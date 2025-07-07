@@ -1,0 +1,33 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  phone: MyString
+  employee_id: MyString
+  email: MyString
+  agency: MyString
+  division: MyString
+  department: MyString
+  make: MyString
+  model: MyString
+  color: MyString
+  year: MyString
+  license_plate: MyString
+  parking_lot: MyString
+  old_permit_number: MyString
+
+two:
+  name: MyString
+  phone: MyString
+  employee_id: MyString
+  email: MyString
+  agency: MyString
+  division: MyString
+  department: MyString
+  make: MyString
+  model: MyString
+  color: MyString
+  year: MyString
+  license_plate: MyString
+  parking_lot: MyString
+  old_permit_number: MyString

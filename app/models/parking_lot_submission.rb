@@ -1,0 +1,2 @@
+class ParkingLotSubmission < ApplicationRecord
+end

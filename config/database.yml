@@ -1,0 +1,13 @@
+default: &default
+  adapter: sqlserver
+  host: gsasql16        # e.g., 192.168.1.100 or localhost
+  port: 1433                 # default MSSQL port
+  username: "ENT\\136626"
+  password: Morfee_Us!99
+  database: GSABSS
+  azure: false
+  timeout: 5000
+  encoding: utf8
+
+development:
+  <<: *default
