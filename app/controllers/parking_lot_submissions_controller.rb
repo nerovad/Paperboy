@@ -2,6 +2,12 @@ class ParkingLotSubmissionsController < ApplicationController
   def new
     @parking_lot_submission = ParkingLotSubmission.new
 
+    # GSABSS lookups
+    @agencies = Agency.all
+    @divisions = Division.all
+    @departments = Department.all
+    @units = Unit.all
+
     @form_logo = "/assets/images/default-logo.svg"
 
     @form_pages = [
@@ -17,9 +23,10 @@ class ParkingLotSubmissionsController < ApplicationController
       {
         title: "Agency Info",
         fields: [
-          { name: "agency", label: "Agency", type: "text", required: true },
-          { name: "division", label: "Division", type: "text", required: true },
-          { name: "department", label: "Department", type: "text", required: true }
+          { name: "agency", label: "Agency", type: "select", required: true },
+          { name: "division", label: "Division", type: "select", required: true },
+          { name: "department", label: "Department", type: "select", required: true },
+          { name: "unit", label: "Unit", type: "select", required: true }
         ]
       },
       {

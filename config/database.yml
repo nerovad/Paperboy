@@ -11,3 +11,10 @@ default: &default
 
 development:
   <<: *default
+
+gsabss:
+  adapter: sqlserver
+  host: gsasql16
+  database: GSABSS
+  username: "ENT\\136626"
+  password: Morfee_Us!99
