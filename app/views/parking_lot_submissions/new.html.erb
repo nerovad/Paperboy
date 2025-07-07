@@ -10,27 +10,52 @@
       <h2><%= page[:title] %></h2>
 
       <div class="form-row">
-        <% page[:fields].each do |field| %>
-          <div class="form-group">
-            <%= form.label field[:name], field[:label] %>
+       <% if page[:title] == "Agency Info" %>
+    <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap gap-2">
+  <div class="form-group flex-fill" style="min-width: 200px;">
+    <%= form.label :agency, "Agency" %>
+    <%= form.select :agency, options_for_select(@agency_options), {}, class: "form-control", id: "agency-select", data: { gsabss_selects_target: "agency", action: "change->gsabss-selects#loadDivisions" } %>
+  </div>
 
-            <% if field[:type] == 'select' %>
-              <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control" %>
-            <% else %>
-              <%= form.text_field field[:name], required: field[:required], class: "form-control" %>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
+  <div class="form-group flex-fill" style="min-width: 200px;">
+    <%= form.label :division, "Division" %>
+    <%= form.select :division, [], {}, class: "form-control", id: "division-select", data: { gsabss_selects_target: "division", action: "change->gsabss-selects#loadDepartments" } %>
+  </div>
+
+  <div class="form-group flex-fill" style="min-width: 200px;">
+    <%= form.label :department, "Department" %>
+    <%= form.select :department, [], {}, class: "form-control", id: "department-select", data: { gsabss_selects_target: "department", action: "change->gsabss-selects#loadUnits" } %>
+  </div>
+
+  <div class="form-group flex-fill" style="min-width: 200px;">
+    <%= form.label :unit, "Unit" %>
+    <%= form.select :unit, [], {}, class: "form-control", id: "unit-select", data: { gsabss_selects_target: "unit" } %>
+  </div>
+</div>
+ 
+<% else %>
+  <% page[:fields].each do |field| %>
+    <div class="form-group">
+      <%= form.label field[:name], field[:label] %>
+
+      <% if field[:type] == 'select' %>
+        <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control" %>
+      <% else %>
+        <%= form.text_field field[:name], required: field[:required], class: "form-control" %>
+      <% end %>
     </div>
   <% end %>
+          <% end %> <!-- closes the 'if page[:title] == "Agency Info"' or 'else' -->
+      </div> <!-- closes .form-row -->
+    </div> <!-- closes .form-page -->
+  <% end %> <!-- closes @form_pages.each_with_index -->
 
   <div class="navigation-buttons">
     <button type="button" onclick="prevPage()">Previous</button>
     <button type="button" onclick="nextPage()">Next</button>
     <%= form.submit "Submit", id: "submitButton", style: "display: none;" %>
   </div>
-<% end %>
+<% end %> <!-- closes form_with -->
 
 <script>
   let currentPage = 0;

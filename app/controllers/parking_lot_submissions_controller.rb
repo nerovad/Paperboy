@@ -3,10 +3,7 @@ class ParkingLotSubmissionsController < ApplicationController
     @parking_lot_submission = ParkingLotSubmission.new
 
     # GSABSS lookups
-    @agencies = Agency.all
-    @divisions = Division.all
-    @departments = Department.all
-    @units = Unit.all
+    @agency_options = Agency.all.map { |a| ["#{a.Agency} #{a.LongName}", a.Agency] }
 
     @form_logo = "/assets/images/default-logo.svg"
 
@@ -23,10 +20,10 @@ class ParkingLotSubmissionsController < ApplicationController
       {
         title: "Agency Info",
         fields: [
-          { name: "agency", label: "Agency", type: "select", required: true },
-          { name: "division", label: "Division", type: "select", required: true },
-          { name: "department", label: "Department", type: "select", required: true },
-          { name: "unit", label: "Unit", type: "select", required: true }
+          { name: "agency", label: "Agency", type: "select", required: true, options: Agency.all.pluck(:LongName) },
+          { name: "division", label: "Division", type: "select", required: true, options: Division.all.pluck(:LongName) },
+          { name: "department", label: "Department", type: "select", required: true, options: Department.all.pluck(:LongName) },
+          { name: "unit", label: "Unit", type: "select", required: true, options: Unit.all.map { |u| ["#{u.Unit} #{u.LongName}", u.Unit] } }
         ]
       },
       {
@@ -63,7 +60,7 @@ class ParkingLotSubmissionsController < ApplicationController
 
   def parking_lot_submission_params
     params.require(:parking_lot_submission).permit(
-      :name, :phone, :employee_id, :email, :agency, :division, :department,
+      :name, :phone, :employee_id, :email, :agency, :division, :department, :unit,
       :make, :model, :color, :year, :license_plate, :parking_lot, :old_permit_number
     )
   end

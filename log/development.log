@@ -849,3 +849,848 @@ Completed 500 Internal Server Error in 536ms (ActiveRecord: 439.4ms (0 queries, 
 NameError (uninitialized constant ParkingLotSubmissionsController::Agency):
   
 app/controllers/parking_lot_submissions_controller.rb:6:in 'ParkingLotSubmissionsController#new'
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 21:32:19 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (1.2ms)[0m  [1m[34mSELECT [schema_migrations].[version] FROM [schema_migrations] ORDER BY [schema_migrations].[version] ASC /*application='FormsApp'*/[0m
+Processing by ParkingLotSubmissionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering parking_lot_submissions/new.html.erb within layouts/application
+  Rendered parking_lot_submissions/new.html.erb within layouts/application (Duration: 11.3ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 15.8ms | GC: 0.0ms)
+Completed 500 Internal Server Error in 333ms (ActiveRecord: 150.8ms (0 queries, 0 cached) | GC: 5.4ms)
+
+
+  
+ActionView::Template::Error (undefined method 'map' for nil)
+Caused by: NoMethodError (undefined method 'map' for nil)
+
+Information for: ActionView::Template::Error (undefined method 'map' for nil):
+    15:             <%= form.label field[:name], field[:label] %>
+    16: 
+    17:             <% if field[:type] == 'select' %>
+    18:               <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control" %>
+    19:             <% else %>
+    20:               <%= form.text_field field[:name], required: field[:required], class: "form-control" %>
+    21:             <% end %>
+  
+app/views/parking_lot_submissions/new.html.erb:18
+app/views/parking_lot_submissions/new.html.erb:13:in 'Array#each'
+app/views/parking_lot_submissions/new.html.erb:13
+app/views/parking_lot_submissions/new.html.erb:8:in 'Array#each'
+app/views/parking_lot_submissions/new.html.erb:8:in 'Enumerable#each_with_index'
+app/views/parking_lot_submissions/new.html.erb:8
+app/views/parking_lot_submissions/new.html.erb:7
+
+Information for cause: NoMethodError (undefined method 'map' for nil):
+  
+app/views/parking_lot_submissions/new.html.erb:18
+app/views/parking_lot_submissions/new.html.erb:13:in 'Array#each'
+app/views/parking_lot_submissions/new.html.erb:13
+app/views/parking_lot_submissions/new.html.erb:8:in 'Array#each'
+app/views/parking_lot_submissions/new.html.erb:8:in 'Enumerable#each_with_index'
+app/views/parking_lot_submissions/new.html.erb:8
+app/views/parking_lot_submissions/new.html.erb:7
+Started GET "/favicon.ico" for 127.0.0.1 at 2025-07-07 21:32:21 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/favicon.ico"):
+  
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 21:37:17 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (5.3ms)[0m  [1m[34mSELECT [schema_migrations].[version] FROM [schema_migrations] ORDER BY [schema_migrations].[version] ASC /*application='FormsApp'*/[0m
+Processing by ParkingLotSubmissionsController#new as HTML
+Completed 500 Internal Server Error in 161ms (ActiveRecord: 52.7ms (0 queries, 0 cached) | GC: 4.7ms)
+
+
+  
+ActiveRecord::StatementInvalid (TinyTds::Error: Invalid object name 'dbo.INFORMATION_SCHEMA.TABLES'.)
+Caused by: TinyTds::Error (Invalid object name 'dbo.INFORMATION_SCHEMA.TABLES'.)
+
+Information for: ActiveRecord::StatementInvalid (TinyTds::Error: Invalid object name 'dbo.INFORMATION_SCHEMA.TABLES'.):
+  
+
+Information for cause: TinyTds::Error (Invalid object name 'dbo.INFORMATION_SCHEMA.TABLES'.):
+  
+app/controllers/parking_lot_submissions_controller.rb:26:in 'ParkingLotSubmissionsController#new'
+Started GET "/favicon.ico" for 127.0.0.1 at 2025-07-07 21:37:18 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/favicon.ico"):
+  
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 21:40:38 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (0.9ms)[0m  [1m[34mSELECT [schema_migrations].[version] FROM [schema_migrations] ORDER BY [schema_migrations].[version] ASC /*application='FormsApp'*/[0m
+Processing by ParkingLotSubmissionsController#new as HTML
+  [1m[36mAgency Pluck (8.5ms)[0m  [1m[34mSELECT [name] FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:26:in 'ParkingLotSubmissionsController#new'
+Completed 500 Internal Server Error in 452ms (ActiveRecord: 331.0ms (1 query, 0 cached) | GC: 3.9ms)
+
+
+  
+ActiveRecord::StatementInvalid (TinyTds::Error: Invalid column name 'name'.)
+Caused by: TinyTds::Error (Invalid column name 'name'.)
+
+Information for: ActiveRecord::StatementInvalid (TinyTds::Error: Invalid column name 'name'.):
+  
+
+Information for cause: TinyTds::Error (Invalid column name 'name'.):
+  
+app/controllers/parking_lot_submissions_controller.rb:26:in 'ParkingLotSubmissionsController#new'
+Started GET "/favicon.ico" for 127.0.0.1 at 2025-07-07 21:40:39 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/favicon.ico"):
+  
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 21:44:03 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (0.9ms)[0m  [1m[34mSELECT [schema_migrations].[version] FROM [schema_migrations] ORDER BY [schema_migrations].[version] ASC /*application='FormsApp'*/[0m
+Processing by ParkingLotSubmissionsController#new as HTML
+  [1m[36mAgency Pluck (10.2ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].[LongName] FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:26:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDivision Pluck (3.7ms)[0m  [1m[34mSELECT [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:27:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDepartment Pluck (3.7ms)[0m  [1m[34mSELECT [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:28:in 'ParkingLotSubmissionsController#new'
+  [1m[36mUnit Pluck (4.8ms)[0m  [1m[34mSELECT [dbo].[TC60_Units].[LongName] FROM [dbo].[TC60_Units] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:29:in 'ParkingLotSubmissionsController#new'
+  Rendering layout layouts/application.html.erb
+  Rendering parking_lot_submissions/new.html.erb within layouts/application
+  Rendered parking_lot_submissions/new.html.erb within layouts/application (Duration: 63.4ms | GC: 0.0ms)
+  Rendered shared/_sidebar.html.erb (Duration: 0.7ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 291.2ms | GC: 0.0ms)
+Completed 200 OK in 1097ms (Views: 311.3ms | ActiveRecord: 607.0ms (4 queries, 0 cached) | GC: 4.9ms)
+
+
+Started GET "/assets/images/default-logo.svg" for 127.0.0.1 at 2025-07-07 21:44:04 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/assets/images/default-logo.svg"):
+  
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 21:46:41 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (0.9ms)[0m  [1m[34mSELECT [schema_migrations].[version] FROM [schema_migrations] ORDER BY [schema_migrations].[version] ASC /*application='FormsApp'*/[0m
+  
+SyntaxError (/home/matthew/gitea/FormsApp/app/controllers/parking_lot_submissions_controller.rb:29: syntax errors found
+  [2m27 | [m          { name: "division", label: "Division", type: "select", required: true, options: Division.all.pluck(:LongName) },
+  [2m28 | [m          { name: "department", label: "Department", type: "select", required: true, options: Department.all.pluck(:LongName) },
+[1;31m> [m[2m29 | [m...  :LongName) }
+  [2m   | [m    [1;31m^[m expected an expression for the array element
+  [2m   | [m    [1;31m^[m unexpected ':'; expected a `,` separator for the array elements
+  [2m   | [m    [1;31m^[m expected a `}` to close the hash literal
+  [2m   | [m    [1;31m^[m expected an expression for the array element
+  [2m   | [m    [1;31m^[m unexpected ':'; expected a `,` separator for the array elements
+  [2m   | [m    [1;31m^[m expected a `}` to close the hash literal
+  [2m   | [m     [1;31m^[m unexpected ':', ignoring it
+  [2m   | [m     [1;31m^[m unexpected ':', expecting end-of-input
+  [2m   | [m     [1;31m^[m unexpected ':'; expected a `]` to close the array
+  [2m   | [m     [1;31m^[m unexpected ':'; expected a `]` to close the array
+  [2m   | [m     [1;31m^[m unexpected ':'; expected a `)` to close the arguments
+  [2m   | [m              [1;31m^[m unexpected ')', ignoring it
+  [2m   | [m              [1;31m^[m unexpected ')', expecting end-of-input
+  [2m   | [m                [1;31m^[m unexpected '}', ignoring it
+[1;31m> [m[2m30 | [m        ]
+  [2m   | [m        [1;31m^[m unexpected ']', ignoring it
+[1;31m> [m[2m31 | [m      },
+  [2m   | [m      [1;31m^[m unexpected '}', ignoring it
+  [2m   | [m       [1;31m^[m unexpected ',', ignoring it
+  [2m32 | [m      {
+  [2m33 | [m        title: "Vehicle Info",
+[2m  ~~~~~~[m
+  [2m39 | [m          { name: "license_plate", label: "License Plate", type: "text", required: true }
+  [2m40 | [m        ]
+[1;31m> [m[2m41 | [m      },
+  [2m   | [m       [1;31m^[m unexpected ',', ignoring it
+  [2m   | [m       [1;31m^[m unexpected ',', expecting end-of-input
+  [2m42 | [m      {
+  [2m43 | [m        title: "Parking Details",
+[2m  ~~~~~~[m
+  [2m47 | [m        ]
+  [2m48 | [m      }
+[1;31m> [m[2m49 | [m    ]
+  [2m   | [m    [1;31m^[m unexpected ']', ignoring it
+  [2m50 | [m  end
+  [2m51 | [m
+):
+  
+app/controllers/parking_lot_submissions_controller.rb:29: syntax errors found
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 21:47:16 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (1.1ms)[0m  [1m[34mSELECT [schema_migrations].[version] FROM [schema_migrations] ORDER BY [schema_migrations].[version] ASC /*application='FormsApp'*/[0m
+Processing by ParkingLotSubmissionsController#new as HTML
+  [1m[36mAgency Pluck (11.3ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].[LongName] FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:26:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDivision Pluck (2.9ms)[0m  [1m[34mSELECT [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:27:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDepartment Pluck (3.5ms)[0m  [1m[34mSELECT [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:28:in 'ParkingLotSubmissionsController#new'
+  [1m[36mUnit Pluck (5.5ms)[0m  [1m[34mSELECT [dbo].[TC60_Units].[Unit], [dbo].[TC60_Units].[LongName] FROM [dbo].[TC60_Units] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:29:in 'ParkingLotSubmissionsController#new'
+  Rendering layout layouts/application.html.erb
+  Rendering parking_lot_submissions/new.html.erb within layouts/application
+  Rendered parking_lot_submissions/new.html.erb within layouts/application (Duration: 67.3ms | GC: 0.0ms)
+  Rendered shared/_sidebar.html.erb (Duration: 0.8ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 296.0ms | GC: 0.0ms)
+Completed 200 OK in 674ms (Views: 316.9ms | ActiveRecord: 167.9ms (4 queries, 0 cached) | GC: 5.0ms)
+
+
+Started GET "/assets/images/default-logo.svg" for 127.0.0.1 at 2025-07-07 21:47:17 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/assets/images/default-logo.svg"):
+  
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 21:56:56 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (0.9ms)[0m  [1m[34mSELECT [schema_migrations].[version] FROM [schema_migrations] ORDER BY [schema_migrations].[version] ASC /*application='FormsApp'*/[0m
+Processing by ParkingLotSubmissionsController#new as HTML
+  [1m[36mAgency Pluck (9.3ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].[LongName] FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:26:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDivision Pluck (1.4ms)[0m  [1m[34mSELECT [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:27:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDepartment Pluck (2.1ms)[0m  [1m[34mSELECT [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:28:in 'ParkingLotSubmissionsController#new'
+  [1m[36mUnit Load (5.0ms)[0m  [1m[34mSELECT [dbo].[TC60_Units].* FROM [dbo].[TC60_Units] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:29:in 'Enumerable#map'
+  Rendering layout layouts/application.html.erb
+  Rendering parking_lot_submissions/new.html.erb within layouts/application
+  Rendered parking_lot_submissions/new.html.erb within layouts/application (Duration: 67.2ms | GC: 0.0ms)
+  Rendered shared/_sidebar.html.erb (Duration: 2.8ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 288.0ms | GC: 0.0ms)
+Completed 200 OK in 970ms (Views: 305.8ms | ActiveRecord: 398.5ms (4 queries, 0 cached) | GC: 4.8ms)
+
+
+Started GET "/assets/images/default-logo.svg" for 127.0.0.1 at 2025-07-07 21:56:57 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/assets/images/default-logo.svg"):
+  
+Started GET "/favicon.ico" for 127.0.0.1 at 2025-07-07 21:56:57 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/favicon.ico"):
+  
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 22:20:28 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (1.2ms)[0m  [1m[34mSELECT [schema_migrations].[version] FROM [schema_migrations] ORDER BY [schema_migrations].[version] ASC /*application='FormsApp'*/[0m
+  
+NoMethodError (undefined method 'namespace' for main):
+  
+config/routes.rb:6:in '<main>'
+Started GET "/favicon.ico" for 127.0.0.1 at 2025-07-07 22:20:29 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/favicon.ico"):
+  
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 22:21:30 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (0.9ms)[0m  [1m[34mSELECT [schema_migrations].[version] FROM [schema_migrations] ORDER BY [schema_migrations].[version] ASC /*application='FormsApp'*/[0m
+Processing by ParkingLotSubmissionsController#new as HTML
+  [1m[36mAgency Load (3.4ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].* FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:6:in 'Enumerable#map'
+  [1m[36mAgency Pluck (2.0ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].[LongName] FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:23:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDivision Pluck (1.4ms)[0m  [1m[34mSELECT [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:24:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDepartment Pluck (3.3ms)[0m  [1m[34mSELECT [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:25:in 'ParkingLotSubmissionsController#new'
+  [1m[36mUnit Load (6.1ms)[0m  [1m[34mSELECT [dbo].[TC60_Units].* FROM [dbo].[TC60_Units] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:26:in 'Enumerable#map'
+  Rendering layout layouts/application.html.erb
+  Rendering parking_lot_submissions/new.html.erb within layouts/application
+  Rendered parking_lot_submissions/new.html.erb within layouts/application (Duration: 15.5ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 21.3ms | GC: 0.0ms)
+Completed 500 Internal Server Error in 772ms (ActiveRecord: 393.1ms (5 queries, 0 cached) | GC: 4.8ms)
+
+
+  
+ActionView::SyntaxErrorInTemplate (Encountered a syntax error while rendering template: check <div class="form-header">
+  <img src="<%= @form_logo %>" alt="Parking Lot Logo" />
+</div>
+
+<h1>Parking Lot Submission Form</h1>
+
+<%= form_with model: @parking_lot_submission, local: true do |form| %>
+  <% @form_pages.each_with_index do |page, page_index| %>
+    <div class="form-page" style="<%= page_index == 0 ? '' : 'display:none;' %>">
+      <h2><%= page[:title] %></h2>
+
+      <div class="form-row">
+       <% if page[:title] == "Agency Info" %>
+  <div data-controller="gsabss-selects">
+    <div class="form-group">
+      <%= form.label :agency, "Agency" %>
+      <%= form.select :agency,
+                      options_for_select(@agency_options),
+                      {},
+                      class: "form-control",
+                      id: "agency-select",
+                      data: {
+                        gsabss_selects_target: "agency",
+                        action: "change->gsabss-selects#loadDivisions"
+                      } %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :division, "Division" %>
+      <%= form.select :division,
+                      [],
+                      {},
+                      class: "form-control",
+                      id: "division-select",
+                      data: {
+                        gsabss_selects_target: "division",
+                        action: "change->gsabss-selects#loadDepartments"
+                      } %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :department, "Department" %>
+      <%= form.select :department,
+                      [],
+                      {},
+                      class: "form-control",
+                      id: "department-select",
+                      data: {
+                        gsabss_selects_target: "department",
+                        action: "change->gsabss-selects#loadUnits"
+                      } %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :unit, "Unit" %>
+      <%= form.select :unit,
+                      [],
+                      {},
+                      class: "form-control",
+                      id: "unit-select",
+                      data: { gsabss_selects_target: "unit" } %>
+    </div>
+  </div>
+<% else %>
+  <% page[:fields].each do |field| %>
+    <div class="form-group">
+      <%= form.label field[:name], field[:label] %>
+
+      <% if field[:type] == 'select' %>
+        <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control" %>
+      <% else %>
+        <%= form.text_field field[:name], required: field[:required], class: "form-control" %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %> 
+  <div class="navigation-buttons">
+    <button type="button" onclick="prevPage()">Previous</button>
+    <button type="button" onclick="nextPage()">Next</button>
+    <%= form.submit "Submit", id: "submitButton", style: "display: none;" %>
+  </div>
+<% end %>
+
+<script>
+  let currentPage = 0;
+  const pages = document.querySelectorAll('.form-page');
+  const submitButton = document.getElementById('submitButton');
+
+  function showPage(index) {
+    pages.forEach((page, i) => {
+      page.style.display = i === index ? 'block' : 'none';
+    });
+    submitButton.style.display = index === pages.length - 1 ? 'inline-block' : 'none';
+  }
+
+  function nextPage() {
+    if (currentPage < pages.length - 1) {
+      currentPage++;
+      showPage(currentPage);
+    }
+  }
+
+  function prevPage() {
+    if (currentPage > 0) {
+      currentPage--;
+      showPage(currentPage);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    showPage(currentPage);
+  });
+</script>
+
+
+)
+Caused by: ActiveSupport::SyntaxErrorProxy (/home/matthew/gitea/FormsApp/app/views/parking_lot_submissions/new.html.erb:117: syntax errors found
+  [2m115 | [m'.freeze;
+  [2m116 | [m@output_buffer.safe_append='<!-- END app/views/parking_lot_submissions/new.html.erb -->';@output_buffer
+[1;31m> [m[2m117 | [m          end
+  [2m    | [m             [1;31m^[m unexpected end-of-input, assuming it is closing the parent top level context
+[1;31m> [m[2m118 | [m
+  [2m    | [m[1;31m^[m expected an `end` to close the `def` statement
+)
+
+Information for: ActionView::SyntaxErrorInTemplate (Encountered a syntax error while rendering template: check <div class="form-header">
+  <img src="<%= @form_logo %>" alt="Parking Lot Logo" />
+</div>
+
+<h1>Parking Lot Submission Form</h1>
+
+<%= form_with model: @parking_lot_submission, local: true do |form| %>
+  <% @form_pages.each_with_index do |page, page_index| %>
+    <div class="form-page" style="<%= page_index == 0 ? '' : 'display:none;' %>">
+      <h2><%= page[:title] %></h2>
+
+      <div class="form-row">
+       <% if page[:title] == "Agency Info" %>
+  <div data-controller="gsabss-selects">
+    <div class="form-group">
+      <%= form.label :agency, "Agency" %>
+      <%= form.select :agency,
+                      options_for_select(@agency_options),
+                      {},
+                      class: "form-control",
+                      id: "agency-select",
+                      data: {
+                        gsabss_selects_target: "agency",
+                        action: "change->gsabss-selects#loadDivisions"
+                      } %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :division, "Division" %>
+      <%= form.select :division,
+                      [],
+                      {},
+                      class: "form-control",
+                      id: "division-select",
+                      data: {
+                        gsabss_selects_target: "division",
+                        action: "change->gsabss-selects#loadDepartments"
+                      } %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :department, "Department" %>
+      <%= form.select :department,
+                      [],
+                      {},
+                      class: "form-control",
+                      id: "department-select",
+                      data: {
+                        gsabss_selects_target: "department",
+                        action: "change->gsabss-selects#loadUnits"
+                      } %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :unit, "Unit" %>
+      <%= form.select :unit,
+                      [],
+                      {},
+                      class: "form-control",
+                      id: "unit-select",
+                      data: { gsabss_selects_target: "unit" } %>
+    </div>
+  </div>
+<% else %>
+  <% page[:fields].each do |field| %>
+    <div class="form-group">
+      <%= form.label field[:name], field[:label] %>
+
+      <% if field[:type] == 'select' %>
+        <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control" %>
+      <% else %>
+        <%= form.text_field field[:name], required: field[:required], class: "form-control" %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %> 
+  <div class="navigation-buttons">
+    <button type="button" onclick="prevPage()">Previous</button>
+    <button type="button" onclick="nextPage()">Next</button>
+    <%= form.submit "Submit", id: "submitButton", style: "display: none;" %>
+  </div>
+<% end %>
+
+<script>
+  let currentPage = 0;
+  const pages = document.querySelectorAll('.form-page');
+  const submitButton = document.getElementById('submitButton');
+
+  function showPage(index) {
+    pages.forEach((page, i) => {
+      page.style.display = i === index ? 'block' : 'none';
+    });
+    submitButton.style.display = index === pages.length - 1 ? 'inline-block' : 'none';
+  }
+
+  function nextPage() {
+    if (currentPage < pages.length - 1) {
+      currentPage++;
+      showPage(currentPage);
+    }
+  }
+
+  function prevPage() {
+    if (currentPage > 0) {
+      currentPage--;
+      showPage(currentPage);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    showPage(currentPage);
+  });
+</script>
+
+
+):
+1:    <div class="form-header">
+2:      <img src="<%= @form_logo %>" alt="Parking Lot Logo" />
+3:    </div>
+4:    
+5:    <h1>Parking Lot Submission Form</h1>
+6:    
+7:    <%= form_with model: @parking_lot_submission, local: true do |form| %>
+8:      <% @form_pages.each_with_index do |page, page_index| %>
+9:        <div class="form-page" style="<%= page_index == 0 ? '' : 'display:none;' %>">
+10:          <h2><%= page[:title] %></h2>
+11:    
+12:          <div class="form-row">
+13:           <% if page[:title] == "Agency Info" %>
+14:      <div data-controller="gsabss-selects">
+15:        <div class="form-group">
+16:          <%= form.label :agency, "Agency" %>
+17:          <%= form.select :agency,
+18:                          options_for_select(@agency_options),
+19:                          {},
+20:                          class: "form-control",
+21:                          id: "agency-select",
+22:                          data: {
+23:                            gsabss_selects_target: "agency",
+24:                            action: "change->gsabss-selects#loadDivisions"
+25:                          } %>
+26:        </div>
+27:    
+28:        <div class="form-group">
+29:          <%= form.label :division, "Division" %>
+30:          <%= form.select :division,
+31:                          [],
+32:                          {},
+33:                          class: "form-control",
+34:                          id: "division-select",
+35:                          data: {
+36:                            gsabss_selects_target: "division",
+37:                            action: "change->gsabss-selects#loadDepartments"
+38:                          } %>
+39:        </div>
+40:    
+41:        <div class="form-group">
+42:          <%= form.label :department, "Department" %>
+43:          <%= form.select :department,
+44:                          [],
+45:                          {},
+46:                          class: "form-control",
+47:                          id: "department-select",
+48:                          data: {
+49:                            gsabss_selects_target: "department",
+50:                            action: "change->gsabss-selects#loadUnits"
+51:                          } %>
+52:        </div>
+53:    
+54:        <div class="form-group">
+55:          <%= form.label :unit, "Unit" %>
+56:          <%= form.select :unit,
+57:                          [],
+58:                          {},
+59:                          class: "form-control",
+60:                          id: "unit-select",
+61:                          data: { gsabss_selects_target: "unit" } %>
+62:        </div>
+63:      </div>
+64:    <% else %>
+65:      <% page[:fields].each do |field| %>
+66:        <div class="form-group">
+67:          <%= form.label field[:name], field[:label] %>
+68:    
+69:          <% if field[:type] == 'select' %>
+70:            <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control" %>
+71:          <% else %>
+72:            <%= form.text_field field[:name], required: field[:required], class: "form-control" %>
+73:          <% end %>
+74:        </div>
+75:      <% end %>
+76:    <% end %> 
+77:      <div class="navigation-buttons">
+78:        <button type="button" onclick="prevPage()">Previous</button>
+79:        <button type="button" onclick="nextPage()">Next</button>
+80:        <%= form.submit "Submit", id: "submitButton", style: "display: none;" %>
+81:      </div>
+82:    <% end %>
+83:    
+84:    <script>
+85:      let currentPage = 0;
+86:      const pages = document.querySelectorAll('.form-page');
+87:      const submitButton = document.getElementById('submitButton');
+88:    
+89:      function showPage(index) {
+90:        pages.forEach((page, i) => {
+91:          page.style.display = i === index ? 'block' : 'none';
+92:        });
+93:        submitButton.style.display = index === pages.length - 1 ? 'inline-block' : 'none';
+94:      }
+95:    
+96:      function nextPage() {
+97:        if (currentPage < pages.length - 1) {
+98:          currentPage++;
+99:          showPage(currentPage);
+100:        }
+101:      }
+102:    
+103:      function prevPage() {
+104:        if (currentPage > 0) {
+105:          currentPage--;
+106:          showPage(currentPage);
+107:        }
+108:      }
+109:    
+110:      document.addEventListener("DOMContentLoaded", () => {
+111:        showPage(currentPage);
+112:      });
+113:    </script>
+  
+app/views/parking_lot_submissions/new.html.erb:117: syntax errors found
+
+Information for cause: ActiveSupport::SyntaxErrorProxy (/home/matthew/gitea/FormsApp/app/views/parking_lot_submissions/new.html.erb:117: syntax errors found
+  [2m115 | [m'.freeze;
+  [2m116 | [m@output_buffer.safe_append='<!-- END app/views/parking_lot_submissions/new.html.erb -->';@output_buffer
+[1;31m> [m[2m117 | [m          end
+  [2m    | [m             [1;31m^[m unexpected end-of-input, assuming it is closing the parent top level context
+[1;31m> [m[2m118 | [m
+  [2m    | [m[1;31m^[m expected an `end` to close the `def` statement
+):
+  
+app/views/parking_lot_submissions/new.html.erb:117: syntax errors found
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 22:25:47 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (1.0ms)[0m  [1m[34mSELECT [schema_migrations].[version] FROM [schema_migrations] ORDER BY [schema_migrations].[version] ASC /*application='FormsApp'*/[0m
+Processing by ParkingLotSubmissionsController#new as HTML
+  [1m[36mAgency Load (3.2ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].* FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:6:in 'Enumerable#map'
+  [1m[36mAgency Pluck (2.1ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].[LongName] FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:23:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDivision Pluck (1.6ms)[0m  [1m[34mSELECT [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:24:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDepartment Pluck (3.3ms)[0m  [1m[34mSELECT [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:25:in 'ParkingLotSubmissionsController#new'
+  [1m[36mUnit Load (4.2ms)[0m  [1m[34mSELECT [dbo].[TC60_Units].* FROM [dbo].[TC60_Units] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:26:in 'Enumerable#map'
+  Rendering layout layouts/application.html.erb
+  Rendering parking_lot_submissions/new.html.erb within layouts/application
+  Rendered parking_lot_submissions/new.html.erb within layouts/application (Duration: 64.2ms | GC: 0.0ms)
+  Rendered shared/_sidebar.html.erb (Duration: 3.5ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 340.2ms | GC: 0.0ms)
+Completed 200 OK in 809ms (Views: 355.9ms | ActiveRecord: 130.0ms (5 queries, 0 cached) | GC: 4.9ms)
+
+
+Started GET "/assets/images/default-logo.svg" for 127.0.0.1 at 2025-07-07 22:25:49 +0000
+Started GET "/assets/turbo.min-38d030897e3554a265d3a3b6bdf4fb7509b08197ba2b6e3761683c07e776c1bc.js" for 127.0.0.1 at 2025-07-07 22:25:49 +0000
+Started GET "/assets/controllers/gsabss_selects_controller-720ac005b295a151552b13e3e613d1a0a31aca2bcc01026f8fee69886f2567a5.js" for 127.0.0.1 at 2025-07-07 22:25:49 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/assets/images/default-logo.svg"):
+  
+Started GET "/api/divisions?agency=GSA" for 127.0.0.1 at 2025-07-07 22:26:03 +0000
+Processing by Api::DropdownsController#divisions as */*
+  Parameters: {"agency" => "GSA"}
+  [1m[36mDivision Load (5.2ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Divisions].[Division], [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] WHERE [dbo].[TC60_Divisions].[Agency] = N'GSA' /*action='divisions',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:6:in 'Enumerable#map'
+Completed 200 OK in 307ms (Views: 2.7ms | ActiveRecord: 218.4ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/departments?agency=GSA&division=4600" for 127.0.0.1 at 2025-07-07 22:26:14 +0000
+Processing by Api::DropdownsController#departments as */*
+  Parameters: {"agency" => "GSA", "division" => "4600"}
+  [1m[36mDepartment Load (5.1ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Departments].[Department], [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] WHERE [dbo].[TC60_Departments].[Agency] = N'GSA' AND [dbo].[TC60_Departments].[Division] = N'4600' /*action='departments',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:15:in 'Enumerable#map'
+Completed 200 OK in 323ms (Views: 1.7ms | ActiveRecord: 291.2ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/units?agency=GSA&division=4600&department=4601" for 127.0.0.1 at 2025-07-07 22:26:17 +0000
+Processing by Api::DropdownsController#units as */*
+  Parameters: {"agency" => "GSA", "division" => "4600", "department" => "4601"}
+  [1m[36mUnit Load (6.3ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Units].[Unit], [dbo].[TC60_Units].[LongName] FROM [dbo].[TC60_Units] WHERE [dbo].[TC60_Units].[Agency] = N'GSA' AND [dbo].[TC60_Units].[Division] = N'4600' AND [dbo].[TC60_Units].[Department] = N'4601' /*action='units',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:24:in 'Enumerable#map'
+Completed 200 OK in 20ms (Views: 0.7ms | ActiveRecord: 6.3ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/units?agency=GSA&division=4600&department=" for 127.0.0.1 at 2025-07-07 22:26:28 +0000
+Processing by Api::DropdownsController#units as */*
+  Parameters: {"agency" => "GSA", "division" => "4600", "department" => ""}
+  [1m[36mUnit Load (5.4ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Units].[Unit], [dbo].[TC60_Units].[LongName] FROM [dbo].[TC60_Units] WHERE [dbo].[TC60_Units].[Agency] = N'GSA' AND [dbo].[TC60_Units].[Division] = N'4600' AND [dbo].[TC60_Units].[Department] = N'' /*action='units',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:24:in 'Enumerable#map'
+Completed 200 OK in 10ms (Views: 1.0ms | ActiveRecord: 5.3ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/departments?agency=GSA&division=4640" for 127.0.0.1 at 2025-07-07 22:26:37 +0000
+Processing by Api::DropdownsController#departments as */*
+  Parameters: {"agency" => "GSA", "division" => "4640"}
+  [1m[36mDepartment Load (4.6ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Departments].[Department], [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] WHERE [dbo].[TC60_Departments].[Agency] = N'GSA' AND [dbo].[TC60_Departments].[Division] = N'4640' /*action='departments',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:15:in 'Enumerable#map'
+Completed 200 OK in 13ms (Views: 0.2ms | ActiveRecord: 4.6ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/units?agency=GSA&division=4640&department=4641" for 127.0.0.1 at 2025-07-07 22:26:39 +0000
+Processing by Api::DropdownsController#units as */*
+  Parameters: {"agency" => "GSA", "division" => "4640", "department" => "4641"}
+  [1m[36mUnit Load (5.1ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Units].[Unit], [dbo].[TC60_Units].[LongName] FROM [dbo].[TC60_Units] WHERE [dbo].[TC60_Units].[Agency] = N'GSA' AND [dbo].[TC60_Units].[Division] = N'4640' AND [dbo].[TC60_Units].[Department] = N'4641' /*action='units',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:24:in 'Enumerable#map'
+Completed 200 OK in 17ms (Views: 0.5ms | ActiveRecord: 5.1ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 22:32:00 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (1.1ms)[0m  [1m[34mSELECT [schema_migrations].[version] FROM [schema_migrations] ORDER BY [schema_migrations].[version] ASC /*application='FormsApp'*/[0m
+Processing by ParkingLotSubmissionsController#new as HTML
+  [1m[36mAgency Load (2.0ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].* FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:6:in 'Enumerable#map'
+  [1m[36mAgency Pluck (2.1ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].[LongName] FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:23:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDivision Pluck (1.5ms)[0m  [1m[34mSELECT [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:24:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDepartment Pluck (3.9ms)[0m  [1m[34mSELECT [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:25:in 'ParkingLotSubmissionsController#new'
+  [1m[36mUnit Load (4.4ms)[0m  [1m[34mSELECT [dbo].[TC60_Units].* FROM [dbo].[TC60_Units] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:26:in 'Enumerable#map'
+  Rendering layout layouts/application.html.erb
+  Rendering parking_lot_submissions/new.html.erb within layouts/application
+  Rendered parking_lot_submissions/new.html.erb within layouts/application (Duration: 64.9ms | GC: 0.0ms)
+  Rendered shared/_sidebar.html.erb (Duration: 2.2ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 288.6ms | GC: 0.0ms)
+Completed 200 OK in 731ms (Views: 305.6ms | ActiveRecord: 100.0ms (5 queries, 0 cached) | GC: 4.8ms)
+
+
+Started GET "/assets/images/default-logo.svg" for 127.0.0.1 at 2025-07-07 22:32:01 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/assets/images/default-logo.svg"):
+  
+Started GET "/api/divisions?agency=CSS" for 127.0.0.1 at 2025-07-07 22:32:12 +0000
+Processing by Api::DropdownsController#divisions as */*
+  Parameters: {"agency" => "CSS"}
+  [1m[36mDivision Load (5.6ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Divisions].[Division], [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] WHERE [dbo].[TC60_Divisions].[Agency] = N'CSS' /*action='divisions',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:6:in 'Enumerable#map'
+Completed 200 OK in 114ms (Views: 0.5ms | ActiveRecord: 30.9ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/departments?agency=CSS&division=2250" for 127.0.0.1 at 2025-07-07 22:32:14 +0000
+Processing by Api::DropdownsController#departments as */*
+  Parameters: {"agency" => "CSS", "division" => "2250"}
+  [1m[36mDepartment Load (5.6ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Departments].[Department], [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] WHERE [dbo].[TC60_Departments].[Agency] = N'CSS' AND [dbo].[TC60_Departments].[Division] = N'2250' /*action='departments',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:15:in 'Enumerable#map'
+Completed 200 OK in 78ms (Views: 0.2ms | ActiveRecord: 46.2ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 22:32:40 +0000
+Processing by ParkingLotSubmissionsController#new as HTML
+  [1m[36mAgency Load (1.4ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].* FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:6:in 'Enumerable#map'
+  [1m[36mAgency Pluck (1.2ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].[LongName] FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:23:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDivision Pluck (1.7ms)[0m  [1m[34mSELECT [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:24:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDepartment Pluck (1.9ms)[0m  [1m[34mSELECT [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:25:in 'ParkingLotSubmissionsController#new'
+  [1m[36mUnit Load (3.2ms)[0m  [1m[34mSELECT [dbo].[TC60_Units].* FROM [dbo].[TC60_Units] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:26:in 'Enumerable#map'
+  Rendering layout layouts/application.html.erb
+  Rendering parking_lot_submissions/new.html.erb within layouts/application
+  Rendered parking_lot_submissions/new.html.erb within layouts/application (Duration: 32.2ms | GC: 0.0ms)
+  Rendered shared/_sidebar.html.erb (Duration: 1.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 45.5ms | GC: 0.0ms)
+Completed 200 OK in 90ms (Views: 53.4ms | ActiveRecord: 9.4ms (5 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/assets/images/default-logo.svg" for 127.0.0.1 at 2025-07-07 22:32:40 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/assets/images/default-logo.svg"):
+  
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 22:32:45 +0000
+Processing by ParkingLotSubmissionsController#new as HTML
+  [1m[36mAgency Load (2.3ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].* FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:6:in 'Enumerable#map'
+  [1m[36mAgency Pluck (1.1ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].[LongName] FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:23:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDivision Pluck (1.3ms)[0m  [1m[34mSELECT [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:24:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDepartment Pluck (1.7ms)[0m  [1m[34mSELECT [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:25:in 'ParkingLotSubmissionsController#new'
+  [1m[36mUnit Load (3.3ms)[0m  [1m[34mSELECT [dbo].[TC60_Units].* FROM [dbo].[TC60_Units] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:26:in 'Enumerable#map'
+  Rendering layout layouts/application.html.erb
+  Rendering parking_lot_submissions/new.html.erb within layouts/application
+  Rendered parking_lot_submissions/new.html.erb within layouts/application (Duration: 13.5ms | GC: 0.0ms)
+  Rendered shared/_sidebar.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 19.4ms | GC: 0.0ms)
+Completed 200 OK in 54ms (Views: 21.3ms | ActiveRecord: 9.6ms (5 queries, 0 cached) | GC: 0.8ms)
+
+
+Started GET "/assets/images/default-logo.svg" for 127.0.0.1 at 2025-07-07 22:32:45 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/assets/images/default-logo.svg"):
+  
+Started GET "/favicon.ico" for 127.0.0.1 at 2025-07-07 22:32:45 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/favicon.ico"):
+  
+Started GET "/api/divisions?agency=GSA" for 127.0.0.1 at 2025-07-07 22:32:53 +0000
+Processing by Api::DropdownsController#divisions as */*
+  Parameters: {"agency" => "GSA"}
+  [1m[36mDivision Load (4.5ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Divisions].[Division], [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] WHERE [dbo].[TC60_Divisions].[Agency] = N'GSA' /*action='divisions',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:6:in 'Enumerable#map'
+Completed 200 OK in 12ms (Views: 2.6ms | ActiveRecord: 4.5ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/departments?agency=GSA&division=4640" for 127.0.0.1 at 2025-07-07 22:32:57 +0000
+Processing by Api::DropdownsController#departments as */*
+  Parameters: {"agency" => "GSA", "division" => "4640"}
+  [1m[36mDepartment Load (4.9ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Departments].[Department], [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] WHERE [dbo].[TC60_Departments].[Agency] = N'GSA' AND [dbo].[TC60_Departments].[Division] = N'4640' /*action='departments',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:15:in 'Enumerable#map'
+Completed 200 OK in 13ms (Views: 0.3ms | ActiveRecord: 4.9ms (1 query, 0 cached) | GC: 0.7ms)
+
+
+Started GET "/api/units?agency=GSA&division=4640&department=4643" for 127.0.0.1 at 2025-07-07 22:32:59 +0000
+Processing by Api::DropdownsController#units as */*
+  Parameters: {"agency" => "GSA", "division" => "4640", "department" => "4643"}
+  [1m[36mUnit Load (6.2ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Units].[Unit], [dbo].[TC60_Units].[LongName] FROM [dbo].[TC60_Units] WHERE [dbo].[TC60_Units].[Agency] = N'GSA' AND [dbo].[TC60_Units].[Division] = N'4640' AND [dbo].[TC60_Units].[Department] = N'4643' /*action='units',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:24:in 'Enumerable#map'
+Completed 200 OK in 21ms (Views: 0.5ms | ActiveRecord: 6.2ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/parking_lot_submissions/new" for 127.0.0.1 at 2025-07-07 23:06:50 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (1.7ms)[0m  [1m[34mSELECT [schema_migrations].[version] FROM [schema_migrations] ORDER BY [schema_migrations].[version] ASC /*application='FormsApp'*/[0m
+Processing by ParkingLotSubmissionsController#new as HTML
+  [1m[36mAgency Load (1.8ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].* FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:6:in 'Enumerable#map'
+  [1m[36mAgency Pluck (2.4ms)[0m  [1m[34mSELECT [dbo].[TC60_Agencies].[LongName] FROM [dbo].[TC60_Agencies] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:23:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDivision Pluck (1.4ms)[0m  [1m[34mSELECT [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:24:in 'ParkingLotSubmissionsController#new'
+  [1m[36mDepartment Pluck (3.9ms)[0m  [1m[34mSELECT [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:25:in 'ParkingLotSubmissionsController#new'
+  [1m[36mUnit Load (5.0ms)[0m  [1m[34mSELECT [dbo].[TC60_Units].* FROM [dbo].[TC60_Units] /*action='new',application='FormsApp',controller='parking_lot_submissions'*/[0m
+  ↳ app/controllers/parking_lot_submissions_controller.rb:26:in 'Enumerable#map'
+  Rendering layout layouts/application.html.erb
+  Rendering parking_lot_submissions/new.html.erb within layouts/application
+  Rendered parking_lot_submissions/new.html.erb within layouts/application (Duration: 66.7ms | GC: 0.0ms)
+  Rendered shared/_sidebar.html.erb (Duration: 2.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 319.7ms | GC: 0.0ms)
+Completed 200 OK in 763ms (Views: 335.7ms | ActiveRecord: 109.8ms (5 queries, 0 cached) | GC: 4.9ms)
+
+
+Started GET "/assets/application-0dc58951598a1452f8346d2d9e580539e0fafd48a5392163d62613b4ec983407.css" for 127.0.0.1 at 2025-07-07 23:06:52 +0000
+Started GET "/assets/images/default-logo.svg" for 127.0.0.1 at 2025-07-07 23:06:52 +0000
+  
+ActionController::RoutingError (No route matches [GET] "/assets/images/default-logo.svg"):
+  
+Started GET "/api/divisions?agency=GSA" for 127.0.0.1 at 2025-07-07 23:07:12 +0000
+Processing by Api::DropdownsController#divisions as */*
+  Parameters: {"agency" => "GSA"}
+  [1m[36mDivision Load (3.3ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Divisions].[Division], [dbo].[TC60_Divisions].[LongName] FROM [dbo].[TC60_Divisions] WHERE [dbo].[TC60_Divisions].[Agency] = N'GSA' /*action='divisions',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:6:in 'Enumerable#map'
+Completed 200 OK in 101ms (Views: 2.5ms | ActiveRecord: 9.6ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/departments?agency=GSA&division=4660" for 127.0.0.1 at 2025-07-07 23:07:14 +0000
+Processing by Api::DropdownsController#departments as */*
+  Parameters: {"agency" => "GSA", "division" => "4660"}
+  [1m[36mDepartment Load (5.5ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Departments].[Department], [dbo].[TC60_Departments].[LongName] FROM [dbo].[TC60_Departments] WHERE [dbo].[TC60_Departments].[Agency] = N'GSA' AND [dbo].[TC60_Departments].[Division] = N'4660' /*action='departments',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:15:in 'Enumerable#map'
+Completed 200 OK in 44ms (Views: 1.8ms | ActiveRecord: 10.5ms (1 query, 0 cached) | GC: 1.3ms)
+
+
+Started GET "/api/units?agency=GSA&division=4660&department=4661" for 127.0.0.1 at 2025-07-07 23:07:16 +0000
+Processing by Api::DropdownsController#units as */*
+  Parameters: {"agency" => "GSA", "division" => "4660", "department" => "4661"}
+  [1m[36mUnit Load (4.7ms)[0m  [1m[34mSELECT DISTINCT [dbo].[TC60_Units].[Unit], [dbo].[TC60_Units].[LongName] FROM [dbo].[TC60_Units] WHERE [dbo].[TC60_Units].[Agency] = N'GSA' AND [dbo].[TC60_Units].[Division] = N'4660' AND [dbo].[TC60_Units].[Department] = N'4661' /*action='units',application='FormsApp',controller='dropdowns'*/[0m
+  ↳ app/controllers/api/dropdowns_controller.rb:24:in 'Enumerable#map'
+Completed 200 OK in 19ms (Views: 0.5ms | ActiveRecord: 4.7ms (1 query, 0 cached) | GC: 0.0ms)
+
+
