@@ -48,6 +48,7 @@ class ParkingLotSubmissionsController < ApplicationController
 
   def create
     @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
+    @parking_lot_submission.status = 0
 
     if @parking_lot_submission.save
       render :create
@@ -56,7 +57,28 @@ class ParkingLotSubmissionsController < ApplicationController
     end
   end
 
-  private
+   def approve
+  @submission = ParkingLotSubmission.find(params[:id])
+  @submission.update!(status: :manager_approved)
+
+  NotifySecurityJob.perform_later(@submission.id)
+
+  redirect_to parking_lot_submissions_path, notice: "Request approved and sent to Security."
+end
+
+def deny
+  @submission = ParkingLotSubmission.find(params[:id])
+  @submission.update!(status: :denied)
+
+  # Optional: Notify the user
+  redirect_to parking_lot_submissions_path, alert: "Request denied."
+end
+
+def index
+  @pending_submissions = ParkingLotSubmission.where(status: 0)
+end
+
+ private
 
   def parking_lot_submission_params
     params.require(:parking_lot_submission).permit(
@@ -64,5 +86,5 @@ class ParkingLotSubmissionsController < ApplicationController
       :make, :model, :color, :year, :license_plate, :parking_lot, :old_permit_number
     )
   end
-end
 
+end

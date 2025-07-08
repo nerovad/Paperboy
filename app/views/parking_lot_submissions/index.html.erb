@@ -1,0 +1,26 @@
+<h1>Manager Review Queue</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Unit</th>
+      <th>Email</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @pending_submissions.each do |submission| %>
+      <tr>
+        <td><%= submission.name %></td>
+        <td><%= submission.unit %></td>
+        <td><%= submission.email %></td>
+        <td>
+          <%= button_to "Approve", approve_parking_lot_submission_path(submission), method: :patch, class: "btn btn-success" %>
+          <%= button_to "Deny", deny_parking_lot_submission_path(submission), method: :patch, class: "btn btn-danger" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
