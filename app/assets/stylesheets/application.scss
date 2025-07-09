@@ -5,6 +5,13 @@ $text-color: #333;
 $label-color: #555;
 $border-color: #ddd;
 
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 .app-container {
   display: flex;
   min-height: 100vh;
@@ -14,13 +21,6 @@ $border-color: #ddd;
   flex: 1;
   padding: 0px;
   background: #fff;
-}
-
-.top-bar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 20px;
 }
 
 .login-button {
