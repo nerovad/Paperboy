@@ -1,9 +1,10 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  get "forms/home"
   mount Sidekiq::Web => '/sidekiq'
 
-  root "parking_lot_submissions#new"
+  root "forms#home"
 
   resources :parking_lot_submissions, only: [:new, :create, :index] do
     member do

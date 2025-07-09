@@ -1,6 +1,5 @@
 <div class="sidebar">
   <h2>Available Forms</h2>
-  <%= link_to "Parking Lot Form", new_parking_lot_submission_path, class: "nav-link" %>
-  <!-- Add other links here -->
+  <%= link_to "Parking Lot Form", new_parking_lot_submission_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
+  <!-- Add more forms here as needed -->
 </div>
-

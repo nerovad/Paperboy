@@ -11,10 +11,16 @@
   <body>
     <div class="app-container">
       <%= render "shared/sidebar" %>
+
       <div class="content-container">
-        <%= yield %>
+        <div id="main-content">
+          <% if content_for?(:image) %>
+            <%= yield :image %>
+          <% else %>
+            <%= yield %>
+          <% end %>
+        </div>
       </div>
     </div>
   </body>
 </html>
-
