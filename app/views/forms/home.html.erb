@@ -1,6 +1,9 @@
 <% content_for :image do %>
   <div class="forms-homepage-wrapper">
-    <%= image_tag "VenturaPier.png", alt: "Forms Homepage", class: "forms-homepage-image" %>
+    <div class="slideshow">
+      <%= image_tag "VenturaPier.png", alt: "Slide 1", class: "slide active" %>
+      <%= image_tag "VenturaCross.png", alt: "Slide 2", class: "slide" %>
+    </div>
     <%= link_to "Login", "#", class: "login-button-over-image" %>
   </div>
 <% end %>
