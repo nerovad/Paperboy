@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_07_235310) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_10_155144) do
   create_table "Agency", primary_key: "AgencyID", id: :integer, force: :cascade do |t|
     t.string "AgencyName", limit: 255, null: false
   end
@@ -334,39 +334,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_07_235310) do
     t.datetime "updated_at", null: false
     t.string "unit"
     t.integer "status"
-  end
-
-  create_table "pc007", id: false, force: :cascade do |t|
-    t.integer "FYEAR", limit: 2
-    t.integer "APMON", limit: 1
-    t.date "ENC_DATE"
-    t.string "DEPT", limit: 50
-    t.integer "DIV", limit: 2
-    t.string "DIVISION_NAME", limit: 50
-    t.integer "UNIT", limit: 2
-    t.string "UNIT_NAME", limit: 50
-    t.string "FUND", limit: 50
-    t.string "FUND_NAME", limit: 50
-    t.string "DOC_TYPE", limit: 50
-    t.string "DOC_CODE", limit: 50
-    t.string "DOCUMENT_ID", limit: 50
-    t.string "DOC_ID_VALUE", limit: 50
-    t.integer "LN", limit: 1
-    t.string "LN_DSCR", limit: 100
-    t.string "REF_DOC_CODE", limit: 50
-    t.string "REF_DOC_DEPT_CODE", limit: 50
-    t.string "REF_DOC_ID", limit: 50
-    t.string "VENDOR_NM", limit: 50
-    t.string "VENDOR_NAME", limit: 50
-    t.string "ACTV", limit: 50
-    t.string "FUNC", limit: 50
-    t.integer "OBJ", limit: 2
-    t.string "OBJ_NM", limit: 100
-    t.string "PROG", limit: 50
-    t.string "PHASE", limit: 50
-    t.float "ENC_AMOUNT"
-    t.float "CLOSED_AMOUNT"
-    t.float "OS_AMT"
   end
 
   add_foreign_key "Department", "Division", column: "DivisionID", primary_key: "DivisionID", name: "FK__Departmen__Divis__54968AE5"

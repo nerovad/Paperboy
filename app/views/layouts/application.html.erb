@@ -8,19 +8,102 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <div class="app-container">
-      <%= render "shared/sidebar" %>
+ <body>
+  <div class="app-container">
+    <%= render "shared/sidebar" %>
 
-      <div class="content-container">
-        <div id="main-content">
-          <% if content_for?(:image) %>
-            <%= yield :image %>
-          <% else %>
-            <%= yield %>
-          <% end %>
+    <div class="content-container">
+      <div id="main-content">
+        <% if content_for?(:image) %>
+          <%= yield :image %>
+        <% else %>
+          <%= yield %>
+        <% end %>
+
+        <!-- Login Button (over image) -->
+        <% unless session[:user] %>
+          <button id="login-btn" class="login-button-over-image">Login</button>
+        <% else %>
+          <div class="profile-dropdown" id="profile-dropdown">
+          <button id="profile-toggle" class="profile-icon">
+            👤 <%= session[:user]["first_name"] %>
+          </button>
+          <div class="dropdown-content" id="dropdown-content">
+           <%= link_to "Inbox Queue", parking_lot_submissions_path %>
+            <%= button_to "Logout", logout_path, method: :delete, class: "logout-btn" %>
+          </div>
         </div>
+        <% end %>
+
+        <!-- Login Modal -->
+       <div id="login-modal" class="modal">
+          <div class="modal-content">
+            <span id="close-modal" class="close">&times;</span>
+            <h2>Login</h2>
+            <form id="login-form">
+              <input type="text" name="login" placeholder="Employee ID or Email" required>
+              <button type="submit">Log in</button>
+            </form>
+          </div>
+        </div>
+ 
       </div>
     </div>
-  </body>
+  </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const loginBtn = document.getElementById("login-btn");
+    const modal = document.getElementById("login-modal");
+    const closeModal = document.getElementById("close-modal");
+
+    if (loginBtn) {
+      loginBtn.addEventListener("click", () => modal.style.display = "block");
+    }
+
+    if (closeModal) {
+      closeModal.addEventListener("click", () => modal.style.display = "none");
+    }
+
+    document.getElementById("login-form")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const login = e.target.login.value;
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ login })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        location.reload();
+      } else {
+        alert("Login failed.");
+      }
+    });
+
+    // ✅ Profile dropdown toggle logic
+    const profileToggle = document.getElementById("profile-toggle");
+    const dropdown = document.getElementById("dropdown-content");
+
+    if (profileToggle && dropdown) {
+      profileToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+      });
+
+      document.addEventListener("click", () => {
+        dropdown.style.display = "none";
+      });
+
+      dropdown.addEventListener("click", (e) => {
+        e.stopPropagation(); // allow clicking inside dropdown
+      });
+    }
+  });
+</script>
+</body> 
 </html>

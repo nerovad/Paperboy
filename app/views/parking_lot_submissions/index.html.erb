@@ -1,26 +1,28 @@
-<h1>Manager Review Queue</h1>
+<h1 class="page-title">Manager Review Queue</h1>
 
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Unit</th>
-      <th>Email</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @pending_submissions.each do |submission| %>
+<div class="table-wrapper">
+  <table class="submission-table">
+    <thead>
       <tr>
-        <td><%= submission.name %></td>
-        <td><%= submission.unit %></td>
-        <td><%= submission.email %></td>
-        <td>
-          <%= button_to "Approve", approve_parking_lot_submission_path(submission), method: :patch, class: "btn btn-success" %>
-          <%= button_to "Deny", deny_parking_lot_submission_path(submission), method: :patch, class: "btn btn-danger" %>
-        </td>
+        <th>Name</th>
+        <th>Unit</th>
+        <th>Email</th>
+        <th>Action</th>
       </tr>
-    <% end %>
-  </tbody>
-</table>
-
+    </thead>
+    <tbody>
+      <% @pending_submissions.each do |submission| %>
+        <tr>
+          <td><%= submission.name %></td>
+          <td><%= submission.unit %></td>
+          <td><%= submission.email %></td>
+          <td class="action-buttons">
+            <%= link_to "View PDF", pdf_parking_lot_submission_path(submission), target: "_blank", class: "pdf-button" %> 
+            <%= button_to "Approve", approve_parking_lot_submission_path(submission), method: :patch, class: "btn approve" %>
+            <%= button_to "Deny", deny_parking_lot_submission_path(submission), method: :patch, class: "btn deny" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

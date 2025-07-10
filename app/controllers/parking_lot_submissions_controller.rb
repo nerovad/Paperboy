@@ -11,9 +11,9 @@ class ParkingLotSubmissionsController < ApplicationController
       {
         title: "Employee Info",
         fields: [
+          { name: "employee_id", label: "Employee ID", type: "text", required: true },
           { name: "name", label: "Name", type: "text", required: true },
           { name: "phone", label: "Phone", type: "text", required: true },
-          { name: "employee_id", label: "Employee ID", type: "text", required: true },
           { name: "email", label: "Email", type: "text", required: true }
         ]
       },
@@ -55,6 +55,16 @@ class ParkingLotSubmissionsController < ApplicationController
     else
       render :new, status: :unprocessable_entity
     end
+  end
+
+  def pdf
+    submission = ParkingLotSubmission.find(params[:id])
+    pdf_data = ParkingLotPdfGenerator.generate(submission)
+
+    send_data pdf_data,
+              filename: "ParkingLotSubmission_#{submission.id}.pdf",
+              type: "application/pdf",
+              disposition: "inline" # or "attachment" if you want it to download
   end
 
    def approve
