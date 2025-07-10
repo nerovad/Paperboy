@@ -89,6 +89,12 @@ html, body {
   }
 }
 
+.form-wrapper {
+  padding: 0 30px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
 .form-header {
   display: flex;
   justify-content: center;
@@ -101,12 +107,13 @@ html, body {
 .form-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 15px;
+  gap: 40px;
   margin-bottom: 20px;
 }
 
 .form-group {
   flex: 1 1 300px;
+  min-width: 300px;
 
   label {
     display: block;
@@ -117,6 +124,31 @@ html, body {
   .form-control {
     width: 100%;
     padding: 10px;
+    border: 1px solid $border-color;
+    border-radius: 5px;
+    font-size: 1em;
+  }
+  select.form-control {
+  background-color: white;
+  padding: 10px; // match text fields
+  border: 1px solid $border-color;
+  border-radius: 5px;
+  font-size: 1em;
+  width: 100%;
+  margin: 0; // remove any default spacing
+  box-sizing: border-box;
+}
+  select.form-control,
+input.form-control {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+}
+
+.form-group {
+  .form-control {
+    background-color: white;        // Fix grey dropdown
     border: 1px solid $border-color;
     border-radius: 5px;
     font-size: 1em;
@@ -211,6 +243,26 @@ html, body {
 
   .nav-link.active {
     background-color: $primary-color;
+  }
+}
+
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 10px;
+
+  .dot {
+    width: 14px;
+    height: 14px;
+    background-color: #ccc;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+  }
+
+  .dot.active {
+    background-color: $primary-color;
+    box-shadow: 0 0 8px $primary-color;
   }
 }
 

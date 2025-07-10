@@ -1,9 +1,9 @@
 <turbo-frame id="main-content">
 <div class="form-header">
-  <img src="<%= @form_logo %>" alt="Parking Lot Logo" />
+  <h1>Parking Lot Submission Form</h1>
 </div>
 
-<h1>Parking Lot Submission Form</h1>
+<div class="form-wrapper">
 
 <%= form_with model: @parking_lot_submission, local: true do |form| %>
   <% @form_pages.each_with_index do |page, page_index| %>
@@ -12,23 +12,23 @@
 
       <div class="form-row">
        <% if page[:title] == "Agency Info" %>
-    <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap gap-2">
-  <div class="form-group flex-fill" style="min-width: 200px;">
+    <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
+  <div class="form-group">
     <%= form.label :agency, "Agency" %>
     <%= form.select :agency, options_for_select(@agency_options), {}, class: "form-control", id: "agency-select", data: { gsabss_selects_target: "agency", action: "change->gsabss-selects#loadDivisions" } %>
   </div>
 
-  <div class="form-group flex-fill" style="min-width: 200px;">
+  <div class="form-group">
     <%= form.label :division, "Division" %>
     <%= form.select :division, [], {}, class: "form-control", id: "division-select", data: { gsabss_selects_target: "division", action: "change->gsabss-selects#loadDepartments" } %>
   </div>
 
-  <div class="form-group flex-fill" style="min-width: 200px;">
+  <div class="form-group">
     <%= form.label :department, "Department" %>
     <%= form.select :department, [], {}, class: "form-control", id: "department-select", data: { gsabss_selects_target: "department", action: "change->gsabss-selects#loadUnits" } %>
   </div>
 
-  <div class="form-group flex-fill" style="min-width: 200px;">
+  <div class="form-group">
     <%= form.label :unit, "Unit" %>
     <%= form.select :unit, [], {}, class: "form-control", id: "unit-select", data: { gsabss_selects_target: "unit" } %>
   </div>
@@ -56,16 +56,31 @@
     <button type="button" onclick="nextPage()">Next</button>
     <%= form.submit "Submit", id: "submitButton", style: "display: none;" %>
   </div>
+
+ <div class="progress-wrapper">
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <div class="progress-dots">
+    <% @form_pages.each_with_index do |_, index| %>
+      <div class="dot <%= 'active' if index == 0 %>"></div>
+    <% end %>
+  </div>
+</div> 
+ 
 <% end %> <!-- closes form_with -->
+</div>
 
 <script>
   let currentPage = 0;
   const pages = document.querySelectorAll('.form-page');
+  const dots = document.querySelectorAll('.progress-dots .dot'); 
   const submitButton = document.getElementById('submitButton');
 
   function showPage(index) {
     pages.forEach((page, i) => {
       page.style.display = i === index ? 'block' : 'none';
+      if (dots[i]) dots[i].classList.toggle('active', i === index);
     });
     submitButton.style.display = index === pages.length - 1 ? 'inline-block' : 'none';
   }

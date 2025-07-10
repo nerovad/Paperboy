@@ -31,8 +31,8 @@ class ParkingLotSubmissionsController < ApplicationController
         fields: [
           { name: "make", label: "Make", type: "text", required: true },
           { name: "model", label: "Model", type: "text", required: true },
-          { name: "color", label: "Color", type: "text", required: true },
-          { name: "year", label: "Year", type: "text", required: true },
+          { name: "color", label: "Color", type: "select", options: %w[White Black Silver Blue Red Green Yellow Gray Brown Other] },
+          { name: "year", label: "Year", type: "select", options: (1920..Date.today.year).to_a.reverse },
           { name: "license_plate", label: "License Plate", type: "text", required: true }
         ]
       },
