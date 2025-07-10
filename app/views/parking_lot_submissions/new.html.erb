@@ -77,13 +77,19 @@
   const dots = document.querySelectorAll('.progress-dots .dot'); 
   const submitButton = document.getElementById('submitButton');
 
-  function showPage(index) {
-    pages.forEach((page, i) => {
-      page.style.display = i === index ? 'block' : 'none';
-      if (dots[i]) dots[i].classList.toggle('active', i === index);
-    });
-    submitButton.style.display = index === pages.length - 1 ? 'inline-block' : 'none';
+ function showPage(index) {
+  pages.forEach((page, i) => {
+    page.style.display = i === index ? 'block' : 'none';
+    if (dots[i]) dots[i].classList.toggle('active', i === index);
+  });
+
+  submitButton.style.display = index === pages.length - 1 ? 'inline-block' : 'none';
+
+  const nextButton = document.querySelector('button[onclick="nextPage()"]');
+  if (nextButton) {
+    nextButton.style.display = index === pages.length - 1 ? 'none' : 'inline-block';
   }
+}
 
   function nextPage() {
     if (currentPage < pages.length - 1) {
