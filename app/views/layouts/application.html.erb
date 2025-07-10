@@ -53,15 +53,16 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
+    // Login modal logic
     const loginBtn = document.getElementById("login-btn");
     const modal = document.getElementById("login-modal");
     const closeModal = document.getElementById("close-modal");
 
-    if (loginBtn) {
+    if (loginBtn && modal) {
       loginBtn.addEventListener("click", () => modal.style.display = "block");
     }
 
-    if (closeModal) {
+    if (closeModal && modal) {
       closeModal.addEventListener("click", () => modal.style.display = "none");
     }
 
@@ -85,22 +86,22 @@
       }
     });
 
-    // ✅ Profile dropdown toggle logic
+    // Profile dropdown toggle
     const profileToggle = document.getElementById("profile-toggle");
     const dropdown = document.getElementById("dropdown-content");
 
     if (profileToggle && dropdown) {
       profileToggle.addEventListener("click", (e) => {
         e.stopPropagation();
-        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        dropdown.classList.toggle("show");
       });
 
       document.addEventListener("click", () => {
-        dropdown.style.display = "none";
+        dropdown.classList.remove("show");
       });
 
       dropdown.addEventListener("click", (e) => {
-        e.stopPropagation(); // allow clicking inside dropdown
+        e.stopPropagation();
       });
     }
   });
