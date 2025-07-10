@@ -22,4 +22,3 @@ Rails.application.routes.draw do
     get 'units', to: 'dropdowns#units'
   end
 end
-

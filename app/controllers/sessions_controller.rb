@@ -20,4 +20,10 @@ class SessionsController < ApplicationController
       render json: { success: false }, status: :unauthorized
     end
   end
+
+  def destroy
+    session[:user] = nil
+    reset_session
+    redirect_to root_path, notice: "Logged out successfully."
+  end
 end
