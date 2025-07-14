@@ -37,20 +37,36 @@
  
 <% elsif page[:title] == "Vehicle and Parking Info" %>
   <div id="vehicle-wrapper">
-    <%= form.fields_for :parking_lot_vehicles do |vf| %>
-      <div class="vehicle-fields d-flex flex-wrap gap-3 mb-4 border p-3 rounded">
-        <%= vf.text_field :make, placeholder: "Make", class: "form-control", required: true %>
-        <%= vf.text_field :model, placeholder: "Model", class: "form-control", required: true %>
-        <%= vf.text_field :color, placeholder: "Color", class: "form-control", required: true %>
-        <%= vf.number_field :year, placeholder: "Year", class: "form-control", required: true %>
-        <%= vf.text_field :license_plate, placeholder: "License Plate", class: "form-control", required: true %>
-        <%= vf.select :parking_lot, options_for_select(["G Lot", "R Lot", "A Lot", "Other"]), {}, class: "form-control parking-lot-select" %>
-        <%= vf.text_field :other_parking_lot, placeholder: "If Other, enter name", class: "form-control other-lot-field", style: "display: none;" %>
+  <%= form.fields_for :parking_lot_vehicles do |vf| %>
+    <div class="vehicle-fields form-row border p-3 rounded mb-4">
+      <div class="form-group">
+          <%= vf.text_field :make, placeholder: "Make", class: "form-control", required: true %>
+        </div>
+        <div class="form-group">
+          <%= vf.text_field :model, placeholder: "Model", class: "form-control", required: true %>
+        </div>
+        <div class="form-group">
+          <%= vf.text_field :color, placeholder: "Color", class: "form-control", required: true %>
+        </div>
+        <div class="form-group">
+          <%= vf.number_field :year, placeholder: "Year", class: "form-control", required: true %>
+        </div>
+        <div class="form-group">
+          <%= vf.text_field :license_plate, placeholder: "License Plate", class: "form-control", required: true %>
+        </div>
+        <div class="form-group">
+          <%= vf.select :parking_lot, options_for_select(["G Lot", "R Lot", "A Lot", "Other"]), {}, class: "form-control parking-lot-select" %>
+        </div>
+        <div class="form-group">
+          <%= vf.text_field :other_parking_lot, placeholder: "If Other, enter name", class: "form-control other-lot-field", style: "display: none;" %>
+        </div>
       </div>
-    <% end %>
-  </div>
+    </div>
+  <% end %>
+</div>
 
-  <button type="button" id="add-vehicle" class="btn btn-secondary mt-2">+ Add Vehicle</button>
+<button type="button" id="add-vehicle" class="btn btn-secondary mt-2">+ Add Vehicle</button>
+
 <% else %>
   <% page[:fields].each do |field| %>
     <div class="form-group flex-fill" style="min-width: 200px;">
@@ -65,14 +81,15 @@
 
           <% end %> <!-- closes the 'if page[:title] == "Agency Info"' or 'else' -->
       </div> <!-- closes .form-row -->
-    </div> <!-- closes .form-page -->
-  <% end %> <!-- closes @form_pages.each_with_index -->
-
+<% if page_index == @form_pages.size - 1 %>
   <div class="navigation-buttons">
     <button type="button" onclick="prevPage()">Previous</button>
     <button type="button" onclick="nextPage()">Next</button>
     <%= form.submit "Submit", id: "submitButton", style: "display: none;" %>
   </div>
+<% end %>
+    </div> <!-- closes .form-page -->
+  <% end %> <!-- closes @form_pages.each_with_index -->
 
  <div class="progress-wrapper">
   <div class="progress-bar-container">
@@ -87,15 +104,31 @@
 
   <div id="vehicle-template" style="display: none;">
     <%= form.fields_for :parking_lot_vehicles, ParkingLotVehicle.new, child_index: "NEW_RECORD" do |vf| %>
-      <div class="vehicle-fields d-flex flex-wrap gap-3 mb-4 border p-3 rounded">
-        <%= vf.text_field :make, placeholder: "Make", class: "form-control", required: true %>
-        <%= vf.text_field :model, placeholder: "Model", class: "form-control", required: true %>
-        <%= vf.text_field :color, placeholder: "Color", class: "form-control", required: true %>
-        <%= vf.number_field :year, placeholder: "Year", class: "form-control", required: true %>
-        <%= vf.text_field :license_plate, placeholder: "License Plate", class: "form-control", required: true %>
-        <%= vf.select :parking_lot, options_for_select(["G Lot", "R Lot", "A Lot", "Other"]), {}, class: "form-control parking-lot-select" %>
-        <%= vf.text_field :other_parking_lot, placeholder: "If Other, enter name", class: "form-control other-lot-field", style: "display: none;" %>
+      <div class="vehicle-fields form-row border p-3 rounded mb-4">
+        <div class="form-group">
+          <%= vf.text_field :make, placeholder: "Make", class: "form-control", required: true %>
+        </div>
+        <div class="form-group">
+          <%= vf.text_field :model, placeholder: "Model", class: "form-control", required: true %>
+        </div>
+        <div class="form-group">
+          <%= vf.text_field :color, placeholder: "Color", class: "form-control", required: true %>
+        </div>
+        <div class="form-group">
+          <%= vf.number_field :year, placeholder: "Year", class: "form-control", required: true %>
+        </div>
+        <div class="form-group">
+          <%= vf.text_field :license_plate, placeholder: "License Plate", class: "form-control", required: true %>
+        </div>
+        <div class="form-group">
+          <%= vf.select :parking_lot, options_for_select(["G Lot", "R Lot", "A Lot", "Other"]), {}, class: "form-control parking-lot-select" %>
+        </div>
+        <div class="form-group">
+          <%= vf.text_field :other_parking_lot, placeholder: "If Other, enter name", class: "form-control other-lot-field", style: "display: none;" %>
+        </div>
+        <button type="button" class="btn btn-danger remove-vehicle">− Remove</button>
       </div>
+</div>
     <% end %>
   </div>
  
@@ -150,6 +183,14 @@
     wrapper.insertAdjacentHTML("beforeend", html);
     vehicleIndex++;
   });
+
+    // Remove vehicle set if remove button is clicked
+    wrapper?.addEventListener("click", (e) => {
+      if (e.target.classList.contains("remove-vehicle")) {
+        const vehicleSet = e.target.closest(".vehicle-fields");
+        vehicleSet.remove();
+      }
+    });
 
   // Show/hide "Other" field per parking lot selection
   wrapper?.addEventListener("change", (e) => {

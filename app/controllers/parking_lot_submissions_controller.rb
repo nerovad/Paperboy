@@ -1,6 +1,7 @@
 class ParkingLotSubmissionsController < ApplicationController
   def new
     @parking_lot_submission = ParkingLotSubmission.new
+    @parking_lot_submission.parking_lot_vehicles.build
 
     # GSABSS lookups
     @agency_options = Agency.all.map { |a| ["#{a.Agency} #{a.LongName}", a.Agency] }

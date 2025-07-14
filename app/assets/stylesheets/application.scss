@@ -547,6 +547,17 @@ input.form-control {
 .choices__placeholder {
   color: #888;
 }
+.vehicle-fields {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+.form-page {
+  max-height: 75vh; // or whatever fits nicely within your layout
+  overflow-y: auto;
+  padding-right: 1rem; // space for scrollbar
+}
 
 .forms-homepage-image {
   width: 100%;
