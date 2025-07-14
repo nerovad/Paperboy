@@ -47,14 +47,23 @@ class ParkingLotSubmissionsController < ApplicationController
     ]
   end
 
-  def create
-    @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
+    def create
+    raw_params = parking_lot_submission_params
+
+    lots = Array.wrap(raw_params[:parking_lot])
+    other = raw_params[:other_parking_lot].presence
+    lots << "Other: #{other}" if other
+    lots.reject!(&:blank?)
+
+    @parking_lot_submission = ParkingLotSubmission.new(
+      raw_params.except(:other_parking_lot).merge(parking_lot: lots)
+    )
     @parking_lot_submission.status = 0
 
     if @parking_lot_submission.save
-      render :create
+      redirect_to parking_lot_submissions_path, notice: "Submitted!"
     else
-      render :new, status: :unprocessable_entity
+      render :new
     end
   end
 

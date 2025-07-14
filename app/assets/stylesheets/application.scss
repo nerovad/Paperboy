@@ -515,6 +515,7 @@ input.form-control {
 
 /* Override Choices.js default styles */
 .choices__inner {
+  width: 94% !important;
   background-color: white !important;
   border: 1px solid $border-color !important;
   border-radius: 5px !important;
@@ -524,11 +525,8 @@ input.form-control {
 }
 
 .choices__list--multiple .choices__item {
-  width: 100% !important;
-  min-width: 100% !important;
-  max-width: 100% !important;
   background-color: $primary-color !important;
-  border-radius: 12px !important;
+  border-radius: 5px !important;
   color: white !important;
   padding: 4px 10px !important;
   font-size: 0.9em !important;
