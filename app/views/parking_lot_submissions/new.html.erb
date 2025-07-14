@@ -106,19 +106,19 @@
     <%= form.fields_for :parking_lot_vehicles, ParkingLotVehicle.new, child_index: "NEW_RECORD" do |vf| %>
       <div class="vehicle-fields form-row border p-3 rounded mb-4">
         <div class="form-group">
-          <%= vf.text_field :make, placeholder: "Make", class: "form-control", required: true %>
+          <%= vf.text_field :make, placeholder: "Make", class: "form-control" %>
         </div>
         <div class="form-group">
-          <%= vf.text_field :model, placeholder: "Model", class: "form-control", required: true %>
+          <%= vf.text_field :model, placeholder: "Model", class: "form-control" %>
         </div>
         <div class="form-group">
-          <%= vf.text_field :color, placeholder: "Color", class: "form-control", required: true %>
+          <%= vf.text_field :color, placeholder: "Color", class: "form-control" %>
         </div>
         <div class="form-group">
-          <%= vf.number_field :year, placeholder: "Year", class: "form-control", required: true %>
+          <%= vf.number_field :year, placeholder: "Year", class: "form-control" %>
         </div>
         <div class="form-group">
-          <%= vf.text_field :license_plate, placeholder: "License Plate", class: "form-control", required: true %>
+          <%= vf.text_field :license_plate, placeholder: "License Plate", class: "form-control" %>
         </div>
         <div class="form-group">
           <%= vf.select :parking_lot, options_for_select(["G Lot", "R Lot", "A Lot", "Other"]), {}, class: "form-control parking-lot-select" %>
