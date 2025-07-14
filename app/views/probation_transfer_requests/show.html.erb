@@ -1,0 +1,10 @@
+<p style="color: green"><%= notice %></p>
+
+<%= render @probation_transfer_request %>
+
+<div>
+  <%= link_to "Edit this probation transfer request", edit_probation_transfer_request_path(@probation_transfer_request) %> |
+  <%= link_to "Back to probation transfer requests", probation_transfer_requests_path %>
+
+  <%= button_to "Destroy this probation transfer request", @probation_transfer_request, method: :delete %>
+</div>

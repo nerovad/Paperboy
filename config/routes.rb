@@ -1,6 +1,7 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  resources :probation_transfer_requests
   get "forms/home"
   post "/login", to: "sessions#create"
   delete "/logout", to: "sessions#destroy"

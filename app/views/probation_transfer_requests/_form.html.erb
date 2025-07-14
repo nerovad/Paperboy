@@ -1,0 +1,77 @@
+<%= form_with(model: probation_transfer_request) do |form| %>
+  <% if probation_transfer_request.errors.any? %>
+    <div style="color: red">
+      <h2><%= pluralize(probation_transfer_request.errors.count, "error") %> prohibited this probation_transfer_request from being saved:</h2>
+
+      <ul>
+        <% probation_transfer_request.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :employee_id, style: "display: block" %>
+    <%= form.text_field :employee_id %>
+  </div>
+
+  <div>
+    <%= form.label :name, style: "display: block" %>
+    <%= form.text_field :name %>
+  </div>
+
+  <div>
+    <%= form.label :email, style: "display: block" %>
+    <%= form.text_field :email %>
+  </div>
+
+  <div>
+    <%= form.label :phone, style: "display: block" %>
+    <%= form.text_field :phone %>
+  </div>
+
+  <div>
+    <%= form.label :agency, style: "display: block" %>
+    <%= form.text_field :agency %>
+  </div>
+
+  <div>
+    <%= form.label :division, style: "display: block" %>
+    <%= form.text_field :division %>
+  </div>
+
+  <div>
+    <%= form.label :department, style: "display: block" %>
+    <%= form.text_field :department %>
+  </div>
+
+  <div>
+    <%= form.label :unit, style: "display: block" %>
+    <%= form.text_field :unit %>
+  </div>
+
+  <div>
+    <%= form.label :work_location, style: "display: block" %>
+    <%= form.text_field :work_location %>
+  </div>
+
+  <div>
+    <%= form.label :current_assignment_date, style: "display: block" %>
+    <%= form.date_field :current_assignment_date %>
+  </div>
+
+  <div>
+    <%= form.label :desired_transfer_destination, style: "display: block" %>
+    <%= form.textarea :desired_transfer_destination %>
+  </div>
+
+  <div>
+    <%= form.label :status, style: "display: block" %>
+    <%= form.number_field :status %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

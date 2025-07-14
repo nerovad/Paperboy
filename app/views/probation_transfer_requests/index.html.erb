@@ -1,0 +1,16 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Probation transfer requests" %>
+
+<h1>Probation transfer requests</h1>
+
+<div id="probation_transfer_requests">
+  <% @probation_transfer_requests.each do |probation_transfer_request| %>
+    <%= render probation_transfer_request %>
+    <p>
+      <%= link_to "Show this probation transfer request", probation_transfer_request %>
+    </p>
+  <% end %>
+</div>
+
+<%= link_to "New probation transfer request", new_probation_transfer_request_path %>

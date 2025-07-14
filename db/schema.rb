@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_14_005930) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_14_160524) do
   create_table "Agency", primary_key: "AgencyID", id: :integer, force: :cascade do |t|
     t.string "AgencyName", limit: 255, null: false
   end
@@ -338,6 +338,23 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_14_005930) do
     t.datetime "updated_at", null: false
     t.string "unit"
     t.integer "status"
+  end
+
+  create_table "probation_transfer_requests", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "email"
+    t.string "phone"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.string "work_location"
+    t.date "current_assignment_date"
+    t.text "desired_transfer_destination"
+    t.integer "status"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   add_foreign_key "Department", "Division", column: "DivisionID", primary_key: "DivisionID", name: "FK__Departmen__Divis__54968AE5"

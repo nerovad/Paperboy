@@ -1,0 +1,2 @@
+class ProbationTransferRequest < ApplicationRecord
+end

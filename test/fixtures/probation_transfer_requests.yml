@@ -1,0 +1,29 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  employee_id: MyString
+  name: MyString
+  email: MyString
+  phone: MyString
+  agency: MyString
+  division: MyString
+  department: MyString
+  unit: MyString
+  work_location: MyString
+  current_assignment_date: 2025-07-14
+  desired_transfer_destination: MyText
+  status: 1
+
+two:
+  employee_id: MyString
+  name: MyString
+  email: MyString
+  phone: MyString
+  agency: MyString
+  division: MyString
+  department: MyString
+  unit: MyString
+  work_location: MyString
+  current_assignment_date: 2025-07-14
+  desired_transfer_destination: MyText
+  status: 1
