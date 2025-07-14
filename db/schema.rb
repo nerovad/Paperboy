@@ -10,18 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_10_155144) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_14_005930) do
   create_table "Agency", primary_key: "AgencyID", id: :integer, force: :cascade do |t|
     t.string "AgencyName", limit: 255, null: false
   end
 
-  create_table "BDMRates", id: false, force: :cascade do |t|
-    t.string "FYEAR", limit: 50
-    t.integer "Unit", limit: 2
-    t.integer "Object", limit: 2
-    t.string "RateType", limit: 150
-    t.string "UOM", limit: 50
-    t.float "Rate"
+  create_table "BdmRateTypes", primary_key: "RateID", id: { type: :integer, limit: 2 }, force: :cascade do |t|
+    t.string "Description", limit: 150, null: false
+    t.string "UOM", limit: 15, null: false
+  end
+
+  create_table "BdmRates", primary_key: ["FYEAR", "RateID"], force: :cascade do |t|
+    t.string "FYEAR", limit: 4, null: false
+    t.integer "RateID", limit: 2, null: false
+    t.integer "ObjectID", limit: 2, null: false
+    t.float "Rate", null: false
+    t.varchar "UnitID", limit: 4
   end
 
   create_table "BusinessUnit", id: :integer, default: 4641, force: :cascade do |t|
@@ -328,7 +332,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_10_155144) do
     t.string "color"
     t.string "year"
     t.string "license_plate"
-    t.string "parking_lot"
+    t.text "parking_lot"
     t.string "old_permit_number"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

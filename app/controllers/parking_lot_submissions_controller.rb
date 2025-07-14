@@ -39,8 +39,8 @@ class ParkingLotSubmissionsController < ApplicationController
       {
         title: "Parking Details",
         fields: [
-          { name: "parking_lot", label: "Parking Lot", type: "text", required: true },
-          { name: "old_permit_number", label: "Old Permit Number", type: "text", required: false }
+          { name: "parking_lot", label: "Parking Lot", type: "multi-select", options: ["BOS", "Courier Parking", "E Lot", "G Lot", "Grand Jury Parking", "HOA Dock", "HOJ Dock", "Maintenance", "R Lot", "Traffic Circle", "County Square Drive", "East County Courthouse", "Gonzales Road", "Juvenile Justice Center", "Telephone Road", "Vanguard", "DCSS", "Other"] },
+          { name: "other_parking_lot", label: "Other, please specify:", type: "text", required: false }
         ]
       }
     ]
@@ -91,10 +91,11 @@ end
  private
 
   def parking_lot_submission_params
-    params.require(:parking_lot_submission).permit(
-      :name, :phone, :employee_id, :email, :agency, :division, :department, :unit,
-      :make, :model, :color, :year, :license_plate, :parking_lot, :old_permit_number
-    )
+  params.require(:parking_lot_submission).permit(
+    :name, :phone, :employee_id, :email, :agency, :division, :department, :unit,
+    :make, :model, :color, :year, :license_plate, :old_permit_number,
+    { parking_lot: [] }, :other_parking_lot
+  )
   end
 
 end

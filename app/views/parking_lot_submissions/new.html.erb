@@ -32,17 +32,21 @@
     <%= form.label :unit, "Unit" %>
     <%= form.select :unit, [], {}, class: "form-control", id: "unit-select", data: { gsabss_selects_target: "unit" } %>
   </div>
+
 </div>
  
 <% else %>
-  <% page[:fields].each do |field| %>
-    <div class="form-group">
-      <%= form.label field[:name], field[:label] %>
+          <% page[:fields].each do |field| %>
+            <div class="form-group flex-fill" style="min-width: 200px;">
+              <%= form.label field[:name], field[:label] %>
 
-      <% if field[:type] == 'select' %>
-        <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control" %>
-      <% else %>
-        <%= form.text_field field[:name], required: field[:required], class: "form-control" %>
+              <% if field[:type] == 'select' %>
+                <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control" %>
+
+              <% elsif field[:type] == 'multi-select' %>
+                <%= form.select field[:name], options_for_select(field[:options]), {}, multiple: true, class: "form-control choices-multiselect", id: "parking_lot_select" %> 
+              <% else %>
+        <%= form.text_field field[:name], required: field[:required], class: "form-control", id: (field[:name] == "other_parking_lot" ? "other_parking_lot_field" : nil) %> 
       <% end %>
     </div>
   <% end %>
@@ -107,6 +111,26 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     showPage(currentPage);
+
+     const select = document.getElementById("parking_lot_select");
+    const otherFieldInput = document.getElementById("other_parking_lot_field");
+
+    function toggleOtherField() {
+      if (!select || !otherFieldInput) return;
+
+      const selected = Array.from(select.selectedOptions).map(o => o.value);
+      if (selected.includes("Other")) {
+        otherFieldInput.parentElement.style.display = "block";
+      } else {
+        otherFieldInput.parentElement.style.display = "none";
+        otherFieldInput.value = "";
+      }
+    }
+
+    if (select && otherFieldInput) {
+      toggleOtherField();
+      select.addEventListener("change", toggleOtherField);
+    }
   });
 </script>
 </turbo-frame>

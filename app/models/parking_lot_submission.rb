@@ -1,4 +1,5 @@
 class ParkingLotSubmission < ApplicationRecord
+
   STATUS_MAP = {
     0 => "submitted",
     1 => "manager_approved",

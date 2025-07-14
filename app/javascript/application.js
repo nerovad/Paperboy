@@ -1,8 +1,10 @@
-// Configure your import map in config/importmap.rb. Read more: https://github.com/rails/importmap-rails
 import "@hotwired/turbo-rails"
 import "controllers"
 
 document.addEventListener("turbo:load", () => {
+
+console.log("application.js loaded");
+  // Slideshow logic
   const slides = document.querySelectorAll(".slide");
   console.log("Slides found:", slides.length);
 
@@ -14,5 +16,14 @@ document.addEventListener("turbo:load", () => {
       current = (current + 1) % slides.length;
       slides[current].classList.add("active");
     }, 10000);
+  }
+
+  const multiSelect = document.querySelector(".choices-multiselect");
+  if (multiSelect && !multiSelect.classList.contains("choices__input")) {
+    new Choices(multiSelect, {
+      removeItemButton: true,
+      placeholderValue: 'Select parking lot(s)',
+      shouldSort: false
+    });
   }
 });
