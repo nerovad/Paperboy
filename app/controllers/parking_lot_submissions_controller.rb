@@ -26,46 +26,20 @@ class ParkingLotSubmissionsController < ApplicationController
           { name: "unit", label: "Unit", type: "select", required: true, options: Unit.all.map { |u| ["#{u.Unit} #{u.LongName}", u.Unit] } }
         ]
       },
-      {
-        title: "Vehicle Info",
-        fields: [
-          { name: "make", label: "Make", type: "text", required: true },
-          { name: "model", label: "Model", type: "text", required: true },
-          { name: "color", label: "Color", type: "select", options: %w[White Black Silver Blue Red Green Yellow Gray Brown Other] },
-          { name: "year", label: "Year", type: "select", options: (1920..Date.today.year).to_a.reverse },
-          { name: "license_plate", label: "License Plate", type: "text", required: true }
-        ]
-      },
-      {
-        title: "Parking Details",
-        fields: [
-          { name: "parking_lot", label: "Parking Lot", type: "multi-select", options: ["BOS", "Courier Parking", "E Lot", "G Lot", "Grand Jury Parking", "HOA Dock", "HOJ Dock", "Maintenance", "R Lot", "Traffic Circle", "County Square Drive", "East County Courthouse", "Gonzales Road", "Juvenile Justice Center", "Telephone Road", "Vanguard", "DCSS", "Other"] },
-          { name: "other_parking_lot", label: "Other, please specify:", type: "text", required: false },
-          { name: "old_permit_number", label: "Old Permit Number", type: "text", required: false }
-        ]
-      }
+      { title: "Vehicle and Parking Info", fields: [] }
     ]
   end
 
     def create
-    raw_params = parking_lot_submission_params
+      @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
+      @parking_lot_submission.status = 0
 
-    lots = Array.wrap(raw_params[:parking_lot])
-    other = raw_params[:other_parking_lot].presence
-    lots << "Other: #{other}" if other
-    lots.reject!(&:blank?)
-
-    @parking_lot_submission = ParkingLotSubmission.new(
-      raw_params.except(:other_parking_lot).merge(parking_lot: lots)
-    )
-    @parking_lot_submission.status = 0
-
-    if @parking_lot_submission.save
-      redirect_to parking_lot_submissions_path, notice: "Submitted!"
-    else
-      render :new
+      if @parking_lot_submission.save
+        redirect_to parking_lot_submissions_path, notice: "Submitted!"
+      else
+        render :new
+      end
     end
-  end
 
   def pdf
     submission = ParkingLotSubmission.find(params[:id])
@@ -102,10 +76,25 @@ end
 
   def parking_lot_submission_params
   params.require(:parking_lot_submission).permit(
-    :name, :phone, :employee_id, :email, :agency, :division, :department, :unit,
-    :make, :model, :color, :year, :license_plate, :old_permit_number,
-    { parking_lot: [] }, :other_parking_lot
-  )
+      :name,
+      :phone,
+      :employee_id,
+      :email,
+      :agency,
+      :division,
+      :department,
+      :unit,
+      parking_lot_vehicles_attributes: [
+        :make,
+        :model,
+        :color,
+        :year,
+        :license_plate,
+        :parking_lot,
+        :other_parking_lot,
+        :_destroy
+      ]
+    )
   end
 
 end

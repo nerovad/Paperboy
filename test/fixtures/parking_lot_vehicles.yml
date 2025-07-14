@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  parking_lot_submission: one
+  make: MyString
+  model: MyString
+  color: MyString
+  year: 1
+  license_plate: MyString
+  parking_lot: MyString
+
+two:
+  parking_lot_submission: two
+  make: MyString
+  model: MyString
+  color: MyString
+  year: 1
+  license_plate: MyString
+  parking_lot: MyString

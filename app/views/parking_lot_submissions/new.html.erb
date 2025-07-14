@@ -35,21 +35,34 @@
 
 </div>
  
+<% elsif page[:title] == "Vehicle and Parking Info" %>
+  <div id="vehicle-wrapper">
+    <%= form.fields_for :parking_lot_vehicles do |vf| %>
+      <div class="vehicle-fields d-flex flex-wrap gap-3 mb-4 border p-3 rounded">
+        <%= vf.text_field :make, placeholder: "Make", class: "form-control", required: true %>
+        <%= vf.text_field :model, placeholder: "Model", class: "form-control", required: true %>
+        <%= vf.text_field :color, placeholder: "Color", class: "form-control", required: true %>
+        <%= vf.number_field :year, placeholder: "Year", class: "form-control", required: true %>
+        <%= vf.text_field :license_plate, placeholder: "License Plate", class: "form-control", required: true %>
+        <%= vf.select :parking_lot, options_for_select(["G Lot", "R Lot", "A Lot", "Other"]), {}, class: "form-control parking-lot-select" %>
+        <%= vf.text_field :other_parking_lot, placeholder: "If Other, enter name", class: "form-control other-lot-field", style: "display: none;" %>
+      </div>
+    <% end %>
+  </div>
+
+  <button type="button" id="add-vehicle" class="btn btn-secondary mt-2">+ Add Vehicle</button>
 <% else %>
-          <% page[:fields].each do |field| %>
-            <div class="form-group flex-fill" style="min-width: 200px;">
-              <%= form.label field[:name], field[:label] %>
-
-              <% if field[:type] == 'select' %>
-                <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control" %>
-
-              <% elsif field[:type] == 'multi-select' %>
-                <%= form.select field[:name], options_for_select(field[:options]), {}, multiple: true, class: "form-control choices-multiselect", id: "parking_lot_select" %> 
-              <% else %>
-        <%= form.text_field field[:name], required: field[:required], class: "form-control", id: (field[:name] == "other_parking_lot" ? "other_parking_lot_field" : nil) %> 
+  <% page[:fields].each do |field| %>
+    <div class="form-group flex-fill" style="min-width: 200px;">
+      <%= form.label field[:name], field[:label] %>
+      <% if field[:type] == 'select' %>
+        <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control" %>
+      <% else %>
+        <%= form.text_field field[:name], required: field[:required], class: "form-control" %>
       <% end %>
     </div>
   <% end %>
+
           <% end %> <!-- closes the 'if page[:title] == "Agency Info"' or 'else' -->
       </div> <!-- closes .form-row -->
     </div> <!-- closes .form-page -->
@@ -71,6 +84,20 @@
     <% end %>
   </div>
 </div> 
+
+  <div id="vehicle-template" style="display: none;">
+    <%= form.fields_for :parking_lot_vehicles, ParkingLotVehicle.new, child_index: "NEW_RECORD" do |vf| %>
+      <div class="vehicle-fields d-flex flex-wrap gap-3 mb-4 border p-3 rounded">
+        <%= vf.text_field :make, placeholder: "Make", class: "form-control", required: true %>
+        <%= vf.text_field :model, placeholder: "Model", class: "form-control", required: true %>
+        <%= vf.text_field :color, placeholder: "Color", class: "form-control", required: true %>
+        <%= vf.number_field :year, placeholder: "Year", class: "form-control", required: true %>
+        <%= vf.text_field :license_plate, placeholder: "License Plate", class: "form-control", required: true %>
+        <%= vf.select :parking_lot, options_for_select(["G Lot", "R Lot", "A Lot", "Other"]), {}, class: "form-control parking-lot-select" %>
+        <%= vf.text_field :other_parking_lot, placeholder: "If Other, enter name", class: "form-control other-lot-field", style: "display: none;" %>
+      </div>
+    <% end %>
+  </div>
  
 <% end %> <!-- closes form_with -->
 </div>
@@ -78,22 +105,22 @@
 <script>
   let currentPage = 0;
   const pages = document.querySelectorAll('.form-page');
-  const dots = document.querySelectorAll('.progress-dots .dot'); 
+  const dots = document.querySelectorAll('.progress-dots .dot');
   const submitButton = document.getElementById('submitButton');
 
- function showPage(index) {
-  pages.forEach((page, i) => {
-    page.style.display = i === index ? 'block' : 'none';
-    if (dots[i]) dots[i].classList.toggle('active', i === index);
-  });
+  function showPage(index) {
+    pages.forEach((page, i) => {
+      page.style.display = i === index ? 'block' : 'none';
+      if (dots[i]) dots[i].classList.toggle('active', i === index);
+    });
 
-  submitButton.style.display = index === pages.length - 1 ? 'inline-block' : 'none';
+    submitButton.style.display = index === pages.length - 1 ? 'inline-block' : 'none';
 
-  const nextButton = document.querySelector('button[onclick="nextPage()"]');
-  if (nextButton) {
-    nextButton.style.display = index === pages.length - 1 ? 'none' : 'inline-block';
+    const nextButton = document.querySelector('button[onclick="nextPage()"]');
+    if (nextButton) {
+      nextButton.style.display = index === pages.length - 1 ? 'none' : 'inline-block';
+    }
   }
-}
 
   function nextPage() {
     if (currentPage < pages.length - 1) {
@@ -110,27 +137,34 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    showPage(currentPage);
+  showPage(currentPage);
 
-     const select = document.getElementById("parking_lot_select");
-    const otherFieldInput = document.getElementById("other_parking_lot_field");
+  const wrapper = document.getElementById("vehicle-wrapper");
+  const addBtn = document.getElementById("add-vehicle");
+  const template = document.getElementById("vehicle-template");
 
-    function toggleOtherField() {
-      if (!select || !otherFieldInput) return;
+  let vehicleIndex = 1;
 
-      const selected = Array.from(select.selectedOptions).map(o => o.value);
-      if (selected.includes("Other")) {
-        otherFieldInput.parentElement.style.display = "block";
+  addBtn?.addEventListener("click", () => {
+    const html = template.innerHTML.replace(/NEW_RECORD/g, vehicleIndex);
+    wrapper.insertAdjacentHTML("beforeend", html);
+    vehicleIndex++;
+  });
+
+  // Show/hide "Other" field per parking lot selection
+  wrapper?.addEventListener("change", (e) => {
+    if (e.target.classList.contains("parking-lot-select")) {
+      const group = e.target.closest(".vehicle-fields");
+      const otherInput = group.querySelector(".other-lot-field");
+
+      if (e.target.value === "Other") {
+        otherInput.style.display = "block";
       } else {
-        otherFieldInput.parentElement.style.display = "none";
-        otherFieldInput.value = "";
+        otherInput.style.display = "none";
+        otherInput.value = "";
       }
     }
-
-    if (select && otherFieldInput) {
-      toggleOtherField();
-      select.addEventListener("change", toggleOtherField);
-    }
   });
+});
 </script>
 </turbo-frame>

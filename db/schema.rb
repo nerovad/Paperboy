@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_14_160524) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_14_171134) do
   create_table "Agency", primary_key: "AgencyID", id: :integer, force: :cascade do |t|
     t.string "AgencyName", limit: 255, null: false
   end
@@ -340,6 +340,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_14_160524) do
     t.integer "status"
   end
 
+  create_table "parking_lot_vehicles", force: :cascade do |t|
+    t.bigint "parking_lot_submission_id", null: false
+    t.string "make"
+    t.string "model"
+    t.string "color"
+    t.integer "year"
+    t.string "license_plate"
+    t.string "parking_lot"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parking_lot_submission_id"], name: "index_parking_lot_vehicles_on_parking_lot_submission_id"
+  end
+
   create_table "probation_transfer_requests", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
@@ -371,4 +384,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_14_160524) do
   add_foreign_key "TC60_Programs", "TC60_Agencies", column: "Agency", primary_key: "Agency", name: "fk_tc60_programs_tc60_agencies"
   add_foreign_key "TC60_Tasks", "TC60_Agencies", column: "Agency", primary_key: "Agency", name: "fk_tc60_tasks_tc60_agencies"
   add_foreign_key "TC60_Units", "TC60_Departments", column: ["Agency", "Division", "Department"], primary_key: ["Agency", "Division", "Department"], name: "FK_TC60_Units_TC60_Departments"
+  add_foreign_key "parking_lot_vehicles", "parking_lot_submissions"
 end
