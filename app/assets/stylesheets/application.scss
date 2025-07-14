@@ -513,6 +513,43 @@ input.form-control {
   }
 }
 
+/* Override Choices.js default styles */
+.choices__inner {
+  background-color: white !important;
+  border: 1px solid $border-color !important;
+  border-radius: 5px !important;
+  min-height: 30px !important;
+  padding: 8px 12px !important;
+  font-size: 1em !important;
+}
+
+.choices__list--multiple .choices__item {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  background-color: $primary-color !important;
+  border-radius: 12px !important;
+  color: white !important;
+  padding: 4px 10px !important;
+  font-size: 0.9em !important;
+  margin: 4px 4px 0 0 !important;
+}
+
+.choices__list--dropdown {
+  border: 1px solid $border-color !important;
+  border-radius: 5px !important;
+}
+
+.choices__input {
+  font-size: 1em !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.choices__placeholder {
+  color: #888;
+}
+
 .forms-homepage-image {
   width: 100%;
   height: 100%;

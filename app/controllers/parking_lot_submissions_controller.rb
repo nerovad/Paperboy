@@ -40,7 +40,8 @@ class ParkingLotSubmissionsController < ApplicationController
         title: "Parking Details",
         fields: [
           { name: "parking_lot", label: "Parking Lot", type: "multi-select", options: ["BOS", "Courier Parking", "E Lot", "G Lot", "Grand Jury Parking", "HOA Dock", "HOJ Dock", "Maintenance", "R Lot", "Traffic Circle", "County Square Drive", "East County Courthouse", "Gonzales Road", "Juvenile Justice Center", "Telephone Road", "Vanguard", "DCSS", "Other"] },
-          { name: "other_parking_lot", label: "Other, please specify:", type: "text", required: false }
+          { name: "other_parking_lot", label: "Other, please specify:", type: "text", required: false },
+          { name: "old_permit_number", label: "Old Permit Number", type: "text", required: false }
         ]
       }
     ]
