@@ -46,16 +46,16 @@
           <%= vf.text_field :model, placeholder: "Model", class: "form-control", required: true %>
         </div>
         <div class="form-group">
-          <%= vf.text_field :color, placeholder: "Color", class: "form-control", required: true %>
+          <%= vf.select :color, options_for_select(%w[White Black Silver Blue Red Green Yellow Gray Brown]), { prompt: "Select Color" }, class: "form-control", required: true %>
         </div>
         <div class="form-group">
-          <%= vf.number_field :year, placeholder: "Year", class: "form-control", required: true %>
+          <%= vf.select :year, options_for_select((1920..Date.today.year).to_a.reverse), { prompt: "Select Year" }, class: "form-control", required: true %>
         </div>
         <div class="form-group">
           <%= vf.text_field :license_plate, placeholder: "License Plate", class: "form-control", required: true %>
         </div>
         <div class="form-group">
-          <%= vf.select :parking_lot, options_for_select(["G Lot", "R Lot", "A Lot", "Other"]), {}, class: "form-control parking-lot-select" %>
+          <%= vf.select :parking_lot, options_for_select(["BOS", "Courier Parking", "E Lot", "G Lot", "Grand Jury Parking", "HOA Dock", "HOJ Dock", "Maintenance", "R Lot", "Traffic Circle", "County Square Drive", "East County Courthouse", "Gonzales Road", "Juvenile Justice Center", "Telephone Road", "Vanguard", "DCSS", "Other"]), {}, class: "form-control parking-lot-select" %>
         </div>
         <div class="form-group">
           <%= vf.text_field :other_parking_lot, placeholder: "If Other, enter name", class: "form-control other-lot-field", style: "display: none;" %>
