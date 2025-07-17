@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_14_171134) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_17_152118) do
   create_table "Agency", primary_key: "AgencyID", id: :integer, force: :cascade do |t|
     t.string "AgencyName", limit: 255, null: false
   end
@@ -25,7 +25,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_14_171134) do
     t.integer "RateID", limit: 2, null: false
     t.integer "ObjectID", limit: 2, null: false
     t.float "Rate", null: false
-    t.varchar "UnitID", limit: 4
+    t.integer "UnitID", limit: 2, null: false
   end
 
   create_table "BusinessUnit", id: :integer, default: 4641, force: :cascade do |t|
@@ -61,6 +61,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_14_171134) do
   create_table "Division", primary_key: "DivisionID", id: :integer, force: :cascade do |t|
     t.string "DivisionName", limit: 255, null: false
     t.integer "AgencyID", null: false
+  end
+
+  create_table "Employees", primary_key: "EmployeeID", id: :integer, default: nil, force: :cascade do |t|
+    t.string "Last_Name", limit: 50
+    t.string "First_Name", limit: 50
+    t.string "Job_Title", limit: 50
+    t.string "Work_Phone", limit: 50
+    t.string "Agency", limit: 50
+    t.string "Unit", limit: 50
+    t.integer "Job_Code", limit: 2
+    t.string "Position", limit: 50
+    t.string "Pay_Status", limit: 50
+    t.integer "Job_Class", limit: 1
+    t.string "Department", limit: 50
+    t.string "Type", limit: 50
+    t.integer "Supervisor_ID"
+    t.string "Supervisor_Last_Name", limit: 50
+    t.string "Supervisor_First_Name", limit: 50
+    t.string "EE_Email", limit: 50
+    t.string "Union_Code", limit: 50
   end
 
   create_table "FiscalMonths", id: false, force: :cascade do |t|
@@ -280,6 +300,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_14_171134) do
     t.string "LongName", limit: 100, null: false
   end
 
+  create_table "_stgBdmRateTypes", id: false, force: :cascade do |t|
+    t.integer "RateID", limit: 2, null: false
+    t.string "Description", limit: 150, null: false
+    t.string "UOM", limit: 15, null: false
+  end
+
   create_table "_stgFiscalCursor", id: false, force: :cascade do |t|
     t.varchar "Year", limit: 4, null: false
     t.varchar "ApMon", limit: 4, null: false
@@ -327,17 +353,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_14_171134) do
     t.string "agency"
     t.string "division"
     t.string "department"
-    t.string "make"
-    t.string "model"
-    t.string "color"
-    t.string "year"
-    t.string "license_plate"
-    t.text "parking_lot"
-    t.string "old_permit_number"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "unit"
     t.integer "status"
+    t.string "supervisor_id"
   end
 
   create_table "parking_lot_vehicles", force: :cascade do |t|
@@ -370,6 +390,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_14_171134) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "BdmRates", "BdmRateTypes", column: "RateID", primary_key: "RateID", name: "FK_BdmRates_RateID"
   add_foreign_key "Department", "Division", column: "DivisionID", primary_key: "DivisionID", name: "FK__Departmen__Divis__54968AE5"
   add_foreign_key "Division", "Agency", column: "AgencyID", primary_key: "AgencyID", name: "FK__Division__Agency__51BA1E3A"
   add_foreign_key "TC60", "TC60_Types", column: "TYPE", primary_key: "TYPE", name: "FK_TC60_TYPE_TC60_TYPES"

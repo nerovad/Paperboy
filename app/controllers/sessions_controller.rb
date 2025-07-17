@@ -3,17 +3,17 @@ class SessionsController < ApplicationController
     login = params[:login]
 
     employee = ActiveRecord::Base.connection.exec_query(<<-SQL).first
-      SELECT TOP 1 EmployeeID, FirstName, LastName, Email
-      FROM [GSABSS].[dbo].[TC60_Employees]
-      WHERE EmployeeID = '#{login}' OR Email = '#{login}'
+      SELECT TOP 1 EmployeeID, First_Name, Last_Name, EE_Email
+      FROM [GSABSS].[dbo].[Employees]
+      WHERE EmployeeID = '#{login}' OR EE_Email = '#{login}'
     SQL
 
     if employee
       session[:user] = {
         "employee_id" => employee["EmployeeID"],
-        "first_name"  => employee["FirstName"],
-        "last_name"   => employee["LastName"],
-        "email"       => employee["Email"]
+        "first_name"  => employee["First_Name"],
+        "last_name"   => employee["Last_Name"],
+        "email"       => employee["EE_Email"]
       }
       render json: { success: true }
     else

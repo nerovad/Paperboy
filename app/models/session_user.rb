@@ -5,9 +5,9 @@ class SessionUser
   def self.authenticate(emp_id_or_email)
     conn = ActiveRecord::Base.connection.raw_connection
     result = conn.execute(<<~SQL)
-      SELECT TOP 1 EmployeeID, FirstName, LastName, Email
-      FROM [GSABSS].[dbo].[TC60_Employees]
-      WHERE EmployeeID = '#{emp_id_or_email}' OR Email = '#{emp_id_or_email}'
+      SELECT TOP 1 EmployeeID, First_Name, Last_Name, EE_Email
+      FROM [GSABSS].[dbo].[Employees]
+      WHERE EmployeeID = '#{emp_id_or_email}' OR EE_Email = '#{emp_id_or_email}'
     SQL
 
     row = result.each(as: :hash).first
@@ -15,9 +15,9 @@ class SessionUser
 
     new(
       employee_id: row["EmployeeID"],
-      first_name: row["FirstName"],
-      last_name: row["LastName"],
-      email: row["Email"]
+      first_name: row["First_Name"],
+      last_name: row["Last_Name"],
+      email: row["EE_Email"]
     )
   rescue => e
     Rails.logger.error("Login error: #{e.message}")

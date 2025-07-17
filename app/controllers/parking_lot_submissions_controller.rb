@@ -31,9 +31,15 @@ class ParkingLotSubmissionsController < ApplicationController
     ]
   end
 
-    def create
+      def create
+      employee = session[:user]
+      supervisor_id = fetch_supervisor_id(employee["employee_id"])
+
+      Rails.logger.info "Creating submission for employee #{employee["employee_id"]}, supervisor: #{supervisor_id}"
+
       @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
       @parking_lot_submission.status = 0
+      @parking_lot_submission.supervisor_id = supervisor_id
 
       if @parking_lot_submission.save
         redirect_to parking_lot_submissions_path, notice: "Submitted!"
@@ -70,13 +76,35 @@ def deny
 end
 
 def index
-  @pending_submissions = ParkingLotSubmission.where(status: 0)
+  employee = session[:user]
+
+  if employee.present? && employee["employee_id"].present?
+    Rails.logger.info "Logged in as employee #{employee["employee_id"]}"
+
+    @pending_submissions = ParkingLotSubmission
+                              .where(supervisor_id: employee["employee_id"].to_s)
+                              .where(status: 0)
+                              .order(created_at: :desc)
+  else
+    Rails.logger.warn "No logged-in employee found"
+    @pending_submissions = []
+  end
 end
 
  private
 
+    def fetch_supervisor_id(employee_id)
+      result = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first
+        SELECT Supervisor_ID
+        FROM [GSABSS].[dbo].[Employees]
+        WHERE EmployeeID = '#{employee_id}'
+      SQL
+
+      result&.fetch("Supervisor_ID", nil)
+    end
+
   def parking_lot_submission_params
-  params.require(:parking_lot_submission).permit(
+    params.require(:parking_lot_submission).permit(
       :name,
       :phone,
       :employee_id,
@@ -85,14 +113,15 @@ end
       :division,
       :department,
       :unit,
+      :status,
       parking_lot_vehicles_attributes: [
+        :id,
         :make,
         :model,
         :color,
         :year,
         :license_plate,
         :parking_lot,
-        :other_parking_lot,
         :_destroy
       ]
     )
