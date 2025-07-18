@@ -6,15 +6,13 @@ class ParkingLotPdfGenerator
 
     Prawn::Document.new(page_size: 'A4', margin: 40) do |pdf|
       # Header with logo
-      if File.exist?(logo_path)
-        pdf.image logo_path.to_s, width: 80
-      end
+      pdf.image(logo_path.to_s, width: 80) if File.exist?(logo_path)
 
       pdf.move_down 10
       pdf.text "Parking Lot Submission", size: 22, style: :bold, align: :center
       pdf.move_down 20
 
-      # Employee Info Section
+      # Employee Info
       pdf.text "Employee Information", size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Name: #{submission.name}"
@@ -33,17 +31,21 @@ class ParkingLotPdfGenerator
       pdf.move_down 15
       pdf.text "Vehicle Information", size: 14, style: :bold
       pdf.move_down 5
-      pdf.text "Make: #{submission.make}"
-      pdf.text "Model: #{submission.model}"
-      pdf.text "Color: #{submission.color}"
-      pdf.text "Year: #{submission.year}"
-      pdf.text "License Plate: #{submission.license_plate}"
 
-      pdf.move_down 15
-      pdf.text "Parking Details", size: 14, style: :bold
-      pdf.move_down 5
-      pdf.text "Parking Lot: #{submission.parking_lot}"
-      pdf.text "Old Permit Number: #{submission.old_permit_number.presence || 'N/A'}"
+      if submission.parking_lot_vehicles.any?
+        submission.parking_lot_vehicles.each_with_index do |vehicle, index|
+          pdf.text "Vehicle ##{index + 1}", style: :bold
+          pdf.text "Make: #{vehicle.make}"
+          pdf.text "Model: #{vehicle.model}"
+          pdf.text "Color: #{vehicle.color}"
+          pdf.text "Year: #{vehicle.year}"
+          pdf.text "License Plate: #{vehicle.license_plate}"
+          pdf.text "Parking Lot: #{vehicle.parking_lot}"
+          pdf.move_down 10
+        end
+      else
+        pdf.text "No vehicle information provided."
+      end
 
       pdf.move_down 25
       pdf.text "Submitted on: #{submission.created_at.strftime('%B %d, %Y at %I:%M %p')}", size: 10, align: :right
