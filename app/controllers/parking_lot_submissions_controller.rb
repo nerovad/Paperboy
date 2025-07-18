@@ -122,6 +122,7 @@ end
         :year,
         :license_plate,
         :parking_lot,
+        :other_parking_lot,
         :_destroy
       ]
     )
