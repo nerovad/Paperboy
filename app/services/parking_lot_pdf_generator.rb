@@ -40,7 +40,7 @@ class ParkingLotPdfGenerator
           pdf.text "Color: #{vehicle.color}"
           pdf.text "Year: #{vehicle.year}"
           pdf.text "License Plate: #{vehicle.license_plate}"
-          pdf.text "Parking Lot: #{vehicle.parking_lot}"
+          pdf.text "Parking Lot: #{vehicle.display_parking_lot}"
           pdf.move_down 10
         end
       else

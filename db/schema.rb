@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_17_152118) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_21_194017) do
   create_table "Agency", primary_key: "AgencyID", id: :integer, force: :cascade do |t|
     t.string "AgencyName", limit: 255, null: false
   end
@@ -370,6 +370,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_17_152118) do
     t.string "parking_lot"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "other_parking_lot"
     t.index ["parking_lot_submission_id"], name: "index_parking_lot_vehicles_on_parking_lot_submission_id"
   end
 
