@@ -28,7 +28,10 @@
         <% else %>
           <div class="profile-dropdown" id="profile-dropdown">
           <button id="profile-toggle" class="profile-icon">
-            👤 <%= session[:user]["first_name"] %>
+            <%= session[:user]["first_name"] %>
+            <% if inbox_count > 0 %>
+              <span class="inbox-badge"><%= inbox_count %></span>
+            <% end %>
           </button>
           <div class="dropdown-content" id="dropdown-content">
            <%= link_to "Inbox Queue", parking_lot_submissions_path %>

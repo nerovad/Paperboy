@@ -558,6 +558,28 @@ input.form-control {
   overflow-y: auto;
   padding-right: 1rem; // space for scrollbar
 }
+.profile-icon {
+  position: relative;
+  font-size: 1rem; /* baseline font */
+}
+
+.inbox-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background-color: red;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 2px;
+  border-radius: 999px;
+  line-height: 1;
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+  box-shadow: 0 0 0 1px white;
+  font-family: sans-serif;
+}
 
 .forms-homepage-image {
   width: 100%;
