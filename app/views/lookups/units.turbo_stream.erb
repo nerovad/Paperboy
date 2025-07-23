@@ -4,8 +4,8 @@
       <%= form.select :unit,
           options_for_select(@unit_options.map { |u| ["#{u.Unit} - #{u.LongName}", u.Unit] }),
           { prompt: "Select Unit" },
-          class: "form-control",
           id: "unit-select",
+          class: "form-control",
           data: {
             gsabss_selects_target: "unit"
           } %>

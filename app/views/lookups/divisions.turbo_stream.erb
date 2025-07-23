@@ -2,10 +2,10 @@
   <template>
     <%= form_with model: ParkingLotSubmission.new, local: true do |form| %>
       <%= form.select :division,
-          options_for_select(@division_options.map { |d| [d.LongName, d.Division] }),
+          options_for_select(@division_options.map { |d| ["#{d.Division} - #{d.LongName}", d.Division] }),
           { prompt: "Select Division" },
-          class: "form-control",
           id: "division-select",
+          class: "form-control",
           data: {
             gsabss_selects_target: "division",
             action: "change->gsabss-selects#loadDepartments"
