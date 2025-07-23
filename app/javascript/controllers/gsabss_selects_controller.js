@@ -1,55 +1,30 @@
-import { Controller } from "@hotwired/stimulus";
+import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["agency", "division", "department", "unit"];
+  static targets = ["agency", "division", "department", "unit"]
 
   connect() {
-    this.clear(this.divisionTarget);
-    this.clear(this.departmentTarget);
-    this.clear(this.unitTarget);
+    // Trigger auto-load for prefilled values
+    if (this.agencyTarget.value) this.loadDivisions()
+    if (this.divisionTarget.value) this.loadDepartments()
+    if (this.departmentTarget.value) this.loadUnits()
   }
 
-  async loadDivisions() {
-    const agency = this.agencyTarget.value;
-    this.clear(this.divisionTarget);
-    this.clear(this.departmentTarget);
-    this.clear(this.unitTarget);
-
-    const res = await fetch(`/api/divisions?agency=${agency}`);
-    const data = await res.json();
-    this.populate(this.divisionTarget, data);
+  loadDivisions() {
+    fetch(`/lookups/divisions?agency=${this.agencyTarget.value}`, {
+      headers: { Accept: "text/vnd.turbo-stream.html" }
+    })
   }
 
-  async loadDepartments() {
-    const agency = this.agencyTarget.value;
-    const division = this.divisionTarget.value;
-    this.clear(this.departmentTarget);
-    this.clear(this.unitTarget);
-
-    const res = await fetch(`/api/departments?agency=${agency}&division=${division}`);
-    const data = await res.json();
-    this.populate(this.departmentTarget, data);
+  loadDepartments() {
+    fetch(`/lookups/departments?division=${this.divisionTarget.value}`, {
+      headers: { Accept: "text/vnd.turbo-stream.html" }
+    })
   }
 
-  async loadUnits() {
-    const agency = this.agencyTarget.value;
-    const division = this.divisionTarget.value;
-    const department = this.departmentTarget.value;
-    this.clear(this.unitTarget);
-
-    const res = await fetch(`/api/units?agency=${agency}&division=${division}&department=${department}`);
-    const data = await res.json();
-    this.populate(this.unitTarget, data);
-  }
-
-  populate(select, data) {
-    data.forEach(({ label, value }) => {
-      select.add(new Option(label, value));
-    });
-  }
-
-  clear(select) {
-    select.innerHTML = "";
-    select.add(new Option("Select one", ""));
+  loadUnits() {
+    fetch(`/lookups/units?department=${this.departmentTarget.value}`, {
+      headers: { Accept: "text/vnd.turbo-stream.html" }
+    })
   }
 }

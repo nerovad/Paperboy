@@ -1,35 +1,59 @@
 class ParkingLotSubmissionsController < ApplicationController
   def new
-    @parking_lot_submission = ParkingLotSubmission.new
-    @parking_lot_submission.parking_lot_vehicles.build
+  @parking_lot_submission = ParkingLotSubmission.new
+  @parking_lot_submission.parking_lot_vehicles.build
 
-    # GSABSS lookups
-    @agency_options = Agency.all.map { |a| ["#{a.Agency} #{a.LongName}", a.Agency] }
+  employee_id = session[:user]["employee_id"]
+  @employee = Employee.find_by(EmployeeID: employee_id)
 
-    @form_logo = "/assets/images/default-logo.svg"
+  unit_code = @employee&.[]("Unit")
+  unit = Unit.find_by(Unit: unit_code)
 
-    @form_pages = [
-      {
-        title: "Employee Info",
-        fields: [
-          { name: "employee_id", label: "Employee ID", type: "text", required: true },
-          { name: "name", label: "Name", type: "text", required: true },
-          { name: "phone", label: "Phone", type: "text", required: true },
-          { name: "email", label: "Email", type: "text", required: true }
-        ]
-      },
-      {
-        title: "Agency Info",
-        fields: [
-          { name: "agency", label: "Agency", type: "select", required: true, options: Agency.all.pluck(:LongName) },
-          { name: "division", label: "Division", type: "select", required: true, options: Division.all.pluck(:LongName) },
-          { name: "department", label: "Department", type: "select", required: true, options: Department.all.pluck(:LongName) },
-          { name: "unit", label: "Unit", type: "select", required: true, options: Unit.all.map { |u| ["#{u.Unit} #{u.LongName}", u.Unit] } }
-        ]
-      },
-      { title: "Vehicle and Parking Info", fields: [] }
-    ]
-  end
+  department = Department.find_by(Department: unit&.Department)
+  division   = Division.find_by(Division: unit&.Division)
+  agency     = Agency.find_by(Agency: unit&.Agency)
+
+  @prefill_data = {
+    employee_id: @employee&.[]("EmployeeID"),
+    name: "#{@employee&.[]("First_Name")} #{@employee&.[]("Last_Name")}",
+    phone: @employee&.[]("Work_Phone"),
+    email: @employee&.[]("EE_Email"),
+    agency: agency&.LongName,
+    division: division&.LongName,
+    department: department&.LongName,
+    unit: unit ? "#{unit.Unit} - #{unit.LongName}" : nil
+  }
+
+  # For dropdowns
+  @agency_options = Agency.all.map { |a| [a.LongName, a.Agency] }
+  @division_options = Division.where(Agency: agency&.Agency).map { |d| [d.LongName, d.Division] }
+  @department_options = Department.where(Division: division&.Division).map { |d| [d.LongName, d.Department] }
+  @unit_options = Unit.where(Department: department&.Department).map { |u| ["#{u.Unit} - #{u.LongName}", u.Unit] }
+
+  @form_logo = "/assets/images/default-logo.svg"
+
+  @form_pages = [
+    {
+      title: "Employee Info",
+      fields: [
+        { name: "employee_id", label: "Employee ID", type: "text", required: true },
+        { name: "name", label: "Name", type: "text", required: true },
+        { name: "phone", label: "Phone", type: "text", required: true },
+        { name: "email", label: "Email", type: "text", required: true }
+      ]
+    },
+    {
+      title: "Agency Info",
+      fields: [
+        { name: "agency", label: "Agency", type: "select", required: true, options: @agency_options.map(&:first) },
+        { name: "division", label: "Division", type: "select", required: true, options: @division_options.map(&:first) },
+        { name: "department", label: "Department", type: "select", required: true, options: @department_options.map(&:first) },
+        { name: "unit", label: "Unit", type: "select", required: true, options: @unit_options.map(&:first) }
+      ]
+    },
+    { title: "Vehicle and Parking Info", fields: [] }
+  ]
+end
 
       def create
       employee = session[:user]

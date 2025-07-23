@@ -17,9 +17,7 @@ Rails.application.routes.draw do
     end
   end
 
-    namespace :api do
-    get 'divisions', to: 'dropdowns#divisions'
-    get 'departments', to: 'dropdowns#departments'
-    get 'units', to: 'dropdowns#units'
-  end
+    get "/lookups/divisions", to: "lookups#divisions"
+    get "/lookups/departments", to: "lookups#departments"
+    get "/lookups/units", to: "lookups#units"
 end

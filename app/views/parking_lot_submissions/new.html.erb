@@ -71,10 +71,18 @@
   <% page[:fields].each do |field| %>
     <div class="form-group flex-fill" style="min-width: 200px;">
       <%= form.label field[:name], field[:label] %>
+
       <% if field[:type] == 'select' %>
-        <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control" %>
+        <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control", id: field[:name] %>
+
       <% else %>
-        <%= form.text_field field[:name], required: field[:required], class: "form-control" %>
+        <% readonly = %w[employee_id name].include?(field[:name]) %>
+        <%= form.text_field field[:name],
+              value: @prefill_data[field[:name].to_sym],
+              readonly: readonly,
+              required: field[:required],
+              class: "form-control",
+              id: field[:name] %>
       <% end %>
     </div>
   <% end %>
@@ -207,5 +215,6 @@
     }
   });
 });
+  window.prefillData = <%= raw @prefill_data.to_json.html_safe %>;
 </script>
 </turbo-frame>
