@@ -15,22 +15,42 @@
     <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
   <div class="form-group">
     <%= form.label :agency, "Agency" %>
-    <%= form.select :agency, options_for_select(@agency_options), {}, class: "form-control", id: "agency-select", data: { gsabss_selects_target: "agency", action: "change->gsabss-selects#loadDivisions" } %>
+    <%= form.select :agency,
+      options_for_select(@agency_options, @prefill_data[:agency]),
+      {},
+      class: "form-control",
+      id: "agency-select",
+      data: { gsabss_selects_target: "agency", action: "change->gsabss-selects#loadDivisions" } %>
   </div>
 
   <div class="form-group">
     <%= form.label :division, "Division" %>
-    <%= form.select :division, [], {}, class: "form-control", id: "division-select", data: { gsabss_selects_target: "division", action: "change->gsabss-selects#loadDepartments" } %>
+    <%= form.select :division,
+      options_for_select(@division_options, @prefill_data[:division]),
+      {},
+      class: "form-control",
+      id: "division-select",
+      data: { gsabss_selects_target: "division", action: "change->gsabss-selects#loadDepartments" } %>
   </div>
 
   <div class="form-group">
     <%= form.label :department, "Department" %>
-    <%= form.select :department, [], {}, class: "form-control", id: "department-select", data: { gsabss_selects_target: "department", action: "change->gsabss-selects#loadUnits" } %>
+    <%= form.select :department,
+      options_for_select(@department_options, @prefill_data[:department]),
+      {},
+      class: "form-control",
+      id: "department-select",
+      data: { gsabss_selects_target: "department", action: "change->gsabss-selects#loadUnits" } %>
   </div>
 
   <div class="form-group">
     <%= form.label :unit, "Unit" %>
-    <%= form.select :unit, [], {}, class: "form-control", id: "unit-select", data: { gsabss_selects_target: "unit" } %>
+    <%= form.select :unit,
+      options_for_select(@unit_options, @prefill_data[:unit]),
+      {},
+      class: "form-control",
+      id: "unit-select",
+      data: { gsabss_selects_target: "unit" } %>
   </div>
 
 </div>

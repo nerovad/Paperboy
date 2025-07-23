@@ -18,8 +18,8 @@ class ParkingLotSubmissionsController < ApplicationController
     name: "#{@employee&.[]("First_Name")} #{@employee&.[]("Last_Name")}",
     phone: @employee&.[]("Work_Phone"),
     email: @employee&.[]("EE_Email"),
-    agency: agency&.LongName,
-    division: division&.LongName,
+    agency: agency&.Agency,
+    division: division&.Division,
     department: department&.LongName,
     unit: unit ? "#{unit.Unit} - #{unit.LongName}" : nil
   }
