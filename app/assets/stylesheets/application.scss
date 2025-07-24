@@ -556,7 +556,8 @@ input.form-control {
 .form-page {
   max-height: 75vh; // or whatever fits nicely within your layout
   overflow-y: auto;
-  padding-right: 1rem; // space for scrollbar
+  padding-right: 2%; // space for scrollbar
+  padding-left: 2%;
 }
 .profile-icon {
   position: relative;
