@@ -1,240 +1,134 @@
 <turbo-frame id="main-content">
-<div class="form-header">
-  <h1>Parking Lot Submission Form</h1>
-</div>
-
-<div class="form-wrapper">
-
-<%= form_with model: @parking_lot_submission, local: true do |form| %>
-  <% @form_pages.each_with_index do |page, page_index| %>
-    <div class="form-page" style="<%= page_index == 0 ? '' : 'display:none;' %>">
-      <h2><%= page[:title] %></h2>
-
-      <div class="form-row">
-       <% if page[:title] == "Agency Info" %>
-    <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
-  <div class="form-group">
-    <%= form.label :agency, "Agency" %>
-    <%= form.select :agency,
-      options_for_select(@agency_options, @prefill_data[:agency]),
-      {},
-      class: "form-control",
-      id: "agency-select",
-      data: { gsabss_selects_target: "agency", action: "change->gsabss-selects#loadDivisions" } %>
+  <div class="form-header">
+    <h1>Parking Lot Submission Form</h1>
   </div>
 
-  <div class="form-group">
-    <%= form.label :division, "Division" %>
-    <%= form.select :division,
-      options_for_select(@division_options, @prefill_data[:division]),
-      {},
-      class: "form-control",
-      id: "division-select",
-      data: { gsabss_selects_target: "division", action: "change->gsabss-selects#loadDepartments" } %>
-  </div>
+  <div class="form-wrapper">
+    <%= form_with model: @parking_lot_submission, local: true,
+          data: { controller: "form-navigation", form_navigation_target: "submitButton" } do |form| %>
 
-  <div class="form-group">
-    <%= form.label :department, "Department" %>
-    <%= form.select :department,
-      options_for_select(@department_options, @prefill_data[:department]),
-      {},
-      class: "form-control",
-      id: "department-select",
-      data: { gsabss_selects_target: "department", action: "change->gsabss-selects#loadUnits" } %>
-  </div>
-
-  <div class="form-group">
-    <%= form.label :unit, "Unit" %>
-    <%= form.select :unit,
-      options_for_select(@unit_options, @prefill_data[:unit]),
-      {},
-      class: "form-control",
-      id: "unit-select",
-      data: { gsabss_selects_target: "unit" } %>
-  </div>
-
-</div>
- 
-<% elsif page[:title] == "Vehicle and Parking Info" %>
-  <div id="vehicle-wrapper">
-  <%= form.fields_for :parking_lot_vehicles do |vf| %>
-    <div class="vehicle-fields form-row border p-3 rounded mb-4">
-      <div class="form-group">
-          <%= vf.text_field :make, placeholder: "Make", class: "form-control", required: true %>
-        </div>
-        <div class="form-group">
-          <%= vf.text_field :model, placeholder: "Model", class: "form-control", required: true %>
-        </div>
-        <div class="form-group">
-          <%= vf.select :color, options_for_select(%w[White Black Silver Blue Red Green Yellow Gray Brown]), { prompt: "Select Color" }, class: "form-control", required: true %>
-        </div>
-        <div class="form-group">
-          <%= vf.select :year, options_for_select((1920..Date.today.year).to_a.reverse), { prompt: "Select Year" }, class: "form-control", required: true %>
-        </div>
-        <div class="form-group">
-          <%= vf.text_field :license_plate, placeholder: "License Plate", class: "form-control", required: true %>
-        </div>
-        <div class="form-group">
-          <%= vf.select :parking_lot, options_for_select(["BOS", "Courier Parking", "E Lot", "G Lot", "Grand Jury Parking", "HOA Dock", "HOJ Dock", "Maintenance", "R Lot", "Traffic Circle", "County Square Drive", "East County Courthouse", "Gonzales Road", "Juvenile Justice Center", "Telephone Road", "Vanguard", "DCSS", "Other"]), {}, class: "form-control parking-lot-select" %>
-        </div>
-        <div class="form-group">
-          <%= vf.text_field :other_parking_lot, placeholder: "If Other, enter name", class: "form-control other-lot-field", style: "display: none;" %>
+      <!-- Page 1: Employee Info -->
+      <div class="form-page">
+        <h2>Employee Info</h2>
+        <div class="form-row d-flex flex-wrap">
+          <div class="form-group flex-fill">
+            <%= form.label :employee_id, "Employee ID" %>
+            <%= form.text_field :employee_id, value: @prefill_data[:employee_id], class: "form-control", readonly: true %>
+          </div>
+          <div class="form-group flex-fill">
+            <%= form.label :name, "Name" %>
+            <%= form.text_field :name, value: @prefill_data[:name], class: "form-control", readonly: true %>
+          </div>
+          <div class="form-group flex-fill">
+            <%= form.label :phone, "Phone" %>
+            <%= form.text_field :phone, value: @prefill_data[:phone], class: "form-control", required: true %>
+          </div>
+          <div class="form-group flex-fill">
+            <%= form.label :email, "Email" %>
+            <%= form.text_field :email, value: @prefill_data[:email], class: "form-control", required: true %>
+          </div>
         </div>
       </div>
+
+     <!-- Page 2: Agency Info -->
+<div class="form-page" style="display:none;">
+  <h2>Agency Info</h2>
+  <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
+    <div class="form-group">
+      <%= form.label :agency, "Agency" %>
+      <%= form.select :agency,
+            options_for_select(@agency_options, @prefill_data[:agency]),
+            {},
+            class: "form-control",
+            id: "agency-select",
+            data: {
+              gsabss_selects_target: "agency",
+              action: "change->gsabss-selects#loadDivisions"
+            } %>
     </div>
-  <% end %>
+
+    <div class="form-group">
+      <%= form.label :division, "Division" %>
+      <%= form.select :division,
+            options_for_select(@division_options, @prefill_data[:division]),
+            {},
+            class: "form-control",
+            id: "division-select",
+            data: {
+              gsabss_selects_target: "division",
+              action: "change->gsabss-selects#loadDepartments"
+            } %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :department, "Department" %>
+      <%= form.select :department,
+            options_for_select(@department_options, @prefill_data[:department]),
+            {},
+            class: "form-control",
+            id: "department-select",
+            data: {
+              gsabss_selects_target: "department",
+              action: "change->gsabss-selects#loadUnits"
+            } %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :unit, "Unit" %>
+      <%= form.select :unit,
+            options_for_select(@unit_options, @prefill_data[:unit]),
+            {},
+            class: "form-control",
+            id: "unit-select",
+            data: {
+              gsabss_selects_target: "unit"
+            } %>
+    </div>
+  </div>
 </div>
 
-<button type="button" id="add-vehicle" class="btn btn-secondary mt-2">+ Add Vehicle</button>
-
-<% else %>
-  <% page[:fields].each do |field| %>
-    <div class="form-group flex-fill" style="min-width: 200px;">
-      <%= form.label field[:name], field[:label] %>
-
-      <% if field[:type] == 'select' %>
-        <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control", id: field[:name] %>
-
-      <% else %>
-        <% readonly = %w[employee_id name].include?(field[:name]) %>
-        <%= form.text_field field[:name],
-              value: @prefill_data[field[:name].to_sym],
-              readonly: readonly,
-              required: field[:required],
-              class: "form-control",
-              id: field[:name] %>
-      <% end %>
-    </div>
-  <% end %>
-
-          <% end %> <!-- closes the 'if page[:title] == "Agency Info"' or 'else' -->
-      </div> <!-- closes .form-row -->
-<% if page_index == @form_pages.size - 1 %>
-  <div class="navigation-buttons">
-    <button type="button" onclick="prevPage()">Previous</button>
-    <button type="button" onclick="nextPage()">Next</button>
-    <%= form.submit "Submit", id: "submitButton", style: "display: none;" %>
-  </div>
-<% end %>
-    </div> <!-- closes .form-page -->
-  <% end %> <!-- closes @form_pages.each_with_index -->
-
- <div class="progress-wrapper">
-  <div class="progress-bar-container">
-    <div class="progress-bar" id="progressBar"></div>
-  </div>
-  <div class="progress-dots">
-    <% @form_pages.each_with_index do |_, index| %>
-      <div class="dot <%= 'active' if index == 0 %>"></div>
-    <% end %>
-  </div>
-</div> 
-
-  <div id="vehicle-template" style="display: none;">
-    <%= form.fields_for :parking_lot_vehicles, ParkingLotVehicle.new, child_index: "NEW_RECORD" do |vf| %>
-      <div class="vehicle-fields form-row border p-3 rounded mb-4">
-      <div class="form-group">
-          <%= vf.text_field :make, placeholder: "Make", class: "form-control" %>
+      <!-- Page 3: Vehicle and Parking Info -->
+      <div class="form-page" style="display:none;">
+        <h2>Vehicle and Parking Info</h2>
+        <div id="vehicle-wrapper">
+          <%= form.fields_for :parking_lot_vehicles do |vf| %>
+            <div class="vehicle-fields form-row border p-3 rounded mb-4">
+              <%= render partial: "vehicle_fields", locals: { vf: vf } %>
+            </div>
+          <% end %>
         </div>
-        <div class="form-group">
-          <%= vf.text_field :model, placeholder: "Model", class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= vf.select :color, options_for_select(%w[White Black Silver Blue Red Green Yellow Gray Brown]), { prompt: "Select Color" }, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= vf.select :year, options_for_select((1920..Date.today.year).to_a.reverse), { prompt: "Select Year" }, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= vf.text_field :license_plate, placeholder: "License Plate", class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= vf.select :parking_lot, options_for_select(["BOS", "Courier Parking", "E Lot", "G Lot", "Grand Jury Parking", "HOA Dock", "HOJ Dock", "Maintenance", "R Lot", "Traffic Circle", "County Square Drive", "East County Courthouse", "Gonzales Road", "Juvenile Justice Center", "Telephone Road", "Vanguard", "DCSS", "Other"]), {}, class: "form-control parking-lot-select" %>
-        </div>
-        <div class="form-group">
-          <%= vf.text_field :other_parking_lot, placeholder: "If Other, enter name", class: "form-control other-lot-field", style: "display: none;" %>
-        </div>
-        <button type="button" class="btn btn-danger remove-vehicle">− Remove</button>
+        <button type="button" id="add-vehicle" class="btn btn-secondary mt-2">+ Add Vehicle</button>
       </div>
-</div>
-    <% end %>
+
+      <!-- Navigation Buttons -->
+      <div class="navigation-buttons">
+        <button type="button" data-action="click->form-navigation#prevPage">Previous</button>
+        <button type="button" data-action="click->form-navigation#nextPage">Next</button>
+        <%= form.submit "Submit", data: { form_navigation_target: "submitButton" }, style: "display: none;" %>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-wrapper">
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-dots">
+          <% 3.times do |index| %>
+            <div class="dot <%= 'active' if index == 0 %>"></div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Vehicle Template -->
+      <div id="vehicle-template" style="display: none;">
+        <%= form.fields_for :parking_lot_vehicles, ParkingLotVehicle.new, child_index: "NEW_RECORD" do |vf| %>
+          <div class="vehicle-fields form-row border p-3 rounded mb-4">
+            <%= render partial: "vehicle_fields", locals: { vf: vf } %>
+            <button type="button" class="btn btn-danger remove-vehicle">− Remove</button>
+          </div>
+        <% end %>
+      </div>
+
+    <% end %> <!-- form_with -->
   </div>
- 
-<% end %> <!-- closes form_with -->
-</div>
-
-<script>
-  let currentPage = 0;
-  const pages = document.querySelectorAll('.form-page');
-  const dots = document.querySelectorAll('.progress-dots .dot');
-  const submitButton = document.getElementById('submitButton');
-
-  function showPage(index) {
-    pages.forEach((page, i) => {
-      page.style.display = i === index ? 'block' : 'none';
-      if (dots[i]) dots[i].classList.toggle('active', i === index);
-    });
-
-    submitButton.style.display = index === pages.length - 1 ? 'inline-block' : 'none';
-
-    const nextButton = document.querySelector('button[onclick="nextPage()"]');
-    if (nextButton) {
-      nextButton.style.display = index === pages.length - 1 ? 'none' : 'inline-block';
-    }
-  }
-
-  function nextPage() {
-    if (currentPage < pages.length - 1) {
-      currentPage++;
-      showPage(currentPage);
-    }
-  }
-
-  function prevPage() {
-    if (currentPage > 0) {
-      currentPage--;
-      showPage(currentPage);
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-  showPage(currentPage);
-
-  const wrapper = document.getElementById("vehicle-wrapper");
-  const addBtn = document.getElementById("add-vehicle");
-  const template = document.getElementById("vehicle-template");
-
-  let vehicleIndex = 1;
-
-  addBtn?.addEventListener("click", () => {
-    const html = template.innerHTML.replace(/NEW_RECORD/g, vehicleIndex);
-    wrapper.insertAdjacentHTML("beforeend", html);
-    vehicleIndex++;
-  });
-
-    // Remove vehicle set if remove button is clicked
-    wrapper?.addEventListener("click", (e) => {
-      if (e.target.classList.contains("remove-vehicle")) {
-        const vehicleSet = e.target.closest(".vehicle-fields");
-        vehicleSet.remove();
-      }
-    });
-
-  // Show/hide "Other" field per parking lot selection
-  wrapper?.addEventListener("change", (e) => {
-    if (e.target.classList.contains("parking-lot-select")) {
-      const group = e.target.closest(".vehicle-fields");
-      const otherInput = group.querySelector(".other-lot-field");
-
-      if (e.target.value === "Other") {
-        otherInput.style.display = "block";
-      } else {
-        otherInput.style.display = "none";
-        otherInput.value = "";
-      }
-    }
-  });
-});
-  window.prefillData = <%= raw @prefill_data.to_json.html_safe %>;
-</script>
 </turbo-frame>

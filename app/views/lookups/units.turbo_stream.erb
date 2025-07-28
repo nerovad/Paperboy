@@ -1,14 +1,7 @@
-<turbo-stream target="unit-select">
-  <template>
-    <%= form_with model: ParkingLotSubmission.new, local: true do |form| %>
-      <%= form.select :unit,
-          options_for_select(@unit_options.map { |u| ["#{u.Unit} - #{u.LongName}", u.Unit] }),
-          { prompt: "Select Unit" },
-          id: "unit-select",
-          class: "form-control",
-          data: {
-            gsabss_selects_target: "unit"
-          } %>
-    <% end %>
-  </template>
-</turbo-stream>
+<%= turbo_stream.update("unit-select") do %>
+  <%= select_tag "parking_lot_submission[unit]",
+        options_for_select(@unit_options, window.prefillData?.unit),
+        class: "form-control",
+        id: "unit-select",
+        data: { gsabss_selects_target: "unit" } %>
+<% end %>

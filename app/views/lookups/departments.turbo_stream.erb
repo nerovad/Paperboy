@@ -1,15 +1,7 @@
-<turbo-stream target="department-select">
-  <template>
-    <%= form_with model: ParkingLotSubmission.new, local: true do |form| %>
-      <%= form.select :department,
-          options_for_select(@department_options.map { |d| ["#{d.Department} - #{d.LongName}", d.Department] }),
-          { prompt: "Select Department" },
-          id: "department-select",
-          class: "form-control",
-          data: {
-            gsabss_selects_target: "department",
-            action: "change->gsabss-selects#loadUnits"
-          } %>
-    <% end %>
-  </template>
-</turbo-stream>
+<%= turbo_stream.update("department-select") do %>
+  <%= select_tag "parking_lot_submission[department]",
+        options_for_select(@department_options, window.prefillData?.department),
+        class: "form-control",
+        id: "department-select",
+        data: { gsabss_selects_target: "department", action: "change->gsabss-selects#loadUnits" } %>
+<% end %>

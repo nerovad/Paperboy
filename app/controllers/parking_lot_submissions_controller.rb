@@ -1,4 +1,5 @@
 class ParkingLotSubmissionsController < ApplicationController
+
   def new
   @parking_lot_submission = ParkingLotSubmission.new
   @parking_lot_submission.parking_lot_vehicles.build
@@ -6,56 +7,48 @@ class ParkingLotSubmissionsController < ApplicationController
   employee_id = session[:user]["employee_id"]
   @employee = Employee.find_by(EmployeeID: employee_id)
 
+  # Lookup by employee’s unit code
   unit_code = @employee&.[]("Unit")
-  unit = Unit.find_by(Unit: unit_code)
+  unit = SubUnit.find_by(subunit_id: unit_code)
 
-  department = Department.find_by(Department: unit&.Department)
-  division   = Division.find_by(Division: unit&.Division)
-  agency     = Agency.find_by(Agency: unit&.Agency)
+  department = Department.find_by(department_id: unit&.[]("department_id"))
+  division   = Division.find_by(division_id: department&.[]("division_id"))
+  agency     = Agency.find_by(agency_id: division&.[]("agency_id"))
 
   @prefill_data = {
     employee_id: @employee&.[]("EmployeeID"),
     name: "#{@employee&.[]("First_Name")} #{@employee&.[]("Last_Name")}",
     phone: @employee&.[]("Work_Phone"),
     email: @employee&.[]("EE_Email"),
-    agency: agency&.Agency,
-    division: division&.Division,
-    department: department&.LongName,
-    unit: unit ? "#{unit.Unit} - #{unit.LongName}" : nil
+    agency: agency&.agency_id,
+    division: division&.division_id,
+    department: department&.department_id,
+    unit: unit ? "#{unit.subunit_id} - #{unit.short_name}" : nil
   }
 
-  # For dropdowns
-  @agency_options = Agency.all.map { |a| [a.LongName, a.Agency] }
-  @division_options = Division.where(Agency: agency&.Agency).map { |d| [d.LongName, d.Division] }
-  @department_options = Department.where(Division: division&.Division).map { |d| [d.LongName, d.Department] }
-  @unit_options = Unit.where(Department: department&.Department).map { |u| ["#{u.Unit} - #{u.LongName}", u.Unit] }
+  # Dropdowns (you can sort by long_name if needed)
+  @agency_options = Agency.all.map { |a| [a.long_name, a.agency_id] }
 
-  @form_logo = "/assets/images/default-logo.svg"
+  @division_options = if agency
+    Division.where(agency_id: agency.agency_id).map { |d| [d.long_name, d.division_id] }
+  else
+    []
+  end
 
-  @form_pages = [
-    {
-      title: "Employee Info",
-      fields: [
-        { name: "employee_id", label: "Employee ID", type: "text", required: true },
-        { name: "name", label: "Name", type: "text", required: true },
-        { name: "phone", label: "Phone", type: "text", required: true },
-        { name: "email", label: "Email", type: "text", required: true }
-      ]
-    },
-    {
-      title: "Agency Info",
-      fields: [
-        { name: "agency", label: "Agency", type: "select", required: true, options: @agency_options.map(&:first) },
-        { name: "division", label: "Division", type: "select", required: true, options: @division_options.map(&:first) },
-        { name: "department", label: "Department", type: "select", required: true, options: @department_options.map(&:first) },
-        { name: "unit", label: "Unit", type: "select", required: true, options: @unit_options.map(&:first) }
-      ]
-    },
-    { title: "Vehicle and Parking Info", fields: [] }
-  ]
+  @department_options = if division
+    Department.where(division_id: division.division_id).map { |d| [d.long_name, d.department_id] }
+  else
+    []
+  end
+
+  @unit_options = if department
+    SubUnit.where(department_id: department.department_id).map { |u| ["#{u.subunit_id} - #{u.short_name}", u.subunit_id] }
+  else
+    []
+  end
 end
 
-      def create
+    def create
       employee = session[:user]
       supervisor_id = fetch_supervisor_id(employee["employee_id"])
 
