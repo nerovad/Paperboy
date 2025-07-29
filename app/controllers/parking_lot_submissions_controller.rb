@@ -9,7 +9,7 @@ class ParkingLotSubmissionsController < ApplicationController
 
   # Lookup by employee’s unit code
   unit_code = @employee&.[]("Unit")
-  unit = SubUnit.find_by(subunit_id: unit_code)
+  unit = Unit.find_by(unit_id: unit_code)
 
   department = Department.find_by(department_id: unit&.[]("department_id"))
   division   = Division.find_by(division_id: department&.[]("division_id"))
@@ -23,7 +23,7 @@ class ParkingLotSubmissionsController < ApplicationController
     agency: agency&.agency_id,
     division: division&.division_id,
     department: department&.department_id,
-    unit: unit ? "#{unit.subunit_id} - #{unit.short_name}" : nil
+    unit: unit ? "#{unit.unit_id} - #{unit.long_name}" : nil
   }
 
   # Dropdowns (you can sort by long_name if needed)
@@ -42,7 +42,7 @@ class ParkingLotSubmissionsController < ApplicationController
   end
 
   @unit_options = if department
-    SubUnit.where(department_id: department.department_id).map { |u| ["#{u.subunit_id} - #{u.short_name}", u.subunit_id] }
+    Unit.where(department_id: department.department_id).map { |u| ["#{u.unit_id} - #{u.short_name}", u.unit_id] }
   else
     []
   end

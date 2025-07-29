@@ -99,14 +99,12 @@
         </div>
         <button type="button" id="add-vehicle" class="btn btn-secondary mt-2">+ Add Vehicle</button>
       </div>
-
       <!-- Navigation Buttons -->
       <div class="navigation-buttons">
         <button type="button" data-action="click->form-navigation#prevPage">Previous</button>
         <button type="button" data-action="click->form-navigation#nextPage">Next</button>
         <%= form.submit "Submit", data: { form_navigation_target: "submitButton" }, style: "display: none;" %>
       </div>
-
       <!-- Progress Bar -->
       <div class="progress-wrapper">
         <div class="progress-bar-container">

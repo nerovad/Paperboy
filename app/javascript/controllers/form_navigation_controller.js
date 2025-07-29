@@ -4,39 +4,41 @@ export default class extends Controller {
   static targets = ["submitButton"]
 
   connect() {
-    this.currentPage = 0;
-    this.pages = document.querySelectorAll('.form-page');
-    this.dots = document.querySelectorAll('.progress-dots .dot');
-    this.showPage(this.currentPage);
-
-    this.setupVehicleHandlers();
+    console.log("FormNavigationController connected")
+    this.pages = Array.from(this.element.querySelectorAll(".form-page"))
+    this.current = 0
+    this.showCurrentPage()
+    this.setupVehicleHandlers()
   }
 
-  showPage(index) {
-    this.pages.forEach((page, i) => {
-      page.style.display = i === index ? 'block' : 'none';
-      if (this.dots[i]) this.dots[i].classList.toggle('active', i === index);
-    });
-
-    if (this.submitButtonTarget) {
-      this.submitButtonTarget.style.display = index === this.pages.length - 1 ? 'inline-block' : 'none';
-    }
-
-    const nextButton = document.querySelector('button[onclick="nextPage()"]');
-    if (nextButton) nextButton.style.display = index === this.pages.length - 1 ? 'none' : 'inline-block';
+  disconnect() {
+    console.log("FormNavigationController disconnected")
   }
+
+  showCurrentPage() {
+  console.log("Showing page:", this.current, "of", this.pages.length)
+
+  this.pages.forEach((page, index) => {
+    console.log("Page", index, "=>", index === this.current ? "SHOW" : "HIDE")
+    page.style.display = index === this.current ? "" : "none"
+  })
+
+  if (this.submitButtonTarget) {
+    this.submitButtonTarget.style.display = this.current === this.pages.length - 1 ? "" : "none"
+  }
+}
 
   nextPage() {
-    if (this.currentPage < this.pages.length - 1) {
-      this.currentPage++;
-      this.showPage(this.currentPage);
+    if (this.current < this.pages.length - 1) {
+      this.current++
+      this.showCurrentPage()
     }
   }
 
   prevPage() {
-    if (this.currentPage > 0) {
-      this.currentPage--;
-      this.showPage(this.currentPage);
+    if (this.current > 0) {
+      this.current--
+      this.showCurrentPage()
     }
   }
 
