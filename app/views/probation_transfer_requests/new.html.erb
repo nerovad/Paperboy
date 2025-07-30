@@ -4,115 +4,115 @@
   </div>
 
   <div class="form-wrapper">
-    <%= form_with model: @probation_transfer_request, local: true do |form| %>
+    <%= form_with model: @probation_transfer_request, local: true, data: { controller: "form-navigation", form_navigation_target: "submitButton" } do |form| %>
       <% @form_pages.each_with_index do |page, page_index| %>
         <div class="form-page" style="<%= page_index == 0 ? '' : 'display:none;' %>">
           <h2><%= page[:title] %></h2>
 
-          <div class="form-row">
-            <% if page[:title] == "Agency Info" %>
-              <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
-                <div class="form-group">
-                  <%= form.label :agency, "Agency" %>
-                  <%= form.select :agency, options_for_select(@agency_options), {}, class: "form-control", id: "agency-select", data: { gsabss_selects_target: "agency", action: "change->gsabss-selects#loadDivisions" } %>
-                </div>
-
-                <div class="form-group">
-                  <%= form.label :division, "Division" %>
-                  <%= form.select :division, [], {}, class: "form-control", id: "division-select", data: { gsabss_selects_target: "division", action: "change->gsabss-selects#loadDepartments" } %>
-                </div>
-
-                <div class="form-group">
-                  <%= form.label :department, "Department" %>
-                  <%= form.select :department, [], {}, class: "form-control", id: "department-select", data: { gsabss_selects_target: "department", action: "change->gsabss-selects#loadUnits" } %>
-                </div>
-
-                <div class="form-group">
-                  <%= form.label :unit, "Unit" %>
-                  <%= form.select :unit, [], {}, class: "form-control", id: "unit-select", data: { gsabss_selects_target: "unit" } %>
-                </div>
+          <% if page[:title] == "Agency Info" %>
+            <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
+              <div class="form-group">
+                <%= form.label :agency, "Agency" %>
+                <%= form.select :agency,
+                      options_for_select(@agency_options, @prefill_data[:agency]),
+                      {},
+                      class: "form-control",
+                      id: "agency-select",
+                      data: {
+                        gsabss_selects_target: "agency",
+                        action: "change->gsabss-selects#loadDivisions"
+                      } %>
               </div>
-            <% else %>
+
+              <div class="form-group">
+                <%= form.label :division, "Division" %>
+                <%= form.select :division,
+                      options_for_select(@division_options, @prefill_data[:division]),
+                      {},
+                      class: "form-control",
+                      id: "division-select",
+                      data: {
+                        gsabss_selects_target: "division",
+                        action: "change->gsabss-selects#loadDepartments"
+                      } %>
+              </div>
+
+              <div class="form-group">
+                <%= form.label :department, "Department" %>
+                <%= form.select :department,
+                      options_for_select(@department_options, @prefill_data[:department]),
+                      {},
+                      class: "form-control",
+                      id: "department-select",
+                      data: {
+                        gsabss_selects_target: "department",
+                        action: "change->gsabss-selects#loadUnits"
+                      } %>
+              </div>
+
+              <div class="form-group">
+                <%= form.label :unit, "Unit" %>
+                <%= form.select :unit,
+                      options_for_select(@unit_options, @prefill_data[:unit]),
+                      {},
+                      class: "form-control",
+                      id: "unit-select",
+                      data: {
+                        gsabss_selects_target: "unit"
+                      } %>
+              </div>
+            </div>
+          <% else %>
+            <div class="form-row d-flex flex-wrap">
               <% page[:fields]&.each do |field| %>
                 <div class="form-group flex-fill" style="min-width: 200px;">
                   <%= form.label field[:name], field[:label] %>
 
-                  <% if field[:type] == 'select' %>
-                    <%= form.select field[:name], options_for_select(field[:options]), {}, class: "form-control" %>
+                  <% case field[:type] %>
+                  <% when 'select' %>
+                    <%= form.select field[:name],
+                          options_for_select(field[:options], @prefill_data[field[:name]]),
+                          {},
+                          class: "form-control" %>
 
-                  <% elsif field[:type] == 'multi-select' %>
-                    <%= form.select field[:name], options_for_select(field[:options]), {}, multiple: true, class: "form-control choices-multiselect", id: "transfer_destination_select" %>
+                  <% when 'multi-select' %>
+                    <%= form.select field[:name],
+                          options_for_select(field[:options], @prefill_data[field[:name]]),
+                          {},
+                          multiple: true,
+                          class: "form-control choices-multiselect",
+                          id: "#{field[:name]}_select" %>
 
                   <% else %>
-                    <%= form.text_field field[:name], required: field[:required], class: "form-control" %>
+                    <%= form.text_field field[:name],
+                          value: @prefill_data[field[:name]],
+                          required: field[:required],
+                          class: "form-control" %>
                   <% end %>
                 </div>
               <% end %>
-            <% end %>
-          </div>
+            </div>
+          <% end %>
         </div>
       <% end %>
 
-      <div class="navigation-buttons">
-        <button type="button" onclick="prevPage()">Previous</button>
-        <button type="button" onclick="nextPage()">Next</button>
-        <%= form.submit "Submit", id: "submitButton", style: "display: none;" %>
+      <!-- Navigation Buttons -->
+      <div class="navigation-buttons d-flex justify-content-between">
+        <div>
+          <button type="button" id="prevBtn" style="display: none;">Previous</button>
+        </div>
+        <div>
+          <button type="button" id="nextBtn">Next</button>
+          <%= form.submit "Submit", id: "submitButton", style: "display: none;" %>
+        </div>
       </div>
 
-      <div class="progress-wrapper">
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="progressBar"></div>
-        </div>
-        <div class="progress-dots">
-          <% @form_pages.each_with_index do |_, index| %>
-            <div class="dot <%= 'active' if index == 0 %>"></div>
-          <% end %>
-        </div>
+      <!-- Progress Dots -->
+      <div class="progress-dots">
+        <% @form_pages.each_with_index do |_, index| %>
+          <div class="dot <%= 'active' if index == 0 %>"></div>
+        <% end %>
       </div>
     <% end %>
   </div>
-
-  <script>
-    let currentPage = 0;
-    const pages = document.querySelectorAll('.form-page');
-    const dots = document.querySelectorAll('.progress-dots .dot');
-    const submitButton = document.getElementById('submitButton');
-
-    function showPage(index) {
-      pages.forEach((page, i) => {
-        page.style.display = i === index ? 'block' : 'none';
-        if (dots[i]) dots[i].classList.toggle('active', i === index);
-      });
-
-      submitButton.style.display = index === pages.length - 1 ? 'inline-block' : 'none';
-
-      const nextButton = document.querySelector('button[onclick="nextPage()"]');
-      if (nextButton) {
-        nextButton.style.display = index === pages.length - 1 ? 'none' : 'inline-block';
-      }
-
-      const prevButton = document.querySelector('button[onclick="prevPage()"]');
-      if (prevButton) {
-        prevButton.style.display = index === 0 ? 'none' : 'inline-block';
-      }
-    }
-
-    function nextPage() {
-      if (currentPage < pages.length - 1) {
-        currentPage++;
-        showPage(currentPage);
-      }
-    }
-
-    function prevPage() {
-      if (currentPage > 0) {
-        currentPage--;
-        showPage(currentPage);
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      showPage(currentPage);
-    });
-  </script>
 </turbo-frame>

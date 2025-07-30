@@ -20,7 +20,46 @@ class ProbationTransferRequestsController < ApplicationController
   def new
   @probation_transfer_request = ProbationTransferRequest.new
 
-  @agency_options = Agency.all.map { |a| ["#{a.Agency} #{a.LongName}", a.Agency] }
+  employee_id = session[:user]["employee_id"]
+  @employee = Employee.find_by(EmployeeID: employee_id)
+
+  unit_code = @employee&.[]("Unit")
+  unit = Unit.find_by(unit_id: unit_code)
+
+  department = Department.find_by(department_id: unit&.[]("department_id"))
+  division   = Division.find_by(division_id: department&.[]("division_id"))
+  agency     = Agency.find_by(agency_id: division&.[]("agency_id"))
+
+  @prefill_data = {
+    employee_id: @employee&.[]("EmployeeID"),
+    name: "#{@employee&.[]("First_Name")} #{@employee&.[]("Last_Name")}",
+    phone: @employee&.[]("Work_Phone"),
+    email: @employee&.[]("EE_Email"),
+    agency: agency&.agency_id,
+    division: division&.division_id,
+    department: department&.department_id,
+    unit: unit ? "#{unit.unit_id} - #{unit.long_name}" : nil
+  }
+
+  @agency_options = Agency.all.map { |a| [a.long_name, a.agency_id] }
+
+  @division_options = if agency
+    Division.where(agency_id: agency.agency_id).map { |d| [d.long_name, d.division_id] }
+  else
+    []
+  end
+
+  @department_options = if division
+    Department.where(division_id: division.division_id).map { |d| [d.long_name, d.department_id] }
+  else
+    []
+  end
+
+  @unit_options = if department
+    Unit.where(department_id: department.department_id).map { |u| ["#{u.unit_id} - #{u.short_name}", u.unit_id] }
+  else
+    []
+  end
 
   @form_logo = "/assets/images/default-logo.svg"
 
@@ -35,13 +74,7 @@ class ProbationTransferRequestsController < ApplicationController
       ]
     },
     {
-      title: "Agency Info",
-      fields: [
-        { name: "agency", label: "Agency", type: "select", required: true, options: Agency.all.pluck(:LongName) },
-        { name: "division", label: "Division", type: "select", required: true, options: Division.all.pluck(:LongName) },
-        { name: "department", label: "Department", type: "select", required: true, options: Department.all.pluck(:LongName) },
-        { name: "unit", label: "Unit", type: "select", required: true, options: Unit.all.map { |u| ["#{u.Unit} #{u.LongName}", u.Unit] } }
-      ]
+      title: "Agency Info"
     },
     {
       title: "Transfer Request Details",

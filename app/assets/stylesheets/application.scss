@@ -572,6 +572,62 @@ input.form-control {
   font-family: sans-serif;
 }
 
+//------------------------------------------BILLING TOOLS//
+.billing-date-form {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.date-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.billing-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.billing-form {
+  flex: 1 1 200px;
+}
+
+.billing-btn {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &.blue {
+    background-color: #007bff;
+  }
+
+  &.gray {
+    background-color: #6c757d;
+  }
+
+  &.yellow {
+    background-color: #ffc107;
+    color: #212529;
+  }
+
+  &.red {
+    background-color: #dc3545;
+  }
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
 .forms-homepage-image {
   width: 100%;
   height: 100%;
