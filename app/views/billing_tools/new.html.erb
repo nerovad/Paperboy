@@ -1,0 +1,33 @@
+<div class="form-header">
+  <h1>Billing Tools</h1>
+</div>
+
+<div class="form-wrapper">
+  <%= form_with url: move_to_production_billing_tools_path, method: :post, local: true do |form| %>
+    <div class="form-group">
+      <%= label_tag :s_date, "Start Date" %>
+      <%= date_field_tag :s_date, @sDate, class: "form-control" %>
+    </div>
+
+    <div class="form-group">
+      <%= label_tag :e_date, "End Date" %>
+      <%= date_field_tag :e_date, @eDate, class: "form-control" %>
+    </div>
+
+    <%= submit_tag "Move to Production", class: "btn btn-primary" %>
+  <% end %>
+
+  <%= form_with url: run_monthly_billing_billing_tools_path, method: :post, local: true do |form| %>
+    <%= hidden_field_tag :s_date, @sDate %>
+    <%= hidden_field_tag :e_date, @eDate %>
+    <%= submit_tag "Run Monthly Billing", class: "btn btn-secondary mt-2" %>
+  <% end %>
+
+  <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true do |form| %>
+    <%= submit_tag "Backup Staging", class: "btn btn-warning mt-2" %>
+  <% end %>
+
+  <%= form_with url: backup_production_billing_tools_path, method: :post, local: true do |form| %>
+    <%= submit_tag "Backup Production", class: "btn btn-danger mt-2" %>
+  <% end %>
+</div>

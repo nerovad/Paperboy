@@ -17,6 +17,16 @@ Rails.application.routes.draw do
     end
   end
 
+  # config/routes.rb
+resources :billing_tools, only: [:new, :create] do
+  collection do
+    post :move_to_production
+    post :run_monthly_billing
+    post :backup_staging
+    post :backup_production
+  end
+end
+
     get "/lookups/divisions", to: "lookups#divisions"
     get "/lookups/departments", to: "lookups#departments"
     get "/lookups/units", to: "lookups#units"

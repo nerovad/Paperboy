@@ -3,3 +3,4 @@
 //= link application.css
 //= link application.js
 //= link_tree ../../javascript/controllers .js
+//= link form_navigation.js
