@@ -23,95 +23,45 @@
         <% end %>
 
         <!-- Login Button (over image) -->
-        <% unless session[:user] %>
-          <button id="login-btn" class="login-button-over-image">Login</button>
-        <% else %>
-          <div class="profile-dropdown" id="profile-dropdown">
-          <button id="profile-toggle" class="profile-icon">
-            <%= session[:user]["first_name"] %>
-            <% if inbox_count > 0 %>
-              <span class="inbox-badge"><%= inbox_count %></span>
-            <% end %>
-          </button>
-          <div class="dropdown-content" id="dropdown-content">
-           <%= link_to "Inbox Queue", parking_lot_submissions_path %>
-            <%= button_to "Logout", logout_path, method: :delete, class: "logout-btn" %>
-          </div>
-        </div>
-        <% end %>
+       <% unless session[:user] %>
+  <div data-controller="login-modal">
+    <button class="login-button-over-image"
+            data-login-modal-target="loginBtn">
+      Login
+    </button>
 
-        <!-- Login Modal -->
-       <div id="login-modal" class="modal">
-          <div class="modal-content">
-            <span id="close-modal" class="close">&times;</span>
-            <h2>Login</h2>
-            <form id="login-form">
-              <input type="text" name="login" placeholder="Employee ID or Email" required>
-              <button type="submit">Log in</button>
-            </form>
-          </div>
-        </div>
- 
+    <div id="login-modal"
+         class="modal"
+         data-login-modal-target="modal">
+      <div class="modal-content">
+        <span class="close" data-login-modal-target="closeBtn">&times;</span>
+        <h2>Login</h2>
+        <form data-login-modal-target="form">
+          <input type="text" name="login" placeholder="Employee ID or Email" required>
+          <button type="submit">Log in</button>
+        </form>
       </div>
     </div>
   </div>
+<% else %>
+  <div class="profile-dropdown" data-controller="profile-dropdown">
+  <button id="profile-toggle"
+          class="profile-icon"
+          data-action="click->profile-dropdown#toggle">
+    <%= session[:user]["first_name"] %>
+    <% if inbox_count > 0 %>
+      <span class="inbox-badge"><%= inbox_count %></span>
+    <% end %>
+  </button>
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    // Login modal logic
-    const loginBtn = document.getElementById("login-btn");
-    const modal = document.getElementById("login-modal");
-    const closeModal = document.getElementById("close-modal");
-
-    if (loginBtn && modal) {
-      loginBtn.addEventListener("click", () => modal.style.display = "block");
-    }
-
-    if (closeModal && modal) {
-      closeModal.addEventListener("click", () => modal.style.display = "none");
-    }
-
-    document.getElementById("login-form")?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const login = e.target.login.value;
-      const res = await fetch("/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({ login })
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        location.reload();
-      } else {
-        alert("Login failed.");
-      }
-    });
-
-    // Profile dropdown toggle
-    const profileToggle = document.getElementById("profile-toggle");
-    const dropdown = document.getElementById("dropdown-content");
-
-    if (profileToggle && dropdown) {
-      profileToggle.addEventListener("click", (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle("show");
-      });
-
-      document.addEventListener("click", () => {
-        dropdown.classList.remove("show");
-      });
-
-      dropdown.addEventListener("click", (e) => {
-        e.stopPropagation();
-      });
-    }
-  });
-</script>
-<!-- Choices.js Script -->
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+  <div class="dropdown-content"
+       data-profile-dropdown-target="dropdown">
+    <%= link_to "Inbox Queue", parking_lot_submissions_path %>
+    <%= button_to "Logout", logout_path, method: :delete, class: "logout-btn" %>
+  </div>
+</div>
+<% end %>
+      </div>
+    </div>
 </body> 
 </html>

@@ -75,6 +75,8 @@ html, body {
 
 .login-button-over-image {
   position: absolute;
+  z-index: 9999; // bump to top for testing
+  background-color: red; // temp debug
   top: 20px;
   right: 20px;
   background-color: #4caf50;
@@ -244,18 +246,6 @@ input.form-control {
   .nav-link.active {
     background-color: $primary-color;
   }
-}
-.login-button-over-image {
-  position: absolute;
-  top: 20px;
-  right: 30px;
-  z-index: 10;
-  padding: 10px 20px;
-  background-color: #00476b;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
 }
 
 .modal {
