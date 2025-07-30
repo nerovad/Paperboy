@@ -1,100 +1,114 @@
-<turbo-frame id="main-content">
+<div id="main-content">
   <div class="form-header">
     <h1>Probation Transfer Request</h1>
   </div>
 
   <div class="form-wrapper">
-    <%= form_with model: @probation_transfer_request, local: true, data: { controller: "form-navigation", form_navigation_target: "submitButton" } do |form| %>
-      <% @form_pages.each_with_index do |page, page_index| %>
-        <div class="form-page" style="<%= page_index == 0 ? '' : 'display:none;' %>">
-          <h2><%= page[:title] %></h2>
+  <%= form_with model: @probation_transfer_request, local: true do |form| %> 
 
-          <% if page[:title] == "Agency Info" %>
-            <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
-              <div class="form-group">
-                <%= form.label :agency, "Agency" %>
-                <%= form.select :agency,
-                      options_for_select(@agency_options, @prefill_data[:agency]),
-                      {},
-                      class: "form-control",
-                      id: "agency-select",
-                      data: {
-                        gsabss_selects_target: "agency",
-                        action: "change->gsabss-selects#loadDivisions"
-                      } %>
-              </div>
-
-              <div class="form-group">
-                <%= form.label :division, "Division" %>
-                <%= form.select :division,
-                      options_for_select(@division_options, @prefill_data[:division]),
-                      {},
-                      class: "form-control",
-                      id: "division-select",
-                      data: {
-                        gsabss_selects_target: "division",
-                        action: "change->gsabss-selects#loadDepartments"
-                      } %>
-              </div>
-
-              <div class="form-group">
-                <%= form.label :department, "Department" %>
-                <%= form.select :department,
-                      options_for_select(@department_options, @prefill_data[:department]),
-                      {},
-                      class: "form-control",
-                      id: "department-select",
-                      data: {
-                        gsabss_selects_target: "department",
-                        action: "change->gsabss-selects#loadUnits"
-                      } %>
-              </div>
-
-              <div class="form-group">
-                <%= form.label :unit, "Unit" %>
-                <%= form.select :unit,
-                      options_for_select(@unit_options, @prefill_data[:unit]),
-                      {},
-                      class: "form-control",
-                      id: "unit-select",
-                      data: {
-                        gsabss_selects_target: "unit"
-                      } %>
-              </div>
-            </div>
-          <% else %>
-            <div class="form-row d-flex flex-wrap">
-              <% page[:fields]&.each do |field| %>
-                <div class="form-group flex-fill" style="min-width: 200px;">
-                  <%= form.label field[:name], field[:label] %>
-
-                  <% case field[:type] %>
-                  <% when 'select' %>
-                    <%= form.select field[:name],
-                          options_for_select(field[:options], @prefill_data[field[:name]]),
-                          {},
-                          class: "form-control" %>
-
-                  <% when 'multi-select' %>
-                    <%= form.select field[:name],
-                          options_for_select(field[:options], @prefill_data[field[:name]]),
-                          {},
-                          multiple: true,
-                          class: "form-control choices-multiselect",
-                          id: "#{field[:name]}_select" %>
-
-                  <% else %>
-                    <%= form.text_field field[:name],
-                          value: @prefill_data[field[:name]],
-                          required: field[:required],
-                          class: "form-control" %>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
-          <% end %>
+      <!-- Page 1: Employee Info -->
+      <div class="form-page" style="display: block;">
+        <h2>Employee Info</h2>
+        <div class="form-row d-flex flex-wrap">
+          <div class="form-group flex-fill">
+            <%= form.label :employee_id, "Employee ID" %>
+            <%= form.text_field :employee_id, value: @prefill_data[:employee_id], class: "form-control" %>
+          </div>
+          <div class="form-group flex-fill">
+            <%= form.label :name, "Name" %>
+            <%= form.text_field :name, value: @prefill_data[:name], class: "form-control" %>
+          </div>
+          <div class="form-group flex-fill">
+            <%= form.label :phone, "Phone" %>
+            <%= form.text_field :phone, value: @prefill_data[:phone], class: "form-control" %>
+          </div>
+          <div class="form-group flex-fill">
+            <%= form.label :email, "Email" %>
+            <%= form.text_field :email, value: @prefill_data[:email], class: "form-control" %>
+          </div>
         </div>
-      <% end %>
+      </div>
+
+      <!-- Page 2: Agency Info -->
+      <div class="form-page" style="display: none;">
+        <h2>Agency Info</h2>
+        <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
+          <div class="form-group">
+            <%= form.label :agency, "Agency" %>
+            <%= form.select :agency,
+              options_for_select(@agency_options, @prefill_data[:agency]),
+              {},
+              class: "form-control",
+              id: "agency-select",
+              data: {
+                gsabss_selects_target: "agency",
+                action: "change->gsabss-selects#loadDivisions"
+              } %>
+          </div>
+
+          <div class="form-group">
+            <%= form.label :division, "Division" %>
+            <%= form.select :division,
+              options_for_select(@division_options, @prefill_data[:division]),
+              {},
+              class: "form-control",
+              id: "division-select",
+              data: {
+                gsabss_selects_target: "division",
+                action: "change->gsabss-selects#loadDepartments"
+              } %>
+          </div>
+
+          <div class="form-group">
+            <%= form.label :department, "Department" %>
+            <%= form.select :department,
+              options_for_select(@department_options, @prefill_data[:department]),
+              {},
+              class: "form-control",
+              id: "department-select",
+              data: {
+                gsabss_selects_target: "department",
+                action: "change->gsabss-selects#loadUnits"
+              } %>
+          </div>
+
+          <div class="form-group">
+            <%= form.label :unit, "Unit" %>
+            <%= form.select :unit,
+              options_for_select(@unit_options, @prefill_data[:unit]),
+              {},
+              class: "form-control",
+              id: "unit-select",
+              data: {
+                gsabss_selects_target: "unit"
+              } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 3: Transfer Request Details -->
+      <div class="form-page" style="display: none;">
+        <h2>Transfer Request Details</h2>
+        <div class="form-row d-flex flex-wrap">
+          <div class="form-group flex-fill">
+            <%= form.label :work_location, "Work Location" %>
+            <%= form.text_field :work_location, class: "form-control" %>
+          </div>
+          <div class="form-group flex-fill">
+            <%= form.label :current_assignment_date, "Current Assignment Date" %>
+            <%= form.text_field :current_assignment_date, class: "form-control" %>
+          </div>
+          <div class="form-group flex-fill">
+            <%= form.label :desired_transfer_destination, "Desired Transfer Destination" %>
+            <%= form.select :desired_transfer_destination,
+              options_for_select(["East County", "West County", "Downtown", "Remote", "Other"]),
+              {},
+              multiple: true,
+              class: "form-control choices-multiselect",
+              id: "transfer_destination_select" %>
+          </div>
+        </div>
+      </div>
 
       <!-- Navigation Buttons -->
       <div class="navigation-buttons d-flex justify-content-between">
@@ -109,10 +123,10 @@
 
       <!-- Progress Dots -->
       <div class="progress-dots">
-        <% @form_pages.each_with_index do |_, index| %>
+        <% 3.times do |index| %>
           <div class="dot <%= 'active' if index == 0 %>"></div>
         <% end %>
       </div>
     <% end %>
   </div>
-</turbo-frame>
+  </div>
