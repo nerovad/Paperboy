@@ -50,29 +50,17 @@ class ProbationTransferRequestsController < ApplicationController
     redirect_to probation_transfer_requests_url, notice: "Transfer request deleted."
   end
 
-  private
+    private
 
-  def set_probation_transfer_request
-    @probation_transfer_request = ProbationTransferRequest.find(params[:id])
-  end
-
-  def probation_transfer_request_params
-    params.require(:probation_transfer_request).permit(
-      :employee_id,
-      :name,
-      :email,
-      :phone,
-      :agency,
-      :division,
-      :department,
-      :unit,
-      :work_location,
-      :current_assignment_date,
-      :desired_transfer_destination,
-      :status
-    )
-  end
-
+    def probation_transfer_request_params
+      params.require(:probation_transfer_request).permit(
+        :employee_id, :name, :phone, :email,
+        :agency, :division, :department, :unit,
+        :work_location, :current_assignment_date,
+        :other_transfer_destination,
+        desired_transfer_destination: []
+      )
+    end
   def prepare_new_transfer_form
     employee_id = session[:user]["employee_id"]
     @employee = Employee.find_by(EmployeeID: employee_id)

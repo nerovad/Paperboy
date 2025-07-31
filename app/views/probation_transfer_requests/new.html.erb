@@ -98,15 +98,54 @@
             <%= form.label :current_assignment_date, "Current Assignment Date" %>
             <%= form.text_field :current_assignment_date, class: "form-control" %>
           </div>
-          <div class="form-group flex-fill">
+        <div data-controller="probation-transfer-request">
+          <div class="form-group">
             <%= form.label :desired_transfer_destination, "Desired Transfer Destination" %>
-            <%= form.select :desired_transfer_destination,
-              options_for_select(["East County", "West County", "Downtown", "Remote", "Other"]),
-              {},
-              multiple: true,
-              class: "form-control choices-multiselect",
-              id: "transfer_destination_select" %>
-          </div>
+            <% destinations = [
+            # Adult
+            "Adult Investigations (AI-I, II, III)",
+            "East County Field Services (ECFS)",
+            "East County Probation/Post-Release (ECPPR)",
+            "Oxnard Field Services (OFS I/II)",
+            "Oxnard Probation/Post-Release (OPPR I/II)",
+            "Pretrial Risk Assessment and Monitoring Services (PRAMS)",
+            "Specialized Services Unit (SSU)",
+            "Ventura Field Services (VFS)",
+            "Ventura Probation/Post-Release (VPPR)",
+            "Work Release (WR)",
+            # Juvenile
+            "Intensive Supervision Services - Juvenile (ISSJ)",
+            "Juvenile Facilities Housing/Operations (JF)",
+            "Juvenile Field Services (JFS)",
+            "Juvenile Intake/Community Confinement (JINT/CC)",
+            "Juvenile Investigations (JINV)",
+            "Juvenile Specialty Programs (JSP)",
+            "Placement Unit (PLAU)",
+            # Support
+            "Force Options Training (FOT)",
+            "Professional Standards Unit (PSU)",
+            "Staff Training Unit (STU)",
+            # Other
+            "Other"
+          ] %>
+
+         <%= form.select :desired_transfer_destination,
+      options_for_select(destinations, @probation_transfer_request&.desired_transfer_destination),
+      {},
+      multiple: true,
+      class: "form-control choices-multiselect",
+      id: "transfer_destination_select",
+      data: { probation_transfer_request_target: "multiSelect" } %>
+      </div>
+
+        <div class="form-group mt-3"
+            data-probation-transfer-request-target="otherGroup"
+            id="other-destination-group"
+            style="display: none;">
+          <%= form.label :other_transfer_destination, "Other:" %>
+          <%= form.text_field :other_transfer_destination, class: "form-control" %>
+        </div>
+      </div>
         </div>
       </div>
 
