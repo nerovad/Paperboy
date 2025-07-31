@@ -77,7 +77,7 @@ end
 
    def approve
   @submission = ParkingLotSubmission.find(params[:id])
-  @submission.update!(status: :manager_approved)
+  @submission.update!(status: 1)
 
   NotifySecurityJob.perform_later(@submission.id)
 
