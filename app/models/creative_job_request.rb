@@ -1,0 +1,2 @@
+class CreativeJobRequest < ApplicationRecord
+end

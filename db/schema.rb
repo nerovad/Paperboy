@@ -10,11 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_21_194017) do
-  create_table "Agency", primary_key: "AgencyID", id: :integer, force: :cascade do |t|
-    t.string "AgencyName", limit: 255, null: false
-  end
-
+ActiveRecord::Schema[8.0].define(version: 2025_07_31_165427) do
   create_table "BdmRateTypes", primary_key: "RateID", id: { type: :integer, limit: 2 }, force: :cascade do |t|
     t.string "Description", limit: 150, null: false
     t.string "UOM", limit: 15, null: false
@@ -30,37 +26,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_21_194017) do
 
   create_table "BusinessUnit", id: :integer, default: 4641, force: :cascade do |t|
     t.varchar "name", limit: 50, null: false
-  end
-
-  create_table "CustomerAccount", id: false, force: :cascade do |t|
-    t.varchar "CUNIT", limit: 4, null: false
-    t.integer "COBJECT", null: false
-    t.varchar "CACTIVITY", limit: 4
-    t.varchar "CFUNCTION", limit: 4
-    t.varchar "CPROGRAM", limit: 10
-    t.varchar "CPHASE", limit: 6
-    t.varchar "CTASK", limit: 4
-  end
-
-  create_table "CustomerAccountWithType", id: false, force: :cascade do |t|
-    t.varchar "CUNIT", limit: 4, null: false
-    t.integer "COBJECT", null: false
-    t.varchar "CACTIVITY", limit: 4
-    t.varchar "CFUNCTION", limit: 4
-    t.varchar "CPROGRAM", limit: 10
-    t.varchar "CPHASE", limit: 6
-    t.varchar "CTASK", limit: 4
-    t.varchar "TYPE", limit: 3
-  end
-
-  create_table "Department", primary_key: "DepartmentID", id: :integer, force: :cascade do |t|
-    t.string "DepartmentName", limit: 255, null: false
-    t.integer "DivisionID"
-  end
-
-  create_table "Division", primary_key: "DivisionID", id: :integer, force: :cascade do |t|
-    t.string "DivisionName", limit: 255, null: false
-    t.integer "AgencyID", null: false
   end
 
   create_table "Employees", primary_key: "EmployeeID", id: :integer, default: nil, force: :cascade do |t|
@@ -92,40 +57,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_21_194017) do
     t.varchar "Year", limit: 4, null: false
     t.date "sDate", null: false
     t.date "eDate", null: false
-  end
-
-  create_table "GL218-FY18", id: false, force: :cascade do |t|
-    t.integer "BFY", limit: 2
-    t.integer "Fiscal_Year", limit: 2
-    t.money "Fund", precision: 19, scale: 4
-    t.string "Dept", limit: 50
-    t.integer "Unit", limit: 2
-    t.integer "AP", limit: 1
-    t.integer "Obj_Revenue", limit: 2
-    t.string "Dept_Object", limit: 50
-    t.string "Dept_Rev_Source", limit: 50
-    t.string "Event_Type", limit: 50
-    t.string "Event_Type_Name", limit: 150
-    t.string "Posting_Code", limit: 50
-    t.string "Posting_Code_Desc", limit: 50
-    t.date "Doc_Record_Date"
-    t.string "Jrnl_Doc_Code", limit: 50
-    t.string "Jrnl_Doc_Dept_Code", limit: 50
-    t.string "Jrnl_Doc_ID", limit: 50
-    t.string "Vendor_Code", limit: 50
-    t.string "Vendor_Invoice_No", limit: 50
-    t.string "Vendor_Invoice_Date", limit: 50
-    t.string "Vendor_Legal_Name", limit: 100
-    t.string "Vendor_Alias_DBA_Name", limit: 100
-    t.string "Accounting_Line_Desc", limit: 100
-    t.money "Expense_Revenue_Amt", precision: 19, scale: 4
-    t.string "Ref_Doc_ID", limit: 50
-    t.string "Activity", limit: 50
-    t.string "Function", limit: 50
-    t.string "Major_Program", limit: 50
-    t.string "Program_Code", limit: 50
-    t.string "Phase_Code", limit: 50
-    t.string "Task", limit: 50
   end
 
   create_table "PlanVsActual", id: false, force: :cascade do |t|
@@ -178,92 +109,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_21_194017) do
     t.float "COST"
   end
 
-  create_table "TC60_Activities", primary_key: ["Agency", "Activity"], force: :cascade do |t|
-    t.string "Agency", limit: 3, null: false
-    t.string "Activity", limit: 4, null: false
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
-  create_table "TC60_Agencies", primary_key: "Agency", id: { type: :string, limit: 3 }, force: :cascade do |t|
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
-  create_table "TC60_Departments", primary_key: ["Agency", "Division", "Department"], force: :cascade do |t|
-    t.string "Agency", limit: 3, null: false
-    t.string "Division", limit: 4, null: false
-    t.string "Department", limit: 4, null: false
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
-  create_table "TC60_Divisions", primary_key: ["Agency", "Division"], force: :cascade do |t|
-    t.string "Agency", limit: 3, null: false
-    t.string "Division", limit: 4, null: false
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
-  create_table "TC60_Employees", primary_key: "EmployeeID", id: :integer, default: nil, force: :cascade do |t|
-    t.string "FirstName", limit: 50, null: false
-    t.string "LastName", limit: 50, null: false
-    t.string "Email", limit: 50, null: false
-    t.string "BU", limit: 4, null: false
-  end
-
-  create_table "TC60_Functions", primary_key: ["Agency", "Function"], force: :cascade do |t|
-    t.string "Agency", limit: 3, null: false
-    t.string "Function", limit: 4, null: false
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
-  create_table "TC60_Functions_and_Funds", primary_key: ["Agency", "Name"], force: :cascade do |t|
-    t.string "Agency", limit: 3, null: false
-    t.string "Name", limit: 4, null: false
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
-  create_table "TC60_Funds", primary_key: ["Agency", "Fund"], force: :cascade do |t|
-    t.string "Agency", limit: 3, null: false
-    t.string "Fund", limit: 4, null: false
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
-  create_table "TC60_Major_Programs", primary_key: ["Agency", "MajorProgram"], force: :cascade do |t|
-    t.string "Agency", limit: 3, null: false
-    t.string "MajorProgram", limit: 10, null: false
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
-  create_table "TC60_Objects", primary_key: "Object", id: :integer, default: nil, force: :cascade do |t|
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
-  create_table "TC60_Phases", primary_key: ["Agency", "Phase"], force: :cascade do |t|
-    t.string "Agency", limit: 3, null: false
-    t.string "Phase", limit: 6, null: false
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
-  create_table "TC60_Programs", primary_key: ["Agency", "Program"], force: :cascade do |t|
-    t.string "Agency", limit: 3, null: false
-    t.string "Program", limit: 10, null: false
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
-  create_table "TC60_Revenues", primary_key: "Object", id: :integer, default: nil, force: :cascade do |t|
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
   create_table "TC60_Services", id: false, force: :cascade do |t|
     t.varchar "YEAR", limit: 4, null: false
     t.varchar "TYPE", limit: 3, null: false
@@ -277,27 +122,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_21_194017) do
     t.varchar "STASK", limit: 4, null: false
   end
 
-  create_table "TC60_Tasks", primary_key: ["Agency", "Task"], force: :cascade do |t|
-    t.string "Agency", limit: 3, null: false
-    t.string "Task", limit: 4, null: false
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
-  end
-
   create_table "TC60_Types", primary_key: "TYPE", id: { type: :varchar, limit: 3 }, force: :cascade do |t|
     t.boolean "ACTIVE", null: false
     t.varchar "NAME", limit: 30
     t.varchar "funding_type", limit: 10, default: "monthly", null: false
     t.check_constraint "[funding_type]='both' OR [funding_type]='encumbered' OR [funding_type]='monthly'", name: "CK_TC60_Types_funding_type"
-  end
-
-  create_table "TC60_Units", primary_key: ["Agency", "Division", "Department", "Unit"], force: :cascade do |t|
-    t.string "Agency", limit: 3, null: false
-    t.string "Division", limit: 4, null: false
-    t.string "Department", limit: 4, null: false
-    t.string "Unit", limit: 4, null: false
-    t.string "ShortName", limit: 50, null: false
-    t.string "LongName", limit: 100, null: false
   end
 
   create_table "_stgBdmRateTypes", id: false, force: :cascade do |t|
@@ -345,6 +174,85 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_21_194017) do
     t.float "COST"
   end
 
+  create_table "activities", primary_key: ["agency_id", "activity_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.string "activity_id", limit: 4, null: false
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "agencies", primary_key: "agency_id", id: { type: :string, limit: 3 }, force: :cascade do |t|
+    t.string "name", limit: 100, null: false
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "creative_job_requests", force: :cascade do |t|
+    t.string "job_id"
+    t.string "job_title"
+    t.string "job_type"
+    t.string "job_agency"
+    t.string "job_division"
+    t.string "job_department"
+    t.string "job_unit"
+    t.string "asset_type"
+    t.string "employee_name"
+    t.string "location"
+    t.date "date"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "department_funds", primary_key: ["agency_id", "fund_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.string "fund_id", limit: 4, null: false
+  end
+
+  create_table "departments", primary_key: ["agency_id", "division_id", "department_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.string "division_id", limit: 4, null: false
+    t.string "department_id", limit: 4, null: false
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "divisions", primary_key: ["agency_id", "division_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.string "division_id", limit: 4, null: false
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "functions", primary_key: ["agency_id", "function_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.string "function_id", limit: 4, null: false
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "funds", primary_key: "fund_id", id: { type: :string, limit: 4 }, force: :cascade do |t|
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+    t.string "fund_class", limit: 50, null: false
+    t.string "fund_category", limit: 50, null: false
+    t.string "fund_type", limit: 50, null: false
+    t.string "fund_group", limit: 50, null: false
+    t.string "cafr_type", limit: 50, null: false
+  end
+
+  create_table "major_programs", primary_key: ["agency_id", "major_program_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.string "major_program_id", limit: 10, null: false
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "objects", primary_key: "object_id", id: { type: :integer, limit: 2, default: nil }, force: :cascade do |t|
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
   create_table "parking_lot_submissions", force: :cascade do |t|
     t.string "name"
     t.string "phone"
@@ -374,6 +282,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_21_194017) do
     t.index ["parking_lot_submission_id"], name: "index_parking_lot_vehicles_on_parking_lot_submission_id"
   end
 
+  create_table "phases", primary_key: ["agency_id", "phase_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.string "phase_id", limit: 6, null: false
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
   create_table "probation_transfer_requests", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
@@ -391,20 +306,51 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_21_194017) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "programs", primary_key: ["agency_id", "program_id", "major_program_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.string "program_id", limit: 10, null: false
+    t.string "major_program_id", limit: 10, null: false
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "revenue_sources", primary_key: ["agency_id", "revenue_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.string "revenue_id", limit: 4, null: false
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "sub_objects", primary_key: ["agency_id", "object_id", "sub_object_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.integer "object_id", limit: 2, null: false
+    t.string "sub_object_id", limit: 4, null: false
+  end
+
+  create_table "sub_units", primary_key: ["agency_id", "unit_id", "subunit_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.string "unit_id", limit: 4, null: false
+    t.string "subunit_id", limit: 4, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "tasks", primary_key: ["agency_id", "task_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.string "task_id", limit: 4, null: false
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "units", primary_key: ["agency_id", "division_id", "department_id", "unit_id"], force: :cascade do |t|
+    t.string "agency_id", limit: 3, null: false
+    t.string "division_id", limit: 4, null: false
+    t.string "department_id", limit: 4, null: false
+    t.string "unit_id", limit: 4, null: false
+    t.string "long_name", limit: 100, null: false
+    t.string "short_name", limit: 50, null: false
+  end
+
   add_foreign_key "BdmRates", "BdmRateTypes", column: "RateID", primary_key: "RateID", name: "FK_BdmRates_RateID"
-  add_foreign_key "Department", "Division", column: "DivisionID", primary_key: "DivisionID", name: "FK__Departmen__Divis__54968AE5"
-  add_foreign_key "Division", "Agency", column: "AgencyID", primary_key: "AgencyID", name: "FK__Division__Agency__51BA1E3A"
   add_foreign_key "TC60", "TC60_Types", column: "TYPE", primary_key: "TYPE", name: "FK_TC60_TYPE_TC60_TYPES"
-  add_foreign_key "TC60_Activities", "TC60_Agencies", column: "Agency", primary_key: "Agency", name: "fk_tc60_activities_tc60_agencies"
-  add_foreign_key "TC60_Departments", "TC60_Divisions", column: ["Agency", "Division"], primary_key: ["Agency", "Division"], name: "FK_TC60_Departments_TC60_Divisions"
-  add_foreign_key "TC60_Divisions", "TC60_Agencies", column: "Agency", primary_key: "Agency", name: "FK_TC60_Divisions_TC60_Agencies"
-  add_foreign_key "TC60_Functions", "TC60_Agencies", column: "Agency", primary_key: "Agency", name: "fk_tc60_functions_tc60_agencies"
-  add_foreign_key "TC60_Functions_and_Funds", "TC60_Agencies", column: "Agency", primary_key: "Agency", name: "fk_tc60_functions_and_funds_tc60_agencies"
-  add_foreign_key "TC60_Funds", "TC60_Agencies", column: "Agency", primary_key: "Agency", name: "fk_tc60_funds_tc60_agencies"
-  add_foreign_key "TC60_Major_Programs", "TC60_Agencies", column: "Agency", primary_key: "Agency", name: "FK_TC60_MajorProgram_TC60_Agencies"
-  add_foreign_key "TC60_Phases", "TC60_Agencies", column: "Agency", primary_key: "Agency", name: "fk_tc60_phases_tc60_agencies"
-  add_foreign_key "TC60_Programs", "TC60_Agencies", column: "Agency", primary_key: "Agency", name: "fk_tc60_programs_tc60_agencies"
-  add_foreign_key "TC60_Tasks", "TC60_Agencies", column: "Agency", primary_key: "Agency", name: "fk_tc60_tasks_tc60_agencies"
-  add_foreign_key "TC60_Units", "TC60_Departments", column: ["Agency", "Division", "Department"], primary_key: ["Agency", "Division", "Department"], name: "FK_TC60_Units_TC60_Departments"
   add_foreign_key "parking_lot_vehicles", "parking_lot_submissions"
 end

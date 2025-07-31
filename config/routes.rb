@@ -27,6 +27,8 @@ resources :billing_tools, only: [:new, :create] do
   end
 end
 
+resources :creative_job_requests, only: [:new, :create]
+
     get "/lookups/divisions", to: "lookups#divisions"
     get "/lookups/departments", to: "lookups#departments"
     get "/lookups/units", to: "lookups#units"

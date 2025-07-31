@@ -1,0 +1,29 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  job_id: MyString
+  job_title: MyString
+  job_type: MyString
+  job_agency: MyString
+  job_division: MyString
+  job_department: MyString
+  job_unit: MyString
+  asset_type: MyString
+  employee_name: MyString
+  location: MyString
+  date: 2025-07-31
+  description: MyText
+
+two:
+  job_id: MyString
+  job_title: MyString
+  job_type: MyString
+  job_agency: MyString
+  job_division: MyString
+  job_department: MyString
+  job_unit: MyString
+  asset_type: MyString
+  employee_name: MyString
+  location: MyString
+  date: 2025-07-31
+  description: MyText
