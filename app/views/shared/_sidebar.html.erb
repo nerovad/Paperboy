@@ -6,6 +6,8 @@
     <%= link_to "Probation Agency Transfer Request", new_probation_transfer_request_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
     <%= link_to "Billing Tools", new_billing_tool_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
     <%= link_to "Creative Job Request", new_creative_job_request_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
+    <%= link_to "RM-75 Injury/Illness Report", new_rm75_submission_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
+    <%= link_to "RM-75i Incident Investigation", new_rm75i_submission_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
   <% else %>
     <p>Please log in to access forms.</p>
   <% end %>

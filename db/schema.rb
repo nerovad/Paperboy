@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_31_165427) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_01_162158) do
   create_table "BdmRateTypes", primary_key: "RateID", id: { type: :integer, limit: 2 }, force: :cascade do |t|
     t.string "Description", limit: 150, null: false
     t.string "UOM", limit: 15, null: false
@@ -319,6 +319,123 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_31_165427) do
     t.string "revenue_id", limit: 4, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "rm75_submissions", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "report_type"
+    t.string "bloodborne_or_covid"
+    t.string "employee_name"
+    t.string "agency"
+    t.string "department"
+    t.string "job_title"
+    t.string "work_hours"
+    t.string "hours_per_week"
+    t.string "supervisor_name"
+    t.string "supervisor_title"
+    t.string "supervisor_phone"
+    t.string "supervisor_email"
+    t.string "form_completed_by"
+    t.string "witness_name"
+    t.string "witness_phone"
+    t.date "date_of_injury"
+    t.string "time_of_injury"
+    t.date "date_employer_knew"
+    t.date "date_dwc1_given"
+    t.string "dwc1_given_by"
+    t.date "date_last_worked"
+    t.date "date_returned_to_work"
+    t.string "missed_work_day"
+    t.string "still_off_work"
+    t.text "injury_description"
+    t.string "incident_location"
+    t.string "on_employer_premises"
+    t.string "department_of_event"
+    t.string "equipment_used"
+    t.string "activity_at_time"
+    t.text "how_it_happened"
+    t.string "physician_name"
+    t.string "physician_address"
+    t.string "physician_phone"
+    t.string "hospital_name"
+    t.string "hospital_address"
+    t.string "hospital_phone"
+    t.string "hospitalized_overnight"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "rm75i_submissions", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "report_type"
+    t.string "employee_name"
+    t.string "department"
+    t.string "job_title"
+    t.string "division"
+    t.string "work_hours"
+    t.string "hours_per_week"
+    t.string "supervisor_name"
+    t.string "supervisor_title"
+    t.string "supervisor_phone"
+    t.string "supervisor_email"
+    t.string "form_completed_by"
+    t.date "date_of_injury"
+    t.string "time_occurred"
+    t.string "incident_location"
+    t.text "injury_description"
+    t.text "how_it_happened"
+    t.string "physician_name"
+    t.string "physician_address"
+    t.string "physician_phone"
+    t.string "hospital_name"
+    t.string "hospital_address"
+    t.string "hospital_phone"
+    t.string "hospitalized_overnight"
+    t.string "agency"
+    t.string "bloodborne_or_covid"
+    t.string "source_blood_tested"
+    t.string "mr_number_source"
+    t.string "mr_number_employee"
+    t.string "covid_status"
+    t.date "date_investigation_began"
+    t.date "date_investigation_complete"
+    t.string "investigator_name"
+    t.string "investigator_title"
+    t.string "investigator_phone"
+    t.text "nature_of_incident"
+    t.text "cause_of_incident"
+    t.text "root_cause"
+    t.string "future_severity"
+    t.string "recurrence_probability"
+    t.string "unsafe_corrected_immediately"
+    t.string "checklist_or_training_updated"
+    t.date "actual_correction_date"
+    t.date "targeted_correction_date"
+    t.string "correction_responsible"
+    t.string "correction_title"
+    t.string "correction_dept"
+    t.string "correction_phone"
+    t.string "injury_code"
+    t.string "osha_reportable"
+    t.string "osha_recordable"
+    t.text "no_correction_notes"
+    t.string "job_classification"
+    t.string "compensation"
+    t.string "home_phone"
+    t.date "date_of_hire"
+    t.date "dob"
+    t.string "email"
+    t.string "work_phone"
+    t.string "cell_phone"
+    t.string "city"
+    t.string "state"
+    t.string "zip"
+    t.string "ssn"
+    t.string "home_address"
+    t.string "ethnicity"
+    t.string "unit_number"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "sub_objects", primary_key: ["agency_id", "object_id", "sub_object_id"], force: :cascade do |t|

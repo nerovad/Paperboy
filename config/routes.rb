@@ -29,6 +29,10 @@ end
 
 resources :creative_job_requests, only: [:new, :create]
 
+resources :rm75_submissions, only: [:new, :create]
+
+resources :rm75i_submissions, only: [:new, :create]
+
     get "/lookups/divisions", to: "lookups#divisions"
     get "/lookups/departments", to: "lookups#departments"
     get "/lookups/units", to: "lookups#units"
