@@ -10,6 +10,7 @@ class BillingToolsController < ApplicationController
   end
 
   def run_monthly_billing
+    puts ">>> Hit run_monthly_billing controller action"
     run_stored_proc("MonthlyBilling", date_params)
     redirect_to new_billing_tool_path, notice: "Monthly billing complete"
   end

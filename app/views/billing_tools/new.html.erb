@@ -2,38 +2,31 @@
   <h1>Billing Tools</h1>
 </div>
 
-<div class="form-wrapper">
+<div class="form-wrapper" data-controller="billing-tools">
   <!-- Start/End Date Row -->
-  <%= form_with url: "#", local: true, html: { id: "billing-date-form" } do %>
-    <div class="form-row">
-      <div class="form-group">
-        <%= label_tag :s_date, "Start Date" %>
-        <%= date_field_tag :s_date, @sDate, class: "form-control" %>
-      </div>
-
-      <div class="form-group">
-        <%= label_tag :e_date, "End Date" %>
-        <%= date_field_tag :e_date, @eDate, class: "form-control" %>
-      </div>
+  <div class="form-row">
+    <div class="form-group">
+      <%= label_tag :s_date, "Start Date" %>
+      <%= date_field_tag :s_date, @sDate, class: "form-control", data: { billing_tools_target: "startDate" } %>
     </div>
-  <% end %>
 
-  <!-- Buttons Row - Match Parking Lot styling -->
+    <div class="form-group">
+      <%= label_tag :e_date, "End Date" %>
+      <%= date_field_tag :e_date, @eDate, class: "form-control", data: { billing_tools_target: "endDate" } %>
+    </div>
+  </div>
+
+  <!-- Buttons Row -->
   <div class="navigation-buttons" style="gap: 10px; flex-wrap: wrap;">
-    <%= form_with url: move_to_production_billing_tools_path, method: :post, local: true do %>
-      <%= hidden_field_tag :s_date, @sDate %>
-      <%= hidden_field_tag :e_date, @eDate %>
-      <%= submit_tag "Move to Production"%>
-    <% end %>
-
-    <%= form_with url: run_monthly_billing_billing_tools_path, method: :post, local: true do %>
-      <%= hidden_field_tag :s_date, @sDate %>
-      <%= hidden_field_tag :e_date, @eDate %>
-      <%= submit_tag "Run Monthly Billing"%>
-    <% end %>
-
     <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true do %>
       <%= submit_tag "Backup Staging" %>
+    <% end %>
+
+    <%= form_with url: run_monthly_billing_billing_tools_path, method: :post, local: true,
+                  html: { data: { billing_tools_target: "form" } } do %>
+      <%= hidden_field_tag :s_date %>
+      <%= hidden_field_tag :e_date %>
+      <%= submit_tag "Run Monthly Billing" %>
     <% end %>
 
     <%= form_with url: backup_production_billing_tools_path, method: :post, local: true do %>
