@@ -627,6 +627,39 @@ input.form-control {
     opacity: 0.9;
   }
 }
+//----------------------------------- Form Submit Success -------//
+.form-success-page {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 2rem;
+  min-height: 70vh;
+
+  .form-success-box {
+    max-width: 600px;
+    width: 100%;
+    background: $form-bg;
+    border: 2px solid $primary-color;
+    border-radius: 12px;
+    padding: 2rem 3rem;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    animation: slideFadeIn 0.5s ease-out;
+  }
+}
+
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 
 .forms-homepage-image {
   width: 100%;

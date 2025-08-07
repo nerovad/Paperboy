@@ -59,7 +59,7 @@ end
       @parking_lot_submission.supervisor_id = supervisor_id
 
       if @parking_lot_submission.save
-        redirect_to parking_lot_submissions_path, notice: "Submitted!"
+        redirect_to form_success_path, allow_other_host: false, status: :see_other
       else
         render :new
       end

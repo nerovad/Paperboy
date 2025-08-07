@@ -29,11 +29,15 @@ end
 
 resources :creative_job_requests, only: [:new, :create]
 
-resources :rm75_submissions, only: [:new, :create]
+resources :rm75_forms, only: [:new, :create]
 
-resources :rm75i_submissions, only: [:new, :create]
+resources :rm75i_forms, only: [:new, :create]
+
+resources :loa_forms, only: [:new, :create]
 
     get "/lookups/divisions", to: "lookups#divisions"
     get "/lookups/departments", to: "lookups#departments"
     get "/lookups/units", to: "lookups#units"
+
+    get "/form_success", to: "shared#form_success", as: :form_success
 end
