@@ -1,20 +1,22 @@
+<!-- app/views/rm75_forms/new.html.erb -->
 <div class="form-header">
   <h1>RM-75: Report of Occupational Injury or Illness</h1>
 </div>
 
 <div class="form-wrapper">
   <%= form_with model: @rm75_form, local: true do |form| %>
-
-      <!-- Hidden field for event_id -->
-  <%= form.hidden_field :event_id, value: params[:event_id] %>
+    <!-- Event link -->
+    <%= hidden_field_tag :event_id, params[:event_id] %>
 
     <!-- Page 1: Injured Employee Info -->
     <div class="form-page">
       <h2>Injured Employee Info</h2>
       <div class="form-row d-flex flex-wrap">
+
+        <!-- UNBOUND employee_id (top-level param for Event) -->
         <div class="form-group flex-fill">
-          <%= form.label :employee_id, "Employee ID" %>
-          <%= form.text_field :employee_id, class: "form-control" %>
+          <%= label_tag :employee_id, "Employee ID" %>
+          <%= text_field_tag :employee_id, @prefill_data[:employee_id], class: "form-control", readonly: true %>
         </div>
 
         <div class="form-group flex-fill">
@@ -23,23 +25,8 @@
         </div>
 
         <div class="form-group flex-fill">
-          <%= form.label :bloodborne_or_covid, "Bloodborne Pathogen or COVID-19?" %>
-          <%= form.select :bloodborne_or_covid, options_for_select(["Yes", "No"]), {}, class: "form-control" %>
-        </div>
-
-        <div class="form-group flex-fill">
-          <%= form.label :employee_name, "Employee Name" %>
-          <%= form.text_field :employee_name, class: "form-control" %>
-        </div>
-
-        <div class="form-group flex-fill">
-          <%= form.label :agency, "Agency" %>
-          <%= form.text_field :agency, class: "form-control" %>
-        </div>
-
-        <div class="form-group flex-fill">
-          <%= form.label :department, "Department" %>
-          <%= form.text_field :department, class: "form-control" %>
+          <%= form.label :bloodborne_pathogen, "Bloodborne Pathogen Exposure?" %>
+          <%= form.select :bloodborne_pathogen, options_for_select([["No", false], ["Yes", true]], false), {}, class: "form-control" %>
         </div>
 
         <div class="form-group flex-fill">
@@ -59,7 +46,45 @@
       </div>
     </div>
 
-    <!-- Page 2: Supervisor and Witness -->
+    <!-- Page 2: Agency Info (UNBOUND – lives in Employees/Lookups) -->
+    <div class="form-page" style="display:none;">
+      <h2>Agency Info</h2>
+      <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
+        <div class="form-group">
+          <%= label_tag :agency, "Agency" %>
+          <%= select_tag :agency,
+              options_for_select(@agency_options, @prefill_data[:agency]),
+              class: "form-control", id: "agency-select",
+              data: { gsabss_selects_target: "agency", action: "change->gsabss-selects#loadDivisions" } %>
+        </div>
+
+        <div class="form-group">
+          <%= label_tag :division, "Division" %>
+          <%= select_tag :division,
+              options_for_select(@division_options, @prefill_data[:division]),
+              class: "form-control", id: "division-select",
+              data: { gsabss_selects_target: "division", action: "change->gsabss-selects#loadDepartments" } %>
+        </div>
+
+        <div class="form-group">
+          <%= label_tag :department, "Department" %>
+          <%= select_tag :department,
+              options_for_select(@department_options, @prefill_data[:department]),
+              class: "form-control", id: "department-select",
+              data: { gsabss_selects_target: "department", action: "change->gsabss-selects#loadUnits" } %>
+        </div>
+
+        <div class="form-group">
+          <%= label_tag :unit, "Unit" %>
+          <%= select_tag :unit,
+              options_for_select(@unit_options, @prefill_data[:unit]),
+              class: "form-control", id: "unit-select",
+              data: { gsabss_selects_target: "unit" } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 3: Supervisor and Witness -->
     <div class="form-page" style="display:none;">
       <h2>Supervisor and Witness Info</h2>
       <div class="form-row d-flex flex-wrap">
@@ -67,40 +92,36 @@
           <%= form.label :supervisor_name, "Supervisor Name" %>
           <%= form.text_field :supervisor_name, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
           <%= form.label :supervisor_title, "Supervisor Title" %>
           <%= form.text_field :supervisor_title, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
           <%= form.label :supervisor_phone, "Supervisor Phone" %>
           <%= form.telephone_field :supervisor_phone, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
           <%= form.label :supervisor_email, "Supervisor Email" %>
           <%= form.email_field :supervisor_email, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
           <%= form.label :form_completed_by, "Form Completed By" %>
           <%= form.text_field :form_completed_by, class: "form-control" %>
         </div>
 
+        <!-- If you still want witness fields, add them to the rm75_forms table or keep unbound like this: -->
         <div class="form-group flex-fill">
-          <%= form.label :witness_name, "Witness Name (Optional)" %>
-          <%= form.text_field :witness_name, class: "form-control" %>
+          <%= label_tag :witness_name, "Witness Name (Optional)" %>
+          <%= text_field_tag :witness_name, nil, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
-          <%= form.label :witness_phone, "Witness Phone (Optional)" %>
-          <%= form.telephone_field :witness_phone, class: "form-control" %>
+          <%= label_tag :witness_phone, "Witness Phone (Optional)" %>
+          <%= telephone_field_tag :witness_phone, nil, class: "form-control" %>
         </div>
       </div>
     </div>
 
-    <!-- Page 3: Incident Details -->
+    <!-- Page 4: Incident Dates and Status -->
     <div class="form-page" style="display:none;">
       <h2>Incident Dates and Status</h2>
       <div class="form-row d-flex flex-wrap">
@@ -108,50 +129,48 @@
           <%= form.label :date_of_injury, "Date of Injury or Illness" %>
           <%= form.date_field :date_of_injury, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
           <%= form.label :time_of_injury, "Time Injury Occurred" %>
           <%= form.text_field :time_of_injury, class: "form-control" %>
         </div>
 
+        <!-- The next five exist in your old rm75_submissions but not in rm75_forms.
+             Keep as UNBOUND if you still want them on-screen, or add columns. -->
         <div class="form-group flex-fill">
-          <%= form.label :date_employer_knew, "Date Employer Knew" %>
-          <%= form.date_field :date_employer_knew, class: "form-control" %>
+          <%= label_tag :date_employer_knew, "Date Employer Knew" %>
+          <%= date_field_tag :date_employer_knew, nil, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
-          <%= form.label :date_dwc1_given, "Date DWC-1 Given" %>
-          <%= form.date_field :date_dwc1_given, class: "form-control" %>
+          <%= label_tag :date_dwc1_given, "Date DWC-1 Given" %>
+          <%= date_field_tag :date_dwc1_given, nil, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
-          <%= form.label :dwc1_given_by, "Who Gave the DWC-1" %>
-          <%= form.text_field :dwc1_given_by, class: "form-control" %>
+          <%= label_tag :dwc1_given_by, "Who Gave the DWC-1" %>
+          <%= text_field_tag :dwc1_given_by, nil, class: "form-control" %>
         </div>
 
         <div class="form-group flex-fill">
           <%= form.label :date_last_worked, "Date Last Worked" %>
           <%= form.date_field :date_last_worked, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
           <%= form.label :date_returned_to_work, "Date Returned to Work" %>
           <%= form.date_field :date_returned_to_work, class: "form-control" %>
         </div>
 
+        <!-- These two are also not in rm75_forms; keep unbound or add columns -->
         <div class="form-group flex-fill">
-          <%= form.label :missed_work_day, "Missed Full Work Day?" %>
-          <%= form.select :missed_work_day, options_for_select(["Yes", "No"]), {}, class: "form-control" %>
+          <%= label_tag :missed_work_day, "Missed Full Work Day?" %>
+          <%= select_tag :missed_work_day, options_for_select(["Yes","No"]), class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
-          <%= form.label :still_off_work, "Still Off Work?" %>
-          <%= form.select :still_off_work, options_for_select(["Yes", "No"]), {}, class: "form-control" %>
+          <%= label_tag :still_off_work, "Still Off Work?" %>
+          <%= select_tag :still_off_work, options_for_select(["Yes","No"]), class: "form-control" %>
         </div>
       </div>
     </div>
 
-    <!-- Page 4: Incident Description -->
+    <!-- Page 5: Incident Description -->
     <div class="form-page" style="display:none;">
       <h2>Incident Description</h2>
       <div class="form-row d-flex flex-wrap">
@@ -159,40 +178,34 @@
           <%= form.label :injury_description, "Specific Injury and Body Part Affected" %>
           <%= form.text_area :injury_description, class: "form-control", rows: 3 %>
         </div>
-
         <div class="form-group flex-fill">
-          <%= form.label :incident_location, "Location of Incident" %>
-          <%= form.text_field :incident_location, class: "form-control" %>
+          <%= form.label :location_of_event, "Location of Incident" %>
+          <%= form.text_field :location_of_event, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
-          <%= form.label :on_employer_premises, "On Employer Premises?" %>
-          <%= form.select :on_employer_premises, options_for_select(["Yes", "No"]), {}, class: "form-control" %>
+          <%= form.label :on_employers_premises, "On Employer Premises?" %>
+          <%= form.select :on_employers_premises, options_for_select([["No", false], ["Yes", true]], false), {}, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
-          <%= form.label :department_of_event, "Department Where Event Occurred" %>
-          <%= form.text_field :department_of_event, class: "form-control" %>
+          <%= form.label :department_of_exposure, "Department Where Event Occurred" %>
+          <%= form.text_field :department_of_exposure, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
-          <%= form.label :equipment_used, "Equipment, Materials, or Chemicals Used" %>
-          <%= form.text_field :equipment_used, class: "form-control" %>
+          <%= form.label :equipment_in_use, "Equipment, Materials, or Chemicals Used" %>
+          <%= form.text_field :equipment_in_use, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
-          <%= form.label :activity_at_time, "Activity at Time of Incident" %>
-          <%= form.text_field :activity_at_time, class: "form-control" %>
+          <%= form.label :specific_activity, "Activity at Time of Incident" %>
+          <%= form.text_field :specific_activity, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
-          <%= form.label :how_it_happened, "How the Injury Occurred" %>
-          <%= form.text_area :how_it_happened, class: "form-control", rows: 3 %>
+          <%= form.label :injury_sequence, "How the Injury Occurred" %>
+          <%= form.text_area :injury_sequence, class: "form-control", rows: 3 %>
         </div>
       </div>
     </div>
 
-    <!-- Page 5: Medical Info -->
+    <!-- Page 6: Medical Info -->
     <div class="form-page" style="display:none;">
       <h2>Medical Info</h2>
       <div class="form-row d-flex flex-wrap">
@@ -200,61 +213,46 @@
           <%= form.label :physician_name, "Physician Name" %>
           <%= form.text_field :physician_name, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
           <%= form.label :physician_address, "Physician Address" %>
           <%= form.text_field :physician_address, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
           <%= form.label :physician_phone, "Physician Phone" %>
           <%= form.text_field :physician_phone, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
           <%= form.label :hospital_name, "Hospital Name" %>
           <%= form.text_field :hospital_name, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
           <%= form.label :hospital_address, "Hospital Address" %>
           <%= form.text_field :hospital_address, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
           <%= form.label :hospital_phone, "Hospital Phone" %>
           <%= form.text_field :hospital_phone, class: "form-control" %>
         </div>
-
         <div class="form-group flex-fill">
           <%= form.label :hospitalized_overnight, "Hospitalized Overnight?" %>
-          <%= form.select :hospitalized_overnight, options_for_select(["Yes", "No"]), {}, class: "form-control" %>
+          <%= form.select :hospitalized_overnight, options_for_select([["No", false], ["Yes", true]], false), {}, class: "form-control" %>
         </div>
       </div>
     </div>
 
-    <!-- Navigation Buttons -->
+    <!-- Navigation Buttons + Progress (no inline CSS if you prefer; move to SCSS) -->
     <div class="navigation-buttons d-flex justify-content-between">
-      <div>
-        <button type="button" id="prevBtn" style="display: none;">Previous</button>
-      </div>
+      <div><button type="button" id="prevBtn" style="display: none;">Previous</button></div>
       <div>
         <button type="button" id="nextBtn">Next</button>
         <%= form.submit "Submit", style: "display: none;" %>
       </div>
     </div>
 
-    <!-- Progress Bar -->
     <div class="progress-wrapper">
-      <div class="progress-bar-container">
-        <div class="progress-bar" id="progressBar"></div>
-      </div>
-      <div class="progress-dots">
-        <% 5.times do |index| %>
-          <div class="dot <%= 'active' if index == 0 %>"></div>
-        <% end %>
-      </div>
+      <div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="progress-dots"><% 6.times do |i| %><div class="dot <%= 'active' if i == 0 %>"></div><% end %></div>
     </div>
 
-  <% end %> <!-- form_with -->
+  <% end %>
 </div>

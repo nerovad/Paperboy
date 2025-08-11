@@ -34,6 +34,7 @@ html, body {
   color: white;
   text-decoration: none;
   border-radius: 5px;
+  border: none;
 
   &:hover {
     background: $primary-hover;
@@ -76,7 +77,6 @@ html, body {
 .login-button-over-image {
   position: absolute;
   z-index: 9999; // bump to top for testing
-  background-color: red; // temp debug
   top: 20px;
   right: 20px;
   background-color: #4caf50;
