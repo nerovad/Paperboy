@@ -4,10 +4,11 @@
     <title>FormsApp</title>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/styles/choices.min.css" />
     <%= stylesheet_link_tag "application", media: "all", "data-turbo-track": "reload" %>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
     <%= javascript_importmap_tags %>
-    <!-- Choices.js Styles -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
   </head>
 
  <body>
@@ -64,8 +65,4 @@
       </div>
     </div>
 </body> 
-<!-- Choices.js Styles -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-<!-- Choices.js Script -->
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 </html>

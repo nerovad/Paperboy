@@ -503,40 +503,29 @@ input.form-control {
   }
 }
 
-/* Override Choices.js default styles */
-.choices__inner {
-  width: 94% !important;
-  background-color: white !important;
-  border: 1px solid $border-color !important;
-  border-radius: 5px !important;
-  min-height: 30px !important;
-  padding: 8px 12px !important;
-  font-size: 1em !important;
+/*Choices.js*/
+/* reserve space so the vertical scrollbar doesn't overlay your field's right edge */
+.form-page { 
+  scrollbar-gutter: stable both-edges;
 }
 
-.choices__list--multiple .choices__item {
-  background-color: $primary-color !important;
-  border-radius: 5px !important;
-  color: white !important;
-  padding: 4px 10px !important;
-  font-size: 0.9em !important;
-  margin: 4px 4px 0 0 !important;
+/* dropdown should span the full control width */
+.form-page { scrollbar-gutter: stable both-edges; }
+.form-group .choices { position: relative; }
+.form-group .choices__list--dropdown {
+  position: absolute !important;
+  inset-inline: 0 !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+  z-index: 10000;
+}
+.form-group .choices__inner {
+  width: 100% !important;
+  box-sizing: border-box;
+  background-clip: padding-box;
 }
 
-.choices__list--dropdown {
-  border: 1px solid $border-color !important;
-  border-radius: 5px !important;
-}
 
-.choices__input {
-  font-size: 1em !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.choices__placeholder {
-  color: #888;
-}
 .vehicle-fields {
   border: 1px solid #ccc;
   padding: 1rem;
@@ -544,10 +533,7 @@ input.form-control {
   margin-bottom: 1rem;
 }
 .form-page {
-  max-height: 75vh; // or whatever fits nicely within your layout
-  overflow-y: auto;
-  padding-right: 2%; // space for scrollbar
-  padding-left: 2%;
+  scrollbar-gutter: stable both-edges;
 }
 .profile-icon {
   position: relative;
