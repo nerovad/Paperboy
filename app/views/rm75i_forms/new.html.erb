@@ -1,132 +1,195 @@
+<!-- app/views/rm75i_forms/new.html.erb -->
 <div class="form-header">
   <h1>RM-75i: Accident / Near-Miss Investigation Report</h1>
 </div>
 
 <div class="form-wrapper">
   <%= form_with model: @rm75i_form, local: true do |form| %>
+    <!-- Link to Event if coming from RM-75 -->
+    <%= form.hidden_field :event_id, value: @prefill_event_id || params[:event_id] %>
 
-      <!-- Hidden field for event_id -->
-  <%= form.hidden_field :event_id, value: params[:event_id] %>
-
-    <!-- Page 1: Employee Info -->
+    <!-- Page 1: Employee & Agency (UNBOUND where not in rm75i_forms) -->
     <div class="form-page">
-      <h2>Employee Info</h2>
+      <h2>Employee & Agency</h2>
+
       <div class="form-row d-flex flex-wrap">
-        <div class="form-group flex-fill"><%= form.label :employee_id %><%= form.text_field :employee_id, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :report_type %><%= form.text_field :report_type, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :employee_name %><%= form.text_field :employee_name, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :department %><%= form.text_field :department, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :job_title %><%= form.text_field :job_title, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :division %><%= form.text_field :division, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :work_hours %><%= form.text_field :work_hours, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :hours_per_week %><%= form.text_field :hours_per_week, class: "form-control" %></div>
+        <!-- UNBOUND employee_id for Event creation -->
+        <div class="form-group flex-fill">
+          <%= label_tag :employee_id, "Employee ID" %>
+          <%= text_field_tag :employee_id, @prefill_data[:employee_id], class: "form-control", readonly: true %>
+        </div>
+
+        <!-- Optional unbound display fields -->
+        <div class="form-group flex-fill">
+          <%= label_tag :employee_name, "Employee Name" %>
+          <%= text_field_tag :employee_name, @prefill_data[:name], class: "form-control", readonly: true %>
+        </div>
+      </div>
+
+      <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
+        <div class="form-group">
+          <%= label_tag :agency, "Agency" %>
+          <%= select_tag :agency,
+                options_for_select(@agency_options, @prefill_data[:agency]),
+                class: "form-control", id: "agency-select",
+                data: { gsabss_selects_target: "agency", action: "change->gsabss-selects#loadDivisions" } %>
+        </div>
+
+        <div class="form-group">
+          <%= label_tag :division, "Division" %>
+          <%= select_tag :division,
+                options_for_select(@division_options, @prefill_data[:division]),
+                class: "form-control", id: "division-select",
+                data: { gsabss_selects_target: "division", action: "change->gsabss-selects#loadDepartments" } %>
+        </div>
+
+        <div class="form-group">
+          <%= label_tag :department, "Department" %>
+          <%= select_tag :department,
+                options_for_select(@department_options, @prefill_data[:department]),
+                class: "form-control", id: "department-select",
+                data: { gsabss_selects_target: "department", action: "change->gsabss-selects#loadUnits" } %>
+        </div>
+
+        <div class="form-group">
+          <%= label_tag :unit, "Unit" %>
+          <%= select_tag :unit,
+                options_for_select(@unit_options, @prefill_data[:unit]),
+                class: "form-control", id: "unit-select",
+                data: { gsabss_selects_target: "unit" } %>
+        </div>
       </div>
     </div>
 
-    <!-- Page 2: Incident Details -->
+    <!-- Page 2: Investigation Details (BOUND) -->
     <div class="form-page" style="display:none;">
-      <h2>Incident Details</h2>
+      <h2>Investigation Details</h2>
       <div class="form-row d-flex flex-wrap">
-        <div class="form-group flex-fill"><%= form.label :supervisor_name %><%= form.text_field :supervisor_name, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :supervisor_title %><%= form.text_field :supervisor_title, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :supervisor_phone %><%= form.text_field :supervisor_phone, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :supervisor_email %><%= form.text_field :supervisor_email, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :form_completed_by %><%= form.text_field :form_completed_by, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :date_of_injury %><%= form.date_field :date_of_injury, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :time_occurred, "Time Occurred" %><%= form.text_field :time_occurred, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :incident_location %><%= form.text_field :incident_location, class: "form-control" %></div>
+        <div class="form-group flex-fill">
+          <%= form.label :investigator_name %>
+          <%= form.text_field :investigator_name, class: "form-control" %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= form.label :investigator_title %>
+          <%= form.text_field :investigator_title, class: "form-control" %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= form.label :investigator_phone %>
+          <%= form.text_field :investigator_phone, class: "form-control" %>
+        </div>
+
+        <div class="form-group flex-fill">
+          <%= form.label :incident_nature, "Nature of Incident (What occurred?)" %>
+          <%= form.text_area :incident_nature, class: "form-control" %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= form.label :incident_cause, "Cause of Incident" %>
+          <%= form.text_area :incident_cause, class: "form-control" %>
+        </div>
       </div>
+
+      <!-- Optional UNBOUND fields you previously showed; keep if you want them visible only
+      <div class="form-row d-flex flex-wrap">
+        <div class="form-group flex-fill"><%= label_tag :date_of_injury %><%= date_field_tag :date_of_injury, nil, class: "form-control" %></div>
+        <div class="form-group flex-fill"><%= label_tag :time_occurred, "Time Occurred" %><%= text_field_tag :time_occurred, nil, class: "form-control" %></div>
+        <div class="form-group flex-fill"><%= label_tag :incident_location %><%= text_field_tag :incident_location, nil, class: "form-control" %></div>
+      </div>
+      -->
     </div>
 
-    <!-- Page 3: Medical and Exposure Info -->
+    <!-- Page 3: Severity & Root Cause (BOUND) -->
     <div class="form-page" style="display:none;">
-      <h2>Medical & Exposure</h2>
+      <h2>Severity & Root Cause</h2>
       <div class="form-row d-flex flex-wrap">
-        <div class="form-group flex-fill"><%= form.label :injury_description %><%= form.text_area :injury_description, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :how_it_happened %><%= form.text_area :how_it_happened, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :physician_name %><%= form.text_field :physician_name, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :physician_address %><%= form.text_field :physician_address, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :physician_phone %><%= form.text_field :physician_phone, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :hospital_name %><%= form.text_field :hospital_name, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :hospital_address %><%= form.text_field :hospital_address, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :hospital_phone %><%= form.text_field :hospital_phone, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :hospitalized_overnight %><%= form.select :hospitalized_overnight, options_for_select(["Yes", "No"]), {}, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :source_blood_tested %><%= form.select :source_blood_tested, options_for_select(["Yes", "No"]), {}, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :mr_number_source %><%= form.text_field :mr_number_source, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :mr_number_employee %><%= form.text_field :mr_number_employee, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :bloodborne_or_covid %><%= form.select :bloodborne_or_covid, options_for_select(["Yes", "No"]), {}, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :covid_status, "COVID-19 Status" %><%= form.select :covid_status, options_for_select(["Unconfirmed", "Confirmed"]), {}, class: "form-control" %></div>
+        <div class="form-group flex-fill">
+          <%= form.label :root_cause %>
+          <%= form.text_area :root_cause, class: "form-control" %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= form.label :severity_potential, "Assessment of Future Severity Potential" %>
+          <%= form.text_field :severity_potential, class: "form-control" %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= form.label :recurrence_probability, "Assessment of Probability of Recurrence" %>
+          <%= form.text_field :recurrence_probability, class: "form-control" %>
+        </div>
       </div>
     </div>
 
-    <!-- Page 4: Investigation -->
+    <!-- Page 4: Corrective Actions (BOUND) -->
     <div class="form-page" style="display:none;">
-      <h2>Investigation</h2>
+      <h2>Corrective Actions</h2>
       <div class="form-row d-flex flex-wrap">
-        <div class="form-group flex-fill"><%= form.label :date_investigation_began %><%= form.date_field :date_investigation_began, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :date_investigation_complete %><%= form.date_field :date_investigation_complete, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :investigator_name %><%= form.text_field :investigator_name, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :investigator_title %><%= form.text_field :investigator_title, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :investigator_phone %><%= form.text_field :investigator_phone, class: "form-control" %></div>
+        <div class="form-group flex-fill">
+          <%= form.label :corrected_immediately, "Unsafe condition corrected immediately?" %>
+          <%= form.select :corrected_immediately, options_for_select([["No", false], ["Yes", true]], false), {}, class: "form-control" %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= form.label :procedures_modified, "Checklist/procedures/training modified?" %>
+          <%= form.select :procedures_modified, options_for_select([["No", false], ["Yes", true]], false), {}, class: "form-control" %>
+        </div>
+
+        <div class="form-group flex-fill">
+          <%= form.label :responsible_person, "Person Responsible for Corrective Action" %>
+          <%= form.text_field :responsible_person, class: "form-control" %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= form.label :responsible_title, "Title" %>
+          <%= form.text_field :responsible_title, class: "form-control" %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= form.label :responsible_department, "Department" %>
+          <%= form.text_field :responsible_department, class: "form-control" %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= form.label :responsible_phone, "Phone" %>
+          <%= form.text_field :responsible_phone, class: "form-control" %>
+        </div>
+
+        <div class="form-group flex-fill">
+          <%= form.label :target_completion_date, "Targeted Completion Date" %>
+          <%= form.date_field :target_completion_date, class: "form-control" %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= form.label :actual_completion_date, "Actual Completion Date" %>
+          <%= form.date_field :actual_completion_date, class: "form-control" %>
+        </div>
       </div>
     </div>
 
-    <!-- Page 5: Nature & Corrective Actions -->
+    <!-- Page 5: OSHA Info (BOUND) -->
     <div class="form-page" style="display:none;">
-      <h2>Nature & Corrective Actions</h2>
+      <h2>OSHA Info</h2>
       <div class="form-row d-flex flex-wrap">
-        <div class="form-group flex-fill"><%= form.label :nature_of_incident %><%= form.text_area :nature_of_incident, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :cause_of_incident %><%= form.text_area :cause_of_incident, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :root_cause %><%= form.text_area :root_cause, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :future_severity %><%= form.text_field :future_severity, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :recurrence_probability %><%= form.text_field :recurrence_probability, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :unsafe_corrected_immediately %><%= form.select :unsafe_corrected_immediately, options_for_select(["Yes", "No"]), {}, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :checklist_or_training_updated %><%= form.select :checklist_or_training_updated, options_for_select(["Yes", "No"]), {}, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :actual_correction_date %><%= form.date_field :actual_correction_date, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :targeted_correction_date %><%= form.date_field :targeted_correction_date, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :correction_responsible %><%= form.text_field :correction_responsible, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :correction_title %><%= form.text_field :correction_title, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :correction_dept %><%= form.text_field :correction_dept, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :correction_phone %><%= form.text_field :correction_phone, class: "form-control" %></div>
+        <div class="form-group flex-fill">
+          <%= form.label :osha_recordable, "OSHA Recordable?" %>
+          <%= form.select :osha_recordable, options_for_select([["No", false], ["Yes", true]], false), {}, class: "form-control" %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= form.label :osha_reportable, "OSHA Reportable?" %>
+          <%= form.select :osha_reportable, options_for_select([["No", false], ["Yes", true]], false), {}, class: "form-control" %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= form.label :reportable_injury_codes, "Reportable Injury Codes" %>
+          <%= form.text_area :reportable_injury_codes, class: "form-control" %>
+        </div>
       </div>
     </div>
 
-    <!-- Page 6: Confidential Info -->
-    <div class="form-page" style="display:none;">
-      <h2>Confidential Info</h2>
-      <div class="form-row d-flex flex-wrap">
-        <div class="form-group flex-fill"><%= form.label :job_classification %><%= form.text_field :job_classification, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :compensation %><%= form.text_field :compensation, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :home_phone %><%= form.text_field :home_phone, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :date_of_hire %><%= form.date_field :date_of_hire, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :dob %><%= form.date_field :dob, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :email %><%= form.email_field :email, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :work_phone %><%= form.text_field :work_phone, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :cell_phone %><%= form.text_field :cell_phone, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :home_address %><%= form.text_field :home_address, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :city %><%= form.text_field :city, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :state %><%= form.text_field :state, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :zip %><%= form.text_field :zip, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :ssn %><%= form.text_field :ssn, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :ethnicity %><%= form.text_field :ethnicity, class: "form-control" %></div>
-        <div class="form-group flex-fill"><%= form.label :unit_number %><%= form.text_field :unit_number, class: "form-control" %></div>
-      </div>
-    </div>
-
-    <!-- Navigation Buttons -->
+    <!-- Nav + Progress -->
     <div class="navigation-buttons d-flex justify-content-between">
-      <button type="button" id="prevBtn" style="display: none;">Previous</button>
+      <div>
+        <button type="button" id="prevBtn" style="display: none;">Previous</button>
+      </div>
       <div>
         <button type="button" id="nextBtn">Next</button>
         <%= form.submit "Submit", style: "display: none;" %>
       </div>
     </div>
 
-    <!-- Progress Dots -->
     <div class="progress-wrapper">
       <div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
-      <div class="progress-dots"><% 6.times do |i| %><div class="dot <%= 'active' if i == 0 %>"></div><% end %></div>
+      <div class="progress-dots"><% 5.times do |i| %><div class="dot <%= 'active' if i == 0 %>"></div><% end %></div>
     </div>
-
   <% end %>
 </div>
