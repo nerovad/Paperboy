@@ -504,27 +504,35 @@ input.form-control {
 }
 
 /*Choices.js*/
-/* reserve space so the vertical scrollbar doesn't overlay your field's right edge */
-.form-page { 
-  scrollbar-gutter: stable both-edges;
-}
+.form-group .choices { position: relative; display:block; width:100%; max-width:100%; min-width:0; }
+.form-group .choices__inner { width:100% !important; box-sizing:border-box; background-clip: padding-box; }
 
-/* dropdown should span the full control width */
-.form-page { scrollbar-gutter: stable both-edges; }
-.form-group .choices { position: relative; }
 .form-group .choices__list--dropdown {
-  position: absolute !important;
-  inset-inline: 0 !important;
-  width: auto !important;
-  box-sizing: border-box !important;
+  position: absolute;
+  inset-inline: 0;
+  width: auto;
+  box-sizing: border-box;
   z-index: 10000;
 }
-.form-group .choices__inner {
-  width: 100% !important;
-  box-sizing: border-box;
-  background-clip: padding-box;
+
+
+/* Full-screen overlay*/
+#overlay-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+}
+#overlay-root .choices__list--dropdown {
+  position: absolute !important;
+  pointer-events: auto;
+  box-sizing: border-box !important;
+  max-height: 50vh;
+  overflow: auto;
 }
 
+/* Keep gutter if you still use an inner scroller somewhere */
+.form-page { scrollbar-gutter: stable both-edges; }
 
 .vehicle-fields {
   border: 1px solid #ccc;
