@@ -1,11 +1,4 @@
-<%= turbo_stream.replace "department-select" do %>
-  <select
-    id="department-select"
-    name="parking_lot_submission[department]"
-    class="form-control"
-    data-gsabss-selects-target="department"
-    data-action="change->gsabss-selects#loadUnits">
-    <option value="">Select one</option>
-    <%= options_for_select(@department_options) %>
-  </select>
+<%= turbo_stream.update "department-select" do %>
+  <option value="">Select one</option>
+  <%= options_for_select(@department_options) %>
 <% end %>

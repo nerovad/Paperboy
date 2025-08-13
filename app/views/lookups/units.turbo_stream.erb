@@ -1,10 +1,4 @@
-<%= turbo_stream.replace "unit-select" do %>
-  <select
-    id="unit-select"
-    name="parking_lot_submission[unit]"
-    class="form-control"
-    data-gsabss-selects-target="unit">
-    <option value="">Select one</option>
-    <%= options_for_select(@unit_options) %>
-  </select>
+<%= turbo_stream.update "unit-select" do %>
+  <option value="">Select one</option>
+  <%= options_for_select(@unit_options) %>
 <% end %>
