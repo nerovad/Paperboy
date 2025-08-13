@@ -92,16 +92,20 @@
         <div class="form-row d-flex flex-wrap">
           <div class="form-group flex-fill">
             <%= form.label :work_location, "Work Location" %>
-            <%= form.text_field :work_location, class: "form-control" %>
+            <%= form.select :work_location,
+                options_for_select(@work_location_options, @probation_transfer_request&.work_location),
+                {},
+                class: "form-control" %>
           </div>
+
           <div class="form-group flex-fill">
-            <%= form.label :current_assignment_date, "Current Assignment Date" %>
-            <%= form.text_field :current_assignment_date, class: "form-control" %>
+            <%= form.label :current_assignment_date, "Current Assignment Start Date" %>
+            <%= form.date_field :current_assignment_date, class: "form-control" %>
           </div>
         <div data-controller="probation-transfer-request">
-          <div class="form-group overflow-visible">
-            <%= form.label :desired_transfer_destination, "Desired Transfer Destination" %>
-            <% destinations = [
+          <div class="form-group flex-fill overflow-visible" style="flex: 1 0 100%;">
+          <%= form.label :desired_transfer_destination, "Desired Transfer Destination" %>
+          <% destinations = [
             # Adult
             "Adult Investigations (AI-I, II, III)",
             "East County Field Services (ECFS)",

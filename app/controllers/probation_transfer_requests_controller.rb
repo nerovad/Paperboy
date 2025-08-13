@@ -127,5 +127,10 @@ class ProbationTransferRequestsController < ApplicationController
         ]
       }
     ]
+        @work_location_options = [
+      ["800 S. Victoria", "800 S. Victoria"],
+      ["4333 E Vineyard Ave.", "4333 E Vineyard Ave."],
+      ["1721 Pacific Ave.", "1721 Pacific Ave."]
+    ]
   end
 end

@@ -1,57 +1,44 @@
+// app/javascript/controllers/gsabss_selects_controller.js
 import { Controller } from "@hotwired/stimulus"
+import * as Turbo from "@hotwired/turbo"
 
 export default class extends Controller {
   static targets = ["agency", "division", "department", "unit"]
 
-  connect() {
-    // Don’t clear anything on connect — keep prefilled values
+  loadDivisions = async () => {
+    this._prepLoad(this.divisionTarget, [this.departmentTarget, this.unitTarget])
+    await this._fetchAndRender(`/lookups/divisions?agency=${encodeURIComponent(this.agencyTarget.value)}`)
+    this.divisionTarget.disabled = false
   }
 
-  loadDivisions() {
-    this.clear(this.divisionTarget)
-    this.clear(this.departmentTarget)
-    this.clear(this.unitTarget)
-
-    fetch(`/lookups/divisions?agency=${this.agencyTarget.value}`, {
-      headers: { Accept: "text/vnd.turbo-stream.html" }
-    })
+  loadDepartments = async () => {
+    this._prepLoad(this.departmentTarget, [this.unitTarget])
+    await this._fetchAndRender(`/lookups/departments?division=${encodeURIComponent(this.divisionTarget.value)}`)
+    this.departmentTarget.disabled = false
   }
 
-  loadDepartments() {
-    this.clear(this.departmentTarget)
-    this.clear(this.unitTarget)
-
-    fetch(`/lookups/departments?division=${this.divisionTarget.value}`, {
-      headers: { Accept: "text/vnd.turbo-stream.html" }
-    })
+  loadUnits = async () => {
+    this._prepLoad(this.unitTarget, [])
+    await this._fetchAndRender(`/lookups/units?department=${encodeURIComponent(this.departmentTarget.value)}`)
+    this.unitTarget.disabled = false
   }
 
-  loadUnits() {
-    this.clear(this.unitTarget)
-
-    fetch(`/lookups/units?department=${this.departmentTarget.value}`, {
-      headers: { Accept: "text/vnd.turbo-stream.html" }
-    })
+  _prepLoad(primary, downstreamToClear = []) {
+    // disable the primary and show a loading placeholder
+    this._setOptions(primary, [["", "Loading…"]], true)
+    // clear & disable all downstream selects
+    downstreamToClear.forEach(sel => this._setOptions(sel, [["", "Select one"]], true))
   }
 
-  clear(select) {
+  _setOptions(select, pairs, disabled) {
     if (!select) return
+    select.innerHTML = pairs.map(([val, label]) => `<option value="${val}">${label}</option>`).join("")
+    select.disabled = !!disabled
+  }
 
-    // Save the select's id and data attributes
-    const id = select.id
-    const target = select.getAttribute("data-gsabss-selects-target")
-    const action = select.getAttribute("data-action")
-
-    // Replace the select's contents with a single blank option
-    select.innerHTML = ''
-    const blankOption = document.createElement("option")
-    blankOption.value = ""
-    blankOption.textContent = "Select one"
-    select.appendChild(blankOption)
-
-    // Re-apply id and data attributes so Turbo can re-target correctly
-    select.id = id
-    if (target) select.setAttribute("data-gsabss-selects-target", target)
-    if (action) select.setAttribute("data-action", action)
+  async _fetchAndRender(url) {
+    const res = await fetch(url, { headers: { Accept: "text/vnd.turbo-stream.html" } })
+    const html = await res.text()
+    Turbo.renderStreamMessage(html) // <-- this applies the <turbo-stream> response to the DOM
   }
 }
