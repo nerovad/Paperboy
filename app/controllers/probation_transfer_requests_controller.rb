@@ -23,17 +23,53 @@ class ProbationTransferRequestsController < ApplicationController
   end
 
   def create
-    @probation_transfer_request = ProbationTransferRequest.new(probation_transfer_request_params)
-    @probation_transfer_request.status = 0
+  @probation_transfer_request = ProbationTransferRequest.new(probation_transfer_request_params)
+  @probation_transfer_request.status = 0
 
-    if @probation_transfer_request.save
-      TransferMailer.notify(@probation_transfer_request).deliver_later
-      redirect_to probation_transfer_requests_path, notice: "Transfer request submitted!"
-    else
-      prepare_new_transfer_form
-      render :new
-    end
+  # Coerce multi-select array -> string for storage (skip blanks)
+  if params[:probation_transfer_request][:desired_transfer_destination].present?
+    destinations = Array(params[:probation_transfer_request][:desired_transfer_destination]).reject(&:blank?)
+    @probation_transfer_request.desired_transfer_destination = destinations.join('; ')
   end
+
+
+      @probation_transfer_request.supervisor_id = supervisor_id
+
+  if @probation_transfer_request.save
+    ProbationMailer.notify(@probation_transfer_request).deliver_later
+    redirect_to probation_transfer_requests_path, notice: "Transfer request submitted!"
+  else
+    prepare_new_transfer_form
+    render :new
+  end
+end
+
+  def pdf
+    submission = ParkingLotSubmission.find(params[:id])
+    pdf_data = ParkingLotPdfGenerator.generate(submission)
+
+    send_data pdf_data,
+              filename: "ParkingLotSubmission_#{submission.id}.pdf",
+              type: "application/pdf",
+              disposition: "inline" # or "attachment" if you want it to download
+  end
+
+   def approve
+  @submission = ParkingLotSubmission.find(params[:id])
+  @submission.update!(status: 1)
+
+  NotifySecurityJob.perform_later(@submission.id)
+
+  redirect_to parking_lot_submissions_path, notice: "Request approved and sent to Security."
+end
+
+def deny
+  @submission = ParkingLotSubmission.find(params[:id])
+  @submission.update!(status: :denied)
+
+  # Optional: Notify the user
+  redirect_to parking_lot_submissions_path, alert: "Request denied."
+end
 
   def edit; end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_07_174249) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_13_172131) do
   create_table "BdmRateTypes", primary_key: "RateID", id: { type: :integer, limit: 2 }, force: :cascade do |t|
     t.string "Description", limit: 150, null: false
     t.string "UOM", limit: 15, null: false
@@ -376,9 +376,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_07_174249) do
     t.string "work_location"
     t.date "current_assignment_date"
     t.text "desired_transfer_destination"
-    t.integer "status"
+    t.integer "status", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "other_transfer_destination"
+    t.string "approved_by"
+    t.datetime "approved_at"
+    t.string "denied_by"
+    t.datetime "denied_at"
+    t.text "denial_reason"
+    t.string "supervisor_email"
+    t.index ["status"], name: "index_probation_transfer_requests_on_status"
   end
 
   create_table "programs", primary_key: ["agency_id", "program_id", "major_program_id"], force: :cascade do |t|

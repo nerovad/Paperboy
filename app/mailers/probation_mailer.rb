@@ -1,4 +1,4 @@
-class TransferMailer < ApplicationMailer
+class ProbationMailer < ApplicationMailer
   default from: "fleet.forms@ventura.org"
 
   def notify(request)

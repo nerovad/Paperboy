@@ -17,6 +17,13 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :probation_transfer_requests, only: [:new, :create, :index] do
+    member do
+      get :pdf
+      patch :approve
+      patch :deny
+    end
+  end
   # config/routes.rb
 resources :billing_tools, only: [:new, :create] do
   collection do
