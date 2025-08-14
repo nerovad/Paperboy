@@ -1,9 +1,24 @@
 class ProbationTransferRequestsController < ApplicationController
-  before_action :set_probation_transfer_request, only: [:show, :edit, :update, :destroy]
+  before_action :set_probation_transfer_request, only: [:show, :edit, :update, :destroy, :pdf, :approve, :deny]
 
   def index
-    @probation_transfer_requests = ProbationTransferRequest.all
+    @probation_transfer_requests = ProbationTransferRequest.where(status: 0, supervisor_id: session[:user]["employee_id"])
+  employee = session[:user]
+
+  if employee.present? && employee["employee_id"].present?
+    Rails.logger.info "Logged in as employee #{employee["employee_id"]}"
+
+    session[:last_seen_inbox_at] = Time.current
+
+    @pending_submissions = ProbationTransferRequest
+                              .where(supervisor_id: employee["employee_id"].to_s)
+                              .where(status: 0)
+                              .order(created_at: :desc)
+  else
+    Rails.logger.warn "No logged-in employee found"
+    @pending_submissions = []
   end
+end
 
   def show
     respond_to do |format|
@@ -23,53 +38,25 @@ class ProbationTransferRequestsController < ApplicationController
   end
 
   def create
-  @probation_transfer_request = ProbationTransferRequest.new(probation_transfer_request_params)
-  @probation_transfer_request.status = 0
+    employee = session[:user]
+    sup_id   = fetch_supervisor_id(employee["employee_id"])
 
-  # Coerce multi-select array -> string for storage (skip blanks)
-  if params[:probation_transfer_request][:desired_transfer_destination].present?
-    destinations = Array(params[:probation_transfer_request][:desired_transfer_destination]).reject(&:blank?)
-    @probation_transfer_request.desired_transfer_destination = destinations.join('; ')
+    @probation_transfer_request = ProbationTransferRequest.new(probation_transfer_request_params)
+    @probation_transfer_request.status = 0
+    @probation_transfer_request.supervisor_id = sup_id
+
+    if params[:probation_transfer_request][:desired_transfer_destination].present?
+      destinations = Array(params[:probation_transfer_request][:desired_transfer_destination]).reject(&:blank?)
+      @probation_transfer_request.desired_transfer_destination = destinations.join('; ')
+    end
+
+    if @probation_transfer_request.save
+      redirect_to form_success_path, allow_other_host: false, status: :see_other
+    else
+      prepare_new_transfer_form
+      render :new
+    end
   end
-
-
-      @probation_transfer_request.supervisor_id = supervisor_id
-
-  if @probation_transfer_request.save
-    ProbationMailer.notify(@probation_transfer_request).deliver_later
-    redirect_to probation_transfer_requests_path, notice: "Transfer request submitted!"
-  else
-    prepare_new_transfer_form
-    render :new
-  end
-end
-
-  def pdf
-    submission = ParkingLotSubmission.find(params[:id])
-    pdf_data = ParkingLotPdfGenerator.generate(submission)
-
-    send_data pdf_data,
-              filename: "ParkingLotSubmission_#{submission.id}.pdf",
-              type: "application/pdf",
-              disposition: "inline" # or "attachment" if you want it to download
-  end
-
-   def approve
-  @submission = ParkingLotSubmission.find(params[:id])
-  @submission.update!(status: 1)
-
-  NotifySecurityJob.perform_later(@submission.id)
-
-  redirect_to parking_lot_submissions_path, notice: "Request approved and sent to Security."
-end
-
-def deny
-  @submission = ParkingLotSubmission.find(params[:id])
-  @submission.update!(status: :denied)
-
-  # Optional: Notify the user
-  redirect_to parking_lot_submissions_path, alert: "Request denied."
-end
 
   def edit; end
 
@@ -86,24 +73,63 @@ end
     redirect_to probation_transfer_requests_url, notice: "Transfer request deleted."
   end
 
-    private
+  def pdf
+    pdf_data = ProbationTransferPdfGenerator.generate(@probation_transfer_request)
 
-    def probation_transfer_request_params
-      params.require(:probation_transfer_request).permit(
-        :employee_id, :name, :phone, :email,
-        :agency, :division, :department, :unit,
-        :work_location, :current_assignment_date,
-        :other_transfer_destination,
-        desired_transfer_destination: []
-      )
-    end
+    send_data pdf_data,
+              filename: "ProbationTransferRequest_#{@probation_transfer_request.id}.pdf",
+              type: "application/pdf",
+              disposition: "inline"
+  end
+
+def approve
+  @submission = ProbationTransferRequest.find(params[:id])
+  @submission.update!(status: 1)
+
+  NotifyProbationJob.perform_later(@submission.id)
+
+  redirect_to inbox_queue_path, notice: "Transfer request approved."
+end
+
+def deny
+  @submission = ProbationTransferRequest.find(params[:id])
+  @submission.update!(status: :denied)
+
+  redirect_to inbox_queue_path, alert: "Transfer request denied."
+end
+
+  private
+
+  def set_probation_transfer_request
+    @probation_transfer_request = ProbationTransferRequest.find(params[:id])
+  end
+
+  def probation_transfer_request_params
+    params.require(:probation_transfer_request).permit(
+      :employee_id, :name, :phone, :email,
+      :agency, :division, :department, :unit,
+      :work_location, :current_assignment_date,
+      :other_transfer_destination,
+      desired_transfer_destination: []
+    )
+  end
+
+  def fetch_supervisor_id(employee_id)
+    result = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first
+      SELECT Supervisor_ID
+      FROM [GSABSS].[dbo].[Employees]
+      WHERE EmployeeID = '#{employee_id}'
+    SQL
+
+    result&.fetch("Supervisor_ID", nil)
+  end
+
   def prepare_new_transfer_form
     employee_id = session[:user]["employee_id"]
     @employee = Employee.find_by(EmployeeID: employee_id)
 
     unit_code = @employee&.[]("Unit")
     unit = Unit.find_by(unit_id: unit_code)
-
     department = Department.find_by(department_id: unit&.[]("department_id"))
     division   = Division.find_by(division_id: department&.[]("division_id"))
     agency     = Agency.find_by(agency_id: division&.[]("agency_id"))
@@ -163,7 +189,8 @@ end
         ]
       }
     ]
-        @work_location_options = [
+
+    @work_location_options = [
       ["800 S. Victoria", "800 S. Victoria"],
       ["4333 E Vineyard Ave.", "4333 E Vineyard Ave."],
       ["1721 Pacific Ave.", "1721 Pacific Ave."]

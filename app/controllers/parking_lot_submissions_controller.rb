@@ -93,6 +93,7 @@ def deny
 end
 
 def index
+  redirect_to inbox_queue_path
   employee = session[:user]
 
   if employee.present? && employee["employee_id"].present?

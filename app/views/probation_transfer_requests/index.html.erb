@@ -5,10 +5,10 @@
 <h1>Probation transfer requests</h1>
 
 <div id="probation_transfer_requests">
-  <% @probation_transfer_requests.each do |probation_transfer_request| %>
-    <%= render probation_transfer_request %>
+  <% @probation_transfer_requests.each do |request| %>
+    <%= render partial: "probation_transfer_request", locals: { probation_transfer_request: request } %>
     <p>
-      <%= link_to "Show this probation transfer request", probation_transfer_request %>
+      <%= link_to "Show this probation transfer request", probation_transfer_request_path(request) %>
     </p>
   <% end %>
 </div>

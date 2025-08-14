@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_13_172131) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_13_175209) do
   create_table "BdmRateTypes", primary_key: "RateID", id: { type: :integer, limit: 2 }, force: :cascade do |t|
     t.string "Description", limit: 150, null: false
     t.string "UOM", limit: 15, null: false
@@ -386,6 +386,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_13_172131) do
     t.datetime "denied_at"
     t.text "denial_reason"
     t.string "supervisor_email"
+    t.string "supervisor_id"
     t.index ["status"], name: "index_probation_transfer_requests_on_status"
   end
 

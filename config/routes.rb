@@ -1,7 +1,6 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
-  resources :probation_transfer_requests
   get "forms/home"
   post "/login", to: "sessions#create"
   delete "/logout", to: "sessions#destroy"
@@ -47,4 +46,7 @@ resources :loa_forms, only: [:new, :create]
     get "/lookups/units", to: "lookups#units"
 
     get "/form_success", to: "shared#form_success", as: :form_success
+
+    get "/inboxqueue", to: "inbox#queue", as: "inbox_queue"
+
 end
