@@ -19,6 +19,10 @@
   <!-- Buttons Row -->
   <div class="navigation-buttons" style="gap: 10px; flex-wrap: wrap;">
     <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true do %>
+      <%= submit_tag "Get Raw Data" %>
+    <% end %>
+
+    <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true do %>
       <%= submit_tag "Backup Staging" %>
     <% end %>
 
@@ -27,6 +31,14 @@
       <%= hidden_field_tag :s_date %>
       <%= hidden_field_tag :e_date %>
       <%= submit_tag "Run Monthly Billing" %>
+    <% end %>
+
+    <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true do %>
+      <%= submit_tag "Print Reports" %>
+    <% end %>
+
+    <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true do %>
+      <%= submit_tag "Email Reports" %>
     <% end %>
 
     <%= form_with url: backup_production_billing_tools_path, method: :post, local: true do %>

@@ -46,6 +46,7 @@ html, body {
   width: 100%;
   height: 100%;
   z-index: 0;
+  overflow: visible;
 }
 
 .slideshow {
@@ -514,6 +515,18 @@ input.form-control {
   box-sizing: border-box;
   z-index: 10000;
 }
+/* Override Choices.js selected item color */
+.choices__list--multiple .choices__item {
+  background-color: $primary-color !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+/* Optional: change hover/focus states in the dropdown */
+.choices__list--dropdown .choices__item--selectable.is-highlighted {
+  background-color: $primary-hover !important;
+  color: #fff !important;
+}
 
 
 /* Full-screen overlay*/
@@ -530,9 +543,6 @@ input.form-control {
   max-height: 50vh;
   overflow: auto;
 }
-
-/* Keep gutter if you still use an inner scroller somewhere */
-.form-page { scrollbar-gutter: stable both-edges; }
 
 .vehicle-fields {
   border: 1px solid #ccc;
@@ -621,36 +631,50 @@ input.form-control {
     opacity: 0.9;
   }
 }
-//----------------------------------- Form Submit Success -------//
+/* ------- Form Submit Success (self-contained) ------- */
 .form-success-page {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 4rem 2rem;
-  min-height: 70vh;
+  /* Center the child regardless of parents */
+  min-height: 100vh;          /* fill the viewport */
+  display: grid;              /* grid makes centering trivial */
+  place-items: center;        /* centers both axes */
+  padding: 4rem 2rem;         /* breathing room on small screens */
+  box-sizing: border-box;     /* keep padding inside the viewport height */
+  overflow: auto;             /* allow internal scroll if content gets tall */
+}
 
-  .form-success-box {
-    max-width: 600px;
-    width: 100%;
-    background: $form-bg;
-    border: 2px solid $primary-color;
-    border-radius: 12px;
-    padding: 2rem 3rem;
-    text-align: center;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-    animation: slideFadeIn 0.5s ease-out;
+.form-success-box {
+  max-width: 600px;
+  width: 100%;
+  background: $form-bg;
+  border: 2px solid $primary-color;
+  border-radius: 12px;
+  padding: 28rem 3rem;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  animation: slideFadeIn 0.5s ease-out;
+
+  h1 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    margin: 0 0 1.25rem;
+    color: $text-color;
   }
 }
 
 @keyframes slideFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* DEBUG: remove after test */
+.app-container #main-content .form-success-page {
+  position: fixed !important;
+  inset: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  outline: 6px solid magenta !important;
+  z-index: 2147483647 !important;
 }
 
