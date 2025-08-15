@@ -5,70 +5,26 @@
 <div class="form-wrapper">
   <%= form_with model: @loa_form, local: true do |form| %>
 
-    <!-- Page 1: Employee Info -->
-    <div class="form-page">
-      <h2>Employee Info</h2>
-      <div class="form-row d-flex flex-wrap">
-        <div class="form-group flex-fill">
-          <%= form.label :employee_id, "Employee ID" %>
-          <%= form.text_field :employee_id, value: @prefill_data[:employee_id], class: "form-control", readonly: true %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= form.label :first_name, "First Name" %>
-          <%= form.text_field :first_name, value: @prefill_data[:first_name], class: "form-control", required: true %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= form.label :middle_name, "Middle Name" %>
-          <%= form.text_field :middle_name, class: "form-control" %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= form.label :last_name, "Last Name" %>
-          <%= form.text_field :last_name, value: @prefill_data[:last_name], class: "form-control", required: true %>
-        </div>
-      </div>
-
-      <div class="form-row d-flex flex-wrap">
-        <div class="form-group flex-fill">
-          <%= form.label :street_address, "Street Address" %>
-          <%= form.text_field :street_address, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= form.label :city, "City" %>
-          <%= form.text_field :city, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= form.label :state, "State" %>
-          <%= form.text_field :state, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= form.label :zip_code, "Zip Code" %>
-          <%= form.text_field :zip_code, class: "form-control" %>
-        </div>
-      </div>
-
-      <div class="form-row d-flex flex-wrap">
-        <div class="form-group">
-          <%= form.label :home_phone, "Home Phone" %>
-          <%= form.text_field :home_phone, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= form.label :cell_phone, "Cell Phone" %>
-          <%= form.text_field :cell_phone, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= form.label :work_phone, "Work Phone" %>
-          <%= form.text_field :work_phone, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= form.label :work_email, "Work Email" %>
-          <%= form.email_field :work_email, value: @prefill_data[:email], class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= form.label :personal_email, "Personal Email" %>
-          <%= form.email_field :personal_email, class: "form-control" %>
-        </div>
-      </div>
+    <!-- Page 1: Employee Info (clean version) -->
+<div class="form-page">
+  <h2>Employee Info</h2>
+  <div class="form-row d-flex flex-wrap">
+    <div class="form-group flex-fill">
+      <%= form.label :employee_id, "Employee ID" %>
+      <%= form.text_field :employee_id, value: @prefill_data[:employee_id], class: "form-control", readonly: true %>
     </div>
+
+    <div class="form-group flex-fill">
+      <%= form.label :employee_name, "Employee Name" %>
+      <%= form.text_field :employee_name, value: @prefill_data[:name], class: "form-control", required: true %>
+    </div>
+
+    <div class="form-group flex-fill">
+      <%= form.label :work_email, "Work Email" %>
+      <%= form.email_field :work_email, value: @prefill_data[:email], class: "form-control" %>
+    </div>
+  </div>
+</div>
 
     <!-- Page 2: Agency Info -->
     <div class="form-page" style="display:none;">

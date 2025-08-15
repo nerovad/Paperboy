@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_13_175209) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_15_183000) do
   create_table "BdmRateTypes", primary_key: "RateID", id: { type: :integer, limit: 2 }, force: :cascade do |t|
     t.string "Description", limit: 150, null: false
     t.string "UOM", limit: 15, null: false
@@ -290,6 +290,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_13_175209) do
     t.date "sig_date"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "employee_id"
+    t.string "employee_name"
+    t.string "work_email"
+    t.index ["employee_id"], name: "index_loa_forms_on_employee_id"
     t.index ["event_id"], name: "index_loa_forms_on_event_id"
   end
 
