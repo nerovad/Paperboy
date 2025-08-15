@@ -610,37 +610,39 @@ input.form-control {
   flex: 1 1 200px;
 }
 
+.billing-button-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2rem 7.5rem;
+  margin-top: 1.5rem;
+}
+
 .billing-btn {
-  width: 100%;
-  padding: 12px 20px;
-  font-size: 1rem;
+  display: block;
+  padding: 14px 16px;
+  font-size: .9rem;
+  font-weight: bold;
+  text-align: center;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   color: white;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-
-  &.blue {
-    background-color: #007bff;
-  }
-
-  &.gray {
-    background-color: #6c757d;
-  }
-
-  &.yellow {
-    background-color: #ffc107;
-    color: #212529;
-  }
-
-  &.red {
-    background-color: #dc3545;
-  }
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 
   &:hover {
-    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   }
+
+  &.raw-data   { background-color: #4caf50; }   /* green */
+  &.backup     { background-color: #3f9e8d; }   /* blue */
+  &.billing    { background-color: #d8a12f; color: #212529; } /* yellow */
+  &.reports    { background-color: #437fc7; }   /* purple */
+  &.email      { background-color: #6a5fac; }   /* teal */
+  &.prod-back  { background-color: #c74c4c; }   /* red */
 }
+
 /* ------- Form Submit Success (self-contained) ------- */
 .form-success-page {
   /* Center the child regardless of parents */
@@ -658,7 +660,7 @@ input.form-control {
   background: $form-bg;
   border: 2px solid $primary-color;
   border-radius: 12px;
-  padding: 28rem 3rem;
+  padding: 10rem 3rem;
   text-align: center;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   animation: slideFadeIn 0.5s ease-out;
@@ -675,16 +677,6 @@ input.form-control {
 }
 
 @keyframes slideFadeIn {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(30px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-/* DEBUG: remove after test */
-.app-container #main-content .form-success-page {
-  position: fixed !important;
-  inset: 0 !important;
-  display: grid !important;
-  place-items: center !important;
-  outline: 6px solid magenta !important;
-  z-index: 2147483647 !important;
-}
-

@@ -7,6 +7,7 @@ import ProfileDropdownController from "./profile_dropdown_controller"
 import ProbationTransferRequestController from "./probation_transfer_request_controller"
 import BillingToolsController from "./billing_tools_controller"
 import SlideshowController from "./slideshow_controller"
+import ConfirmController from "./confirm_controller"
 
 application.register("slideshow", SlideshowController)
 application.register("billing-tools", BillingToolsController)
@@ -14,5 +15,6 @@ application.register("probation-transfer-request", ProbationTransferRequestContr
 application.register("form-navigation", FormNavigationController)
 application.register("login-modal", LoginModalController)
 application.register("profile-dropdown", ProfileDropdownController)
+application.register("confirm", ConfirmController)
 
 eagerLoadControllersFrom("controllers", application)
