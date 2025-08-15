@@ -8,7 +8,7 @@ Rails.application.routes.draw do
 
   root "forms#home"
 
-  resources :parking_lot_submissions, only: [:new, :create, :index] do
+  resources :parking_lot_submissions, only: [:new, :create, :index, :show] do
     member do
       get :pdf
       patch :approve
@@ -16,7 +16,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :probation_transfer_requests, only: [:new, :create, :index] do
+  resources :probation_transfer_requests, only: [:new, :create, :index, :show] do
     member do
       get :pdf
       patch :approve
@@ -48,5 +48,7 @@ resources :loa_forms, only: [:new, :create]
     get "/form_success", to: "shared#form_success", as: :form_success
 
     get "/inboxqueue", to: "inbox#queue", as: "inbox_queue"
+
+    get "/status", to: "status#index", as: :status
 
 end

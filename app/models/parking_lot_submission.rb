@@ -10,6 +10,8 @@ class ParkingLotSubmission < ApplicationRecord
     3 => "sent_to_security"
   }
 
+  scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
+
   def status_label
     STATUS_MAP[status]
   end

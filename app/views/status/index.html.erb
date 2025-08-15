@@ -1,0 +1,33 @@
+<!-- app/views/status/index.html.erb -->
+<div class="form-header">
+  <h1>Status</h1>
+</div>
+
+<div class="form-wrapper">
+<table class="status-table">
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Title</th>
+      <th>Status</th>
+      <th>Last Updated</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @status_items.each do |item| %>
+      <tr>
+        <td class="col-type"><%= item[:type] %></td>
+        <td class="col-title"><%= item[:title] %></td>
+        <td class="col-status">
+          <span class="badge <%= status_badge_class(item[:status]) %>">
+            <%= item[:status].to_s.tr('_', ' ') %>
+          </span>
+        </td>
+        <td class="col-updated"><%= l(item[:updated_at], format: :short) %></td>
+        <td class="col-actions"><%= link_to "Open", item[:path], class: "btn" %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+</div>

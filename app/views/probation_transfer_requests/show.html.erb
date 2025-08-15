@@ -1,10 +1,19 @@
-<p style="color: green"><%= notice %></p>
+<!-- app/views/probation_transfer_requests/show.html.erb -->
 
-<%= render @probation_transfer_request %>
+<div class="form-header">
+  <h1>Probation Transfer Request</h1>
+</div>
 
-<div>
-  <%= link_to "Edit this probation transfer request", edit_probation_transfer_request_path(@probation_transfer_request) %> |
-  <%= link_to "Back to probation transfer requests", probation_transfer_requests_path %>
+<div class="form-wrapper">
+  <% if notice.present? %>
+    <p style="color: green"><%= notice %></p>
+  <% end %>
 
-  <%= button_to "Destroy this probation transfer request", @probation_transfer_request, method: :delete %>
+  <%= render partial: "shared/readonly_record",
+             locals: { record: @probation_transfer_request, exclude: [] } %>
+
+  <div class="form-actions">
+    <%= link_to "Back to Status", status_path, class: "btn" %>
+    <%= link_to "Back to Probation Transfer Requests", probation_transfer_requests_path, class: "btn" %>
+  </div>
 </div>

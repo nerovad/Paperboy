@@ -12,11 +12,11 @@
         <div class="form-row d-flex flex-wrap">
           <div class="form-group flex-fill">
             <%= form.label :employee_id, "Employee ID" %>
-            <%= form.text_field :employee_id, value: @prefill_data[:employee_id], class: "form-control" %>
+            <%= form.text_field :employee_id, value: @prefill_data[:employee_id], readonly: true, class: "form-control" %>
           </div>
           <div class="form-group flex-fill">
             <%= form.label :name, "Name" %>
-            <%= form.text_field :name, value: @prefill_data[:name], class: "form-control" %>
+            <%= form.text_field :name, value: @prefill_data[:name], readonly: true, class: "form-control" %>
           </div>
           <div class="form-group flex-fill">
             <%= form.label :phone, "Phone" %>

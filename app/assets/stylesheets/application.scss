@@ -538,7 +538,6 @@ input.form-control {
   color: #fff !important;
 }
 
-
 /* Full-screen overlay*/
 #overlay-root {
   position: fixed;
@@ -679,4 +678,129 @@ input.form-control {
 @keyframes slideFadeIn {
   from { opacity: 0; transform: translateY(30px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Status page ===== */
+.status-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: $form-bg;
+
+  thead th {
+    text-align: left;
+    font-weight: 600;
+    padding: 12px 14px;
+    border-bottom: 1px solid $border-color;
+    font-size: 14px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid $border-color;
+    font-size: 14px;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    transition: background 120ms ease;
+  }
+
+  tbody tr:hover {
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  /* columns */
+  td.col-type     { width: 160px; }
+  td.col-title    { width: auto; }
+  td.col-status   { width: 170px; }
+  td.col-updated  { width: 160px; }
+  td.col-actions  { width: 110px; text-align: right; }
+}
+
+/* Reuse your button look */
+.status-table .btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: $primary-color;
+  color: #fff;
+  text-decoration: none;
+  border: none;
+  font-size: 13px;
+  line-height: 1;
+}
+.status-table .btn:hover { background: $primary-hover; }
+
+/* Status badges */
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 600;
+  border: 1px solid transparent;
+  text-transform: capitalize;
+}
+
+.badge.is-submitted         { background: #f2f2f2;   color: #333;      border-color: #e6e6e6; }
+.badge.is-manager-approved  { background: #e8f6ee;   color: #1f7a3a;   border-color: #cfeedd; } /* green-ish */
+.badge.is-denied            { background: #fde8e8;   color: #b42318;   border-color: #f8d3d3; } /* red-ish */
+.badge.is-sent              { background: #e8f0fe;   color: #1a4fb3;   border-color: #d6e2fd; } /* blue-ish */
+
+/* Container spacing to match forms */
+.form-wrapper .status-table {
+  border: 1px solid $border-color;
+  border-radius: 12px;
+  overflow: hidden;
+}
+/* Scrollable status table area */
+.form-wrapper {
+  max-height: calc(100vh - 180px); /* leave space for header/nav */
+  overflow-y: auto;
+  padding: 0; /* optional: removes extra padding for flush scroll */
+}
+
+/* Optional: sticky header for the table */
+.status-table thead th {
+  position: sticky;
+  top: 0;
+  background: $form-bg; /* matches your form background */
+  z-index: 2;
+}
+
+/* Mobile tweak */
+@media (max-width: 900px) {
+  .status-table thead { display: none; }
+  .status-table, .status-table tbody, .status-table tr, .status-table td { display: block; width: 100%; }
+  .status-table tr { border-bottom: 1px solid $border-color; }
+  .status-table td { border: none; padding: 10px 14px; }
+  .status-table td.col-actions { text-align: left; padding-top: 0; }
+}
+
+/* ===== Status OPEN page ===== */
+.readonly-form {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  font-size: 14px;
+}
+
+.readonly-form dt {
+  font-weight: 600;
+  color: $label-color;
+}
+
+.readonly-form dd {
+  margin: 0;
+  color: $text-color;
+}
+
+.form-actions {
+  margin-top: 20px;
 }

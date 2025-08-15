@@ -1,0 +1,49 @@
+<!-- app/views/parking_lot_submissions/show.html.erb -->
+
+<div class="form-header">
+  <h1>Parking Lot Submission</h1>
+</div>
+
+<div class="form-wrapper">
+  <% if notice.present? %>
+    <p style="color: green"><%= notice %></p>
+  <% end %>
+
+  <%= render partial: "shared/readonly_record",
+             locals: { record: @parking_lot_submission,
+                       exclude: %w[id created_at updated_at] } %>
+
+  <%# Optional: list associated vehicles read-only %>
+  <% if @parking_lot_submission.parking_lot_vehicles.any? %>
+    <h2>Vehicles</h2>
+    <table class="status-table">
+      <thead>
+        <tr>
+          <th>Make</th>
+          <th>Model</th>
+          <th>Color</th>
+          <th>Year</th>
+          <th>License Plate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @parking_lot_submission.parking_lot_vehicles.each do |v| %>
+          <tr>
+            <td><%= v.make %></td>
+            <td><%= v.model %></td>
+            <td><%= v.color %></td>
+            <td><%= v.year %></td>
+            <td><%= v.license_plate %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <div class="form-actions" style="margin-top: 16px;">
+    <%= link_to "Back to Status", status_path, class: "btn" %>
+    <%= link_to "Back to Parking Lot Submissions", parking_lot_submissions_path, class: "btn" %>
+    <%# Keep PDF link if you like %>
+    <%= link_to "Download PDF", pdf_parking_lot_submission_path(@parking_lot_submission), class: "btn" %>
+  </div>
+</div>

@@ -1,0 +1,25 @@
+<!-- app/views/shared/_readonly_record.html.erb -->
+<dl class="readonly-form">
+  <% excluded = Array(exclude) + %w[id created_at updated_at] %>
+
+  <% record.attribute_names.each do |attr| %>
+    <% next if excluded.include?(attr) %>
+
+    <dt><%= attr.humanize %></dt>
+    <dd>
+      <% value =
+           if attr == "status" && record.respond_to?(:status_label)
+             record.status_label
+           else
+             record.public_send(attr)
+           end %>
+
+      <%# Nicely format dates/times %>
+      <% if value.is_a?(Date) || value.is_a?(Time) || value.is_a?(ActiveSupport::TimeWithZone) %>
+        <%= l(value) %>
+      <% else %>
+        <%= value.to_s %>
+      <% end %>
+    </dd>
+  <% end %>
+</dl>
