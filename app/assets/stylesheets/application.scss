@@ -64,15 +64,25 @@ html, body {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
   opacity: 0;
   transition: opacity 2s ease-in-out;
   z-index: 0;
+
+  display: flex;               /* centers the image vertically/horizontally */
+  align-items: center;
+  justify-content: center;
 }
 
 .slide.active {
   opacity: 1;
   z-index: 1;
+}
+
+.slide img {
+  width: 100%;
+  height: auto;                 /* keep aspect ratio */
+  object-fit: cover;            /* fill width, minimal cropping */
+  display: block;
 }
 
 .login-button-over-image {
