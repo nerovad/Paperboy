@@ -1,0 +1,32 @@
+<div id="deny-modal"
+     class="deny-modal-backdrop"
+     data-deny-modal-target="backdrop"
+     style="display:none;">
+  <div class="deny-modal" data-deny-modal-target="modal" role="dialog" aria-modal="true" aria-labelledby="deny-modal-title">
+    <div class="deny-modal__header">
+      <h3 id="deny-modal-title" data-deny-modal-target="title">Deny</h3>
+      <button type="button" class="deny-modal__close" data-action="deny-modal#close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="deny-modal__body">
+      <%= form_with url: "#", method: :patch, local: true,
+                    html: { id: "deny-form", "data-deny-modal-target": "form" } do %>
+        <div class="form-group">
+          <label for="deny-reason">Reason for denial</label>
+          <textarea id="deny-reason"
+                    name="denial_reason"
+                    class="form-control"
+                    rows="3"
+                    required
+                    data-deny-modal-target="reason"
+                    placeholder="Briefly explain why this is denied"></textarea>
+        </div>
+
+        <div class="deny-modal__actions">
+          <button type="button" class="btn" data-action="deny-modal#close">Cancel</button>
+          <button type="submit" class="btn deny">Deny</button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

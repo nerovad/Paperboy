@@ -1,5 +1,5 @@
 <!-- app/views/inbox/queue.html.erb -->
-<turbo-frame id="main-content">
+<turbo-frame id="main-content" data-controller="deny-modal">
   <h1 class="page-title">Inbox Queue</h1>
 
   <div class="table-wrapper">
@@ -22,15 +22,28 @@
               <td><%= submission.try(:unit) || "—" %></td>
               <td><%= submission.email %></td>
               <td class="action-buttons">
+                <%# PDF links per type %>
                 <% if submission.is_a?(ParkingLotSubmission) %>
                   <%= link_to "View PDF", pdf_parking_lot_submission_path(submission), target: "_blank", class: "pdf-button" %>
-                  <%= button_to "Approve", approve_parking_lot_submission_path(submission), method: :patch, class: "btn approve" %>
-                  <%= button_to "Deny", deny_parking_lot_submission_path(submission), method: :patch, class: "btn deny" %>
                 <% elsif submission.is_a?(ProbationTransferRequest) %>
                   <%= link_to "View PDF", pdf_probation_transfer_request_path(submission), target: "_blank", class: "pdf-button" %>
-                  <%= button_to "Approve", approve_probation_transfer_request_path(submission), method: :patch, class: "btn approve" %>
-                  <%= button_to "Deny", deny_probation_transfer_request_path(submission), method: :patch, class: "btn deny" %>
                 <% end %>
+
+                <%# Approve stays a simple PATCH button %>
+                <% if submission.respond_to?(:id) %>
+                  <%= button_to "Approve",
+                        polymorphic_path(submission, action: :approve),
+                        method: :patch, class: "btn approve" %>
+                <% end %>
+
+                <%# Deny opens the modal (works for ANY model with member :deny) %>
+                <button type="button"
+                        class="btn deny"
+                        data-action="click->deny-modal#open"
+                        data-deny-path="<%= polymorphic_path(submission, action: :deny) %>"
+                        data-record-title="<%= "#{submission.class.name.demodulize.titleize} ##{submission.id}" %>">
+                  Deny
+                </button>
               </td>
             </tr>
           <% end %>
@@ -42,4 +55,6 @@
       </tbody>
     </table>
   </div>
+
+  <%= render "shared/deny_modal" %>
 </turbo-frame>

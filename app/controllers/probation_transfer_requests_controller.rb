@@ -40,10 +40,12 @@ end
   def create
     employee = session[:user]
     sup_id   = fetch_supervisor_id(employee["employee_id"])
+    sup_email = fetch_employee_email(sup_id)
 
     @probation_transfer_request = ProbationTransferRequest.new(probation_transfer_request_params)
     @probation_transfer_request.status = 0
     @probation_transfer_request.supervisor_id = sup_id
+    @probation_transfer_request.supervisor_email = sup_email
 
     if params[:probation_transfer_request][:desired_transfer_destination].present?
       destinations = Array(params[:probation_transfer_request][:desired_transfer_destination]).reject(&:blank?)
@@ -84,16 +86,35 @@ end
 
 def approve
   @submission = ProbationTransferRequest.find(params[:id])
-  @submission.update!(status: 1)
+
+  approver_id    = session.dig(:user, "employee_id").to_s
+  approver_email = session.dig(:user, "email") || fetch_employee_email(approver_id)
+
+  @submission.update!(
+    status: 1,                        # manager_approved
+    approved_by: approver_id,
+    approved_at: Time.current,
+    supervisor_email: @submission.supervisor_email.presence || approver_email
+  )
 
   NotifyProbationJob.perform_later(@submission.id)
-
   redirect_to inbox_queue_path, notice: "Transfer request approved."
 end
 
 def deny
   @submission = ProbationTransferRequest.find(params[:id])
-  @submission.update!(status: :denied)
+
+  denier_id    = session.dig(:user, "employee_id").to_s
+  denier_email = session.dig(:user, "email") || fetch_employee_email(denier_id)
+  reason       = params[:denial_reason].to_s.strip
+
+  @submission.update!(
+    status: 2,                        # denied
+    denied_by: denier_id,
+    denied_at: Time.current,
+    denial_reason: reason.presence || "No reason provided",
+    supervisor_email: @submission.supervisor_email.presence || denier_email
+  )
 
   redirect_to inbox_queue_path, alert: "Transfer request denied."
 end
@@ -122,6 +143,16 @@ end
     SQL
 
     result&.fetch("Supervisor_ID", nil)
+  end
+
+  def fetch_employee_email(emp_id)
+    return nil if emp_id.blank?
+    row = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first
+      SELECT EE_Email
+      FROM [GSABSS].[dbo].[Employees]
+      WHERE EmployeeID = '#{emp_id}'
+    SQL
+    row&.fetch("EE_Email", nil)
   end
 
   def prepare_new_transfer_form

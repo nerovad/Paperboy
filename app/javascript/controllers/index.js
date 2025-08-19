@@ -8,6 +8,7 @@ import ProbationTransferRequestController from "./probation_transfer_request_con
 import BillingToolsController from "./billing_tools_controller"
 import SlideshowController from "./slideshow_controller"
 import ConfirmController from "./confirm_controller"
+import DenyModalController from "./deny_modal_controller"
 
 application.register("slideshow", SlideshowController)
 application.register("billing-tools", BillingToolsController)
@@ -16,5 +17,6 @@ application.register("form-navigation", FormNavigationController)
 application.register("login-modal", LoginModalController)
 application.register("profile-dropdown", ProfileDropdownController)
 application.register("confirm", ConfirmController)
+application.register("deny-modal", DenyModalController)
 
 eagerLoadControllersFrom("controllers", application)
