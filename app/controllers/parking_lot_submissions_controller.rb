@@ -83,16 +83,43 @@ class ParkingLotSubmissionsController < ApplicationController
               disposition: "inline"
   end
 
-  def approve
-    @parking_lot_submission.update!(status: 1) # manager_approved
-    NotifySecurityJob.perform_later(@parking_lot_submission.id) # unchanged (mailer path intact)
-    redirect_to parking_lot_submissions_path, notice: "Request approved and sent to Security."
-  end
+def approve
+  @submission = ParkingLotSubmission.find(params[:id])
 
-  def deny
-    @parking_lot_submission.update!(status: 2) # denied (use integer, not :denied symbol)
-    redirect_to parking_lot_submissions_path, alert: "Request denied."
-  end
+  approver_id = session.dig(:user, "employee_id").to_s
+
+  @submission.update!(
+    status: 1,                        # manager_approved
+    approved_by: approver_id,
+    approved_at: Time.current
+  )
+
+  # send to Security (unchanged, still uses the job)
+  NotifySecurityJob.perform_later(@submission.id)
+
+  # NEW: notify the employee who submitted
+  SecurityMailer.notify(@submission).deliver_later
+
+  redirect_to parking_lot_submissions_path, notice: "Request approved and sent to Security."
+end
+
+def deny
+  @submission = ParkingLotSubmission.find(params[:id])
+
+  denier_id    = session.dig(:user, "employee_id").to_s
+  reason       = params[:denial_reason].to_s.strip
+
+  @submission.update!(
+    status: 2,                        # use your correct denied code
+    denied_by: denier_id,
+    denied_at: Time.current,
+    denial_reason: reason.presence || "No reason provided"
+  )
+
+  SecurityMailer.denied(@submission).deliver_later
+
+  redirect_to inbox_queue_path, alert: "Parking request denied."
+end
 
   def index
     # If you intend to always redirect to inbox, do it and return to avoid extra work below

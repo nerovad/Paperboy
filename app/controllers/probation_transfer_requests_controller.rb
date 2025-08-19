@@ -116,6 +116,8 @@ def deny
     supervisor_email: @submission.supervisor_email.presence || denier_email
   )
 
+  ProbationMailer.denied(@submission).deliver_later
+
   redirect_to inbox_queue_path, alert: "Transfer request denied."
 end
 

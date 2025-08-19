@@ -1,0 +1,9 @@
+<p>Hi <%= @submission.name %>,</p>
+<p>Your parking lot request <strong>#<%= @submission.id %></strong> was denied.</p>
+
+<p><strong>Reason:</strong><br>
+<%= simple_format(@reason.presence || "No reason provided.") %></p>
+
+<p>You can review your request on the status page.</p>
+
+<p>— Ventura County GSA Forms</p>

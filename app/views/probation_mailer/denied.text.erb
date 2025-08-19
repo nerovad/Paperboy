@@ -1,0 +1,10 @@
+Hi <%= @request.name %>,
+
+Your probation transfer request #<%= @request.id %> was denied.
+
+Reason:
+<%= (@reason.presence || "No reason provided.") %>
+
+You can review your request on the status page.
+
+— Ventura County GSA Forms
