@@ -1,5 +1,7 @@
 class ProbationTransferRequest < ApplicationRecord
 
+include PhoneNumberable
+
   STATUS_MAP = {
     0 => "submitted",
     1 => "manager_approved",

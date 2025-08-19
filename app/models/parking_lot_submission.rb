@@ -1,5 +1,7 @@
 class ParkingLotSubmission < ApplicationRecord
 
+include PhoneNumberable
+
   has_many :parking_lot_vehicles, dependent: :destroy
   accepts_nested_attributes_for :parking_lot_vehicles, allow_destroy: true
 

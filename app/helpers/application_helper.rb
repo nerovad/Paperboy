@@ -13,4 +13,11 @@ module ApplicationHelper
 
     submissions.count
   end
+
+  # app/helpers/application_helper.rb
+  def format_phone(digits)
+    d = digits.to_s.gsub(/\D/, "")
+    return digits if d.length != 10
+    "#{d[0,3]}-#{d[3,3]}-#{d[6,4]}"
+  end
 end
