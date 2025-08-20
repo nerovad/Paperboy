@@ -124,56 +124,92 @@
             <%= form.label :current_assignment_date, "Current Assignment Start Date" %>
             <%= form.date_field :current_assignment_date, class: "form-control" %>
           </div>
-        <div data-controller="probation-transfer-request">
-          <div class="form-group flex-fill overflow-visible" style="flex: 1 0 100%;">
-          <%= form.label :desired_transfer_destination, "Desired Transfer Destination" %>
-          <% destinations = [
-            # Adult
-            "Adult Investigations (AI-I, II, III)",
-            "East County Field Services (ECFS)",
-            "East County Probation/Post-Release (ECPPR)",
-            "Oxnard Field Services (OFS I/II)",
-            "Oxnard Probation/Post-Release (OPPR I/II)",
-            "Pretrial Risk Assessment and Monitoring Services (PRAMS)",
-            "Specialized Services Unit (SSU)",
-            "Ventura Field Services (VFS)",
-            "Ventura Probation/Post-Release (VPPR)",
-            "Work Release (WR)",
-            # Juvenile
-            "Intensive Supervision Services - Juvenile (ISSJ)",
-            "Juvenile Facilities Housing/Operations (JF)",
-            "Juvenile Field Services (JFS)",
-            "Juvenile Intake/Community Confinement (JINT/CC)",
-            "Juvenile Investigations (JINV)",
-            "Juvenile Specialty Programs (JSP)",
-            "Placement Unit (PLAU)",
-            # Support
-            "Force Options Training (FOT)",
-            "Professional Standards Unit (PSU)",
-            "Staff Training Unit (STU)",
-            # Other
-            "Other"
-          ] %>
+          <div data-controller="probation-transfer-request">
+            <div class="fieldset-grid">
+              <!-- ADULT -->
+              <fieldset class="fieldset">
+                <legend>Adult Services Bureau</legend>
+                <div class="form-group overflow-visible">
+                  <label for="adult_select">Select one or more</label>
+                  <select id="adult_select" class="form-control choices-multiselect" multiple
+                          data-probation-transfer-request-target="adultSelect">
+                    <%= options_for_select([
+                      "Adult Investigations (AI-I, II, III)",
+                      "East County Field Services (ECFS)",
+                      "East County Probation/Post-Release (ECPPR)",
+                      "Oxnard Field Services (OFS I/II)",
+                      "Oxnard Probation/Post-Release (OPPR I/II)",
+                      "Pretrial Risk Assessment and Monitoring Services (PRAMS)",
+                      "Specialized Services Unit (SSU)",
+                      "Ventura Field Services (VFS)",
+                      "Ventura Probation/Post-Release (VPPR)",
+                      "Work Release (WR)",
+                      "Other"
+                    ]) %>
+                  </select>
+                </div>
+                <div class="form-group mt-2" data-probation-transfer-request-target="adultOtherGroup" style="display:none;">
+                  <label>Other (Adult)</label>
+                  <input type="text" class="form-control" data-probation-transfer-request-target="adultOtherInput">
+                </div>
+              </fieldset>
 
-         <%= form.select :desired_transfer_destination,
-      options_for_select(destinations, @probation_transfer_request&.desired_transfer_destination),
-      {},
-      multiple: true,
-      class: "form-control choices-multiselect",
-      id: "transfer_destination_select",
-      data: { probation_transfer_request_target: "multiSelect" } %>
-      </div>
+              <!-- JUVENILE -->
+              <fieldset class="fieldset">
+                <legend>Juvenile Services Bureau</legend>
+                <div class="form-group overflow-visible">
+                  <label for="juvenile_select">Select one or more</label>
+                  <select id="juvenile_select" class="form-control choices-multiselect" multiple
+                          data-probation-transfer-request-target="juvenileSelect">
+                    <%= options_for_select([
+                      "Intensive Supervision Services - Juvenile (ISSJ)",
+                      "Juvenile Facilities Housing/Operations (JF)",
+                      "Juvenile Field Services (JFS)",
+                      "Juvenile Intake/Community Confinement (JINT/CC)",
+                      "Juvenile Investigations (JINV)",
+                      "Juvenile Specialty Programs (JSP)",
+                      "Placement Unit (PLAU)",
+                      "Other"
+                    ]) %>
+                  </select>
+                </div>
+                <div class="form-group mt-2" data-probation-transfer-request-target="juvenileOtherGroup" style="display:none;">
+                  <label>Other (Juvenile)</label>
+                  <input type="text" class="form-control" data-probation-transfer-request-target="juvenileOtherInput">
+                </div>
+              </fieldset>
 
-        <div class="form-group mt-3"
-            data-probation-transfer-request-target="otherGroup"
-            id="other-destination-group"
-            style="display: none;">
-          <%= form.label :other_transfer_destination, "Other:" %>
-          <%= form.text_field :other_transfer_destination, class: "form-control" %>
-        </div>
+              <!-- ADMIN -->
+              <fieldset class="fieldset">
+                <legend>Administrative Services (SrDPO/SDPO only)</legend>
+                <div class="form-group overflow-visible">
+                  <label for="admin_select">Select one or more</label>
+                  <select id="admin_select" class="form-control choices-multiselect" multiple
+                          data-probation-transfer-request-target="adminSelect">
+                    <%= options_for_select([
+                      "Force Options Training (FOT)",
+                      "Professional Standards Unit (PSU)",
+                      "Staff Training Unit (STU)",
+                      "Other"
+                    ]) %>
+                  </select>
+                </div>
+                <div class="form-group mt-2" data-probation-transfer-request-target="adminOtherGroup" style="display:none;">
+                  <label>Other (Administrative)</label>
+                  <input type="text" class="form-control" data-probation-transfer-request-target="adminOtherInput">
+                </div>
+              </fieldset>
+            </div>
+
+            <!-- The ONLY field bound to your model column -->
+            <%= form.hidden_field :desired_transfer_destination,
+                  id: "combined_transfer_destination",
+                  value: @probation_transfer_request&.desired_transfer_destination,
+                  data: { probation_transfer_request_target: "combinedField" } %>
+          </div>
+
       </div>
         </div>
-      </div>
 
       <!-- Navigation Buttons -->
       <div class="navigation-buttons d-flex justify-content-between">

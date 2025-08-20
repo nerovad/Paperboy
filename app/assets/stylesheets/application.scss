@@ -106,6 +106,7 @@ html, body {
   padding: 0 30px;
   max-width: 900px;
   margin: 0 auto;
+  overflow-x: hidden;
 }
 
 .form-header {
@@ -534,54 +535,137 @@ input.form-control {
   }
 }
 
-/*Choices.js*/
-.form-group .choices { position: relative; display:block; width:100%; max-width:100%; min-width:0; }
-.form-group .choices__inner { width:100% !important; box-sizing:border-box; background-clip: padding-box; }
+/* ===========================
+   Choices.js: layout + widths
+   =========================== */
 
+/* 3 cards side-by-side; stack only on small screens */
+.form-row .fieldset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .form-row .fieldset-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fieldset {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  min-width: 0;
+
+  legend {
+    font-weight: 600;
+    padding: 0 6px;
+  }
+}
+
+/* Let dropdown overflow if needed */
+.form-group.overflow-visible { overflow: visible; }
+
+/* === The important part: set width on the WRAPPER, not the inner === */
+.form-group .choices {
+  position: relative;
+  display: block;
+  width: 80%;          /* match this with the "Other" input below */
+  max-width: 80%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Inner fills the wrapper */
+.form-group .choices__inner {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  background-clip: padding-box;
+}
+
+/* Dropdown should match the wrapper width */
 .form-group .choices__list--dropdown {
   position: absolute;
   inset-inline: 0;
-  width: auto;
+  width: 100%;
   box-sizing: border-box;
   z-index: 10000;
 }
-/* Override Choices.js selected item color */
+
+/* Full-width parity inside the wrapper */
+.choices,
+.choices__list--dropdown { width: 100%; }
+
+/* === Make the "Other" input match the Choices width === */
+.fieldset .form-group[data-probation-transfer-request-target$="OtherGroup"] input.form-control {
+  width: 80% !important;       /* same as .choices width */
+  max-width: 80% !important;
+  box-sizing: border-box;
+}
+
+/* Optional: keep the label aligned visually */
+.fieldset .form-group[data-probation-transfer-request-target$="OtherGroup"] > label {
+  display: inline-block;
+  width: 80%;
+  box-sizing: border-box;
+}
+
+/* Mobile: let both go full-width for comfort */
+@media (max-width: 768px) {
+  .form-group .choices {
+    width: 100%;
+    max-width: 100%;
+  }
+  .fieldset .form-group[data-probation-transfer-request-target$="OtherGroup"] input.form-control,
+  .fieldset .form-group[data-probation-transfer-request-target$="OtherGroup"] > label {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ===========================
+   Choices.js polish (optional)
+   =========================== */
+
 .choices__list--multiple .choices__item {
   background-color: $primary-color !important;
   border: none !important;
   color: #fff !important;
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin: 4px 6px 0 0;
 }
 
-/* Optional: change hover/focus states in the dropdown */
 .choices__list--dropdown .choices__item--selectable.is-highlighted {
   background-color: $primary-hover !important;
   color: #fff !important;
 }
 
-/* Full-screen overlay*/
-#overlay-root {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483647;
-  pointer-events: none;
-}
-#overlay-root .choices__list--dropdown {
-  position: absolute !important;
-  pointer-events: auto;
-  box-sizing: border-box !important;
-  max-height: 50vh;
-  overflow: auto;
+.choices__inner:focus-within {
+  outline: 2px solid rgba(0,0,0,0.15);
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
-.vehicle-fields {
-  border: 1px solid #ccc;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
+.choices__list--dropdown {
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+  overflow: hidden;
 }
-.form-page {
-  scrollbar-gutter: stable both-edges;
+
+.choices__list--dropdown .choices__item--selectable {
+  padding: 10px 12px;
 }
+
+/* space between select and its "Other" field */
+.fieldset .form-group + .form-group { margin-top: .5rem; }
+
 .profile-icon {
   position: relative;
   font-size: 1rem; /* baseline font */
