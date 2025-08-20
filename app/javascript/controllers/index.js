@@ -9,6 +9,7 @@ import BillingToolsController from "./billing_tools_controller"
 import SlideshowController from "./slideshow_controller"
 import ConfirmController from "./confirm_controller"
 import DenyModalController from "./deny_modal_controller"
+import PhoneController from "./phone_controller"
 
 application.register("slideshow", SlideshowController)
 application.register("billing-tools", BillingToolsController)
@@ -18,5 +19,6 @@ application.register("login-modal", LoginModalController)
 application.register("profile-dropdown", ProfileDropdownController)
 application.register("confirm", ConfirmController)
 application.register("deny-modal", DenyModalController)
+application.register("phone", PhoneController)
 
 eagerLoadControllersFrom("controllers", application)

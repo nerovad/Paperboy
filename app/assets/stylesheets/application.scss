@@ -122,6 +122,7 @@ html, body {
   flex-wrap: wrap;
   gap: 40px;
   margin-bottom: 20px;
+  padding: 20px;
 }
 
 .form-group {
@@ -166,6 +167,25 @@ input.form-control {
     border-radius: 5px;
     font-size: 1em;
   }
+}
+/* ==== Phone error handling ==== */
+.form-control.invalid {
+  border-color: #dc3545; // red
+  outline: none;
+}
+
+.field-error {
+  display: none;
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+.field-error.active { display: block; }
+
+/* Optional: ensure placeholder is greyed consistently */
+.form-control::placeholder {
+  color: #6c757d;
+  opacity: 1; // Firefox
 }
 
 .navigation-buttons {
