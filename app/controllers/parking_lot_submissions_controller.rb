@@ -9,6 +9,9 @@ class ParkingLotSubmissionsController < ApplicationController
     employee_id = session[:user]["employee_id"]
     @employee = Employee.find_by(EmployeeID: employee_id)
 
+    # MB3 flag
+    @is_mb3 = @employee&.[]("Union_Code").to_s.upcase == "MB3"
+    
     # Lookup by employee’s unit code
     unit_code = @employee&.[]("Unit")
     unit = Unit.find_by(unit_id: unit_code)
@@ -28,13 +31,21 @@ class ParkingLotSubmissionsController < ApplicationController
       unit: unit ? "#{unit.unit_id} - #{unit.long_name}" : nil
     }
 
+        # Replace this list with your real lots if you have a source of truth.
+    base_lots = [
+      "A Lot", "B Lot", "C Lot", "D Lot",
+      "Employee Lot", "Visitor Lot"
+    ]
+    r_lot = "R Lot"
+    @allowed_parking_lots = @is_mb3 ? (base_lots + [r_lot]) : base_lots
+
     # Dropdowns (you can sort by long_name if needed)
     @agency_options = Agency.all.map { |a| [a.long_name, a.agency_id] }
 
     @division_options = if agency
       Division.where(agency_id: agency.agency_id).map { |d| [d.long_name, d.division_id] }
     else
-      []
+  
     end
 
     @department_options = if division
@@ -50,25 +61,48 @@ class ParkingLotSubmissionsController < ApplicationController
     end
   end
 
-  def create
-    employee = session[:user]
-    supervisor_id = fetch_supervisor_id(employee["employee_id"])
+def create
+  employee      = session[:user]
+  employee_id   = employee["employee_id"].to_s
+  supervisor_id = fetch_supervisor_id(employee_id)
 
-    Rails.logger.info "Creating submission for employee #{employee["employee_id"]}, supervisor: #{supervisor_id}"
+  # Check Union Code from DB (trust server-side)
+  union_code = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first&.fetch("Union_Code", nil).to_s.upcase
+    SELECT Union_Code
+    FROM [GSABSS].[dbo].[Employees]
+    WHERE EmployeeID = '#{employee_id}'
+  SQL
+  is_mb3 = (union_code == "MB3")
 
-    @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
+  @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
+  @parking_lot_submission.employee_id = employee_id
 
-    # Trust the session, not the form, for identity and initial status
-    @parking_lot_submission.employee_id  = employee["employee_id"].to_s
-    @parking_lot_submission.status       = 0  # submitted
+  if is_mb3
+    # Auto-approve: no manager routing
+    @parking_lot_submission.status        = 1 # manager_approved
+    @parking_lot_submission.supervisor_id = nil
+    @parking_lot_submission.approved_by   = employee_id # or "SYSTEM"
+    @parking_lot_submission.approved_at   = Time.current
+  else
+    # Normal path: submitted and routed to supervisor
+    @parking_lot_submission.status        = 0 # submitted
     @parking_lot_submission.supervisor_id = supervisor_id
-
-    if @parking_lot_submission.save
-      redirect_to form_success_path, allow_other_host: false, status: :see_other
-    else
-      render :new, status: :unprocessable_entity
-    end
   end
+
+  if @parking_lot_submission.save
+    if is_mb3
+      NotifySecurityJob.perform_later(@parking_lot_submission.id)
+      SecurityMailer.notify(@parking_lot_submission).deliver_later
+    end
+
+    redirect_to form_success_path, allow_other_host: false, status: :see_other
+  else
+    @is_mb3 = is_mb3
+    base_lots = ["A Lot", "B Lot", "C Lot", "D Lot", "Employee Lot", "Visitor Lot"]
+    @allowed_parking_lots = is_mb3 ? (base_lots + ["R Lot"]) : base_lots
+    render :new, status: :unprocessable_entity
+  end
+end
 
   # READ-ONLY SHOW (uses your shared partial in the view)
   def show; end
