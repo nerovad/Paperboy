@@ -112,7 +112,7 @@
             </div>
           <% end %>
         </div>
-        <button type="button" id="add-vehicle" class="btn btn-secondary mt-2">+ Add Vehicle</button>
+        <button type="button" id="add-vehicle" class="add-vehicle-btn">+ Add Vehicle</button>
       </div>
       <!-- Navigation Buttons -->
       <div class="navigation-buttons d-flex justify-content-between">
@@ -140,7 +140,7 @@
         <%= form.fields_for :parking_lot_vehicles, ParkingLotVehicle.new, child_index: "NEW_RECORD" do |vf| %>
           <div class="vehicle-fields form-row border p-3 rounded mb-4">
             <%= render partial: "vehicle_fields", locals: { vf: vf } %>
-            <button type="button" class="btn btn-danger remove-vehicle">− Remove</button>
+            <button type="button" class="remove-vehicle-btn">− Remove</button>
           </div>
         <% end %>
       </div>

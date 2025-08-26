@@ -1,7 +1,6 @@
 <% is_first = vf.index.nil? || vf.index == 0 %>
 
 <%
-  # Use your original list; only hide "R Lot" for non‑MB3.
   all_lots = [
     "BOS", "Courier Parking", "E Lot", "G Lot", "Grand Jury Parking",
     "HOA Dock", "HOJ Dock", "Maintenance", "R Lot", "Traffic Circle",
@@ -37,7 +36,7 @@
 <div class="form-group">
   <%= vf.select :parking_lot,
         options_for_select(lots),
-        {},
+        { prompt: "Select Parking Lot" },
         class: "form-control parking-lot-select" %>
 </div>
 <div class="form-group">

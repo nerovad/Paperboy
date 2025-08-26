@@ -67,7 +67,7 @@ document.addEventListener("turbo:load", () => {
   });
 
   wrapper?.addEventListener("click", (e) => {
-    if (e.target.classList.contains("remove-vehicle")) {
+    if (e.target.classList.contains("remove-vehicle-btn")) {
       const vehicleSet = e.target.closest(".vehicle-fields");
       vehicleSet.remove();
     }
