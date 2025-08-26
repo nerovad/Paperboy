@@ -708,62 +708,149 @@ input.form-control {
   font-family: sans-serif;
 }
 
-//------------------------------------------BILLING TOOLS//
-.billing-date-form {
-  display: flex;
-  gap: 2rem;
-  margin-bottom: 2rem;
+/* ===== BILLING TOOLS: INPUT-BASED TILE LOOK (no markup changes) ===== */
+
+/* tighter, predictable grid */
+.form-wrapper .billing-button-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important;
+  gap: 14px !important;
 }
 
-.date-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+/* turn the inputs into chunky "tiles" */
+.form-wrapper .billing-btn {
+  /* inputs can’t do ::before content, so we keep this single-column */
+  display: block !important;
+  width: 100%;
+  min-height: 84px;
+  padding: 16px 18px !important;
 
-.billing-button-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: space-between;
-}
+  text-align: left;
+  border: 1px solid rgba(0,0,0,.06) !important;
+  border-radius: 14px !important;
+  font-size: .95rem !important;
+  font-weight: 800 !important;
+  letter-spacing: .1px;
 
-.billing-form {
-  flex: 1 1 200px;
-}
-
-.billing-button-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 2rem 7.5rem;
-  margin-top: 1.5rem;
-}
-
-.billing-btn {
-  display: block;
-  padding: 14px 16px;
-  font-size: .9rem;
-  font-weight: bold;
-  text-align: center;
-  border: none;
-  border-radius: 8px;
-  color: white;
+  box-shadow: 0 3px 10px rgba(0,0,0,.10) !important;
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease !important;
   cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  }
-
-  &.raw-data   { background-color: #4caf50; }   /* green */
-  &.backup     { background-color: #3f9e8d; }   /* blue */
-  &.billing    { background-color: #d8a12f; color: #212529; } /* yellow */
-  &.reports    { background-color: #437fc7; }   /* purple */
-  &.email      { background-color: #6a5fac; }   /* teal */
-  &.prod-back  { background-color: #c74c4c; }   /* red */
+  /* add a slim brand bar on the left so it feels designed */
+  position: relative;
 }
+.form-wrapper .billing-btn::after {
+  /* inputs DO render ::after backgrounds, but not text content in all browsers.
+     We use it only for a colored bar, which is widely supported. */
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 6px;
+  border-top-left-radius: 14px;
+  border-bottom-left-radius: 14px;
+  background: rgba(255,255,255,.25);
+}
+
+.form-wrapper .billing-btn:hover,
+.form-wrapper .billing-btn:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 18px rgba(0,0,0,.18) !important;
+  outline: 2px solid rgba(0,73,118,.35);
+  outline-offset: 2px;
+}
+
+/* keep your brand gradients */
+.form-wrapper .billing-btn.raw-data   { background: linear-gradient(135deg, #45b36b, #3aa360); color: #fff; }
+.form-wrapper .billing-btn.backup     { background: linear-gradient(135deg, #3f9e8d, #2f8c7b); color: #fff; }
+.form-wrapper .billing-btn.billing    { background: linear-gradient(135deg, #f4c24f, #e0aa2b); color: #212529; }
+.form-wrapper .billing-btn.reports    { background: linear-gradient(135deg, #4a86d0, #3d74b8); color: #fff; }
+.form-wrapper .billing-btn.email      { background: linear-gradient(135deg, #7a6fd0, #665fc2); color: #fff; }
+.form-wrapper .billing-btn.prod-back  { background: linear-gradient(135deg, #d45757, #c74c4c); color: #fff; }
+
+/* === Billing modal base (overlay + centering) === */
+.billing-modal {
+  display: none;                 /* hidden by default */
+  position: fixed;
+  inset: 0;                      /* top/right/bottom/left: 0 */
+  z-index: 1000;                 /* above page content */
+  background: rgba(0,0,0,0.45);  /* dim backdrop */
+  align-items: center;           /* center content vertically */
+  justify-content: center;       /* center content horizontally */
+}
+
+/* when controller adds .open */
+.billing-modal.open {
+  display: flex;
+}
+
+/* the dialog box */
+.billing-modal-content {
+  width: 92vw;
+  max-width: 560px;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 14px;
+  padding: 18px 18px 20px;
+  box-shadow: 0 10px 36px rgba(0,0,0,.25);
+  border: 1px solid #e9ecef;
+  position: relative;
+}
+
+.billing-modal-actions {
+  display: flex;
+  gap: .75rem;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.billing-modal .close {
+  position: absolute;
+  right: .6rem;
+  top: .5rem;
+  font-size: 1.25rem;
+  color: #97a6b2;
+  cursor: pointer;
+}
+
+/* date row inside the modal */
+.date-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.date-group label {
+  font-size: .9rem;
+  color: #374151;
+  margin-bottom: 4px;
+  display: block;
+}
+.date-group input[type="date"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: .95rem;
+}
+
+/* buttons inside modal */
+.btn.approve, .btn.deny {
+  padding: .6rem .9rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+.btn.approve { background: #4caf50; color: #fff; }
+.btn.approve:hover { filter: brightness(.95); }
+.btn.deny    { background: #edf2f7; color: #111827; }
+.btn.deny:hover { filter: brightness(.97); }
+
+/* small mobile tweak */
+@media (max-width: 600px) {
+  .date-row { grid-template-columns: 1fr; }
+}
+
 
 /* ------- Form Submit Success (self-contained) ------- */
 .form-success-page {

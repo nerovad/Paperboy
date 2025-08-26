@@ -1,96 +1,114 @@
 <div class="form-header">
   <h1>Billing Tools</h1>
+  <p class="billing-subtitle">Quick actions for monthly ops, backups, and reports.</p>
 </div>
 
-<!-- Mount BOTH controllers here so confirm is an ancestor of the buttons -->
-<div class="form-wrapper" data-controller="billing-tools confirm">
-  <!-- Start/End Date Row -->
-  <div class="form-row">
-    <div class="form-group">
-      <%= label_tag :s_date, "Start Date" %>
-      <%= date_field_tag :s_date, @sDate, class: "form-control", data: { billing_tools_target: "startDate" } %>
-    </div>
+<div class="form-wrapper billing-tools" data-controller="billing-modal">
+  <div class="billing-sections">
+    <section class="billing-section">
+      <h2>Data & Backups</h2>
 
-    <div class="form-group">
-      <%= label_tag :e_date, "End Date" %>
-      <%= date_field_tag :e_date, @eDate, class: "form-control", data: { billing_tools_target: "endDate" } %>
-    </div>
+      <div class="billing-button-grid">
+        <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true, data: { turbo: false } do %>
+          <%= submit_tag "Get Raw Data",
+            class: "billing-btn raw-data",
+            data: {
+              action: "click->billing-modal#open",
+              confirm_title: "Get Raw Data",
+              confirm_message: "Run the raw data query?"
+              # requires_dates omitted/false
+            } %>
+        <% end %>
+
+        <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true, data: { turbo: false } do %>
+          <%= submit_tag "Backup Staging",
+            class: "billing-btn backup",
+            data: {
+              action: "click->billing-modal#open",
+              confirm_title: "Backup Staging",
+              confirm_message: "Create a fresh backup of the staging database?"
+            } %>
+        <% end %>
+
+        <%= form_with url: backup_production_billing_tools_path, method: :post, local: true, data: { turbo: false } do %>
+          <%= submit_tag "Backup Production",
+            class: "billing-btn prod-back",
+            data: {
+              action: "click->billing-modal#open",
+              confirm_title: "Backup Production",
+              confirm_message: "Back up the production database? This may take a while."
+            } %>
+        <% end %>
+      </div>
+    </section>
+
+    <section class="billing-section">
+      <h2>Billing & Reports</h2>
+      <div class="billing-button-grid">
+        <%= form_with url: run_monthly_billing_billing_tools_path, method: :post, local: true, data: { turbo: false } do %>
+          <%= hidden_field_tag :s_date %>
+          <%= hidden_field_tag :e_date %>
+          <%= submit_tag "Run Monthly Billing",
+            class: "billing-btn billing",
+            data: {
+              action: "click->billing-modal#open",
+              requires_dates: true,
+              confirm_title: "Run Monthly Billing",
+              confirm_message: "Kick off MonthlyBilling with these dates?"
+            } %>
+        <% end %>
+
+        <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true, data: { turbo: false } do %>
+          <%= hidden_field_tag :s_date %>
+          <%= hidden_field_tag :e_date %>
+          <%= submit_tag "Print Reports",
+            class: "billing-btn reports",
+            data: {
+              action: "click->billing-modal#open",
+              requires_dates: true,
+              confirm_title: "Print Reports",
+              confirm_message: "Generate and print billing reports for this period?"
+            } %>
+        <% end %>
+
+        <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true, data: { turbo: false } do %>
+          <%= hidden_field_tag :s_date %>
+          <%= hidden_field_tag :e_date %>
+          <%= submit_tag "Email Reports",
+            class: "billing-btn email",
+            data: {
+              action: "click->billing-modal#open",
+              requires_dates: true,
+              confirm_title: "Email Reports",
+              confirm_message: "Email billing reports for this period?"
+            } %>
+        <% end %>
+      </div>
+    </section>
   </div>
 
-  <!-- Buttons Grid -->
-  <div class="billing-button-grid">
-    <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true, data: { turbo: false } do %>
-      <%= submit_tag "Get Raw Data",
-        class: "billing-btn raw-data",
-        data: {
-          action: "click->confirm#open",
-          confirm_title: "Get Raw Data",
-          confirm_message: "Run the raw data query for the selected dates?"
-        } %>
-    <% end %>
+  <!-- Single modal used for BOTH cases (with or without dates) -->
+  <div class="billing-modal" data-billing-modal-target="backdrop">
+    <div class="billing-modal-content" role="dialog" aria-modal="true" aria-labelledby="billing-modal-title">
+      <span class="close" data-action="click->billing-modal#cancel" aria-label="Close">&times;</span>
+      <h3 id="billing-modal-title" data-billing-modal-target="title">Confirm</h3>
+      <p data-billing-modal-target="message">Are you sure you want to proceed?</p>
 
-    <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true, data: { turbo: false } do %>
-      <%= submit_tag "Backup Staging",
-        class: "billing-btn backup",
-        data: {
-          action: "click->confirm#open",
-          confirm_title: "Backup Staging",
-          confirm_message: "Create a fresh backup of the staging database?"
-        } %>
-    <% end %>
+      <!-- Date row toggled by controller -->
+      <div class="date-row" data-billing-modal-target="dateRow" style="display:none;">
+        <div class="date-group">
+          <label for="bm-s">Start Date</label>
+          <input id="bm-s" type="date" data-billing-modal-target="start" value="<%= @sDate %>">
+        </div>
+        <div class="date-group">
+          <label for="bm-e">End Date</label>
+          <input id="bm-e" type="date" data-billing-modal-target="end" value="<%= @eDate %>">
+        </div>
+      </div>
 
-    <%= form_with url: run_monthly_billing_billing_tools_path, method: :post, local: true, data: { turbo: false } do %>
-      <%= hidden_field_tag :s_date %>
-      <%= hidden_field_tag :e_date %>
-      <%= submit_tag "Run Monthly Billing",
-        class: "billing-btn billing",
-        data: {
-          action: "click->confirm#open",
-          confirm_title: "Run Monthly Billing",
-          confirm_message: "Kick off MonthlyBilling with the current Start/End dates?"
-        } %>
-    <% end %>
-
-    <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true, data: { turbo: false } do %>
-      <%= submit_tag "Print Reports",
-        class: "billing-btn reports",
-        data: {
-          action: "click->confirm#open",
-          confirm_title: "Print Reports",
-          confirm_message: "Generate and print billing reports for the selected period?"
-        } %>
-    <% end %>
-
-    <%= form_with url: backup_staging_billing_tools_path, method: :post, local: true, data: { turbo: false } do %>
-      <%= submit_tag "Email Reports",
-        class: "billing-btn email",
-        data: {
-          action: "click->confirm#open",
-          confirm_title: "Email Reports",
-          confirm_message: "Email billing reports to recipients now?"
-        } %>
-    <% end %>
-
-    <%= form_with url: backup_production_billing_tools_path, method: :post, local: true, data: { turbo: false } do %>
-      <%= submit_tag "Backup Production",
-        class: "billing-btn prod-back",
-        data: {
-          action: "click->confirm#open",
-          confirm_title: "Backup Production",
-          confirm_message: "Back up the production database? This may take a while."
-        } %>
-    <% end %>
-  </div>
-
-  <!-- Confirm Modal (now just targets, no controller) -->
-  <div class="modal" data-confirm-target="backdrop">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
-      <span class="close" data-action="click->confirm#cancel" aria-label="Close">&times;</span>
-      <h3 id="confirm-title" data-confirm-target="title">Confirm</h3>
-      <p data-confirm-target="message">Are you sure you want to proceed?</p>
-      <div style="display:flex; gap:0.75rem; justify-content:center; margin-top:1rem;">
-        <button type="button" class="btn deny" data-action="click->confirm#cancel">Cancel</button>
-        <button type="button" class="btn approve" data-action="click->confirm#proceed">Yes, do it</button>
+      <div class="billing-modal-actions">
+        <button type="button" class="btn deny" data-action="click->billing-modal#cancel">Cancel</button>
+        <button type="button" class="btn approve" data-action="click->billing-modal#proceed">Proceed</button>
       </div>
     </div>
   </div>
