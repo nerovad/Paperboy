@@ -710,62 +710,108 @@ input.form-control {
 
 /* ===== BILLING TOOLS: INPUT-BASED TILE LOOK (no markup changes) ===== */
 
-/* tighter, predictable grid */
+/* ===============================
+   Billing Tools: nav-link style tiles
+   =============================== */
+
 .form-wrapper .billing-button-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
   gap: 14px !important;
+  margin-top: 1rem;
 }
 
-/* turn the inputs into chunky "tiles" */
+.form-wrapper .billing-button-grid form {
+  display: flex;              /* center the button in its cell */
+  justify-content: center;
+}
+.billing-section {
+  padding: 1.25rem 1.5rem;        /* space inside each section */
+  background: #fff;               /* optional: white card look */
+  border-radius: 8px;             /* match your form-wrapper style */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05); /* subtle separation */
+}
+
+.billing-section + .billing-section {
+  margin-top: 2rem;               /* gap between stacked sections */
+}
+
+.billing-section h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;             /* space below the header */
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 .form-wrapper .billing-btn {
-  /* inputs can’t do ::before content, so we keep this single-column */
-  display: block !important;
-  width: 100%;
-  min-height: 84px;
-  padding: 16px 18px !important;
+  /* size/shape */
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 16px !important;
+  border-radius: 6px !important;
 
-  text-align: left;
-  border: 1px solid rgba(0,0,0,.06) !important;
-  border-radius: 14px !important;
-  font-size: .95rem !important;
-  font-weight: 800 !important;
-  letter-spacing: .1px;
+  /* “ghost” look on light background */
+  background-color: rgba(0,0,0,0.03) !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
 
-  box-shadow: 0 3px 10px rgba(0,0,0,.10) !important;
-  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease !important;
+  /* type */
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.2px;
+  color: #333 !important;
+  text-align: center;
+
+  /* interactions like .nav-link */
+  transition: background 0.3s, transform 0.2s, border-color 0.2s, color 0.2s;
   cursor: pointer;
-
-  /* add a slim brand bar on the left so it feels designed */
-  position: relative;
-}
-.form-wrapper .billing-btn::after {
-  /* inputs DO render ::after backgrounds, but not text content in all browsers.
-     We use it only for a colored bar, which is widely supported. */
-  content: "";
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 6px;
-  border-top-left-radius: 14px;
-  border-bottom-left-radius: 14px;
-  background: rgba(255,255,255,.25);
 }
 
-.form-wrapper .billing-btn:hover,
-.form-wrapper .billing-btn:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: 0 7px 18px rgba(0,0,0,.18) !important;
-  outline: 2px solid rgba(0,73,118,.35);
-  outline-offset: 2px;
+.form-wrapper .billing-btn:hover {
+  transform: scale(1.05);
 }
 
-/* keep your brand gradients */
-.form-wrapper .billing-btn.raw-data   { background: linear-gradient(135deg, #45b36b, #3aa360); color: #fff; }
-.form-wrapper .billing-btn.backup     { background: linear-gradient(135deg, #3f9e8d, #2f8c7b); color: #fff; }
-.form-wrapper .billing-btn.billing    { background: linear-gradient(135deg, #f4c24f, #e0aa2b); color: #212529; }
-.form-wrapper .billing-btn.reports    { background: linear-gradient(135deg, #4a86d0, #3d74b8); color: #fff; }
-.form-wrapper .billing-btn.email      { background: linear-gradient(135deg, #7a6fd0, #665fc2); color: #fff; }
-.form-wrapper .billing-btn.prod-back  { background: linear-gradient(135deg, #d45757, #c74c4c); color: #fff; }
+.form-wrapper .billing-btn:active {
+  transform: scale(1);
+}
+
+.form-wrapper .billing-btn:hover {
+  background-color: $primary-color !important;
+  border-color: $primary-color !important;
+  color: #fff !important;
+}
+
+.form-wrapper .billing-btn.billing:hover {
+  background-color: $primary-color !important;
+  border-color: $primary-color !important;
+  color: #fff !important;
+}
+
+/* Reports + Email: navy fill on hover */
+.form-wrapper .billing-btn.reports:hover,
+.form-wrapper .billing-btn.email:hover {
+  background-color: $primary-color !important;
+  border-color: $primary-color !important;
+  color: #fff !important;
+}
+
+/* Backups: neutral on idle, green on hover (leave as default) */
+
+/* Production backup: red on hover to signal caution */
+.form-wrapper .billing-btn.prod-back:hover {
+  background-color: $primary-color !important;
+  border-color: $primary-color !important;
+  color: #fff !important;
+}
+
+/* Mobile tweak */
+@media (max-width: 600px) {
+  .form-wrapper .billing-btn {
+    width: 100%;
+  }
+}
 
 /* === Billing modal base (overlay + centering) === */
 .billing-modal {
