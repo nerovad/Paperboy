@@ -16,6 +16,22 @@ body {
   font-family: 'Helvetica Neue', Arial, sans-serif;
   color: $text-color;
 }
+input[type="date"].form-control {
+  font-family: inherit;      // inherit the same font as other .form-control
+  font-size: 1em;            // keep it consistent
+  color: $text-color;        // normal text
+}
+
+input[type="date"].form-control:invalid {
+  color: #6c757d;            // greyed out like placeholder
+}
+
+input[type="date"].form-control:invalid::before {
+  content: attr(placeholder);
+  font-family: inherit;      // ensure placeholder also uses your app font
+  font-size: 1em;
+  color: #6c757d;
+}
 .app-container {
   display: flex;
   min-height: 100vh;
@@ -584,6 +600,8 @@ input.form-control {
   legend {
     font-weight: 600;
     padding: 0 6px;
+    margin-left: 24px;
+    text-align: center;
   }
 }
 
@@ -1161,4 +1179,3 @@ input.form-control {
     box-shadow: 0 0 0 2px rgba(201, 48, 44, 0.2);
   }
 }
-
