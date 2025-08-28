@@ -1,0 +1,41 @@
+<div id="main-content">
+  <div class="form-header">
+    <h1>Probation Transfer Request</h1>
+  </div>
+
+  <div class="form-wrapper">
+    <div class="ptr-gate">
+      <div class="ptr-gate__notice">
+        <p><strong>You already have a transfer request on file.</strong></p>
+        <p><strong>Status:</strong> <%= @existing_request.status_label %></p>
+        <p><strong>Work location:</strong> <%= @existing_request.work_location.presence || "—" %></p>
+        <p><strong>Desired destinations:</strong> <%= @existing_request.desired_transfer_destination.presence || "—" %></p>
+        <p>
+          Submitted on <strong><%= @existing_request.created_at.to_date %></strong>.
+          It will remain on file until <strong><%= @expires_on %></strong>, unless you withdraw or replace it.
+        </p>
+        <ul>
+          <li>Rankings are not considered.</li>
+          <li>Requests stay on file for up to one year.</li>
+          <li>Submitting a new request will cancel the existing one once you submit.</li>
+        </ul>
+      </div>
+
+      <div class="ptr-gate__actions">
+        <%= link_to "Yes, fill out a new form",
+                    new_probation_transfer_request_path(proceed: 1),
+                    class: "ptr-btn ptr-btn--primary" %>
+
+        <%= button_to "Withdraw current request",
+                      withdraw_probation_transfer_request_path(@existing_request),
+                      method: :patch,
+                      form: { data: { turbo_confirm: "Withdraw your current request now?" } },
+                      class: "ptr-btn ptr-btn--warning" %>
+
+        <%= link_to "Keep existing request",
+                    root_path,
+                    class: "ptr-btn ptr-btn--secondary" %>
+      </div>
+    </div>
+  </div>
+</div>

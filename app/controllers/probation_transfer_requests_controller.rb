@@ -1,5 +1,5 @@
 class ProbationTransferRequestsController < ApplicationController
-  before_action :set_probation_transfer_request, only: [:show, :edit, :update, :destroy, :pdf, :approve, :deny]
+  before_action :set_probation_transfer_request, only: [:show, :edit, :update, :destroy, :pdf, :approve, :deny, :withdraw]
 
   def index
     @probation_transfer_requests = ProbationTransferRequest.where(status: 0, supervisor_id: session[:user]["employee_id"])
@@ -33,32 +33,70 @@ end
   end
 
   def new
+      employee_id = session[:user]["employee_id"].to_s
+
+  # Find most recent ACTIVE request within the past year
+  @existing_request = ProbationTransferRequest
+                        .for_employee(employee_id)
+                        .active
+                        .where("created_at >= ?", 1.year.ago)
+                        .order(created_at: :desc)
+                        .first
+
+  # If user chose to proceed anyway (?proceed=1), bypass the gate
+  if @existing_request.present? && params[:proceed].blank?
+    # used for display
+    @expires_on = (@existing_request.expires_at || (@existing_request.created_at + 1.year)).to_date
+    return render :existing_request_gate
+  end
+
     @probation_transfer_request = ProbationTransferRequest.new
     prepare_new_transfer_form
   end
 
-  def create
-    employee = session[:user]
-    sup_id   = fetch_supervisor_id(employee["employee_id"])
-    sup_email = fetch_employee_email(sup_id)
+ def create
+  employee  = session[:user]
+  sup_id    = fetch_supervisor_id(employee["employee_id"])
+  sup_email = fetch_employee_email(sup_id)
 
-    @probation_transfer_request = ProbationTransferRequest.new(probation_transfer_request_params)
-    @probation_transfer_request.status = 0
-    @probation_transfer_request.supervisor_id = sup_id
-    @probation_transfer_request.supervisor_email = sup_email
+  @probation_transfer_request = ProbationTransferRequest.new(probation_transfer_request_params)
+  @probation_transfer_request.status = 0
+  @probation_transfer_request.supervisor_id    = sup_id
+  @probation_transfer_request.supervisor_email = sup_email
 
-    if params[:probation_transfer_request][:desired_transfer_destination].present?
-      destinations = Array(params[:probation_transfer_request][:desired_transfer_destination]).reject(&:blank?)
-      @probation_transfer_request.desired_transfer_destination = destinations.join('; ')
-    end
-
-    if @probation_transfer_request.save
-      redirect_to form_success_path, allow_other_host: false, status: :see_other
-    else
-      prepare_new_transfer_form
-      render :new
-    end
+  if (raw = params.dig(:probation_transfer_request, :desired_transfer_destination)).present?
+    destinations = Array(raw).reject(&:blank?)
+    @probation_transfer_request.desired_transfer_destination = destinations.join("; ")
   end
+
+  if @probation_transfer_request.save
+    # only do lifecycle after we have an ID
+    ActiveRecord::Base.transaction do
+      @probation_transfer_request.ensure_expires!
+
+      ProbationTransferRequest
+        .for_employee(@probation_transfer_request.employee_id)
+        .where.not(id: @probation_transfer_request.id)
+        .active
+        .find_each do |older|
+          # use update_columns to skip validations/callbacks
+          older.update_columns(
+            canceled_at: Time.current,
+            canceled_reason: "superseded_by_new_request",
+            superseded_by_id: @probation_transfer_request.id,
+            updated_at: Time.current
+          )
+        end
+    end
+
+    redirect_to form_success_path, allow_other_host: false, status: :see_other
+  else
+    # See what failed
+    Rails.logger.warn("PTR create failed: #{ @probation_transfer_request.errors.full_messages.join('; ') }")
+    prepare_new_transfer_form
+    render :new, status: :unprocessable_entity
+  end
+end
 
   def edit; end
 
@@ -73,6 +111,11 @@ end
   def destroy
     @probation_transfer_request.destroy
     redirect_to probation_transfer_requests_url, notice: "Transfer request deleted."
+  end
+
+  def withdraw
+    @probation_transfer_request.cancel!(reason: "withdrawn")
+    redirect_to new_probation_transfer_request_path(proceed: 1), notice: "Your previous request was withdrawn. You can submit a new one."
   end
 
   def pdf

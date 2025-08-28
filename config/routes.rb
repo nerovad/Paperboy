@@ -21,6 +21,7 @@ Rails.application.routes.draw do
       get :pdf
       patch :approve
       patch :deny
+      patch :withdraw
     end
   end
   # config/routes.rb

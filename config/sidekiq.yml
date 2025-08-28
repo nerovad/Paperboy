@@ -1,0 +1,8 @@
+:queues:
+  - default
+:schedule:
+  probation_requests_expiry_job:
+    cron: "0 2 * * *"
+    class: "ProbationRequestsExpiryJob"
+    queue: default
+    timezone: "America/Los_Angeles"

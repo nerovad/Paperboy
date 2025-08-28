@@ -28,6 +28,27 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_19_173444) do
     t.varchar "name", limit: 50, null: false
   end
 
+  create_table "CustomerAccount", primary_key: "CustomerAccountID", id: :integer, force: :cascade do |t|
+    t.string "FYEAR", limit: 4, null: false
+    t.string "CUNIT", limit: 4, null: false
+    t.string "CACTIVITY", limit: 4, null: false
+    t.string "CFUNCTION", limit: 4, null: false
+    t.string "CPROGRAM", limit: 10
+    t.string "CPHASE", limit: 6
+    t.string "CTASK", limit: 4
+  end
+
+  create_table "CustomerAccountWithType", primary_key: "CustomerAccountID", id: :integer, force: :cascade do |t|
+    t.string "FYEAR", limit: 4, null: false
+    t.string "CUNIT", limit: 4, null: false
+    t.string "CACTIVITY", limit: 4, null: false
+    t.string "CFUNCTION", limit: 4, null: false
+    t.string "CPROGRAM", limit: 10
+    t.string "CPHASE", limit: 6
+    t.string "CTASK", limit: 4
+    t.string "TYPE", limit: 3, null: false
+  end
+
   create_table "Employees", primary_key: "EmployeeID", id: :integer, default: nil, force: :cascade do |t|
     t.string "Last_Name", limit: 50
     t.string "First_Name", limit: 50
@@ -333,37 +354,37 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_19_173444) do
   end
 
   create_table "parking_lot_submissions", force: :cascade do |t|
-    t.string "name"
-    t.string "phone"
-    t.string "employee_id"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
+    t.string "name", limit: 200
+    t.string "phone", limit: 25
+    t.string "employee_id", limit: 20
+    t.string "email", limit: 200
+    t.string "agency", limit: 100
+    t.string "division", limit: 100
+    t.string "department", limit: 100
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "unit"
+    t.string "unit", limit: 100
     t.integer "status"
-    t.string "supervisor_id"
-    t.string "approved_by"
+    t.string "supervisor_id", limit: 20
+    t.string "approved_by", limit: 20
     t.datetime "approved_at"
-    t.string "denied_by"
+    t.string "denied_by", limit: 20
     t.datetime "denied_at"
     t.text "denial_reason"
-    t.string "supervisor_email"
+    t.string "supervisor_email", limit: 200
   end
 
   create_table "parking_lot_vehicles", force: :cascade do |t|
     t.bigint "parking_lot_submission_id", null: false
-    t.string "make"
-    t.string "model"
-    t.string "color"
+    t.string "make", limit: 50
+    t.string "model", limit: 50
+    t.string "color", limit: 20
     t.integer "year"
-    t.string "license_plate"
-    t.string "parking_lot"
+    t.string "license_plate", limit: 15
+    t.string "parking_lot", limit: 100
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "other_parking_lot"
+    t.string "other_parking_lot", limit: 100
     t.index ["parking_lot_submission_id"], name: "index_parking_lot_vehicles_on_parking_lot_submission_id"
   end
 
@@ -375,29 +396,36 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_19_173444) do
   end
 
   create_table "probation_transfer_requests", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "email"
-    t.string "phone"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.string "work_location"
+    t.string "employee_id", limit: 20
+    t.string "name", limit: 200
+    t.string "email", limit: 200
+    t.string "phone", limit: 25
+    t.string "agency", limit: 100
+    t.string "division", limit: 100
+    t.string "department", limit: 100
+    t.string "unit", limit: 100
+    t.string "work_location", limit: 100
     t.date "current_assignment_date"
     t.text "desired_transfer_destination"
     t.integer "status", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "other_transfer_destination"
-    t.string "approved_by"
+    t.string "other_transfer_destination", limit: 200
+    t.string "approved_by", limit: 20
     t.datetime "approved_at"
-    t.string "denied_by"
+    t.string "denied_by", limit: 20
     t.datetime "denied_at"
     t.text "denial_reason"
-    t.string "supervisor_email"
-    t.string "supervisor_id"
+    t.string "supervisor_email", limit: 200
+    t.string "supervisor_id", limit: 20
+    t.datetime "expires_at"
+    t.datetime "canceled_at"
+    t.string "canceled_reason", limit: 100
+    t.bigint "superseded_by_id"
+    t.index ["canceled_at"], name: "index_probation_transfer_requests_on_canceled_at"
+    t.index ["expires_at"], name: "index_probation_transfer_requests_on_expires_at"
     t.index ["status"], name: "index_probation_transfer_requests_on_status"
+    t.index ["superseded_by_id"], name: "index_probation_transfer_requests_on_superseded_by_id"
   end
 
   create_table "programs", primary_key: ["agency_id", "program_id", "major_program_id"], force: :cascade do |t|
