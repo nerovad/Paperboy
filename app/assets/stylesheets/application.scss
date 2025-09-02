@@ -551,45 +551,49 @@ input.form-control {
 }
 
 .btn {
-  padding: 8px 16px;
-  border-radius: 5px;
-  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 38px;          /* exact height (no surprises) */
+  padding: 0 16px;       /* horizontal only */
+  line-height: 1;        /* no extra vertical space */
+  box-sizing: border-box;
+  vertical-align: middle;
+
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
   text-decoration: none;
-  color: white;
-  border: none;
+  border: 0;
   cursor: pointer;
   transition: background 0.2s ease-in-out;
+  white-space: nowrap;   /* keep on one line */
+  color: #fff;
 }
 
-.btn.approve {
-  background-color: #4caf50;
+/* Variants */
+.btn.approve { background-color: #4caf50; }
+.btn.approve:hover { background-color: #43a047; }
 
-  &:hover {
-    background-color: #43a047;
-  }
+.btn.deny { background-color: #e53935; }
+.btn.deny:hover { background-color: #d32f2f; }
+
+.btn.pdf { background-color: #004976; }
+.btn.pdf:hover { background-color: #0066a1; }
+
+/* Action cell layout */
+.submission-table td.action-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
-.btn.deny {
-  background-color: #e53935;
-
-  &:hover {
-    background-color: #d32f2f;
-  }
+/* Normalize button_to form wrapper */
+.submission-table td.action-buttons form {
+  display: inline-flex;
+  margin: 0;
 }
-
-.pdf-button {
-  padding: 6px 16px;
-  background-color: #004976;
-  color: white;
-  border-radius: 5px;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #0066a1;
-  }
-}
-
 /* ===========================
    Choices.js: layout + widths
    =========================== */

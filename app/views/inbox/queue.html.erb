@@ -24,9 +24,9 @@
               <td class="action-buttons">
                 <%# PDF links per type %>
                 <% if submission.is_a?(ParkingLotSubmission) %>
-                  <%= link_to "View PDF", pdf_parking_lot_submission_path(submission), target: "_blank", class: "pdf-button" %>
+                  <%= link_to "View PDF", pdf_parking_lot_submission_path(submission), target: "_blank", class: "btn pdf" %>
                 <% elsif submission.is_a?(ProbationTransferRequest) %>
-                  <%= link_to "View PDF", pdf_probation_transfer_request_path(submission), target: "_blank", class: "pdf-button" %>
+                  <%= link_to "View PDF", pdf_probation_transfer_request_path(submission), target: "_blank", class: "btn pdf" %>
                 <% end %>
 
                 <%# Approve stays a simple PATCH button %>
