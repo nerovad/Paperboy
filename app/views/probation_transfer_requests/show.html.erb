@@ -5,6 +5,7 @@
 </div>
 
 <div class="form-wrapper">
+  <div class="form-inner">
   <% if notice.present? %>
     <p style="color: green"><%= notice %></p>
   <% end %>
@@ -13,7 +14,9 @@
              locals: { record: @probation_transfer_request, exclude: [] } %>
 
   <div class="form-actions">
-    <%= link_to "Back to Status", status_path, class: "btn" %>
-    <%= link_to "Back to Probation Transfer Requests", probation_transfer_requests_path, class: "btn" %>
+    <%= link_to "Back to Status", status_path, class: "form-btn" %>
+    <%= link_to "Back to Probation Transfer Requests", probation_transfer_requests_path, class: "form-btn" %>
+    <%= link_to "Download PDF", pdf_probation_transfer_request_path(@probation_transfer_request), class: "form-btn" %>
+    </div>
   </div>
 </div>

@@ -5,6 +5,7 @@
 </div>
 
 <div class="form-wrapper">
+  <div class="form-inner">
   <% if notice.present? %>
     <p style="color: green"><%= notice %></p>
   <% end %>
@@ -41,9 +42,9 @@
   <% end %>
 
   <div class="form-actions" style="margin-top: 16px;">
-    <%= link_to "Back to Status", status_path, class: "btn" %>
-    <%= link_to "Back to Parking Lot Submissions", parking_lot_submissions_path, class: "btn" %>
-    <%# Keep PDF link if you like %>
-    <%= link_to "Download PDF", pdf_parking_lot_submission_path(@parking_lot_submission), class: "btn" %>
+    <%= link_to "Back to Status", status_path, class: "form-btn" %>
+    <%= link_to "Back to Parking Lot Submissions", parking_lot_submissions_path, class: "form-btn" %>
+    <%= link_to "Download PDF", pdf_parking_lot_submission_path(@parking_lot_submission), class: "form-btn" %>
+    </div>
   </div>
 </div>
