@@ -28,7 +28,7 @@ class ProbationTransferPdfGenerator
       pdf.text "Agency: #{request.agency}"
       pdf.text "Division: #{request.division}"
       pdf.text "Department: #{request.department}"
-      pdf.text "Unit: #{request.unit}"
+      pdf.text "Unit: #{request.unit_display}"
       pdf.text "Work Location: #{request.work_location}"
 
       pdf.move_down 15

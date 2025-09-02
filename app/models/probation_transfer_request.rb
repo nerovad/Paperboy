@@ -1,6 +1,48 @@
 class ProbationTransferRequest < ApplicationRecord
   include PhoneNumberable
 
+  # === Lookups (stored columns are codes/IDs: agency, division, department, unit)
+  belongs_to :agency_record,
+             class_name: "Agency",
+             primary_key: :agency_id,
+             foreign_key: :agency,
+             optional: true
+
+  belongs_to :division_record,
+             class_name: "Division",
+             primary_key: :division_id,
+             foreign_key: :division,
+             optional: true
+
+  belongs_to :department_record,
+             class_name: "Department",
+             primary_key: :department_id,
+             foreign_key: :department,
+             optional: true
+
+  belongs_to :unit_record,
+             class_name: "Unit",
+             primary_key: :unit_id,
+             foreign_key: :unit,
+             optional: true
+
+  # === Friendly display helpers ===
+  def agency_long_name     = agency_record&.long_name     || agency
+  def division_long_name   = division_record&.long_name   || division
+  def department_long_name = department_record&.long_name || department
+  def unit_long_name       = unit_record&.long_name       || unit
+
+  # EXACT format you want everywhere for Unit:
+  def unit_display
+    if unit.present? && unit_long_name.present?
+      "#{unit} - #{unit_long_name}"
+    elsif unit_long_name.present?
+      unit_long_name
+    else
+      unit.to_s
+    end
+  end
+
   STATUS_MAP = {
     0 => "submitted",
     1 => "manager_approved",

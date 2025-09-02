@@ -218,7 +218,7 @@ end
       agency: agency&.agency_id,
       division: division&.division_id,
       department: department&.department_id,
-      unit: unit ? "#{unit.unit_id} - #{unit.long_name}" : nil
+      unit: unit&.unit_id
     }
 
     @agency_options = Agency.all.map { |a| [a.long_name, a.agency_id] }
@@ -235,11 +235,13 @@ end
       []
     end
 
-    @unit_options = if department
-      Unit.where(department_id: department.department_id).map { |u| ["#{u.unit_id} - #{u.short_name}", u.unit_id] }
-    else
-      []
-    end
+@unit_options = if department
+  Unit.where(department_id: department.department_id)
+      .order(:unit_id)
+      .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }   # <-- CHANGED
+else
+  []
+end
 
     @form_logo = "/assets/images/default-logo.svg"
 

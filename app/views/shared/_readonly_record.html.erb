@@ -10,6 +10,10 @@
       <% value =
            if attr == "status" && record.respond_to?(:status_label)
              record.status_label
+           elsif record.respond_to?("#{attr}_display")
+             record.public_send("#{attr}_display")
+           elsif record.respond_to?("#{attr}_long_name")
+             record.public_send("#{attr}_long_name")
            else
              record.public_send(attr)
            end %>

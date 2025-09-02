@@ -2,64 +2,73 @@
 class ParkingLotSubmissionsController < ApplicationController
   before_action :set_parking_lot_submission, only: [:show, :pdf, :approve, :deny]
 
-  def new
-    @parking_lot_submission = ParkingLotSubmission.new
-    @parking_lot_submission.parking_lot_vehicles.build
+def new
+  @parking_lot_submission = ParkingLotSubmission.new
+  @parking_lot_submission.parking_lot_vehicles.build
 
-    employee_id = session[:user]["employee_id"]
-    @employee = Employee.find_by(EmployeeID: employee_id)
+  # Safely read session
+  employee_id = session.dig(:user, "employee_id").to_s
+  @employee   = employee_id.present? ? Employee.find_by(EmployeeID: employee_id) : nil
 
-    # MB3 flag
-    @is_mb3 = @employee&.[]("Union_Code").to_s.upcase == "MB3"
-    
-    # Lookup by employee’s unit code
-    unit_code = @employee&.[]("Unit")
-    unit = Unit.find_by(unit_id: unit_code)
+  unless @employee
+    redirect_to login_path, alert: "Please sign in to start a submission." and return
 
-    department = Department.find_by(department_id: unit&.[]("department_id"))
-    division   = Division.find_by(division_id: department&.[]("division_id"))
-    agency     = Agency.find_by(agency_id: division&.[]("agency_id"))
-
-    @prefill_data = {
-      employee_id: @employee&.[]("EmployeeID"),
-      name: "#{@employee&.[]("First_Name")} #{@employee&.[]("Last_Name")}",
-      phone: @employee&.[]("Work_Phone"),
-      email: @employee&.[]("EE_Email"),
-      agency: agency&.agency_id,
-      division: division&.division_id,
-      department: department&.department_id,
-      unit: unit ? "#{unit.unit_id} - #{unit.long_name}" : nil
-    }
-
-        # Replace this list with your real lots if you have a source of truth.
-    base_lots = [
-      "A Lot", "B Lot", "C Lot", "D Lot",
-      "Employee Lot", "Visitor Lot"
-    ]
-    r_lot = "R Lot"
-    @allowed_parking_lots = @is_mb3 ? (base_lots + [r_lot]) : base_lots
-
-    # Dropdowns (you can sort by long_name if needed)
-    @agency_options = Agency.all.map { |a| [a.long_name, a.agency_id] }
-
-    @division_options = if agency
-      Division.where(agency_id: agency.agency_id).map { |d| [d.long_name, d.division_id] }
-    else
-  
-    end
-
-    @department_options = if division
-      Department.where(division_id: division.division_id).map { |d| [d.long_name, d.department_id] }
-    else
-      []
-    end
-
-    @unit_options = if department
-      Unit.where(department_id: department.department_id).map { |u| ["#{u.unit_id} - #{u.short_name}", u.unit_id] }
-    else
-      []
-    end
+    @agency_options     = Agency.order(:long_name).pluck(:long_name, :agency_id)
+    @division_options   = []
+    @department_options = []
+    @unit_options       = []
+    return
   end
+
+  # MB3 flag
+  @is_mb3 = @employee["Union_Code"].to_s.upcase == "MB3"
+
+  # Org lookups (guard each step)
+  unit        = Unit.find_by(unit_id: @employee["Unit"])
+  department  = unit ? Department.find_by(department_id: unit["department_id"]) : nil
+  division    = department ? Division.find_by(division_id: department["division_id"]) : nil
+  agency      = division ? Agency.find_by(agency_id: division["agency_id"]) : nil
+
+  # Prefill with IDs (unit = ID only)
+  @prefill_data = {
+    employee_id: @employee["EmployeeID"],
+    name:        [@employee["First_Name"], @employee["Last_Name"]].compact.join(" "),
+    phone:       @employee["Work_Phone"],
+    email:       @employee["EE_Email"],
+    agency:      agency&.agency_id,
+    division:    division&.division_id,
+    department:  department&.department_id,
+    unit:        unit&.unit_id
+  }
+
+  # Parking lots
+  base_lots             = %w[A\ Lot B\ Lot C\ Lot D\ Lot Employee\ Lot Visitor\ Lot]
+  @allowed_parking_lots = @is_mb3 ? (base_lots + ["R Lot"]) : base_lots
+
+  # Dropdowns
+  @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+
+  @division_options = if agency
+    Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id)
+  else
+    []
+  end
+
+  @department_options = if division
+    Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id)
+  else
+    []
+  end
+
+  # 👇 Unit label = "unit_id - long_name", value = unit_id (as requested)
+  @unit_options = if department
+    Unit.where(department_id: department.department_id)
+        .order(:unit_id)
+        .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+  else
+    []
+  end
+end
 
 def create
   employee      = session[:user]
