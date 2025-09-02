@@ -6,10 +6,7 @@
 
 <div class="form-wrapper">
   <div class="form-inner">
-  <% if notice.present? %>
-    <p style="color: green"><%= notice %></p>
-  <% end %>
-
+  
   <%= render partial: "shared/readonly_record",
              locals: { record: @parking_lot_submission,
                        exclude: %w[id created_at updated_at] } %>

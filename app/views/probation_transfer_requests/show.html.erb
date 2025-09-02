@@ -6,9 +6,6 @@
 
 <div class="form-wrapper">
   <div class="form-inner">
-  <% if notice.present? %>
-    <p style="color: green"><%= notice %></p>
-  <% end %>
 
   <%= render partial: "shared/readonly_record",
              locals: { record: @probation_transfer_request, exclude: [] } %>
