@@ -1,7 +1,7 @@
 class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
-  helper_method :current_user
+  helper_method :current_user, :inbox_count
 
   def current_user
     user_data = session[:user]
@@ -13,6 +13,25 @@ class ApplicationController < ActionController::Base
       first_name: user_data["first_name"],
       last_name: user_data["last_name"]
     )
+  end
+
+    def inbox_count
+    return @inbox_count if defined?(@inbox_count)
+
+    user = session[:user]
+    return @inbox_count = 0 unless user && user["employee_id"].present?
+
+    eid = user["employee_id"].to_s
+
+    # Parking Lot: pending for this supervisor
+    pl = ParkingLotSubmission.where(supervisor_id: eid, status: 0)
+    # If you later add cancelation to parking lot, this line will automatically exclude them:
+    pl = pl.where(canceled_at: nil) if ParkingLotSubmission.column_names.include?("canceled_at")
+
+    # Probation Transfer: pending & NOT canceled
+    ptr = ProbationTransferRequest.where(supervisor_id: eid, status: 0, canceled_at: nil)
+
+    @inbox_count = pl.count + ptr.count
   end
 
   def build_prefill_data(employee_id)

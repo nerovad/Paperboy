@@ -5,6 +5,7 @@ module StatusHelper
     when "submitted"         then "is-submitted"
     when "manager_approved"  then "is-manager-approved"
     when "denied"            then "is-denied"
+   # when "canceled"          then "is-denied"
     when "sent_to_security", "sent_to_hr", "sent_to_next"
       "is-sent"
     else

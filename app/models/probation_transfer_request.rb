@@ -57,7 +57,11 @@ class ProbationTransferRequest < ApplicationRecord
   scope :active,       -> { where(status: 0).not_canceled.not_expired } # “submitted” and still valid
 
   def status_label
-    STATUS_MAP[status]
+    if canceled_at.present?
+      "canceled"
+    else
+      STATUS_MAP[status] || "unknown"
+    end
   end
 
   def submitted?;          status == 0; end

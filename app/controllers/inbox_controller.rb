@@ -9,7 +9,7 @@ class InboxController < ApplicationController
     @submissions = []
 
     @submissions += ParkingLotSubmission.where(supervisor_id: employee_id, status: 0)
-    @submissions += ProbationTransferRequest.where(supervisor_id: employee_id, status: 0)
+    @submissions += ProbationTransferRequest.where(supervisor_id: employee_id, status: 0, canceled_at: nil)
 
     @submissions.sort_by!(&:created_at).reverse!
   end
