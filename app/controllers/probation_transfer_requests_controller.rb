@@ -268,10 +268,41 @@ end
       }
     ]
 
-    @work_location_options = [
-      ["800 S. Victoria", "800 S. Victoria"],
-      ["4333 E Vineyard Ave.", "4333 E Vineyard Ave."],
-      ["1721 Pacific Ave.", "1721 Pacific Ave."]
-    ]
+@work_location_options = [
+  ["Adult Court Services", "Adult Court Services"],
+  ["Adult Field Services", "Adult Field Services"],
+  ["AI-1", "AI-1"],
+  ["AI-2", "AI-2"],
+  ["AI-3", "AI-3"],
+  ["ECFS", "ECFS"],
+  ["ECPPR", "ECPPR"],
+  ["Force Options", "Force Options"],
+  ["ISSJ", "ISSJ"],
+  ["JF Commitment", "JF Commitment"],
+  ["JF Detention", "JF Detention"],
+  ["JF Operations", "JF Operations"],
+  ["JF Programming", "JF Programming"],
+  ["JF Special Functions", "JF Special Functions"],
+  ["JFS", "JFS"],
+  ["JINT/CC", "JINT/CC"],
+  ["JINV", "JINV"],
+  ["JSP", "JSP"],
+  ["JSP/ROPP", "JSP/ROPP"],
+  ["OFS-1", "OFS-1"],
+  ["OFS-2", "OFS-2"],
+  ["OPPR-1", "OPPR-1"],
+  ["OPPR-2", "OPPR-2"],
+  ["PLAU", "PLAU"],
+  ["PRAMS-1", "PRAMS-1"],
+  ["PRAMS-2", "PRAMS-2"],
+  ["PSU", "PSU"],
+  ["Public Safety Realignment", "Public Safety Realignment"],
+  ["SSU", "SSU"],
+  ["STU", "STU"],
+  ["VFS", "VFS"],
+  ["VPPR", "VPPR"],
+  ["WR", "WR"],
+  ["YOBG", "YOBG"]
+]
   end
 end
