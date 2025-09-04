@@ -105,6 +105,7 @@
       <!-- Page 3: Vehicle and Parking Info -->
       <div class="form-page" style="display:none;">
         <h2>Vehicle and Parking Info</h2>
+
         <div id="vehicle-wrapper">
           <%= form.fields_for :parking_lot_vehicles do |vf| %>
             <div class="vehicle-fields form-row border p-3 rounded mb-4">
@@ -112,7 +113,9 @@
             </div>
           <% end %>
         </div>
-        <button type="button" id="add-vehicle" class="add-vehicle-btn">+ Add Vehicle</button>
+         <div class="vehicle-list-actions">
+          <button type="button" id="add-vehicle" class="add-vehicle-btn">+ Add Vehicle</button>
+        </div>
       </div>
       <!-- Navigation Buttons -->
       <div class="navigation-buttons d-flex justify-content-between">
@@ -138,8 +141,7 @@
       <!-- Vehicle Template -->
       <div id="vehicle-template" style="display: none;">
         <%= form.fields_for :parking_lot_vehicles, ParkingLotVehicle.new, child_index: "NEW_RECORD" do |vf| %>
-          <div class="vehicle-fields form-row border p-3 rounded mb-4">
-            <%= render partial: "vehicle_fields", locals: { vf: vf } %>
+          <div class="vehicle-fields form-row border p-3 rounded mb-4"> <%= render partial: "vehicle_fields", locals: { vf: vf } %> 
             <button type="button" class="remove-vehicle-btn">− Remove</button>
           </div>
         <% end %>
