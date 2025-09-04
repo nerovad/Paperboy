@@ -10,6 +10,7 @@ import ConfirmController from "./confirm_controller"
 import DenyModalController from "./deny_modal_controller"
 import PhoneController from "./phone_controller"
 import BillingModalController from "./billing_modal_controller" 
+import ApproveModalController from "./approve_modal_controller"
 
 application.register("slideshow", SlideshowController)
 application.register("probation-transfer-request", ProbationTransferRequestController)
@@ -20,5 +21,6 @@ application.register("confirm", ConfirmController)
 application.register("deny-modal", DenyModalController)
 application.register("phone", PhoneController)
 application.register("billing-modal", BillingModalController) 
+application.register("approve-modal", ApproveModalController) 
 
 eagerLoadControllersFrom("controllers", application)

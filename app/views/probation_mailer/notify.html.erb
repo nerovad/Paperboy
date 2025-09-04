@@ -1,6 +1,12 @@
+<!-- app/views/probation_mailer/notify.html.erb -->
 <p>Hello,</p>
 
-<p>A new Probation Agency transfer request has been approved</p>
+<p>
+  A new Probation Agency transfer request has been approved
+  <% if @submission.approved_destination.present? %>
+    for <strong><%= @submission.approved_destination %></strong>.
+  <% end %>
+</p>
 
 <p>Please see the attached PDF for details.</p>
 

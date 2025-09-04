@@ -422,6 +422,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_19_173444) do
     t.datetime "canceled_at"
     t.string "canceled_reason", limit: 100
     t.bigint "superseded_by_id"
+    t.string "approved_destination"
+    t.index ["approved_destination"], name: "index_probation_transfer_requests_on_approved_destination"
     t.index ["canceled_at"], name: "index_probation_transfer_requests_on_canceled_at"
     t.index ["expires_at"], name: "index_probation_transfer_requests_on_expires_at"
     t.index ["status"], name: "index_probation_transfer_requests_on_status"

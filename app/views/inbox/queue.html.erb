@@ -1,5 +1,5 @@
 <!-- app/views/inbox/queue.html.erb -->
-<turbo-frame id="main-content" data-controller="deny-modal">
+<turbo-frame id="main-content" data-controller="approve-modal deny-modal">
   <h1 class="page-title">Inbox Queue</h1>
 
   <div class="table-wrapper">
@@ -22,21 +22,24 @@
               <td><%= submission.try(:unit) || "—" %></td>
               <td><%= submission.email %></td>
               <td class="action-buttons">
-                <%# PDF links per type %>
                 <% if submission.is_a?(ParkingLotSubmission) %>
                   <%= link_to "View PDF", pdf_parking_lot_submission_path(submission), target: "_blank", class: "btn pdf" %>
-                <% elsif submission.is_a?(ProbationTransferRequest) %>
-                  <%= link_to "View PDF", pdf_probation_transfer_request_path(submission), target: "_blank", class: "btn pdf" %>
-                <% end %>
-
-                <%# Approve stays a simple PATCH button %>
-                <% if submission.respond_to?(:id) %>
                   <%= button_to "Approve",
                         polymorphic_path(submission, action: :approve),
                         method: :patch, class: "btn approve" %>
+                <% elsif submission.is_a?(ProbationTransferRequest) %>
+                  <%= link_to "View PDF", pdf_probation_transfer_request_path(submission), target: "_blank", class: "btn pdf" %>
+                <button type="button"
+                        class="btn approve"
+                        data-action="click->approve-modal#open"
+                        data-approve-modal-approve-path-value="<%= polymorphic_path(submission, action: :approve) %>"
+                        data-approve-modal-options-value="<%= submission.desired_destinations_array.to_json %>"
+                        data-approve-modal-title-value="<%= "Approve Transfer ##{submission.id}" %>">
+                  Approve
+                </button>
+
                 <% end %>
 
-                <%# Deny opens the modal (works for ANY model with member :deny) %>
                 <button type="button"
                         class="btn deny"
                         data-action="click->deny-modal#open"
@@ -48,13 +51,43 @@
             </tr>
           <% end %>
         <% else %>
-          <tr>
-            <td colspan="5">No submissions found.</td>
-          </tr>
+          <tr><td colspan="5">No submissions found.</td></tr>
         <% end %>
       </tbody>
     </table>
   </div>
+
+  <!-- Approve Modal (NO data-controller here either) -->
+<div id="approve-modal-backdrop"
+     class="deny-modal-backdrop"
+     data-approve-modal-target="backdrop"
+     style="display:none;">
+  <div class="deny-modal" role="dialog" aria-modal="true" data-approve-modal-target="modal">
+    <div class="deny-modal__header">
+      <h3 id="approve-modal-title" data-approve-modal-target="title">Approve</h3>
+      <button type="button" class="deny-modal__close" data-action="approve-modal#close" aria-label="Close">✕</button>
+    </div>
+    <div class="deny-modal__body">
+      <form data-approve-modal-target="form" method="post" action="#">
+        <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+        <%= hidden_field_tag :_method, "patch" %>
+        <div class="form-group">
+          <label for="approved_destination">Select approved destination</label>
+          <select id="approved_destination"
+                  name="approved_destination"
+                  class="form-control"
+                  required
+                  data-approve-modal-target="select">
+          </select>
+        </div>
+        <div class="deny-modal__actions">
+          <button type="button" class="btn" data-action="approve-modal#close">Cancel</button>
+          <button type="submit" class="btn approve">Approve</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
   <%= render "shared/deny_modal" %>
 </turbo-frame>

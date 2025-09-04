@@ -1,17 +1,15 @@
 class ProbationMailer < ApplicationMailer
   default from: "fleet.forms@ventura.org"
 
-  def notify(request)
-    @request = request
+  def notify(submission)
+    @submission = submission
 
-    attachments["ProbationTransferRequest_#{request.id}.pdf"] = {
-      mime_type: "application/pdf",
-      content: ProbationTransferPdfGenerator.generate(request)
-    }
+    attachments["ProbationTransferRequest_#{submission.id}.pdf"] =
+      ProbationTransferPdfGenerator.generate(submission)
 
     mail(
-      to: @request.email, # or wherever it should go
-      subject: "New Probation Transfer Request Submitted"
+      to: "matthew.davoren@ventura.org",
+      subject: "Probation Transfer Request Approved"
     )
   end
 

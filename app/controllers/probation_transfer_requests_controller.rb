@@ -130,6 +130,15 @@ end
 def approve
   @submission = ProbationTransferRequest.find(params[:id])
 
+  # value coming from the modal <select name="approved_destination">
+  selected_dest = params[:approved_destination].to_s.strip.presence
+
+  # If the request listed choices, require one to be selected
+  options = @submission.desired_transfer_destination.to_s.split(';').map(&:strip).reject(&:blank?)
+  if options.any? && selected_dest.blank?
+    return redirect_to inbox_queue_path, alert: "Please choose an approved destination."
+  end
+
   approver_id    = session.dig(:user, "employee_id").to_s
   approver_email = session.dig(:user, "email") || fetch_employee_email(approver_id)
 
@@ -137,7 +146,8 @@ def approve
     status: 1,                        # manager_approved
     approved_by: approver_id,
     approved_at: Time.current,
-    supervisor_email: @submission.supervisor_email.presence || approver_email
+    supervisor_email: @submission.supervisor_email.presence || approver_email,
+    approved_destination: selected_dest
   )
 
   NotifyProbationJob.perform_later(@submission.id)

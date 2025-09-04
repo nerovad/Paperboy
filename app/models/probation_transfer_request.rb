@@ -85,4 +85,14 @@ def expire_if_due!
   return if expires_at.blank? || expires_at > Time.current
   update_columns(canceled_at: Time.current, canceled_reason: "expired", updated_at: Time.current)
 end
+
+  def desired_destinations_array
+    v = desired_transfer_destination
+    return v if v.is_a?(Array)
+
+    v.to_s
+     .split(/[;,|]/)   # split on ; or , or |
+     .map(&:strip)
+     .reject(&:blank?)
+  end
 end

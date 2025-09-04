@@ -29,13 +29,14 @@ class ProbationTransferPdfGenerator
       pdf.text "Division: #{request.division_long_name}"
       pdf.text "Department: #{request.department_long_name}"
       pdf.text "Unit: #{request.unit_display}"
-      pdf.text "Work Location: #{request.work_location}"
 
       pdf.move_down 15
       pdf.text "Transfer Request Details", size: 14, style: :bold
       pdf.move_down 5
+      pdf.text "Work Location: #{request.work_location}"
       pdf.text "Current Assignment Date: #{request.current_assignment_date.strftime('%B %d, %Y') if request.current_assignment_date.present?}"
       pdf.text "Desired Transfer Destination(s): #{request.desired_transfer_destination}"
+      pdf.text "Approved Destination: #{request.approved_destination.presence || '—'}"
 
       pdf.move_down 25
       pdf.text "Submitted on: #{request.created_at.strftime('%B %d, %Y at %I:%M %p')}", size: 10, align: :right
