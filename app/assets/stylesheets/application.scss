@@ -614,6 +614,7 @@ input.form-control {
   display: inline-flex;
   margin: 0;
 }
+
 /* ===========================
    Choices.js: layout + widths
    =========================== */
@@ -652,6 +653,12 @@ input.form-control {
 .form-group.overflow-visible { overflow: visible; }
 
 /* === The important part: set width on the WRAPPER, not the inner === */
+.placeholder-option {
+.placeholder-option {
+  color: #6c757d; // Bootstrap muted grey
+}
+  color: #6c757d; // Bootstrap muted grey
+}
 .form-group .choices {
   position: relative;
   display: block;
@@ -676,6 +683,61 @@ input.form-control {
   width: 100%;
   box-sizing: border-box;
   z-index: 10000;
+}
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 3px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  color: #1e40af;  
+  cursor: default;
+  position: relative;
+  user-select: none;
+}
+
+.info-icon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(100% + 8px);
+  white-space: nowrap;
+  background: #000;
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+}
+
+.info-icon::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(100% + 2px);
+  border: 6px solid transparent;
+  border-top-color: #000;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+}
+
+.info-icon:hover::after,
+.info-icon:hover::before,
+.info-icon:focus-visible::after,
+.info-icon:focus-visible::before {
+  opacity: 1;
 }
 
 /* Full-width parity inside the wrapper */

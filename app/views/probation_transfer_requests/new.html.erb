@@ -123,9 +123,13 @@
         <h2>Transfer Request Details</h2>
         <div class="form-row d-flex flex-wrap">
           <div class="form-group flex-fill">
-            <%= form.label :work_location, "Work Location" %>
+            <%= form.label :work_location, "Current Work Location" %>
             <%= form.select :work_location,
-                options_for_select(@work_location_options, @probation_transfer_request&.work_location),
+                options_for_select(
+                  [["Select Current Work Location", nil, { disabled: true, selected: @probation_transfer_request&.work_location.blank?, class: "placeholder-option" }]] +
+                  @work_location_options,
+                  @probation_transfer_request&.work_location
+                ),
                 {},
                 class: "form-control" %>
           </div>
@@ -140,7 +144,12 @@
               <fieldset class="fieldset">
                 <legend>Adult Services</legend>
                 <div class="form-group overflow-visible">
-                  <label for="adult_select">Select one or more</label>
+                  <label for="adult_select">Select one or more
+                  <span class="info-icon"
+                        tabindex="0"
+                        aria-label="Rankings will not be considered"
+                        data-tooltip="Rankings will not be considered">i</span>
+                </label>
                   <select id="adult_select" class="form-control choices-multiselect" multiple
                           data-probation-transfer-request-target="adultSelect">
                     <%= options_for_select([
@@ -168,7 +177,12 @@
               <fieldset class="fieldset">
                 <legend>Juvenile Services</legend>
                 <div class="form-group overflow-visible">
-                  <label for="juvenile_select">Select one or more</label>
+                  <label for="juvenile_select">Select one or more
+                  <span class="info-icon"
+                        tabindex="0"
+                        aria-label="Rankings will not be considered"
+                        data-tooltip="Rankings will not be considered">i</span>
+                </label>
                   <select id="juvenile_select" class="form-control choices-multiselect" multiple
                           data-probation-transfer-request-target="juvenileSelect">
                     <%= options_for_select([
@@ -193,7 +207,12 @@
               <fieldset class="fieldset">
                 <legend>Administrative Services</legend>
                 <div class="form-group overflow-visible">
-                  <label for="admin_select">Select one or more</label>
+                  <label for="admin_select">Select one or more
+                  <span class="info-icon"
+                        tabindex="0"
+                        aria-label="Rankings will not be considered"
+                        data-tooltip="Rankings will not be considered">i</span>
+                </label>
                   <select id="admin_select" class="form-control choices-multiselect" multiple
                           data-probation-transfer-request-target="adminSelect">
                     <%= options_for_select([
