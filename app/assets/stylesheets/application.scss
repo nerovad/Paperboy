@@ -1301,6 +1301,14 @@ deny-modal__close {
     box-shadow: 0 0 0 2px rgba(201, 48, 44, 0.2);
   }
 }
+/* Target just the "Other" field input */
+.other-lot-field {
+  max-width: 600px;   /* pick a size that feels right */
+  width: 100%;        /* keep it responsive up to the max */
+  margin-left: 145px;
+  box-sizing: border-box;
+}
+
 /* app/assets/stylesheets/probation_transfer_requests/_existing_request_gate.scss */
 .ptr-gate {
   margin-bottom: 2rem;
