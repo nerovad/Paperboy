@@ -66,15 +66,26 @@ input[type="date"].form-control:invalid::before {
   position: absolute;
   top: 20px;
   left: 320px;
-  z-index: 2000;     /* higher than sidebar/forms */
+  z-index: 2000;
+
+  /* Force the anchor to size to its content only */
   display: inline-block;
-  text-decoration: none;
+  width: fit-content;     /* or width: max-content; if you prefer */
+  height: fit-content;
+
+  /* Ensure no stray clickable padding/line-box */
+  padding: 0;
+  margin: 0;
+  line-height: 0;         /* removes extra inline box height */
+  white-space: nowrap;
 }
 
 .app-logo {
-  width: 7%;      /* adjust as needed */
+  /* 729x141 SVG → about 5.17:1. Keep aspect ratio by setting only width */
+  width: clamp(120px, 7vw, 320px);  /* min 120px, usually ~7% of viewport, max 320px */
   height: auto;
   display: block;
+
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
   transition: transform 0.2s ease;
 }
