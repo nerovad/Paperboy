@@ -96,12 +96,12 @@ def create
     # Normal path: submitted and routed to supervisor
     @parking_lot_submission.status        = 0 # submitted
     @parking_lot_submission.supervisor_id = supervisor_id
+    @parking_lot_submission.supervisor_email  = fetch_employee_email(supervisor_id)
   end
 
   if @parking_lot_submission.save
     if is_mb3
       NotifySecurityJob.perform_later(@parking_lot_submission.id)
-      SecurityMailer.notify(@parking_lot_submission).deliver_later
     end
 
     redirect_to form_success_path, allow_other_host: false, status: :see_other
@@ -139,9 +139,6 @@ def approve
 
   # send to Security (unchanged, still uses the job)
   NotifySecurityJob.perform_later(@submission.id)
-
-  # NEW: notify the employee who submitted
-  SecurityMailer.notify(@submission).deliver_later
 
   redirect_to parking_lot_submissions_path, notice: "Request approved and sent to Security."
 end
@@ -197,6 +194,16 @@ end
       WHERE EmployeeID = '#{employee_id}'
     SQL
     result&.fetch("Supervisor_ID", nil)
+  end
+
+  def fetch_employee_email(emp_id)
+    return nil if emp_id.blank?
+    row = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first
+      SELECT EE_Email
+      FROM [GSABSS].[dbo].[Employees]
+      WHERE EmployeeID = '#{emp_id}'
+    SQL
+    row&.fetch("EE_Email", nil)
   end
 
   def parking_lot_submission_params
