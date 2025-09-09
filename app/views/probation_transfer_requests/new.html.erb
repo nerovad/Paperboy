@@ -3,7 +3,7 @@
     <h1>Probation Transfer Request</h1>
   </div>
 
-  <div class="form-wrapper">
+  <div class="form-wrapper probation-transfer">
   <%= form_with model: @probation_transfer_request, local: true do |form| %> 
     <% if @probation_transfer_request && @probation_transfer_request.errors.any? %>
       <div class="alert alert-danger">

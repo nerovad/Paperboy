@@ -1,0 +1,142 @@
+@import "base/tokens";
+
+/* Scope everything to the Billing Tools page */
+.billing-tools {
+  /* Sections */
+  .billing-section {
+    padding: 1.25rem 1.5rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+  .billing-section + .billing-section { margin-top: 2rem; }
+
+  .billing-section h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Grid of action buttons */
+  .billing-button-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+    gap: 14px !important;
+    margin-top: 1rem;
+  }
+  .billing-button-grid form {
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Button look (page-limited) */
+  .billing-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding: 0 16px !important;
+    border-radius: 6px !important;
+
+    background-color: rgba(0,0,0,0.03) !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
+
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px;
+    color: #333 !important;
+    text-align: center;
+
+    transition: background 0.3s, transform 0.2s, border-color 0.2s, color 0.2s;
+    cursor: pointer;
+  }
+  .billing-btn:hover { transform: scale(1.05); }
+  .billing-btn:active { transform: scale(1); }
+
+  /* Fill on hover (keeps other .btn variants intact elsewhere) */
+  .billing-btn:hover,
+  .billing-btn.billing:hover,
+  .billing-btn.reports:hover,
+  .billing-btn.email:hover,
+  .billing-btn.prod-back:hover {
+    background-color: $primary-color !important;
+    border-color: $primary-color !important;
+    color: #fff !important;
+  }
+
+  @media (max-width: 600px) {
+    .billing-btn { width: 100%; }
+  }
+
+  /* Confirm modal */
+  .billing-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0,0,0,0.45);
+    align-items: center;
+    justify-content: center;
+  }
+  .billing-modal.open { display: flex; }
+
+  .billing-modal-content {
+    width: 92vw;
+    max-width: 560px;
+    background: #fff;
+    color: #1f2937;
+    border-radius: 14px;
+    padding: 18px 18px 20px;
+    box-shadow: 0 10px 36px rgba(0,0,0,.25);
+    border: 1px solid #e9ecef;
+    position: relative;
+  }
+
+  .billing-modal-actions {
+    display: flex;
+    gap: .75rem;
+    justify-content: flex-end;
+    margin-top: 14px;
+  }
+
+  .billing-modal .close {
+    position: absolute;
+    right: .6rem;
+    top: .5rem;
+    font-size: 1.25rem;
+    color: #97a6b2;
+    cursor: pointer;
+  }
+
+  /* Optional date row */
+  .date-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .date-group label {
+    font-size: .9rem;
+    color: #374151;
+    margin-bottom: 4px;
+    display: block;
+  }
+  .date-group input[type="date"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: .95rem;
+  }
+  @media (max-width: 600px) { .date-row { grid-template-columns: 1fr; } }
+
+  /* Keep the "Cancel" button gray only inside this modal */
+  .billing-modal .btn.deny {
+    background: #edf2f7;
+    color: #111827;
+  }
+  .billing-modal .btn.deny:hover { filter: brightness(.97); }
+}

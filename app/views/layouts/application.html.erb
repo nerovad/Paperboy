@@ -11,7 +11,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
- <body>
+  <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %>">
    <%= render "shared/logo" %>
   <div class="app-container">
     <%= render "shared/sidebar" %>

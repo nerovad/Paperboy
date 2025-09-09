@@ -1,0 +1,31 @@
+@import "base/tokens";
+
+/* Success page layout */
+.form-success-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 4rem 2rem;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+.form-success-box {
+  max-width: 600px;
+  width: 100%;
+  background: $form-bg;
+  border: 2px solid $primary-color;
+  border-radius: 12px;
+  padding: 10rem 3rem;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  animation: slideFadeIn 0.5s ease-out;
+
+  h1 { margin-top: 0; margin-bottom: 0.5rem; }
+  p  { margin: 0 0 1.25rem; color: $text-color; }
+}
+
+@keyframes slideFadeIn {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

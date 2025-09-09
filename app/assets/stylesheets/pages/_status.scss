@@ -1,0 +1,93 @@
+@import "base/tokens";
+
+/* Only the Status page wrapper should lose padding & scroll */
+.status-wrapper {
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  padding: 0;
+
+  /* table framing inside the card */
+  .status-table {
+    border: 1px solid $border-color;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+}
+
+/* Main table styles */
+.status-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: $form-bg;
+
+  thead th {
+    text-align: left;
+    font-weight: 600;
+    padding: 12px 14px;
+    border-bottom: 1px solid $border-color;
+    font-size: 14px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+
+    /* sticky header */
+    position: sticky;
+    top: 0;
+    background: $form-bg;
+    z-index: 2;
+  }
+
+  tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid $border-color;
+    font-size: 14px;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  tbody tr { transition: background 120ms ease; }
+  tbody tr:hover { background: rgba(0, 0, 0, 0.03); }
+
+  /* columns */
+  td.col-type    { width: 160px; }
+  td.col-title   { width: auto; }
+  td.col-status  { width: 170px; }
+  td.col-updated { width: 160px; }
+  td.col-actions { width: 110px; text-align: right; }
+}
+
+/* Buttons inside the status table */
+.status-table .btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: $primary-color;
+  color: #fff;
+  text-decoration: none;
+  border: none;
+  font-size: 13px;
+  line-height: 1;
+}
+.status-table .btn:hover { background: $primary-hover; }
+
+/* Status “open” page readonly panel */
+.readonly-form {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  font-size: 14px;
+}
+.readonly-form dt { font-weight: 600; color: $label-color; }
+.readonly-form dd { margin: 0; color: $text-color; }
+
+/* Mobile */
+@media (max-width: 900px) {
+  .status-table thead { display: none; }
+  .status-table, .status-table tbody, .status-table tr, .status-table td {
+    display: block; width: 100%;
+  }
+  .status-table tr { border-bottom: 1px solid $border-color; }
+  .status-table td { border: none; padding: 10px 14px; }
+  .status-table td.col-actions { text-align: left; padding-top: 0; }
+}

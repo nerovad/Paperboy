@@ -1,0 +1,56 @@
+@import "base/tokens";
+
+/* Left sidebar */
+.sidebar {
+  width: 250px;
+  background: linear-gradient(135deg, #2c3e50, $primary-color);
+  color: #fff;
+  height: 100vh;
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: $primary-color #2c3e50;
+
+  &::-webkit-scrollbar { width: 8px; }
+  &::-webkit-scrollbar-track { background: #2c3e50; }
+  &::-webkit-scrollbar-thumb {
+    background: $primary-color;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-thumb:hover { background: $primary-hover; }
+
+  h2 {
+    font-size: 1.2em;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid $primary-color;
+  }
+
+  .sidebar-p { text-align: center; }
+
+  .nav-link {
+    display: block;
+    color: #fff;
+    text-decoration: none;
+    margin: 10px 0;
+    padding: 12px 15px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    text-align: center;
+    transition: background 0.3s, transform 0.2s;
+
+    &:hover {
+      background-color: $primary-color;
+      transform: scale(1.05);
+      cursor: pointer;
+    }
+    &:active { transform: scale(1); }
+  }
+
+  .nav-link.active { background-color: $primary-color; }
+}

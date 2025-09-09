@@ -1,0 +1,66 @@
+@import "base/tokens";
+
+/* Let dropdown overflow if needed */
+.form-group.overflow-visible { overflow: visible; }
+
+/* Placeholder option dim */
+.placeholder-option { color: #6c757d; }
+
+/* Set width on the wrapper (match "Other" input patterns) */
+.form-group .choices {
+  position: relative;
+  display: block;
+  width: 80%;
+  max-width: 80%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Inner fills the wrapper */
+.form-group .choices__inner {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  background-clip: padding-box;
+}
+
+/* Dropdown matches wrapper width */
+.form-group .choices__list--dropdown {
+  position: absolute;
+  inset-inline: 0;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 10000;
+}
+
+/* Full-width parity inside the wrapper */
+.choices,
+.choices__list--dropdown { width: 100%; }
+
+/* Polish */
+.choices__list--multiple .choices__item {
+  background-color: $primary-color !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin: 4px 6px 0 0;
+}
+.choices__list--dropdown .choices__item--selectable.is-highlighted {
+  background-color: $primary-hover !important;
+  color: #fff !important;
+}
+.choices__list--dropdown {
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+  overflow: hidden;
+}
+.choices__list--dropdown .choices__item--selectable { padding: 10px 12px; }
+
+/* Mobile: let selects go full width */
+@media (max-width: 768px) {
+  .form-group .choices {
+    width: 100%;
+    max-width: 100%;
+  }
+}

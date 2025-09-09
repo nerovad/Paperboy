@@ -1,0 +1,37 @@
+@import "base/tokens";
+
+/* Date input polish shared across the app */
+input[type="date"].form-control {
+  font-family: inherit;
+  font-size: 1em;
+  color: $text-color;
+}
+
+input[type="date"].form-control:invalid { color: $muted; }
+
+input[type="date"].form-control:invalid::before {
+  content: attr(placeholder);
+  font-family: inherit;
+  font-size: 1em;
+  color: $muted;
+}
+
+/* Shared validation helpers */
+.form-control.invalid {
+  border-color: $danger;
+  outline: none;
+}
+
+.field-error {
+  display: none;
+  color: $danger;
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+.field-error.active { display: block; }
+
+/* Universal placeholder tone for form controls */
+.form-control::placeholder {
+  color: $muted;
+  opacity: 1; /* Firefox */
+}

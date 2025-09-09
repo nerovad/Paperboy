@@ -1,0 +1,134 @@
+@import "base/tokens";
+
+/* Form wrapper/card */
+.form-wrapper {
+  padding: 30px;
+  max-width: 900px;
+  margin: 0 auto 40px auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: $shadow-soft;
+  overflow-x: hidden;
+}
+
+/* Header above forms */
+.form-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+
+  img { height: 60px; }
+}
+
+/* Section titles inside multi-step forms */
+.form-page h2 {
+  margin: 30px 20px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: $text-color;
+}
+
+/* Form layout rows */
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  margin-bottom: 20px;
+  padding: 20px;
+}
+
+/* Groups */
+.form-group {
+  flex: 1 1 300px;
+  min-width: 300px;
+
+  label {
+    display: block;
+    color: $label-color;
+    margin-bottom: 5px;
+  }
+
+  /* keep explicit field styles for parity */
+  .form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid $border-color;
+    border-radius: 5px;
+    font-size: 1em;
+    background-color: #fff;
+  }
+
+  select.form-control {
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid $border-color;
+    border-radius: 5px;
+    font-size: 1em;
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  select.form-control,
+  input.form-control {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+/* Form nav buttons (Prev/Next/Submit) */
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin: 25px 20px;
+
+  button, input[type="submit"] {
+    padding: 13px 24px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: $primary-color;
+    color: #fff;
+    transition: background 0.3s ease, transform 0.15s ease;
+
+    &:hover   { background: $primary-hover; }
+    &:disabled{ background: #ccc; cursor: not-allowed; }
+  }
+}
+
+/* Progress dots under forms */
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 10px;
+  padding-bottom: 30px;
+
+  .dot {
+    width: 14px;
+    height: 14px;
+    background-color: #ccc;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+  }
+  .dot.active {
+    background-color: $primary-color;
+    box-shadow: 0 0 8px $primary-color;
+    transform: scale(1.1);
+  }
+}
+
+/* Small form utilities */
+.form-actions { margin-top: 20px; }
+
+.form-inner {
+  padding: 20px 24px;
+}
+
+.form-inner h2 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+

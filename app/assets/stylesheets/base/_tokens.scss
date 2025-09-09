@@ -1,0 +1,19 @@
+/* Design tokens (UI variables) */
+$form-bg:       #ffffff;
+$primary-color: #4caf50;
+$primary-hover: #45a049;
+
+$text-color:    #333;
+$label-color:   #555;
+$border-color:  #ddd;
+
+/* You already use these values in multiple places; optional now, handy soon */
+$brand-navy:    #004976;
+$muted:         #6c757d;
+$danger:        #e53935;
+$danger-700:    #d32f2f;
+
+$font-sans: 'Helvetica Neue', Arial, sans-serif;
+$radius-6: 6px;
+$radius-12: 12px;
+$shadow-soft: 0 6px 18px rgba(0,0,0,0.08);

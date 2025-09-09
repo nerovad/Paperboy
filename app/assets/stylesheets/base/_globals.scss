@@ -1,0 +1,14 @@
+@import "base/tokens";
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* matches your current behavior */
+}
+
+body {
+  background: #f0f2f5;
+  font-family: $font-sans;
+  color: $text-color;
+}
