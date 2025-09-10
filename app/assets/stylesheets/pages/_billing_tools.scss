@@ -111,27 +111,43 @@
     cursor: pointer;
   }
 
-  /* Optional date row */
-  .date-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 8px;
-  }
-  .date-group label {
-    font-size: .9rem;
-    color: #374151;
-    margin-bottom: 4px;
-    display: block;
-  }
-  .date-group input[type="date"] {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: .95rem;
-  }
-  @media (max-width: 600px) { .date-row { grid-template-columns: 1fr; } }
+  /* Make the columns respect the container width */
+.date-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* key change */
+  gap: 12px;
+  margin-top: 8px;
+  min-width: 0; /* let the grid shrink in the modal */
+}
+
+/* Let children shrink instead of forcing overflow */
+.date-group {
+  min-width: 0; /* important with intrinsic-width inputs */
+}
+
+/* Keep input from expanding past the column */
+.date-group input[type="date"] {
+  box-sizing: border-box; /* ensure padding/border are included in width */
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: .95rem;
+  min-width: 0; /* override browser min-content stubbornness */
+}
+
+/* Optional: improve label-layout reliability (not required, but tidy) */
+.date-group label {
+  display: block;
+  font-size: .9rem;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+/* If the modal is fairly narrow on desktop, switch to 1 column sooner */
+@media (max-width: 800px) {
+  .date-row { grid-template-columns: 1fr; }
+}
 
   /* Keep the "Cancel" button gray only inside this modal */
   .billing-modal .btn.deny {
