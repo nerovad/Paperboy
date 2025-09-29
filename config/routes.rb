@@ -1,6 +1,7 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  resources :authorization_forms
   get "forms/home"
   post "/login", to: "sessions#create"
   delete "/logout", to: "sessions#destroy"

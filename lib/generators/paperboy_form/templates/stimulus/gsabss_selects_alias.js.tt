@@ -1,0 +1,12 @@
+import { Controller } from "@hotwired/stimulus"
+
+// Thin wrapper that delegates to your existing GSABSS selects logic if present.
+// Adjust IDs/URLs to match your current endpoints for Division/Department/Unit lookups.
+export default class extends Controller {
+  static targets = ["division", "department", "unit"]
+
+  connect() {
+    // Example: populate dependent selects based on Agency via fetch to your MSSQL-backed endpoints
+    // Keep parity with your existing `gsabss_selects_controller.js`
+  }
+}

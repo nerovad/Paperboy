@@ -1,0 +1,19 @@
+<h1 class="page-title"><%= <%= "@#{file_name}" %>.name %></h1>
+<%= render "status_badge", object: @<%= file_name %> %>
+
+<div class="table-wrapper">
+  <table class="submission-table">
+    <tr><th>Name</th><td><%= @<%= file_name %>.name %></td></tr>
+    <tr><th>Email</th><td><%= @<%= file_name %>.email %></td></tr>
+    <tr><th>Phone</th><td><%= @<%= file_name %>.phone %></td></tr>
+<% attrs.each do |a| -%>
+    <tr><th><%= "<%= '#{a[:name].humanize}' %>" %></th><td><%= @<%= file_name %>.<%= a[:name] %> %></td></tr>
+<% end -%>
+  </table>
+</div>
+
+<div class="action-row">
+  <%= link_to "View PDF", pdf_<%= file_name %>_path(@<%= file_name %>), class: "btn" %>
+  <%= button_to "Approve", approve_<%= file_name %>_path(@<%= file_name %>), method: :post, class: "btn success" %>
+  <%= button_to "Deny", deny_<%= file_name %>_path(@<%= file_name %>), method: :post, params: { denial_reason: "" }, class: "btn danger" %>
+</div>

@@ -1,0 +1,2 @@
+<%# Simple status pill %>
+<span class="status-badge <%= object.status %>"><%= object.status.humanize %></span>

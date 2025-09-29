@@ -1,0 +1,13 @@
+class <%= class_name %>Mailer < ApplicationMailer
+  def notify(record)
+    @record = record
+    attachments["<%= class_name %>_#{record.id}.pdf"] = {
+      mime_type: "application/pdf",
+      content: <%= class_name %>PdfGenerator.generate(record)
+    }
+    mail(
+      to: @record.email, # adjust destination as needed
+      subject: "<%= human_name %> Submitted"
+    )
+  end
+end

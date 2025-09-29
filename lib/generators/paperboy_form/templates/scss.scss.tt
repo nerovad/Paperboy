@@ -1,0 +1,31 @@
+@import "base/tokens";
+
+/* Scope to the page using your existing patterns */
+.<%= file_name %> {
+  .form-row .fieldset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    width: 100%;
+  }
+  @media (max-width: 768px) {
+    .form-row .fieldset-grid { grid-template-columns: 1fr; }
+  }
+
+  .fieldset {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 12px;
+    background: #fff;
+
+    legend {
+      font-weight: 600;
+      padding: 0 6px;
+      text-align: center;
+    }
+  }
+
+  .form-steps .form-nav {
+    display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px;
+  }
+}

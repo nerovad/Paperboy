@@ -1,0 +1,6 @@
+<p>Hello,</p>
+<p>A new <%= "<%= human_name %>" %> has been submitted.</p>
+<p>
+  Name: <%= "<%= @record.name %>" %><br>
+  Status: <%= "<%= @record.status.humanize %>" %>
+</p>

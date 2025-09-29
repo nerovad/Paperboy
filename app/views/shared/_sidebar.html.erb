@@ -2,13 +2,20 @@
   <h2>Available Forms</h2>
 
   <% if current_user %>
-    <%= link_to "Parking Lot Form", new_parking_lot_submission_path, data: { turbo: false }, class: "nav-link" %>
-    <%= link_to "Probation Agency Transfer Request", new_probation_transfer_request_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
-    <%= link_to "Leave of Absence", new_loa_form_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
-    <%= link_to "RM-75 Injury/Illness Report", new_rm75_form_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
-    <%= link_to "RM-75i Incident Investigation", new_rm75i_form_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
-    <%= link_to "Billing Tools", new_billing_tool_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
-    <%= link_to "Creative Job Request", new_creative_job_request_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
+    <% forms = [
+      ["Authorization Form", new_authorization_form_path],
+      ["Billing Tools", new_billing_tool_path],
+      ["Creative Job Request", new_creative_job_request_path],
+      ["Leave of Absence", new_loa_form_path],
+      ["Parking Lot Form", new_parking_lot_submission_path],
+      ["Probation Agency Transfer Request", new_probation_transfer_request_path],
+      ["RM-75 Injury/Illness Report", new_rm75_form_path],
+      ["RM-75i Incident Investigation", new_rm75i_form_path]
+    ] %>
+
+    <% forms.sort_by { |f| f[0] }.each do |label, path| %>
+      <%= link_to label, path, class: "nav-link", data: { turbo_frame: "main-content" } %>
+    <% end %>
   <% else %>
     <p class="sidebar-p">Please log in to access forms.</p>
   <% end %>

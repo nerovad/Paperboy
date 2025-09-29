@@ -1,0 +1,19 @@
+import { Controller } from "@hotwired/stimulus"
+
+// Matches your existing Next/Previous multi-step behavior
+export default class extends Controller {
+  static targets = []
+  connect() {
+    this.steps = Array.from(document.querySelectorAll(".fieldset"))
+    this.index = 0
+    this.showStep(this.index)
+  }
+  next() { if (this.index < this.steps.length - 1) this.showStep(++this.index) }
+  prev() { if (this.index > 0) this.showStep(--this.index) }
+
+  showStep(i) {
+    this.steps.forEach((el, idx) => {
+      el.style.display = (idx === i) ? "block" : "none"
+    })
+  }
+}

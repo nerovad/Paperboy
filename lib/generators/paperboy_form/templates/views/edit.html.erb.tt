@@ -1,0 +1,2 @@
+<div class="page-title">Edit <%= human_name %></div>
+<%= render "form" %>

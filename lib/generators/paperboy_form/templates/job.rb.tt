@@ -1,0 +1,7 @@
+class Notify<%= class_name %>Job < ApplicationJob
+  queue_as :default
+  def perform(id)
+    record = <%= class_name %>.find(id)
+    <%= class_name %>Mailer.notify(record).deliver_now
+  end
+end

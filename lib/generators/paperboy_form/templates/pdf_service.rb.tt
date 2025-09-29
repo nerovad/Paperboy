@@ -1,0 +1,16 @@
+class <%= class_name %>PdfGenerator
+  def self.generate(record)
+    # Swap this with your existing PDF lib (wicked_pdf/prawn/hexapdf etc.)
+    # For now, return a very basic PDF so this is drop-in safe.
+    require "prawn"
+    io = StringIO.new
+    Prawn::Document.generate(io) do |pdf|
+      pdf.text "<%= human_name %> ##{record.id}", size: 18, style: :bold
+      pdf.move_down 10
+      pdf.text "Name: #{record.name}"
+      pdf.text "Email: #{record.email}"
+      pdf.text "Status: #{record.status.humanize}"
+    end
+    io.string
+  end
+end

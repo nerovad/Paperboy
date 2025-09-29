@@ -1,0 +1,8 @@
+<%# Step navigation matches your Next/Previous pattern %>
+<div class="form-steps" data-controller="<%= file_name %>-nav">
+  <div class="form-nav">
+    <button type="button" class="btn prev" data-action="<%= file_name %>-nav#prev">Previous</button>
+    <button type="button" class="btn next" data-action="<%= file_name %>-nav#next">Next</button>
+    <button type="submit" class="btn primary">Submit</button>
+  </div>
+</div>

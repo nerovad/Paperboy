@@ -1,0 +1,36 @@
+<h1 class="page-title"><%= human_name.pluralize %></h1>
+
+<div class="table-wrapper">
+  <table class="submission-table">
+    <thead>
+      <tr><th>Created</th><th>Name</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% @<%= plural_file_name %>.each do |r| %>
+        <tr>
+          <td><%= r.created_at&.strftime("%Y-%m-%d %H:%M") %></td>
+          <td><%= r.name %></td>
+          <td><%= link_to "View", r, class: "btn" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<% if defined?(@pending_submissions) && @pending_submissions.present? %>
+  <h2 class="page-title">Inbox</h2>
+  <div class="table-wrapper">
+    <table class="submission-table">
+      <thead><tr><th>Created</th><th>Name</th><th></th></tr></thead>
+      <tbody>
+        <% @pending_submissions.each do |r| %>
+          <tr>
+            <td><%= r.created_at&.strftime("%Y-%m-%d %H:%M") %></td>
+            <td><%= r.name %></td>
+            <td><%= link_to "Review", r, class: "btn" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
