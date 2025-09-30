@@ -1,5 +1,13 @@
 # Paperboy (Ventura County Forms App)
 
+
+**Ruby version:**  
+```bash
+ruby 3.4.4 (2025-05-14 revision a38531fd3f) +PRISM [x86_64-linux]
+
+**Rails version:**  
+Rails 8.0.2
+
 Paperboy is a Ruby on Rails 8.x application for managing internal forms (e.g., Parking Lot Submissions, Probation Transfer Requests, RM-75, etc.) with a modernized workflow.  
 It integrates with Microsoft SQL Server and uses Sidekiq for background jobs.
 
