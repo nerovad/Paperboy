@@ -2,10 +2,8 @@
 
 <%
   all_lots = [
-    "BOS", "Courier Parking", "E Lot", "G Lot", "Grand Jury Parking",
-    "HOA Dock", "HOJ Dock", "Maintenance", "R Lot", "Traffic Circle",
-    "County Square Drive", "East County Courthouse", "Gonzales Road",
-    "Juvenile Justice Center", "Telephone Road", "Vanguard", "DCSS", "Other"
+    "Carpool", "Courier", "G Lot", "Grand Jury Parking",
+    "Loading Docks", "Maintenance", "R Lot", "Traffic Circle", "Other"
   ]
   lots = @is_mb3 ? all_lots : (all_lots - ["R Lot"])
 %>
@@ -36,7 +34,7 @@
 <div class="form-group">
   <%= vf.select :parking_lot,
         options_for_select(lots),
-        { prompt: "Select Parking Lot" },
+        { prompt: "Select Permit Type" },
         class: "form-control parking-lot-select" %>
 </div>
 <div class="form-group">

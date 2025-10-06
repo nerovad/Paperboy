@@ -1,5 +1,5 @@
 <p>Hi <%= @submission.name %>,</p>
-<p>Your parking lot request <strong>#<%= @submission.id %></strong> was denied.</p>
+<p>Your parking permit request <strong>#<%= @submission.id %></strong> was denied.</p>
 
 <p><strong>Reason:</strong><br>
 <%= simple_format(@reason.presence || "No reason provided.") %></p>

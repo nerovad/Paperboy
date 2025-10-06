@@ -9,7 +9,7 @@ class SecurityMailer < ApplicationMailer
     }
     mail(
       to: "matthew.davoren@ventura.org",
-      subject: "New Parking Lot Submission Approved"
+      subject: "New Parking Permit Submission Approved"
     )
   end
 
@@ -23,7 +23,7 @@ class SecurityMailer < ApplicationMailer
     }
     mail(
       to: submission.email,                    # the submitter
-      subject: "Your Parking Lot Request ##{submission.id} was denied"
+      subject: "Your Parking Permit Request ##{submission.id} was denied"
     )
   end
 end
