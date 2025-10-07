@@ -113,6 +113,64 @@
       </div>
     </div>
 
+    <!-- Page 3: Authorization Info -->
+    <div class="form-page" style="display:none;">
+      <h2>Authorization Info</h2>
+
+      <div data-controller="authorization-select" class="form-row d-flex flex-wrap">
+        <div class="form-group">
+          <%= form.label :service_type, "Service Type" %>
+          <%= form.select :service_type,
+                options_for_select([
+                  ["Parking Permit (P)", "P"],
+                  ["Employee Identification Badges (E)", "E"],
+                  ["Volunteer ID Badges (V)", "V"],
+                  ["Vendor ID Badges (C)", "C"],
+                  ["Facility Keys and Security Access (K)", "K"]
+                ], @prefill_data[:service_type]),
+                { prompt: "Select a service type" },
+                class: "form-control",
+                required: true,
+                data: {
+                  authorization_select_target: "serviceType",
+                  action: "change->authorization-select#toggleKeyType"
+                } %>
+        </div>
+
+        <div class="form-group" id="key-type-wrapper" style="display:none;">
+          <%= form.label :key_type, "Type of Service" %>
+          <%= form.select :key_type,
+                options_for_select([
+                  ["1 = Master Keys", "1"],
+                  ["2 = Access Cards", "2"],
+                  ["3 = Site Keys", "3"],
+                  ["4 = Area / Room Keys", "4"],
+                  ["5 = Perimeter Fence Gates", "5"],
+                  ["6 = Equipment Closet Keys", "6"],
+                  ["7 = File/Desk/Storage Cabinet Keys", "7"]
+                ], @prefill_data[:key_type]),
+                { prompt: "Select key type" },
+                class: "form-control",
+                data: { authorization_select_target: "keyType" } %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :budget_units, "Budget Units" %>
+          <%= form.select :budget_units,
+                options_for_select([
+                  ["A = All Budget Units - All Locations", "A"],
+                  ["B = Multiple Budget Units - All Locations", "B"],
+                  ["C = Multiple Budget Units - Multiple Locations", "C"],
+                  ["D = Single Budget Unit - Multiple Locations", "D"],
+                  ["E = Single Budget Unit - Single Location", "E"]
+                ], @prefill_data[:budget_units]),
+                { prompt: "Select budget units" },
+                class: "form-control",
+                required: true %>
+        </div>
+      </div>
+    </div>
+
     <!-- Navigation Buttons -->
     <div class="navigation-buttons d-flex justify-content-between">
       <div>
@@ -130,7 +188,7 @@
         <div class="progress-bar" id="progressBar"></div>
       </div>
       <div class="progress-dots">
-        <% 2.times do |index| %>
+        <% 3.times do |index| %>
           <div class="dot <%= 'active' if index == 0 %>"></div>
         <% end %>
       </div>

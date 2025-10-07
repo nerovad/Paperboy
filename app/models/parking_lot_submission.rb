@@ -52,10 +52,11 @@ class ParkingLotSubmission < ApplicationRecord
 
   # Status
   STATUS_MAP = {
-    0 => "submitted",
-    1 => "manager_approved",
+    0 => "submitted",                    # Pending Dept Head approval
+    1 => "pending_delegated_approval",   # Dept Head approved, awaiting delegated approver
     2 => "denied",
-    3 => "sent_to_security"
+    3 => "approved",                     # Delegated approver approved
+    4 => "sent_to_security"              # Final state
   }
 
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
@@ -64,8 +65,9 @@ class ParkingLotSubmission < ApplicationRecord
     STATUS_MAP[status]
   end
 
-  def submitted?         = status == 0
-  def manager_approved?  = status == 1
-  def denied?            = status == 2
-  def sent_to_security?  = status == 3
+  def submitted?                    = status == 0
+  def pending_delegated_approval?   = status == 1
+  def denied?                       = status == 2
+  def approved?                     = status == 3
+  def sent_to_security?             = status == 4
 end

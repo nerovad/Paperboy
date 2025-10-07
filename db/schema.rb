@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_29_185620) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_07_153417) do
   create_table "BdmRateTypes", primary_key: "RateID", id: { type: :integer, limit: 2 }, force: :cascade do |t|
     t.string "Description", limit: 150, null: false
     t.string "UOM", limit: 15, null: false
@@ -78,6 +78,42 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_29_185620) do
     t.varchar "Year", limit: 4, null: false
     t.date "sDate", null: false
     t.date "eDate", null: false
+  end
+
+  create_table "GL218Detail", id: false, force: :cascade do |t|
+    t.integer "BFY"
+    t.integer "FY"
+    t.string "Fund", limit: 4
+    t.string "Dept", limit: 3
+    t.string "Division", limit: 4
+    t.string "Unit", limit: 4
+    t.integer "AP"
+    t.integer "Obj_Revenue"
+    t.string "Obj_Revenue_Name", limit: 100
+    t.string "Dept_Object", limit: 100
+    t.string "Dept_Rev_Source", limit: 100
+    t.string "Event_Type", limit: 4
+    t.string "Event_Type_Name", limit: 100
+    t.string "Posting_Code", limit: 4
+    t.string "Posting_Code_Desc", limit: 100
+    t.date "Doc_Record_Date"
+    t.string "Jrnl_Doc_Code", limit: 6
+    t.string "Jrnl_Doc_Dept_Code", limit: 3
+    t.string "Jrnl_Doc_ID", limit: 100
+    t.string "Vendor_Code", limit: 100
+    t.string "Vendor_Invoice_No", limit: 100
+    t.datetime "Vendor_Invoice_Date", precision: nil
+    t.string "Vendor_Legal_Name", limit: 100
+    t.string "Vendor_Alias_DBA_Name", limit: 100
+    t.string "Accounting_Line_Desc", limit: 100
+    t.float "Expense_Revenue_Amt"
+    t.string "Ref_Doc_ID", limit: 100
+    t.string "Activity", limit: 4
+    t.string "Function", limit: 4
+    t.string "Major_Program", limit: 10
+    t.string "Program_Code", limit: 10
+    t.string "Phase_Code", limit: 6
+    t.string "Task", limit: 4
   end
 
   create_table "PlanVsActual", id: false, force: :cascade do |t|
@@ -398,6 +434,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_29_185620) do
     t.datetime "denied_at"
     t.text "denial_reason"
     t.string "supervisor_email", limit: 200
+    t.string "delegated_approver_id"
+    t.string "delegated_approver_email"
+    t.string "delegated_approved_by"
+    t.datetime "delegated_approved_at"
   end
 
   create_table "parking_lot_vehicles", force: :cascade do |t|

@@ -20,6 +20,7 @@
     padding: 14px 20px;
     text-align: left;
     border-bottom: 1px solid $border-color;
+    vertical-align: middle;
   }
 
   th {
@@ -31,17 +32,31 @@
     letter-spacing: 0.5px;
   }
 
-  tr:last-child td { border-bottom: none; }
+  tr:last-child td { 
+    border-bottom: none; 
+  }
 
+  /* Remove flex from td, apply to inner container */
   td.action-buttons {
+    vertical-align: middle;
+  }
+
+  .button-container {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
+    flex-wrap: nowrap;
+    white-space: nowrap;
   }
 
   /* Normalize button_to wrapper */
-  td.action-buttons form {
+  .button-container form {
     display: inline-flex;
+    margin: 0;
+  }
+
+  /* Ensure buttons have consistent styling */
+  .button-container .btn {
     margin: 0;
   }
 }

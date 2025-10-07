@@ -26,4 +26,14 @@ class SecurityMailer < ApplicationMailer
       subject: "Your Parking Permit Request ##{submission.id} was denied"
     )
   end
+
+  def notify_delegated_approver(submission)
+    @submission = submission
+    @approver_email = submission.delegated_approver_email
+    
+    mail(
+      to: @approver_email,
+      subject: "Parking Permit Approval Required - #{submission.name}"
+    )
+  end
 end

@@ -128,19 +128,48 @@ end
 
 def approve
   @submission = ParkingLotSubmission.find(params[:id])
-
   approver_id = session.dig(:user, "employee_id").to_s
 
-  @submission.update!(
-    status: 1,                        # manager_approved
-    approved_by: approver_id,
-    approved_at: Time.current
-  )
+  if @submission.submitted?
+    # DEPT HEAD APPROVAL - must select delegated approver
+    delegated_approver_id = params[:delegated_approver_id].to_s.strip
 
-  # send to Security (unchanged, still uses the job)
-  NotifySecurityJob.perform_later(@submission.id)
+    if delegated_approver_id.blank?
+      redirect_to inbox_queue_path, alert: "Please select a delegated approver." and return
+    end
 
-  redirect_to parking_lot_submissions_path, notice: "Request approved and sent to Security."
+    delegated_approver_email = fetch_employee_email(delegated_approver_id)
+
+    @submission.update!(
+      status: 1,  # pending_delegated_approval
+      approved_by: approver_id,
+      approved_at: Time.current,
+      delegated_approver_id: delegated_approver_id,
+      delegated_approver_email: delegated_approver_email
+    )
+
+    # Send notification to delegated approver
+    SecurityMailer.notify_delegated_approver(@submission).deliver_later
+
+    redirect_to inbox_queue_path, notice: "Request approved and sent to #{delegated_approver_id} for final approval."
+
+  elsif @submission.pending_delegated_approval?
+    # DELEGATED APPROVER APPROVAL - final approval before security
+    @submission.update!(
+      status: 3,  # approved
+      delegated_approved_by: approver_id,
+      delegated_approved_at: Time.current
+    )
+
+    # Send to Security
+    NotifySecurityJob.perform_later(@submission.id)
+    
+    @submission.update!(status: 4)  # sent_to_security
+
+    redirect_to inbox_queue_path, notice: "Request approved and sent to Security."
+  else
+    redirect_to inbox_queue_path, alert: "Invalid approval state."
+  end
 end
 
 def deny
@@ -186,6 +215,27 @@ end
   def set_parking_lot_submission
     @parking_lot_submission = ParkingLotSubmission.find(params[:id])
   end
+
+  def fetch_department_employees(department_id)
+  return [] if department_id.blank?
+  
+  result = ActiveRecord::Base.connection.exec_query(<<-SQL.squish)
+    SELECT EmployeeID, First_Name, Last_Name, EE_Email
+    FROM [GSABSS].[dbo].[Employees] e
+    INNER JOIN [GSABSS].[dbo].[Units] u ON e.Unit = u.unit_id
+    WHERE u.department_id = '#{department_id}'
+    AND e.Employment_Status = 'A'  -- Active employees only
+    ORDER BY Last_Name, First_Name
+  SQL
+  
+  result.map do |row|
+    {
+      id: row["EmployeeID"],
+      name: "#{row["First_Name"]} #{row["Last_Name"]}",
+      email: row["EE_Email"]
+    }
+  end
+end
 
   def fetch_supervisor_id(employee_id)
     result = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first
