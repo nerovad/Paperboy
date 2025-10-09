@@ -25,6 +25,15 @@ Rails.application.routes.draw do
       patch :withdraw
     end
   end
+
+  resources :authorization_forms, only: [:new, :create, :index, :show] do
+  member do
+    get :pdf
+    patch :approve
+    patch :deny
+  end
+end
+
   # config/routes.rb
 resources :billing_tools, only: [:new, :create] do
   collection do

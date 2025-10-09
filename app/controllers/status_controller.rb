@@ -10,8 +10,21 @@ class StatusController < ApplicationController
         type: "Parking Lot",
         title: "Parking Permit ##{f.id}",
         status: f.status_label,
+        submitted_at: f.created_at,
         updated_at: f.updated_at,
         path: parking_lot_submission_path(f)
+      }
+    end
+
+        # Authorization Forms
+    @status_items += AuthorizationForm.for_employee(employee_id).map do |f|
+      {
+        type: "Authorization",
+        title: "GSA Authorization ##{f.id}",
+        status: f.status_label,
+        submitted_at: f.created_at,
+        updated_at: f.updated_at,
+        path: authorization_form_path(f)
       }
     end
 
@@ -20,12 +33,11 @@ class StatusController < ApplicationController
         type: "Probation Transfer",
         title: "Transfer Request ##{f.id}",
         status: f.status_label,
+        submitted_at: f.created_at,
         updated_at: f.updated_at,
         path: probation_transfer_request_path(f)
       }
     end
-
-    # Repeat for RM75, RM75i, LOA, etc.
 
     @status_items.sort_by! { |i| i[:updated_at] }.reverse!
   end

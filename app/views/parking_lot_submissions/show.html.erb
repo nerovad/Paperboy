@@ -1,7 +1,7 @@
 <!-- app/views/parking_lot_submissions/show.html.erb -->
 
 <div class="form-header">
-  <h1>Parking Lot Submission</h1>
+  <h1>Parking Permit Submission</h1>
 </div>
 
 <div class="form-wrapper">
@@ -40,7 +40,7 @@
 
   <div class="form-actions" style="margin-top: 16px;">
     <%= link_to "Back to Status", status_path, class: "form-btn" %>
-    <%= link_to "Download PDF", pdf_parking_lot_submission_path(@parking_lot_submission), class: "form-btn" %>
+    <%= link_to "Download PDF", pdf_parking_lot_submission_path(@parking_lot_submission), target: "_blank", class: "form-btn" %>
     </div>
   </div>
 </div>

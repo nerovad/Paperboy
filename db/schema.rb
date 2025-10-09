@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_07_153417) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_09_161627) do
   create_table "BdmRateTypes", primary_key: "RateID", id: { type: :integer, limit: 2 }, force: :cascade do |t|
     t.string "Description", limit: 150, null: false
     t.string "UOM", limit: 15, null: false
@@ -255,6 +255,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_07_153417) do
     t.string "unit"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "supervisor_id"
+    t.string "supervisor_email"
+    t.string "delegated_approver_id"
+    t.string "delegated_approver_email"
+    t.string "approved_by"
+    t.datetime "approved_at"
+    t.string "delegated_approved_by"
+    t.datetime "delegated_approved_at"
+    t.string "denied_by"
+    t.datetime "denied_at"
+    t.text "denial_reason"
+    t.integer "status", default: 0
+    t.string "service_type"
+    t.string "key_type"
+    t.string "budget_units"
   end
 
   create_table "authorization_fos", force: :cascade do |t|
