@@ -32,6 +32,13 @@ gem "redis"
 #PDF Generation
 gem 'prawn'
 
+# Duo 2 factor auth login
+gem 'duo_web'
+
+gem 'omniauth'
+gem 'omniauth-microsoft_entra_id'
+gem 'omniauth-rails_csrf_protection'  # Security
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
