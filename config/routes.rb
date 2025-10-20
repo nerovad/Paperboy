@@ -1,14 +1,20 @@
 require 'sidekiq/web'
-
 Rails.application.routes.draw do
   resources :authorization_forms
   get "forms/home"
-  post "/login", to: "sessions#create"
+  
+  # Old login (keep for admin impersonation)
+  post "/login", to: "sessions#create_legacy"
   delete "/logout", to: "sessions#destroy"
+  
+  # Clean OAuth/Entra ID routes
+  get '/auth/callback', to: 'sessions#create_oauth'
+  get '/auth/failure', to: 'sessions#failure'
+  post '/auth/azure_activedirectory_v2', to: 'sessions#setup', as: :auth_setup
+  
   mount Sidekiq::Web => '/sidekiq'
-
   root "forms#home"
-
+  
   resources :parking_lot_submissions, only: [:new, :create, :index, :show] do
     member do
       get :pdf

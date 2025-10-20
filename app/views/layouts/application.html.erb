@@ -10,12 +10,10 @@
     <script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
     <%= javascript_importmap_tags %>
   </head>
-
   <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %>">
    <%= render "shared/logo" %>
   <div class="app-container">
     <%= render "shared/sidebar" %>
-
     <div class="content-container">
       <div id="main-content">
         <% if content_for?(:image) %>
@@ -23,47 +21,31 @@
         <% else %>
           <%= yield %>
         <% end %>
-
+        
         <!-- Login Button (over image) -->
-       <% unless session[:user] %>
-  <div data-controller="login-modal">
-    <button class="login-button-over-image"
-            data-login-modal-target="loginBtn">
-      Login
-    </button>
-
-    <div id="login-modal"
-         class="modal"
-         data-login-modal-target="modal">
-      <div class="modal-content">
-        <span class="close" data-login-modal-target="closeBtn">&times;</span>
-        <h2>Login</h2>
-        <form data-login-modal-target="form">
-          <input type="text" name="login" placeholder="Employee ID or Email" required>
-          <button type="submit">Log in</button>
-        </form>
-      </div>
-    </div>
-  </div>
-<% else %>
-  <div class="profile-dropdown" data-controller="profile-dropdown">
-  <button id="profile-toggle"
-          class="profile-icon"
-          data-action="click->profile-dropdown#toggle">
-    <%= session[:user]["first_name"] %>
-    <% if inbox_count > 0 %>
-      <span class="inbox-badge"><%= inbox_count %></span>
-    <% end %>
-  </button>
-
-  <div class="dropdown-content"
-       data-profile-dropdown-target="dropdown">
-    <%= link_to "Inbox Queue", inbox_queue_path, class: "btn btn-primary" %>
-    <%= link_to "Status", status_path, class: "btn btn-primary" %>
-    <%= button_to "Logout", logout_path, method: :delete, class: "logout-btn" %>
-  </div>
-</div>
-<% end %>
+        <% unless session[:user_id] %>
+          <%= button_to "Login with Microsoft", 
+                        auth_setup_path, 
+                        method: :post,
+                        class: "login-button-over-image" %>
+        <% else %>
+          <div class="profile-dropdown" data-controller="profile-dropdown">
+            <button id="profile-toggle"
+                    class="profile-icon"
+                    data-action="click->profile-dropdown#toggle">
+              <%= current_user.first_name %>
+              <% if inbox_count > 0 %>
+                <span class="inbox-badge"><%= inbox_count %></span>
+              <% end %>
+            </button>
+            <div class="dropdown-content"
+                 data-profile-dropdown-target="dropdown">
+              <%= link_to "Inbox Queue", inbox_queue_path, class: "btn btn-primary" %>
+              <%= link_to "Status", status_path, class: "btn btn-primary" %>
+              <%= button_to "Logout", logout_path, method: :delete, class: "logout-btn" %>
+            </div>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>

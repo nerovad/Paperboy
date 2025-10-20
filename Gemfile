@@ -36,8 +36,8 @@ gem 'prawn'
 gem 'duo_web'
 
 gem 'omniauth'
-gem 'omniauth-microsoft_entra_id'
-gem 'omniauth-rails_csrf_protection'  # Security
+gem 'omniauth-azure-activedirectory-v2'
+gem 'omniauth-rails_csrf_protection'
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
