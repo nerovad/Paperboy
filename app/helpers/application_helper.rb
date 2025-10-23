@@ -1,14 +1,14 @@
 # app/helpers/application_helper.rb
 module ApplicationHelper
   def current_user
-    @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
+    session[:user]
   end
   
   def inbox_count
-    return 0 unless current_user&.employee_id
+    return 0 unless session[:user]&.dig("employee_id")
     
     submissions = ParkingLotSubmission.where(
-      supervisor_id: current_user.employee_id,
+      supervisor_id: session[:user]["employee_id"],
       status: 0
     )
     

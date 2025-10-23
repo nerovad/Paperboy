@@ -11,6 +11,16 @@
     <%= javascript_importmap_tags %>
   </head>
   <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %>">
+   <!-- Impersonation Banner -->
+   <% if session[:impersonating] %>
+     <div style="background: #ff9800; color: white; padding: 10px; text-align: center;">
+       ⚠️ You are impersonating <%= session[:user]["first_name"] %> <%= session[:user]["last_name"] %>
+       <%= button_to "Stop Impersonating", admin_impersonation_path(1), 
+                     method: :delete, 
+                     class: "btn btn-sm btn-light" %>
+     </div>
+   <% end %>
+   
    <%= render "shared/logo" %>
   <div class="app-container">
     <%= render "shared/sidebar" %>
@@ -24,16 +34,16 @@
         
         <!-- Login Button (over image) -->
         <% unless session[:user_id] %>
-          <%= button_to "Login with Microsoft", 
-                        auth_setup_path, 
-                        method: :post,
-                        class: "login-button-over-image" %>
+          <%= form_with url: "/auth/azure_activedirectory_v2", method: :post, 
+                        data: { turbo: false } do |f| %>
+            <%= f.submit "Login with Microsoft", class: "login-button-over-image" %>
+          <% end %>
         <% else %>
           <div class="profile-dropdown" data-controller="profile-dropdown">
             <button id="profile-toggle"
                     class="profile-icon"
                     data-action="click->profile-dropdown#toggle">
-              <%= current_user.first_name %>
+              <%= session[:user]["first_name"] %>
               <% if inbox_count > 0 %>
                 <span class="inbox-badge"><%= inbox_count %></span>
               <% end %>
@@ -42,6 +52,11 @@
                  data-profile-dropdown-target="dropdown">
               <%= link_to "Inbox Queue", inbox_queue_path, class: "btn btn-primary" %>
               <%= link_to "Status", status_path, class: "btn btn-primary" %>
+              
+              <% if session[:user_id] == 136626 %> <!-- Your employee ID -->
+                <%= link_to "Impersonate", new_admin_impersonation_path, class: "btn btn-warning" %>
+              <% end %>
+              
               <%= button_to "Logout", logout_path, method: :delete, class: "logout-btn" %>
             </div>
           </div>
@@ -49,5 +64,5 @@
       </div>
     </div>
   </div>
-</body> 
+</body>
 </html>

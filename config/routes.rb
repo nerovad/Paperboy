@@ -68,4 +68,7 @@ resources :loa_forms, only: [:new, :create]
 
     get "/status", to: "status#index", as: :status
 
+    namespace :admin do
+  resources :impersonations, only: [:new, :create, :destroy]
+end
 end

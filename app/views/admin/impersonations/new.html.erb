@@ -1,0 +1,15 @@
+<!-- app/views/admin/impersonations/new.html.erb -->
+<div class="impersonation-page">
+  <h1>🎭 Impersonate User</h1>
+
+  <%= form_with url: admin_impersonations_path, method: :post do |f| %>
+    <%= f.label :employee_id, "Select Employee:" %>
+    <%= f.select :employee_id, 
+                 @employees.map { |e| ["#{e.First_Name} #{e.Last_Name} (#{e.EmployeeID})", e.EmployeeID] },
+                 { prompt: "Choose an employee..." }, 
+                 { class: "form-control" } %>
+    
+    <%= f.submit "Impersonate", class: "btn-impersonate" %>
+    <%= link_to "Cancel", root_path, class: "btn-back" %>
+  <% end %>
+</div>

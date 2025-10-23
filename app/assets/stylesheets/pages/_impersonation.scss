@@ -1,0 +1,91 @@
+/* Pages: Admin Impersonation */
+@import "base/tokens";
+
+.impersonation-page {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 30px;
+  background: $form-bg;
+  border-radius: $radius-12;
+  box-shadow: $shadow-soft;
+
+  h1 {
+    color: $text-color;
+    font-size: 1.75rem;
+    margin-bottom: 30px;
+    font-weight: 600;
+  }
+
+  label {
+    display: block;
+    color: $label-color;
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+  }
+
+  select.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 1rem;
+    color: $text-color;
+    background-color: $form-bg;
+    border: 1px solid $border-color;
+    border-radius: $radius-6;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    }
+  }
+
+  .btn-impersonate {
+    display: inline-block;
+    padding: 10px 24px;
+    margin-top: 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: white;
+    background-color: #ff9800;
+    border: none;
+    border-radius: $radius-6;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+
+    &:hover {
+      background-color: #f57c00;
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+    }
+  }
+
+  .btn-back {
+    display: inline-block;
+    padding: 10px 24px;
+    margin-top: 20px;
+    margin-left: 10px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: $text-color;
+    background-color: #f9f9f9;
+    border: 1px solid $border-color;
+    border-radius: $radius-6;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: #f0f0f0;
+      border-color: darken($border-color, 10%);
+    }
+  }
+}
