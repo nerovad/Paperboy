@@ -12,14 +12,16 @@
   </head>
   <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %>">
    <!-- Impersonation Banner -->
-   <% if session[:impersonating] %>
-     <div style="background: #ff9800; color: white; padding: 10px; text-align: center;">
-       ⚠️ You are impersonating <%= session[:user]["first_name"] %> <%= session[:user]["last_name"] %>
-       <%= button_to "Stop Impersonating", admin_impersonation_path(1), 
-                     method: :delete, 
-                     class: "btn btn-sm btn-light" %>
-     </div>
-   <% end %>
+<!-- In app/views/layouts/application.html.erb -->
+<% if session[:impersonating] && session[:user] %>
+  <div style="background: #ff9800; color: white; padding: 10px; text-align: center;">
+    ⚠️ You are impersonating <%= session[:user]["first_name"] %> <%= session[:user]["last_name"] %>
+    <%= button_to "Stop Impersonating", admin_impersonation_path(1), 
+                  method: :delete, 
+                  class: "btn pdf",
+                  style: "margin-left: 10px;" %>
+  </div>
+<% end %>
    
    <%= render "shared/logo" %>
   <div class="app-container">
