@@ -1,0 +1,102 @@
+<!-- app/views/authorization_console/index.html.erb -->
+<div class="form-header">
+  <h1>Authorization Console</h1>
+  <p>Manage authorized approvers for your department(s)</p>
+</div>
+
+<div class="form-wrapper">
+  <% if @managed_departments.size > 1 %>
+    <div class="department-selector">
+      <label>Select Department:</label>
+      <%= form_tag authorization_console_index_path, method: :get do %>
+        <%= select_tag :department_id,
+              options_for_select(
+                @managed_departments.map { |d| ["#{d.department_id} - #{d.long_name}", d.department_id] },
+                @department_id
+              ),
+              onchange: "this.form.submit()",
+              class: "form-control" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @department %>
+    <h2><%= @department.long_name %> (<%= @department.department_id %>)</h2>
+    
+    <%= link_to "+ Add New Authorized Approver",
+          new_authorization_console_path(department_id: @department_id),
+          class: "btn approve",
+          style: "margin: 20px 0;" %>
+    
+    <% if @approvers_by_employee.any? %>
+      <div class="approvers-list">
+        <% @approvers_by_employee.each do |employee_id, approvals| %>
+          <div class="approver-card">
+            <div class="approver-header">
+              <h3>
+                <%= approvals.first.employee&.First_Name %> <%= approvals.first.employee&.Last_Name %>
+                (<%= employee_id %>)
+              </h3>
+              <%= button_to "Remove All Authorizations",
+                    destroy_all_for_employee_authorization_console_index_path(employee_id: employee_id, department_id: @department_id),
+                    method: :delete,
+                    class: "btn deny",
+                    data: { confirm: "Are you sure you want to remove all authorizations for this employee?" } %>
+            </div>
+            
+            <div class="approvals-list">
+              <% approvals.each do |approval| %>
+                <div class="approval-item">
+                  <div class="approval-details">
+                    <strong><%= approval.service_type_label %> (<%= approval.service_type %>)</strong>
+                    
+                    <% if approval.service_type == 'K' && approval.key_type.present? %>
+                      <div class="detail-row">
+                        <span class="label">Key Type:</span>
+                        <span class="value"><%= approval.key_type_label %></span>
+                      </div>
+                    <% end %>
+                    
+                    <% if approval.span.present? %>
+                      <div class="detail-row">
+                        <span class="label">Scope:</span>
+                        <span class="value"><%= approval.span_label %></span>
+                      </div>
+                    <% end %>
+                    
+                    <% if approval.budget_units.present? %>
+                      <div class="detail-row">
+                        <span class="label">Budget Units:</span>
+                        <span class="value"><%= approval.budget_units %></span>
+                      </div>
+                    <% end %>
+                    
+                    <% if approval.locations.present? %>
+                      <div class="detail-row">
+                        <span class="label">Locations:</span>
+                        <span class="value"><%= approval.locations %></span>
+                      </div>
+                    <% end %>
+                  </div>
+                  
+                  <div class="approval-actions">
+                    <%= link_to "Edit", edit_authorization_console_path(approval), class: "btn" %>
+                    <%= button_to "Remove",
+                          authorization_console_path(approval),
+                          method: :delete,
+                          class: "btn deny",
+                          data: { confirm: "Remove this authorization?" } %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p>No authorized approvers have been assigned for this department yet.</p>
+    <% end %>
+  <% else %>
+    <p>No departments assigned to manage.</p>
+  <% end %>
+</div>

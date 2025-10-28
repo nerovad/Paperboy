@@ -1,0 +1,76 @@
+<!-- app/views/authorization_console/edit.html.erb -->
+<div class="form-header">
+  <h1>Edit Authorized Approver</h1>
+</div>
+
+<div class="form-wrapper">
+  <%= form_with model: @authorized_approver, url: authorization_console_path(@authorized_approver), method: :patch, local: true do |form| %>
+    <%= form.hidden_field :department_id %>
+    <%= form.hidden_field :employee_id %>
+    
+    <div class="form-group">
+      <%= form.label :employee_id, "Employee" %>
+      <%= form.text_field :employee_id, class: "form-control", readonly: true %>
+    </div>
+    
+    <div class="form-group" data-controller="authorization-select">
+      <%= form.label :service_type, "Service Type" %>
+      <%= form.select :service_type,
+            options_for_select(
+              AuthorizedApprover::SERVICE_TYPES.map { |k, v| ["#{v} (#{k})", k] },
+              @authorized_approver.service_type
+            ),
+            { prompt: "Select Service Type" },
+            class: "form-control",
+            required: true,
+            data: {
+              authorization_select_target: "serviceType",
+              action: "change->authorization-select#toggleKeyType"
+            } %>
+    </div>
+    
+    <div class="form-group" id="key-type-wrapper" style="<%= @authorized_approver.service_type == 'K' ? '' : 'display:none;' %>">
+      <%= form.label :key_type, "Key Type" %>
+      <%= form.select :key_type,
+            options_for_select(
+              AuthorizedApprover::KEY_TYPES.map { |k, v| ["#{k} = #{v}", k] },
+              @authorized_approver.key_type
+            ),
+            { prompt: "Select Key Type" },
+            class: "form-control",
+            data: { authorization_select_target: "keyType" } %>
+    </div>
+    
+    <div class="form-group">
+      <%= form.label :span, "Authorization Span" %>
+      <%= form.select :span,
+            options_for_select(
+              AuthorizedApprover::SPANS.map { |k, v| ["#{k} = #{v}", k] },
+              @authorized_approver.span
+            ),
+            { prompt: "Select Span" },
+            class: "form-control" %>
+    </div>
+    
+    <div class="form-group">
+      <%= form.label :budget_units, "Budget Units (comma-separated)" %>
+      <%= form.text_field :budget_units,
+            class: "form-control",
+            placeholder: "e.g., 4641, 4642" %>
+      <small class="help-text">Leave blank for all budget units</small>
+    </div>
+    
+    <div class="form-group">
+      <%= form.label :locations, "Building Locations (comma-separated)" %>
+      <%= form.text_field :locations,
+            class: "form-control",
+            placeholder: "e.g., Building A, Building B" %>
+      <small class="help-text">Leave blank for all locations</small>
+    </div>
+    
+    <div class="form-actions">
+      <%= link_to "Cancel", authorization_console_index_path(department_id: @authorized_approver.department_id), class: "btn" %>
+      <%= form.submit "Update Authorization", class: "btn approve" %>
+    </div>
+  <% end %>
+</div>

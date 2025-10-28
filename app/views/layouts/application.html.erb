@@ -36,7 +36,7 @@
         
         <!-- Login Button (over image) -->
         <% unless session[:user_id] %>
-          <%= form_with url: "/auth/azure_activedirectory_v2", method: :post, 
+          <%= form_with url: auth_setup_path, method: :post, 
                         data: { turbo: false } do |f| %>
             <%= f.submit "Login with Microsoft", class: "login-button-over-image" %>
           <% end %>
@@ -55,6 +55,10 @@
               <%= link_to "Inbox Queue", inbox_queue_path, class: "btn btn-primary" %>
               <%= link_to "Status", status_path, class: "btn btn-primary" %>
               
+              <% if AuthorizationManager.exists?(employee_id: session.dig(:user, "employee_id").to_s) %>
+                <%= link_to "Auth Console", authorization_console_index_path, class: "btn btn-primary" %>
+              <% end %>
+
               <% if session[:user_id] == 136626 %> <!-- Your employee ID -->
                 <%= link_to "Impersonate", new_admin_impersonation_path, class: "btn btn-warning" %>
               <% end %>

@@ -1,6 +1,5 @@
 require 'sidekiq/web'
 Rails.application.routes.draw do
-  resources :authorization_forms
   get "forms/home"
   
   # Old login (keep for admin impersonation)
@@ -10,7 +9,7 @@ Rails.application.routes.draw do
   # Clean OAuth/Entra ID routes
   get '/auth/callback', to: 'sessions#create_oauth'
   get '/auth/failure', to: 'sessions#failure'
-  post '/auth/azure_activedirectory_v2', to: 'sessions#setup', as: :auth_setup
+  post '/auth/entra_id', to: 'sessions#setup', as: :auth_setup
   
   mount Sidekiq::Web => '/sidekiq'
   root "forms#home"
@@ -32,14 +31,6 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :authorization_forms, only: [:new, :create, :index, :show] do
-  member do
-    get :pdf
-    patch :approve
-    patch :deny
-  end
-end
-
   # config/routes.rb
 resources :billing_tools, only: [:new, :create] do
   collection do
@@ -47,6 +38,12 @@ resources :billing_tools, only: [:new, :create] do
     post :run_monthly_billing
     post :backup_staging
     post :backup_production
+  end
+end
+
+resources :authorization_console, only: [:index, :new, :create, :edit, :update, :destroy] do
+  collection do
+    delete :destroy_all_for_employee
   end
 end
 

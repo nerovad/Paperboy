@@ -36,8 +36,8 @@ gem 'prawn'
 gem 'duo_web'
 
 gem 'omniauth'
-gem 'omniauth-azure-activedirectory-v2'
 gem 'omniauth-rails_csrf_protection'
+gem 'omniauth-entra-id'
 
 # Gemfile
 gem 'dotenv-rails', groups: [:development, :test]

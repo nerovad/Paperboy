@@ -13,10 +13,6 @@ class InboxController < ApplicationController
     @submissions += ParkingLotSubmission.where(supervisor_id: employee_id, status: 0)
     @submissions += ParkingLotSubmission.where(delegated_approver_id: employee_id, status: 1)
     
-    # Authorization Forms
-    @submissions += AuthorizationForm.where(supervisor_id: employee_id, status: 0)
-    @submissions += AuthorizationForm.where(delegated_approver_id: employee_id, status: 1)
-
     # Probation Transfer Requests (unchanged)
     @submissions += ProbationTransferRequest.where(supervisor_id: employee_id, status: 0, canceled_at: nil)
     
@@ -28,8 +24,8 @@ class InboxController < ApplicationController
       s.is_a?(ParkingLotSubmission) && s.supervisor_id == employee_id && s.submitted?
     end
     
-    parking_submissions_needing_delegation.each do |submission|
-      @department_employees[submission.id] = fetch_department_employees(submission.department)
+    submissions_needing_delegation = @submissions.select do |s|
+      s.is_a?(ParkingLotSubmission) && s.supervisor_id == employee_id && s.submitted?
     end
   end
 

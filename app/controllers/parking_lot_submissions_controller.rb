@@ -73,8 +73,7 @@ end
 def create
   employee      = session[:user]
   employee_id   = employee["employee_id"].to_s
-  supervisor_id = fetch_supervisor_id(employee_id)
-
+  
   # Check Union Code from DB (trust server-side)
   union_code = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first&.fetch("Union_Code", nil).to_s.upcase
     SELECT Union_Code
@@ -82,10 +81,32 @@ def create
     WHERE EmployeeID = '#{employee_id}'
   SQL
   is_mb3 = (union_code == "MB3")
-
+  
+  # Get employee's department for authorized approver lookup
+  emp_record = Employee.find_by(EmployeeID: employee_id)
+  unit = Unit.find_by(unit_id: emp_record["Unit"])
+  department = unit ? Department.find_by(department_id: unit["department_id"]) : nil
+  
+  # Check for authorized approvers for parking permits
+  authorized_approvers = if department
+    AuthorizedApprover.approvers_for(
+      department_id: department.department_id,
+      service_type: 'P'
+    )
+  else
+    []
+  end
+  
+  # Determine supervisor: use authorized approver if exists, otherwise use direct supervisor
+  supervisor_id = if authorized_approvers.any?
+    authorized_approvers.first
+  else
+    fetch_supervisor_id(employee_id)
+  end
+  
   @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
   @parking_lot_submission.employee_id = employee_id
-
+  
   if is_mb3
     # Auto-approve: no manager routing
     @parking_lot_submission.status        = 1 # manager_approved
@@ -93,17 +114,16 @@ def create
     @parking_lot_submission.approved_by   = employee_id # or "SYSTEM"
     @parking_lot_submission.approved_at   = Time.current
   else
-    # Normal path: submitted and routed to supervisor
+    # Normal path: submitted and routed to authorized approver or supervisor
     @parking_lot_submission.status        = 0 # submitted
     @parking_lot_submission.supervisor_id = supervisor_id
     @parking_lot_submission.supervisor_email  = fetch_employee_email(supervisor_id)
   end
-
+  
   if @parking_lot_submission.save
     if is_mb3
       NotifySecurityJob.perform_later(@parking_lot_submission.id)
     end
-
     redirect_to form_success_path, allow_other_host: false, status: :see_other
   else
     @is_mb3 = is_mb3

@@ -1,0 +1,163 @@
+/* Pages: Authorization Console */
+
+// Department selector at the top
+.department-selector {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: $radius-6;
+  border: 1px solid $border-color;
+
+  label {
+    display: block;
+    font-weight: 600;
+    color: $label-color;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+  }
+
+  .form-control {
+    max-width: 400px;
+  }
+}
+
+// List of all approver cards
+.approvers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+// Individual approver card
+.approver-card {
+  background: $form-bg;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  box-shadow: $shadow-soft;
+  overflow: hidden;
+
+  .approver-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid $border-color;
+
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: $text-color;
+    }
+
+    .btn.deny {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+  }
+}
+
+// List of approvals within a card
+.approvals-list {
+  padding: 0;
+}
+
+// Individual approval item
+.approval-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 20px;
+  border-bottom: 1px solid lighten($border-color, 5%);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .approval-details {
+    flex: 1;
+
+    strong {
+      display: block;
+      font-size: 1rem;
+      color: $text-color;
+      margin-bottom: 8px;
+    }
+
+    .detail-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+
+      .label {
+        font-weight: 600;
+        color: $label-color;
+        min-width: 110px;
+      }
+
+      .value {
+        color: $text-color;
+      }
+    }
+  }
+
+  .approval-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-left: 20px;
+
+    .btn {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+  }
+}
+
+// Authorization form pages (new/edit)
+.authorization-console {
+  .form-group {
+    margin-bottom: 20px;
+
+    label {
+      display: block;
+      font-weight: 600;
+      color: $label-color;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .help-text {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: $muted;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid $border-color;
+  }
+}
+
+// Add approver button at the top
+.btn.approve {
+  display: inline-block;
+  margin: 20px 0;
+}
+
+// Empty state
+.form-wrapper p {
+  color: $muted;
+  font-size: 1rem;
+  padding: 40px 0;
+  text-align: center;
+}

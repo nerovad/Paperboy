@@ -49,9 +49,6 @@
                   <% end %>
 
                   <!-- app/views/inbox/queue.html.erb -->
-                <% elsif submission.is_a?(AuthorizationForm) %>
-                  <%= link_to "View PDF", pdf_authorization_form_path(submission), target: "_blank", class: "btn pdf" %>
-                  
                   <% if submission.submitted? %>
                     <!-- Dept Head Approval - needs delegated approver selection -->
                     <button type="button"

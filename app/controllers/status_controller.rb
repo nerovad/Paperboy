@@ -16,18 +16,6 @@ class StatusController < ApplicationController
       }
     end
 
-        # Authorization Forms
-    @status_items += AuthorizationForm.for_employee(employee_id).map do |f|
-      {
-        type: "Authorization",
-        title: "GSA Authorization ##{f.id}",
-        status: f.status_label,
-        submitted_at: f.created_at,
-        updated_at: f.updated_at,
-        path: authorization_form_path(f)
-      }
-    end
-
     @status_items += ProbationTransferRequest.for_employee(employee_id).map do |f|
       {
         type: "Probation Transfer",

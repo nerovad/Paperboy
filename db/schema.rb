@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_09_161627) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_28_160613) do
   create_table "BdmRateTypes", primary_key: "RateID", id: { type: :integer, limit: 2 }, force: :cascade do |t|
     t.string "Description", limit: 150, null: false
     t.string "UOM", limit: 15, null: false
@@ -244,34 +244,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_09_161627) do
     t.string "short_name", limit: 50, null: false
   end
 
-  create_table "authorization_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "supervisor_id"
-    t.string "supervisor_email"
-    t.string "delegated_approver_id"
-    t.string "delegated_approver_email"
-    t.string "approved_by"
-    t.datetime "approved_at"
-    t.string "delegated_approved_by"
-    t.datetime "delegated_approved_at"
-    t.string "denied_by"
-    t.datetime "denied_at"
-    t.text "denial_reason"
-    t.integer "status", default: 0
-    t.string "service_type"
-    t.string "key_type"
-    t.string "budget_units"
-  end
-
   create_table "authorization_fos", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
@@ -283,6 +255,29 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_09_161627) do
     t.string "unit"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "authorization_managers", force: :cascade do |t|
+    t.string "employee_id", null: false
+    t.string "department_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id", "department_id"], name: "index_authorization_managers_on_employee_id_and_department_id", unique: true
+  end
+
+  create_table "authorized_approvers", force: :cascade do |t|
+    t.string "employee_id", null: false
+    t.string "department_id", null: false
+    t.string "service_type", null: false
+    t.string "key_type"
+    t.string "span"
+    t.text "budget_units"
+    t.text "locations"
+    t.string "authorized_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["department_id", "service_type"], name: "index_authorized_approvers_on_department_id_and_service_type"
+    t.index ["employee_id"], name: "index_authorized_approvers_on_employee_id"
   end
 
   create_table "creative_job_requests", force: :cascade do |t|
