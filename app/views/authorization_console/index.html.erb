@@ -1,10 +1,9 @@
 <!-- app/views/authorization_console/index.html.erb -->
 <div class="form-header">
   <h1>Authorization Console</h1>
-  <p>Manage authorized approvers for your department(s)</p>
 </div>
 
-<div class="form-wrapper">
+<div class="form-wrapper authorization-console" data-controller="confirm-modal">
   <% if @managed_departments.size > 1 %>
     <div class="department-selector">
       <label>Select Department:</label>
@@ -21,12 +20,12 @@
   <% end %>
 
   <% if @department %>
-    <h2><%= @department.long_name %> (<%= @department.department_id %>)</h2>
-    
-    <%= link_to "+ Add New Authorized Approver",
-          new_authorization_console_path(department_id: @department_id),
-          class: "btn approve",
-          style: "margin: 20px 0;" %>
+    <div class="department-header">
+      <h2><%= @department.long_name %> (<%= @department.department_id %>)</h2>
+      <%= link_to "+ Add New Authorized Approver",
+            new_authorization_console_path(department_id: @department_id),
+            class: "btn approve" %>
+    </div>
     
     <% if @approvers_by_employee.any? %>
       <div class="approvers-list">
@@ -35,13 +34,8 @@
             <div class="approver-header">
               <h3>
                 <%= approvals.first.employee&.First_Name %> <%= approvals.first.employee&.Last_Name %>
-                (<%= employee_id %>)
+                <span class="employee-id">(<%= employee_id %>)</span>
               </h3>
-              <%= button_to "Remove All Authorizations",
-                    destroy_all_for_employee_authorization_console_index_path(employee_id: employee_id, department_id: @department_id),
-                    method: :delete,
-                    class: "btn deny",
-                    data: { confirm: "Are you sure you want to remove all authorizations for this employee?" } %>
             </div>
             
             <div class="approvals-list">
@@ -81,11 +75,14 @@
                   
                   <div class="approval-actions">
                     <%= link_to "Edit", edit_authorization_console_path(approval), class: "btn" %>
-                    <%= button_to "Remove",
-                          authorization_console_path(approval),
-                          method: :delete,
-                          class: "btn deny",
-                          data: { confirm: "Remove this authorization?" } %>
+                    <button type="button"
+                            class="btn deny"
+                            data-action="click->confirm-modal#open"
+                            data-delete-path="<%= authorization_console_path(approval) %>"
+                            data-confirm-title="Remove Authorization"
+                            data-confirm-message="Are you sure you want to remove the authorization for <%= approval.service_type_label %> from <%= approvals.first.employee&.First_Name %> <%= approvals.first.employee&.Last_Name %>?">
+                      Remove
+                    </button>
                   </div>
                 </div>
               <% end %>
@@ -94,9 +91,16 @@
         <% end %>
       </div>
     <% else %>
-      <p>No authorized approvers have been assigned for this department yet.</p>
+      <div class="empty-state">
+        <p>No authorized approvers have been assigned for this department yet.</p>
+        <p class="empty-state-hint">Click "+ Add New Authorized Approver" to get started.</p>
+      </div>
     <% end %>
   <% else %>
-    <p>No departments assigned to manage.</p>
+    <div class="empty-state">
+      <p>No departments assigned to manage.</p>
+    </div>
   <% end %>
+  <%= render "shared/confirm_modal" %>
+</div>
 </div>

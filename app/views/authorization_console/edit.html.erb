@@ -3,7 +3,7 @@
   <h1>Edit Authorized Approver</h1>
 </div>
 
-<div class="form-wrapper">
+<div class="form-wrapper authorization-console">
   <%= form_with model: @authorized_approver, url: authorization_console_path(@authorized_approver), method: :patch, local: true do |form| %>
     <%= form.hidden_field :department_id %>
     <%= form.hidden_field :employee_id %>

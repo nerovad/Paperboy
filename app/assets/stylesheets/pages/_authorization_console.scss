@@ -1,5 +1,40 @@
 /* Pages: Authorization Console */
 
+.authorization-console {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// Header section
+.form-header {
+  p {
+    color: $muted;
+    font-size: 1rem;
+    margin-top: 8px;
+  }
+}
+
+// Department header with title and add button
+.department-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid $border-color;
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: $text-color;
+  }
+
+  .btn.approve {
+    margin: 0;
+  }
+}
+
 // Department selector at the top
 .department-selector {
   margin-bottom: 30px;
@@ -36,11 +71,13 @@
   border-radius: $radius-6;
   box-shadow: $shadow-soft;
   overflow: hidden;
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
 
   .approver-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: 16px 20px;
     background-color: #f9f9f9;
     border-bottom: 1px solid $border-color;
@@ -50,11 +87,12 @@
       font-size: 1.1rem;
       font-weight: 600;
       color: $text-color;
-    }
 
-    .btn.deny {
-      padding: 6px 12px;
-      font-size: 0.85rem;
+      .employee-id {
+        color: $muted;
+        font-weight: 400;
+        font-size: 0.95rem;
+      }
     }
   }
 }
@@ -71,6 +109,11 @@
   align-items: flex-start;
   padding: 16px 20px;
   border-bottom: 1px solid lighten($border-color, 5%);
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: #fafafa;
+  }
 
   &:last-child {
     border-bottom: none;
@@ -104,60 +147,112 @@
     }
   }
 
-  .approval-actions {
+.approval-actions {
     display: flex;
     gap: 8px;
     flex-shrink: 0;
     margin-left: 20px;
+    align-items: flex-start;
 
     .btn {
-      padding: 6px 12px;
-      font-size: 0.85rem;
+      padding: 8px 16px;
+      font-size: 0.9rem;
       white-space: nowrap;
+      border: 1px solid $border-color;
+      background-color: #f9f9f9;
+      color: $text-color;
+      
+      &:hover {
+        background-color: #f0f0f0;
+        border-color: darken($border-color, 10%);
+      }
+    }
+
+    .btn.deny {
+      background-color: #fff;
+      border-color: #e0a0a0;
+      color: #c9302c;
+      
+      &:hover {
+        background-color: #fdf1f1;
+        border-color: #d88;
+      }
+    }
+
+    form {
+      margin: 0;
     }
   }
 }
 
 // Authorization form pages (new/edit)
-.authorization-console {
-  .form-group {
-    margin-bottom: 20px;
+.form-group {
+  margin-bottom: 20px;
 
-    label {
-      display: block;
-      font-weight: 600;
-      color: $label-color;
-      margin-bottom: 8px;
-      font-size: 0.95rem;
-    }
-
-    .help-text {
-      display: block;
-      margin-top: 6px;
-      font-size: 0.85rem;
-      color: $muted;
-    }
+  label {
+    display: block;
+    font-weight: 600;
+    color: $label-color;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
   }
 
-  .form-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 32px;
-    padding-top: 20px;
-    border-top: 1px solid $border-color;
+  .help-text {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.85rem;
+    color: $muted;
+    font-style: italic;
+  }
+
+  .form-control {
+    width: 100%;
+    max-width: 600px;
   }
 }
 
-// Add approver button at the top
-.btn.approve {
-  display: inline-block;
-  margin: 20px 0;
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid $border-color;
+
+  .btn {
+    padding: 10px 20px;
+    background-color: #f9f9f9;
+    border: 1px solid $border-color;
+    color: $text-color;
+    
+    &:hover {
+      background-color: #f0f0f0;
+    }
+  }
+
+  .btn.approve {
+    background-color: $primary-color;
+    color: white;
+    border-color: $primary-color;
+    
+    &:hover {
+      background-color: $primary-hover;
+    }
+  }
 }
 
 // Empty state
-.form-wrapper p {
-  color: $muted;
-  font-size: 1rem;
-  padding: 40px 0;
+.empty-state {
+  padding: 60px 20px;
   text-align: center;
+
+  p {
+    color: $muted;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
+
+  .empty-state-hint {
+    color: lighten($muted, 10%);
+    font-size: 0.95rem;
+  }
 }
