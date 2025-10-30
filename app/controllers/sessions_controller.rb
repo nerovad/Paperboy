@@ -39,9 +39,9 @@ class SessionsController < ApplicationController
     }
     
     Rails.logger.info "Session set for EmployeeID: #{employee.EmployeeID}"
-    Rails.logger.info "Redirecting to inbox_queue_path"
-    
-    redirect_to inbox_queue_path
+    Rails.logger.info "Redirecting to root_path"
+
+    redirect_to root_path
   end
   
   # OLD: Keep this for admin impersonation/testing
@@ -61,7 +61,7 @@ class SessionsController < ApplicationController
         "agency" => employee.Agency,
         "unit" => employee.Unit
       }
-      redirect_to inbox_queue_path
+      redirect_to root_path
     else
       redirect_to root_path, alert: "User not found"
     end
