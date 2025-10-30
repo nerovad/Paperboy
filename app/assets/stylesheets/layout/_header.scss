@@ -36,7 +36,7 @@
   &:hover { background: $primary-hover; }
 }
 .login-button-over-image {
-  position: absolute;
+  position: fixed;
   z-index: 9999;
   top: 20px;
   right: 20px;
@@ -53,7 +53,7 @@
 
 /* Profile dropdown (top-right) */
 .profile-dropdown {
-  position: absolute;
+  position: fixed;
   top: 20px;
   right: 30px;
   z-index: 10;
