@@ -2,6 +2,8 @@
   <h2>Available Forms</h2>
 
   <% if current_user %>
+
+    <%= link_to "Bike Locker Permit", new_bike_locker_permit_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
     <% forms = [
       ["Billing Tools", new_billing_tool_path],
       ["Creative Job Request", new_creative_job_request_path],

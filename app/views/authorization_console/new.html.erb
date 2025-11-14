@@ -6,7 +6,7 @@
 <div class="form-wrapper authorization-console">
   <%= form_with model: @authorized_approver, url: authorization_console_index_path, local: true do |form| %>
     <%= form.hidden_field :department_id, value: @department_id %>
-    
+
     <div class="form-group">
       <%= form.label :employee_id, "Employee" %>
       <%= form.select :employee_id,
@@ -15,29 +15,44 @@
             class: "form-control",
             required: true %>
     </div>
-    
-    <div class="form-group" data-controller="authorization-select">
-      <%= form.label :service_type, "Service Type" %>
-      <%= form.select :service_type,
-            options_for_select(AuthorizedApprover::SERVICE_TYPES.map { |k, v| ["#{v} (#{k})", k] }),
-            { prompt: "Select Service Type" },
-            class: "form-control",
-            required: true,
-            data: {
-              authorization_select_target: "serviceType",
-              action: "change->authorization-select#toggleKeyType"
-            } %>
+
+    <!-- Wrap all key-related fields under one Stimulus controller -->
+    <div data-controller="authorization-select">
+      <div class="form-group">
+        <%= form.label :service_type, "Service Type" %>
+        <%= form.select :service_type,
+              options_for_select(AuthorizedApprover::SERVICE_TYPES.map { |k, v| ["#{v} (#{k})", k] }),
+              { prompt: "Select Service Type" },
+              class: "form-control",
+              required: true,
+              data: {
+                authorization_select_target: "serviceType",
+                action: "change->authorization-select#toggleFields"
+              } %>
+      </div>
+
+      <div class="form-group"
+           data-authorization-select-target="keyTypeWrapper"
+           style="display:none;">
+        <%= form.label :key_type, "Key Type" %>
+        <%= form.select :key_type,
+              options_for_select(AuthorizedApprover::KEY_TYPES.map { |k, v| ["#{k} = #{v}", k] }),
+              { prompt: "Select Key Type" },
+              class: "form-control",
+              data: { authorization_select_target: "keyType" } %>
+      </div>
+
+      <div class="form-group"
+           data-authorization-select-target="locationsWrapper"
+           style="display:none;">
+        <%= form.label :locations, "Building Locations (comma-separated)" %>
+        <%= form.text_field :locations,
+              class: "form-control",
+              placeholder: "e.g., Building A, Building B" %>
+        <small class="help-text">Leave blank for all locations</small>
+      </div>
     </div>
-    
-    <div class="form-group" id="key-type-wrapper" style="display:none;">
-      <%= form.label :key_type, "Key Type" %>
-      <%= form.select :key_type,
-            options_for_select(AuthorizedApprover::KEY_TYPES.map { |k, v| ["#{k} = #{v}", k] }),
-            { prompt: "Select Key Type" },
-            class: "form-control",
-            data: { authorization_select_target: "keyType" } %>
-    </div>
-    
+
     <div class="form-group">
       <%= form.label :span, "Authorization Span" %>
       <%= form.select :span,
@@ -45,7 +60,7 @@
             { prompt: "Select Span" },
             class: "form-control" %>
     </div>
-    
+
     <div class="form-group">
       <%= form.label :budget_units, "Budget Units (comma-separated)" %>
       <%= form.text_field :budget_units,
@@ -53,17 +68,11 @@
             placeholder: "e.g., 4641, 4642" %>
       <small class="help-text">Leave blank for all budget units</small>
     </div>
-    
-    <div class="form-group">
-      <%= form.label :locations, "Building Locations (comma-separated)" %>
-      <%= form.text_field :locations,
-            class: "form-control",
-            placeholder: "e.g., Building A, Building B" %>
-      <small class="help-text">Leave blank for all locations</small>
-    </div>
-    
+
     <div class="form-actions">
-      <%= link_to "Cancel", authorization_console_index_path(department_id: @department_id), class: "btn" %>
+      <%= link_to "Cancel",
+                  authorization_console_index_path(department_id: @department_id),
+                  class: "btn" %>
       <%= form.submit "Add Authorization", class: "btn approve" %>
     </div>
   <% end %>

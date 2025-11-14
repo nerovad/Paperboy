@@ -1,5 +1,6 @@
 require 'sidekiq/web'
 Rails.application.routes.draw do
+  resources :bike_locker_permits
   get "forms/home"
   
   # Old login (keep for admin impersonation)

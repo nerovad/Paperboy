@@ -10,7 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_28_160613) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_10_223919) do
+  create_table "AimUsers", id: false, force: :cascade do |t|
+    t.integer "EmployeeID", null: false
+    t.string "FirstName", limit: 50, null: false
+    t.string "LastName", limit: 50, null: false
+    t.string "email", limit: 50, null: false
+    t.date "Created", null: false
+    t.date "Updated", null: false
+    t.date "LastLogin", null: false
+    t.string "Active", limit: 50, null: false
+    t.string "LicenseType", limit: 50, null: false
+    t.string "SystemAdmininistrator", limit: 50, null: false
+    t.boolean "ApplicationAdministrator", null: false
+    t.boolean "ApplicationSupervisor", null: false
+    t.string "ExternalAdministrator", limit: 50, null: false
+    t.string "ExternalSupervisor", limit: 50, null: false
+  end
+
   create_table "BdmRateTypes", primary_key: "RateID", id: { type: :integer, limit: 2 }, force: :cascade do |t|
     t.string "Description", limit: 150, null: false
     t.string "UOM", limit: 15, null: false
@@ -50,6 +67,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_160613) do
   end
 
   create_table "Employees", primary_key: "EmployeeID", id: :integer, default: nil, force: :cascade do |t|
+    t.string "Last_Name", limit: 50
+    t.string "First_Name", limit: 50
+    t.string "Job_Title", limit: 50
+    t.string "Work_Phone", limit: 50
+    t.string "Agency", limit: 50
+    t.string "Unit", limit: 50
+    t.string "Job_Code", limit: 50
+    t.string "Position", limit: 50
+    t.string "Pay_Status", limit: 50
+    t.integer "Job_Class", limit: 1
+    t.string "Department", limit: 50
+    t.string "Type", limit: 50
+    t.integer "Supervisor_ID"
+    t.string "Supervisor_Last_Name", limit: 50
+    t.string "Supervisor_First_Name", limit: 50
+    t.string "EE_Email", limit: 50
+    t.string "Union_Code", limit: 50
+  end
+
+  create_table "Employees_Old", primary_key: "EmployeeID", id: :integer, default: nil, force: :cascade do |t|
     t.string "Last_Name", limit: 50
     t.string "First_Name", limit: 50
     t.string "Job_Title", limit: 50
@@ -114,6 +151,36 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_160613) do
     t.string "Program_Code", limit: 10
     t.string "Phase_Code", limit: 6
     t.string "Task", limit: 4
+  end
+
+  create_table "Manual_Transactions", id: false, force: :cascade do |t|
+    t.string "TYPE", limit: 3
+    t.string "CUNIT", limit: 4
+    t.string "COBJECT", limit: 4
+    t.string "CACTIVITY", limit: 4
+    t.string "CFUNCTION", limit: 4
+    t.string "CPROGRAM", limit: 10
+    t.string "CPHASE", limit: 6
+    t.string "CTASK", limit: 4
+    t.float "AMOUNT", default: 0.0
+    t.string "SUNIT", limit: 4
+    t.string "SOBJECT", limit: 4
+    t.string "SACTIVITY", limit: 4
+    t.string "SFUNCTION", limit: 4
+    t.string "SPROGRAM", limit: 10
+    t.string "SPHASE", limit: 6
+    t.string "STASK", limit: 4
+    t.string "POSTING_REF", limit: 20
+    t.string "SERVICE", limit: 15
+    t.date "DATE"
+    t.string "DOC_NMBR", limit: 50
+    t.string "DESCRIPTION", limit: 100
+    t.string "OTHER1", limit: 50
+    t.string "OTHER2", limit: 50
+    t.string "OTHER3", limit: 50
+    t.float "QUANTITY", default: 0.0
+    t.float "RATE", default: 0.0
+    t.float "COST", default: 0.0
   end
 
   create_table "PlanVsActual", id: false, force: :cascade do |t|
@@ -278,6 +345,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_160613) do
     t.datetime "updated_at", null: false
     t.index ["department_id", "service_type"], name: "index_authorized_approvers_on_department_id_and_service_type"
     t.index ["employee_id"], name: "index_authorized_approvers_on_employee_id"
+  end
+
+  create_table "bike_locker_permits", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "creative_job_requests", force: :cascade do |t|
@@ -611,8 +691,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_160613) do
 
   add_foreign_key "BdmRates", "BdmRateTypes", column: "RateID", primary_key: "RateID", name: "FK_BdmRates_RateID"
   add_foreign_key "TC60", "TC60_Types", column: "TYPE", primary_key: "TYPE", name: "FK_TC60_TYPE_TC60_TYPES"
-  add_foreign_key "events", "Employees", column: "employee_id", primary_key: "EmployeeID"
-  add_foreign_key "events", "Employees", column: "reported_by_id", primary_key: "EmployeeID"
+  add_foreign_key "events", "Employees_Old", column: "employee_id", primary_key: "EmployeeID"
+  add_foreign_key "events", "Employees_Old", column: "reported_by_id", primary_key: "EmployeeID"
   add_foreign_key "loa_forms", "events"
   add_foreign_key "osha_301_forms", "events"
   add_foreign_key "parking_lot_vehicles", "parking_lot_submissions"
