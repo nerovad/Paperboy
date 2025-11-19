@@ -9,8 +9,9 @@ import SlideshowController from "./slideshow_controller"
 import ConfirmController from "./confirm_controller"
 import DenyModalController from "./deny_modal_controller"
 import PhoneController from "./phone_controller"
-import BillingModalController from "./billing_modal_controller" 
+import BillingModalController from "./billing_modal_controller"
 import ApproveModalController from "./approve_modal_controller"
+import ChoicesController from "./choices_controller"
 
 application.register("slideshow", SlideshowController)
 application.register("probation-transfer-request", ProbationTransferRequestController)
@@ -20,7 +21,8 @@ application.register("profile-dropdown", ProfileDropdownController)
 application.register("confirm", ConfirmController)
 application.register("deny-modal", DenyModalController)
 application.register("phone", PhoneController)
-application.register("billing-modal", BillingModalController) 
-application.register("approve-modal", ApproveModalController) 
+application.register("billing-modal", BillingModalController)
+application.register("approve-modal", ApproveModalController)
+application.register("choices", ChoicesController)
 
 eagerLoadControllersFrom("controllers", application)

@@ -21,6 +21,8 @@ class AuthorizationConsoleController < ApplicationController
     @department_id = params[:department_id]
     @authorized_approver = AuthorizedApprover.new(department_id: @department_id)
     
+    @building_options     = fetch_buildings_for_department(@department_id)
+    @budget_unit_options  = fetch_budget_units_for_department(@department_id)
     # Get employees from this department for the dropdown
     @department_employees = fetch_department_employees(@department_id)
   end
@@ -33,16 +35,20 @@ class AuthorizationConsoleController < ApplicationController
       redirect_to authorization_console_index_path(department_id: @authorized_approver.department_id),
                   notice: "Approver authorization added successfully."
     else
-      @department_id = @authorized_approver.department_id
-      @department_employees = fetch_department_employees(@department_id)
+      @department_id         = @authorized_approver.department_id
+      @department_employees  = fetch_department_employees(@department_id)
+      @building_options      = fetch_buildings_for_department(@department_id)
+      @budget_unit_options   = fetch_budget_units_for_department(@department_id)
       render :new, status: :unprocessable_entity
     end
   end
   
   def edit
-    @authorized_approver = AuthorizedApprover.find(params[:id])
-    @department_id = @authorized_approver.department_id
-    @department_employees = fetch_department_employees(@department_id)
+    @authorized_approver   = AuthorizedApprover.find(params[:id])
+    @department_id         = @authorized_approver.department_id
+    @department_employees  = fetch_department_employees(@department_id)
+    @building_options      = fetch_buildings_for_department(@department_id)
+    @budget_unit_options   = fetch_budget_units_for_department(@department_id)
   end
   
   def update
@@ -52,8 +58,10 @@ class AuthorizationConsoleController < ApplicationController
       redirect_to authorization_console_index_path(department_id: @authorized_approver.department_id),
                   notice: "Approver authorization updated successfully."
     else
-      @department_id = @authorized_approver.department_id
-      @department_employees = fetch_department_employees(@department_id)
+      @department_id         = @authorized_approver.department_id
+      @department_employees  = fetch_department_employees(@department_id)
+      @building_options      = fetch_buildings_for_department(@department_id)
+      @budget_unit_options   = fetch_budget_units_for_department(@department_id)
       render :edit, status: :unprocessable_entity
     end
   end
@@ -68,7 +76,7 @@ class AuthorizationConsoleController < ApplicationController
   end
   
   def destroy_all_for_employee
-    employee_id = params[:employee_id]
+    employee_id   = params[:employee_id]
     department_id = params[:department_id]
     
     AuthorizedApprover.where(employee_id: employee_id, department_id: department_id).destroy_all
@@ -115,15 +123,36 @@ class AuthorizationConsoleController < ApplicationController
     end
   end
   
+  def fetch_buildings_for_department(department_id)
+    # Replace this with your real logic / query
+    # e.g. Building.where(department_id:).order(:name).pluck(:name)
+    [
+      "Hall of Administration",
+      "Government Center - A",
+      "Government Center - B"
+    ]
+  end
+
+  def fetch_budget_units_for_department(department_id)
+    # Replace with real data source (MSSQL / lookup table / constant)
+    %w[4641 4642 4643]
+  end
+
   def authorized_approver_params
-    params.require(:authorized_approver).permit(
+    raw = params.require(:authorized_approver).permit(
       :employee_id,
       :department_id,
       :service_type,
       :key_type,
       :span,
-      :budget_units,
-      :locations
+      locations: [],
+      budget_units: []
     )
+
+    # Normalize multi-select arrays into comma-separated strings
+    raw[:locations]     = Array(raw[:locations]).reject(&:blank?).join(",")
+    raw[:budget_units]  = Array(raw[:budget_units]).reject(&:blank?).join(",")
+
+    raw
   end
 end

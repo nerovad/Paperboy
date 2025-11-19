@@ -43,13 +43,28 @@
       </div>
 
       <div class="form-group"
-           data-authorization-select-target="locationsWrapper"
-           style="display:none;">
-        <%= form.label :locations, "Building Locations (comma-separated)" %>
-        <%= form.text_field :locations,
+          data-authorization-select-target="locationsWrapper"
+          data-controller="choices"
+          style="display:none;">
+        <%= form.label :locations, "Building Locations" %>
+
+        <%= form.select :locations,
+              options_for_select(
+                (@building_options || []),
+                @authorized_approver.locations&.split(",")
+              ),
+              {},
+              multiple: true,
               class: "form-control",
-              placeholder: "e.g., Building A, Building B" %>
-        <small class="help-text">Leave blank for all locations</small>
+              data: {
+                authorization_select_target: "locations",
+                choices_target: "select",                 # 👈 tell Stimulus this is the select
+                placeholder: "Select building(s)…"
+              } %>
+
+        <small class="help-text">
+          Leave blank to allow all locations
+        </small>
       </div>
     </div>
 
@@ -61,12 +76,25 @@
             class: "form-control" %>
     </div>
 
-    <div class="form-group">
-      <%= form.label :budget_units, "Budget Units (comma-separated)" %>
-      <%= form.text_field :budget_units,
+    <div class="form-group" data-controller="choices">
+      <%= form.label :budget_units, "Budget Units" %>
+
+      <%= form.select :budget_units,
+            options_for_select(
+              (@budget_unit_options || []),
+              @authorized_approver.budget_units&.split(",")
+            ),
+            {},
+            multiple: true,
             class: "form-control",
-            placeholder: "e.g., 4641, 4642" %>
-      <small class="help-text">Leave blank for all budget units</small>
+            data: {
+              choices_target: "select",
+              placeholder: "Select budget unit(s)…"
+            } %>
+
+      <small class="help-text">
+        Leave blank to allow all budget units
+      </small>
     </div>
 
     <div class="form-actions">
