@@ -3,6 +3,8 @@
 
   <% if current_user %>
 
+    <%= link_to "Carpool Form", new_carpool_form_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
+
     <%= link_to "Bike Locker Permit", new_bike_locker_permit_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
     <% forms = [
       ["Billing Tools", new_billing_tool_path],
