@@ -40,15 +40,15 @@ gem 'omniauth-rails_csrf_protection'
 gem 'omniauth-entra-id'
 
 # Gemfile
-gem 'dotenv-rails', groups: [:development, :test]
+gem 'dotenv-rails', groups: %i[development test production]
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
 # Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
-gem "solid_cache"
-gem "solid_queue"
-gem "solid_cable"
+gem "solid_cache", group: [:development, :test]
+gem "solid_queue", group: [:development, :test]
+gem "solid_cable", group: [:development, :test]
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
