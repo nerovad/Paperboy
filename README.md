@@ -13,6 +13,41 @@ It integrates with Microsoft SQL Server and uses Sidekiq for background jobs.
 
 ---
 
+## Pushing to Github
+Push code from dev server to github
+git status
+git add .
+git commit -m ""
+git push
+
+Rollback Strategy
+
+Before each deploy, snapshot what’s currently in prod with a tag so you can roll back easily.
+
+10.1. Tag the current prod version (from dev or any machine with the repo)
+
+cd ~/gitea/Paperboy
+
+# Example: prod-20251112-2050
+TAG_NAME="prod-$(date +%Y%m%d-%H%M)"
+
+git tag -a "$TAG_NAME" -m "Deploy to prod at $TAG_NAME"
+git push origin --tags
+
+## Pulling Code to Production Server
+On the prod server:
+
+git pull
+
+## Rolling back on Production
+Get the tags
+git fetch origin --tags
+
+Reset to the previous known-good tag
+git reset --hard prod-20251112-2050  # example tag
+
+Rebuild assets + restart app
+
 ## Running the App
 
 Frontend (Rails server):
@@ -21,6 +56,7 @@ Dev:
 bin/rails s -p 3001
 
 Production:
+RAILS_ENV=production bin/rails s -b 127.0.0.1 -p 3001
 
 Backend (background jobs):
 
@@ -28,6 +64,7 @@ Dev:
 bundle exec sidekiq
 
 Production:
+bundle exec sidekiq -e production
 
 
 ##Form Template Workflow
