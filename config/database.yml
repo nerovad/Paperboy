@@ -1,10 +1,12 @@
+# config/database.yml
+
 default: &default
   adapter: sqlserver
-  host: gsasql16        # e.g., 192.168.1.100 or localhost
-  port: 1433                 # default MSSQL port
-  username: "ENT\\136626"
-  password: Morfee_Us!99
-  database: GSABSS
+  host: <%= ENV.fetch("GSABSS_HOST", "gsasql16") %>
+  port: <%= ENV.fetch("GSABSS_PORT", 1433).to_i %>
+  username: <%= ENV.fetch("GSABSS_USERNAME") %>
+  password: <%= ENV.fetch("GSABSS_PASSWORD") %>
+  database: <%= ENV.fetch("GSABSS_DATABASE", "GSABSS") %>
   azure: false
   timeout: 30000
   encoding: utf8
@@ -12,9 +14,12 @@ default: &default
 development:
   <<: *default
 
+test:
+  <<: *default
+
+production:
+  <<: *default
+
+# Used by GsabssBase:
 gsabss:
-  adapter: sqlserver
-  host: gsasql16
-  database: GSABSS
-  username: "ENT\\136626"
-  password: Morfee_Us!99
+  <<: *default
