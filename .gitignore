@@ -1,6 +1,7 @@
 /tmp/
 /vendor/
-/log/*.log
+/log/*
+!/log/.keep
 /public/assets/*
 
 .env
