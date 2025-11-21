@@ -1,4 +1,4 @@
-class Unit < ApplicationRecord
+class Unit < GsabssBase
   self.table_name = 'dbo.units'
   self.primary_key = 'unit_id'
 
