@@ -66,7 +66,6 @@ bundle exec sidekiq
 Production:
 bundle exec sidekiq -e production
 
-
 ##Form Template Workflow
 
 Paperboy includes a Rails generator for creating new form templates.
@@ -92,18 +91,7 @@ Sidebar link (if the generator inserts it)
 2. Run the migration (create the database table)
 bin/rails db:migrate
 
-3. Clean up duplicate migrations
-If you see errors like wrong number of arguments (given 0, expected 1..2)
-or Duplicate migration class CreateAuthorizationForms, you probably have more than one migration file with the same class name.
-
-List duplicate migrations:
-
-ls db/migrate | grep create_authorization_forms
-Delete all of them (since the last runs aborted):
-
-rm db/migrate/*_create_authorization_forms.rb
-
-4. Destroy a generated form (undo files + routes)
+3. Destroy a generated form (undo files + routes)
 bin/rails destroy paperboy_form FormName
 
 This removes:
@@ -112,7 +100,7 @@ Model, controller, views, routes, Sidebar link, SCSS, Stimulus JS controllers, e
 
 Note: Destroying a form cleans up code + routes but leaves tables; drop tables with migrations.
 
-5. Delete the generated table (manually)
+4. Delete the generated table (manually)
 Create a migration to drop it:
 
 bin/rails generate migration DropTestForm
@@ -127,6 +115,17 @@ end
 Run it:
 
 bin/rails db:migrate
+
+5. ***IF ANY EXIST - Clean up duplicate migrations
+If you see errors like wrong number of arguments (given 0, expected 1..2)
+or Duplicate migration class CreateAuthorizationForms, you probably have more than one migration file with the same class name.
+
+List duplicate migrations:
+
+ls db/migrate | grep create_authorization_forms
+Delete all of them (since the last runs aborted):
+
+rm db/migrate/*_create_authorization_forms.rb
 
 
 Seeding Test Data
