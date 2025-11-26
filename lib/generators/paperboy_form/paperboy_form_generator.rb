@@ -32,14 +32,22 @@ module PaperboyForm
       sidebar = "app/views/shared/_sidebar.html.erb"
       return unless File.exist?(sidebar)
 
-      label = class_name.titleize
-      helper = "new_#{file_name}_path" # e.g., new_authorization_form_path
+      label  = class_name.titleize
+      helper = "new_#{file_name}_path"
 
-      snippet = %(\n    <%= link_to "#{label}", #{helper}, class: "nav-link", data: { turbo_frame: "main-content" } %>\n)
+      # This is the line we want inside the forms array
+      key     = %[["#{label}", #{helper}]]
+      snippet = %(      ["#{label}", #{helper}],\n)
 
-      unless File.read(sidebar).include?(snippet.strip)
-        insert_into_file sidebar, snippet, after: /if\s+current_user\s*%>\n/
-      end
+      content = File.read(sidebar)
+
+      # Don’t add it again if it's already present
+      return if content.include?(key)
+
+      # Insert before the closing "] %>" of the forms array
+      insert_into_file sidebar,
+                      snippet,
+                      before: /^\s*\]\s*%>/
     end
 
     # ROUTES

@@ -1,5 +1,6 @@
 require 'sidekiq/web'
 Rails.application.routes.draw do
+  resources :critical_information_reportings
   resources :carpool_forms
   resources :bike_locker_permits
   get "forms/home"

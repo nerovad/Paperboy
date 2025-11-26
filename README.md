@@ -108,46 +108,27 @@ bin/rails destroy paperboy_form FormName
 
 This removes:
 
-Model, controller, views, routes
+Model, controller, views, routes, Sidebar link, SCSS, Stimulus JS controllers, etc.
 
-Sidebar link, SCSS, Stimulus JS controllers, etc.
+Note: Destroying a form cleans up code + routes but leaves tables; drop tables with migrations.
 
-❗ Note: This does not remove the DB table automatically (see below).
-
-5. Roll back a migration (undo the DB table)
-Roll back the last migration:
-
-bin/rails db:rollback STEP=1
-Roll back multiple (e.g., last 3):
-
-bin/rails db:rollback STEP=3
-Drop & recreate the entire DB (nuclear option):
-
-bin/rails db:drop db:create db:migrate
-
-6. List all tables in the current database
-bin/rails dbconsole
-Inside the DB console:
-
-sql
-SELECT name FROM sys.tables;
-(exit with \q)
-
-7. Delete a specific table (manually)
+5. Delete the generated table (manually)
 Create a migration to drop it:
 
 bin/rails generate migration DropAuthorizationForms
 Edit the migration:
 
-ruby
-class DropAuthorizationForms < ActiveRecord::Migration[7.1]
+class DropTestForm < ActiveRecord::Migration[7.1]
   def change
-    drop_table :authorization_forms
+    drop_table :test_forms
   end
 end
+
 Run it:
 
 bin/rails db:migrate
+
+
 Seeding Test Data
 Master seeding:
 
@@ -158,15 +139,7 @@ Dev seeding with options:
 
 rails dev:seed:parking SUBMISSIONS=200 REPLANT=1
 rails dev:seed:probation TRANSFERS=80
-Notes
-Use bin/rails generate paperboy_form for new forms instead of manual setup.
 
-Always run db:migrate after generating or editing migrations.
-
-Destroying a form cleans up code + routes but leaves tables; drop tables with migrations.
-
+Notes:
 Use REPLANT=1 with seeds to reset test data.
 
-Sidekiq must be running for background jobs and email notifications.
-
-Duplicate migrations cause strange errors → clean them up before running db:migrate.

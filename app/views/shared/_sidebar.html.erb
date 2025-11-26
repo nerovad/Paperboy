@@ -3,17 +3,18 @@
 
   <% if current_user %>
 
-    <%= link_to "Carpool Form", new_carpool_form_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
-
-    <%= link_to "Bike Locker Permit", new_bike_locker_permit_path, class: "nav-link", data: { turbo_frame: "main-content" } %>
     <% forms = [
+      ["Bike Locker Permit", new_bike_locker_permit_path],
       ["Billing Tools", new_billing_tool_path],
+      ["Carpool Form", new_carpool_form_path],
       ["Creative Job Request", new_creative_job_request_path],
+      ["Critical Information Reporting", new_critical_information_reporting_path],
       ["Leave of Absence", new_loa_form_path],
       ["Parking Permit Application", new_parking_lot_submission_path],
       ["Probation Agency Transfer Request", new_probation_transfer_request_path],
       ["RM-75 Injury/Illness Report", new_rm75_form_path],
-      ["RM-75i Incident Investigation", new_rm75i_form_path]
+      ["RM-75i Incident Investigation", new_rm75i_form_path],
+      ["Test Form", new_test_form_path],
     ] %>
 
     <% forms.sort_by { |f| f[0] }.each do |label, path| %>
