@@ -32,21 +32,16 @@ module PaperboyForm
       sidebar = "app/views/shared/_sidebar.html.erb"
       return unless File.exist?(sidebar)
 
-      label  = class_name.titleize
-      helper = "new_#{file_name}_path"
+      label  = class_name.titleize       # e.g. "Vest Form"
+      helper = "new_#{file_name}_path"   # e.g. new_vest_form_path
 
-      # This is the line we want inside the forms array
-      key     = %[["#{label}", #{helper}]]
-      snippet = %(      ["#{label}", #{helper}],\n)
+      # This is the exact line we insert into the forms array
+      line = %(      ["#{label}", #{helper}],\n)
 
-      content = File.read(sidebar)
-
-      # Don’t add it again if it's already present
-      return if content.include?(key)
-
-      # Insert before the closing "] %>" of the forms array
+      # IMPORTANT: do NOT guard with `include?` here,
+      # or destroy/revoke won't be able to reverse it.
       insert_into_file sidebar,
-                      snippet,
+                      line,
                       before: /^\s*\]\s*%>/
     end
 

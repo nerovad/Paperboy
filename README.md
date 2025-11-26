@@ -115,7 +115,7 @@ Note: Destroying a form cleans up code + routes but leaves tables; drop tables w
 5. Delete the generated table (manually)
 Create a migration to drop it:
 
-bin/rails generate migration DropAuthorizationForms
+bin/rails generate migration DropTestForm
 Edit the migration:
 
 class DropTestForm < ActiveRecord::Migration[7.1]
