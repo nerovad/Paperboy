@@ -12,6 +12,7 @@ import PhoneController from "./phone_controller"
 import BillingModalController from "./billing_modal_controller"
 import ApproveModalController from "./approve_modal_controller"
 import ChoicesController from "./choices_controller"
+import ConditionalFieldController from "./conditional_field_controller.js"
 
 application.register("slideshow", SlideshowController)
 application.register("probation-transfer-request", ProbationTransferRequestController)
@@ -24,5 +25,6 @@ application.register("phone", PhoneController)
 application.register("billing-modal", BillingModalController)
 application.register("approve-modal", ApproveModalController)
 application.register("choices", ChoicesController)
+application.register("conditional-field-controller", ConditionalFieldController)
 
 eagerLoadControllersFrom("controllers", application)

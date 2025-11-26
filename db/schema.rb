@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_26_184849) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_26_221943) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -401,6 +401,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_26_184849) do
     t.string "unit"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "incident_type"
+    t.text "incident_details"
+    t.text "cause"
+    t.string "staff_involved"
+    t.string "incident_manager"
+    t.string "reported_by"
+    t.datetime "impact_started"
+    t.string "location"
+    t.string "status"
+    t.datetime "actual_completion_date"
+    t.string "urgency"
+    t.string "impact"
+    t.string "impacted_customers"
+    t.text "next_steps"
+    t.string "media"
   end
 
   create_table "department_funds", primary_key: ["agency_id", "fund_id"], force: :cascade do |t|
