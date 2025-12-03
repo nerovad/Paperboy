@@ -1,20 +1,16 @@
 @import "base/tokens";
 
   .incident-textarea {
-    width: 240px;
-    max-width: 100%;
+    width: 390px !important;
+    flex: 0 0 auto;
   }
 
-.critical-information-reporting {
   .next-textarea {
-    width: 640px;
-    max-width: 100%;
+    width: 390px !important;
+    flex: 0 0 auto;
   }
-}
 
-.critical-information-reporting {
   .cause-textarea {
-    width: 640px;
-    max-width: 100%;
+    width: 390px !important;
+    flex: 0 0 auto;
   }
-}
