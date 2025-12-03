@@ -142,8 +142,6 @@ rails dev:seed:probation TRANSFERS=80
 Notes:
 Use REPLANT=1 with seeds to reset test data.
 
-##MSSQL gsasql16 gsabss Command for Linux Terminal viewing. With alias.
-prettysql "SELECT TOP 50 * FROM dbo.Employees"
-## Database override Command
-prettysql -d GSAP2M -Q "SELECT TOP 50 * FROM dbo.Employees"
+##MSSQL gsasql16 Command for Linux Terminal viewing. With alias.
+prettysql "SELECT TOP 50 * FROM GSABSS.dbo.Employees"
 

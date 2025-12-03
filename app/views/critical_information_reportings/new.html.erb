@@ -140,10 +140,19 @@
         </div>
 
         <div class="form-group">
+          <%= form.label :location, "Where: Location" %>
+          <%= form.select :location,
+                options_for_select(@location_options),
+                { prompt: 'Select Location' },
+                class: "form-control",
+                required: true %>
+        </div>
+        
+        <div class="form-group">
           <%= form.label :incident_details, "Incident Details" %>
           <%= form.text_area :incident_details,
-                class: "form-control",
-                rows: 1,
+                class: "form-control incident-textarea",
+                rows: 5,
                 required: true,
                 placeholder: "Describe the incident in detail..." %>
         </div>
@@ -151,7 +160,7 @@
         <div class="form-group">
           <%= form.label :cause, "Cause" %>
           <%= form.text_area :cause,
-                class: "form-control",
+                class: "form-control cause-textarea",
                 rows: 5,
                 required: true,
                 placeholder: "Describe the cause..." %>
@@ -194,15 +203,6 @@
         <div class="form-group">
           <%= form.label :impact_started, "When: Impact Started" %>
           <%= form.datetime_local_field :impact_started,
-                class: "form-control",
-                required: true %>
-        </div>
-
-        <div class="form-group">
-          <%= form.label :location, "Where: Location" %>
-          <%= form.select :location,
-                options_for_select(@location_options),
-                { prompt: 'Select Location' },
                 class: "form-control",
                 required: true %>
         </div>
@@ -273,7 +273,7 @@
         <div class="form-group">
           <%= form.label :next_steps, "Next Steps" %>
           <%= form.text_area :next_steps,
-                class: "form-control",
+                class: "form-control next-textarea",
                 rows: 5,
                 required: true,
                 placeholder: "Describe the next steps..." %>
