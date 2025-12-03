@@ -142,3 +142,5 @@ rails dev:seed:probation TRANSFERS=80
 Notes:
 Use REPLANT=1 with seeds to reset test data.
 
+##MSSQL Command for Linux Terminal viewing
+sqlcmd -E -C -S gsasql16,1433 -d GSABSS   -Q "SELECT TOP 50 * FROM dbo.Employees"   -s"," -W   | column -s"," -t   | less -S
