@@ -1,9 +1,9 @@
 <!-- lib/generators/paperboy_form/templates/views/new.html.erb.tt -->
 <div class="form-header">
-<h1>Critical Information Reporting</h1>
+  <h1>Critical Information Reporting</h1>
 </div>
 
-<div class="form-wrapper" data-controller="form-navigation">
+<div class="form-wrapper critical-information-reporting" data-controller="form-navigation">
   <%= form_with model: @critical_information_reporting, local: true do |form| %>
 
     <!-- Page 1: Employee Info -->
@@ -116,7 +116,7 @@
     <!-- Page 3: Incident Info -->
     <div class="form-page" style="display:none;">
       <h2>Incident Info</h2>
-      
+
       <div class="form-row">
         <div class="form-group">
           <%= form.label :incident_type, "Incident Type" %>
@@ -147,32 +147,16 @@
                 class: "form-control",
                 required: true %>
         </div>
-        
-        <div class="form-group">
-          <%= form.label :incident_details, "Incident Details" %>
-          <%= form.text_area :incident_details,
-                class: "form-control incident-textarea",
-                rows: 5,
-                required: true,
-                placeholder: "Describe the incident in detail..." %>
-        </div>
 
         <div class="form-group">
-          <%= form.label :cause, "Cause" %>
-          <%= form.text_area :cause,
-                class: "form-control cause-textarea",
-                rows: 5,
-                required: true,
-                placeholder: "Describe the cause..." %>
+          <%= form.label :urgency, "Urgency of Reporting" %>
+          <%= form.select :urgency,
+                options_for_select(['1 Immediate', '2 Earliest convenience', '3 Before it happens']),
+                { prompt: 'Select Urgency' },
+                class: "form-control",
+                required: true %>
         </div>
-      </div>
-    </div>
 
-    <!-- Page 4: Incident Info Cont'd -->
-    <div class="form-page" style="display:none;">
-      <h2>Incident Info Cont'd</h2>
-      
-      <div class="form-row">
         <div class="form-group">
           <%= form.label :staff_involved, "Staff Involved" %>
           <%= form.select :staff_involved,
@@ -201,62 +185,42 @@
         </div>
 
         <div class="form-group">
-          <%= form.label :impact_started, "When: Impact Started" %>
-          <%= form.datetime_local_field :impact_started,
-                class: "form-control",
-                required: true %>
-        </div>
-      </div>
-    </div>
-
-    <!-- Page 5: Status -->
-    <div class="form-page" style="display:none;" data-controller="conditional-field">
-      <h2>Status</h2>
-      
-      <div class="form-row">
-        <div class="form-group">
-          <%= form.label :status, "Status" %>
-          <%= form.select :status,
-                options_for_select(['In Progress', 'Resolved', 'Scheduled', 'Cancelled']),
-                { prompt: 'Select Status' },
-                class: "form-control",
+          <%= form.label :incident_details, "Incident Details" %>
+          <%= form.text_area :incident_details,
+                class: "form-control incident-textarea",
+                rows: 5,
                 required: true,
-                data: {
-                  conditional_field_target: "trigger",
-                  action: "change->conditional-field#toggle"
-                } %>
-        </div>
-
-        <div class="form-group" 
-             data-conditional-field-target="field" 
-             data-show-when="Resolved"
-             style="display:none;">
-          <%= form.label :actual_completion_date, "When: Actual Completion Date" %>
-          <%= form.datetime_local_field :actual_completion_date,
-                class: "form-control" %>
+                placeholder: "Describe the incident in detail..." %>
         </div>
 
         <div class="form-group">
-          <%= form.label :urgency, "Urgency of Reporting" %>
-          <%= form.select :urgency,
-                options_for_select(['1 Immediate', '2 Earliest convenience', '3 Before it happens']),
-                { prompt: 'Select Urgency' },
-                class: "form-control",
-                required: true %>
+          <%= form.label :cause, "Cause" %>
+          <%= form.text_area :cause,
+                class: "form-control cause-textarea",
+                rows: 5,
+                required: true,
+                placeholder: "Describe the cause..." %>
         </div>
       </div>
     </div>
 
-    <!-- Page 6: Impact -->
-    <div class="form-page" style="display:none;">
+    <!-- Page 4: Impact -->
+    <div class="form-page" style="display:none;" data-controller="conditional-field">
       <h2>Impact</h2>
-      
+
       <div class="form-row">
         <div class="form-group">
           <%= form.label :impact, "Impact" %>
           <%= form.select :impact,
                 options_for_select(['Low', 'Medium', 'High']),
                 { prompt: 'Select Impact Level' },
+                class: "form-control",
+                required: true %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :impact_started, "When: Impact Started" %>
+          <%= form.datetime_local_field :impact_started,
                 class: "form-control",
                 required: true %>
         </div>
@@ -270,6 +234,35 @@
                 required: true %>
         </div>
 
+        <div class="form-group">
+          <%= form.label :status, "Status" %>
+          <%= form.select :status,
+                options_for_select(['In Progress', 'Resolved', 'Scheduled', 'Cancelled']),
+                { prompt: 'Select Status' },
+                class: "form-control",
+                required: true,
+                data: {
+                  conditional_field_target: "trigger",
+                  action: "change->conditional-field#toggle"
+                } %>
+        </div>
+
+        <div class="form-group"
+             data-conditional-field-target="field"
+             data-show-when="Resolved"
+             style="display:none;">
+          <%= form.label :actual_completion_date, "When: Actual Completion Date" %>
+          <%= form.datetime_local_field :actual_completion_date,
+                class: "form-control" %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 5: Outcome -->
+    <div class="form-page" style="display:none;">
+      <h2>Outcome</h2>
+
+      <div class="form-row">
         <div class="form-group">
           <%= form.label :next_steps, "Next Steps" %>
           <%= form.text_area :next_steps,
@@ -285,7 +278,9 @@
                 class: "form-control",
                 placeholder: "https://example.com/media",
                 pattern: "https?://.+" %>
-          <small class="help-text text-muted">Enter a valid URL (must start with http:// or https://)</small>
+          <small class="help-text text-muted">
+            Enter a valid URL (must start with http:// or https://)
+          </small>
         </div>
       </div>
     </div>
@@ -293,21 +288,32 @@
     <!-- Navigation Buttons -->
     <div class="navigation-buttons d-flex justify-content-between">
       <div>
-        <button type="button" id="prevBtn" data-action="click->form-navigation#prevPage" style="display:none;">Previous</button>
+        <button type="button"
+                id="prevBtn"
+                data-action="click->form-navigation#prevPage"
+                style="display:none;">
+          Previous
+        </button>
       </div>
       <div>
-        <button type="button" id="nextBtn" data-action="click->form-navigation#nextPage">Next</button>
-        <%= form.submit "Submit", data: { form_navigation_target: "submitButton" }, style: "display:none;" %>
+        <button type="button"
+                id="nextBtn"
+                data-action="click->form-navigation#nextPage">
+          Next
+        </button>
+        <%= form.submit "Submit",
+              data: { form_navigation_target: "submitButton" },
+              style: "display:none;" %>
       </div>
     </div>
 
-    <!-- Progress (6 steps) -->
+    <!-- Progress (5 steps) -->
     <div class="progress-wrapper">
       <div class="progress-bar-container">
         <div class="progress-bar" id="progressBar"></div>
       </div>
       <div class="progress-dots">
-        <% 6.times do |index| %>
+        <% 5.times do |index| %>
           <div class="dot <%= 'active' if index == 0 %>"></div>
         <% end %>
       </div>
