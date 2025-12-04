@@ -2,7 +2,7 @@
 import { application } from "controllers/application"
 
 // Use importmap bare specifiers instead of relative ./ imports.
-// These names are resolved via `pin_all_from "app/javascript/controllers", under: "controllers"`
+// These are resolved via `pin_all_from "app/javascript/controllers", under: "controllers"`
 // in config/importmap.rb.
 
 import FormNavigationController from "controllers/form_navigation_controller"
@@ -10,7 +10,7 @@ import LoginModalController from "controllers/login_modal_controller"
 import ProfileDropdownController from "controllers/profile_dropdown_controller"
 import ProbationTransferRequestController from "controllers/probation_transfer_request_controller"
 import SlideshowController from "controllers/slideshow_controller"
-import ConfirmController from "controllers_confirm_controller"
+import ConfirmController from "controllers/confirm_controller"
 import DenyModalController from "controllers/deny_modal_controller"
 import PhoneController from "controllers/phone_controller"
 import BillingModalController from "controllers/billing_modal_controller"
