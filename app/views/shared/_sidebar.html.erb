@@ -1,9 +1,12 @@
+<%# app/views/shared/_sidebar.html.erb %>
 <div class="sidebar">
   <h2>Available Forms</h2>
 
   <% if current_user %>
 
-    <% forms = [
+    <% 
+    # Most forms are public (available to all employees)
+    public_forms = [
       ["Bike Locker Permit", new_bike_locker_permit_path],
       ["Billing Tools", new_billing_tool_path],
       ["Carpool Form", new_carpool_form_path],
@@ -12,13 +15,29 @@
       ["Leave of Absence", new_loa_form_path],
       ["Parking Permit Application", new_parking_lot_submission_path],
       ["Probation Agency Transfer Request", new_probation_transfer_request_path],
-      ["RM-75 Injury/Illness Report", new_rm75_form_path],
-      ["RM-75i Incident Investigation", new_rm75i_form_path],
-    ] %>
+    ]
+    
+    # Restricted forms - only for specific groups
+    restricted_forms = [
+      ["RM-75 Injury/Illness Report", new_rm75_form_path, ["Safety_Officers", "System_Admins"]],
+      ["RM-75i Incident Investigation", new_rm75i_form_path, ["Safety_Officers", "System_Admins"]],
+    ]
+    
+    # Build available forms list
+    available_forms = public_forms.dup
+    
+    # Add restricted forms if user has access
+    restricted_forms.each do |label, path, required_groups|
+      if current_user.in_any_group?(*required_groups)
+        available_forms << [label, path]
+      end
+    end
+    %>
 
-    <% forms.sort_by { |f| f[0] }.each do |label, path| %>
+    <% available_forms.sort_by { |f| f[0] }.each do |label, path| %>
       <%= link_to label, path, class: "nav-link", data: { turbo_frame: "main-content" } %>
     <% end %>
+    
   <% else %>
     <p class="sidebar-p">Please log in to access forms.</p>
   <% end %>
