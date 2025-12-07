@@ -52,5 +52,33 @@
     &:active { transform: scale(1); }
   }
 
+  .sidebar-search-input {
+    width: 100%;
+    padding: 10px 12px;
+    margin: 0 0 16px 0;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transition: all 0.3s ease;
+    
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+      font-style: italic;
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      background-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 0 3px rgba($primary-color, 0.2);
+    }
+    
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+  }
   .nav-link.active { background-color: $primary-color; }
 }

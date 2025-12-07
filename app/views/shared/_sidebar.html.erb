@@ -1,9 +1,14 @@
 <%# app/views/shared/_sidebar.html.erb %>
-<div class="sidebar">
+<div class="sidebar" data-controller="sidebar-search">
   <h2>Available Forms</h2>
-
   <% if current_user %>
-
+    <input 
+      type="text" 
+      placeholder="Search forms..." 
+      data-sidebar-search-target="input"
+      data-action="input->sidebar-search#filter"
+      class="sidebar-search-input"
+    />
     <% 
     # Most forms are public (available to all employees)
     public_forms = [
@@ -33,10 +38,15 @@
       end
     end
     %>
-
-    <% available_forms.sort_by { |f| f[0] }.each do |label, path| %>
-      <%= link_to label, path, class: "nav-link", data: { turbo_frame: "main-content" } %>
-    <% end %>
+    <div data-sidebar-search-target="formsList">
+      <% available_forms.sort_by { |f| f[0] }.each do |label, path| %>
+        <%= link_to label, path, class: "nav-link", 
+            data: { 
+              turbo_frame: "main-content",
+              sidebar_search_target: "formLink"
+            } %>
+      <% end %>
+    </div>
     
   <% else %>
     <p class="sidebar-p">Please log in to access forms.</p>
