@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_08_202756) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_08_205459) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -373,7 +373,33 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_08_202756) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "buffalo_bills_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "carpool_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "chicago_bears_forms", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
     t.string "phone"
@@ -645,6 +671,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_08_202756) do
     t.string "phase_id", limit: 6, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "polar_express_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "probation_transfer_requests", force: :cascade do |t|

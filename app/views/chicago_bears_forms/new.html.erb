@@ -1,0 +1,140 @@
+<!-- lib/generators/paperboy_form/templates/views/new.html.erb.tt -->
+<div class="form-header">
+<h1>Chicago Bears Form</h1>
+</div>
+
+<div class="form-wrapper" data-controller="form-navigation">
+  <%= form_with model: @chicago_bears_form, local: true do |form| %>
+
+    <!-- Page 1: Employee Info -->
+    <div class="form-page">
+      <h2>Employee Info</h2>
+      <div class="form-row d-flex flex-wrap">
+        <div class="form-group flex-fill">
+          <%= form.label :employee_id, "Employee ID" %>
+          <%= form.text_field :employee_id,
+                value: @prefill_data[:employee_id],
+                class: "form-control",
+                readonly: true %>
+        </div>
+
+        <div class="form-group flex-fill">
+          <%= form.label :name, "Name" %>
+          <%= form.text_field :name,
+                value: @prefill_data[:name],
+                class: "form-control",
+                readonly: true %>
+        </div>
+
+        <div class="form-group flex-fill">
+          <%= form.label :phone, "Phone" %>
+          <%= form.text_field :phone,
+                value: @prefill_data[:phone],
+                class: "form-control",
+                required: true,
+                placeholder: "e.g. 555-555-5555",
+                title: "Enter a 10-digit phone number like 555-555-5555",
+                data: {
+                  controller: "phone",
+                  phone_target: "input",
+                  action: "input->phone#format paste->phone#format blur->phone#validate"
+                },
+                "aria-describedby": "phoneHelp phoneError",
+                pattern: "\\d{3}-\\d{3}-\\d{4}",
+                inputmode: "numeric",
+                autocomplete: "tel" %>
+          <small id="phoneHelp" class="help-text text-muted"></small>
+          <div id="phoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group flex-fill">
+          <%= form.label :email, "Email" %>
+          <%= form.text_field :email,
+                value: @prefill_data[:email],
+                class: "form-control",
+                required: true %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 2: Agency Info -->
+    <div class="form-page" style="display:none;">
+      <h2>Agency Info</h2>
+
+      <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
+        <div class="form-group">
+          <%= form.label :agency, "Agency" %>
+          <%= form.select :agency,
+                options_for_select(@agency_options, @prefill_data[:agency]),
+                {},
+                class: "form-control",
+                id: "agency-select",
+                data: {
+                  gsabss_selects_target: "agency",
+                  action: "change->gsabss-selects#loadDivisions"
+                } %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :division, "Division" %>
+          <%= form.select :division,
+                options_for_select(@division_options, @prefill_data[:division]),
+                {},
+                class: "form-control",
+                id: "division-select",
+                data: {
+                  gsabss_selects_target: "division",
+                  action: "change->gsabss-selects#loadDepartments"
+                } %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :department, "Department" %>
+          <%= form.select :department,
+                options_for_select(@department_options, @prefill_data[:department]),
+                {},
+                class: "form-control",
+                id: "department-select",
+                data: {
+                  gsabss_selects_target: "department",
+                  action: "change->gsabss-selects#loadUnits"
+                } %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :unit, "Unit" %>
+          <%= form.select :unit,
+                options_for_select(@unit_options, @prefill_data[:unit]),
+                {},
+                class: "form-control",
+                id: "unit-select",
+                data: { gsabss_selects_target: "unit" } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons d-flex justify-content-between">
+      <div>
+        <button type="button" id="prevBtn" data-action="click->form-navigation#prevPage" style="display:none;">Previous</button>
+      </div>
+      <div>
+        <button type="button" id="nextBtn" data-action="click->form-navigation#nextPage">Next</button>
+        <%= form.submit "Submit", data: { form_navigation_target: "submitButton" }, style: "display:none;" %>
+      </div>
+    </div>
+
+    <!-- Progress (2 steps) -->
+    <div class="progress-wrapper">
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-dots">
+        <% 2.times do |index| %>
+          <div class="dot <%= 'active' if index == 0 %>"></div>
+        <% end %>
+      </div>
+    </div>
+
+  <% end %>
+</div>

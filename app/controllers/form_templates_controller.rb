@@ -100,31 +100,40 @@ class FormTemplatesController < ApplicationController
     label = class_name.titleize
     helper = "new_#{class_name.underscore}_path"
     
-    # First, remove the incorrectly placed line (generator puts it at the very end)
+    # Read the sidebar content
     sidebar_content = File.read(sidebar)
+    
+    # First, remove the incorrectly placed line (generator puts it at the very end)
     incorrect_line = %(      ["#{label}", #{helper}],)
     sidebar_content.gsub!(/^\s*#{Regexp.escape(incorrect_line)}\s*\n/, '')
-    File.write(sidebar, sidebar_content)
     
     if form_template.restricted?
       # Add to restricted_forms array with group requirement
       group_name = form_template.acl_group_name
       line = %(      ["#{label}", #{helper}, ["#{group_name}"]],\n)
       
-      # Insert before the closing of restricted_forms (before "# Build available forms list")
-      insert_into_file sidebar,
-                      line,
-                      before: /^\s*# Build available forms list/
+      # Find the restricted_forms array and insert before its closing ]
+      # Look for the ] that comes after restricted_forms but before "# Build available forms"
+      sidebar_content.sub!(
+        /(restricted_forms = \[.*?)(^\s*\])/m,
+        "\\1#{line}\\2"
+      )
     else
       # Add to public_forms array
       line = %(      ["#{label}", #{helper}],\n)
       
-      # Insert before the closing of public_forms (before "# Restricted forms")
-      insert_into_file sidebar,
-                      line,
-                      before: /^\s*# Restricted forms/
+      # Find the public_forms array and insert before its closing ]
+      # Look for the ] that comes after public_forms but before "# Restricted forms"
+      sidebar_content.sub!(
+        /(public_forms = \[.*?)(^\s*\])/m,
+        "\\1#{line}\\2"
+      )
     end
-  end  
+  
+    # Write the modified content back
+    File.write(sidebar, sidebar_content)
+  end
+
   def form_template_params
     params.require(:form_template).permit(
       :name,
