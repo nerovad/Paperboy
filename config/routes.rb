@@ -1,5 +1,6 @@
 require 'sidekiq/web'
 Rails.application.routes.draw do
+  resources :jungle_book_forms
   resources :critical_information_reportings
   resources :carpool_forms
   resources :bike_locker_permits
@@ -55,6 +56,8 @@ resources :creative_job_requests, only: [:new, :create]
 resources :rm75_forms, only: [:new, :create]
 
 resources :rm75i_forms, only: [:new, :create]
+
+resources :form_templates
 
 resources :loa_forms, only: [:new, :create]
 

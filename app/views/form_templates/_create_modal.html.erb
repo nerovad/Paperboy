@@ -1,0 +1,187 @@
+<div id="create-form-modal" 
+     class="modal" 
+     data-controller="form-builder"
+     data-form-builder-acl-groups-value="<%= acl_groups.to_json %>"
+     style="display: none;">
+  
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Create New Form</h2>
+      <button type="button" 
+              class="close-modal" 
+              data-action="click->form-builder#closeModal">&times;</button>
+    </div>
+    
+  <%= form_with model: FormTemplate.new, 
+                url: form_templates_path, 
+                method: :post,
+                  data: { 
+                    form_builder_target: "form",
+                    action: "submit->form-builder#submitForm"
+                  } do |f| %>
+      
+      <div class="modal-body">
+        <!-- Step 1: Form Name -->
+        <div class="form-group">
+          <label for="form_name">1. Name of Form <span class="required">*</span></label>
+          <%= f.text_field :name, 
+                          id: "form_name",
+                          class: "form-control",
+                          placeholder: "e.g., Authorization Request",
+                          required: true,
+                          data: { form_builder_target: "formName" } %>
+        </div>
+        
+        <!-- Step 2: Access Level -->
+        <div class="form-group">
+          <label for="form_access">2. Access <span class="required">*</span></label>
+          <%= f.select :access_level,
+                      options_for_select([['Public', 'public'], ['Restricted', 'restricted']]),
+                      {},
+                      {
+                        id: "form_access",
+                        class: "form-control",
+                        data: { 
+                          form_builder_target: "accessLevel",
+                          action: "change->form-builder#toggleACLGroup"
+                        }
+                      } %>
+        </div>
+        
+        <!-- Step 3: ACL Group (hidden by default) -->
+        <div class="form-group" 
+             data-form-builder-target="aclGroupContainer"
+             style="display: none;">
+          <label for="form_acl_group">3. ACL Group <span class="required">*</span></label>
+          <%= f.select :acl_group_id,
+                      options_for_select(acl_groups),
+                      { include_blank: "Select a group..." },
+                      {
+                        id: "form_acl_group",
+                        class: "form-control",
+                        data: { form_builder_target: "aclGroup" }
+                      } %>
+        </div>
+        
+        <!-- Step 4: Number of Pages -->
+        <div class="form-group">
+          <label for="form_page_count">4. Number of Pages <span class="required">*</span></label>
+          <%= f.number_field :page_count,
+                            id: "form_page_count",
+                            class: "form-control",
+                            min: 2,
+                            max: 30,
+                            value: 2,
+                            data: { 
+                              form_builder_target: "pageCount",
+                              action: "change->form-builder#updatePageHeaders"
+                            } %>
+          <small class="form-text">Minimum: 2 (Employee Info, Agency Info) | Maximum: 30</small>
+        </div>
+        
+        <!-- Additional Page Headers (shown when pages > 2) -->
+        <div class="form-group" 
+             data-form-builder-target="pageHeadersContainer"
+             style="display: none;">
+          <label>Page Names (for pages 3+)</label>
+          <div data-form-builder-target="pageHeadersList"></div>
+        </div>
+        
+        <!-- Step 5: Fields -->
+        <div class="form-group">
+          <label>5. Fields</label>
+          <div class="fields-container" data-form-builder-target="fieldsContainer">
+            <!-- Fields will be added here dynamically -->
+          </div>
+          <button type="button" 
+                  class="btn btn-secondary btn-sm"
+                  data-action="click->form-builder#addField">
+            + Add Field
+          </button>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" 
+                class="btn btn-secondary" 
+                data-action="click->form-builder#closeModal">
+          Cancel
+        </button>
+        <%= f.submit "Create Form Template", 
+                    class: "btn btn-primary",
+                    data: { form_builder_target: "submitButton" } %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Field Template (hidden, used for cloning) -->
+<template id="field-template">
+  <div class="field-item" data-form-builder-target="fieldItem">
+    <div class="field-row">
+      <div class="field-input">
+        <label>Label</label>
+        <input type="text" 
+               name="fields[][label]" 
+               class="form-control form-control-sm"
+               placeholder="e.g., Employee Name"
+               required>
+      </div>
+      
+      <div class="field-input">
+        <label>Type</label>
+        <select name="fields[][field_type]" 
+                class="form-control form-control-sm"
+                data-action="change->form-builder#handleFieldTypeChange"
+                required>
+          <option value="text">Text</option>
+          <option value="text_box">Text Box</option>
+          <option value="dropdown">Dropdown</option>
+        </select>
+      </div>
+      
+      <div class="field-input">
+        <label>Page</label>
+        <select name="fields[][page_number]" 
+                class="form-control form-control-sm page-select"
+                required>
+          <option value="1">Page 1 - Employee Info</option>
+          <option value="2">Page 2 - Agency Info</option>
+        </select>
+      </div>
+      
+      <div class="field-input">
+        <label>Required?</label>
+        <input type="checkbox" 
+               name="fields[][required]" 
+               value="1">
+      </div>
+      
+      <button type="button" 
+              class="btn btn-danger btn-sm"
+              data-action="click->form-builder#removeField">
+        Remove
+      </button>
+    </div>
+    
+    <!-- Text Box Options -->
+    <div class="field-options text-box-options" style="display: none;">
+      <label>Rows:</label>
+      <input type="number" 
+             name="fields[][rows]" 
+             class="form-control form-control-sm"
+             value="5"
+             min="1"
+             max="20">
+    </div>
+    
+    <!-- Dropdown Options -->
+    <div class="field-options dropdown-options" style="display: none;">
+      <label>Values (comma-separated):</label>
+      <input type="text" 
+             name="fields[][dropdown_values]" 
+             class="form-control form-control-sm"
+             placeholder="Option 1, Option 2, Option 3">
+    </div>
+  </div>
+</template>

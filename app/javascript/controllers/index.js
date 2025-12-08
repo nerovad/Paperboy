@@ -14,6 +14,8 @@ import ApproveModalController from "controllers/approve_modal_controller"
 import ChoicesController from "controllers/choices_controller"
 import ConditionalFieldController from "controllers/conditional_field_controller"
 import SidebarSearchController from "controllers/sidebar_search_controller"
+import FormBuilderController from "controllers/form_builder_controller"
+
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -29,3 +31,4 @@ application.register("approve-modal", ApproveModalController)
 application.register("choices", ChoicesController)
 application.register("conditional-field-controller", ConditionalFieldController)
 application.register("sidebar-search", SidebarSearchController)
+application.register("form-builder", FormBuilderController)

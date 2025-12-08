@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_02_233951) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_08_202756) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -64,6 +64,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_233951) do
     t.string "CPHASE", limit: 6
     t.string "CTASK", limit: 4
     t.string "TYPE", limit: 3, null: false
+  end
+
+  create_table "Employee_Groups", primary_key: ["EmployeeID", "GroupID"], force: :cascade do |t|
+    t.integer "EmployeeID", null: false
+    t.integer "GroupID", null: false
+    t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
+    t.integer "Assigned_By"
   end
 
   create_table "Employees", primary_key: "EmployeeID", id: :integer, default: nil, force: :cascade do |t|
@@ -151,6 +158,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_233951) do
     t.string "Program_Code", limit: 10
     t.string "Phase_Code", limit: 6
     t.string "Task", limit: 4
+  end
+
+  create_table "Groups", primary_key: "GroupID", id: :integer, force: :cascade do |t|
+    t.string "Group_Name", limit: 100, null: false
+    t.string "Description", limit: 500
+    t.datetime "Created_At", precision: nil, default: -> { "getdate()" }
   end
 
   create_table "Manual_Transactions", id: false, force: :cascade do |t|
@@ -454,6 +467,35 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_233951) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "form_fields", force: :cascade do |t|
+    t.bigint "form_template_id", null: false
+    t.string "field_name", null: false
+    t.string "field_type", null: false
+    t.string "label"
+    t.integer "page_number", null: false
+    t.integer "position"
+    t.text "options"
+    t.boolean "required", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["form_template_id", "page_number"], name: "index_form_fields_on_form_template_id_and_page_number"
+    t.index ["form_template_id", "position"], name: "index_form_fields_on_form_template_id_and_position"
+    t.index ["form_template_id"], name: "index_form_fields_on_form_template_id"
+  end
+
+  create_table "form_templates", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "class_name", null: false
+    t.string "access_level", default: "public", null: false
+    t.integer "acl_group_id"
+    t.integer "page_count", default: 2, null: false
+    t.text "page_headers"
+    t.integer "created_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["class_name"], name: "index_form_templates_on_class_name", unique: true
+  end
+
   create_table "functions", primary_key: ["agency_id", "function_id"], force: :cascade do |t|
     t.string "agency_id", limit: 3, null: false
     t.string "function_id", limit: 4, null: false
@@ -469,6 +511,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_233951) do
     t.string "fund_type", limit: 50, null: false
     t.string "fund_group", limit: 50, null: false
     t.string "cafr_type", limit: 50, null: false
+  end
+
+  create_table "jungle_book_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "loa_forms", force: :cascade do |t|
@@ -721,6 +776,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_233951) do
     t.string "short_name", limit: 50, null: false
   end
 
+  create_table "testyyy_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "units", primary_key: ["agency_id", "division_id", "department_id", "unit_id"], force: :cascade do |t|
     t.string "agency_id", limit: 3, null: false
     t.string "division_id", limit: 4, null: false
@@ -731,9 +799,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_233951) do
   end
 
   add_foreign_key "BdmRates", "BdmRateTypes", column: "RateID", primary_key: "RateID", name: "FK_BdmRates_RateID"
+  add_foreign_key "Employee_Groups", "Employees", column: "EmployeeID", primary_key: "EmployeeID", name: "FK__Employee___Emplo__5B988E2F"
+  add_foreign_key "Employee_Groups", "Groups", column: "GroupID", primary_key: "GroupID", name: "FK__Employee___Group__5C8CB268"
   add_foreign_key "TC60", "TC60_Types", column: "TYPE", primary_key: "TYPE", name: "FK_TC60_TYPE_TC60_TYPES"
   add_foreign_key "events", "Employees_Old", column: "employee_id", primary_key: "EmployeeID"
   add_foreign_key "events", "Employees_Old", column: "reported_by_id", primary_key: "EmployeeID"
+  add_foreign_key "form_fields", "form_templates"
   add_foreign_key "loa_forms", "events"
   add_foreign_key "osha_301_forms", "events"
   add_foreign_key "parking_lot_vehicles", "parking_lot_submissions"

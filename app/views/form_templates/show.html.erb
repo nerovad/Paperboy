@@ -1,0 +1,141 @@
+<div class="container">
+  <div class="header-row">
+    <h1><%= @form_template.name %></h1>
+    <%= link_to "← Back to Templates", form_templates_path, class: "btn btn-secondary" %>
+  </div>
+  
+  <div class="form-template-details">
+    <div class="detail-section">
+      <h2>Template Information</h2>
+      <dl class="details-list">
+        <dt>Class Name:</dt>
+        <dd><code><%= @form_template.class_name %></code></dd>
+        
+        <dt>Table Name:</dt>
+        <dd><code><%= @form_template.table_name %></code></dd>
+        
+        <dt>Access Level:</dt>
+        <dd>
+          <span class="badge <%= @form_template.restricted? ? 'badge-warning' : 'badge-success' %>">
+            <%= @form_template.access_level.titleize %>
+          </span>
+        </dd>
+        
+        <% if @form_template.restricted? %>
+          <dt>ACL Group:</dt>
+          <dd><%= @form_template.acl_group_name %> (ID: <%= @form_template.acl_group_id %>)</dd>
+        <% end %>
+        
+        <dt>Number of Pages:</dt>
+        <dd><%= @form_template.page_count %></dd>
+        
+        <dt>Created:</dt>
+        <dd><%= @form_template.created_at.strftime("%B %d, %Y at %I:%M %p") %></dd>
+      </dl>
+    </div>
+    
+    <div class="detail-section">
+      <h2>Page Structure</h2>
+      <ol class="page-list">
+        <% (1..@form_template.page_count).each do |page_num| %>
+          <li>
+            <strong>Page <%= page_num %>:</strong> <%= @form_template.page_header(page_num) %>
+            
+            <% if @fields_by_page[page_num].present? %>
+              <ul class="field-list">
+                <% @fields_by_page[page_num].each do |field| %>
+                  <li>
+                    <code><%= field.field_name %></code> 
+                    (<%= field.field_type.titleize %>) 
+                    - <%= field.label %>
+                    <%= content_tag(:span, "Required", class: "badge badge-danger") if field.required %>
+                    
+                    <% if field.text_box? %>
+                      <small class="text-muted"> - Rows: <%= field.rows %></small>
+                    <% elsif field.dropdown? %>
+                      <small class="text-muted"> - Options: <%= field.dropdown_values.join(', ') %></small>
+                    <% end %>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="text-muted">No fields on this page</p>
+            <% end %>
+          </li>
+        <% end %>
+      </ol>
+    </div>
+    
+    <div class="action-section">
+      <div class="alert alert-success">
+        <strong>✓ Form Generated!</strong><br>
+        This form has been created and is now available in your sidebar.
+      </div>
+      
+      <%= link_to "View Form", 
+                  send("new_#{@form_template.file_name}_path"),
+                  class: "btn btn-primary",
+                  target: "_blank" %>
+    </div>
+  </div>
+</div>
+
+<style>
+  .form-template-details {
+    max-width: 900px;
+  }
+  
+  .detail-section {
+    background: #f8f9fa;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+  }
+  
+  .details-list {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 10px;
+  }
+  
+  .details-list dt {
+    font-weight: bold;
+  }
+  
+  .page-list {
+    list-style: decimal;
+    padding-left: 20px;
+  }
+  
+  .page-list li {
+    margin: 15px 0;
+  }
+  
+  .field-list {
+    list-style: circle;
+    padding-left: 20px;
+    margin-top: 10px;
+  }
+  
+  .field-list li {
+    margin: 5px 0;
+  }
+  
+  .action-section {
+    margin: 30px 0;
+  }
+  
+  .badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  
+  .badge-success { background: #28a745; color: white; }
+  .badge-warning { background: #ffc107; color: black; }
+  .badge-danger { background: #dc3545; color: white; }
+  .badge-primary { background: #007bff; color: white; }
+  .badge-secondary { background: #6c757d; color: white; }
+</style>
