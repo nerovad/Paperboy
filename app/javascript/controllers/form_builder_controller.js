@@ -200,7 +200,53 @@ export default class extends Controller {
 
   // Submit form
   submitForm(event) {
-    // Let form submit naturally
-    console.log("Form submitting...")
+    event.preventDefault()
+
+    console.log("Form submission started")
+
+    // Disable submit button to prevent double submission
+    this.submitButtonTarget.disabled = true
+    this.submitButtonTarget.textContent = 'Creating...'
+
+    const formData = new FormData(this.formTarget)
+
+    fetch(this.formTarget.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
+        'Accept': 'application/json'
+      }
+    })
+      .then(response => {
+        console.log("Response received:", response)
+        return response.json()
+      })
+      .then(data => {
+        console.log("Data parsed:", data)
+
+        if (data.success) {
+          alert(data.message)
+          this.closeModal(new Event('click')) // Pass a dummy event
+
+          console.log("About to redirect to:", data.redirect)
+
+          if (data.redirect) {
+            window.location.href = data.redirect
+          } else {
+            window.location.reload()
+          }
+        } else {
+          alert('Error creating form:\n' + data.errors.join('\n'))
+          this.submitButtonTarget.disabled = false
+          this.submitButtonTarget.textContent = 'Create Form Template'
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error)
+        alert('An error occurred while creating the form.')
+        this.submitButtonTarget.disabled = false
+        this.submitButtonTarget.textContent = 'Create Form Template'
+      })
   }
 }

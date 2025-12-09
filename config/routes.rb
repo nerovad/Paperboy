@@ -1,5 +1,8 @@
 require 'sidekiq/web'
 Rails.application.routes.draw do
+  resources :jacksonville_jaguars_forms
+  resources :miami_dolphins_forms
+  resources :new_orleans_saints_forms
   resources :new_england_patriots_forms
   resources :minnesota_vikings_forms
   resources :detroit_lions_forms
