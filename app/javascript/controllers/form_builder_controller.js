@@ -1,3 +1,5 @@
+// form_builder_controller.js - Updates needed for improved modal scrolling
+
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
@@ -20,118 +22,155 @@ export default class extends Controller {
   }
 
   connect() {
-    console.log("Form builder controller connected")
-    this.fieldCounter = 0
+    console.log("Form Builder controller connected")
+    // Add one field by default
+    this.addField()
   }
 
-  openModal() {
+  // Show the modal
+  openModal(event) {
+    event.preventDefault()
     const modal = document.getElementById('create-form-modal')
     if (modal) {
+      // Use the 'show' class to display with flexbox
+      modal.classList.add('show')
       modal.style.display = 'flex'
+
+      // Lock body scroll when modal is open
       document.body.style.overflow = 'hidden'
     }
   }
 
-  closeModal() {
+  // Close the modal
+  closeModal(event) {
+    event.preventDefault()
     const modal = document.getElementById('create-form-modal')
     if (modal) {
+      modal.classList.remove('show')
       modal.style.display = 'none'
+
+      // Restore body scroll
       document.body.style.overflow = 'auto'
-      this.resetForm()
+
+      // Reset form
+      this.formTarget.reset()
+      this.fieldsContainerTarget.innerHTML = ''
+      this.addField() // Add back the default field
+      this.pageHeadersContainerTarget.style.display = 'none'
+      this.aclGroupContainerTarget.style.display = 'none'
     }
   }
 
-  resetForm() {
-    this.formTarget.reset()
-    this.fieldsContainerTarget.innerHTML = ''
-    this.aclGroupContainerTarget.style.display = 'none'
-    this.pageHeadersContainerTarget.style.display = 'none'
-    this.fieldCounter = 0
+  // Close modal when clicking outside the modal content
+  clickOutside(event) {
+    if (event.target.id === 'create-form-modal') {
+      this.closeModal(event)
+    }
   }
 
+  // Toggle ACL Group visibility based on access level
   toggleACLGroup(event) {
-    const isRestricted = event.target.value === 'restricted'
-    this.aclGroupContainerTarget.style.display = isRestricted ? 'block' : 'none'
+    const accessLevel = event.target.value
+    const container = this.aclGroupContainerTarget
 
-    if (!isRestricted) {
+    if (accessLevel === 'restricted') {
+      container.style.display = 'block'
+      this.aclGroupTarget.required = true
+    } else {
+      container.style.display = 'none'
+      this.aclGroupTarget.required = false
       this.aclGroupTarget.value = ''
     }
   }
 
+  // Update page headers based on page count
   updatePageHeaders(event) {
     const pageCount = parseInt(event.target.value)
+    const container = this.pageHeadersContainerTarget
+    const headersList = this.pageHeadersListTarget
 
     if (pageCount > 2) {
-      this.pageHeadersContainerTarget.style.display = 'block'
-      this.renderPageHeaderInputs(pageCount)
-    } else {
-      this.pageHeadersContainerTarget.style.display = 'none'
-      this.pageHeadersListTarget.innerHTML = ''
-    }
+      container.style.display = 'block'
+      headersList.innerHTML = ''
 
-    // Update all page select dropdowns in fields
-    this.updatePageSelects(pageCount)
-  }
-
-  renderPageHeaderInputs(pageCount) {
-    const additionalPages = pageCount - 2
-    let html = ''
-
-    for (let i = 1; i <= additionalPages; i++) {
-      const pageNum = i + 2
-      html += `
-        <div class="form-group-inline">
-          <label>Page ${pageNum}:</label>
+      // Create input fields for pages 3+
+      for (let i = 3; i <= pageCount; i++) {
+        const headerItem = document.createElement('div')
+        headerItem.className = 'page-header-item'
+        headerItem.innerHTML = `
+          <label>Page ${i}:</label>
           <input type="text" 
-                 name="form_template[page_headers][]" 
+                 name="page_headers[]" 
                  class="form-control form-control-sm"
                  placeholder="e.g., Additional Information"
                  required>
-        </div>
-      `
-    }
-
-    this.pageHeadersListTarget.innerHTML = html
-  }
-
-  updatePageSelects(pageCount) {
-    const pageSelects = this.fieldsContainerTarget.querySelectorAll('.page-select')
-
-    pageSelects.forEach(select => {
-      const currentValue = select.value
-      let options = `
-        <option value="1">Page 1 - Employee Info</option>
-        <option value="2">Page 2 - Agency Info</option>
-      `
-
-      for (let i = 3; i <= pageCount; i++) {
-        options += `<option value="${i}">Page ${i}</option>`
+        `
+        headersList.appendChild(headerItem)
       }
 
-      select.innerHTML = options
+      // Update all page selects to include new pages
+      this.updatePageSelects(pageCount)
+    } else {
+      container.style.display = 'none'
+      headersList.innerHTML = ''
+      this.updatePageSelects(2) // Reset to just 2 pages
+    }
+  }
 
-      // Restore previous selection if still valid
-      if (currentValue && currentValue <= pageCount) {
+  // Update all page select dropdowns with current page count
+  updatePageSelects(pageCount) {
+    const pageSelects = this.fieldsContainerTarget.querySelectorAll('.page-select')
+    const templateSelect = document.querySelector('#field-template .page-select')
+
+    // Update existing field page selects
+    pageSelects.forEach(select => {
+      const currentValue = select.value
+      select.innerHTML = this.generatePageOptions(pageCount)
+      if (currentValue && parseInt(currentValue) <= pageCount) {
         select.value = currentValue
       }
     })
+
+    // Update template page select
+    if (templateSelect) {
+      templateSelect.innerHTML = this.generatePageOptions(pageCount)
+    }
   }
 
+  // Generate page options HTML
+  generatePageOptions(pageCount) {
+    let options = `
+      <option value="1">Page 1 - Employee Info</option>
+      <option value="2">Page 2 - Agency Info</option>
+    `
+
+    for (let i = 3; i <= pageCount; i++) {
+      const input = this.pageHeadersListTarget?.querySelector(`input:nth-child(${i - 2})`)
+      const pageName = input?.value || `Page ${i}`
+      options += `<option value="${i}">Page ${i} - ${pageName}</option>`
+    }
+
+    return options
+  }
+
+  // Add a new field
   addField(event) {
-    event.preventDefault()
+    if (event) event.preventDefault()
 
     const template = document.getElementById('field-template')
     const clone = template.content.cloneNode(true)
 
-    this.fieldsContainerTarget.appendChild(clone)
-
-    // Update the page select for this new field
+    // Update page select options if needed
     const pageCount = parseInt(this.pageCountTarget.value)
-    this.updatePageSelects(pageCount)
+    const pageSelect = clone.querySelector('.page-select')
+    if (pageSelect) {
+      pageSelect.innerHTML = this.generatePageOptions(pageCount)
+    }
 
-    this.fieldCounter++
+    this.fieldsContainerTarget.appendChild(clone)
   }
 
+  // Remove a field
   removeField(event) {
     event.preventDefault()
     const fieldItem = event.target.closest('.field-item')
@@ -140,63 +179,28 @@ export default class extends Controller {
     }
   }
 
+  // Handle field type change to show/hide options
   handleFieldTypeChange(event) {
     const fieldItem = event.target.closest('.field-item')
     const fieldType = event.target.value
+    const textBoxOptions = fieldItem.querySelector('.text-box-options')
+    const dropdownOptions = fieldItem.querySelector('.dropdown-options')
 
     // Hide all options first
-    const allOptions = fieldItem.querySelectorAll('.field-options')
-    allOptions.forEach(opt => opt.style.display = 'none')
+    textBoxOptions.style.display = 'none'
+    dropdownOptions.style.display = 'none'
 
     // Show relevant options
     if (fieldType === 'text_box') {
-      const textBoxOptions = fieldItem.querySelector('.text-box-options')
-      if (textBoxOptions) textBoxOptions.style.display = 'block'
+      textBoxOptions.style.display = 'block'
     } else if (fieldType === 'dropdown') {
-      const dropdownOptions = fieldItem.querySelector('.dropdown-options')
-      if (dropdownOptions) dropdownOptions.style.display = 'block'
+      dropdownOptions.style.display = 'block'
     }
   }
 
+  // Submit form
   submitForm(event) {
-    event.preventDefault()
-
-    // Disable submit button to prevent double submission
-    this.submitButtonTarget.disabled = true
-    this.submitButtonTarget.textContent = 'Creating...'
-
-    const formData = new FormData(this.formTarget)
-
-    fetch(this.formTarget.action, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
-        'Accept': 'application/json'
-      }
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert(data.message)
-          this.closeModal()
-
-          if (data.redirect) {
-            window.location.href = data.redirect
-          } else {
-            window.location.reload()
-          }
-        } else {
-          alert('Error creating form:\n' + data.errors.join('\n'))
-          this.submitButtonTarget.disabled = false
-          this.submitButtonTarget.textContent = 'Create Form Template'
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error)
-        alert('An error occurred while creating the form.')
-        this.submitButtonTarget.disabled = false
-        this.submitButtonTarget.textContent = 'Create Form Template'
-      })
+    // Let form submit naturally
+    console.log("Form submitting...")
   }
 }

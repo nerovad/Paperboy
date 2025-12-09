@@ -1,81 +1,138 @@
-<div class="container">
-  <div class="header-row">
-    <h1><%= @form_template.name %></h1>
-    <%= link_to "← Back to Templates", form_templates_path, class: "btn btn-secondary" %>
-  </div>
-  
-  <div class="form-template-details">
-    <div class="detail-section">
-      <h2>Template Information</h2>
-      <dl class="details-list">
-        <dt>Class Name:</dt>
-        <dd><code><%= @form_template.class_name %></code></dd>
-        
-        <dt>Table Name:</dt>
-        <dd><code><%= @form_template.table_name %></code></dd>
-        
-        <dt>Access Level:</dt>
-        <dd>
-          <span class="badge <%= @form_template.restricted? ? 'badge-warning' : 'badge-success' %>">
-            <%= @form_template.access_level.titleize %>
-          </span>
-        </dd>
-        
-        <% if @form_template.restricted? %>
-          <dt>ACL Group:</dt>
-          <dd><%= @form_template.acl_group_name %> (ID: <%= @form_template.acl_group_id %>)</dd>
-        <% end %>
-        
-        <dt>Number of Pages:</dt>
-        <dd><%= @form_template.page_count %></dd>
-        
-        <dt>Created:</dt>
-        <dd><%= @form_template.created_at.strftime("%B %d, %Y at %I:%M %p") %></dd>
-      </dl>
-    </div>
-    
-    <div class="detail-section">
-      <h2>Page Structure</h2>
-      <ol class="page-list">
-        <% (1..@form_template.page_count).each do |page_num| %>
-          <li>
-            <strong>Page <%= page_num %>:</strong> <%= @form_template.page_header(page_num) %>
-            
-            <% if @fields_by_page[page_num].present? %>
-              <ul class="field-list">
-                <% @fields_by_page[page_num].each do |field| %>
-                  <li>
-                    <code><%= field.field_name %></code> 
-                    (<%= field.field_type.titleize %>) 
-                    - <%= field.label %>
-                    <%= content_tag(:span, "Required", class: "badge badge-danger") if field.required %>
-                    
-                    <% if field.text_box? %>
-                      <small class="text-muted"> - Rows: <%= field.rows %></small>
-                    <% elsif field.dropdown? %>
-                      <small class="text-muted"> - Options: <%= field.dropdown_values.join(', ') %></small>
-                    <% end %>
-                  </li>
-                <% end %>
-              </ul>
-            <% else %>
-              <p class="text-muted">No fields on this page</p>
-            <% end %>
-          </li>
-        <% end %>
-      </ol>
-    </div>
-    
-    <div class="action-section">
-      <div class="alert alert-success">
-        <strong>✓ Form Generated!</strong><br>
-        This form has been created and is now available in your sidebar.
+<!-- app/views/form_templates/show.html.erb -->
+<div class="form-header">
+  <h1><%= @form_template.name %></h1>
+  <%= link_to "← Back to Templates", form_templates_path, class: "btn btn-secondary" %>
+</div>
+
+<div class="form-wrapper form-templates">
+  <div class="approvers-list">
+    <!-- Template Information Card -->
+    <div class="approver-card">
+      <div class="approver-header">
+        <h3>
+          Template Information
+          <span class="employee-id">(<%= @form_template.class_name %>)</span>
+        </h3>
       </div>
       
-      <%= link_to "View Form", 
-                  send("new_#{@form_template.file_name}_path"),
-                  class: "btn btn-primary",
-                  target: "_blank" %>
+      <div class="approvals-list">
+        <div class="approval-item">
+          <div class="approval-details">
+            <div class="detail-row">
+              <span class="label">Class Name:</span>
+              <span class="value"><code><%= @form_template.class_name %></code></span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="label">Table Name:</span>
+              <span class="value"><code><%= @form_template.table_name %></code></span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="label">Access Level:</span>
+              <span class="value">
+                <span class="badge <%= @form_template.restricted? ? 'badge-warning' : 'badge-success' %>">
+                  <%= @form_template.access_level.titleize %>
+                </span>
+              </span>
+            </div>
+            
+            <% if @form_template.restricted? %>
+              <div class="detail-row">
+                <span class="label">ACL Group:</span>
+                <span class="value"><%= @form_template.acl_group_name %> (ID: <%= @form_template.acl_group_id %>)</span>
+              </div>
+            <% end %>
+            
+            <div class="detail-row">
+              <span class="label">Number of Pages:</span>
+              <span class="value"><%= @form_template.page_count %></span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="label">Total Fields:</span>
+              <span class="value"><%= @form_template.form_fields.count %></span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="label">Created:</span>
+              <span class="value"><%= @form_template.created_at.strftime("%m/%d/%Y at %I:%M %p") %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Page Structure Card -->
+    <div class="approver-card">
+      <div class="approver-header">
+        <h3>Page Structure</h3>
+      </div>
+      
+      <div class="approvals-list">
+        <% (1..@form_template.page_count).each do |page_num| %>
+          <div class="approval-item">
+            <div class="approval-details">
+              <div class="detail-row">
+                <span class="label">
+                  <strong>Page <%= page_num %>:</strong>
+                </span>
+                <span class="value"><%= @form_template.page_header(page_num) %></span>
+              </div>
+              
+              <% if @fields_by_page[page_num].present? %>
+                <div class="field-list-wrapper">
+                  <% @fields_by_page[page_num].each do |field| %>
+                    <div class="detail-row field-row">
+                      <span class="label">
+                        <code><%= field.field_name %></code>
+                        <%= content_tag(:span, "Required", class: "badge badge-danger") if field.required %>
+                      </span>
+                      <span class="value">
+                        <%= field.label %> 
+                        <span class="text-muted">(<%= field.field_type.titleize %>)</span>
+                        
+                        <% if field.text_box? %>
+                          <span class="text-muted"> - Rows: <%= field.rows %></span>
+                        <% elsif field.dropdown? %>
+                          <span class="text-muted"> - Options: <%= field.dropdown_values.join(', ') %></span>
+                        <% end %>
+                      </span>
+                    </div>
+                  <% end %>
+                </div>
+              <% else %>
+                <div class="detail-row">
+                  <span class="value text-muted">No fields on this page</span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    
+    <!-- Actions Card -->
+    <div class="approver-card">
+      <div class="approver-header">
+        <h3>Actions</h3>
+      </div>
+      
+      <div class="approvals-list">
+        <div class="approval-item">
+          <div class="alert alert-success">
+            <strong>✓ Form Generated!</strong><br>
+            This form has been created and is now available in your sidebar.
+          </div>
+          
+          <div class="approval-actions">
+            <%= link_to "View Form", 
+                        send("new_#{@form_template.file_name}_path"),
+                        class: "btn approve",
+                        target: "_blank" %>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
