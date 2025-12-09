@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_08_205459) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_09_170427) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -470,6 +470,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_08_205459) do
     t.string "short_name", limit: 50, null: false
   end
 
+  create_table "detroit_lions_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "divisions", primary_key: ["agency_id", "division_id"], force: :cascade do |t|
     t.string "agency_id", limit: 3, null: false
     t.string "division_id", limit: 4, null: false
@@ -540,6 +553,32 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_08_205459) do
   end
 
   create_table "jungle_book_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "la_chargers_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "la_rams_forms", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
     t.string "phone"
@@ -793,6 +832,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_08_205459) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_rm75i_forms_on_event_id"
+  end
+
+  create_table "seattle_seahawks_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "sub_objects", primary_key: ["agency_id", "object_id", "sub_object_id"], force: :cascade do |t|

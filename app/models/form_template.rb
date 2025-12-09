@@ -1,6 +1,8 @@
 class FormTemplate < ApplicationRecord
+  attribute :page_headers, :json
+
   has_many :form_fields, dependent: :destroy
-  
+
   validates :name, presence: true
   validates :class_name, presence: true, uniqueness: true
   validates :access_level, inclusion: { in: %w[public restricted] }
