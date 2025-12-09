@@ -75,13 +75,51 @@ class FormTemplatesController < ApplicationController
   
   def destroy
     class_name = @form_template.class_name
+    table_name = class_name.underscore.pluralize
+    path_name = "new_#{table_name.singularize}_path"
     
-    # Run the destroy command to remove generated files
+    # 1. Remove entry from sidebar
+    sidebar_file = Rails.root.join("app/views/shared/_sidebar.html.erb")
+    if File.exist?(sidebar_file)
+      sidebar_content = File.read(sidebar_file)
+      
+      # Remove the line containing this form's path
+      updated_content = sidebar_content.lines.reject do |line|
+        line.include?(path_name)
+      end.join
+      
+      File.write(sidebar_file, updated_content)
+    end
+    
+    # 2. Generate a migration to drop the table
+    migration_name = "Drop#{class_name}"
+    generate_output = `cd #{Rails.root} && bin/rails generate migration #{migration_name} 2>&1`
+    
+    # 3. Find and update the generated migration file
+    migration_file = Dir.glob(Rails.root.join("db/migrate/*_#{migration_name.underscore}.rb")).first
+    
+    if migration_file
+      # Write the drop_table migration
+      migration_content = <<~RUBY
+        class #{migration_name} < ActiveRecord::Migration[7.1]
+          def change
+            drop_table :#{table_name}
+          end
+        end
+      RUBY
+      
+      File.write(migration_file, migration_content)
+      
+      # 4. Run the migration to drop the table
+      migrate_output = `cd #{Rails.root} && bin/rails db:migrate 2>&1`
+    end
+    
+    # 5. Run the destroy command to remove generated files
     destroy_output = `cd #{Rails.root} && bin/rails destroy paperboy_form #{class_name} 2>&1`
     
-    # Delete the template record
+    # 6. Delete the template record
     if @form_template.destroy
-      redirect_to form_templates_path, notice: "Form template and generated files deleted successfully."
+      redirect_to form_templates_path, notice: "Form template, generated files, database table, and sidebar entry deleted successfully."
     else
       redirect_to form_templates_path, alert: "Failed to delete form template."
     end

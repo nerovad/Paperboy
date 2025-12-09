@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_09_183716) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_09_215406) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -552,19 +552,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_09_183716) do
     t.string "cafr_type", limit: 50, null: false
   end
 
-  create_table "jacksonville_jaguars_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "jungle_book_forms", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
@@ -649,19 +636,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_09_183716) do
     t.string "major_program_id", limit: 10, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
-  end
-
-  create_table "miami_dolphins_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "minnesota_vikings_forms", force: :cascade do |t|
