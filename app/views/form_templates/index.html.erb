@@ -1,65 +1,83 @@
-<div class="container">
-  <div class="header-row">
-    <h1>Form Templates</h1>
+<!-- app/views/form_templates/index.html.erb -->
+<div class="form-header">
+  <h1>Form Templates</h1>
+</div>
+
+<div class="form-wrapper form-templates">
+  <div class="department-header">
+    <h2>Manage Form Templates</h2>
     <button type="button" 
-            class="btn btn-primary"
+            class="btn approve"
             data-controller="form-builder"
             data-action="click->form-builder#openModal">
-      ➕ Create Form
+      + Create Form
     </button>
   </div>
   
   <% if @form_templates.any? %>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Class Name</th>
-          <th>Access</th>
-          <th>Pages</th>
-          <th>Fields</th>
-          <th>Created</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @form_templates.each do |template| %>
-          <tr>
-            <td><%= template.name %></td>
-            <td><code><%= template.class_name %></code></td>
-            <td>
-              <span class="badge <%= template.restricted? ? 'badge-warning' : 'badge-success' %>">
-                <%= template.access_level.titleize %>
-              </span>
-              <% if template.restricted? %>
-                <br><small><%= template.acl_group_name %></small>
-              <% end %>
-            </td>
-            <td><%= template.page_count %></td>
-            <td><%= template.form_fields.count %></td>
-            <td><%= template.created_at.strftime("%m/%d/%Y") %></td>
-            <td>
-              <%= link_to "View", form_template_path(template), class: "btn btn-sm btn-info" %>
+    <div class="approvers-list">
+      <% @form_templates.each do |template| %>
+        <div class="approver-card">
+          <div class="approver-header">
+            <h3>
+              <%= template.name %>
+              <span class="employee-id">(<%= template.class_name %>)</span>
+            </h3>
+          </div>
+          
+          <div class="approvals-list">
+            <div class="approval-item">
+              <div class="approval-details">
+                <div class="detail-row">
+                  <span class="label">Table Name:</span>
+                  <span class="value"><code><%= template.table_name %></code></span>
+                </div>
+                
+                <div class="detail-row">
+                  <span class="label">Access:</span>
+                  <span class="value">
+                    <span class="badge <%= template.restricted? ? 'badge-warning' : 'badge-success' %>">
+                      <%= template.access_level.titleize %>
+                    </span>
+                    <% if template.restricted? %>
+                      - <%= template.acl_group_name %>
+                    <% end %>
+                  </span>
+                </div>
+                
+                <div class="detail-row">
+                  <span class="label">Pages:</span>
+                  <span class="value"><%= template.page_count %></span>
+                </div>
+                
+                <div class="detail-row">
+                  <span class="label">Fields:</span>
+                  <span class="value"><%= template.form_fields.count %></span>
+                </div>
+                
+                <div class="detail-row">
+                  <span class="label">Created:</span>
+                  <span class="value"><%= template.created_at.strftime("%m/%d/%Y at %I:%M %p") %></span>
+                </div>
+              </div>
               
-              <%= button_to "Delete", 
-                            form_template_path(template), 
-                            method: :delete,
-                            class: "btn btn-sm btn-danger",
-                            data: { confirm: "Are you sure? This will also delete the generated form files." } %>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
+              <div class="approval-actions">
+                <%= link_to "View Details", form_template_path(template), class: "btn" %>
+                <%= button_to "Delete", 
+                              form_template_path(template), 
+                              method: :delete,
+                              class: "btn deny",
+                              data: { confirm: "Are you sure? This will delete the form template and all generated files." } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
   <% else %>
     <div class="empty-state">
-      <p>No form templates yet.</p>
-      <button type="button" 
-              class="btn btn-primary"
-              data-controller="form-builder"
-              data-action="click->form-builder#openModal">
-        Create Your First Form
-      </button>
+      <p>No form templates have been created yet.</p>
+      <p class="empty-state-hint">Click "+ Create Form" to get started.</p>
     </div>
   <% end %>
 </div>

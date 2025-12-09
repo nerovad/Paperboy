@@ -1,11 +1,13 @@
 /* Pages: Authorization Console */
+@import "base/tokens";
 
 .authorization-console {
-  max-width: 1200px;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
   margin: 0 auto;
 }
 
-// Header section
+/* Header section */
 .form-header {
   p {
     color: $muted;

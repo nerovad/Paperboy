@@ -5,9 +5,17 @@
 .page-form_templates-index,
 .page-form_templates-show {
   .container {
+    max-height: calc(100vh - 180px);
     max-width: 1200px;
+    overflow-y: auto;
     margin: 0 auto;
     padding: 20px;
+  }
+
+  .form-templates {
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    margin: 0 auto;
   }
 
   /* Header Row */
