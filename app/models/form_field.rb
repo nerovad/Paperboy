@@ -1,4 +1,7 @@
 class FormField < ApplicationRecord
+  # Serialize options as JSON (Rails 7.1+ syntax)
+  attribute :options, :json
+  
   belongs_to :form_template
   
   FIELD_TYPES = %w[text text_box dropdown].freeze
