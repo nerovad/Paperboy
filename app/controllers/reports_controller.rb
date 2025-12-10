@@ -24,7 +24,7 @@ class ReportsController < ApplicationController
 
     # Queue the report generation job
     ReportGenerationJob.perform_later(
-      current_employee.EmployeeID,
+      session.dig(:user, "employee_id"),
       form_type,
       start_date.to_s,
       end_date.to_s,
@@ -37,8 +37,11 @@ class ReportsController < ApplicationController
   private
 
   def require_system_admin
-    unless current_employee&.system_admin?
-      redirect_to root_path, alert: "Access denied. System administrator privileges required."
+    employee_id = session.dig(:user, "employee_id").to_s
+    employee = Employee.find_by(EmployeeID: employee_id)
+    
+    unless employee&.in_any_group?('System_Admins')
+      redirect_to root_path, alert: "You do not have permission to access Reports."
     end
   end
 
