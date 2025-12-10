@@ -63,6 +63,10 @@
                 <%= link_to "Manage Forms", form_templates_path, class: "btn btn-info" %>
               <% end %>
 
+                <% if system_admin? %>
+                <%= link_to "Reports", reports_path, class: "btn btn-info" %>
+              <% end %>
+
               <% if session[:user_id] == 136626 %> <!-- Your employee ID -->
                 <%= link_to "Impersonate", new_admin_impersonation_path, class: "btn btn-warning" %>
               <% end %>

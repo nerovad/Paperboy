@@ -1,0 +1,141 @@
+<%# app/views/reports/index.html.erb %>
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">
+            <i class="bi bi-file-earmark-bar-graph me-2"></i>
+            Generate Reports
+          </h4>
+        </div>
+
+        <div class="card-body">
+          <%= form_with url: reports_generate_path, method: :post, local: true, class: "needs-validation" do |f| %>
+            
+            <%# Form Selection %>
+            <div class="mb-4">
+              <%= f.label :form_type, "Select Form", class: "form-label fw-semibold" %>
+              <%= f.select :form_type, 
+                options_for_select(@forms.map { |form| [form[:name], form[:value]] }, params[:form_type]),
+                { prompt: "Choose a form..." },
+                { class: "form-select form-select-lg", required: true }
+              %>
+              <div class="form-text">
+                Select the form type you want to generate reports for
+              </div>
+            </div>
+
+            <%# Date Range %>
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <%= f.label :start_date, "Start Date", class: "form-label fw-semibold" %>
+                <%= f.date_field :start_date, 
+                  class: "form-control form-control-lg", 
+                  required: true,
+                  value: params[:start_date] || 1.month.ago.to_date
+                %>
+                <div class="form-text">
+                  Beginning of date range
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <%= f.label :end_date, "End Date", class: "form-label fw-semibold" %>
+                <%= f.date_field :end_date, 
+                  class: "form-control form-control-lg", 
+                  required: true,
+                  value: params[:end_date] || Date.today
+                %>
+                <div class="form-text">
+                  End of date range
+                </div>
+              </div>
+            </div>
+
+            <%# Format Selection %>
+            <div class="mb-4">
+              <%= f.label :format, "Export Format", class: "form-label fw-semibold" %>
+              <%= f.select :format,
+                [["PDF", "pdf"]],
+                {},
+                { class: "form-select form-select-lg", required: true }
+              %>
+              <div class="form-text">
+                Select the export format (more formats coming soon)
+              </div>
+            </div>
+
+            <%# Information Box %>
+            <div class="alert alert-info d-flex align-items-start" role="alert">
+              <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+              <div>
+                <strong>How it works:</strong>
+                <ul class="mb-0 mt-2">
+                  <li>Select a form and date range above</li>
+                  <li>The system will generate a PDF for each submission within that date range</li>
+                  <li>All PDFs will be packaged into a single ZIP file</li>
+                  <li>You'll receive an email when your report is ready for download</li>
+                  <li>Large reports may take several minutes to generate</li>
+                </ul>
+              </div>
+            </div>
+
+            <%# Submit Button %>
+            <div class="d-grid gap-2">
+              <%= f.submit "Generate Report", 
+                class: "btn btn-primary btn-lg",
+                data: { 
+                  disable_with: "<i class='bi bi-hourglass-split me-2'></i>Generating...",
+                  confirm: "This will generate PDFs for all matching submissions. Continue?"
+                }
+              %>
+            </div>
+
+          <% end %>
+        </div>
+      </div>
+
+      <%# Recent Reports Section (placeholder for future enhancement) %>
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-clock-history me-2"></i>
+            Recent Reports
+          </h5>
+        </div>
+        <div class="card-body text-center text-muted py-5">
+          <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
+          <p>Your recently generated reports will appear here</p>
+          <small class="text-muted">Coming soon</small>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  .form-label.fw-semibold {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-control-lg, .form-select-lg {
+    border-radius: 0.5rem;
+  }
+
+  .card {
+    border-radius: 0.75rem;
+    border: none;
+  }
+
+  .card-header {
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+    padding: 1.25rem;
+  }
+
+  .alert {
+    border-radius: 0.5rem;
+  }
+</style>

@@ -24,7 +24,9 @@ Rails.application.routes.draw do
   get '/auth/callback', to: 'sessions#create_oauth'
   get '/auth/failure', to: 'sessions#failure'
   post '/auth/entra_id', to: 'sessions#setup', as: :auth_setup
-  
+  get 'reports', to: 'reports#index', as: 'reports'
+  post 'reports/generate', to: 'reports#generate', as: 'reports_generate'
+
   mount Sidekiq::Web => '/sidekiq'
   root "forms#home"
   
