@@ -1,9 +1,10 @@
 <%# app/views/reports/index.html.erb %>
 <div class="form-header">
   <h1>Generate Reports</h1>
+  <p>Create comprehensive PDF or CSV reports for any form within a specified date range</p>
 </div>
 
-<div class="form-wrapper reports-wrapper">
+<div class="form-wrapper reports-wrapper" data-controller="reports scheduled-report-form">
   <%= form_with url: reports_generate_path, method: :post, local: true do |f| %>
     
     <%# Form Selection %>
@@ -12,31 +13,145 @@
       <%= f.select :form_type, 
         options_for_select(@forms.map { |form| [form[:name], form[:value]] }, params[:form_type]),
         { prompt: "Choose a form..." },
-        { class: "form-control", required: true }
+        { 
+          class: "form-control", 
+          required: true,
+          data: { 
+            action: "change->reports#loadStatusOptions"
+          }
+        }
       %>
       <small class="help-text">Select the form type you want to generate reports for</small>
     </div>
 
-    <%# Date Range %>
-    <div class="form-row">
-      <div class="form-group flex-fill">
-        <%= f.label :start_date, "Start Date", class: "form-label" %>
-        <%= f.date_field :start_date, 
-          class: "form-control", 
-          required: true,
-          value: params[:start_date] || 1.month.ago.to_date
+    <%# Status Filter (Dynamic) %>
+    <div class="form-group" data-reports-target="statusGroup">
+      <%= f.label :status, "Filter by Status (Optional)", class: "form-label" %>
+      <%= f.select :status,
+        [],
+        { prompt: "All statuses" },
+        { 
+          class: "form-control",
+          data: { reports_target: "statusSelect" }
+        }
+      %>
+      <small class="help-text">Leave blank to include all statuses</small>
+    </div>
+
+    <%# Schedule Toggle %>
+    <div class="form-group">
+      <label class="form-label">
+        <%= f.check_box :schedule, 
+          data: { 
+            scheduled_report_form_target: "scheduleCheckbox",
+            action: "change->scheduled-report-form#toggleScheduleFields"
+          }
         %>
-        <small class="help-text">Beginning of date range</small>
+        Schedule this report to run automatically
+      </label>
+      <small class="help-text">Check this to set up recurring report generation</small>
+    </div>
+
+    <%# One-Time Report Fields (shown by default) %>
+    <div data-scheduled-report-form-target="oneTimeFields">
+      <div class="form-row">
+        <div class="form-group flex-fill">
+          <%= f.label :start_date, "Start Date", class: "form-label" %>
+          <%= f.date_field :start_date, 
+            class: "form-control", 
+            value: params[:start_date] || 1.month.ago.to_date,
+            data: { scheduled_report_form_target: "startDate" }
+          %>
+          <small class="help-text">Beginning of date range</small>
+        </div>
+
+        <div class="form-group flex-fill">
+          <%= f.label :end_date, "End Date", class: "form-label" %>
+          <%= f.date_field :end_date, 
+            class: "form-control", 
+            value: params[:end_date] || Date.today,
+            data: { scheduled_report_form_target: "endDate" }
+          %>
+          <small class="help-text">End of date range</small>
+        </div>
+      </div>
+    </div>
+
+    <%# Scheduled Report Fields (hidden by default) %>
+    <div data-scheduled-report-form-target="scheduledFields" style="display: none;">
+      
+      <%# Date Range Type %>
+      <div class="form-group">
+        <%= f.label :date_range_type, "Date Range", class: "form-label" %>
+        <%= f.select :date_range_type,
+          options_for_select(ScheduledReport::DATE_RANGE_TYPES.map { |k, v| [v, k] }),
+          { prompt: "Choose date range..." },
+          { class: "form-control", data: { scheduled_report_form_target: "dateRangeType" } }
+        %>
+        <small class="help-text">The report will include submissions from this rolling time period</small>
       </div>
 
-      <div class="form-group flex-fill">
-        <%= f.label :end_date, "End Date", class: "form-label" %>
-        <%= f.date_field :end_date, 
-          class: "form-control", 
-          required: true,
-          value: params[:end_date] || Date.today
+      <%# Frequency %>
+      <div class="form-group">
+        <%= f.label :frequency, "Frequency", class: "form-label" %>
+        <%= f.select :frequency,
+          options_for_select(ScheduledReport::FREQUENCIES.map { |k, v| [v, k] }),
+          { prompt: "Choose frequency..." },
+          { 
+            class: "form-control",
+            data: { 
+              scheduled_report_form_target: "frequencySelect",
+              action: "change->scheduled-report-form#toggleFrequencyFields"
+            }
+          }
         %>
-        <small class="help-text">End of date range</small>
+      </div>
+
+      <%# Time of Day %>
+      <div class="form-group">
+        <%= f.label :time_of_day, "Time of Day", class: "form-label" %>
+        <%= f.time_field :time_of_day,
+          class: "form-control",
+          value: "23:30",
+          data: { scheduled_report_form_target: "timeOfDay" }
+        %>
+        <small class="help-text">Time in Pacific Time (PT)</small>
+      </div>
+
+      <%# Day of Week (for weekly) %>
+      <div class="form-group" 
+           data-scheduled-report-form-target="weeklyField"
+           style="display: none;">
+        <%= f.label :day_of_week, "Day of Week", class: "form-label" %>
+        <%= f.select :day_of_week,
+          options_for_select([
+            ['Sunday', 0],
+            ['Monday', 1],
+            ['Tuesday', 2],
+            ['Wednesday', 3],
+            ['Thursday', 4],
+            ['Friday', 5],
+            ['Saturday', 6]
+          ]),
+          { prompt: "Choose day..." },
+          { class: "form-control", data: { scheduled_report_form_target: "dayOfWeek" } }
+        %>
+      </div>
+
+      <%# Day of Month (for monthly) %>
+      <div class="form-group"
+           data-scheduled-report-form-target="monthlyField"
+           style="display: none;">
+        <%= f.label :day_of_month, "Day of Month", class: "form-label" %>
+        <%= f.number_field :day_of_month,
+          class: "form-control",
+          min: 1,
+          max: 31,
+          placeholder: "1-31",
+          value: 1,
+          data: { scheduled_report_form_target: "dayOfMonth" }
+        %>
+        <small class="help-text">For months with fewer days, it will run on the last day of the month</small>
       </div>
     </div>
 
@@ -58,17 +173,98 @@
         <li>Select a form and date range above</li>
         <li><strong>PDF format:</strong> Creates an individual PDF for each submission, packaged into a ZIP file</li>
         <li><strong>CSV format:</strong> Creates one spreadsheet with all submissions in rows (opens in Excel)</li>
-        <li>You'll receive an email when your report is ready for download</li>
-        <li>Large reports may take several minutes to generate</li>
+        <li><strong>One-time reports:</strong> Generate immediately and receive email when ready</li>
+        <li><strong>Scheduled reports:</strong> Automatically generate and email on a recurring schedule</li>
       </ul>
     </div>
 
     <%# Submit Button %>
-    <%= f.submit "Generate Report", 
+    <%= f.submit nil, 
       class: "btn approve",
-      data: { disable_with: "Generating..." },
-      onclick: "return confirm('This will generate PDFs for all matching submissions. Continue?');"
+      data: { 
+        disable_with: "Saving...",
+        scheduled_report_form_target: "submitButton"
+      },
+      onclick: "return confirm('Continue?');"
     %>
 
+  <% end %>
+
+  <%# Scheduled Reports List %>
+  <% if @scheduled_reports.any? %>
+    <div class="section-divider"></div>
+    
+    <div class="department-header">
+      <h2>Your Scheduled Reports</h2>
+    </div>
+
+    <% @scheduled_reports.each do |report| %>
+      <div class="approver-card">
+        <div class="card-content">
+          <div class="approval-details">
+            <div class="detail-row">
+              <span class="label">Form:</span>
+              <span class="value"><%= report.form_name %></span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="label">Schedule:</span>
+              <span class="value"><%= report.schedule_description %></span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="label">Format:</span>
+              <span class="value"><%= report.format_label %></span>
+            </div>
+            
+            <% if report.status_filter.present? %>
+              <div class="detail-row">
+                <span class="label">Status Filter:</span>
+                <span class="value"><%= report.status_filter.titleize %></span>
+              </div>
+            <% end %>
+            
+            <div class="detail-row">
+              <span class="label">Status:</span>
+              <span class="value">
+                <span class="badge <%= report.enabled? ? 'badge-success' : 'badge-secondary' %>">
+                  <%= report.enabled? ? 'Active' : 'Paused' %>
+                </span>
+              </span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="label">Next Run:</span>
+              <span class="value">
+                <%= report.next_run_at&.strftime('%B %d, %Y at %I:%M %p') || 'Not scheduled' %>
+              </span>
+            </div>
+            
+            <% if report.last_run_at.present? %>
+              <div class="detail-row">
+                <span class="label">Last Run:</span>
+                <span class="value"><%= report.last_run_at.strftime('%B %d, %Y at %I:%M %p') %></span>
+              </div>
+            <% end %>
+          </div>
+          
+          <div class="approval-actions">
+            <%= button_to toggle_scheduled_report_path(report), 
+                  method: :patch,
+                  class: "btn #{report.enabled? ? 'deny' : 'approve'}",
+                  data: { confirm: "#{report.enabled? ? 'Pause' : 'Resume'} this scheduled report?" } do %>
+              <%= report.enabled? ? 'Pause' : 'Resume' %>
+            <% end %>
+            
+            <%= button_to scheduled_report_path(report), 
+                  method: :delete,
+                  class: "btn deny",
+                  data: { confirm: "Delete this scheduled report? This cannot be undone." } do %>
+              Delete
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
   <% end %>
 </div>

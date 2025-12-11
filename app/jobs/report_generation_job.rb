@@ -6,13 +6,13 @@ require 'csv'
 class ReportGenerationJob < ApplicationJob
   queue_as :default
 
-  def perform(employee_id, form_type, start_date, end_date, format)
+  def perform(employee_id, form_type, start_date, end_date, format, status = nil)
     employee = Employee.find(employee_id)
     start_date = Date.parse(start_date)
     end_date = Date.parse(end_date)
 
     # Get submissions for the specified form and date range
-    submissions = get_submissions(form_type, start_date, end_date)
+    submissions = get_submissions(form_type, start_date, end_date, status)
 
     if submissions.empty?
       ReportMailer.no_submissions_found(employee, form_type, start_date, end_date).deliver_now
@@ -56,7 +56,7 @@ class ReportGenerationJob < ApplicationJob
 
   private
 
-  def get_submissions(form_type, start_date, end_date)
+  def get_submissions(form_type, start_date, end_date, status = nil)
     model_class = form_type_to_model(form_type)
     
     # Check which date column exists in the model
@@ -70,10 +70,17 @@ class ReportGenerationJob < ApplicationJob
       'CreatedAt' # Default fallback
     end
     
-    model_class.where("#{date_column} >= ? AND #{date_column} <= ?", 
-                     start_date.beginning_of_day, 
-                     end_date.end_of_day)
-               .order("#{date_column} DESC")
+    # Build base query with date range
+    query = model_class.where("#{date_column} >= ? AND #{date_column} <= ?", 
+                              start_date.beginning_of_day, 
+                              end_date.end_of_day)
+    
+    # Add status filter if provided
+    if status.present? && model_class.column_names.include?('status')
+      query = query.where(status: status.to_i)
+    end
+    
+    query.order("#{date_column} DESC")
   end
 
   def form_type_to_model(form_type)

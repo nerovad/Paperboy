@@ -1,0 +1,7 @@
+# config/sidekiq_cron_schedule.yml
+
+scheduled_reports_runner:
+  cron: "* * * * *"  # Run every minute
+  class: "ScheduledReportsRunnerJob"
+  queue: default
+  description: "Checks for scheduled reports that are due and executes them"

@@ -24,8 +24,11 @@ Rails.application.routes.draw do
   get '/auth/callback', to: 'sessions#create_oauth'
   get '/auth/failure', to: 'sessions#failure'
   post '/auth/entra_id', to: 'sessions#setup', as: :auth_setup
+
+  #Reports
   get 'reports', to: 'reports#index', as: 'reports'
   post 'reports/generate', to: 'reports#generate', as: 'reports_generate'
+  get 'reports/status_options', to: 'reports#status_options', as: 'reports_status_options'
 
   mount Sidekiq::Web => '/sidekiq'
   root "forms#home"
@@ -60,6 +63,12 @@ end
 resources :authorization_console, only: [:index, :new, :create, :edit, :update, :destroy] do
   collection do
     delete :destroy_all_for_employee
+  end
+end
+
+resources :scheduled_reports do
+  member do
+    patch :toggle  # Enable/disable a scheduled report
   end
 end
 

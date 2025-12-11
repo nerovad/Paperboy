@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_09_215406) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_11_215544) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -871,6 +871,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_09_215406) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_rm75i_forms_on_event_id"
+  end
+
+  create_table "scheduled_reports", force: :cascade do |t|
+    t.string "employee_id", null: false
+    t.string "form_type", null: false
+    t.string "format", default: "csv", null: false
+    t.string "status_filter"
+    t.string "frequency", null: false
+    t.string "time_of_day", null: false
+    t.integer "day_of_week"
+    t.integer "day_of_month"
+    t.string "date_range_type", null: false
+    t.boolean "enabled", default: true, null: false
+    t.datetime "last_run_at"
+    t.datetime "next_run_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id"], name: "index_scheduled_reports_on_employee_id"
+    t.index ["enabled"], name: "index_scheduled_reports_on_enabled"
+    t.index ["next_run_at"], name: "index_scheduled_reports_on_next_run_at"
   end
 
   create_table "seattle_seahawks_forms", force: :cascade do |t|
