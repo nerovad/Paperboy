@@ -14,7 +14,7 @@ class ReportMailer < ApplicationMailer
     attachments[@zip_filename] = File.read(zip_filename)
 
     mail(
-      to: employee.Email,
+      to: employee.EE_Email,
       subject: "Your Report is Ready - #{@form_type} (#{submission_count} submissions)"
     )
   end
@@ -26,7 +26,7 @@ class ReportMailer < ApplicationMailer
     @end_date = end_date
 
     mail(
-      to: employee.Email,
+      to: employee.EE_Email,
       subject: "No Submissions Found - #{@form_type}"
     )
   end
@@ -37,7 +37,7 @@ class ReportMailer < ApplicationMailer
     @error_message = error_message
 
     mail(
-      to: employee.Email,
+      to: employee.EE_Email,
       subject: "Report Generation Failed - #{@form_type}"
     )
   end

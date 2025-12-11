@@ -46,13 +46,11 @@ class ReportsController < ApplicationController
   end
 
   def available_forms
-    [
-      { name: "Parking Permits", value: "parking_permits" },
-      { name: "Employee Badges", value: "employee_badges" },
-      { name: "Critical Information Reports", value: "critical_information_reports" },
-      { name: "Probation Transfers", value: "probation_transfers" },
-      { name: "Authorization Requests", value: "authorization_requests" }
-      # Add more forms as needed
-    ]
+    FormTemplate.all.order(:name).map do |template|
+      {
+        name: template.name,
+        value: template.class_name.tableize  # Converts "ParkingLotSubmission" → "parking_lot_submissions"
+      }
+    end
   end
 end

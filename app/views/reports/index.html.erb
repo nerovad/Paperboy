@@ -1,7 +1,6 @@
 <%# app/views/reports/index.html.erb %>
 <div class="form-header">
   <h1>Generate Reports</h1>
-  <p>Create comprehensive PDF reports for any form within a specified date range</p>
 </div>
 
 <div class="form-wrapper reports-wrapper">
@@ -67,10 +66,8 @@
     <%# Submit Button %>
     <%= f.submit "Generate Report", 
       class: "btn approve",
-      data: { 
-        disable_with: "Generating...",
-        confirm: "This will generate PDFs for all matching submissions. Continue?"
-      }
+      data: { disable_with: "Generating..." },
+      onclick: "return confirm('This will generate PDFs for all matching submissions. Continue?');"
     %>
 
   <% end %>

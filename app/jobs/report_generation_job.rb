@@ -63,19 +63,19 @@ class ReportGenerationJob < ApplicationJob
   end
 
   def form_type_to_model(form_type)
-    case form_type
-    when "parking_permits"
-      ParkingPermit
-    when "employee_badges"
-      EmployeeBadge
-    when "critical_information_reports"
-      CriticalInformationReport
-    when "probation_transfers"
-      ProbationTransfer
-    when "authorization_requests"
-      AuthorizationRequest
-    else
+    # form_type is the tableized class name (e.g., "parking_lot_submissions")
+    # Find the template whose class_name tableizes to this value
+    template = FormTemplate.all.find { |t| t.class_name.tableize == form_type }
+    
+    unless template
       raise "Unknown form type: #{form_type}"
+    end
+    
+    # Constantize the class name to get the actual model class
+    begin
+      template.class_name.constantize
+    rescue NameError
+      raise "Model class not found for form type: #{form_type} (#{template.class_name})"
     end
   end
 
