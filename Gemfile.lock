@@ -103,6 +103,7 @@ GEM
     cronex (0.15.0)
       tzinfo
       unicode (>= 0.4.4.5)
+    csv (3.3.5)
     date (3.4.1)
     debug (1.11.0)
       irb (~> 1.10)
@@ -463,6 +464,7 @@ DEPENDENCIES
   bootsnap
   brakeman
   capybara
+  csv
   debug
   dotenv-rails
   duo_web

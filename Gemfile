@@ -32,6 +32,9 @@ gem "redis"
 #PDF Generation
 gem 'prawn'
 
+#CSV Generation
+gem 'csv'
+
 # Duo 2 factor auth login
 gem 'duo_web'
 

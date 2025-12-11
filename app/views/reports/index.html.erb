@@ -44,11 +44,11 @@
     <div class="form-group">
       <%= f.label :format, "Export Format", class: "form-label" %>
       <%= f.select :format,
-        [["PDF", "pdf"]],
+        [["PDF (Individual files in ZIP)", "pdf"], ["CSV (Single spreadsheet)", "csv"]],
         {},
         { class: "form-control", required: true }
       %>
-      <small class="help-text">Select the export format (more formats coming soon)</small>
+      <small class="help-text">PDF creates individual files for each submission; CSV creates one spreadsheet with all data</small>
     </div>
 
     <%# Information Box %>
@@ -56,8 +56,8 @@
       <strong>How it works:</strong>
       <ul>
         <li>Select a form and date range above</li>
-        <li>The system will generate a PDF for each submission within that date range</li>
-        <li>All PDFs will be packaged into a single ZIP file</li>
+        <li><strong>PDF format:</strong> Creates an individual PDF for each submission, packaged into a ZIP file</li>
+        <li><strong>CSV format:</strong> Creates one spreadsheet with all submissions in rows (opens in Excel)</li>
         <li>You'll receive an email when your report is ready for download</li>
         <li>Large reports may take several minutes to generate</li>
       </ul>
@@ -71,16 +71,4 @@
     %>
 
   <% end %>
-
-  <%# Recent Reports Section %>
-  <div class="section-divider"></div>
-  
-  <div class="section-header">
-    <h2>Recent Reports</h2>
-  </div>
-  
-  <div class="empty-state">
-    <p>Your recently generated reports will appear here</p>
-    <p class="empty-state-hint">Coming soon</p>
-  </div>
 </div>

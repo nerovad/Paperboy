@@ -1,6 +1,7 @@
 # app/jobs/report_generation_job.rb
 require 'zip'
 require 'prawn'
+require 'csv'
 
 class ReportGenerationJob < ApplicationJob
   queue_as :default
@@ -18,17 +19,30 @@ class ReportGenerationJob < ApplicationJob
       return
     end
 
-    # Generate PDFs
-    pdf_files = generate_pdfs(submissions, form_type)
-
-    # Create zip file
-    zip_filename = create_zip_file(pdf_files, form_type, start_date, end_date)
-
-    # Send email with download link or attachment
-    ReportMailer.report_ready(employee, zip_filename, submissions.count, form_type, start_date, end_date).deliver_now
-
-    # Clean up temporary files
-    cleanup_temp_files(pdf_files)
+    # Branch based on format
+    if format == 'csv'
+      # Generate CSV
+      csv_filename = generate_csv(submissions, form_type, start_date, end_date)
+      
+      # Send email with CSV attachment
+      ReportMailer.report_ready(employee, csv_filename, submissions.count, form_type, start_date, end_date).deliver_now
+      
+      # Clean up CSV file
+      File.delete(csv_filename) if File.exist?(csv_filename)
+    else
+      # Generate PDFs (original logic)
+      pdf_files = generate_pdfs(submissions, form_type)
+      
+      # Create zip file
+      zip_filename = create_zip_file(pdf_files, form_type, start_date, end_date)
+      
+      # Send email with ZIP attachment
+      ReportMailer.report_ready(employee, zip_filename, submissions.count, form_type, start_date, end_date).deliver_now
+      
+      # Clean up temporary files
+      cleanup_temp_files(pdf_files)
+      File.delete(zip_filename) if File.exist?(zip_filename)
+    end
   rescue StandardError => e
     Rails.logger.error "Report generation failed: #{e.message}"
     Rails.logger.error e.backtrace.join("\n")
@@ -77,6 +91,54 @@ class ReportGenerationJob < ApplicationJob
     rescue NameError
       raise "Model class not found for form type: #{form_type} (#{template.class_name})"
     end
+  end
+
+  def generate_csv(submissions, form_type, start_date, end_date)
+    # Create filename
+    csv_filename = Rails.root.join(
+      'tmp',
+      'reports',
+      "#{form_type}_#{start_date.strftime('%Y%m%d')}_to_#{end_date.strftime('%Y%m%d')}_#{Time.current.to_i}.csv"
+    )
+    
+    # Ensure directory exists
+    FileUtils.mkdir_p(File.dirname(csv_filename))
+    
+    # Get all attribute names from the first submission
+    headers = submissions.first.attributes.keys
+    
+    # Generate CSV
+    CSV.open(csv_filename, 'wb') do |csv|
+      # Write headers
+      csv << headers
+      
+      # Write each submission as a row
+      submissions.each do |submission|
+        row = headers.map do |attr|
+          value = submission.send(attr)
+          
+          # Format the value appropriately
+          case value
+          when Time, DateTime
+            value.strftime('%Y-%m-%d %H:%M:%S')
+          when Date
+            value.strftime('%Y-%m-%d')
+          when TrueClass
+            'Yes'
+          when FalseClass
+            'No'
+          when nil
+            ''
+          else
+            value.to_s
+          end
+        end
+        
+        csv << row
+      end
+    end
+    
+    csv_filename
   end
 
   def generate_pdfs(submissions, form_type)
