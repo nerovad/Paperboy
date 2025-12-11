@@ -4,8 +4,35 @@
 /* Reports wrapper */
 .reports-wrapper {
   max-width: 800px;
-  margin: 0 auto;
-  padding: 0;
+  height: calc(100vh - 200px); /* Fixed height to enable scrolling */
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+  
+  /* Custom scrollbar styling (WebKit browsers) */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+    
+    &:hover {
+      background: #555;
+    }
+  }
+  
+  /* Firefox scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
 }
 
 /* Form groups and spacing */
@@ -132,8 +159,105 @@
   }
 }
 
+/* Department header (for scheduled reports section) */
+.reports-wrapper .department-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: $text-color;
+  }
+}
+
+/* Approver/Schedule cards */
+.reports-wrapper .approver-card {
+  background: $form-bg;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: box-shadow 0.2s ease;
+  
+  &:hover {
+    box-shadow: $shadow-soft;
+  }
+  
+  .card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  
+  .approval-details {
+    flex: 1;
+  }
+  
+  .detail-row {
+    display: flex;
+    margin-bottom: 12px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .label {
+      font-weight: 600;
+      color: $label-color;
+      min-width: 140px;
+      font-size: 0.9rem;
+    }
+    
+    .value {
+      color: $text-color;
+      font-size: 0.9rem;
+    }
+  }
+  
+  .approval-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+    
+    .btn {
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+  }
+}
+
+/* Badge styles */
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  
+  &.badge-success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+  
+  &.badge-secondary {
+    background-color: #f5f5f5;
+    color: #616161;
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+  .reports-wrapper {
+    height: calc(100vh - 160px); /* Adjust for mobile header */
+    padding: 0 10px 10px 0; /* Less padding on mobile */
+  }
+  
   .reports-wrapper .form-row {
     flex-direction: column;
     gap: 0;
@@ -143,6 +267,29 @@
 
       &:last-child {
         margin-bottom: 0;
+      }
+    }
+  }
+  
+  .reports-wrapper .approver-card {
+    .card-content {
+      flex-direction: column;
+    }
+    
+    .detail-row {
+      flex-direction: column;
+      
+      .label {
+        min-width: 0;
+        margin-bottom: 4px;
+      }
+    }
+    
+    .approval-actions {
+      width: 100%;
+      
+      .btn {
+        flex: 1;
       }
     }
   }

@@ -5,9 +5,13 @@ class ReportsController < ApplicationController
   def index
     @forms = available_forms
     
-    # Load user's scheduled reports
+    # Load user's scheduled reports (if model exists)
     employee_id = session.dig(:user, "employee_id")
-    @scheduled_reports = ScheduledReport.for_employee(employee_id).order(created_at: :desc) if employee_id
+    if defined?(ScheduledReport) && employee_id
+      @scheduled_reports = ScheduledReport.for_employee(employee_id).order(created_at: :desc)
+    else
+      @scheduled_reports = []
+    end
   end
 
   def generate
@@ -28,58 +32,6 @@ class ReportsController < ApplicationController
     else
       # Generate one-time report
       generate_one_time_report(employee_id, form_type, format_param, status)
-    end
-  end
-
-  private
-
-  def generate_one_time_report(employee_id, form_type, format, status)
-    start_date = Date.parse(params[:start_date]) rescue nil
-    end_date = Date.parse(params[:end_date]) rescue nil
-
-    if start_date.nil? || end_date.nil?
-      redirect_to reports_path, alert: "Invalid date format"
-      return
-    end
-
-    if start_date > end_date
-      redirect_to reports_path, alert: "Start date must be before end date"
-      return
-    end
-
-    # Queue the report generation job (status can be nil/blank)
-    ReportGenerationJob.perform_later(
-      employee_id,
-      form_type,
-      start_date.to_s,
-      end_date.to_s,
-      format,
-      status.presence
-    )
-
-    redirect_to reports_path, notice: "Your report is being generated. You will receive an email when it's ready."
-  end
-
-  def create_scheduled_report(employee_id, form_type, format, status)
-    scheduled_report = ScheduledReport.new(
-      employee_id: employee_id,
-      form_type: form_type,
-      format: format,
-      status_filter: status.presence,
-      date_range_type: params[:date_range_type],
-      frequency: params[:frequency],
-      time_of_day: params[:time_of_day],
-      day_of_week: params[:day_of_week],
-      day_of_month: params[:day_of_month]
-    )
-
-    scheduled_report.next_run_at = scheduled_report.calculate_next_run
-
-    if scheduled_report.save
-      next_run = scheduled_report.next_run_at.strftime('%B %d at %I:%M %p')
-      redirect_to reports_path, notice: "Scheduled report created successfully. Next run: #{next_run}"
-    else
-      redirect_to reports_path, alert: "Error creating scheduled report: #{scheduled_report.errors.full_messages.join(', ')}"
     end
   end
 
@@ -121,6 +73,61 @@ class ReportsController < ApplicationController
   end
 
   private
+
+  def generate_one_time_report(employee_id, form_type, format, status)
+    start_date = Date.parse(params[:start_date]) rescue nil
+    end_date = Date.parse(params[:end_date]) rescue nil
+
+    if start_date.nil? || end_date.nil?
+      redirect_to reports_path, alert: "Invalid date format"
+      return
+    end
+
+    if start_date > end_date
+      redirect_to reports_path, alert: "Start date must be before end date"
+      return
+    end
+
+    # Queue the report generation job (status can be nil/blank)
+    ReportGenerationJob.perform_later(
+      employee_id,
+      form_type,
+      start_date.to_s,
+      end_date.to_s,
+      format,
+      status.presence
+    )
+
+    redirect_to reports_path, notice: "Your report is being generated. You will receive an email when it's ready."
+  end
+
+  def create_scheduled_report(employee_id, form_type, format, status)
+    unless defined?(ScheduledReport)
+      redirect_to reports_path, alert: "Scheduled reports feature is not yet set up. Please complete the installation steps."
+      return
+    end
+
+    scheduled_report = ScheduledReport.new(
+      employee_id: employee_id,
+      form_type: form_type,
+      format: format,
+      status_filter: status.presence,
+      date_range_type: params[:date_range_type],
+      frequency: params[:frequency],
+      time_of_day: params[:time_of_day],
+      day_of_week: params[:day_of_week],
+      day_of_month: params[:day_of_month]
+    )
+
+    scheduled_report.next_run_at = scheduled_report.calculate_next_run
+
+    if scheduled_report.save
+      next_run = scheduled_report.next_run_at.strftime('%B %d at %I:%M %p')
+      redirect_to reports_path, notice: "Scheduled report created successfully. Next run: #{next_run}"
+    else
+      redirect_to reports_path, alert: "Error creating scheduled report: #{scheduled_report.errors.full_messages.join(', ')}"
+    end
+  end
 
   def require_system_admin
     employee_id = session.dig(:user, "employee_id").to_s

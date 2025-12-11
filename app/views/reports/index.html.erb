@@ -3,8 +3,8 @@
   <h1>Generate Reports</h1>
 </div>
 
-<div class="form-wrapper reports-wrapper" data-controller="reports scheduled-report-form">
-  <%= form_with url: reports_generate_path, method: :post, local: true do |f| %>
+<div class="form-wrapper reports-wrapper" data-controller="reports">
+  <%= form_with url: reports_generate_path, method: :post, local: true, data: { controller: "scheduled-report-form" } do |f| %>
     
     <%# Form Selection %>
     <div class="form-group">
@@ -38,18 +38,20 @@
     </div>
 
     <%# Schedule Toggle %>
-    <div class="form-group">
-      <label class="form-label">
-        <%= f.check_box :schedule, 
-          data: { 
-            scheduled_report_form_target: "scheduleCheckbox",
-            action: "change->scheduled-report-form#toggleScheduleFields"
-          }
-        %>
-        Schedule this report to run automatically
-      </label>
-      <small class="help-text">Check this to set up recurring report generation</small>
-    </div>
+    <% if defined?(ScheduledReport) %>
+      <div class="form-group">
+        <label class="form-label">
+          <%= f.check_box :schedule, 
+            data: { 
+              scheduled_report_form_target: "scheduleCheckbox",
+              action: "change->scheduled-report-form#toggleScheduleFields"
+            }
+          %>
+          Schedule this report to run automatically
+        </label>
+        <small class="help-text">Check this to set up recurring report generation</small>
+      </div>
+    <% end %>
 
     <%# One-Time Report Fields (shown by default) %>
     <div data-scheduled-report-form-target="oneTimeFields">
@@ -77,82 +79,84 @@
     </div>
 
     <%# Scheduled Report Fields (hidden by default) %>
-    <div data-scheduled-report-form-target="scheduledFields" style="display: none;">
-      
-      <%# Date Range Type %>
-      <div class="form-group">
-        <%= f.label :date_range_type, "Date Range", class: "form-label" %>
-        <%= f.select :date_range_type,
-          options_for_select(ScheduledReport::DATE_RANGE_TYPES.map { |k, v| [v, k] }),
-          { prompt: "Choose date range..." },
-          { class: "form-control", data: { scheduled_report_form_target: "dateRangeType" } }
-        %>
-        <small class="help-text">The report will include submissions from this rolling time period</small>
-      </div>
+    <% if defined?(ScheduledReport) %>
+      <div data-scheduled-report-form-target="scheduledFields" style="display: none;">
+        
+        <%# Date Range Type %>
+        <div class="form-group">
+          <%= f.label :date_range_type, "Date Range", class: "form-label" %>
+          <%= f.select :date_range_type,
+            options_for_select(ScheduledReport::DATE_RANGE_TYPES.map { |k, v| [v, k] }),
+            { prompt: "Choose date range..." },
+            { class: "form-control", data: { scheduled_report_form_target: "dateRangeType" } }
+          %>
+          <small class="help-text">The report will include submissions from this rolling time period</small>
+        </div>
 
-      <%# Frequency %>
-      <div class="form-group">
-        <%= f.label :frequency, "Frequency", class: "form-label" %>
-        <%= f.select :frequency,
-          options_for_select(ScheduledReport::FREQUENCIES.map { |k, v| [v, k] }),
-          { prompt: "Choose frequency..." },
-          { 
-            class: "form-control",
-            data: { 
-              scheduled_report_form_target: "frequencySelect",
-              action: "change->scheduled-report-form#toggleFrequencyFields"
+        <%# Frequency %>
+        <div class="form-group">
+          <%= f.label :frequency, "Frequency", class: "form-label" %>
+          <%= f.select :frequency,
+            options_for_select(ScheduledReport::FREQUENCIES.map { |k, v| [v, k] }),
+            { prompt: "Choose frequency..." },
+            { 
+              class: "form-control",
+              data: { 
+                scheduled_report_form_target: "frequencySelect",
+                action: "change->scheduled-report-form#toggleFrequencyFields"
+              }
             }
-          }
-        %>
-      </div>
+          %>
+        </div>
 
-      <%# Time of Day %>
-      <div class="form-group">
-        <%= f.label :time_of_day, "Time of Day", class: "form-label" %>
-        <%= f.time_field :time_of_day,
-          class: "form-control",
-          value: "23:30",
-          data: { scheduled_report_form_target: "timeOfDay" }
-        %>
-        <small class="help-text">Time in Pacific Time (PT)</small>
-      </div>
+        <%# Time of Day %>
+        <div class="form-group">
+          <%= f.label :time_of_day, "Time of Day", class: "form-label" %>
+          <%= f.time_field :time_of_day,
+            class: "form-control",
+            value: "23:30",
+            data: { scheduled_report_form_target: "timeOfDay" }
+          %>
+          <small class="help-text">Time in Pacific Time (PT)</small>
+        </div>
 
-      <%# Day of Week (for weekly) %>
-      <div class="form-group" 
-           data-scheduled-report-form-target="weeklyField"
-           style="display: none;">
-        <%= f.label :day_of_week, "Day of Week", class: "form-label" %>
-        <%= f.select :day_of_week,
-          options_for_select([
-            ['Sunday', 0],
-            ['Monday', 1],
-            ['Tuesday', 2],
-            ['Wednesday', 3],
-            ['Thursday', 4],
-            ['Friday', 5],
-            ['Saturday', 6]
-          ]),
-          { prompt: "Choose day..." },
-          { class: "form-control", data: { scheduled_report_form_target: "dayOfWeek" } }
-        %>
-      </div>
+        <%# Day of Week (for weekly) %>
+        <div class="form-group" 
+             data-scheduled-report-form-target="weeklyField"
+             style="display: none;">
+          <%= f.label :day_of_week, "Day of Week", class: "form-label" %>
+          <%= f.select :day_of_week,
+            options_for_select([
+              ['Sunday', 0],
+              ['Monday', 1],
+              ['Tuesday', 2],
+              ['Wednesday', 3],
+              ['Thursday', 4],
+              ['Friday', 5],
+              ['Saturday', 6]
+            ]),
+            { prompt: "Choose day..." },
+            { class: "form-control", data: { scheduled_report_form_target: "dayOfWeek" } }
+          %>
+        </div>
 
-      <%# Day of Month (for monthly) %>
-      <div class="form-group"
-           data-scheduled-report-form-target="monthlyField"
-           style="display: none;">
-        <%= f.label :day_of_month, "Day of Month", class: "form-label" %>
-        <%= f.number_field :day_of_month,
-          class: "form-control",
-          min: 1,
-          max: 31,
-          placeholder: "1-31",
-          value: 1,
-          data: { scheduled_report_form_target: "dayOfMonth" }
-        %>
-        <small class="help-text">For months with fewer days, it will run on the last day of the month</small>
+        <%# Day of Month (for monthly) %>
+        <div class="form-group"
+             data-scheduled-report-form-target="monthlyField"
+             style="display: none;">
+          <%= f.label :day_of_month, "Day of Month", class: "form-label" %>
+          <%= f.number_field :day_of_month,
+            class: "form-control",
+            min: 1,
+            max: 31,
+            placeholder: "1-31",
+            value: 1,
+            data: { scheduled_report_form_target: "dayOfMonth" }
+          %>
+          <small class="help-text">For months with fewer days, it will run on the last day of the month</small>
+        </div>
       </div>
-    </div>
+    <% end %>
 
     <%# Format Selection %>
     <div class="form-group">
