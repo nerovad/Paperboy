@@ -1,5 +1,71 @@
 @import "base/tokens";
 
+/* Hamburger menu button (mobile only) */
+.hamburger-btn {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1001;
+  background: $primary-color;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: $primary-hover;
+    transform: scale(1.05);
+  }
+  
+  .navbar-toggler-icon {
+    width: 24px;
+    height: 2px;
+    background: white;
+    display: block;
+    position: relative;
+    transition: all 0.3s ease;
+    
+    &::before, &::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 2px;
+      background: white;
+      transition: all 0.3s ease;
+    }
+    
+    &::before { top: -8px; }
+    &::after { top: 8px; }
+  }
+  
+  // Show on mobile
+  @media (max-width: 768px) {
+    display: block;
+  }
+}
+
+/* Overlay backdrop for mobile */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  
+  &.open {
+    display: block;
+    opacity: 1;
+  }
+}
+
 /* Left sidebar */
 .sidebar {
   width: 280px;
@@ -12,7 +78,7 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: $primary-color #2c3e50;
-
+  
   &::-webkit-scrollbar { width: 8px; }
   &::-webkit-scrollbar-track { background: #2c3e50; }
   &::-webkit-scrollbar-thumb {
@@ -20,7 +86,7 @@
     border-radius: 4px;
   }
   &::-webkit-scrollbar-thumb:hover { background: $primary-hover; }
-
+  
   h2 {
     font-size: 1.2em;
     text-align: center;
@@ -31,9 +97,9 @@
     padding-bottom: 10px;
     border-bottom: 2px solid $primary-color;
   }
-
+  
   .sidebar-p { text-align: center; }
-
+  
   .nav-link {
     display: block;
     color: #fff;
@@ -44,15 +110,16 @@
     border-radius: 5px;
     text-align: center;
     transition: background 0.3s, transform 0.2s;
-
+    
     &:hover {
       background-color: $primary-color;
       transform: scale(1.05);
       cursor: pointer;
     }
+    
     &:active { transform: scale(1); }
   }
-
+  
   .sidebar-search-input {
     width: 100%;
     padding: 10px 12px;
@@ -81,5 +148,28 @@
       border-color: rgba(255, 255, 255, 0.5);
     }
   }
+  
   .nav-link.active { background-color: $primary-color; }
+  
+  /* Mobile responsive behavior */
+  @media (max-width: 768px) {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    
+    &.open {
+      left: 0;
+    }
+  }
+}
+
+/* Main content area adjustment */
+.main-content {
+  @media (max-width: 768px) {
+    margin-left: 0 !important;
+    width: 100%;
+    padding-top: 60px; // Space for hamburger button
+  }
 }

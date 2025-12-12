@@ -1,4 +1,11 @@
 <%# app/views/shared/_sidebar.html.erb %>
+<button class="hamburger-btn" data-controller="sidebar" data-action="click->sidebar#toggle">
+  <span class="navbar-toggler-icon"></span>
+</button>
+
+<!-- Overlay -->
+<div class="sidebar-overlay" data-controller="sidebar" data-action="click->sidebar#close"></div>
+
 <div class="sidebar" data-controller="sidebar-search">
   <h2>Available Forms</h2>
   <% if current_user %>
