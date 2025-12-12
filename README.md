@@ -38,6 +38,9 @@ git push origin --tags
 On the prod server:
 
 git pull
+RAILS_ENV=production bin/rails assets:clobber
+RAILS_ENV=production bin/rails assets:precompile
+Then restart the app
 
 ## Rolling back on Production
 Get the tags
