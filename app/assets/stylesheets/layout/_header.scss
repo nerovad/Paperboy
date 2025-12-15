@@ -14,7 +14,13 @@
   margin: 0;
   line-height: 0;
   white-space: nowrap;
+  
+  /* Hide on mobile */
+  @media (max-width: 768px) {
+    display: none;
+  }
 }
+
 .app-logo {
   width: clamp(120px, 7vw, 320px);
   height: auto;
@@ -22,6 +28,7 @@
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
   transition: transform 0.2s ease;
 }
+
 .app-logo-link:hover .app-logo { transform: scale(1.05); }
 
 /* Auth controls */
@@ -35,6 +42,7 @@
 
   &:hover { background: $primary-hover; }
 }
+
 .login-button-over-image {
   position: fixed;
   z-index: 9999;
@@ -49,6 +57,14 @@
   cursor: pointer;
 
   &:hover { background-color: #45a049; }
+  
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    top: 15px;
+    right: 15px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
 }
 
 /* Profile dropdown (top-right) */
@@ -61,6 +77,12 @@
   align-items: center;
   gap: 10px;
   font-family: "Helvetica Neue", Arial, sans-serif;
+  
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    top: 15px;
+    right: 15px;
+  }
 }
 
 /* Profile button */
@@ -85,6 +107,34 @@
     background 0.18s ease-out,
     box-shadow 0.18s ease-out,
     transform 0.12s ease-out;
+  
+  /* Mobile: compact icon-only version */
+  @media (max-width: 768px) {
+    padding: 10px;
+    gap: 0;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    justify-content: center;
+    font-size: 1.1rem;
+    
+    /* Hide the name text on mobile */
+    .profile-name {
+      display: none;
+    }
+    
+    /* Hide chevron on mobile */
+    &::after {
+      display: none;
+    }
+  }
+  
+  /* Tablet: show initials only */
+  @media (min-width: 769px) and (max-width: 992px) {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    gap: 6px;
+  }
 }
 
 .profile-icon:hover {
@@ -125,6 +175,12 @@
   color: #fff;
   text-align: center;
   border: 1px solid rgba(0, 0, 0, 0.06);
+  
+  /* Mobile: adjust for circular button */
+  @media (max-width: 768px) {
+    top: -4px;
+    right: -4px;
+  }
 }
 
 /* Dropdown menu */
@@ -157,6 +213,13 @@
     opacity 0.16s ease-out,
     transform 0.16s ease-out,
     visibility 0.16s ease-out;
+  
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    top: 52px; /* below the circular button */
+    min-width: 200px;
+    right: -5px; /* slight adjustment for circular button */
+  }
 }
 
 /* When Stimulus adds .show, animate it in */
@@ -187,6 +250,12 @@
     background 0.16s ease-out,
     color 0.16s ease-out,
     padding-left 0.16s ease-out;
+  
+  /* Mobile: slightly smaller text */
+  @media (max-width: 768px) {
+    font-size: 0.88rem;
+    padding: 9px 14px;
+  }
 }
 
 /* Hover state for items */
@@ -194,6 +263,10 @@
   background-color: #f4f7fb;
   color: #004976;
   padding-left: 20px;
+  
+  @media (max-width: 768px) {
+    padding-left: 18px;
+  }
 }
 
 /* Optional thin divider between sections */
@@ -222,6 +295,12 @@
     background 0.16s ease-out,
     transform 0.1s ease-out,
     box-shadow 0.16s ease-out;
+  
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
+    padding: 8px 10px;
+  }
 }
 
 .logout-btn:hover {

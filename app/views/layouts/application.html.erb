@@ -11,72 +11,93 @@
     <%= javascript_importmap_tags %>
   </head>
   <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %>">
-   <!-- Impersonation Banner -->
-<!-- In app/views/layouts/application.html.erb -->
-<% if session[:impersonating] && session[:user] %>
-  <div style="background: #ff9800; color: white; padding: 10px; text-align: center;">
-    ⚠️ You are impersonating <%= session[:user]["first_name"] %> <%= session[:user]["last_name"] %>
-    <%= button_to "Stop Impersonating", admin_impersonation_path(1), 
-                  method: :delete, 
-                  class: "btn pdf",
-                  style: "margin-left: 10px;" %>
-  </div>
-<% end %>
+    <!-- Impersonation Banner -->
+    <% if session[:impersonating] && session[:user] %>
+      <div style="background: #ff9800; color: white; padding: 10px; text-align: center;">
+        ⚠️ You are impersonating <%= session[:user]["first_name"] %> <%= session[:user]["last_name"] %>
+        <%= button_to "Stop Impersonating", admin_impersonation_path(1), 
+                      method: :delete, 
+                      class: "btn pdf",
+                      style: "margin-left: 10px;" %>
+      </div>
+    <% end %>
+    
+    <!-- Hamburger button (mobile only) -->
+    <% if session[:user_id] %>
+      <button class="hamburger-btn" data-controller="sidebar" data-action="click->sidebar#toggle">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    <% end %>
+    
+    <!-- Overlay backdrop (mobile only) -->
+    <div class="sidebar-overlay" data-controller="sidebar" data-action="click->sidebar#close"></div>
    
-   <%= render "shared/logo" %>
-  <div class="app-container">
-    <%= render "shared/sidebar" %>
-    <div class="content-container">
-      <div id="main-content">
-        <% if content_for?(:image) %>
-          <%= yield :image %>
-        <% else %>
-          <%= yield %>
-        <% end %>
-        
-        <!-- Login Button (over image) -->
-        <% unless session[:user_id] %>
-          <%= form_with url: auth_setup_path, method: :post, 
-                        data: { turbo: false } do |f| %>
-            <%= f.submit "Login with Microsoft", class: "login-button-over-image" %>
+    <%= render "shared/logo" %>
+    
+    <div class="app-container">
+      <%= render "shared/sidebar" %>
+      
+      <div class="content-container">
+        <div id="main-content">
+          <% if content_for?(:image) %>
+            <%= yield :image %>
+          <% else %>
+            <%= yield %>
           <% end %>
-        <% else %>
-          <div class="profile-dropdown" data-controller="profile-dropdown">
-            <button id="profile-toggle"
-                    class="profile-icon"
-                    data-action="click->profile-dropdown#toggle">
-              <%= session[:user]["first_name"] %>
-              <% if inbox_count > 0 %>
-                <span class="inbox-badge"><%= inbox_count %></span>
-              <% end %>
-            </button>
-            <div class="dropdown-content"
-                 data-profile-dropdown-target="dropdown">
-              <%= link_to "Inbox Queue", inbox_queue_path, class: "btn btn-primary" %>
-              <%= link_to "Status", status_path, class: "btn btn-primary" %>
+          
+          <!-- Login Button (over image) -->
+          <% unless session[:user_id] %>
+            <%= form_with url: auth_setup_path, method: :post, 
+                          data: { turbo: false } do |f| %>
+              <%= f.submit "Login with Microsoft", class: "login-button-over-image" %>
+            <% end %>
+          <% else %>
+            <div class="profile-dropdown" data-controller="profile-dropdown">
+              <button id="profile-toggle"
+                      class="profile-icon"
+                      data-action="click->profile-dropdown#toggle"
+                      aria-expanded="false">
+                <!-- User icon (always visible) -->
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                </svg>
+                
+                <!-- Name (hidden on mobile) -->
+                <span class="profile-name"><%= session[:user]["first_name"] %></span>
+                
+                <!-- Inbox badge -->
+                <% if inbox_count > 0 %>
+                  <span class="inbox-badge"><%= inbox_count %></span>
+                <% end %>
+              </button>
               
-              <% if AuthorizationManager.exists?(employee_id: session.dig(:user, "employee_id").to_s) %>
-                <%= link_to "Auth Console", authorization_console_index_path, class: "btn btn-primary" %>
-              <% end %>
-
+              <div class="dropdown-content"
+                   data-profile-dropdown-target="dropdown">
+                <%= link_to "Inbox Queue", inbox_queue_path, class: "btn btn-primary" %>
+                <%= link_to "Status", status_path, class: "btn btn-primary" %>
+                
+                <% if AuthorizationManager.exists?(employee_id: session.dig(:user, "employee_id").to_s) %>
+                  <%= link_to "Auth Console", authorization_console_index_path, class: "btn btn-primary" %>
+                <% end %>
+                
                 <% if system_admin? %>
-                <%= link_to "Manage Forms", form_templates_path, class: "btn btn-info" %>
-              <% end %>
-
+                  <%= link_to "Manage Forms", form_templates_path, class: "btn btn-info" %>
+                <% end %>
+                
                 <% if system_admin? %>
-                <%= link_to "Reports", reports_path, class: "btn btn-info" %>
-              <% end %>
-
-              <% if session[:user_id] == 136626 %> <!-- Your employee ID -->
-                <%= link_to "Impersonate", new_admin_impersonation_path, class: "btn btn-warning" %>
-              <% end %>
-              
-              <%= button_to "Logout", logout_path, method: :delete, class: "logout-btn" %>
+                  <%= link_to "Reports", reports_path, class: "btn btn-info" %>
+                <% end %>
+                
+                <% if session[:user_id] == 136626 %> <!-- Your employee ID -->
+                  <%= link_to "Impersonate", new_admin_impersonation_path, class: "btn btn-warning" %>
+                <% end %>
+                
+                <%= button_to "Logout", logout_path, method: :delete, class: "logout-btn" %>
+              </div>
             </div>
-          </div>
-        <% end %>
+          <% end %>
+        </div>
       </div>
     </div>
-  </div>
-</body>
+  </body>
 </html>
