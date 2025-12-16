@@ -15,11 +15,11 @@ Rails.application.routes.draw do
   resources :carpool_forms
   resources :bike_locker_permits
   get "forms/home"
-  
+
   # Old login (keep for admin impersonation)
   post "/login", to: "sessions#create_legacy"
   delete "/logout", to: "sessions#destroy"
-  
+
   # Clean OAuth/Entra ID routes
   get '/auth/callback', to: 'sessions#create_oauth'
   get '/auth/failure', to: 'sessions#failure'
@@ -32,7 +32,7 @@ Rails.application.routes.draw do
 
   mount Sidekiq::Web => '/sidekiq'
   root "forms#home"
-  
+
   resources :parking_lot_submissions, only: [:new, :create, :index, :show] do
     member do
       get :pdf
@@ -92,7 +92,15 @@ resources :loa_forms, only: [:new, :create]
 
     get "/status", to: "status#index", as: :status
 
+    # TC60 Billing → PDF Invoice
+    get "/invoice", to: "invoices#show"
+    get "/invoice", to: "invoices#new"
+
+    # PDF Grid Mapping Tool
+    get "/debug/invoice_grid", to: "grid#show"
+
     namespace :admin do
   resources :impersonations, only: [:new, :create, :destroy]
 end
+
 end

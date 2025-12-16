@@ -1,0 +1,30 @@
+# Coordinate dictionary for Paperboy TC60 invoice overlay
+# Units: PDF points, origin (0,0) = bottom-left
+
+invoice:
+  header:
+    date_range:
+      x: 50
+      y: 705
+    billing_type:
+      x: 50
+      y: 690
+    encumbered_flag:
+      x: 50
+      y: 675
+
+  summary:
+    total_amount:
+      x: 430
+      y: 640
+    total_cost:
+      x: 430
+      y: 625
+    total_quantity:
+      x: 430
+      y: 610
+
+  line_items:
+    x: 40
+    y: 550
+    width: 520

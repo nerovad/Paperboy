@@ -1,0 +1,15 @@
+# app/reports/base/template_loader.rb
+module Reports
+  module Base
+    class TemplateLoader
+      def initialize(report)
+        @path = Rails.root.join("app/pdfs/#{report}/template.pdf")
+      end
+
+      def path
+        fail "#{@path} missing." unless File.exist?(@path)
+        @path
+      end
+    end
+  end
+end

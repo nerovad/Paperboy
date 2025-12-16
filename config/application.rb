@@ -17,7 +17,9 @@ module FormsApp
     config.autoload_lib(ignore: %w[assets tasks])
 
     # Configuration for the application, engines, and railties goes here.
-    #
+    config.paths.add "app/reports", eager_load: true
+    config.eager_load_paths << Rails.root.join("app/reports")
+
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #

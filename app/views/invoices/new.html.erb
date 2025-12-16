@@ -1,0 +1,37 @@
+<h1>TC60 Billing – Invoice Generator</h1>
+
+<%= form_with url: invoice_path, method: :get, local: true do |f| %>
+  <div>
+    <%= f.label :sDate, "Start Date" %><br>
+    <%= f.date_field :sDate %>
+  </div>
+
+  <div>
+    <%= f.label :eDate, "End Date" %><br>
+    <%= f.date_field :eDate %>
+  </div>
+
+  <div>
+    <%= f.label :type, "Billing Type (e.g., GDS)" %><br>
+    <%= f.text_field :type %>
+  </div>
+
+  <div>
+    <%= f.label :digits, "Rounding Digits" %><br>
+    <%= f.number_field :digits, value: 2 %>
+  </div>
+
+  <div>
+    <%= f.label :encumbered, "Encumbered?" %><br>
+    <%= f.select :encumbered,
+                 options_for_select([["Non-Encumbered", 0], ["Encumbered", 1]], 0) %>
+  </div>
+
+  <div style="margin-top: 1rem;">
+    <%= f.submit "Generate Invoice PDF" %>
+  </div>
+<% end %>
+
+<p>
+  Debug: <%= link_to "View Invoice Grid Overlay", "/debug/invoice_grid", target: "_blank" %>
+</p>

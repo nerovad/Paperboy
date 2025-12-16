@@ -2,13 +2,13 @@
 
 default: &default
   adapter: sqlserver
-  host: <%= ENV.fetch("GSABSS_HOST", "gsasql16") %>
-  port: <%= ENV.fetch("GSABSS_PORT", 1433).to_i %>
+  host: <%= ENV.fetch("GSABSS_HOST") %>
+  port: <%= ENV.fetch("GSABSS_PORT").to_i %>
   username: <%= ENV.fetch("GSABSS_USERNAME") %>
   password: <%= ENV.fetch("GSABSS_PASSWORD") %>
   database: <%= ENV.fetch("GSABSS_DATABASE", "GSABSS") %>
   azure: false
-  timeout: 30000
+  timeout: <%= ENV.fetch("GSABSS_TIMEOUT").to_i %>
   encoding: utf8
 
 development:
@@ -20,6 +20,5 @@ test:
 production:
   <<: *default
 
-# Used by GsabssBase:
 gsabss:
   <<: *default
