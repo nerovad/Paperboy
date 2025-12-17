@@ -1,20 +1,10 @@
 /* Pages: Admin Impersonation */
 @import "base/tokens";
 
-.impersonation-page {
+.impersonation-wrapper {
   max-width: 600px;
-  margin: 50px auto;
+  margin: 0 auto;
   padding: 30px;
-  background: $form-bg;
-  border-radius: $radius-12;
-  box-shadow: $shadow-soft;
-
-  h1 {
-    color: $text-color;
-    font-size: 1.75rem;
-    margin-bottom: 30px;
-    font-weight: 600;
-  }
 
   label {
     display: block;
@@ -48,14 +38,14 @@
     font-size: 1rem;
     font-weight: 500;
     color: white;
-    background-color: #ff9800;
+    background-color: $primary-color;
     border: none;
     border-radius: $radius-6;
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.1s ease;
 
     &:hover {
-      background-color: #f57c00;
+      background-color: $primary-hover;
     }
 
     &:active {
@@ -64,7 +54,7 @@
 
     &:focus {
       outline: none;
-      box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
     }
   }
 
