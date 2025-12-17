@@ -1,10 +1,10 @@
 <!-- app/views/form_templates/show.html.erb -->
 <div class="form-header">
   <h1><%= @form_template.name %></h1>
-  <%= link_to "← Back to Templates", form_templates_path, class: "btn btn-secondary" %>
 </div>
 
 <div class="form-wrapper form-templates">
+<%= link_to "← Back to Templates", form_templates_path, class: "btn btn-secondary" %>
   <div class="approvers-list">
     <!-- Template Information Card -->
     <div class="approver-card">
@@ -118,13 +118,6 @@
         <h3>Actions</h3>
       </div>
       
-      <div class="approvals-list">
-        <div class="approval-item">
-          <div class="alert alert-success">
-            <strong>✓ Form Generated!</strong><br>
-            This form has been created and is now available in your sidebar.
-          </div>
-          
           <div class="approval-actions">
             <%= link_to "View Form", 
                         send("new_#{@form_template.file_name}_path"),

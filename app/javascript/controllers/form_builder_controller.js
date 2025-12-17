@@ -100,10 +100,10 @@ export default class extends Controller {
         headerItem.innerHTML = `
           <label>Page ${i}:</label>
           <input type="text" 
-                 name="page_headers[]" 
-                 class="form-control form-control-sm"
-                 placeholder="e.g., Additional Information"
-                 required>
+                name="form_template[page_headers][]" 
+                class="form-control form-control-sm"
+                placeholder="e.g., Additional Information"
+                required>
         `
         headersList.appendChild(headerItem)
       }
@@ -116,7 +116,6 @@ export default class extends Controller {
       this.updatePageSelects(2) // Reset to just 2 pages
     }
   }
-
   // Update all page select dropdowns with current page count
   updatePageSelects(pageCount) {
     const pageSelects = this.fieldsContainerTarget.querySelectorAll('.page-select')
@@ -138,6 +137,7 @@ export default class extends Controller {
   }
 
   // Generate page options HTML
+  // Generate page options HTML
   generatePageOptions(pageCount) {
     let options = `
       <option value="1">Page 1 - Employee Info</option>
@@ -145,7 +145,9 @@ export default class extends Controller {
     `
 
     for (let i = 3; i <= pageCount; i++) {
-      const input = this.pageHeadersListTarget?.querySelector(`input:nth-child(${i - 2})`)
+      // Get all page header inputs, then grab the one for this page
+      const allInputs = this.pageHeadersListTarget?.querySelectorAll('input')
+      const input = allInputs?.[i - 3] // Array index: page 3 = index 0, page 4 = index 1, etc.
       const pageName = input?.value || `Page ${i}`
       options += `<option value="${i}">Page ${i} - ${pageName}</option>`
     }
