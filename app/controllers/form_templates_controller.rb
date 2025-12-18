@@ -4,6 +4,8 @@ class FormTemplatesController < ApplicationController
   
   def index
     @form_templates = FormTemplate.all.order(created_at: :desc)
+    @acl_groups = fetch_acl_groups
+    @employees = fetch_employees
   end
   
   def new
@@ -42,9 +44,15 @@ class FormTemplatesController < ApplicationController
       
       # Check if generation was successful
       if $?.success?
+        # Customize generated model based on submission routing
+        customize_generated_model(@form_template)
+
+        # Customize generated controller based on submission routing
+        customize_generated_controller(@form_template)
+
         # Generate dynamic view based on template configuration
         generate_dynamic_view(class_name)
-        
+
         # Fix the sidebar to put the form in the correct array
         fix_sidebar_placement(class_name)
         
@@ -181,6 +189,9 @@ class FormTemplatesController < ApplicationController
       :access_level,
       :acl_group_id,
       :page_count,
+      :submission_type,
+      :approval_routing_to,
+      :approval_employee_id,
       page_headers: []
     )
   end
@@ -228,10 +239,80 @@ class FormTemplatesController < ApplicationController
     result = ActiveRecord::Base.connection.execute(
       "SELECT GroupID, Group_Name FROM GSABSS.dbo.Groups ORDER BY Group_Name"
     )
-    
+
     result.map { |row| [row['Group_Name'], row['GroupID']] }
   rescue
     []
+  end
+
+  def fetch_employees
+    Employee.order(:Last_Name, :First_Name)
+            .map { |e| ["#{e.First_Name} #{e.Last_Name} (#{e.EmployeeID})", e.EmployeeID] }
+  rescue
+    []
+  end
+
+  def customize_generated_model(form_template)
+    model_path = Rails.root.join("app/models/#{form_template.file_name}.rb")
+    return unless File.exist?(model_path)
+
+    # If submission type is database, remove status enum
+    if form_template.submission_type == 'database'
+      content = File.read(model_path)
+      # Remove the enum block
+      content.gsub!(/  enum :status.*?\n  \}/m, '')
+      File.write(model_path, content)
+    end
+    # If submission type is approval, the enum is already there from the template
+  end
+
+  def customize_generated_controller(form_template)
+    controller_path = Rails.root.join("app/controllers/#{form_template.plural_file_name}_controller.rb")
+    return unless File.exist?(controller_path)
+
+    content = File.read(controller_path)
+
+    # Find the create action and customize it based on submission routing
+    if form_template.requires_approval?
+      # Add routing logic to the create action
+      routing_logic = generate_approval_routing_logic(form_template)
+
+      # Replace the redirect in the create action with our custom routing logic
+      content.gsub!(
+        /redirect_to form_success_path.*$/,
+        routing_logic
+      )
+    end
+
+    File.write(controller_path, content)
+  end
+
+  def generate_approval_routing_logic(form_template)
+    case form_template.approval_routing_to
+    when 'supervisor'
+      <<~RUBY.chomp
+        # Route to supervisor for approval
+        @#{form_template.file_name}.update(status: :pending)
+        # TODO: Send notification to supervisor
+        redirect_to form_success_path, notice: 'Form submitted and routed to your supervisor for approval.', allow_other_host: false, status: :see_other
+      RUBY
+    when 'department_head'
+      <<~RUBY.chomp
+        # Route to department head for approval
+        @#{form_template.file_name}.update(status: :pending)
+        # TODO: Send notification to department head
+        redirect_to form_success_path, notice: 'Form submitted and routed to your department head for approval.', allow_other_host: false, status: :see_other
+      RUBY
+    when 'employee'
+      <<~RUBY.chomp
+        # Route to specific employee for approval
+        @#{form_template.file_name}.update(status: :pending, approver_id: #{form_template.approval_employee_id})
+        # TODO: Send notification to employee with ID #{form_template.approval_employee_id}
+        redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
+      RUBY
+    else
+      "redirect_to form_success_path, allow_other_host: false, status: :see_other"
+    end
   end
   def generate_dynamic_view(class_name)
     form_template = FormTemplate.find_by(class_name: class_name)

@@ -8,11 +8,22 @@ class FormTemplate < ApplicationRecord
   validates :access_level, inclusion: { in: %w[public restricted] }
   validates :page_count, numericality: { greater_than_or_equal_to: 2, less_than_or_equal_to: 30 }
   validates :acl_group_id, presence: true, if: :restricted?
+  validates :submission_type, inclusion: { in: %w[database approval] }
+  validates :approval_routing_to, presence: true, if: :requires_approval?
+  validates :approval_employee_id, presence: true, if: :routes_to_specific_employee?
   
   before_validation :generate_class_name, on: :create
   
   def restricted?
     access_level == 'restricted'
+  end
+
+  def requires_approval?
+    submission_type == 'approval'
+  end
+
+  def routes_to_specific_employee?
+    requires_approval? && approval_routing_to == 'employee'
   end
   
   def table_name

@@ -1,7 +1,8 @@
-<div id="create-form-modal" 
-     class="modal form-builder-modal" 
+<div id="create-form-modal"
+     class="modal form-builder-modal"
      data-controller="form-builder"
      data-form-builder-acl-groups-value="<%= acl_groups.to_json %>"
+     data-form-builder-employees-value="<%= employees.to_json %>"
      style="display: none;">
   
   <div class="form-builder-modal-content">
@@ -80,16 +81,73 @@
         </div>
         
         <!-- Additional Page Headers (shown when pages > 2) -->
-        <div class="form-group page-headers-container" 
+        <div class="form-group page-headers-container"
              data-form-builder-target="pageHeadersContainer"
              style="display: none;">
           <label>Page Names (for pages 3+)</label>
           <div data-form-builder-target="pageHeadersList"></div>
         </div>
-        
-        <!-- Step 5: Fields -->
+
+        <!-- Step 5: Submission Routing -->
         <div class="form-group">
-          <label>5. Fields</label>
+          <label for="form_submission_type">5. Form Submission Routing <span class="required">*</span></label>
+          <%= f.select :submission_type,
+                      options_for_select([
+                        ['Submit to Database (Ends the workflow)', 'database'],
+                        ['Routed for Approval', 'approval']
+                      ], 'database'),
+                      {},
+                      {
+                        id: "form_submission_type",
+                        class: "form-control",
+                        data: {
+                          form_builder_target: "submissionType",
+                          action: "change->form-builder#toggleApprovalRouting"
+                        }
+                      } %>
+        </div>
+
+        <!-- Approval Routing Options (hidden by default) -->
+        <div class="form-group"
+             data-form-builder-target="approvalRoutingContainer"
+             style="display: none;">
+          <label for="form_approval_routing">Route to: <span class="required">*</span></label>
+          <%= f.select :approval_routing_to,
+                      options_for_select([
+                        ['Supervisor', 'supervisor'],
+                        ['Department Head', 'department_head'],
+                        ['Employee', 'employee']
+                      ]),
+                      { include_blank: "Select routing option..." },
+                      {
+                        id: "form_approval_routing",
+                        class: "form-control",
+                        data: {
+                          form_builder_target: "approvalRoutingTo",
+                          action: "change->form-builder#toggleEmployeeSelect"
+                        }
+                      } %>
+        </div>
+
+        <!-- Employee Selection (hidden by default) -->
+        <div class="form-group"
+             data-form-builder-target="employeeSelectContainer"
+             style="display: none;">
+          <label for="form_approval_employee">Select Employee: <span class="required">*</span></label>
+          <%= f.select :approval_employee_id,
+                      [],
+                      { include_blank: "Select employee..." },
+                      {
+                        id: "form_approval_employee",
+                        class: "form-control",
+                        data: { form_builder_target: "approvalEmployee" }
+                      } %>
+          <small class="form-text">All employees will be loaded when this option is selected.</small>
+        </div>
+
+        <!-- Step 6: Fields -->
+        <div class="form-group">
+          <label>6. Fields</label>
           <div class="fields-container" data-form-builder-target="fieldsContainer">
             <!-- Fields will be added here dynamically -->
           </div>

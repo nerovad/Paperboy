@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_16_213745) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_18_221129) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -324,6 +324,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_16_213745) do
     t.string "short_name", limit: 50, null: false
   end
 
+  create_table "arizona_cardinals_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.integer "status", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "authorization_fos", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
@@ -558,6 +572,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_16_213745) do
     t.integer "created_by"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "submission_type", default: "database"
+    t.string "approval_routing_to"
+    t.integer "approval_employee_id"
     t.index ["class_name"], name: "index_form_templates_on_class_name", unique: true
   end
 

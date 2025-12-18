@@ -14,11 +14,17 @@ export default class extends Controller {
     "pageHeadersList",
     "fieldsContainer",
     "fieldItem",
-    "submitButton"
+    "submitButton",
+    "submissionType",
+    "approvalRoutingContainer",
+    "approvalRoutingTo",
+    "employeeSelectContainer",
+    "approvalEmployee"
   ]
 
   static values = {
-    aclGroups: Array
+    aclGroups: Array,
+    employees: Array
   }
 
   connect() {
@@ -58,6 +64,8 @@ export default class extends Controller {
       this.addField() // Add back the default field
       this.pageHeadersContainerTarget.style.display = 'none'
       this.aclGroupContainerTarget.style.display = 'none'
+      this.approvalRoutingContainerTarget.style.display = 'none'
+      this.employeeSelectContainerTarget.style.display = 'none'
     }
   }
 
@@ -81,6 +89,58 @@ export default class extends Controller {
       this.aclGroupTarget.required = false
       this.aclGroupTarget.value = ''
     }
+  }
+
+  // Toggle approval routing options based on submission type
+  toggleApprovalRouting(event) {
+    const submissionType = event.target.value
+    const container = this.approvalRoutingContainerTarget
+    const employeeContainer = this.employeeSelectContainerTarget
+
+    if (submissionType === 'approval') {
+      container.style.display = 'block'
+      this.approvalRoutingToTarget.required = true
+    } else {
+      container.style.display = 'none'
+      employeeContainer.style.display = 'none'
+      this.approvalRoutingToTarget.required = false
+      this.approvalRoutingToTarget.value = ''
+      this.approvalEmployeeTarget.required = false
+      this.approvalEmployeeTarget.value = ''
+    }
+  }
+
+  // Toggle employee select based on routing option
+  toggleEmployeeSelect(event) {
+    const routingTo = event.target.value
+    const container = this.employeeSelectContainerTarget
+
+    if (routingTo === 'employee') {
+      container.style.display = 'block'
+      this.approvalEmployeeTarget.required = true
+      // Load employees for the current user's department
+      this.loadDepartmentEmployees()
+    } else {
+      container.style.display = 'none'
+      this.approvalEmployeeTarget.required = false
+      this.approvalEmployeeTarget.value = ''
+    }
+  }
+
+  // Load employees from the user's department
+  loadDepartmentEmployees() {
+    console.log("Loading employees...")
+
+    const select = this.approvalEmployeeTarget
+    select.innerHTML = '<option value="">Select employee...</option>'
+
+    // Populate with all employees from the employeesValue
+    this.employeesValue.forEach(emp => {
+      const option = document.createElement('option')
+      option.value = emp[1]  // EmployeeID
+      option.textContent = emp[0]  // "First Last (EmployeeID)"
+      select.appendChild(option)
+    })
   }
 
   // Update page headers based on page count
