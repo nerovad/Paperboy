@@ -148,3 +148,61 @@ Use REPLANT=1 with seeds to reset test data.
 ##MSSQL gsasql16 Command for Linux Terminal viewing. With alias.
 prettysql "SELECT TOP 50 * FROM GSABSS.dbo.Employees"
 
+#Claude Code Git Reversion Best Practices
+Best practices:
+
+Start each Claude Code session with a clean commit:
+
+git add .
+   git commit -m "Pre-Claude: baseline before [task description]"
+   claude
+
+Review Claude's changes before accepting them - you can use Plan Mode 
+(--permission-mode plan or Shift+Tab to cycle to it) to see what Claude 
+wants to do before it makes changes
+
+If you mistakenly accept unwanted changes:
+
+# See what changed
+   git status
+   git diff
+   
+   # Revert specific files
+   git checkout -- path/to/file
+   
+   # Or revert everything to last commit
+   git reset --hard HEAD
+   
+   # Or if you already committed, revert the commit
+   git revert HEAD
+
+Use branches for risky tasks:
+
+git checkout -b claude-experiment
+   claude
+   # Review changes, then decide to merge or discard
+
+Best Practice for Paperboy Development
+
+# Start feature work
+git checkout -b feature/badge-request-acls
+git commit -m "Baseline before Claude session"
+
+# Work with Claude, commit frequently
+claude
+# ... Claude makes changes ...
+git add .
+git commit -m "Claude: Initial ACL implementation"
+# ... more Claude work ...
+git commit -m "Claude: Fix Employee lookup"
+
+# Review and clean up
+git log --oneline -5
+git rebase -i HEAD~4  # Squash Claude's commits into logical units
+
+# Test thoroughly
+bundle exec rspec
+rails s  # Manual testing
+
+# NOW push to remote for PR/review
+git push origin feature/badge-request-acls
