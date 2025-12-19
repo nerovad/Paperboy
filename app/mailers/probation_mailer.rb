@@ -1,5 +1,5 @@
 class ProbationMailer < ApplicationMailer
-  default from: "fleet.forms@ventura.org"
+  default from: "gsa-forms@ventura.org"
 
   def notify(submission)
     @submission = submission

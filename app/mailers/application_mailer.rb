@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: "fleet.forms@ventura.org"
+  default from: "gsa-forms@ventura.org"
   layout "mailer"
 end
