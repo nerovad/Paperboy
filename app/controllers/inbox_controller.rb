@@ -17,15 +17,15 @@ class InboxController < ApplicationController
     @submissions += ProbationTransferRequest.where(supervisor_id: employee_id, status: 0, canceled_at: nil)
     
     @submissions.sort_by!(&:created_at).reverse!
-    
+
     # Load department employees for parking lot submissions needing dept head approval
     @department_employees = {}
     parking_submissions_needing_delegation = @submissions.select do |s|
       s.is_a?(ParkingLotSubmission) && s.supervisor_id == employee_id && s.submitted?
     end
-    
-    submissions_needing_delegation = @submissions.select do |s|
-      s.is_a?(ParkingLotSubmission) && s.supervisor_id == employee_id && s.submitted?
+
+    parking_submissions_needing_delegation.each do |submission|
+      @department_employees[submission.id] = fetch_department_employees(submission.department)
     end
   end
 
