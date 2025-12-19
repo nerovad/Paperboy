@@ -11,6 +11,7 @@ import DenyModalController from "controllers/deny_modal_controller"
 import PhoneController from "controllers/phone_controller"
 import BillingModalController from "controllers/billing_modal_controller"
 import ApproveModalController from "controllers/approve_modal_controller"
+import ParkingApproveModalController from "controllers/parking_approve_modal_controller"
 import ChoicesController from "controllers/choices_controller"
 import ConditionalFieldController from "controllers/conditional_field_controller"
 import SidebarSearchController from "controllers/sidebar_search_controller"
@@ -30,6 +31,7 @@ application.register("deny-modal", DenyModalController)
 application.register("phone", PhoneController)
 application.register("billing-modal", BillingModalController)
 application.register("approve-modal", ApproveModalController)
+application.register("parking-approve-modal", ParkingApproveModalController)
 application.register("choices", ChoicesController)
 application.register("conditional-field-controller", ConditionalFieldController)
 application.register("sidebar-search", SidebarSearchController)
