@@ -13,16 +13,15 @@ namespace :reports do
     class_name = args[:name].camelize
     base_path  = Rails.root.join("app/reports/#{name}")
 
-    # --------------------------------------------------------------------------
-    # Create directories
-    # --------------------------------------------------------------------------
+    # {{{ Create directories
+
     FileUtils.mkdir_p base_path
     FileUtils.mkdir_p Rails.root.join("config/reports")
     FileUtils.mkdir_p Rails.root.join("app/pdfs/#{name}")
 
-    # --------------------------------------------------------------------------
-    # Create Service
-    # --------------------------------------------------------------------------
+    # ---------------------------------------------------------------------- }}}
+    # {{{ Create Service
+
     service_file = base_path.join("#{name}_service.rb")
     unless File.exist?(service_file)
       File.write(service_file, <<~RUBY)
@@ -48,9 +47,9 @@ namespace :reports do
       puts "⚠ Service exists: #{service_file}"
     end
 
-    # --------------------------------------------------------------------------
-    # Create Sidekiq Worker
-    # --------------------------------------------------------------------------
+    # ---------------------------------------------------------------------- }}}
+    # {{{ Create Sidekiq Worker
+
     worker_file = Rails.root.join("app/jobs/#{name}_job.rb")
     unless File.exist?(worker_file)
       File.write(worker_file, <<~RUBY)
@@ -70,9 +69,9 @@ namespace :reports do
       puts "⚠ Worker exists: #{worker_file}"
     end
 
-    # --------------------------------------------------------------------------
-    # Create YAML mapping
-    # --------------------------------------------------------------------------
+    # ---------------------------------------------------------------------- }}}
+    # {{{ Create YAML mapping
+
     yaml_file = Rails.root.join("config/reports/#{name}.yml")
     unless File.exist?(yaml_file)
       File.write(yaml_file, <<~YAML)
@@ -111,9 +110,84 @@ namespace :reports do
       puts "⚠ YAML exists: #{yaml_file}"
     end
 
-    # --------------------------------------------------------------------------
+    # ---------------------------------------------------------------------- }}}
+    # {{{ Create Controller
+
+    controller_file =
+      Rails.root.join("app/controllers/#{name}_reports_controller.rb")
+
+    unless File.exist?(controller_file)
+      File.write(controller_file, <<~RUBY)
+        class #{class_name}ReportsController < ApplicationController
+          def show
+            @report_name = "#{name}"
+          end
+
+          def run
+            #{class_name}Job.perform_async(
+              sDate: params[:sDate],
+              eDate: params[:eDate]
+            )
+
+            redirect_to root_path,
+              notice: "#{class_name} report submitted for generation."
+          end
+        end
+      RUBY
+
+      puts "✓ Created controller: #{controller_file}"
+    end
+
+    # ---------------------------------------------------------------------- }}}
+    # {{{ Create View
+
+    view_dir = Rails.root.join("app/views/#{name}_reports")
+    FileUtils.mkdir_p(view_dir)
+
+    view_file = view_dir.join("show.html.erb")
+
+    unless File.exist?(view_file)
+      File.write(view_file, <<~ERB)
+        <h2>Generate #{class_name} Report</h2>
+
+        <%= form_with url: #{name}_reports_run_path, method: :post do %>
+          <div>
+            <label>Start Date</label>
+            <%= date_field_tag :sDate, nil, required: true %>
+          </div>
+
+          <div>
+            <label>End Date</label>
+            <%= date_field_tag :eDate, nil, required: true %>
+          </div>
+
+          <%= submit_tag "Generate Report" %>
+        <% end %>
+      ERB
+
+      puts "✓ Created view: #{view_file}"
+    end
+
+    # ---------------------------------------------------------------------- }}}
+    # {{{ Patch routes.rb
+
+    routes_file = Rails.root.join("config/routes.rb")
+
+    route_block = <<~RUBY
+
+      # #{class_name} report
+      get  "/reports/#{name}",     to: "#{name}_reports#show", as: "#{name}_reports"
+      post "/reports/#{name}/run", to: "#{name}_reports#run",  as: "#{name}_reports_run"
+    RUBY
+
+    unless File.read(routes_file).include?("reports/#{name}")
+      File.open(routes_file, "a") { |f| f.write(route_block) }
+      puts "✓ Routes added for #{name}"
+    end
+
+    # ---------------------------------------------------------------------- }}}
     # Create placeholder template PDF
-    # --------------------------------------------------------------------------
+
     template_path = Rails.root.join("app/pdfs/#{name}/template.pdf")
     unless File.exist?(template_path)
       require "prawn"
@@ -155,10 +229,12 @@ namespace :reports do
     name = args[:name].underscore
 
     paths = {
-      service_dir: Rails.root.join("app/reports/#{name}"),
-      worker_file: Rails.root.join("app/jobs/#{name}_job.rb"),
-      yaml_file:   Rails.root.join("config/reports/#{name}.yml"),
-      pdf_dir:     Rails.root.join("app/pdfs/#{name}")
+      service_dir:  Rails.root.join("app/reports/#{name}"),
+      worker_file:  Rails.root.join("app/jobs/#{name}_job.rb"),
+      yaml_file:    Rails.root.join("config/reports/#{name}.yml"),
+      pdf_dir:      Rails.root.join("app/pdfs/#{name}"),
+      controller:   Rails.root.join("app/controllers/#{name}_reports_controller.rb"),
+      view_dir:     Rails.root.join("app/views/#{name}_reports")
     }
 
     puts "\nThe following items will be removed:\n\n"
@@ -189,8 +265,10 @@ namespace :reports do
         puts "✗ Not found: #{path}"
       end
     end
-
     puts "\n🎉 Report '#{name}' successfully destroyed.\n"
+    puts "\n Manual step required:"
+    puts "   Remove routes for '#{name}' from config/routes.rb if present."
+
   end
 end
 

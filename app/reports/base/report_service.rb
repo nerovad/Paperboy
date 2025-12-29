@@ -4,11 +4,10 @@ module Reports
     class ReportService
       attr_reader :params
 
-      def initialize(params)
+      def initialize(params = {})
         @params = params.symbolize_keys
       end
 
-      # Main pipeline: SQL → YAML → Prawn
       def call
         data     = SqlProvider.new(stored_proc, params).fetch
         mapping  = YamlLoader.new(report_name).mapping
@@ -22,18 +21,18 @@ module Reports
         ).render
       end
 
-      # ----------------------------------------------------------------------
-      # Required overrides in child classes
-      # ----------------------------------------------------------------------
-
-      # Example: "dbo.Export_TC60_To_Billing_File"
       def stored_proc
         raise NotImplementedError, "#{self.class} must implement #stored_proc"
       end
 
-      # Example: "invoice"
       def report_name
         raise NotImplementedError, "#{self.class} must implement #report_name"
+      end
+
+      def validate_params!
+        %i[sDate eDate].each do |key|
+          raise ArgumentError, "Missing parameter: #{key}" unless params[key]
+        end
       end
     end
   end
