@@ -230,7 +230,7 @@ namespace :reports do
     end
 
     # ---------------------------------------------------------------------- }}}
-    puts "\nΓëí╞Æ├ä├½ Report scaffold '#{name}' created successfully.\n"
+    puts "\n Report scaffold '#{name}' created successfully.\n"
   end
 end
 
