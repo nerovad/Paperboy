@@ -172,6 +172,64 @@ namespace :reports do
     end
 
     # ---------------------------------------------------------------------- }}}
+    # {{{ Create Renderer
+    renderer_path =
+      Rails.root.join("app/pdfs/#{name}/#{name}_renderer.rb")
+
+    unless File.exist?(renderer_path)
+      File.write(renderer_path, <<~RUBY)
+        # app/pdfs/#{name}/#{name}_renderer.rb
+        #
+        # This is a developer-editable Prawn renderer.
+        # It receives:
+        #   - pdf      ΓåÆ Prawn::Document
+        #   - data     ΓåÆ Array<Hash> from stored procedure
+        #   - mapping  ΓåÆ YAML field coordinates
+        #
+        # One SQL row = one PDF page (default behavior)
+
+        module Reports
+          module #{class_name}
+            class Renderer
+              def initialize(pdf:, data:, mapping:)
+                @pdf     = pdf
+                @data    = data
+                @mapping = mapping
+              end
+
+              def render
+                if @data.empty?
+                  @pdf.text "No data returned from stored procedure.", style: :bold
+                  return
+                end
+
+                @data.each_with_index do |row, idx|
+                  @pdf.start_new_page unless idx.zero?
+
+                  @mapping.each do |field, coords|
+                    value =
+                      row[field.to_s.upcase] ||
+                      row[field.to_s] ||
+                      ""
+
+                    @pdf.draw_text(
+                      value.to_s,
+                      at: [coords["x"], coords["y"]]
+                    )
+                  end
+                end
+              end
+            end
+          end
+        end
+      RUBY
+
+      puts "Γ£ô Created renderer: #{renderer_path}"
+    else
+      puts "Γä╣ Renderer exists: #{renderer_path}"
+    end
+
+    # ---------------------------------------------------------------------- }}}
     # {{{ Patch routes.rb
 
     routes_file = Rails.root.join("config/routes.rb")
@@ -186,47 +244,6 @@ namespace :reports do
     unless File.read(routes_file).include?("reports/#{name}")
       File.open(routes_file, "a") { |f| f.write(route_block) }
       puts "✓ Routes added for #{name}"
-    end
-
-    # ---------------------------------------------------------------------- }}}
-    # {{{ Create placeholder template PDF
-
-    template_path = Rails.root.join("app/pdfs/#{name}/template.pdf")
-
-    unless File.exist?(template_path)
-      require "prawn"
-      require "yaml"
-
-      mapping =
-        YAML.load_file(Rails.root.join("config/reports/#{name}.yml"))["fields"]
-
-      Prawn::Document.generate(template_path.to_s) do |pdf|
-        pdf.font_size 10
-
-        pdf.text(
-          "#{class_name} DEBUG TEMPLATE",
-          size: 16,
-          style: :bold
-        )
-        pdf.text(
-          "Placeholder only — real data rendered at runtime",
-          size: 9,
-          color: "777777"
-        )
-
-        pdf.start_new_page
-
-        mapping.each do |field, coords|
-          pdf.draw_text(
-            field.to_s.upcase,
-            at: [ coords["x"], coords["y"] ]
-          )
-        end
-      end
-
-      puts "✓ Created placeholder template PDF: #{template_path}"
-    else
-      puts "ℹ Template PDF exists: #{template_path}"
     end
 
     # ---------------------------------------------------------------------- }}}
