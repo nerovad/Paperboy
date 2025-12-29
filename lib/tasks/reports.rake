@@ -197,55 +197,37 @@ namespace :reports do
       require "prawn"
       require "yaml"
 
-      # ------------------------------------------------------------------------
-      # Load data + mapping
-      # ------------------------------------------------------------------------
-      data =
-        Reports::Base::SqlProvider
-          .new("GSABSS.dbo.Paperboy_Reports_Scaffolding", {})
-          .fetch
-
       mapping =
         YAML.load_file(Rails.root.join("config/reports/#{name}.yml"))["fields"]
 
       Prawn::Document.generate(template_path.to_s) do |pdf|
         pdf.font_size 10
 
-        if data.empty?
-          pdf.text "No data returned from stored procedure.", style: :bold
-        else
-          data.each_with_index do |row, idx|
-            pdf.start_new_page unless idx.zero?
+        pdf.text(
+          "#{class_name} DEBUG TEMPLATE",
+          size: 16,
+          style: :bold
+        )
+        pdf.text(
+          "Placeholder only — real data rendered at runtime",
+          size: 9,
+          color: "777777"
+        )
 
-            pdf.text(
-              "#{class_name} Placeholder Template",
-              size: 16,
-              style: :bold
-            )
+        pdf.start_new_page
 
-            pdf.stroke_horizontal_rule
-            pdf.move_down 10
-
-            mapping.each do |field, coords|
-              value =
-                row[field.to_s.upcase] ||
-                row[field.to_s] ||
-                ""
-
-              pdf.draw_text(
-                value.to_s,
-                at: [ coords["x"], coords["y"] ]
-              )
-            end
-          end
+        mapping.each do |field, coords|
+          pdf.draw_text(
+            field.to_s.upcase,
+            at: [ coords["x"], coords["y"] ]
+          )
         end
       end
 
-      puts "✓ Created data-backed placeholder template PDF: #{template_path}"
+      puts "✓ Created placeholder template PDF: #{template_path}"
     else
       puts "ℹ Template PDF exists: #{template_path}"
     end
-
 
     # ---------------------------------------------------------------------- }}}
     puts "\nΓëí╞Æ├ä├½ Report scaffold '#{name}' created successfully.\n"
