@@ -2,6 +2,8 @@
 # {{{ task: new
 
 namespace :reports do
+  # {{{ task new definition
+
   desc "Scaffold a new Prawn/YAML/Sidekiq-based report. Usage: rake reports:new[report_name]"
   task :new, [ :name ] => :environment do |_t, args|
     unless args[:name]
@@ -13,6 +15,7 @@ namespace :reports do
     class_name = args[:name].camelize
     base_path  = Rails.root.join("app/reports/#{name}")
 
+    # ---------------------------------------------------------------------- }}}
     # {{{ Create directories
 
     FileUtils.mkdir_p base_path
@@ -186,32 +189,66 @@ namespace :reports do
     end
 
     # ---------------------------------------------------------------------- }}}
-    # Create placeholder template PDF
+    # {{{ Create placeholder template PDF
 
     template_path = Rails.root.join("app/pdfs/#{name}/template.pdf")
+
     unless File.exist?(template_path)
       require "prawn"
-      Prawn::Document.generate(template_path.to_s) do
-        text "#{class_name} Template (replace with Creative Services PDF)", size: 18
-        stroke_horizontal_rule
-        move_down 10
-        text "Fields expected from SQL:", style: :bold
-        text "- CUNIT"
-        text "- POSTING_REF"
-        text "- SERVICE"
-        text "- DATE"
-        text "- DOC_NMBR"
-        text "- DESCRIPTION"
-        text "- OTHER1, OTHER2, OTHER3"
-        text "- QUANTITY, RATE, COST"
+      require "yaml"
+
+      # ------------------------------------------------------------------------
+      # Load data + mapping
+      # ------------------------------------------------------------------------
+      data =
+        Reports::Base::SqlProvider
+          .new("GSABSS.dbo.Paperboy_Reports_Scaffolding", {})
+          .fetch
+
+      mapping =
+        YAML.load_file(Rails.root.join("config/reports/#{name}.yml"))["fields"]
+
+      Prawn::Document.generate(template_path.to_s) do |pdf|
+        pdf.font_size 10
+
+        if data.empty?
+          pdf.text "No data returned from stored procedure.", style: :bold
+        else
+          data.each_with_index do |row, idx|
+            pdf.start_new_page unless idx.zero?
+
+            pdf.text(
+              "#{class_name} Placeholder Template",
+              size: 16,
+              style: :bold
+            )
+
+            pdf.stroke_horizontal_rule
+            pdf.move_down 10
+
+            mapping.each do |field, coords|
+              value =
+                row[field.to_s.upcase] ||
+                row[field.to_s] ||
+                ""
+
+              pdf.draw_text(
+                value.to_s,
+                at: [ coords["x"], coords["y"] ]
+              )
+            end
+          end
+        end
       end
 
-      puts "✓ Created placeholder template PDF: #{template_path}"
+      puts "✓ Created data-backed placeholder template PDF: #{template_path}"
     else
-      puts "⚠ Template PDF exists: #{template_path}"
+      puts "ℹ Template PDF exists: #{template_path}"
     end
 
-    puts "\n🎉 Report scaffold '#{name}' created successfully.\n"
+
+    # ---------------------------------------------------------------------- }}}
+    puts "\nΓëí╞Æ├ä├½ Report scaffold '#{name}' created successfully.\n"
   end
 end
 
@@ -268,7 +305,6 @@ namespace :reports do
     puts "\n🎉 Report '#{name}' successfully destroyed.\n"
     puts "\n Manual step required:"
     puts "   Remove routes for '#{name}' from config/routes.rb if present."
-
   end
 end
 
