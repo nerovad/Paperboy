@@ -18,10 +18,24 @@ namespace :reports do
     # ---------------------------------------------------------------------- }}}
     # {{{ Create directories
 
+
     FileUtils.mkdir_p base_path
     FileUtils.mkdir_p Rails.root.join("config/reports")
     FileUtils.mkdir_p Rails.root.join("tmp/reports")
     FileUtils.mkdir_p Rails.root.join("app/pdfs/#{name}")
+
+    # ---------------------------------------------------------------------- }}}
+    # {{{ Copy base PDF template
+
+    template_src = Rails.root.join("app/pdfs/templates/template.pdf")
+    template_dst = Rails.root.join("app/pdfs/#{name}/#{name}.pdf")
+
+    if File.exist?(template_src)
+      FileUtils.cp(template_src, template_dst)
+      puts "Copied template PDF → #{template_dst}"
+    else
+      puts "WARNING: template.pdf not found at #{template_src}"
+    end
 
     # ---------------------------------------------------------------------- }}}
     # {{{ Create Service
@@ -46,9 +60,9 @@ namespace :reports do
         end
       RUBY
 
-      puts "✓ Created service: #{service_file}"
+      puts "Created service: #{service_file}"
     else
-      puts "⚠ Service exists: #{service_file}"
+      puts "Service exists: #{service_file}"
     end
 
     # ---------------------------------------------------------------------- }}}
@@ -68,9 +82,9 @@ namespace :reports do
         end
       RUBY
 
-      puts "✓ Created worker: #{worker_file}"
+      puts "Created worker: #{worker_file}"
     else
-      puts "⚠ Worker exists: #{worker_file}"
+      puts "Worker exists: #{worker_file}"
     end
 
     # ---------------------------------------------------------------------- }}}
@@ -109,9 +123,9 @@ namespace :reports do
             y: 680
       YAML
 
-      puts "✓ Created YAML mapping: #{yaml_file}"
+      puts "Created YAML mapping: #{yaml_file}"
     else
-      puts "⚠ YAML exists: #{yaml_file}"
+      puts "YAML exists: #{yaml_file}"
     end
 
     # ---------------------------------------------------------------------- }}}
@@ -139,7 +153,7 @@ namespace :reports do
         end
       RUBY
 
-      puts "✓ Created controller: #{controller_file}"
+      puts "Created controller: #{controller_file}"
     end
 
     # ---------------------------------------------------------------------- }}}
@@ -169,7 +183,7 @@ namespace :reports do
         <% end %>
       ERB
 
-      puts "✓ Created view: #{view_file}"
+      puts "Created view: #{view_file}"
     end
 
     # ---------------------------------------------------------------------- }}}
@@ -208,18 +222,18 @@ namespace :reports do
                   @pdf.start_new_page unless idx.zero?
 
                   @mapping.each do |field, coords|
-                  value =
-                    case row
-                    when Hash
-                      row[field.to_s.upcase]||
-                      row[field.to_s] ||
-                      ""
-                    when Array
-                      idx = @mapping.keys.index(field)
-                      idx ? row[idx] : ""
-                    else
-                      ""
-                    end
+                    value =
+                      case row
+                      when Hash
+                        row[field.to_s.upcase] ||
+                        row[field.to_s] ||
+                        ""
+                      when Array
+                        col_idx = @mapping.keys.index(field)
+                        col_idx ? row[col_idx] : ""
+                      else
+                        ""
+                      end
 
                     @pdf.draw_text(
                       value.to_s,
@@ -255,11 +269,11 @@ namespace :reports do
 
     unless File.read(routes_file).include?("reports/#{name}")
       File.open(routes_file, "a") { |f| f.write(route_block) }
-      puts "✓ Routes added for #{name}"
+      puts "Routes added for #{name}"
     end
 
     # ---------------------------------------------------------------------- }}}
-    puts "\n Report scaffold '#{name}' created successfully.\n"
+    puts "\nReport scaffold '#{name}' created successfully.\n"
   end
 end
 
@@ -291,7 +305,7 @@ namespace :reports do
       puts "  #{exists ? '✓' : '✗'} #{path}"
     end
 
-    puts "\n⚠️ This operation is irreversible."
+    puts "\nThis operation is irreversible."
 
     unless ENV["FORCE"]
       print "\nType 'yes' to continue: "
@@ -305,17 +319,17 @@ namespace :reports do
     paths.each do |_key, path|
       if File.file?(path)
         File.delete(path)
-        puts "✓ Deleted file: #{path}"
+        puts "Deleted file: #{path}"
       elsif Dir.exist?(path)
         FileUtils.rm_rf(path)
-        puts "✓ Deleted directory: #{path}"
+        puts "Deleted directory: #{path}"
       else
-        puts "✗ Not found: #{path}"
+        puts "Not found: #{path}"
       end
     end
-    puts "\n🎉 Report '#{name}' successfully destroyed.\n"
-    puts "\n Manual step required:"
-    puts "   Remove routes for '#{name}' from config/routes.rb if present."
+    puts "\nReport '#{name}' successfully destroyed.\n"
+    puts "\nManual step required:"
+    puts "  Remove routes for '#{name}' from config/routes.rb if present."
   end
 end
 
@@ -337,7 +351,7 @@ namespace :reports do
       Rails.root.join("app/reports/#{report_name}/#{report_name}_service.rb")
 
     unless File.exist?(service_path)
-      puts "✗ ERROR: Service file not found:"
+      puts "ERROR: Service file not found:"
       puts "  #{service_path}"
       exit 1
     end
@@ -352,8 +366,8 @@ namespace :reports do
       service_class =
         Reports.const_get(class_name).const_get("#{class_name}Service")
     rescue NameError
-      puts "✗ ERROR: Unable to resolve service class:"
-      puts "  Reports::#{class_name}::#{class_name}Service"
+      puts "ERROR: Unable to resolve service class:"
+      puts "Reports::#{class_name}::#{class_name}Service"
       exit 1
     end
 
@@ -362,22 +376,22 @@ namespace :reports do
       eDate: args[:eDate]
     }
 
-    puts "\n▶ Running report: #{report_name}"
-    puts "  sDate = #{args[:sDate]}"
-    puts "  eDate = #{args[:eDate]}"
-    puts "  Service = #{service_class.name}\n\n"
+    puts "\nRunning report: #{report_name}"
+    puts "sDate = #{args[:sDate]}"
+    puts "eDate = #{args[:eDate]}"
+    puts "Service = #{service_class.name}\n\n"
 
     begin
       output_path = service_class.new(params).call
     rescue => e
-      puts "✗ ERROR during report generation:"
+      puts "ERROR during report generation:"
       puts e.message
       puts e.backtrace.join("\n")
       exit 1
     end
 
-    puts "✓ Report generated successfully!"
-    puts "→ Output PDF: #{output_path}\n\n"
+    puts "Report generated successfully!"
+    puts "Output PDF: #{output_path}\n\n"
   end
 end
 
@@ -387,48 +401,48 @@ end
 namespace :reports do
   desc "Diagnose Zeitwerk/autoload problems for the Reports subsystem"
   task doctor: :environment do
-    puts "\n=== 📋 REPORTS DOCTOR ===\n\n"
+    puts "\n=== REPORTS DOCTOR ===\n\n"
 
-    puts "➡ Autoload paths:"
+    puts "Autoload paths:"
     ActiveSupport::Dependencies.autoload_paths.each do |path|
       puts "   - #{path}"
     end
 
-    puts "\n➡ Eager load paths:"
+    puts "\nEager load paths:"
     Rails.application.config.eager_load_paths.each do |path|
       puts "   - #{path}"
     end
 
     reports_path = Rails.root.join("app/reports").to_s
 
-    puts "\n➡ Checking if app/reports is autoloaded:"
+    puts "\nChecking if app/reports is autoloaded:"
     puts ActiveSupport::Dependencies.autoload_paths.include?(reports_path) ?
-         "   ✓ app/reports IS in autoload paths" :
-         "   ✗ app/reports is NOT in autoload paths"
+         "  app/reports IS in autoload paths" :
+         "  app/reports is NOT in autoload paths"
 
-    puts "\n➡ Checking if app/reports is eager loaded:"
+    puts "\nChecking if app/reports is eager loaded:"
     puts Rails.application.config.eager_load_paths.include?(reports_path) ?
-         "   ✓ app/reports IS in eager load paths" :
-         "   ✗ app/reports is NOT in eager load paths"
+         "  app/reports IS in eager load paths" :
+         "  app/reports is NOT in eager load paths"
 
-    puts "\n➡ Checking namespace constants:\n"
+    puts "\nChecking namespace constants:\n"
 
     begin
       Reports
-      puts "   ✓ Reports constant exists"
+      puts "   Reports constant exists"
     rescue NameError
-      puts "   ✗ Reports constant missing"
+      puts "   Reports constant missing"
     end
 
     begin
       Reports::Base
-      puts "   ✓ Reports::Base constant exists"
+      puts "   Reports::Base constant exists"
     rescue NameError
-      puts "   ✗ Reports::Base constant missing"
+      puts "   Reports::Base constant missing"
     end
 
     base_dir = Rails.root.join("app/reports/base")
-    puts "\n➡ Testing base class loadability:"
+    puts "\nTesting base class loadability:"
     Dir[base_dir.join("*.rb")].each do |file|
       print "   Loading #{File.basename(file)} ... "
       begin
@@ -439,7 +453,7 @@ namespace :reports do
       end
     end
 
-    puts "\n➡ Testing base class constants:"
+    puts "\nTesting base class constants:"
     {
       ReportService: "Reports::Base::ReportService",
       PdfRenderer:   "Reports::Base::PdfRenderer",
@@ -456,7 +470,7 @@ namespace :reports do
       end
     end
 
-    puts "\n=== 🩺 REPORTS DOCTOR COMPLETE ===\n\n"
+    puts "\n=== REPORTS DOCTOR COMPLETE ===\n\n"
   end
 end
 
