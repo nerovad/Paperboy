@@ -6,11 +6,11 @@ module Reports
     class PdfRenderer
       attr_reader :template, :mapping, :data, :report
 
-      def initialize(template:, mapping:, data:, report:)
-        @template = template
-        @mapping  = mapping
+      def initialize(pdf:, data:, mapping:, template:)
+        @pdf      = pdf
         @data     = data
-        @report   = report
+        @mapping  = mapping
+        @template = template.to_s
       end
 
       def render
@@ -52,8 +52,10 @@ module Reports
         renderer_class.new(
           pdf:     pdf,
           data:    data,
-          mapping: mapping
+          mapping: mapping,
+          template: template
         )
+
       rescue NameError => e
         raise NameError,
           "Renderer class Reports::#{report.camelize}::Renderer not found " \

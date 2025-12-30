@@ -219,7 +219,7 @@ namespace :reports do
                 end
 
                 @data.each_with_index do |row, idx|
-                  @pdf.start_new_page unless idx.zero?
+                  @pdf.start_new_page(template: @template) unless idx.zero?
 
                   @mapping.each do |field, coords|
                     value =
