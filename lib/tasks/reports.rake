@@ -236,9 +236,7 @@ namespace :reports do
 
                   @mapping.each do |field, coords|
                     value =
-                      row[field.to_s.upcase] ||
-                      row[field.to_s] ||
-                      ""
+                      row[field.to_s] || ""
 
                     @pdf.draw_text(
                       value.to_s,

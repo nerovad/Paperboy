@@ -15,8 +15,10 @@ module Reports
 
         result = ActiveRecord::Base.connection.exec_query(sql)
 
-        result.to_a.map(&:symbolize_keys)
+        result.to_a.map do |row|
+          row.transform_keys { |k| k.to_s.downcase }
       end
     end
   end
 end
+
