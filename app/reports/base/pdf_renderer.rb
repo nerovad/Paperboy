@@ -1,5 +1,4 @@
 # app/reports/base/pdf_renderer.rb
-# app/reports/base/pdf_renderer.rb
 require "prawn"
 
 module Reports
@@ -17,9 +16,15 @@ module Reports
       def render
         output_path = build_output_path
 
-        Prawn::Document.generate(output_path, template: template) do |pdf|
-          renderer = load_renderer(pdf)
+        unless File.exist?(template.to_s)
+          raise "Template PDF not found: #{template}"
+        end
 
+        Prawn::Document.generate(
+          output_path,
+          template: template.to_s
+        ) do |pdf|
+          renderer = load_renderer(pdf)
           renderer.render
         end
 
@@ -28,9 +33,6 @@ module Reports
 
       private
 
-      # ----------------------------------------------------------------------
-      # Renderer loading
-      # ----------------------------------------------------------------------
       def load_renderer(pdf)
         renderer_file =
           Rails.root.join(
@@ -58,9 +60,6 @@ module Reports
           "in #{renderer_file}: #{e.message}"
       end
 
-      # ----------------------------------------------------------------------
-      # Output path
-      # ----------------------------------------------------------------------
       def build_output_path
         timestamp = Time.now.strftime("%Y%m%d-%H%M%S")
 
