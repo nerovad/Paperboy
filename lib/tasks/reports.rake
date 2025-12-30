@@ -250,9 +250,9 @@ namespace :reports do
         end
       RUBY
 
-      puts "Γ£ô Created renderer: #{renderer_path}"
+      puts "Created renderer: #{renderer_path}"
     else
-      puts "Γä╣ Renderer exists: #{renderer_path}"
+      puts "Renderer exists: #{renderer_path}"
     end
 
     # ---------------------------------------------------------------------- }}}

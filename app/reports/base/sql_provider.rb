@@ -15,7 +15,7 @@ module Reports
 
         result = ActiveRecord::Base.connection.exec_query(sql)
 
-        result.to_a.first&.symbolize_keys || {}
+        result.to_a.map(&:symbolize_keys)
       end
     end
   end
