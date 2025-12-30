@@ -134,3 +134,7 @@ Rails.application.routes.draw do
   # ============================================================================
   get "/debug/invoice_grid", to: "grid#show"
 end
+
+# PackingSlip report
+get  "/reports/packing_slip",     to: "packing_slip_reports#show", as: "packing_slip_reports"
+post "/reports/packing_slip/run", to: "packing_slip_reports#run",  as: "packing_slip_reports_run"
