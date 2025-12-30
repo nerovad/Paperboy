@@ -244,7 +244,7 @@ namespace :reports do
                       value.to_s,
                       at: [
                         coords["x"].to_i,
-                        coords["y"].to_i
+                        @pdf.bounds.top - coords["y"].to_i
                       ]
                     )
                   end
