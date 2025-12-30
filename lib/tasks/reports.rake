@@ -214,7 +214,10 @@ namespace :reports do
 
                     @pdf.draw_text(
                       value.to_s,
-                      at: [coords["x"], coords["y"]]
+                      at: [
+                        coords["x"].to_i,
+                        coords["y"].to_i
+                      ]
                     )
                   end
                 end
