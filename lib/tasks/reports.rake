@@ -20,6 +20,7 @@ namespace :reports do
 
     FileUtils.mkdir_p base_path
     FileUtils.mkdir_p Rails.root.join("config/reports")
+    FileUtils.mkdir_p Rails.root.join("tmp/reports")
     FileUtils.mkdir_p Rails.root.join("app/pdfs/#{name}")
 
     # ---------------------------------------------------------------------- }}}
@@ -182,9 +183,9 @@ namespace :reports do
         #
         # This is a developer-editable Prawn renderer.
         # It receives:
-        #   - pdf      ΓåÆ Prawn::Document
-        #   - data     ΓåÆ Array<Hash> from stored procedure
-        #   - mapping  ΓåÆ YAML field coordinates
+        #   - pdf      Prawn::Document
+        #   - data     Array<Hash> from stored procedure
+        #   - mapping  YAML field coordinates
         #
         # One SQL row = one PDF page (default behavior)
 
