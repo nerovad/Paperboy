@@ -207,10 +207,18 @@ namespace :reports do
                   @pdf.start_new_page unless idx.zero?
 
                   @mapping.each do |field, coords|
-                    value =
-                      row[field.to_s.upcase] ||
+                  value =
+                    case row
+                    when Hash
+                      row[field.to_s.upcase]||
                       row[field.to_s] ||
                       ""
+                    when Array
+                      idx = @mapping.keys.index(field)
+                      idx ? row[idx] : ""
+                    else
+                      ""
+                    end
 
                     @pdf.draw_text(
                       value.to_s,
