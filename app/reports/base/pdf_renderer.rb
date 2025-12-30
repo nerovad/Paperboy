@@ -6,11 +6,11 @@ module Reports
     class PdfRenderer
       attr_reader :template, :mapping, :data, :report
 
-      def initialize(pdf:, data:, mapping:, template:)
-        @pdf      = pdf
-        @data     = data
+      def initialize(template:, mapping:, data:, report:)
+        @template = template
         @mapping  = mapping
-        @template = template.to_s
+        @data     = data
+        @report   = report
       end
 
       def render

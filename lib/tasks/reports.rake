@@ -206,10 +206,11 @@ namespace :reports do
         module Reports
           module #{class_name}
             class Renderer
-              def initialize(pdf:, data:, mapping:)
+              def initialize(pdf:, data:, mapping:, template:)
                 @pdf     = pdf
                 @data    = data
                 @mapping = mapping
+                @template = template.to_s
               end
 
               def render
