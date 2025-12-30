@@ -230,6 +230,10 @@ namespace :reports do
                     margin: 0
                   ) unless idx.zero?
 
+                  @pdf.fill_color "000000"
+                  @pdf.stroke_color "000000"
+                  @pdf.font_size 10
+
                   @mapping.each do |field, coords|
                     value =
                       row[field.to_s.upcase] ||

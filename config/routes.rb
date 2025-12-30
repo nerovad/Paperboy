@@ -16,7 +16,7 @@ Rails.application.routes.draw do
   get '/auth/callback', to: 'sessions#create_oauth'
   get '/auth/failure', to: 'sessions#failure'
   post '/auth/entra_id', to: 'sessions#setup', as: :auth_setup
-  
+
   # Legacy login (keep for admin impersonation)
   post "/login", to: "sessions#create_legacy"
   delete "/logout", to: "sessions#destroy"
@@ -134,7 +134,3 @@ Rails.application.routes.draw do
   # ============================================================================
   get "/debug/invoice_grid", to: "grid#show"
 end
-
-# PackingSlip report
-get  "/reports/packing_slip",     to: "packing_slip_reports#show", as: "packing_slip_reports"
-post "/reports/packing_slip/run", to: "packing_slip_reports#run",  as: "packing_slip_reports_run"
