@@ -3,7 +3,7 @@ module Reports
   module Base
     class TemplateLoader
       def initialize(report)
-        @path = Rails.root.join("app/pdfs/#{report}/template.pdf")
+        @path = Rails.root.join("app/pdfs/#{report}/#{report}.pdf")
       end
 
       def path
