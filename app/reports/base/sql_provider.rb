@@ -17,8 +17,8 @@ module Reports
 
         result.to_a.map do |row|
           row.transform_keys { |k| k.to_s.downcase }
+        end
       end
     end
   end
 end
-
