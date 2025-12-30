@@ -188,6 +188,7 @@ namespace :reports do
 
     # ---------------------------------------------------------------------- }}}
     # {{{ Create Renderer
+
     renderer_path =
       Rails.root.join("app/pdfs/#{name}/#{name}_renderer.rb")
 
@@ -195,21 +196,25 @@ namespace :reports do
       File.write(renderer_path, <<~RUBY)
         # app/pdfs/#{name}/#{name}_renderer.rb
         #
-        # This is a developer-editable Prawn renderer.
-        # It receives:
-        #   - pdf      Prawn::Document
-        #   - data     Array<Hash> from stored procedure
-        #   - mapping  YAML field coordinates
+        # Developer-editable Prawn renderer.
         #
-        # One SQL row = one PDF page (default behavior)
+        # Receives:
+        #   - pdf      Prawn::Document (already initialized with template + margin)
+        #   - data     Array<Hash> (one hash per SQL row)
+        #   - mapping  YAML field coordinates
+        #   - template Path to PDF template (String)
+        #
+        # Contract:
+        #   - One SQL row = one PDF page
+        #   - Absolute coordinates assume margin: 0
 
         module Reports
           module #{class_name}
             class Renderer
               def initialize(pdf:, data:, mapping:, template:)
-                @pdf     = pdf
-                @data    = data
-                @mapping = mapping
+                @pdf      = pdf
+                @data     = data
+                @mapping  = mapping
                 @template = template.to_s
               end
 
@@ -220,21 +225,16 @@ namespace :reports do
                 end
 
                 @data.each_with_index do |row, idx|
-                  @pdf.start_new_page(template: @template) unless idx.zero?
+                  @pdf.start_new_page(
+                    template: @template,
+                    margin: 0
+                  ) unless idx.zero?
 
                   @mapping.each do |field, coords|
                     value =
-                      case row
-                      when Hash
-                        row[field.to_s.upcase] ||
-                        row[field.to_s] ||
-                        ""
-                      when Array
-                        col_idx = @mapping.keys.index(field)
-                        col_idx ? row[col_idx] : ""
-                      else
-                        ""
-                      end
+                      row[field.to_s.upcase] ||
+                      row[field.to_s] ||
+                      ""
 
                     @pdf.draw_text(
                       value.to_s,
@@ -255,6 +255,7 @@ namespace :reports do
     else
       puts "Renderer exists: #{renderer_path}"
     end
+
 
     # ---------------------------------------------------------------------- }}}
     # {{{ Patch routes.rb
