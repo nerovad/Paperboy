@@ -230,20 +230,28 @@ namespace :reports do
                     margin: 0
                   ) unless idx.zero?
 
-                  @pdf.fill_color "000000"
-                  @pdf.stroke_color "000000"
-                  @pdf.font_size 10
-
                   @mapping.each do |field, coords|
-                    value =
-                      row[field.to_s] || ""
+                    value = row[field.to_s] || ""
 
-                    @pdf.draw_text(
+                    x = coods["x"].to_i
+                    y = coods["y"].to_i
+
+                    @pdf.text_box(
+                      "#{field.to_s.upcase}:",
+                      at: [x - 80, y],
+                      width: 75,
+                      height: 20,
+                      overflow: :truncate,
+                      disable_wrap: true
+                    )
+
+                    @pdf.text_box(
                       value.to_s,
-                      at: [
-                        coords["x"].to_i,
-                        @pdf.bounds.top - coords["y"].to_i
-                      ]
+                      at: [x, y],
+                      width: 200,
+                      height: 20,
+                      overflow: :truncate,
+                      disable_wrap: true
                     )
                   end
                 end
