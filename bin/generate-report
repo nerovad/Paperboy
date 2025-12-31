@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# git checkout -- config/routes.rb
+# rake reports:destroy:packing_slip]
+# rake reports:new[packing_slip]
+# rake reports:run[packing_slip,'2025-11-01','2025-11-01']
+
+file_name=${file_name:-packing_slip}
+sDate=${sDate:-2025-11-01}
+eDate=${eDate:-2025-11-01}
+
+git checkout -- config/routes.rb
+rake "reports:destroy[${file_name}]"
+rake "reports:new[${file_name}]"
+rake "reports:run[${file_name},${sDate},${eDate}]"
+
