@@ -240,10 +240,14 @@ namespace :reports do
                 end
 
                 @data.each do |row|
-                  @pdf.start_new_page(
-                    template: @template.to_s,
-                    margin: 0
-                  )
+                  @pdf.start_new_page
+
+                  logo_path = Rails.root.join("app/assets/images/report_logo.png")
+                  if File.exist?(logo_path)
+                    @pdf.image(logo_path.to_s, at: [38, 780], width: 600)
+                  else
+                    @pdf.text_box("MISSING LOGO", at: [38, 780], width: 200, height: 20)
+                  end
 
                   @mapping.each do |field, coords|
                     value = row[field.to_s] || ""
