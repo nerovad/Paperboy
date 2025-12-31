@@ -89,38 +89,53 @@ namespace :reports do
 
     # ---------------------------------------------------------------------- }}}
     # {{{ Create YAML mapping
-
+    #
+    # Sample Data
+# CUNIT | POSTING_REF | SERVICE        | DATE       | DOC_NMBR | DESCRIPTION                 | OTHER1                             | OTHER2                     | OTHER3                               | QUANTITY | RATE               | COST
+# 1703  | RCD1125     | RECORDS        | 2025-11-01 | 7102     | Storage of Size A Container | STORE                              | A                          | 69 Boxes @ 1.2 CuFt = 82.8 CuFt      | 69       | 0.5                | 34.5
+# 2925  | GDS1125     | Digitization   | 2025-11-01 |          | GSABSS                      | OVS                                |                            |                                      | 2738     | 3.25               | 8898.5
+# 2925  | GDS1125     | Digitization   | 2025-11-01 |          | GSABSS                      | RS                                 |                            |                                      | 98622    | 0.2029999941587448 | 20020.26542392373
+# 3000  | GDS1125     | Doc Automation | 2025-11-01 |          | RM-75I Injury Reporting     | Creative Services and Project Mgmt | Dashboards and Analytics   | Hourly Rate                          | 1        | 114.12999725341797 | 114.12999725341797
+# 3000  | GDS1125     | Doc Automation | 2025-11-01 |          | RM-75I Injury Reporting     | Creative Services and Project Mgmt | eForm and Workflow         | Hourly Rate                          | 1        | 114.12999725341797 | 114.12999725341797
     yaml_file = Rails.root.join("config/reports/#{name}.yml")
     unless File.exist?(yaml_file)
       File.write(yaml_file, <<~YAML)
         fields:
           cunit:
             x: 100
-            y: 720
-          posting_ref:
-            x: 200
-            y: 720
-          service:
-            x: 100
-            y: 700
-          date:
-            x: 100
             y: 680
-          doc_nmbr:
+
+          posting_ref:
             x: 100
             y: 660
-          description:
+
+          service:
             x: 100
             y: 640
+
+          date:
+            x: 100
+            y: 620
+
+          doc_nmbr:
+            x: 100
+            y: 600
+
+          description:
+            x: 100
+            y: 580
+
           quantity:
-            x: 400
-            y: 680
+            x: 100
+            y: 560
+
           rate:
-            x: 450
-            y: 680
+            x: 100
+            y: 540
+
           cost:
-            x: 500
-            y: 680
+            x: 100
+            y: 520
       YAML
 
       puts "Created YAML mapping: #{yaml_file}"
