@@ -26,6 +26,8 @@ namespace :reports do
 
     # ---------------------------------------------------------------------- }}}
     # {{{ Copy base PDF template
+    #     TODO: placehoder for template overlay logic. :wall
+    #
 
     template_src = Rails.root.join("app/pdfs/templates/template.pdf")
     template_dst = Rails.root.join("app/pdfs/#{name}/#{name}.pdf")
@@ -47,6 +49,7 @@ namespace :reports do
           module #{class_name}
             class #{class_name}Service < Reports::Base::ReportService
 
+              # TODO: Stwp in the correct report-specific stored procedure.
               def stored_proc
                 "GSABSS.dbo.Paperboy_Reports_Scaffolding"
               end
@@ -90,52 +93,59 @@ namespace :reports do
     # ---------------------------------------------------------------------- }}}
     # {{{ Create YAML mapping
     #
-    # Sample Data
-# CUNIT | POSTING_REF | SERVICE        | DATE       | DOC_NMBR | DESCRIPTION                 | OTHER1                             | OTHER2                     | OTHER3                               | QUANTITY | RATE               | COST
-# 1703  | RCD1125     | RECORDS        | 2025-11-01 | 7102     | Storage of Size A Container | STORE                              | A                          | 69 Boxes @ 1.2 CuFt = 82.8 CuFt      | 69       | 0.5                | 34.5
-# 2925  | GDS1125     | Digitization   | 2025-11-01 |          | GSABSS                      | OVS                                |                            |                                      | 2738     | 3.25               | 8898.5
-# 2925  | GDS1125     | Digitization   | 2025-11-01 |          | GSABSS                      | RS                                 |                            |                                      | 98622    | 0.2029999941587448 | 20020.26542392373
-# 3000  | GDS1125     | Doc Automation | 2025-11-01 |          | RM-75I Injury Reporting     | Creative Services and Project Mgmt | Dashboards and Analytics   | Hourly Rate                          | 1        | 114.12999725341797 | 114.12999725341797
-# 3000  | GDS1125     | Doc Automation | 2025-11-01 |          | RM-75I Injury Reporting     | Creative Services and Project Mgmt | eForm and Workflow         | Hourly Rate                          | 1        | 114.12999725341797 | 114.12999725341797
+
     yaml_file = Rails.root.join("config/reports/#{name}.yml")
     unless File.exist?(yaml_file)
       File.write(yaml_file, <<~YAML)
+      # TODO: Update fields and x,y coorrdinates to match the report-specific stored procedue.
         fields:
           cunit:
-            x: 119
+            x: 135
             y: 695
 
           posting_ref:
-            x: 119
+            x: 135
             y: 675
 
           service:
-            x: 119
+            x: 135
             y: 655
 
           date:
-            x: 119
+            x: 135
             y: 635
 
           doc_nmbr:
-            x: 119
+            x: 135
             y: 615
 
           description:
-            x: 119
+            x: 135
             y: 595
 
-          quantity:
-            x: 119
+          other1:
+            x: 135
             y: 575
 
-          rate:
-            x: 119
+          other3:
+            x: 135
             y: 555
 
-          cost:
-            x: 119
+          other2:
+            x: 135
             y: 535
+
+          quantity:
+            x: 135
+            y: 515
+
+          rate:
+            x: 135
+            y: 495
+
+          cost:
+            x: 135
+            y: 475
       YAML
 
       puts "Created YAML mapping: #{yaml_file}"
@@ -223,6 +233,8 @@ namespace :reports do
         #   - One SQL row = one PDF page
         #   - Absolute coordinates assume margin: 0
 
+        # TODO: Update renderer to match the report-specific stored procedue.
+
         module Reports
           module #{class_name}
             class Renderer
@@ -257,8 +269,8 @@ namespace :reports do
 
                     @pdf.text_box(
                       "\#{field.to_s.upcase}:",
-                      at: [x - 80, y],
-                      width: 75,
+                      at: [x - 90, y],
+                      width: 90,
                       height: 20,
                       overflow: :truncate,
                       disable_wrap: true
