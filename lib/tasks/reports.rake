@@ -239,11 +239,11 @@ namespace :reports do
                   return
                 end
 
-                @data.each_with_index do |row, idx|
+                @data.each do |row|
                   @pdf.start_new_page(
-                    template: @template,
+                    template: @template.to_s,
                     margin: 0
-                  ) unless idx.zero?
+                  )
 
                   @mapping.each do |field, coords|
                     value = row[field.to_s] || ""
@@ -270,6 +270,13 @@ namespace :reports do
                     )
                   end
                 end
+
+                @pdf.number_pages(
+                  "<page> of <total>",
+                  at: [500, 20],
+                  width: 100,
+                  align: :right
+                )
               end
 
             end

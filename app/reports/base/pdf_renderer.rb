@@ -22,8 +22,8 @@ module Reports
 
         Prawn::Document.generate(
           output_path,
-          template: template.to_s,
           margin: 0
+          skip_page_creation: true
         ) do |pdf|
           renderer = load_renderer(pdf)
           renderer.render
