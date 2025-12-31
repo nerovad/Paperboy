@@ -233,11 +233,11 @@ namespace :reports do
                   @mapping.each do |field, coords|
                     value = row[field.to_s] || ""
 
-                    x = coods["x"].to_i
-                    y = coods["y"].to_i
+                    x = coords["x"].to_i
+                    y = coords["y"].to_i
 
                     @pdf.text_box(
-                      "#{field.to_s.upcase}:",
+                      "\#{field.to_s.upcase}:",
                       at: [x - 80, y],
                       width: 75,
                       height: 20,
@@ -256,6 +256,7 @@ namespace :reports do
                   end
                 end
               end
+
             end
           end
         end
