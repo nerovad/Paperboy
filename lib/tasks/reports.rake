@@ -102,40 +102,40 @@ namespace :reports do
       File.write(yaml_file, <<~YAML)
         fields:
           cunit:
-            x: 100
-            y: 680
+            x: 119
+            y: 720
 
           posting_ref:
-            x: 100
-            y: 660
+            x: 119
+            y: 700
 
           service:
-            x: 100
-            y: 640
+            x: 119
+            y: 680
 
           date:
-            x: 100
-            y: 620
+            x: 119
+            y: 660
 
           doc_nmbr:
-            x: 100
-            y: 600
+            x: 119
+            y: 640
 
           description:
-            x: 100
-            y: 580
+            x: 119
+            y: 620
 
           quantity:
-            x: 100
-            y: 560
+            x: 119
+            y: 600
 
           rate:
-            x: 100
-            y: 540
+            x: 119
+            y: 580
 
           cost:
-            x: 100
-            y: 520
+            x: 119
+            y: 560
       YAML
 
       puts "Created YAML mapping: #{yaml_file}"
