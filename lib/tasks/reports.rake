@@ -103,39 +103,39 @@ namespace :reports do
         fields:
           cunit:
             x: 119
-            y: 720
+            y: 695
 
           posting_ref:
             x: 119
-            y: 700
+            y: 675
 
           service:
             x: 119
-            y: 680
+            y: 655
 
           date:
             x: 119
-            y: 660
+            y: 635
 
           doc_nmbr:
             x: 119
-            y: 640
+            y: 615
 
           description:
             x: 119
-            y: 620
+            y: 595
 
           quantity:
             x: 119
-            y: 600
+            y: 575
 
           rate:
             x: 119
-            y: 580
+            y: 555
 
           cost:
             x: 119
-            y: 560
+            y: 535
       YAML
 
       puts "Created YAML mapping: #{yaml_file}"
