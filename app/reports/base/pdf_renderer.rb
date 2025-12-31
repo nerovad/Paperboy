@@ -22,7 +22,7 @@ module Reports
 
         Prawn::Document.generate(
           output_path,
-          margin: 0
+          margin: 0,
           skip_page_creation: true
         ) do |pdf|
           renderer = load_renderer(pdf)
