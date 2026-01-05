@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_18_221129) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -387,6 +387,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_18_221129) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "brown_mail_form_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.integer "status", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "buffalo_bills_forms", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
@@ -716,6 +730,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_18_221129) do
     t.string "division"
     t.string "department"
     t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "new_york_giants_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.integer "status", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

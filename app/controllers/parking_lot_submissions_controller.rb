@@ -151,30 +151,25 @@ def approve
   approver_id = session.dig(:user, "employee_id").to_s
 
   if @submission.submitted?
-    # DEPT HEAD APPROVAL - must select delegated approver
-    delegated_approver_id = params[:delegated_approver_id].to_s.strip
-
-    if delegated_approver_id.blank?
-      redirect_to inbox_queue_path, alert: "Please select a delegated approver." and return
-    end
-
-    delegated_approver_email = fetch_employee_email(delegated_approver_id)
+    # AUTHORIZED APPROVER APPROVAL - always routes to Sean Payne for final approval
+    sean_payne_id = "104236"
+    sean_payne_email = "Sean.Payne@ventura.org"
 
     @submission.update!(
       status: 1,  # pending_delegated_approval
       approved_by: approver_id,
       approved_at: Time.current,
-      delegated_approver_id: delegated_approver_id,
-      delegated_approver_email: delegated_approver_email
+      delegated_approver_id: sean_payne_id,
+      delegated_approver_email: sean_payne_email
     )
 
-    # Send notification to delegated approver
+    # Send notification to Sean Payne
     SecurityMailer.notify_delegated_approver(@submission).deliver_later
 
-    redirect_to inbox_queue_path, notice: "Request approved and sent to #{delegated_approver_id} for final approval."
+    redirect_to inbox_queue_path, notice: "Request approved and sent to Sean Payne for final approval."
 
   elsif @submission.pending_delegated_approval?
-    # DELEGATED APPROVER APPROVAL - final approval before security
+    # SEAN PAYNE FINAL APPROVAL - sends to Security after approval
     @submission.update!(
       status: 3,  # approved
       delegated_approved_by: approver_id,
@@ -183,7 +178,7 @@ def approve
 
     # Send to Security
     NotifySecurityJob.perform_later(@submission.id)
-    
+
     @submission.update!(status: 4)  # sent_to_security
 
     redirect_to inbox_queue_path, notice: "Request approved and sent to Security."
@@ -235,27 +230,6 @@ end
   def set_parking_lot_submission
     @parking_lot_submission = ParkingLotSubmission.find(params[:id])
   end
-
-  def fetch_department_employees(department_id)
-  return [] if department_id.blank?
-  
-  result = ActiveRecord::Base.connection.exec_query(<<-SQL.squish)
-    SELECT EmployeeID, First_Name, Last_Name, EE_Email
-    FROM [GSABSS].[dbo].[Employees] e
-    INNER JOIN [GSABSS].[dbo].[Units] u ON e.Unit = u.unit_id
-    WHERE u.department_id = '#{department_id}'
-    AND e.Employment_Status = 'A'  -- Active employees only
-    ORDER BY Last_Name, First_Name
-  SQL
-  
-  result.map do |row|
-    {
-      id: row["EmployeeID"],
-      name: "#{row["First_Name"]} #{row["Last_Name"]}",
-      email: row["EE_Email"]
-    }
-  end
-end
 
   def fetch_supervisor_id(employee_id)
     result = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first

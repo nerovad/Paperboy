@@ -1,5 +1,5 @@
 <!-- app/views/inbox/queue.html.erb -->
-<turbo-frame id="main-content" data-controller="approve-modal deny-modal parking-approve-modal">
+<turbo-frame id="main-content" data-controller="approve-modal deny-modal">
   <h1 class="page-title">Inbox Queue</h1>
 
   <div class="table-wrapper">
@@ -40,22 +40,11 @@
 
                   <!-- APPROVE BUTTONS -->
                   <% if submission.is_a?(ParkingLotSubmission) %>
-                    <!-- Parking forms need delegation modal -->
-                    <% if submission.submitted? %>
-                      <button type="button"
-                              class="btn approve"
-                              data-action="click->parking-approve-modal#open"
-                              data-parking-approve-modal-submission-id-value="<%= submission.id %>"
-                              data-parking-approve-modal-approve-path-value="<%= polymorphic_path(submission, action: :approve) %>"
-                              data-parking-approve-modal-employees-value="<%= @department_employees[submission.id].to_json %>">
-                        Approve & Delegate
-                      </button>
-                    <% elsif submission.pending_delegated_approval? %>
-                      <%= button_to "Final Approve",
-                            polymorphic_path(submission, action: :approve),
-                            method: :patch, 
-                            class: "btn approve" %>
-                    <% end %>
+                    <!-- Parking forms: Authorized Approver -> Sean Payne -> Security -->
+                    <%= button_to "Approve",
+                          polymorphic_path(submission, action: :approve),
+                          method: :patch,
+                          class: "btn approve" %>
 
                   <% elsif submission.is_a?(ProbationTransferRequest) %>
                     <!-- Probation transfers need destination selection modal -->
@@ -93,41 +82,6 @@
         <% end %>
       </tbody>
     </table>
-  </div>
-
-  <!-- Parking Approve Modal -->
-  <div id="parking-approve-modal-backdrop"
-       class="deny-modal-backdrop"
-       data-parking-approve-modal-target="backdrop"
-       style="display:none;">
-    <div class="deny-modal" role="dialog" aria-modal="true" data-parking-approve-modal-target="modal">
-      <div class="deny-modal__header">
-        <h3>Approve & Select Delegated Approver</h3>
-        <button type="button" class="deny-modal__close" data-action="parking-approve-modal#close" aria-label="Close">✕</button>
-      </div>
-      <div class="deny-modal__body">
-        <p>Select an employee from this department to perform the final approval:</p>
-        <form data-parking-approve-modal-target="form" method="post" action="#">
-          <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
-          <%= hidden_field_tag :_method, "patch" %>
-          <div class="form-group">
-            <label for="delegated_approver_id">Delegated Approver *</label>
-            <select id="delegated_approver_id"
-                    name="delegated_approver_id"
-                    class="form-control"
-                    required
-                    data-parking-approve-modal-target="select">
-              <option value="">-- Select Employee --</option>
-            </select>
-            <small class="help-text text-muted">This person will receive the request for final approval before it goes to Security.</small>
-          </div>
-          <div class="deny-modal__actions">
-            <button type="button" class="btn" data-action="parking-approve-modal#close">Cancel</button>
-            <button type="submit" class="btn approve">Approve & Send</button>
-          </div>
-        </form>
-      </div>
-    </div>
   </div>
 
   <!-- Approve Modal for Probation Transfers -->

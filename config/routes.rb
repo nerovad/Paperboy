@@ -1,6 +1,9 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  resources :brown_mail_form_forms
+  resources :brown_mail_forms
+  resources :new_york_giants_forms
   resources :arizona_cardinals_forms
   # ============================================================================
   # Root & Home

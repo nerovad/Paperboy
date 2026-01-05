@@ -8,7 +8,7 @@ class SecurityMailer < ApplicationMailer
       content: ParkingLotPdfGenerator.generate(submission)
     }
     mail(
-      to: "matthew.davoren@ventura.org",
+      to: "GSA.Security@venturacounty.gov",
       subject: "New Parking Permit Submission Approved"
     )
   end
