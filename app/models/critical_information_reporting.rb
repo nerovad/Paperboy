@@ -1,6 +1,9 @@
 # app/models/critical_information_reporting.rb
 
 class CriticalInformationReporting < ApplicationRecord
+  # ActiveStorage attachment for media files
+  has_one_attached :media
+
   # Validations for Employee Info (Page 1)
   validates :employee_id, presence: true
   validates :name, presence: true
@@ -28,7 +31,7 @@ class CriticalInformationReporting < ApplicationRecord
   # Validations for Status (Page 5)
   validates :status, presence: true, inclusion: { in: ['In Progress', 'Resolved', 'Scheduled', 'Cancelled'] }
   validates :urgency, presence: true
-  
+
   # Conditional validation for actual_completion_date - only required if status is 'Resolved'
   validates :actual_completion_date, presence: true, if: -> { status == 'Resolved' }
 
@@ -36,9 +39,24 @@ class CriticalInformationReporting < ApplicationRecord
   validates :impact, presence: true, inclusion: { in: ['Low', 'Medium', 'High'] }
   validates :impacted_customers, presence: true
   validates :next_steps, presence: true
-  
-  # Media is optional but must be a valid URL if provided
-  validates :media, format: { with: URI::DEFAULT_PARSER.make_regexp(['http', 'https']), message: "must be a valid URL" }, allow_blank: true
+
+  # Media attachment validation - optional, accepts common file types
+  validate :acceptable_media_file
+
+  private
+
+  def acceptable_media_file
+    return unless media.attached?
+
+    unless media.blob.byte_size <= 10.megabytes
+      errors.add(:media, "is too large (maximum is 10 MB)")
+    end
+
+    acceptable_types = ["image/jpeg", "image/png", "image/gif", "application/pdf"]
+    unless acceptable_types.include?(media.blob.content_type)
+      errors.add(:media, "must be a JPEG, PNG, GIF, or PDF")
+    end
+  end
 
   # Scopes for common queries
   scope :by_status, ->(status) { where(status: status) }

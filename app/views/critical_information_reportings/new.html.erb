@@ -273,13 +273,13 @@
         </div>
 
         <div class="form-group">
-          <%= form.label :media, "Media" %>
-          <%= form.url_field :media,
+          <%= form.label :media, "Media (Photo, PDF, etc.)" %>
+          <%= form.file_field :media,
                 class: "form-control",
-                placeholder: "https://example.com/media",
-                pattern: "https?://.+" %>
+                accept: "image/jpeg,image/png,image/gif,application/pdf",
+                direct_upload: true %>
           <small class="help-text text-muted">
-            Enter a valid URL (must start with http:// or https://)
+            Upload a photo (JPEG, PNG, GIF) or PDF file (maximum 10 MB)
           </small>
         </div>
       </div>

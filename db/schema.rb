@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_05_035117) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -311,6 +311,34 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
     t.float "COST"
   end
 
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.bigint "record_id", null: false
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "filename", null: false
+    t.string "content_type"
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.datetime "created_at", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
   create_table "activities", primary_key: ["agency_id", "activity_id"], force: :cascade do |t|
     t.string "agency_id", limit: 3, null: false
     t.string "activity_id", limit: 4, null: false
@@ -322,20 +350,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
     t.string "name", limit: 100, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
-  end
-
-  create_table "arizona_cardinals_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.integer "status", default: 0
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "authorization_fos", force: :cascade do |t|
@@ -387,60 +401,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "brown_mail_form_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.integer "status", default: 0
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "buffalo_bills_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "carpool_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "chicago_bears_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "chicago_blackhawks_forms", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
     t.string "phone"
@@ -495,20 +456,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
     t.string "impact"
     t.string "impacted_customers"
     t.text "next_steps"
-    t.string "media"
-  end
-
-  create_table "dallas_cowboys_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "department_funds", primary_key: ["agency_id", "fund_id"], force: :cascade do |t|
@@ -522,19 +469,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
     t.string "department_id", limit: 4, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
-  end
-
-  create_table "detroit_lions_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "divisions", primary_key: ["agency_id", "division_id"], force: :cascade do |t|
@@ -609,45 +543,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
     t.string "cafr_type", limit: 50, null: false
   end
 
-  create_table "jungle_book_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "la_chargers_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "la_rams_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "loa_forms", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.date "last_date_worked"
@@ -693,59 +588,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
     t.string "major_program_id", limit: 10, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
-  end
-
-  create_table "minnesota_vikings_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "new_england_patriots_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "new_orleans_saints_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "new_york_giants_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.integer "status", default: 0
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "objects", primary_key: "object_id", id: { type: :integer, limit: 2, default: nil }, force: :cascade do |t|
@@ -820,32 +662,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
     t.string "phase_id", limit: 6, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
-  end
-
-  create_table "polar_express_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "princess_bride_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "probation_transfer_requests", force: :cascade do |t|
@@ -977,32 +793,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
     t.index ["next_run_at"], name: "index_scheduled_reports_on_next_run_at"
   end
 
-  create_table "seattle_seahawks_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "sonic_the_hedgehog_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "sub_objects", primary_key: ["agency_id", "object_id", "sub_object_id"], force: :cascade do |t|
     t.string "agency_id", limit: 3, null: false
     t.integer "object_id", limit: 2, null: false
@@ -1014,19 +804,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
     t.string "unit_id", limit: 4, null: false
     t.string "subunit_id", limit: 4, null: false
     t.string "short_name", limit: 50, null: false
-  end
-
-  create_table "super_mario_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "tasks", primary_key: ["agency_id", "task_id"], force: :cascade do |t|
@@ -1062,6 +839,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_220311) do
   add_foreign_key "Employee_Groups", "Employees", column: "EmployeeID", primary_key: "EmployeeID", name: "FK__Employee___Emplo__5B988E2F"
   add_foreign_key "Employee_Groups", "Groups", column: "GroupID", primary_key: "GroupID", name: "FK__Employee___Group__5C8CB268"
   add_foreign_key "TC60", "TC60_Types", column: "TYPE", primary_key: "TYPE", name: "FK_TC60_TYPE_TC60_TYPES"
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "events", "Employees_Old", column: "employee_id", primary_key: "EmployeeID"
   add_foreign_key "events", "Employees_Old", column: "reported_by_id", primary_key: "EmployeeID"
   add_foreign_key "form_fields", "form_templates"

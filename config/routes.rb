@@ -1,10 +1,7 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
-  resources :brown_mail_form_forms
   resources :brown_mail_forms
-  resources :new_york_giants_forms
-  resources :arizona_cardinals_forms
   # ============================================================================
   # Root & Home
   # ============================================================================
@@ -96,28 +93,12 @@ Rails.application.routes.draw do
   # Standard Forms (alphabetical)
   # ============================================================================
   resources :bike_locker_permits
-  resources :buffalo_bills_forms
   resources :carpool_forms
-  resources :chicago_bears_forms
-  resources :chicago_blackhawks_forms
   resources :creative_job_requests, only: [:new, :create]
   resources :critical_information_reportings
-  resources :dallas_cowboys_forms
-  resources :detroit_lions_forms
-  resources :jungle_book_forms
-  resources :la_chargers_forms
-  resources :la_rams_forms
   resources :loa_forms, only: [:new, :create]
-  resources :minnesota_vikings_forms
-  resources :new_england_patriots_forms
-  resources :new_orleans_saints_forms
-  resources :polar_express_forms
-  resources :princess_bride_forms
   resources :rm75_forms, only: [:new, :create]
   resources :rm75i_forms, only: [:new, :create]
-  resources :seattle_seahawks_forms
-  resources :sonic_the_hedgehog_forms
-  resources :super_mario_forms
 
   # ============================================================================
   # Lookups & Dynamic Data
