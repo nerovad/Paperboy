@@ -1,0 +1,80 @@
+<%# app/views/dashboards/index.html.erb %>
+<div class="form-header">
+  <h1>Dashboards</h1>
+</div>
+
+<div class="form-wrapper dashboards-wrapper" data-controller="dashboards">
+  <% if @dashboard_forms.any? %>
+    <!-- Form Selector Dropdown -->
+    <div class="form-group">
+      <%= form_with url: dashboards_path, method: :get, local: true, class: "dashboard-form-selector" do |f| %>
+        <%= f.label :form_id, "Select Dashboard", class: "form-label" %>
+        <%= f.select :form_id,
+          options_for_select(
+            @dashboard_forms.map { |form| [form.name, form.id] },
+            @selected_form&.id
+          ),
+          { prompt: "Choose a dashboard..." },
+          {
+            class: "form-control",
+            data: {
+              action: "change->dashboards#loadDashboard",
+              dashboards_target: "formSelect"
+            }
+          }
+        %>
+        <small class="help-text">Select a form to view its analytics dashboard</small>
+      <% end %>
+    </div>
+
+    <!-- Dashboard Container -->
+    <% if @selected_form&.has_dashboard? %>
+      <div class="dashboard-container" data-dashboards-target="container">
+        <!-- Loading State -->
+        <div class="dashboard-loading" data-dashboards-target="loading">
+          <div class="loading-spinner"></div>
+          <p>Loading dashboard...</p>
+        </div>
+
+        <!-- Error State -->
+        <div class="dashboard-error"
+             data-dashboards-target="error"
+             style="display: none;">
+          <div class="error-icon">⚠️</div>
+          <h3>Unable to Load Dashboard</h3>
+          <p data-dashboards-target="errorMessage"></p>
+          <button class="btn approve" data-action="click->dashboards#retry">
+            Retry
+          </button>
+        </div>
+
+        <!-- Power BI Embed Container -->
+        <div id="powerbi-report-container"
+             data-dashboards-target="reportContainer"
+             data-embed-config="<%= @embed_config.to_json %>"
+             style="display: none;">
+        </div>
+      </div>
+    <% elsif @selected_form %>
+      <!-- No Dashboard Configured State -->
+      <div class="empty-state">
+        <p>No dashboard has been configured for <%= @selected_form.name %>.</p>
+        <% if system_admin? %>
+          <p class="empty-state-hint">
+            <%= link_to "Configure dashboard settings", edit_form_template_path(@selected_form), class: "btn" %>
+          </p>
+        <% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <!-- No Dashboards Available State -->
+    <div class="empty-state">
+      <p>No dashboards are currently available.</p>
+      <% if system_admin? %>
+        <p class="empty-state-hint">
+          Configure dashboards in <%= link_to "Form Templates", form_templates_path %>
+        </p>
+      <% end %>
+    </div>
+  <% end %>
+</div>

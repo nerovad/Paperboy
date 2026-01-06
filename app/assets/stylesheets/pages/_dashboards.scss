@@ -1,0 +1,198 @@
+/* Pages: Dashboards */
+@import '../base/tokens';
+
+/* Dashboards wrapper */
+.dashboards-wrapper {
+  max-width: 100%;
+  height: calc(100vh - 140px);
+  padding: 20px;
+  overflow: hidden;
+
+  /* Smooth scrolling for form selector area */
+  scroll-behavior: smooth;
+
+  @media (max-width: 768px) {
+    height: calc(100vh - 120px);
+    padding: 10px;
+  }
+}
+
+/* Form selector group */
+.dashboards-wrapper .form-group {
+  margin-bottom: 24px;
+  max-width: 600px;
+}
+
+/* Dashboard container */
+.dashboard-container {
+  position: relative;
+  width: 100%;
+  height: calc(100% - 120px); /* Account for form selector */
+  background: $form-bg;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    height: calc(100% - 140px);
+  }
+}
+
+/* Loading state */
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 20px;
+
+  p {
+    color: $text-color;
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid $border-color;
+  border-top-color: $primary-color;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error state */
+.dashboard-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  padding: 40px;
+  text-align: center;
+
+  .error-icon {
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: $text-color;
+  }
+
+  p {
+    margin: 0;
+    color: $muted;
+    max-width: 500px;
+  }
+
+  .btn {
+    margin-top: 10px;
+  }
+}
+
+/* Power BI report container */
+#powerbi-report-container {
+  width: 100%;
+  height: 100%;
+
+  /* Power BI iframe will fill this container */
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+}
+
+/* Form selector - match reports page styling */
+.dashboards-wrapper .form-label {
+  display: block;
+  color: $label-color;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.dashboards-wrapper .form-control {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  color: $text-color;
+  background-color: $form-bg;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+  }
+}
+
+.dashboards-wrapper .help-text {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.875rem;
+  color: $muted;
+}
+
+/* Empty state - reuse from reports */
+.dashboards-wrapper .empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: #fafafa;
+  border-radius: $radius-6;
+  border: 1px solid $border-color;
+  max-width: 600px;
+  margin: 0 auto;
+
+  p {
+    color: $text-color;
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+
+  .empty-state-hint {
+    color: $muted;
+    font-size: 0.9rem;
+
+    a {
+      color: $primary-color;
+      text-decoration: underline;
+
+      &:hover {
+        color: $primary-hover;
+      }
+    }
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dashboard-container {
+    border-radius: 4px;
+  }
+
+  .dashboard-error {
+    padding: 20px;
+
+    .error-icon {
+      font-size: 2rem;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+    }
+  }
+}

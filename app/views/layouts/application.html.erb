@@ -75,7 +75,8 @@
                    data-profile-dropdown-target="dropdown">
                 <%= link_to "Inbox Queue", inbox_queue_path, class: "btn btn-primary" %>
                 <%= link_to "Status", status_path, class: "btn btn-primary" %>
-                
+                <%= link_to "Dashboards", dashboards_path, class: "btn btn-primary" %>
+
                 <% if AuthorizationManager.exists?(employee_id: session.dig(:user, "employee_id").to_s) %>
                   <%= link_to "Auth Console", authorization_console_index_path, class: "btn btn-primary" %>
                 <% end %>
