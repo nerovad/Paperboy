@@ -59,4 +59,41 @@
   .button-container .btn {
     margin: 0;
   }
+
+  /* Status dropdown for CIR forms */
+  .button-container .status-dropdown {
+    padding: 8px 12px;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    background: white;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 140px;
+
+    &:hover {
+      border-color: darken($border-color, 10%);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+    }
+  }
+
+  /* Edit button styling */
+  .button-container .btn.edit {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: darken(#2196F3, 10%);
+    }
+  }
 }

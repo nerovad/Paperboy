@@ -12,10 +12,13 @@ class InboxController < ApplicationController
     # 2. Delegated Approver and status = 1 (pending_delegated_approval)
     @submissions += ParkingLotSubmission.where(supervisor_id: employee_id, status: 0)
     @submissions += ParkingLotSubmission.where(delegated_approver_id: employee_id, status: 1)
-    
+
     # Probation Transfer Requests (unchanged)
     @submissions += ProbationTransferRequest.where(supervisor_id: employee_id, status: 0, canceled_at: nil)
-    
+
+    # Critical Information Reporting forms assigned to this manager
+    @submissions += CriticalInformationReporting.where(assigned_manager_id: employee_id, status: 0)
+
     @submissions.sort_by!(&:created_at).reverse!
   end
 

@@ -62,6 +62,120 @@ class CriticalInformationReportingsController < ApplicationController
     @location_options = load_location_options
   end
 
+  def pdf
+    @critical_information_reporting = CriticalInformationReporting.find(params[:id])
+    pdf_data = CriticalInformationPdfGenerator.generate(@critical_information_reporting)
+
+    send_data pdf_data,
+              filename: "CriticalInformationReport_#{@critical_information_reporting.id}.pdf",
+              type: "application/pdf",
+              disposition: "attachment"
+  end
+
+  def edit
+    @critical_information_reporting = CriticalInformationReporting.find(params[:id])
+
+    employee_id = session.dig(:user, "employee_id").to_s
+    @employee = employee_id.present? ? Employee.find_by(EmployeeID: employee_id) : nil
+
+    unless @employee
+      redirect_to login_path, alert: "Please sign in." and return
+    end
+
+    # Load organization options (same as new action)
+    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+
+    agency = Agency.find_by(agency_id: @critical_information_reporting.agency)
+    @division_options = agency ? Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
+
+    division = Division.find_by(division_id: @critical_information_reporting.division)
+    @department_options = division ? Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
+
+    department = Department.find_by(department_id: @critical_information_reporting.department)
+    @unit_options = if department
+      Unit.where(department_id: department.department_id)
+          .order(:unit_id)
+          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+    else
+      []
+    end
+
+    @employee_options = Employee.select(:EmployeeID, :First_Name, :Last_Name)
+                                .order(:Last_Name, :First_Name)
+                                .map { |e| ["#{e.First_Name} #{e.Last_Name}", e.EmployeeID] }
+
+    @location_options = load_location_options
+  end
+
+  def update
+    @critical_information_reporting = CriticalInformationReporting.find(params[:id])
+
+    if @critical_information_reporting.update(critical_information_reporting_params)
+      redirect_to inbox_queue_path, notice: "Critical Information Report updated successfully."
+    else
+      # Reload options on failure
+      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+
+      agency = Agency.find_by(agency_id: @critical_information_reporting.agency)
+      @division_options = agency ? Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
+
+      division = Division.find_by(division_id: @critical_information_reporting.division)
+      @department_options = division ? Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
+
+      department = Department.find_by(department_id: @critical_information_reporting.department)
+      @unit_options = if department
+        Unit.where(department_id: department.department_id)
+            .order(:unit_id)
+            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+      else
+        []
+      end
+
+      @employee_options = Employee.select(:EmployeeID, :First_Name, :Last_Name)
+                                  .order(:Last_Name, :First_Name)
+                                  .map { |e| ["#{e.First_Name} #{e.Last_Name}", e.EmployeeID] }
+
+      @location_options = load_location_options
+
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def update_status
+    @critical_information_reporting = CriticalInformationReporting.find(params[:id])
+    new_status = params[:status]
+
+    if CriticalInformationReporting.statuses.keys.include?(new_status)
+      @critical_information_reporting.update!(status: new_status)
+
+      if new_status == "resolved"
+        redirect_to inbox_queue_path, notice: "Critical Information Report marked as resolved and removed from queue."
+      else
+        redirect_to inbox_queue_path, notice: "Status updated to #{new_status.titleize}."
+      end
+    else
+      redirect_to inbox_queue_path, alert: "Invalid status."
+    end
+  end
+
+  def approve
+    @critical_information_reporting = CriticalInformationReporting.find(params[:id])
+
+    @critical_information_reporting.update!(status: :resolved)
+
+    redirect_to inbox_queue_path, notice: "Critical Information Report marked as resolved."
+  end
+
+  def deny
+    @critical_information_reporting = CriticalInformationReporting.find(params[:id])
+
+    reason = params[:denial_reason].to_s.strip
+
+    @critical_information_reporting.update!(status: :cancelled)
+
+    redirect_to inbox_queue_path, alert: "Critical Information Report cancelled."
+  end
+
   def create
     employee      = session[:user]
     employee_id   = employee&.dig("employee_id").to_s

@@ -95,13 +95,21 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :critical_information_reportings, only: [:new, :create, :edit, :update] do
+    member do
+      get :pdf
+      patch :approve
+      patch :deny
+      patch :update_status
+    end
+  end
+
   # ============================================================================
   # Standard Forms (alphabetical)
   # ============================================================================
   resources :bike_locker_permits
   resources :carpool_forms
   resources :creative_job_requests, only: [:new, :create]
-  resources :critical_information_reportings
   resources :loa_forms, only: [:new, :create]
   resources :rm75_forms, only: [:new, :create]
   resources :rm75i_forms, only: [:new, :create]

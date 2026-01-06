@@ -51,21 +51,6 @@ class CriticalInformationReporting < ApplicationRecord
   # Media attachment validation - optional, accepts common file types
   validate :acceptable_media_file
 
-  private
-
-  def acceptable_media_file
-    return unless media.attached?
-
-    unless media.blob.byte_size <= 10.megabytes
-      errors.add(:media, "is too large (maximum is 10 MB)")
-    end
-
-    acceptable_types = ["image/jpeg", "image/png", "image/gif", "application/pdf"]
-    unless acceptable_types.include?(media.blob.content_type)
-      errors.add(:media, "must be a JPEG, PNG, GIF, or PDF")
-    end
-  end
-
   # Scopes for common queries
   scope :by_status, ->(status) { where(status: status) }
   scope :by_impact, ->(impact) { where(impact: impact) }
@@ -98,6 +83,19 @@ class CriticalInformationReporting < ApplicationRecord
   end
 
   private
+
+  def acceptable_media_file
+    return unless media.attached?
+
+    unless media.blob.byte_size <= 10.megabytes
+      errors.add(:media, "is too large (maximum is 10 MB)")
+    end
+
+    acceptable_types = ["image/jpeg", "image/png", "image/gif", "application/pdf"]
+    unless acceptable_types.include?(media.blob.content_type)
+      errors.add(:media, "must be a JPEG, PNG, GIF, or PDF")
+    end
+  end
 
   def assign_manager_based_on_location
     # Auto-assign the incident manager based on location

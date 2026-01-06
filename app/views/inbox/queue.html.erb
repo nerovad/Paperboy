@@ -30,49 +30,76 @@
 
               <td class="action-buttons">
                 <div class="button-container">
-                  <!-- VIEW PDF BUTTON -->
-                  <% if submission.respond_to?(:pdf_path) || submission.is_a?(ParkingLotSubmission) || submission.is_a?(ProbationTransferRequest) %>
-                    <%= link_to "View PDF", 
-                        submission.is_a?(ParkingLotSubmission) ? pdf_parking_lot_submission_path(submission) : pdf_probation_transfer_request_path(submission), 
-                        target: "_blank", 
+                  <% if submission.is_a?(CriticalInformationReporting) %>
+                    <!-- CIR FORM CUSTOM BUTTONS -->
+                    <%= link_to "Download PDF",
+                        pdf_critical_information_reporting_path(submission),
                         class: "btn pdf" %>
-                  <% end %>
 
-                  <!-- APPROVE BUTTONS -->
-                  <% if submission.is_a?(ParkingLotSubmission) %>
-                    <!-- Parking forms: Authorized Approver -> Sean Payne -> Security -->
-                    <%= button_to "Approve",
-                          polymorphic_path(submission, action: :approve),
-                          method: :patch,
-                          class: "btn approve" %>
+                    <%= link_to "Edit Form",
+                        edit_critical_information_reporting_path(submission),
+                        class: "btn edit",
+                        data: { turbo: false } %>
 
-                  <% elsif submission.is_a?(ProbationTransferRequest) %>
-                    <!-- Probation transfers need destination selection modal -->
-                    <button type="button"
-                            class="btn approve"
-                            data-action="click->approve-modal#open"
-                            data-approve-modal-approve-path-value="<%= polymorphic_path(submission, action: :approve) %>"
-                            data-approve-modal-options-value="<%= submission.desired_destinations_array.to_json %>"
-                            data-approve-modal-title-value="<%= "Approve Transfer ##{submission.id}" %>">
-                      Approve
-                    </button>
+                    <%= form_with url: update_status_critical_information_reporting_path(submission), method: :patch, local: true, style: "display: inline;" do |f| %>
+                      <%= f.select :status,
+                          options_for_select([
+                            ['In Progress', 'in_progress'],
+                            ['Resolved', 'resolved'],
+                            ['Scheduled', 'scheduled'],
+                            ['Cancelled', 'cancelled']
+                          ], submission.status),
+                          {},
+                          class: "form-control status-dropdown",
+                          onchange: "this.form.submit()",
+                          style: "display: inline-block; width: auto; margin-left: 10px;" %>
+                    <% end %>
 
                   <% else %>
-                    <!-- All other forms get simple approve -->
-                    <%= button_to "Approve",
-                          polymorphic_path(submission, action: :approve),
-                          method: :patch,
-                          class: "btn approve" %>
-                  <% end %>
+                    <!-- VIEW PDF BUTTON -->
+                    <% if submission.respond_to?(:pdf_path) || submission.is_a?(ParkingLotSubmission) || submission.is_a?(ProbationTransferRequest) %>
+                      <%= link_to "View PDF",
+                          submission.is_a?(ParkingLotSubmission) ? pdf_parking_lot_submission_path(submission) : pdf_probation_transfer_request_path(submission),
+                          target: "_blank",
+                          class: "btn pdf" %>
+                    <% end %>
 
-                  <!-- DENY BUTTON (all forms) -->
-                  <button type="button"
-                          class="btn deny"
-                          data-action="click->deny-modal#open"
-                          data-deny-path="<%= polymorphic_path(submission, action: :deny) %>"
-                          data-record-title="<%= "#{submission.class.name.demodulize.titleize} ##{submission.id}" %>">
-                    Deny
-                  </button>
+                    <!-- APPROVE BUTTONS -->
+                    <% if submission.is_a?(ParkingLotSubmission) %>
+                      <!-- Parking forms: Authorized Approver -> Sean Payne -> Security -->
+                      <%= button_to "Approve",
+                            polymorphic_path(submission, action: :approve),
+                            method: :patch,
+                            class: "btn approve" %>
+
+                    <% elsif submission.is_a?(ProbationTransferRequest) %>
+                      <!-- Probation transfers need destination selection modal -->
+                      <button type="button"
+                              class="btn approve"
+                              data-action="click->approve-modal#open"
+                              data-approve-modal-approve-path-value="<%= polymorphic_path(submission, action: :approve) %>"
+                              data-approve-modal-options-value="<%= submission.desired_destinations_array.to_json %>"
+                              data-approve-modal-title-value="<%= "Approve Transfer ##{submission.id}" %>">
+                        Approve
+                      </button>
+
+                    <% else %>
+                      <!-- All other forms get simple approve -->
+                      <%= button_to "Approve",
+                            polymorphic_path(submission, action: :approve),
+                            method: :patch,
+                            class: "btn approve" %>
+                    <% end %>
+
+                    <!-- DENY BUTTON (all forms) -->
+                    <button type="button"
+                            class="btn deny"
+                            data-action="click->deny-modal#open"
+                            data-deny-path="<%= polymorphic_path(submission, action: :deny) %>"
+                            data-record-title="<%= "#{submission.class.name.demodulize.titleize} ##{submission.id}" %>">
+                      Deny
+                    </button>
+                  <% end %>
                 </div>
               </td>
             </tr>

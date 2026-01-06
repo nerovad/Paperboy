@@ -1,0 +1,301 @@
+<div class="form-header">
+  <h1>Edit Critical Information Report</h1>
+</div>
+
+<div class="form-wrapper critical-information-reporting" data-controller="form-navigation">
+  <%= form_with model: @critical_information_reporting, local: true do |form| %>
+
+    <!-- Page 1: Employee Info -->
+    <div class="form-page">
+      <h2>Employee Info</h2>
+      <div class="form-row d-flex flex-wrap">
+        <div class="form-group flex-fill">
+          <%= form.label :employee_id, "Employee ID" %>
+          <%= form.text_field :employee_id,
+                class: "form-control",
+                readonly: true %>
+        </div>
+
+        <div class="form-group flex-fill">
+          <%= form.label :name, "Name" %>
+          <%= form.text_field :name,
+                class: "form-control",
+                readonly: true %>
+        </div>
+
+        <div class="form-group flex-fill">
+          <%= form.label :phone, "Phone" %>
+          <%= form.text_field :phone,
+                class: "form-control",
+                required: true,
+                placeholder: "e.g. 555-555-5555",
+                title: "Enter a 10-digit phone number like 555-555-5555",
+                data: {
+                  controller: "phone",
+                  phone_target: "input",
+                  action: "input->phone#format paste->phone#format blur->phone#validate"
+                },
+                "aria-describedby": "phoneHelp phoneError",
+                pattern: "\\d{3}-\\d{3}-\\d{4}",
+                inputmode: "numeric",
+                autocomplete: "tel" %>
+          <small id="phoneHelp" class="help-text text-muted"></small>
+          <div id="phoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group flex-fill">
+          <%= form.label :email, "Email" %>
+          <%= form.text_field :email,
+                class: "form-control",
+                required: true %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 2: Agency Info -->
+    <div class="form-page" style="display:none;">
+      <h2>Agency Info</h2>
+
+      <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
+        <div class="form-group">
+          <%= form.label :agency, "Agency" %>
+          <%= form.select :agency,
+                options_for_select(@agency_options, @critical_information_reporting.agency),
+                {},
+                class: "form-control",
+                id: "agency-select",
+                data: {
+                  gsabss_selects_target: "agency",
+                  action: "change->gsabss-selects#loadDivisions"
+                } %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :division, "Division" %>
+          <%= form.select :division,
+                options_for_select(@division_options, @critical_information_reporting.division),
+                {},
+                class: "form-control",
+                id: "division-select",
+                data: {
+                  gsabss_selects_target: "division",
+                  action: "change->gsabss-selects#loadDepartments"
+                } %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :department, "Department" %>
+          <%= form.select :department,
+                options_for_select(@department_options, @critical_information_reporting.department),
+                {},
+                class: "form-control",
+                id: "department-select",
+                data: {
+                  gsabss_selects_target: "department",
+                  action: "change->gsabss-selects#loadUnits"
+                } %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :unit, "Unit" %>
+          <%= form.select :unit,
+                options_for_select(@unit_options, @critical_information_reporting.unit),
+                {},
+                class: "form-control",
+                id: "unit-select",
+                data: { gsabss_selects_target: "unit" } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 3: Incident Info -->
+    <div class="form-page" style="display:none;">
+      <h2>Incident Info</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <%= form.label :incident_type, "Incident Type" %>
+          <%= form.select :incident_type,
+                options_for_select([
+                  'Approved Event Permit',
+                  'CEO Interest',
+                  'Elevator Outage (Entrapment)',
+                  'Elevator Outage (No Entrapment)',
+                  'Generator of Alarm Testing',
+                  'HVAC',
+                  'Natural Disaster',
+                  'Planned Outage',
+                  'Unplanned Outage',
+                  'Safety Incident',
+                  'Tree Removal'
+                ], @critical_information_reporting.incident_type),
+                { prompt: 'Select Incident Type' },
+                class: "form-control",
+                required: true %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :location, "Where: Location" %>
+          <%= form.select :location,
+                options_for_select(@location_options, @critical_information_reporting.location),
+                { prompt: 'Select Location' },
+                class: "form-control",
+                required: true %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :urgency, "Urgency of Reporting" %>
+          <%= form.select :urgency,
+                options_for_select(['1 Immediate', '2 Earliest convenience', '3 Before it happens'], @critical_information_reporting.urgency),
+                { prompt: 'Select Urgency' },
+                class: "form-control",
+                required: true %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :staff_involved, "Staff Involved" %>
+          <%= form.select :staff_involved,
+                options_for_select(@employee_options, @critical_information_reporting.staff_involved),
+                { prompt: 'Select Staff Member' },
+                class: "form-control",
+                required: true %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :incident_manager, "Incident Manager" %>
+          <%= form.select :incident_manager,
+                options_for_select(@employee_options, @critical_information_reporting.incident_manager),
+                { prompt: 'Select Incident Manager' },
+                class: "form-control",
+                required: true %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :reported_by, "Reported By" %>
+          <%= form.select :reported_by,
+                options_for_select(@employee_options, @critical_information_reporting.reported_by),
+                { prompt: 'Select Reporter' },
+                class: "form-control",
+                required: true %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :incident_details, "Incident Details" %>
+          <%= form.text_area :incident_details,
+                class: "form-control incident-textarea",
+                rows: 5,
+                required: true,
+                placeholder: "Describe the incident in detail..." %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :cause, "Cause" %>
+          <%= form.text_area :cause,
+                class: "form-control cause-textarea",
+                rows: 5,
+                required: true,
+                placeholder: "Describe the cause..." %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 4: Impact -->
+    <div class="form-page" style="display:none;" data-controller="conditional-field">
+      <h2>Impact</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <%= form.label :impact, "Impact" %>
+          <%= form.select :impact,
+                options_for_select(['Low', 'Medium', 'High'], @critical_information_reporting.impact),
+                { prompt: 'Select Impact Level' },
+                class: "form-control",
+                required: true %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :impact_started, "When: Impact Started" %>
+          <%= form.datetime_local_field :impact_started,
+                class: "form-control",
+                required: true %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :impacted_customers, "Impacted Customers" %>
+          <%= form.select :impacted_customers,
+                options_for_select(['Customer 1', 'Customer 2', 'Customer 3'], @critical_information_reporting.impacted_customers),
+                { prompt: 'Select Customer' },
+                class: "form-control",
+                required: true %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 5: Outcome -->
+    <div class="form-page" style="display:none;">
+      <h2>Outcome</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <%= form.label :next_steps, "Next Steps" %>
+          <%= form.text_area :next_steps,
+                class: "form-control next-textarea",
+                rows: 5,
+                required: true,
+                placeholder: "Describe the next steps..." %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :media, "Media (Photo, PDF, etc.)" %>
+          <%= form.file_field :media,
+                class: "form-control",
+                accept: "image/jpeg,image/png,image/gif,application/pdf",
+                direct_upload: true %>
+          <small class="help-text text-muted">
+            Upload a photo (JPEG, PNG, GIF) or PDF file (maximum 10 MB)
+          </small>
+          <% if @critical_information_reporting.media.attached? %>
+            <div class="mt-2">
+              <strong>Current file:</strong> <%= @critical_information_reporting.media.filename %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons d-flex justify-content-between">
+      <div>
+        <button type="button"
+                id="prevBtn"
+                data-action="click->form-navigation#prevPage"
+                style="display:none;">
+          Previous
+        </button>
+      </div>
+      <div>
+        <button type="button"
+                id="nextBtn"
+                data-action="click->form-navigation#nextPage">
+          Next
+        </button>
+        <%= form.submit "Update",
+              data: { form_navigation_target: "submitButton" },
+              style: "display:none;" %>
+      </div>
+    </div>
+
+    <!-- Progress (5 steps) -->
+    <div class="progress-wrapper">
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-dots">
+        <% 5.times do |index| %>
+          <div class="dot <%= 'active' if index == 0 %>"></div>
+        <% end %>
+      </div>
+    </div>
+
+  <% end %>
+</div>
