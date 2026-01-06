@@ -4,6 +4,9 @@ class CriticalInformationReporting < ApplicationRecord
   # ActiveStorage attachment for media files
   has_one_attached :media
 
+  # Callbacks
+  before_validation :assign_manager_based_on_location, on: :create
+
   # Validations for Employee Info (Page 1)
   validates :employee_id, presence: true
   validates :name, presence: true
@@ -28,12 +31,17 @@ class CriticalInformationReporting < ApplicationRecord
   validates :impact_started, presence: true
   validates :location, presence: true
 
-  # Validations for Status (Page 5)
-  validates :status, presence: true, inclusion: { in: ['In Progress', 'Resolved', 'Scheduled', 'Cancelled'] }
-  validates :urgency, presence: true
+  # Status enum - provides in_progress?, resolved?, etc. automatically
+  # New submissions default to in_progress
+  enum :status, {
+    in_progress: 0,
+    resolved: 1,
+    scheduled: 2,
+    cancelled: 3
+  }, default: :in_progress
 
-  # Conditional validation for actual_completion_date - only required if status is 'Resolved'
-  validates :actual_completion_date, presence: true, if: -> { status == 'Resolved' }
+  # Validations for Status (Page 5)
+  validates :urgency, presence: true
 
   # Validations for Impact (Page 6)
   validates :impact, presence: true, inclusion: { in: ['Low', 'Medium', 'High'] }
@@ -63,10 +71,12 @@ class CriticalInformationReporting < ApplicationRecord
   scope :by_impact, ->(impact) { where(impact: impact) }
   scope :recent, -> { order(created_at: :desc) }
   scope :high_urgency, -> { where(urgency: '1 Immediate') }
+  scope :assigned_to, ->(manager_id) { where(assigned_manager_id: manager_id) }
 
   # Instance methods
-  def resolved?
-    status == 'Resolved'
+  # With enum, status returns a symbol like :in_progress, :resolved, etc.
+  def status_label
+    status&.to_s&.humanize || "Unknown"
   end
 
   def high_impact?
@@ -75,5 +85,25 @@ class CriticalInformationReporting < ApplicationRecord
 
   def immediate_urgency?
     urgency == '1 Immediate'
+  end
+
+  # Get the Employee record for the assigned manager
+  def assigned_manager
+    return nil unless assigned_manager_id.present?
+    @assigned_manager ||= Employee.find_by(EmployeeID: assigned_manager_id)
+  end
+
+  def assigned_manager_name
+    assigned_manager&.then { |e| "#{e['First_Name']} #{e['Last_Name']}" } || "Unassigned"
+  end
+
+  private
+
+  def assign_manager_based_on_location
+    # Auto-assign the incident manager based on location
+    if location.present? && assigned_manager_id.blank?
+      manager_id = CriticalInformationLocationRouter.find_manager_for_location(location)
+      self.assigned_manager_id = manager_id if manager_id.present?
+    end
   end
 end

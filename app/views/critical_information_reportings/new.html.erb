@@ -233,28 +233,6 @@
                 class: "form-control",
                 required: true %>
         </div>
-
-        <div class="form-group">
-          <%= form.label :status, "Status" %>
-          <%= form.select :status,
-                options_for_select(['In Progress', 'Resolved', 'Scheduled', 'Cancelled']),
-                { prompt: 'Select Status' },
-                class: "form-control",
-                required: true,
-                data: {
-                  conditional_field_target: "trigger",
-                  action: "change->conditional-field#toggle"
-                } %>
-        </div>
-
-        <div class="form-group"
-             data-conditional-field-target="field"
-             data-show-when="Resolved"
-             style="display:none;">
-          <%= form.label :actual_completion_date, "When: Actual Completion Date" %>
-          <%= form.datetime_local_field :actual_completion_date,
-                class: "form-control completion-date-field" %>
-        </div>
       </div>
     </div>
 

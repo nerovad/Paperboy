@@ -122,7 +122,7 @@ class CriticalInformationReportingsController < ApplicationController
       :agency, :division, :department, :unit,
       :incident_type, :incident_details, :cause,
       :staff_involved, :incident_manager, :reported_by, :impact_started, :location,
-      :status, :actual_completion_date, :urgency,
+      :urgency,
       :impact, :impacted_customers, :next_steps, :media
     )
   end
