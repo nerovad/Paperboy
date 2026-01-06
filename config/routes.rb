@@ -65,6 +65,12 @@ Rails.application.routes.draw do
   get "/status", to: "status#index", as: :status
 
   # ============================================================================
+  # Dashboards
+  # ============================================================================
+  get "/dashboards", to: "dashboards#index", as: :dashboards
+  post "/dashboards/embed_token", to: "dashboards#embed_token", as: :dashboard_embed_token
+
+  # ============================================================================
   # Form Templates & Builder
   # ============================================================================
   resources :form_templates

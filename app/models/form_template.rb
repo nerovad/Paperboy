@@ -11,8 +11,12 @@ class FormTemplate < ApplicationRecord
   validates :submission_type, inclusion: { in: %w[database approval] }
   validates :approval_routing_to, presence: true, if: :requires_approval?
   validates :approval_employee_id, presence: true, if: :routes_to_specific_employee?
-  
+  validates :powerbi_workspace_id, presence: true, if: :has_dashboard?
+  validates :powerbi_report_id, presence: true, if: :has_dashboard?
+
   before_validation :generate_class_name, on: :create
+
+  scope :with_dashboards, -> { where(has_dashboard: true) }
   
   def restricted?
     access_level == 'restricted'
@@ -24,6 +28,10 @@ class FormTemplate < ApplicationRecord
 
   def routes_to_specific_employee?
     requires_approval? && approval_routing_to == 'employee'
+  end
+
+  def has_dashboard?
+    has_dashboard == true
   end
   
   def table_name

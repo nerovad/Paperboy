@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_06_041636) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_06_053525) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -524,6 +524,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_06_041636) do
     t.string "submission_type", default: "database"
     t.string "approval_routing_to"
     t.integer "approval_employee_id"
+    t.string "powerbi_workspace_id"
+    t.string "powerbi_report_id"
+    t.boolean "has_dashboard", default: false
     t.index ["class_name"], name: "index_form_templates_on_class_name", unique: true
   end
 

@@ -112,6 +112,51 @@
       </div>
     </div>
     
+    <!-- Power BI Dashboard Configuration Card -->
+    <div class="approver-card">
+      <div class="approver-header">
+        <h3>Power BI Dashboard Configuration</h3>
+      </div>
+
+      <div class="approvals-list">
+        <div class="approval-item">
+          <div class="approval-details">
+            <div class="detail-row">
+              <span class="label">Dashboard Enabled:</span>
+              <span class="value">
+                <span class="badge <%= @form_template.has_dashboard? ? 'badge-success' : 'badge-secondary' %>">
+                  <%= @form_template.has_dashboard? ? 'Yes' : 'No' %>
+                </span>
+              </span>
+            </div>
+
+            <% if @form_template.has_dashboard? %>
+              <div class="detail-row">
+                <span class="label">Workspace ID:</span>
+                <span class="value"><code><%= @form_template.powerbi_workspace_id %></code></span>
+              </div>
+
+              <div class="detail-row">
+                <span class="label">Report ID:</span>
+                <span class="value"><code><%= @form_template.powerbi_report_id %></code></span>
+              </div>
+
+              <div class="detail-row">
+                <span class="label">Dashboard URL:</span>
+                <span class="value">
+                  <%= link_to "View Dashboard", dashboards_path(form_id: @form_template.id), class: "btn approve", target: "_blank" %>
+                </span>
+              </div>
+            <% else %>
+              <div class="detail-row">
+                <span class="value text-muted">No dashboard configured for this form</span>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Actions Card -->
     <div class="approver-card">
       <div class="approver-header">

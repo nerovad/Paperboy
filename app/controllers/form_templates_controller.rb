@@ -192,6 +192,9 @@ class FormTemplatesController < ApplicationController
       :submission_type,
       :approval_routing_to,
       :approval_employee_id,
+      :has_dashboard,
+      :powerbi_workspace_id,
+      :powerbi_report_id,
       page_headers: []
     )
   end
