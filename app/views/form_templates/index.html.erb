@@ -63,8 +63,9 @@
               
               <div class="approval-actions">
                 <%= link_to "View Details", form_template_path(template), class: "btn" %>
-                <%= button_to "Delete", 
-                              form_template_path(template), 
+                <%= link_to "Edit", edit_form_template_path(template), class: "btn approve" %>
+                <%= button_to "Delete",
+                              form_template_path(template),
                               method: :delete,
                               class: "btn deny",
                               data: { confirm: "Are you sure? This will delete the form template and all generated files." } %>

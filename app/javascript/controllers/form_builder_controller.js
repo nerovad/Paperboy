@@ -29,8 +29,11 @@ export default class extends Controller {
 
   connect() {
     console.log("Form Builder controller connected")
-    // Add one field by default
-    this.addField()
+    // Add one field by default only if we're in the create modal
+    const template = document.getElementById('field-template')
+    if (template) {
+      this.addField()
+    }
   }
 
   // Show the modal
@@ -141,6 +144,16 @@ export default class extends Controller {
       option.textContent = emp[0]  // "First Last (EmployeeID)"
       select.appendChild(option)
     })
+  }
+
+  // Toggle Power BI fields visibility based on has_dashboard selection
+  togglePowerBIFields(event) {
+    const hasDashboard = event.target.value === 'true'
+    const powerbiFields = document.getElementById('powerbi-fields')
+
+    if (powerbiFields) {
+      powerbiFields.style.display = hasDashboard ? 'block' : 'none'
+    }
   }
 
   // Update page headers based on page count

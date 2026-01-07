@@ -14,6 +14,8 @@ class FormTemplate < ApplicationRecord
   validates :powerbi_workspace_id, presence: true, if: :has_dashboard?
   validates :powerbi_report_id, presence: true, if: :has_dashboard?
 
+  validate :page_count_cannot_orphan_fields, on: :update
+
   before_validation :generate_class_name, on: :create
 
   scope :with_dashboards, -> { where(has_dashboard: true) }
@@ -65,10 +67,23 @@ class FormTemplate < ApplicationRecord
   end
   
   private
-  
+
   def generate_class_name
     return if name.blank?
-    
+
     self.class_name = name.gsub(/[^a-zA-Z0-9\s]/, '').split.map(&:capitalize).join + 'Form'
+  end
+
+  def page_count_cannot_orphan_fields
+    return unless page_count_changed? && page_count_was.present?
+
+    if page_count < page_count_was
+      max_field_page = form_fields.maximum(:page_number)
+      if max_field_page && max_field_page > page_count
+        errors.add(:page_count,
+          "cannot be reduced to #{page_count} because fields exist on page #{max_field_page}. " \
+          "Please remove or move fields first.")
+      end
+    end
   end
 end

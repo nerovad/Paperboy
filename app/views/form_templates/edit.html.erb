@@ -1,0 +1,408 @@
+<div class="form-header">
+  <h1>Edit Form Template</h1>
+</div>
+
+<div class="form-wrapper form-templates">
+  <%= link_to "← Back to Template Details", form_template_path(@form_template), class: "btn" %>
+
+  <div class="approver-card" style="margin-top: 20px;">
+    <div class="approver-header">
+      <h3>Edit Template Configuration</h3>
+    </div>
+
+    <div class="modal-body">
+      <% if @form_template.errors.any? %>
+        <div class="alert alert-danger" role="alert" style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+          <h4 style="margin-top: 0;">Please correct the following errors:</h4>
+          <ul style="margin-bottom: 0;">
+            <% @form_template.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <%= form_with model: @form_template,
+                    url: form_template_path(@form_template),
+                    method: :patch,
+                    local: true,
+                    data: {
+                      controller: "form-builder",
+                      form_builder_acl_groups_value: @acl_groups.to_json,
+                      form_builder_employees_value: @employees.to_json,
+                      form_builder_target: "form"
+                    } do |f| %>
+
+        <!-- Form Name (READ-ONLY) -->
+        <div class="form-group">
+          <label>1. Name of Form
+            <span style="margin-left: 10px; background: #6c757d; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">🔒 Locked</span>
+          </label>
+          <div class="form-control" style="background-color: #f5f5f5; cursor: not-allowed; color: #495057;">
+            <%= @form_template.name %>
+          </div>
+          <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-top: 5px; display: block;">
+            Form name cannot be changed after creation because it determines the class name and database table.
+          </small>
+        </div>
+
+        <!-- Access Level (EDITABLE) -->
+        <div class="form-group">
+          <label for="form_access">2. Access <span class="required">*</span></label>
+          <%= f.select :access_level,
+                      options_for_select([['Public', 'public'], ['Restricted', 'restricted']], @form_template.access_level),
+                      {},
+                      {
+                        id: "form_access",
+                        class: "form-control",
+                        data: {
+                          form_builder_target: "accessLevel",
+                          action: "change->form-builder#toggleACLGroup"
+                        }
+                      } %>
+        </div>
+
+        <!-- ACL Group (EDITABLE) -->
+        <div class="form-group"
+             data-form-builder-target="aclGroupContainer"
+             style="<%= 'display: none;' unless @form_template.restricted? %>">
+          <label for="form_acl_group">3. ACL Group <span class="required">*</span></label>
+          <%= f.select :acl_group_id,
+                      options_for_select(@acl_groups, @form_template.acl_group_id),
+                      { include_blank: "Select a group..." },
+                      {
+                        id: "form_acl_group",
+                        class: "form-control",
+                        data: { form_builder_target: "aclGroup" }
+                      } %>
+        </div>
+
+        <!-- Number of Pages (EDITABLE with warning) -->
+        <div class="form-group">
+          <label for="form_page_count">4. Number of Pages <span class="required">*</span></label>
+          <%= f.number_field :page_count,
+                            id: "form_page_count",
+                            class: "form-control",
+                            min: 2,
+                            max: 30,
+                            value: @form_template.page_count,
+                            data: {
+                              form_builder_target: "pageCount",
+                              action: "change->form-builder#updatePageHeaders"
+                            } %>
+          <small class="form-text text-muted" style="color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-top: 5px; display: block;">
+            ⚠️ Warning: Reducing page count will fail if fields exist on higher pages. Remove those fields first.
+          </small>
+        </div>
+
+        <!-- Page Headers (EDITABLE) -->
+        <div class="form-group page-headers-container"
+             data-form-builder-target="pageHeadersContainer"
+             style="<%= 'display: none;' if @form_template.page_count <= 2 %>">
+          <label>Page Names (for pages 3+)</label>
+          <div data-form-builder-target="pageHeadersList">
+            <% (@form_template.page_count - 2).times do |i| %>
+              <div class="form-group" style="margin-bottom: 10px;">
+                <label style="font-size: 0.9em; color: #6c757d;">Page <%= i + 3 %> Header</label>
+                <%= text_field_tag "form_template[page_headers][]",
+                                  @form_template.page_headers&.dig(i),
+                                  class: "form-control form-control-sm",
+                                  placeholder: "e.g., Additional Information" %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Submission Routing (EDITABLE with regeneration warning) -->
+        <div class="alert alert-warning" role="alert" style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 6px; margin-top: 20px;">
+          <strong>⚠️ Warning:</strong> Changing submission routing options will regenerate the controller file,
+          overwriting any manual customizations. The form will continue to work, but custom code changes will be lost.
+        </div>
+
+        <div class="form-group">
+          <label for="form_submission_type">5. Form Submission Routing <span class="required">*</span></label>
+          <%= f.select :submission_type,
+                      options_for_select([
+                        ['Submit to Database (Ends the workflow)', 'database'],
+                        ['Routed for Approval', 'approval']
+                      ], @form_template.submission_type),
+                      {},
+                      {
+                        id: "form_submission_type",
+                        class: "form-control",
+                        data: {
+                          form_builder_target: "submissionType",
+                          action: "change->form-builder#toggleApprovalRouting"
+                        }
+                      } %>
+        </div>
+
+        <!-- Approval Routing Options (EDITABLE) -->
+        <div class="form-group"
+             data-form-builder-target="approvalRoutingContainer"
+             style="<%= 'display: none;' unless @form_template.requires_approval? %>">
+          <label for="form_approval_routing">Route to: <span class="required">*</span></label>
+          <%= f.select :approval_routing_to,
+                      options_for_select([
+                        ['Supervisor', 'supervisor'],
+                        ['Department Head', 'department_head'],
+                        ['Employee', 'employee']
+                      ], @form_template.approval_routing_to),
+                      { include_blank: "Select routing option..." },
+                      {
+                        id: "form_approval_routing",
+                        class: "form-control",
+                        data: {
+                          form_builder_target: "approvalRoutingTo",
+                          action: "change->form-builder#toggleEmployeeSelect"
+                        }
+                      } %>
+        </div>
+
+        <!-- Employee Selection (EDITABLE) -->
+        <div class="form-group"
+             data-form-builder-target="employeeSelectContainer"
+             style="<%= 'display: none;' unless @form_template.routes_to_specific_employee? %>">
+          <label for="form_approval_employee">Select Employee: <span class="required">*</span></label>
+          <%= f.select :approval_employee_id,
+                      options_for_select(@employees, @form_template.approval_employee_id),
+                      { include_blank: "Select employee..." },
+                      {
+                        id: "form_approval_employee",
+                        class: "form-control",
+                        data: { form_builder_target: "approvalEmployee" }
+                      } %>
+        </div>
+
+        <!-- Power BI Dashboard Configuration (FULLY EDITABLE) -->
+        <div class="form-group" style="margin-top: 30px;">
+          <h4>6. Power BI Dashboard Configuration</h4>
+
+          <div class="form-group">
+            <%= f.label :has_dashboard, "Enable Dashboard?" %>
+            <%= f.select :has_dashboard,
+                        options_for_select([['No', false], ['Yes', true]], @form_template.has_dashboard),
+                        {},
+                        {
+                          id: "has_dashboard_select",
+                          class: "form-control",
+                          data: {
+                            action: "change->form-builder#togglePowerBIFields"
+                          }
+                        } %>
+          </div>
+
+          <div id="powerbi-fields" style="<%= 'display: none;' unless @form_template.has_dashboard %>">
+            <div class="form-group">
+              <%= f.label :powerbi_workspace_id, "Workspace ID" %>
+              <%= f.text_field :powerbi_workspace_id,
+                              class: "form-control",
+                              placeholder: "e.g., 12345678-1234-1234-1234-123456789abc" %>
+              <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-top: 5px; display: block;">
+                Find this in Power BI: Workspace Settings → Workspace ID
+              </small>
+            </div>
+
+            <div class="form-group">
+              <%= f.label :powerbi_report_id, "Report ID" %>
+              <%= f.text_field :powerbi_report_id,
+                              class: "form-control",
+                              placeholder: "e.g., 87654321-4321-4321-4321-cba987654321" %>
+              <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-top: 5px; display: block;">
+                Find this in Power BI: Report Settings → Report ID (or from the URL)
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fields Editor -->
+        <div class="form-group" style="margin-top: 30px;">
+          <h4>7. Form Fields</h4>
+          <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-bottom: 15px; display: block;">
+            These are custom fields that will appear on your form pages. Standard fields (Employee ID, Name, Phone, Email, Agency info) are already included.
+          </small>
+
+          <div class="fields-container" data-form-builder-target="fieldsContainer">
+            <% if @form_template.form_fields.any? %>
+              <% @form_template.form_fields.ordered.each do |field| %>
+                <div class="field-item" data-form-builder-target="fieldItem" style="background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 6px;">
+                  <div class="field-row" style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+                    <div class="field-input" style="flex: 1; min-width: 200px;">
+                      <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Label</label>
+                      <input type="text"
+                             name="fields[][label]"
+                             class="form-control form-control-sm"
+                             value="<%= field.label %>"
+                             required>
+                    </div>
+
+                    <div class="field-input" style="flex: 0 0 150px;">
+                      <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Type</label>
+                      <select name="fields[][field_type]"
+                              class="form-control form-control-sm"
+                              data-action="change->form-builder#handleFieldTypeChange"
+                              required>
+                        <option value="text" <%= 'selected' if field.field_type == 'text' %>>Text</option>
+                        <option value="text_box" <%= 'selected' if field.field_type == 'text_box' %>>Text Box</option>
+                        <option value="dropdown" <%= 'selected' if field.field_type == 'dropdown' %>>Dropdown</option>
+                      </select>
+                    </div>
+
+                    <div class="field-input" style="flex: 0 0 150px;">
+                      <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Page</label>
+                      <select name="fields[][page_number]"
+                              class="form-control form-control-sm page-select"
+                              required>
+                        <% (1..@form_template.page_count).each do |page_num| %>
+                          <option value="<%= page_num %>" <%= 'selected' if field.page_number == page_num %>>
+                            Page <%= page_num %> - <%= @form_template.page_header(page_num) %>
+                          </option>
+                        <% end %>
+                      </select>
+                    </div>
+
+                    <div class="field-input" style="flex: 0 0 80px;">
+                      <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Required?</label>
+                      <input type="checkbox"
+                             name="fields[][required]"
+                             value="1"
+                             style="margin-top: 10px;"
+                             <%= 'checked' if field.required %>>
+                    </div>
+
+                    <div style="flex: 0 0 auto;">
+                      <label style="font-size: 0.9em; color: transparent; display: block; margin-bottom: 5px;">-</label>
+                      <button type="button"
+                              class="btn deny"
+                              style="padding: 5px 10px; font-size: 0.875em;"
+                              data-action="click->form-builder#removeField">
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Text Box Options -->
+                  <div class="field-options text-box-options" style="margin-top: 10px; <%= 'display: none;' unless field.text_box? %>">
+                    <label style="font-size: 0.9em; color: #495057;">Rows:</label>
+                    <input type="number"
+                           name="fields[][rows]"
+                           class="form-control form-control-sm"
+                           value="<%= field.rows %>"
+                           min="1"
+                           max="20"
+                           style="width: 100px;">
+                  </div>
+
+                  <!-- Dropdown Options -->
+                  <div class="field-options dropdown-options" style="margin-top: 10px; <%= 'display: none;' unless field.dropdown? %>">
+                    <label style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
+                    <input type="text"
+                           name="fields[][dropdown_values]"
+                           class="form-control form-control-sm"
+                           value="<%= field.dropdown_values.join(', ') %>"
+                           placeholder="Option 1, Option 2, Option 3">
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+
+          <button type="button"
+                  class="btn"
+                  style="margin-top: 15px;"
+                  data-action="click->form-builder#addField">
+            + Add Field
+          </button>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="approval-actions" style="margin-top: 30px; display: flex; gap: 10px;">
+          <%= link_to "Cancel", form_template_path(@form_template), class: "btn" %>
+          <%= f.submit "Update Form Template",
+                      class: "btn approve",
+                      data: {
+                        form_builder_target: "submitButton",
+                        confirm: "Are you sure you want to update this form template? Any routing changes will regenerate the controller file."
+                      } %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Field Template (hidden, used for cloning when adding new fields) -->
+<template id="field-template">
+  <div class="field-item" data-form-builder-target="fieldItem" style="background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 6px;">
+    <div class="field-row" style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+      <div class="field-input" style="flex: 1; min-width: 200px;">
+        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Label</label>
+        <input type="text"
+               name="fields[][label]"
+               class="form-control form-control-sm"
+               placeholder="e.g., Employee Name"
+               required>
+      </div>
+
+      <div class="field-input" style="flex: 0 0 150px;">
+        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Type</label>
+        <select name="fields[][field_type]"
+                class="form-control form-control-sm"
+                data-action="change->form-builder#handleFieldTypeChange"
+                required>
+          <option value="text">Text</option>
+          <option value="text_box">Text Box</option>
+          <option value="dropdown">Dropdown</option>
+        </select>
+      </div>
+
+      <div class="field-input" style="flex: 0 0 150px;">
+        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Page</label>
+        <select name="fields[][page_number]"
+                class="form-control form-control-sm page-select"
+                required>
+          <option value="1">Page 1 - Employee Info</option>
+          <option value="2">Page 2 - Agency Info</option>
+        </select>
+      </div>
+
+      <div class="field-input" style="flex: 0 0 80px;">
+        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Required?</label>
+        <input type="checkbox"
+               name="fields[][required]"
+               value="1"
+               style="margin-top: 10px;">
+      </div>
+
+      <div style="flex: 0 0 auto;">
+        <label style="font-size: 0.9em; color: transparent; display: block; margin-bottom: 5px;">-</label>
+        <button type="button"
+                class="btn deny"
+                style="padding: 5px 10px; font-size: 0.875em;"
+                data-action="click->form-builder#removeField">
+          Remove
+        </button>
+      </div>
+    </div>
+
+    <!-- Text Box Options -->
+    <div class="field-options text-box-options" style="margin-top: 10px; display: none;">
+      <label style="font-size: 0.9em; color: #495057;">Rows:</label>
+      <input type="number"
+             name="fields[][rows]"
+             class="form-control form-control-sm"
+             value="5"
+             min="1"
+             max="20"
+             style="width: 100px;">
+    </div>
+
+    <!-- Dropdown Options -->
+    <div class="field-options dropdown-options" style="margin-top: 10px; display: none;">
+      <label style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
+      <input type="text"
+             name="fields[][dropdown_values]"
+             class="form-control form-control-sm"
+             placeholder="Option 1, Option 2, Option 3">
+    </div>
+  </div>
+</template>

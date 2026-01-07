@@ -1,6 +1,6 @@
 class FormTemplatesController < ApplicationController
   before_action :require_system_admin
-  before_action :set_form_template, only: [:show, :destroy]
+  before_action :set_form_template, only: [:show, :edit, :update, :destroy]
   
   def index
     @form_templates = FormTemplate.all.order(created_at: :desc)
@@ -80,7 +80,36 @@ class FormTemplatesController < ApplicationController
   def show
     @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
   end
-  
+
+  def edit
+    @acl_groups = fetch_acl_groups
+    @employees = fetch_employees
+    @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
+  end
+
+  def update
+    routing_changed = routing_fields_changed?
+
+    if @form_template.update(form_template_params)
+      rebuild_form_fields
+
+      if routing_changed
+        customize_generated_controller(@form_template)
+        Rails.logger.info "Regenerated controller for #{@form_template.class_name}"
+      end
+
+      redirect_to form_template_path(@form_template),
+                  notice: routing_changed ?
+                    "Form template updated successfully. Controller was regenerated." :
+                    "Form template updated successfully."
+    else
+      @acl_groups = fetch_acl_groups
+      @employees = fetch_employees
+      @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
   def destroy
     class_name = @form_template.class_name
     table_name = class_name.underscore.pluralize
@@ -288,6 +317,32 @@ class FormTemplatesController < ApplicationController
     end
 
     File.write(controller_path, content)
+  end
+
+  def routing_fields_changed?
+    return false unless @form_template
+
+    @form_template.submission_type != params[:form_template][:submission_type] ||
+      @form_template.approval_routing_to != params[:form_template][:approval_routing_to] ||
+      @form_template.approval_employee_id&.to_s != params[:form_template][:approval_employee_id]
+  end
+
+  def rebuild_form_fields
+    @form_template.form_fields.destroy_all
+
+    if params[:fields].present?
+      params[:fields].each_with_index do |field_data, index|
+        field = @form_template.form_fields.build(
+          label: field_data[:label],
+          field_type: field_data[:field_type],
+          page_number: field_data[:page_number].to_i,
+          position: index,
+          required: field_data[:required] == '1',
+          options: build_field_options(field_data)
+        )
+        field.save
+      end
+    end
   end
 
   def generate_approval_routing_logic(form_template)

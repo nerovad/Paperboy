@@ -164,9 +164,10 @@
       </div>
       
           <div class="approval-actions">
-            <%= link_to "View Form", 
+            <%= link_to "Edit Template", edit_form_template_path(@form_template), class: "btn approve" %>
+            <%= link_to "View Form",
                         send("new_#{@form_template.file_name}_path"),
-                        class: "btn approve",
+                        class: "btn",
                         target: "_blank" %>
           </div>
         </div>
