@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_06_222732) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_07_201607) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -246,7 +246,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_06_222732) do
     t.float "COST"
   end
 
-  create_table "TC60_Credits", id: false, force: :cascade do |t|
+  create_table "TC60_Adjustments", id: false, force: :cascade do |t|
     t.varchar "TYPE", limit: 3, null: false
     t.varchar "CUNIT", limit: 4, null: false
     t.integer "COBJECT", null: false
@@ -440,6 +440,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_06_222732) do
     t.string "division"
     t.string "department"
     t.string "unit"
+    t.integer "status", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

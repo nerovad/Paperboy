@@ -63,7 +63,10 @@ class CarpoolFormsController < ApplicationController
 
     if @carpool_form.save
       # Keep success behavior simple for the template; you can extend per form.
-      redirect_to form_success_path, allow_other_host: false, status: :see_other
+      # Route to specific employee for approval
+@carpool_form.update(status: :pending, approver_id: 136626)
+# TODO: Send notification to employee with ID 136626
+redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)

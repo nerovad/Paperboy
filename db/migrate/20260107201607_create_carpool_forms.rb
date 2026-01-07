@@ -12,6 +12,8 @@ class CreateCarpoolForms < ActiveRecord::Migration[7.1]
       t.string :department
       t.string :unit
 
+      t.integer :status, default: 0
+
       t.timestamps
     end
   end

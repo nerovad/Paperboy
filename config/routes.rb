@@ -1,6 +1,7 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  resources :carpool_forms
   resources :brown_mail_forms
   # ============================================================================
   # Root & Home
@@ -108,7 +109,6 @@ Rails.application.routes.draw do
   # Standard Forms (alphabetical)
   # ============================================================================
   resources :bike_locker_permits
-  resources :carpool_forms
   resources :creative_job_requests, only: [:new, :create]
   resources :loa_forms, only: [:new, :create]
   resources :rm75_forms, only: [:new, :create]
