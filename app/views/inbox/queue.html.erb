@@ -34,14 +34,15 @@
                     <!-- CIR FORM CUSTOM BUTTONS -->
                     <%= link_to "Download PDF",
                         pdf_critical_information_reporting_path(submission),
-                        class: "btn pdf" %>
+                        class: "btn pdf",
+                        data: { turbo: false } %>
 
                     <%= link_to "Edit Form",
                         edit_critical_information_reporting_path(submission),
                         class: "btn edit",
                         data: { turbo: false } %>
 
-                    <%= form_with url: update_status_critical_information_reporting_path(submission), method: :patch, local: true, style: "display: inline;", data: { controller: "auto-submit" } do |f| %>
+                    <%= form_with url: update_status_critical_information_reporting_path(submission), method: :patch, style: "display: inline;", data: { turbo: false, controller: "auto-submit" } do |f| %>
                       <%= f.select :status,
                           options_for_select([
                             ['In Progress', 'in_progress'],

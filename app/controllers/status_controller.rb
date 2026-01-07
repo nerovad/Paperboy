@@ -27,6 +27,17 @@ class StatusController < ApplicationController
       }
     end
 
+    @status_items += CriticalInformationReporting.for_employee(employee_id).map do |f|
+      {
+        type: "Critical Information Report",
+        title: "CIR ##{f.id}",
+        status: f.status_label,
+        submitted_at: f.created_at,
+        updated_at: f.updated_at,
+        path: edit_critical_information_reporting_path(f)
+      }
+    end
+
     @status_items.sort_by! { |i| i[:updated_at] }.reverse!
   end
 end

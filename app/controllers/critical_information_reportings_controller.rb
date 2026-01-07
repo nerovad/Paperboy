@@ -148,10 +148,10 @@ class CriticalInformationReportingsController < ApplicationController
     if CriticalInformationReporting.statuses.keys.include?(new_status)
       @critical_information_reporting.update!(status: new_status)
 
-      if new_status == "resolved"
-        redirect_to inbox_queue_path, notice: "Critical Information Report marked as resolved and removed from queue."
+      if new_status == "in_progress"
+        redirect_to inbox_queue_path, notice: "Status updated to In Progress."
       else
-        redirect_to inbox_queue_path, notice: "Status updated to #{new_status.titleize}."
+        redirect_to inbox_queue_path, notice: "Critical Information Report marked as #{new_status.titleize} and removed from queue."
       end
     else
       redirect_to inbox_queue_path, alert: "Invalid status."

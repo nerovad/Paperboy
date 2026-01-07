@@ -50,6 +50,7 @@ class CriticalInformationReporting < ApplicationRecord
   validate :acceptable_media_file
 
   # Scopes for common queries
+  scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
   scope :by_status, ->(status) { where(status: status) }
   scope :by_impact, ->(impact) { where(impact: impact) }
   scope :recent, -> { order(created_at: :desc) }

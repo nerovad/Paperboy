@@ -20,6 +20,7 @@ import ReportsController from "controllers/reports_controller"
 import ScheduledReportController from "controllers/scheduled_report_form_controller"
 import SidebarController from "controllers/sidebar_controller"
 import ConfirmModalController from "controllers/confirm_modal_controller"
+import AutoSubmitController from "controllers/auto_submit_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -41,3 +42,4 @@ application.register("reports", ReportsController)
 application.register("scheduled-report-form", ScheduledReportController)
 application.register("sidebar", SidebarController)
 application.register("confirm-modal", ConfirmModalController)
+application.register("auto-submit", AutoSubmitController)
