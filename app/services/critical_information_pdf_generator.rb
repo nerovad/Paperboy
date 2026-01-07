@@ -47,8 +47,6 @@ class CriticalInformationPdfGenerator
       pdf.text "Staff & Management", size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Staff Involved: #{cir.staff_involved}"
-      pdf.text "Incident Manager: #{cir.incident_manager}"
-      pdf.text "Reported By: #{cir.reported_by}"
       pdf.text "Assigned Manager: #{cir.assigned_manager_name}"
 
       pdf.move_down 15

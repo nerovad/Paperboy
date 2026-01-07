@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_06_053525) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_06_222732) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -246,6 +246,36 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_06_053525) do
     t.float "COST"
   end
 
+  create_table "TC60_Credits", id: false, force: :cascade do |t|
+    t.varchar "TYPE", limit: 3, null: false
+    t.varchar "CUNIT", limit: 4, null: false
+    t.integer "COBJECT", null: false
+    t.varchar "CACTIVITY", limit: 4
+    t.varchar "CFUNCTION", limit: 4
+    t.varchar "CPROGRAM", limit: 10
+    t.varchar "CPHASE", limit: 6
+    t.varchar "CTASK", limit: 4
+    t.float "AMOUNT"
+    t.varchar "SUNIT", limit: 4, null: false
+    t.integer "SOBJECT", null: false
+    t.varchar "SACTIVITY", limit: 4
+    t.varchar "SFUNCTION", limit: 4
+    t.varchar "SPROGRAM", limit: 10
+    t.varchar "SPHASE", limit: 6
+    t.varchar "STASK", limit: 4
+    t.varchar "POSTING_REF", limit: 20, null: false
+    t.varchar "SERVICE", limit: 15, null: false
+    t.date "DATE", null: false
+    t.varchar "DOC_NMBR", limit: 50
+    t.varchar "DESCRIPTION", limit: 50
+    t.varchar "OTHER1", limit: 50
+    t.varchar "OTHER2", limit: 50
+    t.varchar "OTHER3", limit: 50
+    t.float "QUANTITY"
+    t.float "RATE"
+    t.float "COST"
+  end
+
   create_table "TC60_Services", id: false, force: :cascade do |t|
     t.varchar "YEAR", limit: 4, null: false
     t.varchar "TYPE", limit: 3, null: false
@@ -446,8 +476,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_06_053525) do
     t.text "incident_details"
     t.text "cause"
     t.string "staff_involved"
-    t.string "incident_manager"
-    t.string "reported_by"
     t.datetime "impact_started"
     t.string "location"
     t.datetime "actual_completion_date"

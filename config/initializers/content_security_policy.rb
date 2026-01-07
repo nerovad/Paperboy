@@ -31,9 +31,10 @@ Rails.application.configure do
                        'wss://wabi-us-gov-virginia-api.analysis.usgovcloudapi.net'
   end
 
-  # Generate session nonces for permitted importmap, inline scripts, and inline styles.
+  # Generate session nonces for permitted importmap and inline scripts only
+  # Note: Removing style-src from nonces to allow inline styles (for impersonation banner, modals, etc.)
   config.content_security_policy_nonce_generator = ->(request) { request.session.id.to_s }
-  config.content_security_policy_nonce_directives = %w(script-src style-src)
+  config.content_security_policy_nonce_directives = %w(script-src)
 
   # Report violations without enforcing the policy (for initial testing)
   # Uncomment to enforce after testing:

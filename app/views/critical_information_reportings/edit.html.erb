@@ -162,24 +162,6 @@
         </div>
 
         <div class="form-group">
-          <%= form.label :incident_manager, "Incident Manager" %>
-          <%= form.select :incident_manager,
-                options_for_select(@employee_options, @critical_information_reporting.incident_manager),
-                { prompt: 'Select Incident Manager' },
-                class: "form-control",
-                required: true %>
-        </div>
-
-        <div class="form-group">
-          <%= form.label :reported_by, "Reported By" %>
-          <%= form.select :reported_by,
-                options_for_select(@employee_options, @critical_information_reporting.reported_by),
-                { prompt: 'Select Reporter' },
-                class: "form-control",
-                required: true %>
-        </div>
-
-        <div class="form-group">
           <%= form.label :incident_details, "Incident Details" %>
           <%= form.text_area :incident_details,
                 class: "form-control incident-textarea",

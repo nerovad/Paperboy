@@ -26,8 +26,6 @@ class CriticalInformationReporting < ApplicationRecord
 
   # Validations for Incident Info Cont'd (Page 4)
   validates :staff_involved, presence: true
-  validates :incident_manager, presence: true
-  validates :reported_by, presence: true
   validates :impact_started, presence: true
   validates :location, presence: true
 

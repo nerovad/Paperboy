@@ -5,10 +5,14 @@ export default class extends Controller {
   static targets = ["trigger", "field"]
 
   connect() {
-    this.toggle()
+    if (this.hasTriggerTarget) {
+      this.toggle()
+    }
   }
 
   toggle() {
+    if (!this.hasTriggerTarget) return
+
     const selectedValue = this.triggerTarget.value
 
     this.fieldTargets.forEach(field => {

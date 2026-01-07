@@ -37,22 +37,22 @@ class ReportsController < ApplicationController
 
   def status_options
     form_type = params[:form_type]
-    
+
     begin
       # Get the model class
       template = FormTemplate.all.find { |t| t.class_name.tableize == form_type }
-      
+
       if template.nil?
         render json: { status_options: [] }
         return
       end
 
       model_class = template.class_name.constantize
-      
+
       # Check if model has STATUS_MAP constant
       if model_class.const_defined?(:STATUS_MAP)
         status_map = model_class::STATUS_MAP
-        
+
         # Convert to array of {value, label} for the dropdown
         options = status_map.map do |int_value, label|
           {
@@ -60,10 +60,24 @@ class ReportsController < ApplicationController
             label: label.titleize
           }
         end.sort_by { |opt| opt[:value].to_i }
-        
+
+        render json: { status_options: options }
+      # Check if model uses Rails enum for status
+      elsif model_class.defined_enums.key?('status')
+        status_enum = model_class.defined_enums['status']
+
+        # Convert enum hash to array of {value, label} for the dropdown
+        # Enum returns {"submitted" => 0, "approved" => 1, ...}
+        options = status_enum.map do |label, int_value|
+          {
+            value: int_value.to_s,
+            label: label.titleize
+          }
+        end.sort_by { |opt| opt[:value].to_i }
+
         render json: { status_options: options }
       else
-        # No STATUS_MAP defined
+        # No STATUS_MAP or status enum defined
         render json: { status_options: [] }
       end
     rescue StandardError => e

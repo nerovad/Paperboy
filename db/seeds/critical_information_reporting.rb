@@ -94,8 +94,6 @@ module Seeds
             incident_details: incident_details,
             cause: cause,
             staff_involved: staff_involved,
-            incident_manager: sup[:name],
-            reported_by: person,
             impact_started: impact_started,
             location: location,
             status: status,

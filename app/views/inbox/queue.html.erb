@@ -41,7 +41,7 @@
                         class: "btn edit",
                         data: { turbo: false } %>
 
-                    <%= form_with url: update_status_critical_information_reporting_path(submission), method: :patch, local: true, style: "display: inline;" do |f| %>
+                    <%= form_with url: update_status_critical_information_reporting_path(submission), method: :patch, local: true, style: "display: inline;", data: { controller: "auto-submit" } do |f| %>
                       <%= f.select :status,
                           options_for_select([
                             ['In Progress', 'in_progress'],
@@ -51,7 +51,7 @@
                           ], submission.status),
                           {},
                           class: "form-control status-dropdown",
-                          onchange: "this.form.submit()",
+                          data: { action: "change->auto-submit#submit" },
                           style: "display: inline-block; width: auto; margin-left: 10px;" %>
                     <% end %>
 

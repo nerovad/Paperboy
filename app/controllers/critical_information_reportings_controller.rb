@@ -235,7 +235,7 @@ class CriticalInformationReportingsController < ApplicationController
       :employee_id, :name, :phone, :email,
       :agency, :division, :department, :unit,
       :incident_type, :incident_details, :cause,
-      :staff_involved, :incident_manager, :reported_by, :impact_started, :location,
+      :staff_involved, :impact_started, :location,
       :urgency,
       :impact, :impacted_customers, :next_steps, :media
     )

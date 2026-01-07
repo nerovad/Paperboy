@@ -243,12 +243,12 @@ class ReportGenerationJob < ApplicationJob
 
   def create_zip_file(pdf_files, form_type, start_date, end_date)
     zip_filename = Rails.root.join(
-      'tmp', 
+      'tmp',
       'reports',
       "#{form_type}_#{start_date.strftime('%Y%m%d')}_to_#{end_date.strftime('%Y%m%d')}_#{Time.current.to_i}.zip"
     )
 
-    Zip::File.open(zip_filename, Zip::File::CREATE) do |zipfile|
+    Zip::File.open(zip_filename, create: true) do |zipfile|
       pdf_files.each do |pdf_file|
         zipfile.add(File.basename(pdf_file), pdf_file)
       end
