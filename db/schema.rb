@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_07_201607) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_07_220312) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -574,6 +574,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_07_201607) do
     t.string "fund_type", limit: 50, null: false
     t.string "fund_group", limit: 50, null: false
     t.string "cafr_type", limit: 50, null: false
+  end
+
+  create_table "gym_locker_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.integer "status", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "loa_forms", force: :cascade do |t|

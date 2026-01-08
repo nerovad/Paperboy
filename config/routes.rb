@@ -1,6 +1,7 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  resources :gym_locker_forms
   resources :carpool_forms
   resources :brown_mail_forms
   # ============================================================================
