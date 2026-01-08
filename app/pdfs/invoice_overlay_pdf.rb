@@ -1,4 +1,4 @@
-reuire "prawn"
+require "prawn"
 require "prawn/templates"
 
 class InvoiceOverlayPDF < Prawn::Document
@@ -21,7 +21,7 @@ class InvoiceOverlayPDF < Prawn::Document
     draw_line_items
 
     number_pages "Page <page> of <total>",
-                 at: [bounds.right - 50, 20],
+                 at: [ bounds.right - 50, 20 ],
                  size: 8
   end
 
@@ -33,16 +33,16 @@ class InvoiceOverlayPDF < Prawn::Document
 
     date_range_text = "#{@params[:sDate]} – #{@params[:eDate]}"
     draw_text date_range_text,
-              at: [h[:date_range][:x], h[:date_range][:y]],
+              at: [ h[:date_range][:x], h[:date_range][:y] ],
               size: 10
 
     draw_text "Type: #{@params[:type]}",
-              at: [h[:billing_type][:x], h[:billing_type][:y]],
+              at: [ h[:billing_type][:x], h[:billing_type][:y] ],
               size: 10
 
     enc_text = @params[:encumbered].to_i == 1 ? "Encumbered" : "Non-Encumbered"
     draw_text enc_text,
-              at: [h[:encumbered_flag][:x], h[:encumbered_flag][:y]],
+              at: [ h[:encumbered_flag][:x], h[:encumbered_flag][:y] ],
               size: 10
   end
 
@@ -54,15 +54,15 @@ class InvoiceOverlayPDF < Prawn::Document
     totals = summarize(@rows)
 
     draw_text currency(totals[:total_amount]),
-              at: [s[:total_amount][:x], s[:total_amount][:y]],
+              at: [ s[:total_amount][:x], s[:total_amount][:y] ],
               size: 10
 
     draw_text currency(totals[:total_cost]),
-              at: [s[:total_cost][:x], s[:total_cost][:y]],
+              at: [ s[:total_cost][:x], s[:total_cost][:y] ],
               size: 10
 
     draw_text totals[:total_quantity].to_s,
-              at: [s[:total_quantity][:x], s[:total_quantity][:y]],
+              at: [ s[:total_quantity][:x], s[:total_quantity][:y] ],
               size: 10
   end
 
@@ -90,7 +90,7 @@ class InvoiceOverlayPDF < Prawn::Document
 
   def line_item_table_data
     rows = [
-      ["Date", "Description", "Doc #", "Qty", "Rate", "Amount"]
+      [ "Date", "Description", "Doc #", "Qty", "Rate", "Amount" ]
     ]
 
     @rows.each do |row|
@@ -124,5 +124,4 @@ class InvoiceOverlayPDF < Prawn::Document
     format("$%.2f", value.to_f)
   end
   # ---------------------------------------------------------------------------
-
 end
