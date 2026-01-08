@@ -1,5 +1,5 @@
 # app/reports/base/base.rb
-module Reports
-  module Base
+module Base
+  class Base
   end
 end
