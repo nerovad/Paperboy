@@ -1,23 +1,21 @@
 # app/reports/base/sql_provider.rb
-module Reports
-  module Base
-    class SqlProvider
-      def initialize(stored_proc, params)
-        @stored_proc = stored_proc
-        @params      = params
-      end
+module Base
+  class SqlProvider
+    def initialize(stored_proc, params)
+      @stored_proc = stored_proc
+      @params      = params
+    end
 
-      def fetch
-        # Example output:  "@sDate='2024-01-01', @eDate='2024-01-31', @type='RM'"
-        args = @params.map { |k, v| "@#{k}='#{v}'" }.join(", ")
+    def fetch
+      # Example output:  "@sDate='2024-01-01', @eDate='2024-01-31', @type='RM'"
+      args = @params.map { |k, v| "@#{k}='#{v}'" }.join(", ")
 
-        sql = "EXEC #{@stored_proc} #{args}"
+      sql = "EXEC #{@stored_proc} #{args}"
 
-        result = ActiveRecord::Base.connection.exec_query(sql)
+      result = ActiveRecord::Base.connection.exec_query(sql)
 
-        result.to_a.map do |row|
-          row.transform_keys { |k| k.to_s.downcase }
-        end
+      result.to_a.map do |row|
+        row.transform_keys { |k| k.to_s.downcase }
       end
     end
   end
