@@ -1,8 +1,8 @@
 require 'prawn'
 require 'prawn/templates'
 
-class GridOverlayPDF < Prawn::Document
-  # {{{ Initialzie InvoiceOverlayPDF
+class GridOverlayPdf < Prawn::Document
+  # {{{ Initialzie InvoiceOverlayPdf
 
   def initialize
     super(

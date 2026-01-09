@@ -1,6 +1,6 @@
 class GridController < ApplicationController
   def show
-    pdf = GridOverlayPDF.new
+    pdf = GridOverlayPdf.new
 
     send_data pdf.render,
               filename: "invoice-grid-debug.pdf",

@@ -13,7 +13,7 @@ class InvoicesController < ApplicationController
       encumbered: params[:encumbered].presence || 0
     )
 
-    pdf = InvoiceOverlayPDF.new(
+    pdf = InvoiceOverlayPdf.new(
       rows: rows,
       params: params.slice(:sDate, :eDate, :type, :digits, :encumbered)
     )

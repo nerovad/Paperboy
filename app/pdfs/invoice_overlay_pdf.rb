@@ -1,8 +1,8 @@
 require "prawn"
 require "prawn/templates"
 
-class InvoiceOverlayPDF < Prawn::Document
-  # {{{ Initialzie InvoiceOverlayPDF
+class InvoiceOverlayPdf < Prawn::Document
+  # {{{ Initialzie InvoiceOverlayPdf
 
   def initialize(rows:, params:)
     @rows   = rows
