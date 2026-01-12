@@ -72,6 +72,16 @@ class CriticalInformationReportingsController < ApplicationController
               disposition: "attachment"
   end
 
+  def download_media
+    @critical_information_reporting = CriticalInformationReporting.find(params[:id])
+
+    if @critical_information_reporting.media.attached?
+      redirect_to rails_blob_path(@critical_information_reporting.media, disposition: "attachment")
+    else
+      redirect_to inbox_queue_path, alert: "No media attachment found."
+    end
+  end
+
   def edit
     @critical_information_reporting = CriticalInformationReporting.find(params[:id])
 

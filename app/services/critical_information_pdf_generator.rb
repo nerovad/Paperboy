@@ -1,4 +1,5 @@
 require "prawn"
+require "tempfile"
 
 class CriticalInformationPdfGenerator
   def self.generate(cir)
@@ -63,6 +64,43 @@ class CriticalInformationPdfGenerator
       if cir.actual_completion_date.present?
         pdf.move_down 10
         pdf.text "Actual Completion Date: #{cir.actual_completion_date.strftime('%B %d, %Y at %I:%M %p')}"
+      end
+
+      # Include media attachment if present
+      if cir.media.attached?
+        pdf.move_down 15
+        pdf.text "Attached Media", size: 14, style: :bold
+        pdf.move_down 5
+
+        if cir.media.content_type.start_with?('image/')
+          # Embed image in PDF
+          begin
+            # Download the image to a temporary file
+            tempfile = Tempfile.new(['media', File.extname(cir.media.filename.to_s)])
+            tempfile.binmode
+            tempfile.write(cir.media.download)
+            tempfile.rewind
+
+            # Use Prawn's fit option to automatically scale the image
+            max_width = pdf.bounds.width
+            max_height = 300
+
+            pdf.image tempfile.path, fit: [max_width, max_height], position: :left
+            pdf.move_down 5
+            pdf.text "Filename: #{cir.media.filename}", size: 9, style: :italic
+
+            tempfile.close
+            tempfile.unlink
+          rescue => e
+            pdf.text "Error loading image: #{e.message}", size: 9, color: 'FF0000'
+          end
+        elsif cir.media.content_type == 'application/pdf'
+          pdf.text "PDF Document: #{cir.media.filename}", size: 10
+          pdf.text "(See separate attachment)", size: 9, style: :italic, color: '666666'
+        else
+          pdf.text "File: #{cir.media.filename}", size: 10
+          pdf.text "Type: #{cir.media.content_type}", size: 9, style: :italic
+        end
       end
 
       pdf.move_down 25

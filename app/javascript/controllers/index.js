@@ -21,6 +21,7 @@ import ScheduledReportController from "controllers/scheduled_report_form_control
 import SidebarController from "controllers/sidebar_controller"
 import ConfirmModalController from "controllers/confirm_modal_controller"
 import AutoSubmitController from "controllers/auto_submit_controller"
+import FilePreviewController from "controllers/file_preview_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -43,3 +44,4 @@ application.register("scheduled-report-form", ScheduledReportController)
 application.register("sidebar", SidebarController)
 application.register("confirm-modal", ConfirmModalController)
 application.register("auto-submit", AutoSubmitController)
+application.register("file-preview", FilePreviewController)

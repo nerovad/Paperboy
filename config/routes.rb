@@ -101,6 +101,7 @@ Rails.application.routes.draw do
   resources :critical_information_reportings, only: [:new, :create, :edit, :update] do
     member do
       get :pdf
+      get :download_media
       patch :approve
       patch :deny
       patch :update_status

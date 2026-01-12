@@ -37,6 +37,13 @@
                         class: "btn pdf",
                         data: { turbo: false } %>
 
+                    <% if submission.media.attached? %>
+                      <%= link_to "Download Media",
+                          download_media_critical_information_reporting_path(submission),
+                          class: "btn pdf",
+                          data: { turbo: false } %>
+                    <% end %>
+
                     <%= link_to "Edit Form",
                         edit_critical_information_reporting_path(submission),
                         class: "btn edit",
