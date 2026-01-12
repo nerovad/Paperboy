@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_09_223834) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_12_181951) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -476,7 +476,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_09_223834) do
     t.string "incident_type"
     t.text "incident_details"
     t.text "cause"
-    t.string "staff_involved"
+    t.text "staff_involved"
     t.datetime "impact_started"
     t.string "location"
     t.datetime "actual_completion_date"

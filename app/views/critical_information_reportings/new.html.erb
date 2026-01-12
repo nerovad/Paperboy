@@ -157,13 +157,21 @@
                 required: true %>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" data-controller="choices">
           <%= form.label :staff_involved, "Staff Involved" %>
           <%= form.select :staff_involved,
                 options_for_select(@employee_options),
-                { prompt: 'Select Staff Member' },
+                {},
+                multiple: true,
                 class: "form-control",
-                required: true %>
+                required: true,
+                data: {
+                  choices_target: "select",
+                  placeholder: "Select staff member(s)…"
+                } %>
+          <small class="help-text">
+            Select one or more staff members involved in the incident
+          </small>
         </div>
 
         <div class="form-group">

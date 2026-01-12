@@ -47,7 +47,19 @@ class CriticalInformationPdfGenerator
       pdf.move_down 15
       pdf.text "Staff & Management", size: 14, style: :bold
       pdf.move_down 5
-      pdf.text "Staff Involved: #{cir.staff_involved}"
+
+      # Handle comma-separated employee IDs for staff_involved
+      if cir.staff_involved.present?
+        staff_ids = cir.staff_involved.split(",").map(&:strip)
+        staff_names = staff_ids.map do |employee_id|
+          employee = Employee.find_by(EmployeeID: employee_id)
+          employee ? "#{employee['First_Name']} #{employee['Last_Name']}" : employee_id
+        end
+        pdf.text "Staff Involved: #{staff_names.join(', ')}"
+      else
+        pdf.text "Staff Involved: None"
+      end
+
       pdf.text "Assigned Manager: #{cir.assigned_manager_name}"
 
       pdf.move_down 15

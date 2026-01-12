@@ -241,14 +241,20 @@ class CriticalInformationReportingsController < ApplicationController
   private
 
   def critical_information_reporting_params
-    params.require(:critical_information_reporting).permit(
+    raw = params.require(:critical_information_reporting).permit(
       :employee_id, :name, :phone, :email,
       :agency, :division, :department, :unit,
       :incident_type, :incident_details, :cause,
-      :staff_involved, :impact_started, :location,
+      :impact_started, :location,
       :urgency,
-      :impact, :impacted_customers, :next_steps, :media
+      :impact, :impacted_customers, :next_steps, :media,
+      staff_involved: []
     )
+
+    # Normalize multi-select array into comma-separated string
+    raw[:staff_involved] = Array(raw[:staff_involved]).reject(&:blank?).join(",")
+
+    raw
   end
 
   def load_location_options
