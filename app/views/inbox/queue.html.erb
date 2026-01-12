@@ -1,16 +1,106 @@
 <!-- app/views/inbox/queue.html.erb -->
-<turbo-frame id="main-content" data-controller="approve-modal deny-modal">
+<div data-controller="approve-modal deny-modal">
   <h1 class="page-title">Inbox Queue</h1>
+
+  <!-- Filter Form -->
+  <div class="filter-wrapper">
+    <form action="<%= inbox_queue_path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
+      <div class="filter-controls">
+        <div class="filter-group">
+          <label for="filter_form_type">Form Type</label>
+          <%= select_tag :filter_form_type,
+              options_for_select([['All', '']] + @filter_options[:form_types].map { |ft| [ft, ft] }, params[:filter_form_type]),
+              class: 'filter-select',
+              data: { action: "change->auto-submit#submit" } %>
+        </div>
+
+        <div class="filter-group">
+          <label for="filter_name">Name</label>
+          <%= select_tag :filter_name,
+              options_for_select([['All', '']] + @filter_options[:names].map { |n| [n, n] }, params[:filter_name]),
+              class: 'filter-select',
+              data: { action: "change->auto-submit#submit" } %>
+        </div>
+
+        <div class="filter-group">
+          <label for="filter_unit">Unit</label>
+          <%= select_tag :filter_unit,
+              options_for_select([['All', '']] + @filter_options[:units].map { |u| [u, u] }, params[:filter_unit]),
+              class: 'filter-select',
+              data: { action: "change->auto-submit#submit" } %>
+        </div>
+
+        <div class="filter-group">
+          <label for="filter_email">Email</label>
+          <%= select_tag :filter_email,
+              options_for_select([['All', '']] + @filter_options[:emails].map { |e| [e, e] }, params[:filter_email]),
+              class: 'filter-select',
+              data: { action: "change->auto-submit#submit" } %>
+        </div>
+
+        <div class="filter-group">
+          <label for="filter_status">Status</label>
+          <%= select_tag :filter_status,
+              options_for_select([['All', '']] + @filter_options[:statuses].map { |s| [s, s] }, params[:filter_status]),
+              class: 'filter-select',
+              data: { action: "change->auto-submit#submit" } %>
+        </div>
+
+        <% if params[:filter_form_type].present? || params[:filter_name].present? || params[:filter_unit].present? || params[:filter_email].present? || params[:filter_status].present? %>
+          <%= link_to "Clear Filters", inbox_queue_path(sort_by: params[:sort_by], sort_direction: params[:sort_direction]), class: 'btn clear-filters', data: { turbo: false } %>
+        <% end %>
+      </div>
+
+      <!-- Hidden fields to preserve sorting when filtering -->
+      <%= hidden_field_tag :sort_by, params[:sort_by] %>
+      <%= hidden_field_tag :sort_direction, params[:sort_direction] %>
+    </form>
+  </div>
 
   <div class="table-wrapper">
     <table class="submission-table">
       <thead>
         <tr>
-          <th>Form Type</th>
-          <th>Name</th>
-          <th>Unit</th>
-          <th>Email</th>
-          <th>Stage</th>
+          <th>
+            <%= link_to inbox_queue_path(sort_by: 'form_type', sort_direction: params[:sort_by] == 'form_type' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status]), class: 'sortable-header', data: { turbo: false } do %>
+              Form Type
+              <% if params[:sort_by] == 'form_type' %>
+                <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
+              <% end %>
+            <% end %>
+          </th>
+          <th>
+            <%= link_to inbox_queue_path(sort_by: 'name', sort_direction: params[:sort_by] == 'name' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status]), class: 'sortable-header', data: { turbo: false } do %>
+              Name
+              <% if params[:sort_by] == 'name' %>
+                <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
+              <% end %>
+            <% end %>
+          </th>
+          <th>
+            <%= link_to inbox_queue_path(sort_by: 'unit', sort_direction: params[:sort_by] == 'unit' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status]), class: 'sortable-header', data: { turbo: false } do %>
+              Unit
+              <% if params[:sort_by] == 'unit' %>
+                <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
+              <% end %>
+            <% end %>
+          </th>
+          <th>
+            <%= link_to inbox_queue_path(sort_by: 'email', sort_direction: params[:sort_by] == 'email' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status]), class: 'sortable-header', data: { turbo: false } do %>
+              Email
+              <% if params[:sort_by] == 'email' %>
+                <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
+              <% end %>
+            <% end %>
+          </th>
+          <th>
+            <%= link_to inbox_queue_path(sort_by: 'status', sort_direction: params[:sort_by] == 'status' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status]), class: 'sortable-header', data: { turbo: false } do %>
+              Status
+              <% if params[:sort_by] == 'status' %>
+                <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
+              <% end %>
+            <% end %>
+          </th>
           <th>Action</th>
         </tr>
       </thead>
@@ -152,4 +242,4 @@
   </div>
 
   <%= render "shared/deny_modal" %>
-</turbo-frame>
+</div>
