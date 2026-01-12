@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_07_220312) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_09_223834) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -838,6 +838,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_07_220312) do
     t.index ["employee_id"], name: "index_scheduled_reports_on_employee_id"
     t.index ["enabled"], name: "index_scheduled_reports_on_enabled"
     t.index ["next_run_at"], name: "index_scheduled_reports_on_next_run_at"
+  end
+
+  create_table "social_media_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.integer "status", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "sub_objects", primary_key: ["agency_id", "object_id", "sub_object_id"], force: :cascade do |t|
