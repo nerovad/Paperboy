@@ -1,5 +1,5 @@
 <!-- app/views/inbox/queue.html.erb -->
-<div data-controller="approve-modal deny-modal">
+<div data-controller="approve-modal deny-modal reassign-modal">
   <h1 class="page-title">Inbox Queue</h1>
 
   <!-- Filter Form -->
@@ -198,6 +198,30 @@
                       Deny
                     </button>
                   <% end %>
+
+                  <!-- REASSIGN BUTTON (all forms) -->
+                  <button type="button"
+                          class="btn reassign"
+                          data-action="click->reassign-modal#open"
+                          data-task-type="<%= submission.class.name %>"
+                          data-task-id="<%= submission.id %>"
+                          data-current-assignee="<%= submission.respond_to?(:current_assignee_id) ? submission.current_assignee_id : '' %>">
+                    Reassign
+                  </button>
+
+                  <!-- TAKE BACK BUTTON (only if user is in reassignment chain) -->
+                  <% if submission.respond_to?(:can_take_back?) && submission.can_take_back?(session.dig(:user, "employee_id")) %>
+                    <%= button_to "Take Back",
+                          take_back_task_reassignments_path,
+                          method: :post,
+                          params: {
+                            task_type: submission.class.name,
+                            task_id: submission.id,
+                            to_employee_id: session.dig(:user, "employee_id")
+                          },
+                          class: "btn take-back",
+                          form: { data: { turbo: false } } %>
+                  <% end %>
                 </div>
               </td>
             </tr>
@@ -242,4 +266,5 @@
   </div>
 
   <%= render "shared/deny_modal" %>
+  <%= render "shared/reassign_modal" %>
 </div>

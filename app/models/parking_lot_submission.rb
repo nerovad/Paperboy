@@ -1,5 +1,6 @@
 class ParkingLotSubmission < ApplicationRecord
   include PhoneNumberable
+  include Reassignable
   # Stored columns on this model for org hierarchy are *codes/IDs*:
   #   agency, division, department, unit
   # === Associations to lookup tables (resolve codes -> LongName) ===
@@ -54,5 +55,23 @@ class ParkingLotSubmission < ApplicationRecord
   # With enum, status returns a symbol like :submitted, :approved, etc.
   def status_label
     status&.to_s&.humanize || "Unknown"
+  end
+
+  # Reassignable concern implementation
+  # Use delegated_approver_id if status is pending_delegated_approval, otherwise use supervisor_id
+  def current_assignee_id
+    if pending_delegated_approval?
+      delegated_approver_id
+    else
+      supervisor_id
+    end
+  end
+
+  def assignment_field_name
+    if pending_delegated_approval?
+      'delegated_approver_id'
+    else
+      'supervisor_id'
+    end
   end
 end

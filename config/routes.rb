@@ -67,6 +67,15 @@ Rails.application.routes.draw do
   get "/inboxqueue", to: "inbox#queue", as: "inbox_queue"
   get "/status", to: "status#index", as: :status
 
+  # Task Reassignment Routes
+  resources :task_reassignments, only: [] do
+    collection do
+      post :reassign
+      post :take_back
+      get :history
+    end
+  end
+
   # ============================================================================
   # Dashboards
   # ============================================================================

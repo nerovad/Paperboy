@@ -1,6 +1,9 @@
 # app/models/critical_information_reporting.rb
 
 class CriticalInformationReporting < ApplicationRecord
+  # Include reassignment functionality
+  include Reassignable
+
   # ActiveStorage attachment for media files
   has_one_attached :media
 
@@ -79,6 +82,15 @@ class CriticalInformationReporting < ApplicationRecord
 
   def assigned_manager_name
     assigned_manager&.then { |e| "#{e['First_Name']} #{e['Last_Name']}" } || "Unassigned"
+  end
+
+  # Reassignable concern implementation
+  def current_assignee_id
+    assigned_manager_id
+  end
+
+  def assignment_field_name
+    'assigned_manager_id'
   end
 
   private

@@ -30,6 +30,9 @@ class InboxController < ApplicationController
     sort_direction = params[:sort_direction] || 'desc'
 
     @submissions = sort_submissions(@submissions, sort_by, sort_direction)
+
+    # Load employees for reassignment dropdown
+    @employees = Employee.order(:Last_Name, :First_Name)
   end
 
   private

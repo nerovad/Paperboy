@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_12_181951) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_13_210056) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -865,6 +865,21 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_12_181951) do
     t.string "unit_id", limit: 4, null: false
     t.string "subunit_id", limit: 4, null: false
     t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "task_reassignments", force: :cascade do |t|
+    t.string "task_type", null: false
+    t.bigint "task_id", null: false
+    t.string "from_employee_id", null: false
+    t.string "to_employee_id", null: false
+    t.string "reassigned_by_id", null: false
+    t.text "reason"
+    t.string "assignment_field"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["from_employee_id"], name: "index_task_reassignments_on_from_employee_id"
+    t.index ["task_type", "task_id"], name: "index_task_reassignments_on_task_type_and_task_id"
+    t.index ["to_employee_id"], name: "index_task_reassignments_on_to_employee_id"
   end
 
   create_table "tasks", primary_key: ["agency_id", "task_id"], force: :cascade do |t|

@@ -1,5 +1,6 @@
 class ProbationTransferRequest < ApplicationRecord
   include PhoneNumberable
+  include Reassignable
 
   # === Lookups (stored columns are codes/IDs: agency, division, department, unit)
   belongs_to :agency_record,
@@ -94,5 +95,14 @@ end
      .split(/[;,|]/)   # split on ; or , or |
      .map(&:strip)
      .reject(&:blank?)
+  end
+
+  # Reassignable concern implementation
+  def current_assignee_id
+    supervisor_id
+  end
+
+  def assignment_field_name
+    'supervisor_id'
   end
 end

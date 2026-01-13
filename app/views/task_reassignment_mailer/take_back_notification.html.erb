@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    h2 { color: #10b981; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background-color: #f5f5f5; font-weight: 600; }
+    .btn { display: inline-block; padding: 10px 20px; background-color: #004976; color: white; text-decoration: none; border-radius: 4px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Task Returned to You</h2>
+
+    <p>Hello <%= @to_employee.First_Name %>,</p>
+
+    <p>A <%= @task.class.name.demodulize.titleize %> has been returned to you from the reassignment chain.</p>
+
+    <table>
+      <tr>
+        <th>Task ID:</th>
+        <td>#<%= @task.id %></td>
+      </tr>
+      <tr>
+        <th>Form Type:</th>
+        <td><%= @task.class.name.demodulize.titleize %></td>
+      </tr>
+      <tr>
+        <th>Submitted by:</th>
+        <td><%= @task.name %> (<%= @task.email %>)</td>
+      </tr>
+      <tr>
+        <th>Previously assigned to:</th>
+        <td><%= @from_employee.First_Name %> <%= @from_employee.Last_Name %></td>
+      </tr>
+    </table>
+
+    <p>
+      <%= link_to "View in Inbox Queue", inbox_queue_url, class: "btn" %>
+    </p>
+
+    <p style="color: #666; font-size: 0.9em; margin-top: 30px;">
+      This is an automated message from the County of Ventura GSA Forms system.
+    </p>
+  </div>
+</body>
+</html>
