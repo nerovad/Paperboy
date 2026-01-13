@@ -11,6 +11,7 @@ import DenyModalController from "controllers/deny_modal_controller"
 import PhoneController from "controllers/phone_controller"
 import BillingModalController from "controllers/billing_modal_controller"
 import ApproveModalController from "controllers/approve_modal_controller"
+import ReassignModalController from "controllers/reassign_modal_controller"
 import ChoicesController from "controllers/choices_controller"
 import ConditionalFieldController from "controllers/conditional_field_controller"
 import GsabssSelectsController from "controllers/gsabss_selects_controller"
@@ -34,6 +35,7 @@ application.register("deny-modal", DenyModalController)
 application.register("phone", PhoneController)
 application.register("billing-modal", BillingModalController)
 application.register("approve-modal", ApproveModalController)
+application.register("reassign-modal", ReassignModalController)
 application.register("choices", ChoicesController)
 application.register("conditional-field", ConditionalFieldController)
 application.register("gsabss-selects", GsabssSelectsController)
