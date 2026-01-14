@@ -70,6 +70,16 @@ class InboxController < ApplicationController
       filtered = filtered.select { |s| s.status_label.to_s.tr('_', ' ').titleize == params[:filter_status] }
     end
 
+    if params[:filter_date_from].present?
+      from_date = Date.parse(params[:filter_date_from]).beginning_of_day
+      filtered = filtered.select { |s| s.created_at >= from_date }
+    end
+
+    if params[:filter_date_to].present?
+      to_date = Date.parse(params[:filter_date_to]).end_of_day
+      filtered = filtered.select { |s| s.created_at <= to_date }
+    end
+
     filtered
   end
 

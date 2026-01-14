@@ -1,5 +1,38 @@
 @import "base/tokens";
 
+/* Inbox page wrapper - enables full page scrolling */
+.inbox-page-wrapper {
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  padding-bottom: 20px;
+
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+
+  /* Custom scrollbar styling (WebKit browsers) */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+
+    &:hover {
+      background: #666;
+    }
+  }
+
+  /* Firefox scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}
+
 /* Filter wrapper */
 .filter-wrapper {
   max-width: 1000px;
@@ -81,6 +114,12 @@
   max-width: 1000px;
   margin: 0 auto;
   padding: 0 30px;
+
+  /* When inside inbox page wrapper, don't add extra scroll - let parent handle it */
+  .inbox-page-wrapper & {
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 /* Inbox submissions table */
@@ -106,6 +145,9 @@
     text-transform: uppercase;
     font-size: 0.85em;
     letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 
     a.sortable-header {
       color: inherit;
@@ -138,7 +180,7 @@
 
   .button-container {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
     flex-wrap: wrap;
   }
@@ -149,24 +191,37 @@
     margin: 0;
   }
 
-  /* Ensure buttons have consistent styling */
+  /* Ensure all buttons have consistent styling */
   .button-container .btn {
     margin: 0;
+    height: 38px;
+    padding: 0 16px;
+    font-size: 0.9em;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
   }
 
-  /* Status dropdown for CIR forms */
+  /* Status dropdown styled like other buttons */
   .button-container .status-dropdown {
-    padding: 8px 12px;
+    height: 38px;
+    padding: 0 12px;
     border: 1px solid $border-color;
-    border-radius: 4px;
+    border-radius: 6px;
     background: white;
     font-size: 0.9em;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     min-width: 140px;
+    display: inline-flex;
+    align-items: center;
 
     &:hover {
-      border-color: darken($border-color, 10%);
+      border-color: darken($border-color, 15%);
+      background: #f8f9fa;
     }
 
     &:focus {
@@ -176,18 +231,20 @@
     }
   }
 
-  /* Edit button styling */
+  /* Edit button - use a distinct color */
   .button-container .btn.edit {
-    background-color: #2196F3;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+    background-color: #ff9800;
 
     &:hover {
-      background-color: darken(#2196F3, 10%);
+      background-color: darken(#ff9800, 8%);
     }
+  }
+
+  /* Visual grouping with subtle separator */
+  .button-group-separator {
+    width: 1px;
+    height: 24px;
+    background: $border-color;
+    margin: 0 4px;
   }
 }
