@@ -144,3 +144,7 @@ Rails.application.routes.draw do
   # ============================================================================
   get "/debug/invoice_grid", to: "grid#show"
 end
+
+# MatthewTestReport report
+get  "/reports/matthew_test_report",     to: "matthew_test_report_reports#show", as: "matthew_test_report_reports"
+post "/reports/matthew_test_report/run", to: "matthew_test_report_reports#run",  as: "matthew_test_report_reports_run"

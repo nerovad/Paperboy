@@ -47,7 +47,7 @@ namespace :reports do
       File.write(service_file, <<~RUBY)
         module Reports
           module #{class_name}
-            class #{class_name}Service < Reports::Base::ReportService
+            class #{class_name}Service < Base::ReportService
 
               # TODO: Stwp in the correct report-specific stored procedure.
               def stored_proc
@@ -247,6 +247,7 @@ namespace :reports do
 
               def render
                 if @data.empty?
+                  @pdf.start_new_page
                   @pdf.text "No data returned from stored procedure.", style: :bold
                   return
                 end

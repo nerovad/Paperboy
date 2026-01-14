@@ -1,0 +1,49 @@
+# TODO: Update fields and x,y coorrdinates to match the report-specific stored procedue.
+  fields:
+    cunit:
+      x: 135
+      y: 695
+
+    posting_ref:
+      x: 135
+      y: 675
+
+    service:
+      x: 135
+      y: 655
+
+    date:
+      x: 135
+      y: 635
+
+    doc_nmbr:
+      x: 135
+      y: 615
+
+    description:
+      x: 135
+      y: 595
+
+    other1:
+      x: 135
+      y: 575
+
+    other3:
+      x: 135
+      y: 555
+
+    other2:
+      x: 135
+      y: 535
+
+    quantity:
+      x: 135
+      y: 515
+
+    rate:
+      x: 135
+      y: 495
+
+    cost:
+      x: 135
+      y: 475
