@@ -1,0 +1,15 @@
+<h2>Generate MatthewTestYay Report</h2>
+
+<%= form_with url: matthew_test_yay_reports_run_path, method: :post do %>
+  <div>
+    <label>Start Date</label>
+    <%= date_field_tag :sDate, nil, required: true %>
+  </div>
+
+  <div>
+    <label>End Date</label>
+    <%= date_field_tag :eDate, nil, required: true %>
+  </div>
+
+  <%= submit_tag "Generate Report" %>
+<% end %>

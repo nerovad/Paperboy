@@ -147,4 +147,8 @@ Rails.application.routes.draw do
   # MatthewTestReport report
   get  "/reports/matthew_test_report",     to: "matthew_test_report_reports#show", as: "matthew_test_report_reports"
   post "/reports/matthew_test_report/run", to: "matthew_test_report_reports#run",  as: "matthew_test_report_reports_run"
+
+# MatthewTestYay report
+get  "/reports/matthew_test_yay",     to: "matthew_test_yay_reports#show", as: "matthew_test_yay_reports"
+post "/reports/matthew_test_yay/run", to: "matthew_test_yay_reports#run",  as: "matthew_test_yay_reports_run"
 end
