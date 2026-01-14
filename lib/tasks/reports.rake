@@ -45,20 +45,18 @@ namespace :reports do
     service_file = base_path.join("#{name}_service.rb")
     unless File.exist?(service_file)
       File.write(service_file, <<~RUBY)
-        module Reports
-          module #{class_name}
-            class #{class_name}Service < Base::ReportService
+        module #{class_name}
+          class #{class_name}Service < Base::ReportService
 
-              # TODO: Stwp in the correct report-specific stored procedure.
-              def stored_proc
-                "GSABSS.dbo.Paperboy_Reports_Scaffolding"
-              end
-
-              def report_name
-                "#{name}"
-              end
-
+            # TODO: Stwp in the correct report-specific stored procedure.
+            def stored_proc
+              "GSABSS.dbo.Paperboy_Reports_Scaffolding"
             end
+
+            def report_name
+              "#{name}"
+            end
+
           end
         end
       RUBY
@@ -78,7 +76,7 @@ namespace :reports do
           include Sidekiq::Job
 
           def perform(params)
-            Reports::#{class_name}::#{class_name}Service
+            #{class_name}::#{class_name}Service
               .new(params.symbolize_keys)
               .call
           end
@@ -235,68 +233,66 @@ namespace :reports do
 
         # TODO: Update renderer to match the report-specific stored procedue.
 
-        module Reports
-          module #{class_name}
-            class Renderer
-              def initialize(pdf:, data:, mapping:, template:)
-                @pdf      = pdf
-                @data     = data
-                @mapping  = mapping
-                @template = template.to_s
-              end
-
-              def render
-                if @data.empty?
-                  @pdf.start_new_page
-                  @pdf.text "No data returned from stored procedure.", style: :bold
-                  return
-                end
-
-                @data.each do |row|
-                  @pdf.start_new_page
-
-                  logo_path = Rails.root.join("app/assets/images/report_logo.png")
-                  if File.exist?(logo_path)
-                    @pdf.image(logo_path.to_s, at: [38, 780], width: 600)
-                  else
-                    @pdf.text_box("MISSING LOGO", at: [38, 780], width: 200, height: 20)
-                  end
-
-                  @mapping.each do |field, coords|
-                    value = row[field.to_s] || ""
-
-                    x = coords["x"].to_i
-                    y = coords["y"].to_i
-
-                    @pdf.text_box(
-                      "\#{field.to_s.upcase}:",
-                      at: [x - 90, y],
-                      width: 90,
-                      height: 20,
-                      overflow: :truncate,
-                      disable_wrap: true
-                    )
-
-                    @pdf.text_box(
-                      value.to_s,
-                      at: [x, y],
-                      width: 200,
-                      height: 20,
-                      overflow: :truncate,
-                      disable_wrap: true
-                    )
-                  end
-                end
-
-                @pdf.number_pages(
-                  "<page> of <total>",
-                  at: [500, 20],
-                  width: 100,
-                  align: :right
-                )
-              end
-
+        module #{class_name}
+          class Renderer
+            def initialize(pdf:, data:, mapping:, template:)
+              @pdf      = pdf
+              @data     = data
+              @mapping  = mapping
+              @template = template.to_s
             end
+
+            def render
+              if @data.empty?
+                @pdf.start_new_page
+                @pdf.text "No data returned from stored procedure.", style: :bold
+                return
+              end
+
+              @data.each do |row|
+                @pdf.start_new_page
+
+                logo_path = Rails.root.join("app/assets/images/report_logo.png")
+                if File.exist?(logo_path)
+                  @pdf.image(logo_path.to_s, at: [38, 780], width: 600)
+                else
+                  @pdf.text_box("MISSING LOGO", at: [38, 780], width: 200, height: 20)
+                end
+
+                @mapping.each do |field, coords|
+                  value = row[field.to_s] || ""
+
+                  x = coords["x"].to_i
+                  y = coords["y"].to_i
+
+                  @pdf.text_box(
+                    "\#{field.to_s.upcase}:",
+                    at: [x - 90, y],
+                    width: 90,
+                    height: 20,
+                    overflow: :truncate,
+                    disable_wrap: true
+                  )
+
+                  @pdf.text_box(
+                    value.to_s,
+                    at: [x, y],
+                    width: 200,
+                    height: 20,
+                    overflow: :truncate,
+                    disable_wrap: true
+                  )
+                end
+              end
+
+              @pdf.number_pages(
+                "<page> of <total>",
+                at: [500, 20],
+                width: 100,
+                align: :right
+              )
+            end
+
           end
         end
       RUBY
@@ -416,10 +412,10 @@ namespace :reports do
 
     begin
       service_class =
-        Reports.const_get(class_name).const_get("#{class_name}Service")
+        Object.const_get(class_name).const_get("#{class_name}Service")
     rescue NameError
       puts "ERROR: Unable to resolve service class:"
-      puts "Reports::#{class_name}::#{class_name}Service"
+      puts "#{class_name}::#{class_name}Service"
       exit 1
     end
 
@@ -480,17 +476,10 @@ namespace :reports do
     puts "\nChecking namespace constants:\n"
 
     begin
-      Reports
-      puts "   Reports constant exists"
+      Base
+      puts "   Base constant exists"
     rescue NameError
-      puts "   Reports constant missing"
-    end
-
-    begin
-      Reports::Base
-      puts "   Reports::Base constant exists"
-    rescue NameError
-      puts "   Reports::Base constant missing"
+      puts "   Base constant missing"
     end
 
     base_dir = Rails.root.join("app/reports/base")
@@ -507,11 +496,11 @@ namespace :reports do
 
     puts "\nTesting base class constants:"
     {
-      ReportService: "Reports::Base::ReportService",
-      PdfRenderer:   "Reports::Base::PdfRenderer",
-      SqlProvider:  "Reports::Base::SqlProvider",
-      TemplateLoader: "Reports::Base::TemplateLoader",
-      YamlLoader:   "Reports::Base::YamlLoader"
+      ReportService:  "Base::ReportService",
+      PdfRenderer:    "Base::PdfRenderer",
+      SqlProvider:    "Base::SqlProvider",
+      TemplateLoader: "Base::TemplateLoader",
+      YamlLoader:     "Base::YamlLoader"
     }.each do |_short, full|
       print "   #{full} ... "
       begin
