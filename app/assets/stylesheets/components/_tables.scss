@@ -33,6 +33,117 @@
   scrollbar-color: #888 #f1f1f1;
 }
 
+/* Action Panel - appears when a task is selected */
+.action-panel {
+  max-width: 1000px;
+  margin: 0 auto 20px;
+  padding: 0 30px;
+
+  .action-panel-content {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-left: 4px solid $primary-color;
+  }
+
+  .task-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    form {
+      display: inline-flex;
+      margin: 0;
+    }
+
+    .btn {
+      height: 38px;
+      padding: 0 16px;
+      font-size: 0.9em;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    .status-dropdown {
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid $border-color;
+      border-radius: 6px;
+      background: white;
+      font-size: 0.9em;
+      font-weight: 600;
+      cursor: pointer;
+      min-width: 140px;
+
+      &:hover {
+        border-color: darken($border-color, 15%);
+        background: #f8f9fa;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+      }
+    }
+
+    .btn.edit {
+      background-color: #ff9800;
+
+      &:hover {
+        background-color: darken(#ff9800, 8%);
+      }
+    }
+
+    .btn.close-panel {
+      background-color: #6c757d;
+      margin-left: auto;
+
+      &:hover {
+        background-color: darken(#6c757d, 10%);
+      }
+    }
+
+    .button-group-separator {
+      width: 1px;
+      height: 24px;
+      background: $border-color;
+      margin: 0 4px;
+    }
+  }
+
+  .action-panel-label {
+    font-weight: 600;
+    color: $text-color;
+    margin-right: 10px;
+    padding-right: 10px;
+    border-right: 1px solid $border-color;
+  }
+}
+
+/* Selectable rows */
+.selectable-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba($primary-color, 0.05);
+  }
+
+  &.selected {
+    background-color: rgba($primary-color, 0.12);
+
+    &:hover {
+      background-color: rgba($primary-color, 0.15);
+    }
+  }
+}
+
 /* Filter wrapper */
 .filter-wrapper {
   max-width: 1000px;

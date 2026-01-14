@@ -23,6 +23,7 @@ import SidebarController from "controllers/sidebar_controller"
 import ConfirmModalController from "controllers/confirm_modal_controller"
 import AutoSubmitController from "controllers/auto_submit_controller"
 import FilePreviewController from "controllers/file_preview_controller"
+import TaskSelectionController from "controllers/task_selection_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -47,3 +48,4 @@ application.register("sidebar", SidebarController)
 application.register("confirm-modal", ConfirmModalController)
 application.register("auto-submit", AutoSubmitController)
 application.register("file-preview", FilePreviewController)
+application.register("task-selection", TaskSelectionController)
