@@ -3,32 +3,116 @@
   <h1>Status</h1>
 </div>
 
+<!-- Filter Form -->
+<div class="filter-wrapper">
+  <form action="<%= status_path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label for="filter_type">Type</label>
+        <%= select_tag :filter_type,
+            options_for_select([['All', '']] + @filter_options[:types].map { |t| [t, t] }, params[:filter_type]),
+            class: 'filter-select',
+            data: { action: "change->auto-submit#submit" } %>
+      </div>
+
+      <div class="filter-group">
+        <label for="filter_status">Status</label>
+        <%= select_tag :filter_status,
+            options_for_select([['All', '']] + @filter_options[:statuses].map { |s| [s, s] }, params[:filter_status]),
+            class: 'filter-select',
+            data: { action: "change->auto-submit#submit" } %>
+      </div>
+
+      <div class="filter-group">
+        <label for="filter_date_from">Submitted From</label>
+        <%= date_field_tag :filter_date_from, params[:filter_date_from],
+            class: 'filter-select',
+            data: { action: "change->auto-submit#submit" } %>
+      </div>
+
+      <div class="filter-group">
+        <label for="filter_date_to">Submitted To</label>
+        <%= date_field_tag :filter_date_to, params[:filter_date_to],
+            class: 'filter-select',
+            data: { action: "change->auto-submit#submit" } %>
+      </div>
+
+      <% if params[:filter_type].present? || params[:filter_status].present? || params[:filter_date_from].present? || params[:filter_date_to].present? %>
+        <%= link_to "Clear Filters", status_path(sort_by: params[:sort_by], sort_direction: params[:sort_direction]), class: 'btn clear-filters', data: { turbo: false } %>
+      <% end %>
+    </div>
+
+    <!-- Hidden fields to preserve sorting when filtering -->
+    <%= hidden_field_tag :sort_by, params[:sort_by] %>
+    <%= hidden_field_tag :sort_direction, params[:sort_direction] %>
+  </form>
+</div>
+
 <div class="form-wrapper status-wrapper">
 <table class="status-table">
   <thead>
     <tr>
-      <th>Type</th>
-      <th>Title</th>
-      <th>Status</th>
-      <th>Submitted</th>
-      <th>Last Updated</th>
+      <th>
+        <%= link_to status_path(sort_by: 'type', sort_direction: params[:sort_by] == 'type' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to]), class: 'sortable-header', data: { turbo: false } do %>
+          Type
+          <% if params[:sort_by] == 'type' %>
+            <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
+          <% end %>
+        <% end %>
+      </th>
+      <th>
+        <%= link_to status_path(sort_by: 'title', sort_direction: params[:sort_by] == 'title' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to]), class: 'sortable-header', data: { turbo: false } do %>
+          Title
+          <% if params[:sort_by] == 'title' %>
+            <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
+          <% end %>
+        <% end %>
+      </th>
+      <th>
+        <%= link_to status_path(sort_by: 'status', sort_direction: params[:sort_by] == 'status' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to]), class: 'sortable-header', data: { turbo: false } do %>
+          Status
+          <% if params[:sort_by] == 'status' %>
+            <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
+          <% end %>
+        <% end %>
+      </th>
+      <th>
+        <%= link_to status_path(sort_by: 'submitted_at', sort_direction: params[:sort_by] == 'submitted_at' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to]), class: 'sortable-header', data: { turbo: false } do %>
+          Submitted
+          <% if params[:sort_by] == 'submitted_at' %>
+            <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
+          <% end %>
+        <% end %>
+      </th>
+      <th>
+        <%= link_to status_path(sort_by: 'updated_at', sort_direction: params[:sort_by] == 'updated_at' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to]), class: 'sortable-header', data: { turbo: false } do %>
+          Last Updated
+          <% if params[:sort_by] == 'updated_at' || params[:sort_by].nil? %>
+            <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
+          <% end %>
+        <% end %>
+      </th>
       <th></th>
     </tr>
   </thead>
   <tbody>
-    <% @status_items.each do |item| %>
-      <tr>
-        <td class="col-type"><%= item[:type] %></td>
-        <td class="col-title"><%= item[:title] %></td>
-        <td class="col-status">
-          <span class="badge <%= status_badge_class(item[:status]) %>">
-            <%= item[:status].to_s.tr('_', ' ') %>
-          </span>
-        </td>
-        <td class="col-submitted"><%= l(item[:submitted_at], format: :short) %></td>
-        <td class="col-updated"><%= l(item[:updated_at], format: :short) %></td>
-        <td class="col-actions"><%= link_to "Open", item[:path], class: "btn" %></td>
-      </tr>
+    <% if @status_items.present? %>
+      <% @status_items.each do |item| %>
+        <tr>
+          <td class="col-type"><%= item[:type] %></td>
+          <td class="col-title"><%= item[:title] %></td>
+          <td class="col-status">
+            <span class="badge <%= status_badge_class(item[:status]) %>">
+              <%= item[:status].to_s.tr('_', ' ') %>
+            </span>
+          </td>
+          <td class="col-submitted"><%= l(item[:submitted_at], format: :short) %></td>
+          <td class="col-updated"><%= l(item[:updated_at], format: :short) %></td>
+          <td class="col-actions"><%= link_to "Open", item[:path], class: "btn" %></td>
+        </tr>
+      <% end %>
+    <% else %>
+      <tr><td colspan="6">No submissions found.</td></tr>
     <% end %>
   </tbody>
 </table>

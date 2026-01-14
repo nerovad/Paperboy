@@ -1,5 +1,7 @@
 # app/controllers/inbox_controller.rb
 class InboxController < ApplicationController
+  include Filterable
+
   def queue
     employee = session[:user]
     return @submissions = [] unless employee.present? && employee["employee_id"].present?
@@ -20,16 +22,19 @@ class InboxController < ApplicationController
     @submissions += CriticalInformationReporting.where(assigned_manager_id: employee_id, status: 0)
 
     # Collect unique values for filter dropdowns before filtering
-    @filter_options = collect_filter_options(@submissions)
+    @filter_options = collect_filter_options(@submissions, inbox_field_mappings)
 
     # Apply filters
-    @submissions = apply_filters(@submissions)
+    @submissions = apply_filters(@submissions,
+      filter_configs: inbox_filter_configs,
+      date_filters: inbox_date_filters
+    )
 
     # Apply sorting
     sort_by = params[:sort_by] || 'created_at'
     sort_direction = params[:sort_direction] || 'desc'
 
-    @submissions = sort_submissions(@submissions, sort_by, sort_direction)
+    @submissions = sort_collection(@submissions, sort_by, sort_direction, inbox_sort_configs)
 
     # Load employees for reassignment dropdown
     @employees = Employee.order(:Last_Name, :First_Name)
@@ -37,69 +42,42 @@ class InboxController < ApplicationController
 
   private
 
-  def collect_filter_options(submissions)
+  def inbox_field_mappings
     {
-      form_types: submissions.map { |s| s.class.name.demodulize.titleize }.uniq.sort,
-      names: submissions.map(&:name).compact.uniq.sort_by(&:downcase),
-      units: submissions.map { |s| s.try(:unit) }.compact.uniq.sort_by(&:downcase),
-      emails: submissions.map(&:email).compact.uniq.sort_by(&:downcase),
-      statuses: submissions.map { |s| s.status_label.to_s.tr('_', ' ').titleize }.compact.uniq.sort
+      form_types: ->(s) { s.class.name.demodulize.titleize },
+      names: ->(s) { s.name },
+      units: ->(s) { s.try(:unit) },
+      emails: ->(s) { s.email },
+      statuses: ->(s) { s.status_label.to_s.tr('_', ' ').titleize }
     }
   end
 
-  def apply_filters(submissions)
-    filtered = submissions
-
-    if params[:filter_form_type].present?
-      filtered = filtered.select { |s| s.class.name.demodulize.titleize == params[:filter_form_type] }
-    end
-
-    if params[:filter_name].present?
-      filtered = filtered.select { |s| s.name == params[:filter_name] }
-    end
-
-    if params[:filter_unit].present?
-      filtered = filtered.select { |s| s.try(:unit) == params[:filter_unit] }
-    end
-
-    if params[:filter_email].present?
-      filtered = filtered.select { |s| s.email == params[:filter_email] }
-    end
-
-    if params[:filter_status].present?
-      filtered = filtered.select { |s| s.status_label.to_s.tr('_', ' ').titleize == params[:filter_status] }
-    end
-
-    if params[:filter_date_from].present?
-      from_date = Date.parse(params[:filter_date_from]).beginning_of_day
-      filtered = filtered.select { |s| s.created_at >= from_date }
-    end
-
-    if params[:filter_date_to].present?
-      to_date = Date.parse(params[:filter_date_to]).end_of_day
-      filtered = filtered.select { |s| s.created_at <= to_date }
-    end
-
-    filtered
+  def inbox_filter_configs
+    [
+      { param: :filter_form_type, extractor: ->(s) { s.class.name.demodulize.titleize } },
+      { param: :filter_name, extractor: ->(s) { s.name } },
+      { param: :filter_unit, extractor: ->(s) { s.try(:unit) } },
+      { param: :filter_email, extractor: ->(s) { s.email } },
+      { param: :filter_status, extractor: ->(s) { s.status_label.to_s.tr('_', ' ').titleize } }
+    ]
   end
 
-  def sort_submissions(submissions, sort_by, direction)
-    sorted = case sort_by
-    when 'form_type'
-      submissions.sort_by { |s| s.class.name.demodulize.titleize }
-    when 'name'
-      submissions.sort_by { |s| s.name.to_s.downcase }
-    when 'unit'
-      submissions.sort_by { |s| (s.try(:unit) || '').to_s.downcase }
-    when 'email'
-      submissions.sort_by { |s| s.email.to_s.downcase }
-    when 'status'
-      submissions.sort_by { |s| s.status_label.to_s.downcase }
-    else # 'created_at' or any other default
-      submissions.sort_by(&:created_at)
-    end
+  def inbox_date_filters
+    [
+      { param: :filter_date_from, extractor: ->(s) { s.created_at }, comparison: :from },
+      { param: :filter_date_to, extractor: ->(s) { s.created_at }, comparison: :to }
+    ]
+  end
 
-    direction == 'desc' ? sorted.reverse : sorted
+  def inbox_sort_configs
+    {
+      'form_type' => ->(s) { s.class.name.demodulize.titleize },
+      'name' => ->(s) { s.name.to_s },
+      'unit' => ->(s) { (s.try(:unit) || '').to_s },
+      'email' => ->(s) { s.email.to_s },
+      'status' => ->(s) { s.status_label.to_s },
+      'created_at' => ->(s) { s.created_at.to_s }
+    }
   end
 
 end
