@@ -47,7 +47,7 @@ module Base
       require renderer_file
 
       renderer_class =
-        "#{report.camelize}::Renderer".constantize
+        "#{report.camelize}::#{report.camelize}Renderer".constantize
 
       renderer_class.new(
         pdf:     pdf,
@@ -58,7 +58,7 @@ module Base
 
     rescue NameError => e
       raise NameError,
-        "Renderer class #{report.camelize}::Renderer not found " \
+        "Renderer class #{report.camelize}::#{report.camelize}Renderer not found " \
         "in #{renderer_file}: #{e.message}"
     end
 

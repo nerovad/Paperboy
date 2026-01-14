@@ -234,7 +234,7 @@ namespace :reports do
         # TODO: Update renderer to match the report-specific stored procedue.
 
         module #{class_name}
-          class Renderer
+          class #{class_name}Renderer
             def initialize(pdf:, data:, mapping:, template:)
               @pdf      = pdf
               @data     = data

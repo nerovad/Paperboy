@@ -15,7 +15,7 @@
 # TODO: Update renderer to match the report-specific stored procedue.
 
 module MatthewTestReport
-  class Renderer
+  class MatthewTestReportRenderer
       def initialize(pdf:, data:, mapping:, template:)
         @pdf      = pdf
         @data     = data
