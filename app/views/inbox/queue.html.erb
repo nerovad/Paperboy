@@ -81,9 +81,10 @@
                data-task-id="<%= submission.id %>"
                style="display: none;">
 
-            <span class="action-panel-label">
-              <%= submission.class.name.demodulize.titleize %> - <%= submission.name %>
-            </span>
+            <div class="action-panel-label">
+              <span class="label-form-type"><%= submission.class.name.demodulize.titleize %></span>
+              <span class="label-name"><%= submission.name %></span>
+            </div>
 
             <!-- VIEW/DOWNLOAD ACTIONS -->
             <% if submission.is_a?(CriticalInformationReporting) %>
@@ -107,8 +108,6 @@
 
             <!-- EDIT/STATUS ACTIONS (CIR only) -->
             <% if submission.is_a?(CriticalInformationReporting) %>
-              <div class="button-group-separator"></div>
-
               <%= link_to "Edit",
                   edit_critical_information_reporting_path(submission),
                   class: "btn edit",
@@ -132,8 +131,6 @@
 
             <!-- DECISION ACTIONS (Parking/Probation) -->
             <% if submission.is_a?(ParkingLotSubmission) || submission.is_a?(ProbationTransferRequest) %>
-              <div class="button-group-separator"></div>
-
               <% if submission.is_a?(ParkingLotSubmission) %>
                 <%= button_to "Approve",
                       polymorphic_path(submission, action: :approve),
@@ -161,8 +158,6 @@
             <% end %>
 
             <!-- ASSIGNMENT ACTIONS (all forms) -->
-            <div class="button-group-separator"></div>
-
             <button type="button"
                     class="btn reassign"
                     data-action="click->reassign-modal#open"
