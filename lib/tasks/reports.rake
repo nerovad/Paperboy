@@ -309,14 +309,16 @@ namespace :reports do
     routes_file = Rails.root.join("config/routes.rb")
 
     route_block = <<~RUBY
-
-      # #{class_name} report
-      get  "/reports/#{name}",     to: "#{name}_reports#show", as: "#{name}_reports"
-      post "/reports/#{name}/run", to: "#{name}_reports#run",  as: "#{name}_reports_run"
+  # #{class_name} report
+  get  "/reports/#{name}",     to: "#{name}_reports#show", as: "#{name}_reports"
+  post "/reports/#{name}/run", to: "#{name}_reports#run",  as: "#{name}_reports_run"
     RUBY
 
-    unless File.read(routes_file).include?("reports/#{name}")
-      File.open(routes_file, "a") { |f| f.write(route_block) }
+    routes_content = File.read(routes_file)
+    unless routes_content.include?("reports/#{name}")
+      # Insert before the final 'end' of the draw block
+      updated_content = routes_content.sub(/^end\s*\z/, "\n#{route_block}end\n")
+      File.write(routes_file, updated_content)
       puts "Routes added for #{name}"
     end
 
