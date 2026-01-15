@@ -18,8 +18,8 @@ class InboxController < ApplicationController
     # Probation Transfer Requests (unchanged)
     @submissions += ProbationTransferRequest.where(supervisor_id: employee_id, status: 0, canceled_at: nil)
 
-    # Critical Information Reporting forms assigned to this manager
-    @submissions += CriticalInformationReporting.where(assigned_manager_id: employee_id, status: 0)
+    # Critical Information Reporting forms assigned to this manager (all statuses stay in inbox)
+    @submissions += CriticalInformationReporting.where(assigned_manager_id: employee_id)
 
     # Collect unique values for filter dropdowns before filtering
     @filter_options = collect_filter_options(@submissions, inbox_field_mappings)
