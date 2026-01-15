@@ -10,13 +10,13 @@ class InboxController < ApplicationController
     @submissions = []
 
     # Parking Lot Submissions where employee is either:
-    # 1. Supervisor (Dept Head) and status = 0 (submitted)
-    # 2. Delegated Approver and status = 1 (pending_delegated_approval)
-    @submissions += ParkingLotSubmission.where(supervisor_id: employee_id, status: 0)
-    @submissions += ParkingLotSubmission.where(delegated_approver_id: employee_id, status: 1)
+    # 1. Supervisor (Dept Head) - all statuses stay in inbox
+    # 2. Delegated Approver - all statuses stay in inbox
+    @submissions += ParkingLotSubmission.where(supervisor_id: employee_id)
+    @submissions += ParkingLotSubmission.where(delegated_approver_id: employee_id)
 
-    # Probation Transfer Requests (unchanged)
-    @submissions += ProbationTransferRequest.where(supervisor_id: employee_id, status: 0, canceled_at: nil)
+    # Probation Transfer Requests - all statuses stay in inbox (except canceled)
+    @submissions += ProbationTransferRequest.where(supervisor_id: employee_id, canceled_at: nil)
 
     # Critical Information Reporting forms assigned to this manager (all statuses stay in inbox)
     @submissions += CriticalInformationReporting.where(assigned_manager_id: employee_id)
