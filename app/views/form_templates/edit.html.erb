@@ -233,9 +233,33 @@
           </button>
         </div>
 
+        <!-- Inbox Queue Buttons -->
+        <div class="form-group" style="margin-top: 30px;">
+          <h4>6. Inbox Queue Buttons</h4>
+          <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-bottom: 15px; display: block;">
+            Select which action buttons should appear in the inbox queue for this form type.
+          </small>
+          <div class="inbox-buttons-container" style="display: flex; flex-wrap: wrap; gap: 15px;">
+            <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+              <div class="inbox-button-option" style="flex: 0 0 calc(50% - 10px); display: flex; align-items: flex-start; gap: 8px; background: #f8f9fa; padding: 10px; border-radius: 6px;">
+                <input type="checkbox"
+                       name="form_template[inbox_buttons][]"
+                       value="<%= key %>"
+                       id="edit_inbox_button_<%= key %>"
+                       style="margin-top: 3px;"
+                       <%= 'checked' if @form_template.has_inbox_button?(key) %>>
+                <label for="edit_inbox_button_<%= key %>" style="margin: 0; cursor: pointer;">
+                  <strong><%= config[:label] %></strong>
+                  <small style="display: block; color: #6c757d; font-weight: normal;"><%= config[:description] %></small>
+                </label>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
         <!-- Power BI Dashboard Configuration (FULLY EDITABLE) -->
         <div class="form-group" style="margin-top: 30px;">
-          <h4>6. Power BI Dashboard Configuration</h4>
+          <h4>7. Power BI Dashboard Configuration</h4>
 
           <div class="form-group">
             <%= f.label :has_dashboard, "Enable Dashboard?" %>
@@ -276,7 +300,7 @@
 
         <!-- Fields Editor -->
         <div class="form-group" style="margin-top: 30px;">
-          <h4>7. Form Fields</h4>
+          <h4>8. Form Fields</h4>
           <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-bottom: 15px; display: block;">
             These are custom fields that will appear on your form pages. Standard fields (Employee ID, Name, Phone, Email, Agency info) are already included.
           </small>

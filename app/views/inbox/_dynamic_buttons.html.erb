@@ -1,0 +1,91 @@
+<%# Renders inbox action buttons for dynamically generated forms based on form template configuration %>
+<%# Usage: render 'inbox/dynamic_buttons', submission: submission %>
+
+<% template = form_template_for(submission) %>
+<% return unless template %>
+
+<!-- View PDF -->
+<% if template.has_inbox_button?('view_pdf') %>
+  <% pdf_path = inbox_pdf_path(submission) %>
+  <% if pdf_path %>
+    <%= link_to "View PDF", pdf_path, class: "btn pdf", data: { turbo: false } %>
+  <% end %>
+<% end %>
+
+<!-- Edit -->
+<% if template.has_inbox_button?('edit') %>
+  <% edit_path = inbox_edit_path(submission) %>
+  <% if edit_path %>
+    <%= link_to "Edit", edit_path, class: "btn edit", data: { turbo: false } %>
+  <% end %>
+<% end %>
+
+<!-- Status Dropdown -->
+<% if template.has_inbox_button?('status_dropdown') %>
+  <% status_path = inbox_update_status_path(submission) %>
+  <% status_options = inbox_status_options(submission) %>
+  <% if status_path && status_options.any? %>
+    <%= form_with url: status_path,
+                  method: :patch,
+                  data: { turbo: false, controller: "auto-submit" } do |f| %>
+      <%= f.select :status,
+          options_for_select(status_options, submission.status),
+          {},
+          class: "status-dropdown",
+          data: { action: "change->auto-submit#submit" } %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<!-- Approve -->
+<% if template.has_inbox_button?('approve') %>
+  <% approve_path = inbox_approve_path(submission) %>
+  <% if approve_path %>
+    <%= button_to "Approve",
+          approve_path,
+          method: :patch,
+          class: "btn approve" %>
+  <% end %>
+<% end %>
+
+<!-- Deny -->
+<% if template.has_inbox_button?('deny') %>
+  <% deny_path = inbox_deny_path(submission) %>
+  <% if deny_path %>
+    <button type="button"
+            class="btn deny"
+            data-action="click->deny-modal#open"
+            data-deny-path="<%= deny_path %>"
+            data-record-title="<%= "#{submission.class.name.demodulize.titleize} ##{submission.id}" %>">
+      Deny
+    </button>
+  <% end %>
+<% end %>
+
+<!-- Reassign -->
+<% if template.has_inbox_button?('reassign') %>
+  <button type="button"
+          class="btn reassign"
+          data-action="click->reassign-modal#open"
+          data-task-type="<%= submission.class.name %>"
+          data-task-id="<%= submission.id %>"
+          data-current-assignee="<%= submission.respond_to?(:current_assignee_id) ? submission.current_assignee_id : '' %>">
+    Reassign
+  </button>
+<% end %>
+
+<!-- Take Back -->
+<% if template.has_inbox_button?('take_back') %>
+  <% if submission.respond_to?(:can_take_back?) && submission.can_take_back?(session.dig(:user, "employee_id")) %>
+    <%= button_to "Take Back",
+          take_back_task_reassignments_path,
+          method: :post,
+          params: {
+            task_type: submission.class.name,
+            task_id: submission.id,
+            to_employee_id: session.dig(:user, "employee_id")
+          },
+          class: "btn take-back",
+          form: { data: { turbo: false } } %>
+  <% end %>
+<% end %>

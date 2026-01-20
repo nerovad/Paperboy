@@ -14,7 +14,14 @@ class Create<%= plural_table_name.camelize %> < ActiveRecord::Migration[7.1]
 
       t.integer :status, default: 0
 
+      # Approval workflow fields
+      t.string :approver_id       # Current approver's employee ID
+      t.text :deny_reason         # Reason for denial (if denied)
+
       t.timestamps
     end
+
+    add_index :<%= plural_table_name %>, :approver_id
+    add_index :<%= plural_table_name %>, :employee_id
   end
 end

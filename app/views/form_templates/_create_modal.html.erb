@@ -125,9 +125,33 @@
           </button>
         </div>
 
-        <!-- Step 6: Fields -->
+        <!-- Step 6: Inbox Queue Buttons -->
         <div class="form-group">
-          <label>6. Fields</label>
+          <label>6. Inbox Queue Buttons</label>
+          <small class="form-text" style="display: block; margin-bottom: 10px;">
+            Select which action buttons should appear in the inbox queue for this form type.
+          </small>
+          <div class="inbox-buttons-container" style="display: flex; flex-wrap: wrap; gap: 15px;">
+            <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+              <div class="inbox-button-option" style="flex: 0 0 calc(50% - 10px); display: flex; align-items: flex-start; gap: 8px;">
+                <input type="checkbox"
+                       name="form_template[inbox_buttons][]"
+                       value="<%= key %>"
+                       id="inbox_button_<%= key %>"
+                       style="margin-top: 3px;"
+                       <%= 'checked' if %w[view_pdf].include?(key) %>>
+                <label for="inbox_button_<%= key %>" style="margin: 0; cursor: pointer;">
+                  <strong><%= config[:label] %></strong>
+                  <small style="display: block; color: #6c757d; font-weight: normal;"><%= config[:description] %></small>
+                </label>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Step 7: Fields -->
+        <div class="form-group">
+          <label>7. Fields</label>
           <div class="fields-container" data-form-builder-target="fieldsContainer">
             <!-- Fields will be added here dynamically -->
           </div>

@@ -231,7 +231,8 @@ class FormTemplatesController < ApplicationController
       :has_dashboard,
       :powerbi_workspace_id,
       :powerbi_report_id,
-      page_headers: []
+      page_headers: [],
+      inbox_buttons: []
     )
   end
   
@@ -462,14 +463,39 @@ class FormTemplatesController < ApplicationController
     first_step = steps.first
 
     step_description = routing_step_description(first_step)
+    approver_logic = generate_approver_lookup(first_step)
 
     <<~RUBY.chomp
       # Multi-step approval routing (#{steps.count} steps)
       # Step 1: #{step_description}
-      @#{form_template.file_name}.update(status: :step_1_pending)
+      #{approver_logic}
+      @#{form_template.file_name}.update(status: :step_1_pending, approver_id: approver_id)
       # TODO: Send notification to #{step_description}
       redirect_to form_success_path, notice: 'Form submitted and routed to #{step_description} for approval.', allow_other_host: false, status: :see_other
     RUBY
+  end
+
+  def generate_approver_lookup(step)
+    case step.routing_type
+    when 'supervisor'
+      <<~RUBY.chomp
+        # Look up the submitter's supervisor
+        employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
+        approver_id = employee&.Supervisor_ID&.to_s
+      RUBY
+    when 'department_head'
+      <<~RUBY.chomp
+        # Look up the submitter's department head
+        employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
+        unit = employee ? Unit.find_by(unit_id: employee["Unit"]) : nil
+        department = unit ? Department.find_by(department_id: unit["department_id"]) : nil
+        approver_id = department&.department_head_id&.to_s
+      RUBY
+    when 'employee'
+      "approver_id = '#{step.employee_id}'"
+    else
+      "approver_id = nil"
+    end
   end
 
   def routing_step_description(step)

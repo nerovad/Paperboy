@@ -47,7 +47,17 @@ module PaperboyForm
 
     # ROUTES
     def add_routes
-      route "resources :#{plural_file_name}"
+      route_content = <<~RUBY
+        resources :#{plural_file_name} do
+          member do
+            get :pdf
+            patch :approve
+            patch :deny
+            patch :update_status
+          end
+        end
+      RUBY
+      route route_content
     end
   end
 end

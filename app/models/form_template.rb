@@ -1,5 +1,17 @@
 class FormTemplate < ApplicationRecord
   attribute :page_headers, :json
+  attribute :inbox_buttons, :json, default: []
+
+  # Available inbox button types
+  INBOX_BUTTON_TYPES = {
+    'view_pdf' => { label: 'View PDF', description: 'Download or view the form as PDF' },
+    'edit' => { label: 'Edit', description: 'Edit the submitted form' },
+    'approve' => { label: 'Approve', description: 'Approve button for approval workflows' },
+    'deny' => { label: 'Deny', description: 'Deny button with reason modal' },
+    'reassign' => { label: 'Reassign', description: 'Reassign to another employee' },
+    'take_back' => { label: 'Take Back', description: 'Take back a reassigned task' },
+    'status_dropdown' => { label: 'Status Dropdown', description: 'Quick status change dropdown' }
+  }.freeze
 
   has_many :form_fields, dependent: :destroy
   has_many :routing_steps, -> { order(:step_number) }, class_name: 'FormTemplateRoutingStep', dependent: :destroy
@@ -48,6 +60,14 @@ class FormTemplate < ApplicationRecord
 
   def has_dashboard?
     has_dashboard == true
+  end
+
+  def has_inbox_button?(button_type)
+    (inbox_buttons || []).include?(button_type.to_s)
+  end
+
+  def enabled_inbox_buttons
+    inbox_buttons || []
   end
   
   def table_name

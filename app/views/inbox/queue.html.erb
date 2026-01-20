@@ -86,103 +86,114 @@
               <span class="label-name"><%= submission.name %></span>
             </div>
 
-            <!-- VIEW/DOWNLOAD ACTIONS -->
-            <% if submission.is_a?(CriticalInformationReporting) %>
-              <%= link_to "View PDF",
-                  pdf_critical_information_reporting_path(submission),
-                  class: "btn pdf",
-                  data: { turbo: false } %>
+            <% if dynamic_form?(submission) %>
+              <!-- DYNAMIC FORM BUTTONS (based on form template configuration) -->
+              <%= render 'inbox/dynamic_buttons', submission: submission %>
 
-              <% if submission.media.attached? %>
-                <%= link_to "Media",
-                    download_media_critical_information_reporting_path(submission),
+              <button type="button" class="btn close-panel" data-action="click->task-selection#closePanel">
+                Close
+              </button>
+            <% else %>
+              <!-- HARDCODED FORM BUTTONS -->
+
+              <!-- VIEW/DOWNLOAD ACTIONS -->
+              <% if submission.is_a?(CriticalInformationReporting) %>
+                <%= link_to "View PDF",
+                    pdf_critical_information_reporting_path(submission),
                     class: "btn pdf",
                     data: { turbo: false } %>
+
+                <% if submission.media.attached? %>
+                  <%= link_to "Media",
+                      download_media_critical_information_reporting_path(submission),
+                      class: "btn pdf",
+                      data: { turbo: false } %>
+                <% end %>
+              <% else %>
+                <%= link_to "View PDF",
+                    submission.is_a?(ParkingLotSubmission) ? pdf_parking_lot_submission_path(submission) : pdf_probation_transfer_request_path(submission),
+                    target: "_blank",
+                    class: "btn pdf" %>
               <% end %>
-            <% else %>
-              <%= link_to "View PDF",
-                  submission.is_a?(ParkingLotSubmission) ? pdf_parking_lot_submission_path(submission) : pdf_probation_transfer_request_path(submission),
-                  target: "_blank",
-                  class: "btn pdf" %>
-            <% end %>
 
-            <!-- EDIT/STATUS ACTIONS (CIR only) -->
-            <% if submission.is_a?(CriticalInformationReporting) %>
-              <%= link_to "Edit",
-                  edit_critical_information_reporting_path(submission),
-                  class: "btn edit",
-                  data: { turbo: false } %>
+              <!-- EDIT/STATUS ACTIONS (CIR only) -->
+              <% if submission.is_a?(CriticalInformationReporting) %>
+                <%= link_to "Edit",
+                    edit_critical_information_reporting_path(submission),
+                    class: "btn edit",
+                    data: { turbo: false } %>
 
-              <%= form_with url: update_status_critical_information_reporting_path(submission),
-                            method: :patch,
-                            data: { turbo: false, controller: "auto-submit" } do |f| %>
-                <%= f.select :status,
-                    options_for_select([
-                      ['In Progress', 'in_progress'],
-                      ['Resolved', 'resolved'],
-                      ['Scheduled', 'scheduled'],
-                      ['Cancelled', 'cancelled']
-                    ], submission.status),
-                    {},
-                    class: "status-dropdown",
-                    data: { action: "change->auto-submit#submit" } %>
+                <%= form_with url: update_status_critical_information_reporting_path(submission),
+                              method: :patch,
+                              data: { turbo: false, controller: "auto-submit" } do |f| %>
+                  <%= f.select :status,
+                      options_for_select([
+                        ['In Progress', 'in_progress'],
+                        ['Resolved', 'resolved'],
+                        ['Scheduled', 'scheduled'],
+                        ['Cancelled', 'cancelled']
+                      ], submission.status),
+                      {},
+                      class: "status-dropdown",
+                      data: { action: "change->auto-submit#submit" } %>
+                <% end %>
               <% end %>
-            <% end %>
 
-            <!-- DECISION ACTIONS (Parking/Probation) -->
-            <% if submission.is_a?(ParkingLotSubmission) || submission.is_a?(ProbationTransferRequest) %>
-              <% if submission.is_a?(ParkingLotSubmission) %>
-                <%= button_to "Approve",
-                      polymorphic_path(submission, action: :approve),
-                      method: :patch,
-                      class: "btn approve" %>
+              <!-- DECISION ACTIONS (Parking/Probation) -->
+              <% if submission.is_a?(ParkingLotSubmission) || submission.is_a?(ProbationTransferRequest) %>
+                <% if submission.is_a?(ParkingLotSubmission) %>
+                  <%= button_to "Approve",
+                        polymorphic_path(submission, action: :approve),
+                        method: :patch,
+                        class: "btn approve" %>
 
-              <% elsif submission.is_a?(ProbationTransferRequest) %>
+                <% elsif submission.is_a?(ProbationTransferRequest) %>
+                  <button type="button"
+                          class="btn approve"
+                          data-action="click->approve-modal#open"
+                          data-approve-modal-approve-path-value="<%= polymorphic_path(submission, action: :approve) %>"
+                          data-approve-modal-options-value="<%= submission.desired_destinations_array.to_json %>"
+                          data-approve-modal-title-value="<%= "Approve Transfer ##{submission.id}" %>">
+                    Approve
+                  </button>
+                <% end %>
+
                 <button type="button"
-                        class="btn approve"
-                        data-action="click->approve-modal#open"
-                        data-approve-modal-approve-path-value="<%= polymorphic_path(submission, action: :approve) %>"
-                        data-approve-modal-options-value="<%= submission.desired_destinations_array.to_json %>"
-                        data-approve-modal-title-value="<%= "Approve Transfer ##{submission.id}" %>">
-                  Approve
+                        class="btn deny"
+                        data-action="click->deny-modal#open"
+                        data-deny-path="<%= polymorphic_path(submission, action: :deny) %>"
+                        data-record-title="<%= "#{submission.class.name.demodulize.titleize} ##{submission.id}" %>">
+                  Deny
                 </button>
               <% end %>
 
+              <!-- ASSIGNMENT ACTIONS (all forms) -->
               <button type="button"
-                      class="btn deny"
-                      data-action="click->deny-modal#open"
-                      data-deny-path="<%= polymorphic_path(submission, action: :deny) %>"
-                      data-record-title="<%= "#{submission.class.name.demodulize.titleize} ##{submission.id}" %>">
-                Deny
+                      class="btn reassign"
+                      data-action="click->reassign-modal#open"
+                      data-task-type="<%= submission.class.name %>"
+                      data-task-id="<%= submission.id %>"
+                      data-current-assignee="<%= submission.respond_to?(:current_assignee_id) ? submission.current_assignee_id : '' %>">
+                Reassign
+              </button>
+
+              <% if submission.respond_to?(:can_take_back?) && submission.can_take_back?(session.dig(:user, "employee_id")) %>
+                <%= button_to "Take Back",
+                      take_back_task_reassignments_path,
+                      method: :post,
+                      params: {
+                        task_type: submission.class.name,
+                        task_id: submission.id,
+                        to_employee_id: session.dig(:user, "employee_id")
+                      },
+                      class: "btn take-back",
+                      form: { data: { turbo: false } } %>
+              <% end %>
+
+              <button type="button" class="btn close-panel" data-action="click->task-selection#closePanel">
+                Close
               </button>
             <% end %>
-
-            <!-- ASSIGNMENT ACTIONS (all forms) -->
-            <button type="button"
-                    class="btn reassign"
-                    data-action="click->reassign-modal#open"
-                    data-task-type="<%= submission.class.name %>"
-                    data-task-id="<%= submission.id %>"
-                    data-current-assignee="<%= submission.respond_to?(:current_assignee_id) ? submission.current_assignee_id : '' %>">
-              Reassign
-            </button>
-
-            <% if submission.respond_to?(:can_take_back?) && submission.can_take_back?(session.dig(:user, "employee_id")) %>
-              <%= button_to "Take Back",
-                    take_back_task_reassignments_path,
-                    method: :post,
-                    params: {
-                      task_type: submission.class.name,
-                      task_id: submission.id,
-                      to_employee_id: session.dig(:user, "employee_id")
-                    },
-                    class: "btn take-back",
-                    form: { data: { turbo: false } } %>
-            <% end %>
-
-            <button type="button" class="btn close-panel" data-action="click->task-selection#closePanel">
-              Close
-            </button>
           </div>
         <% end %>
       <% end %>

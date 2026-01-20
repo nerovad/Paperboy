@@ -21,6 +21,9 @@ class InboxController < ApplicationController
     # Critical Information Reporting forms assigned to this manager (all statuses stay in inbox)
     @submissions += CriticalInformationReporting.where(assigned_manager_id: employee_id)
 
+    # Dynamically generated forms with approval workflows
+    @submissions += fetch_dynamic_form_submissions(employee_id)
+
     # Collect unique values for filter dropdowns before filtering
     @filter_options = collect_filter_options(@submissions, inbox_field_mappings)
 
@@ -80,4 +83,28 @@ class InboxController < ApplicationController
     }
   end
 
+  # Fetch submissions from dynamically generated forms that need approval
+  def fetch_dynamic_form_submissions(employee_id)
+    submissions = []
+
+    # Get all form templates that have approval workflows
+    FormTemplate.where(submission_type: 'approval').find_each do |template|
+      begin
+        # Try to get the model class for this form template
+        model_class = template.class_name.constantize
+
+        # Query for submissions where this employee is the approver
+        if model_class.column_names.include?('approver_id')
+          submissions += model_class.where(approver_id: employee_id).to_a
+        end
+      rescue NameError
+        # Model class doesn't exist yet (form not generated), skip it
+        Rails.logger.debug "Skipping inbox query for #{template.class_name} - model not found"
+      rescue => e
+        Rails.logger.warn "Error querying #{template.class_name} for inbox: #{e.message}"
+      end
+    end
+
+    submissions
+  end
 end
