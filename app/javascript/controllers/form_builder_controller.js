@@ -17,9 +17,8 @@ export default class extends Controller {
     "submitButton",
     "submissionType",
     "approvalRoutingContainer",
-    "approvalRoutingTo",
-    "employeeSelectContainer",
-    "approvalEmployee"
+    "routingStepsContainer",
+    "routingStepItem"
   ]
 
   static values = {
@@ -68,7 +67,7 @@ export default class extends Controller {
       this.pageHeadersContainerTarget.style.display = 'none'
       this.aclGroupContainerTarget.style.display = 'none'
       this.approvalRoutingContainerTarget.style.display = 'none'
-      this.employeeSelectContainerTarget.style.display = 'none'
+      this.routingStepsContainerTarget.innerHTML = ''
     }
   }
 
@@ -98,52 +97,99 @@ export default class extends Controller {
   toggleApprovalRouting(event) {
     const submissionType = event.target.value
     const container = this.approvalRoutingContainerTarget
-    const employeeContainer = this.employeeSelectContainerTarget
 
     if (submissionType === 'approval') {
       container.style.display = 'block'
-      this.approvalRoutingToTarget.required = true
+      // Add a default routing step if none exist
+      if (this.routingStepItemTargets.length === 0) {
+        this.addRoutingStep()
+      }
     } else {
       container.style.display = 'none'
-      employeeContainer.style.display = 'none'
-      this.approvalRoutingToTarget.required = false
-      this.approvalRoutingToTarget.value = ''
-      this.approvalEmployeeTarget.required = false
-      this.approvalEmployeeTarget.value = ''
+      // Clear all routing steps
+      this.routingStepsContainerTarget.innerHTML = ''
     }
   }
 
-  // Toggle employee select based on routing option
-  toggleEmployeeSelect(event) {
-    const routingTo = event.target.value
-    const container = this.employeeSelectContainerTarget
+  // Add a new routing step
+  addRoutingStep(event) {
+    if (event) event.preventDefault()
 
-    if (routingTo === 'employee') {
-      container.style.display = 'block'
-      this.approvalEmployeeTarget.required = true
-      // Load employees for the current user's department
-      this.loadDepartmentEmployees()
-    } else {
-      container.style.display = 'none'
-      this.approvalEmployeeTarget.required = false
-      this.approvalEmployeeTarget.value = ''
+    const template = document.getElementById('routing-step-template')
+    if (!template) {
+      console.error('Routing step template not found')
+      return
+    }
+
+    const clone = template.content.cloneNode(true)
+
+    // Update step number
+    const stepNumber = this.routingStepItemTargets.length + 1
+    const stepLabel = clone.querySelector('.step-number')
+    if (stepLabel) {
+      stepLabel.textContent = `Step ${stepNumber}:`
+    }
+
+    const stepInput = clone.querySelector('.step-number-input')
+    if (stepInput) {
+      stepInput.value = stepNumber
+    }
+
+    // Populate employee dropdown
+    const employeeSelect = clone.querySelector('.step-employee-dropdown')
+    if (employeeSelect && this.employeesValue) {
+      this.employeesValue.forEach(emp => {
+        const option = document.createElement('option')
+        option.value = emp[1]  // EmployeeID
+        option.textContent = emp[0]  // "First Last (EmployeeID)"
+        employeeSelect.appendChild(option)
+      })
+    }
+
+    this.routingStepsContainerTarget.appendChild(clone)
+  }
+
+  // Remove a routing step
+  removeRoutingStep(event) {
+    event.preventDefault()
+    const stepItem = event.target.closest('.routing-step-item')
+    if (stepItem) {
+      stepItem.remove()
+      // Renumber remaining steps
+      this.renumberRoutingSteps()
     }
   }
 
-  // Load employees from the user's department
-  loadDepartmentEmployees() {
-    console.log("Loading employees...")
-
-    const select = this.approvalEmployeeTarget
-    select.innerHTML = '<option value="">Select employee...</option>'
-
-    // Populate with all employees from the employeesValue
-    this.employeesValue.forEach(emp => {
-      const option = document.createElement('option')
-      option.value = emp[1]  // EmployeeID
-      option.textContent = emp[0]  // "First Last (EmployeeID)"
-      select.appendChild(option)
+  // Renumber routing steps after removal
+  renumberRoutingSteps() {
+    this.routingStepItemTargets.forEach((item, index) => {
+      const stepNumber = index + 1
+      const stepLabel = item.querySelector('.step-number')
+      if (stepLabel) {
+        stepLabel.textContent = `Step ${stepNumber}:`
+      }
+      const stepInput = item.querySelector('.step-number-input')
+      if (stepInput) {
+        stepInput.value = stepNumber
+      }
     })
+  }
+
+  // Toggle employee select for a specific routing step
+  toggleStepEmployeeSelect(event) {
+    const routingType = event.target.value
+    const stepItem = event.target.closest('.routing-step-item')
+    const employeeSelectContainer = stepItem.querySelector('.step-employee-select')
+    const employeeSelect = stepItem.querySelector('.step-employee-dropdown')
+
+    if (routingType === 'employee') {
+      employeeSelectContainer.style.display = 'block'
+      employeeSelect.required = true
+    } else {
+      employeeSelectContainer.style.display = 'none'
+      employeeSelect.required = false
+      employeeSelect.value = ''
+    }
   }
 
   // Toggle Power BI fields visibility based on has_dashboard selection

@@ -137,41 +137,100 @@
                       } %>
         </div>
 
-        <!-- Approval Routing Options (EDITABLE) -->
+        <!-- Approval Routing Steps (EDITABLE) -->
         <div class="form-group"
              data-form-builder-target="approvalRoutingContainer"
              style="<%= 'display: none;' unless @form_template.requires_approval? %>">
-          <label for="form_approval_routing">Route to: <span class="required">*</span></label>
-          <%= f.select :approval_routing_to,
-                      options_for_select([
-                        ['Supervisor', 'supervisor'],
-                        ['Department Head', 'department_head'],
-                        ['Employee', 'employee']
-                      ], @form_template.approval_routing_to),
-                      { include_blank: "Select routing option..." },
-                      {
-                        id: "form_approval_routing",
-                        class: "form-control",
-                        data: {
-                          form_builder_target: "approvalRoutingTo",
-                          action: "change->form-builder#toggleEmployeeSelect"
-                        }
-                      } %>
-        </div>
+          <label>Routing Steps <span class="required">*</span></label>
+          <small class="form-text text-muted" style="display: block; margin-bottom: 10px;">
+            Add one or more routing steps. Forms will be routed through each step in order.
+          </small>
+          <div class="routing-steps-container" data-form-builder-target="routingStepsContainer">
+            <% if @form_template.routing_steps.any? %>
+              <% @form_template.routing_steps.ordered.each_with_index do |step, index| %>
+                <div class="routing-step-item" data-form-builder-target="routingStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #007bff;">
+                  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <span class="step-number" style="font-weight: bold; color: #495057; min-width: 60px;">Step <%= index + 1 %>:</span>
 
-        <!-- Employee Selection (EDITABLE) -->
-        <div class="form-group"
-             data-form-builder-target="employeeSelectContainer"
-             style="<%= 'display: none;' unless @form_template.routes_to_specific_employee? %>">
-          <label for="form_approval_employee">Select Employee: <span class="required">*</span></label>
-          <%= f.select :approval_employee_id,
-                      options_for_select(@employees, @form_template.approval_employee_id),
-                      { include_blank: "Select employee..." },
-                      {
-                        id: "form_approval_employee",
-                        class: "form-control",
-                        data: { form_builder_target: "approvalEmployee" }
-                      } %>
+                    <div style="flex: 1; min-width: 150px;">
+                      <select name="routing_steps[][routing_type]"
+                              class="form-control form-control-sm routing-type-select"
+                              data-action="change->form-builder#toggleStepEmployeeSelect"
+                              required>
+                        <option value="">Select...</option>
+                        <option value="supervisor" <%= 'selected' if step.routing_type == 'supervisor' %>>Supervisor</option>
+                        <option value="department_head" <%= 'selected' if step.routing_type == 'department_head' %>>Department Head</option>
+                        <option value="employee" <%= 'selected' if step.routing_type == 'employee' %>>Specific Employee</option>
+                      </select>
+                    </div>
+
+                    <div class="step-employee-select" style="flex: 1; min-width: 200px; <%= 'display: none;' unless step.routing_type == 'employee' %>">
+                      <select name="routing_steps[][employee_id]"
+                              class="form-control form-control-sm step-employee-dropdown">
+                        <option value="">Select employee...</option>
+                        <% @employees.each do |emp| %>
+                          <option value="<%= emp[1] %>" <%= 'selected' if step.employee_id == emp[1] %>><%= emp[0] %></option>
+                        <% end %>
+                      </select>
+                    </div>
+
+                    <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="<%= index + 1 %>">
+
+                    <button type="button"
+                            class="btn deny"
+                            data-action="click->form-builder#removeRoutingStep"
+                            style="padding: 4px 8px;">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              <% end %>
+            <% elsif @form_template.approval_routing_to.present? %>
+              <!-- Convert legacy single routing to step format -->
+              <div class="routing-step-item" data-form-builder-target="routingStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #007bff;">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                  <span class="step-number" style="font-weight: bold; color: #495057; min-width: 60px;">Step 1:</span>
+
+                  <div style="flex: 1; min-width: 150px;">
+                    <select name="routing_steps[][routing_type]"
+                            class="form-control form-control-sm routing-type-select"
+                            data-action="change->form-builder#toggleStepEmployeeSelect"
+                            required>
+                      <option value="">Select...</option>
+                      <option value="supervisor" <%= 'selected' if @form_template.approval_routing_to == 'supervisor' %>>Supervisor</option>
+                      <option value="department_head" <%= 'selected' if @form_template.approval_routing_to == 'department_head' %>>Department Head</option>
+                      <option value="employee" <%= 'selected' if @form_template.approval_routing_to == 'employee' %>>Specific Employee</option>
+                    </select>
+                  </div>
+
+                  <div class="step-employee-select" style="flex: 1; min-width: 200px; <%= 'display: none;' unless @form_template.approval_routing_to == 'employee' %>">
+                    <select name="routing_steps[][employee_id]"
+                            class="form-control form-control-sm step-employee-dropdown">
+                      <option value="">Select employee...</option>
+                      <% @employees.each do |emp| %>
+                        <option value="<%= emp[1] %>" <%= 'selected' if @form_template.approval_employee_id == emp[1] %>><%= emp[0] %></option>
+                      <% end %>
+                    </select>
+                  </div>
+
+                  <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="1">
+
+                  <button type="button"
+                          class="btn deny"
+                          data-action="click->form-builder#removeRoutingStep"
+                          style="padding: 4px 8px;">
+                    Remove
+                  </button>
+                </div>
+              </div>
+            <% end %>
+          </div>
+          <button type="button"
+                  class="btn"
+                  style="margin-top: 10px;"
+                  data-action="click->form-builder#addRoutingStep">
+            + Add Routing Step
+          </button>
         </div>
 
         <!-- Power BI Dashboard Configuration (FULLY EDITABLE) -->
@@ -403,6 +462,46 @@
              name="fields[][dropdown_values]"
              class="form-control form-control-sm"
              placeholder="Option 1, Option 2, Option 3">
+    </div>
+  </div>
+</template>
+
+<!-- Routing Step Template (hidden, used for cloning) -->
+<template id="routing-step-template">
+  <div class="routing-step-item" data-form-builder-target="routingStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #007bff;">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <span class="step-number" style="font-weight: bold; color: #495057; min-width: 60px;">Step 1:</span>
+
+      <div style="flex: 1; min-width: 150px;">
+        <select name="routing_steps[][routing_type]"
+                class="form-control form-control-sm routing-type-select"
+                data-action="change->form-builder#toggleStepEmployeeSelect"
+                required>
+          <option value="">Select...</option>
+          <option value="supervisor">Supervisor</option>
+          <option value="department_head">Department Head</option>
+          <option value="employee">Specific Employee</option>
+        </select>
+      </div>
+
+      <div class="step-employee-select" style="flex: 1; min-width: 200px; display: none;">
+        <select name="routing_steps[][employee_id]"
+                class="form-control form-control-sm step-employee-dropdown">
+          <option value="">Select employee...</option>
+          <% @employees&.each do |emp| %>
+            <option value="<%= emp[1] %>"><%= emp[0] %></option>
+          <% end %>
+        </select>
+      </div>
+
+      <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="1">
+
+      <button type="button"
+              class="btn deny"
+              data-action="click->form-builder#removeRoutingStep"
+              style="padding: 4px 8px;">
+        Remove
+      </button>
     </div>
   </div>
 </template>

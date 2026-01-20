@@ -16,8 +16,11 @@ class FormTemplatesController < ApplicationController
   def create
     @form_template = FormTemplate.new(form_template_params)
     @form_template.created_by = session.dig(:user, "employee_id")
-    
+
     if @form_template.save
+      # Save routing steps
+      save_routing_steps(@form_template)
+
       # Save fields
       if params[:fields].present?
         params[:fields].each_with_index do |field_data, index|
@@ -91,9 +94,13 @@ class FormTemplatesController < ApplicationController
     routing_changed = routing_fields_changed?
 
     if @form_template.update(form_template_params)
+      # Rebuild routing steps
+      rebuild_routing_steps(@form_template)
+
       rebuild_form_fields
 
       if routing_changed
+        customize_generated_model(@form_template)
         customize_generated_controller(@form_template)
         Rails.logger.info "Regenerated controller for #{@form_template.class_name}"
       end
@@ -288,14 +295,40 @@ class FormTemplatesController < ApplicationController
     model_path = Rails.root.join("app/models/#{form_template.file_name}.rb")
     return unless File.exist?(model_path)
 
+    content = File.read(model_path)
+
     # If submission type is database, remove status enum
     if form_template.submission_type == 'database'
-      content = File.read(model_path)
-      # Remove the enum block
       content.gsub!(/  enum :status.*?\n  \}/m, '')
-      File.write(model_path, content)
+    elsif form_template.requires_approval? && form_template.routing_steps.any?
+      # Generate multi-step status enum
+      enum_content = generate_multi_step_enum(form_template)
+      content.gsub!(/  enum :status.*?\n  \}/m, enum_content)
     end
-    # If submission type is approval, the enum is already there from the template
+
+    File.write(model_path, content)
+  end
+
+  def generate_multi_step_enum(form_template)
+    steps = form_template.routing_steps.ordered
+    return '' if steps.empty?
+
+    statuses = ["submitted: 0"]
+
+    steps.each_with_index do |step, index|
+      step_num = index + 1
+      statuses << "step_#{step_num}_pending: #{index * 2 + 1}"
+      statuses << "step_#{step_num}_approved: #{index * 2 + 2}" unless step_num == steps.count
+    end
+
+    statuses << "approved: #{steps.count * 2}"
+    statuses << "denied: #{steps.count * 2 + 1}"
+
+    <<~RUBY.chomp
+      enum :status, {
+        #{statuses.join(",\n    ")}
+      }
+    RUBY
   end
 
   def customize_generated_controller(form_template)
@@ -322,9 +355,54 @@ class FormTemplatesController < ApplicationController
   def routing_fields_changed?
     return false unless @form_template
 
-    @form_template.submission_type != params[:form_template][:submission_type] ||
-      @form_template.approval_routing_to != params[:form_template][:approval_routing_to] ||
-      @form_template.approval_employee_id&.to_s != params[:form_template][:approval_employee_id]
+    # Check if submission type changed
+    return true if @form_template.submission_type != params[:form_template][:submission_type]
+
+    # Check if routing steps changed
+    current_steps = @form_template.routing_steps.ordered.map do |step|
+      { routing_type: step.routing_type, employee_id: step.employee_id }
+    end
+
+    new_steps = (params[:routing_steps] || []).map do |step|
+      { routing_type: step[:routing_type], employee_id: step[:employee_id]&.to_i.presence }
+    end.reject { |s| s[:routing_type].blank? }
+
+    current_steps != new_steps
+  end
+
+  def save_routing_steps(form_template)
+    return unless params[:routing_steps].present?
+
+    params[:routing_steps].each do |step_data|
+      next if step_data[:routing_type].blank?
+
+      form_template.routing_steps.create!(
+        step_number: step_data[:step_number].to_i,
+        routing_type: step_data[:routing_type],
+        employee_id: step_data[:employee_id].presence
+      )
+    end
+  end
+
+  def rebuild_routing_steps(form_template)
+    form_template.routing_steps.destroy_all
+
+    return unless params[:routing_steps].present?
+
+    params[:routing_steps].each_with_index do |step_data, index|
+      next if step_data[:routing_type].blank?
+
+      form_template.routing_steps.create!(
+        step_number: index + 1,
+        routing_type: step_data[:routing_type],
+        employee_id: step_data[:employee_id].presence
+      )
+    end
+
+    # Clear legacy routing fields when using routing steps
+    if form_template.routing_steps.any?
+      form_template.update_columns(approval_routing_to: nil, approval_employee_id: nil)
+    end
   end
 
   def rebuild_form_fields
@@ -346,6 +424,12 @@ class FormTemplatesController < ApplicationController
   end
 
   def generate_approval_routing_logic(form_template)
+    # Check if using multi-step routing
+    if form_template.routing_steps.any?
+      return generate_multi_step_routing_logic(form_template)
+    end
+
+    # Legacy single-step routing
     case form_template.approval_routing_to
     when 'supervisor'
       <<~RUBY.chomp
@@ -370,6 +454,32 @@ class FormTemplatesController < ApplicationController
       RUBY
     else
       "redirect_to form_success_path, allow_other_host: false, status: :see_other"
+    end
+  end
+
+  def generate_multi_step_routing_logic(form_template)
+    steps = form_template.routing_steps.ordered
+    first_step = steps.first
+
+    step_description = routing_step_description(first_step)
+
+    <<~RUBY.chomp
+      # Multi-step approval routing (#{steps.count} steps)
+      # Step 1: #{step_description}
+      @#{form_template.file_name}.update(status: :step_1_pending)
+      # TODO: Send notification to #{step_description}
+      redirect_to form_success_path, notice: 'Form submitted and routed to #{step_description} for approval.', allow_other_host: false, status: :see_other
+    RUBY
+  end
+
+  def routing_step_description(step)
+    case step.routing_type
+    when 'supervisor'
+      'supervisor'
+    when 'department_head'
+      'department head'
+    when 'employee'
+      "employee ##{step.employee_id}"
     end
   end
   def generate_dynamic_view(class_name)

@@ -107,42 +107,22 @@
                       } %>
         </div>
 
-        <!-- Approval Routing Options (hidden by default) -->
+        <!-- Approval Routing Steps (hidden by default) -->
         <div class="form-group"
              data-form-builder-target="approvalRoutingContainer"
              style="display: none;">
-          <label for="form_approval_routing">Route to: <span class="required">*</span></label>
-          <%= f.select :approval_routing_to,
-                      options_for_select([
-                        ['Supervisor', 'supervisor'],
-                        ['Department Head', 'department_head'],
-                        ['Employee', 'employee']
-                      ]),
-                      { include_blank: "Select routing option..." },
-                      {
-                        id: "form_approval_routing",
-                        class: "form-control",
-                        data: {
-                          form_builder_target: "approvalRoutingTo",
-                          action: "change->form-builder#toggleEmployeeSelect"
-                        }
-                      } %>
-        </div>
-
-        <!-- Employee Selection (hidden by default) -->
-        <div class="form-group"
-             data-form-builder-target="employeeSelectContainer"
-             style="display: none;">
-          <label for="form_approval_employee">Select Employee: <span class="required">*</span></label>
-          <%= f.select :approval_employee_id,
-                      [],
-                      { include_blank: "Select employee..." },
-                      {
-                        id: "form_approval_employee",
-                        class: "form-control",
-                        data: { form_builder_target: "approvalEmployee" }
-                      } %>
-          <small class="form-text">All employees will be loaded when this option is selected.</small>
+          <label>Routing Steps <span class="required">*</span></label>
+          <small class="form-text" style="display: block; margin-bottom: 10px;">
+            Add one or more routing steps. Forms will be routed through each step in order.
+          </small>
+          <div class="routing-steps-container" data-form-builder-target="routingStepsContainer">
+            <!-- Routing steps will be added here dynamically -->
+          </div>
+          <button type="button"
+                  class="btn btn-secondary btn-sm"
+                  data-action="click->form-builder#addRoutingStep">
+            + Add Routing Step
+          </button>
         </div>
 
         <!-- Step 6: Fields -->
@@ -236,10 +216,47 @@
     <!-- Dropdown Options -->
     <div class="field-options dropdown-options" style="display: none;">
       <label>Values (comma-separated):</label>
-      <input type="text" 
-             name="fields[][dropdown_values]" 
+      <input type="text"
+             name="fields[][dropdown_values]"
              class="form-control form-control-sm"
              placeholder="Option 1, Option 2, Option 3">
+    </div>
+  </div>
+</template>
+
+<!-- Routing Step Template (hidden, used for cloning) -->
+<template id="routing-step-template">
+  <div class="routing-step-item" data-form-builder-target="routingStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #007bff;">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <span class="step-number" style="font-weight: bold; color: #495057; min-width: 60px;">Step 1:</span>
+
+      <div style="flex: 1; min-width: 150px;">
+        <select name="routing_steps[][routing_type]"
+                class="form-control form-control-sm routing-type-select"
+                data-action="change->form-builder#toggleStepEmployeeSelect"
+                required>
+          <option value="">Select...</option>
+          <option value="supervisor">Supervisor</option>
+          <option value="department_head">Department Head</option>
+          <option value="employee">Specific Employee</option>
+        </select>
+      </div>
+
+      <div class="step-employee-select" style="flex: 1; min-width: 200px; display: none;">
+        <select name="routing_steps[][employee_id]"
+                class="form-control form-control-sm step-employee-dropdown">
+          <option value="">Select employee...</option>
+        </select>
+      </div>
+
+      <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="1">
+
+      <button type="button"
+              class="btn btn-danger btn-sm"
+              data-action="click->form-builder#removeRoutingStep"
+              style="padding: 4px 8px;">
+        Remove
+      </button>
     </div>
   </div>
 </template>

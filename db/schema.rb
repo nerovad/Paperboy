@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_13_210056) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_20_221218) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -540,6 +540,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_13_210056) do
     t.index ["form_template_id"], name: "index_form_fields_on_form_template_id"
   end
 
+  create_table "form_template_routing_steps", force: :cascade do |t|
+    t.bigint "form_template_id", null: false
+    t.integer "step_number", null: false
+    t.string "routing_type", null: false
+    t.integer "employee_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["form_template_id", "step_number"], name: "idx_routing_steps_template_step", unique: true
+    t.index ["form_template_id"], name: "index_form_template_routing_steps_on_form_template_id"
+  end
+
   create_table "form_templates", force: :cascade do |t|
     t.string "name", null: false
     t.string "class_name", null: false
@@ -920,6 +931,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_13_210056) do
   add_foreign_key "events", "Employees_Old", column: "employee_id", primary_key: "EmployeeID"
   add_foreign_key "events", "Employees_Old", column: "reported_by_id", primary_key: "EmployeeID"
   add_foreign_key "form_fields", "form_templates"
+  add_foreign_key "form_template_routing_steps", "form_templates"
   add_foreign_key "loa_forms", "events"
   add_foreign_key "osha_301_forms", "events"
   add_foreign_key "parking_lot_vehicles", "parking_lot_submissions"

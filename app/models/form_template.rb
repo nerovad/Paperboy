@@ -2,6 +2,8 @@ class FormTemplate < ApplicationRecord
   attribute :page_headers, :json
 
   has_many :form_fields, dependent: :destroy
+  has_many :routing_steps, -> { order(:step_number) }, class_name: 'FormTemplateRoutingStep', dependent: :destroy
+  accepts_nested_attributes_for :routing_steps, allow_destroy: true, reject_if: :all_blank
 
   validates :name, presence: true
   validates :class_name, presence: true, uniqueness: true
@@ -9,7 +11,7 @@ class FormTemplate < ApplicationRecord
   validates :page_count, numericality: { greater_than_or_equal_to: 2, less_than_or_equal_to: 30 }
   validates :acl_group_id, presence: true, if: :restricted?
   validates :submission_type, inclusion: { in: %w[database approval] }
-  validates :approval_routing_to, presence: true, if: :requires_approval?
+  validates :approval_routing_to, presence: true, if: :requires_legacy_routing?
   validates :approval_employee_id, presence: true, if: :routes_to_specific_employee?
   validates :powerbi_workspace_id, presence: true, if: :has_dashboard?
   validates :powerbi_report_id, presence: true, if: :has_dashboard?
@@ -30,6 +32,18 @@ class FormTemplate < ApplicationRecord
 
   def routes_to_specific_employee?
     requires_approval? && approval_routing_to == 'employee'
+  end
+
+  def requires_legacy_routing?
+    requires_approval? && !has_routing_steps?
+  end
+
+  def has_routing_steps?
+    routing_steps.any?
+  end
+
+  def has_multiple_routing_steps?
+    routing_steps.count > 1
   end
 
   def has_dashboard?
