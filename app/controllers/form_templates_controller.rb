@@ -30,7 +30,10 @@ class FormTemplatesController < ApplicationController
             page_number: field_data[:page_number].to_i,
             position: index,
             required: field_data[:required] == '1',
-            options: build_field_options(field_data)
+            options: build_field_options(field_data),
+            restricted_to_type: field_data[:restricted_to_type].presence || 'none',
+            restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
+            restricted_to_group_id: field_data[:restricted_to_group_id].presence
           )
           field.save
         end
@@ -417,7 +420,10 @@ class FormTemplatesController < ApplicationController
           page_number: field_data[:page_number].to_i,
           position: index,
           required: field_data[:required] == '1',
-          options: build_field_options(field_data)
+          options: build_field_options(field_data),
+          restricted_to_type: field_data[:restricted_to_type].presence || 'none',
+          restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
+          restricted_to_group_id: field_data[:restricted_to_group_id].presence
         )
         field.save
       end
@@ -699,34 +705,74 @@ class FormTemplatesController < ApplicationController
   end
 
   def generate_field_html(field)
-    required_attr = field.required ? ", required: true" : ""
-    
+    # Generate restriction check and attributes
+    if field.restricted?
+      editable_check = generate_editable_check(field)
+      required_logic = field.required ? "required: field_#{field.id}_editable && #{field.required}" : ""
+      disabled_attr = "disabled: !field_#{field.id}_editable"
+      restriction_label = field.restriction_label
+    else
+      editable_check = nil
+      required_logic = field.required ? "required: true" : ""
+      disabled_attr = nil
+      restriction_label = nil
+    end
+
+    # Build attributes hash string
+    attrs = ["class: \"form-control\""]
+    attrs << required_logic if required_logic.present?
+    attrs << disabled_attr if disabled_attr.present?
+    attrs_str = attrs.join(", ")
+
     case field.field_type
     when 'text'
-      <<~HTML
-              <div class="form-group flex-fill">
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
-                <%= form.text_field :#{field.field_name}, class: "form-control"#{required_attr} %>
-              </div>
       HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.text_field :#{field.field_name}, #{attrs_str} %>\n"
+      html += "          </div>\n"
+      html
     when 'text_box'
-      <<~HTML
-              <div class="form-group flex-fill">
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
-                <%= form.text_area :#{field.field_name}, rows: #{field.rows}, class: "form-control"#{required_attr} %>
-              </div>
       HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.text_area :#{field.field_name}, rows: #{field.rows}, #{attrs_str} %>\n"
+      html += "          </div>\n"
+      html
     when 'dropdown'
       options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-      <<~HTML
-              <div class="form-group flex-fill">
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
-                <%= form.select :#{field.field_name},
-                      options_for_select([#{options}]),
-                      { include_blank: "Select..." },
-                      { class: "form-control"#{required_attr} } %>
-              </div>
       HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.select :#{field.field_name},\n"
+      html += "                  options_for_select([#{options}]),\n"
+      html += "                  { include_blank: \"Select...\" },\n"
+      html += "                  { #{attrs_str} } %>\n"
+      html += "          </div>\n"
+      html
+    end
+  end
+
+  def generate_editable_check(field)
+    case field.restricted_to_type
+    when 'employee'
+      "field_#{field.id}_editable = (session.dig(:user, 'employee_id').to_s == '#{field.restricted_to_employee_id}')"
+    when 'group'
+      "field_#{field.id}_editable = @current_user_groups&.include?(#{field.restricted_to_group_id})"
+    else
+      nil
     end
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_20_222605) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_20_224320) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -535,9 +535,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_20_222605) do
     t.boolean "required", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "restricted_to_type", default: "none"
+    t.integer "restricted_to_employee_id"
+    t.integer "restricted_to_group_id"
     t.index ["form_template_id", "page_number"], name: "index_form_fields_on_form_template_id_and_page_number"
     t.index ["form_template_id", "position"], name: "index_form_fields_on_form_template_id_and_position"
     t.index ["form_template_id"], name: "index_form_fields_on_form_template_id"
+    t.index ["restricted_to_type"], name: "index_form_fields_on_restricted_to_type"
   end
 
   create_table "form_template_routing_steps", force: :cascade do |t|

@@ -289,6 +289,12 @@ export default class extends Controller {
     }
 
     this.fieldsContainerTarget.appendChild(clone)
+
+    // Populate restriction dropdowns for the newly added field
+    const addedField = this.fieldsContainerTarget.lastElementChild
+    if (addedField) {
+      this.populateRestrictionDropdowns(addedField)
+    }
   }
 
   // Remove a field
@@ -316,6 +322,63 @@ export default class extends Controller {
       textBoxOptions.style.display = 'block'
     } else if (fieldType === 'dropdown') {
       dropdownOptions.style.display = 'block'
+    }
+  }
+
+  // Toggle field restriction dropdowns based on restriction type
+  toggleFieldRestriction(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const restrictionType = event.target.value
+    const employeeContainer = fieldItem.querySelector('.restriction-employee-select')
+    const groupContainer = fieldItem.querySelector('.restriction-group-select')
+    const employeeSelect = fieldItem.querySelector('.restriction-employee-dropdown')
+    const groupSelect = fieldItem.querySelector('.restriction-group-dropdown')
+
+    // Hide all restriction selects first
+    employeeContainer.style.display = 'none'
+    groupContainer.style.display = 'none'
+
+    // Clear required attributes
+    if (employeeSelect) employeeSelect.required = false
+    if (groupSelect) groupSelect.required = false
+
+    // Show relevant restriction select
+    if (restrictionType === 'employee') {
+      employeeContainer.style.display = 'inline-block'
+      if (employeeSelect) employeeSelect.required = true
+    } else if (restrictionType === 'group') {
+      groupContainer.style.display = 'inline-block'
+      if (groupSelect) groupSelect.required = true
+    }
+  }
+
+  // Populate restriction dropdowns in a field item
+  populateRestrictionDropdowns(fieldItem) {
+    const employeeSelect = fieldItem.querySelector('.restriction-employee-dropdown')
+    const groupSelect = fieldItem.querySelector('.restriction-group-dropdown')
+
+    // Populate employee dropdown
+    if (employeeSelect && this.employeesValue) {
+      // Keep the placeholder option
+      employeeSelect.innerHTML = '<option value="">Select employee...</option>'
+      this.employeesValue.forEach(emp => {
+        const option = document.createElement('option')
+        option.value = emp[1]  // EmployeeID
+        option.textContent = emp[0]  // "First Last (EmployeeID)"
+        employeeSelect.appendChild(option)
+      })
+    }
+
+    // Populate group dropdown
+    if (groupSelect && this.aclGroupsValue) {
+      // Keep the placeholder option
+      groupSelect.innerHTML = '<option value="">Select group...</option>'
+      this.aclGroupsValue.forEach(group => {
+        const option = document.createElement('option')
+        option.value = group[1]  // GroupID
+        option.textContent = group[0]  // Group name
+        groupSelect.appendChild(option)
+      })
     }
   }
 

@@ -12,6 +12,9 @@ class <%= class_name.pluralize %>Controller < ApplicationController
       redirect_to login_path, alert: "Please sign in to start a submission." and return
     end
 
+    # Load user groups for field restrictions
+    @current_user_groups = fetch_user_groups(employee_id)
+
     # --- Organization chain (same pattern you use now) ---
     unit        = Unit.find_by(unit_id: @employee["Unit"])
     department  = unit ? Department.find_by(department_id: unit["department_id"]) : nil
@@ -196,6 +199,20 @@ class <%= class_name.pluralize %>Controller < ApplicationController
     else
       []
     end
+
+    # Load user groups for field restrictions
+    @current_user_groups = fetch_user_groups(employee_id)
+  end
+
+  def fetch_user_groups(employee_id)
+    return [] if employee_id.blank?
+
+    result = ActiveRecord::Base.connection.execute(
+      "SELECT GroupID FROM GSABSS.dbo.Employee_Groups WHERE EmployeeID = #{employee_id}"
+    )
+    result.map { |row| row['GroupID'] }
+  rescue
+    []
   end
 
   def <%= file_name %>_params
