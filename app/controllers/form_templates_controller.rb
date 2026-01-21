@@ -861,6 +861,19 @@ class FormTemplatesController < ApplicationController
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
+    when 'date'
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.datetime_local_field :#{field.field_name}, #{attrs_str} %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
     end
   end
 
