@@ -122,16 +122,12 @@ class <%= class_name.pluralize %>Controller < ApplicationController
   end
 
   def pdf
-    # Generate PDF for this submission
-    respond_to do |format|
-      format.pdf do
-        render pdf: "<%= file_name %>_#{@<%= file_name %>.id}",
-               template: '<%= plural_file_name %>/pdf',
-               layout: 'pdf',
-               disposition: 'inline'
-      end
-      format.html { redirect_to @<%= file_name %> }
-    end
+    pdf_data = <%= class_name %>PdfGenerator.generate(@<%= file_name %>)
+
+    send_data pdf_data,
+              filename: "<%= class_name %>_#{@<%= file_name %>.id}.pdf",
+              type: "application/pdf",
+              disposition: "inline"
   end
 
   def approve

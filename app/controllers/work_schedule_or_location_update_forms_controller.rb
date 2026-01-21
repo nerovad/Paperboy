@@ -66,113 +66,12 @@ class WorkScheduleOrLocationUpdateFormsController < ApplicationController
     @work_schedule_or_location_update_form.employee_id = employee_id if @work_schedule_or_location_update_form.respond_to?(:employee_id=)
 
     if @work_schedule_or_location_update_form.save
-      # Keep success behavior simple for the template; you can extend per form.
       # Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (2 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+      # Step 1: Route to supervisor
+      employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
+      approver_id = employee&.Supervisor_ID&.to_s
+      @work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
+      redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
@@ -227,21 +126,30 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
   end
 
   def pdf
-    # Generate PDF for this submission
-    respond_to do |format|
-      format.pdf do
-        render pdf: "work_schedule_or_location_update_form_#{@work_schedule_or_location_update_form.id}",
-               template: 'work_schedule_or_location_update_forms/pdf',
-               layout: 'pdf',
-               disposition: 'inline'
-      end
-      format.html { redirect_to @work_schedule_or_location_update_form }
-    end
+    pdf_data = WorkScheduleOrLocationUpdatePdfGenerator.generate(@work_schedule_or_location_update_form)
+
+    send_data pdf_data,
+              filename: "WorkScheduleOrLocationUpdate_#{@work_schedule_or_location_update_form.id}.pdf",
+              type: "application/pdf",
+              disposition: "inline"
   end
 
   def approve
-    if @work_schedule_or_location_update_form.respond_to?(:approved!)
-      @work_schedule_or_location_update_form.approved!
+    form = @work_schedule_or_location_update_form
+
+    # Multi-step routing: check current status and route to next step
+    if form.step_1_pending?
+      # Step 1 approved -> route to step 2
+      next_approver_id = determine_approver_for_step(2, form)
+      form.update(status: :step_2_pending, approver_id: next_approver_id)
+      redirect_to inbox_queue_path, notice: 'Step 1 approved. Form routed to next approver.'
+    elsif form.step_2_pending?
+      # Step 2 approved -> final approval
+      form.approved!
+      redirect_to inbox_queue_path, notice: 'Form fully approved.'
+    elsif form.respond_to?(:approved!)
+      # Fallback for single-step approval
+      form.approved!
       redirect_to inbox_queue_path, notice: 'Submission approved.'
     else
       redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
@@ -325,5 +233,30 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
     params.require(:work_schedule_or_location_update_form).permit(
       :name, :phone, :email, :agency, :division, :department, :unit
     )
+  end
+
+  # Determine the approver for a given routing step based on form template configuration
+  def determine_approver_for_step(step_number, form)
+    form_template = FormTemplate.find_by(class_name: 'WorkScheduleOrLocationUpdateForm')
+    return nil unless form_template
+
+    routing_step = form_template.routing_steps.find_by(step_number: step_number)
+    return nil unless routing_step
+
+    case routing_step.routing_type
+    when 'supervisor'
+      # Look up the submitter's supervisor
+      employee = Employee.find_by(EmployeeID: form.employee_id)
+      employee&.Supervisor_ID&.to_s
+    when 'department_head'
+      # Look up the submitter's department head
+      employee = Employee.find_by(EmployeeID: form.employee_id)
+      unit = employee ? Unit.find_by(unit_id: employee["Unit"]) : nil
+      department = unit ? Department.find_by(department_id: unit["department_id"]) : nil
+      department&.department_head_id&.to_s
+    when 'employee'
+      # Route to the specific employee configured in the routing step
+      routing_step.employee_id.to_s
+    end
   end
 end
