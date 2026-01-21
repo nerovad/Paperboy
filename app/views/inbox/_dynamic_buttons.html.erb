@@ -8,7 +8,7 @@
 <% if template.has_inbox_button?('view_pdf') %>
   <% pdf_path = inbox_pdf_path(submission) %>
   <% if pdf_path %>
-    <%= link_to "View PDF", pdf_path, class: "btn pdf", data: { turbo: false } %>
+    <%= link_to "View PDF", pdf_path, class: "btn pdf", target: "_blank", data: { turbo: false } %>
   <% end %>
 <% end %>
 
