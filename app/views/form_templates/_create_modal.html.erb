@@ -152,10 +152,13 @@
         <!-- Step 7: Fields -->
         <div class="form-group">
           <label>7. Fields</label>
+          <small class="form-text" style="display: block; margin-bottom: 10px;">
+            Add custom fields for your form. <strong>Tip:</strong> Drag the &#x2630; handle to reorder fields.
+          </small>
           <div class="fields-container" data-form-builder-target="fieldsContainer">
             <!-- Fields will be added here dynamically -->
           </div>
-          <button type="button" 
+          <button type="button"
                   class="btn btn-secondary btn-sm"
                   data-action="click->form-builder#addField">
             + Add Field
@@ -181,6 +184,11 @@
 <template id="field-template">
   <div class="field-item" data-form-builder-target="fieldItem">
     <div class="field-row">
+      <div class="drag-handle" title="Drag to reorder">
+        <span class="field-position">#1</span>
+        <span class="drag-icon">&#x2630;</span>
+      </div>
+
       <div class="field-input">
         <label>Label</label>
         <input type="text"

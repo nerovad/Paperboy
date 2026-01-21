@@ -1,6 +1,7 @@
 // form_builder_controller.js - Updates needed for improved modal scrolling
 
 import { Controller } from "@hotwired/stimulus"
+import Sortable from "sortablejs"
 
 export default class extends Controller {
   static targets = [
@@ -33,6 +34,36 @@ export default class extends Controller {
     if (template) {
       this.addField()
     }
+
+    // Initialize sortable on fields container
+    this.initializeSortable()
+  }
+
+  // Initialize SortableJS for drag-and-drop field reordering
+  initializeSortable() {
+    if (this.hasFieldsContainerTarget) {
+      this.sortable = new Sortable(this.fieldsContainerTarget, {
+        animation: 150,
+        handle: '.drag-handle',
+        ghostClass: 'field-item-ghost',
+        chosenClass: 'field-item-chosen',
+        dragClass: 'field-item-drag',
+        onEnd: () => {
+          this.updateFieldPositions()
+        }
+      })
+    }
+  }
+
+  // Update visual position indicators after reorder
+  updateFieldPositions() {
+    const fields = this.fieldsContainerTarget.querySelectorAll('.field-item')
+    fields.forEach((field, index) => {
+      const positionLabel = field.querySelector('.field-position')
+      if (positionLabel) {
+        positionLabel.textContent = `#${index + 1}`
+      }
+    })
   }
 
   // Show the modal
@@ -295,6 +326,9 @@ export default class extends Controller {
     if (addedField) {
       this.populateRestrictionDropdowns(addedField)
     }
+
+    // Update position indicators
+    this.updateFieldPositions()
   }
 
   // Remove a field
@@ -303,6 +337,8 @@ export default class extends Controller {
     const fieldItem = event.target.closest('.field-item')
     if (fieldItem) {
       fieldItem.remove()
+      // Update position indicators
+      this.updateFieldPositions()
     }
   }
 
