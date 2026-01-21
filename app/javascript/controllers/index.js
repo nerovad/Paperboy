@@ -14,6 +14,7 @@ import ApproveModalController from "controllers/approve_modal_controller"
 import ReassignModalController from "controllers/reassign_modal_controller"
 import ChoicesController from "controllers/choices_controller"
 import ConditionalFieldController from "controllers/conditional_field_controller"
+import ConditionalFieldsController from "controllers/conditional_fields_controller"
 import GsabssSelectsController from "controllers/gsabss_selects_controller"
 import SidebarSearchController from "controllers/sidebar_search_controller"
 import FormBuilderController from "controllers/form_builder_controller"
@@ -39,6 +40,7 @@ application.register("approve-modal", ApproveModalController)
 application.register("reassign-modal", ReassignModalController)
 application.register("choices", ChoicesController)
 application.register("conditional-field", ConditionalFieldController)
+application.register("conditional-fields", ConditionalFieldsController)
 application.register("gsabss-selects", GsabssSelectsController)
 application.register("sidebar-search", SidebarSearchController)
 application.register("form-builder", FormBuilderController)

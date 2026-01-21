@@ -450,6 +450,9 @@ export default class extends Controller {
     const conditionalSelect = fieldItem.querySelector('.conditional-field-select')
     if (!conditionalSelect) return
 
+    // Preserve current selection to restore after rebuild
+    const currentValue = conditionalSelect.value
+
     // Get all dropdown fields from the form
     const allFields = this.fieldsContainerTarget.querySelectorAll('.field-item')
     const currentFieldIndex = Array.from(allFields).indexOf(fieldItem)
@@ -482,6 +485,14 @@ export default class extends Controller {
         conditionalSelect.appendChild(option)
       }
     })
+
+    // Restore selection if it still exists in the new options
+    if (currentValue) {
+      const matchingOption = conditionalSelect.querySelector(`option[value="${currentValue}"]`)
+      if (matchingOption) {
+        conditionalSelect.value = currentValue
+      }
+    }
   }
 
   // Update conditional values checkboxes when a dropdown is selected
@@ -545,6 +556,39 @@ export default class extends Controller {
     })
   }
 
+  // Validate conditional fields before form submission
+  validateConditionalFields() {
+    let isValid = true
+    const allFields = this.fieldsContainerTarget.querySelectorAll('.field-item')
+
+    allFields.forEach(field => {
+      const conditionalToggle = field.querySelector('.conditional-toggle')
+      if (conditionalToggle && conditionalToggle.checked) {
+        const conditionalSelect = field.querySelector('.conditional-field-select')
+        const checkedValues = field.querySelectorAll('.conditional-values-container input[type="checkbox"]:checked')
+
+        if (!conditionalSelect || !conditionalSelect.value) {
+          if (checkedValues.length > 0) {
+            // Values are checked but no dropdown selected - clear the checkboxes
+            checkedValues.forEach(cb => cb.checked = false)
+          }
+          // Also uncheck the conditional toggle since no dropdown is selected
+          conditionalToggle.checked = false
+          const conditionalConfig = field.querySelector('.conditional-config')
+          if (conditionalConfig) conditionalConfig.style.display = 'none'
+        } else if (checkedValues.length === 0) {
+          // Dropdown selected but no values checked - show warning
+          const labelInput = field.querySelector('input[name="fields[][label]"]')
+          const fieldName = labelInput ? labelInput.value : 'A field'
+          alert(`"${fieldName}" has conditional display enabled but no trigger values selected. Please select at least one value or uncheck "Show conditionally".`)
+          isValid = false
+        }
+      }
+    })
+
+    return isValid
+  }
+
   // Refresh all conditional dropdowns when field types change
   refreshConditionalDropdowns() {
     const allFields = this.fieldsContainerTarget.querySelectorAll('.field-item')
@@ -556,11 +600,47 @@ export default class extends Controller {
     })
   }
 
+  // Called when dropdown values are changed - update any conditional fields that depend on this dropdown
+  handleDropdownValuesChange(event) {
+    // Refresh conditional dropdowns in other fields to pick up the new values
+    this.refreshConditionalDropdowns()
+
+    // Also refresh any conditional value checkboxes that reference this field
+    const changedField = event.target.closest('.field-item')
+    const allFields = this.fieldsContainerTarget.querySelectorAll('.field-item')
+    const changedFieldIndex = Array.from(allFields).indexOf(changedField)
+
+    allFields.forEach(field => {
+      const conditionalSelect = field.querySelector('.conditional-field-select')
+      if (conditionalSelect && conditionalSelect.value === `field_${changedFieldIndex}`) {
+        // This field depends on the changed dropdown - refresh its value checkboxes
+        this.updateConditionalValues({ target: conditionalSelect })
+      }
+    })
+  }
+
+  // Validate form before regular submission (used by edit page)
+  validateBeforeSubmit(event) {
+    console.log("Validating form before submit")
+
+    if (!this.validateConditionalFields()) {
+      event.preventDefault()
+      return false
+    }
+
+    return true
+  }
+
   // Submit form
   submitForm(event) {
     event.preventDefault()
 
     console.log("Form submission started")
+
+    // Validate conditional fields
+    if (!this.validateConditionalFields()) {
+      return
+    }
 
     // Disable submit button to prevent double submission
     this.submitButtonTarget.disabled = true
