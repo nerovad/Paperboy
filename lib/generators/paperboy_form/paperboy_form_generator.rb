@@ -21,11 +21,12 @@ module PaperboyForm
       template "controller.rb.tt", File.join("app/controllers", "#{plural_file_name}_controller.rb")
     end
 
-    # VIEWS (new and show)
+    # VIEWS (new, edit, and show)
     def create_views
       dir = File.join("app/views", plural_file_name)
       empty_directory dir
       template "views/new.html.erb.tt", File.join(dir, "new.html.erb")
+      template "views/edit.html.erb.tt", File.join(dir, "edit.html.erb")
       template "views/show.html.erb.tt", File.join(dir, "show.html.erb")
     end
 
