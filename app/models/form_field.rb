@@ -1,6 +1,7 @@
 class FormField < ApplicationRecord
   # Serialize options as JSON (Rails 7.1+ syntax)
   attribute :options, :json
+  attribute :conditional_values, :json
 
   belongs_to :form_template
 
@@ -25,6 +26,9 @@ class FormField < ApplicationRecord
   scope :ordered, -> { order(:page_number, :position) }
   scope :unrestricted, -> { where(restricted_to_type: ['none', nil]) }
   scope :restricted, -> { where.not(restricted_to_type: ['none', nil]) }
+  scope :dropdowns, -> { where(field_type: 'dropdown') }
+  scope :conditional, -> { where.not(conditional_field_id: nil) }
+  scope :unconditional, -> { where(conditional_field_id: nil) }
   
   def text_field?
     field_type == 'text'
@@ -112,6 +116,41 @@ class FormField < ApplicationRecord
     else
       nil
     end
+  end
+
+  # Conditional field logic
+  def conditional?
+    conditional_field_id.present? && conditional_values.present? && Array(conditional_values).any?
+  end
+
+  def unconditional?
+    !conditional?
+  end
+
+  # Get the field this depends on
+  def conditional_field
+    return nil unless conditional_field_id.present?
+    form_template.form_fields.find_by(id: conditional_field_id)
+  end
+
+  # Get the label of the conditional field for display
+  def conditional_field_label
+    conditional_field&.label
+  end
+
+  # Check if this field should be visible given a dropdown value
+  def visible_for_value?(value)
+    return true if unconditional?
+    conditional_values.include?(value.to_s)
+  end
+
+  # Human-readable conditional description
+  def conditional_label
+    return nil unless conditional?
+    field = conditional_field
+    return nil unless field
+    values = conditional_values.join(', ')
+    "Shows when \"#{field.label}\" is: #{values}"
   end
 
   private

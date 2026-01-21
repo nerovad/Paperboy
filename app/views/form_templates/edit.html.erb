@@ -428,6 +428,56 @@
                       </div>
                     </div>
                   </div>
+
+                  <!-- Conditional Logic Options -->
+                  <div class="field-options conditional-options" style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 4px; border-left: 3px solid #ffc107;">
+                    <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+                      <label style="margin: 0; font-size: 0.85em; color: #495057; padding-top: 5px;">
+                        <input type="checkbox"
+                               class="conditional-toggle"
+                               data-action="change->form-builder#toggleConditionalOptions"
+                               style="margin-right: 5px;"
+                               <%= 'checked' if field.conditional? %>>
+                        Show conditionally
+                      </label>
+
+                      <div class="conditional-config" style="<%= 'display: none;' unless field.conditional? %> flex: 1; min-width: 300px;">
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+                          <span style="font-size: 0.85em; color: #495057;">When</span>
+                          <select class="form-control form-control-sm conditional-field-select"
+                                  name="fields[][conditional_field_id]"
+                                  data-action="change->form-builder#updateConditionalValues"
+                                  style="width: auto; min-width: 150px;">
+                            <option value="">Select dropdown...</option>
+                            <% @form_template.form_fields.dropdowns.each do |dropdown| %>
+                              <% next if dropdown.id == field.id %>
+                              <option value="<%= dropdown.id %>"
+                                      data-values="<%= dropdown.dropdown_values.to_json %>"
+                                      <%= 'selected' if field.conditional_field_id == dropdown.id %>>
+                                <%= dropdown.label %>
+                              </option>
+                            <% end %>
+                          </select>
+                          <span style="font-size: 0.85em; color: #495057;">equals:</span>
+                        </div>
+                        <div class="conditional-values-container" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                          <% if field.conditional? && field.conditional_field %>
+                            <% field.conditional_field.dropdown_values.each do |value| %>
+                              <label style="font-size: 0.8em; display: flex; align-items: center; gap: 4px; background: #fff; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd;">
+                                <input type="checkbox"
+                                       name="fields[][conditional_values][]"
+                                       value="<%= value %>"
+                                       <%= 'checked' if field.conditional_values&.include?(value) %>>
+                                <%= value %>
+                              </label>
+                            <% end %>
+                          <% else %>
+                            <span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a dropdown field first</span>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               <% end %>
             <% end %>
@@ -569,6 +619,35 @@
               <option value="<%= group[1] %>"><%= group[0] %></option>
             <% end %>
           </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conditional Logic Options -->
+    <div class="field-options conditional-options" style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 4px; border-left: 3px solid #ffc107;">
+      <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+        <label style="margin: 0; font-size: 0.85em; color: #495057; padding-top: 5px;">
+          <input type="checkbox"
+                 class="conditional-toggle"
+                 data-action="change->form-builder#toggleConditionalOptions"
+                 style="margin-right: 5px;">
+          Show conditionally
+        </label>
+
+        <div class="conditional-config" style="display: none; flex: 1; min-width: 300px;">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+            <span style="font-size: 0.85em; color: #495057;">When</span>
+            <select class="form-control form-control-sm conditional-field-select"
+                    name="fields[][conditional_field_id]"
+                    data-action="change->form-builder#updateConditionalValues"
+                    style="width: auto; min-width: 150px;">
+              <option value="">Select dropdown...</option>
+            </select>
+            <span style="font-size: 0.85em; color: #495057;">equals:</span>
+          </div>
+          <div class="conditional-values-container" style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a dropdown field first</span>
+          </div>
         </div>
       </div>
     </div>

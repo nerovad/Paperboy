@@ -1,6 +1,14 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  resources :work_schedule_or_location_update_forms do
+    member do
+      get :pdf
+      patch :approve
+      patch :deny
+      patch :update_status
+    end
+  end
   resources :social_media_forms
   resources :gym_locker_forms
   resources :carpool_forms

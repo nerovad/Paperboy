@@ -2,6 +2,9 @@ class FormTemplate < ApplicationRecord
   attribute :page_headers, :json
   attribute :inbox_buttons, :json, default: []
 
+  # Virtual attribute to track routing steps being submitted (before they're saved)
+  attr_accessor :pending_routing_steps
+
   # Available inbox button types
   INBOX_BUTTON_TYPES = {
     'view_pdf' => { label: 'View PDF', description: 'Download or view the form as PDF' },
@@ -51,7 +54,7 @@ class FormTemplate < ApplicationRecord
   end
 
   def has_routing_steps?
-    routing_steps.any?
+    routing_steps.any? || pending_routing_steps.present?
   end
 
   def has_multiple_routing_steps?

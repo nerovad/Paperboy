@@ -17,14 +17,21 @@ class FormTemplatesController < ApplicationController
     @form_template = FormTemplate.new(form_template_params)
     @form_template.created_by = session.dig(:user, "employee_id")
 
+    # Set pending routing steps to pass validation (they'll be saved after the form_template)
+    @form_template.pending_routing_steps = params[:routing_steps] if params[:routing_steps].present?
+
     if @form_template.save
       # Save routing steps
       save_routing_steps(@form_template)
 
-      # Save fields
+      # Save fields (two-pass: create first, then link conditionals)
       if params[:fields].present?
+        # First pass: create all fields, store conditional references
+        created_fields = []
+        conditional_refs = []
+
         params[:fields].each_with_index do |field_data, index|
-          field = @form_template.form_fields.build(
+          field = @form_template.form_fields.create!(
             label: field_data[:label],
             field_type: field_data[:field_type],
             page_number: field_data[:page_number].to_i,
@@ -35,7 +42,35 @@ class FormTemplatesController < ApplicationController
             restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
             restricted_to_group_id: field_data[:restricted_to_group_id].presence
           )
-          field.save
+          created_fields << field
+
+          # Store conditional reference if present (format: "field_N" where N is index)
+          if field_data[:conditional_field_id].present? && field_data[:conditional_values].present?
+            conditional_refs << {
+              field: field,
+              ref: field_data[:conditional_field_id],
+              values: Array(field_data[:conditional_values]).reject(&:blank?)
+            }
+          end
+        end
+
+        # Second pass: resolve conditional field references to actual IDs
+        conditional_refs.each do |ref_data|
+          if ref_data[:ref] =~ /^field_(\d+)$/
+            ref_index = $1.to_i
+            if created_fields[ref_index]
+              ref_data[:field].update!(
+                conditional_field_id: created_fields[ref_index].id,
+                conditional_values: ref_data[:values]
+              )
+            end
+          elsif ref_data[:ref].to_i > 0
+            # Direct ID reference (for edit page)
+            ref_data[:field].update!(
+              conditional_field_id: ref_data[:ref].to_i,
+              conditional_values: ref_data[:values]
+            )
+          end
         end
       end
       
@@ -413,8 +448,12 @@ class FormTemplatesController < ApplicationController
     @form_template.form_fields.destroy_all
 
     if params[:fields].present?
+      # First pass: create all fields, store conditional references
+      created_fields = []
+      conditional_refs = []
+
       params[:fields].each_with_index do |field_data, index|
-        field = @form_template.form_fields.build(
+        field = @form_template.form_fields.create!(
           label: field_data[:label],
           field_type: field_data[:field_type],
           page_number: field_data[:page_number].to_i,
@@ -425,7 +464,35 @@ class FormTemplatesController < ApplicationController
           restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
           restricted_to_group_id: field_data[:restricted_to_group_id].presence
         )
-        field.save
+        created_fields << field
+
+        # Store conditional reference if present
+        if field_data[:conditional_field_id].present? && field_data[:conditional_values].present?
+          conditional_refs << {
+            field: field,
+            ref: field_data[:conditional_field_id],
+            values: Array(field_data[:conditional_values]).reject(&:blank?)
+          }
+        end
+      end
+
+      # Second pass: resolve conditional field references to actual IDs
+      conditional_refs.each do |ref_data|
+        if ref_data[:ref] =~ /^field_(\d+)$/
+          ref_index = $1.to_i
+          if created_fields[ref_index]
+            ref_data[:field].update!(
+              conditional_field_id: created_fields[ref_index].id,
+              conditional_values: ref_data[:values]
+            )
+          end
+        elsif ref_data[:ref].to_i > 0
+          # Direct ID reference (for edit page with existing fields)
+          ref_data[:field].update!(
+            conditional_field_id: ref_data[:ref].to_i,
+            conditional_values: ref_data[:values]
+          )
+        end
       end
     end
   end
@@ -594,8 +661,73 @@ class FormTemplatesController < ApplicationController
         <% end %>
       </div>
     HTML
-    
+
+    # Add conditional field JavaScript if there are conditional fields
+    if form_template.form_fields.conditional.any?
+      content += generate_conditional_fields_javascript(form_template)
+    end
+
     File.write(view_path, content)
+  end
+
+  def generate_conditional_fields_javascript(form_template)
+    <<~HTML
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          // Handle conditional field visibility
+          function updateConditionalFields(triggerField) {
+            const triggerName = triggerField.name.replace(/.*\\[(.*)\\]/, '$1');
+            const triggerValue = triggerField.value;
+
+            // Find all conditional fields that depend on this trigger
+            document.querySelectorAll('.conditional-field[data-depends-on="' + triggerName + '"]').forEach(function(conditionalEl) {
+              const showValues = JSON.parse(conditionalEl.dataset.showValues.replace(/&quot;/g, '"'));
+
+              if (showValues.includes(triggerValue)) {
+                conditionalEl.style.display = 'block';
+                // Enable required validation for inputs inside
+                conditionalEl.querySelectorAll('[data-was-required]').forEach(function(input) {
+                  input.required = true;
+                });
+              } else {
+                conditionalEl.style.display = 'none';
+                // Disable required validation and clear values
+                conditionalEl.querySelectorAll('input, select, textarea').forEach(function(input) {
+                  if (input.required) {
+                    input.dataset.wasRequired = 'true';
+                    input.required = false;
+                  }
+                });
+              }
+            });
+          }
+
+          // Initialize: set up change listeners on trigger dropdowns
+          document.querySelectorAll('select[data-conditional-trigger]').forEach(function(select) {
+            select.addEventListener('change', function() {
+              updateConditionalFields(this);
+            });
+            // Trigger initial check
+            updateConditionalFields(select);
+          });
+
+          // Also check for dropdowns that might be triggers but don't have the data attribute
+          // (handles cases where the field name matches)
+          document.querySelectorAll('.conditional-field').forEach(function(conditionalEl) {
+            const dependsOn = conditionalEl.dataset.dependsOn;
+            const triggerSelect = document.querySelector('select[name$="[' + dependsOn + ']"]');
+            if (triggerSelect && !triggerSelect.hasAttribute('data-conditional-trigger')) {
+              triggerSelect.addEventListener('change', function() {
+                updateConditionalFields(this);
+              });
+              // Trigger initial check
+              updateConditionalFields(triggerSelect);
+            }
+          });
+        });
+      </script>
+    HTML
   end
 
   def generate_employee_info_fields
@@ -718,16 +850,35 @@ class FormTemplatesController < ApplicationController
       restriction_label = nil
     end
 
+    # Generate conditional attributes
+    conditional_wrapper_start = ""
+    conditional_wrapper_end = ""
+    if field.conditional?
+      conditional_field = field.conditional_field
+      if conditional_field
+        values_json = field.conditional_values.to_json.gsub('"', '&quot;')
+        conditional_wrapper_start = "          <div class=\"conditional-field\" data-depends-on=\"#{conditional_field.field_name}\" data-show-values=\"#{values_json}\" style=\"display: none;\">\n"
+        conditional_wrapper_end = "          </div>\n"
+        # For conditional fields, don't require them initially (JS will handle validation)
+        required_logic = "" if field.required
+      end
+    end
+
     # Build attributes hash string
     attrs = ["class: \"form-control\""]
     attrs << required_logic if required_logic.present?
     attrs << disabled_attr if disabled_attr.present?
+    # Add data attribute for dropdowns that have conditional dependencies
+    if field.dropdown? && has_conditional_dependents?(field)
+      attrs << "data: { conditional_trigger: '#{field.field_name}' }"
+    end
     attrs_str = attrs.join(", ")
 
     case field.field_type
     when 'text'
       html = ""
       html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
       html += <<~HTML
               <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
@@ -735,10 +886,12 @@ class FormTemplatesController < ApplicationController
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.text_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
+      html += conditional_wrapper_end
       html
     when 'text_box'
       html = ""
       html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
       html += <<~HTML
               <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
@@ -746,11 +899,13 @@ class FormTemplatesController < ApplicationController
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.text_area :#{field.field_name}, rows: #{field.rows}, #{attrs_str} %>\n"
       html += "          </div>\n"
+      html += conditional_wrapper_end
       html
     when 'dropdown'
       options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
       html = ""
       html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
       html += <<~HTML
               <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
@@ -761,8 +916,13 @@ class FormTemplatesController < ApplicationController
       html += "                  { include_blank: \"Select...\" },\n"
       html += "                  { #{attrs_str} } %>\n"
       html += "          </div>\n"
+      html += conditional_wrapper_end
       html
     end
+  end
+
+  def has_conditional_dependents?(field)
+    field.form_template.form_fields.any? { |f| f.conditional_field_id == field.id }
   end
 
   def generate_editable_check(field)

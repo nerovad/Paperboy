@@ -359,6 +359,9 @@ export default class extends Controller {
     } else if (fieldType === 'dropdown') {
       dropdownOptions.style.display = 'block'
     }
+
+    // Refresh conditional dropdowns in other fields (they may now see this as a dropdown option)
+    this.refreshConditionalDropdowns()
   }
 
   // Toggle field restriction dropdowns based on restriction type
@@ -416,6 +419,141 @@ export default class extends Controller {
         groupSelect.appendChild(option)
       })
     }
+  }
+
+  // Toggle conditional options visibility
+  toggleConditionalOptions(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const conditionalConfig = fieldItem.querySelector('.conditional-config')
+    const isChecked = event.target.checked
+
+    if (conditionalConfig) {
+      conditionalConfig.style.display = isChecked ? 'block' : 'none'
+
+      // If enabling, update the dropdown options
+      if (isChecked) {
+        this.updateConditionalFieldDropdown(fieldItem)
+      } else {
+        // Clear conditional field selection when unchecked
+        const conditionalSelect = fieldItem.querySelector('.conditional-field-select')
+        if (conditionalSelect) conditionalSelect.value = ''
+        const valuesContainer = fieldItem.querySelector('.conditional-values-container')
+        if (valuesContainer) {
+          valuesContainer.innerHTML = '<span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a dropdown field first</span>'
+        }
+      }
+    }
+  }
+
+  // Update the conditional field dropdown with available dropdown fields
+  updateConditionalFieldDropdown(fieldItem) {
+    const conditionalSelect = fieldItem.querySelector('.conditional-field-select')
+    if (!conditionalSelect) return
+
+    // Get all dropdown fields from the form
+    const allFields = this.fieldsContainerTarget.querySelectorAll('.field-item')
+    const currentFieldIndex = Array.from(allFields).indexOf(fieldItem)
+
+    // Clear and rebuild options
+    conditionalSelect.innerHTML = '<option value="">Select dropdown...</option>'
+
+    allFields.forEach((field, index) => {
+      // Skip the current field
+      if (index === currentFieldIndex) return
+
+      const typeSelect = field.querySelector('select[name="fields[][field_type]"]')
+      const labelInput = field.querySelector('input[name="fields[][label]"]')
+      const dropdownValuesInput = field.querySelector('input[name="fields[][dropdown_values]"]')
+
+      // Only include dropdown fields
+      if (typeSelect && typeSelect.value === 'dropdown' && labelInput) {
+        const option = document.createElement('option')
+        option.value = `field_${index}` // Use index as identifier
+        option.textContent = labelInput.value || `Field ${index + 1}`
+        option.dataset.fieldIndex = index
+
+        // Store dropdown values if available
+        if (dropdownValuesInput && dropdownValuesInput.value) {
+          option.dataset.values = JSON.stringify(
+            dropdownValuesInput.value.split(',').map(v => v.trim()).filter(v => v)
+          )
+        }
+
+        conditionalSelect.appendChild(option)
+      }
+    })
+  }
+
+  // Update conditional values checkboxes when a dropdown is selected
+  updateConditionalValues(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const valuesContainer = fieldItem.querySelector('.conditional-values-container')
+    const selectedOption = event.target.selectedOptions[0]
+
+    if (!valuesContainer) return
+
+    // Clear existing checkboxes
+    valuesContainer.innerHTML = ''
+
+    if (!selectedOption || !selectedOption.value) {
+      valuesContainer.innerHTML = '<span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a dropdown field first</span>'
+      return
+    }
+
+    // Get values from the selected dropdown field
+    let values = []
+
+    // Check if values are stored in data attribute
+    if (selectedOption.dataset.values) {
+      try {
+        values = JSON.parse(selectedOption.dataset.values)
+      } catch (e) {
+        console.error('Error parsing dropdown values:', e)
+      }
+    }
+
+    // If using field index, get values from the actual field
+    if (selectedOption.dataset.fieldIndex !== undefined) {
+      const allFields = this.fieldsContainerTarget.querySelectorAll('.field-item')
+      const targetField = allFields[parseInt(selectedOption.dataset.fieldIndex)]
+      if (targetField) {
+        const dropdownValuesInput = targetField.querySelector('input[name="fields[][dropdown_values]"]')
+        if (dropdownValuesInput && dropdownValuesInput.value) {
+          values = dropdownValuesInput.value.split(',').map(v => v.trim()).filter(v => v)
+        }
+      }
+    }
+
+    if (values.length === 0) {
+      valuesContainer.innerHTML = '<span style="font-size: 0.8em; color: #6c757d; font-style: italic;">No values defined for this dropdown</span>'
+      return
+    }
+
+    // Create checkboxes for each value
+    values.forEach(value => {
+      const label = document.createElement('label')
+      label.style.cssText = 'font-size: 0.8em; display: flex; align-items: center; gap: 4px; background: #fff; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd;'
+
+      const checkbox = document.createElement('input')
+      checkbox.type = 'checkbox'
+      checkbox.name = 'fields[][conditional_values][]'
+      checkbox.value = value
+
+      label.appendChild(checkbox)
+      label.appendChild(document.createTextNode(value))
+      valuesContainer.appendChild(label)
+    })
+  }
+
+  // Refresh all conditional dropdowns when field types change
+  refreshConditionalDropdowns() {
+    const allFields = this.fieldsContainerTarget.querySelectorAll('.field-item')
+    allFields.forEach(field => {
+      const conditionalToggle = field.querySelector('.conditional-toggle')
+      if (conditionalToggle && conditionalToggle.checked) {
+        this.updateConditionalFieldDropdown(field)
+      }
+    })
   }
 
   // Submit form

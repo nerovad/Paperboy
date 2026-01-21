@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_20_224320) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_21_180558) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -538,6 +538,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_20_224320) do
     t.string "restricted_to_type", default: "none"
     t.integer "restricted_to_employee_id"
     t.integer "restricted_to_group_id"
+    t.integer "conditional_field_id"
+    t.text "conditional_values"
+    t.index ["conditional_field_id"], name: "index_form_fields_on_conditional_field_id"
     t.index ["form_template_id", "page_number"], name: "index_form_fields_on_form_template_id_and_page_number"
     t.index ["form_template_id", "position"], name: "index_form_fields_on_form_template_id_and_position"
     t.index ["form_template_id"], name: "index_form_fields_on_form_template_id"
@@ -925,6 +928,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_20_224320) do
     t.string "unit_id", limit: 4, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "work_schedule_or_location_update_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.integer "status", default: 0
+    t.string "approver_id"
+    t.text "deny_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["approver_id"], name: "index_work_schedule_or_location_update_forms_on_approver_id"
+    t.index ["employee_id"], name: "index_work_schedule_or_location_update_forms_on_employee_id"
   end
 
   add_foreign_key "BdmRates", "BdmRateTypes", column: "RateID", primary_key: "RateID", name: "FK_BdmRates_RateID"
