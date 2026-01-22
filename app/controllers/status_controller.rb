@@ -5,12 +5,11 @@ class StatusController < ApplicationController
   def index
     employee_id = session.dig(:user, "employee_id").to_s
     @is_manager = current_user&.in_group?("Status Managers")
-    @view_mode = @is_manager && params[:view_mode] == "team" ? "team" : "personal"
 
     @status_items = []
 
-    if @view_mode == "team"
-      # Team view - all submissions
+    if @is_manager
+      # Managers see all submissions
       @status_items += ParkingLotSubmission.includes(:status_changes).map do |f|
         build_status_item(f, "Parking Lot", parking_lot_submission_path(f))
       end
@@ -22,8 +21,11 @@ class StatusController < ApplicationController
       @status_items += CriticalInformationReporting.includes(:status_changes).map do |f|
         build_status_item(f, "Critical Information Report", edit_critical_information_reporting_path(f))
       end
+
+      # Load employees from GSABSS for filter dropdowns
+      @employees = Employee.order(:Last_Name, :First_Name)
     else
-      # Personal view - user's own submissions only
+      # Regular users see only their own submissions
       @status_items += ParkingLotSubmission.for_employee(employee_id).includes(:status_changes).map do |f|
         build_status_item(f, "Parking Lot", parking_lot_submission_path(f))
       end
@@ -75,12 +77,6 @@ class StatusController < ApplicationController
       types: ->(item) { item[:type] },
       statuses: ->(item) { item[:status].to_s.tr('_', ' ').titleize }
     }
-
-    if @view_mode == "team"
-      mappings[:employee_names] = ->(item) { item[:employee_name] }
-      mappings[:employee_ids] = ->(item) { item[:employee_id] }
-    end
-
     mappings
   end
 
@@ -90,7 +86,7 @@ class StatusController < ApplicationController
       { param: :filter_status, extractor: ->(item) { item[:status].to_s.tr('_', ' ').titleize } }
     ]
 
-    if @view_mode == "team"
+    if @is_manager
       configs << { param: :filter_employee_name, extractor: ->(item) { item[:employee_name] } }
       configs << { param: :filter_employee_id, extractor: ->(item) { item[:employee_id] } }
     end
@@ -114,7 +110,7 @@ class StatusController < ApplicationController
       'updated_at' => ->(item) { item[:updated_at].to_s }
     }
 
-    if @view_mode == "team"
+    if @is_manager
       configs['employee_name'] = ->(item) { item[:employee_name].to_s }
       configs['employee_id'] = ->(item) { item[:employee_id].to_s }
     end
