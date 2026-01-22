@@ -1,6 +1,7 @@
 class ProbationTransferRequest < ApplicationRecord
   include PhoneNumberable
   include Reassignable
+  include TrackableStatus
 
   # === Lookups (stored columns are codes/IDs: agency, division, department, unit)
   belongs_to :agency_record,

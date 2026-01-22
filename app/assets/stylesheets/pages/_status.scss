@@ -1,5 +1,39 @@
 @import "base/tokens";
 
+/* View Toggle for Manager/Personal view */
+.view-toggle-wrapper {
+  margin-bottom: 20px;
+}
+
+.view-toggle {
+  display: inline-flex;
+  background: $border-color;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+
+  .toggle-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    color: $text-color;
+    background: transparent;
+    transition: all 150ms ease;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    &.active {
+      background: $primary-color;
+      color: #fff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+  }
+}
+
 /* Only the Status page wrapper should lose padding & scroll */
 .status-wrapper {
   max-height: calc(100vh - 180px);
@@ -82,6 +116,160 @@
 .readonly-form dt { font-weight: 600; color: $label-color; }
 .readonly-form dd { margin: 0; color: $text-color; }
 
+/* Employee columns for team view */
+.status-table td.col-employee-name,
+.status-table td.col-employee-id {
+  width: 140px;
+}
+
+/* Timeline toggle button */
+.timeline-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  margin-left: 8px;
+  background: transparent;
+  border: 1px solid $border-color;
+  border-radius: 4px;
+  cursor: pointer;
+  color: $muted;
+  transition: all 150ms ease;
+  vertical-align: middle;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: $text-color;
+  }
+
+  &.active {
+    background: $primary-color;
+    border-color: $primary-color;
+    color: #fff;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Timeline row */
+.timeline-row {
+  background: #f9fafb;
+
+  td {
+    padding: 0 !important;
+    border-bottom: 1px solid $border-color;
+  }
+}
+
+/* Status Timeline */
+.status-timeline {
+  padding: 16px 20px;
+  max-width: 600px;
+
+  .timeline-header {
+    font-weight: 600;
+    font-size: 14px;
+    color: $text-color;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid $border-color;
+  }
+
+  .timeline-items {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .timeline-item {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+
+    &.latest .timeline-dot {
+      background: $primary-color;
+      border-color: $primary-color;
+    }
+  }
+
+  .timeline-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 20px;
+    flex-shrink: 0;
+  }
+
+  .timeline-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid $border-color;
+    flex-shrink: 0;
+  }
+
+  .timeline-line {
+    width: 2px;
+    flex: 1;
+    background: $border-color;
+    margin-top: 4px;
+  }
+
+  .timeline-content {
+    flex: 1;
+    padding-bottom: 8px;
+  }
+
+  .timeline-status-change {
+    font-size: 14px;
+    font-weight: 500;
+    color: $text-color;
+    margin-bottom: 4px;
+
+    .from-status {
+      color: $muted;
+    }
+
+    .arrow {
+      color: $muted;
+      margin: 0 6px;
+    }
+
+    .to-status {
+      color: $primary-color;
+    }
+  }
+
+  .timeline-meta {
+    font-size: 12px;
+    color: $muted;
+
+    .timeline-date {
+      margin-right: 8px;
+    }
+
+    .timeline-by {
+      font-style: italic;
+    }
+
+    .timeline-by-id {
+      color: darken($muted, 10%);
+    }
+  }
+
+  .timeline-notes {
+    margin-top: 4px;
+    font-size: 13px;
+    color: $text-color;
+    background: rgba(0, 0, 0, 0.03);
+    padding: 6px 10px;
+    border-radius: 4px;
+  }
+}
+
 /* Mobile */
 @media (max-width: 900px) {
   .status-table thead { display: none; }
@@ -91,4 +279,21 @@
   .status-table tr { border-bottom: 1px solid $border-color; }
   .status-table td { border: none; padding: 10px 14px; }
   .status-table td.col-actions { text-align: left; padding-top: 0; }
+
+  .view-toggle {
+    width: 100%;
+
+    .toggle-btn {
+      flex: 1;
+      text-align: center;
+    }
+  }
+
+  .timeline-row td {
+    padding: 0 10px !important;
+  }
+
+  .status-timeline {
+    padding: 12px;
+  }
 }

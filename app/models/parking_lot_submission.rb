@@ -1,6 +1,7 @@
 class ParkingLotSubmission < ApplicationRecord
   include PhoneNumberable
   include Reassignable
+  include TrackableStatus
   # Stored columns on this model for org hierarchy are *codes/IDs*:
   #   agency, division, department, unit
   # === Associations to lookup tables (resolve codes -> LongName) ===

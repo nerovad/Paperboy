@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_21_180558) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_22_163212) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -871,6 +871,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_21_180558) do
     t.integer "status", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "status_changes", force: :cascade do |t|
+    t.string "trackable_type", null: false
+    t.bigint "trackable_id", null: false
+    t.string "from_status"
+    t.string "to_status", null: false
+    t.string "changed_by_id"
+    t.string "changed_by_name"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["changed_by_id"], name: "index_status_changes_on_changed_by_id"
+    t.index ["trackable_type", "trackable_id"], name: "index_status_changes_on_trackable_type_and_trackable_id"
   end
 
   create_table "sub_objects", primary_key: ["agency_id", "object_id", "sub_object_id"], force: :cascade do |t|

@@ -3,6 +3,7 @@
 class CriticalInformationReporting < ApplicationRecord
   # Include reassignment functionality
   include Reassignable
+  include TrackableStatus
 
   # ActiveStorage attachment for media files
   has_one_attached :media

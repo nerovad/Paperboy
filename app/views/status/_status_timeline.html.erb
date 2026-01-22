@@ -1,0 +1,37 @@
+<%# app/views/status/_status_timeline.html.erb %>
+<div class="status-timeline" id="timeline-content-<%= item_id %>">
+  <div class="timeline-header">Status History</div>
+  <div class="timeline-items">
+    <% status_changes.each_with_index do |change, index| %>
+      <div class="timeline-item <%= index == status_changes.length - 1 ? 'latest' : '' %>">
+        <div class="timeline-marker">
+          <div class="timeline-dot"></div>
+          <% if index < status_changes.length - 1 %>
+            <div class="timeline-line"></div>
+          <% end %>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-status-change">
+            <% if change.from_status.present? %>
+              <span class="from-status"><%= change.from_status %></span>
+              <span class="arrow">&rarr;</span>
+            <% end %>
+            <span class="to-status"><%= change.to_status %></span>
+          </div>
+          <div class="timeline-meta">
+            <span class="timeline-date"><%= l(change.created_at, format: :long) %></span>
+            <% if change.changed_by_name.present? %>
+              <span class="timeline-by">by <%= change.changed_by_name %></span>
+              <% if change.changed_by_id.present? %>
+                <span class="timeline-by-id">(ID: <%= change.changed_by_id %>)</span>
+              <% end %>
+            <% end %>
+          </div>
+          <% if change.notes.present? %>
+            <div class="timeline-notes"><%= change.notes %></div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
