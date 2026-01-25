@@ -43,9 +43,6 @@
     border-bottom: 1px solid $border-color;
     font-size: 14px;
     vertical-align: middle;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   tbody tr { transition: background 120ms ease; }
@@ -54,7 +51,7 @@
   /* columns */
   td.col-type    { width: 160px; }
   td.col-title   { width: auto; }
-  td.col-status  { width: 170px; }
+  td.col-status  { width: 200px; }
   td.col-updated { width: 160px; }
   td.col-actions { width: 110px; text-align: right; }
 }
@@ -83,9 +80,12 @@
 .readonly-form dd { margin: 0; color: $text-color; }
 
 /* Employee columns for team view */
-.status-table td.col-employee-name,
-.status-table td.col-employee-id {
+.status-table td.col-employee-name {
   width: 140px;
+}
+
+.status-table td.col-employee-id {
+  width: 100px;
 }
 
 /* Timeline toggle button */
