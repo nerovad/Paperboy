@@ -24,6 +24,10 @@ class StatusController < ApplicationController
 
       # Load employees from GSABSS for filter dropdowns
       @employees = Employee.order(:Last_Name, :First_Name)
+
+      # Current user info for "Myself" filter option
+      @current_user_name = "#{session.dig(:user, 'first_name')} #{session.dig(:user, 'last_name')}"
+      @current_user_id = employee_id
     else
       # Regular users see only their own submissions
       @status_items += ParkingLotSubmission.for_employee(employee_id).includes(:status_changes).map do |f|
