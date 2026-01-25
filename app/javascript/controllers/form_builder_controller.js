@@ -19,12 +19,17 @@ export default class extends Controller {
     "submissionType",
     "approvalRoutingContainer",
     "routingStepsContainer",
-    "routingStepItem"
+    "routingStepItem",
+    "statusesContainer",
+    "statusItem",
+    "predefinedStatusesList"
   ]
 
   static values = {
     aclGroups: Array,
-    employees: Array
+    employees: Array,
+    predefinedStatuses: Array,
+    validCategories: Array
   }
 
   connect() {
@@ -99,6 +104,11 @@ export default class extends Controller {
       this.aclGroupContainerTarget.style.display = 'none'
       this.approvalRoutingContainerTarget.style.display = 'none'
       this.routingStepsContainerTarget.innerHTML = ''
+      if (this.hasStatusesContainerTarget) {
+        this.statusesContainerTarget.innerHTML = ''
+      }
+      // Close status picker if open
+      this.closeStatusPicker()
     }
   }
 
@@ -222,6 +232,199 @@ export default class extends Controller {
       employeeSelect.value = ''
     }
   }
+
+  // ============================================
+  // STATUS CONFIGURATION METHODS
+  // ============================================
+
+  // Show the status picker modal
+  showStatusPicker(event) {
+    if (event) event.preventDefault()
+
+    const modal = document.getElementById('status-picker-modal')
+    const listContainer = this.predefinedStatusesListTarget
+
+    if (!modal || !listContainer) return
+
+    // Get currently added status keys
+    const addedKeys = this.getAddedStatusKeys()
+
+    // Populate predefined statuses list
+    listContainer.innerHTML = ''
+
+    this.predefinedStatusesValue.forEach(status => {
+      const isAdded = addedKeys.includes(status.key)
+      const item = document.createElement('div')
+      item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee;'
+      item.innerHTML = `
+        <div>
+          <strong>${status.name}</strong>
+          <span class="badge ${this.getCategoryBadgeClass(status.category)}" style="margin-left: 8px;">${this.getCategoryLabel(status.category)}</span>
+          ${status.is_initial ? '<small style="color: #6c757d; margin-left: 8px;">(Initial)</small>' : ''}
+          ${status.is_terminal ? '<small style="color: #6c757d; margin-left: 8px;">(Terminal)</small>' : ''}
+        </div>
+        <button type="button"
+                class="btn btn-sm ${isAdded ? 'btn-secondary' : 'btn-primary'}"
+                data-status-key="${status.key}"
+                ${isAdded ? 'disabled' : ''}
+                data-action="click->form-builder#addPredefinedStatus">
+          ${isAdded ? 'Added' : 'Add'}
+        </button>
+      `
+      listContainer.appendChild(item)
+    })
+
+    modal.style.display = 'flex'
+  }
+
+  // Close the status picker modal
+  closeStatusPicker(event) {
+    if (event) event.preventDefault()
+    const modal = document.getElementById('status-picker-modal')
+    if (modal) {
+      modal.style.display = 'none'
+    }
+  }
+
+  // Get array of currently added status keys
+  getAddedStatusKeys() {
+    const keys = []
+    this.statusItemTargets.forEach(item => {
+      const keyInput = item.querySelector('.status-key-input')
+      if (keyInput && keyInput.value) {
+        keys.push(keyInput.value)
+      }
+    })
+    return keys
+  }
+
+  // Add a predefined status
+  addPredefinedStatus(event) {
+    if (event) event.preventDefault()
+
+    const statusKey = event.target.dataset.statusKey
+    const statusData = this.predefinedStatusesValue.find(s => s.key === statusKey)
+
+    if (!statusData) return
+
+    const template = document.getElementById('status-item-template')
+    if (!template) return
+
+    const clone = template.content.cloneNode(true)
+    const item = clone.querySelector('.status-item')
+
+    // Set values
+    item.querySelector('.status-name-text').textContent = statusData.name
+    item.querySelector('.status-name-input').value = statusData.name
+    item.querySelector('.status-key-input').value = statusData.key
+    item.querySelector('.status-category-input').value = statusData.category
+
+    // Set category badge
+    const badge = item.querySelector('.status-category-badge')
+    badge.textContent = this.getCategoryLabel(statusData.category)
+    badge.className = `badge ${this.getCategoryBadgeClass(statusData.category)}`
+
+    // Set flags
+    if (statusData.is_initial) {
+      item.querySelector('.status-initial-input').checked = true
+    }
+    if (statusData.is_terminal) {
+      item.querySelector('.status-terminal-input').checked = true
+    }
+
+    this.statusesContainerTarget.appendChild(clone)
+    this.updateStatusPositions()
+
+    // Update the picker button state
+    event.target.textContent = 'Added'
+    event.target.disabled = true
+    event.target.classList.remove('btn-primary')
+    event.target.classList.add('btn-secondary')
+  }
+
+  // Add a custom status
+  addCustomStatus(event) {
+    if (event) event.preventDefault()
+
+    const template = document.getElementById('custom-status-template')
+    if (!template) return
+
+    const clone = template.content.cloneNode(true)
+    this.statusesContainerTarget.appendChild(clone)
+    this.updateStatusPositions()
+
+    // Focus the name input
+    const addedItem = this.statusesContainerTarget.lastElementChild
+    const nameInput = addedItem.querySelector('.status-name-input')
+    if (nameInput) nameInput.focus()
+  }
+
+  // Remove a status
+  removeStatus(event) {
+    if (event) event.preventDefault()
+
+    const statusItem = event.target.closest('.status-item')
+    if (statusItem) {
+      statusItem.remove()
+      this.updateStatusPositions()
+    }
+  }
+
+  // Update status position indicators
+  updateStatusPositions() {
+    this.statusItemTargets.forEach((item, index) => {
+      const positionLabel = item.querySelector('.status-position')
+      const positionInput = item.querySelector('.status-position-input')
+      if (positionLabel) positionLabel.textContent = `#${index + 1}`
+      if (positionInput) positionInput.value = index
+    })
+  }
+
+  // Generate status key from name (for custom statuses)
+  generateStatusKey(event) {
+    const nameInput = event.target
+    const statusItem = nameInput.closest('.status-item')
+    const keyInput = statusItem.querySelector('.status-key-input')
+
+    if (keyInput) {
+      // Convert to snake_case key
+      keyInput.value = nameInput.value
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/^_+|_+$/g, '')
+    }
+  }
+
+  // Get category badge CSS class
+  getCategoryBadgeClass(category) {
+    const classes = {
+      'pending': 'is-pending',
+      'in_review': 'is-in-review',
+      'approved': 'is-approved',
+      'denied': 'is-denied',
+      'cancelled': 'is-cancelled',
+      'scheduled': 'is-scheduled'
+    }
+    return classes[category] || 'is-pending'
+  }
+
+  // Get category label
+  getCategoryLabel(category) {
+    const labels = {
+      'pending': 'Pending',
+      'in_review': 'In Review',
+      'approved': 'Approved',
+      'denied': 'Denied',
+      'cancelled': 'Cancelled',
+      'scheduled': 'Scheduled'
+    }
+    return labels[category] || category
+  }
+
+  // ============================================
+  // POWER BI METHODS
+  // ============================================
 
   // Toggle Power BI fields visibility based on has_dashboard selection
   togglePowerBIFields(event) {

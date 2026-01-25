@@ -2,6 +2,10 @@
 module TrackableStatus
   extend ActiveSupport::Concern
 
+  # Normalized status categories for cross-form reporting
+  # Each model must define STATUS_CATEGORIES mapping its statuses to these categories
+  VALID_CATEGORIES = %i[pending in_review approved denied cancelled scheduled].freeze
+
   included do
     has_many :status_changes, as: :trackable, dependent: :destroy
     after_create :record_initial_status
@@ -31,10 +35,57 @@ module TrackableStatus
         status_value.to_s.humanize
       end
     end
+
+    # Returns the normalized category for a given status value
+    # Requires the model to define STATUS_CATEGORIES constant
+    def status_category_for(status_value)
+      return nil if status_value.nil?
+      return nil unless const_defined?(:STATUS_CATEGORIES)
+
+      # Normalize status to symbol key
+      status_key = if status_value.is_a?(Integer) && const_defined?(:STATUS_MAP)
+                     self::STATUS_MAP[status_value]&.to_sym
+                   elsif status_value.is_a?(Integer) && defined_enums['status'].present?
+                     defined_enums['status'].key(status_value)&.to_sym
+                   else
+                     status_value.to_s.to_sym
+                   end
+
+      self::STATUS_CATEGORIES[status_key]
+    end
+
+    # Returns all statuses that belong to a given category
+    def statuses_for_category(category)
+      return [] unless const_defined?(:STATUS_CATEGORIES)
+
+      self::STATUS_CATEGORIES.select { |_, cat| cat == category.to_sym }.keys
+    end
+
+    # Returns hash of category => human-readable label
+    def category_labels
+      {
+        pending: "Pending",
+        in_review: "In Review",
+        approved: "Approved",
+        denied: "Denied",
+        cancelled: "Cancelled",
+        scheduled: "Scheduled"
+      }
+    end
   end
 
   def status_timeline
     status_changes.chronological
+  end
+
+  # Returns the normalized category for the current status
+  def status_category
+    self.class.status_category_for(status)
+  end
+
+  # Returns the human-readable label for the current status category
+  def status_category_label
+    self.class.category_labels[status_category] || "Unknown"
   end
 
   private

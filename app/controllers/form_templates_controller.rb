@@ -24,6 +24,9 @@ class FormTemplatesController < ApplicationController
       # Save routing steps
       save_routing_steps(@form_template)
 
+      # Save statuses
+      save_statuses(@form_template)
+
       # Save fields (two-pass: create first, then link conditionals)
       if params[:fields].present?
         # First pass: create all fields, store conditional references
@@ -135,6 +138,9 @@ class FormTemplatesController < ApplicationController
     if @form_template.update(form_template_params)
       # Rebuild routing steps
       rebuild_routing_steps(@form_template)
+
+      # Rebuild statuses
+      rebuild_statuses(@form_template)
 
       rebuild_form_fields
 
@@ -340,11 +346,15 @@ class FormTemplatesController < ApplicationController
 
     content = File.read(model_path)
 
-    # If submission type is database, remove status enum
-    if form_template.submission_type == 'database'
+    # If submission type is database and no statuses configured, remove status enum
+    if form_template.submission_type == 'database' && form_template.statuses.empty?
       content.gsub!(/  enum :status.*?\n  \}/m, '')
+    elsif form_template.statuses.any?
+      # Generate status enum and categories from configured statuses
+      enum_content = generate_configured_status_enum(form_template)
+      content.gsub!(/  enum :status.*?\n  \}/m, enum_content)
     elsif form_template.requires_approval? && form_template.routing_steps.any?
-      # Generate multi-step status enum
+      # Generate multi-step status enum (legacy behavior)
       enum_content = generate_multi_step_enum(form_template)
       content.gsub!(/  enum :status.*?\n  \}/m, enum_content)
     end
@@ -371,6 +381,36 @@ class FormTemplatesController < ApplicationController
       enum :status, {
         #{statuses.join(",\n    ")}
       }
+    RUBY
+  end
+
+  def generate_configured_status_enum(form_template)
+    configured_statuses = form_template.statuses.ordered
+    return '' if configured_statuses.empty?
+
+    # Find the initial status to set as default
+    initial_status = configured_statuses.find(&:is_initial) || configured_statuses.first
+    default_key = initial_status.key
+
+    # Build enum entries
+    enum_entries = configured_statuses.each_with_index.map do |status, index|
+      "#{status.key}: #{index}"
+    end
+
+    # Build STATUS_CATEGORIES mapping
+    category_entries = configured_statuses.map do |status|
+      "#{status.key}: :#{status.category}"
+    end
+
+    <<~RUBY.chomp
+      enum :status, {
+        #{enum_entries.join(",\n    ")}
+      }, default: :#{default_key}
+
+      # Normalized status categories for cross-form reporting
+      STATUS_CATEGORIES = {
+        #{category_entries.join(",\n    ")}
+      }.freeze
     RUBY
   end
 
@@ -427,6 +467,23 @@ class FormTemplatesController < ApplicationController
     end
   end
 
+  def save_statuses(form_template)
+    return unless params[:statuses].present?
+
+    params[:statuses].each_with_index do |status_data, index|
+      next if status_data[:name].blank? || status_data[:category].blank?
+
+      form_template.statuses.create!(
+        name: status_data[:name],
+        key: status_data[:key].presence || status_data[:name].parameterize.underscore,
+        category: status_data[:category],
+        position: status_data[:position].present? ? status_data[:position].to_i : index,
+        is_initial: status_data[:is_initial] == '1',
+        is_terminal: status_data[:is_terminal] == '1'
+      )
+    end
+  end
+
   def rebuild_routing_steps(form_template)
     form_template.routing_steps.destroy_all
 
@@ -445,6 +502,25 @@ class FormTemplatesController < ApplicationController
     # Clear legacy routing fields when using routing steps
     if form_template.routing_steps.any?
       form_template.update_columns(approval_routing_to: nil, approval_employee_id: nil)
+    end
+  end
+
+  def rebuild_statuses(form_template)
+    form_template.statuses.destroy_all
+
+    return unless params[:statuses].present?
+
+    params[:statuses].each_with_index do |status_data, index|
+      next if status_data[:name].blank? || status_data[:category].blank?
+
+      form_template.statuses.create!(
+        name: status_data[:name],
+        key: status_data[:key].presence || status_data[:name].parameterize.underscore,
+        category: status_data[:category],
+        position: status_data[:position].present? ? status_data[:position].to_i : index,
+        is_initial: status_data[:is_initial] == '1',
+        is_terminal: status_data[:is_terminal] == '1'
+      )
     end
   end
 

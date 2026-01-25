@@ -12,8 +12,16 @@
   text-transform: capitalize;
 }
 
-.badge.is-submitted        { background: #f2f2f2; color: #333;    border-color: #e6e6e6; }
-.badge.is-manager-approved { background: #e8f6ee; color: #1f7a3a; border-color: #cfeedd; }
-.badge.is-denied           { background: #fde8e8; color: #b42318; border-color: #f8d3d3; }
-.badge.is-sent             { background: #e8f0fe; color: #1a4fb3; border-color: #d6e2fd; }
-.badge.is-canceled         { background: #fde8e8; color: #b42318; border-color: #f8d3d3; }
+/* Category-based status badges (normalized) */
+.badge.is-pending    { background: #f2f2f2; color: #333;    border-color: #e6e6e6; }
+.badge.is-in-review  { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.badge.is-approved   { background: #e8f6ee; color: #1f7a3a; border-color: #cfeedd; }
+.badge.is-denied     { background: #fde8e8; color: #b42318; border-color: #f8d3d3; }
+.badge.is-cancelled  { background: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
+.badge.is-scheduled  { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
+
+/* Legacy class aliases for backwards compatibility */
+.badge.is-submitted        { @extend .badge.is-pending; }
+.badge.is-manager-approved { @extend .badge.is-approved; }
+.badge.is-sent             { @extend .badge.is-in-review; }
+.badge.is-canceled         { @extend .badge.is-cancelled; }

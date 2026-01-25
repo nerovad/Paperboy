@@ -716,3 +716,130 @@
     }
   }
 }
+
+/* Status Picker Modal */
+#status-picker-modal {
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+
+  .modal-content {
+    background: white;
+    border-radius: $radius-12;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h3 {
+      margin: 0;
+      color: $brand-navy;
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: $muted;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.05);
+        color: $text-color;
+      }
+    }
+  }
+
+  .predefined-statuses-list {
+    > div:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+/* Statuses Container */
+.form-builder-modal {
+  .statuses-container {
+    border: 2px dashed $border-color;
+    border-radius: $radius-6;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: #fafafa;
+    min-height: 80px;
+
+    &:empty::before {
+      content: "No statuses configured. Add statuses to enable status tracking for this form.";
+      color: $muted;
+      font-style: italic;
+      font-size: 13px;
+      display: block;
+      text-align: center;
+      padding: 20px;
+    }
+  }
+
+  .status-item {
+    background: $form-bg;
+    border: 1px solid $border-color;
+    border-radius: $radius-6;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &.custom-status-item {
+      background: #fffbeb;
+      border-color: #fde68a;
+    }
+  }
+
+  .status-position {
+    font-weight: 600;
+    color: $muted;
+    min-width: 30px;
+    text-align: center;
+  }
+
+  .status-name-text {
+    font-weight: 500;
+    color: $text-color;
+  }
+
+  .status-category-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .status-flags {
+    label {
+      font-weight: normal;
+      color: $label-color;
+      cursor: pointer;
+
+      input {
+        cursor: pointer;
+      }
+    }
+  }
+}

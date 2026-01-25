@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_22_163212) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_25_195636) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -558,6 +558,21 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_22_163212) do
     t.index ["form_template_id"], name: "index_form_template_routing_steps_on_form_template_id"
   end
 
+  create_table "form_template_statuses", force: :cascade do |t|
+    t.bigint "form_template_id", null: false
+    t.string "name", null: false
+    t.string "key", null: false
+    t.string "category", null: false
+    t.integer "position", default: 0
+    t.boolean "is_initial", default: false
+    t.boolean "is_terminal", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["form_template_id", "key"], name: "index_form_template_statuses_on_form_template_id_and_key", unique: true
+    t.index ["form_template_id", "position"], name: "index_form_template_statuses_on_form_template_id_and_position"
+    t.index ["form_template_id"], name: "index_form_template_statuses_on_form_template_id"
+  end
+
   create_table "form_templates", force: :cascade do |t|
     t.string "name", null: false
     t.string "class_name", null: false
@@ -972,6 +987,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_22_163212) do
   add_foreign_key "events", "Employees_Old", column: "reported_by_id", primary_key: "EmployeeID"
   add_foreign_key "form_fields", "form_templates"
   add_foreign_key "form_template_routing_steps", "form_templates"
+  add_foreign_key "form_template_statuses", "form_templates"
   add_foreign_key "loa_forms", "events"
   add_foreign_key "osha_301_forms", "events"
   add_foreign_key "parking_lot_vehicles", "parking_lot_submissions"

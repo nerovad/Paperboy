@@ -42,6 +42,14 @@ class CriticalInformationReporting < ApplicationRecord
     cancelled: 3
   }, default: :in_progress
 
+  # Normalized status categories for cross-form reporting
+  STATUS_CATEGORIES = {
+    in_progress: :in_review,
+    resolved: :approved,
+    scheduled: :scheduled,
+    cancelled: :cancelled
+  }.freeze
+
   # Validations for Status (Page 5)
   validates :urgency, presence: true
 

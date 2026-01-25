@@ -18,7 +18,9 @@ class FormTemplate < ApplicationRecord
 
   has_many :form_fields, dependent: :destroy
   has_many :routing_steps, -> { order(:step_number) }, class_name: 'FormTemplateRoutingStep', dependent: :destroy
+  has_many :statuses, -> { order(:position) }, class_name: 'FormTemplateStatus', dependent: :destroy
   accepts_nested_attributes_for :routing_steps, allow_destroy: true, reject_if: :all_blank
+  accepts_nested_attributes_for :statuses, allow_destroy: true, reject_if: :all_blank
 
   validates :name, presence: true
   validates :class_name, presence: true, uniqueness: true

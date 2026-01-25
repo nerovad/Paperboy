@@ -51,6 +51,15 @@ class ParkingLotSubmission < ApplicationRecord
     approved: 3,
     sent_to_security: 4
   }
+
+  # Normalized status categories for cross-form reporting
+  STATUS_CATEGORIES = {
+    submitted: :pending,
+    pending_delegated_approval: :in_review,
+    denied: :denied,
+    approved: :approved,
+    sent_to_security: :in_review
+  }.freeze
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
   
   # With enum, status returns a symbol like :submitted, :approved, etc.

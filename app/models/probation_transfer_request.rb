@@ -50,7 +50,15 @@ class ProbationTransferRequest < ApplicationRecord
     1 => "manager_approved",
     2 => "denied",
     3 => "sent_to_security"
-  }
+  }.freeze
+
+  # Normalized status categories for cross-form reporting
+  STATUS_CATEGORIES = {
+    submitted: :pending,
+    manager_approved: :in_review,
+    denied: :denied,
+    sent_to_security: :in_review
+  }.freeze
 
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
 

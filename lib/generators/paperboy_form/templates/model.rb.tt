@@ -1,4 +1,6 @@
 class <%= class_name %> < ApplicationRecord
+  include TrackableStatus
+
   enum :status, {
     submitted: 0,
     pending: 1,
@@ -6,12 +8,15 @@ class <%= class_name %> < ApplicationRecord
     approved: 3,
   }
 
+  # Scopes
+  scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
+
   # Minimal baseline validations; adjust or remove as needed
   validates :name, :email, presence: true
 
   # For inbox queue display
   def status_label
-    status
+    status&.to_s&.humanize || "Unknown"
   end
 
   # For inbox queue filtering - returns the form type name
