@@ -3,6 +3,8 @@
      data-controller="form-builder"
      data-form-builder-acl-groups-value="<%= acl_groups.to_json %>"
      data-form-builder-employees-value="<%= employees.to_json %>"
+     data-form-builder-predefined-statuses-value="<%= FormTemplateStatus::PREDEFINED_STATUSES.to_json %>"
+     data-form-builder-valid-categories-value="<%= FormTemplateStatus::VALID_CATEGORIES.to_json %>"
      style="display: none;">
   
   <div class="form-builder-modal-content">
@@ -149,9 +151,32 @@
           </div>
         </div>
 
-        <!-- Step 7: Fields -->
+        <!-- Step 7: Status Configuration -->
         <div class="form-group">
-          <label>7. Fields</label>
+          <label>7. Status Configuration</label>
+          <small class="form-text" style="display: block; margin-bottom: 10px;">
+            Select the statuses available for this form. Choose from predefined statuses or add custom ones.
+          </small>
+          <div class="statuses-container" data-form-builder-target="statusesContainer">
+            <!-- Statuses will be added here dynamically -->
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button type="button"
+                    class="btn btn-secondary btn-sm"
+                    data-action="click->form-builder#showStatusPicker">
+              + Add Predefined Status
+            </button>
+            <button type="button"
+                    class="btn btn-secondary btn-sm"
+                    data-action="click->form-builder#addCustomStatus">
+              + Add Custom Status
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 8: Fields -->
+        <div class="form-group">
+          <label>8. Fields</label>
           <small class="form-text" style="display: block; margin-bottom: 10px;">
             Add custom fields for your form. <strong>Tip:</strong> Drag the &#x2630; handle to reorder fields.
           </small>
@@ -355,3 +380,111 @@
     </div>
   </div>
 </template>
+
+<!-- Status Item Template (hidden, used for cloning) -->
+<template id="status-item-template">
+  <div class="status-item" data-form-builder-target="statusItem" style="background: #f8f9fa; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #28a745;">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <span class="status-position" style="font-weight: bold; color: #6c757d; min-width: 30px;">#1</span>
+
+      <div class="status-name-display" style="flex: 1; min-width: 120px;">
+        <span class="status-name-text" style="font-weight: 500;"></span>
+        <input type="hidden" name="statuses[][name]" class="status-name-input">
+        <input type="hidden" name="statuses[][key]" class="status-key-input">
+      </div>
+
+      <div class="status-category-display" style="min-width: 100px;">
+        <span class="badge status-category-badge"></span>
+        <input type="hidden" name="statuses[][category]" class="status-category-input">
+      </div>
+
+      <div class="status-flags" style="display: flex; gap: 15px; min-width: 180px;">
+        <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
+          <input type="checkbox" name="statuses[][is_initial]" value="1" class="status-initial-input">
+          Initial
+        </label>
+        <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
+          <input type="checkbox" name="statuses[][is_terminal]" value="1" class="status-terminal-input">
+          Terminal
+        </label>
+      </div>
+
+      <input type="hidden" name="statuses[][position]" class="status-position-input" value="0">
+
+      <button type="button"
+              class="btn btn-danger btn-sm"
+              data-action="click->form-builder#removeStatus"
+              style="padding: 4px 8px;">
+        Remove
+      </button>
+    </div>
+  </div>
+</template>
+
+<!-- Custom Status Item Template (hidden, used for cloning) -->
+<template id="custom-status-template">
+  <div class="status-item custom-status-item" data-form-builder-target="statusItem" style="background: #fff3cd; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #ffc107;">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <span class="status-position" style="font-weight: bold; color: #6c757d; min-width: 30px;">#1</span>
+
+      <div style="flex: 1; min-width: 150px;">
+        <input type="text"
+               name="statuses[][name]"
+               class="form-control form-control-sm status-name-input"
+               placeholder="Status name (e.g., Under Review)"
+               required
+               data-action="input->form-builder#generateStatusKey">
+        <input type="hidden" name="statuses[][key]" class="status-key-input">
+      </div>
+
+      <div style="min-width: 140px;">
+        <select name="statuses[][category]"
+                class="form-control form-control-sm status-category-input"
+                required>
+          <option value="">Map to category...</option>
+          <option value="pending">Pending</option>
+          <option value="in_review">In Review</option>
+          <option value="approved">Approved</option>
+          <option value="denied">Denied</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="scheduled">Scheduled</option>
+        </select>
+      </div>
+
+      <div class="status-flags" style="display: flex; gap: 15px; min-width: 180px;">
+        <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
+          <input type="checkbox" name="statuses[][is_initial]" value="1" class="status-initial-input">
+          Initial
+        </label>
+        <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
+          <input type="checkbox" name="statuses[][is_terminal]" value="1" class="status-terminal-input">
+          Terminal
+        </label>
+      </div>
+
+      <input type="hidden" name="statuses[][position]" class="status-position-input" value="0">
+
+      <button type="button"
+              class="btn btn-danger btn-sm"
+              data-action="click->form-builder#removeStatus"
+              style="padding: 4px 8px;">
+        Remove
+      </button>
+    </div>
+  </div>
+</template>
+
+<!-- Status Picker Modal -->
+<div id="status-picker-modal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+    <div class="modal-header" style="padding: 15px; border-bottom: 1px solid #dee2e6;">
+      <h3 style="margin: 0;">Select Predefined Status</h3>
+      <button type="button" class="close-modal" data-action="click->form-builder#closeStatusPicker">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 15px;">
+      <div class="predefined-statuses-list" data-form-builder-target="predefinedStatusesList">
+        <!-- Predefined statuses will be populated here -->
+      </div>
+    </div>
+  </div>
+</div>
