@@ -22,6 +22,8 @@ class FormTemplate < ApplicationRecord
   accepts_nested_attributes_for :routing_steps, allow_destroy: true, reject_if: :all_blank
   accepts_nested_attributes_for :statuses, allow_destroy: true, reject_if: :all_blank
 
+  TRANSITION_MODES = %w[automatic manual].freeze
+
   validates :name, presence: true
   validates :class_name, presence: true, uniqueness: true
   validates :access_level, inclusion: { in: %w[public restricted] }
@@ -32,6 +34,7 @@ class FormTemplate < ApplicationRecord
   validates :approval_employee_id, presence: true, if: :routes_to_specific_employee?
   validates :powerbi_workspace_id, presence: true, if: :has_dashboard?
   validates :powerbi_report_id, presence: true, if: :has_dashboard?
+  validates :status_transition_mode, inclusion: { in: TRANSITION_MODES }, allow_nil: true
 
   validate :page_count_cannot_orphan_fields, on: :update
 
@@ -65,6 +68,14 @@ class FormTemplate < ApplicationRecord
 
   def has_dashboard?
     has_dashboard == true
+  end
+
+  def automatic_status_transitions?
+    status_transition_mode == 'automatic'
+  end
+
+  def manual_status_transitions?
+    status_transition_mode == 'manual'
   end
 
   def has_inbox_button?(button_type)

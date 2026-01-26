@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_25_195636) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_26_164258) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -554,8 +554,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_25_195636) do
     t.integer "employee_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "form_template_status_id"
     t.index ["form_template_id", "step_number"], name: "idx_routing_steps_template_step", unique: true
     t.index ["form_template_id"], name: "index_form_template_routing_steps_on_form_template_id"
+    t.index ["form_template_status_id"], name: "index_form_template_routing_steps_on_form_template_status_id"
   end
 
   create_table "form_template_statuses", force: :cascade do |t|
@@ -565,7 +567,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_25_195636) do
     t.string "category", null: false
     t.integer "position", default: 0
     t.boolean "is_initial", default: false
-    t.boolean "is_terminal", default: false
+    t.boolean "is_end", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["form_template_id", "key"], name: "index_form_template_statuses_on_form_template_id_and_key", unique: true
@@ -590,6 +592,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_25_195636) do
     t.string "powerbi_report_id"
     t.boolean "has_dashboard", default: false
     t.text "inbox_buttons"
+    t.string "status_transition_mode", default: "automatic"
     t.index ["class_name"], name: "index_form_templates_on_class_name", unique: true
   end
 
@@ -986,6 +989,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_25_195636) do
   add_foreign_key "events", "Employees_Old", column: "employee_id", primary_key: "EmployeeID"
   add_foreign_key "events", "Employees_Old", column: "reported_by_id", primary_key: "EmployeeID"
   add_foreign_key "form_fields", "form_templates"
+  add_foreign_key "form_template_routing_steps", "form_template_statuses"
   add_foreign_key "form_template_routing_steps", "form_templates"
   add_foreign_key "form_template_statuses", "form_templates"
   add_foreign_key "loa_forms", "events"

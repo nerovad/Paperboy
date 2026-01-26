@@ -279,6 +279,7 @@ class FormTemplatesController < ApplicationController
       :has_dashboard,
       :powerbi_workspace_id,
       :powerbi_report_id,
+      :status_transition_mode,
       page_headers: [],
       inbox_buttons: []
     )
@@ -470,17 +471,43 @@ class FormTemplatesController < ApplicationController
   def save_statuses(form_template)
     return unless params[:statuses].present?
 
+    # Create a map of status keys to their created IDs for routing step reference
+    status_key_to_id = {}
+
     params[:statuses].each_with_index do |status_data, index|
       next if status_data[:name].blank? || status_data[:category].blank?
 
-      form_template.statuses.create!(
+      status = form_template.statuses.create!(
         name: status_data[:name],
         key: status_data[:key].presence || status_data[:name].parameterize.underscore,
         category: status_data[:category],
         position: status_data[:position].present? ? status_data[:position].to_i : index,
         is_initial: status_data[:is_initial] == '1',
-        is_terminal: status_data[:is_terminal] == '1'
+        is_end: status_data[:is_end] == '1'
       )
+      status_key_to_id["status_#{index}"] = status.id
+    end
+
+    # Link routing steps to their assigned statuses
+    link_routing_steps_to_statuses(form_template, status_key_to_id)
+  end
+
+  def link_routing_steps_to_statuses(form_template, status_key_to_id)
+    return unless params[:routing_steps].present?
+
+    form_template.routing_steps.ordered.each_with_index do |step, index|
+      step_data = params[:routing_steps][index]
+      next unless step_data && step_data[:form_template_status_id].present?
+
+      status_ref = step_data[:form_template_status_id]
+      # Handle the temporary status reference (e.g., "status_0")
+      if status_ref.start_with?('status_')
+        actual_status_id = status_key_to_id[status_ref]
+        step.update!(form_template_status_id: actual_status_id) if actual_status_id
+      elsif status_ref.to_i > 0
+        # Direct ID reference
+        step.update!(form_template_status_id: status_ref.to_i)
+      end
     end
   end
 
@@ -510,18 +537,24 @@ class FormTemplatesController < ApplicationController
 
     return unless params[:statuses].present?
 
+    status_key_to_id = {}
+
     params[:statuses].each_with_index do |status_data, index|
       next if status_data[:name].blank? || status_data[:category].blank?
 
-      form_template.statuses.create!(
+      status = form_template.statuses.create!(
         name: status_data[:name],
         key: status_data[:key].presence || status_data[:name].parameterize.underscore,
         category: status_data[:category],
         position: status_data[:position].present? ? status_data[:position].to_i : index,
         is_initial: status_data[:is_initial] == '1',
-        is_terminal: status_data[:is_terminal] == '1'
+        is_end: status_data[:is_end] == '1'
       )
+      status_key_to_id["status_#{index}"] = status.id
     end
+
+    # Re-link routing steps to their statuses after rebuild
+    link_routing_steps_to_statuses(form_template, status_key_to_id)
   end
 
   def rebuild_form_fields

@@ -1,5 +1,6 @@
 class FormTemplateRoutingStep < ApplicationRecord
   belongs_to :form_template
+  belongs_to :form_template_status, optional: true
 
   ROUTING_TYPES = %w[supervisor department_head employee].freeze
 
@@ -31,5 +32,10 @@ class FormTemplateRoutingStep < ApplicationRecord
     employee ? "#{employee.First_Name} #{employee.Last_Name}" : nil
   rescue
     nil
+  end
+
+  # Returns the status to apply when a form reaches this step
+  def status_to_apply
+    form_template_status
   end
 end

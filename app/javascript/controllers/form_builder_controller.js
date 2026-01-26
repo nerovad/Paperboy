@@ -187,7 +187,61 @@ export default class extends Controller {
       })
     }
 
+    // Populate status dropdown with non-end statuses
+    const statusSelect = clone.querySelector('.step-status-dropdown')
+    if (statusSelect) {
+      this.populateStepStatusDropdown(statusSelect)
+    }
+
     this.routingStepsContainerTarget.appendChild(clone)
+  }
+
+  // Populate a routing step's status dropdown with currently added non-end statuses
+  populateStepStatusDropdown(selectElement) {
+    // Keep the first placeholder option
+    const placeholder = selectElement.querySelector('option:first-child')
+    selectElement.innerHTML = ''
+    if (placeholder) {
+      selectElement.appendChild(placeholder)
+    } else {
+      const opt = document.createElement('option')
+      opt.value = ''
+      opt.textContent = 'Status at this step...'
+      selectElement.appendChild(opt)
+    }
+
+    // Get all added statuses that are not end statuses
+    this.statusItemTargets.forEach((item, index) => {
+      const nameInput = item.querySelector('.status-name-input')
+      const keyInput = item.querySelector('.status-key-input')
+      const endInput = item.querySelector('.status-end-input')
+
+      // Only include non-end statuses
+      if (nameInput && keyInput && (!endInput || !endInput.checked)) {
+        const option = document.createElement('option')
+        // Use the index as a temporary identifier since we don't have the actual DB ID yet
+        option.value = `status_${index}`
+        option.textContent = nameInput.value || `Status ${index + 1}`
+        option.dataset.statusKey = keyInput.value
+        selectElement.appendChild(option)
+      }
+    })
+  }
+
+  // Refresh all routing step status dropdowns (called when statuses change)
+  refreshStepStatusDropdowns() {
+    const statusDropdowns = this.routingStepsContainerTarget.querySelectorAll('.step-status-dropdown')
+    statusDropdowns.forEach(select => {
+      const currentValue = select.value
+      this.populateStepStatusDropdown(select)
+      // Try to restore the previous selection
+      if (currentValue) {
+        const matchingOption = select.querySelector(`option[value="${currentValue}"]`)
+        if (matchingOption) {
+          select.value = currentValue
+        }
+      }
+    })
   }
 
   // Remove a routing step
@@ -261,7 +315,7 @@ export default class extends Controller {
           <strong>${status.name}</strong>
           <span class="badge ${this.getCategoryBadgeClass(status.category)}" style="margin-left: 8px;">${this.getCategoryLabel(status.category)}</span>
           ${status.is_initial ? '<small style="color: #6c757d; margin-left: 8px;">(Initial)</small>' : ''}
-          ${status.is_terminal ? '<small style="color: #6c757d; margin-left: 8px;">(Terminal)</small>' : ''}
+          ${status.is_end ? '<small style="color: #6c757d; margin-left: 8px;">(End)</small>' : ''}
         </div>
         <button type="button"
                 class="btn btn-sm ${isAdded ? 'btn-secondary' : 'btn-primary'}"
@@ -328,12 +382,13 @@ export default class extends Controller {
     if (statusData.is_initial) {
       item.querySelector('.status-initial-input').checked = true
     }
-    if (statusData.is_terminal) {
-      item.querySelector('.status-terminal-input').checked = true
+    if (statusData.is_end) {
+      item.querySelector('.status-end-input').checked = true
     }
 
     this.statusesContainerTarget.appendChild(clone)
     this.updateStatusPositions()
+    this.refreshStepStatusDropdowns()
 
     // Update the picker button state
     event.target.textContent = 'Added'
@@ -352,6 +407,7 @@ export default class extends Controller {
     const clone = template.content.cloneNode(true)
     this.statusesContainerTarget.appendChild(clone)
     this.updateStatusPositions()
+    this.refreshStepStatusDropdowns()
 
     // Focus the name input
     const addedItem = this.statusesContainerTarget.lastElementChild
@@ -367,6 +423,7 @@ export default class extends Controller {
     if (statusItem) {
       statusItem.remove()
       this.updateStatusPositions()
+      this.refreshStepStatusDropdowns()
     }
   }
 
@@ -394,6 +451,14 @@ export default class extends Controller {
         .replace(/\s+/g, '_')
         .replace(/^_+|_+$/g, '')
     }
+
+    // Refresh step status dropdowns when status name changes
+    this.refreshStepStatusDropdowns()
+  }
+
+  // Handle end checkbox toggle - refresh step status dropdowns
+  handleEndStatusToggle(event) {
+    this.refreshStepStatusDropdowns()
   }
 
   // Get category badge CSS class

@@ -125,6 +125,28 @@
                   data-action="click->form-builder#addRoutingStep">
             + Add Routing Step
           </button>
+
+          <!-- Status Transition Mode -->
+          <div style="margin-top: 15px; padding: 12px; background: #e8f4f8; border-radius: 6px;">
+            <label style="font-weight: 600; margin-bottom: 8px; display: block;">Status Transitions</label>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+              <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
+                <input type="radio"
+                       name="form_template[status_transition_mode]"
+                       value="automatic"
+                       checked
+                       data-form-builder-target="transitionModeAutomatic">
+                <span><strong>Automatic</strong> - Status changes with routing steps</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
+                <input type="radio"
+                       name="form_template[status_transition_mode]"
+                       value="manual"
+                       data-form-builder-target="transitionModeManual">
+                <span><strong>Manual</strong> - Status changed via dropdown only</span>
+              </label>
+            </div>
+          </div>
         </div>
 
         <!-- Step 6: Inbox Queue Buttons -->
@@ -202,6 +224,21 @@
                     data: { form_builder_target: "submitButton" } %>
       </div>
     <% end %>
+
+    <!-- Status Picker Modal (must be inside the form-builder controller scope) -->
+    <div id="status-picker-modal" class="modal" style="display: none;">
+      <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-header" style="padding: 15px; border-bottom: 1px solid #dee2e6;">
+          <h3 style="margin: 0;">Select Predefined Status</h3>
+          <button type="button" class="close-modal" data-action="click->form-builder#closeStatusPicker">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 15px;">
+          <div class="predefined-statuses-list" data-form-builder-target="predefinedStatusesList">
+            <!-- Predefined statuses will be populated here -->
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -369,6 +406,13 @@
         </select>
       </div>
 
+      <div class="step-status-select" style="flex: 1; min-width: 180px;">
+        <select name="routing_steps[][form_template_status_id]"
+                class="form-control form-control-sm step-status-dropdown">
+          <option value="">Status at this step...</option>
+        </select>
+      </div>
+
       <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="1">
 
       <button type="button"
@@ -404,8 +448,8 @@
           Initial
         </label>
         <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-          <input type="checkbox" name="statuses[][is_terminal]" value="1" class="status-terminal-input">
-          Terminal
+          <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input" data-action="change->form-builder#handleEndStatusToggle">
+          End
         </label>
       </div>
 
@@ -457,8 +501,8 @@
           Initial
         </label>
         <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-          <input type="checkbox" name="statuses[][is_terminal]" value="1" class="status-terminal-input">
-          Terminal
+          <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input" data-action="change->form-builder#handleEndStatusToggle">
+          End
         </label>
       </div>
 
@@ -474,17 +518,3 @@
   </div>
 </template>
 
-<!-- Status Picker Modal -->
-<div id="status-picker-modal" class="modal" style="display: none;">
-  <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
-    <div class="modal-header" style="padding: 15px; border-bottom: 1px solid #dee2e6;">
-      <h3 style="margin: 0;">Select Predefined Status</h3>
-      <button type="button" class="close-modal" data-action="click->form-builder#closeStatusPicker">&times;</button>
-    </div>
-    <div class="modal-body" style="padding: 15px;">
-      <div class="predefined-statuses-list" data-form-builder-target="predefinedStatusesList">
-        <!-- Predefined statuses will be populated here -->
-      </div>
-    </div>
-  </div>
-</div>

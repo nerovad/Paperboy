@@ -177,6 +177,16 @@
                       </select>
                     </div>
 
+                    <div class="step-status-select" style="flex: 1; min-width: 180px;">
+                      <select name="routing_steps[][form_template_status_id]"
+                              class="form-control form-control-sm step-status-dropdown">
+                        <option value="">Status at this step...</option>
+                        <% @form_template.statuses.non_end.ordered.each_with_index do |status, status_index| %>
+                          <option value="status_<%= status_index %>" <%= 'selected' if step.form_template_status_id == status.id %>><%= status.name %></option>
+                        <% end %>
+                      </select>
+                    </div>
+
                     <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="<%= index + 1 %>">
 
                     <button type="button"
@@ -234,6 +244,25 @@
                   data-action="click->form-builder#addRoutingStep">
             + Add Routing Step
           </button>
+
+          <!-- Status Transition Mode -->
+          <div style="margin-top: 15px; padding: 12px; background: #e8f4f8; border-radius: 6px;">
+            <label style="font-weight: 600; margin-bottom: 8px; display: block;">Status Transitions</label>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+              <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
+                <%= radio_button_tag "form_template[status_transition_mode]", "automatic",
+                      @form_template.status_transition_mode == 'automatic' || @form_template.status_transition_mode.nil?,
+                      data: { form_builder_target: "transitionModeAutomatic" } %>
+                <span><strong>Automatic</strong> - Status changes with routing steps</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
+                <%= radio_button_tag "form_template[status_transition_mode]", "manual",
+                      @form_template.status_transition_mode == 'manual',
+                      data: { form_builder_target: "transitionModeManual" } %>
+                <span><strong>Manual</strong> - Status changed via dropdown only</span>
+              </label>
+            </div>
+          </div>
         </div>
 
         <!-- Inbox Queue Buttons -->
@@ -291,8 +320,8 @@
                           Initial
                         </label>
                         <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-                          <input type="checkbox" name="statuses[][is_terminal]" value="1" class="status-terminal-input" <%= 'checked' if status.is_terminal %>>
-                          Terminal
+                          <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input" <%= 'checked' if status.is_end %>>
+                          End
                         </label>
                       </div>
 
@@ -342,8 +371,8 @@
                           Initial
                         </label>
                         <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-                          <input type="checkbox" name="statuses[][is_terminal]" value="1" class="status-terminal-input" <%= 'checked' if status.is_terminal %>>
-                          Terminal
+                          <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input" <%= 'checked' if status.is_end %>>
+                          End
                         </label>
                       </div>
 
@@ -813,6 +842,13 @@
         </select>
       </div>
 
+      <div class="step-status-select" style="flex: 1; min-width: 180px;">
+        <select name="routing_steps[][form_template_status_id]"
+                class="form-control form-control-sm step-status-dropdown">
+          <option value="">Status at this step...</option>
+        </select>
+      </div>
+
       <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="1">
 
       <button type="button"
@@ -848,8 +884,8 @@
           Initial
         </label>
         <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-          <input type="checkbox" name="statuses[][is_terminal]" value="1" class="status-terminal-input">
-          Terminal
+          <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input">
+          End
         </label>
       </div>
 
@@ -901,8 +937,8 @@
           Initial
         </label>
         <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-          <input type="checkbox" name="statuses[][is_terminal]" value="1" class="status-terminal-input">
-          Terminal
+          <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input">
+          End
         </label>
       </div>
 

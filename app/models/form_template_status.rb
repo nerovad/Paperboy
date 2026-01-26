@@ -7,16 +7,16 @@ class FormTemplateStatus < ApplicationRecord
   # Predefined statuses with their default category mappings
   # These are the common statuses that users can select from
   PREDEFINED_STATUSES = [
-    { name: 'Submitted', key: 'submitted', category: 'pending', is_initial: true, is_terminal: false },
-    { name: 'In Progress', key: 'in_progress', category: 'in_review', is_initial: true, is_terminal: false },
-    { name: 'Pending Approval', key: 'pending_approval', category: 'in_review', is_initial: false, is_terminal: false },
-    { name: 'Approved', key: 'approved', category: 'approved', is_initial: false, is_terminal: true },
-    { name: 'Denied', key: 'denied', category: 'denied', is_initial: false, is_terminal: true },
-    { name: 'Cancelled', key: 'cancelled', category: 'cancelled', is_initial: false, is_terminal: true },
-    { name: 'Scheduled', key: 'scheduled', category: 'scheduled', is_initial: false, is_terminal: false },
-    { name: 'Resolved', key: 'resolved', category: 'approved', is_initial: false, is_terminal: true },
-    { name: 'Sent to Security', key: 'sent_to_security', category: 'in_review', is_initial: false, is_terminal: false },
-    { name: 'Sent to HR', key: 'sent_to_hr', category: 'in_review', is_initial: false, is_terminal: false }
+    { name: 'Submitted', key: 'submitted', category: 'pending', is_initial: true, is_end: false },
+    { name: 'In Progress', key: 'in_progress', category: 'in_review', is_initial: true, is_end: false },
+    { name: 'Pending Approval', key: 'pending_approval', category: 'in_review', is_initial: false, is_end: false },
+    { name: 'Approved', key: 'approved', category: 'approved', is_initial: false, is_end: true },
+    { name: 'Denied', key: 'denied', category: 'denied', is_initial: false, is_end: true },
+    { name: 'Cancelled', key: 'cancelled', category: 'cancelled', is_initial: false, is_end: true },
+    { name: 'Scheduled', key: 'scheduled', category: 'scheduled', is_initial: false, is_end: false },
+    { name: 'Resolved', key: 'resolved', category: 'approved', is_initial: false, is_end: true },
+    { name: 'Sent to Security', key: 'sent_to_security', category: 'in_review', is_initial: false, is_end: false },
+    { name: 'Sent to HR', key: 'sent_to_hr', category: 'in_review', is_initial: false, is_end: false }
   ].freeze
 
   # Validations
@@ -28,7 +28,8 @@ class FormTemplateStatus < ApplicationRecord
   # Scopes
   scope :ordered, -> { order(:position) }
   scope :initial, -> { where(is_initial: true) }
-  scope :terminal, -> { where(is_terminal: true) }
+  scope :end_status, -> { where(is_end: true) }
+  scope :non_end, -> { where(is_end: false) }
 
   # Before validation callback to generate key from name if not provided
   before_validation :generate_key_from_name, if: -> { key.blank? && name.present? }
