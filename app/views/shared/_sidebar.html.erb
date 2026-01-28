@@ -47,13 +47,20 @@
         available_forms << [label, path]
       end
     end
+
+    # Cache form templates with their field labels for search
+    form_field_labels = {}
+    FormTemplate.includes(:form_fields).each do |template|
+      form_field_labels[template.name] = template.form_fields.pluck(:label).join(", ")
+    end
     %>
     <div data-sidebar-search-target="formsList">
       <% available_forms.sort_by { |f| f[0] }.each do |label, path| %>
-        <%= link_to label, path, class: "nav-link", 
-            data: { 
+        <%= link_to label, path, class: "nav-link",
+            data: {
               turbo_frame: "main-content",
-              sidebar_search_target: "formLink"
+              sidebar_search_target: "formLink",
+              fields: form_field_labels[label] || ""
             } %>
       <% end %>
     </div>

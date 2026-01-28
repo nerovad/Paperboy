@@ -150,6 +150,21 @@
   }
   
   .nav-link.active { background-color: $primary-color; }
+
+  .nav-link mark {
+    background-color: rgba(255, 255, 0, 0.4);
+    color: inherit;
+    padding: 0;
+    border-radius: 2px;
+  }
+
+  .nav-link .matched-field {
+    display: block;
+    font-size: 0.75em;
+    opacity: 0.8;
+    margin-top: 4px;
+    font-style: italic;
+  }
   
   /* Mobile responsive behavior */
   @media (max-width: 768px) {
