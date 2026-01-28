@@ -54,6 +54,9 @@ class StatusController < ApplicationController
 
     # Build status options mapping for JavaScript dynamic filtering
     @status_options_by_type = build_status_options_by_type
+
+    # Build title options mapping for JavaScript dynamic filtering
+    @title_options_by_type = build_title_options_by_type(@status_items)
   end
 
   def status_options
@@ -91,6 +94,22 @@ class StatusController < ApplicationController
     rescue NameError
       next
     end
+
+    options
+  end
+
+  def build_title_options_by_type(status_items)
+    options = {}
+
+    status_items.each do |item|
+      type = item[:type]
+      title = item[:title]
+      options[type] ||= []
+      options[type] << title unless options[type].include?(title)
+    end
+
+    # Sort titles within each type
+    options.each { |_type, titles| titles.sort! }
 
     options
   end
@@ -154,10 +173,14 @@ class StatusController < ApplicationController
       next unless model_class.table_exists?
       next unless model_class.respond_to?(:status_category) || model_class.new.respond_to?(:status_category)
 
+      # Build includes based on model associations
+      includes_list = [:status_changes]
+      includes_list << :parking_lot_vehicles if model_class.reflect_on_association(:parking_lot_vehicles)
+
       submissions = if @is_manager
-                      model_class.includes(:status_changes)
+                      model_class.includes(includes_list)
                     else
-                      model_class.for_employee(employee_id).includes(:status_changes)
+                      model_class.for_employee(employee_id).includes(includes_list)
                     end
 
       submissions.each do |submission|
@@ -220,10 +243,27 @@ class StatusController < ApplicationController
   end
 
   def build_status_item(submission, type, path)
+    title = case type
+            when 'Critical Information Report'
+              if submission.respond_to?(:incident_type) && submission.incident_type.present?
+                submission.incident_type
+              else
+                "#{type} ##{submission.id}"
+              end
+            when 'Parking Lot'
+              if submission.respond_to?(:parking_lot_vehicles) && submission.parking_lot_vehicles.first&.parking_lot.present?
+                submission.parking_lot_vehicles.first.display_parking_lot
+              else
+                "#{type} ##{submission.id}"
+              end
+            else
+              "#{type} ##{submission.id}"
+            end
+
     {
       id: submission.id,
       type: type,
-      title: "#{type} ##{submission.id}",
+      title: title,
       status: submission.status_label,
       status_category: submission.status_category,
       status_category_label: submission.status_category_label,
@@ -239,6 +279,7 @@ class StatusController < ApplicationController
   def status_field_mappings
     {
       types: ->(item) { item[:type] },
+      titles: ->(item) { item[:title] },
       statuses: ->(item) { item[:status].to_s.tr('_', ' ').titleize },
       categories: ->(item) { item[:status_category_label] }
     }
@@ -247,6 +288,7 @@ class StatusController < ApplicationController
   def status_filter_configs
     configs = [
       { param: :filter_type, extractor: ->(item) { item[:type] } },
+      { param: :filter_title, extractor: ->(item) { item[:title] } },
       { param: :filter_status, extractor: ->(item) { item[:status].to_s.tr('_', ' ').titleize } },
       { param: :filter_category, extractor: ->(item) { item[:status_category_label] } }
     ]
