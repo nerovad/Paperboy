@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_26_164258) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_28_220732) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -593,6 +593,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_164258) do
     t.boolean "has_dashboard", default: false
     t.text "inbox_buttons"
     t.string "status_transition_mode", default: "automatic"
+    t.text "tags"
     t.index ["class_name"], name: "index_form_templates_on_class_name", unique: true
   end
 

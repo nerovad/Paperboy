@@ -23,10 +23,11 @@ export default class extends Controller {
       return
     }
 
-    // Score and filter links (search both form name and field labels)
+    // Score and filter links (search form name, field labels, and tags)
     const scored = this.formLinkTargets.map(link => {
       const formName = link.dataset.originalName
       const fields = link.dataset.fields || ""
+      const tags = link.dataset.tags || ""
 
       // Match against form name
       const nameResult = this.fuzzyMatch(searchTerm, formName)
@@ -43,14 +44,29 @@ export default class extends Controller {
         }
       }
 
-      // Use the better match (name match gets priority bonus)
+      // Match against tags (search each tag separately)
+      let bestTagMatch = { matches: [], score: 0, tagName: null }
+      if (tags) {
+        const tagList = tags.split(", ")
+        for (const tag of tagList) {
+          const tagResult = this.fuzzyMatch(searchTerm, tag)
+          if (tagResult.score > bestTagMatch.score) {
+            bestTagMatch = { ...tagResult, tagName: tag }
+          }
+        }
+      }
+
+      // Use the better match (name match gets priority bonus, then tags, then fields)
       const nameScore = nameResult.score > 0 ? nameResult.score + 50 : 0
+      const tagScore = bestTagMatch.score > 0 ? bestTagMatch.score + 30 : 0
       const fieldScore = bestFieldMatch.score
 
-      if (nameScore >= fieldScore) {
-        return { link, formName, ...nameResult, matchedField: null }
+      if (nameScore >= tagScore && nameScore >= fieldScore) {
+        return { link, formName, ...nameResult, matchedField: null, matchedTag: null }
+      } else if (tagScore >= fieldScore) {
+        return { link, formName, matches: [], score: tagScore, matchedField: null, matchedTag: bestTagMatch.tagName }
       } else {
-        return { link, formName, matches: [], score: fieldScore, matchedField: bestFieldMatch.fieldName }
+        return { link, formName, matches: [], score: fieldScore, matchedField: bestFieldMatch.fieldName, matchedTag: null }
       }
     })
 
@@ -61,10 +77,13 @@ export default class extends Controller {
     })
 
     // Reorder and display links
-    scored.forEach(({ link, formName, matches, score, matchedField }) => {
+    scored.forEach(({ link, formName, matches, score, matchedField, matchedTag }) => {
       if (score > 0) {
         link.style.display = ""
-        if (matchedField) {
+        if (matchedTag) {
+          // Match was in a tag - show tag below form name
+          link.innerHTML = `${this.escapeHtml(formName)}<span class="matched-tag">Tag: ${this.escapeHtml(matchedTag)}</span>`
+        } else if (matchedField) {
           // Match was in a field - show field name below form name
           link.innerHTML = `${this.escapeHtml(formName)}<span class="matched-field">Field: ${this.escapeHtml(matchedField)}</span>`
         } else {

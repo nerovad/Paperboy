@@ -6,6 +6,7 @@ class FormTemplatesController < ApplicationController
     @form_templates = FormTemplate.all.order(created_at: :desc)
     @acl_groups = fetch_acl_groups
     @employees = fetch_employees
+    @existing_tags = FormTemplate.all_tags
   end
   
   def new
@@ -130,6 +131,7 @@ class FormTemplatesController < ApplicationController
     @acl_groups = fetch_acl_groups
     @employees = fetch_employees
     @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
+    @existing_tags = FormTemplate.all_tags
   end
 
   def update
@@ -280,6 +282,7 @@ class FormTemplatesController < ApplicationController
       :powerbi_workspace_id,
       :powerbi_report_id,
       :status_transition_mode,
+      :tags,
       page_headers: [],
       inbox_buttons: []
     )

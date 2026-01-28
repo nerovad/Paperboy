@@ -9,9 +9,9 @@
 <div class="sidebar" data-controller="sidebar-search">
   <h2>Available Forms</h2>
   <% if current_user %>
-    <input 
-      type="text" 
-      placeholder="Search forms..." 
+    <input
+      type="text"
+      placeholder="Search forms, fields, tags..."
       data-sidebar-search-target="input"
       data-action="input->sidebar-search#filter"
       class="sidebar-search-input"
@@ -48,10 +48,12 @@
       end
     end
 
-    # Cache form templates with their field labels for search
+    # Cache form templates with their field labels and tags for search
     form_field_labels = {}
+    form_tags = {}
     FormTemplate.includes(:form_fields).each do |template|
       form_field_labels[template.name] = template.form_fields.pluck(:label).join(", ")
+      form_tags[template.name] = template.tags_array.join(", ")
     end
     %>
     <div data-sidebar-search-target="formsList">
@@ -60,7 +62,8 @@
             data: {
               turbo_frame: "main-content",
               sidebar_search_target: "formLink",
-              fields: form_field_labels[label] || ""
+              fields: form_field_labels[label] || "",
+              tags: form_tags[label] || ""
             } %>
       <% end %>
     </div>

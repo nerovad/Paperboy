@@ -26,6 +26,7 @@ import AutoSubmitController from "controllers/auto_submit_controller"
 import FilePreviewController from "controllers/file_preview_controller"
 import TaskSelectionController from "controllers/task_selection_controller"
 import StatusFiltersController from "controllers/status_filters_controller"
+import TagChipsController from "controllers/tag_chips_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -53,3 +54,4 @@ application.register("auto-submit", AutoSubmitController)
 application.register("file-preview", FilePreviewController)
 application.register("task-selection", TaskSelectionController)
 application.register("status-filters", StatusFiltersController)
+application.register("tag-chips", TagChipsController)

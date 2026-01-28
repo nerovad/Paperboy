@@ -5,6 +5,25 @@ class FormTemplate < ApplicationRecord
   # Virtual attribute to track routing steps being submitted (before they're saved)
   attr_accessor :pending_routing_steps
 
+  # Tags for metadata search
+  def tags_array
+    (tags || "").split(",").map(&:strip).reject(&:blank?)
+  end
+
+  def tags_array=(array)
+    self.tags = Array(array).map(&:strip).reject(&:blank?).join(",")
+  end
+
+  # Get all unique tags used across all form templates
+  def self.all_tags
+    FormTemplate.pluck(:tags)
+                .compact
+                .flat_map { |t| t.split(",").map(&:strip) }
+                .reject(&:blank?)
+                .uniq
+                .sort
+  end
+
   # Available inbox button types
   INBOX_BUTTON_TYPES = {
     'view_pdf' => { label: 'View PDF', description: 'Download or view the form as PDF' },

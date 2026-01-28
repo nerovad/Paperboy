@@ -27,14 +27,34 @@
         <!-- Step 1: Form Name -->
         <div class="form-group">
           <label for="form_name">1. Name of Form <span class="required">*</span></label>
-          <%= f.text_field :name, 
+          <%= f.text_field :name,
                           id: "form_name",
                           class: "form-control",
                           placeholder: "e.g., Authorization Request",
                           required: true,
                           data: { form_builder_target: "formName" } %>
         </div>
-        
+
+        <!-- Tags -->
+        <div class="form-group">
+          <label>Tags</label>
+          <small class="form-text" style="display: block; margin-bottom: 8px; color: #6c757d;">
+            Add tags to help users find this form. Press Enter or comma to add a tag.
+          </small>
+          <div class="tag-chips-container" data-controller="tag-chips" data-tag-chips-existing-tags-value="<%= (@existing_tags || FormTemplate.all_tags).to_json %>">
+            <div class="tag-chips-input-wrapper">
+              <div class="tag-chips" data-tag-chips-target="chips"></div>
+              <input type="text"
+                     class="tag-chips-input"
+                     placeholder="Type to add tags..."
+                     data-tag-chips-target="input"
+                     data-action="keydown->tag-chips#handleKeydown input->tag-chips#handleInput blur->tag-chips#handleBlur">
+              <div class="tag-autocomplete" data-tag-chips-target="autocomplete" style="display: none;"></div>
+            </div>
+            <%= f.hidden_field :tags, data: { tag_chips_target: "hiddenField" } %>
+          </div>
+        </div>
+
         <!-- Step 2: Access Level -->
         <div class="form-group">
           <label for="form_access">2. Access <span class="required">*</span></label>

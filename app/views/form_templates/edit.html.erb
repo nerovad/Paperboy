@@ -39,7 +39,7 @@
         <!-- Form Name (READ-ONLY) -->
         <div class="form-group">
           <label>1. Name of Form
-            <span style="margin-left: 10px; background: #6c757d; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">🔒 Locked</span>
+            <span style="margin-left: 10px; background: #6c757d; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">Locked</span>
           </label>
           <div class="form-control" style="background-color: #f5f5f5; cursor: not-allowed; color: #495057;">
             <%= @form_template.name %>
@@ -47,6 +47,29 @@
           <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-top: 5px; display: block;">
             Form name cannot be changed after creation because it determines the class name and database table.
           </small>
+        </div>
+
+        <!-- Tags -->
+        <div class="form-group">
+          <label>Tags</label>
+          <small class="form-text text-muted" style="display: block; margin-bottom: 8px; color: #6c757d;">
+            Add tags to help users find this form. Press Enter or comma to add a tag.
+          </small>
+          <div class="tag-chips-container"
+               data-controller="tag-chips"
+               data-tag-chips-existing-tags-value="<%= @existing_tags.to_json %>"
+               data-tag-chips-tags-value="<%= @form_template.tags_array.to_json %>">
+            <div class="tag-chips-input-wrapper">
+              <div class="tag-chips" data-tag-chips-target="chips"></div>
+              <input type="text"
+                     class="tag-chips-input"
+                     placeholder="Type to add tags..."
+                     data-tag-chips-target="input"
+                     data-action="keydown->tag-chips#handleKeydown input->tag-chips#handleInput blur->tag-chips#handleBlur">
+              <div class="tag-autocomplete" data-tag-chips-target="autocomplete" style="display: none;"></div>
+            </div>
+            <%= f.hidden_field :tags, value: @form_template.tags, data: { tag_chips_target: "hiddenField" } %>
+          </div>
         </div>
 
         <!-- Access Level (EDITABLE) -->
