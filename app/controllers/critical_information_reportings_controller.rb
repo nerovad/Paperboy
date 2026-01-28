@@ -62,6 +62,11 @@ class CriticalInformationReportingsController < ApplicationController
     @location_options = load_location_options
   end
 
+  def show
+    @critical_information_reporting = CriticalInformationReporting.includes(:status_changes).find(params[:id])
+    @status_changes = @critical_information_reporting.status_changes.chronological
+  end
+
   def pdf
     @critical_information_reporting = CriticalInformationReporting.find(params[:id])
     pdf_data = CriticalInformationPdfGenerator.generate(@critical_information_reporting)

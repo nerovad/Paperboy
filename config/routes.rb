@@ -74,6 +74,7 @@ Rails.application.routes.draw do
   # ============================================================================
   get "/inboxqueue", to: "inbox#queue", as: "inbox_queue"
   get "/status", to: "status#index", as: :status
+  get "/status/status_options", to: "status#status_options", as: :status_status_options
 
   # Task Reassignment Routes
   resources :task_reassignments, only: [] do
@@ -115,7 +116,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :critical_information_reportings, only: [:new, :create, :edit, :update] do
+  resources :critical_information_reportings, only: [:new, :create, :show, :edit, :update] do
     member do
       get :pdf
       get :download_media

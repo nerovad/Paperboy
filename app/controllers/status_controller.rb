@@ -6,8 +6,15 @@ class StatusController < ApplicationController
   LEGACY_FORMS = [
     { model: 'ParkingLotSubmission', type: 'Parking Lot', path_helper: :parking_lot_submission_path },
     { model: 'ProbationTransferRequest', type: 'Probation Transfer', path_helper: :probation_transfer_request_path },
-    { model: 'CriticalInformationReporting', type: 'Critical Information Report', path_helper: :edit_critical_information_reporting_path }
+    { model: 'CriticalInformationReporting', type: 'Critical Information Report', path_helper: :critical_information_reporting_path }
   ].freeze
+
+  # Map form type display names to model classes
+  FORM_TYPE_TO_MODEL = {
+    'Parking Lot' => 'ParkingLotSubmission',
+    'Probation Transfer' => 'ProbationTransferRequest',
+    'Critical Information Report' => 'CriticalInformationReporting'
+  }.freeze
 
   def index
     employee_id = session.dig(:user, "employee_id").to_s
@@ -44,9 +51,102 @@ class StatusController < ApplicationController
     sort_direction = params[:sort_direction] || 'desc'
 
     @status_items = sort_collection(@status_items, sort_by, sort_direction, status_sort_configs, default_sort: 'updated_at')
+
+    # Build status options mapping for JavaScript dynamic filtering
+    @status_options_by_type = build_status_options_by_type
+  end
+
+  def status_options
+    form_type = params[:type]
+
+    if form_type.blank?
+      # Return all statuses from all forms
+      all_statuses = collect_all_statuses
+      render json: { statuses: all_statuses }
+    else
+      statuses = statuses_for_form_type(form_type)
+      render json: { statuses: statuses }
+    end
   end
 
   private
+
+  def build_status_options_by_type
+    options = {}
+
+    # Legacy forms
+    LEGACY_FORMS.each do |form_config|
+      model_class = form_config[:model].constantize
+      statuses = statuses_from_model(model_class)
+      options[form_config[:type]] = statuses
+    rescue NameError
+      next
+    end
+
+    # Dynamic forms from FormTemplates
+    FormTemplate.joins(:statuses).distinct.each do |template|
+      model_class = template.class_name.constantize
+      statuses = statuses_from_model(model_class)
+      options[template.name] = statuses
+    rescue NameError
+      next
+    end
+
+    options
+  end
+
+  def statuses_for_form_type(form_type)
+    # Check legacy forms first
+    model_name = FORM_TYPE_TO_MODEL[form_type]
+
+    if model_name
+      model_class = model_name.constantize
+      return statuses_from_model(model_class)
+    end
+
+    # Check dynamic forms
+    template = FormTemplate.find_by(name: form_type)
+    if template
+      model_class = template.class_name.constantize
+      return statuses_from_model(model_class)
+    end
+
+    []
+  rescue NameError
+    []
+  end
+
+  def statuses_from_model(model_class)
+    if model_class.respond_to?(:statuses)
+      # Model uses enum :status
+      model_class.statuses.keys.map { |s| s.to_s.tr('_', ' ').titleize }
+    elsif model_class.const_defined?(:STATUS_MAP)
+      # Model uses STATUS_MAP (like ProbationTransferRequest)
+      model_class::STATUS_MAP.values.map { |s| s.to_s.tr('_', ' ').titleize }
+    else
+      []
+    end
+  end
+
+  def collect_all_statuses
+    all_statuses = Set.new
+
+    LEGACY_FORMS.each do |form_config|
+      model_class = form_config[:model].constantize
+      all_statuses.merge(statuses_from_model(model_class))
+    rescue NameError
+      next
+    end
+
+    FormTemplate.joins(:statuses).distinct.each do |template|
+      model_class = template.class_name.constantize
+      all_statuses.merge(statuses_from_model(model_class))
+    rescue NameError
+      next
+    end
+
+    all_statuses.to_a.sort
+  end
 
   def load_legacy_forms(employee_id)
     LEGACY_FORMS.each do |form_config|

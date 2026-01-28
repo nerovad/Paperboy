@@ -1,0 +1,386 @@
+<!-- app/views/critical_information_reportings/show.html.erb -->
+
+<div class="form-header">
+  <h1>Critical Information Report #<%= @critical_information_reporting.id %></h1>
+</div>
+
+<div class="form-wrapper">
+  <div class="form-inner">
+
+    <!-- Current Status Banner -->
+    <div class="status-banner <%= "status-#{@critical_information_reporting.status_category}" %>">
+      <strong>Current Status:</strong> <%= @critical_information_reporting.status_label %>
+    </div>
+
+    <!-- Status Audit History -->
+    <section class="summary-section">
+      <h2>Status History & Audit Trail</h2>
+      <% if @status_changes.any? %>
+        <div class="audit-timeline">
+          <table class="status-table audit-table">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Status Change</th>
+                <th>Changed By</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @status_changes.each do |change| %>
+                <tr>
+                  <td class="audit-timestamp"><%= l(change.created_at, format: :long) %></td>
+                  <td class="audit-status">
+                    <% if change.from_status.present? %>
+                      <span class="from-status"><%= change.from_status.humanize %></span>
+                      <span class="arrow">&rarr;</span>
+                    <% end %>
+                    <span class="to-status"><%= change.to_status.humanize %></span>
+                  </td>
+                  <td class="audit-user">
+                    <% if change.changed_by_name.present? %>
+                      <%= change.changed_by_name %>
+                      <% if change.changed_by_id.present? %>
+                        <span class="employee-id">(ID: <%= change.changed_by_id %>)</span>
+                      <% end %>
+                    <% else %>
+                      <span class="system-change">System</span>
+                    <% end %>
+                  </td>
+                  <td class="audit-notes"><%= change.notes.presence || "-" %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="no-history">No status history available.</p>
+      <% end %>
+    </section>
+
+    <!-- Key Dates Summary -->
+    <section class="summary-section">
+      <h2>Key Dates</h2>
+      <dl class="summary-dl">
+        <dt>Submitted</dt>
+        <dd><%= l(@critical_information_reporting.created_at, format: :long) %></dd>
+
+        <dt>Last Updated</dt>
+        <dd><%= l(@critical_information_reporting.updated_at, format: :long) %></dd>
+
+        <dt>Impact Started</dt>
+        <dd><%= @critical_information_reporting.impact_started.present? ? l(@critical_information_reporting.impact_started, format: :long) : "Not specified" %></dd>
+
+        <% first_change = @status_changes.first %>
+        <% if first_change %>
+          <dt>First Recorded Status</dt>
+          <dd><%= first_change.to_status.humanize %> on <%= l(first_change.created_at, format: :long) %></dd>
+        <% end %>
+
+        <% resolved_change = @status_changes.find { |c| c.to_status == "resolved" } %>
+        <% if resolved_change %>
+          <dt>Resolved</dt>
+          <dd><%= l(resolved_change.created_at, format: :long) %></dd>
+        <% end %>
+
+        <% cancelled_change = @status_changes.find { |c| c.to_status == "cancelled" } %>
+        <% if cancelled_change %>
+          <dt>Cancelled</dt>
+          <dd><%= l(cancelled_change.created_at, format: :long) %></dd>
+        <% end %>
+
+        <% scheduled_change = @status_changes.find { |c| c.to_status == "scheduled" } %>
+        <% if scheduled_change %>
+          <dt>Scheduled</dt>
+          <dd><%= l(scheduled_change.created_at, format: :long) %></dd>
+        <% end %>
+      </dl>
+    </section>
+
+    <!-- Employee Information -->
+    <section class="summary-section">
+      <h2>Employee Information</h2>
+      <dl class="summary-dl">
+        <dt>Employee ID</dt>
+        <dd><%= @critical_information_reporting.employee_id %></dd>
+
+        <dt>Name</dt>
+        <dd><%= @critical_information_reporting.name %></dd>
+
+        <dt>Phone</dt>
+        <dd><%= @critical_information_reporting.phone %></dd>
+
+        <dt>Email</dt>
+        <dd><%= @critical_information_reporting.email %></dd>
+      </dl>
+    </section>
+
+    <!-- Organization Information -->
+    <section class="summary-section">
+      <h2>Organization</h2>
+      <dl class="summary-dl">
+        <dt>Agency</dt>
+        <dd><%= Agency.find_by(agency_id: @critical_information_reporting.agency)&.long_name || @critical_information_reporting.agency %></dd>
+
+        <dt>Division</dt>
+        <dd><%= Division.find_by(division_id: @critical_information_reporting.division)&.long_name || @critical_information_reporting.division %></dd>
+
+        <dt>Department</dt>
+        <dd><%= Department.find_by(department_id: @critical_information_reporting.department)&.long_name || @critical_information_reporting.department %></dd>
+
+        <dt>Unit</dt>
+        <dd>
+          <% unit = Unit.find_by(unit_id: @critical_information_reporting.unit) %>
+          <%= unit ? "#{unit.unit_id} - #{unit.long_name}" : @critical_information_reporting.unit %>
+        </dd>
+      </dl>
+    </section>
+
+    <!-- Incident Information -->
+    <section class="summary-section">
+      <h2>Incident Details</h2>
+      <dl class="summary-dl">
+        <dt>Incident Type</dt>
+        <dd><%= @critical_information_reporting.incident_type %></dd>
+
+        <dt>Location</dt>
+        <dd><%= @critical_information_reporting.location %></dd>
+
+        <dt>Urgency</dt>
+        <dd><%= @critical_information_reporting.urgency %></dd>
+
+        <dt>Staff Involved</dt>
+        <dd>
+          <% staff_ids = @critical_information_reporting.staff_involved.to_s.split(",").map(&:strip).reject(&:blank?) %>
+          <% if staff_ids.any? %>
+            <ul class="staff-list">
+              <% staff_ids.each do |staff_id| %>
+                <% employee = Employee.find_by(EmployeeID: staff_id) %>
+                <li>
+                  <% if employee %>
+                    <%= employee["First_Name"] %> <%= employee["Last_Name"] %> (ID: <%= staff_id %>)
+                  <% else %>
+                    ID: <%= staff_id %>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            None specified
+          <% end %>
+        </dd>
+
+        <dt>Incident Details</dt>
+        <dd class="long-text"><%= simple_format(@critical_information_reporting.incident_details) %></dd>
+
+        <dt>Cause</dt>
+        <dd class="long-text"><%= simple_format(@critical_information_reporting.cause) %></dd>
+      </dl>
+    </section>
+
+    <!-- Impact Assessment -->
+    <section class="summary-section">
+      <h2>Impact Assessment</h2>
+      <dl class="summary-dl">
+        <dt>Impact Level</dt>
+        <dd>
+          <span class="impact-badge impact-<%= @critical_information_reporting.impact&.downcase %>">
+            <%= @critical_information_reporting.impact %>
+          </span>
+        </dd>
+
+        <dt>Impacted Customers</dt>
+        <dd><%= @critical_information_reporting.impacted_customers %></dd>
+
+        <dt>Next Steps</dt>
+        <dd class="long-text"><%= simple_format(@critical_information_reporting.next_steps) %></dd>
+      </dl>
+    </section>
+
+    <!-- Assignment Information -->
+    <section class="summary-section">
+      <h2>Assignment</h2>
+      <dl class="summary-dl">
+        <dt>Assigned Manager</dt>
+        <dd><%= @critical_information_reporting.assigned_manager_name %></dd>
+      </dl>
+    </section>
+
+    <!-- Media Attachment -->
+    <% if @critical_information_reporting.media.attached? %>
+      <section class="summary-section">
+        <h2>Attached Media</h2>
+        <div class="media-attachment">
+          <% if @critical_information_reporting.media.content_type.start_with?("image/") %>
+            <%= image_tag rails_blob_path(@critical_information_reporting.media), class: "attached-image", alt: "Attached media" %>
+          <% end %>
+          <p>
+            <strong>Filename:</strong> <%= @critical_information_reporting.media.filename %><br>
+            <strong>Size:</strong> <%= number_to_human_size(@critical_information_reporting.media.byte_size) %><br>
+            <strong>Type:</strong> <%= @critical_information_reporting.media.content_type %>
+          </p>
+          <%= link_to "Download Media", download_media_critical_information_reporting_path(@critical_information_reporting), class: "form-btn" %>
+        </div>
+      </section>
+    <% end %>
+
+    <!-- Action Buttons -->
+    <div class="form-actions" style="margin-top: 24px;">
+      <%= link_to "Back to Status", status_path, class: "form-btn" %>
+      <%= link_to "Download PDF", pdf_critical_information_reporting_path(@critical_information_reporting), target: "_blank", class: "form-btn" %>
+      <%= link_to "Edit Report", edit_critical_information_reporting_path(@critical_information_reporting), class: "form-btn" %>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .status-banner {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+    font-size: 1.1em;
+  }
+  .status-banner.status-in_review {
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+  }
+  .status-banner.status-approved {
+    background-color: #d4edda;
+    border: 1px solid #28a745;
+    color: #155724;
+  }
+  .status-banner.status-cancelled {
+    background-color: #f8d7da;
+    border: 1px solid #dc3545;
+    color: #721c24;
+  }
+  .status-banner.status-scheduled {
+    background-color: #cce5ff;
+    border: 1px solid #004085;
+    color: #004085;
+  }
+
+  .summary-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .summary-section:last-of-type {
+    border-bottom: none;
+  }
+  .summary-section h2 {
+    font-size: 1.2em;
+    margin-bottom: 16px;
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+  }
+
+  .summary-dl {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 12px 16px;
+  }
+  .summary-dl dt {
+    font-weight: 600;
+    color: #555;
+  }
+  .summary-dl dd {
+    margin: 0;
+    color: #333;
+  }
+  .summary-dl dd.long-text {
+    white-space: pre-wrap;
+  }
+
+  .audit-table {
+    width: 100%;
+    font-size: 0.95em;
+  }
+  .audit-table th {
+    text-align: left;
+    background-color: #f5f5f5;
+    padding: 10px 12px;
+  }
+  .audit-table td {
+    padding: 10px 12px;
+    vertical-align: top;
+  }
+  .audit-timestamp {
+    white-space: nowrap;
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+  .audit-status .from-status {
+    color: #666;
+  }
+  .audit-status .arrow {
+    margin: 0 6px;
+    color: #999;
+  }
+  .audit-status .to-status {
+    font-weight: 600;
+  }
+  .audit-user .employee-id {
+    color: #888;
+    font-size: 0.9em;
+  }
+  .audit-user .system-change {
+    color: #888;
+    font-style: italic;
+  }
+  .audit-notes {
+    color: #666;
+    font-style: italic;
+  }
+
+  .no-history {
+    color: #888;
+    font-style: italic;
+  }
+
+  .staff-list {
+    margin: 0;
+    padding-left: 20px;
+  }
+  .staff-list li {
+    margin-bottom: 4px;
+  }
+
+  .impact-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85em;
+  }
+  .impact-badge.impact-low {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  .impact-badge.impact-medium {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+  .impact-badge.impact-high {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+
+  .media-attachment {
+    background: #f9f9f9;
+    padding: 16px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+  }
+  .attached-image {
+    max-width: 400px;
+    max-height: 300px;
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+</style>

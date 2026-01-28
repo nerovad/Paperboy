@@ -4,7 +4,10 @@
 </div>
 
 <!-- Filter Form -->
-<div class="filter-wrapper">
+<div class="filter-wrapper"
+     data-controller="status-filters"
+     data-status-filters-status-options-value='<%= @status_options_by_type.to_json %>'
+     data-status-filters-all-statuses-value='<%= @filter_options[:statuses].to_json %>'>
   <form action="<%= status_path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
     <div class="filter-controls">
       <div class="filter-group">
@@ -12,7 +15,10 @@
         <%= select_tag :filter_type,
             options_for_select([['All', '']] + @filter_options[:types].map { |t| [t, t] }, params[:filter_type]),
             class: 'filter-select',
-            data: { action: "change->auto-submit#submit" } %>
+            data: {
+              status_filters_target: "type",
+              action: "change->status-filters#typeChanged change->auto-submit#submit"
+            } %>
       </div>
 
       <div class="filter-group">
@@ -28,7 +34,10 @@
         <%= select_tag :filter_status,
             options_for_select([['All', '']] + @filter_options[:statuses].map { |s| [s, s] }, params[:filter_status]),
             class: 'filter-select',
-            data: { action: "change->auto-submit#submit" } %>
+            data: {
+              status_filters_target: "status",
+              action: "change->auto-submit#submit"
+            } %>
       </div>
 
       <% if @is_manager && @employees.present? %>
@@ -161,7 +170,7 @@
               <%= item[:status].to_s.tr('_', ' ') %>
             </span>
             <% if item[:status_changes].any? %>
-              <button type="button" class="timeline-toggle-btn" data-timeline-id="timeline-<%= item[:type].parameterize %>-<%= item[:id] %>" title="View status history">
+              <button type="button" class="timeline-toggle-btn" data-timeline-id="timeline-<%= item[:type].parameterize %>-<%= item[:id] %>" data-action="click->status-filters#toggleTimeline" title="View status history">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"></circle>
                   <polyline points="12 6 12 12 16 14"></polyline>
@@ -188,23 +197,3 @@
 </table>
 </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Toggle timeline visibility
-    document.querySelectorAll('.timeline-toggle-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var timelineId = this.getAttribute('data-timeline-id');
-        var timelineRow = document.getElementById(timelineId);
-        if (timelineRow) {
-          if (timelineRow.style.display === 'none') {
-            timelineRow.style.display = 'table-row';
-            this.classList.add('active');
-          } else {
-            timelineRow.style.display = 'none';
-            this.classList.remove('active');
-          }
-        }
-      });
-    });
-  });
-</script>
