@@ -178,8 +178,8 @@
               </button>
             <% end %>
           </td>
-          <td class="col-submitted"><%= l(item[:submitted_at], format: :short) %></td>
-          <td class="col-updated"><%= l(item[:updated_at], format: :short) %></td>
+          <td class="col-submitted"><%= format_pst(item[:submitted_at]) %></td>
+          <td class="col-updated"><%= format_pst(item[:updated_at]) %></td>
           <td class="col-actions"><%= link_to "Open", item[:path], class: "btn" %></td>
         </tr>
         <% if item[:status_changes].any? %>

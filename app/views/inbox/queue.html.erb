@@ -271,7 +271,7 @@
                   <%= submission.status_label.to_s.tr('_', ' ').titleize %>
                 </span>
               </td>
-              <td><%= submission.created_at.strftime("%b %d, %Y") %></td>
+              <td><%= format_pst(submission.created_at) %></td>
             </tr>
           <% end %>
         <% else %>
