@@ -1,6 +1,12 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  # ============================================================================
+  # PWA
+  # ============================================================================
+  get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
+  get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+
   resources :work_schedule_or_location_update_forms do
     member do
       get :pdf
