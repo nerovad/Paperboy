@@ -9,5 +9,8 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  event.respondWith(fetch(event.request));
+  // Only handle same-origin requests; let external CDN requests pass through to the browser.
+  if (new URL(event.request.url).origin === self.location.origin) {
+    event.respondWith(fetch(event.request));
+  }
 });

@@ -4,12 +4,12 @@
 </div>
 
 <!-- Filter Form -->
-<div class="filter-wrapper"
-     data-controller="status-filters"
+<div data-controller="status-filters"
      data-status-filters-status-options-value='<%= @status_options_by_type.to_json %>'
      data-status-filters-all-statuses-value='<%= @filter_options[:statuses].to_json %>'
      data-status-filters-title-options-value='<%= @title_options_by_type.to_json %>'
      data-status-filters-all-titles-value='<%= @filter_options[:titles].to_json %>'>
+<div class="filter-wrapper">
   <form action="<%= status_path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
     <div class="filter-controls">
       <div class="filter-group">
@@ -209,4 +209,4 @@
   </tbody>
 </table>
 </div>
-
+</div>
