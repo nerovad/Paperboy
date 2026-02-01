@@ -13,20 +13,27 @@ Rails.application.configure do
     policy.script_src  :self, :https, :unsafe_inline, :unsafe_eval,
                        'https://cdn.jsdelivr.net',
                        'https://app.powerbi.com',
-                       'https://login.microsoftonline.com'
+                       'https://app.powerbigov.us',
+                       'https://login.microsoftonline.com',
+                       'https://login.microsoftonline.us'
     policy.style_src   :self, :https, :unsafe_inline,
                        'https://cdn.jsdelivr.net'
 
     # Allow Power BI iframes
     policy.frame_src   :self,
                        'https://app.powerbi.com',
-                       'https://login.microsoftonline.com'
+                       'https://app.powerbigov.us',
+                       'https://login.microsoftonline.com',
+                       'https://login.microsoftonline.us'
 
     # Allow connections to Power BI services
     policy.connect_src :self,
                        'https://app.powerbi.com',
+                       'https://app.powerbigov.us',
                        'https://api.powerbi.com',
+                       'https://api.powerbigov.us',
                        'https://login.microsoftonline.com',
+                       'https://login.microsoftonline.us',
                        'https://wabi-us-gov-virginia-api.analysis.usgovcloudapi.net',
                        'wss://wabi-us-gov-virginia-api.analysis.usgovcloudapi.net'
   end
