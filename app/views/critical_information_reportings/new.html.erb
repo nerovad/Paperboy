@@ -116,7 +116,7 @@
 <div class="form-page" style="display:none;">
   <h2>Incident Info</h2>
 
-  <div class="form-row">
+  <div class="form-row" data-controller="urgency-map">
     <div class="form-group">
       <%= form.label :incident_type, "Incident Type" %>
       <%= form.select :incident_type,
@@ -135,7 +135,11 @@
             ]),
             { prompt: 'Select Incident Type' },
             class: "form-control",
-            required: true %>
+            required: true,
+            data: {
+              urgency_map_target: "incidentType",
+              action: "change->urgency-map#mapUrgency"
+            } %>
     </div>
 
     <div class="form-group">
@@ -150,10 +154,12 @@
     <div class="form-group">
       <%= form.label :urgency, "Urgency of Reporting" %>
       <%= form.select :urgency,
-            options_for_select(['1 Immediate', '2 Earliest convenience', '3 Before it happens']),
+            options_for_select(['Immediate', 'Earliest convenience', 'Before it happens']),
             { prompt: 'Select Urgency' },
             class: "form-control",
-            required: true %>
+            disabled: true,
+            data: { urgency_map_target: "urgency" } %>
+      <%= form.hidden_field :urgency, data: { urgency_map_target: "hiddenUrgency" } %>
     </div>
 
     <div class="form-group" data-controller="choices">
