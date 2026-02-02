@@ -12,3 +12,316 @@
     flex: 0 0 auto;
   }
 }
+
+// CIR Show Page
+
+.status-banner {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .status-date {
+    font-size: 0.85em;
+    opacity: 0.8;
+  }
+
+  &.status-in_review {
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+  }
+
+  &.status-approved {
+    background-color: #d4edda;
+    border: 1px solid #28a745;
+    color: #155724;
+  }
+
+  &.status-cancelled {
+    background-color: #f8d7da;
+    border: 1px solid #dc3545;
+    color: #721c24;
+  }
+
+  &.status-scheduled {
+    background-color: #cce5ff;
+    border: 1px solid #004085;
+    color: #004085;
+  }
+}
+
+.incident-hero {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+}
+
+.incident-type-banner {
+  font-size: 1.5em;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #dc3545;
+}
+
+.incident-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-label {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  color: #666;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.meta-value {
+  font-size: 0.95em;
+  color: #333;
+
+  &.urgency {
+    font-weight: 600;
+    color: #c00;
+  }
+}
+
+.incident-description,
+.incident-cause,
+.incident-next-steps {
+  margin-bottom: 12px;
+
+  strong {
+    display: block;
+    font-size: 0.85em;
+    color: #555;
+    margin-bottom: 4px;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.5;
+    color: #333;
+  }
+}
+
+// Impact Badge
+.impact-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8em;
+
+  &.impact-low {
+    background-color: #d4edda;
+    color: #155724;
+  }
+
+  &.impact-medium {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+
+  &.impact-high {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+}
+
+// Info Grid
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.info-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 14px;
+
+  h3 {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    color: #666;
+    margin: 0 0 8px 0;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .primary {
+    font-size: 1em;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+  }
+
+  .secondary {
+    font-size: 0.85em;
+    color: #666;
+    margin: 4px 0 0 0;
+  }
+}
+
+// Staff Section
+.staff-section {
+  margin-bottom: 24px;
+
+  h3 {
+    font-size: 0.85em;
+    text-transform: uppercase;
+    color: #666;
+    margin: 0 0 10px 0;
+    font-weight: 600;
+  }
+}
+
+.staff-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.staff-chip {
+  background: #e9ecef;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.9em;
+  color: #333;
+}
+
+// Media Section
+.media-section {
+  margin-bottom: 24px;
+
+  h3 {
+    font-size: 0.85em;
+    text-transform: uppercase;
+    color: #666;
+    margin: 0 0 10px 0;
+    font-weight: 600;
+  }
+}
+
+.media-attachment {
+  background: #f9f9f9;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  display: inline-block;
+
+  p {
+    margin: 0 0 6px 0;
+    font-size: 0.9em;
+    color: #666;
+  }
+}
+
+.attached-image {
+  max-width: 300px;
+  max-height: 200px;
+  display: block;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+.btn-link {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 0.9em;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Audit Section
+.audit-section {
+  margin-bottom: 24px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+
+  summary {
+    padding: 12px 16px;
+    cursor: pointer;
+    background: #f8f9fa;
+    border-radius: 6px;
+
+    h3 {
+      display: inline;
+      font-size: 0.95em;
+      color: #333;
+      margin: 0;
+    }
+  }
+
+  &[open] summary {
+    border-bottom: 1px solid #e0e0e0;
+    border-radius: 6px 6px 0 0;
+  }
+}
+
+.audit-table {
+  width: 100%;
+  font-size: 0.9em;
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    font-weight: 600;
+    color: #555;
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.from-status {
+  color: #888;
+}
+
+.no-history {
+  padding: 16px;
+  color: #888;
+  font-style: italic;
+}
+
+// Action Buttons
+.form-actions {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
