@@ -95,7 +95,7 @@ module TrackableStatus
       from_status: nil,
       to_status: status_label,
       changed_by_id: Current.user&.dig("employee_id")&.to_s,
-      changed_by_name: Current.user&.dig("name") || name
+      changed_by_name: current_user_display_name || name
     )
   end
 
@@ -104,8 +104,13 @@ module TrackableStatus
       from_status: status_label_was,
       to_status: status_label,
       changed_by_id: Current.user&.dig("employee_id")&.to_s,
-      changed_by_name: Current.user&.dig("name")
+      changed_by_name: current_user_display_name
     )
+  end
+
+  def current_user_display_name
+    return nil unless Current.user
+    [Current.user["first_name"], Current.user["last_name"]].compact.join(" ").presence
   end
 
   def status_label_was
