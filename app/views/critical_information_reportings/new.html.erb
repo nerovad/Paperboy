@@ -112,20 +112,150 @@
 </div>
       </div>
 
-<!-- Page 3:  -->
+<!-- Page 3: Incident Info -->
 <div class="form-page" style="display:none;">
-  <h2></h2>
-      </div>
+  <h2>Incident Info</h2>
 
-<!-- Page 4:  -->
-<div class="form-page" style="display:none;">
-  <h2></h2>
-      </div>
+  <div class="form-row">
+    <div class="form-group">
+      <%= form.label :incident_type, "Incident Type" %>
+      <%= form.select :incident_type,
+            options_for_select([
+              'Approved Event Permit',
+              'CEO Interest',
+              'Elevator Outage (Entrapment)',
+              'Elevator Outage (No Entrapment)',
+              'Generator of Alarm Testing',
+              'HVAC',
+              'Natural Disaster',
+              'Planned Outage',
+              'Unplanned Outage',
+              'Safety Incident',
+              'Tree Removal'
+            ]),
+            { prompt: 'Select Incident Type' },
+            class: "form-control",
+            required: true %>
+    </div>
 
-<!-- Page 5:  -->
+    <div class="form-group">
+      <%= form.label :location, "Where: Location" %>
+      <%= form.select :location,
+            options_for_select(@location_options),
+            { prompt: 'Select Location' },
+            class: "form-control",
+            required: true %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :urgency, "Urgency of Reporting" %>
+      <%= form.select :urgency,
+            options_for_select(['1 Immediate', '2 Earliest convenience', '3 Before it happens']),
+            { prompt: 'Select Urgency' },
+            class: "form-control",
+            required: true %>
+    </div>
+
+    <div class="form-group" data-controller="choices">
+      <%= form.label :staff_involved, "Staff Involved" %>
+      <%= form.select :staff_involved,
+            options_for_select(@employee_options),
+            {},
+            multiple: true,
+            class: "form-control",
+            required: true,
+            data: {
+              choices_target: "select",
+              placeholder: "Select staff member(s)…"
+            } %>
+      <small class="help-text">
+        Select one or more staff members involved in the incident
+      </small>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :incident_details, "Incident Details" %>
+      <%= form.text_area :incident_details,
+            class: "form-control incident-textarea",
+            rows: 5,
+            required: true,
+            placeholder: "Describe the incident in detail..." %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :cause, "Cause" %>
+      <%= form.text_area :cause,
+            class: "form-control cause-textarea",
+            rows: 5,
+            required: true,
+            placeholder: "Describe the cause..." %>
+    </div>
+  </div>
+</div>
+
+<!-- Page 4: Impact -->
+<div class="form-page" style="display:none;" data-controller="conditional-field">
+  <h2>Impact</h2>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= form.label :impact, "Impact" %>
+      <%= form.select :impact,
+            options_for_select(['Low', 'Medium', 'High']),
+            { prompt: 'Select Impact Level' },
+            class: "form-control",
+            required: true %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :impact_started, "When: Impact Started" %>
+      <%= form.datetime_local_field :impact_started,
+            class: "form-control",
+            required: true %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :impacted_customers, "Impacted Customers" %>
+      <%= form.select :impacted_customers,
+            options_for_select(@agency_options),
+            { prompt: 'Select Agency' },
+            class: "form-control",
+            required: true %>
+    </div>
+  </div>
+</div>
+
+<!-- Page 5: Outcome -->
 <div class="form-page" style="display:none;">
-  <h2></h2>
-      </div>
+  <h2>Outcome</h2>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= form.label :next_steps, "Next Steps" %>
+      <%= form.text_area :next_steps,
+            class: "form-control next-textarea",
+            rows: 3,
+            required: true,
+            placeholder: "Describe the next steps..." %>
+    </div>
+
+    <div class="form-group" data-controller="file-preview">
+      <%= form.label :media, "Media (Photo, PDF, etc.)" %>
+      <%= form.file_field :media,
+            class: "form-control",
+            accept: "image/jpeg,image/png,image/gif,application/pdf",
+            direct_upload: true,
+            data: {
+              file_preview_target: "input",
+              action: "change->file-preview#preview"
+            } %>
+      <small class="help-text text-muted">
+        Upload a photo (JPEG, PNG, GIF) or PDF file (maximum 10 MB)
+      </small>
+      <div data-file-preview-target="preview"></div>
+    </div>
+  </div>
+</div>
 
     <!-- Navigation Buttons -->
     <div class="navigation-buttons d-flex justify-content-between">
