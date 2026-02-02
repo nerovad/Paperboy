@@ -135,11 +135,7 @@ Rails.application.routes.draw do
   # ============================================================================
   # Standard Forms (alphabetical)
   # ============================================================================
-  resources :bike_locker_permits
   resources :creative_job_requests, only: [:new, :create]
-  resources :loa_forms, only: [:new, :create]
-  resources :rm75_forms, only: [:new, :create]
-  resources :rm75i_forms, only: [:new, :create]
 
   # ============================================================================
   # Lookups & Dynamic Data

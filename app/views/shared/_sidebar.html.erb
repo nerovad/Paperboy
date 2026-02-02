@@ -19,11 +19,9 @@
     <% 
     # Most forms are public (available to all employees)
     public_forms = [
-      ["Bike Locker Permit", new_bike_locker_permit_path],
       ["Billing Tools", new_billing_tool_path],
       ["Creative Job Request", new_creative_job_request_path],
       ["Critical Information Reporting", new_critical_information_reporting_path],
-      ["Leave of Absence", new_loa_form_path],
       ["Parking Permit Application", new_parking_lot_submission_path],
       ["Probation Agency Transfer Request", new_probation_transfer_request_path],
       ["Carpool Form", new_carpool_form_path],
@@ -32,21 +30,8 @@
       ["Work Schedule Or Location Update Form", new_work_schedule_or_location_update_form_path],
     ]
     
-    # Restricted forms - only for specific groups
-    restricted_forms = [
-      ["RM-75 Injury/Illness Report", new_rm75_form_path, ["Safety_Officers", "System_Admins"]],
-      ["RM-75i Incident Investigation", new_rm75i_form_path, ["Safety_Officers", "System_Admins"]],
-    ]
-    
     # Build available forms list
     available_forms = public_forms.dup
-    
-    # Add restricted forms if user has access
-    restricted_forms.each do |label, path, required_groups|
-      if current_user.in_any_group?(*required_groups)
-        available_forms << [label, path]
-      end
-    end
 
     # Cache form templates with their field labels and tags for search
     form_field_labels = {}

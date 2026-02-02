@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_28_220732) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_02_232406) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -418,19 +418,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_220732) do
     t.index ["employee_id"], name: "index_authorized_approvers_on_employee_id"
   end
 
-  create_table "bike_locker_permits", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "carpool_forms", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
@@ -506,22 +493,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_220732) do
     t.string "division_id", limit: 4, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
-  end
-
-  create_table "events", force: :cascade do |t|
-    t.string "event_type", null: false
-    t.string "subtype"
-    t.integer "employee_id", null: false
-    t.integer "reported_by_id"
-    t.datetime "event_date", null: false
-    t.string "location"
-    t.boolean "on_premises"
-    t.text "initial_summary"
-    t.date "date_reported"
-    t.date "date_resolved"
-    t.string "status", default: "open"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "form_fields", force: :cascade do |t|
@@ -628,46 +599,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_220732) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "loa_forms", force: :cascade do |t|
-    t.bigint "event_id", null: false
-    t.date "last_date_worked"
-    t.date "leave_start_date"
-    t.date "leave_end_date"
-    t.boolean "extension_requested"
-    t.text "requested_during_leave"
-    t.boolean "applying_for_disability"
-    t.string "leave_type"
-    t.text "leave_reason"
-    t.string "emp_initials_1"
-    t.date "initial_date_1"
-    t.string "biweekly_hours"
-    t.string "pay_status_during_leave"
-    t.text "estimated_leave_balances"
-    t.text "expected_disability_benefits"
-    t.text "notes_1"
-    t.boolean "agreed_to_terms"
-    t.string "emp_initials_2"
-    t.date "initial_date_2"
-    t.date "waive_benefits_start_date"
-    t.date "waive_benefits_end_date"
-    t.text "waived_sources"
-    t.string "emp_initials_3"
-    t.date "initial_date_3"
-    t.boolean "employee_verified_info"
-    t.text "notes_2"
-    t.string "request_status"
-    t.string "team_signature"
-    t.string "sig_employee_id"
-    t.date "sig_date"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "employee_id"
-    t.string "employee_name"
-    t.string "work_email"
-    t.index ["employee_id"], name: "index_loa_forms_on_employee_id"
-    t.index ["event_id"], name: "index_loa_forms_on_event_id"
-  end
-
   create_table "major_programs", primary_key: ["agency_id", "major_program_id"], force: :cascade do |t|
     t.string "agency_id", limit: 3, null: false
     t.string "major_program_id", limit: 10, null: false
@@ -678,29 +609,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_220732) do
   create_table "objects", primary_key: "object_id", id: { type: :integer, limit: 2, default: nil }, force: :cascade do |t|
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
-  end
-
-  create_table "osha_301_forms", force: :cascade do |t|
-    t.bigint "event_id", null: false
-    t.string "physician_name"
-    t.string "treatment_location"
-    t.boolean "treated_in_er"
-    t.boolean "hospitalized_overnight"
-    t.string "case_number"
-    t.date "date_of_injury"
-    t.time "time_began_work", precision: 7
-    t.time "time_of_event", precision: 7
-    t.text "activity_before_incident"
-    t.text "incident_description"
-    t.text "injury_type"
-    t.text "harmful_object"
-    t.string "completed_by"
-    t.string "completed_by_title"
-    t.string "completed_by_phone"
-    t.date "completion_date"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_osha_301_forms_on_event_id"
   end
 
   create_table "parking_lot_submissions", force: :cascade do |t|
@@ -795,67 +703,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_220732) do
   create_table "revenue_sources", primary_key: "revenue_id", id: { type: :integer, limit: 2, default: nil }, force: :cascade do |t|
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
-  end
-
-  create_table "rm75_forms", force: :cascade do |t|
-    t.bigint "event_id", null: false
-    t.string "report_type"
-    t.boolean "bloodborne_pathogen"
-    t.string "job_title"
-    t.string "work_hours"
-    t.integer "hours_per_week"
-    t.string "supervisor_name"
-    t.string "supervisor_title"
-    t.string "supervisor_email"
-    t.string "supervisor_phone"
-    t.string "form_completed_by"
-    t.date "date_of_injury"
-    t.time "time_of_injury", precision: 7
-    t.text "injury_description"
-    t.date "date_last_worked"
-    t.date "date_returned_to_work"
-    t.string "location_of_event"
-    t.boolean "on_employers_premises"
-    t.string "department_of_exposure"
-    t.text "equipment_in_use"
-    t.text "specific_activity"
-    t.text "injury_sequence"
-    t.string "physician_name"
-    t.string "physician_address"
-    t.string "physician_phone"
-    t.string "hospital_name"
-    t.string "hospital_address"
-    t.string "hospital_phone"
-    t.boolean "hospitalized_overnight"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_rm75_forms_on_event_id"
-  end
-
-  create_table "rm75i_forms", force: :cascade do |t|
-    t.bigint "event_id", null: false
-    t.string "investigator_name"
-    t.string "investigator_title"
-    t.string "investigator_phone"
-    t.boolean "osha_recordable"
-    t.boolean "osha_reportable"
-    t.text "incident_nature"
-    t.text "incident_cause"
-    t.text "root_cause"
-    t.string "severity_potential"
-    t.string "recurrence_probability"
-    t.text "reportable_injury_codes"
-    t.boolean "corrected_immediately"
-    t.boolean "procedures_modified"
-    t.string "responsible_person"
-    t.string "responsible_title"
-    t.string "responsible_department"
-    t.string "responsible_phone"
-    t.date "target_completion_date"
-    t.date "actual_completion_date"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_rm75i_forms_on_event_id"
   end
 
   create_table "scheduled_reports", force: :cascade do |t|
@@ -987,15 +834,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_220732) do
   add_foreign_key "TC60", "TC60_Types", column: "TYPE", primary_key: "TYPE", name: "FK_TC60_TYPE_TC60_TYPES"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "events", "Employees_Old", column: "employee_id", primary_key: "EmployeeID"
-  add_foreign_key "events", "Employees_Old", column: "reported_by_id", primary_key: "EmployeeID"
   add_foreign_key "form_fields", "form_templates"
   add_foreign_key "form_template_routing_steps", "form_template_statuses"
   add_foreign_key "form_template_routing_steps", "form_templates"
   add_foreign_key "form_template_statuses", "form_templates"
-  add_foreign_key "loa_forms", "events"
-  add_foreign_key "osha_301_forms", "events"
   add_foreign_key "parking_lot_vehicles", "parking_lot_submissions"
-  add_foreign_key "rm75_forms", "events"
-  add_foreign_key "rm75i_forms", "events"
 end
