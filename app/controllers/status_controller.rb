@@ -174,13 +174,14 @@ class StatusController < ApplicationController
       next unless model_class.respond_to?(:status_category) || model_class.new.respond_to?(:status_category)
 
       # Build includes based on model associations
-      includes_list = [:status_changes]
+      includes_list = []
       includes_list << :parking_lot_vehicles if model_class.reflect_on_association(:parking_lot_vehicles)
 
       submissions = if @is_manager
-                      model_class.includes(includes_list)
+                      includes_list.any? ? model_class.includes(includes_list) : model_class.all
                     else
-                      model_class.for_employee(employee_id).includes(includes_list)
+                      scope = model_class.for_employee(employee_id)
+                      includes_list.any? ? scope.includes(includes_list) : scope
                     end
 
       submissions.each do |submission|
@@ -203,12 +204,12 @@ class StatusController < ApplicationController
       next unless model_class.new.respond_to?(:status_category)
 
       submissions = if @is_manager
-                      model_class.includes(:status_changes)
+                      model_class.all
                     else
                       if model_class.respond_to?(:for_employee)
-                        model_class.for_employee(employee_id).includes(:status_changes)
+                        model_class.for_employee(employee_id)
                       else
-                        model_class.where(employee_id: employee_id).includes(:status_changes)
+                        model_class.where(employee_id: employee_id)
                       end
                     end
 
@@ -272,7 +273,6 @@ class StatusController < ApplicationController
       path: path,
       employee_id: submission.employee_id,
       employee_name: submission.name,
-      status_changes: submission.status_changes.chronological.to_a
     }
   end
 

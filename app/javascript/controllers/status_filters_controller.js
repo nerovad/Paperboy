@@ -83,20 +83,4 @@ export default class extends Controller {
       // On page load, restore the URL param value if valid
       this.titleTarget.value = this.currentTitleValue
     }
-  }
-
-  // Timeline toggle functionality
-  toggleTimeline(event) {
-    const timelineId = event.currentTarget.getAttribute('data-timeline-id')
-    const timelineRow = document.getElementById(timelineId)
-    if (timelineRow) {
-      if (timelineRow.style.display === 'none') {
-        timelineRow.style.display = 'table-row'
-        event.currentTarget.classList.add('active')
-      } else {
-        timelineRow.style.display = 'none'
-        event.currentTarget.classList.remove('active')
-      }
-    }
-  }
-}
+  }}

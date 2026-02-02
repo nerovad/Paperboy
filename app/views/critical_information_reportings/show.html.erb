@@ -84,11 +84,20 @@
       <div class="info-card">
         <h3>Reported By</h3>
         <p class="primary"><%= @critical_information_reporting.name %></p>
-        <p class="secondary"><%= @critical_information_reporting.phone %> | <%= @critical_information_reporting.email %></p>
-        <p class="primary"><%= Agency.find_by(agency_id: @critical_information_reporting.agency)&.long_name || @critical_information_reporting.agency %></p>
-        <p class="secondary">
-          <%= Division.find_by(division_id: @critical_information_reporting.division)&.long_name || @critical_information_reporting.division %>
-        </p>
+        <div class="contact-details">
+          <% if @critical_information_reporting.phone.present? %>
+            <span><%= link_to @critical_information_reporting.phone, "tel:#{@critical_information_reporting.phone}" %></span>
+          <% end %>
+          <% if @critical_information_reporting.email.present? %>
+            <span><%= link_to @critical_information_reporting.email, "mailto:#{@critical_information_reporting.email}" %></span>
+          <% end %>
+        </div>
+        <div class="org-details">
+          <p class="primary"><%= Agency.find_by(agency_id: @critical_information_reporting.agency)&.long_name || @critical_information_reporting.agency %></p>
+          <p class="secondary">
+            <%= Division.find_by(division_id: @critical_information_reporting.division)&.long_name || @critical_information_reporting.division %>
+          </p>
+        </div>
       </div>
 
       <div class="info-card">

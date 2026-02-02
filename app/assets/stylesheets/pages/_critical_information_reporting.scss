@@ -182,6 +182,29 @@
     color: #666;
     margin: 4px 0 0 0;
   }
+
+  .contact-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 4px 0 0 0;
+    font-size: 0.85em;
+
+    a {
+      color: #1a73e8;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .org-details {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e0e0e0;
+  }
 }
 
 // Staff Section

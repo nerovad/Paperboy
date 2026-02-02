@@ -171,7 +171,7 @@
   <tbody>
     <% if @status_items.present? %>
       <% @status_items.each do |item| %>
-        <tr class="status-row" data-has-timeline="<%= item[:status_changes].any? %>">
+        <tr class="status-row">
           <td class="col-type"><%= item[:type] %></td>
           <td class="col-title"><%= item[:title] %></td>
           <% if @is_manager %>
@@ -182,26 +182,11 @@
             <span class="badge <%= category_badge_class(item[:status_category]) %>">
               <%= item[:status].to_s.tr('_', ' ') %>
             </span>
-            <% if item[:status_changes].any? %>
-              <button type="button" class="timeline-toggle-btn" data-timeline-id="timeline-<%= item[:type].parameterize %>-<%= item[:id] %>" data-action="click->status-filters#toggleTimeline" title="View status history">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-              </button>
-            <% end %>
           </td>
           <td class="col-submitted"><%= format_pst(item[:submitted_at]) %></td>
           <td class="col-updated"><%= format_pst(item[:updated_at]) %></td>
           <td class="col-actions"><%= link_to "Open", item[:path], class: "btn" %></td>
         </tr>
-        <% if item[:status_changes].any? %>
-          <tr class="timeline-row" id="timeline-<%= item[:type].parameterize %>-<%= item[:id] %>" style="display: none;">
-            <td colspan="<%= @is_manager ? 9 : 7 %>">
-              <%= render partial: 'status_timeline', locals: { status_changes: item[:status_changes], item_id: "#{item[:type].parameterize}-#{item[:id]}" } %>
-            </td>
-          </tr>
-        <% end %>
       <% end %>
     <% else %>
       <tr><td colspan="<%= @is_manager ? 9 : 7 %>">No submissions found.</td></tr>
