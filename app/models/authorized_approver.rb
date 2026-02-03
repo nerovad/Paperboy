@@ -5,6 +5,10 @@ class AuthorizedApprover < ApplicationRecord
   validates :service_type, presence: true, inclusion: { in: %w[P E V C K] }
   validates :key_type, inclusion: { in: %w[1 2 3 4 5 6 7] }, if: -> { service_type == 'K' }
   validates :span, inclusion: { in: %w[A B C D E] }, allow_blank: true
+  validates :service_type, uniqueness: {
+    scope: [:department_id, :key_type],
+    message: "already has an approver assigned for this service type in this department"
+  }
   
   SERVICE_TYPES = {
     'P' => 'Parking Permits',
@@ -55,5 +59,17 @@ class AuthorizedApprover < ApplicationRecord
   # Find approvers for a given department and service type
   def self.approvers_for(department_id:, service_type:)
     where(department_id: department_id, service_type: service_type).pluck(:employee_id).uniq
+  end
+
+  # Find approvers for a given department, service type, and budget unit.
+  # Span 'A' (All Budget Units) matches any unit. All other spans require
+  # the unit to appear in the approver's comma-separated budget_units list.
+  def self.approver_for_unit(department_id:, service_type:, unit_id:)
+    candidates = where(department_id: department_id, service_type: service_type)
+    unit_str = unit_id.to_s
+
+    candidates.select { |a|
+      a.span == 'A' || a.budget_units.to_s.split(',').map(&:strip).include?(unit_str)
+    }.map(&:employee_id).uniq
   end
 end

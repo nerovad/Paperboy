@@ -86,27 +86,35 @@ def create
   emp_record = Employee.find_by(EmployeeID: employee_id)
   unit = Unit.find_by(unit_id: emp_record["Unit"])
   department = unit ? Department.find_by(department_id: unit["department_id"]) : nil
-  
-  # Check for authorized approvers for parking permits
-  authorized_approvers = if department
-    AuthorizedApprover.approvers_for(
+
+  # Build the submission early so we can access the submitted unit
+  @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
+  @parking_lot_submission.employee_id = employee_id
+  submitted_unit = @parking_lot_submission.unit
+
+  # Find authorized approver for parking permits matching the submitter's budget unit
+  authorized_approvers = if department && submitted_unit.present?
+    AuthorizedApprover.approver_for_unit(
       department_id: department.department_id,
-      service_type: 'P'
+      service_type: 'P',
+      unit_id: submitted_unit
     )
   else
     []
   end
-  
-  # Determine supervisor: use authorized approver if exists, otherwise use direct supervisor
-  supervisor_id = if authorized_approvers.any?
-    authorized_approvers.first
-  else
-    fetch_supervisor_id(employee_id)
+
+  # MB3 employees skip approval routing entirely
+  unless is_mb3
+    if authorized_approvers.empty?
+      @parking_lot_submission.errors.add(:base, "No authorized approver found for Parking Permits in your budget unit. Please contact your department's authorization manager.")
+      @is_mb3 = false
+      base_lots = ["A Lot", "B Lot", "C Lot", "D Lot", "Employee Lot", "Visitor Lot"]
+      @allowed_parking_lots = base_lots
+      reload_form_options(emp_record)
+      render :new, status: :unprocessable_entity and return
+    end
   end
-  
-  @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
-  @parking_lot_submission.employee_id = employee_id
-  
+
   if is_mb3
     # Auto-approve: no manager routing
     @parking_lot_submission.status        = 1 # manager_approved
@@ -114,12 +122,12 @@ def create
     @parking_lot_submission.approved_by   = employee_id # or "SYSTEM"
     @parking_lot_submission.approved_at   = Time.current
   else
-    # Normal path: submitted and routed to authorized approver or supervisor
-    @parking_lot_submission.status        = 0 # submitted
-    @parking_lot_submission.supervisor_id = supervisor_id
-    @parking_lot_submission.supervisor_email  = fetch_employee_email(supervisor_id)
+    # Normal path: submitted and routed to authorized approver for their budget unit
+    @parking_lot_submission.status           = 0 # submitted
+    @parking_lot_submission.supervisor_id    = authorized_approvers.first
+    @parking_lot_submission.supervisor_email = fetch_employee_email(authorized_approvers.first)
   end
-  
+
   if @parking_lot_submission.save
     if is_mb3
       NotifySecurityJob.perform_later(@parking_lot_submission.id)
@@ -129,6 +137,7 @@ def create
     @is_mb3 = is_mb3
     base_lots = ["A Lot", "B Lot", "C Lot", "D Lot", "Employee Lot", "Visitor Lot"]
     @allowed_parking_lots = is_mb3 ? (base_lots + ["R Lot"]) : base_lots
+    reload_form_options(emp_record)
     render :new, status: :unprocessable_entity
   end
 end
@@ -248,6 +257,18 @@ end
       WHERE EmployeeID = '#{emp_id}'
     SQL
     row&.fetch("EE_Email", nil)
+  end
+
+  def reload_form_options(emp_record)
+    unit       = Unit.find_by(unit_id: emp_record["Unit"])
+    department = unit ? Department.find_by(department_id: unit["department_id"]) : nil
+    division   = department ? Division.find_by(division_id: department["division_id"]) : nil
+    agency     = division ? Agency.find_by(agency_id: division["agency_id"]) : nil
+
+    @agency_options     = Agency.order(:long_name).pluck(:long_name, :agency_id)
+    @division_options   = division ? Division.where(agency_id: agency&.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
+    @department_options = department ? Department.where(division_id: division&.division_id).order(:long_name).pluck(:long_name, :department_id) : []
+    @unit_options       = department ? Unit.where(department_id: department.department_id).order(:unit_id).map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] } : []
   end
 
   def parking_lot_submission_params
