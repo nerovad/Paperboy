@@ -108,7 +108,7 @@
 
         <div id="vehicle-wrapper">
           <%= form.fields_for :parking_lot_vehicles do |vf| %>
-            <div class="vehicle-fields form-row border p-3 rounded mb-4">
+            <div class="vehicle-fields form-row border p-3 rounded mb-4" data-controller="nhtsa-vehicle">
               <%= render partial: "vehicle_fields", locals: { vf: vf } %>
             </div>
           <% end %>
@@ -141,7 +141,7 @@
       <!-- Vehicle Template -->
       <div id="vehicle-template" style="display: none;">
         <%= form.fields_for :parking_lot_vehicles, ParkingLotVehicle.new, child_index: "NEW_RECORD" do |vf| %>
-          <div class="vehicle-fields form-row border p-3 rounded mb-4"> <%= render partial: "vehicle_fields", locals: { vf: vf } %> 
+          <div class="vehicle-fields form-row border p-3 rounded mb-4" data-controller="nhtsa-vehicle"> <%= render partial: "vehicle_fields", locals: { vf: vf } %>
             <button type="button" class="remove-vehicle-btn">− Remove</button>
           </div>
         <% end %>

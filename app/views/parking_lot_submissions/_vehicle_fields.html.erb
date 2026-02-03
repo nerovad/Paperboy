@@ -9,22 +9,48 @@
 %>
 
 <div class="form-group">
-  <%= vf.text_field :make, placeholder: "Make", class: "form-control", required: is_first %>
+  <%= vf.select :year,
+        options_for_select((1920..Date.today.year).to_a.reverse),
+        { prompt: "Select Year" },
+        class: "form-control",
+        required: is_first,
+        data: {
+          nhtsa_vehicle_target: "year",
+          action: "change->nhtsa-vehicle#yearChanged"
+        } %>
 </div>
 <div class="form-group">
-  <%= vf.text_field :model, placeholder: "Model", class: "form-control", required: is_first %>
+  <select data-nhtsa-vehicle-target="make"
+          data-action="change->nhtsa-vehicle#makeChanged"
+          class="form-control" disabled>
+    <option value="">Select Make</option>
+  </select>
+  <%= vf.hidden_field :make, data: { nhtsa_vehicle_target: "hiddenMake" } %>
+  <input type="text"
+         placeholder="Enter Make"
+         class="form-control mt-1"
+         style="display: none;"
+         data-nhtsa-vehicle-target="otherMake"
+         data-action="input->nhtsa-vehicle#otherMakeTyped">
+</div>
+<div class="form-group">
+  <select data-nhtsa-vehicle-target="model"
+          data-action="change->nhtsa-vehicle#modelChanged"
+          class="form-control" disabled>
+    <option value="">Select Model</option>
+  </select>
+  <%= vf.hidden_field :model, data: { nhtsa_vehicle_target: "hiddenModel" } %>
+  <input type="text"
+         placeholder="Enter Model"
+         class="form-control mt-1"
+         style="display: none;"
+         data-nhtsa-vehicle-target="otherModel"
+         data-action="input->nhtsa-vehicle#otherModelTyped">
 </div>
 <div class="form-group">
   <%= vf.select :color,
         options_for_select(%w[White Black Silver Blue Red Green Yellow Gray Brown]),
         { prompt: "Select Color" },
-        class: "form-control",
-        required: is_first %>
-</div>
-<div class="form-group">
-  <%= vf.select :year,
-        options_for_select((1920..Date.today.year).to_a.reverse),
-        { prompt: "Select Year" },
         class: "form-control",
         required: is_first %>
 </div>
