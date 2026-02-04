@@ -82,23 +82,11 @@
                 <%= link_to "Status", status_path, class: "btn btn-primary" %>
                 <%= link_to "Dashboards", dashboards_path, class: "btn btn-primary" %>
 
-                <% if AuthorizationManager.exists?(employee_id: session.dig(:user, "employee_id").to_s) %>
-                  <%= link_to "Auth Console", authorization_console_index_path, class: "btn btn-primary" %>
-                <% end %>
-                
                 <% if system_admin? %>
+                  <%= link_to "Auth Console", authorization_console_index_path, class: "btn btn-info" %>
                   <%= link_to "ACL", acl_index_path, class: "btn btn-info" %>
-                <% end %>
-
-                <% if system_admin? %>
                   <%= link_to "Manage Forms", form_templates_path, class: "btn btn-info" %>
-                <% end %>
-                
-                <% if system_admin? %>
                   <%= link_to "Reports", reports_path, class: "btn btn-info" %>
-                <% end %>
-                
-                <% if session[:user_id] == 136626 %> <!-- Your employee ID -->
                   <%= link_to "Impersonate", new_admin_impersonation_path, class: "btn btn-warning" %>
                 <% end %>
                 

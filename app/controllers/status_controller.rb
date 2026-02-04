@@ -18,7 +18,7 @@ class StatusController < ApplicationController
 
   def index
     employee_id = session.dig(:user, "employee_id").to_s
-    @is_manager = current_user&.in_group?("Status Managers")
+    @is_manager = current_user_group_names.include?("status managers")
 
     @status_items = []
 

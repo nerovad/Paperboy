@@ -143,15 +143,6 @@ class ReportsController < ApplicationController
     end
   end
 
-  def require_system_admin
-    employee_id = session.dig(:user, "employee_id").to_s
-    employee = Employee.find_by(EmployeeID: employee_id)
-    
-    unless employee&.in_any_group?('System_Admins')
-      redirect_to root_path, alert: "You do not have permission to access Reports."
-    end
-  end
-
   def available_forms
     FormTemplate.all.order(:name).map do |template|
       {

@@ -2,7 +2,7 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
   before_action :set_current_user
-  helper_method :current_user, :inbox_count
+  helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids
 
   def current_user
     user_data = session[:user]
@@ -57,7 +57,54 @@ class ApplicationController < ActionController::Base
     }
   end
 
+  # Memoized group names (Set) and group IDs (Array) for the current user.
+  # Loaded once per request via a single JOIN query.
+  def current_user_group_names
+    load_current_user_groups unless defined?(@_current_user_group_names)
+    @_current_user_group_names
+  end
+
+  def current_user_group_ids
+    load_current_user_groups unless defined?(@_current_user_group_ids)
+    @_current_user_group_ids
+  end
+
+  def require_system_admin
+    unless current_user_group_names.include?("system_admins")
+      redirect_to root_path, alert: "Access denied. System administrators only."
+    end
+  end
+
   private
+
+  def load_current_user_groups
+    employee_id = session.dig(:user, "employee_id")
+
+    if employee_id.present?
+      rows = ActiveRecord::Base.connection.execute(<<~SQL)
+        SELECT g.Group_Name, eg.GroupID
+        FROM GSABSS.dbo.Employee_Groups eg
+        JOIN GSABSS.dbo.Groups g ON eg.GroupID = g.GroupID
+        WHERE eg.EmployeeID = #{ActiveRecord::Base.connection.quote(employee_id)}
+      SQL
+
+      names = Set.new
+      ids   = []
+      rows.each do |row|
+        names << row["Group_Name"].downcase
+        ids   << row["GroupID"]
+      end
+
+      @_current_user_group_names = names
+      @_current_user_group_ids   = ids
+    else
+      @_current_user_group_names = Set.new
+      @_current_user_group_ids   = []
+    end
+  rescue
+    @_current_user_group_names = Set.new
+    @_current_user_group_ids   = []
+  end
 
   def set_current_user
     Current.user = session[:user]

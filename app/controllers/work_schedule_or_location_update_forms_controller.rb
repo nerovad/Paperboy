@@ -13,7 +13,7 @@ class WorkScheduleOrLocationUpdateFormsController < ApplicationController
     end
 
     # Load user groups for field restrictions
-    @current_user_groups = fetch_user_groups(employee_id)
+    @current_user_groups = current_user_group_ids
 
     # --- Organization chain (same pattern you use now) ---
     unit        = Unit.find_by(unit_id: @employee["Unit"])
@@ -229,18 +229,7 @@ class WorkScheduleOrLocationUpdateFormsController < ApplicationController
     end
 
     # Load user groups for field restrictions
-    @current_user_groups = fetch_user_groups(employee_id)
-  end
-
-  def fetch_user_groups(employee_id)
-    return [] if employee_id.blank?
-
-    result = ActiveRecord::Base.connection.execute(
-      "SELECT GroupID FROM GSABSS.dbo.Employee_Groups WHERE EmployeeID = #{employee_id}"
-    )
-    result.map { |row| row['GroupID'] }
-  rescue
-    []
+    @current_user_groups = current_user_group_ids
   end
 
   def work_schedule_or_location_update_form_params

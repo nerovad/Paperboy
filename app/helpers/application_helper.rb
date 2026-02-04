@@ -31,22 +31,7 @@ module ApplicationHelper
   end
   
   def system_admin?
-    return false unless session[:user_id]
-    
-    employee_id = session.dig(:user, "employee_id")
-    return false unless employee_id
-    
-    result = ActiveRecord::Base.connection.execute(
-      "SELECT COUNT(*) as count 
-       FROM GSABSS.dbo.Employee_Groups eg
-       JOIN GSABSS.dbo.Groups g ON eg.GroupID = g.GroupID
-       WHERE eg.EmployeeID = #{employee_id} 
-       AND g.Group_Name = 'system_admins'"
-    ).first
-    
-    result && result['count'].to_i > 0
-  rescue
-    false
+    current_user_group_names.include?("system_admins")
   end
 
   def fetch_acl_groups

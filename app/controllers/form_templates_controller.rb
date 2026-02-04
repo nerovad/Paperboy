@@ -303,30 +303,6 @@ class FormTemplatesController < ApplicationController
     options
   end
   
-  def require_system_admin
-    unless is_system_admin?
-      redirect_to root_path, alert: "Access denied. System administrators only."
-    end
-  end
-  
-  def is_system_admin?
-    return false unless session[:user_id]
-    
-    employee_id = session.dig(:user, "employee_id")
-    
-    result = ActiveRecord::Base.connection.execute(
-      "SELECT COUNT(*) as count 
-       FROM GSABSS.dbo.Employee_Groups eg
-       JOIN GSABSS.dbo.Groups g ON eg.GroupID = g.GroupID
-       WHERE eg.EmployeeID = #{employee_id} 
-       AND g.Group_Name = 'system_admins'"
-    ).first
-    
-    result && result['count'].to_i > 0
-  rescue
-    false
-  end
-  
   def fetch_acl_groups
     result = ActiveRecord::Base.connection.execute(
       "SELECT GroupID, Group_Name FROM GSABSS.dbo.Groups ORDER BY Group_Name"

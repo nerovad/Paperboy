@@ -72,12 +72,6 @@ class AclController < ApplicationController
 
   private
 
-  def require_system_admin
-    unless helpers.system_admin?
-      redirect_to root_path, alert: "You do not have permission to access ACL management."
-    end
-  end
-
   def set_group
     @group = Group.find(params[:id])
   end
