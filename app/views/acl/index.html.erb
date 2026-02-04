@@ -1,0 +1,63 @@
+<!-- app/views/acl/index.html.erb -->
+<div class="form-header">
+  <h1>ACL - Group Management</h1>
+</div>
+
+<div class="form-wrapper acl-management" data-controller="group-select confirm-modal">
+  <div class="acl-header">
+    <p class="acl-subtitle">Manage access control groups and their members.</p>
+    <%= link_to "+ Create New Group", new_acl_path, class: "btn approve" %>
+  </div>
+
+  <% if @groups.any? %>
+    <!-- Action panel (hidden until a group is selected) -->
+    <div class="action-panel" data-group-select-target="actionPanel" style="display:none;">
+      <div class="action-panel-content" data-group-select-target="actionsContainer">
+        <% @groups.each do |group| %>
+          <div class="task-actions" data-group-id="<%= group.GroupID %>" style="display:none;">
+            <%= link_to "View Members", acl_path(group), class: "btn pdf" %>
+            <%= link_to "Edit", edit_acl_path(group), class: "btn" %>
+            <button type="button"
+                    class="btn deny"
+                    data-action="click->confirm-modal#open"
+                    data-delete-path="<%= acl_path(group) %>"
+                    data-confirm-title="Delete Group"
+                    data-confirm-message="Are you sure you want to delete the group '<%= group.Group_Name %>'? All member assignments will be removed.">
+              Delete
+            </button>
+            <button type="button" class="btn close-panel" data-action="click->group-select#closePanel">Close</button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <table class="submission-table">
+      <thead>
+        <tr>
+          <th>Group Name</th>
+          <th>Description</th>
+          <th>Members</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @groups.each do |group| %>
+          <tr class="selectable-row"
+              data-group-select-target="row"
+              data-group-id="<%= group.GroupID %>"
+              data-action="click->group-select#select">
+            <td><%= group.Group_Name %></td>
+            <td><%= group.Description %></td>
+            <td><%= @group_member_counts[group.GroupID] || 0 %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="empty-state">
+      <p>No groups have been created yet.</p>
+      <p class="empty-state-hint">Click "+ Create New Group" to get started.</p>
+    </div>
+  <% end %>
+
+  <%= render "shared/confirm_modal" %>
+</div>

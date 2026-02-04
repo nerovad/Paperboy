@@ -1,0 +1,26 @@
+<!-- app/views/acl/_form.html.erb -->
+<% if group.errors.any? %>
+  <div class="alert alert-danger">
+    <p><strong>There was a problem:</strong></p>
+    <ul>
+      <% group.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<div class="form-group">
+  <%= form.label :Group_Name, "Group Name" %>
+  <%= form.text_field :Group_Name, class: "form-control", required: true %>
+</div>
+
+<div class="form-group">
+  <%= form.label :Description, "Description" %>
+  <%= form.text_area :Description, class: "form-control", rows: 3 %>
+</div>
+
+<div class="form-actions">
+  <%= link_to "Cancel", acl_index_path, class: "btn" %>
+  <%= form.submit submit_label, class: "btn approve" %>
+</div>

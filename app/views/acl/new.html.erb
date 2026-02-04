@@ -1,0 +1,10 @@
+<!-- app/views/acl/new.html.erb -->
+<div class="form-header">
+  <h1>Create New Group</h1>
+</div>
+
+<div class="form-wrapper acl-management">
+  <%= form_with model: @group, url: acl_index_path, local: true do |form| %>
+    <%= render "form", form: form, group: @group, submit_label: "Create Group" %>
+  <% end %>
+</div>

@@ -87,6 +87,10 @@
                 <% end %>
                 
                 <% if system_admin? %>
+                  <%= link_to "ACL", acl_index_path, class: "btn btn-info" %>
+                <% end %>
+
+                <% if system_admin? %>
                   <%= link_to "Manage Forms", form_templates_path, class: "btn btn-info" %>
                 <% end %>
                 

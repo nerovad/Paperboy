@@ -1,0 +1,102 @@
+<!-- app/views/acl/show.html.erb -->
+<div class="form-header">
+  <h1><%= @group.Group_Name %></h1>
+</div>
+
+<div class="form-wrapper acl-management" data-controller="confirm-modal">
+  <div class="acl-header">
+    <p class="acl-subtitle"><%= @group.Description %></p>
+    <%= link_to "Back to Groups", acl_index_path, class: "btn" %>
+  </div>
+
+  <!-- Add Member Search -->
+  <div class="acl-search-section">
+    <h3>Add Member</h3>
+    <%= form_tag acl_path(@group), method: :get, class: "acl-search-form" do %>
+      <div class="acl-search-row">
+        <%= text_field_tag :search, params[:search],
+              placeholder: "Search by name or employee ID...",
+              class: "form-control acl-search-input" %>
+        <%= submit_tag "Search", class: "btn approve" %>
+      </div>
+    <% end %>
+
+    <% if @search_results&.any? %>
+      <table class="submission-table acl-search-results">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @search_results.each do |emp| %>
+            <tr>
+              <td><%= emp.EmployeeID %></td>
+              <td><%= emp.First_Name %> <%= emp.Last_Name %></td>
+              <td><%= emp.EE_Email %></td>
+              <td class="action-buttons">
+                <% if @group.employee_groups.exists?(EmployeeID: emp.EmployeeID) %>
+                  <span class="acl-already-member">Already a member</span>
+                <% else %>
+                  <%= form_tag add_member_acl_path(@group), method: :post do %>
+                    <%= hidden_field_tag :employee_id, emp.EmployeeID %>
+                    <%= submit_tag "Add", class: "btn approve" %>
+                  <% end %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% elsif params[:search].present? %>
+      <p class="acl-no-results">No employees found matching "<%= params[:search] %>".</p>
+    <% end %>
+  </div>
+
+  <!-- Current Members -->
+  <div class="acl-members-section">
+    <h3>Members (<%= @members.size %>)</h3>
+
+    <% if @members.any? %>
+      <table class="submission-table">
+        <thead>
+          <tr>
+            <th>Employee ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @members.each do |member| %>
+            <tr>
+              <td><%= member.EmployeeID %></td>
+              <td><%= member.First_Name %> <%= member.Last_Name %></td>
+              <td><%= member.EE_Email %></td>
+              <td class="action-buttons">
+                <button type="button"
+                        class="btn deny"
+                        data-action="click->confirm-modal#open"
+                        data-delete-path="<%= remove_member_acl_path(@group, employee_id: member.EmployeeID) %>"
+                        data-confirm-title="Remove Member"
+                        data-confirm-message="Remove <%= member.First_Name %> <%= member.Last_Name %> from <%= @group.Group_Name %>?">
+                  Remove
+                </button>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty-state">
+        <p>No members in this group yet.</p>
+        <p class="empty-state-hint">Use the search above to find and add employees.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <%= render "shared/confirm_modal" %>
+</div>

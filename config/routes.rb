@@ -51,6 +51,13 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :acl, only: [:index, :show, :new, :create, :edit, :update, :destroy] do
+    member do
+      post :add_member
+      delete :remove_member
+    end
+  end
+
   resources :billing_tools, only: [:new, :create] do
     collection do
       post :move_to_production
