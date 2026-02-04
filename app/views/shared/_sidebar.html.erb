@@ -40,6 +40,21 @@
       form_field_labels[template.name] = template.form_fields.pluck(:label).join(", ")
       form_tags[template.name] = template.tags_array.join(", ")
     end
+
+    # Add public templates not already in hardcoded list
+    FormTemplate.where(access_level: 'public').each do |template|
+      path = send("new_#{template.file_name}_path") rescue nil
+      next unless path
+      next if public_forms.any? { |f| f[0] == template.name }
+      available_forms << [template.name, path]
+    end
+
+    # Add restricted templates the current user can access
+    FormTemplate.where(access_level: 'restricted').each do |template|
+      next unless template.accessible_by?(current_user_org_chain, current_user_group_ids)
+      path = send("new_#{template.file_name}_path") rescue nil
+      available_forms << [template.name, path] if path
+    end
     %>
     <div data-sidebar-search-target="formsList">
       <% available_forms.sort_by { |f| f[0] }.each do |label, path| %>

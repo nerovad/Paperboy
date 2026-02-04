@@ -47,7 +47,8 @@ class FormTemplate < ApplicationRecord
   validates :class_name, presence: true, uniqueness: true
   validates :access_level, inclusion: { in: %w[public restricted] }
   validates :page_count, numericality: { greater_than_or_equal_to: 2, less_than_or_equal_to: 30 }
-  validates :acl_group_id, presence: true, if: :restricted?
+  validates :org_scope_type, inclusion: { in: %w[agency division department unit] }, allow_nil: true
+  validate :restricted_must_have_scope_or_group
   validates :submission_type, inclusion: { in: %w[database approval] }
   validates :approval_routing_to, presence: true, if: :requires_legacy_routing?
   validates :approval_employee_id, presence: true, if: :routes_to_specific_employee?
@@ -58,6 +59,7 @@ class FormTemplate < ApplicationRecord
   validate :page_count_cannot_orphan_fields, on: :update
 
   before_validation :generate_class_name, on: :create
+  before_validation :clear_restrictions_if_public
 
   scope :with_dashboards, -> { where(has_dashboard: true) }
   
@@ -117,6 +119,53 @@ class FormTemplate < ApplicationRecord
     file_name.pluralize
   end
   
+  def org_scoped?
+    org_scope_type.present? && org_scope_id.present?
+  end
+
+  def org_scope_label
+    return nil unless org_scoped?
+
+    klass = case org_scope_type
+            when 'agency'     then Agency
+            when 'division'   then Division
+            when 'department' then Department
+            when 'unit'       then Unit
+            end
+    return nil unless klass
+
+    pk = case org_scope_type
+         when 'agency'     then :agency_id
+         when 'division'   then :division_id
+         when 'department' then :department_id
+         when 'unit'       then :unit_id
+         end
+
+    record = klass.find_by(pk => org_scope_id)
+    record&.long_name
+  end
+
+  def accessible_by?(user_org_chain, user_group_ids)
+    # Check org scope if set
+    if org_scoped?
+      user_value = case org_scope_type
+                   when 'agency'     then user_org_chain[:agency_id]
+                   when 'division'   then user_org_chain[:division_id]
+                   when 'department' then user_org_chain[:department_id]
+                   when 'unit'       then user_org_chain[:unit_id]
+                   end
+      return false unless user_value.to_s == org_scope_id.to_s
+    end
+
+    # Check ACL group if set
+    if acl_group_id.present?
+      return false unless user_group_ids.include?(acl_group_id)
+    end
+
+    # At least one restriction must have been checked (already validated on save)
+    true
+  end
+
   def acl_group_name
     return nil unless acl_group_id
     
@@ -136,6 +185,21 @@ class FormTemplate < ApplicationRecord
   end
   
   private
+
+  def restricted_must_have_scope_or_group
+    return unless restricted?
+    return if org_scoped? || acl_group_id.present?
+
+    errors.add(:base, "Restricted forms must have at least an Organization Scope or an ACL Group")
+  end
+
+  def clear_restrictions_if_public
+    return if restricted?
+
+    self.acl_group_id   = nil
+    self.org_scope_type = nil
+    self.org_scope_id   = nil
+  end
 
   def generate_class_name
     return if name.blank?

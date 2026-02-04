@@ -71,11 +71,63 @@
                       } %>
         </div>
         
-        <!-- Step 3: ACL Group (hidden by default) -->
-        <div class="form-group" 
+        <!-- Organization Scope (hidden by default, shown when Restricted) -->
+        <div class="form-group"
+             data-form-builder-target="orgScopeContainer"
+             style="display: none;">
+          <label>Organization Scope</label>
+          <small class="form-text" style="display: block; margin-bottom: 8px; color: #6c757d;">
+            Restrict this form to users within a specific organization level. Select the most specific level that applies.
+          </small>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 180px;">
+              <label style="font-size: 0.85em; color: #495057;">Agency</label>
+              <select id="org-scope-agency-select"
+                      class="form-control form-control-sm"
+                      data-action="change->form-builder#loadOrgDivisions change->form-builder#updateOrgScope">
+                <option value="">Select Agency...</option>
+                <% @agency_options&.each do |name, id| %>
+                  <option value="<%= id %>"><%= name %></option>
+                <% end %>
+              </select>
+            </div>
+            <div style="flex: 1; min-width: 180px;">
+              <label style="font-size: 0.85em; color: #495057;">Division</label>
+              <select id="org-scope-division-select"
+                      class="form-control form-control-sm"
+                      disabled
+                      data-action="change->form-builder#loadOrgDepartments change->form-builder#updateOrgScope">
+                <option value="">Select Division...</option>
+              </select>
+            </div>
+            <div style="flex: 1; min-width: 180px;">
+              <label style="font-size: 0.85em; color: #495057;">Department</label>
+              <select id="org-scope-department-select"
+                      class="form-control form-control-sm"
+                      disabled
+                      data-action="change->form-builder#loadOrgUnits change->form-builder#updateOrgScope">
+                <option value="">Select Department...</option>
+              </select>
+            </div>
+            <div style="flex: 1; min-width: 180px;">
+              <label style="font-size: 0.85em; color: #495057;">Unit</label>
+              <select id="org-scope-unit-select"
+                      class="form-control form-control-sm"
+                      disabled
+                      data-action="change->form-builder#updateOrgScope">
+                <option value="">Select Unit...</option>
+              </select>
+            </div>
+          </div>
+          <%= f.hidden_field :org_scope_type, data: { form_builder_target: "orgScopeType" } %>
+          <%= f.hidden_field :org_scope_id, data: { form_builder_target: "orgScopeId" } %>
+        </div>
+
+        <!-- ACL Group (hidden by default) -->
+        <div class="form-group"
              data-form-builder-target="aclGroupContainer"
              style="display: none;">
-          <label for="form_acl_group">3. ACL Group <span class="required">*</span></label>
+          <label for="form_acl_group">ACL Group</label>
           <%= f.select :acl_group_id,
                       options_for_select(acl_groups),
                       { include_blank: "Select a group..." },

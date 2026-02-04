@@ -10,6 +10,9 @@ export default class extends Controller {
     "accessLevel",
     "aclGroup",
     "aclGroupContainer",
+    "orgScopeContainer",
+    "orgScopeType",
+    "orgScopeId",
     "pageCount",
     "pageHeadersContainer",
     "pageHeadersList",
@@ -102,6 +105,10 @@ export default class extends Controller {
       this.addField() // Add back the default field
       this.pageHeadersContainerTarget.style.display = 'none'
       this.aclGroupContainerTarget.style.display = 'none'
+      if (this.hasOrgScopeContainerTarget) {
+        this.orgScopeContainerTarget.style.display = 'none'
+        this.clearOrgScope()
+      }
       this.approvalRoutingContainerTarget.style.display = 'none'
       this.routingStepsContainerTarget.innerHTML = ''
       if (this.hasStatusesContainerTarget) {
@@ -119,19 +126,183 @@ export default class extends Controller {
     }
   }
 
-  // Toggle ACL Group visibility based on access level
+  // Toggle ACL Group and Org Scope visibility based on access level
   toggleACLGroup(event) {
     const accessLevel = event.target.value
-    const container = this.aclGroupContainerTarget
+    const aclContainer = this.aclGroupContainerTarget
+    const orgContainer = this.hasOrgScopeContainerTarget ? this.orgScopeContainerTarget : null
 
     if (accessLevel === 'restricted') {
-      container.style.display = 'block'
-      this.aclGroupTarget.required = true
+      aclContainer.style.display = 'block'
+      if (orgContainer) orgContainer.style.display = 'block'
+      // ACL group is no longer individually required (at least one of org scope or group needed)
+      this.aclGroupTarget.required = false
     } else {
-      container.style.display = 'none'
+      aclContainer.style.display = 'none'
       this.aclGroupTarget.required = false
       this.aclGroupTarget.value = ''
+      if (orgContainer) {
+        orgContainer.style.display = 'none'
+        this.clearOrgScope()
+      }
     }
+  }
+
+  // ============================================
+  // ORG SCOPE METHODS
+  // ============================================
+
+  // Clear all org scope selects and hidden fields
+  clearOrgScope() {
+    const agencySelect = this.element.querySelector('#org-scope-agency-select')
+    const divisionSelect = this.element.querySelector('#org-scope-division-select')
+    const departmentSelect = this.element.querySelector('#org-scope-department-select')
+    const unitSelect = this.element.querySelector('#org-scope-unit-select')
+
+    if (agencySelect) agencySelect.value = ''
+    if (divisionSelect) { divisionSelect.innerHTML = '<option value="">Select Division...</option>'; divisionSelect.disabled = true }
+    if (departmentSelect) { departmentSelect.innerHTML = '<option value="">Select Department...</option>'; departmentSelect.disabled = true }
+    if (unitSelect) { unitSelect.innerHTML = '<option value="">Select Unit...</option>'; unitSelect.disabled = true }
+
+    if (this.hasOrgScopeTypeTarget) this.orgScopeTypeTarget.value = ''
+    if (this.hasOrgScopeIdTarget) this.orgScopeIdTarget.value = ''
+  }
+
+  // Walk bottom-up to find most specific non-blank value and set hidden fields
+  updateOrgScope() {
+    const unitSelect = this.element.querySelector('#org-scope-unit-select')
+    const departmentSelect = this.element.querySelector('#org-scope-department-select')
+    const divisionSelect = this.element.querySelector('#org-scope-division-select')
+    const agencySelect = this.element.querySelector('#org-scope-agency-select')
+
+    let scopeType = ''
+    let scopeId = ''
+
+    if (unitSelect && unitSelect.value) {
+      scopeType = 'unit'
+      scopeId = unitSelect.value
+    } else if (departmentSelect && departmentSelect.value) {
+      scopeType = 'department'
+      scopeId = departmentSelect.value
+    } else if (divisionSelect && divisionSelect.value) {
+      scopeType = 'division'
+      scopeId = divisionSelect.value
+    } else if (agencySelect && agencySelect.value) {
+      scopeType = 'agency'
+      scopeId = agencySelect.value
+    }
+
+    if (this.hasOrgScopeTypeTarget) this.orgScopeTypeTarget.value = scopeType
+    if (this.hasOrgScopeIdTarget) this.orgScopeIdTarget.value = scopeId
+  }
+
+  // Fetch divisions for org scope agency select
+  async loadOrgDivisions() {
+    const agencySelect = this.element.querySelector('#org-scope-agency-select')
+    const divisionSelect = this.element.querySelector('#org-scope-division-select')
+    const departmentSelect = this.element.querySelector('#org-scope-department-select')
+    const unitSelect = this.element.querySelector('#org-scope-unit-select')
+
+    // Reset downstream
+    if (departmentSelect) { departmentSelect.innerHTML = '<option value="">Select Department...</option>'; departmentSelect.disabled = true }
+    if (unitSelect) { unitSelect.innerHTML = '<option value="">Select Unit...</option>'; unitSelect.disabled = true }
+
+    const agencyId = agencySelect?.value
+    if (!agencyId || !divisionSelect) {
+      divisionSelect.innerHTML = '<option value="">Select Division...</option>'
+      divisionSelect.disabled = true
+      this.updateOrgScope()
+      return
+    }
+
+    try {
+      const response = await fetch(`/lookups/divisions?agency=${encodeURIComponent(agencyId)}`, {
+        headers: { 'Accept': 'application/json' }
+      })
+      const data = await response.json()
+      divisionSelect.innerHTML = '<option value="">Select Division...</option>'
+      data.forEach(([name, id]) => {
+        const opt = document.createElement('option')
+        opt.value = id
+        opt.textContent = name
+        divisionSelect.appendChild(opt)
+      })
+      divisionSelect.disabled = false
+    } catch (e) {
+      console.error('Error loading divisions:', e)
+    }
+
+    this.updateOrgScope()
+  }
+
+  // Fetch departments for org scope division select
+  async loadOrgDepartments() {
+    const divisionSelect = this.element.querySelector('#org-scope-division-select')
+    const departmentSelect = this.element.querySelector('#org-scope-department-select')
+    const unitSelect = this.element.querySelector('#org-scope-unit-select')
+
+    // Reset downstream
+    if (unitSelect) { unitSelect.innerHTML = '<option value="">Select Unit...</option>'; unitSelect.disabled = true }
+
+    const divisionId = divisionSelect?.value
+    if (!divisionId || !departmentSelect) {
+      departmentSelect.innerHTML = '<option value="">Select Department...</option>'
+      departmentSelect.disabled = true
+      this.updateOrgScope()
+      return
+    }
+
+    try {
+      const response = await fetch(`/lookups/departments?division=${encodeURIComponent(divisionId)}`, {
+        headers: { 'Accept': 'application/json' }
+      })
+      const data = await response.json()
+      departmentSelect.innerHTML = '<option value="">Select Department...</option>'
+      data.forEach(([name, id]) => {
+        const opt = document.createElement('option')
+        opt.value = id
+        opt.textContent = name
+        departmentSelect.appendChild(opt)
+      })
+      departmentSelect.disabled = false
+    } catch (e) {
+      console.error('Error loading departments:', e)
+    }
+
+    this.updateOrgScope()
+  }
+
+  // Fetch units for org scope department select
+  async loadOrgUnits() {
+    const departmentSelect = this.element.querySelector('#org-scope-department-select')
+    const unitSelect = this.element.querySelector('#org-scope-unit-select')
+
+    const departmentId = departmentSelect?.value
+    if (!departmentId || !unitSelect) {
+      unitSelect.innerHTML = '<option value="">Select Unit...</option>'
+      unitSelect.disabled = true
+      this.updateOrgScope()
+      return
+    }
+
+    try {
+      const response = await fetch(`/lookups/units?department=${encodeURIComponent(departmentId)}`, {
+        headers: { 'Accept': 'application/json' }
+      })
+      const data = await response.json()
+      unitSelect.innerHTML = '<option value="">Select Unit...</option>'
+      data.forEach(([name, id]) => {
+        const opt = document.createElement('option')
+        opt.value = id
+        opt.textContent = name
+        unitSelect.appendChild(opt)
+      })
+      unitSelect.disabled = false
+    } catch (e) {
+      console.error('Error loading units:', e)
+    }
+
+    this.updateOrgScope()
   }
 
   // Toggle approval routing options based on submission type

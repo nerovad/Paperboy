@@ -2,7 +2,7 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
   before_action :set_current_user
-  helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids
+  helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain
 
   def current_user
     user_data = session[:user]
@@ -67,6 +67,30 @@ class ApplicationController < ActionController::Base
   def current_user_group_ids
     load_current_user_groups unless defined?(@_current_user_group_ids)
     @_current_user_group_ids
+  end
+
+  def current_user_org_chain
+    return @_current_user_org_chain if defined?(@_current_user_org_chain)
+
+    employee_id = session.dig(:user, "employee_id")
+    if employee_id.present?
+      employee   = Employee.find_by(EmployeeID: employee_id)
+      unit       = employee ? Unit.find_by(unit_id: employee["Unit"]) : nil
+      department = unit ? Department.find_by(department_id: unit.department_id) : nil
+      division   = department ? Division.find_by(division_id: department.division_id) : nil
+      agency     = division ? Agency.find_by(agency_id: division.agency_id) : nil
+
+      @_current_user_org_chain = {
+        agency_id:     agency&.agency_id,
+        division_id:   division&.division_id,
+        department_id: department&.department_id,
+        unit_id:       unit&.unit_id
+      }
+    else
+      @_current_user_org_chain = {}
+    end
+  rescue
+    @_current_user_org_chain = {}
   end
 
   def require_system_admin

@@ -7,11 +7,13 @@ class FormTemplatesController < ApplicationController
     @acl_groups = fetch_acl_groups
     @employees = fetch_employees
     @existing_tags = FormTemplate.all_tags
+    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id) rescue []
   end
-  
+
   def new
     @form_template = FormTemplate.new
     @acl_groups = fetch_acl_groups
+    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id) rescue []
   end
   
   def create
@@ -132,6 +134,8 @@ class FormTemplatesController < ApplicationController
     @employees = fetch_employees
     @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
     @existing_tags = FormTemplate.all_tags
+    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id) rescue []
+    load_org_scope_chain
   end
 
   def update
@@ -163,6 +167,8 @@ class FormTemplatesController < ApplicationController
       @acl_groups = fetch_acl_groups
       @employees = fetch_employees
       @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
+      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id) rescue []
+      load_org_scope_chain
       render :edit, status: :unprocessable_entity
     end
   end
@@ -228,44 +234,31 @@ class FormTemplatesController < ApplicationController
   def fix_sidebar_placement(class_name)
     sidebar = "app/views/shared/_sidebar.html.erb"
     return unless File.exist?(sidebar)
-    
+
     form_template = FormTemplate.find_by(class_name: class_name)
     return unless form_template
-    
+
     label = class_name.titleize
     helper = "new_#{class_name.underscore}_path"
-    
+
     # Read the sidebar content
     sidebar_content = File.read(sidebar)
-    
+
     # First, remove the incorrectly placed line (generator puts it at the very end)
     incorrect_line = %(      ["#{label}", #{helper}],)
     sidebar_content.gsub!(/^\s*#{Regexp.escape(incorrect_line)}\s*\n/, '')
-    
-    if form_template.restricted?
-      # Add to restricted_forms array with group requirement
-      group_name = form_template.acl_group_name
-      line = %(      ["#{label}", #{helper}, ["#{group_name}"]],\n)
-      
-      # Find the restricted_forms array and insert before its closing ]
-      # Look for the ] that comes after restricted_forms but before "# Build available forms"
-      sidebar_content.sub!(
-        /(restricted_forms = \[.*?)(^\s*\])/m,
-        "\\1#{line}\\2"
-      )
-    else
-      # Add to public_forms array
+
+    # Only add public forms to the hardcoded array.
+    # Restricted forms are now handled dynamically in the sidebar partial via accessible_by?
+    unless form_template.restricted?
       line = %(      ["#{label}", #{helper}],\n)
-      
-      # Find the public_forms array and insert before its closing ]
-      # Look for the ] that comes after public_forms but before "# Restricted forms"
+
       sidebar_content.sub!(
         /(public_forms = \[.*?)(^\s*\])/m,
         "\\1#{line}\\2"
       )
     end
-  
-    # Write the modified content back
+
     File.write(sidebar, sidebar_content)
   end
 
@@ -278,6 +271,8 @@ class FormTemplatesController < ApplicationController
       :submission_type,
       :approval_routing_to,
       :approval_employee_id,
+      :org_scope_type,
+      :org_scope_id,
       :has_dashboard,
       :powerbi_workspace_id,
       :powerbi_report_id,
@@ -318,6 +313,62 @@ class FormTemplatesController < ApplicationController
             .map { |e| ["#{e.First_Name} #{e.Last_Name} (#{e.EmployeeID})", e.EmployeeID] }
   rescue
     []
+  end
+
+  # Resolve the org chain from stored scope to populate edit form selects
+  def load_org_scope_chain
+    @org_scope_selected_agency     = nil
+    @org_scope_selected_division   = nil
+    @org_scope_selected_department = nil
+    @org_scope_selected_unit       = nil
+    @org_scope_division_options    = []
+    @org_scope_department_options  = []
+    @org_scope_unit_options        = []
+
+    return unless @form_template.org_scoped?
+
+    scope_type = @form_template.org_scope_type
+    scope_id   = @form_template.org_scope_id
+
+    case scope_type
+    when 'unit'
+      unit       = Unit.find_by(unit_id: scope_id)
+      department = unit ? Department.find_by(department_id: unit.department_id) : nil
+      division   = department ? Division.find_by(division_id: department.division_id) : nil
+      agency     = division ? Agency.find_by(agency_id: division.agency_id) : nil
+
+      @org_scope_selected_agency     = agency&.agency_id
+      @org_scope_selected_division   = division&.division_id
+      @org_scope_selected_department = department&.department_id
+      @org_scope_selected_unit       = unit&.unit_id
+
+      @org_scope_division_options   = Division.where(agency_id: agency&.agency_id).order(:long_name).pluck(:long_name, :division_id) if agency
+      @org_scope_department_options = Department.where(division_id: division&.division_id).order(:long_name).pluck(:long_name, :department_id) if division
+      @org_scope_unit_options       = Unit.where(department_id: department&.department_id).order(:unit_id).map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] } if department
+    when 'department'
+      department = Department.find_by(department_id: scope_id)
+      division   = department ? Division.find_by(division_id: department.division_id) : nil
+      agency     = division ? Agency.find_by(agency_id: division.agency_id) : nil
+
+      @org_scope_selected_agency     = agency&.agency_id
+      @org_scope_selected_division   = division&.division_id
+      @org_scope_selected_department = department&.department_id
+
+      @org_scope_division_options   = Division.where(agency_id: agency&.agency_id).order(:long_name).pluck(:long_name, :division_id) if agency
+      @org_scope_department_options = Department.where(division_id: division&.division_id).order(:long_name).pluck(:long_name, :department_id) if division
+    when 'division'
+      division = Division.find_by(division_id: scope_id)
+      agency   = division ? Agency.find_by(agency_id: division.agency_id) : nil
+
+      @org_scope_selected_agency   = agency&.agency_id
+      @org_scope_selected_division = division&.division_id
+
+      @org_scope_division_options = Division.where(agency_id: agency&.agency_id).order(:long_name).pluck(:long_name, :division_id) if agency
+    when 'agency'
+      @org_scope_selected_agency = scope_id
+    end
+  rescue => e
+    Rails.logger.warn "Error loading org scope chain: #{e.message}"
   end
 
   def customize_generated_model(form_template)

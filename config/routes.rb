@@ -147,6 +147,7 @@ Rails.application.routes.draw do
   # ============================================================================
   # Lookups & Dynamic Data
   # ============================================================================
+  get "/lookups/agencies", to: "lookups#agencies"
   get "/lookups/divisions", to: "lookups#divisions"
   get "/lookups/departments", to: "lookups#departments"
   get "/lookups/units", to: "lookups#units"
