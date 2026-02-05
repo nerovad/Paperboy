@@ -18,12 +18,11 @@
     />
     <% 
     # Legacy forms not managed via FormTemplate
-    # Note: Forms created via FormTemplate are added dynamically below - don't hardcode them here
     public_forms = [
-      ["Billing Tools", new_billing_tool_path],
       ["Creative Job Request", new_creative_job_request_path],
     ]
-    
+    public_forms.unshift(["Billing Tools", new_billing_tool_path]) if system_admin?
+
     # Build available forms list
     available_forms = public_forms.dup
 
@@ -35,18 +34,29 @@
       form_tags[template.name] = template.tags_array.join(", ")
     end
 
+    # Resolve the route path for a FormTemplate.
+    # Tries the standard _form convention first, then falls back
+    # to the base name for legacy forms (e.g. critical_information_reportings).
+    resolve_path = ->(template) {
+      begin
+        send("new_#{template.file_name}_path")
+      rescue NoMethodError
+        send("new_#{template.file_name.chomp('_form')}_path") rescue nil
+      end
+    }
+
     # Add public templates not already in hardcoded list
     FormTemplate.where(access_level: 'public').each do |template|
-      path = send("new_#{template.file_name}_path") rescue nil
+      path = resolve_path.call(template)
       next unless path
       next if public_forms.any? { |f| f[0] == template.name }
       available_forms << [template.name, path]
     end
 
-    # Add restricted templates the current user can access
+    # Add restricted templates the current user can access (system admins see all)
     FormTemplate.where(access_level: 'restricted').each do |template|
-      next unless template.accessible_by?(current_user_org_chain, current_user_group_ids)
-      path = send("new_#{template.file_name}_path") rescue nil
+      next unless system_admin? || template.accessible_by?(current_user_org_chain, current_user_group_ids)
+      path = resolve_path.call(template)
       available_forms << [template.name, path] if path
     end
     %>

@@ -1,4 +1,6 @@
 class BillingToolsController < ApplicationController
+  before_action :require_system_admin
+
   def new
     @sDate = Date.today.beginning_of_month
     @eDate = Date.today.end_of_month
