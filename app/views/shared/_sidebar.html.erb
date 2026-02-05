@@ -17,17 +17,11 @@
       class="sidebar-search-input"
     />
     <% 
-    # Most forms are public (available to all employees)
+    # Legacy forms not managed via FormTemplate
+    # Note: Forms created via FormTemplate are added dynamically below - don't hardcode them here
     public_forms = [
       ["Billing Tools", new_billing_tool_path],
       ["Creative Job Request", new_creative_job_request_path],
-      ["Critical Information Reporting", new_critical_information_reporting_path],
-      ["Parking Permit Application", new_parking_lot_submission_path],
-      ["Probation Agency Transfer Request", new_probation_transfer_request_path],
-      ["Carpool Form", new_carpool_form_path],
-      ["Gym Locker Form", new_gym_locker_form_path],
-      ["Social Media Form", new_social_media_form_path],
-      ["Work Schedule Or Location Update Form", new_work_schedule_or_location_update_form_path],
     ]
     
     # Build available forms list

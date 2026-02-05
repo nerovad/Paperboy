@@ -238,7 +238,7 @@ class FormTemplatesController < ApplicationController
     form_template = FormTemplate.find_by(class_name: class_name)
     return unless form_template
 
-    label = class_name.titleize
+    label = form_template.name
     helper = "new_#{class_name.underscore}_path"
 
     # Read the sidebar content
