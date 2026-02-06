@@ -66,7 +66,7 @@ class CriticalInformationReporting < ApplicationRecord
   scope :by_status, ->(status) { where(status: status) }
   scope :by_impact, ->(impact) { where(impact: impact) }
   scope :recent, -> { order(created_at: :desc) }
-  scope :high_urgency, -> { where(urgency: '1 Immediate') }
+  scope :high_urgency, -> { where(urgency: 'Immediate') }
   scope :assigned_to, ->(manager_id) { where(assigned_manager_id: manager_id) }
 
   # Instance methods
@@ -80,7 +80,7 @@ class CriticalInformationReporting < ApplicationRecord
   end
 
   def immediate_urgency?
-    urgency == '1 Immediate'
+    urgency == 'Immediate'
   end
 
   # Get the Employee record for the assigned manager

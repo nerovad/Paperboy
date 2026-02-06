@@ -195,7 +195,7 @@ class CriticalInformationReportingsController < ApplicationController
     @critical_information_reporting.employee_id = employee_id if @critical_information_reporting.respond_to?(:employee_id=)
 
     if @critical_information_reporting.save
-      # Keep success behavior simple for the template; you can extend per form.
+      NotifyTeamsJob.perform_later(@critical_information_reporting.id) if @critical_information_reporting.immediate_urgency?
       redirect_to form_success_path, allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)

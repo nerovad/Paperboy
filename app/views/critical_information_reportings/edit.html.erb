@@ -150,7 +150,7 @@
         <div class="form-group">
           <%= form.label :urgency, "Urgency of Reporting" %>
           <%= form.select :urgency,
-                options_for_select(['1 Immediate', '2 Earliest convenience', '3 Before it happens'], @critical_information_reporting.urgency),
+                options_for_select(['Immediate', 'Earliest convenience', 'Before it happens'], @critical_information_reporting.urgency),
                 { prompt: 'Select Urgency' },
                 class: "form-control",
                 required: true,
