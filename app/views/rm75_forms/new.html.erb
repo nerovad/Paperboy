@@ -162,11 +162,37 @@
           </div>
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_employer_notified, "Date Employer Notified" %>
-            <%= form.text_field :date_employer_notified, class: "form-control", required: true %>
+            <%= form.datetime_local_field :date_employer_notified, class: "form-control", required: true %>
           </div>
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_dwc1_given, "Date DWC-1 Given" %>
             <%= form.datetime_local_field :date_dwc1_given, class: "form-control", required: true %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :who_gave_the_dwc1, "Who Gave the DWC-1" %>
+            <%= form.text_field :who_gave_the_dwc1, class: "form-control", required: true %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :date_last_worked, "Date Last Worked" %>
+            <%= form.datetime_local_field :date_last_worked, class: "form-control", required: true %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :date_returned_to_work, "Date Returned to Work" %>
+            <%= form.datetime_local_field :date_returned_to_work, class: "form-control", required: true %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :missed_full_work_day_, "Missed Full Work Day? " %>
+            <%= form.select :missed_full_work_day_,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: true } %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :still_off_work, "Still off Work?" %>
+            <%= form.select :still_off_work,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: true } %>
           </div>
         </div>
       </div>
@@ -174,31 +200,227 @@
 <!-- Page 6: Incident Description -->
 <div class="form-page" style="display:none;">
   <h2>Incident Description</h2>
+        <div class="form-row d-flex flex-wrap">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :specific_injury_and_body_part_affected, "Specific Injury and Body Part Affected" %>
+            <%= form.text_area :specific_injury_and_body_part_affected, rows: 5, class: "form-control", required: true %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :location_of_incident, "Location of Incident" %>
+            <%= form.text_field :location_of_incident, class: "form-control", required: true %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :on_employer_premises, "On Employer Premises?" %>
+            <%= form.select :on_employer_premises,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: true } %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :department_where_event_occurred, "Department Where Event Occurred" %>
+            <%= form.text_field :department_where_event_occurred, class: "form-control", required: true %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :activity_at_time_of_incident, "Activity at Time of Incident" %>
+            <%= form.text_area :activity_at_time_of_incident, rows: 5, class: "form-control", required: true %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :how_the_injury_occurred, "How the Injury Occurred" %>
+            <%= form.text_area :how_the_injury_occurred, rows: 5, class: "form-control", required: true %>
+          </div>
+        </div>
       </div>
 
 <!-- Page 7: Medical Info -->
 <div class="form-page" style="display:none;">
   <h2>Medical Info</h2>
+        <div class="form-row d-flex flex-wrap">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :physician_name, "Physician Name" %>
+            <%= form.text_field :physician_name, class: "form-control", required: true %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :physician_address, "Physician Address" %>
+            <%= form.text_field :physician_address, class: "form-control", required: true %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :physician_phone, "Physician Phone" %>
+            <%= form.text_field :physician_phone, class: "form-control", required: true %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :hospital_name, "Hospital Name" %>
+            <%= form.text_field :hospital_name, class: "form-control" %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :hospital_address, "Hospital Address" %>
+            <%= form.text_field :hospital_address, class: "form-control" %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :hospital_phone, "Hospital Phone" %>
+            <%= form.text_field :hospital_phone, class: "form-control" %>
+          </div>
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :hospitalized_overnight, "Hospitalized Overnight?" %>
+            <%= form.select :hospitalized_overnight,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
+          </div>
+        </div>
       </div>
 
 <!-- Page 8: Investigation Details -->
 <div class="form-page" style="display:none;">
   <h2>Investigation Details</h2>
+        <div class="form-row d-flex flex-wrap">
+        <% field_502_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_502_editable %>">
+  <%= form.label :investigator_name, "Investigator Name" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :investigator_name, class: "form-control", required: field_502_editable && true, disabled: !field_502_editable %>
+          </div>
+        <% field_503_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_503_editable %>">
+  <%= form.label :investigator_title, "Investigator Title" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :investigator_title, class: "form-control", required: field_503_editable && true, disabled: !field_503_editable %>
+          </div>
+        <% field_504_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_504_editable %>">
+  <%= form.label :investigator_phone, "Investigator Phone" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :investigator_phone, class: "form-control", required: field_504_editable && true, disabled: !field_504_editable %>
+          </div>
+        <% field_505_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_505_editable %>">
+  <%= form.label :nature_of_incident, "Nature of Incident" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_area :nature_of_incident, rows: 5, class: "form-control", required: field_505_editable && true, disabled: !field_505_editable %>
+          </div>
+        <% field_506_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_506_editable %>">
+  <%= form.label :cause_of_incident, "Cause of Incident" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_area :cause_of_incident, rows: 5, class: "form-control", required: field_506_editable && true, disabled: !field_506_editable %>
+          </div>
+        </div>
       </div>
 
 <!-- Page 9: Severity & Root Cause -->
 <div class="form-page" style="display:none;">
   <h2>Severity & Root Cause</h2>
+        <div class="form-row d-flex flex-wrap">
+        <% field_507_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_507_editable %>">
+  <%= form.label :root_cause, "Root Cause" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_area :root_cause, rows: 5, class: "form-control", required: field_507_editable && true, disabled: !field_507_editable %>
+          </div>
+        <% field_508_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_508_editable %>">
+  <%= form.label :assessment_of_future_severity_potential, "Assessment of Future Severity Potential" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_area :assessment_of_future_severity_potential, rows: 5, class: "form-control", required: field_508_editable && true, disabled: !field_508_editable %>
+          </div>
+        <% field_509_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_509_editable %>">
+  <%= form.label :assessment_of_probability_of_recurrence, "Assessment of Probability of Recurrence" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_area :assessment_of_probability_of_recurrence, rows: 5, class: "form-control", required: field_509_editable && true, disabled: !field_509_editable %>
+          </div>
+        </div>
       </div>
 
 <!-- Page 10: Corrective Actions -->
 <div class="form-page" style="display:none;">
   <h2>Corrective Actions</h2>
+        <div class="form-row d-flex flex-wrap">
+        <% field_510_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_510_editable %>">
+  <%= form.label :unsafe_condition_corrected_immediately, "Unsafe condition corrected immediately?" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.select :unsafe_condition_corrected_immediately,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: field_510_editable && true, disabled: !field_510_editable } %>
+          </div>
+        <% field_511_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_511_editable %>">
+  <%= form.label :checklistprocedurestraining_modified, "Checklist/procedures/training modified?" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.select :checklistprocedurestraining_modified,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: field_511_editable && true, disabled: !field_511_editable } %>
+          </div>
+        <% field_512_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_512_editable %>">
+  <%= form.label :person_responsible_for_corrective_action, "Person Responsible for Corrective Action" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :person_responsible_for_corrective_action, class: "form-control", required: field_512_editable && true, disabled: !field_512_editable %>
+          </div>
+        <% field_513_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_513_editable %>">
+  <%= form.label :title, "Title" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :title, class: "form-control", required: field_513_editable && true, disabled: !field_513_editable %>
+          </div>
+        <% field_514_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_514_editable %>">
+  <%= form.label :department, "Department" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :department, class: "form-control", required: field_514_editable && true, disabled: !field_514_editable %>
+          </div>
+        <% field_515_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_515_editable %>">
+  <%= form.label :phone, "Phone" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :phone, class: "form-control", required: field_515_editable && true, disabled: !field_515_editable %>
+          </div>
+        <% field_516_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_516_editable %>">
+  <%= form.label :targeted_completion_date, "Targeted Completion Date" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.datetime_local_field :targeted_completion_date, class: "form-control", required: field_516_editable && true, disabled: !field_516_editable %>
+          </div>
+        <% field_517_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_517_editable %>">
+  <%= form.label :actual_completion_date, "Actual Completion Date" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.datetime_local_field :actual_completion_date, class: "form-control", required: field_517_editable && true, disabled: !field_517_editable %>
+          </div>
+        </div>
       </div>
 
 <!-- Page 11: OSHA Info -->
 <div class="form-page" style="display:none;">
   <h2>OSHA Info</h2>
+        <div class="form-row d-flex flex-wrap">
+        <% field_518_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_518_editable %>">
+  <%= form.label :osha_recordable, "OSHA Recordable" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.select :osha_recordable,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: field_518_editable && true, disabled: !field_518_editable } %>
+          </div>
+        <% field_519_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_519_editable %>">
+  <%= form.label :osha_reportable, "OSHA Reportable" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.select :osha_reportable,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: field_519_editable && true, disabled: !field_519_editable } %>
+          </div>
+        <% field_520_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_520_editable %>">
+  <%= form.label :reportable_injury_codes, "Reportable Injury Codes" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :reportable_injury_codes, class: "form-control", required: field_520_editable && true, disabled: !field_520_editable %>
+          </div>
+        </div>
       </div>
 
     <!-- Navigation Buttons -->

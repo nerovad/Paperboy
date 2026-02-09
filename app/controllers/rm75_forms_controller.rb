@@ -74,6 +74,48 @@ employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
 approver_id = employee&.Supervisor_ID&.to_s
 @rm75_form.update(status: :step_1_pending, approver_id: approver_id)
 # TODO: Send notification to supervisor
+# Multi-step approval routing (1 steps)
+# Step 1: supervisor
+# Look up the submitter's supervisor
+employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
+approver_id = employee&.Supervisor_ID&.to_s
+@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
+# TODO: Send notification to supervisor
+# Multi-step approval routing (1 steps)
+# Step 1: supervisor
+# Look up the submitter's supervisor
+employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
+approver_id = employee&.Supervisor_ID&.to_s
+@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
+# TODO: Send notification to supervisor
+# Multi-step approval routing (1 steps)
+# Step 1: supervisor
+# Look up the submitter's supervisor
+employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
+approver_id = employee&.Supervisor_ID&.to_s
+@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
+# TODO: Send notification to supervisor
+# Multi-step approval routing (1 steps)
+# Step 1: supervisor
+# Look up the submitter's supervisor
+employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
+approver_id = employee&.Supervisor_ID&.to_s
+@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
+# TODO: Send notification to supervisor
+# Multi-step approval routing (1 steps)
+# Step 1: supervisor
+# Look up the submitter's supervisor
+employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
+approver_id = employee&.Supervisor_ID&.to_s
+@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
+# TODO: Send notification to supervisor
+# Multi-step approval routing (1 steps)
+# Step 1: supervisor
+# Look up the submitter's supervisor
+employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
+approver_id = employee&.Supervisor_ID&.to_s
+@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
+# TODO: Send notification to supervisor
 redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)

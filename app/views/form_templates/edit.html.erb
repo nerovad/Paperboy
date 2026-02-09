@@ -395,7 +395,7 @@
                       </div>
 
                       <div class="status-category-display" style="min-width: 100px;">
-                        <span class="badge <%= helpers.category_badge_class(status.category.to_sym) %>"><%= status.category_label %></span>
+                        <span class="badge <%= category_badge_class(status.category.to_sym) %>"><%= status.category_label %></span>
                         <input type="hidden" name="statuses[][category]" class="status-category-input" value="<%= status.category %>">
                       </div>
 
