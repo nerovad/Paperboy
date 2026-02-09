@@ -25,7 +25,13 @@ export default class extends Controller {
     "routingStepItem",
     "statusesContainer",
     "statusItem",
-    "predefinedStatusesList"
+    "predefinedStatusesList",
+    "wizardPage",
+    "wizardDot",
+    "wizardPrevBtn",
+    "wizardNextBtn",
+    "wizardPageLabel",
+    "wizardSubmitBtn"
   ]
 
   static values = {
@@ -45,6 +51,9 @@ export default class extends Controller {
 
     // Initialize sortable on fields container
     this.initializeSortable()
+
+    // Initialize wizard navigation (no-op on edit page)
+    this.initializeWizard()
   }
 
   // Initialize SortableJS for drag-and-drop field reordering
@@ -85,6 +94,8 @@ export default class extends Controller {
 
       // Lock body scroll when modal is open
       document.body.style.overflow = 'hidden'
+
+      this.resetWizard()
     }
   }
 
@@ -116,6 +127,8 @@ export default class extends Controller {
       }
       // Close status picker if open
       this.closeStatusPicker()
+
+      this.resetWizard()
     }
   }
 
@@ -1086,6 +1099,101 @@ export default class extends Controller {
     return true
   }
 
+  // ============================================
+  // WIZARD NAVIGATION METHODS
+  // ============================================
+
+  initializeWizard() {
+    if (!this.hasWizardPageTarget) return
+    this.currentWizardPage = 0
+    this.showWizardPage()
+  }
+
+  showWizardPage() {
+    if (!this.hasWizardPageTarget) return
+
+    const page = this.currentWizardPage
+
+    // Toggle page visibility
+    this.wizardPageTargets.forEach((el, i) => {
+      el.style.display = i === page ? 'block' : 'none'
+    })
+
+    // Update dots
+    this.wizardDotTargets.forEach((dot, i) => {
+      dot.classList.toggle('active', i === page)
+    })
+
+    // Show/hide prev button
+    if (this.hasWizardPrevBtnTarget) {
+      this.wizardPrevBtnTarget.style.display = page === 0 ? 'none' : 'inline-block'
+    }
+
+    // Show/hide next button
+    const lastPage = this.wizardPageTargets.length - 1
+    if (this.hasWizardNextBtnTarget) {
+      this.wizardNextBtnTarget.style.display = page === lastPage ? 'none' : 'inline-block'
+    }
+
+    // Show/hide submit button (only on last page)
+    if (this.hasWizardSubmitBtnTarget) {
+      this.wizardSubmitBtnTarget.style.display = page === lastPage ? 'inline-block' : 'none'
+    }
+
+    // Update page label
+    if (this.hasWizardPageLabelTarget) {
+      const currentPageEl = this.wizardPageTargets[page]
+      const title = currentPageEl?.dataset.wizardTitle || `Step ${page + 1}`
+      this.wizardPageLabelTarget.textContent = `Step ${page + 1} of ${this.wizardPageTargets.length} — ${title}`
+    }
+
+    // Scroll modal body to top
+    const modalBody = this.element.querySelector('.modal-body')
+    if (modalBody) modalBody.scrollTop = 0
+  }
+
+  wizardNext(event) {
+    if (event) event.preventDefault()
+    if (!this.hasWizardPageTarget) return
+
+    if (!this.validateWizardPage(this.currentWizardPage)) return
+
+    if (this.currentWizardPage < this.wizardPageTargets.length - 1) {
+      this.currentWizardPage++
+      this.showWizardPage()
+    }
+  }
+
+  wizardPrev(event) {
+    if (event) event.preventDefault()
+    if (!this.hasWizardPageTarget) return
+
+    if (this.currentWizardPage > 0) {
+      this.currentWizardPage--
+      this.showWizardPage()
+    }
+  }
+
+  validateWizardPage(pageIndex) {
+    const page = this.wizardPageTargets[pageIndex]
+    if (!page) return true
+
+    // Check all visible required inputs on this page
+    const inputs = page.querySelectorAll('input[required], select[required], textarea[required]')
+    for (const input of inputs) {
+      // Skip hidden inputs (e.g. inside display:none containers)
+      if (input.offsetParent === null && input.type !== 'hidden') continue
+      if (!input.reportValidity()) return false
+    }
+    return true
+  }
+
+  resetWizard() {
+    if (!this.hasWizardPageTarget) return
+    this.currentWizardPage = 0
+    this.showWizardPage()
+  }
+
   // Submit form
   submitForm(event) {
     event.preventDefault()
@@ -1132,14 +1240,14 @@ export default class extends Controller {
         } else {
           alert('Error creating form:\n' + data.errors.join('\n'))
           this.submitButtonTarget.disabled = false
-          this.submitButtonTarget.textContent = 'Create Form Template'
+          this.submitButtonTarget.textContent = 'Create Form'
         }
       })
       .catch(error => {
         console.error('Error:', error)
         alert('An error occurred while creating the form.')
         this.submitButtonTarget.disabled = false
-        this.submitButtonTarget.textContent = 'Create Form Template'
+        this.submitButtonTarget.textContent = 'Create Form'
       })
   }
 }

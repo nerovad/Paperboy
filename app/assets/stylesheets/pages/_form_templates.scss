@@ -315,6 +315,43 @@
     position: sticky; // Make footer sticky
     bottom: 0;
     z-index: 10;
+
+    &.wizard-footer {
+      justify-content: space-between;
+    }
+  }
+
+  .wizard-page-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 400;
+    color: $muted;
+    margin-top: 4px;
+  }
+
+  .wizard-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .progress-dots {
+      display: flex;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        background-color: #ccc;
+        border-radius: 50%;
+        transition: background-color 0.3s ease;
+
+        &.active {
+          background-color: $primary-color;
+        }
+      }
+    }
   }
 }
 

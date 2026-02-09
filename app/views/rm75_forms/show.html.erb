@@ -1,0 +1,17 @@
+<div class="form-header">
+  <h1>Rm75 Form</h1>
+</div>
+
+<div class="form-wrapper">
+  <div class="form-inner">
+
+  <%= render partial: "shared/readonly_record",
+             locals: { record: @rm75_form,
+                       exclude: %w[id created_at updated_at approver_id deny_reason] } %>
+
+  <div class="form-actions" style="margin-top: 16px;">
+    <%= link_to "Back to Inbox", inbox_queue_path, class: "form-btn" %>
+    <%= link_to "Download PDF", pdf_rm75_form_path(@rm75_form), target: "_blank", class: "form-btn" %>
+  </div>
+  </div>
+</div>

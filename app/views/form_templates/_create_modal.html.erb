@@ -9,9 +9,12 @@
   
   <div class="form-builder-modal-content">
     <div class="modal-header">
-      <h2>Create New Form</h2>
-      <button type="button" 
-              class="close-modal" 
+      <div>
+        <h2>Create New Form</h2>
+        <span class="wizard-page-label" data-form-builder-target="wizardPageLabel"></span>
+      </div>
+      <button type="button"
+              class="close-modal"
               data-action="click->form-builder#closeModal">&times;</button>
     </div>
     
@@ -24,276 +27,300 @@
                   } do |f| %>
       
       <div class="modal-body">
-        <!-- Step 1: Form Name -->
-        <div class="form-group">
-          <label for="form_name">1. Name of Form <span class="required">*</span></label>
-          <%= f.text_field :name,
-                          id: "form_name",
-                          class: "form-control",
-                          placeholder: "e.g., Authorization Request",
-                          required: true,
-                          data: { form_builder_target: "formName" } %>
-        </div>
 
-        <!-- Tags -->
-        <div class="form-group">
-          <label>Tags</label>
-          <small class="form-text" style="display: block; margin-bottom: 8px; color: #6c757d;">
-            Add tags to help users find this form. Press Enter or comma to add a tag.
-          </small>
-          <div class="tag-chips-container" data-controller="tag-chips" data-tag-chips-existing-tags-value="<%= (@existing_tags || FormTemplate.all_tags).to_json %>">
-            <div class="tag-chips-input-wrapper">
-              <div class="tag-chips" data-tag-chips-target="chips"></div>
-              <input type="text"
-                     class="tag-chips-input"
-                     placeholder="Type to add tags..."
-                     data-tag-chips-target="input"
-                     data-action="keydown->tag-chips#handleKeydown input->tag-chips#handleInput blur->tag-chips#handleBlur">
-              <div class="tag-autocomplete" data-tag-chips-target="autocomplete" style="display: none;"></div>
-            </div>
-            <%= f.hidden_field :tags, data: { tag_chips_target: "hiddenField" } %>
-          </div>
-        </div>
-
-        <!-- Step 2: Access Level -->
-        <div class="form-group">
-          <label for="form_access">2. Access <span class="required">*</span></label>
-          <%= f.select :access_level,
-                      options_for_select([['Public', 'public'], ['Restricted', 'restricted']]),
-                      {},
-                      {
-                        id: "form_access",
-                        class: "form-control",
-                        data: { 
-                          form_builder_target: "accessLevel",
-                          action: "change->form-builder#toggleACLGroup"
-                        }
-                      } %>
-        </div>
-        
-        <!-- Organization Scope (hidden by default, shown when Restricted) -->
-        <div class="form-group"
-             data-form-builder-target="orgScopeContainer"
-             style="display: none;">
-          <label>Organization Scope</label>
-          <small class="form-text" style="display: block; margin-bottom: 8px; color: #6c757d;">
-            Restrict this form to users within a specific organization level. Select the most specific level that applies.
-          </small>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 180px;">
-              <label style="font-size: 0.85em; color: #495057;">Agency</label>
-              <select id="org-scope-agency-select"
-                      class="form-control form-control-sm"
-                      data-action="change->form-builder#loadOrgDivisions change->form-builder#updateOrgScope">
-                <option value="">Select Agency...</option>
-                <% @agency_options&.each do |name, id| %>
-                  <option value="<%= id %>"><%= name %></option>
-                <% end %>
-              </select>
-            </div>
-            <div style="flex: 1; min-width: 180px;">
-              <label style="font-size: 0.85em; color: #495057;">Division</label>
-              <select id="org-scope-division-select"
-                      class="form-control form-control-sm"
-                      disabled
-                      data-action="change->form-builder#loadOrgDepartments change->form-builder#updateOrgScope">
-                <option value="">Select Division...</option>
-              </select>
-            </div>
-            <div style="flex: 1; min-width: 180px;">
-              <label style="font-size: 0.85em; color: #495057;">Department</label>
-              <select id="org-scope-department-select"
-                      class="form-control form-control-sm"
-                      disabled
-                      data-action="change->form-builder#loadOrgUnits change->form-builder#updateOrgScope">
-                <option value="">Select Department...</option>
-              </select>
-            </div>
-            <div style="flex: 1; min-width: 180px;">
-              <label style="font-size: 0.85em; color: #495057;">Unit</label>
-              <select id="org-scope-unit-select"
-                      class="form-control form-control-sm"
-                      disabled
-                      data-action="change->form-builder#updateOrgScope">
-                <option value="">Select Unit...</option>
-              </select>
-            </div>
-          </div>
-          <%= f.hidden_field :org_scope_type, data: { form_builder_target: "orgScopeType" } %>
-          <%= f.hidden_field :org_scope_id, data: { form_builder_target: "orgScopeId" } %>
-        </div>
-
-        <!-- ACL Group (hidden by default) -->
-        <div class="form-group"
-             data-form-builder-target="aclGroupContainer"
-             style="display: none;">
-          <label for="form_acl_group">ACL Group</label>
-          <%= f.select :acl_group_id,
-                      options_for_select(acl_groups),
-                      { include_blank: "Select a group..." },
-                      {
-                        id: "form_acl_group",
-                        class: "form-control",
-                        data: { form_builder_target: "aclGroup" }
-                      } %>
-        </div>
-        
-        <!-- Step 4: Number of Pages -->
-        <div class="form-group">
-          <label for="form_page_count">4. Number of Pages <span class="required">*</span></label>
-          <%= f.number_field :page_count,
-                            id: "form_page_count",
+        <!-- ========== Page 1: Basic Info ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Basic Info">
+          <div class="form-group">
+            <label for="form_name">Name of Form <span class="required">*</span></label>
+            <%= f.text_field :name,
+                            id: "form_name",
                             class: "form-control",
-                            min: 2,
-                            max: 30,
-                            value: 2,
-                            data: { 
-                              form_builder_target: "pageCount",
-                              action: "change->form-builder#updatePageHeaders"
-                            } %>
-          <small class="form-text">Minimum: 2 (Employee Info, Agency Info) | Maximum: 30</small>
-        </div>
-        
-        <!-- Additional Page Headers (shown when pages > 2) -->
-        <div class="form-group page-headers-container"
-             data-form-builder-target="pageHeadersContainer"
-             style="display: none;">
-          <label>Page Names (for pages 3+)</label>
-          <div data-form-builder-target="pageHeadersList"></div>
-        </div>
-
-        <!-- Step 5: Submission Routing -->
-        <div class="form-group">
-          <label for="form_submission_type">5. Form Submission Routing <span class="required">*</span></label>
-          <%= f.select :submission_type,
-                      options_for_select([
-                        ['Submit to Database (Ends the workflow)', 'database'],
-                        ['Routed for Approval', 'approval']
-                      ], 'database'),
-                      {},
-                      {
-                        id: "form_submission_type",
-                        class: "form-control",
-                        data: {
-                          form_builder_target: "submissionType",
-                          action: "change->form-builder#toggleApprovalRouting"
-                        }
-                      } %>
-        </div>
-
-        <!-- Approval Routing Steps (hidden by default) -->
-        <div class="form-group"
-             data-form-builder-target="approvalRoutingContainer"
-             style="display: none;">
-          <label>Routing Steps <span class="required">*</span></label>
-          <small class="form-text" style="display: block; margin-bottom: 10px;">
-            Add one or more routing steps. Forms will be routed through each step in order.
-          </small>
-          <div class="routing-steps-container" data-form-builder-target="routingStepsContainer">
-            <!-- Routing steps will be added here dynamically -->
+                            placeholder: "e.g., Authorization Request",
+                            required: true,
+                            data: { form_builder_target: "formName" } %>
           </div>
-          <button type="button"
-                  class="btn btn-secondary btn-sm"
-                  data-action="click->form-builder#addRoutingStep">
-            + Add Routing Step
-          </button>
 
-          <!-- Status Transition Mode -->
-          <div style="margin-top: 15px; padding: 12px; background: #e8f4f8; border-radius: 6px;">
-            <label style="font-weight: 600; margin-bottom: 8px; display: block;">Status Transitions</label>
-            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-              <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
-                <input type="radio"
-                       name="form_template[status_transition_mode]"
-                       value="automatic"
-                       checked
-                       data-form-builder-target="transitionModeAutomatic">
-                <span><strong>Automatic</strong> - Status changes with routing steps</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
-                <input type="radio"
-                       name="form_template[status_transition_mode]"
-                       value="manual"
-                       data-form-builder-target="transitionModeManual">
-                <span><strong>Manual</strong> - Status changed via dropdown only</span>
-              </label>
+          <div class="form-group">
+            <label>Tags</label>
+            <small class="form-text" style="display: block; margin-bottom: 8px; color: #6c757d;">
+              Add tags to help users find this form. Press Enter or comma to add a tag.
+            </small>
+            <div class="tag-chips-container" data-controller="tag-chips" data-tag-chips-existing-tags-value="<%= (@existing_tags || FormTemplate.all_tags).to_json %>">
+              <div class="tag-chips-input-wrapper">
+                <div class="tag-chips" data-tag-chips-target="chips"></div>
+                <input type="text"
+                       class="tag-chips-input"
+                       placeholder="Type to add tags..."
+                       data-tag-chips-target="input"
+                       data-action="keydown->tag-chips#handleKeydown input->tag-chips#handleInput blur->tag-chips#handleBlur">
+                <div class="tag-autocomplete" data-tag-chips-target="autocomplete" style="display: none;"></div>
+              </div>
+              <%= f.hidden_field :tags, data: { tag_chips_target: "hiddenField" } %>
             </div>
           </div>
+
+          <div class="form-group">
+            <label for="form_access">Access <span class="required">*</span></label>
+            <%= f.select :access_level,
+                        options_for_select([['Public', 'public'], ['Restricted', 'restricted']]),
+                        {},
+                        {
+                          id: "form_access",
+                          class: "form-control",
+                          data: {
+                            form_builder_target: "accessLevel",
+                            action: "change->form-builder#toggleACLGroup"
+                          }
+                        } %>
+          </div>
+
+          <div class="form-group"
+               data-form-builder-target="orgScopeContainer"
+               style="display: none;">
+            <label>Organization Scope</label>
+            <small class="form-text" style="display: block; margin-bottom: 8px; color: #6c757d;">
+              Restrict this form to users within a specific organization level. Select the most specific level that applies.
+            </small>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 180px;">
+                <label style="font-size: 0.85em; color: #495057;">Agency</label>
+                <select id="org-scope-agency-select"
+                        class="form-control form-control-sm"
+                        data-action="change->form-builder#loadOrgDivisions change->form-builder#updateOrgScope">
+                  <option value="">Select Agency...</option>
+                  <% @agency_options&.each do |name, id| %>
+                    <option value="<%= id %>"><%= name %></option>
+                  <% end %>
+                </select>
+              </div>
+              <div style="flex: 1; min-width: 180px;">
+                <label style="font-size: 0.85em; color: #495057;">Division</label>
+                <select id="org-scope-division-select"
+                        class="form-control form-control-sm"
+                        disabled
+                        data-action="change->form-builder#loadOrgDepartments change->form-builder#updateOrgScope">
+                  <option value="">Select Division...</option>
+                </select>
+              </div>
+              <div style="flex: 1; min-width: 180px;">
+                <label style="font-size: 0.85em; color: #495057;">Department</label>
+                <select id="org-scope-department-select"
+                        class="form-control form-control-sm"
+                        disabled
+                        data-action="change->form-builder#loadOrgUnits change->form-builder#updateOrgScope">
+                  <option value="">Select Department...</option>
+                </select>
+              </div>
+              <div style="flex: 1; min-width: 180px;">
+                <label style="font-size: 0.85em; color: #495057;">Unit</label>
+                <select id="org-scope-unit-select"
+                        class="form-control form-control-sm"
+                        disabled
+                        data-action="change->form-builder#updateOrgScope">
+                  <option value="">Select Unit...</option>
+                </select>
+              </div>
+            </div>
+            <%= f.hidden_field :org_scope_type, data: { form_builder_target: "orgScopeType" } %>
+            <%= f.hidden_field :org_scope_id, data: { form_builder_target: "orgScopeId" } %>
+          </div>
+
+          <div class="form-group"
+               data-form-builder-target="aclGroupContainer"
+               style="display: none;">
+            <label for="form_acl_group">ACL Group</label>
+            <%= f.select :acl_group_id,
+                        options_for_select(acl_groups),
+                        { include_blank: "Select a group..." },
+                        {
+                          id: "form_acl_group",
+                          class: "form-control",
+                          data: { form_builder_target: "aclGroup" }
+                        } %>
+          </div>
         </div>
 
-        <!-- Step 6: Inbox Queue Buttons -->
-        <div class="form-group">
-          <label>6. Inbox Queue Buttons</label>
-          <small class="form-text" style="display: block; margin-bottom: 10px;">
-            Select which action buttons should appear in the inbox queue for this form type.
-          </small>
-          <div class="inbox-buttons-container" style="display: flex; flex-wrap: wrap; gap: 15px;">
-            <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
-              <div class="inbox-button-option" style="flex: 0 0 calc(50% - 10px); display: flex; align-items: flex-start; gap: 8px;">
-                <input type="checkbox"
-                       name="form_template[inbox_buttons][]"
-                       value="<%= key %>"
-                       id="inbox_button_<%= key %>"
-                       style="margin-top: 3px;"
-                       <%= 'checked' if %w[view_pdf].include?(key) %>>
-                <label for="inbox_button_<%= key %>" style="margin: 0; cursor: pointer;">
-                  <strong><%= config[:label] %></strong>
-                  <small style="display: block; color: #6c757d; font-weight: normal;"><%= config[:description] %></small>
+        <!-- ========== Page 2: Page Setup ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Page Setup" style="display: none;">
+          <div class="form-group">
+            <label for="form_page_count">Number of Pages <span class="required">*</span></label>
+            <%= f.number_field :page_count,
+                              id: "form_page_count",
+                              class: "form-control",
+                              min: 2,
+                              max: 30,
+                              value: 2,
+                              data: {
+                                form_builder_target: "pageCount",
+                                action: "change->form-builder#updatePageHeaders"
+                              } %>
+            <small class="form-text">Minimum: 2 (Employee Info, Agency Info) | Maximum: 30</small>
+          </div>
+
+          <div class="form-group page-headers-container"
+               data-form-builder-target="pageHeadersContainer"
+               style="display: none;">
+            <label>Page Names (for pages 3+)</label>
+            <div data-form-builder-target="pageHeadersList"></div>
+          </div>
+        </div>
+
+        <!-- ========== Page 3: Routing ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Routing" style="display: none;">
+          <div class="form-group">
+            <label for="form_submission_type">Form Submission Routing <span class="required">*</span></label>
+            <%= f.select :submission_type,
+                        options_for_select([
+                          ['Submit to Database (Ends the workflow)', 'database'],
+                          ['Routed for Approval', 'approval']
+                        ], 'database'),
+                        {},
+                        {
+                          id: "form_submission_type",
+                          class: "form-control",
+                          data: {
+                            form_builder_target: "submissionType",
+                            action: "change->form-builder#toggleApprovalRouting"
+                          }
+                        } %>
+          </div>
+
+          <div class="form-group"
+               data-form-builder-target="approvalRoutingContainer"
+               style="display: none;">
+            <label>Routing Steps <span class="required">*</span></label>
+            <small class="form-text" style="display: block; margin-bottom: 10px;">
+              Add one or more routing steps. Forms will be routed through each step in order.
+            </small>
+            <div class="routing-steps-container" data-form-builder-target="routingStepsContainer">
+            </div>
+            <button type="button"
+                    class="btn btn-secondary btn-sm"
+                    data-action="click->form-builder#addRoutingStep">
+              + Add Routing Step
+            </button>
+
+            <div style="margin-top: 15px; padding: 12px; background: #e8f4f8; border-radius: 6px;">
+              <label style="font-weight: 600; margin-bottom: 8px; display: block;">Status Transitions</label>
+              <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
+                  <input type="radio"
+                         name="form_template[status_transition_mode]"
+                         value="automatic"
+                         checked
+                         data-form-builder-target="transitionModeAutomatic">
+                  <span><strong>Automatic</strong> - Status changes with routing steps</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
+                  <input type="radio"
+                         name="form_template[status_transition_mode]"
+                         value="manual"
+                         data-form-builder-target="transitionModeManual">
+                  <span><strong>Manual</strong> - Status changed via dropdown only</span>
                 </label>
               </div>
-            <% end %>
+            </div>
           </div>
         </div>
 
-        <!-- Step 7: Status Configuration -->
-        <div class="form-group">
-          <label>7. Status Configuration</label>
-          <small class="form-text" style="display: block; margin-bottom: 10px;">
-            Select the statuses available for this form. Choose from predefined statuses or add custom ones.
-          </small>
-          <div class="statuses-container" data-form-builder-target="statusesContainer">
-            <!-- Statuses will be added here dynamically -->
+        <!-- ========== Page 4: Statuses & Buttons ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Statuses &amp; Buttons" style="display: none;">
+          <div class="form-group">
+            <label>Inbox Queue Buttons</label>
+            <small class="form-text" style="display: block; margin-bottom: 10px;">
+              Select which action buttons should appear in the inbox queue for this form type.
+            </small>
+            <div class="inbox-buttons-container" style="display: flex; flex-wrap: wrap; gap: 15px;">
+              <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+                <div class="inbox-button-option" style="flex: 0 0 calc(50% - 10px); display: flex; align-items: flex-start; gap: 8px;">
+                  <input type="checkbox"
+                         name="form_template[inbox_buttons][]"
+                         value="<%= key %>"
+                         id="inbox_button_<%= key %>"
+                         style="margin-top: 3px;"
+                         <%= 'checked' if %w[view_pdf].include?(key) %>>
+                  <label for="inbox_button_<%= key %>" style="margin: 0; cursor: pointer;">
+                    <strong><%= config[:label] %></strong>
+                    <small style="display: block; color: #6c757d; font-weight: normal;"><%= config[:description] %></small>
+                  </label>
+                </div>
+              <% end %>
+            </div>
           </div>
-          <div style="display: flex; gap: 10px; margin-top: 10px;">
+
+          <div class="form-group">
+            <label>Status Configuration</label>
+            <small class="form-text" style="display: block; margin-bottom: 10px;">
+              Select the statuses available for this form. Choose from predefined statuses or add custom ones.
+            </small>
+            <div class="statuses-container" data-form-builder-target="statusesContainer">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+              <button type="button"
+                      class="btn btn-secondary btn-sm"
+                      data-action="click->form-builder#showStatusPicker">
+                + Add Predefined Status
+              </button>
+              <button type="button"
+                      class="btn btn-secondary btn-sm"
+                      data-action="click->form-builder#addCustomStatus">
+                + Add Custom Status
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== Page 5: Form Fields ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Form Fields" style="display: none;">
+          <div class="form-group">
+            <label>Fields</label>
+            <small class="form-text" style="display: block; margin-bottom: 10px;">
+              Add custom fields for your form. <strong>Tip:</strong> Drag the &#x2630; handle to reorder fields.
+            </small>
+            <div class="fields-container" data-form-builder-target="fieldsContainer">
+            </div>
             <button type="button"
                     class="btn btn-secondary btn-sm"
-                    data-action="click->form-builder#showStatusPicker">
-              + Add Predefined Status
-            </button>
-            <button type="button"
-                    class="btn btn-secondary btn-sm"
-                    data-action="click->form-builder#addCustomStatus">
-              + Add Custom Status
+                    data-action="click->form-builder#addField">
+              + Add Field
             </button>
           </div>
         </div>
 
-        <!-- Step 8: Fields -->
-        <div class="form-group">
-          <label>8. Fields</label>
-          <small class="form-text" style="display: block; margin-bottom: 10px;">
-            Add custom fields for your form. <strong>Tip:</strong> Drag the &#x2630; handle to reorder fields.
-          </small>
-          <div class="fields-container" data-form-builder-target="fieldsContainer">
-            <!-- Fields will be added here dynamically -->
-          </div>
-          <button type="button"
-                  class="btn btn-secondary btn-sm"
-                  data-action="click->form-builder#addField">
-            + Add Field
-          </button>
-        </div>
       </div>
-      
-      <div class="modal-footer">
-        <button type="button" 
-                class="btn btn-secondary" 
+
+      <div class="modal-footer wizard-footer">
+        <button type="button"
+                class="btn btn-secondary"
                 data-action="click->form-builder#closeModal">
           Cancel
         </button>
-        <%= f.submit "Create Form Template", 
-                    class: "btn btn-primary",
-                    data: { form_builder_target: "submitButton" } %>
+        <div class="wizard-nav">
+          <button type="button"
+                  class="btn btn-secondary"
+                  data-form-builder-target="wizardPrevBtn"
+                  data-action="click->form-builder#wizardPrev"
+                  style="display: none;">
+            &larr; Previous
+          </button>
+          <div class="progress-dots">
+            <span class="dot active" data-form-builder-target="wizardDot"></span>
+            <span class="dot" data-form-builder-target="wizardDot"></span>
+            <span class="dot" data-form-builder-target="wizardDot"></span>
+            <span class="dot" data-form-builder-target="wizardDot"></span>
+            <span class="dot" data-form-builder-target="wizardDot"></span>
+          </div>
+          <button type="button"
+                  class="btn btn-primary"
+                  data-form-builder-target="wizardNextBtn"
+                  data-action="click->form-builder#wizardNext">
+            Next &rarr;
+          </button>
+          <%= f.submit "Create Form",
+                      class: "btn btn-primary",
+                      style: "display: none;",
+                      data: { form_builder_target: "submitButton wizardSubmitBtn" } %>
+        </div>
       </div>
     <% end %>
 
