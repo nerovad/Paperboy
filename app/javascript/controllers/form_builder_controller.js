@@ -698,6 +698,7 @@ export default class extends Controller {
                 name="form_template[page_headers][]"
                 class="form-control form-control-sm"
                 placeholder="e.g., Additional Information"
+                data-action="input->form-builder#refreshPageSelects"
                 required>
         `
         // Restore previously entered value if it exists
@@ -736,8 +737,12 @@ export default class extends Controller {
     }
   }
 
-  // Generate page options HTML
-  // Generate page options HTML
+  // Refresh page selects when page header names change
+  refreshPageSelects() {
+    const pageCount = parseInt(this.pageCountTarget.value)
+    this.updatePageSelects(pageCount)
+  }
+
   generatePageOptions(pageCount) {
     let options = `
       <option value="1">Page 1 - Employee Info</option>

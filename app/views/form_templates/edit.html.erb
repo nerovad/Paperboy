@@ -194,7 +194,8 @@
                 <%= text_field_tag "form_template[page_headers][]",
                                   @form_template.page_headers&.dig(i),
                                   class: "form-control form-control-sm",
-                                  placeholder: "e.g., Additional Information" %>
+                                  placeholder: "e.g., Additional Information",
+                                  data: { action: "input->form-builder#refreshPageSelects" } %>
               </div>
             <% end %>
           </div>
