@@ -1,6 +1,22 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  resources :osha301_forms do
+    member do
+      get :pdf
+      patch :approve
+      patch :deny
+      patch :update_status
+    end
+  end
+  resources :leave_of_absence_forms do
+    member do
+      get :pdf
+      patch :approve
+      patch :deny
+      patch :update_status
+    end
+  end
   resources :rm75_forms do
     member do
       get :pdf
