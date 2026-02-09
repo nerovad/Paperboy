@@ -6,8 +6,11 @@ export default class extends Controller {
 
   connect() {
     // Store original form names before any modifications
+    // If data-original-name is already set (e.g. on complex cards), keep it
     this.formLinkTargets.forEach(link => {
-      link.dataset.originalName = link.textContent.trim()
+      if (!link.dataset.originalName) {
+        link.dataset.originalName = link.textContent.trim()
+      }
     })
   }
 
@@ -18,7 +21,9 @@ export default class extends Controller {
       // Show all links in original order, remove highlighting
       this.formLinkTargets.forEach(link => {
         link.style.display = ""
-        link.innerHTML = link.dataset.originalName
+        if (!link.hasAttribute("data-search-card")) {
+          link.innerHTML = link.dataset.originalName
+        }
       })
       return
     }
@@ -78,21 +83,25 @@ export default class extends Controller {
 
     // Reorder and display links
     scored.forEach(({ link, formName, matches, score, matchedField, matchedTag }) => {
+      const isCard = link.hasAttribute("data-search-card")
+
       if (score > 0) {
         link.style.display = ""
-        if (matchedTag) {
-          // Match was in a tag - show tag below form name
-          link.innerHTML = `${this.escapeHtml(formName)}<span class="matched-tag">Tag: ${this.escapeHtml(matchedTag)}</span>`
-        } else if (matchedField) {
-          // Match was in a field - show field name below form name
-          link.innerHTML = `${this.escapeHtml(formName)}<span class="matched-field">Field: ${this.escapeHtml(matchedField)}</span>`
-        } else {
-          // Match was in form name - highlight matches
-          link.innerHTML = this.highlightMatches(formName, matches)
+        // Only modify innerHTML for simple link targets (sidebar), not complex cards
+        if (!isCard) {
+          if (matchedTag) {
+            link.innerHTML = `${this.escapeHtml(formName)}<span class="matched-tag">Tag: ${this.escapeHtml(matchedTag)}</span>`
+          } else if (matchedField) {
+            link.innerHTML = `${this.escapeHtml(formName)}<span class="matched-field">Field: ${this.escapeHtml(matchedField)}</span>`
+          } else {
+            link.innerHTML = this.highlightMatches(formName, matches)
+          }
         }
       } else {
         link.style.display = "none"
-        link.innerHTML = formName
+        if (!isCard) {
+          link.innerHTML = formName
+        }
       }
       // Reorder in DOM
       this.formsListTarget.appendChild(link)

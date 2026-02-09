@@ -18,6 +18,35 @@
     margin: 0 auto;
   }
 
+  .template-search-input {
+    width: 100%;
+    padding: 10px 14px;
+    margin: 0 0 20px 0;
+    border: 1px solid $border-color;
+    border-radius: $radius-6;
+    font-size: 14px;
+    font-family: $font-sans;
+    box-sizing: border-box;
+    background-color: $form-bg;
+    color: $text-color;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &::placeholder {
+      color: $muted;
+      font-style: italic;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 3px rgba($primary-color, 0.15);
+    }
+
+    &:hover {
+      border-color: darken($border-color, 10%);
+    }
+  }
+
   /* Header Row */
   .header-row {
     display: flex;

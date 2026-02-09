@@ -3,7 +3,7 @@ class FormTemplatesController < ApplicationController
   before_action :set_form_template, only: [:show, :edit, :update, :destroy]
   
   def index
-    @form_templates = FormTemplate.all.order(created_at: :desc)
+    @form_templates = FormTemplate.includes(:form_fields).order(:name)
     @acl_groups = fetch_acl_groups
     @employees = fetch_employees
     @existing_tags = FormTemplate.all_tags
