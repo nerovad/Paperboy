@@ -678,6 +678,12 @@ export default class extends Controller {
     const container = this.pageHeadersContainerTarget
     const headersList = this.pageHeadersListTarget
 
+    // Preserve existing page header values before rebuilding
+    const existingValues = []
+    headersList.querySelectorAll('input').forEach(input => {
+      existingValues.push(input.value)
+    })
+
     if (pageCount > 2) {
       container.style.display = 'block'
       headersList.innerHTML = ''
@@ -688,12 +694,17 @@ export default class extends Controller {
         headerItem.className = 'page-header-item'
         headerItem.innerHTML = `
           <label>Page ${i}:</label>
-          <input type="text" 
-                name="form_template[page_headers][]" 
+          <input type="text"
+                name="form_template[page_headers][]"
                 class="form-control form-control-sm"
                 placeholder="e.g., Additional Information"
                 required>
         `
+        // Restore previously entered value if it exists
+        const savedValue = existingValues[i - 3]
+        if (savedValue) {
+          headerItem.querySelector('input').value = savedValue
+        }
         headersList.appendChild(headerItem)
       }
 
