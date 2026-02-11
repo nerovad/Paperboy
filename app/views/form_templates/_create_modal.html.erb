@@ -165,7 +165,54 @@
           </div>
         </div>
 
-        <!-- ========== Page 3: Routing ========== -->
+        <!-- ========== Page 3: Statuses & Buttons ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Statuses &amp; Buttons" style="display: none;">
+          <div class="form-group">
+            <label>Inbox Queue Buttons</label>
+            <small class="form-text" style="display: block; margin-bottom: 10px;">
+              Select which action buttons should appear in the inbox queue for this form type.
+            </small>
+            <div class="inbox-buttons-container" style="display: flex; flex-wrap: wrap; gap: 15px;">
+              <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+                <div class="inbox-button-option" style="flex: 0 0 calc(50% - 10px); display: flex; align-items: flex-start; gap: 8px;">
+                  <input type="checkbox"
+                         name="form_template[inbox_buttons][]"
+                         value="<%= key %>"
+                         id="inbox_button_<%= key %>"
+                         style="margin-top: 3px;"
+                         <%= 'checked' if %w[view_pdf].include?(key) %>>
+                  <label for="inbox_button_<%= key %>" style="margin: 0; cursor: pointer;">
+                    <strong><%= config[:label] %></strong>
+                    <small style="display: block; color: #6c757d; font-weight: normal;"><%= config[:description] %></small>
+                  </label>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Status Configuration</label>
+            <small class="form-text" style="display: block; margin-bottom: 10px;">
+              Select the statuses available for this form. Choose from predefined statuses or add custom ones.
+            </small>
+            <div class="statuses-container" data-form-builder-target="statusesContainer">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+              <button type="button"
+                      class="btn btn-secondary btn-sm"
+                      data-action="click->form-builder#showStatusPicker">
+                + Add Predefined Status
+              </button>
+              <button type="button"
+                      class="btn btn-secondary btn-sm"
+                      data-action="click->form-builder#addCustomStatus">
+                + Add Custom Status
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== Page 4: Routing ========== -->
         <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Routing" style="display: none;">
           <div class="form-group">
             <label for="form_submission_type">Form Submission Routing <span class="required">*</span></label>
@@ -219,53 +266,6 @@
                   <span><strong>Manual</strong> - Status changed via dropdown only</span>
                 </label>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ========== Page 4: Statuses & Buttons ========== -->
-        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Statuses &amp; Buttons" style="display: none;">
-          <div class="form-group">
-            <label>Inbox Queue Buttons</label>
-            <small class="form-text" style="display: block; margin-bottom: 10px;">
-              Select which action buttons should appear in the inbox queue for this form type.
-            </small>
-            <div class="inbox-buttons-container" style="display: flex; flex-wrap: wrap; gap: 15px;">
-              <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
-                <div class="inbox-button-option" style="flex: 0 0 calc(50% - 10px); display: flex; align-items: flex-start; gap: 8px;">
-                  <input type="checkbox"
-                         name="form_template[inbox_buttons][]"
-                         value="<%= key %>"
-                         id="inbox_button_<%= key %>"
-                         style="margin-top: 3px;"
-                         <%= 'checked' if %w[view_pdf].include?(key) %>>
-                  <label for="inbox_button_<%= key %>" style="margin: 0; cursor: pointer;">
-                    <strong><%= config[:label] %></strong>
-                    <small style="display: block; color: #6c757d; font-weight: normal;"><%= config[:description] %></small>
-                  </label>
-                </div>
-              <% end %>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Status Configuration</label>
-            <small class="form-text" style="display: block; margin-bottom: 10px;">
-              Select the statuses available for this form. Choose from predefined statuses or add custom ones.
-            </small>
-            <div class="statuses-container" data-form-builder-target="statusesContainer">
-            </div>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-              <button type="button"
-                      class="btn btn-secondary btn-sm"
-                      data-action="click->form-builder#showStatusPicker">
-                + Add Predefined Status
-              </button>
-              <button type="button"
-                      class="btn btn-secondary btn-sm"
-                      data-action="click->form-builder#addCustomStatus">
-                + Add Custom Status
-              </button>
             </div>
           </div>
         </div>
