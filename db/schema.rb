@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_11_165539) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_11_225742) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -892,6 +892,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_11_165539) do
     t.datetime "updated_at", null: false
     t.index ["approver_id"], name: "index_work_schedule_or_location_update_forms_on_approver_id"
     t.index ["employee_id"], name: "index_work_schedule_or_location_update_forms_on_employee_id"
+  end
+
+  create_table "workplace_violence_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.integer "status", default: 0
+    t.string "approver_id"
+    t.text "deny_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["approver_id"], name: "index_workplace_violence_forms_on_approver_id"
+    t.index ["employee_id"], name: "index_workplace_violence_forms_on_employee_id"
   end
 
   add_foreign_key "BdmRates", "BdmRateTypes", column: "RateID", primary_key: "RateID", name: "FK_BdmRates_RateID"
