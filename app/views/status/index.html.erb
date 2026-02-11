@@ -9,7 +9,13 @@
      data-status-filters-all-statuses-value='<%= @filter_options[:statuses].to_json %>'
      data-status-filters-title-options-value='<%= @title_options_by_type.to_json %>'
      data-status-filters-all-titles-value='<%= @filter_options[:titles].to_json %>'>
-<div class="filter-wrapper">
+<div class="filter-wrapper" data-controller="saved-search">
+  <!-- Hidden delete form (outside the GET filter form to avoid nesting) -->
+  <form data-saved-search-target="deleteForm" method="post" style="display: none;">
+    <input type="hidden" name="_method" value="delete">
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+  </form>
+
   <form action="<%= status_path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
     <div class="filter-controls">
       <div class="filter-group">
@@ -100,6 +106,30 @@
     <!-- Hidden fields to preserve sorting when filtering -->
     <%= hidden_field_tag :sort_by, params[:sort_by] %>
     <%= hidden_field_tag :sort_direction, params[:sort_direction] %>
+
+    <div class="saved-search-bar">
+      <div class="saved-search-controls">
+        <select class="filter-select" data-saved-search-target="dropdown" data-action="change->saved-search#load">
+          <option value="">Saved Searches</option>
+          <% @saved_searches.each do |ss| %>
+            <option value="<%= ss.id %>"
+                    data-filters="<%= ss.filters.to_json %>"
+                    <%= 'selected' if params[:saved_search_id].to_s == ss.id.to_s %>>
+              <%= ss.name %>
+            </option>
+          <% end %>
+        </select>
+
+        <button type="button" class="btn" data-action="click->saved-search#toggleSaveForm">Save Search</button>
+        <button type="button" class="btn deny" data-action="click->saved-search#confirmDelete">Delete</button>
+      </div>
+
+      <div class="saved-search-save-form" data-saved-search-target="saveForm" style="display: none;">
+        <input type="text" class="filter-select" placeholder="Search name..." data-saved-search-target="nameInput"
+               data-action="keydown.enter->saved-search#save">
+        <button type="button" class="btn approve" data-action="click->saved-search#save">Confirm</button>
+      </div>
+    </div>
   </form>
 </div>
 

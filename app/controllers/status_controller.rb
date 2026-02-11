@@ -19,6 +19,7 @@ class StatusController < ApplicationController
   def index
     employee_id = session.dig(:user, "employee_id").to_s
     @is_manager = current_user_group_names.include?("status managers")
+    @saved_searches = SavedSearch.for_employee(employee_id).order(:name)
 
     @status_items = []
 

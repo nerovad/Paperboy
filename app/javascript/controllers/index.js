@@ -30,6 +30,7 @@ import TagChipsController from "controllers/tag_chips_controller"
 import UrgencyMapController from "controllers/urgency_map_controller"
 import NhtsaVehicleController from "controllers/nhtsa_vehicle_controller"
 import GroupSelectController from "controllers/group_select_controller"
+import SavedSearchController from "controllers/saved_search_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -61,3 +62,4 @@ application.register("tag-chips", TagChipsController)
 application.register("urgency-map", UrgencyMapController)
 application.register("nhtsa-vehicle", NhtsaVehicleController)
 application.register("group-select", GroupSelectController)
+application.register("saved-search", SavedSearchController)

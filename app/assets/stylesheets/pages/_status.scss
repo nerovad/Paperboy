@@ -1,5 +1,44 @@
 @import "base/tokens";
 
+/* Saved Search bar — lives inside .filter-form, above .filter-controls */
+.saved-search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid $border-color;
+
+  .saved-search-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    > .btn:not(.approve):not(.deny) {
+      background-color: $muted;
+
+      &:hover {
+        background-color: darken($muted, 10%);
+      }
+    }
+  }
+
+  .saved-search-save-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  select.filter-select {
+    min-width: 200px;
+  }
+
+  input.filter-select {
+    min-width: 180px;
+  }
+}
+
 /* Only the Status page wrapper should lose padding & scroll */
 .status-wrapper {
   max-height: calc(100vh - 480px);

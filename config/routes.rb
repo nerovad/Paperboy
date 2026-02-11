@@ -112,6 +112,7 @@ Rails.application.routes.draw do
   get "/inboxqueue", to: "inbox#queue", as: "inbox_queue"
   get "/status", to: "status#index", as: :status
   get "/status/status_options", to: "status#status_options", as: :status_status_options
+  resources :saved_searches, only: [:create, :destroy]
 
   # Task Reassignment Routes
   resources :task_reassignments, only: [] do

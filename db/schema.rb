@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_09_233503) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_11_165539) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -759,6 +759,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_233503) do
     t.datetime "updated_at", null: false
     t.index ["approver_id"], name: "index_rm75_forms_on_approver_id"
     t.index ["employee_id"], name: "index_rm75_forms_on_employee_id"
+  end
+
+  create_table "saved_searches", force: :cascade do |t|
+    t.string "employee_id", null: false
+    t.string "name", null: false
+    t.text "filters", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id", "name"], name: "index_saved_searches_on_employee_id_and_name", unique: true
+    t.index ["employee_id"], name: "index_saved_searches_on_employee_id"
   end
 
   create_table "scheduled_reports", force: :cascade do |t|
