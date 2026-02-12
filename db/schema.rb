@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_11_225742) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_12_232410) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -624,6 +624,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_11_225742) do
     t.string "major_program_id", limit: 10, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "notice_of_change_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.integer "status", default: 0
+    t.string "approver_id"
+    t.text "deny_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["approver_id"], name: "index_notice_of_change_forms_on_approver_id"
+    t.index ["employee_id"], name: "index_notice_of_change_forms_on_employee_id"
   end
 
   create_table "objects", primary_key: "object_id", id: { type: :integer, limit: 2, default: nil }, force: :cascade do |t|
