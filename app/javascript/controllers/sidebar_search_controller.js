@@ -18,12 +18,15 @@ export default class extends Controller {
     const searchTerm = this.inputTarget.value.toLowerCase().trim()
 
     if (searchTerm === "") {
-      // Show all links in original order, remove highlighting
-      this.formLinkTargets.forEach(link => {
+      // Show all links, remove highlighting, and restore alphabetical order
+      const links = [...this.formLinkTargets]
+      links.sort((a, b) => a.dataset.originalName.localeCompare(b.dataset.originalName))
+      links.forEach(link => {
         link.style.display = ""
         if (!link.hasAttribute("data-search-card")) {
           link.innerHTML = link.dataset.originalName
         }
+        this.formsListTarget.appendChild(link)
       })
       return
     }
