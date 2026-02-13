@@ -38,21 +38,24 @@ export default class extends Controller {
     aclGroups: Array,
     employees: Array,
     predefinedStatuses: Array,
-    validCategories: Array
+    validCategories: Array,
+    editMode: { type: Boolean, default: false }
   }
 
   connect() {
     console.log("Form Builder controller connected")
-    // Add one field by default only if we're in the create modal
-    const template = document.getElementById('field-template')
-    if (template) {
-      this.addField()
+    // Add one field by default only if we're in the create modal (not edit page)
+    if (!this.editModeValue) {
+      const template = document.getElementById('field-template')
+      if (template) {
+        this.addField()
+      }
     }
 
     // Initialize sortable on fields container
     this.initializeSortable()
 
-    // Initialize wizard navigation (no-op on edit page)
+    // Initialize wizard navigation
     this.initializeWizard()
   }
 
@@ -1087,7 +1090,7 @@ export default class extends Controller {
     })
   }
 
-  // Validate form before regular submission (used by edit page)
+  // Validate form before regular submission (legacy, kept for compatibility)
   validateBeforeSubmit(event) {
     console.log("Validating form before submit")
 
@@ -1096,6 +1099,19 @@ export default class extends Controller {
       return false
     }
 
+    return true
+  }
+
+  // Submit edit form - validates conditional fields then allows native form submit
+  submitEditForm(event) {
+    console.log("Validating edit form before submit")
+
+    if (!this.validateConditionalFields()) {
+      event.preventDefault()
+      return false
+    }
+
+    // Allow native form submission (PATCH) to proceed
     return true
   }
 
@@ -1147,9 +1163,13 @@ export default class extends Controller {
       this.wizardPageLabelTarget.textContent = `Step ${page + 1} of ${this.wizardPageTargets.length} — ${title}`
     }
 
-    // Scroll modal body to top
+    // Scroll modal body to top (works for both modal and edit page)
     const modalBody = this.element.querySelector('.modal-body')
     if (modalBody) modalBody.scrollTop = 0
+
+    // For full-page edit wizard, scroll the wrapper to top
+    const editWrapper = this.element.closest('.edit-wizard-wrapper')
+    if (editWrapper) editWrapper.scrollTop = 0
   }
 
   wizardNext(event) {

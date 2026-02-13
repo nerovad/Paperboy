@@ -1,244 +1,432 @@
-<div class="form-header">
-  <h1>Edit Form Template</h1>
-</div>
+<div class="edit-wizard-wrapper form-builder-modal"
+     data-controller="form-builder"
+     data-form-builder-acl-groups-value="<%= @acl_groups.to_json %>"
+     data-form-builder-employees-value="<%= @employees.to_json %>"
+     data-form-builder-predefined-statuses-value="<%= FormTemplateStatus::PREDEFINED_STATUSES.to_json %>"
+     data-form-builder-valid-categories-value="<%= FormTemplateStatus::VALID_CATEGORIES.to_json %>"
+     data-form-builder-edit-mode-value="true">
+  <div class="form-builder-modal-content">
+    <% if @form_template.errors.any? %>
+      <div class="alert alert-danger" role="alert" style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px 6px 0 0; margin: 0;">
+        <h4 style="margin-top: 0;">Please correct the following errors:</h4>
+        <ul style="margin-bottom: 0;">
+          <% @form_template.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
 
-<div class="form-wrapper form-templates">
-  <%= link_to "← Back to Template Details", form_template_path(@form_template), class: "btn" %>
+    <%= form_with model: @form_template,
+                  url: form_template_path(@form_template),
+                  method: :patch,
+                  local: true,
+                  data: {
+                    form_builder_target: "form",
+                    action: "submit->form-builder#submitEditForm"
+                  } do |f| %>
 
-  <div class="approver-card" style="margin-top: 20px;">
-    <div class="approver-header">
-      <h3>Edit Template Configuration</h3>
-    </div>
-
-    <div class="modal-body">
-      <% if @form_template.errors.any? %>
-        <div class="alert alert-danger" role="alert" style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-          <h4 style="margin-top: 0;">Please correct the following errors:</h4>
-          <ul style="margin-bottom: 0;">
-            <% @form_template.errors.full_messages.each do |message| %>
-              <li><%= message %></li>
-            <% end %>
-          </ul>
+      <div class="modal-header">
+        <div>
+          <h2>Edit: <%= @form_template.name %></h2>
+          <span class="wizard-page-label" data-form-builder-target="wizardPageLabel"></span>
         </div>
-      <% end %>
+        <%= link_to "← Back", form_template_path(@form_template), class: "close-modal", style: "text-decoration: none; font-size: 18px;" %>
+      </div>
 
-      <%= form_with model: @form_template,
-                    url: form_template_path(@form_template),
-                    method: :patch,
-                    local: true,
-                    data: {
-                      controller: "form-builder",
-                      form_builder_acl_groups_value: @acl_groups.to_json,
-                      form_builder_employees_value: @employees.to_json,
-                      form_builder_predefined_statuses_value: FormTemplateStatus::PREDEFINED_STATUSES.to_json,
-                      form_builder_valid_categories_value: FormTemplateStatus::VALID_CATEGORIES.to_json,
-                      form_builder_target: "form",
-                      action: "submit->form-builder#validateBeforeSubmit"
-                    } do |f| %>
+      <div class="modal-body">
 
-        <!-- Form Name (READ-ONLY) -->
-        <div class="form-group">
-          <label>1. Name of Form
-            <span style="margin-left: 10px; background: #6c757d; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">Locked</span>
-          </label>
-          <div class="form-control" style="background-color: #f5f5f5; cursor: not-allowed; color: #495057;">
-            <%= @form_template.name %>
+        <!-- ========== Page 1: Basic Info ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Basic Info">
+          <div class="form-group">
+            <label>Name of Form
+              <span style="margin-left: 10px; background: #6c757d; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">Locked</span>
+            </label>
+            <div class="form-control" style="background-color: #f5f5f5; cursor: not-allowed; color: #495057;">
+              <%= @form_template.name %>
+            </div>
+            <small class="form-text" style="color: #6c757d;">
+              Form name cannot be changed after creation because it determines the class name and database table.
+            </small>
           </div>
-          <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-top: 5px; display: block;">
-            Form name cannot be changed after creation because it determines the class name and database table.
-          </small>
-        </div>
 
-        <!-- Tags -->
-        <div class="form-group">
-          <label>Tags</label>
-          <small class="form-text text-muted" style="display: block; margin-bottom: 8px; color: #6c757d;">
-            Add tags to help users find this form. Press Enter or comma to add a tag.
-          </small>
-          <div class="tag-chips-container"
-               data-controller="tag-chips"
-               data-tag-chips-existing-tags-value="<%= @existing_tags.to_json %>"
-               data-tag-chips-tags-value="<%= @form_template.tags_array.to_json %>">
-            <div class="tag-chips-input-wrapper">
-              <div class="tag-chips" data-tag-chips-target="chips"></div>
-              <input type="text"
-                     class="tag-chips-input"
-                     placeholder="Type to add tags..."
-                     data-tag-chips-target="input"
-                     data-action="keydown->tag-chips#handleKeydown input->tag-chips#handleInput blur->tag-chips#handleBlur">
-              <div class="tag-autocomplete" data-tag-chips-target="autocomplete" style="display: none;"></div>
-            </div>
-            <%= f.hidden_field :tags, value: @form_template.tags, data: { tag_chips_target: "hiddenField" } %>
-          </div>
-        </div>
-
-        <!-- Access Level (EDITABLE) -->
-        <div class="form-group">
-          <label for="form_access">2. Access <span class="required">*</span></label>
-          <%= f.select :access_level,
-                      options_for_select([['Public', 'public'], ['Restricted', 'restricted']], @form_template.access_level),
-                      {},
-                      {
-                        id: "form_access",
-                        class: "form-control",
-                        data: {
-                          form_builder_target: "accessLevel",
-                          action: "change->form-builder#toggleACLGroup"
-                        }
-                      } %>
-        </div>
-
-        <!-- Organization Scope (EDITABLE) -->
-        <div class="form-group"
-             data-form-builder-target="orgScopeContainer"
-             style="<%= 'display: none;' unless @form_template.restricted? %>">
-          <label>Organization Scope</label>
-          <small class="form-text text-muted" style="display: block; margin-bottom: 8px; color: #6c757d;">
-            Restrict this form to users within a specific organization level. Select the most specific level that applies.
-          </small>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 180px;">
-              <label style="font-size: 0.85em; color: #495057;">Agency</label>
-              <select id="org-scope-agency-select"
-                      class="form-control form-control-sm"
-                      data-action="change->form-builder#loadOrgDivisions change->form-builder#updateOrgScope">
-                <option value="">Select Agency...</option>
-                <% @agency_options&.each do |name, id| %>
-                  <option value="<%= id %>" <%= 'selected' if @org_scope_selected_agency.to_s == id.to_s %>><%= name %></option>
-                <% end %>
-              </select>
-            </div>
-            <div style="flex: 1; min-width: 180px;">
-              <label style="font-size: 0.85em; color: #495057;">Division</label>
-              <select id="org-scope-division-select"
-                      class="form-control form-control-sm"
-                      <%= 'disabled' unless @org_scope_division_options&.any? %>
-                      data-action="change->form-builder#loadOrgDepartments change->form-builder#updateOrgScope">
-                <option value="">Select Division...</option>
-                <% @org_scope_division_options&.each do |name, id| %>
-                  <option value="<%= id %>" <%= 'selected' if @org_scope_selected_division.to_s == id.to_s %>><%= name %></option>
-                <% end %>
-              </select>
-            </div>
-            <div style="flex: 1; min-width: 180px;">
-              <label style="font-size: 0.85em; color: #495057;">Department</label>
-              <select id="org-scope-department-select"
-                      class="form-control form-control-sm"
-                      <%= 'disabled' unless @org_scope_department_options&.any? %>
-                      data-action="change->form-builder#loadOrgUnits change->form-builder#updateOrgScope">
-                <option value="">Select Department...</option>
-                <% @org_scope_department_options&.each do |name, id| %>
-                  <option value="<%= id %>" <%= 'selected' if @org_scope_selected_department.to_s == id.to_s %>><%= name %></option>
-                <% end %>
-              </select>
-            </div>
-            <div style="flex: 1; min-width: 180px;">
-              <label style="font-size: 0.85em; color: #495057;">Unit</label>
-              <select id="org-scope-unit-select"
-                      class="form-control form-control-sm"
-                      <%= 'disabled' unless @org_scope_unit_options&.any? %>
-                      data-action="change->form-builder#updateOrgScope">
-                <option value="">Select Unit...</option>
-                <% @org_scope_unit_options&.each do |name, id| %>
-                  <option value="<%= id %>" <%= 'selected' if @org_scope_selected_unit.to_s == id.to_s %>><%= name %></option>
-                <% end %>
-              </select>
-            </div>
-          </div>
-          <%= f.hidden_field :org_scope_type, value: @form_template.org_scope_type, data: { form_builder_target: "orgScopeType" } %>
-          <%= f.hidden_field :org_scope_id, value: @form_template.org_scope_id, data: { form_builder_target: "orgScopeId" } %>
-        </div>
-
-        <!-- ACL Group (EDITABLE) -->
-        <div class="form-group"
-             data-form-builder-target="aclGroupContainer"
-             style="<%= 'display: none;' unless @form_template.restricted? %>">
-          <label for="form_acl_group">ACL Group</label>
-          <%= f.select :acl_group_id,
-                      options_for_select(@acl_groups, @form_template.acl_group_id),
-                      { include_blank: "Select a group..." },
-                      {
-                        id: "form_acl_group",
-                        class: "form-control",
-                        data: { form_builder_target: "aclGroup" }
-                      } %>
-        </div>
-
-        <!-- Number of Pages (EDITABLE with warning) -->
-        <div class="form-group">
-          <label for="form_page_count">4. Number of Pages <span class="required">*</span></label>
-          <%= f.number_field :page_count,
-                            id: "form_page_count",
-                            class: "form-control",
-                            min: 2,
-                            max: 30,
-                            value: @form_template.page_count,
-                            data: {
-                              form_builder_target: "pageCount",
-                              action: "change->form-builder#updatePageHeaders"
-                            } %>
-          <small class="form-text text-muted" style="color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-top: 5px; display: block;">
-            ⚠️ Warning: Reducing page count will fail if fields exist on higher pages. Remove those fields first.
-          </small>
-        </div>
-
-        <!-- Page Headers (EDITABLE) -->
-        <div class="form-group page-headers-container"
-             data-form-builder-target="pageHeadersContainer"
-             style="<%= 'display: none;' if @form_template.page_count <= 2 %>">
-          <label>Page Names (for pages 3+)</label>
-          <div data-form-builder-target="pageHeadersList">
-            <% (@form_template.page_count - 2).times do |i| %>
-              <div class="form-group" style="margin-bottom: 10px;">
-                <label style="font-size: 0.9em; color: #6c757d;">Page <%= i + 3 %> Header</label>
-                <%= text_field_tag "form_template[page_headers][]",
-                                  @form_template.page_headers&.dig(i),
-                                  class: "form-control form-control-sm",
-                                  placeholder: "e.g., Additional Information",
-                                  data: { action: "input->form-builder#refreshPageSelects" } %>
+          <div class="form-group">
+            <label>Tags</label>
+            <small class="form-text" style="display: block; margin-bottom: 8px; color: #6c757d;">
+              Add tags to help users find this form. Press Enter or comma to add a tag.
+            </small>
+            <div class="tag-chips-container"
+                 data-controller="tag-chips"
+                 data-tag-chips-existing-tags-value="<%= @existing_tags.to_json %>"
+                 data-tag-chips-tags-value="<%= @form_template.tags_array.to_json %>">
+              <div class="tag-chips-input-wrapper">
+                <div class="tag-chips" data-tag-chips-target="chips"></div>
+                <input type="text"
+                       class="tag-chips-input"
+                       placeholder="Type to add tags..."
+                       data-tag-chips-target="input"
+                       data-action="keydown->tag-chips#handleKeydown input->tag-chips#handleInput blur->tag-chips#handleBlur">
+                <div class="tag-autocomplete" data-tag-chips-target="autocomplete" style="display: none;"></div>
               </div>
-            <% end %>
+              <%= f.hidden_field :tags, value: @form_template.tags, data: { tag_chips_target: "hiddenField" } %>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="form_access">Access <span class="required">*</span></label>
+            <%= f.select :access_level,
+                        options_for_select([['Public', 'public'], ['Restricted', 'restricted']], @form_template.access_level),
+                        {},
+                        {
+                          id: "form_access",
+                          class: "form-control",
+                          data: {
+                            form_builder_target: "accessLevel",
+                            action: "change->form-builder#toggleACLGroup"
+                          }
+                        } %>
+          </div>
+
+          <div class="form-group"
+               data-form-builder-target="orgScopeContainer"
+               style="<%= 'display: none;' unless @form_template.restricted? %>">
+            <label>Organization Scope</label>
+            <small class="form-text" style="display: block; margin-bottom: 8px; color: #6c757d;">
+              Restrict this form to users within a specific organization level. Select the most specific level that applies.
+            </small>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 180px;">
+                <label style="font-size: 0.85em; color: #495057;">Agency</label>
+                <select id="org-scope-agency-select"
+                        class="form-control form-control-sm"
+                        data-action="change->form-builder#loadOrgDivisions change->form-builder#updateOrgScope">
+                  <option value="">Select Agency...</option>
+                  <% @agency_options&.each do |name, id| %>
+                    <option value="<%= id %>" <%= 'selected' if @org_scope_selected_agency.to_s == id.to_s %>><%= name %></option>
+                  <% end %>
+                </select>
+              </div>
+              <div style="flex: 1; min-width: 180px;">
+                <label style="font-size: 0.85em; color: #495057;">Division</label>
+                <select id="org-scope-division-select"
+                        class="form-control form-control-sm"
+                        <%= 'disabled' unless @org_scope_division_options&.any? %>
+                        data-action="change->form-builder#loadOrgDepartments change->form-builder#updateOrgScope">
+                  <option value="">Select Division...</option>
+                  <% @org_scope_division_options&.each do |name, id| %>
+                    <option value="<%= id %>" <%= 'selected' if @org_scope_selected_division.to_s == id.to_s %>><%= name %></option>
+                  <% end %>
+                </select>
+              </div>
+              <div style="flex: 1; min-width: 180px;">
+                <label style="font-size: 0.85em; color: #495057;">Department</label>
+                <select id="org-scope-department-select"
+                        class="form-control form-control-sm"
+                        <%= 'disabled' unless @org_scope_department_options&.any? %>
+                        data-action="change->form-builder#loadOrgUnits change->form-builder#updateOrgScope">
+                  <option value="">Select Department...</option>
+                  <% @org_scope_department_options&.each do |name, id| %>
+                    <option value="<%= id %>" <%= 'selected' if @org_scope_selected_department.to_s == id.to_s %>><%= name %></option>
+                  <% end %>
+                </select>
+              </div>
+              <div style="flex: 1; min-width: 180px;">
+                <label style="font-size: 0.85em; color: #495057;">Unit</label>
+                <select id="org-scope-unit-select"
+                        class="form-control form-control-sm"
+                        <%= 'disabled' unless @org_scope_unit_options&.any? %>
+                        data-action="change->form-builder#updateOrgScope">
+                  <option value="">Select Unit...</option>
+                  <% @org_scope_unit_options&.each do |name, id| %>
+                    <option value="<%= id %>" <%= 'selected' if @org_scope_selected_unit.to_s == id.to_s %>><%= name %></option>
+                  <% end %>
+                </select>
+              </div>
+            </div>
+            <%= f.hidden_field :org_scope_type, value: @form_template.org_scope_type, data: { form_builder_target: "orgScopeType" } %>
+            <%= f.hidden_field :org_scope_id, value: @form_template.org_scope_id, data: { form_builder_target: "orgScopeId" } %>
+          </div>
+
+          <div class="form-group"
+               data-form-builder-target="aclGroupContainer"
+               style="<%= 'display: none;' unless @form_template.restricted? %>">
+            <label for="form_acl_group">ACL Group</label>
+            <%= f.select :acl_group_id,
+                        options_for_select(@acl_groups, @form_template.acl_group_id),
+                        { include_blank: "Select a group..." },
+                        {
+                          id: "form_acl_group",
+                          class: "form-control",
+                          data: { form_builder_target: "aclGroup" }
+                        } %>
           </div>
         </div>
 
-        <!-- Submission Routing (EDITABLE with regeneration warning) -->
-        <div class="alert alert-warning" role="alert" style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 6px; margin-top: 20px;">
-          <strong>⚠️ Warning:</strong> Changing submission routing options will regenerate the controller file,
-          overwriting any manual customizations. The form will continue to work, but custom code changes will be lost.
+        <!-- ========== Page 2: Page Setup ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Page Setup" style="display: none;">
+          <div class="form-group">
+            <label for="form_page_count">Number of Pages <span class="required">*</span></label>
+            <%= f.number_field :page_count,
+                              id: "form_page_count",
+                              class: "form-control",
+                              min: 2,
+                              max: 30,
+                              value: @form_template.page_count,
+                              data: {
+                                form_builder_target: "pageCount",
+                                action: "change->form-builder#updatePageHeaders"
+                              } %>
+            <small class="form-text" style="color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-top: 5px; display: block;">
+              Warning: Reducing page count will fail if fields exist on higher pages. Remove those fields first.
+            </small>
+          </div>
+
+          <div class="form-group page-headers-container"
+               data-form-builder-target="pageHeadersContainer"
+               style="<%= 'display: none;' if @form_template.page_count <= 2 %>">
+            <label>Page Names (for pages 3+)</label>
+            <div data-form-builder-target="pageHeadersList">
+              <% (@form_template.page_count - 2).times do |i| %>
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label style="font-size: 0.9em; color: #6c757d;">Page <%= i + 3 %> Header</label>
+                  <%= text_field_tag "form_template[page_headers][]",
+                                    @form_template.page_headers&.dig(i),
+                                    class: "form-control form-control-sm",
+                                    placeholder: "e.g., Additional Information",
+                                    data: { action: "input->form-builder#refreshPageSelects" } %>
+                </div>
+              <% end %>
+            </div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="form_submission_type">5. Form Submission Routing <span class="required">*</span></label>
-          <%= f.select :submission_type,
-                      options_for_select([
-                        ['Submit to Database (Ends the workflow)', 'database'],
-                        ['Routed for Approval', 'approval']
-                      ], @form_template.submission_type),
-                      {},
-                      {
-                        id: "form_submission_type",
-                        class: "form-control",
-                        data: {
-                          form_builder_target: "submissionType",
-                          action: "change->form-builder#toggleApprovalRouting"
-                        }
-                      } %>
+        <!-- ========== Page 3: Statuses & Buttons ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Statuses &amp; Buttons" style="display: none;">
+          <div class="form-group">
+            <label>Inbox Queue Buttons</label>
+            <small class="form-text" style="display: block; margin-bottom: 10px; color: #6c757d;">
+              Select which action buttons should appear in the inbox queue for this form type.
+            </small>
+            <div class="inbox-buttons-container" style="display: flex; flex-wrap: wrap; gap: 15px;">
+              <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+                <div class="inbox-button-option" style="flex: 0 0 calc(50% - 10px); display: flex; align-items: flex-start; gap: 8px; background: #f8f9fa; padding: 10px; border-radius: 6px;">
+                  <input type="checkbox"
+                         name="form_template[inbox_buttons][]"
+                         value="<%= key %>"
+                         id="edit_inbox_button_<%= key %>"
+                         style="margin-top: 3px;"
+                         <%= 'checked' if @form_template.has_inbox_button?(key) %>>
+                  <label for="edit_inbox_button_<%= key %>" style="margin: 0; cursor: pointer;">
+                    <strong><%= config[:label] %></strong>
+                    <small style="display: block; color: #6c757d; font-weight: normal;"><%= config[:description] %></small>
+                  </label>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Status Configuration</label>
+            <small class="form-text" style="display: block; margin-bottom: 10px; color: #6c757d;">
+              Configure the statuses available for this form. Choose from predefined statuses or add custom ones.
+            </small>
+            <div class="statuses-container" data-form-builder-target="statusesContainer">
+              <% if @form_template.statuses.any? %>
+                <% @form_template.statuses.ordered.each_with_index do |status, index| %>
+                  <% if status.predefined? %>
+                    <div class="status-item" data-form-builder-target="statusItem" style="background: #f8f9fa; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #28a745;">
+                      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <span class="status-position" style="font-weight: bold; color: #6c757d; min-width: 30px;">#<%= index + 1 %></span>
+
+                        <div class="status-name-display" style="flex: 1; min-width: 120px;">
+                          <span class="status-name-text" style="font-weight: 500;"><%= status.name %></span>
+                          <input type="hidden" name="statuses[][name]" class="status-name-input" value="<%= status.name %>">
+                          <input type="hidden" name="statuses[][key]" class="status-key-input" value="<%= status.key %>">
+                        </div>
+
+                        <div class="status-category-display" style="min-width: 100px;">
+                          <span class="badge <%= category_badge_class(status.category.to_sym) %>"><%= status.category_label %></span>
+                          <input type="hidden" name="statuses[][category]" class="status-category-input" value="<%= status.category %>">
+                        </div>
+
+                        <div class="status-flags" style="display: flex; gap: 15px; min-width: 180px;">
+                          <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
+                            <input type="checkbox" name="statuses[][is_initial]" value="1" class="status-initial-input" <%= 'checked' if status.is_initial %>>
+                            Initial
+                          </label>
+                          <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
+                            <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input" <%= 'checked' if status.is_end %>>
+                            End
+                          </label>
+                        </div>
+
+                        <input type="hidden" name="statuses[][position]" class="status-position-input" value="<%= index %>">
+
+                        <button type="button"
+                                class="btn btn-danger btn-sm"
+                                data-action="click->form-builder#removeStatus"
+                                style="padding: 4px 8px;">
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  <% else %>
+                    <div class="status-item custom-status-item" data-form-builder-target="statusItem" style="background: #fff3cd; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #ffc107;">
+                      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <span class="status-position" style="font-weight: bold; color: #6c757d; min-width: 30px;">#<%= index + 1 %></span>
+
+                        <div style="flex: 1; min-width: 150px;">
+                          <input type="text"
+                                 name="statuses[][name]"
+                                 class="form-control form-control-sm status-name-input"
+                                 placeholder="Status name"
+                                 value="<%= status.name %>"
+                                 required
+                                 data-action="input->form-builder#generateStatusKey">
+                          <input type="hidden" name="statuses[][key]" class="status-key-input" value="<%= status.key %>">
+                        </div>
+
+                        <div style="min-width: 140px;">
+                          <select name="statuses[][category]"
+                                  class="form-control form-control-sm status-category-input"
+                                  required>
+                            <option value="">Map to category...</option>
+                            <option value="pending" <%= 'selected' if status.category == 'pending' %>>Pending</option>
+                            <option value="in_review" <%= 'selected' if status.category == 'in_review' %>>In Review</option>
+                            <option value="approved" <%= 'selected' if status.category == 'approved' %>>Approved</option>
+                            <option value="denied" <%= 'selected' if status.category == 'denied' %>>Denied</option>
+                            <option value="cancelled" <%= 'selected' if status.category == 'cancelled' %>>Cancelled</option>
+                            <option value="scheduled" <%= 'selected' if status.category == 'scheduled' %>>Scheduled</option>
+                          </select>
+                        </div>
+
+                        <div class="status-flags" style="display: flex; gap: 15px; min-width: 180px;">
+                          <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
+                            <input type="checkbox" name="statuses[][is_initial]" value="1" class="status-initial-input" <%= 'checked' if status.is_initial %>>
+                            Initial
+                          </label>
+                          <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
+                            <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input" <%= 'checked' if status.is_end %>>
+                            End
+                          </label>
+                        </div>
+
+                        <input type="hidden" name="statuses[][position]" class="status-position-input" value="<%= index %>">
+
+                        <button type="button"
+                                class="btn btn-danger btn-sm"
+                                data-action="click->form-builder#removeStatus"
+                                style="padding: 4px 8px;">
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  <% end %>
+                <% end %>
+              <% end %>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+              <button type="button"
+                      class="btn btn-secondary btn-sm"
+                      data-action="click->form-builder#showStatusPicker">
+                + Add Predefined Status
+              </button>
+              <button type="button"
+                      class="btn btn-secondary btn-sm"
+                      data-action="click->form-builder#addCustomStatus">
+                + Add Custom Status
+              </button>
+            </div>
+          </div>
         </div>
 
-        <!-- Approval Routing Steps (EDITABLE) -->
-        <div class="form-group"
-             data-form-builder-target="approvalRoutingContainer"
-             style="<%= 'display: none;' unless @form_template.requires_approval? %>">
-          <label>Routing Steps <span class="required">*</span></label>
-          <small class="form-text text-muted" style="display: block; margin-bottom: 10px;">
-            Add one or more routing steps. Forms will be routed through each step in order.
-          </small>
-          <div class="routing-steps-container" data-form-builder-target="routingStepsContainer">
-            <% if @form_template.routing_steps.any? %>
-              <% @form_template.routing_steps.ordered.each_with_index do |step, index| %>
+        <!-- ========== Page 4: Routing ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Routing" style="display: none;">
+          <div class="alert alert-warning" role="alert" style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <strong>Warning:</strong> Changing submission routing options will regenerate the controller file,
+            overwriting any manual customizations.
+          </div>
+
+          <div class="form-group">
+            <label for="form_submission_type">Form Submission Routing <span class="required">*</span></label>
+            <%= f.select :submission_type,
+                        options_for_select([
+                          ['Submit to Database (Ends the workflow)', 'database'],
+                          ['Routed for Approval', 'approval']
+                        ], @form_template.submission_type),
+                        {},
+                        {
+                          id: "form_submission_type",
+                          class: "form-control",
+                          data: {
+                            form_builder_target: "submissionType",
+                            action: "change->form-builder#toggleApprovalRouting"
+                          }
+                        } %>
+          </div>
+
+          <div class="form-group"
+               data-form-builder-target="approvalRoutingContainer"
+               style="<%= 'display: none;' unless @form_template.requires_approval? %>">
+            <label>Routing Steps <span class="required">*</span></label>
+            <small class="form-text" style="display: block; margin-bottom: 10px;">
+              Add one or more routing steps. Forms will be routed through each step in order.
+            </small>
+            <div class="routing-steps-container" data-form-builder-target="routingStepsContainer">
+              <% if @form_template.routing_steps.any? %>
+                <% @form_template.routing_steps.ordered.each_with_index do |step, index| %>
+                  <div class="routing-step-item" data-form-builder-target="routingStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #007bff;">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                      <span class="step-number" style="font-weight: bold; color: #495057; min-width: 60px;">Step <%= index + 1 %>:</span>
+
+                      <div style="flex: 1; min-width: 150px;">
+                        <select name="routing_steps[][routing_type]"
+                                class="form-control form-control-sm routing-type-select"
+                                data-action="change->form-builder#toggleStepEmployeeSelect"
+                                required>
+                          <option value="">Select...</option>
+                          <option value="supervisor" <%= 'selected' if step.routing_type == 'supervisor' %>>Supervisor</option>
+                          <option value="department_head" <%= 'selected' if step.routing_type == 'department_head' %>>Department Head</option>
+                          <option value="employee" <%= 'selected' if step.routing_type == 'employee' %>>Specific Employee</option>
+                        </select>
+                      </div>
+
+                      <div class="step-employee-select" style="flex: 1; min-width: 200px; <%= 'display: none;' unless step.routing_type == 'employee' %>">
+                        <select name="routing_steps[][employee_id]"
+                                class="form-control form-control-sm step-employee-dropdown">
+                          <option value="">Select employee...</option>
+                          <% @employees.each do |emp| %>
+                            <option value="<%= emp[1] %>" <%= 'selected' if step.employee_id == emp[1] %>><%= emp[0] %></option>
+                          <% end %>
+                        </select>
+                      </div>
+
+                      <div class="step-status-select" style="flex: 1; min-width: 180px;">
+                        <select name="routing_steps[][form_template_status_id]"
+                                class="form-control form-control-sm step-status-dropdown">
+                          <option value="">Status at this step...</option>
+                          <% @form_template.statuses.non_end.ordered.each_with_index do |status, status_index| %>
+                            <option value="status_<%= status_index %>" <%= 'selected' if step.form_template_status_id == status.id %>><%= status.name %></option>
+                          <% end %>
+                        </select>
+                      </div>
+
+                      <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="<%= index + 1 %>">
+
+                      <button type="button"
+                              class="btn btn-danger btn-sm"
+                              data-action="click->form-builder#removeRoutingStep"
+                              style="padding: 4px 8px;">
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                <% end %>
+              <% elsif @form_template.approval_routing_to.present? %>
+                <!-- Convert legacy single routing to step format -->
                 <div class="routing-step-item" data-form-builder-target="routingStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #007bff;">
                   <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <span class="step-number" style="font-weight: bold; color: #495057; min-width: 60px;">Step <%= index + 1 %>:</span>
+                    <span class="step-number" style="font-weight: bold; color: #495057; min-width: 60px;">Step 1:</span>
 
                     <div style="flex: 1; min-width: 150px;">
                       <select name="routing_steps[][routing_type]"
@@ -246,36 +434,26 @@
                               data-action="change->form-builder#toggleStepEmployeeSelect"
                               required>
                         <option value="">Select...</option>
-                        <option value="supervisor" <%= 'selected' if step.routing_type == 'supervisor' %>>Supervisor</option>
-                        <option value="department_head" <%= 'selected' if step.routing_type == 'department_head' %>>Department Head</option>
-                        <option value="employee" <%= 'selected' if step.routing_type == 'employee' %>>Specific Employee</option>
+                        <option value="supervisor" <%= 'selected' if @form_template.approval_routing_to == 'supervisor' %>>Supervisor</option>
+                        <option value="department_head" <%= 'selected' if @form_template.approval_routing_to == 'department_head' %>>Department Head</option>
+                        <option value="employee" <%= 'selected' if @form_template.approval_routing_to == 'employee' %>>Specific Employee</option>
                       </select>
                     </div>
 
-                    <div class="step-employee-select" style="flex: 1; min-width: 200px; <%= 'display: none;' unless step.routing_type == 'employee' %>">
+                    <div class="step-employee-select" style="flex: 1; min-width: 200px; <%= 'display: none;' unless @form_template.approval_routing_to == 'employee' %>">
                       <select name="routing_steps[][employee_id]"
                               class="form-control form-control-sm step-employee-dropdown">
                         <option value="">Select employee...</option>
                         <% @employees.each do |emp| %>
-                          <option value="<%= emp[1] %>" <%= 'selected' if step.employee_id == emp[1] %>><%= emp[0] %></option>
+                          <option value="<%= emp[1] %>" <%= 'selected' if @form_template.approval_employee_id == emp[1] %>><%= emp[0] %></option>
                         <% end %>
                       </select>
                     </div>
 
-                    <div class="step-status-select" style="flex: 1; min-width: 180px;">
-                      <select name="routing_steps[][form_template_status_id]"
-                              class="form-control form-control-sm step-status-dropdown">
-                        <option value="">Status at this step...</option>
-                        <% @form_template.statuses.non_end.ordered.each_with_index do |status, status_index| %>
-                          <option value="status_<%= status_index %>" <%= 'selected' if step.form_template_status_id == status.id %>><%= status.name %></option>
-                        <% end %>
-                      </select>
-                    </div>
-
-                    <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="<%= index + 1 %>">
+                    <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="1">
 
                     <button type="button"
-                            class="btn deny"
+                            class="btn btn-danger btn-sm"
                             data-action="click->form-builder#removeRoutingStep"
                             style="padding: 4px 8px;">
                       Remove
@@ -283,216 +461,240 @@
                   </div>
                 </div>
               <% end %>
-            <% elsif @form_template.approval_routing_to.present? %>
-              <!-- Convert legacy single routing to step format -->
-              <div class="routing-step-item" data-form-builder-target="routingStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #007bff;">
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                  <span class="step-number" style="font-weight: bold; color: #495057; min-width: 60px;">Step 1:</span>
+            </div>
+            <button type="button"
+                    class="btn btn-secondary btn-sm"
+                    data-action="click->form-builder#addRoutingStep"
+                    style="margin-top: 10px;">
+              + Add Routing Step
+            </button>
 
-                  <div style="flex: 1; min-width: 150px;">
-                    <select name="routing_steps[][routing_type]"
-                            class="form-control form-control-sm routing-type-select"
-                            data-action="change->form-builder#toggleStepEmployeeSelect"
-                            required>
-                      <option value="">Select...</option>
-                      <option value="supervisor" <%= 'selected' if @form_template.approval_routing_to == 'supervisor' %>>Supervisor</option>
-                      <option value="department_head" <%= 'selected' if @form_template.approval_routing_to == 'department_head' %>>Department Head</option>
-                      <option value="employee" <%= 'selected' if @form_template.approval_routing_to == 'employee' %>>Specific Employee</option>
-                    </select>
-                  </div>
-
-                  <div class="step-employee-select" style="flex: 1; min-width: 200px; <%= 'display: none;' unless @form_template.approval_routing_to == 'employee' %>">
-                    <select name="routing_steps[][employee_id]"
-                            class="form-control form-control-sm step-employee-dropdown">
-                      <option value="">Select employee...</option>
-                      <% @employees.each do |emp| %>
-                        <option value="<%= emp[1] %>" <%= 'selected' if @form_template.approval_employee_id == emp[1] %>><%= emp[0] %></option>
-                      <% end %>
-                    </select>
-                  </div>
-
-                  <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="1">
-
-                  <button type="button"
-                          class="btn deny"
-                          data-action="click->form-builder#removeRoutingStep"
-                          style="padding: 4px 8px;">
-                    Remove
-                  </button>
-                </div>
+            <!-- Status Transition Mode -->
+            <div style="margin-top: 15px; padding: 12px; background: #e8f4f8; border-radius: 6px;">
+              <label style="font-weight: 600; margin-bottom: 8px; display: block;">Status Transitions</label>
+              <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
+                  <%= radio_button_tag "form_template[status_transition_mode]", "automatic",
+                        @form_template.status_transition_mode == 'automatic' || @form_template.status_transition_mode.nil?,
+                        data: { form_builder_target: "transitionModeAutomatic" } %>
+                  <span><strong>Automatic</strong> - Status changes with routing steps</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
+                  <%= radio_button_tag "form_template[status_transition_mode]", "manual",
+                        @form_template.status_transition_mode == 'manual',
+                        data: { form_builder_target: "transitionModeManual" } %>
+                  <span><strong>Manual</strong> - Status changed via dropdown only</span>
+                </label>
               </div>
-            <% end %>
-          </div>
-          <button type="button"
-                  class="btn"
-                  style="margin-top: 10px;"
-                  data-action="click->form-builder#addRoutingStep">
-            + Add Routing Step
-          </button>
-
-          <!-- Status Transition Mode -->
-          <div style="margin-top: 15px; padding: 12px; background: #e8f4f8; border-radius: 6px;">
-            <label style="font-weight: 600; margin-bottom: 8px; display: block;">Status Transitions</label>
-            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-              <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
-                <%= radio_button_tag "form_template[status_transition_mode]", "automatic",
-                      @form_template.status_transition_mode == 'automatic' || @form_template.status_transition_mode.nil?,
-                      data: { form_builder_target: "transitionModeAutomatic" } %>
-                <span><strong>Automatic</strong> - Status changes with routing steps</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
-                <%= radio_button_tag "form_template[status_transition_mode]", "manual",
-                      @form_template.status_transition_mode == 'manual',
-                      data: { form_builder_target: "transitionModeManual" } %>
-                <span><strong>Manual</strong> - Status changed via dropdown only</span>
-              </label>
             </div>
           </div>
         </div>
 
-        <!-- Inbox Queue Buttons -->
-        <div class="form-group" style="margin-top: 30px;">
-          <h4>6. Inbox Queue Buttons</h4>
-          <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-bottom: 15px; display: block;">
-            Select which action buttons should appear in the inbox queue for this form type.
-          </small>
-          <div class="inbox-buttons-container" style="display: flex; flex-wrap: wrap; gap: 15px;">
-            <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
-              <div class="inbox-button-option" style="flex: 0 0 calc(50% - 10px); display: flex; align-items: flex-start; gap: 8px; background: #f8f9fa; padding: 10px; border-radius: 6px;">
-                <input type="checkbox"
-                       name="form_template[inbox_buttons][]"
-                       value="<%= key %>"
-                       id="edit_inbox_button_<%= key %>"
-                       style="margin-top: 3px;"
-                       <%= 'checked' if @form_template.has_inbox_button?(key) %>>
-                <label for="edit_inbox_button_<%= key %>" style="margin: 0; cursor: pointer;">
-                  <strong><%= config[:label] %></strong>
-                  <small style="display: block; color: #6c757d; font-weight: normal;"><%= config[:description] %></small>
-                </label>
-              </div>
-            <% end %>
-          </div>
-        </div>
+        <!-- ========== Page 5: Form Fields ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Form Fields" style="display: none;">
+          <div class="form-group">
+            <label>Fields</label>
+            <small class="form-text" style="display: block; margin-bottom: 10px; color: #6c757d;">
+              These are custom fields that will appear on your form pages.
+              <br><strong>Tip:</strong> Drag the &#x2630; handle to reorder fields.
+            </small>
 
-        <!-- Status Configuration -->
-        <div class="form-group" style="margin-top: 30px;">
-          <h4>7. Status Configuration</h4>
-          <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-bottom: 15px; display: block;">
-            Configure the statuses available for this form. Choose from predefined statuses or add custom ones.
-          </small>
-          <div class="statuses-container" data-form-builder-target="statusesContainer">
-            <% if @form_template.statuses.any? %>
-              <% @form_template.statuses.ordered.each_with_index do |status, index| %>
-                <% if status.predefined? %>
-                  <div class="status-item" data-form-builder-target="statusItem" style="background: #f8f9fa; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #28a745;">
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                      <span class="status-position" style="font-weight: bold; color: #6c757d; min-width: 30px;">#<%= index + 1 %></span>
-
-                      <div class="status-name-display" style="flex: 1; min-width: 120px;">
-                        <span class="status-name-text" style="font-weight: 500;"><%= status.name %></span>
-                        <input type="hidden" name="statuses[][name]" class="status-name-input" value="<%= status.name %>">
-                        <input type="hidden" name="statuses[][key]" class="status-key-input" value="<%= status.key %>">
+            <div class="fields-container" data-form-builder-target="fieldsContainer">
+              <% if @form_template.form_fields.any? %>
+                <% @form_template.form_fields.ordered.each_with_index do |field, index| %>
+                  <div class="field-item" data-form-builder-target="fieldItem" style="background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 6px;">
+                    <div class="field-row" style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+                      <div class="drag-handle" title="Drag to reorder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: grab; padding: 8px 12px; background: #e9ecef; border-radius: 4px; min-width: 50px;">
+                        <span class="field-position" style="font-size: 11px; font-weight: 700; color: #4CAF50;">#<%= index + 1 %></span>
+                        <span class="drag-icon" style="font-size: 16px; color: #6c757d;">&#x2630;</span>
                       </div>
 
-                      <div class="status-category-display" style="min-width: 100px;">
-                        <span class="badge <%= category_badge_class(status.category.to_sym) %>"><%= status.category_label %></span>
-                        <input type="hidden" name="statuses[][category]" class="status-category-input" value="<%= status.category %>">
-                      </div>
-
-                      <div class="status-flags" style="display: flex; gap: 15px; min-width: 180px;">
-                        <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-                          <input type="checkbox" name="statuses[][is_initial]" value="1" class="status-initial-input" <%= 'checked' if status.is_initial %>>
-                          Initial
-                        </label>
-                        <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-                          <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input" <%= 'checked' if status.is_end %>>
-                          End
-                        </label>
-                      </div>
-
-                      <input type="hidden" name="statuses[][position]" class="status-position-input" value="<%= index %>">
-
-                      <button type="button"
-                              class="btn deny"
-                              data-action="click->form-builder#removeStatus"
-                              style="padding: 4px 8px;">
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                <% else %>
-                  <div class="status-item custom-status-item" data-form-builder-target="statusItem" style="background: #fff3cd; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #ffc107;">
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                      <span class="status-position" style="font-weight: bold; color: #6c757d; min-width: 30px;">#<%= index + 1 %></span>
-
-                      <div style="flex: 1; min-width: 150px;">
+                      <div class="field-input" style="flex: 1; min-width: 200px;">
+                        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Label</label>
                         <input type="text"
-                               name="statuses[][name]"
-                               class="form-control form-control-sm status-name-input"
-                               placeholder="Status name"
-                               value="<%= status.name %>"
-                               required
-                               data-action="input->form-builder#generateStatusKey">
-                        <input type="hidden" name="statuses[][key]" class="status-key-input" value="<%= status.key %>">
+                               name="fields[][label]"
+                               class="form-control form-control-sm"
+                               value="<%= field.label %>"
+                               required>
                       </div>
 
-                      <div style="min-width: 140px;">
-                        <select name="statuses[][category]"
-                                class="form-control form-control-sm status-category-input"
+                      <div class="field-input" style="flex: 0 0 150px;">
+                        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Type</label>
+                        <select name="fields[][field_type]"
+                                class="form-control form-control-sm"
+                                data-action="change->form-builder#handleFieldTypeChange"
                                 required>
-                          <option value="">Map to category...</option>
-                          <option value="pending" <%= 'selected' if status.category == 'pending' %>>Pending</option>
-                          <option value="in_review" <%= 'selected' if status.category == 'in_review' %>>In Review</option>
-                          <option value="approved" <%= 'selected' if status.category == 'approved' %>>Approved</option>
-                          <option value="denied" <%= 'selected' if status.category == 'denied' %>>Denied</option>
-                          <option value="cancelled" <%= 'selected' if status.category == 'cancelled' %>>Cancelled</option>
-                          <option value="scheduled" <%= 'selected' if status.category == 'scheduled' %>>Scheduled</option>
+                          <option value="text" <%= 'selected' if field.field_type == 'text' %>>Text</option>
+                          <option value="text_box" <%= 'selected' if field.field_type == 'text_box' %>>Text Box</option>
+                          <option value="dropdown" <%= 'selected' if field.field_type == 'dropdown' %>>Dropdown</option>
+                          <option value="date" <%= 'selected' if field.field_type == 'date' %>>Date</option>
                         </select>
                       </div>
 
-                      <div class="status-flags" style="display: flex; gap: 15px; min-width: 180px;">
-                        <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-                          <input type="checkbox" name="statuses[][is_initial]" value="1" class="status-initial-input" <%= 'checked' if status.is_initial %>>
-                          Initial
-                        </label>
-                        <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-                          <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input" <%= 'checked' if status.is_end %>>
-                          End
-                        </label>
+                      <div class="field-input" style="flex: 0 0 150px;">
+                        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Page</label>
+                        <select name="fields[][page_number]"
+                                class="form-control form-control-sm page-select"
+                                required>
+                          <% (1..@form_template.page_count).each do |page_num| %>
+                            <option value="<%= page_num %>" <%= 'selected' if field.page_number == page_num %>>
+                              Page <%= page_num %> - <%= @form_template.page_header(page_num) %>
+                            </option>
+                          <% end %>
+                        </select>
                       </div>
 
-                      <input type="hidden" name="statuses[][position]" class="status-position-input" value="<%= index %>">
+                      <div class="field-input" style="flex: 0 0 80px;">
+                        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Required?</label>
+                        <input type="checkbox"
+                               name="fields[][required]"
+                               value="1"
+                               style="margin-top: 10px;"
+                               <%= 'checked' if field.required %>>
+                      </div>
 
-                      <button type="button"
-                              class="btn deny"
-                              data-action="click->form-builder#removeStatus"
-                              style="padding: 4px 8px;">
-                        Remove
-                      </button>
+                      <div style="flex: 0 0 auto;">
+                        <label style="font-size: 0.9em; color: transparent; display: block; margin-bottom: 5px;">-</label>
+                        <button type="button"
+                                class="btn deny"
+                                style="padding: 5px 10px; font-size: 0.875em;"
+                                data-action="click->form-builder#removeField">
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Text Box Options -->
+                    <div class="field-options text-box-options" style="margin-top: 10px; <%= 'display: none;' unless field.text_box? %>">
+                      <label style="font-size: 0.9em; color: #495057;">Rows:</label>
+                      <input type="number"
+                             name="fields[][rows]"
+                             class="form-control form-control-sm"
+                             value="<%= field.rows %>"
+                             min="1"
+                             max="20"
+                             style="width: 100px;">
+                    </div>
+
+                    <!-- Dropdown Options -->
+                    <div class="field-options dropdown-options" style="margin-top: 10px; <%= 'display: none;' unless field.dropdown? %>">
+                      <label style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
+                      <input type="text"
+                             name="fields[][dropdown_values]"
+                             class="form-control form-control-sm"
+                             value="<%= field.dropdown_values.join(', ') %>"
+                             placeholder="Option 1, Option 2, Option 3"
+                             data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
+                    </div>
+
+                    <!-- Field Restriction Options -->
+                    <div class="field-options field-restriction-options" style="margin-top: 10px; padding: 8px; background: #e9ecef; border-radius: 4px;">
+                      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <label style="margin: 0; font-size: 0.85em; color: #495057;">Fill out by:</label>
+                        <select name="fields[][restricted_to_type]"
+                                class="form-control form-control-sm restriction-type-select"
+                                data-action="change->form-builder#toggleFieldRestriction"
+                                style="width: auto; min-width: 150px;">
+                          <option value="none" <%= 'selected' if field.restricted_to_type == 'none' || field.restricted_to_type.nil? %>>Anyone (Submitter)</option>
+                          <option value="employee" <%= 'selected' if field.restricted_to_type == 'employee' %>>Specific Employee</option>
+                          <option value="group" <%= 'selected' if field.restricted_to_type == 'group' %>>Group</option>
+                        </select>
+
+                        <div class="restriction-employee-select" style="<%= 'display: none;' unless field.restricted_to_type == 'employee' %>">
+                          <select name="fields[][restricted_to_employee_id]"
+                                  class="form-control form-control-sm restriction-employee-dropdown"
+                                  style="min-width: 200px;">
+                            <option value="">Select employee...</option>
+                            <% @employees.each do |emp| %>
+                              <option value="<%= emp[1] %>" <%= 'selected' if field.restricted_to_employee_id == emp[1] %>><%= emp[0] %></option>
+                            <% end %>
+                          </select>
+                        </div>
+
+                        <div class="restriction-group-select" style="<%= 'display: none;' unless field.restricted_to_type == 'group' %>">
+                          <select name="fields[][restricted_to_group_id]"
+                                  class="form-control form-control-sm restriction-group-dropdown"
+                                  style="min-width: 200px;">
+                            <option value="">Select group...</option>
+                            <% @acl_groups.each do |group| %>
+                              <option value="<%= group[1] %>" <%= 'selected' if field.restricted_to_group_id == group[1] %>><%= group[0] %></option>
+                            <% end %>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Conditional Logic Options -->
+                    <div class="field-options conditional-options" style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 4px; border-left: 3px solid #ffc107;">
+                      <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+                        <label style="margin: 0; font-size: 0.85em; color: #495057; padding-top: 5px;">
+                          <input type="checkbox"
+                                 class="conditional-toggle"
+                                 data-action="change->form-builder#toggleConditionalOptions"
+                                 style="margin-right: 5px;"
+                                 <%= 'checked' if field.conditional? %>>
+                          Show conditionally
+                        </label>
+
+                        <%
+                          ordered_fields = @form_template.form_fields.ordered.to_a
+                          dropdown_fields_with_index = ordered_fields.each_with_index.select { |f, _| f.dropdown? }
+                          conditional_field_index = field.conditional_field_id ? ordered_fields.index { |f| f.id == field.conditional_field_id } : nil
+                        %>
+                        <div class="conditional-config" style="<%= 'display: none;' unless field.conditional? %> flex: 1; min-width: 300px;">
+                          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+                            <span style="font-size: 0.85em; color: #495057;">When</span>
+                            <select class="form-control form-control-sm conditional-field-select"
+                                    name="fields[][conditional_field_id]"
+                                    data-action="change->form-builder#updateConditionalValues"
+                                    style="width: auto; min-width: 150px;">
+                              <option value="">Select dropdown...</option>
+                              <% dropdown_fields_with_index.each do |dropdown, dropdown_index| %>
+                                <% next if dropdown.id == field.id %>
+                                <option value="field_<%= dropdown_index %>"
+                                        data-field-index="<%= dropdown_index %>"
+                                        data-values="<%= dropdown.dropdown_values.to_json %>"
+                                        <%= 'selected' if conditional_field_index == dropdown_index %>>
+                                  <%= dropdown.label %>
+                                </option>
+                              <% end %>
+                            </select>
+                            <span style="font-size: 0.85em; color: #495057;">equals:</span>
+                          </div>
+                          <div class="conditional-values-container" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <% if field.conditional? && field.conditional_field %>
+                              <% field.conditional_field.dropdown_values.each do |value| %>
+                                <label style="font-size: 0.8em; display: flex; align-items: center; gap: 4px; background: #fff; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd;">
+                                  <input type="checkbox"
+                                         name="fields[][conditional_values][]"
+                                         value="<%= value %>"
+                                         <%= 'checked' if field.conditional_values&.include?(value) %>>
+                                  <%= value %>
+                                </label>
+                              <% end %>
+                            <% else %>
+                              <span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a dropdown field first</span>
+                            <% end %>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 <% end %>
               <% end %>
-            <% end %>
-          </div>
-          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            </div>
+
             <button type="button"
-                    class="btn"
-                    data-action="click->form-builder#showStatusPicker">
-              + Add Predefined Status
-            </button>
-            <button type="button"
-                    class="btn"
-                    data-action="click->form-builder#addCustomStatus">
-              + Add Custom Status
+                    class="btn btn-secondary btn-sm"
+                    style="margin-top: 15px;"
+                    data-action="click->form-builder#addField">
+              + Add Field
             </button>
           </div>
         </div>
 
-        <!-- Power BI Dashboard Configuration (FULLY EDITABLE) -->
-        <div class="form-group" style="margin-top: 30px;">
-          <h4>8. Power BI Dashboard Configuration</h4>
-
+        <!-- ========== Page 6: Dashboard ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Dashboard" style="display: none;">
           <div class="form-group">
             <%= f.label :has_dashboard, "Enable Dashboard?" %>
             <%= f.select :has_dashboard,
@@ -513,7 +715,7 @@
               <%= f.text_field :powerbi_workspace_id,
                               class: "form-control",
                               placeholder: "e.g., 12345678-1234-1234-1234-123456789abc" %>
-              <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-top: 5px; display: block;">
+              <small class="form-text" style="color: #6c757d;">
                 Find this in Power BI: Workspace Settings → Workspace ID
               </small>
             </div>
@@ -523,228 +725,62 @@
               <%= f.text_field :powerbi_report_id,
                               class: "form-control",
                               placeholder: "e.g., 87654321-4321-4321-4321-cba987654321" %>
-              <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-top: 5px; display: block;">
+              <small class="form-text" style="color: #6c757d;">
                 Find this in Power BI: Report Settings → Report ID (or from the URL)
               </small>
             </div>
           </div>
         </div>
 
-        <!-- Fields Editor -->
-        <div class="form-group" style="margin-top: 30px;">
-          <h4>9. Form Fields</h4>
-          <small class="form-text text-muted" style="color: #6c757d; font-size: 0.875em; margin-bottom: 15px; display: block;">
-            These are custom fields that will appear on your form pages. Standard fields (Employee ID, Name, Phone, Email, Agency info) are already included.
-            <br><strong>Tip:</strong> Drag the &#x2630; handle to reorder fields.
-          </small>
+      </div>
 
-          <div class="fields-container" data-form-builder-target="fieldsContainer">
-            <% if @form_template.form_fields.any? %>
-              <% @form_template.form_fields.ordered.each_with_index do |field, index| %>
-                <div class="field-item" data-form-builder-target="fieldItem" style="background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 6px;">
-                  <div class="field-row" style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
-                    <div class="drag-handle" title="Drag to reorder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: grab; padding: 8px 12px; background: #e9ecef; border-radius: 4px; min-width: 50px;">
-                      <span class="field-position" style="font-size: 11px; font-weight: 700; color: #4CAF50;">#<%= index + 1 %></span>
-                      <span class="drag-icon" style="font-size: 16px; color: #6c757d;">&#x2630;</span>
-                    </div>
-
-                    <div class="field-input" style="flex: 1; min-width: 200px;">
-                      <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Label</label>
-                      <input type="text"
-                             name="fields[][label]"
-                             class="form-control form-control-sm"
-                             value="<%= field.label %>"
-                             required>
-                    </div>
-
-                    <div class="field-input" style="flex: 0 0 150px;">
-                      <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Type</label>
-                      <select name="fields[][field_type]"
-                              class="form-control form-control-sm"
-                              data-action="change->form-builder#handleFieldTypeChange"
-                              required>
-                        <option value="text" <%= 'selected' if field.field_type == 'text' %>>Text</option>
-                        <option value="text_box" <%= 'selected' if field.field_type == 'text_box' %>>Text Box</option>
-                        <option value="dropdown" <%= 'selected' if field.field_type == 'dropdown' %>>Dropdown</option>
-                        <option value="date" <%= 'selected' if field.field_type == 'date' %>>Date</option>
-                      </select>
-                    </div>
-
-                    <div class="field-input" style="flex: 0 0 150px;">
-                      <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Page</label>
-                      <select name="fields[][page_number]"
-                              class="form-control form-control-sm page-select"
-                              required>
-                        <% (1..@form_template.page_count).each do |page_num| %>
-                          <option value="<%= page_num %>" <%= 'selected' if field.page_number == page_num %>>
-                            Page <%= page_num %> - <%= @form_template.page_header(page_num) %>
-                          </option>
-                        <% end %>
-                      </select>
-                    </div>
-
-                    <div class="field-input" style="flex: 0 0 80px;">
-                      <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Required?</label>
-                      <input type="checkbox"
-                             name="fields[][required]"
-                             value="1"
-                             style="margin-top: 10px;"
-                             <%= 'checked' if field.required %>>
-                    </div>
-
-                    <div style="flex: 0 0 auto;">
-                      <label style="font-size: 0.9em; color: transparent; display: block; margin-bottom: 5px;">-</label>
-                      <button type="button"
-                              class="btn deny"
-                              style="padding: 5px 10px; font-size: 0.875em;"
-                              data-action="click->form-builder#removeField">
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- Text Box Options -->
-                  <div class="field-options text-box-options" style="margin-top: 10px; <%= 'display: none;' unless field.text_box? %>">
-                    <label style="font-size: 0.9em; color: #495057;">Rows:</label>
-                    <input type="number"
-                           name="fields[][rows]"
-                           class="form-control form-control-sm"
-                           value="<%= field.rows %>"
-                           min="1"
-                           max="20"
-                           style="width: 100px;">
-                  </div>
-
-                  <!-- Dropdown Options -->
-                  <div class="field-options dropdown-options" style="margin-top: 10px; <%= 'display: none;' unless field.dropdown? %>">
-                    <label style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
-                    <input type="text"
-                           name="fields[][dropdown_values]"
-                           class="form-control form-control-sm"
-                           value="<%= field.dropdown_values.join(', ') %>"
-                           placeholder="Option 1, Option 2, Option 3"
-                           data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
-                  </div>
-
-                  <!-- Field Restriction Options -->
-                  <div class="field-options field-restriction-options" style="margin-top: 10px; padding: 8px; background: #e9ecef; border-radius: 4px;">
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                      <label style="margin: 0; font-size: 0.85em; color: #495057;">Fill out by:</label>
-                      <select name="fields[][restricted_to_type]"
-                              class="form-control form-control-sm restriction-type-select"
-                              data-action="change->form-builder#toggleFieldRestriction"
-                              style="width: auto; min-width: 150px;">
-                        <option value="none" <%= 'selected' if field.restricted_to_type == 'none' || field.restricted_to_type.nil? %>>Anyone (Submitter)</option>
-                        <option value="employee" <%= 'selected' if field.restricted_to_type == 'employee' %>>Specific Employee</option>
-                        <option value="group" <%= 'selected' if field.restricted_to_type == 'group' %>>Group</option>
-                      </select>
-
-                      <div class="restriction-employee-select" style="<%= 'display: none;' unless field.restricted_to_type == 'employee' %>">
-                        <select name="fields[][restricted_to_employee_id]"
-                                class="form-control form-control-sm restriction-employee-dropdown"
-                                style="min-width: 200px;">
-                          <option value="">Select employee...</option>
-                          <% @employees.each do |emp| %>
-                            <option value="<%= emp[1] %>" <%= 'selected' if field.restricted_to_employee_id == emp[1] %>><%= emp[0] %></option>
-                          <% end %>
-                        </select>
-                      </div>
-
-                      <div class="restriction-group-select" style="<%= 'display: none;' unless field.restricted_to_type == 'group' %>">
-                        <select name="fields[][restricted_to_group_id]"
-                                class="form-control form-control-sm restriction-group-dropdown"
-                                style="min-width: 200px;">
-                          <option value="">Select group...</option>
-                          <% @acl_groups.each do |group| %>
-                            <option value="<%= group[1] %>" <%= 'selected' if field.restricted_to_group_id == group[1] %>><%= group[0] %></option>
-                          <% end %>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Conditional Logic Options -->
-                  <div class="field-options conditional-options" style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 4px; border-left: 3px solid #ffc107;">
-                    <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
-                      <label style="margin: 0; font-size: 0.85em; color: #495057; padding-top: 5px;">
-                        <input type="checkbox"
-                               class="conditional-toggle"
-                               data-action="change->form-builder#toggleConditionalOptions"
-                               style="margin-right: 5px;"
-                               <%= 'checked' if field.conditional? %>>
-                        Show conditionally
-                      </label>
-
-                      <%
-                        # Build a mapping of field positions for conditional references
-                        # We need to use field_N indices (not database IDs) because rebuild_form_fields
-                        # destroys and recreates all fields, making old IDs invalid
-                        ordered_fields = @form_template.form_fields.ordered.to_a
-                        dropdown_fields_with_index = ordered_fields.each_with_index.select { |f, _| f.dropdown? }
-                        conditional_field_index = field.conditional_field_id ? ordered_fields.index { |f| f.id == field.conditional_field_id } : nil
-                      %>
-                      <div class="conditional-config" style="<%= 'display: none;' unless field.conditional? %> flex: 1; min-width: 300px;">
-                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
-                          <span style="font-size: 0.85em; color: #495057;">When</span>
-                          <select class="form-control form-control-sm conditional-field-select"
-                                  name="fields[][conditional_field_id]"
-                                  data-action="change->form-builder#updateConditionalValues"
-                                  style="width: auto; min-width: 150px;">
-                            <option value="">Select dropdown...</option>
-                            <% dropdown_fields_with_index.each do |dropdown, dropdown_index| %>
-                              <% next if dropdown.id == field.id %>
-                              <option value="field_<%= dropdown_index %>"
-                                      data-field-index="<%= dropdown_index %>"
-                                      data-values="<%= dropdown.dropdown_values.to_json %>"
-                                      <%= 'selected' if conditional_field_index == dropdown_index %>>
-                                <%= dropdown.label %>
-                              </option>
-                            <% end %>
-                          </select>
-                          <span style="font-size: 0.85em; color: #495057;">equals:</span>
-                        </div>
-                        <div class="conditional-values-container" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                          <% if field.conditional? && field.conditional_field %>
-                            <% field.conditional_field.dropdown_values.each do |value| %>
-                              <label style="font-size: 0.8em; display: flex; align-items: center; gap: 4px; background: #fff; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd;">
-                                <input type="checkbox"
-                                       name="fields[][conditional_values][]"
-                                       value="<%= value %>"
-                                       <%= 'checked' if field.conditional_values&.include?(value) %>>
-                                <%= value %>
-                              </label>
-                            <% end %>
-                          <% else %>
-                            <span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a dropdown field first</span>
-                          <% end %>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              <% end %>
-            <% end %>
-          </div>
-
+      <div class="modal-footer wizard-footer">
+        <%= link_to "Cancel", form_template_path(@form_template), class: "btn btn-secondary" %>
+        <div class="wizard-nav">
           <button type="button"
-                  class="btn"
-                  style="margin-top: 15px;"
-                  data-action="click->form-builder#addField">
-            + Add Field
+                  class="btn btn-secondary"
+                  data-form-builder-target="wizardPrevBtn"
+                  data-action="click->form-builder#wizardPrev"
+                  style="display: none;">
+            &larr; Previous
           </button>
-        </div>
-
-        <!-- Form Actions -->
-        <div class="approval-actions" style="margin-top: 30px; display: flex; gap: 10px;">
-          <%= link_to "Cancel", form_template_path(@form_template), class: "btn" %>
+          <div class="progress-dots">
+            <span class="dot active" data-form-builder-target="wizardDot"></span>
+            <span class="dot" data-form-builder-target="wizardDot"></span>
+            <span class="dot" data-form-builder-target="wizardDot"></span>
+            <span class="dot" data-form-builder-target="wizardDot"></span>
+            <span class="dot" data-form-builder-target="wizardDot"></span>
+            <span class="dot" data-form-builder-target="wizardDot"></span>
+          </div>
+          <button type="button"
+                  class="btn btn-primary"
+                  data-form-builder-target="wizardNextBtn"
+                  data-action="click->form-builder#wizardNext">
+            Next &rarr;
+          </button>
           <%= f.submit "Update Form Template",
-                      class: "btn approve",
+                      class: "btn btn-primary",
+                      style: "display: none;",
                       data: {
-                        form_builder_target: "submitButton",
+                        form_builder_target: "submitButton wizardSubmitBtn",
                         confirm: "Are you sure you want to update this form template? Any routing changes will regenerate the controller file."
                       } %>
         </div>
-      <% end %>
+      </div>
+    <% end %>
+
+    <!-- Status Picker Modal -->
+    <div id="status-picker-modal" class="modal" style="display: none;">
+      <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-header" style="padding: 15px; border-bottom: 1px solid #dee2e6;">
+          <h3 style="margin: 0;">Select Predefined Status</h3>
+          <button type="button" class="close-modal" data-action="click->form-builder#closeStatusPicker">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 15px;">
+          <div class="predefined-statuses-list" data-form-builder-target="predefinedStatusesList">
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1038,18 +1074,3 @@
     </div>
   </div>
 </template>
-
-<!-- Status Picker Modal -->
-<div id="status-picker-modal" class="modal" style="display: none;">
-  <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
-    <div class="modal-header" style="padding: 15px; border-bottom: 1px solid #dee2e6;">
-      <h3 style="margin: 0;">Select Predefined Status</h3>
-      <button type="button" class="close-modal" data-action="click->form-builder#closeStatusPicker">&times;</button>
-    </div>
-    <div class="modal-body" style="padding: 15px;">
-      <div class="predefined-statuses-list" data-form-builder-target="predefinedStatusesList">
-        <!-- Predefined statuses will be populated here -->
-      </div>
-    </div>
-  </div>
-</div>

@@ -1017,3 +1017,37 @@
     }
   }
 }
+
+/* ============================================
+   Edit Page Wizard Layout
+   ============================================ */
+.page-form_templates-edit {
+  .edit-wizard-wrapper.form-builder-modal {
+    // Override the modal fixed positioning - this is a full page, not an overlay
+    position: static;
+    display: block;
+    background: transparent;
+    padding: 40px 20px 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 60px);
+    width: auto;
+    height: auto;
+
+    .form-builder-modal-content {
+      margin: 0 auto 50px;
+    }
+
+    .modal-body {
+      padding: 24px;
+      overflow-y: visible;
+      flex: 0 1 auto;
+      min-height: 300px;
+    }
+
+    .modal-footer.wizard-footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+    }
+  }
+}
