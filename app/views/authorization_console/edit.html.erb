@@ -4,7 +4,7 @@
 </div>
 
 <div class="form-wrapper authorization-console">
-  <%= form_with model: @authorized_approver, url: authorization_console_path(@authorized_approver), method: :patch, local: true do |form| %>
+  <%= form_with model: @authorized_approver, url: authorization_console_path(@authorized_approver), method: :patch, data: { turbo: false } do |form| %>
     <%= form.hidden_field :department_id %>
     <%= form.hidden_field :employee_id %>
     
@@ -52,12 +52,21 @@
             class: "form-control" %>
     </div>
     
-    <div class="form-group">
-      <%= form.label :budget_units, "Budget Units (comma-separated)" %>
-      <%= form.text_field :budget_units,
+    <div class="form-group" data-controller="choices">
+      <%= form.label :budget_units, "Budget Units" %>
+      <%= form.select :budget_units,
+            options_for_select(
+              (@budget_unit_options || []),
+              @authorized_approver.budget_units&.split(",")
+            ),
+            {},
+            multiple: true,
             class: "form-control",
-            placeholder: "e.g., 4641, 4642" %>
-      <small class="help-text">Leave blank for all budget units</small>
+            data: {
+              choices_target: "select",
+              placeholder: "Select budget unit(s)…"
+            } %>
+      <small class="help-text">Leave blank to allow all budget units</small>
     </div>
     
     <div class="form-group">

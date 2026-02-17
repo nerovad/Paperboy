@@ -4,7 +4,7 @@
 </div>
 
 <div class="form-wrapper authorization-console">
-  <%= form_with model: @authorized_approver, url: authorization_console_index_path, local: true do |form| %>
+  <%= form_with model: @authorized_approver, url: authorization_console_index_path, data: { turbo: false } do |form| %>
     <% if @authorized_approver.errors.any? %>
       <div class="alert alert-danger">
         <p><strong>There was a problem:</strong></p>

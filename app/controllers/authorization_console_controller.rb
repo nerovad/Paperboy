@@ -20,11 +20,10 @@ class AuthorizationConsoleController < ApplicationController
   def new
     @department_id = params[:department_id]
     @authorized_approver = AuthorizedApprover.new(department_id: @department_id)
-    
+
     @building_options     = fetch_buildings_for_department(@department_id)
-    @budget_unit_options  = fetch_budget_units_for_department(@department_id)
-    # Get employees from this department for the dropdown
-    @department_employees = fetch_department_employees(@department_id)
+    @budget_unit_options  = fetch_managed_budget_units
+    @department_employees = fetch_managed_employees
   end
   
   def create
@@ -36,9 +35,9 @@ class AuthorizationConsoleController < ApplicationController
                   notice: "Approver authorization added successfully."
     else
       @department_id         = @authorized_approver.department_id
-      @department_employees  = fetch_department_employees(@department_id)
+      @department_employees  = fetch_managed_employees
       @building_options      = fetch_buildings_for_department(@department_id)
-      @budget_unit_options   = fetch_budget_units_for_department(@department_id)
+      @budget_unit_options   = fetch_managed_budget_units
       render :new, status: :unprocessable_entity
     end
   end
@@ -46,9 +45,9 @@ class AuthorizationConsoleController < ApplicationController
   def edit
     @authorized_approver   = AuthorizedApprover.find(params[:id])
     @department_id         = @authorized_approver.department_id
-    @department_employees  = fetch_department_employees(@department_id)
+    @department_employees  = fetch_managed_employees
     @building_options      = fetch_buildings_for_department(@department_id)
-    @budget_unit_options   = fetch_budget_units_for_department(@department_id)
+    @budget_unit_options   = fetch_managed_budget_units
   end
   
   def update
@@ -59,9 +58,9 @@ class AuthorizationConsoleController < ApplicationController
                   notice: "Approver authorization updated successfully."
     else
       @department_id         = @authorized_approver.department_id
-      @department_employees  = fetch_department_employees(@department_id)
+      @department_employees  = fetch_managed_employees
       @building_options      = fetch_buildings_for_department(@department_id)
-      @budget_unit_options   = fetch_budget_units_for_department(@department_id)
+      @budget_unit_options   = fetch_managed_budget_units
       render :edit, status: :unprocessable_entity
     end
   end
@@ -89,7 +88,9 @@ class AuthorizationConsoleController < ApplicationController
   
   def set_managed_departments
     if auth_console_admin?
-      @managed_departments = Department.order(:department_id).to_a
+      gsa = Agency.find_by(long_name: "General Services Agency")
+      division_ids = gsa ? Division.where(agency_id: gsa.agency_id).pluck(:division_id) : []
+      @managed_departments = Department.where(division_id: division_ids).order(:department_id).to_a
     else
       dept_id = current_user_org_chain[:department_id]
       dept = dept_id ? Department.find_by(department_id: dept_id) : nil
@@ -97,17 +98,20 @@ class AuthorizationConsoleController < ApplicationController
     end
   end
   
-  def fetch_department_employees(department_id)
-    return [] if department_id.blank?
-    
+  def fetch_managed_employees
+    dept_ids = @managed_departments.map(&:department_id)
+    return [] if dept_ids.empty?
+
+    quoted = dept_ids.map { |id| ActiveRecord::Base.connection.quote(id) }.join(",")
+
     result = ActiveRecord::Base.connection.exec_query(<<-SQL.squish)
       SELECT EmployeeID, First_Name, Last_Name, EE_Email
       FROM [GSABSS].[dbo].[Employees] e
       INNER JOIN [GSABSS].[dbo].[Units] u ON e.Unit = u.unit_id
-      WHERE u.department_id = '#{department_id}'
+      WHERE u.department_id IN (#{quoted})
       ORDER BY Last_Name, First_Name
     SQL
-    
+
     result.map do |row|
       {
         id: row["EmployeeID"],
@@ -127,9 +131,15 @@ class AuthorizationConsoleController < ApplicationController
     ]
   end
 
-  def fetch_budget_units_for_department(department_id)
-    # Replace with real data source (MSSQL / lookup table / constant)
-    %w[4641 4642 4643]
+  def fetch_managed_budget_units
+    dept_ids = @managed_departments.map(&:department_id)
+    return [] if dept_ids.empty?
+
+    dept_names = @managed_departments.index_by(&:department_id)
+    Unit.where(department_id: dept_ids).order(:unit_id).map do |u|
+      label = "#{u.unit_id} - #{dept_names[u.department_id]&.long_name}"
+      [label, u.unit_id.to_s]
+    end
   end
 
   def authorized_approver_params
