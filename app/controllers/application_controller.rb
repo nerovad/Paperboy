@@ -2,7 +2,8 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
   before_action :set_current_user
-  helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain
+  helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain,
+                :auth_console_admin?, :auth_console_user?
 
   def current_user
     user_data = session[:user]
@@ -93,9 +94,25 @@ class ApplicationController < ActionController::Base
     @_current_user_org_chain = {}
   end
 
+  def auth_console_admin?
+    current_user_group_names.include?("system_admins") ||
+      current_user_group_names.include?("auth_console_admin")
+  end
+
+  def auth_console_user?
+    auth_console_admin? ||
+      current_user_group_names.include?("auth_console_approvers")
+  end
+
   def require_system_admin
     unless current_user_group_names.include?("system_admins")
       redirect_to root_path, alert: "Access denied. System administrators only."
+    end
+  end
+
+  def require_auth_console
+    unless auth_console_user?
+      redirect_to root_path, alert: "Access denied. Authorization Console access required."
     end
   end
 

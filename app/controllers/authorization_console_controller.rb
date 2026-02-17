@@ -1,6 +1,6 @@
 # app/controllers/authorization_console_controller.rb
 class AuthorizationConsoleController < ApplicationController
-  before_action :require_authorization_manager
+  before_action :require_auth_console
   before_action :set_managed_departments
   
   def index
@@ -87,20 +87,14 @@ class AuthorizationConsoleController < ApplicationController
   
   private
   
-  def require_authorization_manager
-    employee_id = session.dig(:user, "employee_id").to_s
-    
-    unless AuthorizationManager.exists?(employee_id: employee_id)
-      redirect_to root_path, alert: "You do not have permission to access the Authorization Console."
-    end
-  end
-  
   def set_managed_departments
-    employee_id = session.dig(:user, "employee_id").to_s
-    @managed_departments = AuthorizationManager
-      .where(employee_id: employee_id)
-      .map(&:department)  # Remove .includes(:department)
-      .compact
+    if auth_console_admin?
+      @managed_departments = Department.order(:department_id).to_a
+    else
+      dept_id = current_user_org_chain[:department_id]
+      dept = dept_id ? Department.find_by(department_id: dept_id) : nil
+      @managed_departments = [dept].compact
+    end
   end
   
   def fetch_department_employees(department_id)

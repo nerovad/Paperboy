@@ -34,6 +34,7 @@ module ApplicationHelper
     current_user_group_names.include?("system_admins")
   end
 
+
   def fetch_acl_groups
     result = ActiveRecord::Base.connection.execute(
       "SELECT GroupID, Group_Name FROM GSABSS.dbo.Groups ORDER BY Group_Name"

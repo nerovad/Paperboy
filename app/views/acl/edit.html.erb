@@ -4,7 +4,7 @@
 </div>
 
 <div class="form-wrapper acl-management">
-  <%= form_with model: @group, url: acl_path(@group), method: :patch, local: true do |form| %>
+  <%= form_with model: @group, url: acl_path(@group), method: :patch, data: { turbo: false } do |form| %>
     <%= render "form", form: form, group: @group, submit_label: "Update Group" %>
   <% end %>
 </div>

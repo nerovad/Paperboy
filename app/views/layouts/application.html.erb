@@ -84,10 +84,12 @@
                 <%= link_to "Dashboards", dashboards_path, class: "btn btn-primary" %>
 
                 <% if system_admin? %>
-                  <%= link_to "Auth Console", authorization_console_index_path, class: "btn btn-info" %>
                   <%= link_to "Manage Forms", form_templates_path, class: "btn btn-info" %>
                   <%= link_to "Impersonate", new_admin_impersonation_path, class: "btn btn-warning" %>
                   <%= link_to "ACL", acl_index_path, class: "btn btn-info" %>
+                <% end %>
+                <% if auth_console_user? %>
+                  <%= link_to "Auth Console", authorization_console_index_path, class: "btn btn-info" %>
                 <% end %>
                 
                 <%= button_to "Logout", logout_path, method: :delete, class: "logout-btn" %>
