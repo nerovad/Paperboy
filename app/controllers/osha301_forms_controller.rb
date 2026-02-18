@@ -201,9 +201,22 @@ class Osha301FormsController < ApplicationController
   end
 
   def osha301_form_params
-    # Only the baseline fields you asked for
     params.require(:osha301_form).permit(
-      :name, :phone, :email, :agency, :division, :department, :unit
+      :name, :phone, :email, :agency, :division, :department, :unit,
+      :street, :city, :state, :zip, :date_of_birth, :date_hired, :sex,
+      :name_of_physician_or_other_health_care_professional,
+      :was_treatment_given_away_from_the_worksite,
+      :facility_name, :facility_street_address, :facility_city,
+      :facility_state, :facility_zip,
+      :was_the_employee_treated_in_an_emergency_room,
+      :was_the_employee_hospitalized_overnight_as_an_inpatient,
+      :case_number_from_the_log, :date_of_injury_or_illness,
+      :time_employee_began_work, :time_of_event,
+      :what_happened_tell_us_how_the_injury_occurred,
+      :what_was_the_injury_or_illness,
+      :what_was_the_employee_doing_just_before_the_incident_occurred,
+      :what_object_or_substance_directly_harmed_the_employee,
+      :did_employee_die, :date_of_death
     )
   end
 end

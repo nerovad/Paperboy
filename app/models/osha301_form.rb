@@ -1,6 +1,8 @@
 class Osha301Form < ApplicationRecord
   include TrackableStatus
 
+  belongs_to :rm75_form, optional: true
+
 enum :status, {
   in_progress: 0,
     approved: 1

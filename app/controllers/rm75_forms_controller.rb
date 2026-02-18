@@ -66,57 +66,12 @@ class Rm75FormsController < ApplicationController
     @rm75_form.employee_id = employee_id if @rm75_form.respond_to?(:employee_id=)
 
     if @rm75_form.save
-      # Keep success behavior simple for the template; you can extend per form.
-      # Multi-step approval routing (1 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (1 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (1 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (1 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (1 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (1 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (1 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
-@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+      # Route to submitter's supervisor for approval
+      employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
+      supervisor_id = employee&.Supervisor_ID&.to_s
+      @rm75_form.update(approver_id: supervisor_id)
+
+      redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
@@ -163,7 +118,12 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
 
   def update
     if @rm75_form.update(rm75_form_params)
-      redirect_to @rm75_form, notice: 'Submission updated successfully.'
+      # Auto-create OSHA 301 when Gary marks as reportable
+      if @rm75_form.osha_reportable == 'Yes' && @rm75_form.osha301_form.blank?
+        @rm75_form.create_osha301!
+      end
+
+      redirect_to form_success_path, notice: 'Submission updated successfully.', allow_other_host: false, status: :see_other
     else
       setup_form_options
       render :edit, status: :unprocessable_entity
@@ -250,9 +210,35 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
   end
 
   def rm75_form_params
-    # Only the baseline fields you asked for
-    params.require(:rm75_form).permit(
-      :name, :phone, :email, :agency, :division, :department, :unit
-    )
+    permitted = [
+      :name, :phone, :email, :agency, :division, :department, :unit,
+      :report_type, :bloodborne_pathogen_exposure, :supervisor_name,
+      :witness_name, :witness_phone, :date_of_injury_or_illness,
+      :date_employer_notified, :date_dwc1_given, :who_gave_the_dwc1,
+      :date_last_worked, :date_returned_to_work, :missed_full_work_day_,
+      :still_off_work, :specific_injury_and_body_part_affected,
+      :location_of_incident, :on_employer_premises,
+      :department_where_event_occurred, :activity_at_time_of_incident,
+      :how_the_injury_occurred, :physician_name, :physician_address,
+      :physician_phone, :hospital_name, :hospital_address,
+      :hospital_phone, :hospitalized_overnight
+    ]
+
+    if session.dig(:user, 'employee_id').to_s == Rm75Form::GARY_HOWARD_ID
+      permitted += [
+        :investigator_name, :investigator_title, :investigator_phone,
+        :nature_of_incident, :cause_of_incident, :root_cause,
+        :assessment_of_future_severity_potential,
+        :assessment_of_probability_of_recurrence,
+        :unsafe_condition_corrected_immediately,
+        :checklistprocedurestraining_modified,
+        :person_responsible_for_corrective_action, :title,
+        :corrective_department, :corrective_phone,
+        :targeted_completion_date, :actual_completion_date,
+        :osha_recordable, :osha_reportable, :reportable_injury_codes
+      ]
+    end
+
+    params.require(:rm75_form).permit(permitted)
   end
 end

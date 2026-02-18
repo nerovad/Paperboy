@@ -6,21 +6,27 @@ export default class extends Controller {
  connect() {
   console.log("FormNavigationController connected");
 
-  const form = this.element.querySelector("form");
-  if (form) {
+  this.form = this.element.querySelector("form") || this.element.closest("form") || this.element;
+  if (this.form.tagName === "FORM") {
+    // Disable native validation — we validate page-by-page ourselves
+    this.form.setAttribute("novalidate", "")
+
     // Observe unexpected display changes
     const observer = new MutationObserver(() => {
-      console.log("Form style changed:", form.getAttribute("style"));
+      console.log("Form style changed:", this.form.getAttribute("style"));
     });
-    observer.observe(form, { attributes: true, attributeFilter: ["style"] });
+    observer.observe(this.form, { attributes: true, attributeFilter: ["style"] });
 
     // Force visible in case Turbo renders it hidden
     requestAnimationFrame(() => {
-      if (form.style.display === "none") {
+      if (this.form.style.display === "none") {
         console.log("Form was hidden — un-hiding it now");
-        form.style.display = "block";
+        this.form.style.display = "block";
       }
     });
+
+    // Intercept submit to handle hidden-page validation
+    this.form.addEventListener("submit", (e) => this.handleSubmit(e));
   }
 
   this.pages = Array.from(this.element.querySelectorAll(".form-page"));
@@ -48,8 +54,49 @@ export default class extends Controller {
   }
 }
 
+  // Validate only the visible, enabled fields on the current page
+  validateCurrentPage() {
+    const page = this.pages[this.current]
+    const fields = page.querySelectorAll("input, select, textarea")
+    for (const field of fields) {
+      // Skip disabled/hidden fields — they aren't submitted anyway
+      if (field.disabled) continue
+      if (!field.checkValidity()) {
+        field.reportValidity()
+        return false
+      }
+    }
+    return true
+  }
+
+  // On submit, walk all pages and stop at the first one with invalid fields
+  handleSubmit(e) {
+    for (let i = 0; i < this.pages.length; i++) {
+      // Temporarily show the page so the browser can focus invalid fields
+      const wasHidden = this.pages[i].style.display === "none"
+      if (wasHidden) this.pages[i].style.display = ""
+
+      const fields = this.pages[i].querySelectorAll("input, select, textarea")
+      for (const field of fields) {
+        if (field.disabled) continue
+        if (!field.checkValidity()) {
+          e.preventDefault()
+          this.current = i
+          this.showCurrentPage()
+          field.reportValidity()
+          return
+        }
+      }
+
+      // Re-hide if we showed it temporarily and it's not the target page
+      if (wasHidden) this.pages[i].style.display = "none"
+    }
+    // All valid — let the submit proceed
+  }
+
   nextPage() {
     if (this.current < this.pages.length - 1) {
+      if (!this.validateCurrentPage()) return
       this.current++
       this.showCurrentPage()
     }

@@ -9,6 +9,13 @@
              locals: { record: @osha301_form,
                        exclude: %w[id created_at updated_at approver_id deny_reason] } %>
 
+  <% if @osha301_form.rm75_form.present? %>
+    <div class="form-group" style="margin-top: 16px;">
+      <strong>Source RM75:</strong>
+      <%= link_to "View RM75 Form ##{@osha301_form.rm75_form.id}", rm75_form_path(@osha301_form.rm75_form) %>
+    </div>
+  <% end %>
+
   <div class="form-actions" style="margin-top: 16px;">
     <%= link_to "Back to Inbox", inbox_queue_path, class: "form-btn" %>
     <%= link_to "Download PDF", pdf_osha301_form_path(@osha301_form), target: "_blank", class: "form-btn" %>
