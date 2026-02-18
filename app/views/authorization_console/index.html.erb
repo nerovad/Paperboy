@@ -10,6 +10,7 @@
       <%= form_with url: authorization_console_index_path, method: :get, data: { turbo: false, controller: "auto-submit" } do %>
         <%= select_tag :department_id,
               options_for_select(
+                [["All Departments", "all"]] +
                 @managed_departments.map { |d| ["#{d.department_id} - #{d.long_name}", d.department_id] },
                 @department_id.to_s
               ),
@@ -19,11 +20,15 @@
     </div>
   <% end %>
 
-  <% if @department %>
+  <% if @department || @department_id == "all" %>
     <div class="department-header">
-      <h2><%= @department.long_name %> (<%= @department.department_id %>)</h2>
+      <% if @department %>
+        <h2><%= @department.long_name %> (<%= @department.department_id %>)</h2>
+      <% else %>
+        <h2>All Departments</h2>
+      <% end %>
       <%= link_to "+ Add New Authorized Approver",
-            new_authorization_console_path(department_id: @department_id),
+            new_authorization_console_path(department_id: @department&.department_id || @managed_departments.first&.department_id),
             class: "btn approve" %>
     </div>
     
@@ -92,7 +97,7 @@
       </div>
     <% else %>
       <div class="empty-state">
-        <p>No authorized approvers have been assigned for this department yet.</p>
+        <p>No authorized approvers have been assigned yet.</p>
         <p class="empty-state-hint">Click "+ Add New Authorized Approver" to get started.</p>
       </div>
     <% end %>

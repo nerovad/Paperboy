@@ -4,17 +4,37 @@ class AuthorizationConsoleController < ApplicationController
   before_action :set_managed_departments
   
   def index
-    @department_id = params[:department_id] || @managed_departments.first&.department_id
-    
-    if @department_id
-      @department = Department.find_by(department_id: @department_id)
+    @department_id = params[:department_id] || "all"
+    managed_dept_ids = @managed_departments.map(&:department_id)
+
+    if @department_id == "all"
+      @department = nil
       @authorized_approvers = AuthorizedApprover
-        .where(department_id: @department_id)
+        .where(department_id: managed_dept_ids)
         .order(:employee_id, :service_type)
-      
-      # Group by employee for display
-      @approvers_by_employee = @authorized_approvers.group_by(&:employee_id)
+        .to_a
+    elsif managed_dept_ids.include?(@department_id)
+      @department = Department.find_by(department_id: @department_id)
+
+      # Find all budget-unit IDs that belong to this department
+      dept_unit_ids = Unit.where(department_id: @department_id)
+                         .pluck(:unit_id).map(&:to_s).to_set
+
+      # Show approvers whose budget units overlap with this department's
+      # units, OR whose department_id matches when no units are specified.
+      @authorized_approvers = AuthorizedApprover
+        .where(department_id: managed_dept_ids)
+        .order(:employee_id, :service_type)
+        .select { |a|
+          if a.budget_units.present?
+            (a.budget_units.split(",").map(&:strip).to_set & dept_unit_ids).any?
+          else
+            a.department_id == @department_id
+          end
+        }
     end
+
+    @approvers_by_employee = (@authorized_approvers || []).group_by(&:employee_id)
   end
   
   def new
@@ -29,7 +49,8 @@ class AuthorizationConsoleController < ApplicationController
   def create
     @authorized_approver = AuthorizedApprover.new(authorized_approver_params)
     @authorized_approver.authorized_by = session.dig(:user, "employee_id").to_s
-    
+    resolve_department_from_units(@authorized_approver)
+
     if @authorized_approver.save
       redirect_to authorization_console_index_path(department_id: @authorized_approver.department_id),
                   notice: "Approver authorization added successfully."
@@ -52,8 +73,10 @@ class AuthorizationConsoleController < ApplicationController
   
   def update
     @authorized_approver = AuthorizedApprover.find(params[:id])
-    
-    if @authorized_approver.update(authorized_approver_params)
+    @authorized_approver.assign_attributes(authorized_approver_params)
+    resolve_department_from_units(@authorized_approver)
+
+    if @authorized_approver.save
       redirect_to authorization_console_index_path(department_id: @authorized_approver.department_id),
                   notice: "Approver authorization updated successfully."
     else
@@ -140,6 +163,18 @@ class AuthorizationConsoleController < ApplicationController
       label = "#{u.unit_id} - #{dept_names[u.department_id]&.long_name}"
       [label, u.unit_id.to_s]
     end
+  end
+
+  # Derive department_id from the first selected budget unit's actual department.
+  # Falls back to the existing department_id when no budget units are selected.
+  def resolve_department_from_units(approver)
+    return if approver.budget_units.blank?
+
+    first_unit_id = approver.budget_units.split(",").first&.strip
+    return if first_unit_id.blank?
+
+    unit = Unit.find_by(unit_id: first_unit_id)
+    approver.department_id = unit.department_id if unit&.department_id.present?
   end
 
   def authorized_approver_params
