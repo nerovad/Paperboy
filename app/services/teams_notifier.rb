@@ -1,6 +1,6 @@
 class TeamsNotifier
   def self.send_cir_alert(cir)
-    webhook_url = ENV['TEAMS_WEBHOOK_URL']
+    webhook_url = Rails.application.config.teams_webhook_url
     return unless webhook_url.present?
 
     payload = build_adaptive_card(cir)
