@@ -7,14 +7,14 @@
   <% if @managed_departments.size > 1 %>
     <div class="department-selector">
       <label>Select Department:</label>
-      <%= form_tag authorization_console_index_path, method: :get do %>
+      <%= form_with url: authorization_console_index_path, method: :get, data: { turbo: false, controller: "auto-submit" } do %>
         <%= select_tag :department_id,
               options_for_select(
                 @managed_departments.map { |d| ["#{d.department_id} - #{d.long_name}", d.department_id] },
-                @department_id
+                @department_id.to_s
               ),
-              onchange: "this.form.submit()",
-              class: "form-control" %>
+              class: "form-control",
+              data: { action: "change->auto-submit#submit" } %>
       <% end %>
     </div>
   <% end %>
