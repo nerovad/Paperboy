@@ -6,11 +6,11 @@ namespace :powerbi do
     require 'json'
 
     puts "Fetching Power BI workspaces..."
-    puts "Using Government Cloud endpoints"
+    puts "Using GCC endpoints (commercial auth, gov Power BI)"
     puts
 
     # Get Azure AD access token
-    authority_url = ENV['POWERBI_AUTHORITY_URL'] || 'https://login.microsoftonline.us'
+    authority_url = ENV['POWERBI_AUTHORITY_URL'] || 'https://login.microsoftonline.com'
     tenant_id = ENV['POWERBI_TENANT_ID']
 
     if tenant_id.blank?
@@ -56,6 +56,20 @@ namespace :powerbi do
       request['Authorization'] = "Bearer #{access_token}"
 
       response = http.request(request)
+      puts "API Response: #{response.code} #{response.message}"
+      puts "WWW-Authenticate: #{response['WWW-Authenticate']}" if response['WWW-Authenticate']
+      puts "Response body: #{response.body[0..500]}" if response.body.present?
+
+      # Decode token to check audience
+      token_parts = access_token.split('.')
+      if token_parts.length >= 2
+        payload = JSON.parse(Base64.decode64(token_parts[1] + '=='))
+        puts
+        puts "Token audience (aud): #{payload['aud']}"
+        puts "Token issuer (iss):   #{payload['iss']}"
+      end
+
+      exit(1) if response.code != '200'
       workspaces_data = JSON.parse(response.body)
 
       if workspaces_data['error']

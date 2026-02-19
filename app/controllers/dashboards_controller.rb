@@ -70,7 +70,6 @@ class DashboardsController < ApplicationController
   end
 
   def powerbi_embed_url(form_template)
-    # Government Cloud embed URL format
     base_url = ENV['POWERBI_EMBED_URL'] || 'https://app.powerbigov.us'
     "#{base_url}/reportEmbed?" \
     "reportId=#{form_template.powerbi_report_id}&" \

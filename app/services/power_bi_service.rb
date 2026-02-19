@@ -46,7 +46,7 @@ class PowerBiService
     require 'json'
 
     # Government Cloud endpoint
-    authority_url = ENV['POWERBI_AUTHORITY_URL'] || 'https://login.microsoftonline.us'
+    authority_url = ENV['POWERBI_AUTHORITY_URL'] || 'https://login.microsoftonline.com'
     tenant_id = ENV['POWERBI_TENANT_ID']
 
     uri = URI.parse("#{authority_url}/#{tenant_id}/oauth2/v2.0/token")
