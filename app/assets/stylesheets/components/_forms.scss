@@ -16,8 +16,18 @@
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
+  padding: 0 60px;
 
   img { height: 60px; }
+
+  h1 {
+    font-size: 1.6rem;
+    text-align: center;
+
+    @media (max-width: 768px) {
+      font-size: 1.1rem;
+    }
+  }
 }
 
 /* Section titles inside multi-step forms */
