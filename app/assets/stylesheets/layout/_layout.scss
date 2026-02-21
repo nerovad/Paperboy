@@ -15,9 +15,14 @@
 
 #main-content {
   height: 100vh;
-  padding: 80px 0 0;
+  padding: 0;
   position: relative;
   overflow-y: auto;
+}
+
+/* Push content below the fixed logo / profile bar — except on the homepage */
+body:not(.page-forms-home) #main-content {
+  padding-top: 80px;
 
   @media (max-width: 768px) {
     padding-top: 60px;
