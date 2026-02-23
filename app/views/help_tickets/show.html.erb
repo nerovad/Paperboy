@@ -1,0 +1,54 @@
+<div class="form-header">
+  <h1>Ticket #<%= @help_ticket.id %></h1>
+</div>
+
+<div class="form-wrapper">
+  <div class="form-inner">
+    <div class="form-group">
+      <label>Subject</label>
+      <p><%= @help_ticket.subject %></p>
+    </div>
+
+    <div class="form-group">
+      <label>Description</label>
+      <p style="white-space: pre-wrap;"><%= @help_ticket.description %></p>
+    </div>
+
+    <div class="form-group">
+      <label>Status</label>
+      <p><span class="badge <%= @help_ticket.open? ? 'is-pending' : 'is-approved' %>"><%= @help_ticket.status %></span></p>
+    </div>
+
+    <div class="form-group">
+      <label>Employee Name</label>
+      <p><%= @help_ticket.employee_name %></p>
+    </div>
+
+    <div class="form-group">
+      <label>Employee Email</label>
+      <p><%= @help_ticket.employee_email %></p>
+    </div>
+
+    <div class="form-group">
+      <label>Employee ID</label>
+      <p><%= @help_ticket.employee_id %></p>
+    </div>
+
+    <div class="form-group">
+      <label>Created</label>
+      <p><%= @help_ticket.created_at.strftime("%m/%d/%Y %I:%M %p") %></p>
+    </div>
+
+    <div class="form-group">
+      <label>Updated</label>
+      <p><%= @help_ticket.updated_at.strftime("%m/%d/%Y %I:%M %p") %></p>
+    </div>
+
+    <div class="form-actions" style="margin-top: 16px;">
+      <%= link_to "Back to Tickets", help_tickets_path, class: "btn" %>
+      <% if ticket_admin? && @help_ticket.open? %>
+        <%= button_to "Close Ticket", close_help_ticket_path(@help_ticket), method: :patch, class: "btn deny" %>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_23_162349) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_23_173204) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -606,6 +606,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_23_162349) do
     t.integer "status", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "help_tickets", force: :cascade do |t|
+    t.string "subject", null: false
+    t.text "description", null: false
+    t.string "employee_id", null: false
+    t.string "employee_name"
+    t.string "employee_email"
+    t.integer "status", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id"], name: "index_help_tickets_on_employee_id"
   end
 
   create_table "leave_of_absence_forms", force: :cascade do |t|
