@@ -186,6 +186,7 @@ Rails.application.routes.draw do
   # Standard Forms (alphabetical)
   # ============================================================================
   resources :creative_job_requests, only: [:new, :create]
+  resources :help_tickets, only: [:new, :create]
 
   # ============================================================================
   # Lookups & Dynamic Data
