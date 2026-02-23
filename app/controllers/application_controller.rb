@@ -3,7 +3,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
   before_action :set_current_user
   helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain,
-                :auth_console_admin?, :auth_console_user?
+                :auth_console_admin?, :auth_console_user?, :current_user_dropdown_permissions, :current_user_form_permission_ids
 
   def current_user
     user_data = session[:user]
@@ -104,6 +104,16 @@ class ApplicationController < ActionController::Base
       current_user_group_names.include?("auth_console_approvers")
   end
 
+  def current_user_dropdown_permissions
+    return @_current_user_dropdown_permissions if defined?(@_current_user_dropdown_permissions)
+    @_current_user_dropdown_permissions = load_user_permissions('dropdown')
+  end
+
+  def current_user_form_permission_ids
+    return @_current_user_form_permission_ids if defined?(@_current_user_form_permission_ids)
+    @_current_user_form_permission_ids = load_user_permissions('form').map(&:to_i).to_set
+  end
+
   def require_system_admin
     unless current_user_group_names.include?("system_admins")
       redirect_to root_path, alert: "Access denied. System administrators only."
@@ -145,6 +155,27 @@ class ApplicationController < ActionController::Base
   rescue
     @_current_user_group_names = Set.new
     @_current_user_group_ids   = []
+  end
+
+  def load_user_permissions(permission_type)
+    group_ids = current_user_group_ids
+    return Set.new if group_ids.empty?
+
+    quoted_ids = group_ids.map { |id| ActiveRecord::Base.connection.quote(id) }.join(', ')
+    quoted_type = ActiveRecord::Base.connection.quote(permission_type)
+
+    rows = ActiveRecord::Base.connection.execute(<<~SQL)
+      SELECT Permission_Key
+      FROM GSABSS.dbo.Group_Permissions
+      WHERE GroupID IN (#{quoted_ids})
+        AND Permission_Type = #{quoted_type}
+    SQL
+
+    keys = Set.new
+    rows.each { |row| keys << row["Permission_Key"] }
+    keys
+  rescue
+    Set.new
   end
 
   def set_current_user

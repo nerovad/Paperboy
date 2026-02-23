@@ -16,6 +16,7 @@
         <% @groups.each do |group| %>
           <div class="task-actions" data-group-id="<%= group.GroupID %>" style="display:none;">
             <%= link_to "View Members", acl_path(group), class: "btn pdf" %>
+            <%= link_to "Add Permissions", permissions_acl_path(group), class: "btn pdf" %>
             <%= link_to "Edit", edit_acl_path(group), class: "btn" %>
             <button type="button"
                     class="btn deny"

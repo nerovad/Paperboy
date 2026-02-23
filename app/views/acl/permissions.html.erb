@@ -1,0 +1,44 @@
+<!-- app/views/acl/permissions.html.erb -->
+<div class="form-header">
+  <h1>Permissions - <%= @group.Group_Name %></h1>
+</div>
+
+<div class="form-wrapper acl-management">
+  <div class="acl-header">
+    <p class="acl-subtitle">Configure what this group grants access to.</p>
+    <%= link_to "Back to Group", acl_path(@group), class: "btn" %>
+  </div>
+
+  <%= form_tag update_permissions_acl_path(@group), method: :patch, data: { turbo: false } do %>
+
+    <div class="acl-permissions-section">
+      <h3>Profile Dropdown Items</h3>
+      <p class="acl-subtitle">Select which profile dropdown items members of this group can access.</p>
+      <div class="permissions-grid">
+        <% @dropdown_items.each do |item| %>
+          <label class="permission-checkbox">
+            <%= check_box_tag "dropdown_permissions[]", item[:key], @dropdown_keys.include?(item[:key]) %>
+            <span><%= item[:label] %></span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="acl-permissions-section">
+      <h3>Form Template Access</h3>
+      <p class="acl-subtitle">Select which form templates members of this group can access.</p>
+      <div class="permissions-grid">
+        <% @form_templates.each do |template| %>
+          <label class="permission-checkbox">
+            <%= check_box_tag "form_permissions[]", template.id.to_s, @form_keys.include?(template.id.to_s) %>
+            <span><%= template.name %></span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <%= submit_tag "Save Permissions", class: "btn approve" %>
+    </div>
+  <% end %>
+</div>

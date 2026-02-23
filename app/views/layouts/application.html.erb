@@ -83,12 +83,16 @@
                 <%= link_to "Reports", reports_path, class: "btn btn-info" %>
                 <%= link_to "Dashboards", dashboards_path, class: "btn btn-primary" %>
 
-                <% if system_admin? %>
+                <% if system_admin? || current_user_dropdown_permissions.include?('manage_forms') %>
                   <%= link_to "Manage Forms", form_templates_path, class: "btn btn-info" %>
+                <% end %>
+                <% if system_admin? || current_user_dropdown_permissions.include?('impersonate') %>
                   <%= link_to "Impersonate", new_admin_impersonation_path, class: "btn btn-warning" %>
+                <% end %>
+                <% if system_admin? || current_user_dropdown_permissions.include?('acl') %>
                   <%= link_to "ACL", acl_index_path, class: "btn btn-info" %>
                 <% end %>
-                <% if auth_console_user? %>
+                <% if auth_console_user? || current_user_dropdown_permissions.include?('auth_console') %>
                   <%= link_to "Auth Console", authorization_console_index_path, class: "btn btn-info" %>
                 <% end %>
                 

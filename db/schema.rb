@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_18_200001) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_23_162349) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -158,6 +158,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_200001) do
     t.string "Program_Code", limit: 10
     t.string "Phase_Code", limit: 6
     t.string "Task", limit: 4
+  end
+
+  create_table "Group_Permissions", primary_key: ["GroupID", "Permission_Type", "Permission_Key"], force: :cascade do |t|
+    t.integer "GroupID", null: false
+    t.string "Permission_Type", limit: 50, null: false
+    t.string "Permission_Key", limit: 255, null: false
+    t.datetime "Created_At", default: -> { "getdate()" }, null: false
   end
 
   create_table "Groups", primary_key: "GroupID", id: :integer, force: :cascade do |t|

@@ -60,7 +60,7 @@
 
     # Add restricted templates the current user can access (system admins see all)
     FormTemplate.where(access_level: 'restricted').each do |template|
-      next unless system_admin? || template.accessible_by?(current_user_org_chain, current_user_group_ids)
+      next unless system_admin? || template.accessible_by?(current_user_org_chain, current_user_group_ids) || current_user_form_permission_ids.include?(template.id)
       path = resolve_path.call(template)
       available_forms << [template.name, path] if path
     end

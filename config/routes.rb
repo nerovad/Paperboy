@@ -95,6 +95,8 @@ Rails.application.routes.draw do
     member do
       post :add_member
       delete :remove_member
+      get :permissions
+      patch :update_permissions
     end
   end
 
