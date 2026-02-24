@@ -44,6 +44,9 @@ gem "prawn-templates"
 #CSV Generation
 gem 'csv'
 
+# ZIP file generation for report bundles
+gem 'rubyzip', require: 'zip'
+
 # Duo 2 factor auth login
 gem 'duo_web'
 
