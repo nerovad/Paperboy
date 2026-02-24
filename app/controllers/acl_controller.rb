@@ -9,7 +9,7 @@ class AclController < ApplicationController
     { key: 'reports',      label: 'Reports' },
     { key: 'dashboards',   label: 'Dashboards' },
     { key: 'manage_forms', label: 'Manage Forms' },
-    { key: 'impersonate',  label: 'Impersonate' },
+    { key: 'emulate',  label: 'Emulate' },
     { key: 'acl',          label: 'ACL' },
     { key: 'auth_console', label: 'Auth Console' },
   ].freeze

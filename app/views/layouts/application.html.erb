@@ -16,11 +16,11 @@
     <%= javascript_importmap_tags %>
   </head>
   <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %>">
-    <!-- Impersonation Banner -->
+    <!-- Emulation Banner -->
     <% if session[:impersonating] && session[:user] %>
       <div style="background: #ff9800; color: white; padding: 10px; text-align: center;">
-        ⚠️ You are impersonating <%= session[:user]["first_name"] %> <%= session[:user]["last_name"] %>
-        <%= button_to "Stop Impersonating", admin_impersonation_path(1), 
+        ⚠️ You are emulating <%= session[:user]["first_name"] %> <%= session[:user]["last_name"] %>
+        <%= button_to "Stop Emulating", admin_impersonation_path(1), 
                       method: :delete, 
                       class: "btn pdf",
                       style: "margin-left: 10px;" %>
@@ -86,8 +86,8 @@
                 <% if system_admin? || current_user_dropdown_permissions.include?('manage_forms') %>
                   <%= link_to "Manage Forms", form_templates_path, class: "btn btn-info" %>
                 <% end %>
-                <% if system_admin? || current_user_dropdown_permissions.include?('impersonate') %>
-                  <%= link_to "Impersonate", new_admin_impersonation_path, class: "btn btn-warning" %>
+                <% if system_admin? || current_user_dropdown_permissions.include?('emulate') %>
+                  <%= link_to "Emulate", new_admin_impersonation_path, class: "btn btn-warning" %>
                 <% end %>
                 <% if system_admin? || current_user_dropdown_permissions.include?('acl') %>
                   <%= link_to "ACL", acl_index_path, class: "btn btn-info" %>

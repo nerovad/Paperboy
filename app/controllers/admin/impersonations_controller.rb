@@ -27,7 +27,7 @@ class Admin::ImpersonationsController < ApplicationController
       "unit" => employee.Unit
     }
     
-    redirect_to root_path, notice: "Now impersonating #{employee.First_Name} #{employee.Last_Name}"
+    redirect_to root_path, notice: "Now emulating #{employee.First_Name} #{employee.Last_Name}"
   end
   
   def destroy
@@ -48,7 +48,7 @@ class Admin::ImpersonationsController < ApplicationController
     session[:impersonating] = false
     session[:real_admin_id] = nil
     
-    redirect_to root_path, notice: "Stopped impersonating"
+    redirect_to root_path, notice: "Stopped emulating"
   end
   
   private
