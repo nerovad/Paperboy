@@ -35,12 +35,18 @@ git tag -a "$TAG_NAME" -m "Deploy to prod at $TAG_NAME"
 git push origin --tags
 
 ## Pulling Code to Production Server
-On the prod server:
+  On Dev — write code, commit, push to Gitea
+  On Prod — run bin/deploy and it handles everything:
+  1. git pull the latest code
+  2. bundle install for any new gems
+  3. assets:clobber + assets:precompile for a clean asset build
+  4. Restarts Puma and Sidekiq via systemd
 
-git pull
-RAILS_ENV=production bin/rails assets:clobber
-RAILS_ENV=production bin/rails assets:precompile
-Then restart the app
+  Puma and Sidekiq are managed by systemd, which means:
+  - They auto-start on server boot
+  - They auto-restart if they crash
+  - You can check on them anytime with sudo systemctl status paperboy or sudo systemctl status paperboy-sidekiq
+  - Logs go to journald: sudo journalctl -u paperboy -f
 
 ## Rolling back on Production
 Get the tags
