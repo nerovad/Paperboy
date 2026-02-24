@@ -1,5 +1,5 @@
-# app/controllers/status_controller.rb
-class StatusController < ApplicationController
+# app/controllers/submissions_controller.rb
+class SubmissionsController < ApplicationController
   include Filterable
 
   # Legacy forms that are hardcoded (not created via FormTemplate)

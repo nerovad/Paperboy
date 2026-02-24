@@ -1,6 +1,6 @@
-<!-- app/views/status/index.html.erb -->
+<!-- app/views/submissions/index.html.erb -->
 <div class="form-header">
-  <h1>Status</h1>
+  <h1>Submissions</h1>
 </div>
 
 <!-- Filter Form -->
@@ -16,7 +16,7 @@
     <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
   </form>
 
-  <form action="<%= status_path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
+  <form action="<%= submissions_path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
     <div class="filter-controls">
       <div class="filter-group">
         <label for="filter_type">Type</label>
@@ -99,7 +99,7 @@
 
       <% has_filters = params[:filter_type].present? || params[:filter_title].present? || params[:filter_category].present? || params[:filter_status].present? || params[:filter_date_from].present? || params[:filter_date_to].present? || params[:filter_employee_name].present? || params[:filter_employee_id].present? %>
       <% if has_filters %>
-        <%= link_to "Clear Filters", status_path(sort_by: params[:sort_by], sort_direction: params[:sort_direction]), class: 'btn clear-filters', data: { turbo: false } %>
+        <%= link_to "Clear Filters", submissions_path(sort_by: params[:sort_by], sort_direction: params[:sort_direction]), class: 'btn clear-filters', data: { turbo: false } %>
       <% end %>
     </div>
 
@@ -138,7 +138,7 @@
   <thead>
     <tr>
       <th>
-        <%= link_to status_path(sort_by: 'type', sort_direction: params[:sort_by] == 'type' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
+        <%= link_to submissions_path(sort_by: 'type', sort_direction: params[:sort_by] == 'type' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
           Type
           <% if params[:sort_by] == 'type' %>
             <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -146,7 +146,7 @@
         <% end %>
       </th>
       <th>
-        <%= link_to status_path(sort_by: 'title', sort_direction: params[:sort_by] == 'title' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
+        <%= link_to submissions_path(sort_by: 'title', sort_direction: params[:sort_by] == 'title' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
           Title
           <% if params[:sort_by] == 'title' %>
             <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -155,7 +155,7 @@
       </th>
       <% if @is_manager %>
         <th>
-          <%= link_to status_path(sort_by: 'employee_name', sort_direction: params[:sort_by] == 'employee_name' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
+          <%= link_to submissions_path(sort_by: 'employee_name', sort_direction: params[:sort_by] == 'employee_name' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
             Employee
             <% if params[:sort_by] == 'employee_name' %>
               <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -163,7 +163,7 @@
           <% end %>
         </th>
         <th>
-          <%= link_to status_path(sort_by: 'employee_id', sort_direction: params[:sort_by] == 'employee_id' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
+          <%= link_to submissions_path(sort_by: 'employee_id', sort_direction: params[:sort_by] == 'employee_id' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
             Employee ID
             <% if params[:sort_by] == 'employee_id' %>
               <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -172,7 +172,7 @@
         </th>
       <% end %>
       <th>
-        <%= link_to status_path(sort_by: 'status', sort_direction: params[:sort_by] == 'status' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
+        <%= link_to submissions_path(sort_by: 'status', sort_direction: params[:sort_by] == 'status' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
           Status
           <% if params[:sort_by] == 'status' %>
             <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -180,7 +180,7 @@
         <% end %>
       </th>
       <th>
-        <%= link_to status_path(sort_by: 'submitted_at', sort_direction: params[:sort_by] == 'submitted_at' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
+        <%= link_to submissions_path(sort_by: 'submitted_at', sort_direction: params[:sort_by] == 'submitted_at' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
           Submitted
           <% if params[:sort_by] == 'submitted_at' %>
             <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -188,7 +188,7 @@
         <% end %>
       </th>
       <th>
-        <%= link_to status_path(sort_by: 'updated_at', sort_direction: params[:sort_by] == 'updated_at' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
+        <%= link_to submissions_path(sort_by: 'updated_at', sort_direction: params[:sort_by] == 'updated_at' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee_name: params[:filter_employee_name], filter_employee_id: params[:filter_employee_id]), class: 'sortable-header', data: { turbo: false } do %>
           Last Updated
           <% if params[:sort_by] == 'updated_at' || params[:sort_by].nil? %>
             <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>

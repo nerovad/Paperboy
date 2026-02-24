@@ -9,10 +9,10 @@ class SavedSearchesController < ApplicationController
     saved_search.filters = filter_params.to_h
     saved_search.save!
 
-    redirect_to status_path(saved_search.filters.merge(saved_search_id: saved_search.id)),
+    redirect_to submissions_path(saved_search.filters.merge(saved_search_id: saved_search.id)),
                 notice: "Search \"#{saved_search.name}\" saved."
   rescue ActiveRecord::RecordInvalid => e
-    redirect_to status_path, alert: "Could not save search: #{e.record.errors.full_messages.join(', ')}"
+    redirect_to submissions_path, alert: "Could not save search: #{e.record.errors.full_messages.join(', ')}"
   end
 
   def destroy
@@ -20,9 +20,9 @@ class SavedSearchesController < ApplicationController
     saved_search = SavedSearch.find_by!(id: params[:id], employee_id: employee_id)
     saved_search.destroy!
 
-    redirect_to status_path, notice: "Search \"#{saved_search.name}\" deleted."
+    redirect_to submissions_path, notice: "Search \"#{saved_search.name}\" deleted."
   rescue ActiveRecord::RecordNotFound
-    redirect_to status_path, alert: "Saved search not found."
+    redirect_to submissions_path, alert: "Saved search not found."
   end
 
   private

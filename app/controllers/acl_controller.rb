@@ -5,7 +5,7 @@ class AclController < ApplicationController
 
   DROPDOWN_ITEMS = [
     { key: 'inbox',        label: 'Inbox' },
-    { key: 'status',       label: 'Status' },
+    { key: 'submissions',  label: 'Submissions' },
     { key: 'reports',      label: 'Reports' },
     { key: 'dashboards',   label: 'Dashboards' },
     { key: 'manage_forms', label: 'Manage Forms' },

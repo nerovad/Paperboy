@@ -125,11 +125,11 @@ Rails.application.routes.draw do
   end
 
   # ============================================================================
-  # Inbox & Status
+  # Inbox & Submissions
   # ============================================================================
   get "/inboxqueue", to: "inbox#queue", as: "inbox_queue"
-  get "/status", to: "status#index", as: :status
-  get "/status/status_options", to: "status#status_options", as: :status_status_options
+  get "/submissions", to: "submissions#index", as: :submissions
+  get "/submissions/status_options", to: "submissions#status_options", as: :submissions_status_options
   resources :saved_searches, only: [:create, :destroy]
 
   # Task Reassignment Routes
