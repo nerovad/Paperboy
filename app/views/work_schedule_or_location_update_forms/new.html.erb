@@ -129,12 +129,14 @@
             <%= form.text_field :other, class: "form-control" %>
           </div>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<div class="form-group flex-fill" data-controller="choices">
   <%= form.label :type_of_change, "Type of Change" %>
             <%= form.select :type_of_change,
                   options_for_select(['Schedule', 'Location']),
-                  { include_blank: "Select..." },
-                  { class: "form-control", required: true, data: { conditional_trigger: 'type_of_change' } } %>
+                  {},
+                  { multiple: true, class: "form-control", required: true,
+                    data: { choices_target: "select", placeholder: "Select type(s) of change…",
+                            conditional_trigger: 'type_of_change' } } %>
           </div>
           <div class="conditional-field" data-depends-on="type_of_change" data-show-values="[&quot;Schedule&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>">
