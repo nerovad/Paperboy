@@ -1,0 +1,19 @@
+[Unit]
+Description=Paperboy Sidekiq Worker
+After=network.target redis.service
+
+[Service]
+Type=simple
+User=matthew
+Group=matthew
+WorkingDirectory=/home/matthew/gitea/Paperboy
+
+EnvironmentFile=/home/matthew/gitea/Paperboy/.env
+Environment=RAILS_ENV=production
+
+ExecStart=/bin/bash -lc 'bundle exec sidekiq -C config/sidekiq.yml'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

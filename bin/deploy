@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e
+
+APP_DIR="/home/matthew/gitea/Paperboy"
+cd "$APP_DIR"
+
+echo "==> Pulling latest code..."
+git pull origin master
+
+echo "==> Installing gems..."
+bundle install --without development test
+
+echo "==> Clobbering old assets..."
+RAILS_ENV=production bundle exec rails assets:clobber
+
+echo "==> Precompiling assets..."
+RAILS_ENV=production bundle exec rails assets:precompile
+
+echo "==> Restarting Puma..."
+sudo systemctl restart paperboy
+
+echo "==> Restarting Sidekiq..."
+sudo systemctl restart paperboy-sidekiq
+
+echo "==> Deploy complete!"

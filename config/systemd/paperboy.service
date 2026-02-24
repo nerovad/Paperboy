@@ -1,0 +1,22 @@
+[Unit]
+Description=Paperboy Puma Rails Server
+After=network.target
+
+[Service]
+Type=simple
+User=matthew
+Group=matthew
+WorkingDirectory=/home/matthew/gitea/Paperboy
+
+EnvironmentFile=/home/matthew/gitea/Paperboy/.env
+Environment=RAILS_ENV=production
+
+ExecStart=/bin/bash -lc 'bundle exec puma -C config/puma.rb'
+ExecReload=/bin/kill -USR1 $MAINPID
+Restart=always
+RestartSec=5
+
+ExecStartPre=/bin/mkdir -p tmp/pids
+
+[Install]
+WantedBy=multi-user.target
