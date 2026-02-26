@@ -67,6 +67,9 @@ namespace :powerbi do
         puts
         puts "Token audience (aud): #{payload['aud']}"
         puts "Token issuer (iss):   #{payload['iss']}"
+        puts "Token roles:          #{payload['roles']&.join(', ') || 'NONE'}"
+        puts "Token app ID:         #{payload['appid'] || payload['azp']}"
+        puts "Token expires:        #{Time.at(payload['exp']).utc}" if payload['exp']
       end
 
       exit(1) if response.code != '200'
