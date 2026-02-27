@@ -1,6 +1,28 @@
 # config/database.yml
 
 default: &default
+  adapter: postgresql
+  host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
+  port: <%= ENV.fetch("POSTGRES_PORT", 5432).to_i %>
+  username: <%= ENV.fetch("POSTGRES_USERNAME", "postgres") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "") %>
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+
+development:
+  <<: *default
+  database: <%= ENV.fetch("POSTGRES_DATABASE", "paperboy_development") %>
+
+test:
+  <<: *default
+  database: <%= ENV.fetch("POSTGRES_DATABASE", "paperboy_test") %>
+
+production:
+  <<: *default
+  database: <%= ENV.fetch("POSTGRES_DATABASE", "paperboy_production") %>
+
+# MSSQL connection for billing stored procedures (TC60, Invoices)
+billing:
   adapter: sqlserver
   host: <%= ENV.fetch("GSABSS_HOST") %>
   port: <%= ENV.fetch("GSABSS_PORT").to_i %>
@@ -8,17 +30,5 @@ default: &default
   password: <%= ENV.fetch("GSABSS_PASSWORD") %>
   database: <%= ENV.fetch("GSABSS_DATABASE", "GSABSS") %>
   azure: false
-  timeout: <%= ENV.fetch("GSABSS_TIMEOUT").to_i %>
+  timeout: <%= ENV.fetch("GSABSS_TIMEOUT", 5).to_i %>
   encoding: utf8
-
-development:
-  <<: *default
-
-test:
-  <<: *default
-
-production:
-  <<: *default
-
-gsabss:
-  <<: *default

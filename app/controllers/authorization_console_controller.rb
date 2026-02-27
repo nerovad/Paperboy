@@ -125,21 +125,14 @@ class AuthorizationConsoleController < ApplicationController
     dept_ids = @managed_departments.map(&:department_id)
     return [] if dept_ids.empty?
 
-    quoted = dept_ids.map { |id| ActiveRecord::Base.connection.quote(id) }.join(",")
+    unit_ids = Unit.where(department_id: dept_ids).pluck(:unit_id)
+    employees = Employee.where(unit: unit_ids).order(:last_name, :first_name)
 
-    result = ActiveRecord::Base.connection.exec_query(<<-SQL.squish)
-      SELECT EmployeeID, First_Name, Last_Name, EE_Email
-      FROM [GSABSS].[dbo].[Employees] e
-      INNER JOIN [GSABSS].[dbo].[Units] u ON e.Unit = u.unit_id
-      WHERE u.department_id IN (#{quoted})
-      ORDER BY Last_Name, First_Name
-    SQL
-
-    result.map do |row|
+    employees.map do |e|
       {
-        id: row["EmployeeID"],
-        name: "#{row["First_Name"]} #{row["Last_Name"]} (#{row["EmployeeID"]})",
-        email: row["EE_Email"]
+        id: e.employee_id,
+        name: "#{e.first_name} #{e.last_name} (#{e.employee_id})",
+        email: e.email
       }
     end
   end

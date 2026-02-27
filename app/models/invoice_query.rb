@@ -3,22 +3,17 @@ class InvoiceQuery
   def self.fetch(fiscal_year:, agency:, account:)
     sql = <<-SQL
       EXEC dbo.Export_TC60_Invoice
-        @FiscalYear = #{fiscal_year},
-        @Agency     = '#{agency}',
-        @Account    = '#{account}'
+        @FiscalYear = ?,
+        @Agency     = ?,
+        @Account    = ?
     SQL
 
-    # TODO:  Below is the real quesry.
-    # sql = <<-SQL
-    #   EXEC dbo.Export_TC60_To_Billing_File
-    #     @start_date = #{start_date},
-    #     @end_date   = #{end_date},
-    #     @type       = #{type},
-    #     @digits     = '#{digits}',
-    #     @encumbered = '#{encumbered}'
-    # SQL
+    sanitized = ActiveRecord::Base.send(
+      :sanitize_sql_array,
+      [sql, fiscal_year, agency, account]
+    )
 
-    result = ActiveRecord::Base.connection.exec_query(sql)
+    result = BillingBase.connection.exec_query(sanitized)
     result.to_a # return array of hashes
   end
 end

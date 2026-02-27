@@ -15,20 +15,20 @@ class AclController < ApplicationController
   ].freeze
 
   def index
-    @groups = Group.all.order(:Group_Name)
-    @group_member_counts = EmployeeGroup.group(:GroupID).count
+    @groups = Group.all.order(:group_name)
+    @group_member_counts = EmployeeGroup.group(:group_id).count
   end
 
   def show
-    @members = @group.employees.order(:Last_Name, :First_Name)
+    @members = @group.employees.order(:last_name, :first_name)
 
     if params[:search].present?
       search = params[:search].strip
       sanitized = ActiveRecord::Base.sanitize_sql_like(search)
       @search_results = Employee
-        .where("First_Name LIKE :q OR Last_Name LIKE :q OR CAST(EmployeeID AS VARCHAR) LIKE :q",
+        .where("first_name ILIKE :q OR last_name ILIKE :q OR CAST(employee_id AS TEXT) LIKE :q",
                q: "%#{sanitized}%")
-        .order(:Last_Name, :First_Name)
+        .order(:last_name, :first_name)
         .limit(20)
     end
   end
@@ -68,8 +68,8 @@ class AclController < ApplicationController
   def add_member
     employee_id = params[:employee_id]
 
-    if employee_id.present? && !@group.employee_groups.exists?(EmployeeID: employee_id)
-      @group.employee_groups.create!(EmployeeID: employee_id)
+    if employee_id.present? && !@group.employee_groups.exists?(employee_id: employee_id)
+      @group.employee_groups.create!(employee_id: employee_id)
       redirect_to acl_path(@group), notice: "Member added."
     else
       redirect_to acl_path(@group), alert: "Employee is already a member or was not found."
@@ -77,7 +77,7 @@ class AclController < ApplicationController
   end
 
   def remove_member
-    eg = @group.employee_groups.find_by(EmployeeID: params[:employee_id])
+    eg = @group.employee_groups.find_by(employee_id: params[:employee_id])
     eg&.destroy
     redirect_to acl_path(@group), notice: "Member removed."
   end
@@ -85,7 +85,7 @@ class AclController < ApplicationController
   def permissions
     @dropdown_items = DROPDOWN_ITEMS
     @form_templates = FormTemplate.order(:name)
-    @current_permissions = @group.group_permissions.pluck(:Permission_Type, :Permission_Key)
+    @current_permissions = @group.group_permissions.pluck(:permission_type, :permission_key)
     @dropdown_keys = @current_permissions.select { |t, _| t == 'dropdown' }.map(&:last).to_set
     @form_keys = @current_permissions.select { |t, _| t == 'form' }.map(&:last).to_set
   end
@@ -98,11 +98,11 @@ class AclController < ApplicationController
       @group.group_permissions.destroy_all
 
       dropdown_keys.each do |key|
-        @group.group_permissions.create!(Permission_Type: 'dropdown', Permission_Key: key)
+        @group.group_permissions.create!(permission_type: 'dropdown', permission_key: key)
       end
 
       form_keys.each do |key|
-        @group.group_permissions.create!(Permission_Type: 'form', Permission_Key: key)
+        @group.group_permissions.create!(permission_type: 'form', permission_key: key)
       end
     end
 
@@ -116,6 +116,6 @@ class AclController < ApplicationController
   end
 
   def group_params
-    params.require(:group).permit(:Group_Name, :Description)
+    params.require(:group).permit(:group_name, :description)
   end
 end

@@ -28,8 +28,8 @@ class FormTemplateRoutingStep < ApplicationRecord
 
   def employee_name
     return nil unless employee_id
-    employee = Employee.find_by(EmployeeID: employee_id)
-    employee ? "#{employee.First_Name} #{employee.Last_Name}" : nil
+    employee = Employee.find_by(employee_id: employee_id)
+    employee ? "#{employee.first_name} #{employee.last_name}" : nil
   rescue
     nil
   end

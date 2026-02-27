@@ -14,7 +14,7 @@ class TaskReassignmentMailer < ApplicationMailer
     task_type = @task.class.name.demodulize.titleize
 
     mail(
-      to: @to_employee.EE_Email,
+      to: @to_employee.email,
       subject: "Task Reassigned to You: #{task_type} ##{@task.id}"
     )
   end
@@ -29,7 +29,7 @@ class TaskReassignmentMailer < ApplicationMailer
     task_type = @task.class.name.demodulize.titleize
 
     mail(
-      to: @to_employee.EE_Email,
+      to: @to_employee.email,
       subject: "Task Returned to You: #{task_type} ##{@task.id}"
     )
   end

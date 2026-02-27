@@ -38,7 +38,7 @@
           <div class="approver-card">
             <div class="approver-header">
               <h3>
-                <%= approvals.first.employee&.First_Name %> <%= approvals.first.employee&.Last_Name %>
+                <%= approvals.first.employee&.first_name %> <%= approvals.first.employee&.last_name %>
                 <span class="employee-id">(<%= employee_id %>)</span>
               </h3>
             </div>
@@ -85,7 +85,7 @@
                             data-action="click->confirm-modal#open"
                             data-delete-path="<%= authorization_console_path(approval) %>"
                             data-confirm-title="Remove Authorization"
-                            data-confirm-message="Are you sure you want to remove the authorization for <%= approval.service_type_label %> from <%= approvals.first.employee&.First_Name %> <%= approvals.first.employee&.Last_Name %>?">
+                            data-confirm-message="Are you sure you want to remove the authorization for <%= approval.service_type_label %> from <%= approvals.first.employee&.first_name %> <%= approvals.first.employee&.last_name %>?">
                       Remove
                     </button>
                   </div>

@@ -1,5 +1,4 @@
-class Unit < GsabssBase
-  self.table_name = 'dbo.units'
+class Unit < ApplicationRecord
   self.primary_key = 'unit_id'
 
   belongs_to :agency, foreign_key: "agency_id", optional: true

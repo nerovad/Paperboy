@@ -5,24 +5,24 @@ class CriticalInformationReportingsController < ApplicationController
     @critical_information_reporting = CriticalInformationReporting.new
 
     employee_id = session.dig(:user, "employee_id").to_s
-    @employee   = employee_id.present? ? Employee.find_by(EmployeeID: employee_id) : nil
+    @employee   = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
 
     unless @employee
       redirect_to login_path, alert: "Please sign in to start a submission." and return
     end
 
     # --- Organization chain (same pattern you use now) ---
-    unit        = Unit.find_by(unit_id: @employee["Unit"])
-    department  = unit ? Department.find_by(department_id: unit["department_id"]) : nil
-    division    = department ? Division.find_by(division_id: department["division_id"]) : nil
-    agency      = division ? Agency.find_by(agency_id: division["agency_id"]) : nil
+    unit        = Unit.find_by(unit_id: @employee.unit)
+    department  = unit ? Department.find_by(department_id: unit.department_id) : nil
+    division    = department ? Division.find_by(division_id: department.division_id) : nil
+    agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
 
     # --- Prefill values (everything prefilled exactly like you do now) ---
     @prefill_data = {
-      employee_id: @employee["EmployeeID"],
-      name:        [@employee["First_Name"], @employee["Last_Name"]].compact.join(" "),
-      phone:       @employee["Work_Phone"],
-      email:       @employee["EE_Email"],
+      employee_id: @employee.employee_id,
+      name:        [@employee.first_name, @employee.last_name].compact.join(" "),
+      phone:       @employee.work_phone,
+      email:       @employee.email,
       agency:      agency&.agency_id,
       division:    division&.division_id,
       department:  department&.department_id,
@@ -54,9 +54,9 @@ class CriticalInformationReportingsController < ApplicationController
     end
 
     # Employee dropdown options (for Pages 4+)
-    @employee_options = Employee.select(:EmployeeID, :First_Name, :Last_Name)
-                                .order(:Last_Name, :First_Name)
-                                .map { |e| ["#{e.First_Name} #{e.Last_Name}", e.EmployeeID] }
+    @employee_options = Employee.select(:employee_id, :first_name, :last_name)
+                                .order(:last_name, :first_name)
+                                .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
     
     # Load location options
     @location_options = load_location_options
@@ -91,7 +91,7 @@ class CriticalInformationReportingsController < ApplicationController
     @critical_information_reporting = CriticalInformationReporting.find(params[:id])
 
     employee_id = session.dig(:user, "employee_id").to_s
-    @employee = employee_id.present? ? Employee.find_by(EmployeeID: employee_id) : nil
+    @employee = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
 
     unless @employee
       redirect_to login_path, alert: "Please sign in." and return
@@ -115,9 +115,9 @@ class CriticalInformationReportingsController < ApplicationController
       []
     end
 
-    @employee_options = Employee.select(:EmployeeID, :First_Name, :Last_Name)
-                                .order(:Last_Name, :First_Name)
-                                .map { |e| ["#{e.First_Name} #{e.Last_Name}", e.EmployeeID] }
+    @employee_options = Employee.select(:employee_id, :first_name, :last_name)
+                                .order(:last_name, :first_name)
+                                .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
 
     @location_options = load_location_options
   end
@@ -146,9 +146,9 @@ class CriticalInformationReportingsController < ApplicationController
         []
       end
 
-      @employee_options = Employee.select(:EmployeeID, :First_Name, :Last_Name)
-                                  .order(:Last_Name, :First_Name)
-                                  .map { |e| ["#{e.First_Name} #{e.Last_Name}", e.EmployeeID] }
+      @employee_options = Employee.select(:employee_id, :first_name, :last_name)
+                                  .order(:last_name, :first_name)
+                                  .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
 
       @location_options = load_location_options
 
@@ -200,17 +200,17 @@ class CriticalInformationReportingsController < ApplicationController
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
-      emp = employee_id.present? ? Employee.find_by(EmployeeID: employee_id) : nil
-      unit        = emp ? Unit.find_by(unit_id: emp["Unit"]) : nil
-      department  = unit ? Department.find_by(department_id: unit["department_id"]) : nil
-      division    = department ? Division.find_by(division_id: department["division_id"]) : nil
-      agency      = division ? Agency.find_by(agency_id: division["agency_id"]) : nil
+      emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
+      unit        = emp ? Unit.find_by(unit_id: emp&.unit) : nil
+      department  = unit ? Department.find_by(department_id: unit.department_id) : nil
+      division    = department ? Division.find_by(division_id: department.division_id) : nil
+      agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
 
       @prefill_data = {
-        employee_id: emp&.[]("EmployeeID"),
-        name:        emp ? [emp["First_Name"], emp["Last_Name"]].compact.join(" ") : nil,
-        phone:       emp&.[]("Work_Phone"),
-        email:       emp&.[]("EE_Email"),
+        employee_id: emp&.employee_id,
+        name:        emp ? [emp&.first_name, emp&.last_name].compact.join(" ") : nil,
+        phone:       emp&.work_phone,
+        email:       emp&.email,
         agency:      agency&.agency_id,
         division:    division&.division_id,
         department:  department&.department_id,
@@ -229,9 +229,9 @@ class CriticalInformationReportingsController < ApplicationController
       end
 
       # CRITICAL: Reload employee and location options for Pages 4+ when validation fails
-      @employee_options = Employee.select(:EmployeeID, :First_Name, :Last_Name)
-                                  .order(:Last_Name, :First_Name)
-                                  .map { |e| ["#{e.First_Name} #{e.Last_Name}", e.EmployeeID] }
+      @employee_options = Employee.select(:employee_id, :first_name, :last_name)
+                                  .order(:last_name, :first_name)
+                                  .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
       
       @location_options = load_location_options
 

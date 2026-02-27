@@ -38,7 +38,7 @@ class ScheduledReport < ApplicationRecord
   
   # Associations
   def employee
-    Employee.find_by(EmployeeID: employee_id)
+    Employee.find_by(employee_id: employee_id)
   end
   
   def form_template

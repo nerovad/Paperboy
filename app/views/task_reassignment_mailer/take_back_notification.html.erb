@@ -16,7 +16,7 @@
   <div class="container">
     <h2>Task Returned to You</h2>
 
-    <p>Hello <%= @to_employee.First_Name %>,</p>
+    <p>Hello <%= @to_employee.first_name %>,</p>
 
     <p>A <%= @task.class.name.demodulize.titleize %> has been returned to you from the reassignment chain.</p>
 
@@ -35,7 +35,7 @@
       </tr>
       <tr>
         <th>Previously assigned to:</th>
-        <td><%= @from_employee.First_Name %> <%= @from_employee.Last_Name %></td>
+        <td><%= @from_employee.first_name %> <%= @from_employee.last_name %></td>
       </tr>
     </table>
 

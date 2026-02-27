@@ -40,7 +40,7 @@ class InboxController < ApplicationController
     @submissions = sort_collection(@submissions, sort_by, sort_direction, inbox_sort_configs)
 
     # Load employees for reassignment dropdown
-    @employees = Employee.order(:Last_Name, :First_Name)
+    @employees = Employee.order(:last_name, :first_name)
   end
 
   private

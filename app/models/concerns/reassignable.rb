@@ -22,7 +22,7 @@ module Reassignable
     field_name = assignment_field_name
 
     # Validate new assignee exists
-    new_assignee = Employee.find_by(EmployeeID: new_assignee_id)
+    new_assignee = Employee.find_by(employee_id: new_assignee_id)
     raise ActiveRecord::RecordNotFound, "Employee #{new_assignee_id} not found" unless new_assignee
 
     # Don't allow reassigning to the same person

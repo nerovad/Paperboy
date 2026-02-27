@@ -10,343 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
-  create_table "AimUsers", id: false, force: :cascade do |t|
-    t.integer "EmployeeID", null: false
-    t.string "FirstName", limit: 50, null: false
-    t.string "LastName", limit: 50, null: false
-    t.string "email", limit: 50, null: false
-    t.date "Created", null: false
-    t.date "Updated", null: false
-    t.date "LastLogin", null: false
-    t.string "Active", limit: 50, null: false
-    t.string "LicenseType", limit: 50, null: false
-    t.string "SystemAdmininistrator", limit: 50, null: false
-    t.boolean "ApplicationAdministrator", null: false
-    t.boolean "ApplicationSupervisor", null: false
-    t.string "ExternalAdministrator", limit: 50, null: false
-    t.string "ExternalSupervisor", limit: 50, null: false
-  end
-
-  create_table "BdmRateTypes", primary_key: "RateID", id: { type: :integer, limit: 2 }, force: :cascade do |t|
-    t.string "Description", limit: 150, null: false
-    t.string "UOM", limit: 15, null: false
-  end
-
-  create_table "BdmRates", primary_key: ["FYEAR", "RateID"], force: :cascade do |t|
-    t.string "FYEAR", limit: 4, null: false
-    t.integer "RateID", limit: 2, null: false
-    t.integer "ObjectID", limit: 2, null: false
-    t.float "Rate", null: false
-    t.integer "UnitID", limit: 2, null: false
-  end
-
-  create_table "BusinessUnit", id: :integer, default: 4641, force: :cascade do |t|
-    t.varchar "name", limit: 50, null: false
-  end
-
-  create_table "CustomerAccount", primary_key: "CustomerAccountID", id: :integer, force: :cascade do |t|
-    t.string "FYEAR", limit: 4, null: false
-    t.string "CUNIT", limit: 4, null: false
-    t.string "CACTIVITY", limit: 4, null: false
-    t.string "CFUNCTION", limit: 4, null: false
-    t.string "CPROGRAM", limit: 10
-    t.string "CPHASE", limit: 6
-    t.string "CTASK", limit: 4
-  end
-
-  create_table "CustomerAccountWithType", primary_key: "CustomerAccountID", id: :integer, force: :cascade do |t|
-    t.string "FYEAR", limit: 4, null: false
-    t.string "CUNIT", limit: 4, null: false
-    t.string "CACTIVITY", limit: 4, null: false
-    t.string "CFUNCTION", limit: 4, null: false
-    t.string "CPROGRAM", limit: 10
-    t.string "CPHASE", limit: 6
-    t.string "CTASK", limit: 4
-    t.string "TYPE", limit: 3, null: false
-  end
-
-  create_table "Employee_Groups", primary_key: ["EmployeeID", "GroupID"], force: :cascade do |t|
-    t.integer "EmployeeID", null: false
-    t.integer "GroupID", null: false
-    t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
-    t.integer "Assigned_By"
-  end
-
-  create_table "Employees", primary_key: "EmployeeID", id: :integer, default: nil, force: :cascade do |t|
-    t.string "Last_Name", limit: 50
-    t.string "First_Name", limit: 50
-    t.string "Job_Title", limit: 50
-    t.string "Work_Phone", limit: 50
-    t.string "Agency", limit: 50
-    t.string "Unit", limit: 50
-    t.string "Job_Code", limit: 50
-    t.string "Position", limit: 50
-    t.string "Pay_Status", limit: 50
-    t.integer "Job_Class", limit: 1
-    t.string "Department", limit: 50
-    t.string "Type", limit: 50
-    t.integer "Supervisor_ID"
-    t.string "Supervisor_Last_Name", limit: 50
-    t.string "Supervisor_First_Name", limit: 50
-    t.string "EE_Email", limit: 50
-    t.string "Union_Code", limit: 50
-  end
-
-  create_table "Employees_Old", primary_key: "EmployeeID", id: :integer, default: nil, force: :cascade do |t|
-    t.string "Last_Name", limit: 50
-    t.string "First_Name", limit: 50
-    t.string "Job_Title", limit: 50
-    t.string "Work_Phone", limit: 50
-    t.string "Agency", limit: 50
-    t.string "Unit", limit: 50
-    t.integer "Job_Code", limit: 2
-    t.string "Position", limit: 50
-    t.string "Pay_Status", limit: 50
-    t.integer "Job_Class", limit: 1
-    t.string "Department", limit: 50
-    t.string "Type", limit: 50
-    t.integer "Supervisor_ID"
-    t.string "Supervisor_Last_Name", limit: 50
-    t.string "Supervisor_First_Name", limit: 50
-    t.string "EE_Email", limit: 50
-    t.string "Union_Code", limit: 50
-  end
-
-  create_table "FiscalMonths", id: false, force: :cascade do |t|
-    t.varchar "ApMon", limit: 4, null: false
-    t.integer "MonNbr", null: false
-  end
-
-  create_table "FiscalYears", id: false, force: :cascade do |t|
-    t.varchar "Year", limit: 4, null: false
-    t.date "sDate", null: false
-    t.date "eDate", null: false
-  end
-
-  create_table "GL218Detail", id: false, force: :cascade do |t|
-    t.integer "BFY"
-    t.integer "FY"
-    t.string "Fund", limit: 4
-    t.string "Dept", limit: 3
-    t.string "Division", limit: 4
-    t.string "Unit", limit: 4
-    t.integer "AP"
-    t.integer "Obj_Revenue"
-    t.string "Obj_Revenue_Name", limit: 100
-    t.string "Dept_Object", limit: 100
-    t.string "Dept_Rev_Source", limit: 100
-    t.string "Event_Type", limit: 4
-    t.string "Event_Type_Name", limit: 100
-    t.string "Posting_Code", limit: 4
-    t.string "Posting_Code_Desc", limit: 100
-    t.date "Doc_Record_Date"
-    t.string "Jrnl_Doc_Code", limit: 6
-    t.string "Jrnl_Doc_Dept_Code", limit: 3
-    t.string "Jrnl_Doc_ID", limit: 100
-    t.string "Vendor_Code", limit: 100
-    t.string "Vendor_Invoice_No", limit: 100
-    t.datetime "Vendor_Invoice_Date", precision: nil
-    t.string "Vendor_Legal_Name", limit: 100
-    t.string "Vendor_Alias_DBA_Name", limit: 100
-    t.string "Accounting_Line_Desc", limit: 100
-    t.float "Expense_Revenue_Amt"
-    t.string "Ref_Doc_ID", limit: 100
-    t.string "Activity", limit: 4
-    t.string "Function", limit: 4
-    t.string "Major_Program", limit: 10
-    t.string "Program_Code", limit: 10
-    t.string "Phase_Code", limit: 6
-    t.string "Task", limit: 4
-  end
-
-  create_table "Group_Permissions", primary_key: ["GroupID", "Permission_Type", "Permission_Key"], force: :cascade do |t|
-    t.integer "GroupID", null: false
-    t.string "Permission_Type", limit: 50, null: false
-    t.string "Permission_Key", limit: 255, null: false
-    t.datetime "Created_At", default: -> { "getdate()" }, null: false
-  end
-
-  create_table "Groups", primary_key: "GroupID", id: :integer, force: :cascade do |t|
-    t.string "Group_Name", limit: 100, null: false
-    t.string "Description", limit: 500
-    t.datetime "Created_At", precision: nil, default: -> { "getdate()" }
-  end
-
-  create_table "Manual_Transactions", id: false, force: :cascade do |t|
-    t.string "TYPE", limit: 3
-    t.string "CUNIT", limit: 4
-    t.string "COBJECT", limit: 4
-    t.string "CACTIVITY", limit: 4
-    t.string "CFUNCTION", limit: 4
-    t.string "CPROGRAM", limit: 10
-    t.string "CPHASE", limit: 6
-    t.string "CTASK", limit: 4
-    t.float "AMOUNT", default: 0.0
-    t.string "SUNIT", limit: 4
-    t.string "SOBJECT", limit: 4
-    t.string "SACTIVITY", limit: 4
-    t.string "SFUNCTION", limit: 4
-    t.string "SPROGRAM", limit: 10
-    t.string "SPHASE", limit: 6
-    t.string "STASK", limit: 4
-    t.string "POSTING_REF", limit: 20
-    t.string "SERVICE", limit: 15
-    t.date "DATE"
-    t.string "DOC_NMBR", limit: 50
-    t.string "DESCRIPTION", limit: 100
-    t.string "OTHER1", limit: 50
-    t.string "OTHER2", limit: 50
-    t.string "OTHER3", limit: 50
-    t.float "QUANTITY", default: 0.0
-    t.float "RATE", default: 0.0
-    t.float "COST", default: 0.0
-  end
-
-  create_table "PlanVsActual", id: false, force: :cascade do |t|
-    t.varchar "YEAR", limit: 4, null: false
-    t.varchar "PLAN", limit: 1, null: false
-    t.varchar "TYPE", limit: 3, null: false
-    t.varchar "SERVICE", limit: 15, null: false
-    t.varchar "SERVICETYPE", limit: 15, null: false
-    t.float "Jul", null: false
-    t.float "Aug", null: false
-    t.float "Sep", null: false
-    t.float "Oct", null: false
-    t.float "Nov", null: false
-    t.float "Dec", null: false
-    t.float "Jan", null: false
-    t.float "Feb", null: false
-    t.float "Mar", null: false
-    t.float "Apr", null: false
-    t.float "May", null: false
-    t.float "Jun", null: false
-  end
-
-  create_table "TC60", id: false, force: :cascade do |t|
-    t.varchar "TYPE", limit: 3, null: false
-    t.varchar "CUNIT", limit: 4, null: false
-    t.integer "COBJECT", null: false
-    t.varchar "CACTIVITY", limit: 4
-    t.varchar "CFUNCTION", limit: 4
-    t.varchar "CPROGRAM", limit: 10
-    t.varchar "CPHASE", limit: 6
-    t.varchar "CTASK", limit: 4
-    t.float "AMOUNT", default: 0.0
-    t.varchar "SUNIT", limit: 4, null: false
-    t.integer "SOBJECT", null: false
-    t.varchar "SACTIVITY", limit: 4
-    t.varchar "SFUNCTION", limit: 4
-    t.varchar "SPROGRAM", limit: 10
-    t.varchar "SPHASE", limit: 6
-    t.varchar "STASK", limit: 4
-    t.varchar "POSTING_REF", limit: 20, null: false
-    t.varchar "SERVICE", limit: 15, null: false
-    t.date "DATE", null: false
-    t.varchar "DOC_NMBR", limit: 50
-    t.varchar "DESCRIPTION", limit: 50
-    t.varchar "OTHER1", limit: 50
-    t.varchar "OTHER2", limit: 50
-    t.varchar "OTHER3", limit: 50
-    t.float "QUANTITY", default: 0.0
-    t.float "RATE", default: 0.0
-    t.float "COST"
-  end
-
-  create_table "TC60_Adjustments", id: false, force: :cascade do |t|
-    t.varchar "TYPE", limit: 3, null: false
-    t.varchar "CUNIT", limit: 4, null: false
-    t.integer "COBJECT", null: false
-    t.varchar "CACTIVITY", limit: 4
-    t.varchar "CFUNCTION", limit: 4
-    t.varchar "CPROGRAM", limit: 10
-    t.varchar "CPHASE", limit: 6
-    t.varchar "CTASK", limit: 4
-    t.float "AMOUNT"
-    t.varchar "SUNIT", limit: 4, null: false
-    t.integer "SOBJECT", null: false
-    t.varchar "SACTIVITY", limit: 4
-    t.varchar "SFUNCTION", limit: 4
-    t.varchar "SPROGRAM", limit: 10
-    t.varchar "SPHASE", limit: 6
-    t.varchar "STASK", limit: 4
-    t.varchar "POSTING_REF", limit: 20, null: false
-    t.varchar "SERVICE", limit: 15, null: false
-    t.date "DATE", null: false
-    t.varchar "DOC_NMBR", limit: 50
-    t.varchar "DESCRIPTION", limit: 50
-    t.varchar "OTHER1", limit: 50
-    t.varchar "OTHER2", limit: 50
-    t.varchar "OTHER3", limit: 50
-    t.float "QUANTITY"
-    t.float "RATE"
-    t.float "COST"
-  end
-
-  create_table "TC60_Services", id: false, force: :cascade do |t|
-    t.varchar "YEAR", limit: 4, null: false
-    t.varchar "TYPE", limit: 3, null: false
-    t.varchar "SERVICE", limit: 15, null: false
-    t.varchar "SUNIT", limit: 4, null: false
-    t.integer "SOBJECT", null: false
-    t.varchar "SACTIVITY", limit: 4, null: false
-    t.varchar "SFUNCTION", limit: 4, null: false
-    t.varchar "SPROGRAM", limit: 10, null: false
-    t.varchar "SPHASE", limit: 6, null: false
-    t.varchar "STASK", limit: 4, null: false
-  end
-
-  create_table "TC60_Types", primary_key: "TYPE", id: { type: :varchar, limit: 3 }, force: :cascade do |t|
-    t.boolean "ACTIVE", null: false
-    t.varchar "NAME", limit: 30
-    t.varchar "funding_type", limit: 10, default: "monthly", null: false
-    t.check_constraint "[funding_type]='both' OR [funding_type]='encumbered' OR [funding_type]='monthly'", name: "CK_TC60_Types_funding_type"
-  end
-
-  create_table "_stgBdmRateTypes", id: false, force: :cascade do |t|
-    t.integer "RateID", limit: 2, null: false
-    t.string "Description", limit: 150, null: false
-    t.string "UOM", limit: 15, null: false
-  end
-
-  create_table "_stgFiscalCursor", id: false, force: :cascade do |t|
-    t.varchar "Year", limit: 4, null: false
-    t.varchar "ApMon", limit: 4, null: false
-    t.integer "MonNbr", null: false
-    t.date "sDate", null: false
-    t.date "eDate", null: false
-    t.boolean "processed", default: false, null: false
-  end
-
-  create_table "_stgTC60", id: false, force: :cascade do |t|
-    t.varchar "TYPE", limit: 3, null: false
-    t.varchar "CUNIT", limit: 4, null: false
-    t.integer "COBJECT", null: false
-    t.varchar "CACTIVITY", limit: 4
-    t.varchar "CFUNCTION", limit: 4
-    t.varchar "CPROGRAM", limit: 10
-    t.varchar "CPHASE", limit: 6
-    t.varchar "CTASK", limit: 4
-    t.float "AMOUNT", default: 0.0
-    t.varchar "SUNIT", limit: 4, null: false
-    t.integer "SOBJECT", null: false
-    t.varchar "SACTIVITY", limit: 4
-    t.varchar "SFUNCTION", limit: 4
-    t.varchar "SPROGRAM", limit: 10
-    t.varchar "SPHASE", limit: 6
-    t.varchar "STASK", limit: 4
-    t.varchar "POSTING_REF", limit: 20, null: false
-    t.varchar "SERVICE", limit: 15, null: false
-    t.date "DATE", null: false
-    t.varchar "DOC_NMBR", limit: 50
-    t.varchar "DESCRIPTION", limit: 50
-    t.varchar "OTHER1", limit: 50
-    t.varchar "OTHER2", limit: 50
-    t.varchar "OTHER3", limit: 50
-    t.float "QUANTITY", default: 0.0
-    t.float "RATE", default: 0.0
-    t.float "COST"
-  end
+ActiveRecord::Schema[8.0].define(version: 2026_02_27_000010) do
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "pg_catalog.plpgsql"
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -374,6 +40,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+    t.index ["blob_id"], name: "index_active_storage_variant_records_on_blob_id"
   end
 
   create_table "activities", primary_key: ["agency_id", "activity_id"], force: :cascade do |t|
@@ -425,6 +92,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.index ["employee_id"], name: "index_authorized_approvers_on_employee_id"
   end
 
+  create_table "brown_mail_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.integer "status", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "carpool_forms", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
@@ -465,8 +146,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.string "division"
     t.string "department"
     t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.string "incident_type"
     t.text "incident_details"
     t.text "cause"
@@ -480,6 +159,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.text "next_steps"
     t.integer "status", default: 0
     t.string "assigned_manager_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "department_funds", primary_key: ["agency_id", "fund_id"], force: :cascade do |t|
@@ -502,6 +183,35 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.string "short_name", limit: 50, null: false
   end
 
+  create_table "employee_groups", force: :cascade do |t|
+    t.integer "employee_id", null: false
+    t.bigint "group_id", null: false
+    t.datetime "assigned_at", default: -> { "CURRENT_TIMESTAMP" }
+    t.integer "assigned_by"
+    t.index ["employee_id", "group_id"], name: "index_employee_groups_on_employee_id_and_group_id", unique: true
+  end
+
+  create_table "employees", primary_key: "employee_id", id: :integer, default: nil, force: :cascade do |t|
+    t.string "first_name", limit: 50
+    t.string "last_name", limit: 50
+    t.string "email", limit: 50
+    t.string "work_phone", limit: 50
+    t.integer "supervisor_id"
+    t.string "supervisor_first_name", limit: 50
+    t.string "supervisor_last_name", limit: 50
+    t.string "job_title", limit: 50
+    t.string "job_code", limit: 50
+    t.integer "job_class"
+    t.string "pay_status", limit: 50
+    t.string "union_code", limit: 50
+    t.string "employee_type", limit: 50
+    t.string "agency", limit: 50
+    t.string "department", limit: 50
+    t.string "unit", limit: 50
+    t.string "position", limit: 50
+    t.index ["employee_id"], name: "index_employees_on_employee_id", unique: true
+  end
+
   create_table "form_fields", force: :cascade do |t|
     t.bigint "form_template_id", null: false
     t.string "field_name", null: false
@@ -511,13 +221,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.integer "position"
     t.text "options"
     t.boolean "required", default: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.string "restricted_to_type", default: "none"
     t.integer "restricted_to_employee_id"
     t.integer "restricted_to_group_id"
     t.integer "conditional_field_id"
     t.text "conditional_values"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["conditional_field_id"], name: "index_form_fields_on_conditional_field_id"
     t.index ["form_template_id", "page_number"], name: "index_form_fields_on_form_template_id_and_page_number"
     t.index ["form_template_id", "position"], name: "index_form_fields_on_form_template_id_and_position"
@@ -530,9 +240,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.integer "step_number", null: false
     t.string "routing_type", null: false
     t.integer "employee_id"
+    t.bigint "form_template_status_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "form_template_status_id"
     t.index ["form_template_id", "step_number"], name: "idx_routing_steps_template_step", unique: true
     t.index ["form_template_id"], name: "index_form_template_routing_steps_on_form_template_id"
     t.index ["form_template_status_id"], name: "index_form_template_routing_steps_on_form_template_status_id"
@@ -561,8 +271,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.integer "page_count", default: 2, null: false
     t.text "page_headers"
     t.integer "created_by"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.string "submission_type", default: "database"
     t.string "approval_routing_to"
     t.integer "approval_employee_id"
@@ -574,6 +282,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.text "tags"
     t.string "org_scope_type"
     t.string "org_scope_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["class_name"], name: "index_form_templates_on_class_name", unique: true
   end
 
@@ -592,6 +302,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.string "fund_type", limit: 50, null: false
     t.string "fund_group", limit: 50, null: false
     t.string "cafr_type", limit: 50, null: false
+  end
+
+  create_table "group_permissions", force: :cascade do |t|
+    t.bigint "group_id", null: false
+    t.string "permission_type", limit: 50, null: false
+    t.string "permission_key", limit: 255, null: false
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["group_id", "permission_type", "permission_key"], name: "idx_group_permissions_unique", unique: true
+  end
+
+  create_table "groups", force: :cascade do |t|
+    t.string "group_name", limit: 100, null: false
+    t.string "description", limit: 500
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }
   end
 
   create_table "gym_locker_forms", force: :cascade do |t|
@@ -680,8 +404,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.integer "status", default: 0
     t.string "approver_id"
     t.text "deny_reason"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.bigint "rm75_form_id"
     t.string "street"
     t.string "city"
@@ -709,6 +431,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.text "what_object_or_substance_directly_harmed_the_employee"
     t.string "did_employee_die"
     t.datetime "date_of_death"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["approver_id"], name: "index_osha301_forms_on_approver_id"
     t.index ["employee_id"], name: "index_osha301_forms_on_employee_id"
     t.index ["rm75_form_id"], name: "index_osha301_forms_on_rm75_form_id"
@@ -722,8 +446,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.string "agency", limit: 100
     t.string "division", limit: 100
     t.string "department", limit: 100
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.string "unit", limit: 100
     t.integer "status"
     t.string "supervisor_id", limit: 20
@@ -737,6 +459,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.string "delegated_approver_email"
     t.string "delegated_approved_by"
     t.datetime "delegated_approved_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "parking_lot_vehicles", force: :cascade do |t|
@@ -747,9 +471,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.integer "year"
     t.string "license_plate", limit: 15
     t.string "parking_lot", limit: 100
+    t.string "other_parking_lot", limit: 100
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "other_parking_lot", limit: 100
     t.index ["parking_lot_submission_id"], name: "index_parking_lot_vehicles_on_parking_lot_submission_id"
   end
 
@@ -773,8 +497,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.date "current_assignment_date"
     t.text "desired_transfer_destination"
     t.integer "status", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.string "other_transfer_destination", limit: 200
     t.string "approved_by", limit: 20
     t.datetime "approved_at"
@@ -788,6 +510,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.string "canceled_reason", limit: 100
     t.bigint "superseded_by_id"
     t.string "approved_destination"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["approved_destination"], name: "index_probation_transfer_requests_on_approved_destination"
     t.index ["canceled_at"], name: "index_probation_transfer_requests_on_canceled_at"
     t.index ["expires_at"], name: "index_probation_transfer_requests_on_expires_at"
@@ -820,8 +544,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.integer "status", default: 0
     t.string "approver_id"
     t.text "deny_reason"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.string "report_type"
     t.string "bloodborne_pathogen_exposure"
     t.string "supervisor_name"
@@ -867,6 +589,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.string "osha_recordable"
     t.string "osha_reportable"
     t.string "reportable_injury_codes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["approver_id"], name: "index_rm75_forms_on_approver_id"
     t.index ["employee_id"], name: "index_rm75_forms_on_employee_id"
   end
@@ -1022,15 +746,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_225448) do
     t.index ["employee_id"], name: "index_workplace_violence_forms_on_employee_id"
   end
 
-  add_foreign_key "BdmRates", "BdmRateTypes", column: "RateID", primary_key: "RateID", name: "FK_BdmRates_RateID"
-  add_foreign_key "Employee_Groups", "Employees", column: "EmployeeID", primary_key: "EmployeeID", name: "FK__Employee___Emplo__5B988E2F"
-  add_foreign_key "Employee_Groups", "Groups", column: "GroupID", primary_key: "GroupID", name: "FK__Employee___Group__5C8CB268"
-  add_foreign_key "TC60", "TC60_Types", column: "TYPE", primary_key: "TYPE", name: "FK_TC60_TYPE_TC60_TYPES"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "employee_groups", "employees", primary_key: "employee_id"
+  add_foreign_key "employee_groups", "groups"
   add_foreign_key "form_fields", "form_templates"
   add_foreign_key "form_template_routing_steps", "form_template_statuses"
   add_foreign_key "form_template_routing_steps", "form_templates"
   add_foreign_key "form_template_statuses", "form_templates"
+  add_foreign_key "group_permissions", "groups"
   add_foreign_key "parking_lot_vehicles", "parking_lot_submissions"
 end

@@ -265,6 +265,11 @@ GEM
       hashery (~> 2.0)
       ruby-rc4
       ttfunk
+    pg (1.6.3)
+    pg (1.6.3-aarch64-linux)
+    pg (1.6.3-aarch64-linux-musl)
+    pg (1.6.3-x86_64-linux)
+    pg (1.6.3-x86_64-linux-musl)
     pp (0.6.3)
       prettyprint
     prawn (2.5.0)
@@ -521,6 +526,7 @@ DEPENDENCIES
   omniauth
   omniauth-entra-id
   omniauth-rails_csrf_protection
+  pg
   prawn
   prawn-table
   prawn-templates

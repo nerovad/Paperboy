@@ -64,7 +64,7 @@
           <label for="filter_employee_name">Employee</label>
           <%= select_tag :filter_employee_name,
               options_for_select(
-                [['All', ''], ["#{session.dig(:user, 'last_name')}, #{session.dig(:user, 'first_name')} (Me)", @current_user_name]] + @employees.map { |e| ["#{e.Last_Name}, #{e.First_Name}", "#{e.First_Name} #{e.Last_Name}"] },
+                [['All', ''], ["#{session.dig(:user, 'last_name')}, #{session.dig(:user, 'first_name')} (Me)", @current_user_name]] + @employees.map { |e| ["#{e.last_name}, #{e.first_name}", "#{e.first_name} #{e.last_name}"] },
                 params[:filter_employee_name]
               ),
               class: 'filter-select',
@@ -75,7 +75,7 @@
           <label for="filter_employee_id">Employee ID</label>
           <%= select_tag :filter_employee_id,
               options_for_select(
-                [['All', ''], ["#{@current_user_id} (Me)", @current_user_id]] + @employees.map { |e| [e.EmployeeID.to_s, e.EmployeeID.to_s] },
+                [['All', ''], ["#{@current_user_id} (Me)", @current_user_id]] + @employees.map { |e| [e.employee_id.to_s, e.employee_id.to_s] },
                 params[:filter_employee_id]
               ),
               class: 'filter-select',

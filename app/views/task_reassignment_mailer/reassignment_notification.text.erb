@@ -1,7 +1,7 @@
 Task Reassigned to You
 ========================
 
-Hello <%= @to_employee.First_Name %>,
+Hello <%= @to_employee.first_name %>,
 
 A <%= @task.class.name.demodulize.titleize %> has been reassigned to you.
 
@@ -10,8 +10,8 @@ Task Details:
 Task ID: #<%= @task.id %>
 Form Type: <%= @task.class.name.demodulize.titleize %>
 Submitted by: <%= @task.name %> (<%= @task.email %>)
-Previously assigned to: <%= @from_employee.First_Name %> <%= @from_employee.Last_Name %>
-Reassigned by: <%= @reassigned_by.First_Name %> <%= @reassigned_by.Last_Name %>
+Previously assigned to: <%= @from_employee.first_name %> <%= @from_employee.last_name %>
+Reassigned by: <%= @reassigned_by.first_name %> <%= @reassigned_by.last_name %>
 <% if @reassignment.reason.present? %>
 Reason: <%= @reassignment.reason %>
 <% end %>

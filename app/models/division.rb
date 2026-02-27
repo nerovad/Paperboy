@@ -1,4 +1,3 @@
-class Division < GsabssBase
-  self.table_name = 'dbo.divisions'
+class Division < ApplicationRecord
   self.primary_key = 'division_id'
 end

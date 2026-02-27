@@ -86,11 +86,11 @@ class CriticalInformationReporting < ApplicationRecord
   # Get the Employee record for the assigned manager
   def assigned_manager
     return nil unless assigned_manager_id.present?
-    @assigned_manager ||= Employee.find_by(EmployeeID: assigned_manager_id)
+    @assigned_manager ||= Employee.find_by(employee_id: assigned_manager_id)
   end
 
   def assigned_manager_name
-    assigned_manager&.then { |e| "#{e['First_Name']} #{e['Last_Name']}" } || "Unassigned"
+    assigned_manager&.then { |e| "#{e.first_name} #{e.last_name}" } || "Unassigned"
   end
 
   # Reassignable concern implementation

@@ -93,8 +93,8 @@ class FormField < ApplicationRecord
   # Get the name of the restricted employee
   def restricted_employee_name
     return nil unless restricted_to_employee?
-    employee = Employee.find_by(EmployeeID: restricted_to_employee_id)
-    employee ? "#{employee.First_Name} #{employee.Last_Name}" : "Employee ##{restricted_to_employee_id}"
+    employee = Employee.find_by(employee_id: restricted_to_employee_id)
+    employee ? "#{employee.first_name} #{employee.last_name}" : "Employee ##{restricted_to_employee_id}"
   rescue
     "Employee ##{restricted_to_employee_id}"
   end
@@ -102,10 +102,7 @@ class FormField < ApplicationRecord
   # Get the name of the restricted group
   def restricted_group_name
     return nil unless restricted_to_group?
-    result = ActiveRecord::Base.connection.execute(
-      "SELECT Group_Name FROM GSABSS.dbo.Groups WHERE GroupID = #{restricted_to_group_id}"
-    ).first
-    result ? result['Group_Name'] : "Group ##{restricted_to_group_id}"
+    Group.find_by(id: restricted_to_group_id)&.group_name || "Group ##{restricted_to_group_id}"
   rescue
     "Group ##{restricted_to_group_id}"
   end

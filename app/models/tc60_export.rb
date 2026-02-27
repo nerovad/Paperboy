@@ -21,8 +21,7 @@ class Tc60Export
       [sql, sDate, eDate, type, digits.to_i, encumbered.to_i]
     )
 
-    result = ActiveRecord::Base.connection.exec_query(sanitized)
+    result = BillingBase.connection.exec_query(sanitized)
     result.to_a # array of hashes
   end
 end
-

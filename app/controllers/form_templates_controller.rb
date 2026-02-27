@@ -299,18 +299,14 @@ class FormTemplatesController < ApplicationController
   end
   
   def fetch_acl_groups
-    result = ActiveRecord::Base.connection.execute(
-      "SELECT GroupID, Group_Name FROM GSABSS.dbo.Groups ORDER BY Group_Name"
-    )
-
-    result.map { |row| [row['Group_Name'], row['GroupID']] }
+    Group.order(:group_name).pluck(:group_name, :id)
   rescue
     []
   end
 
   def fetch_employees
-    Employee.order(:Last_Name, :First_Name)
-            .map { |e| ["#{e.First_Name} #{e.Last_Name} (#{e.EmployeeID})", e.EmployeeID] }
+    Employee.order(:last_name, :first_name)
+            .map { |e| ["#{e.first_name} #{e.last_name} (#{e.employee_id})", e.employee_id] }
   rescue
     []
   end
@@ -696,15 +692,15 @@ class FormTemplatesController < ApplicationController
     when 'supervisor'
       <<~RUBY.chomp
         # Look up the submitter's supervisor
-        employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-        approver_id = employee&.Supervisor_ID&.to_s
+        employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+        approver_id = employee&.supervisor_id&.to_s
       RUBY
     when 'department_head'
       <<~RUBY.chomp
         # Look up the submitter's department head
-        employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-        unit = employee ? Unit.find_by(unit_id: employee["Unit"]) : nil
-        department = unit ? Department.find_by(department_id: unit["department_id"]) : nil
+        employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+        unit = employee ? Unit.find_by(unit_id: employee.unit) : nil
+        department = unit ? Department.find_by(department_id: unit.department_id) : nil
         approver_id = department&.department_head_id&.to_s
       RUBY
     when 'employee'

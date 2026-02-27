@@ -7,7 +7,7 @@
   <%= form_with url: admin_impersonations_path, method: :post do |f| %>
     <%= f.label :employee_id, "Select Employee:" %>
     <%= f.select :employee_id,
-                 @employees.map { |e| ["#{e.First_Name} #{e.Last_Name} (#{e.EmployeeID})", e.EmployeeID] },
+                 @employees.map { |e| ["#{e.first_name} #{e.last_name} (#{e.employee_id})", e.employee_id] },
                  { prompt: "Choose an employee..." },
                  { class: "form-control" } %>
 

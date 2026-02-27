@@ -37,20 +37,20 @@ class ApplicationController < ActionController::Base
   end
 
   def build_prefill_data(employee_id)
-    employee = Employee.find_by(EmployeeID: employee_id)
+    employee = Employee.find_by(employee_id: employee_id)
     return {} unless employee
 
-    unit_code = employee["Unit"]
+    unit_code = employee.unit
     unit = Unit.find_by(unit_id: unit_code)
     department = Department.find_by(department_id: unit&.department_id)
     division   = Division.find_by(division_id: department&.division_id)
     agency     = Agency.find_by(agency_id: division&.agency_id)
 
     {
-      employee_id: employee["EmployeeID"],
-      name: "#{employee["First_Name"]} #{employee["Last_Name"]}",
-      phone: employee["Work_Phone"],
-      email: employee["EE_Email"],
+      employee_id: employee.employee_id,
+      name: "#{employee.first_name} #{employee.last_name}",
+      phone: employee.work_phone,
+      email: employee.email,
       agency: agency&.agency_id,
       division: division&.division_id,
       department: department&.department_id,
@@ -75,8 +75,8 @@ class ApplicationController < ActionController::Base
 
     employee_id = session.dig(:user, "employee_id")
     if employee_id.present?
-      employee   = Employee.find_by(EmployeeID: employee_id)
-      unit       = employee ? Unit.find_by(unit_id: employee["Unit"]) : nil
+      employee   = Employee.find_by(employee_id: employee_id)
+      unit       = employee ? Unit.find_by(unit_id: employee.unit) : nil
       department = unit ? Department.find_by(department_id: unit.department_id) : nil
       division   = department ? Division.find_by(division_id: department.division_id) : nil
       agency     = division ? Agency.find_by(agency_id: division.agency_id) : nil
@@ -132,18 +132,15 @@ class ApplicationController < ActionController::Base
     employee_id = session.dig(:user, "employee_id")
 
     if employee_id.present?
-      rows = ActiveRecord::Base.connection.execute(<<~SQL)
-        SELECT g.Group_Name, eg.GroupID
-        FROM GSABSS.dbo.Employee_Groups eg
-        JOIN GSABSS.dbo.Groups g ON eg.GroupID = g.GroupID
-        WHERE eg.EmployeeID = #{ActiveRecord::Base.connection.quote(employee_id)}
-      SQL
+      rows = EmployeeGroup.joins(:group)
+                          .where(employee_id: employee_id)
+                          .pluck("groups.group_name", :group_id)
 
       names = Set.new
       ids   = []
-      rows.each do |row|
-        names << row["Group_Name"].downcase
-        ids   << row["GroupID"]
+      rows.each do |group_name, group_id|
+        names << group_name.downcase
+        ids   << group_id
       end
 
       @_current_user_group_names = names
@@ -161,18 +158,9 @@ class ApplicationController < ActionController::Base
     group_ids = current_user_group_ids
     return Set.new if group_ids.empty?
 
-    quoted_ids = group_ids.map { |id| ActiveRecord::Base.connection.quote(id) }.join(', ')
-    quoted_type = ActiveRecord::Base.connection.quote(permission_type)
-
-    rows = ActiveRecord::Base.connection.execute(<<~SQL)
-      SELECT Permission_Key
-      FROM GSABSS.dbo.Group_Permissions
-      WHERE GroupID IN (#{quoted_ids})
-        AND Permission_Type = #{quoted_type}
-    SQL
-
-    keys = Set.new
-    rows.each { |row| keys << row["Permission_Key"] }
+    keys = GroupPermission.where(group_id: group_ids, permission_type: permission_type)
+                          .pluck(:permission_key)
+                          .to_set
     keys
   rescue
     Set.new

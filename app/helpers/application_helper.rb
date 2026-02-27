@@ -36,11 +36,7 @@ module ApplicationHelper
 
 
   def fetch_acl_groups
-    result = ActiveRecord::Base.connection.execute(
-      "SELECT GroupID, Group_Name FROM GSABSS.dbo.Groups ORDER BY Group_Name"
-    )
-    
-    result.map { |row| [row['Group_Name'], row['GroupID']] }
+    Group.order(:group_name).pluck(:group_name, :id)
   rescue
     []
   end

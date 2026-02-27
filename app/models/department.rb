@@ -1,4 +1,3 @@
-class Department < GsabssBase
-  self.table_name = 'dbo.departments'
+class Department < ApplicationRecord
   self.primary_key = 'department_id'
 end

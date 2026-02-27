@@ -5,7 +5,7 @@ class AuthorizationManager < ApplicationRecord
   validates :employee_id, uniqueness: { scope: :department_id }
   
   def employee
-    Employee.find_by(EmployeeID: employee_id)
+    Employee.find_by(employee_id: employee_id)
   end
   
   def department

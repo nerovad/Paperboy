@@ -20,7 +20,7 @@
         <div class="form-group">
           <label for="to_employee_id">Assign to</label>
           <%= f.select :to_employee_id,
-                       @employees.map { |e| ["#{e.First_Name} #{e.Last_Name} (#{e.EmployeeID})", e.EmployeeID] },
+                       @employees.map { |e| ["#{e.first_name} #{e.last_name} (#{e.employee_id})", e.employee_id] },
                        { include_blank: "Select employee..." },
                        class: "form-control",
                        required: true,

@@ -16,7 +16,7 @@
   <div class="container">
     <h2>Task Reassigned to You</h2>
 
-    <p>Hello <%= @to_employee.First_Name %>,</p>
+    <p>Hello <%= @to_employee.first_name %>,</p>
 
     <p>A <%= @task.class.name.demodulize.titleize %> has been reassigned to you.</p>
 
@@ -35,11 +35,11 @@
       </tr>
       <tr>
         <th>Previously assigned to:</th>
-        <td><%= @from_employee.First_Name %> <%= @from_employee.Last_Name %></td>
+        <td><%= @from_employee.first_name %> <%= @from_employee.last_name %></td>
       </tr>
       <tr>
         <th>Reassigned by:</th>
-        <td><%= @reassigned_by.First_Name %> <%= @reassigned_by.Last_Name %></td>
+        <td><%= @reassigned_by.first_name %> <%= @reassigned_by.last_name %></td>
       </tr>
       <% if @reassignment.reason.present? %>
       <tr>

@@ -37,7 +37,7 @@ class AuthorizedApprover < ApplicationRecord
   }.freeze
   
   def employee
-    Employee.find_by(EmployeeID: employee_id)
+    Employee.find_by(employee_id: employee_id)
   end
   
   def department

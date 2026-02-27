@@ -6,7 +6,7 @@ class WorkplaceViolenceFormsController < ApplicationController
     @workplace_violence_form = WorkplaceViolenceForm.new
 
     employee_id = session.dig(:user, "employee_id").to_s
-    @employee   = employee_id.present? ? Employee.find_by(EmployeeID: employee_id) : nil
+    @employee   = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
 
     unless @employee
       redirect_to login_path, alert: "Please sign in to start a submission." and return
@@ -16,17 +16,17 @@ class WorkplaceViolenceFormsController < ApplicationController
     @current_user_groups = current_user_group_ids
 
     # --- Organization chain (same pattern you use now) ---
-    unit        = Unit.find_by(unit_id: @employee["Unit"])
-    department  = unit ? Department.find_by(department_id: unit["department_id"]) : nil
-    division    = department ? Division.find_by(division_id: department["division_id"]) : nil
-    agency      = division ? Agency.find_by(agency_id: division["agency_id"]) : nil
+    unit        = Unit.find_by(unit_id: @employee.unit)
+    department  = unit ? Department.find_by(department_id: unit.department_id) : nil
+    division    = department ? Division.find_by(division_id: department.division_id) : nil
+    agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
 
     # --- Prefill values (everything prefilled exactly like you do now) ---
     @prefill_data = {
-      employee_id: @employee["EmployeeID"],
-      name:        [@employee["First_Name"], @employee["Last_Name"]].compact.join(" "),
-      phone:       @employee["Work_Phone"],
-      email:       @employee["EE_Email"],
+      employee_id: @employee.employee_id,
+      name:        [@employee.first_name, @employee.last_name].compact.join(" "),
+      phone:       @employee.work_phone,
+      email:       @employee.email,
       agency:      agency&.agency_id,
       division:    division&.division_id,
       department:  department&.department_id,
@@ -70,39 +70,39 @@ class WorkplaceViolenceFormsController < ApplicationController
       # Multi-step approval routing (1 steps)
 # Step 1: supervisor
 # Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
+employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+approver_id = employee&.supervisor_id&.to_s
 @workplace_violence_form.update(status: :step_1_pending, approver_id: approver_id)
 # TODO: Send notification to supervisor
 # Multi-step approval routing (1 steps)
 # Step 1: supervisor
 # Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
+employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+approver_id = employee&.supervisor_id&.to_s
 @workplace_violence_form.update(status: :step_1_pending, approver_id: approver_id)
 # TODO: Send notification to supervisor
 # Multi-step approval routing (1 steps)
 # Step 1: supervisor
 # Look up the submitter's supervisor
-employee = Employee.find_by(EmployeeID: session.dig(:user, "employee_id"))
-approver_id = employee&.Supervisor_ID&.to_s
+employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+approver_id = employee&.supervisor_id&.to_s
 @workplace_violence_form.update(status: :step_1_pending, approver_id: approver_id)
 # TODO: Send notification to supervisor
 redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
-      emp = employee_id.present? ? Employee.find_by(EmployeeID: employee_id) : nil
-      unit        = emp ? Unit.find_by(unit_id: emp["Unit"]) : nil
-      department  = unit ? Department.find_by(department_id: unit["department_id"]) : nil
-      division    = department ? Division.find_by(division_id: department["division_id"]) : nil
-      agency      = division ? Agency.find_by(agency_id: division["agency_id"]) : nil
+      emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
+      unit        = emp ? Unit.find_by(unit_id: emp&.unit) : nil
+      department  = unit ? Department.find_by(department_id: unit.department_id) : nil
+      division    = department ? Division.find_by(division_id: department.division_id) : nil
+      agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
 
       @prefill_data = {
-        employee_id: emp&.[]("EmployeeID"),
-        name:        emp ? [emp["First_Name"], emp["Last_Name"]].compact.join(" ") : nil,
-        phone:       emp&.[]("Work_Phone"),
-        email:       emp&.[]("EE_Email"),
+        employee_id: emp&.employee_id,
+        name:        emp ? [emp&.first_name, emp&.last_name].compact.join(" ") : nil,
+        phone:       emp&.work_phone,
+        email:       emp&.email,
         agency:      agency&.agency_id,
         division:    division&.division_id,
         department:  department&.department_id,
@@ -189,17 +189,17 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
 
   def setup_form_options
     employee_id = session.dig(:user, "employee_id").to_s
-    emp = employee_id.present? ? Employee.find_by(EmployeeID: employee_id) : nil
-    unit        = emp ? Unit.find_by(unit_id: emp["Unit"]) : nil
-    department  = unit ? Department.find_by(department_id: unit["department_id"]) : nil
-    division    = department ? Division.find_by(division_id: department["division_id"]) : nil
-    agency      = division ? Agency.find_by(agency_id: division["agency_id"]) : nil
+    emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
+    unit        = emp ? Unit.find_by(unit_id: emp&.unit) : nil
+    department  = unit ? Department.find_by(department_id: unit.department_id) : nil
+    division    = department ? Division.find_by(division_id: department.division_id) : nil
+    agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
 
     @prefill_data = {
-      employee_id: emp&.[]("EmployeeID"),
-      name:        emp ? [emp["First_Name"], emp["Last_Name"]].compact.join(" ") : nil,
-      phone:       emp&.[]("Work_Phone"),
-      email:       emp&.[]("EE_Email"),
+      employee_id: emp&.employee_id,
+      name:        emp ? [emp&.first_name, emp&.last_name].compact.join(" ") : nil,
+      phone:       emp&.work_phone,
+      email:       emp&.email,
       agency:      agency&.agency_id,
       division:    division&.division_id,
       department:  department&.department_id,

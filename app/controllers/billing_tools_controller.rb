@@ -41,7 +41,7 @@ class BillingToolsController < ApplicationController
     sql = "EXEC [GSABSS].[dbo].[#{proc_name}] #{placeholders}"
     values = args.values
 
-    ActiveRecord::Base.connection.exec_query(
+    BillingBase.connection.exec_query(
       ActiveRecord::Base.send(:sanitize_sql_array, [sql, *values])
     )
   end

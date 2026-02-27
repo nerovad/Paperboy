@@ -8,7 +8,7 @@ def new
 
   # Safely read session
   employee_id = session.dig(:user, "employee_id").to_s
-  @employee   = employee_id.present? ? Employee.find_by(EmployeeID: employee_id) : nil
+  @employee   = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
 
   unless @employee
     redirect_to login_path, alert: "Please sign in to start a submission." and return
@@ -21,20 +21,20 @@ def new
   end
 
   # MB3 flag
-  @is_mb3 = @employee["Union_Code"].to_s.upcase == "MB3"
+  @is_mb3 = @employee.union_code.to_s.upcase == "MB3"
 
   # Org lookups (guard each step)
-  unit        = Unit.find_by(unit_id: @employee["Unit"])
-  department  = unit ? Department.find_by(department_id: unit["department_id"]) : nil
-  division    = department ? Division.find_by(division_id: department["division_id"]) : nil
-  agency      = division ? Agency.find_by(agency_id: division["agency_id"]) : nil
+  unit        = Unit.find_by(unit_id: @employee.unit)
+  department  = unit ? Department.find_by(department_id: unit.department_id) : nil
+  division    = department ? Division.find_by(division_id: department.division_id) : nil
+  agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
 
   # Prefill with IDs (unit = ID only)
   @prefill_data = {
-    employee_id: @employee["EmployeeID"],
-    name:        [@employee["First_Name"], @employee["Last_Name"]].compact.join(" "),
-    phone:       @employee["Work_Phone"],
-    email:       @employee["EE_Email"],
+    employee_id: @employee.employee_id,
+    name:        [@employee.first_name, @employee.last_name].compact.join(" "),
+    phone:       @employee.work_phone,
+    email:       @employee.email,
     agency:      agency&.agency_id,
     division:    division&.division_id,
     department:  department&.department_id,
@@ -60,7 +60,6 @@ def new
     []
   end
 
-  # 👇 Unit label = "unit_id - long_name", value = unit_id (as requested)
   @unit_options = if department
     Unit.where(department_id: department.department_id)
         .order(:unit_id)
@@ -73,19 +72,15 @@ end
 def create
   employee      = session[:user]
   employee_id   = employee["employee_id"].to_s
-  
+
   # Check Union Code from DB (trust server-side)
-  union_code = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first&.fetch("Union_Code", nil).to_s.upcase
-    SELECT Union_Code
-    FROM [GSABSS].[dbo].[Employees]
-    WHERE EmployeeID = '#{employee_id}'
-  SQL
+  emp_record = Employee.find_by(employee_id: employee_id)
+  union_code = emp_record&.union_code.to_s.upcase
   is_mb3 = (union_code == "MB3")
-  
+
   # Get employee's department for authorized approver lookup
-  emp_record = Employee.find_by(EmployeeID: employee_id)
-  unit = Unit.find_by(unit_id: emp_record["Unit"])
-  department = unit ? Department.find_by(department_id: unit["department_id"]) : nil
+  unit = Unit.find_by(unit_id: emp_record&.unit)
+  department = unit ? Department.find_by(department_id: unit.department_id) : nil
 
   # Build the submission early so we can access the submitted unit
   @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
@@ -241,29 +236,19 @@ end
   end
 
   def fetch_supervisor_id(employee_id)
-    result = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first
-      SELECT Supervisor_ID
-      FROM [GSABSS].[dbo].[Employees]
-      WHERE EmployeeID = '#{employee_id}'
-    SQL
-    result&.fetch("Supervisor_ID", nil)
+    Employee.find_by(employee_id: employee_id)&.supervisor_id
   end
 
   def fetch_employee_email(emp_id)
     return nil if emp_id.blank?
-    row = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first
-      SELECT EE_Email
-      FROM [GSABSS].[dbo].[Employees]
-      WHERE EmployeeID = '#{emp_id}'
-    SQL
-    row&.fetch("EE_Email", nil)
+    Employee.find_by(employee_id: emp_id)&.email
   end
 
   def reload_form_options(emp_record)
-    unit       = Unit.find_by(unit_id: emp_record["Unit"])
-    department = unit ? Department.find_by(department_id: unit["department_id"]) : nil
-    division   = department ? Division.find_by(division_id: department["division_id"]) : nil
-    agency     = division ? Agency.find_by(agency_id: division["agency_id"]) : nil
+    unit       = Unit.find_by(unit_id: emp_record&.unit)
+    department = unit ? Department.find_by(department_id: unit.department_id) : nil
+    division   = department ? Division.find_by(division_id: department.division_id) : nil
+    agency     = division ? Agency.find_by(agency_id: division.agency_id) : nil
 
     @agency_options     = Agency.order(:long_name).pluck(:long_name, :agency_id)
     @division_options   = division ? Division.where(agency_id: agency&.agency_id).order(:long_name).pluck(:long_name, :division_id) : []

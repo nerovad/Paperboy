@@ -319,15 +319,8 @@ class FormGenerator
     if form_template.restricted?
       <<~RUBY
         return false unless employee_id
-            
-            result = ActiveRecord::Base.connection.execute(
-              "SELECT COUNT(*) as count 
-               FROM GSABSS.dbo.GroupMembers 
-               WHERE EmployeeID = \#{employee_id} 
-               AND GroupID = #{form_template.acl_group_id}"
-            ).first
-            
-            result && result['count'].to_i > 0
+
+            EmployeeGroup.where(employee_id: employee_id, group_id: #{form_template.acl_group_id}).exists?
           rescue
             false
       RUBY

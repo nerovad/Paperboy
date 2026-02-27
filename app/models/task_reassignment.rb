@@ -13,14 +13,14 @@ class TaskReassignment < ApplicationRecord
 
   # Helper methods to fetch employee records for display
   def from_employee
-    @from_employee ||= Employee.find_by(EmployeeID: from_employee_id)
+    @from_employee ||= Employee.find_by(employee_id: from_employee_id)
   end
 
   def to_employee
-    @to_employee ||= Employee.find_by(EmployeeID: to_employee_id)
+    @to_employee ||= Employee.find_by(employee_id: to_employee_id)
   end
 
   def reassigned_by_employee
-    @reassigned_by_employee ||= Employee.find_by(EmployeeID: reassigned_by_id)
+    @reassigned_by_employee ||= Employee.find_by(employee_id: reassigned_by_id)
   end
 end

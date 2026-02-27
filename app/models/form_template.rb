@@ -168,12 +168,7 @@ class FormTemplate < ApplicationRecord
 
   def acl_group_name
     return nil unless acl_group_id
-    
-    result = ActiveRecord::Base.connection.execute(
-      "SELECT Group_Name FROM GSABSS.dbo.Groups WHERE GroupID = #{acl_group_id}"
-    ).first
-    
-    result ? result['Group_Name'] : nil
+    Group.find_by(id: acl_group_id)&.group_name
   end
   
   def page_header(page_num)

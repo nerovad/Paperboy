@@ -31,7 +31,7 @@ class SubmissionsController < ApplicationController
 
     if @is_manager
       # Load employees from GSABSS for filter dropdowns
-      @employees = Employee.order(:Last_Name, :First_Name)
+      @employees = Employee.order(:last_name, :first_name)
 
       # Current user info for "Myself" filter option
       @current_user_name = "#{session.dig(:user, 'first_name')} #{session.dig(:user, 'last_name')}"

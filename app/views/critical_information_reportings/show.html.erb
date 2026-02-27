@@ -45,10 +45,10 @@
           <% staff_ids = @critical_information_reporting.staff_involved.to_s.split(",").map(&:strip).reject(&:blank?) %>
           <div class="staff-chips">
             <% staff_ids.each do |staff_id| %>
-              <% employee = Employee.find_by(EmployeeID: staff_id) %>
+              <% employee = Employee.find_by(employee_id: staff_id) %>
               <span class="staff-chip">
                 <% if employee %>
-                  <%= employee["First_Name"] %> <%= employee["Last_Name"] %>
+                  <%= employee.first_name %> <%= employee.last_name %>
                 <% else %>
                   ID: <%= staff_id %>
                 <% end %>

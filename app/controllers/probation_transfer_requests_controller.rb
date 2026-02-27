@@ -191,40 +191,28 @@ end
   end
 
   def fetch_supervisor_id(employee_id)
-    result = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first
-      SELECT Supervisor_ID
-      FROM [GSABSS].[dbo].[Employees]
-      WHERE EmployeeID = '#{employee_id}'
-    SQL
-
-    result&.fetch("Supervisor_ID", nil)
+    Employee.find_by(employee_id: employee_id)&.supervisor_id
   end
 
   def fetch_employee_email(emp_id)
     return nil if emp_id.blank?
-    row = ActiveRecord::Base.connection.exec_query(<<-SQL.squish).first
-      SELECT EE_Email
-      FROM [GSABSS].[dbo].[Employees]
-      WHERE EmployeeID = '#{emp_id}'
-    SQL
-    row&.fetch("EE_Email", nil)
+    Employee.find_by(employee_id: emp_id)&.email
   end
 
   def prepare_new_transfer_form
     employee_id = session[:user]["employee_id"]
-    @employee = Employee.find_by(EmployeeID: employee_id)
+    @employee = Employee.find_by(employee_id: employee_id)
 
-    unit_code = @employee&.[]("Unit")
-    unit = Unit.find_by(unit_id: unit_code)
-    department = Department.find_by(department_id: unit&.[]("department_id"))
-    division   = Division.find_by(division_id: department&.[]("division_id"))
-    agency     = Agency.find_by(agency_id: division&.[]("agency_id"))
+    unit = Unit.find_by(unit_id: @employee&.unit)
+    department = Department.find_by(department_id: unit&.department_id)
+    division   = Division.find_by(division_id: department&.division_id)
+    agency     = Agency.find_by(agency_id: division&.agency_id)
 
     @prefill_data = {
-      employee_id: @employee&.[]("EmployeeID"),
-      name: "#{@employee&.[]("First_Name")} #{@employee&.[]("Last_Name")}",
-      phone: @employee&.[]("Work_Phone"),
-      email: @employee&.[]("EE_Email"),
+      employee_id: @employee&.employee_id,
+      name: "#{@employee&.first_name} #{@employee&.last_name}",
+      phone: @employee&.work_phone,
+      email: @employee&.email,
       agency: agency&.agency_id,
       division: division&.division_id,
       department: department&.department_id,
@@ -248,7 +236,7 @@ end
 @unit_options = if department
   Unit.where(department_id: department.department_id)
       .order(:unit_id)
-      .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }   # <-- CHANGED
+      .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
 else
   []
 end
