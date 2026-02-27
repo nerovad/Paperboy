@@ -109,7 +109,25 @@ namespace :db do
     migrate_org_table(mssql, "sub_units",       nil,           nil, table: "sub_units")
 
     # ---------------------------------------------------------------
-    # 6. Remap acl_group_id in form_templates
+    # 6. App data tables (direct copy)
+    # ---------------------------------------------------------------
+    app_tables = %w[
+      form_templates form_fields form_template_statuses form_template_routing_steps
+      status_changes saved_searches scheduled_reports help_tickets
+      authorization_managers authorized_approvers task_reassignments
+      parking_lot_submissions parking_lot_vehicles probation_transfer_requests
+      critical_information_reportings creative_job_requests
+      carpool_forms gym_locker_forms social_media_forms brown_mail_forms
+      osha301_forms rm75_forms leave_of_absence_forms
+      work_schedule_or_location_update_forms workplace_violence_forms
+      notice_of_change_forms testyyy_forms authorization_fos
+    ]
+    app_tables.each do |t|
+      migrate_org_table(mssql, t, nil, nil, table: t)
+    end
+
+    # ---------------------------------------------------------------
+    # 7. Remap acl_group_id in form_templates
     # ---------------------------------------------------------------
     puts "Remapping form_templates.acl_group_id..."
     FormTemplate.where.not(acl_group_id: nil).find_each do |ft|
@@ -118,7 +136,7 @@ namespace :db do
     end
 
     # ---------------------------------------------------------------
-    # 7. Remap restricted_to_group_id in form_fields
+    # 8. Remap restricted_to_group_id in form_fields
     # ---------------------------------------------------------------
     puts "Remapping form_fields.restricted_to_group_id..."
     FormField.where(restricted_to_type: "group").where.not(restricted_to_group_id: nil).find_each do |ff|
