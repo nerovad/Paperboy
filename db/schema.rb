@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_27_000010) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_28_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -274,8 +274,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_27_000010) do
     t.string "submission_type", default: "database"
     t.string "approval_routing_to"
     t.integer "approval_employee_id"
-    t.string "powerbi_workspace_id"
-    t.string "powerbi_report_id"
     t.boolean "has_dashboard", default: false
     t.text "inbox_buttons"
     t.string "status_transition_mode", default: "automatic"
@@ -284,6 +282,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_27_000010) do
     t.string "org_scope_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "metabase_dashboard_id"
     t.index ["class_name"], name: "index_form_templates_on_class_name", unique: true
   end
 

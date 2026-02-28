@@ -52,8 +52,7 @@ class FormTemplate < ApplicationRecord
   validates :submission_type, inclusion: { in: %w[database approval] }
   validates :approval_routing_to, presence: true, if: :requires_legacy_routing?
   validates :approval_employee_id, presence: true, if: :routes_to_specific_employee?
-  validates :powerbi_workspace_id, presence: true, if: :has_dashboard?
-  validates :powerbi_report_id, presence: true, if: :has_dashboard?
+  validates :metabase_dashboard_id, presence: true, if: :has_dashboard?
   validates :status_transition_mode, inclusion: { in: TRANSITION_MODES }, allow_nil: true
 
   validate :page_count_cannot_orphan_fields, on: :update

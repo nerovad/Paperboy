@@ -28,32 +28,16 @@
     </div>
 
     <!-- Dashboard Container -->
-    <% if @selected_form&.has_dashboard? %>
+    <% if @selected_form&.has_dashboard? && @embed_url %>
       <div class="dashboard-container" data-dashboards-target="container">
-        <!-- Loading State -->
-        <div class="dashboard-loading" data-dashboards-target="loading">
-          <div class="loading-spinner"></div>
-          <p>Loading dashboard...</p>
-        </div>
-
-        <!-- Error State -->
-        <div class="dashboard-error"
-             data-dashboards-target="error"
-             style="display: none;">
-          <div class="error-icon">⚠️</div>
-          <h3>Unable to Load Dashboard</h3>
-          <p data-dashboards-target="errorMessage"></p>
-          <button class="btn approve" data-action="click->dashboards#retry">
-            Retry
-          </button>
-        </div>
-
-        <!-- Power BI Embed Container -->
-        <div id="powerbi-report-container"
-             data-dashboards-target="reportContainer"
-             data-embed-config="<%= @embed_config.to_json %>"
-             style="display: none;">
-        </div>
+        <iframe
+          src="<%= @embed_url %>"
+          frameborder="0"
+          width="100%"
+          height="100%"
+          allowtransparency
+          data-dashboards-target="iframe">
+        </iframe>
       </div>
     <% elsif @selected_form %>
       <!-- No Dashboard Configured State -->
