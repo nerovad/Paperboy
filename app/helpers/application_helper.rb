@@ -36,7 +36,7 @@ module ApplicationHelper
 
 
   def fetch_acl_groups
-    Group.order(:group_name).pluck(:group_name, :id)
+    Group.order(:Group_Name).pluck(:Group_Name, :GroupID)
   rescue
     []
   end

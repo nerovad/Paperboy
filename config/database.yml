@@ -1,33 +1,38 @@
 # config/database.yml
 
+# Primary connection: SQL Server (GSABSS on gsasql16)
 default: &default
-  adapter: postgresql
-  host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
-  port: <%= ENV.fetch("POSTGRES_PORT", 5432).to_i %>
-  username: <%= ENV.fetch("POSTGRES_USERNAME", "postgres") %>
-  password: <%= ENV.fetch("POSTGRES_PASSWORD", "") %>
-  encoding: unicode
+  adapter: sqlserver
+  host: <%= ENV.fetch("GSABSS_HOST") %>
+  port: <%= ENV.fetch("GSABSS_PORT").to_i %>
+  username: <%= ENV.fetch("GSABSS_USERNAME") %>
+  password: <%= ENV.fetch("GSABSS_PASSWORD") %>
+  database: <%= ENV.fetch("GSABSS_DATABASE", "GSABSS") %>
+  timeout: <%= ENV.fetch("GSABSS_TIMEOUT", 5).to_i %>
+  encoding: utf8
   pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+
+# PostgreSQL config (commented out for future use):
+# default: &default
+#   adapter: postgresql
+#   host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
+#   port: <%= ENV.fetch("POSTGRES_PORT", 5432).to_i %>
+#   username: <%= ENV.fetch("POSTGRES_USERNAME", "postgres") %>
+#   password: <%= ENV.fetch("POSTGRES_PASSWORD", "") %>
+#   encoding: unicode
+#   pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
 
 development:
   <<: *default
-  database: <%= ENV.fetch("POSTGRES_DATABASE", "paperboy_development") %>
 
 test:
   <<: *default
-  database: <%= ENV.fetch("POSTGRES_DATABASE", "paperboy_test") %>
 
 production:
   <<: *default
-  database: <%= ENV.fetch("POSTGRES_DATABASE", "paperboy_production") %>
-  sslmode: <%= ENV.fetch("POSTGRES_SSLMODE", "require") %>
-  connect_timeout: 5
-  checkout_timeout: 5
-  variables:
-    statement_timeout: 30s
-    lock_timeout: 10s
 
 # MSSQL connection for billing stored procedures (TC60, Invoices)
+# Same DB server, separate connection pool
 billing:
   adapter: sqlserver
   host: <%= ENV.fetch("GSABSS_HOST") %>

@@ -298,7 +298,7 @@ class FormTemplatesController < ApplicationController
   end
   
   def fetch_acl_groups
-    Group.order(:group_name).pluck(:group_name, :id)
+    Group.order(:group_name).pluck(:group_name, :GroupID)
   rescue
     []
   end

@@ -133,8 +133,8 @@ class ApplicationController < ActionController::Base
 
     if employee_id.present?
       rows = EmployeeGroup.joins(:group)
-                          .where(employee_id: employee_id)
-                          .pluck("groups.group_name", :group_id)
+                          .where(EmployeeID: employee_id)
+                          .pluck("Groups.Group_Name", "Employee_Groups.GroupID")
 
       names = Set.new
       ids   = []

@@ -102,7 +102,7 @@ class FormField < ApplicationRecord
   # Get the name of the restricted group
   def restricted_group_name
     return nil unless restricted_to_group?
-    Group.find_by(id: restricted_to_group_id)&.group_name || "Group ##{restricted_to_group_id}"
+    Group.find_by(GroupID: restricted_to_group_id)&.group_name || "Group ##{restricted_to_group_id}"
   rescue
     "Group ##{restricted_to_group_id}"
   end

@@ -9,9 +9,8 @@ gem "sass-rails", ">= 6"
 
 # Use sqlite3 as the database for Active Record
 # gem "sqlite3", ">= 2.1"
-# PostgreSQL as primary database
-gem "pg"
-# MSSQL for billing stored procedures only
+# gem "pg"  # Uncomment to switch back to PostgreSQL
+# MSSQL (primary database + billing stored procedures)
 gem "tiny_tds"
 gem "activerecord-sqlserver-adapter"
 

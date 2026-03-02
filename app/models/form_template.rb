@@ -167,7 +167,7 @@ class FormTemplate < ApplicationRecord
 
   def acl_group_name
     return nil unless acl_group_id
-    Group.find_by(id: acl_group_id)&.group_name
+    Group.find_by(GroupID: acl_group_id)&.group_name
   end
   
   def page_header(page_num)
