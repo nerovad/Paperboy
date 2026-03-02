@@ -20,6 +20,12 @@ test:
 production:
   <<: *default
   database: <%= ENV.fetch("POSTGRES_DATABASE", "paperboy_production") %>
+  sslmode: <%= ENV.fetch("POSTGRES_SSLMODE", "require") %>
+  connect_timeout: 5
+  checkout_timeout: 5
+  variables:
+    statement_timeout: 30s
+    lock_timeout: 10s
 
 # MSSQL connection for billing stored procedures (TC60, Invoices)
 billing:
