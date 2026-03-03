@@ -517,7 +517,6 @@ DEPENDENCIES
   duo_web
   importmap-rails
   jbuilder
-  jwt
   kamal
   omniauth
   omniauth-entra-id

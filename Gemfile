@@ -37,8 +37,6 @@ gem 'sidekiq'
 gem "sidekiq-cron"
 gem "redis"
 
-# Metabase signed embedding
-gem 'jwt'
 
 #PDF Generation
 gem 'prawn'

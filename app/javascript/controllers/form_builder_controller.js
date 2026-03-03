@@ -675,16 +675,16 @@ export default class extends Controller {
   }
 
   // ============================================
-  // METABASE METHODS
+  // POWER BI METHODS
   // ============================================
 
-  // Toggle Metabase fields visibility based on has_dashboard selection
-  toggleMetabaseFields(event) {
+  // Toggle Power BI fields visibility based on has_dashboard selection
+  togglePowerBIFields(event) {
     const hasDashboard = event.target.value === 'true'
-    const metabaseFields = document.getElementById('metabase-fields')
+    const powerbiFields = document.getElementById('powerbi-fields')
 
-    if (metabaseFields) {
-      metabaseFields.style.display = hasDashboard ? 'block' : 'none'
+    if (powerbiFields) {
+      powerbiFields.style.display = hasDashboard ? 'block' : 'none'
     }
   }
 

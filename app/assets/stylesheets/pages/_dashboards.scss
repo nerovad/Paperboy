@@ -101,11 +101,17 @@
   }
 }
 
-/* Metabase iframe */
-.dashboard-container iframe {
+/* Power BI report container */
+#powerbi-report-container {
   width: 100%;
   height: 100%;
-  border: none;
+
+  /* Power BI iframe will fill this container */
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
 }
 
 /* Form selector - match reports page styling */
