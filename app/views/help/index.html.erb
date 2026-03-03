@@ -1,0 +1,52 @@
+<div class="form-header">
+  <h1>Help & Support</h1>
+</div>
+
+<div class="form-wrapper" data-controller="tabs" data-tabs-active-tab-value="<%= @active_tab %>">
+  <div class="help-tabs">
+    <button class="help-tab"
+            data-tabs-target="tab"
+            data-tab="documentation"
+            data-action="click->tabs#switch">
+      Documentation
+    </button>
+    <button class="help-tab"
+            data-tabs-target="tab"
+            data-tab="tickets"
+            data-action="click->tabs#switch">
+      Tickets
+    </button>
+  </div>
+
+  <%# ── Documentation Panel ── %>
+  <div data-tabs-target="panel" data-tab="documentation">
+    <nav class="docs-nav">
+      <a href="#getting-started">Getting Started</a>
+      <a href="#submitting-forms">Submitting Forms</a>
+      <a href="#inbox-approvals">Inbox & Approvals</a>
+      <a href="#submissions-tracking">Submissions</a>
+      <a href="#reports">Reports</a>
+      <a href="#dashboards">Dashboards</a>
+      <% if system_admin? %>
+        <a href="#admin-tools">Admin Tools</a>
+      <% end %>
+    </nav>
+
+    <div class="docs-content">
+      <%= render "help/docs/getting_started" %>
+      <%= render "help/docs/submitting_forms" %>
+      <%= render "help/docs/inbox_approvals" %>
+      <%= render "help/docs/submissions_tracking" %>
+      <%= render "help/docs/reports" %>
+      <%= render "help/docs/dashboards" %>
+      <% if system_admin? %>
+        <%= render "help/docs/admin_tools" %>
+      <% end %>
+    </div>
+  </div>
+
+  <%# ── Tickets Panel ── %>
+  <div data-tabs-target="panel" data-tab="tickets">
+    <%= render "help/tickets_list" %>
+  </div>
+</div>

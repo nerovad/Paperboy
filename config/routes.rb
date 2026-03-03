@@ -186,6 +186,7 @@ Rails.application.routes.draw do
   # Standard Forms (alphabetical)
   # ============================================================================
   resources :creative_job_requests, only: [:new, :create]
+  get "help", to: "help#index", as: :help
   resources :help_tickets, only: [:new, :create, :index, :show] do
     member do
       patch :close

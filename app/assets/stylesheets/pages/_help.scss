@@ -1,0 +1,139 @@
+.help-tabs {
+  display: flex;
+  border-bottom: 2px solid $border-color;
+  margin-bottom: 24px;
+  gap: 4px;
+
+  .help-tab {
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 500;
+    color: $muted;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    margin-bottom: -2px;
+    transition: color 0.15s, border-color 0.15s;
+
+    &:hover {
+      color: $brand-navy;
+    }
+
+    &.active {
+      color: $brand-navy;
+      border-bottom-color: $brand-navy;
+    }
+  }
+}
+
+.docs-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid $border-color;
+
+  a {
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: $brand-navy;
+    background: lighten($brand-navy, 58%);
+    border-radius: $radius-6;
+    text-decoration: none;
+    transition: background 0.15s;
+
+    &:hover {
+      background: lighten($brand-navy, 50%);
+    }
+  }
+}
+
+.docs-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.docs-section {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid $border-color;
+
+  &:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  h2 {
+    font-size: 20px;
+    color: $brand-navy;
+    margin-bottom: 12px;
+  }
+
+  h3 {
+    font-size: 16px;
+    color: $text-color;
+    margin: 16px 0 8px;
+  }
+
+  p, li {
+    font-size: 14px;
+    line-height: 1.6;
+    color: $text-color;
+  }
+
+  ul, ol {
+    padding-left: 20px;
+    margin: 8px 0;
+  }
+}
+
+.docs-card {
+  background: #f8f9fa;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  padding: 16px;
+  margin: 12px 0;
+
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: $brand-navy;
+    margin-bottom: 6px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  .help-tabs {
+    gap: 0;
+
+    .help-tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+  }
+
+  .docs-nav {
+    gap: 6px;
+
+    a {
+      font-size: 12px;
+      padding: 5px 10px;
+    }
+  }
+
+  .docs-content {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
