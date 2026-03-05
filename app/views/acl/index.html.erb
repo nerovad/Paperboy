@@ -1,64 +1,131 @@
 <!-- app/views/acl/index.html.erb -->
 <div class="form-header">
-  <h1>ACL - Group Management</h1>
+  <h1>ACL Management</h1>
 </div>
 
 <div class="form-wrapper acl-management" data-controller="group-select confirm-modal">
   <div class="acl-header">
-    <p class="acl-subtitle">Manage access control groups and their members.</p>
-    <%= link_to "+ Create New Group", new_acl_path, class: "btn approve" %>
+    <p class="acl-subtitle">Manage access control by organization hierarchy and groups.</p>
   </div>
 
-  <% if @groups.any? %>
-    <!-- Action panel (hidden until a group is selected) -->
-    <div class="action-panel" data-group-select-target="actionPanel" style="display:none;">
-      <div class="action-panel-content" data-group-select-target="actionsContainer">
-        <% @groups.each do |group| %>
-          <div class="task-actions" data-group-id="<%= group.id %>" style="display:none;">
-            <%= link_to "View Members", acl_path(group), class: "btn pdf" %>
-            <%= link_to "Add Permissions", permissions_acl_path(group), class: "btn pdf" %>
-            <%= link_to "Edit", edit_acl_path(group), class: "btn" %>
-            <button type="button"
-                    class="btn deny"
-                    data-action="click->confirm-modal#open"
-                    data-delete-path="<%= acl_path(group) %>"
-                    data-confirm-title="Delete Group"
-                    data-confirm-message="Are you sure you want to delete the group '<%= group.group_name %>'? All member assignments will be removed.">
-              Delete
-            </button>
-            <button type="button" class="btn close-panel" data-action="click->group-select#closePanel">Close</button>
-          </div>
-        <% end %>
-      </div>
+  <!-- ===== Organization Permissions ===== -->
+  <div class="acl-section" data-controller="gsabss-selects org-permissions" data-org-permissions-url-value="<%= org_permissions_acl_index_path %>">
+    <div class="acl-section-header">
+      <h2>Organization Permissions</h2>
+      <p class="acl-subtitle">Set permissions by Agency, Division, Department, or Unit. These apply to all employees in the selected org level.</p>
     </div>
 
-    <table class="submission-table">
-      <thead>
-        <tr>
-          <th>Group Name</th>
-          <th>Description</th>
-          <th>Members</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @groups.each do |group| %>
-          <tr class="selectable-row"
-              data-group-select-target="row"
-              data-group-id="<%= group.id %>"
-              data-action="click->group-select#select">
-            <td><%= group.group_name %></td>
-            <td><%= group.description %></td>
-            <td><%= @group_member_counts[group.id] || 0 %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  <% else %>
-    <div class="empty-state">
-      <p>No groups have been created yet.</p>
-      <p class="empty-state-hint">Click "+ Create New Group" to get started.</p>
+    <div class="acl-org-selects">
+      <div class="acl-org-row">
+        <div class="acl-org-field">
+          <label for="agency-select">Agency</label>
+          <%= select_tag "agency_id",
+                options_for_select([["Select Agency", ""]] + @agency_options),
+                id: "agency-select",
+                class: "form-control",
+                data: { gsabss_selects_target: "agency", org_permissions_target: "agency", action: "change->gsabss-selects#loadDivisions" } %>
+        </div>
+
+        <div class="acl-org-field">
+          <label for="division-select">Division</label>
+          <%= select_tag "division_id",
+                options_for_select([["Select Division", ""]]),
+                id: "division-select",
+                class: "form-control",
+                disabled: true,
+                data: { gsabss_selects_target: "division", org_permissions_target: "division", action: "change->gsabss-selects#loadDepartments" } %>
+        </div>
+
+        <div class="acl-org-field">
+          <label for="department-select">Department</label>
+          <%= select_tag "department_id",
+                options_for_select([["Select Department", ""]]),
+                id: "department-select",
+                class: "form-control",
+                disabled: true,
+                data: { gsabss_selects_target: "department", org_permissions_target: "department", action: "change->gsabss-selects#loadUnits" } %>
+        </div>
+
+        <div class="acl-org-field">
+          <label for="unit-select">Unit</label>
+          <%= select_tag "unit_id",
+                options_for_select([["Select Unit", ""]]),
+                id: "unit-select",
+                class: "form-control",
+                disabled: true,
+                data: { gsabss_selects_target: "unit", org_permissions_target: "unit" } %>
+        </div>
+      </div>
+
+      <div class="acl-org-actions">
+        <button type="button" class="btn approve" data-action="click->org-permissions#navigate">
+          Manage Permissions
+        </button>
+      </div>
     </div>
-  <% end %>
+  </div>
+
+  <!-- ===== Group Management ===== -->
+  <div class="acl-section">
+    <div class="acl-section-header">
+      <div class="acl-section-header-row">
+        <h2>Group Management</h2>
+        <%= link_to "+ Create New Group", new_acl_path, class: "btn approve" %>
+      </div>
+      <p class="acl-subtitle">Groups handle exceptions and outliers. Add specific employees to a group for permissions beyond their org level.</p>
+    </div>
+
+    <% if @groups.any? %>
+      <!-- Action panel (hidden until a group is selected) -->
+      <div class="action-panel" data-group-select-target="actionPanel" style="display:none;">
+        <div class="action-panel-content" data-group-select-target="actionsContainer">
+          <% @groups.each do |group| %>
+            <div class="task-actions" data-group-id="<%= group.id %>" style="display:none;">
+              <%= link_to "View Members", acl_path(group), class: "btn pdf" %>
+              <%= link_to "Add Permissions", permissions_acl_path(group), class: "btn pdf" %>
+              <%= link_to "Edit", edit_acl_path(group), class: "btn" %>
+              <button type="button"
+                      class="btn deny"
+                      data-action="click->confirm-modal#open"
+                      data-delete-path="<%= acl_path(group) %>"
+                      data-confirm-title="Delete Group"
+                      data-confirm-message="Are you sure you want to delete the group '<%= group.group_name %>'? All member assignments will be removed.">
+                Delete
+              </button>
+              <button type="button" class="btn close-panel" data-action="click->group-select#closePanel">Close</button>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <table class="submission-table">
+        <thead>
+          <tr>
+            <th>Group Name</th>
+            <th>Description</th>
+            <th>Members</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @groups.each do |group| %>
+            <tr class="selectable-row"
+                data-group-select-target="row"
+                data-group-id="<%= group.id %>"
+                data-action="click->group-select#select">
+              <td><%= group.group_name %></td>
+              <td><%= group.description %></td>
+              <td><%= @group_member_counts[group.id] || 0 %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty-state">
+        <p>No groups have been created yet.</p>
+        <p class="empty-state-hint">Click "+ Create New Group" to get started.</p>
+      </div>
+    <% end %>
+  </div>
 
   <%= render "shared/confirm_modal" %>
 </div>

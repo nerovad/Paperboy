@@ -1,0 +1,51 @@
+<!-- app/views/acl/org_permissions.html.erb -->
+<div class="form-header">
+  <h1>Organization Permissions</h1>
+</div>
+
+<div class="form-wrapper acl-management">
+  <div class="acl-header">
+    <div>
+      <p class="acl-subtitle">Configure permissions for:</p>
+      <p class="acl-org-label"><%= @org_label %></p>
+    </div>
+    <%= link_to "Back to ACL", acl_index_path, class: "btn" %>
+  </div>
+
+  <%= form_tag update_org_permissions_acl_index_path, method: :patch, data: { turbo: false } do %>
+    <%= hidden_field_tag :agency_id, @agency_id %>
+    <%= hidden_field_tag :division_id, @division_id %>
+    <%= hidden_field_tag :department_id, @department_id %>
+    <%= hidden_field_tag :unit_id, @unit_id %>
+
+    <div class="acl-permissions-section">
+      <h3>Profile Dropdown Items</h3>
+      <p class="acl-subtitle">Select which profile dropdown items are accessible at this organization level.</p>
+      <div class="permissions-grid">
+        <% @dropdown_items.each do |item| %>
+          <label class="permission-checkbox">
+            <%= check_box_tag "dropdown_permissions[]", item[:key], @org_dropdown_keys.include?(item[:key]) %>
+            <span><%= item[:label] %></span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="acl-permissions-section">
+      <h3>Form Template Access</h3>
+      <p class="acl-subtitle">Select which form templates are accessible at this organization level.</p>
+      <div class="permissions-grid">
+        <% @form_templates.each do |template| %>
+          <label class="permission-checkbox">
+            <%= check_box_tag "form_permissions[]", template.id.to_s, @org_form_keys.include?(template.id.to_s) %>
+            <span><%= template.name %></span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <%= submit_tag "Save Permissions", class: "btn approve" %>
+    </div>
+  <% end %>
+</div>

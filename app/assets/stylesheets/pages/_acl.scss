@@ -2,8 +2,10 @@
 @import "base/tokens";
 
 .acl-management {
+  max-width: 1100px;
   max-height: calc(100vh - 180px);
   overflow-y: auto;
+  overflow-x: hidden;
   margin: 0 auto;
 }
 
@@ -132,4 +134,89 @@
     font-weight: 600;
     color: $text-color;
   }
+}
+
+/* ACL Sections */
+.acl-section {
+  margin-bottom: 32px;
+  padding: 24px;
+  background-color: #f9f9f9;
+  border-radius: $radius-6;
+  border: 1px solid $border-color;
+}
+
+.acl-section-header {
+  margin-bottom: 20px;
+
+  h2 {
+    margin: 0 0 4px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: $text-color;
+  }
+
+  .acl-subtitle {
+    margin: 0;
+  }
+}
+
+.acl-section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+/* Organization selects */
+.acl-org-selects {
+  margin-top: 16px;
+}
+
+.acl-org-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.acl-org-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $text-color;
+  }
+
+  .form-control {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+}
+
+.acl-org-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Org permission label breadcrumb */
+.acl-org-label {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: $text-color;
+  margin: 4px 0 0;
 }

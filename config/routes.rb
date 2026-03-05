@@ -98,6 +98,10 @@ Rails.application.routes.draw do
       get :permissions
       patch :update_permissions
     end
+    collection do
+      get :org_permissions
+      patch :update_org_permissions
+    end
   end
 
   resources :billing_tools, only: [:new, :create] do

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_03_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_05_000001) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -666,6 +666,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_03_000001) do
   create_table "objects", primary_key: "object_id", id: { type: :integer, limit: 2, default: nil }, force: :cascade do |t|
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "org_permissions", force: :cascade do |t|
+    t.string "agency_id"
+    t.string "division_id"
+    t.string "department_id"
+    t.string "unit_id"
+    t.string "permission_type", null: false
+    t.string "permission_key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id", "division_id", "department_id", "unit_id", "permission_type", "permission_key"], name: "idx_org_permissions_unique", unique: true
+    t.index ["agency_id"], name: "index_org_permissions_on_agency_id"
+    t.index ["department_id"], name: "index_org_permissions_on_department_id"
+    t.index ["division_id"], name: "index_org_permissions_on_division_id"
+    t.index ["unit_id"], name: "index_org_permissions_on_unit_id"
   end
 
   create_table "osha301_forms", force: :cascade do |t|
