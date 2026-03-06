@@ -155,12 +155,41 @@ class ApplicationController < ActionController::Base
   end
 
   def load_user_permissions(permission_type)
-    group_ids = current_user_group_ids
-    return Set.new if group_ids.empty?
+    keys = Set.new
 
-    keys = GroupPermission.where(group_id: group_ids, permission_type: permission_type)
-                          .pluck(:permission_key)
-                          .to_set
+    # 1. Org-level permissions (cascading: agency → division → department → unit)
+    org = current_user_org_chain
+    if org[:agency_id].present?
+      # Collect permissions from each level of the hierarchy.
+      # Agency-level: only agency_id set, rest nil
+      # Division-level: agency_id + division_id set, rest nil
+      # etc.
+      conditions = [
+        { agency_id: org[:agency_id], division_id: nil, department_id: nil, unit_id: nil }
+      ]
+      if org[:division_id].present?
+        conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: nil, unit_id: nil }
+      end
+      if org[:department_id].present?
+        conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: org[:department_id], unit_id: nil }
+      end
+      if org[:unit_id].present?
+        conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: org[:department_id], unit_id: org[:unit_id] }
+      end
+
+      query = conditions.map { |c| OrgPermission.where(c.merge(permission_type: permission_type)) }.reduce(:or)
+      keys.merge(query.pluck(:permission_key))
+    end
+
+    # 2. Group-level permissions (additive on top of org)
+    group_ids = current_user_group_ids
+    if group_ids.any?
+      keys.merge(
+        GroupPermission.where(group_id: group_ids, permission_type: permission_type)
+                       .pluck(:permission_key)
+      )
+    end
+
     keys
   rescue
     Set.new

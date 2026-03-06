@@ -80,8 +80,12 @@
                    data-profile-dropdown-target="dropdown">
                 <%= link_to "Inbox", inbox_queue_path, class: "btn btn-primary" %>
                 <%= link_to "Submissions", submissions_path, class: "btn btn-primary" %>
-                <%= link_to "Reports", reports_path, class: "btn btn-info" %>
-                <%= link_to "Dashboards", dashboards_path, class: "btn btn-primary" %>
+                <% if system_admin? || current_user_dropdown_permissions.include?('reports') %>
+                  <%= link_to "Reports", reports_path, class: "btn btn-info" %>
+                <% end %>
+                <% if system_admin? || current_user_dropdown_permissions.include?('dashboards') %>
+                  <%= link_to "Dashboards", dashboards_path, class: "btn btn-primary" %>
+                <% end %>
 
                 <% if system_admin? || current_user_dropdown_permissions.include?('manage_forms') %>
                   <%= link_to "Manage Forms", form_templates_path, class: "btn btn-info" %>
