@@ -12,6 +12,7 @@ class AclController < ApplicationController
     { key: 'emulate',  label: 'Emulate' },
     { key: 'acl',          label: 'ACL' },
     { key: 'auth_console', label: 'Auth Console' },
+    { key: 'lookup_tables', label: 'Lookup Tables' },
   ].freeze
 
   def index

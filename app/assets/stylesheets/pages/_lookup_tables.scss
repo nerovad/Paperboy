@@ -1,0 +1,127 @@
+/* Pages: Lookup Tables Management */
+@import "base/tokens";
+
+.lookup-tables-management {
+  max-width: 1100px;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0 auto;
+}
+
+/* Grid of table cards */
+.lookup-tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.lookup-table-card {
+  background: #fff;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: box-shadow 0.15s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.lookup-table-card-header {
+  margin-bottom: 16px;
+
+  h3 {
+    margin: 0 0 4px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: $text-color;
+  }
+
+  .lookup-table-key {
+    font-size: 0.8rem;
+    color: $muted;
+    font-family: monospace;
+  }
+}
+
+.lookup-table-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Header actions row */
+.lookup-table-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Data table wrapper for horizontal scroll */
+.lookup-table-data-wrapper {
+  overflow-x: auto;
+  margin-top: 8px;
+
+  .submission-table {
+    min-width: 100%;
+    white-space: nowrap;
+
+    th, td {
+      padding: 10px 16px;
+      font-size: 0.9rem;
+    }
+  }
+}
+
+/* Add form */
+.lookup-add-form {
+  .lookup-form-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: $text-color;
+      font-family: monospace;
+    }
+  }
+
+  .lookup-field-meta {
+    font-size: 0.75rem;
+    color: $muted;
+    font-family: monospace;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid $border-color;
+  }
+}
+
+/* Empty state */
+.lookup-tables-management .empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: $muted;
+
+  p {
+    margin: 4px 0;
+  }
+
+  .empty-state-hint {
+    font-size: 0.9rem;
+  }
+}

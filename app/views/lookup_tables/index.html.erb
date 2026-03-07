@@ -1,0 +1,24 @@
+<div class="form-header">
+  <h1>Lookup Tables</h1>
+</div>
+
+<div class="form-wrapper lookup-tables-management">
+  <div class="acl-header">
+    <p class="acl-subtitle">View and manage reference data tables.</p>
+  </div>
+
+  <div class="lookup-tables-grid">
+    <% @tables.each do |table| %>
+      <div class="lookup-table-card">
+        <div class="lookup-table-card-header">
+          <h3><%= table[:name] %></h3>
+          <span class="lookup-table-key"><%= table[:table] %></span>
+        </div>
+        <div class="lookup-table-card-actions">
+          <%= link_to "View", lookup_table_path(id: table[:key]), class: "btn pdf" %>
+          <%= link_to "Add", new_lookup_table_path(id: table[:key]), class: "btn approve" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

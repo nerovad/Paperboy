@@ -1,0 +1,43 @@
+<div class="form-header">
+  <h1><%= @table_config[:name] %></h1>
+</div>
+
+<div class="form-wrapper lookup-tables-management">
+  <div class="acl-header">
+    <div class="acl-section-header-row">
+      <p class="acl-subtitle"><%= @rows.size %> record<%= @rows.size == 1 ? "" : "s" %></p>
+      <div class="lookup-table-header-actions">
+        <%= link_to "Add Record", new_lookup_table_path(id: @table_config[:key]), class: "btn approve" %>
+        <%= link_to "Back", lookup_tables_path, class: "btn" %>
+      </div>
+    </div>
+  </div>
+
+  <% if @rows.any? %>
+    <div class="lookup-table-data-wrapper">
+      <table class="submission-table">
+        <thead>
+          <tr>
+            <% @columns.each do |col| %>
+              <th><%= col[:name] %></th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% @rows.each do |row| %>
+            <tr>
+              <% @columns.each do |col| %>
+                <td><%= row[col[:name]] %></td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>No records in this table.</p>
+      <p class="empty-state-hint"><%= link_to "Add a record", new_lookup_table_path(id: @table_config[:key]) %> to get started.</p>
+    </div>
+  <% end %>
+</div>

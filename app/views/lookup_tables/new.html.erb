@@ -1,0 +1,38 @@
+<div class="form-header">
+  <h1>Add to <%= @table_config[:name] %></h1>
+</div>
+
+<div class="form-wrapper lookup-tables-management">
+  <div class="acl-header">
+    <p class="acl-subtitle">Insert a new record into <strong><%= @table_config[:table] %></strong>.</p>
+  </div>
+
+  <%= form_tag lookup_table_path(id: @table_config[:key]), method: :post, class: "lookup-add-form" do %>
+    <div class="lookup-form-fields">
+      <% @columns.each do |col| %>
+        <div class="form-group">
+          <label for="record_<%= col[:name] %>"><%= col[:name] %></label>
+          <% if col[:type] == :text %>
+            <%= text_area_tag "record[#{col[:name]}]", nil, id: "record_#{col[:name]}", class: "form-control", rows: 3 %>
+          <% elsif col[:type] == :integer || col[:type] == :decimal || col[:type] == :float %>
+            <%= number_field_tag "record[#{col[:name]}]", nil, id: "record_#{col[:name]}", class: "form-control", step: (col[:type] == :integer ? 1 : "any") %>
+          <% elsif col[:type] == :date %>
+            <%= date_field_tag "record[#{col[:name]}]", nil, id: "record_#{col[:name]}", class: "form-control" %>
+          <% elsif col[:type] == :datetime %>
+            <%= datetime_local_field_tag "record[#{col[:name]}]", nil, id: "record_#{col[:name]}", class: "form-control" %>
+          <% elsif col[:type] == :boolean %>
+            <%= select_tag "record[#{col[:name]}]", options_for_select([["", ""], ["True", "1"], ["False", "0"]]), id: "record_#{col[:name]}", class: "form-control" %>
+          <% else %>
+            <%= text_field_tag "record[#{col[:name]}]", nil, id: "record_#{col[:name]}", class: "form-control" %>
+          <% end %>
+          <span class="lookup-field-meta"><%= col[:sql_type] %></span>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="form-actions">
+      <%= submit_tag "Add Record", class: "btn approve" %>
+      <%= link_to "Cancel", lookup_table_path(id: @table_config[:key]), class: "btn" %>
+    </div>
+  <% end %>
+</div>
