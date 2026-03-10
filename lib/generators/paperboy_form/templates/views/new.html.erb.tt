@@ -57,6 +57,12 @@
       </div>
     </div>
 
+    <!--
+      IMPORTANT: When adding custom fields, column/field names MUST start with a letter or underscore.
+      Names starting with a number (e.g. :30_day_limit) are invalid Ruby symbols and will cause syntax errors.
+      Use :spending_limit_30_day instead of :30_day_spending_limit.
+    -->
+
     <!-- Page 2: Agency Info -->
     <div class="form-page" style="display:none;">
       <h2>Agency Info</h2>

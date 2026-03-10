@@ -13,6 +13,17 @@ class <%= class_name %> < ApplicationRecord
 
   # Minimal baseline validations; adjust or remove as needed
   validates :name, :email, presence: true
+  validate :column_names_must_be_valid_identifiers
+
+  # Rejects any column name starting with a digit — these break ERB symbol syntax.
+  # e.g. :30_day_spending_limit is invalid; use :spending_limit_30_day instead.
+  def column_names_must_be_valid_identifiers
+    self.class.column_names.each do |col|
+      unless col.match?(/\A[a-zA-Z_]/)
+        errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.")
+      end
+    end
+  end
 
   # For inbox queue display
   def status_label
