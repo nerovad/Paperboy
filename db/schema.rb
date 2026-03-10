@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_05_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_10_202643) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -767,6 +767,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_05_000001) do
     t.datetime "updated_at", null: false
     t.string "other_parking_lot", limit: 100
     t.index ["parking_lot_submission_id"], name: "index_parking_lot_vehicles_on_parking_lot_submission_id"
+  end
+
+  create_table "pcard_request_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.integer "status", default: 0
+    t.string "approver_id"
+    t.text "deny_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["approver_id"], name: "index_pcard_request_forms_on_approver_id"
+    t.index ["employee_id"], name: "index_pcard_request_forms_on_employee_id"
   end
 
   create_table "phases", primary_key: ["agency_id", "phase_id"], force: :cascade do |t|

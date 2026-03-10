@@ -53,8 +53,10 @@ class CriticalInformationReportingsController < ApplicationController
       []
     end
 
-    # Employee dropdown options (for Pages 4+)
-    @employee_options = Employee.select(:employee_id, :first_name, :last_name)
+    # Employee dropdown options (for Pages 4+) — scoped to General Services Agency
+    gsa = Agency.find_by(long_name: "General Services Agency")
+    @employee_options = Employee.where(agency: gsa&.agency_id)
+                                .select(:employee_id, :first_name, :last_name)
                                 .order(:last_name, :first_name)
                                 .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
     
@@ -115,7 +117,9 @@ class CriticalInformationReportingsController < ApplicationController
       []
     end
 
-    @employee_options = Employee.select(:employee_id, :first_name, :last_name)
+    gsa = Agency.find_by(long_name: "General Services Agency")
+    @employee_options = Employee.where(agency: gsa&.agency_id)
+                                .select(:employee_id, :first_name, :last_name)
                                 .order(:last_name, :first_name)
                                 .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
 
@@ -146,7 +150,9 @@ class CriticalInformationReportingsController < ApplicationController
         []
       end
 
-      @employee_options = Employee.select(:employee_id, :first_name, :last_name)
+      gsa = Agency.find_by(long_name: "General Services Agency")
+      @employee_options = Employee.where(agency: gsa&.agency_id)
+                                  .select(:employee_id, :first_name, :last_name)
                                   .order(:last_name, :first_name)
                                   .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
 
@@ -229,7 +235,9 @@ class CriticalInformationReportingsController < ApplicationController
       end
 
       # CRITICAL: Reload employee and location options for Pages 4+ when validation fails
-      @employee_options = Employee.select(:employee_id, :first_name, :last_name)
+      gsa = Agency.find_by(long_name: "General Services Agency")
+      @employee_options = Employee.where(agency: gsa&.agency_id)
+                                  .select(:employee_id, :first_name, :last_name)
                                   .order(:last_name, :first_name)
                                   .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
       
@@ -259,7 +267,7 @@ class CriticalInformationReportingsController < ApplicationController
   end
 
   def load_location_options
-    [
+    locations = [
       'AGOURA-899 N. KANAN RD.',
       'CAMARILLO-106 DURLEY AVE.',
       'CAMARILLO-1203 FLYNN RD. UNIT 220',
@@ -473,5 +481,23 @@ class CriticalInformationReportingsController < ApplicationController
       'VENTURA-950 COUNTY SQUARE DR.',
       'VENTURA-RINCON-5674 W. PACIFIC COAST HWY-PCH'
     ]
+
+    # Build a manager name lookup from the router's employee IDs
+    manager_ids = CriticalInformationLocationRouter::LOCATION_MANAGER_MAP.keys.map(&:to_i)
+    manager_names = Employee.where(employee_id: manager_ids)
+                            .pluck(:employee_id, :first_name, :last_name)
+                            .each_with_object({}) do |(eid, first, last), hash|
+      hash[eid.to_s] = "#{first} #{last}".strip
+    end
+
+    # Return [display_label, value] pairs with manager name appended
+    locations.map do |loc|
+      manager_id = CriticalInformationLocationRouter.find_manager_for_location(loc)
+      if manager_id && manager_names[manager_id]
+        ["#{loc} - #{manager_names[manager_id]}", loc]
+      else
+        [loc, loc]
+      end
+    end
   end
 end
