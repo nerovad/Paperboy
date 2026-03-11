@@ -125,7 +125,7 @@
             <%= form.text_field :brown_mail_location_number, class: "form-control", required: true %>
           </div>
 <div class="form-group flex-fill<%= '' %>">
-  <%= form.label :spending_limit_30_day, "30 Day Spending Limit" %>
+  <%= form.label :spending_limit_30_day, "Spending Limit 30 Day" %>
             <%= form.select :spending_limit_30_day,
                   options_for_select(['500', '550', '600', '650', '700', '750', '800', '850', '900', '950', '1000', '1050', '1100', '1150', '1200', '1250', '1300', '1350', '1400', '1450', '1500', '1550', '1600', '1650', '1700', '1750', '1800', '1850', '1900', '1950', '2000', '2050', '2100', '2150', '2200', '2250', '2300', '2350', '2400', '2450', '2500', '2550', '2600', '2650', '2700', '2750', '2800', '2850', '2900', '2950', '3000', '3050', '3100', '3150', '3200', '3250', '3300', '3350', '3400', '3450', '3500', '3550', '3600', '3650', '3700', '3750', '3800', '3850', '3900', '3950', '4000', '4050', '4100', '4150', '4200', '4250', '4300', '4350', '4400', '4450', '4500', '4550', '4600', '4650', '4700', '4750', '4800', '4850', '4900', '4950', '5000']),
                   { include_blank: "Select..." },
@@ -184,53 +184,77 @@
 <div class="form-page" style="display:none;">
   <h2>Billing Information</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+        <% field_733_editable = (session.dig(:user, 'employee_id').to_s == '123385') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_733_editable %>">
   <%= form.label :billing_official_name, "Billing Official Name" %>
-            <%= form.text_field :billing_official_name, class: "form-control", required: true %>
+            <small class="restriction-notice">To be filled by: Dana Vodantis</small>
+            <%= form.text_field :billing_official_name, class: "form-control", required: field_733_editable && true, disabled: !field_733_editable %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+        <% field_734_editable = (session.dig(:user, 'employee_id').to_s == '123385') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_734_editable %>">
   <%= form.label :title, "Title" %>
-            <%= form.text_field :title, class: "form-control", required: true %>
+            <small class="restriction-notice">To be filled by: Dana Vodantis</small>
+            <%= form.text_field :title, class: "form-control", required: field_734_editable && true, disabled: !field_734_editable %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+        <% field_735_editable = (session.dig(:user, 'employee_id').to_s == '123385') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_735_editable %>">
   <%= form.label :address, "Address" %>
-            <%= form.text_field :address, class: "form-control", required: true %>
+            <small class="restriction-notice">To be filled by: Dana Vodantis</small>
+            <%= form.text_field :address, class: "form-control", required: field_735_editable && true, disabled: !field_735_editable %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+        <% field_736_editable = (session.dig(:user, 'employee_id').to_s == '123385') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_736_editable %>">
   <%= form.label :city, "City" %>
-            <%= form.text_field :city, class: "form-control", required: true %>
+            <small class="restriction-notice">To be filled by: Dana Vodantis</small>
+            <%= form.text_field :city, class: "form-control", required: field_736_editable && true, disabled: !field_736_editable %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+        <% field_737_editable = (session.dig(:user, 'employee_id').to_s == '123385') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_737_editable %>">
   <%= form.label :state, "State" %>
-            <%= form.text_field :state, class: "form-control", required: true %>
+            <small class="restriction-notice">To be filled by: Dana Vodantis</small>
+            <%= form.text_field :state, class: "form-control", required: field_737_editable && true, disabled: !field_737_editable %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+        <% field_738_editable = (session.dig(:user, 'employee_id').to_s == '123385') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_738_editable %>">
   <%= form.label :zip, "Zip" %>
-            <%= form.text_field :zip, class: "form-control", required: true %>
+            <small class="restriction-notice">To be filled by: Dana Vodantis</small>
+            <%= form.text_field :zip, class: "form-control", required: field_738_editable && true, disabled: !field_738_editable %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+        <% field_739_editable = (session.dig(:user, 'employee_id').to_s == '123385') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_739_editable %>">
   <%= form.label :phone, "Phone" %>
-            <%= form.text_field :phone, class: "form-control", required: true %>
+            <small class="restriction-notice">To be filled by: Dana Vodantis</small>
+            <%= form.text_field :phone, class: "form-control", required: field_739_editable && true, disabled: !field_739_editable %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+        <% field_740_editable = (session.dig(:user, 'employee_id').to_s == '123385') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_740_editable %>">
   <%= form.label :org_number, "Org Number" %>
-            <%= form.text_field :org_number, class: "form-control", required: true %>
+            <small class="restriction-notice">To be filled by: Dana Vodantis</small>
+            <%= form.text_field :org_number, class: "form-control", required: field_740_editable && true, disabled: !field_740_editable %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+        <% field_741_editable = (session.dig(:user, 'employee_id').to_s == '123385') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_741_editable %>">
   <%= form.label :activity, "Activity" %>
-            <%= form.text_field :activity, class: "form-control", required: true %>
+            <small class="restriction-notice">To be filled by: Dana Vodantis</small>
+            <%= form.text_field :activity, class: "form-control", required: field_741_editable && true, disabled: !field_741_editable %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+        <% field_742_editable = (session.dig(:user, 'employee_id').to_s == '123385') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_742_editable %>">
   <%= form.label :function, "Function" %>
-            <%= form.text_field :function, class: "form-control", required: true %>
+            <small class="restriction-notice">To be filled by: Dana Vodantis</small>
+            <%= form.text_field :function, class: "form-control", required: field_742_editable && true, disabled: !field_742_editable %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+        <% field_743_editable = (session.dig(:user, 'employee_id').to_s == '123385') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_743_editable %>">
   <%= form.label :project, "Project" %>
-            <%= form.text_field :project, class: "form-control", required: true %>
+            <small class="restriction-notice">To be filled by: Dana Vodantis</small>
+            <%= form.text_field :project, class: "form-control", required: field_743_editable && true, disabled: !field_743_editable %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+        <% field_744_editable = (session.dig(:user, 'employee_id').to_s == '123385') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_744_editable %>">
   <%= form.label :category, "Category" %>
-            <%= form.text_field :category, class: "form-control", required: true %>
+            <small class="restriction-notice">To be filled by: Dana Vodantis</small>
+            <%= form.text_field :category, class: "form-control", required: field_744_editable && true, disabled: !field_744_editable %>
           </div>
         </div>
       </div>
