@@ -27,6 +27,9 @@ module FormsApp
     # config.eager_load_paths << Rails.root.join("extras")
     config.active_job.queue_adapter = :sidekiq
     config.middleware.use ActionDispatch::Cookies
-    config.middleware.use ActionDispatch::Session::CookieStore
+    config.middleware.use ActionDispatch::Session::CookieStore,
+      key: "_paperboy_session",
+      same_site: :lax,
+      secure: Rails.env.production?
   end
 end
