@@ -1,0 +1,126 @@
+<div class="form-row d-flex flex-wrap">
+  <div class="form-group flex-fill">
+    <%= form.label :first_name, "First Name" %>
+    <%= form.text_field :first_name, class: "form-control", required: true %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :last_name, "Last Name" %>
+    <%= form.text_field :last_name, class: "form-control", required: true %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :agency, "Agency / Department" %>
+    <%= form.text_field :agency, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :division, "Division" %>
+    <%= form.text_field :division, class: "form-control" %>
+  </div>
+</div>
+
+<div class="form-row d-flex flex-wrap">
+  <div class="form-group flex-fill">
+    <%= form.label :mail_stop, "Mail Stop" %>
+    <%= form.text_field :mail_stop, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :address, "Address" %>
+    <%= form.text_field :address, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :city, "City" %>
+    <%= form.text_field :city, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :state, "State" %>
+    <%= form.text_field :state, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :zip, "Zip" %>
+    <%= form.text_field :zip, class: "form-control" %>
+  </div>
+</div>
+
+<div class="form-row d-flex flex-wrap">
+  <div class="form-group flex-fill">
+    <%= form.label :phone, "Phone" %>
+    <%= form.text_field :phone, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :single_purchase_limit, "Single Purchase Limit" %>
+    <%= form.number_field :single_purchase_limit, class: "form-control", step: "0.01" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :monthly_limit, "Monthly Limit" %>
+    <%= form.number_field :monthly_limit, class: "form-control", step: "0.01" %>
+  </div>
+</div>
+
+<div class="form-row d-flex flex-wrap">
+  <div class="form-group flex-fill">
+    <%= form.label :card_number, "Card Number" %>
+    <%= form.text_field :card_number, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :issued_date, "Issued Date" %>
+    <%= form.date_field :issued_date, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :expiration_date, "Expiration Date" %>
+    <%= form.date_field :expiration_date, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :canceled_date, "Canceled Date" %>
+    <%= form.date_field :canceled_date, class: "form-control" %>
+  </div>
+</div>
+
+<div class="form-row d-flex flex-wrap">
+  <div class="form-group flex-fill">
+    <%= form.label :agent, "Agent" %>
+    <%= form.text_field :agent, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :company, "Company" %>
+    <%= form.text_field :company, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :division_number, "Division #" %>
+    <%= form.text_field :division_number, class: "form-control" %>
+  </div>
+</div>
+
+<div class="form-row d-flex flex-wrap">
+  <div class="form-group flex-fill">
+    <%= form.label :approver_name, "Approver Name" %>
+    <%= form.text_field :approver_name, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :org_number, "Org #" %>
+    <%= form.text_field :org_number, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :dept_head_agency, "Dept Head / Agency" %>
+    <%= form.text_field :dept_head_agency, class: "form-control" %>
+  </div>
+
+  <div class="form-group flex-fill">
+    <%= form.label :billing_contact, "Billing Contact" %>
+    <%= form.text_field :billing_contact, class: "form-control" %>
+  </div>
+</div>

@@ -1,0 +1,156 @@
+/* Pages: P-Card Inventory */
+@import "base/tokens";
+
+.pcard-inventory {
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  margin: 0 auto;
+}
+
+// Toolbar with search, filters, and action buttons
+.inventory-toolbar {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid $border-color;
+}
+
+.inventory-search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  .form-control {
+    max-width: 400px;
+    flex: 1;
+  }
+}
+
+.inventory-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.inventory-filters {
+  display: flex;
+  gap: 4px;
+
+  .btn {
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    background-color: #f9f9f9;
+    border: 1px solid $border-color;
+
+    &.active {
+      background-color: $primary-color;
+      color: white;
+      border-color: $primary-color;
+    }
+  }
+}
+
+.inventory-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+// Table
+.inventory-table-wrapper {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+    white-space: nowrap;
+  }
+
+  th {
+    background-color: #f9f9f9;
+    font-weight: 600;
+    color: $label-color;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  tbody tr {
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: #fafafa;
+    }
+  }
+
+  .canceled-row {
+    opacity: 0.6;
+
+    td {
+      text-decoration: line-through;
+      text-decoration-color: rgba(0, 0, 0, 0.3);
+    }
+
+    td:last-child {
+      text-decoration: none;
+    }
+  }
+}
+
+// Card number masking
+.card-number {
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+
+.text-muted {
+  color: $muted;
+}
+
+// Status badges
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  &.active-card {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  &.expired {
+    background-color: #fff3e0;
+    color: #e65100;
+  }
+
+  &.canceled {
+    background-color: #ffebee;
+    color: #c62828;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .inventory-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .inventory-search {
+    flex-wrap: wrap;
+
+    .form-control {
+      max-width: 100%;
+    }
+  }
+}

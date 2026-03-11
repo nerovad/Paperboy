@@ -1,0 +1,95 @@
+<div class="form-header">
+  <h1>P-Card Inventory</h1>
+</div>
+
+<div class="form-wrapper pcard-inventory">
+  <div class="inventory-toolbar">
+    <div class="inventory-search">
+      <%= form_with url: pcard_inventory_index_path, method: :get, data: { turbo: false } do %>
+        <%= text_field_tag :search, params[:search], placeholder: "Search by name, card #, or agency...", class: "form-control" %>
+        <%= hidden_field_tag :filter, params[:filter] %>
+        <%= submit_tag "Search", class: "btn" %>
+        <% if params[:search].present? %>
+          <%= link_to "Clear", pcard_inventory_index_path(filter: params[:filter]), class: "btn" %>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="inventory-actions">
+      <div class="inventory-filters">
+        <%= link_to "All", pcard_inventory_index_path(search: params[:search]),
+              class: "btn #{params[:filter].blank? ? 'active' : ''}" %>
+        <%= link_to "Active", pcard_inventory_index_path(filter: "active", search: params[:search]),
+              class: "btn #{params[:filter] == 'active' ? 'active' : ''}" %>
+        <%= link_to "Canceled", pcard_inventory_index_path(filter: "canceled", search: params[:search]),
+              class: "btn #{params[:filter] == 'canceled' ? 'active' : ''}" %>
+      </div>
+
+      <div class="inventory-buttons">
+        <%= link_to "+ Add Card", new_pcard_inventory_path, class: "btn approve" %>
+        <%= link_to "Export CSV", export_pcard_inventory_index_path(filter: params[:filter]),
+              class: "btn pdf" %>
+      </div>
+    </div>
+  </div>
+
+  <% if @pcard_inventories.any? %>
+    <div class="inventory-table-wrapper">
+      <table class="inventory-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Agency/Dept</th>
+            <th>Division</th>
+            <th>Phone</th>
+            <th>Single Limit</th>
+            <th>Monthly Limit</th>
+            <th>Card #</th>
+            <th>Issued</th>
+            <th>Expires</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @pcard_inventories.each do |card| %>
+            <tr class="<%= 'canceled-row' if card.canceled_date.present? %>">
+              <td><%= card.last_name %>, <%= card.first_name %></td>
+              <td><%= card.agency %></td>
+              <td><%= card.division %></td>
+              <td><%= card.phone %></td>
+              <td><%= number_to_currency(card.single_purchase_limit) if card.single_purchase_limit %></td>
+              <td><%= number_to_currency(card.monthly_limit) if card.monthly_limit %></td>
+              <td>
+                <% if card.card_number.present? %>
+                  <span class="card-number">****<%= card.card_number.last(4) %></span>
+                <% else %>
+                  <span class="text-muted">--</span>
+                <% end %>
+              </td>
+              <td><%= card.issued_date&.strftime("%m/%d/%Y") %></td>
+              <td><%= card.expiration_date&.strftime("%m/%d/%Y") %></td>
+              <td>
+                <% if card.canceled_date.present? %>
+                  <span class="status-badge canceled">Canceled</span>
+                <% elsif card.expiration_date.present? && card.expiration_date < Date.today %>
+                  <span class="status-badge expired">Expired</span>
+                <% else %>
+                  <span class="status-badge active-card">Active</span>
+                <% end %>
+              </td>
+              <td>
+                <%= link_to "Edit", edit_pcard_inventory_path(card), class: "btn btn-sm" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>No P-Card inventory records found.</p>
+      <p class="empty-state-hint">Click "+ Add Card" to add a new record, or records will be auto-created when P-Card requests are approved.</p>
+    </div>
+  <% end %>
+</div>

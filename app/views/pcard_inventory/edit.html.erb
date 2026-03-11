@@ -1,0 +1,14 @@
+<div class="form-header">
+  <h1>Edit P-Card Inventory Record</h1>
+</div>
+
+<div class="form-wrapper pcard-inventory">
+  <%= form_with model: @pcard_inventory, url: pcard_inventory_path(@pcard_inventory), local: true do |form| %>
+    <%= render "form", form: form %>
+
+    <div class="form-actions">
+      <%= form.submit "Update Record", class: "btn approve" %>
+      <%= link_to "Cancel", pcard_inventory_index_path, class: "btn" %>
+    </div>
+  <% end %>
+</div>

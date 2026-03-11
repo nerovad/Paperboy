@@ -3,7 +3,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
   before_action :set_current_user
   helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain,
-                :auth_console_admin?, :auth_console_user?, :current_user_dropdown_permissions, :current_user_form_permission_ids
+                :auth_console_admin?, :auth_console_user?, :pcard_admin?, :current_user_dropdown_permissions, :current_user_form_permission_ids
 
   def current_user
     user_data = session[:user]
@@ -102,6 +102,11 @@ class ApplicationController < ActionController::Base
   def auth_console_user?
     auth_console_admin? ||
       current_user_group_names.include?("auth_console_approvers")
+  end
+
+  def pcard_admin?
+    current_user_group_names.include?("system_admins") ||
+      current_user_group_names.include?("pcard_admin")
   end
 
   def current_user_dropdown_permissions

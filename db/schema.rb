@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_10_202643) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_11_000001) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -769,6 +769,38 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_10_202643) do
     t.index ["parking_lot_submission_id"], name: "index_parking_lot_vehicles_on_parking_lot_submission_id"
   end
 
+  create_table "pcard_inventories", force: :cascade do |t|
+    t.string "last_name"
+    t.string "first_name"
+    t.string "agency"
+    t.string "division"
+    t.string "mail_stop"
+    t.string "address"
+    t.string "city"
+    t.string "state"
+    t.string "zip"
+    t.string "phone"
+    t.decimal "single_purchase_limit", precision: 10, scale: 2
+    t.decimal "monthly_limit", precision: 10, scale: 2
+    t.string "card_number"
+    t.date "issued_date"
+    t.date "expiration_date"
+    t.date "canceled_date"
+    t.string "agent"
+    t.string "company"
+    t.string "division_number"
+    t.string "approver_name"
+    t.string "org_number"
+    t.string "dept_head_agency"
+    t.string "billing_contact"
+    t.bigint "pcard_request_form_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["card_number"], name: "index_pcard_inventories_on_card_number"
+    t.index ["last_name"], name: "index_pcard_inventories_on_last_name"
+    t.index ["pcard_request_form_id"], name: "index_pcard_inventories_on_pcard_request_form_id"
+  end
+
   create_table "pcard_request_forms", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
@@ -1067,4 +1099,5 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_10_202643) do
   add_foreign_key "form_template_routing_steps", "form_templates"
   add_foreign_key "form_template_statuses", "form_templates"
   add_foreign_key "parking_lot_vehicles", "parking_lot_submissions"
+  add_foreign_key "pcard_inventories", "pcard_request_forms"
 end

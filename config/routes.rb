@@ -93,6 +93,12 @@ Rails.application.routes.draw do
     resources :impersonations, only: [:new, :create, :destroy]
   end
 
+  resources :pcard_inventory, only: [:index, :new, :create, :edit, :update] do
+    collection do
+      get :export
+    end
+  end
+
   resources :authorization_console, only: [:index, :new, :create, :edit, :update, :destroy] do
     collection do
       delete :destroy_all_for_employee
