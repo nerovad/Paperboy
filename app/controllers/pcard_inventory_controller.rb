@@ -35,7 +35,10 @@ class PcardInventoryController < ApplicationController
   end
 
   def update
-    if @pcard_inventory.update(pcard_inventory_params)
+    filtered_params = pcard_inventory_params
+    filtered_params.delete(:card_number) if filtered_params[:card_number].blank?
+
+    if @pcard_inventory.update(filtered_params)
       redirect_to pcard_inventory_index_path, notice: "P-Card inventory record updated."
     else
       render :edit, status: :unprocessable_entity
@@ -98,7 +101,7 @@ class PcardInventoryController < ApplicationController
         csv << [
           r.last_name, r.first_name, r.agency, r.division, r.mail_stop,
           r.address, r.city, r.state, r.zip, r.phone,
-          r.single_purchase_limit, r.monthly_limit, r.card_number,
+          r.single_purchase_limit, r.monthly_limit, r.masked_card_number,
           r.issued_date, r.expiration_date, r.canceled_date,
           r.agent, r.company, r.division_number, r.approver_name,
           r.org_number, r.dept_head_agency, r.billing_contact

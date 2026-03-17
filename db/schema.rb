@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_11_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_17_000001) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -796,6 +796,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_11_000001) do
     t.bigint "pcard_request_form_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "card_last_four", limit: 4
     t.index ["card_number"], name: "index_pcard_inventories_on_card_number"
     t.index ["last_name"], name: "index_pcard_inventories_on_last_name"
     t.index ["pcard_request_form_id"], name: "index_pcard_inventories_on_pcard_request_form_id"

@@ -67,7 +67,12 @@
 <div class="form-row d-flex flex-wrap">
   <div class="form-group flex-fill">
     <%= form.label :card_number, "Card Number" %>
-    <%= form.text_field :card_number, class: "form-control" %>
+    <% if form.object.persisted? && form.object.card_last_four.present? %>
+      <p class="form-control-plaintext">****<%= form.object.card_last_four %></p>
+      <%= form.text_field :card_number, class: "form-control", placeholder: "Enter new card number to replace", value: "" %>
+    <% else %>
+      <%= form.text_field :card_number, class: "form-control", placeholder: "Enter card number" %>
+    <% end %>
   </div>
 
   <div class="form-group flex-fill">

@@ -61,8 +61,8 @@
               <td><%= number_to_currency(card.single_purchase_limit) if card.single_purchase_limit %></td>
               <td><%= number_to_currency(card.monthly_limit) if card.monthly_limit %></td>
               <td>
-                <% if card.card_number.present? %>
-                  <span class="card-number">****<%= card.card_number.last(4) %></span>
+                <% if card.card_last_four.present? %>
+                  <span class="card-number">****<%= card.card_last_four %></span>
                 <% else %>
                   <span class="text-muted">--</span>
                 <% end %>
