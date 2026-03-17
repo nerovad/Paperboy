@@ -221,13 +221,14 @@
             required: true %>
     </div>
 
-    <div class="form-group">
+    <div class="form-group overflow-visible" data-controller="choices">
       <%= form.label :impacted_customers, "Impacted Customers" %>
       <%= form.select :impacted_customers,
             options_for_select(@agency_options),
-            { prompt: 'Select Agency' },
+            {},
             class: "form-control",
-            required: true %>
+            multiple: true,
+            data: { choices_target: "select", placeholder: "Select agencies..." } %>
     </div>
   </div>
 </div>
