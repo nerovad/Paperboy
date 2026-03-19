@@ -23,6 +23,9 @@ export default class extends Controller {
     "approvalRoutingContainer",
     "routingStepsContainer",
     "routingStepItem",
+    "statusConfigSection",
+    "statusAutoMessage",
+    "statusManualConfig",
     "statusesContainer",
     "statusItem",
     "predefinedStatusesList",
@@ -325,8 +328,9 @@ export default class extends Controller {
   toggleApprovalRouting(event) {
     const submissionType = event.target.value
     const container = this.approvalRoutingContainerTarget
+    const isApproval = submissionType === 'approval'
 
-    if (submissionType === 'approval') {
+    if (isApproval) {
       container.style.display = 'block'
       // Add a default routing step if none exist
       if (this.routingStepItemTargets.length === 0) {
@@ -336,6 +340,14 @@ export default class extends Controller {
       container.style.display = 'none'
       // Clear all routing steps
       this.routingStepsContainerTarget.innerHTML = ''
+    }
+
+    // Toggle status config: approval shows auto message, database shows manual config
+    if (this.hasStatusAutoMessageTarget) {
+      this.statusAutoMessageTarget.style.display = isApproval ? 'block' : 'none'
+    }
+    if (this.hasStatusManualConfigTarget) {
+      this.statusManualConfigTarget.style.display = isApproval ? 'none' : 'block'
     }
   }
 

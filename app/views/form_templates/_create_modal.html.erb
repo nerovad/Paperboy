@@ -190,24 +190,31 @@
             </div>
           </div>
 
-          <div class="form-group">
+          <div class="form-group" data-form-builder-target="statusConfigSection">
             <label>Status Configuration</label>
-            <small class="form-text" style="display: block; margin-bottom: 10px;">
-              Select the statuses available for this form. Choose from predefined statuses or add custom ones.
-            </small>
-            <div class="statuses-container" data-form-builder-target="statusesContainer">
+
+            <div data-form-builder-target="statusAutoMessage" style="display: none; padding: 12px; background: #e8f4f8; border-radius: 6px; color: #0c5460;">
+              Statuses are auto-generated from your routing steps (e.g. "Sent to Supervisor", "Approved", "Denied"). You can customize them later from the edit page.
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-              <button type="button"
-                      class="btn btn-secondary btn-sm"
-                      data-action="click->form-builder#showStatusPicker">
-                + Add Predefined Status
-              </button>
-              <button type="button"
-                      class="btn btn-secondary btn-sm"
-                      data-action="click->form-builder#addCustomStatus">
-                + Add Custom Status
-              </button>
+
+            <div data-form-builder-target="statusManualConfig">
+              <small class="form-text" style="display: block; margin-bottom: 10px;">
+                Select the statuses available for this form. Choose from predefined statuses or add custom ones.
+              </small>
+              <div class="statuses-container" data-form-builder-target="statusesContainer">
+              </div>
+              <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button type="button"
+                        class="btn btn-secondary btn-sm"
+                        data-action="click->form-builder#showStatusPicker">
+                  + Add Predefined Status
+                </button>
+                <button type="button"
+                        class="btn btn-secondary btn-sm"
+                        data-action="click->form-builder#addCustomStatus">
+                  + Add Custom Status
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -225,117 +225,124 @@
             </div>
           </div>
 
-          <div class="form-group">
+          <div class="form-group" data-form-builder-target="statusConfigSection">
             <label>Status Configuration</label>
-            <small class="form-text" style="display: block; margin-bottom: 10px; color: #6c757d;">
-              Configure the statuses available for this form. Choose from predefined statuses or add custom ones.
-            </small>
-            <div class="statuses-container" data-form-builder-target="statusesContainer">
-              <% if @form_template.statuses.any? %>
-                <% @form_template.statuses.ordered.each_with_index do |status, index| %>
-                  <% if status.predefined? %>
-                    <div class="status-item" data-form-builder-target="statusItem" style="background: #f8f9fa; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #28a745;">
-                      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <span class="status-position" style="font-weight: bold; color: #6c757d; min-width: 30px;">#<%= index + 1 %></span>
 
-                        <div class="status-name-display" style="flex: 1; min-width: 120px;">
-                          <span class="status-name-text" style="font-weight: 500;"><%= status.name %></span>
-                          <input type="hidden" name="statuses[][name]" class="status-name-input" value="<%= status.name %>">
-                          <input type="hidden" name="statuses[][key]" class="status-key-input" value="<%= status.key %>">
+            <div data-form-builder-target="statusAutoMessage" style="<%= 'display: none;' unless @form_template.requires_approval? %>; padding: 12px; background: #e8f4f8; border-radius: 6px; color: #0c5460;">
+              Statuses are auto-generated from your routing steps (e.g. "Sent to Supervisor", "Approved", "Denied"). You can add extra statuses below if needed.
+            </div>
+
+            <div data-form-builder-target="statusManualConfig" style="<%= 'display: none;' if @form_template.requires_approval? %>">
+              <small class="form-text" style="display: block; margin-bottom: 10px; color: #6c757d;">
+                Configure the statuses available for this form. Choose from predefined statuses or add custom ones.
+              </small>
+              <div class="statuses-container" data-form-builder-target="statusesContainer">
+                <% if @form_template.statuses.user_configured.any? %>
+                  <% @form_template.statuses.user_configured.ordered.each_with_index do |status, index| %>
+                    <% if status.predefined? %>
+                      <div class="status-item" data-form-builder-target="statusItem" style="background: #f8f9fa; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #28a745;">
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                          <span class="status-position" style="font-weight: bold; color: #6c757d; min-width: 30px;">#<%= index + 1 %></span>
+
+                          <div class="status-name-display" style="flex: 1; min-width: 120px;">
+                            <span class="status-name-text" style="font-weight: 500;"><%= status.name %></span>
+                            <input type="hidden" name="statuses[][name]" class="status-name-input" value="<%= status.name %>">
+                            <input type="hidden" name="statuses[][key]" class="status-key-input" value="<%= status.key %>">
+                          </div>
+
+                          <div class="status-category-display" style="min-width: 100px;">
+                            <span class="badge <%= category_badge_class(status.category.to_sym) %>"><%= status.category_label %></span>
+                            <input type="hidden" name="statuses[][category]" class="status-category-input" value="<%= status.category %>">
+                          </div>
+
+                          <div class="status-flags" style="display: flex; gap: 15px; min-width: 180px;">
+                            <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
+                              <input type="checkbox" name="statuses[][is_initial]" value="1" class="status-initial-input" <%= 'checked' if status.is_initial %>>
+                              Initial
+                            </label>
+                            <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
+                              <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input" <%= 'checked' if status.is_end %>>
+                              End
+                            </label>
+                          </div>
+
+                          <input type="hidden" name="statuses[][position]" class="status-position-input" value="<%= index %>">
+
+                          <button type="button"
+                                  class="btn btn-danger btn-sm"
+                                  data-action="click->form-builder#removeStatus"
+                                  style="padding: 4px 8px;">
+                            Remove
+                          </button>
                         </div>
-
-                        <div class="status-category-display" style="min-width: 100px;">
-                          <span class="badge <%= category_badge_class(status.category.to_sym) %>"><%= status.category_label %></span>
-                          <input type="hidden" name="statuses[][category]" class="status-category-input" value="<%= status.category %>">
-                        </div>
-
-                        <div class="status-flags" style="display: flex; gap: 15px; min-width: 180px;">
-                          <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-                            <input type="checkbox" name="statuses[][is_initial]" value="1" class="status-initial-input" <%= 'checked' if status.is_initial %>>
-                            Initial
-                          </label>
-                          <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-                            <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input" <%= 'checked' if status.is_end %>>
-                            End
-                          </label>
-                        </div>
-
-                        <input type="hidden" name="statuses[][position]" class="status-position-input" value="<%= index %>">
-
-                        <button type="button"
-                                class="btn btn-danger btn-sm"
-                                data-action="click->form-builder#removeStatus"
-                                style="padding: 4px 8px;">
-                          Remove
-                        </button>
                       </div>
-                    </div>
-                  <% else %>
-                    <div class="status-item custom-status-item" data-form-builder-target="statusItem" style="background: #fff3cd; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #ffc107;">
-                      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <span class="status-position" style="font-weight: bold; color: #6c757d; min-width: 30px;">#<%= index + 1 %></span>
+                    <% else %>
+                      <div class="status-item custom-status-item" data-form-builder-target="statusItem" style="background: #fff3cd; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #ffc107;">
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                          <span class="status-position" style="font-weight: bold; color: #6c757d; min-width: 30px;">#<%= index + 1 %></span>
 
-                        <div style="flex: 1; min-width: 150px;">
-                          <input type="text"
-                                 name="statuses[][name]"
-                                 class="form-control form-control-sm status-name-input"
-                                 placeholder="Status name"
-                                 value="<%= status.name %>"
-                                 required
-                                 data-action="input->form-builder#generateStatusKey">
-                          <input type="hidden" name="statuses[][key]" class="status-key-input" value="<%= status.key %>">
+                          <div style="flex: 1; min-width: 150px;">
+                            <input type="text"
+                                   name="statuses[][name]"
+                                   class="form-control form-control-sm status-name-input"
+                                   placeholder="Status name"
+                                   value="<%= status.name %>"
+                                   required
+                                   data-action="input->form-builder#generateStatusKey">
+                            <input type="hidden" name="statuses[][key]" class="status-key-input" value="<%= status.key %>">
+                          </div>
+
+                          <div style="min-width: 140px;">
+                            <select name="statuses[][category]"
+                                    class="form-control form-control-sm status-category-input"
+                                    required>
+                              <option value="">Map to category...</option>
+                              <option value="pending" <%= 'selected' if status.category == 'pending' %>>Pending</option>
+                              <option value="in_review" <%= 'selected' if status.category == 'in_review' %>>In Review</option>
+                              <option value="approved" <%= 'selected' if status.category == 'approved' %>>Approved</option>
+                              <option value="denied" <%= 'selected' if status.category == 'denied' %>>Denied</option>
+                              <option value="cancelled" <%= 'selected' if status.category == 'cancelled' %>>Cancelled</option>
+                              <option value="scheduled" <%= 'selected' if status.category == 'scheduled' %>>Scheduled</option>
+                            </select>
+                          </div>
+
+                          <div class="status-flags" style="display: flex; gap: 15px; min-width: 180px;">
+                            <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
+                              <input type="checkbox" name="statuses[][is_initial]" value="1" class="status-initial-input" <%= 'checked' if status.is_initial %>>
+                              Initial
+                            </label>
+                            <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
+                              <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input" <%= 'checked' if status.is_end %>>
+                              End
+                            </label>
+                          </div>
+
+                          <input type="hidden" name="statuses[][position]" class="status-position-input" value="<%= index %>">
+
+                          <button type="button"
+                                  class="btn btn-danger btn-sm"
+                                  data-action="click->form-builder#removeStatus"
+                                  style="padding: 4px 8px;">
+                            Remove
+                          </button>
                         </div>
-
-                        <div style="min-width: 140px;">
-                          <select name="statuses[][category]"
-                                  class="form-control form-control-sm status-category-input"
-                                  required>
-                            <option value="">Map to category...</option>
-                            <option value="pending" <%= 'selected' if status.category == 'pending' %>>Pending</option>
-                            <option value="in_review" <%= 'selected' if status.category == 'in_review' %>>In Review</option>
-                            <option value="approved" <%= 'selected' if status.category == 'approved' %>>Approved</option>
-                            <option value="denied" <%= 'selected' if status.category == 'denied' %>>Denied</option>
-                            <option value="cancelled" <%= 'selected' if status.category == 'cancelled' %>>Cancelled</option>
-                            <option value="scheduled" <%= 'selected' if status.category == 'scheduled' %>>Scheduled</option>
-                          </select>
-                        </div>
-
-                        <div class="status-flags" style="display: flex; gap: 15px; min-width: 180px;">
-                          <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-                            <input type="checkbox" name="statuses[][is_initial]" value="1" class="status-initial-input" <%= 'checked' if status.is_initial %>>
-                            Initial
-                          </label>
-                          <label style="font-size: 0.85em; display: flex; align-items: center; gap: 4px; margin: 0;">
-                            <input type="checkbox" name="statuses[][is_end]" value="1" class="status-end-input" <%= 'checked' if status.is_end %>>
-                            End
-                          </label>
-                        </div>
-
-                        <input type="hidden" name="statuses[][position]" class="status-position-input" value="<%= index %>">
-
-                        <button type="button"
-                                class="btn btn-danger btn-sm"
-                                data-action="click->form-builder#removeStatus"
-                                style="padding: 4px 8px;">
-                          Remove
-                        </button>
                       </div>
-                    </div>
+                    <% end %>
                   <% end %>
                 <% end %>
-              <% end %>
-            </div>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-              <button type="button"
-                      class="btn btn-secondary btn-sm"
-                      data-action="click->form-builder#showStatusPicker">
-                + Add Predefined Status
-              </button>
-              <button type="button"
-                      class="btn btn-secondary btn-sm"
-                      data-action="click->form-builder#addCustomStatus">
-                + Add Custom Status
-              </button>
+              </div>
+              <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button type="button"
+                        class="btn btn-secondary btn-sm"
+                        data-action="click->form-builder#showStatusPicker">
+                  + Add Predefined Status
+                </button>
+                <button type="button"
+                        class="btn btn-secondary btn-sm"
+                        data-action="click->form-builder#addCustomStatus">
+                  + Add Custom Status
+                </button>
+              </div>
             </div>
           </div>
         </div>
