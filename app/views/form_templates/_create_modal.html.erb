@@ -165,7 +165,45 @@
           </div>
         </div>
 
-        <!-- ========== Page 3: Statuses & Buttons ========== -->
+        <!-- ========== Page 3: Routing ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Routing" style="display: none;">
+          <div class="form-group">
+            <label for="form_submission_type">Form Submission Routing <span class="required">*</span></label>
+            <%= f.select :submission_type,
+                        options_for_select([
+                          ['Submit to Database (Ends the workflow)', 'database'],
+                          ['Routed for Approval', 'approval']
+                        ], 'database'),
+                        {},
+                        {
+                          id: "form_submission_type",
+                          class: "form-control",
+                          data: {
+                            form_builder_target: "submissionType",
+                            action: "change->form-builder#toggleApprovalRouting"
+                          }
+                        } %>
+          </div>
+
+          <div class="form-group"
+               data-form-builder-target="approvalRoutingContainer"
+               style="display: none;">
+            <label>Routing Steps <span class="required">*</span></label>
+            <small class="form-text" style="display: block; margin-bottom: 10px;">
+              Add one or more routing steps. Forms will be routed through each step in order.
+            </small>
+            <div class="routing-steps-container" data-form-builder-target="routingStepsContainer">
+            </div>
+            <button type="button"
+                    class="btn btn-secondary btn-sm"
+                    data-action="click->form-builder#addRoutingStep">
+              + Add Routing Step
+            </button>
+
+          </div>
+        </div>
+
+        <!-- ========== Page 4: Statuses & Buttons ========== -->
         <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Statuses &amp; Buttons" style="display: none;">
           <div class="form-group">
             <label>Inbox Queue Buttons</label>
@@ -216,44 +254,6 @@
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- ========== Page 4: Routing ========== -->
-        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Routing" style="display: none;">
-          <div class="form-group">
-            <label for="form_submission_type">Form Submission Routing <span class="required">*</span></label>
-            <%= f.select :submission_type,
-                        options_for_select([
-                          ['Submit to Database (Ends the workflow)', 'database'],
-                          ['Routed for Approval', 'approval']
-                        ], 'database'),
-                        {},
-                        {
-                          id: "form_submission_type",
-                          class: "form-control",
-                          data: {
-                            form_builder_target: "submissionType",
-                            action: "change->form-builder#toggleApprovalRouting"
-                          }
-                        } %>
-          </div>
-
-          <div class="form-group"
-               data-form-builder-target="approvalRoutingContainer"
-               style="display: none;">
-            <label>Routing Steps <span class="required">*</span></label>
-            <small class="form-text" style="display: block; margin-bottom: 10px;">
-              Add one or more routing steps. Forms will be routed through each step in order.
-            </small>
-            <div class="routing-steps-container" data-form-builder-target="routingStepsContainer">
-            </div>
-            <button type="button"
-                    class="btn btn-secondary btn-sm"
-                    data-action="click->form-builder#addRoutingStep">
-              + Add Routing Step
-            </button>
-
           </div>
         </div>
 
