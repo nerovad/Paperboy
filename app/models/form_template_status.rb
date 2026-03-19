@@ -30,6 +30,8 @@ class FormTemplateStatus < ApplicationRecord
   scope :initial, -> { where(is_initial: true) }
   scope :end_status, -> { where(is_end: true) }
   scope :non_end, -> { where(is_end: false) }
+  scope :auto_generated, -> { where(auto_generated: true) }
+  scope :user_configured, -> { where(auto_generated: false) }
 
   # Before validation callback to generate key from name if not provided
   before_validation :generate_key_from_name, if: -> { key.blank? && name.present? }

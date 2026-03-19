@@ -27,8 +27,8 @@ class FormTemplatesController < ApplicationController
       # Save routing steps
       save_routing_steps(@form_template)
 
-      # Save statuses
-      save_statuses(@form_template)
+      # Sync statuses (user-configured + auto-generated from routing steps)
+      sync_statuses(@form_template)
 
       # Save fields (two-pass: create first, then link conditionals)
       if params[:fields].present?
@@ -145,16 +145,18 @@ class FormTemplatesController < ApplicationController
       # Rebuild routing steps
       rebuild_routing_steps(@form_template)
 
-      # Rebuild statuses
-      rebuild_statuses(@form_template)
+      # Sync statuses (user-configured + auto-generated from routing steps)
+      sync_statuses(@form_template)
 
       rebuild_form_fields
 
       # Regenerate the view to reflect field changes (including conditional logic)
       generate_dynamic_view(@form_template.class_name)
 
+      # Always regenerate the model to sync enum/STATUS_LABELS with current statuses
+      customize_generated_model(@form_template)
+
       if routing_changed
-        customize_generated_model(@form_template)
         customize_generated_controller(@form_template)
         Rails.logger.info "Regenerated controller for #{@form_template.class_name}"
       end
@@ -373,63 +375,54 @@ class FormTemplatesController < ApplicationController
 
     content = File.read(model_path)
 
-    # If submission type is database and no statuses configured, remove status enum
     if form_template.submission_type == 'database' && form_template.statuses.empty?
-      content.gsub!(/  enum :status.*?\n  \}/m, '')
-    elsif form_template.statuses.any?
-      # Generate status enum and categories from configured statuses
-      enum_content = generate_configured_status_enum(form_template)
-      content.gsub!(/  enum :status.*?\n  \}/m, enum_content)
-    elsif form_template.requires_approval? && form_template.routing_steps.any?
-      # Generate multi-step status enum (legacy behavior)
-      enum_content = generate_multi_step_enum(form_template)
-      content.gsub!(/  enum :status.*?\n  \}/m, enum_content)
+      # No statuses configured for database-only form — remove enum block
+      content.gsub!(/^\s*enum :status.*?\n\s*\}/m, '')
+      content.gsub!(/^\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, '')
+      content.gsub!(/^\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, '')
+    else
+      # Generate unified enum from all statuses (user + auto-generated)
+      generate_unified_status_enum(form_template, content)
+    end
+
+    # Update status_label method to use STATUS_LABELS
+    status_label_code = <<~RUBY.chomp
+      def status_label
+        self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
+      end
+    RUBY
+
+    if content =~ /def status_label\n.*?\n  end/m
+      content.gsub!(/def status_label\n.*?\n  end/m, status_label_code)
     end
 
     File.write(model_path, content)
   end
 
-  def generate_multi_step_enum(form_template)
-    steps = form_template.routing_steps.ordered
-    return '' if steps.empty?
+  def generate_unified_status_enum(form_template, content)
+    all_statuses = form_template.statuses.ordered.to_a
+    return if all_statuses.empty?
 
-    statuses = ["submitted: 0"]
-
-    steps.each_with_index do |step, index|
-      step_num = index + 1
-      statuses << "step_#{step_num}_pending: #{index * 2 + 1}"
-      statuses << "step_#{step_num}_approved: #{index * 2 + 2}" unless step_num == steps.count
-    end
-
-    statuses << "approved: #{steps.count * 2}"
-    statuses << "denied: #{steps.count * 2 + 1}"
-
-    <<~RUBY.chomp
-      enum :status, {
-        #{statuses.join(",\n    ")}
-      }
-    RUBY
-  end
-
-  def generate_configured_status_enum(form_template)
-    configured_statuses = form_template.statuses.ordered
-    return '' if configured_statuses.empty?
-
-    # Find the initial status to set as default
-    initial_status = configured_statuses.find(&:is_initial) || configured_statuses.first
+    # Find the initial status
+    initial_status = all_statuses.find(&:is_initial) || all_statuses.first
     default_key = initial_status.key
 
     # Build enum entries
-    enum_entries = configured_statuses.each_with_index.map do |status, index|
+    enum_entries = all_statuses.each_with_index.map do |status, index|
       "#{status.key}: #{index}"
     end
 
-    # Build STATUS_CATEGORIES mapping
-    category_entries = configured_statuses.map do |status|
+    # Build STATUS_CATEGORIES
+    category_entries = all_statuses.map do |status|
       "#{status.key}: :#{status.category}"
     end
 
-    <<~RUBY.chomp
+    # Build STATUS_LABELS
+    label_entries = all_statuses.map do |status|
+      "#{status.key}: \"#{status.name}\""
+    end
+
+    new_block = <<~RUBY.chomp
       enum :status, {
         #{enum_entries.join(",\n    ")}
       }, default: :#{default_key}
@@ -438,7 +431,31 @@ class FormTemplatesController < ApplicationController
       STATUS_CATEGORIES = {
         #{category_entries.join(",\n    ")}
       }.freeze
+
+      # Human-readable status labels
+      STATUS_LABELS = {
+        #{label_entries.join(",\n    ")}
+      }.freeze
     RUBY
+
+    # Remove existing blocks first, then insert the new unified block
+    # Remove enum block
+    content.gsub!(/^\s*enum :status.*?\n\s*\}(,\s*default:\s*:\w+)?/m, '')
+    # Remove existing STATUS_CATEGORIES
+    content.gsub!(/^\s*#[^\n]*status categories[^\n]*\n\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, '')
+    # Remove existing STATUS_LABELS
+    content.gsub!(/^\s*#[^\n]*status labels[^\n]*\n\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, '')
+    # Also remove standalone constants without comments
+    content.gsub!(/^\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, '')
+    content.gsub!(/^\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, '')
+
+    # Clean up blank lines left behind
+    content.gsub!(/\n{3,}/, "\n\n")
+
+    # Insert after `include TrackableStatus`
+    content.sub!(/include TrackableStatus\n/) do |match|
+      "#{match}\n#{new_block}\n"
+    end
   end
 
   def customize_generated_controller(form_template)
@@ -470,11 +487,11 @@ class FormTemplatesController < ApplicationController
 
     # Check if routing steps changed
     current_steps = @form_template.routing_steps.ordered.map do |step|
-      { routing_type: step.routing_type, employee_id: step.employee_id }
+      { routing_type: step.routing_type, employee_id: step.employee_id, display_name: step.display_name }
     end
 
     new_steps = (params[:routing_steps] || []).map do |step|
-      { routing_type: step[:routing_type], employee_id: step[:employee_id]&.to_i.presence }
+      { routing_type: step[:routing_type], employee_id: step[:employee_id]&.to_i.presence, display_name: step[:display_name].presence }
     end.reject { |s| s[:routing_type].blank? }
 
     current_steps != new_steps
@@ -489,51 +506,136 @@ class FormTemplatesController < ApplicationController
       form_template.routing_steps.create!(
         step_number: step_data[:step_number].to_i,
         routing_type: step_data[:routing_type],
-        employee_id: step_data[:employee_id].presence
+        employee_id: step_data[:employee_id].presence,
+        display_name: step_data[:display_name].presence
       )
     end
   end
 
-  def save_statuses(form_template)
-    return unless params[:statuses].present?
+  def sync_statuses(form_template)
+    # Destroy auto-generated statuses (they'll be recreated)
+    form_template.statuses.auto_generated.destroy_all
+    # Destroy user-configured statuses (they'll be recreated from params)
+    form_template.statuses.user_configured.destroy_all
 
-    # Create a map of status keys to their created IDs for routing step reference
-    status_key_to_id = {}
+    position = 0
 
-    params[:statuses].each_with_index do |status_data, index|
-      next if status_data[:name].blank? || status_data[:category].blank?
+    # 1. Save user-submitted statuses from params (initial/non-end statuses first)
+    if params[:statuses].present?
+      initial_statuses = []
+      terminal_statuses = []
 
-      status = form_template.statuses.create!(
-        name: status_data[:name],
-        key: status_data[:key].presence || status_data[:name].parameterize.underscore,
-        category: status_data[:category],
-        position: status_data[:position].present? ? status_data[:position].to_i : index,
-        is_initial: status_data[:is_initial] == '1',
-        is_end: status_data[:is_end] == '1'
-      )
-      status_key_to_id["status_#{index}"] = status.id
-    end
+      params[:statuses].each_with_index do |status_data, index|
+        next if status_data[:name].blank? || status_data[:category].blank?
 
-    # Link routing steps to their assigned statuses
-    link_routing_steps_to_statuses(form_template, status_key_to_id)
-  end
+        data = {
+          name: status_data[:name],
+          key: status_data[:key].presence || status_data[:name].parameterize.underscore,
+          category: status_data[:category],
+          is_initial: status_data[:is_initial] == '1',
+          is_end: status_data[:is_end] == '1',
+          auto_generated: false
+        }
 
-  def link_routing_steps_to_statuses(form_template, status_key_to_id)
-    return unless params[:routing_steps].present?
-
-    form_template.routing_steps.ordered.each_with_index do |step, index|
-      step_data = params[:routing_steps][index]
-      next unless step_data && step_data[:form_template_status_id].present?
-
-      status_ref = step_data[:form_template_status_id]
-      # Handle the temporary status reference (e.g., "status_0")
-      if status_ref.start_with?('status_')
-        actual_status_id = status_key_to_id[status_ref]
-        step.update!(form_template_status_id: actual_status_id) if actual_status_id
-      elsif status_ref.to_i > 0
-        # Direct ID reference
-        step.update!(form_template_status_id: status_ref.to_i)
+        if data[:is_end]
+          terminal_statuses << data
+        else
+          initial_statuses << data
+        end
       end
+
+      # Create initial/non-end user statuses first
+      initial_statuses.each do |data|
+        form_template.statuses.create!(data.merge(position: position))
+        position += 1
+      end
+
+      # 2. Auto-generate step statuses from routing steps
+      if form_template.requires_approval? && form_template.routing_steps.any?
+        steps = form_template.routing_steps.ordered.to_a
+
+        steps.each_with_index do |step, index|
+          step_num = index + 1
+
+          # Create step_N_pending
+          form_template.statuses.create!(
+            name: step.pending_display_name,
+            key: "step_#{step_num}_pending",
+            category: 'in_review',
+            position: position,
+            is_initial: false,
+            is_end: false,
+            auto_generated: true
+          )
+          position += 1
+
+          # Create step_N_approved for non-final steps
+          unless step_num == steps.count
+            form_template.statuses.create!(
+              name: step.approved_display_name,
+              key: "step_#{step_num}_approved",
+              category: 'in_review',
+              position: position,
+              is_initial: false,
+              is_end: false,
+              auto_generated: true
+            )
+            position += 1
+          end
+        end
+      end
+
+      # Create terminal user statuses last
+      terminal_statuses.each do |data|
+        form_template.statuses.create!(data.merge(position: position))
+        position += 1
+      end
+    elsif form_template.requires_approval? && form_template.routing_steps.any?
+      # No user statuses but has routing steps — create a default set
+      steps = form_template.routing_steps.ordered.to_a
+
+      # Default initial status
+      form_template.statuses.create!(
+        name: 'Submitted', key: 'submitted', category: 'pending',
+        position: position, is_initial: true, is_end: false, auto_generated: false
+      )
+      position += 1
+
+      # Auto-generate step statuses
+      steps.each_with_index do |step, index|
+        step_num = index + 1
+
+        form_template.statuses.create!(
+          name: step.pending_display_name,
+          key: "step_#{step_num}_pending",
+          category: 'in_review',
+          position: position,
+          is_initial: false, is_end: false, auto_generated: true
+        )
+        position += 1
+
+        unless step_num == steps.count
+          form_template.statuses.create!(
+            name: step.approved_display_name,
+            key: "step_#{step_num}_approved",
+            category: 'in_review',
+            position: position,
+            is_initial: false, is_end: false, auto_generated: true
+          )
+          position += 1
+        end
+      end
+
+      # Default terminal statuses
+      form_template.statuses.create!(
+        name: 'Approved', key: 'approved', category: 'approved',
+        position: position, is_initial: false, is_end: true, auto_generated: false
+      )
+      position += 1
+      form_template.statuses.create!(
+        name: 'Denied', key: 'denied', category: 'denied',
+        position: position, is_initial: false, is_end: true, auto_generated: false
+      )
     end
   end
 
@@ -548,7 +650,8 @@ class FormTemplatesController < ApplicationController
       form_template.routing_steps.create!(
         step_number: index + 1,
         routing_type: step_data[:routing_type],
-        employee_id: step_data[:employee_id].presence
+        employee_id: step_data[:employee_id].presence,
+        display_name: step_data[:display_name].presence
       )
     end
 
@@ -556,31 +659,6 @@ class FormTemplatesController < ApplicationController
     if form_template.routing_steps.any?
       form_template.update_columns(approval_routing_to: nil, approval_employee_id: nil)
     end
-  end
-
-  def rebuild_statuses(form_template)
-    form_template.statuses.destroy_all
-
-    return unless params[:statuses].present?
-
-    status_key_to_id = {}
-
-    params[:statuses].each_with_index do |status_data, index|
-      next if status_data[:name].blank? || status_data[:category].blank?
-
-      status = form_template.statuses.create!(
-        name: status_data[:name],
-        key: status_data[:key].presence || status_data[:name].parameterize.underscore,
-        category: status_data[:category],
-        position: status_data[:position].present? ? status_data[:position].to_i : index,
-        is_initial: status_data[:is_initial] == '1',
-        is_end: status_data[:is_end] == '1'
-      )
-      status_key_to_id["status_#{index}"] = status.id
-    end
-
-    # Re-link routing steps to their statuses after rebuild
-    link_routing_steps_to_statuses(form_template, status_key_to_id)
   end
 
   def rebuild_form_fields

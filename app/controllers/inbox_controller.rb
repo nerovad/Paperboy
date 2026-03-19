@@ -51,7 +51,7 @@ class InboxController < ApplicationController
       names: ->(s) { s.name },
       units: ->(s) { s.try(:unit) },
       emails: ->(s) { s.email },
-      statuses: ->(s) { s.status_label.to_s.tr('_', ' ').titleize }
+      statuses: ->(s) { s.status_label }
     }
   end
 
@@ -61,7 +61,7 @@ class InboxController < ApplicationController
       { param: :filter_name, extractor: ->(s) { s.name } },
       { param: :filter_unit, extractor: ->(s) { s.try(:unit) } },
       { param: :filter_email, extractor: ->(s) { s.email } },
-      { param: :filter_status, extractor: ->(s) { s.status_label.to_s.tr('_', ' ').titleize } }
+      { param: :filter_status, extractor: ->(s) { s.status_label } }
     ]
   end
 

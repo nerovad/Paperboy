@@ -83,8 +83,10 @@ module InboxHelper
   # Get available status options for a submission
   def inbox_status_options(submission)
     if submission.class.respond_to?(:statuses)
+      labels = submission.class.const_defined?(:STATUS_LABELS) ? submission.class::STATUS_LABELS : {}
       submission.class.statuses.keys.map do |status|
-        [status.to_s.tr('_', ' ').titleize, status]
+        label = labels[status.to_sym] || status.to_s.tr('_', ' ').titleize
+        [label, status]
       end
     else
       []

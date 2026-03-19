@@ -18,18 +18,26 @@ module TrackableStatus
     def status_label_for(status_value)
       return nil if status_value.nil?
 
-      # Check if this model uses enum
+      # Prefer STATUS_LABELS for human-readable display names
+      if const_defined?(:STATUS_LABELS)
+        key = if status_value.is_a?(Integer) && defined_enums['status'].present?
+                defined_enums['status'].key(status_value)&.to_sym
+              else
+                status_value.to_s.to_sym
+              end
+        label = self::STATUS_LABELS[key]
+        return label if label
+      end
+
+      # Fall back to enum/STATUS_MAP humanization
       if defined_enums['status'].present?
-        # For enum, status_value could be string key or integer value
         if status_value.is_a?(Integer)
-          # Find the key for this integer value
           key = defined_enums['status'].key(status_value)
           key&.to_s&.humanize || "Unknown"
         else
           status_value.to_s.humanize
         end
       elsif const_defined?(:STATUS_MAP)
-        # For STATUS_MAP-based models
         self::STATUS_MAP[status_value]&.humanize || "Unknown"
       else
         status_value.to_s.humanize

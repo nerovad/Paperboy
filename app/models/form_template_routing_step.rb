@@ -1,6 +1,5 @@
 class FormTemplateRoutingStep < ApplicationRecord
   belongs_to :form_template
-  belongs_to :form_template_status, optional: true
 
   ROUTING_TYPES = %w[supervisor department_head employee].freeze
 
@@ -34,8 +33,23 @@ class FormTemplateRoutingStep < ApplicationRecord
     nil
   end
 
-  # Returns the status to apply when a form reaches this step
-  def status_to_apply
-    form_template_status
+  # Default display name for the pending status at this step
+  def default_pending_display_name
+    "Sent to #{routing_label}"
+  end
+
+  # Default display name for the approved status at this step
+  def default_approved_display_name
+    "#{routing_label} Approved"
+  end
+
+  # Pending display name: prefer user-set display_name, fall back to default
+  def pending_display_name
+    display_name.presence || default_pending_display_name
+  end
+
+  # Approved display name: derive from display_name or fall back to default
+  def approved_display_name
+    default_approved_display_name
   end
 end

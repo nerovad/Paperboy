@@ -27,7 +27,7 @@ class <%= class_name %> < ApplicationRecord
 
   # For inbox queue display
   def status_label
-    status&.to_s&.humanize || "Unknown"
+    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
   end
 
   # For inbox queue filtering - returns the form type name

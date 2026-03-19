@@ -57,6 +57,7 @@ class FormTemplate < ApplicationRecord
   validates :status_transition_mode, inclusion: { in: TRANSITION_MODES }, allow_nil: true
 
   validate :page_count_cannot_orphan_fields, on: :update
+  validate :approval_must_have_terminal_statuses
 
   before_validation :generate_class_name, on: :create
   before_validation :clear_restrictions_if_public
@@ -200,6 +201,17 @@ class FormTemplate < ApplicationRecord
     return if name.blank?
 
     self.class_name = name.gsub(/[^a-zA-Z0-9\s]/, '').split.map(&:capitalize).join + 'Form'
+  end
+
+  def approval_must_have_terminal_statuses
+    return unless requires_approval?
+    return unless statuses.user_configured.any?
+
+    has_approved = statuses.user_configured.any? { |s| s.category == 'approved' }
+    has_denied = statuses.user_configured.any? { |s| s.category == 'denied' }
+
+    errors.add(:base, "Approval forms must have at least one status with the 'Approved' category") unless has_approved
+    errors.add(:base, "Approval forms must have at least one status with the 'Denied' category") unless has_denied
   end
 
   def page_count_cannot_orphan_fields

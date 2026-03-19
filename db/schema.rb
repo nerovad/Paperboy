@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_17_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_19_000001) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -533,6 +533,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_17_000001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "form_template_status_id"
+    t.string "display_name"
     t.index ["form_template_id", "step_number"], name: "idx_routing_steps_template_step", unique: true
     t.index ["form_template_id"], name: "index_form_template_routing_steps_on_form_template_id"
     t.index ["form_template_status_id"], name: "index_form_template_routing_steps_on_form_template_status_id"
@@ -548,6 +549,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_17_000001) do
     t.boolean "is_end", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "auto_generated", default: false
     t.index ["form_template_id", "key"], name: "index_form_template_statuses_on_form_template_id_and_key", unique: true
     t.index ["form_template_id", "position"], name: "index_form_template_statuses_on_form_template_id_and_position"
     t.index ["form_template_id"], name: "index_form_template_statuses_on_form_template_id"

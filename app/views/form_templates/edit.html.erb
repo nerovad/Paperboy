@@ -401,14 +401,11 @@
                         </select>
                       </div>
 
-                      <div class="step-status-select" style="flex: 1; min-width: 180px;">
-                        <select name="routing_steps[][form_template_status_id]"
-                                class="form-control form-control-sm step-status-dropdown">
-                          <option value="">Status at this step...</option>
-                          <% @form_template.statuses.non_end.ordered.each_with_index do |status, status_index| %>
-                            <option value="status_<%= status_index %>" <%= 'selected' if step.form_template_status_id == status.id %>><%= status.name %></option>
-                          <% end %>
-                        </select>
+                      <div class="step-display-name" style="flex: 1; min-width: 180px;">
+                        <input type="text" name="routing_steps[][display_name]"
+                               class="form-control form-control-sm step-display-name-input"
+                               value="<%= step.display_name %>"
+                               placeholder="<%= step.default_pending_display_name %>">
                       </div>
 
                       <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="<%= index + 1 %>">
@@ -963,11 +960,10 @@
         </select>
       </div>
 
-      <div class="step-status-select" style="flex: 1; min-width: 180px;">
-        <select name="routing_steps[][form_template_status_id]"
-                class="form-control form-control-sm step-status-dropdown">
-          <option value="">Status at this step...</option>
-        </select>
+      <div class="step-display-name" style="flex: 1; min-width: 180px;">
+        <input type="text" name="routing_steps[][display_name]"
+               class="form-control form-control-sm step-display-name-input"
+               placeholder="e.g. Sent to HR (auto-generated if blank)">
       </div>
 
       <input type="hidden" name="routing_steps[][step_number]" class="step-number-input" value="1">

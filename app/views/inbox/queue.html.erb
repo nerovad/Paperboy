@@ -268,7 +268,7 @@
               <td><%= submission.email %></td>
               <td>
                 <span class="badge <%= status_badge_class(submission.status_label) %>">
-                  <%= submission.status_label.to_s.tr('_', ' ').titleize %>
+                  <%= submission.status_label %>
                 </span>
               </td>
               <td><%= format_pst(submission.created_at) %></td>
