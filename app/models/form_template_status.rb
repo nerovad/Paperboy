@@ -7,16 +7,12 @@ class FormTemplateStatus < ApplicationRecord
   # Predefined statuses with their default category mappings
   # These are the common statuses that users can select from
   PREDEFINED_STATUSES = [
-    { name: 'Submitted', key: 'submitted', category: 'pending', is_initial: true, is_end: false },
-    { name: 'In Progress', key: 'in_progress', category: 'in_review', is_initial: true, is_end: false },
+    { name: 'In Progress', key: 'in_progress', category: 'pending', is_initial: true, is_end: false },
     { name: 'Pending Approval', key: 'pending_approval', category: 'in_review', is_initial: false, is_end: false },
     { name: 'Approved', key: 'approved', category: 'approved', is_initial: false, is_end: true },
     { name: 'Denied', key: 'denied', category: 'denied', is_initial: false, is_end: true },
     { name: 'Cancelled', key: 'cancelled', category: 'cancelled', is_initial: false, is_end: true },
-    { name: 'Scheduled', key: 'scheduled', category: 'scheduled', is_initial: false, is_end: false },
-    { name: 'Resolved', key: 'resolved', category: 'approved', is_initial: false, is_end: true },
-    { name: 'Sent to Security', key: 'sent_to_security', category: 'in_review', is_initial: false, is_end: false },
-    { name: 'Sent to HR', key: 'sent_to_hr', category: 'in_review', is_initial: false, is_end: false }
+    { name: 'Scheduled', key: 'scheduled', category: 'scheduled', is_initial: false, is_end: false }
   ].freeze
 
   # Validations
