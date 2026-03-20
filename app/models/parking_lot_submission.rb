@@ -79,6 +79,14 @@ STATUS_LABELS = {
   self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
 end
 
+  def current_assignee_id
+    if pending_delegated_approval?
+      delegated_approver_id
+    else
+      supervisor_id
+    end
+  end
+
   def assignment_field_name
     if pending_delegated_approval?
       'delegated_approver_id'

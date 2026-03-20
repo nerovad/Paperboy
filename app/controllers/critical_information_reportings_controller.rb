@@ -256,12 +256,14 @@ class CriticalInformationReportingsController < ApplicationController
       :incident_type, :incident_details, :cause,
       :impact_started, :location,
       :urgency,
-      :impact, :impacted_customers, :next_steps, :media,
-      staff_involved: []
+      :impact, :next_steps, :media,
+      staff_involved: [],
+      impacted_customers: []
     )
 
-    # Normalize multi-select array into comma-separated string
+    # Normalize multi-select arrays into comma-separated strings
     raw[:staff_involved] = Array(raw[:staff_involved]).reject(&:blank?).join(",")
+    raw[:impacted_customers] = Array(raw[:impacted_customers]).reject(&:blank?).join(",")
 
     raw
   end
