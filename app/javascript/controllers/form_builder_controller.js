@@ -2,6 +2,7 @@
 
 import { Controller } from "@hotwired/stimulus"
 import Sortable from "sortablejs"
+import ToastController from "controllers/toast_controller"
 
 export default class extends Controller {
   static targets = [
@@ -1192,6 +1193,22 @@ export default class extends Controller {
   }
 
   // Submit form
+  showLoadingOverlay(container, message) {
+    const overlay = document.createElement('div')
+    overlay.className = 'loading-overlay'
+    overlay.innerHTML = `
+      <div class="loading-spinner"></div>
+      <span class="loading-text">${message}</span>
+    `
+    container.style.position = 'relative'
+    container.appendChild(overlay)
+    return overlay
+  }
+
+  removeLoadingOverlay(overlay) {
+    if (overlay) overlay.remove()
+  }
+
   submitForm(event) {
     event.preventDefault()
 
@@ -1205,6 +1222,10 @@ export default class extends Controller {
     // Disable submit button to prevent double submission
     this.submitButtonTarget.disabled = true
     this.submitButtonTarget.textContent = 'Creating...'
+
+    // Show loading overlay on the modal content
+    const modalContent = this.element.querySelector('.form-builder-modal-content')
+    const overlay = this.showLoadingOverlay(modalContent, 'Creating form...')
 
     const formData = new FormData(this.formTarget)
 
@@ -1224,25 +1245,28 @@ export default class extends Controller {
         console.log("Data parsed:", data)
 
         if (data.success) {
-          alert(data.message)
-          this.closeModal(new Event('click')) // Pass a dummy event
+          this.removeLoadingOverlay(overlay)
+          ToastController.show('success', data.message)
+          this.closeModal(new Event('click'))
 
           console.log("About to redirect to:", data.redirect)
 
           if (data.redirect) {
-            window.location.href = data.redirect
+            setTimeout(() => { window.location.href = data.redirect }, 1000)
           } else {
-            window.location.reload()
+            setTimeout(() => { window.location.reload() }, 1000)
           }
         } else {
-          alert('Error creating form:\n' + data.errors.join('\n'))
+          this.removeLoadingOverlay(overlay)
+          ToastController.show('error', 'Error creating form: ' + data.errors.join(', '))
           this.submitButtonTarget.disabled = false
           this.submitButtonTarget.textContent = 'Create Form'
         }
       })
       .catch(error => {
         console.error('Error:', error)
-        alert('An error occurred while creating the form.')
+        this.removeLoadingOverlay(overlay)
+        ToastController.show('error', 'An error occurred while creating the form.')
         this.submitButtonTarget.disabled = false
         this.submitButtonTarget.textContent = 'Create Form'
       })

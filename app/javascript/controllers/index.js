@@ -33,6 +33,8 @@ import GroupSelectController from "controllers/group_select_controller"
 import SavedSearchController from "controllers/saved_search_controller"
 import TabsController from "controllers/tabs_controller"
 import OrgPermissionsController from "controllers/org_permissions_controller"
+import ToastController from "controllers/toast_controller"
+import DeleteFormController from "controllers/delete_form_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -67,3 +69,5 @@ application.register("group-select", GroupSelectController)
 application.register("saved-search", SavedSearchController)
 application.register("tabs", TabsController)
 application.register("org-permissions", OrgPermissionsController)
+application.register("toast", ToastController)
+application.register("delete-form", DeleteFormController)

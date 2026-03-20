@@ -38,6 +38,22 @@
     <div class="sidebar-overlay" data-controller="sidebar" data-action="click->sidebar#close"></div>
    
     <%= render "shared/logo" %>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container" data-controller="toast" data-toast-target="container">
+      <% if flash[:notice] %>
+        <div class="toast toast-success" data-auto-show>
+          <span class="toast-message"><%= flash[:notice] %></span>
+          <button class="toast-close" data-action="click->toast#close">&times;</button>
+        </div>
+      <% end %>
+      <% if flash[:alert] %>
+        <div class="toast toast-error" data-auto-show>
+          <span class="toast-message"><%= flash[:alert] %></span>
+          <button class="toast-close" data-action="click->toast#close">&times;</button>
+        </div>
+      <% end %>
+    </div>
     
     <div class="app-container">
       <%= render "shared/sidebar" %>
