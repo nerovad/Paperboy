@@ -1201,6 +1201,95 @@ class FormTemplatesController < ApplicationController
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
+    when 'phone'
+      phone_id = field.field_name.camelize(:lower)
+      phone_attrs = ["class: \"form-control\""]
+      phone_attrs << required_logic if required_logic.present?
+      phone_attrs << disabled_attr if disabled_attr.present?
+      phone_attrs << "placeholder: \"e.g. 555-555-5555\""
+      phone_attrs << "title: \"Enter a 10-digit phone number like 555-555-5555\""
+      phone_attrs << "data: { controller: \"phone\", phone_target: \"input\", action: \"input->phone#format paste->phone#format blur->phone#validate\" }"
+      phone_attrs << "\"aria-describedby\": \"#{phone_id}Help #{phone_id}Error\""
+      phone_attrs << "pattern: \"\\\\d{3}-\\\\d{3}-\\\\d{4}\""
+      phone_attrs << "inputmode: \"numeric\""
+      phone_attrs << "autocomplete: \"tel\""
+      phone_attrs_str = phone_attrs.join(",\n                  ")
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.text_field :#{field.field_name},\n"
+      html += "                  #{phone_attrs_str} %>\n"
+      html += "            <small id=\"#{phone_id}Help\" class=\"help-text text-muted\"></small>\n"
+      html += "            <div id=\"#{phone_id}Error\" data-phone-target=\"error\" class=\"field-error\" aria-live=\"polite\"></div>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
+    when 'email'
+      email_attrs = ["class: \"form-control\""]
+      email_attrs << required_logic if required_logic.present?
+      email_attrs << disabled_attr if disabled_attr.present?
+      email_attrs << "placeholder: \"e.g. name@example.com\""
+      email_attrs << "autocomplete: \"email\""
+      email_attrs_str = email_attrs.join(", ")
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.email_field :#{field.field_name}, #{email_attrs_str} %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
+    when 'number'
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.number_field :#{field.field_name}, #{attrs_str} %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
+    when 'yes_no'
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.select :#{field.field_name},\n"
+      html += "                  options_for_select(['Yes', 'No'], @#{form_template.file_name}.#{field.field_name}),\n"
+      html += "                  { include_blank: \"Select...\" },\n"
+      html += "                  { #{attrs_str} } %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
+    when 'time'
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.time_field :#{field.field_name}, #{attrs_str} %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
     end
   end
 
@@ -1402,6 +1491,96 @@ class FormTemplatesController < ApplicationController
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.datetime_local_field :#{field.field_name}, #{attrs_str} %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
+    when 'phone'
+      phone_id = field.field_name.camelize(:lower)
+      # Build phone attrs separately since we need data hash
+      phone_attrs = ["class: \"form-control\""]
+      phone_attrs << required_logic if required_logic.present?
+      phone_attrs << disabled_attr if disabled_attr.present?
+      phone_attrs << "placeholder: \"e.g. 555-555-5555\""
+      phone_attrs << "title: \"Enter a 10-digit phone number like 555-555-5555\""
+      phone_attrs << "data: { controller: \"phone\", phone_target: \"input\", action: \"input->phone#format paste->phone#format blur->phone#validate\" }"
+      phone_attrs << "\"aria-describedby\": \"#{phone_id}Help #{phone_id}Error\""
+      phone_attrs << "pattern: \"\\\\d{3}-\\\\d{3}-\\\\d{4}\""
+      phone_attrs << "inputmode: \"numeric\""
+      phone_attrs << "autocomplete: \"tel\""
+      phone_attrs_str = phone_attrs.join(",\n                  ")
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.text_field :#{field.field_name},\n"
+      html += "                  #{phone_attrs_str} %>\n"
+      html += "            <small id=\"#{phone_id}Help\" class=\"help-text text-muted\"></small>\n"
+      html += "            <div id=\"#{phone_id}Error\" data-phone-target=\"error\" class=\"field-error\" aria-live=\"polite\"></div>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
+    when 'email'
+      email_attrs = ["class: \"form-control\""]
+      email_attrs << required_logic if required_logic.present?
+      email_attrs << disabled_attr if disabled_attr.present?
+      email_attrs << "placeholder: \"e.g. name@example.com\""
+      email_attrs << "autocomplete: \"email\""
+      email_attrs_str = email_attrs.join(", ")
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.email_field :#{field.field_name}, #{email_attrs_str} %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
+    when 'number'
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.number_field :#{field.field_name}, #{attrs_str} %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
+    when 'yes_no'
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.select :#{field.field_name},\n"
+      html += "                  options_for_select(['Yes', 'No']),\n"
+      html += "                  { include_blank: \"Select...\" },\n"
+      html += "                  { #{attrs_str} } %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
+    when 'time'
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.time_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html

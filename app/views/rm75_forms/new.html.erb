@@ -147,7 +147,22 @@
           </div>
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :witness_phone, "Witness Phone" %>
-            <%= form.text_field :witness_phone, class: "form-control", required: true %>
+            <%= form.text_field :witness_phone,
+                  class: "form-control",
+                  required: true,
+                  placeholder: "e.g. 555-555-5555",
+                  title: "Enter a 10-digit phone number like 555-555-5555",
+                  data: {
+                    controller: "phone",
+                    phone_target: "input",
+                    action: "input->phone#format paste->phone#format blur->phone#validate"
+                  },
+                  "aria-describedby": "witnessPhoneHelp witnessPhoneError",
+                  pattern: "\\d{3}-\\d{3}-\\d{4}",
+                  inputmode: "numeric",
+                  autocomplete: "tel" %>
+            <small id="witnessPhoneHelp" class="help-text text-muted"></small>
+            <div id="witnessPhoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
           </div>
         </div>
       </div>
@@ -245,7 +260,22 @@
           </div>
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :physician_phone, "Physician Phone" %>
-            <%= form.text_field :physician_phone, class: "form-control", required: true %>
+            <%= form.text_field :physician_phone,
+                  class: "form-control",
+                  required: true,
+                  placeholder: "e.g. 555-555-5555",
+                  title: "Enter a 10-digit phone number like 555-555-5555",
+                  data: {
+                    controller: "phone",
+                    phone_target: "input",
+                    action: "input->phone#format paste->phone#format blur->phone#validate"
+                  },
+                  "aria-describedby": "physicianPhoneHelp physicianPhoneError",
+                  pattern: "\\d{3}-\\d{3}-\\d{4}",
+                  inputmode: "numeric",
+                  autocomplete: "tel" %>
+            <small id="physicianPhoneHelp" class="help-text text-muted"></small>
+            <div id="physicianPhoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
           </div>
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :hospital_name, "Hospital Name" %>
@@ -257,7 +287,21 @@
           </div>
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :hospital_phone, "Hospital Phone" %>
-            <%= form.text_field :hospital_phone, class: "form-control" %>
+            <%= form.text_field :hospital_phone,
+                  class: "form-control",
+                  placeholder: "e.g. 555-555-5555",
+                  title: "Enter a 10-digit phone number like 555-555-5555",
+                  data: {
+                    controller: "phone",
+                    phone_target: "input",
+                    action: "input->phone#format paste->phone#format blur->phone#validate"
+                  },
+                  "aria-describedby": "hospitalPhoneHelp hospitalPhoneError",
+                  pattern: "\\d{3}-\\d{3}-\\d{4}",
+                  inputmode: "numeric",
+                  autocomplete: "tel" %>
+            <small id="hospitalPhoneHelp" class="help-text text-muted"></small>
+            <div id="hospitalPhoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
           </div>
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :hospitalized_overnight, "Hospitalized Overnight?" %>
@@ -289,7 +333,23 @@
 <div class="form-group flex-fill<%= ' field-restricted' unless field_504_editable %>">
   <%= form.label :investigator_phone, "Investigator Phone" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.text_field :investigator_phone, class: "form-control", required: field_504_editable && true, disabled: !field_504_editable %>
+            <%= form.text_field :investigator_phone,
+                  class: "form-control",
+                  required: field_504_editable && true,
+                  disabled: !field_504_editable,
+                  placeholder: "e.g. 555-555-5555",
+                  title: "Enter a 10-digit phone number like 555-555-5555",
+                  data: {
+                    controller: "phone",
+                    phone_target: "input",
+                    action: "input->phone#format paste->phone#format blur->phone#validate"
+                  },
+                  "aria-describedby": "investigatorPhoneHelp investigatorPhoneError",
+                  pattern: "\\d{3}-\\d{3}-\\d{4}",
+                  inputmode: "numeric",
+                  autocomplete: "tel" %>
+            <small id="investigatorPhoneHelp" class="help-text text-muted"></small>
+            <div id="investigatorPhoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
           </div>
         <% field_505_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
 <div class="form-group flex-fill<%= ' field-restricted' unless field_505_editable %>">
@@ -375,7 +435,23 @@
 <div class="form-group flex-fill<%= ' field-restricted' unless field_515_editable %>">
   <%= form.label :phone, "Phone" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.text_field :phone, class: "form-control", required: field_515_editable && true, disabled: !field_515_editable %>
+            <%= form.text_field :phone,
+                  class: "form-control",
+                  required: field_515_editable && true,
+                  disabled: !field_515_editable,
+                  placeholder: "e.g. 555-555-5555",
+                  title: "Enter a 10-digit phone number like 555-555-5555",
+                  data: {
+                    controller: "phone",
+                    phone_target: "input",
+                    action: "input->phone#format paste->phone#format blur->phone#validate"
+                  },
+                  "aria-describedby": "correctivePhoneHelp correctivePhoneError",
+                  pattern: "\\d{3}-\\d{3}-\\d{4}",
+                  inputmode: "numeric",
+                  autocomplete: "tel" %>
+            <small id="correctivePhoneHelp" class="help-text text-muted"></small>
+            <div id="correctivePhoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
           </div>
         <% field_516_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
 <div class="form-group flex-fill<%= ' field-restricted' unless field_516_editable %>">

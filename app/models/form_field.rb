@@ -5,7 +5,7 @@ class FormField < ApplicationRecord
 
   belongs_to :form_template
 
-  FIELD_TYPES = %w[text text_box dropdown date].freeze
+  FIELD_TYPES = %w[text text_box dropdown date phone email number yes_no time].freeze
   RESTRICTION_TYPES = %w[none employee group].freeze
 
   validates :field_name, presence: true
@@ -44,6 +44,26 @@ class FormField < ApplicationRecord
 
   def date?
     field_type == 'date'
+  end
+
+  def phone?
+    field_type == 'phone'
+  end
+
+  def email?
+    field_type == 'email'
+  end
+
+  def number?
+    field_type == 'number'
+  end
+
+  def yes_no?
+    field_type == 'yes_no'
+  end
+
+  def time?
+    field_type == 'time'
   end
   
   def rows
