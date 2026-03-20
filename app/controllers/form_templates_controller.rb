@@ -140,6 +140,7 @@ class FormTemplatesController < ApplicationController
 
   def update
     routing_changed = routing_fields_changed?
+    fields_changed = form_fields_changed?
 
     if @form_template.update(form_template_params)
       # Rebuild routing steps
@@ -148,10 +149,12 @@ class FormTemplatesController < ApplicationController
       # Sync statuses (user-configured + auto-generated from routing steps)
       sync_statuses(@form_template)
 
-      rebuild_form_fields
-
-      # Regenerate the view to reflect field changes (including conditional logic)
-      generate_dynamic_view(@form_template.class_name)
+      # Only rebuild fields and regenerate views when fields actually changed
+      if fields_changed
+        rebuild_form_fields
+        generate_dynamic_view(@form_template.class_name)
+        generate_dynamic_edit_view(@form_template.class_name)
+      end
 
       # Always regenerate the model to sync enum/STATUS_LABELS with current statuses
       customize_generated_model(@form_template)
@@ -495,6 +498,30 @@ class FormTemplatesController < ApplicationController
     end.reject { |s| s[:routing_type].blank? }
 
     current_steps != new_steps
+  end
+
+  def form_fields_changed?
+    return false unless @form_template
+
+    current_fields = @form_template.form_fields.ordered.map do |f|
+      { label: f.label, field_type: f.field_type, page_number: f.page_number, required: f.required, options: f.options }
+    end
+
+    new_fields = (params[:fields] || []).map do |f|
+      {
+        label: f[:label],
+        field_type: f[:field_type],
+        page_number: f[:page_number].to_i,
+        required: f[:required] == '1',
+        options: case f[:field_type]
+                 when 'text_box' then { 'rows' => f[:rows].to_i }
+                 when 'dropdown' then f[:dropdown_values].present? ? { 'values' => f[:dropdown_values].split(',').map(&:strip) } : {}
+                 else {}
+                 end
+      }
+    end.reject { |f| f[:label].blank? }
+
+    current_fields != new_fields
   end
 
   def save_routing_steps(form_template)

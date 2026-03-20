@@ -1,25 +1,12 @@
 class WorkScheduleOrLocationUpdateForm < ApplicationRecord
-enum :status, {
-  submitted: 0,
-    step_1_pending: 1,
-    step_1_approved: 2,
-    step_2_pending: 3,
-    approved: 4,
-    denied: 5
-}
 
   # Minimal baseline validations; adjust or remove as needed
   validates :name, :email, presence: true
 
   # For inbox queue display
   def status_label
-    status
-  end
-
-  # For inbox queue filtering - returns the form type name
-  def form_type
-    self.class.name.demodulize.titleize
-  end
+  self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
+end
 
   # For inbox reassignment - returns the current approver's ID
   def current_assignee_id

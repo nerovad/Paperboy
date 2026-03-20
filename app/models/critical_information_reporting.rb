@@ -5,6 +5,29 @@ class CriticalInformationReporting < ApplicationRecord
   include Reassignable
   include TrackableStatus
 
+enum :status, {
+  in_progress: 0,
+    resolved: 1,
+    scheduled: 2,
+    cancelled: 3
+}, default: :in_progress
+
+# Normalized status categories for cross-form reporting
+STATUS_CATEGORIES = {
+  in_progress: :in_review,
+    resolved: :approved,
+    scheduled: :scheduled,
+    cancelled: :cancelled
+}.freeze
+
+# Human-readable status labels
+STATUS_LABELS = {
+  in_progress: "In progress",
+    resolved: "Resolved",
+    scheduled: "Scheduled",
+    cancelled: "Cancelled"
+}.freeze
+
   # ActiveStorage attachment for media files
   has_one_attached :media
 
@@ -35,20 +58,6 @@ class CriticalInformationReporting < ApplicationRecord
 
   # Status enum - provides in_progress?, resolved?, etc. automatically
   # New submissions default to in_progress
-  enum :status, {
-    in_progress: 0,
-    resolved: 1,
-    scheduled: 2,
-    cancelled: 3
-  }, default: :in_progress
-
-  # Normalized status categories for cross-form reporting
-  STATUS_CATEGORIES = {
-    in_progress: :in_review,
-    resolved: :approved,
-    scheduled: :scheduled,
-    cancelled: :cancelled
-  }.freeze
 
   # Validations for Status (Page 5)
   validates :urgency, presence: true
@@ -72,12 +81,8 @@ class CriticalInformationReporting < ApplicationRecord
   # Instance methods
   # With enum, status returns a symbol like :in_progress, :resolved, etc.
   def status_label
-    status&.to_s&.humanize || "Unknown"
-  end
-
-  def high_impact?
-    impact == 'High'
-  end
+  self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
+end
 
   def immediate_urgency?
     urgency == 'Immediate'

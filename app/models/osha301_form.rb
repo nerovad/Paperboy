@@ -1,8 +1,6 @@
 class Osha301Form < ApplicationRecord
   include TrackableStatus
 
-  belongs_to :rm75_form, optional: true
-
 enum :status, {
   in_progress: 0,
     approved: 1
@@ -14,6 +12,14 @@ STATUS_CATEGORIES = {
     approved: :approved
 }.freeze
 
+# Human-readable status labels
+STATUS_LABELS = {
+  in_progress: "In Progress",
+    approved: "Approved"
+}.freeze
+
+  belongs_to :rm75_form, optional: true
+
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
 
@@ -22,13 +28,8 @@ STATUS_CATEGORIES = {
 
   # For inbox queue display
   def status_label
-    status&.to_s&.humanize || "Unknown"
-  end
-
-  # For inbox queue filtering - returns the form type name
-  def form_type
-    self.class.name.demodulize.titleize
-  end
+  self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
+end
 
   # For inbox reassignment - returns the current approver's ID
   def current_assignee_id

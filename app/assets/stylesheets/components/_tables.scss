@@ -1,36 +1,43 @@
 @import "base/tokens";
 
-/* Inbox page wrapper - enables full page scrolling */
+/* Inbox page wrapper - flex column so filters stay fixed and only the table scrolls */
 .inbox-page-wrapper {
+  display: flex;
+  flex-direction: column;
   height: calc(100vh - 60px);
-  overflow-y: auto;
-  padding-bottom: 40px;
+  overflow: hidden;
 
-  /* Smooth scrolling */
-  scroll-behavior: smooth;
+  .table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 40px;
 
-  /* Custom scrollbar styling (WebKit browsers) */
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
 
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
-
-    &:hover {
-      background: #666;
+    /* Custom scrollbar styling (WebKit browsers) */
+    &::-webkit-scrollbar {
+      width: 8px;
     }
-  }
 
-  /* Firefox scrollbar styling */
-  scrollbar-width: thin;
-  scrollbar-color: #888 #f1f1f1;
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+
+      &:hover {
+        background: #666;
+      }
+    }
+
+    /* Firefox scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+  }
 }
 
 /* Action Panel - appears when a task is selected */
@@ -232,11 +239,6 @@
   margin: 0 auto;
   padding: 0 30px;
 
-  /* When inside inbox page wrapper, don't add extra scroll - let parent handle it */
-  .inbox-page-wrapper & {
-    max-height: none;
-    overflow-y: visible;
-  }
 }
 
 /* Inbox submissions table */

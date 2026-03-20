@@ -2,6 +2,33 @@ class ParkingLotSubmission < ApplicationRecord
   include PhoneNumberable
   include Reassignable
   include TrackableStatus
+
+enum :status, {
+  submitted: 0,
+    pending_delegated_approval: 1,
+    denied: 2,
+    approved: 3,
+    sent_to_security: 4
+}, default: :submitted
+
+# Normalized status categories for cross-form reporting
+STATUS_CATEGORIES = {
+  submitted: :pending,
+    pending_delegated_approval: :in_review,
+    denied: :denied,
+    approved: :approved,
+    sent_to_security: :in_review
+}.freeze
+
+# Human-readable status labels
+STATUS_LABELS = {
+  submitted: "Submitted",
+    pending_delegated_approval: "Pending delegated approval",
+    denied: "Denied",
+    approved: "Approved",
+    sent_to_security: "Sent to security"
+}.freeze
+
   # Stored columns on this model for org hierarchy are *codes/IDs*:
   #   agency, division, department, unit
   # === Associations to lookup tables (resolve codes -> LongName) ===
@@ -44,38 +71,13 @@ class ParkingLotSubmission < ApplicationRecord
   has_many :parking_lot_vehicles, dependent: :destroy
   accepts_nested_attributes_for :parking_lot_vehicles, allow_destroy: true
   # Status enum - provides submitted?, approved?, etc. automatically
-  enum :status, {
-    submitted: 0,
-    pending_delegated_approval: 1,
-    denied: 2,
-    approved: 3,
-    sent_to_security: 4
-  }
 
-  # Normalized status categories for cross-form reporting
-  STATUS_CATEGORIES = {
-    submitted: :pending,
-    pending_delegated_approval: :in_review,
-    denied: :denied,
-    approved: :approved,
-    sent_to_security: :in_review
-  }.freeze
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
   
   # With enum, status returns a symbol like :submitted, :approved, etc.
   def status_label
-    status&.to_s&.humanize || "Unknown"
-  end
-
-  # Reassignable concern implementation
-  # Use delegated_approver_id if status is pending_delegated_approval, otherwise use supervisor_id
-  def current_assignee_id
-    if pending_delegated_approval?
-      delegated_approver_id
-    else
-      supervisor_id
-    end
-  end
+  self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
+end
 
   def assignment_field_name
     if pending_delegated_approval?

@@ -14,6 +14,13 @@ STATUS_CATEGORIES = {
     denied: :denied
 }.freeze
 
+# Human-readable status labels
+STATUS_LABELS = {
+  in_progress: "In Progress",
+    approved: "Approved",
+    denied: "Denied"
+}.freeze
+
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
 
@@ -22,13 +29,8 @@ STATUS_CATEGORIES = {
 
   # For inbox queue display
   def status_label
-    status&.to_s&.humanize || "Unknown"
-  end
-
-  # For inbox queue filtering - returns the form type name
-  def form_type
-    self.class.name.demodulize.titleize
-  end
+  self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
+end
 
   # For inbox reassignment - returns the current approver's ID
   def current_assignee_id
