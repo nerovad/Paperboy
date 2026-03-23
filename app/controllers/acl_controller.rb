@@ -117,7 +117,7 @@ class AclController < ApplicationController
       end
     end
 
-    redirect_to acl_path(@group), notice: "Permissions updated successfully."
+    redirect_to permissions_acl_path(@group), notice: "Permissions saved successfully."
   end
 
   # --- Organization Permissions ---
@@ -186,7 +186,12 @@ class AclController < ApplicationController
       end
     end
 
-    redirect_to acl_index_path, notice: "Organization permissions updated successfully."
+    redirect_to org_permissions_acl_index_path(
+      agency_id: agency_id,
+      division_id: division_id,
+      department_id: department_id,
+      unit_id: unit_id
+    ), notice: "Permissions saved successfully."
   end
 
   private
