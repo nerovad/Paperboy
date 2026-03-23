@@ -3,14 +3,16 @@ class NoticeOfChangeForm < ApplicationRecord
 
 enum :status, {
   in_progress: 0,
-    approved: 1,
-    denied: 2,
-    cancelled: 3
+    step_1_pending: 1,
+    approved: 2,
+    denied: 3,
+    cancelled: 4
 }, default: :in_progress
 
 # Normalized status categories for cross-form reporting
 STATUS_CATEGORIES = {
   in_progress: :in_review,
+    step_1_pending: :in_review,
     approved: :approved,
     denied: :denied,
     cancelled: :cancelled
@@ -19,6 +21,7 @@ STATUS_CATEGORIES = {
 # Human-readable status labels
 STATUS_LABELS = {
   in_progress: "In Progress",
+    step_1_pending: "Sent to Dana Vodantis",
     approved: "Approved",
     denied: "Denied",
     cancelled: "Cancelled"
@@ -34,11 +37,6 @@ STATUS_LABELS = {
   def status_label
   self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
 end
-
-  # For inbox reassignment - returns the current approver's ID
-  def current_assignee_id
-    approver_id
-  end
 
   # Get the form template for this model (for button configuration)
   def form_template

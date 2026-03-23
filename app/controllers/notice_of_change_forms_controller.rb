@@ -72,7 +72,12 @@ class NoticeOfChangeFormsController < ApplicationController
 approver_id = '135272'
 @notice_of_change_form.update(status: :step_1_pending, approver_id: approver_id)
 # TODO: Send notification to employee #135272
-redirect_to form_success_path, notice: 'Form submitted and routed to employee #135272 for approval.', allow_other_host: false, status: :see_other
+# Multi-step approval routing (1 steps)
+# Step 1: employee #123385
+approver_id = '123385'
+@notice_of_change_form.update(status: :step_1_pending, approver_id: approver_id)
+# TODO: Send notification to employee #123385
+redirect_to form_success_path, notice: 'Form submitted and routed to employee #123385 for approval.', allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)

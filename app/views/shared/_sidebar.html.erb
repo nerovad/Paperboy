@@ -16,9 +16,19 @@
       data-action="input->sidebar-search#filter"
       class="sidebar-search-input"
     />
-    <% 
+    <%
+    # Map legacy form names to ACL keys
+    legacy_form_key_map = {
+      "Creative Job Request" => "creative_job_request",
+      "RM-75"               => "rm75",
+      "Leave of Absence"    => "leave_of_absence",
+      "OSHA 301"            => "osha301",
+      "Workplace Violence"  => "workplace_violence",
+      "Notice of Change"    => "notice_of_change",
+    }
+
     # Legacy forms not managed via FormTemplate
-    public_forms = [
+    legacy_forms = [
       ["Creative Job Request", new_creative_job_request_path],
       ["RM-75", new_rm75_form_path],
       ["Leave of Absence", new_leave_of_absence_form_path],
@@ -26,10 +36,18 @@
       ["Workplace Violence", new_workplace_violence_form_path],
       ["Notice of Change", new_notice_of_change_form_path],
     ]
-    public_forms.unshift(["Billing Tools", new_billing_tool_path]) if system_admin?
+    legacy_forms.unshift(["Billing Tools", new_billing_tool_path]) if system_admin?
 
-    # Build available forms list
-    available_forms = public_forms.dup
+    # Check if user has form-level ACL restrictions (whitelist mode)
+    form_perm_keys = system_admin? ? nil : current_user_form_permission_keys
+    has_form_whitelist = form_perm_keys.present? && form_perm_keys.any?
+
+    # Filter legacy forms through ACL when whitelist is active
+    if has_form_whitelist
+      legacy_forms.select! { |name, _| form_perm_keys.include?(legacy_form_key_map[name]) }
+    end
+
+    available_forms = legacy_forms.dup
 
     # Cache form templates with their field labels and tags for search
     form_field_labels = {}
@@ -50,17 +68,22 @@
       end
     }
 
-    # Add public templates not already in hardcoded list
+    # Add public templates (filtered through ACL whitelist if active)
     FormTemplate.where(access_level: 'public').each do |template|
       path = resolve_path.call(template)
       next unless path
-      next if public_forms.any? { |f| f[0] == template.name }
+      next if legacy_forms.any? { |f| f[0] == template.name }
+      next if has_form_whitelist && !form_perm_keys.include?(template.id.to_s)
       available_forms << [template.name, path]
     end
 
     # Add restricted templates the current user can access (system admins see all)
     FormTemplate.where(access_level: 'restricted').each do |template|
-      next unless system_admin? || template.accessible_by?(current_user_org_chain, current_user_group_ids) || current_user_form_permission_ids.include?(template.id)
+      if has_form_whitelist
+        next unless form_perm_keys.include?(template.id.to_s)
+      else
+        next unless system_admin? || template.accessible_by?(current_user_org_chain, current_user_group_ids)
+      end
       path = resolve_path.call(template)
       available_forms << [template.name, path] if path
     end

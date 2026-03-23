@@ -15,6 +15,15 @@ class AclController < ApplicationController
     { key: 'lookup_tables', label: 'Lookup Tables' },
   ].freeze
 
+  LEGACY_FORMS = [
+    { key: 'creative_job_request', label: 'Creative Job Request' },
+    { key: 'rm75',                 label: 'RM-75' },
+    { key: 'leave_of_absence',     label: 'Leave of Absence' },
+    { key: 'osha301',              label: 'OSHA 301' },
+    { key: 'workplace_violence',   label: 'Workplace Violence' },
+    { key: 'notice_of_change',     label: 'Notice of Change' },
+  ].freeze
+
   def index
     @groups = Group.all.order(:group_name)
     @group_member_counts = EmployeeGroup.group(:group_id).count
@@ -86,6 +95,7 @@ class AclController < ApplicationController
 
   def permissions
     @dropdown_items = DROPDOWN_ITEMS
+    @legacy_forms = LEGACY_FORMS
     @form_templates = FormTemplate.order(:name)
     @current_permissions = @group.group_permissions.pluck(:permission_type, :permission_key)
     @dropdown_keys = @current_permissions.select { |t, _| t == 'dropdown' }.map(&:last).to_set
@@ -115,6 +125,7 @@ class AclController < ApplicationController
 
   def org_permissions
     @dropdown_items = DROPDOWN_ITEMS
+    @legacy_forms = LEGACY_FORMS
     @form_templates = FormTemplate.order(:name)
 
     @agency_id = params[:agency_id]

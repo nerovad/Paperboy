@@ -32,8 +32,20 @@
     </div>
 
     <div class="acl-permissions-section">
-      <h3>Form Template Access</h3>
-      <p class="acl-subtitle">Select which form templates are accessible at this organization level.</p>
+      <h3>Form Access</h3>
+      <p class="acl-subtitle">Select which forms are accessible at this organization level. When any forms are selected, only those forms will appear in the sidebar.</p>
+
+      <h4>Legacy Forms</h4>
+      <div class="permissions-grid">
+        <% @legacy_forms.each do |form| %>
+          <label class="permission-checkbox">
+            <%= check_box_tag "form_permissions[]", form[:key], @org_form_keys.include?(form[:key]) %>
+            <span><%= form[:label] %></span>
+          </label>
+        <% end %>
+      </div>
+
+      <h4>Generated Form Templates</h4>
       <div class="permissions-grid">
         <% @form_templates.each do |template| %>
           <label class="permission-checkbox">
