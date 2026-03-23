@@ -11,26 +11,40 @@
 
   <%= form_tag update_permissions_acl_path(@group), method: :patch, data: { turbo: false } do %>
 
-    <div class="acl-permissions-section">
+    <div class="acl-permissions-section" data-controller="select-all">
       <h3>Profile Dropdown Items</h3>
       <p class="acl-subtitle">Select which profile dropdown items members of this group can access.</p>
       <div class="permissions-grid">
+        <label class="permission-checkbox select-all-checkbox">
+          <%= check_box_tag "select_all_dropdown", "1",
+              @dropdown_items.all? { |item| @dropdown_keys.include?(item[:key]) },
+              data: { select_all_target: "selectAll", action: "change->select-all#toggle" } %>
+          <span><strong>Select All</strong></span>
+        </label>
         <% @dropdown_items.each do |item| %>
           <label class="permission-checkbox">
-            <%= check_box_tag "dropdown_permissions[]", item[:key], @dropdown_keys.include?(item[:key]) %>
+            <%= check_box_tag "dropdown_permissions[]", item[:key], @dropdown_keys.include?(item[:key]),
+                data: { select_all_target: "checkbox", action: "change->select-all#update" } %>
             <span><%= item[:label] %></span>
           </label>
         <% end %>
       </div>
     </div>
 
-    <div class="acl-permissions-section">
+    <div class="acl-permissions-section" data-controller="select-all">
       <h3>Forms</h3>
       <p class="acl-subtitle">Select which forms members of this group can access. When any forms are selected, only those forms will appear in the sidebar.</p>
       <div class="permissions-grid">
+        <label class="permission-checkbox select-all-checkbox">
+          <%= check_box_tag "select_all_forms", "1",
+              @all_forms.all? { |form| @form_keys.include?(form[:key]) },
+              data: { select_all_target: "selectAll", action: "change->select-all#toggle" } %>
+          <span><strong>Select All</strong></span>
+        </label>
         <% @all_forms.each do |form| %>
           <label class="permission-checkbox">
-            <%= check_box_tag "form_permissions[]", form[:key], @form_keys.include?(form[:key]) %>
+            <%= check_box_tag "form_permissions[]", form[:key], @form_keys.include?(form[:key]),
+                data: { select_all_target: "checkbox", action: "change->select-all#update" } %>
             <span><%= form[:label] %></span>
           </label>
         <% end %>
