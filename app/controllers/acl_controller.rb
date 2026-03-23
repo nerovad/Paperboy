@@ -134,13 +134,20 @@ class AclController < ApplicationController
     # Build the org label for display
     @org_label = build_org_label
 
-    # Load current permissions for this exact org level
-    @current_org_permissions = OrgPermission.where(
-      agency_id: @agency_id.presence,
-      division_id: @division_id.presence,
-      department_id: @department_id.presence,
-      unit_id: @unit_id.presence
-    ).pluck(:permission_type, :permission_key)
+    # Load effective permissions — merge all levels in this org chain
+    agency = @agency_id.presence
+    division = @division_id.presence
+    department = @department_id.presence
+    unit = @unit_id.presence
+
+    chain_conditions = [{ agency_id: nil, division_id: nil, department_id: nil, unit_id: nil }]
+    chain_conditions << { agency_id: agency, division_id: nil, department_id: nil, unit_id: nil } if agency
+    chain_conditions << { agency_id: agency, division_id: division, department_id: nil, unit_id: nil } if division
+    chain_conditions << { agency_id: agency, division_id: division, department_id: department, unit_id: nil } if department
+    chain_conditions << { agency_id: agency, division_id: division, department_id: department, unit_id: unit } if unit
+
+    query = chain_conditions.map { |c| OrgPermission.where(c) }.reduce(:or)
+    @current_org_permissions = query.pluck(:permission_type, :permission_key)
 
     @org_dropdown_keys = @current_org_permissions.select { |t, _| t == 'dropdown' }.map(&:last).to_set
     @org_form_keys = @current_org_permissions.select { |t, _| t == 'form' }.map(&:last).to_set
@@ -156,12 +163,18 @@ class AclController < ApplicationController
     form_keys = Array(params[:form_permissions])
 
     ActiveRecord::Base.transaction do
-      OrgPermission.where(
-        agency_id: agency_id,
-        division_id: division_id,
-        department_id: department_id,
-        unit_id: unit_id
-      ).destroy_all
+      # Delete permissions at every level in this exact org chain so
+      # nothing stale remains. For agency=GSA, div=4600, dept=4601,
+      # unit=4601 this clears: agency-only, agency+div, agency+div+dept,
+      # and agency+div+dept+unit rows — but not other divisions/depts.
+      chain_conditions = []
+      chain_conditions << { agency_id: agency_id, division_id: nil, department_id: nil, unit_id: nil } if agency_id
+      chain_conditions << { agency_id: agency_id, division_id: division_id, department_id: nil, unit_id: nil } if division_id
+      chain_conditions << { agency_id: agency_id, division_id: division_id, department_id: department_id, unit_id: nil } if department_id
+      chain_conditions << { agency_id: agency_id, division_id: division_id, department_id: department_id, unit_id: unit_id } if unit_id
+      chain_conditions << { agency_id: nil, division_id: nil, department_id: nil, unit_id: nil } if chain_conditions.empty?
+
+      chain_conditions.each { |c| OrgPermission.where(c).destroy_all }
 
       dropdown_keys.each do |key|
         OrgPermission.create!(
