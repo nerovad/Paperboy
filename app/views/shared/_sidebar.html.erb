@@ -38,13 +38,12 @@
     ]
     legacy_forms.unshift(["Billing Tools", new_billing_tool_path]) if system_admin?
 
-    # Check if user has form-level ACL restrictions (whitelist mode)
+    # ACL whitelist: non-admins only see forms they have explicit permission for
     form_perm_keys = system_admin? ? nil : current_user_form_permission_keys
-    has_form_whitelist = form_perm_keys.present? && form_perm_keys.any?
 
-    # Filter legacy forms through ACL when whitelist is active
-    if has_form_whitelist
-      legacy_forms.select! { |name, _| form_perm_keys.include?(legacy_form_key_map[name]) }
+    # Filter legacy forms through ACL (admins bypass)
+    unless system_admin?
+      legacy_forms.select! { |name, _| form_perm_keys&.include?(legacy_form_key_map[name]) }
     end
 
     available_forms = legacy_forms.dup
@@ -68,13 +67,12 @@
       end
     }
 
-    # Add form templates — filtered through ACL whitelist when active,
-    # otherwise all templates are visible (system admins always see all)
+    # Add form templates — non-admins only see those granted by ACL
     FormTemplate.all.each do |template|
       path = resolve_path.call(template)
       next unless path
       next if available_forms.any? { |f| f[0] == template.name }
-      next if has_form_whitelist && !form_perm_keys.include?(template.id.to_s)
+      next if !system_admin? && !form_perm_keys&.include?(template.id.to_s)
       available_forms << [template.name, path]
     end
     %>

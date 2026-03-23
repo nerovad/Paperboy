@@ -8,11 +8,22 @@
     <p class="acl-subtitle">Manage access control by organization hierarchy and groups.</p>
   </div>
 
+  <!-- ===== Global Permissions ===== -->
+  <div class="acl-section">
+    <div class="acl-section-header">
+      <div class="acl-section-header-row">
+        <h2>Global Permissions</h2>
+        <%= link_to "Manage Global Permissions", org_permissions_acl_index_path, class: "btn approve" %>
+      </div>
+      <p class="acl-subtitle">Baseline permissions that apply to every user. Use this to set what everyone can see by default.</p>
+    </div>
+  </div>
+
   <!-- ===== Organization Permissions ===== -->
   <div class="acl-section" data-controller="gsabss-selects org-permissions" data-org-permissions-url-value="<%= org_permissions_acl_index_path %>">
     <div class="acl-section-header">
       <h2>Organization Permissions</h2>
-      <p class="acl-subtitle">Set permissions by Agency, Division, Department, or Unit. These apply to all employees in the selected org level.</p>
+      <p class="acl-subtitle">Set permissions by Agency, Division, Department, or Unit. These apply to all employees in the selected org level, on top of global permissions.</p>
     </div>
 
     <div class="acl-org-selects">

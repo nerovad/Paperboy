@@ -238,6 +238,6 @@ class AclController < ApplicationController
       unit = Unit.find_by(unit_id: @unit_id)
       parts << "Unit: #{unit&.unit_id} - #{unit&.long_name || @unit_id}"
     end
-    parts.join(" > ")
+    parts.any? ? parts.join(" > ") : "Global (All Users)"
   end
 end

@@ -163,13 +163,17 @@ class ApplicationController < ActionController::Base
   def load_user_permissions(permission_type)
     keys = Set.new
 
-    # 1. Org-level permissions (cascading: agency → division → department → unit)
+    # 1. Global permissions (all org fields nil — apply to everyone)
+    keys.merge(
+      OrgPermission.where(
+        agency_id: nil, division_id: nil, department_id: nil, unit_id: nil,
+        permission_type: permission_type
+      ).pluck(:permission_key)
+    )
+
+    # 2. Org-level permissions (cascading: agency → division → department → unit)
     org = current_user_org_chain
     if org[:agency_id].present?
-      # Collect permissions from each level of the hierarchy.
-      # Agency-level: only agency_id set, rest nil
-      # Division-level: agency_id + division_id set, rest nil
-      # etc.
       conditions = [
         { agency_id: org[:agency_id], division_id: nil, department_id: nil, unit_id: nil }
       ]
@@ -187,7 +191,7 @@ class ApplicationController < ActionController::Base
       keys.merge(query.pluck(:permission_key))
     end
 
-    # 2. Group-level permissions (additive on top of org)
+    # 3. Group-level permissions (additive on top of org)
     group_ids = current_user_group_ids
     if group_ids.any?
       keys.merge(
