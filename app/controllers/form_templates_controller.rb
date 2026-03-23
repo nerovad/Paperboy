@@ -141,13 +141,18 @@ class FormTemplatesController < ApplicationController
   def update
     routing_changed = routing_fields_changed?
     fields_changed = form_fields_changed?
+    statuses_changed = statuses_fields_changed?
 
     if @form_template.update(form_template_params)
-      # Rebuild routing steps
-      rebuild_routing_steps(@form_template)
+      # Only rebuild routing steps when routing actually changed
+      if routing_changed
+        rebuild_routing_steps(@form_template)
+      end
 
-      # Sync statuses (user-configured + auto-generated from routing steps)
-      sync_statuses(@form_template)
+      # Only sync statuses when statuses or routing changed
+      if statuses_changed || routing_changed
+        sync_statuses(@form_template)
+      end
 
       # Only rebuild fields and regenerate views when fields actually changed
       if fields_changed
@@ -156,8 +161,10 @@ class FormTemplatesController < ApplicationController
         generate_dynamic_edit_view(@form_template.class_name)
       end
 
-      # Always regenerate the model to sync enum/STATUS_LABELS with current statuses
-      customize_generated_model(@form_template)
+      # Only regenerate model when statuses or routing changed (enum needs to match)
+      if statuses_changed || routing_changed
+        customize_generated_model(@form_template)
+      end
 
       if routing_changed
         customize_generated_controller(@form_template)
@@ -522,6 +529,27 @@ class FormTemplatesController < ApplicationController
     end.reject { |f| f[:label].blank? }
 
     current_fields != new_fields
+  end
+
+  def statuses_fields_changed?
+    return false unless @form_template
+
+    current_statuses = @form_template.statuses.user_configured.ordered.map do |s|
+      { name: s.name, key: s.key, category: s.category, is_initial: s.is_initial, is_end: s.is_end }
+    end
+
+    new_statuses = (params[:statuses] || []).map do |s|
+      next nil if s[:name].blank? || s[:category].blank?
+      {
+        name: s[:name],
+        key: s[:key].presence || s[:name].parameterize.underscore,
+        category: s[:category],
+        is_initial: s[:is_initial] == '1',
+        is_end: s[:is_end] == '1'
+      }
+    end.compact
+
+    current_statuses != new_statuses
   end
 
   def save_routing_steps(form_template)

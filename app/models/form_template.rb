@@ -2,6 +2,26 @@ class FormTemplate < ApplicationRecord
   attribute :page_headers, :json
   attribute :inbox_buttons, :json, default: []
 
+  # Ensure page_headers always returns an array (guards against double-encoded JSON)
+  def page_headers
+    val = super
+    return nil if val.nil?
+    val = JSON.parse(val) while val.is_a?(String)
+    val.is_a?(Array) ? val : nil
+  rescue JSON::ParserError
+    nil
+  end
+
+  # Ensure inbox_buttons always returns an array (guards against double-encoded JSON)
+  def inbox_buttons
+    val = super
+    return [] if val.nil?
+    val = JSON.parse(val) while val.is_a?(String)
+    val.is_a?(Array) ? val : []
+  rescue JSON::ParserError
+    []
+  end
+
   # Virtual attribute to track routing steps being submitted (before they're saved)
   attr_accessor :pending_routing_steps
 
