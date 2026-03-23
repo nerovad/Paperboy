@@ -28,21 +28,6 @@
               <span class="value"><code><%= @form_template.table_name %></code></span>
             </div>
             
-            <div class="detail-row">
-              <span class="label">Access Level:</span>
-              <span class="value">
-                <span class="badge <%= @form_template.restricted? ? 'badge-warning' : 'badge-success' %>">
-                  <%= @form_template.access_level.titleize %>
-                </span>
-              </span>
-            </div>
-            
-            <% if @form_template.restricted? %>
-              <div class="detail-row">
-                <span class="label">ACL Group:</span>
-                <span class="value"><%= @form_template.acl_group_name %> (ID: <%= @form_template.acl_group_id %>)</span>
-              </div>
-            <% end %>
             
             <div class="detail-row">
               <span class="label">Number of Pages:</span>

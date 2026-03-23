@@ -127,13 +127,9 @@ namespace :db do
     end
 
     # ---------------------------------------------------------------
-    # 7. Remap acl_group_id in form_templates
+    # 7. (Removed) acl_group_id no longer exists on form_templates.
+    #    Form access is now managed exclusively via the ACL Manager.
     # ---------------------------------------------------------------
-    puts "Remapping form_templates.acl_group_id..."
-    FormTemplate.where.not(acl_group_id: nil).find_each do |ft|
-      new_id = group_id_map[ft.acl_group_id]
-      ft.update_column(:acl_group_id, new_id) if new_id
-    end
 
     # ---------------------------------------------------------------
     # 8. Remap restricted_to_group_id in form_fields

@@ -4,7 +4,7 @@ class ApplicationController < ActionController::Base
   before_action :set_current_user
   helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain,
                 :auth_console_admin?, :auth_console_user?, :pcard_admin?, :current_user_dropdown_permissions,
-                :current_user_form_permission_keys, :current_user_form_permission_ids
+                :current_user_form_permission_keys
 
   def current_user
     user_data = session[:user]
@@ -118,11 +118,6 @@ class ApplicationController < ActionController::Base
   def current_user_form_permission_keys
     return @_current_user_form_permission_keys if defined?(@_current_user_form_permission_keys)
     @_current_user_form_permission_keys = load_user_permissions('form')
-  end
-
-  def current_user_form_permission_ids
-    return @_current_user_form_permission_ids if defined?(@_current_user_form_permission_ids)
-    @_current_user_form_permission_ids = current_user_form_permission_keys.map(&:to_i).reject(&:zero?).to_set
   end
 
   def require_system_admin
