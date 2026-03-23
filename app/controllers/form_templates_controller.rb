@@ -100,9 +100,12 @@ class FormTemplatesController < ApplicationController
 
         # Fix the sidebar to put the form in the correct array
         fix_sidebar_placement(class_name)
-        
-        render json: { 
-          success: true, 
+
+        # Auto-grant this form to any org/group that had all forms selected
+        auto_grant_to_select_all_scopes(@form_template)
+
+        render json: {
+          success: true,
           message: "Form created and generated successfully! The form should now appear in your sidebar.",
           redirect: form_templates_path
         }
@@ -257,6 +260,49 @@ class FormTemplatesController < ApplicationController
     if sidebar_content.gsub!(/^\s*#{Regexp.escape(incorrect_line)}\s*\n/, '')
       File.write(sidebar, sidebar_content)
     end
+  end
+
+  # When a new form is created, auto-grant it to any org scope or group
+  # that currently has every existing form selected (i.e. Select All was on).
+  def auto_grant_to_select_all_scopes(new_template)
+    # Build the set of all form permission keys that existed BEFORE this template
+    legacy_keys = AclController::LEGACY_FORMS.map { |f| f[:key] }
+    template_names = FormTemplate.pluck(:name).map(&:downcase).to_set
+    legacy_keys.reject! { |k| template_names.include?(AclController::LEGACY_FORMS.find { |f| f[:key] == k }&.dig(:label)&.downcase) }
+    existing_keys = legacy_keys + FormTemplate.where.not(id: new_template.id).pluck(:id).map(&:to_s)
+    expected_count = existing_keys.size
+    new_key = new_template.id.to_s
+
+    # Org permissions: find scopes that had all forms selected
+    OrgPermission.where(permission_type: 'form')
+                 .select(:agency_id, :division_id, :department_id, :unit_id)
+                 .group(:agency_id, :division_id, :department_id, :unit_id)
+                 .having("COUNT(*) = ?", expected_count)
+                 .each do |scope|
+      OrgPermission.find_or_create_by!(
+        agency_id: scope.agency_id,
+        division_id: scope.division_id,
+        department_id: scope.department_id,
+        unit_id: scope.unit_id,
+        permission_type: 'form',
+        permission_key: new_key
+      )
+    end
+
+    # Group permissions: find groups that had all forms selected
+    GroupPermission.where(permission_type: 'form')
+                   .select(:group_id)
+                   .group(:group_id)
+                   .having("COUNT(*) = ?", expected_count)
+                   .each do |gp|
+      GroupPermission.find_or_create_by!(
+        group_id: gp.group_id,
+        permission_type: 'form',
+        permission_key: new_key
+      )
+    end
+  rescue => e
+    Rails.logger.warn "Auto-grant failed for template #{new_template.id}: #{e.message}"
   end
 
   def form_template_params
