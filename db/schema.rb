@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_20_163325) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_23_000001) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -558,8 +558,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_163325) do
   create_table "form_templates", force: :cascade do |t|
     t.string "name", null: false
     t.string "class_name", null: false
-    t.string "access_level", default: "public", null: false
-    t.integer "acl_group_id"
     t.integer "page_count", default: 2, null: false
     t.text "page_headers"
     t.integer "created_by"
@@ -574,8 +572,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_163325) do
     t.text "inbox_buttons"
     t.string "status_transition_mode", default: "automatic"
     t.text "tags"
-    t.string "org_scope_type"
-    t.string "org_scope_id"
     t.index ["class_name"], name: "index_form_templates_on_class_name", unique: true
   end
 

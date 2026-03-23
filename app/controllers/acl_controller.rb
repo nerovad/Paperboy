@@ -95,8 +95,7 @@ class AclController < ApplicationController
 
   def permissions
     @dropdown_items = DROPDOWN_ITEMS
-    @legacy_forms = LEGACY_FORMS
-    @form_templates = FormTemplate.order(:name)
+    @all_forms = build_all_forms_list
     @current_permissions = @group.group_permissions.pluck(:permission_type, :permission_key)
     @dropdown_keys = @current_permissions.select { |t, _| t == 'dropdown' }.map(&:last).to_set
     @form_keys = @current_permissions.select { |t, _| t == 'form' }.map(&:last).to_set
@@ -125,8 +124,7 @@ class AclController < ApplicationController
 
   def org_permissions
     @dropdown_items = DROPDOWN_ITEMS
-    @legacy_forms = LEGACY_FORMS
-    @form_templates = FormTemplate.order(:name)
+    @all_forms = build_all_forms_list
 
     @agency_id = params[:agency_id]
     @division_id = params[:division_id]
@@ -195,6 +193,27 @@ class AclController < ApplicationController
 
   def set_group
     @group = Group.find(params[:id])
+  end
+
+  # Build a single sorted list of all forms (legacy + templates, deduplicated).
+  # Each entry is { key: String, label: String } where key is either a legacy
+  # string key or a template ID string.
+  def build_all_forms_list
+    template_names = FormTemplate.pluck(:name).map(&:downcase).to_set
+    forms = []
+
+    # Add legacy forms that don't exist as a FormTemplate
+    LEGACY_FORMS.each do |form|
+      next if template_names.include?(form[:label].downcase)
+      forms << form
+    end
+
+    # Add all FormTemplates
+    FormTemplate.order(:name).each do |template|
+      forms << { key: template.id.to_s, label: template.name }
+    end
+
+    forms.sort_by { |f| f[:label] }
   end
 
   def group_params

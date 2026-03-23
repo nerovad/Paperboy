@@ -25,25 +25,13 @@
     </div>
 
     <div class="acl-permissions-section">
-      <h3>Form Access</h3>
+      <h3>Forms</h3>
       <p class="acl-subtitle">Select which forms members of this group can access. When any forms are selected, only those forms will appear in the sidebar.</p>
-
-      <h4>Legacy Forms</h4>
       <div class="permissions-grid">
-        <% @legacy_forms.each do |form| %>
+        <% @all_forms.each do |form| %>
           <label class="permission-checkbox">
             <%= check_box_tag "form_permissions[]", form[:key], @form_keys.include?(form[:key]) %>
             <span><%= form[:label] %></span>
-          </label>
-        <% end %>
-      </div>
-
-      <h4>Generated Form Templates</h4>
-      <div class="permissions-grid">
-        <% @form_templates.each do |template| %>
-          <label class="permission-checkbox">
-            <%= check_box_tag "form_permissions[]", template.id.to_s, @form_keys.include?(template.id.to_s) %>
-            <span><%= template.name %></span>
           </label>
         <% end %>
       </div>
