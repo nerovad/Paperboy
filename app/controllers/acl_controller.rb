@@ -4,16 +4,20 @@ class AclController < ApplicationController
   before_action :set_group, only: [:show, :edit, :update, :destroy, :add_member, :remove_member, :permissions, :update_permissions]
 
   DROPDOWN_ITEMS = [
-    { key: 'inbox',        label: 'Inbox' },
-    { key: 'submissions',  label: 'Submissions' },
-    { key: 'reports',      label: 'Reports' },
-    { key: 'dashboards',   label: 'Dashboards' },
-    { key: 'manage_forms', label: 'Manage Forms' },
-    { key: 'emulate',  label: 'Emulate' },
-    { key: 'acl',          label: 'ACL' },
-    { key: 'auth_console', label: 'Auth Console' },
+    { key: 'inbox',         label: 'Inbox',          default_public: true },
+    { key: 'submissions',   label: 'Submissions',    default_public: true },
+    { key: 'settings',      label: 'Settings',       default_public: true },
+    { key: 'help',          label: 'Help',           default_public: true },
+    { key: 'reports',       label: 'Reports' },
+    { key: 'dashboards',    label: 'Dashboards' },
+    { key: 'manage_forms',  label: 'Manage Forms' },
+    { key: 'emulate',       label: 'Emulate' },
+    { key: 'acl',           label: 'ACL' },
+    { key: 'auth_console',  label: 'Auth Console' },
     { key: 'lookup_tables', label: 'Lookup Tables' },
   ].freeze
+
+  DEFAULT_PUBLIC_DROPDOWN_KEYS = DROPDOWN_ITEMS.select { |i| i[:default_public] }.map { |i| i[:key] }.freeze
 
   LEGACY_FORMS = [
     { key: 'creative_job_request', label: 'Creative Job Request' },
@@ -52,6 +56,10 @@ class AclController < ApplicationController
     @group = Group.new(group_params)
 
     if @group.save
+      # Auto-grant default public dropdown items to the new group
+      DEFAULT_PUBLIC_DROPDOWN_KEYS.each do |key|
+        @group.group_permissions.create(permission_type: 'dropdown', permission_key: key)
+      end
       redirect_to acl_index_path, notice: "Group created successfully."
     else
       render :new, status: :unprocessable_entity
@@ -99,6 +107,11 @@ class AclController < ApplicationController
     @current_permissions = @group.group_permissions.pluck(:permission_type, :permission_key)
     @dropdown_keys = @current_permissions.select { |t, _| t == 'dropdown' }.map(&:last).to_set
     @form_keys = @current_permissions.select { |t, _| t == 'form' }.map(&:last).to_set
+
+    # If no permissions exist yet for this group, pre-check default public items
+    if @current_permissions.empty?
+      @dropdown_keys = DEFAULT_PUBLIC_DROPDOWN_KEYS.to_set
+    end
   end
 
   def update_permissions
@@ -151,6 +164,11 @@ class AclController < ApplicationController
 
     @org_dropdown_keys = @current_org_permissions.select { |t, _| t == 'dropdown' }.map(&:last).to_set
     @org_form_keys = @current_org_permissions.select { |t, _| t == 'form' }.map(&:last).to_set
+
+    # If no permissions exist yet for this scope, pre-check default public items
+    if @current_org_permissions.empty?
+      @org_dropdown_keys = DEFAULT_PUBLIC_DROPDOWN_KEYS.to_set
+    end
   end
 
   def update_org_permissions

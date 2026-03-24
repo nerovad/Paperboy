@@ -126,8 +126,12 @@
                   <%= link_to "Lookup Tables", lookup_tables_path, class: "btn btn-info" %>
                 <% end %>
 
-                <%= link_to "Settings", settings_path, class: "btn btn-primary" %>
-                <%= link_to "Help", help_path, class: "btn btn-primary" %>
+                <% if system_admin? || current_user_dropdown_permissions.include?('settings') %>
+                  <%= link_to "Settings", settings_path, class: "btn btn-primary" %>
+                <% end %>
+                <% if system_admin? || current_user_dropdown_permissions.include?('help') %>
+                  <%= link_to "Help", help_path, class: "btn btn-primary" %>
+                <% end %>
                 <%= button_to "Logout", logout_path, method: :delete, class: "logout-btn" %>
               </div>
             </div>
