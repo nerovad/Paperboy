@@ -66,6 +66,7 @@ class FormTemplate < ApplicationRecord
   validates :name, presence: true
   validates :class_name, presence: true, uniqueness: true
   validates :page_count, numericality: { greater_than_or_equal_to: 2, less_than_or_equal_to: 30 }
+  validates :visibility, inclusion: { in: %w[public restricted] }
   validates :submission_type, inclusion: { in: %w[database approval] }
   validates :approval_routing_to, presence: true, if: :requires_legacy_routing?
   validates :approval_employee_id, presence: true, if: :routes_to_specific_employee?

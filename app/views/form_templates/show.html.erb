@@ -30,6 +30,17 @@
             
             
             <div class="detail-row">
+              <span class="label">Access Level:</span>
+              <span class="value">
+                <% if @form_template.visibility == 'public' %>
+                  <span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">Public</span>
+                <% else %>
+                  <span style="background: #6c757d; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">Restricted</span>
+                <% end %>
+              </span>
+            </div>
+
+            <div class="detail-row">
               <span class="label">Number of Pages:</span>
               <span class="value"><%= @form_template.page_count %></span>
             </div>

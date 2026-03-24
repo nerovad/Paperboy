@@ -101,8 +101,12 @@ class FormTemplatesController < ApplicationController
         # Fix the sidebar to put the form in the correct array
         fix_sidebar_placement(class_name)
 
-        # Auto-grant this form to any org/group that had all forms selected
-        auto_grant_to_select_all_scopes(@form_template)
+        # Grant access: public forms go to everyone, restricted forms auto-grant to select-all scopes
+        if @form_template.visibility == 'public'
+          grant_to_all_scopes(@form_template)
+        else
+          auto_grant_to_select_all_scopes(@form_template)
+        end
 
         render json: {
           success: true,
@@ -140,8 +144,11 @@ class FormTemplatesController < ApplicationController
     routing_changed = routing_fields_changed?
     fields_changed = form_fields_changed?
     statuses_changed = statuses_fields_changed?
+    visibility_changed_to_public = @form_template.visibility != 'public' && form_template_params[:visibility] == 'public'
 
     if @form_template.update(form_template_params)
+      # If visibility just changed to public, grant to all orgs and groups
+      grant_to_all_scopes(@form_template) if visibility_changed_to_public
       # Only rebuild routing steps when routing actually changed
       if routing_changed
         rebuild_routing_steps(@form_template)
@@ -305,9 +312,48 @@ class FormTemplatesController < ApplicationController
     Rails.logger.warn "Auto-grant failed for template #{new_template.id}: #{e.message}"
   end
 
+  def grant_to_all_scopes(template)
+    permission_key = template.id.to_s
+
+    # Grant to every distinct org scope that has any permissions
+    existing_scopes = OrgPermission
+      .select(:agency_id, :division_id, :department_id, :unit_id)
+      .distinct
+      .map { |s| [s.agency_id, s.division_id, s.department_id, s.unit_id] }
+      .to_set
+
+    # Also ensure every agency has a grant (even if not yet in org_permissions)
+    Agency.pluck(:agency_id).each do |aid|
+      existing_scopes << [aid, nil, nil, nil]
+    end
+
+    existing_scopes.each do |agency_id, division_id, department_id, unit_id|
+      OrgPermission.find_or_create_by!(
+        agency_id: agency_id,
+        division_id: division_id,
+        department_id: department_id,
+        unit_id: unit_id,
+        permission_type: 'form',
+        permission_key: permission_key
+      )
+    end
+
+    # Grant to every group
+    Group.pluck(:GroupID).each do |gid|
+      GroupPermission.find_or_create_by!(
+        group_id: gid,
+        permission_type: 'form',
+        permission_key: permission_key
+      )
+    end
+  rescue => e
+    Rails.logger.warn "Grant-to-all failed for template #{template.id}: #{e.message}"
+  end
+
   def form_template_params
     params.require(:form_template).permit(
       :name,
+      :visibility,
       :page_count,
       :submission_type,
       :approval_routing_to,

@@ -72,6 +72,24 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label for="form_visibility">Access Level <span class="required">*</span></label>
+            <%= f.select :visibility,
+                        options_for_select([
+                          ['Public (accessible to all users)', 'public'],
+                          ['Restricted (manage access in ACL)', 'restricted']
+                        ], @form_template.visibility),
+                        {},
+                        {
+                          id: "form_visibility",
+                          class: "form-control"
+                        } %>
+            <small class="form-text" style="color: #6c757d;">
+              Public forms are automatically granted to every organization and group.
+              Restricted forms require access to be configured in the ACL page.
+            </small>
+          </div>
+
         </div>
 
         <!-- ========== Page 2: Page Setup ========== -->
