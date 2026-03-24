@@ -1,0 +1,64 @@
+.settings-notice {
+  background: lighten($primary-color, 40%);
+  color: darken($primary-color, 20%);
+  border: 1px solid lighten($primary-color, 25%);
+  border-radius: $radius-6;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.settings-section {
+  margin-bottom: 32px;
+
+  h2 {
+    font-size: 18px;
+    color: $brand-navy;
+    margin-bottom: 4px;
+  }
+
+  .settings-description {
+    font-size: 14px;
+    color: $muted;
+    margin-bottom: 20px;
+  }
+}
+
+.settings-option {
+  padding: 14px 16px;
+  background: #f8f9fa;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  margin-bottom: 12px;
+}
+
+.settings-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.settings-checkbox {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: $brand-navy;
+  flex-shrink: 0;
+}
+
+.settings-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-size: 14px;
+    color: $text-color;
+  }
+
+  small {
+    font-size: 13px;
+    color: $muted;
+  }
+}

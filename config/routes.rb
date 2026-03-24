@@ -205,6 +205,7 @@ Rails.application.routes.draw do
   # ============================================================================
   resources :creative_job_requests, only: [:new, :create]
   get "help", to: "help#index", as: :help
+  resource :settings, only: [:show, :update]
   resources :help_tickets, only: [:new, :create, :index, :show] do
     member do
       patch :close

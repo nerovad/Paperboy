@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_23_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_24_000001) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -1049,6 +1049,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_23_000001) do
     t.string "unit_id", limit: 4, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "user_settings", force: :cascade do |t|
+    t.string "employee_id", null: false
+    t.boolean "inbox_email_notifications", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id"], name: "index_user_settings_on_employee_id", unique: true
   end
 
   create_table "work_schedule_or_location_update_forms", force: :cascade do |t|

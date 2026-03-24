@@ -1,0 +1,30 @@
+<div class="form-header">
+  <h1>Settings</h1>
+</div>
+
+<div class="form-wrapper">
+  <% if notice.present? %>
+    <div class="settings-notice"><%= notice %></div>
+  <% end %>
+
+  <%= form_with model: @settings, url: settings_path, method: :patch do |f| %>
+    <section class="settings-section">
+      <h2>Email Notifications</h2>
+      <p class="settings-description">Configure when Paperboy sends you email notifications.</p>
+
+      <div class="settings-option">
+        <label class="settings-toggle">
+          <%= f.check_box :inbox_email_notifications, class: "settings-checkbox" %>
+          <span class="settings-label">
+            <strong>Inbox notifications</strong>
+            <small>Receive an email when a new item lands in your inbox for approval.</small>
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <%= f.submit "Save Settings", class: "btn approve" %>
+    </div>
+  <% end %>
+</div>
