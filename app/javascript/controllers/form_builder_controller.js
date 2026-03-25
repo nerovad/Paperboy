@@ -895,17 +895,60 @@ export default class extends Controller {
     return true
   }
 
-  // Submit edit form - validates conditional fields then allows native form submit
+  // Submit edit form - validates conditional fields, shows loading overlay + toast
   submitEditForm(event) {
+    event.preventDefault()
+
     console.log("Validating edit form before submit")
 
     if (!this.validateConditionalFields()) {
-      event.preventDefault()
-      return false
+      return
     }
 
-    // Allow native form submission (PATCH) to proceed
-    return true
+    // Disable submit button to prevent double submission
+    this.submitButtonTarget.disabled = true
+    this.submitButtonTarget.textContent = 'Updating...'
+
+    // Show loading overlay
+    const formWrapper = this.element.querySelector('.form-wrapper') || this.element
+    const overlay = this.showLoadingOverlay(formWrapper, 'Updating form template...')
+
+    const form = this.element.querySelector('form') || this.element.closest('form')
+    const formData = new FormData(form)
+
+    fetch(form.action, {
+      method: form.method || 'POST',
+      body: formData,
+      headers: {
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
+        'Accept': 'application/json'
+      }
+    })
+      .then(response => response.json())
+      .then(data => {
+        this.removeLoadingOverlay(overlay)
+
+        if (data.success) {
+          ToastController.show('success', data.message)
+
+          if (data.redirect) {
+            setTimeout(() => { window.location.href = data.redirect }, 1000)
+          } else {
+            setTimeout(() => { window.location.reload() }, 1000)
+          }
+        } else {
+          ToastController.show('error', 'Error updating form: ' + data.errors.join(', '))
+          this.submitButtonTarget.disabled = false
+          this.submitButtonTarget.textContent = 'Update Form Template'
+        }
+      })
+      .catch(error => {
+        this.removeLoadingOverlay(overlay)
+        ToastController.show('error', 'An unexpected error occurred.')
+        this.submitButtonTarget.disabled = false
+        this.submitButtonTarget.textContent = 'Update Form Template'
+        console.error('Edit form submission error:', error)
+      })
   }
 
   // ============================================

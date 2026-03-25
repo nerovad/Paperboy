@@ -146,6 +146,9 @@ class FormTemplatesController < ApplicationController
     statuses_changed = statuses_fields_changed?
     visibility_changed_to_public = @form_template.visibility != 'public' && form_template_params[:visibility] == 'public'
 
+    # Set pending routing steps to pass validation (same as create)
+    @form_template.pending_routing_steps = params[:routing_steps] if params[:routing_steps].present?
+
     if @form_template.update(form_template_params)
       # If visibility just changed to public, grant to all orgs and groups
       grant_to_all_scopes(@form_template) if visibility_changed_to_public
@@ -176,17 +179,26 @@ class FormTemplatesController < ApplicationController
         Rails.logger.info "Regenerated controller for #{@form_template.class_name}"
       end
 
-      redirect_to form_template_path(@form_template),
-                  notice: routing_changed ?
-                    "Form template updated successfully. Controller was regenerated." :
-                    "Form template updated successfully."
+      message = routing_changed ?
+        "Form template updated successfully. Controller was regenerated." :
+        "Form template updated successfully."
+
+      respond_to do |format|
+        format.json { render json: { success: true, message: message, redirect: form_template_path(@form_template) } }
+        format.html { redirect_to form_template_path(@form_template), notice: message }
+      end
     else
-      @acl_groups = fetch_acl_groups
-      @employees = fetch_employees
-      @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
-      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id) rescue []
-      load_org_scope_chain
-      render :edit, status: :unprocessable_entity
+      respond_to do |format|
+        format.json { render json: { success: false, errors: @form_template.errors.full_messages }, status: :unprocessable_entity }
+        format.html do
+          @acl_groups = fetch_acl_groups
+          @employees = fetch_employees
+          @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
+          @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id) rescue []
+          load_org_scope_chain
+          render :edit, status: :unprocessable_entity
+        end
+      end
     end
   end
 

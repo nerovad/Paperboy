@@ -71,7 +71,14 @@ class Rm75FormsController < ApplicationController
       supervisor_id = employee&.supervisor_id&.to_s
       @rm75_form.update(approver_id: supervisor_id)
 
-      redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+      # Multi-step approval routing (1 steps)
+# Step 1: supervisor
+# Look up the submitter's supervisor
+employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+approver_id = employee&.supervisor_id&.to_s
+@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
+# TODO: Send notification to supervisor
+redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
@@ -123,7 +130,14 @@ class Rm75FormsController < ApplicationController
         @rm75_form.create_osha301!
       end
 
-      redirect_to form_success_path, notice: 'Submission updated successfully.', allow_other_host: false, status: :see_other
+      # Multi-step approval routing (1 steps)
+# Step 1: supervisor
+# Look up the submitter's supervisor
+employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+approver_id = employee&.supervisor_id&.to_s
+@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
+# TODO: Send notification to supervisor
+redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
     else
       setup_form_options
       render :edit, status: :unprocessable_entity
