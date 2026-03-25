@@ -163,7 +163,7 @@
       <%= f.label :format, "Export Format", class: "form-label" %>
       <%= f.select :format,
         [["PDF (Individual files in ZIP)", "pdf"], ["CSV (Single spreadsheet)", "csv"]],
-        {},
+        { prompt: "Choose a Format..." },
         { class: "form-control", required: true }
       %>
       <small class="help-text">PDF creates individual files for each submission; CSV creates one spreadsheet with all data</small>
