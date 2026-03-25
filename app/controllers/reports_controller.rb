@@ -1,6 +1,6 @@
 # app/controllers/reports_controller.rb
 class ReportsController < ApplicationController
-  before_action :require_system_admin
+  before_action :require_reports_access
 
   def index
     @forms = available_forms
@@ -22,6 +22,12 @@ class ReportsController < ApplicationController
 
     if form_type.blank? || format_param.blank?
       redirect_to reports_path, alert: "Please fill in all required fields"
+      return
+    end
+
+    # Verify user has form-level permission for this form type
+    unless current_user_group_names.include?("system_admins") || permitted_form_type?(form_type)
+      redirect_to reports_path, alert: "You do not have permission to generate reports for this form."
       return
     end
 
@@ -144,11 +150,31 @@ class ReportsController < ApplicationController
   end
 
   def available_forms
-    FormTemplate.all.order(:name).map do |template|
+    templates = FormTemplate.all.order(:name)
+
+    # Non-admins only see forms they have ACL permission for
+    unless current_user_group_names.include?("system_admins")
+      perm_keys = current_user_form_permission_keys
+      templates = templates.select { |t| perm_keys.include?(t.id.to_s) }
+    end
+
+    templates.map do |template|
       {
         name: template.name,
         value: template.class_name.tableize  # Converts "ParkingLotSubmission" → "parking_lot_submissions"
       }
+    end
+  end
+
+  def permitted_form_type?(form_type)
+    template = FormTemplate.all.find { |t| t.class_name.tableize == form_type }
+    return false unless template
+    current_user_form_permission_keys.include?(template.id.to_s)
+  end
+
+  def require_reports_access
+    unless current_user_group_names.include?("system_admins") || current_user_dropdown_permissions.include?('reports')
+      redirect_to root_path, alert: "Access denied."
     end
   end
 end

@@ -1,13 +1,18 @@
 class DashboardsController < ApplicationController
-  before_action :require_authentication
+  before_action :require_dashboards_access
 
   def index
-    # Get all forms that have dashboards configured
+    # Get all forms that have dashboards configured, filtered by ACL
     @dashboard_forms = FormTemplate.with_dashboards.order(:name)
 
-    # Pre-select first form if available
+    unless current_user_group_names.include?("system_admins")
+      perm_keys = current_user_form_permission_keys
+      @dashboard_forms = @dashboard_forms.select { |f| perm_keys.include?(f.id.to_s) }
+    end
+
+    # Pre-select first form if available and permitted
     @selected_form = if params[:form_id].present?
-      FormTemplate.find_by(id: params[:form_id])
+      @dashboard_forms.find { |f| f.id == params[:form_id].to_i }
     else
       @dashboard_forms.first
     end
@@ -22,6 +27,12 @@ class DashboardsController < ApplicationController
     # AJAX endpoint for refreshing embed token
     form = FormTemplate.find(params[:form_id])
 
+    # Verify user has form-level permission
+    unless current_user_group_names.include?("system_admins") || current_user_form_permission_keys.include?(form.id.to_s)
+      render json: { error: 'Access denied' }, status: :forbidden
+      return
+    end
+
     if form&.has_dashboard?
       embed_config = get_embed_config(form)
       render json: embed_config
@@ -32,9 +43,14 @@ class DashboardsController < ApplicationController
 
   private
 
-  def require_authentication
+  def require_dashboards_access
     unless session[:user_id]
       redirect_to root_path, alert: "Please log in to access dashboards"
+      return
+    end
+
+    unless current_user_group_names.include?("system_admins") || current_user_dropdown_permissions.include?('dashboards')
+      redirect_to root_path, alert: "Access denied."
     end
   end
 
