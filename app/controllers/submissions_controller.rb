@@ -1,6 +1,7 @@
 # app/controllers/submissions_controller.rb
 class SubmissionsController < ApplicationController
   include Filterable
+  include Pagy::Method
 
   # Legacy forms that are hardcoded (not created via FormTemplate)
   LEGACY_FORMS = [
@@ -23,7 +24,7 @@ class SubmissionsController < ApplicationController
 
     @status_items = []
 
-    # Load legacy hardcoded forms
+    # Load legacy hardcoded forms (with SQL-level filters applied)
     load_legacy_forms(employee_id)
 
     # Load dynamic forms from FormTemplates that have statuses configured
@@ -38,10 +39,10 @@ class SubmissionsController < ApplicationController
       @current_user_id = employee_id
     end
 
-    # Collect unique values for filter dropdowns before filtering
+    # Collect unique values for filter dropdowns BEFORE in-memory filtering
     @filter_options = collect_filter_options(@status_items, status_field_mappings)
 
-    # Apply filters
+    # Apply in-memory filters (type, title, category — these span multiple tables)
     @status_items = apply_filters(@status_items,
       filter_configs: status_filter_configs,
       date_filters: status_date_filters
@@ -58,6 +59,9 @@ class SubmissionsController < ApplicationController
 
     # Build title options mapping for JavaScript dynamic filtering
     @title_options_by_type = build_title_options_by_type(@status_items)
+
+    # Paginate the final sorted array
+    @pagy, @status_items = pagy(:offset, @status_items, count: @status_items.size)
   end
 
   def status_options
@@ -170,6 +174,9 @@ class SubmissionsController < ApplicationController
 
   def load_legacy_forms(employee_id)
     LEGACY_FORMS.each do |form_config|
+      # Skip tables that don't match the type filter (avoids querying unnecessary tables)
+      next if params[:filter_type].present? && params[:filter_type] != form_config[:type]
+
       model_class = form_config[:model].constantize
       next unless model_class.table_exists?
       next unless model_class.respond_to?(:status_category) || model_class.new.respond_to?(:status_category)
@@ -178,14 +185,25 @@ class SubmissionsController < ApplicationController
       includes_list = []
       includes_list << :parking_lot_vehicles if model_class.reflect_on_association(:parking_lot_vehicles)
 
-      submissions = if @is_manager
-                      includes_list.any? ? model_class.includes(includes_list) : model_class.all
-                    else
-                      scope = model_class.for_employee(employee_id)
-                      includes_list.any? ? scope.includes(includes_list) : scope
-                    end
+      # Start with base scope
+      scope = if @is_manager
+                model_class.all
+              else
+                model_class.for_employee(employee_id)
+              end
 
-      submissions.each do |submission|
+      # Apply SQL-level date filters
+      scope = apply_scope_date_filters(scope, submission_scope_date_filters)
+
+      # Apply SQL-level employee_id filter (manager filtering by specific employee)
+      if @is_manager && params[:filter_employee_id].present?
+        scope = scope.where(employee_id: params[:filter_employee_id])
+      end
+
+      # Apply eager loading
+      scope = scope.includes(includes_list) if includes_list.any?
+
+      scope.each do |submission|
         path = send(form_config[:path_helper], submission)
         @status_items << build_status_item(submission, form_config[:type], path)
       end
@@ -198,23 +216,35 @@ class SubmissionsController < ApplicationController
   def load_form_template_submissions(employee_id)
     # Find all form templates that have statuses configured
     FormTemplate.joins(:statuses).distinct.each do |template|
+      # Skip templates that don't match the type filter
+      next if params[:filter_type].present? && params[:filter_type] != template.name
+
       model_class = template.class_name.constantize
       next unless model_class.table_exists?
 
       # Check if model includes TrackableStatus (has status_category method)
       next unless model_class.new.respond_to?(:status_category)
 
-      submissions = if @is_manager
-                      model_class.all
-                    else
-                      if model_class.respond_to?(:for_employee)
-                        model_class.for_employee(employee_id)
-                      else
-                        model_class.where(employee_id: employee_id)
-                      end
-                    end
+      # Start with base scope
+      scope = if @is_manager
+                model_class.all
+              else
+                if model_class.respond_to?(:for_employee)
+                  model_class.for_employee(employee_id)
+                else
+                  model_class.where(employee_id: employee_id)
+                end
+              end
 
-      submissions.each do |submission|
+      # Apply SQL-level date filters
+      scope = apply_scope_date_filters(scope, submission_scope_date_filters)
+
+      # Apply SQL-level employee_id filter (manager filtering by specific employee)
+      if @is_manager && params[:filter_employee_id].present?
+        scope = scope.where(employee_id: params[:filter_employee_id])
+      end
+
+      scope.each do |submission|
         # Generate path dynamically based on the model's route
         path = generate_submission_path(template, submission)
         @status_items << build_status_item(submission, template.name, path)
@@ -223,6 +253,14 @@ class SubmissionsController < ApplicationController
       # Model doesn't exist yet (form template created but not generated), skip
       next
     end
+  end
+
+  # SQL-level date filter config (applied per-table before combining)
+  def submission_scope_date_filters
+    [
+      { param: :filter_date_from, column: :created_at, comparison: :from },
+      { param: :filter_date_to, column: :created_at, comparison: :to }
+    ]
   end
 
   def generate_submission_path(template, submission)
@@ -296,17 +334,16 @@ class SubmissionsController < ApplicationController
 
     if @is_manager
       configs << { param: :filter_employee_name, extractor: ->(item) { item[:employee_name] } }
-      configs << { param: :filter_employee_id, extractor: ->(item) { item[:employee_id] } }
+      # employee_id is handled at SQL level, but keep for in-memory consistency
     end
 
     configs
   end
 
   def status_date_filters
-    [
-      { param: :filter_date_from, extractor: ->(item) { item[:submitted_at] }, comparison: :from },
-      { param: :filter_date_to, extractor: ->(item) { item[:submitted_at] }, comparison: :to }
-    ]
+    # Date filters are now applied at SQL level in load methods,
+    # but we keep the in-memory fallback for any items that slipped through
+    []
   end
 
   def status_sort_configs

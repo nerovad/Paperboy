@@ -41,8 +41,6 @@
 
 /* Only the Status page wrapper should lose padding & scroll */
 .status-wrapper {
-  max-height: calc(100vh - 480px);
-  overflow-y: auto;
   padding: 0;
   padding-bottom: 40px;
 
@@ -272,6 +270,73 @@
     background: rgba(0, 0, 0, 0.03);
     padding: 6px 10px;
     border-radius: 4px;
+  }
+}
+
+/* Pagination */
+.pagination-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+
+  .pagy.series-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    margin: 0;
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 36px;
+      padding: 0 10px;
+      border: 1px solid $border-color;
+      border-radius: 6px;
+      font-size: 14px;
+      text-decoration: none;
+      color: $text-color;
+      background: $form-bg;
+      transition: all 120ms ease;
+
+      &:hover:not([aria-disabled]) {
+        background: rgba(0, 0, 0, 0.05);
+        border-color: darken($border-color, 10%);
+      }
+
+      // Current page
+      &[aria-current="page"] {
+        background: $primary-color;
+        color: #fff;
+        border-color: $primary-color;
+        font-weight: 600;
+        cursor: default;
+      }
+
+      // Gap (ellipsis)
+      &[role="separator"] {
+        border-color: transparent;
+        background: transparent;
+        cursor: default;
+      }
+
+      // Disabled prev/next
+      &[aria-disabled="true"]:not([role="separator"]):not([aria-current]) {
+        opacity: 0.4;
+        cursor: default;
+      }
+    }
+  }
+
+  .pagination-info {
+    font-size: 13px;
+    color: $muted;
+    margin: 0;
   }
 }
 

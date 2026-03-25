@@ -223,5 +223,14 @@
     <% end %>
   </tbody>
 </table>
+
+<% if @pagy.pages > 1 %>
+  <div class="pagination-wrapper">
+    <%== @pagy.series_nav %>
+    <p class="pagination-info">
+      Showing <%= @pagy.from %>–<%= @pagy.to %> of <%= @pagy.count %> submissions
+    </p>
+  </div>
+<% end %>
 </div>
 </div>

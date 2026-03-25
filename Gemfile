@@ -102,3 +102,6 @@ group :test do
 end
 
 gem "sass-embedded", "~> 1.94"
+
+# Pagination
+gem 'pagy'

@@ -67,6 +67,37 @@ module Filterable
     sort_direction == 'desc' ? sorted.reverse : sorted
   end
 
+  # Apply SQL-level WHERE clauses to an ActiveRecord scope
+  # scope_filters: Array of { param:, column: } hashes
+  # Example: { param: :filter_status, column: :status, transform: ->(v) { v.downcase.tr(' ', '_') } }
+  def apply_scope_filters(scope, scope_filters)
+    scope_filters.each do |config|
+      value = params[config[:param]]
+      next unless value.present?
+
+      value = config[:transform].call(value) if config[:transform]
+      scope = scope.where(config[:column] => value)
+    end
+    scope
+  end
+
+  # Apply SQL-level date range filters to an ActiveRecord scope
+  # date_filters: Array of { param:, column:, comparison: :from/:to }
+  def apply_scope_date_filters(scope, date_filters)
+    date_filters.each do |config|
+      value = params[config[:param]]
+      next unless value.present?
+
+      date = Date.parse(value)
+      scope = if config[:comparison] == :from
+                scope.where(config[:column] => date.beginning_of_day..)
+              else
+                scope.where(config[:column] => ..date.end_of_day)
+              end
+    end
+    scope
+  end
+
   # Helper to check if any filters are active
   def filters_active?(*filter_params)
     filter_params.any? { |param| params[param].present? }

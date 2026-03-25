@@ -1,6 +1,7 @@
 # app/controllers/inbox_controller.rb
 class InboxController < ApplicationController
   include Filterable
+  include Pagy::Method
 
   def queue
     employee = session[:user]
@@ -12,22 +13,37 @@ class InboxController < ApplicationController
     # Parking Lot Submissions where employee is either:
     # 1. Supervisor (Dept Head) - all statuses stay in inbox
     # 2. Delegated Approver - all statuses stay in inbox
-    @submissions += ParkingLotSubmission.where(supervisor_id: employee_id)
-    @submissions += ParkingLotSubmission.where(delegated_approver_id: employee_id)
+    @submissions += apply_scope_date_filters(
+      ParkingLotSubmission.where(supervisor_id: employee_id),
+      inbox_scope_date_filters
+    ).to_a
+    @submissions += apply_scope_date_filters(
+      ParkingLotSubmission.where(delegated_approver_id: employee_id),
+      inbox_scope_date_filters
+    ).to_a
 
     # Probation Transfer Requests - all statuses stay in inbox (except canceled)
-    @submissions += ProbationTransferRequest.where(supervisor_id: employee_id, canceled_at: nil)
+    @submissions += apply_scope_date_filters(
+      ProbationTransferRequest.where(supervisor_id: employee_id, canceled_at: nil),
+      inbox_scope_date_filters
+    ).to_a
 
     # Critical Information Reporting forms assigned to this manager (all statuses stay in inbox)
-    @submissions += CriticalInformationReporting.where(assigned_manager_id: employee_id)
+    @submissions += apply_scope_date_filters(
+      CriticalInformationReporting.where(assigned_manager_id: employee_id),
+      inbox_scope_date_filters
+    ).to_a
 
     # Dynamically generated forms with approval workflows
     @submissions += fetch_dynamic_form_submissions(employee_id)
 
-    # Collect unique values for filter dropdowns before filtering
+    # Deduplicate (a submission could match both supervisor and delegated approver)
+    @submissions.uniq!(&:id)
+
+    # Collect unique values for filter dropdowns BEFORE in-memory filtering
     @filter_options = collect_filter_options(@submissions, inbox_field_mappings)
 
-    # Apply filters
+    # Apply in-memory filters
     @submissions = apply_filters(@submissions,
       filter_configs: inbox_filter_configs,
       date_filters: inbox_date_filters
@@ -39,11 +55,22 @@ class InboxController < ApplicationController
 
     @submissions = sort_collection(@submissions, sort_by, sort_direction, inbox_sort_configs)
 
+    # Paginate the final sorted array
+    @pagy, @submissions = pagy(:offset, @submissions, count: @submissions.size)
+
     # Load employees for reassignment dropdown
     @employees = Employee.order(:last_name, :first_name)
   end
 
   private
+
+  # SQL-level date filter config
+  def inbox_scope_date_filters
+    [
+      { param: :filter_date_from, column: :created_at, comparison: :from },
+      { param: :filter_date_to, column: :created_at, comparison: :to }
+    ]
+  end
 
   def inbox_field_mappings
     {
@@ -66,10 +93,8 @@ class InboxController < ApplicationController
   end
 
   def inbox_date_filters
-    [
-      { param: :filter_date_from, extractor: ->(s) { s.created_at }, comparison: :from },
-      { param: :filter_date_to, extractor: ->(s) { s.created_at }, comparison: :to }
-    ]
+    # Date filters are now applied at SQL level
+    []
   end
 
   def inbox_sort_configs
@@ -95,7 +120,9 @@ class InboxController < ApplicationController
 
         # Query for submissions where this employee is the approver
         if model_class.column_names.include?('approver_id')
-          submissions += model_class.where(approver_id: employee_id).to_a
+          scope = model_class.where(approver_id: employee_id)
+          scope = apply_scope_date_filters(scope, inbox_scope_date_filters)
+          submissions += scope.to_a
         end
       rescue NameError
         # Model class doesn't exist yet (form not generated), skip it
