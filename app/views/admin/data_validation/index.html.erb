@@ -1,0 +1,162 @@
+<div class="form-header">
+  <h1>Data Validation</h1>
+</div>
+
+<div class="form-wrapper data-validation-wrapper">
+
+  <%# ── Summary Cards ── %>
+  <div class="dv-summary">
+    <div class="dv-card">
+      <span class="dv-card-count"><%= @summary[:total] %></span>
+      <span class="dv-card-label">Total Employees</span>
+    </div>
+    <div class="dv-card dv-card--ok">
+      <span class="dv-card-count"><%= @summary[:valid] %></span>
+      <span class="dv-card-label">Clean</span>
+    </div>
+    <div class="dv-card dv-card--error">
+      <span class="dv-card-count"><%= @summary[:with_errors] %></span>
+      <span class="dv-card-label">With Errors</span>
+    </div>
+    <div class="dv-card dv-card--warning">
+      <span class="dv-card-count"><%= @summary[:with_warnings] %></span>
+      <span class="dv-card-label">Warnings Only</span>
+    </div>
+  </div>
+
+  <%# ── Category Breakdown ── %>
+  <% category_labels = {
+       email: "Email",
+       org_chain: "Org Chain",
+       agency: "Agency",
+       supervisor: "Supervisor",
+       name: "Name",
+       phone: "Phone",
+       groups: "Groups"
+     } %>
+  <div class="dv-section">
+    <h2>Issues by Category</h2>
+    <div class="dv-categories">
+      <% category_labels.each do |key, label| %>
+        <% count = @summary[:by_category][key] || 0 %>
+        <% next if count == 0 %>
+        <%= link_to admin_data_validation_index_path(filter: key, search: @search),
+              class: "dv-category-pill #{'dv-category-pill--active' if @filter == key.to_s}" do %>
+          <span class="dv-pill-label"><%= label %></span>
+          <span class="dv-pill-count"><%= count %></span>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <%# ── Download CSV ── %>
+  <div class="dv-section">
+    <h2>Download CSV</h2>
+    <div class="dv-download-group">
+      <%= link_to "All Employees", admin_data_validation_index_path(filter: "all", format: :csv), class: "btn pdf" %>
+      <%= link_to "Errors Only", admin_data_validation_index_path(filter: "errors", format: :csv), class: "btn deny" %>
+      <% category_labels.each do |key, label| %>
+        <% next if (@summary[:by_category][key] || 0) == 0 %>
+        <%= link_to label, admin_data_validation_index_path(filter: key, format: :csv), class: "btn" %>
+      <% end %>
+    </div>
+  </div>
+
+  <%# ── Filters & Search ── %>
+  <div class="dv-section">
+    <div class="dv-toolbar">
+      <div class="dv-filter-group">
+        <%= link_to "All", admin_data_validation_index_path(filter: "all", search: @search),
+              class: "btn #{'approve' if @filter == 'all'}" %>
+        <%= link_to "Errors", admin_data_validation_index_path(filter: "errors", search: @search),
+              class: "btn #{'deny' if @filter == 'errors'}" %>
+        <%= link_to "Warnings", admin_data_validation_index_path(filter: "warnings", search: @search),
+              class: "btn #{'edit' if @filter == 'warnings'}" %>
+        <%= link_to "Valid", admin_data_validation_index_path(filter: "valid", search: @search),
+              class: "btn #{'approve' if @filter == 'valid'}" %>
+      </div>
+      <%= form_with url: admin_data_validation_index_path, method: :get, local: true, class: "dv-search-form" do %>
+        <%= hidden_field_tag :filter, @filter %>
+        <%= text_field_tag :search, @search, placeholder: "Search by name, ID, email, agency, or unit...", class: "form-control dv-search-input" %>
+        <%= submit_tag "Search", class: "btn" %>
+        <% if @search.present? %>
+          <%= link_to "Clear", admin_data_validation_index_path(filter: @filter), class: "btn clear-filters" %>
+        <% end %>
+      <% end %>
+    </div>
+    <p class="dv-result-count">Showing <%= @filtered_results.size %> of <%= @total_filtered %> employees</p>
+  </div>
+
+  <%# ── Results Table ── %>
+  <div class="dv-section">
+    <table class="submission-table dv-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Agency</th>
+          <th>Unit</th>
+          <th>Supervisor</th>
+          <th>Status</th>
+          <th>Issues</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @filtered_results.each do |result| %>
+          <% emp = result.employee %>
+          <tr class="<%= result.error_count > 0 ? 'dv-row--error' : (result.warning_count > 0 ? 'dv-row--warning' : 'dv-row--ok') %>">
+            <td><%= emp.EmployeeID %></td>
+            <td><%= emp.first_name %> <%= emp.last_name %></td>
+            <td class="<%= 'dv-cell--error' if result.issues.any? { |i| i.category == :email } %>">
+              <%= emp.email %>
+            </td>
+            <td class="<%= 'dv-cell--error' if result.issues.any? { |i| i.category == :agency } %>">
+              <%= emp.agency %>
+            </td>
+            <td class="<%= 'dv-cell--error' if result.issues.any? { |i| i.category == :org_chain } %>">
+              <%= emp.unit %>
+            </td>
+            <td class="<%= 'dv-cell--error' if result.issues.any? { |i| i.category == :supervisor } %>">
+              <%= emp.supervisor_id || "—" %>
+            </td>
+            <td>
+              <% if result.error_count > 0 %>
+                <span class="dv-badge dv-badge--error"><%= result.error_count %> error<%= 's' if result.error_count > 1 %></span>
+              <% elsif result.warning_count > 0 %>
+                <span class="dv-badge dv-badge--warning"><%= result.warning_count %> warning<%= 's' if result.warning_count > 1 %></span>
+              <% else %>
+                <span class="dv-badge dv-badge--ok">clean</span>
+              <% end %>
+            </td>
+            <td class="dv-issues-cell">
+              <% result.issues.each do |issue| %>
+                <span class="dv-issue dv-issue--<%= issue.severity %>"><%= issue.message %></span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% if @filtered_results.empty? %>
+      <div class="empty-state">
+        <p>No employees match the current filters.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <%# ── Pagination ── %>
+  <% if @total_pages > 1 %>
+    <div class="dv-pagination">
+      <% if @page > 1 %>
+        <%= link_to "Previous", admin_data_validation_index_path(filter: @filter, search: @search, page: @page - 1), class: "btn" %>
+      <% end %>
+      <span class="dv-page-info">Page <%= @page %> of <%= @total_pages %></span>
+      <% if @page < @total_pages %>
+        <%= link_to "Next", admin_data_validation_index_path(filter: @filter, search: @search, page: @page + 1), class: "btn" %>
+      <% end %>
+    </div>
+  <% end %>
+
+</div>

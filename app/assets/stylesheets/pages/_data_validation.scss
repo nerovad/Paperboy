@@ -1,0 +1,244 @@
+/* Pages: Data Validation */
+@import "base/tokens";
+
+.data-validation-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Summary cards */
+.dv-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dv-card {
+  background: #f9f9f9;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  padding: 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &--ok { border-left: 4px solid $primary-color; }
+  &--error { border-left: 4px solid $danger; }
+  &--warning { border-left: 4px solid #ff9800; }
+}
+
+.dv-card-count {
+  font-size: 2rem;
+  font-weight: 700;
+  color: $text-color;
+  line-height: 1;
+}
+
+.dv-card-label {
+  font-size: 0.9rem;
+  color: $muted;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Sections */
+.dv-section {
+  margin-bottom: 24px;
+
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: $text-color;
+    margin: 0 0 12px;
+  }
+}
+
+/* Download group */
+.dv-download-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Category pills */
+.dv-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dv-category-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid $border-color;
+  border-radius: 20px;
+  background: #f9f9f9;
+  color: $text-color;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background-color 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: #eef2ff;
+    border-color: $brand-navy;
+  }
+
+  &--active {
+    background: $brand-navy;
+    border-color: $brand-navy;
+    color: #fff;
+
+    .dv-pill-count {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+  }
+}
+
+.dv-pill-count {
+  background: $border-color;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Toolbar */
+.dv-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.dv-filter-group {
+  display: flex;
+  gap: 6px;
+}
+
+.dv-search-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex: 1;
+  min-width: 250px;
+}
+
+.dv-search-input {
+  flex: 1;
+  max-width: 400px;
+}
+
+.dv-result-count {
+  color: $muted;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* Table overrides */
+.dv-table {
+  font-size: 0.85rem;
+
+  th {
+    white-space: nowrap;
+  }
+
+  td {
+    vertical-align: top;
+    padding: 10px 12px;
+  }
+}
+
+.dv-row--error {
+  background: #fff5f5;
+}
+
+.dv-row--warning {
+  background: #fffbeb;
+}
+
+.dv-row--ok {
+  background: #fff;
+}
+
+.dv-cell--error {
+  color: $danger;
+  font-weight: 600;
+}
+
+/* Badges */
+.dv-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &--error {
+    background: #fde8e8;
+    color: $danger;
+  }
+
+  &--warning {
+    background: #fef3cd;
+    color: #856404;
+  }
+
+  &--ok {
+    background: #d4edda;
+    color: #155724;
+  }
+}
+
+/* Issue tags */
+.dv-issues-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.dv-issue {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+
+  &--error {
+    background: #fde8e8;
+    color: $danger-700;
+  }
+
+  &--warning {
+    background: #fef3cd;
+    color: #856404;
+  }
+}
+
+/* Pagination */
+.dv-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.dv-page-info {
+  color: $muted;
+  font-size: 0.9rem;
+}

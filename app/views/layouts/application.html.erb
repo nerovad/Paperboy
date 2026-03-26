@@ -125,6 +125,9 @@
                 <% if system_admin? || current_user_dropdown_permissions.include?('lookup_tables') %>
                   <%= link_to "Lookup Tables", lookup_tables_path, class: "btn btn-info" %>
                 <% end %>
+                <% if system_admin? %>
+                  <%= link_to "Data Validation", admin_data_validation_index_path, class: "btn btn-info" %>
+                <% end %>
 
                 <% if system_admin? || current_user_dropdown_permissions.include?('settings') %>
                   <%= link_to "Settings", settings_path, class: "btn btn-primary" %>

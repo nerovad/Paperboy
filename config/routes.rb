@@ -91,6 +91,7 @@ Rails.application.routes.draw do
   # ============================================================================
   namespace :admin do
     resources :impersonations, only: [:new, :create, :destroy]
+    resources :data_validation, only: [:index]
   end
 
   resources :pcard_inventory, only: [:index, :new, :create, :edit, :update] do
