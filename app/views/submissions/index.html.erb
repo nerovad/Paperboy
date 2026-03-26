@@ -1,10 +1,12 @@
 <!-- app/views/submissions/index.html.erb -->
+<div class="submissions-page-wrapper">
 <div class="form-header">
   <h1>Submissions</h1>
 </div>
 
 <!-- Filter Form -->
-<div data-controller="status-filters"
+<div class="submissions-filters-and-table"
+     data-controller="status-filters"
      data-status-filters-status-options-value='<%= @status_options_by_type.to_json %>'
      data-status-filters-all-statuses-value='<%= @filter_options[:statuses].to_json %>'
      data-status-filters-title-options-value='<%= @title_options_by_type.to_json %>'
@@ -133,6 +135,7 @@
   </form>
 </div>
 
+<div class="submissions-table-scroll">
 <div class="form-wrapper status-wrapper">
 <table class="status-table">
   <thead>
@@ -232,5 +235,7 @@
     </p>
   </div>
 <% end %>
+</div>
+</div>
 </div>
 </div>

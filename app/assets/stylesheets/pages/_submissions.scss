@@ -1,5 +1,57 @@
 @import "base/tokens";
 
+/* Submissions page wrapper — flex column so filters stay fixed and only the table scrolls */
+.submissions-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+
+  .form-header {
+    flex-shrink: 0;
+  }
+
+  .filter-wrapper {
+    flex-shrink: 0;
+  }
+
+  .submissions-filters-and-table {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+}
+
+.submissions-table-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 40px;
+
+  scroll-behavior: smooth;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+
+    &:hover {
+      background: #666;
+    }
+  }
+
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}
+
 /* Saved Search bar — lives inside .filter-form, above .filter-controls */
 .saved-search-bar {
   display: flex;
