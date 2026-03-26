@@ -49,19 +49,6 @@
     </div>
   </div>
 
-  <%# ── Download CSV ── %>
-  <div class="dv-section">
-    <h2>Download CSV</h2>
-    <div class="dv-download-group">
-      <%= link_to "All Employees", admin_data_validation_index_path(filter: "all", format: :csv), class: "btn pdf" %>
-      <%= link_to "Errors Only", admin_data_validation_index_path(filter: "errors", format: :csv), class: "btn deny" %>
-      <% category_labels.each do |key, label| %>
-        <% next if (@summary[:by_category][key] || 0) == 0 %>
-        <%= link_to label, admin_data_validation_index_path(filter: key, format: :csv), class: "btn" %>
-      <% end %>
-    </div>
-  </div>
-
   <%# ── Filters & Search ── %>
   <div class="dv-section">
     <div class="dv-toolbar">
@@ -83,6 +70,7 @@
           <%= link_to "Clear", admin_data_validation_index_path(filter: @filter), class: "btn clear-filters" %>
         <% end %>
       <% end %>
+      <%= link_to "Download Results", admin_data_validation_index_path(filter: @filter, search: @search, format: :csv), class: "btn pdf" %>
     </div>
     <p class="dv-result-count">Showing <%= @filtered_results.size %> of <%= @total_filtered %> employees</p>
   </div>
