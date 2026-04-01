@@ -151,6 +151,8 @@ class FormTemplate < ApplicationRecord
 
   def approval_must_have_terminal_statuses
     return unless requires_approval?
+    # Skip when sync_statuses will handle creating default terminal statuses after save
+    return if pending_routing_steps.present?
     return unless statuses.user_configured.any?
 
     has_approved = statuses.user_configured.any? { |s| s.category == 'approved' }

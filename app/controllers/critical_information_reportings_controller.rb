@@ -60,6 +60,9 @@ class CriticalInformationReportingsController < ApplicationController
                                 .order(:last_name, :first_name)
                                 .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
     
+    # Agency options for Impacted Customers multi-select
+    @impacted_customer_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+
     # Load location options
     @location_options = load_location_options
   end
@@ -124,6 +127,8 @@ class CriticalInformationReportingsController < ApplicationController
                                 .order(:last_name, :first_name)
                                 .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
 
+    @impacted_customer_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+
     @location_options = load_location_options
   end
 
@@ -156,6 +161,8 @@ class CriticalInformationReportingsController < ApplicationController
                                   .select(:employee_id, :first_name, :last_name)
                                   .order(:last_name, :first_name)
                                   .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
+
+      @impacted_customer_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
 
       @location_options = load_location_options
 
@@ -203,7 +210,14 @@ class CriticalInformationReportingsController < ApplicationController
 
     if @critical_information_reporting.save
       NotifyTeamsJob.perform_later(@critical_information_reporting.id) if @critical_information_reporting.immediate_urgency?
-      redirect_to form_success_path, allow_other_host: false, status: :see_other
+      # Multi-step approval routing (1 steps)
+# Step 1: supervisor
+# Look up the submitter's supervisor
+employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+approver_id = employee&.supervisor_id&.to_s
+@critical_information_reporting.update(status: :step_1_pending, approver_id: approver_id)
+# TODO: Send notification to supervisor
+redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
@@ -241,7 +255,9 @@ class CriticalInformationReportingsController < ApplicationController
                                   .select(:employee_id, :first_name, :last_name)
                                   .order(:last_name, :first_name)
                                   .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
-      
+
+      @impacted_customer_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+
       @location_options = load_location_options
 
       render :new, status: :unprocessable_entity

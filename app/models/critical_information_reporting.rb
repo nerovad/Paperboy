@@ -7,24 +7,27 @@ class CriticalInformationReporting < ApplicationRecord
 
 enum :status, {
   in_progress: 0,
-    resolved: 1,
-    scheduled: 2,
-    cancelled: 3
+    scheduled: 1,
+    step_1_pending: 2,
+    resolved: 3,
+    cancelled: 4
 }, default: :in_progress
 
 # Normalized status categories for cross-form reporting
 STATUS_CATEGORIES = {
   in_progress: :in_review,
-    resolved: :approved,
     scheduled: :scheduled,
+    step_1_pending: :in_review,
+    resolved: :approved,
     cancelled: :cancelled
 }.freeze
 
 # Human-readable status labels
 STATUS_LABELS = {
   in_progress: "In progress",
-    resolved: "Resolved",
     scheduled: "Scheduled",
+    step_1_pending: "Sent to Supervisor",
+    resolved: "Resolved",
     cancelled: "Cancelled"
 }.freeze
 
@@ -83,10 +86,6 @@ STATUS_LABELS = {
   def status_label
   self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
 end
-
-  def immediate_urgency?
-    urgency == 'Immediate'
-  end
 
   # Get the Employee record for the assigned manager
   def assigned_manager
