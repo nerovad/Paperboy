@@ -28,8 +28,8 @@ STATUS_LABELS = {
     cancelled: "Cancelled"
 }.freeze
 
-  # ActiveStorage attachment for media files
-  has_one_attached :media
+  # ActiveStorage attachments for media files (multiple)
+  has_many_attached :media
 
   # Callbacks
   before_validation :assign_manager_based_on_location, on: :create
@@ -112,13 +112,16 @@ end
   def acceptable_media_file
     return unless media.attached?
 
-    unless media.blob.byte_size <= 10.megabytes
-      errors.add(:media, "is too large (maximum is 10 MB)")
-    end
-
     acceptable_types = ["image/jpeg", "image/png", "image/gif", "application/pdf"]
-    unless acceptable_types.include?(media.blob.content_type)
-      errors.add(:media, "must be a JPEG, PNG, GIF, or PDF")
+
+    media.each do |file|
+      unless file.blob.byte_size <= 10.megabytes
+        errors.add(:media, "\"#{file.filename}\" is too large (maximum is 10 MB per file)")
+      end
+
+      unless acceptable_types.include?(file.blob.content_type)
+        errors.add(:media, "\"#{file.filename}\" must be a JPEG, PNG, GIF, or PDF")
+      end
     end
   end
 

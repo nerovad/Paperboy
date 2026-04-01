@@ -81,9 +81,10 @@ class CriticalInformationReportingsController < ApplicationController
 
   def download_media
     @critical_information_reporting = CriticalInformationReporting.find(params[:id])
+    attachment = @critical_information_reporting.media.find_by(id: params[:attachment_id])
 
-    if @critical_information_reporting.media.attached?
-      redirect_to rails_blob_path(@critical_information_reporting.media, disposition: "attachment")
+    if attachment
+      redirect_to rails_blob_path(attachment, disposition: "attachment")
     else
       redirect_to inbox_queue_path, alert: "No media attachment found."
     end
@@ -256,9 +257,10 @@ class CriticalInformationReportingsController < ApplicationController
       :incident_type, :incident_details, :cause,
       :impact_started, :location,
       :urgency,
-      :impact, :next_steps, :media,
+      :impact, :next_steps,
       staff_involved: [],
-      impacted_customers: []
+      impacted_customers: [],
+      media: []
     )
 
     # Normalize multi-select arrays into comma-separated strings

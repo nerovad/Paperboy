@@ -248,17 +248,18 @@
     </div>
 
     <div class="form-group" data-controller="file-preview">
-      <%= form.label :media, "Media (Photo, PDF, etc.)" %>
+      <%= form.label :media, "Media (Photos, PDFs, etc.)" %>
       <%= form.file_field :media,
             class: "form-control",
             accept: "image/jpeg,image/png,image/gif,application/pdf",
+            multiple: true,
             direct_upload: true,
             data: {
               file_preview_target: "input",
               action: "change->file-preview#preview"
             } %>
       <small class="help-text text-muted">
-        Upload a photo (JPEG, PNG, GIF) or PDF file (maximum 10 MB)
+        Upload photos (JPEG, PNG, GIF) or PDF files (maximum 10 MB each)
       </small>
       <div data-file-preview-target="preview"></div>
     </div>

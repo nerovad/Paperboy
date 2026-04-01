@@ -106,17 +106,19 @@
       </div>
     </section>
 
-    <!-- Media Attachment -->
+    <!-- Media Attachments -->
     <% if @critical_information_reporting.media.attached? %>
       <section class="media-section">
-        <h3>Attached Media</h3>
-        <div class="media-attachment">
-          <% if @critical_information_reporting.media.content_type.start_with?("image/") %>
-            <%= image_tag rails_blob_path(@critical_information_reporting.media), class: "attached-image", alt: "Attached media" %>
-          <% end %>
-          <p><%= @critical_information_reporting.media.filename %> (<%= number_to_human_size(@critical_information_reporting.media.byte_size) %>)</p>
-          <%= link_to "Download", download_media_critical_information_reporting_path(@critical_information_reporting), class: "btn-link" %>
-        </div>
+        <h3>Attached Media (<%= @critical_information_reporting.media.count %>)</h3>
+        <% @critical_information_reporting.media.each do |attachment| %>
+          <div class="media-attachment">
+            <% if attachment.content_type.start_with?("image/") %>
+              <%= image_tag rails_blob_path(attachment), class: "attached-image", alt: attachment.filename %>
+            <% end %>
+            <p><%= attachment.filename %> (<%= number_to_human_size(attachment.byte_size) %>)</p>
+            <%= link_to "Download", download_media_critical_information_reporting_path(@critical_information_reporting, attachment_id: attachment.id), class: "btn-link" %>
+          </div>
+        <% end %>
       </section>
     <% end %>
 
