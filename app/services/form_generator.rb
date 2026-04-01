@@ -44,7 +44,7 @@ class FormGenerator
     # Build field definitions for migration
     field_definitions = form_template.form_fields.map do |field|
       case field.field_type
-      when 'text', 'dropdown'
+      when 'text', 'dropdown', 'choices_dropdown'
         "  # #{field.label}\n  attribute :#{field.field_name}, :string"
       when 'text_box'
         "  # #{field.label}\n  attribute :#{field.field_name}, :text"
@@ -98,7 +98,7 @@ class FormGenerator
     # Build column definitions
     columns = form_template.form_fields.map do |field|
       case field.field_type
-      when 'text', 'dropdown'
+      when 'text', 'dropdown', 'choices_dropdown'
         "      t.string :#{field.field_name}"
       when 'text_box'
         "      t.text :#{field.field_name}"
@@ -297,10 +297,21 @@ class FormGenerator
       <<~HTML
         <div class="form-group">
           <%= f.label :#{field.field_name}, "#{field.label}" %>
-          <%= f.select :#{field.field_name}, 
+          <%= f.select :#{field.field_name},
                       options_for_select([#{values}]),
                       { include_blank: "Select..." },
                       { class: "form-control"#{field.required ? ', required: true' : ''} } %>
+        </div>
+      HTML
+    when 'choices_dropdown'
+      values = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+      <<~HTML
+        <div class="form-group" data-controller="choices">
+          <%= f.label :#{field.field_name}, "#{field.label}" %>
+          <%= f.select :#{field.field_name},
+                      options_for_select([#{values}]),
+                      { include_blank: false },
+                      { class: "form-control"#{field.required ? ', required: true' : ''}, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
         </div>
       HTML
     end
@@ -319,7 +330,13 @@ class FormGenerator
   end
   
   def generate_permitted_params
-    field_names = form_template.form_fields.map { |f| ":#{f.field_name}" }
+    field_names = form_template.form_fields.map do |f|
+      if f.choices_dropdown?
+        "#{f.field_name}: []"
+      else
+        ":#{f.field_name}"
+      end
+    end
     field_names.join(",\n            ")
   end
   

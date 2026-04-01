@@ -90,7 +90,7 @@
                         
                         <% if field.text_box? %>
                           <span class="text-muted"> - Rows: <%= field.rows %></span>
-                        <% elsif field.dropdown? %>
+                        <% elsif field.dropdown? || field.choices_dropdown? %>
                           <span class="text-muted"> - Options: <%= field.dropdown_values.join(', ') %></span>
                         <% end %>
                       </span>

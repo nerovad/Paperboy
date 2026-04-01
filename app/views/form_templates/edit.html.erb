@@ -443,6 +443,7 @@
                           <option value="text" <%= 'selected' if field.field_type == 'text' %>>Text</option>
                           <option value="text_box" <%= 'selected' if field.field_type == 'text_box' %>>Text Box</option>
                           <option value="dropdown" <%= 'selected' if field.field_type == 'dropdown' %>>Dropdown</option>
+                          <option value="choices_dropdown" <%= 'selected' if field.field_type == 'choices_dropdown' %>>Dropdown - Choices</option>
                           <option value="date" <%= 'selected' if field.field_type == 'date' %>>Date</option>
                           <option value="phone" <%= 'selected' if field.field_type == 'phone' %>>Phone</option>
                           <option value="email" <%= 'selected' if field.field_type == 'email' %>>Email</option>
@@ -498,7 +499,7 @@
                     </div>
 
                     <!-- Dropdown Options -->
-                    <div class="field-options dropdown-options" style="margin-top: 10px; <%= 'display: none;' unless field.dropdown? %>">
+                    <div class="field-options dropdown-options" style="margin-top: 10px; <%= 'display: none;' unless field.dropdown? || field.choices_dropdown? %>">
                       <label style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
                       <input type="text"
                              name="fields[][dropdown_values]"
@@ -559,7 +560,7 @@
 
                         <%
                           ordered_fields = @form_template.form_fields.ordered.to_a
-                          dropdown_fields_with_index = ordered_fields.each_with_index.select { |f, _| f.dropdown? }
+                          dropdown_fields_with_index = ordered_fields.each_with_index.select { |f, _| f.dropdown? || f.choices_dropdown? }
                           conditional_field_index = field.conditional_field_id ? ordered_fields.index { |f| f.id == field.conditional_field_id } : nil
                         %>
                         <div class="conditional-config" style="<%= 'display: none;' unless field.conditional? %> flex: 1; min-width: 300px;">
@@ -733,6 +734,7 @@
           <option value="text">Text</option>
           <option value="text_box">Text Box</option>
           <option value="dropdown">Dropdown</option>
+          <option value="choices_dropdown">Dropdown - Choices</option>
           <option value="date">Date</option>
           <option value="phone">Phone</option>
           <option value="email">Email</option>

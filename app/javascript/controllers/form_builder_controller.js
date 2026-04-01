@@ -620,7 +620,7 @@ export default class extends Controller {
     // Show relevant options
     if (fieldType === 'text_box') {
       textBoxOptions.style.display = 'block'
-    } else if (fieldType === 'dropdown') {
+    } else if (fieldType === 'dropdown' || fieldType === 'choices_dropdown') {
       dropdownOptions.style.display = 'block'
     }
 
@@ -732,8 +732,8 @@ export default class extends Controller {
       const labelInput = field.querySelector('input[name="fields[][label]"]')
       const dropdownValuesInput = field.querySelector('input[name="fields[][dropdown_values]"]')
 
-      // Only include dropdown fields
-      if (typeSelect && typeSelect.value === 'dropdown' && labelInput) {
+      // Only include dropdown fields (regular and choices)
+      if (typeSelect && (typeSelect.value === 'dropdown' || typeSelect.value === 'choices_dropdown') && labelInput) {
         const option = document.createElement('option')
         option.value = `field_${index}` // Use index as identifier
         option.textContent = labelInput.value || `Field ${index + 1}`

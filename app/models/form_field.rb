@@ -5,7 +5,7 @@ class FormField < ApplicationRecord
 
   belongs_to :form_template
 
-  FIELD_TYPES = %w[text text_box dropdown date phone email number yes_no time].freeze
+  FIELD_TYPES = %w[text text_box dropdown choices_dropdown date phone email number yes_no time].freeze
   RESTRICTION_TYPES = %w[none employee group].freeze
 
   validates :field_name, presence: true
@@ -26,7 +26,7 @@ class FormField < ApplicationRecord
   scope :ordered, -> { order(:page_number, :position) }
   scope :unrestricted, -> { where(restricted_to_type: ['none', nil]) }
   scope :restricted, -> { where.not(restricted_to_type: ['none', nil]) }
-  scope :dropdowns, -> { where(field_type: 'dropdown') }
+  scope :dropdowns, -> { where(field_type: ['dropdown', 'choices_dropdown']) }
   scope :conditional, -> { where.not(conditional_field_id: nil) }
   scope :unconditional, -> { where(conditional_field_id: nil) }
   
@@ -40,6 +40,10 @@ class FormField < ApplicationRecord
   
   def dropdown?
     field_type == 'dropdown'
+  end
+
+  def choices_dropdown?
+    field_type == 'choices_dropdown'
   end
 
   def date?
@@ -192,7 +196,7 @@ class FormField < ApplicationRecord
     case field_type
     when 'text_box'
       self.options['rows'] ||= 5
-    when 'dropdown'
+    when 'dropdown', 'choices_dropdown'
       self.options['values'] ||= []
     end
   end

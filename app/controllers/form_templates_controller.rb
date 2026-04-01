@@ -386,7 +386,7 @@ class FormTemplatesController < ApplicationController
     case field_data[:field_type]
     when 'text_box'
       options['rows'] = field_data[:rows].to_i if field_data[:rows].present?
-    when 'dropdown'
+    when 'dropdown', 'choices_dropdown'
       if field_data[:dropdown_values].present?
         options['values'] = field_data[:dropdown_values].split(',').map(&:strip)
       end
@@ -551,7 +551,7 @@ class FormTemplatesController < ApplicationController
         required: f[:required] == '1',
         options: case f[:field_type]
                  when 'text_box' then { 'rows' => f[:rows].to_i }
-                 when 'dropdown' then f[:dropdown_values].present? ? { 'values' => f[:dropdown_values].split(',').map(&:strip) } : {}
+                 when 'dropdown', 'choices_dropdown' then f[:dropdown_values].present? ? { 'values' => f[:dropdown_values].split(',').map(&:strip) } : {}
                  else {}
                  end
       }
@@ -1196,7 +1196,7 @@ class FormTemplatesController < ApplicationController
     attrs << required_logic if required_logic.present?
     attrs << disabled_attr if disabled_attr.present?
     # Add data attribute for dropdowns that have conditional dependencies
-    if field.dropdown? && has_conditional_dependents?(field)
+    if (field.dropdown? || field.choices_dropdown?) && has_conditional_dependents?(field)
       attrs << "data: { conditional_trigger: '#{field.field_name}' }"
     end
     attrs_str = attrs.join(", ")
@@ -1242,6 +1242,23 @@ class FormTemplatesController < ApplicationController
       html += "                  options_for_select([#{options}], @#{form_template.file_name}.#{field.field_name}),\n"
       html += "                  { include_blank: \"Select...\" },\n"
       html += "                  { #{attrs_str} } %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
+    when 'choices_dropdown'
+      options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>" data-controller="choices">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.select :#{field.field_name},\n"
+      html += "                  options_for_select([#{options}]),\n"
+      html += "                  { include_blank: false },\n"
+      html += "                  { #{attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
@@ -1489,7 +1506,7 @@ class FormTemplatesController < ApplicationController
     attrs << required_logic if required_logic.present?
     attrs << disabled_attr if disabled_attr.present?
     # Add data attribute for dropdowns that have conditional dependencies
-    if field.dropdown? && has_conditional_dependents?(field)
+    if (field.dropdown? || field.choices_dropdown?) && has_conditional_dependents?(field)
       attrs << "data: { conditional_trigger: '#{field.field_name}' }"
     end
     attrs_str = attrs.join(", ")
@@ -1535,6 +1552,23 @@ class FormTemplatesController < ApplicationController
       html += "                  options_for_select([#{options}]),\n"
       html += "                  { include_blank: \"Select...\" },\n"
       html += "                  { #{attrs_str} } %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
+    when 'choices_dropdown'
+      options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>" data-controller="choices">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.select :#{field.field_name},\n"
+      html += "                  options_for_select([#{options}]),\n"
+      html += "                  { include_blank: false },\n"
+      html += "                  { #{attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
