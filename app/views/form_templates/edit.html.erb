@@ -500,13 +500,62 @@
 
                     <!-- Dropdown Options -->
                     <div class="field-options dropdown-options" style="margin-top: 10px; <%= 'display: none;' unless field.dropdown? || field.choices_dropdown? %>">
-                      <label style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
-                      <input type="text"
-                             name="fields[][dropdown_values]"
-                             class="form-control form-control-sm"
-                             value="<%= field.dropdown_values.join(', ') %>"
-                             placeholder="Option 1, Option 2, Option 3"
-                             data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
+                      <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
+                        <label style="margin: 0; font-size: 0.85em; color: #495057;">Source:</label>
+                        <label style="margin: 0; font-size: 0.85em; cursor: pointer;">
+                          <input type="radio" class="dropdown-source-radio" value="manual"
+                                 <%= 'checked' unless field.data_source? %>
+                                 data-action="change->form-builder#handleDropdownSourceChange"
+                                 style="margin-right: 4px;">
+                          Manual Values
+                        </label>
+                        <label style="margin: 0; font-size: 0.85em; cursor: pointer;">
+                          <input type="radio" class="dropdown-source-radio" value="database"
+                                 <%= 'checked' if field.data_source? %>
+                                 data-action="change->form-builder#handleDropdownSourceChange"
+                                 style="margin-right: 4px;">
+                          Database Table
+                        </label>
+                      </div>
+
+                      <div class="dropdown-manual-values" style="<%= 'display: none;' if field.data_source? %>">
+                        <label style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
+                        <input type="text"
+                               name="fields[][dropdown_values]"
+                               class="form-control form-control-sm"
+                               value="<%= field.dropdown_values.join(', ') %>"
+                               placeholder="Option 1, Option 2, Option 3"
+                               data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
+                      </div>
+
+                      <div class="dropdown-data-source" style="<%= 'display: none;' unless field.data_source? %>">
+                        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                          <div style="flex: 1; min-width: 150px;">
+                            <label style="font-size: 0.9em; color: #495057;">Table:</label>
+                            <select name="fields[][data_source]"
+                                    class="form-control form-control-sm data-source-table-select"
+                                    data-action="change->form-builder#handleDataSourceTableChange">
+                              <option value="">Select table...</option>
+                              <% FormField::DATA_SOURCES.each do |key, config| %>
+                                <option value="<%= key %>" data-columns="<%= config[:columns].to_json %>"
+                                        <%= 'selected' if field.data_source_table == key %>><%= config[:label] %></option>
+                              <% end %>
+                            </select>
+                          </div>
+                          <div style="flex: 1; min-width: 150px;">
+                            <label style="font-size: 0.9em; color: #495057;">Column:</label>
+                            <select name="fields[][data_source_column]"
+                                    class="form-control form-control-sm data-source-column-select">
+                              <option value="">Select column...</option>
+                              <% if field.data_source? && FormField::DATA_SOURCES[field.data_source_table] %>
+                                <% FormField::DATA_SOURCES[field.data_source_table][:columns].each do |col_key, col_label| %>
+                                  <option value="<%= col_key %>" <%= 'selected' if field.data_source_column == col_key %>><%= col_label %></option>
+                                <% end %>
+                              <% end %>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <!-- Field Restriction Options -->
@@ -787,12 +836,53 @@
 
     <!-- Dropdown Options -->
     <div class="field-options dropdown-options" style="margin-top: 10px; display: none;">
-      <label style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
-      <input type="text"
-             name="fields[][dropdown_values]"
-             class="form-control form-control-sm"
-             placeholder="Option 1, Option 2, Option 3"
-             data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
+      <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
+        <label style="margin: 0; font-size: 0.85em; color: #495057;">Source:</label>
+        <label style="margin: 0; font-size: 0.85em; cursor: pointer;">
+          <input type="radio" class="dropdown-source-radio" value="manual" checked
+                 data-action="change->form-builder#handleDropdownSourceChange"
+                 style="margin-right: 4px;">
+          Manual Values
+        </label>
+        <label style="margin: 0; font-size: 0.85em; cursor: pointer;">
+          <input type="radio" class="dropdown-source-radio" value="database"
+                 data-action="change->form-builder#handleDropdownSourceChange"
+                 style="margin-right: 4px;">
+          Database Table
+        </label>
+      </div>
+
+      <div class="dropdown-manual-values">
+        <label style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
+        <input type="text"
+               name="fields[][dropdown_values]"
+               class="form-control form-control-sm"
+               placeholder="Option 1, Option 2, Option 3"
+               data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
+      </div>
+
+      <div class="dropdown-data-source" style="display: none;">
+        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 150px;">
+            <label style="font-size: 0.9em; color: #495057;">Table:</label>
+            <select name="fields[][data_source]"
+                    class="form-control form-control-sm data-source-table-select"
+                    data-action="change->form-builder#handleDataSourceTableChange">
+              <option value="">Select table...</option>
+              <% FormField::DATA_SOURCES.each do |key, config| %>
+                <option value="<%= key %>" data-columns="<%= config[:columns].to_json %>"><%= config[:label] %></option>
+              <% end %>
+            </select>
+          </div>
+          <div style="flex: 1; min-width: 150px;">
+            <label style="font-size: 0.9em; color: #495057;">Column:</label>
+            <select name="fields[][data_source_column]"
+                    class="form-control form-control-sm data-source-column-select">
+              <option value="">Select column...</option>
+            </select>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Field Restriction Options -->

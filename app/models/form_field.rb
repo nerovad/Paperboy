@@ -8,6 +8,60 @@ class FormField < ApplicationRecord
   FIELD_TYPES = %w[text text_box dropdown choices_dropdown date phone email number yes_no time].freeze
   RESTRICTION_TYPES = %w[none employee group].freeze
 
+  # Whitelisted database tables and columns available as dropdown data sources
+  DATA_SOURCES = {
+    'agencies' => {
+      model: 'Agency',
+      label: 'Agencies',
+      order: ':long_name',
+      columns: {
+        'long_name'  => 'Name',
+        'short_name' => 'Short Name',
+        'agency_id'  => 'Agency ID'
+      }
+    },
+    'divisions' => {
+      model: 'Division',
+      label: 'Divisions',
+      order: ':long_name',
+      columns: {
+        'long_name'   => 'Name',
+        'short_name'  => 'Short Name',
+        'division_id' => 'Division ID'
+      }
+    },
+    'departments' => {
+      model: 'Department',
+      label: 'Departments',
+      order: ':long_name',
+      columns: {
+        'long_name'      => 'Name',
+        'short_name'     => 'Short Name',
+        'department_id'  => 'Department ID'
+      }
+    },
+    'units' => {
+      model: 'Unit',
+      label: 'Units',
+      order: ':long_name',
+      columns: {
+        'long_name' => 'Name',
+        'unit_id'   => 'Unit ID'
+      }
+    },
+    'employees' => {
+      model: 'Employee',
+      label: 'Employees',
+      order: ':Last_Name',
+      columns: {
+        'full_name'  => 'Full Name (Last, First)',
+        'first_name' => 'First Name',
+        'last_name'  => 'Last Name',
+        'email'      => 'Email'
+      }
+    }
+  }.freeze
+
   validates :field_name, presence: true
   validates :field_type, inclusion: { in: FIELD_TYPES }
   validates :restricted_to_type, inclusion: { in: RESTRICTION_TYPES }, allow_nil: true
@@ -76,6 +130,37 @@ class FormField < ApplicationRecord
   
   def dropdown_values
     options&.dig('values') || []
+  end
+
+  # Data source helpers
+  def data_source?
+    options&.dig('data_source').present?
+  end
+
+  def data_source_table
+    options&.dig('data_source')
+  end
+
+  def data_source_column
+    options&.dig('data_source_column')
+  end
+
+  # Returns Ruby code string for use in generated ERB views
+  def data_source_query_code
+    return nil unless data_source?
+
+    config = DATA_SOURCES[data_source_table]
+    return nil unless config
+
+    col = data_source_column
+    model = config[:model]
+    order = config[:order]
+
+    if data_source_table == 'employees' && col == 'full_name'
+      "#{model}.order(#{order}).map { |e| \"\#{e.last_name}, \#{e.first_name}\" }"
+    else
+      "#{model}.order(#{order}).pluck(:#{col}).uniq"
+    end
   end
 
   # Restriction type checks

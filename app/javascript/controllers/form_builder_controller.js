@@ -628,6 +628,57 @@ export default class extends Controller {
     this.refreshConditionalDropdowns()
   }
 
+  // Toggle between manual values and database table for dropdown source
+  handleDropdownSourceChange(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const source = event.target.value
+    const manualSection = fieldItem.querySelector('.dropdown-manual-values')
+    const dataSourceSection = fieldItem.querySelector('.dropdown-data-source')
+
+    // Uncheck other radios in this field item (since they share no name attribute)
+    fieldItem.querySelectorAll('.dropdown-source-radio').forEach(radio => {
+      radio.checked = (radio === event.target)
+    })
+
+    if (source === 'database') {
+      manualSection.style.display = 'none'
+      dataSourceSection.style.display = 'block'
+    } else {
+      manualSection.style.display = 'block'
+      dataSourceSection.style.display = 'none'
+      // Clear data source selects when switching back to manual
+      const tableSelect = fieldItem.querySelector('.data-source-table-select')
+      const columnSelect = fieldItem.querySelector('.data-source-column-select')
+      if (tableSelect) tableSelect.value = ''
+      if (columnSelect) {
+        columnSelect.innerHTML = '<option value="">Select column...</option>'
+      }
+    }
+  }
+
+  // Populate column dropdown when a data source table is selected
+  handleDataSourceTableChange(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const columnSelect = fieldItem.querySelector('.data-source-column-select')
+    const selectedOption = event.target.selectedOptions[0]
+
+    columnSelect.innerHTML = '<option value="">Select column...</option>'
+
+    if (!selectedOption || !selectedOption.value) return
+
+    try {
+      const columns = JSON.parse(selectedOption.dataset.columns)
+      for (const [key, label] of Object.entries(columns)) {
+        const option = document.createElement('option')
+        option.value = key
+        option.textContent = label
+        columnSelect.appendChild(option)
+      }
+    } catch (e) {
+      console.error('Error parsing column data:', e)
+    }
+  }
+
   // Toggle field restriction dropdowns based on restriction type
   toggleFieldRestriction(event) {
     const fieldItem = event.target.closest('.field-item')

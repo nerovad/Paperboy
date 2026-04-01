@@ -382,16 +382,19 @@ class FormTemplatesController < ApplicationController
   
   def build_field_options(field_data)
     options = {}
-    
+
     case field_data[:field_type]
     when 'text_box'
       options['rows'] = field_data[:rows].to_i if field_data[:rows].present?
     when 'dropdown', 'choices_dropdown'
-      if field_data[:dropdown_values].present?
+      if field_data[:data_source].present?
+        options['data_source'] = field_data[:data_source]
+        options['data_source_column'] = field_data[:data_source_column]
+      elsif field_data[:dropdown_values].present?
         options['values'] = field_data[:dropdown_values].split(',').map(&:strip)
       end
     end
-    
+
     options
   end
   
@@ -551,7 +554,14 @@ class FormTemplatesController < ApplicationController
         required: f[:required] == '1',
         options: case f[:field_type]
                  when 'text_box' then { 'rows' => f[:rows].to_i }
-                 when 'dropdown', 'choices_dropdown' then f[:dropdown_values].present? ? { 'values' => f[:dropdown_values].split(',').map(&:strip) } : {}
+                 when 'dropdown', 'choices_dropdown'
+                   if f[:data_source].present?
+                     { 'data_source' => f[:data_source], 'data_source_column' => f[:data_source_column] }
+                   elsif f[:dropdown_values].present?
+                     { 'values' => f[:dropdown_values].split(',').map(&:strip) }
+                   else
+                     {}
+                   end
                  else {}
                  end
       }
@@ -1229,7 +1239,14 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'dropdown'
-      options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+      if field.data_source?
+        options_expr = field.data_source_query_code
+        selected_expr = "@#{form_template.file_name}.#{field.field_name}"
+      else
+        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+        options_expr = "[#{options}]"
+        selected_expr = "@#{form_template.file_name}.#{field.field_name}"
+      end
       html = ""
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
@@ -1239,14 +1256,19 @@ class FormTemplatesController < ApplicationController
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.select :#{field.field_name},\n"
-      html += "                  options_for_select([#{options}], @#{form_template.file_name}.#{field.field_name}),\n"
+      html += "                  options_for_select(#{options_expr}, #{selected_expr}),\n"
       html += "                  { include_blank: \"Select...\" },\n"
       html += "                  { #{attrs_str} } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
     when 'choices_dropdown'
-      options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+      if field.data_source?
+        options_expr = field.data_source_query_code
+      else
+        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+        options_expr = "[#{options}]"
+      end
       html = ""
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
@@ -1256,7 +1278,7 @@ class FormTemplatesController < ApplicationController
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.select :#{field.field_name},\n"
-      html += "                  options_for_select([#{options}]),\n"
+      html += "                  options_for_select(#{options_expr}),\n"
       html += "                  { include_blank: false },\n"
       html += "                  { #{attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
       html += "          </div>\n"
@@ -1539,7 +1561,12 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'dropdown'
-      options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+      if field.data_source?
+        options_expr = field.data_source_query_code
+      else
+        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+        options_expr = "[#{options}]"
+      end
       html = ""
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
@@ -1549,14 +1576,19 @@ class FormTemplatesController < ApplicationController
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.select :#{field.field_name},\n"
-      html += "                  options_for_select([#{options}]),\n"
+      html += "                  options_for_select(#{options_expr}),\n"
       html += "                  { include_blank: \"Select...\" },\n"
       html += "                  { #{attrs_str} } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
     when 'choices_dropdown'
-      options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+      if field.data_source?
+        options_expr = field.data_source_query_code
+      else
+        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+        options_expr = "[#{options}]"
+      end
       html = ""
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
@@ -1566,7 +1598,7 @@ class FormTemplatesController < ApplicationController
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.select :#{field.field_name},\n"
-      html += "                  options_for_select([#{options}]),\n"
+      html += "                  options_for_select(#{options_expr}),\n"
       html += "                  { include_blank: false },\n"
       html += "                  { #{attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
       html += "          </div>\n"

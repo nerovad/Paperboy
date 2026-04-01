@@ -8,16 +8,14 @@ class CriticalInformationReporting < ApplicationRecord
 enum :status, {
   in_progress: 0,
     scheduled: 1,
-    step_1_pending: 2,
-    resolved: 3,
-    cancelled: 4
+    resolved: 2,
+    cancelled: 3
 }, default: :in_progress
 
 # Normalized status categories for cross-form reporting
 STATUS_CATEGORIES = {
   in_progress: :in_review,
     scheduled: :scheduled,
-    step_1_pending: :in_review,
     resolved: :approved,
     cancelled: :cancelled
 }.freeze
@@ -26,7 +24,6 @@ STATUS_CATEGORIES = {
 STATUS_LABELS = {
   in_progress: "In progress",
     scheduled: "Scheduled",
-    step_1_pending: "Sent to Supervisor",
     resolved: "Resolved",
     cancelled: "Cancelled"
 }.freeze
@@ -86,12 +83,6 @@ STATUS_LABELS = {
   def status_label
   self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
 end
-
-  # Get the Employee record for the assigned manager
-  def assigned_manager
-    return nil unless assigned_manager_id.present?
-    @assigned_manager ||= Employee.find_by(employee_id: assigned_manager_id)
-  end
 
   def assigned_manager_name
     assigned_manager&.then { |e| "#{e.first_name} #{e.last_name}" } || "Unassigned"
