@@ -4,6 +4,10 @@ console.log("form_navigation.js is REALLY loaded");
 document.addEventListener("turbo:load", () => {
   console.log("form_navigation.js loaded on turbo:load");
 
+  // Skip if a Stimulus form-navigation controller is handling this page
+  const stimulusWrapper = document.querySelector("[data-controller~='form-navigation']");
+  if (stimulusWrapper) return;
+
   // ✅ Page Navigation
   const pages = document.querySelectorAll(".form-page");
   const nextBtn = document.getElementById("nextBtn");

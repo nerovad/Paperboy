@@ -209,15 +209,10 @@ class CriticalInformationReportingsController < ApplicationController
     @critical_information_reporting.employee_id = employee_id if @critical_information_reporting.respond_to?(:employee_id=)
 
     if @critical_information_reporting.save
-      NotifyTeamsJob.perform_later(@critical_information_reporting.id) if @critical_information_reporting.immediate_urgency?
-      # Multi-step approval routing (1 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-approver_id = employee&.supervisor_id&.to_s
-@critical_information_reporting.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+      NotifyTeamsJob.perform_later(@critical_information_reporting.id) if @critical_information_reporting.urgency == "Immediate"
+      # Route to assigned manager (set by location router in before_validation callback)
+      @critical_information_reporting.update(status: :step_1_pending)
+      redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)

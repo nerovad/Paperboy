@@ -104,10 +104,12 @@
                     data: { turbo: false } %>
 
                 <% if submission.media.attached? %>
-                  <%= link_to "Media",
-                      download_media_critical_information_reporting_path(submission),
-                      class: "btn pdf",
-                      data: { turbo: false } %>
+                  <% submission.media.each do |attachment| %>
+                    <%= link_to attachment.filename,
+                        download_media_critical_information_reporting_path(submission, attachment_id: attachment.id),
+                        class: "btn pdf",
+                        data: { turbo: false } %>
+                  <% end %>
                 <% end %>
               <% else %>
                 <%= link_to "View PDF",
