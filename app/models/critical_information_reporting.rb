@@ -111,6 +111,11 @@ end
   def acceptable_media_file
     return unless media.attached?
 
+    if media.count > 10
+      errors.add(:media, "cannot exceed 10 files")
+      return
+    end
+
     acceptable_types = ["image/jpeg", "image/png", "image/gif", "application/pdf"]
 
     media.each do |file|
