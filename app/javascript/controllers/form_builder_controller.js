@@ -675,17 +675,20 @@ export default class extends Controller {
   handleDataSourceTableChange(event) {
     const fieldItem = event.target.closest('.field-item')
     const columnSelect = fieldItem.querySelector('.data-source-column-select')
-    const filterOption = fieldItem.querySelector('.data-source-filter-option')
+    const agencyOption = fieldItem.querySelector('.data-source-agency-option')
     const selectedOption = event.target.selectedOptions[0]
 
     columnSelect.innerHTML = '<option value="">Select column...</option>'
 
-    // Show/hide the "Filter by Agency" checkbox (only for employees)
-    if (filterOption) {
-      filterOption.style.display = (selectedOption?.value === 'employees') ? 'block' : 'none'
-      if (selectedOption?.value !== 'employees') {
-        const checkbox = filterOption.querySelector('input[type="checkbox"]')
-        if (checkbox) checkbox.checked = false
+    // Show/hide the Agency filter dropdown (only for employees)
+    if (agencyOption) {
+      const isEmployees = selectedOption?.value === 'employees'
+      agencyOption.style.display = isEmployees ? 'block' : 'none'
+      if (isEmployees) {
+        this.populateAgencySelect(agencyOption.querySelector('.data-source-agency-select'))
+      } else {
+        const agencySelect = agencyOption.querySelector('.data-source-agency-select')
+        if (agencySelect) agencySelect.value = ''
       }
     }
 
@@ -701,6 +704,22 @@ export default class extends Controller {
       }
     } catch (e) {
       console.error('Error parsing column data:', e)
+    }
+  }
+
+  async populateAgencySelect(select) {
+    if (!select || select.options.length > 1) return
+    try {
+      const response = await fetch('/lookups/agencies.json')
+      const agencies = await response.json()
+      agencies.forEach(([name, id]) => {
+        const option = document.createElement('option')
+        option.value = id
+        option.textContent = name
+        select.appendChild(option)
+      })
+    } catch (e) {
+      console.error('Error loading agencies:', e)
     }
   }
 

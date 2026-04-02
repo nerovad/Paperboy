@@ -566,13 +566,15 @@
                             </select>
                           </div>
                         </div>
-                        <div class="data-source-filter-option" style="<%= field.data_source_table == 'employees' ? '' : 'display: none;' %>margin-top: 8px;">
-                          <label style="margin: 0; font-size: 0.85em; cursor: pointer;">
-                            <input type="checkbox" name="fields[][data_source_filter]" value="agency"
-                                   <%= 'checked' if field.options&.dig('data_source_filter') == 'agency' %>
-                                   style="margin-right: 4px;">
-                            Filter by Agency field (cascading)
-                          </label>
+                        <div class="data-source-agency-option" style="<%= field.data_source_table == 'employees' ? '' : 'display: none;' %>margin-top: 8px;">
+                          <label style="font-size: 0.9em; color: #495057;">Filter by Agency:</label>
+                          <select name="fields[][data_source_agency]"
+                                  class="form-control form-control-sm data-source-agency-select">
+                            <option value="">All agencies</option>
+                            <% Agency.order(:long_name).each do |agency| %>
+                              <option value="<%= agency.agency_id %>" <%= 'selected' if field.options&.dig('data_source_agency') == agency.agency_id.to_s %>><%= agency.long_name %></option>
+                            <% end %>
+                          </select>
                         </div>
                       </div>
                     </div>

@@ -148,6 +148,10 @@ class FormField < ApplicationRecord
     options&.dig('data_source_column')
   end
 
+  def data_source_agency
+    options&.dig('data_source_agency')
+  end
+
   # Returns Ruby code string for use in generated ERB views
   def data_source_query_code
     return nil unless data_source?
@@ -159,10 +163,15 @@ class FormField < ApplicationRecord
     model = config[:model]
     order = config[:order]
 
+    agency_filter = ""
+    if data_source_table == 'employees' && data_source_agency.present?
+      agency_filter = ".where(Agency: '#{data_source_agency}')"
+    end
+
     if data_source_table == 'employees' && col == 'full_name'
-      "#{model}.order(#{order}).map { |e| \"\#{e.last_name}, \#{e.first_name}\" }"
+      "#{model}#{agency_filter}.order(#{order}).map { |e| \"\#{e.last_name}, \#{e.first_name}\" }"
     else
-      "#{model}.order(#{order}).pluck(:#{col}).uniq"
+      "#{model}#{agency_filter}.order(#{order}).pluck(:#{col}).uniq"
     end
   end
 

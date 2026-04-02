@@ -422,7 +422,7 @@ class FormTemplatesController < ApplicationController
       if field_data[:data_source].present?
         options['data_source'] = field_data[:data_source]
         options['data_source_column'] = field_data[:data_source_column]
-        options['data_source_filter'] = field_data[:data_source_filter] if field_data[:data_source_filter].present?
+        options['data_source_agency'] = field_data[:data_source_agency] if field_data[:data_source_agency].present?
       elsif field_data[:dropdown_values].present?
         options['values'] = field_data[:dropdown_values].split(',').map(&:strip)
       end
@@ -591,7 +591,7 @@ class FormTemplatesController < ApplicationController
                  when 'dropdown', 'choices_dropdown'
                    if f[:data_source].present?
                      opts = { 'data_source' => f[:data_source], 'data_source_column' => f[:data_source_column] }
-                     opts['data_source_filter'] = f[:data_source_filter] if f[:data_source_filter].present?
+                     opts['data_source_agency'] = f[:data_source_agency] if f[:data_source_agency].present?
                      opts
                    elsif f[:dropdown_values].present?
                      { 'values' => f[:dropdown_values].split(',').map(&:strip) }
@@ -1327,91 +1327,51 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'dropdown'
-      has_agency_filter = field.data_source? && field.options&.dig('data_source_filter') == 'agency'
-      if has_agency_filter
-        col = field.data_source_column || 'full_name'
-        record_var = "@#{form_template.file_name}"
-        div_data = "data-controller=\"dependent-select\" data-dependent-select-url-value=\"/lookups/employees\" data-dependent-select-param-value=\"agency\" data-dependent-select-column-value=\"#{col}\" data-dependent-select-source-selector-value=\"#agency-select\""
-        html = ""
-        html += "        <% #{editable_check} %>\n" if editable_check
-        html += conditional_wrapper_start
-        html += "          <div class=\"form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>\" #{div_data}#{conditional_answer_attrs}>\n"
-        html += "            <%= form.label :#{field.field_name}, \"#{field.label}\" %>\n"
-        html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-          html += "            <%= form.select :#{field.field_name},\n"
-        html += "                  options_for_select(#{record_var}.agency.present? ? Employee.where(Agency: #{record_var}.agency).order(:Last_Name).map { |e| \"\#{e.last_name}, \#{e.first_name}\" } : [], #{record_var}.#{field.field_name}),\n"
-        html += "                  { include_blank: \"Select agency first...\" },\n"
-        html += "                  { #{select_attrs_str}, data: { dependent_select_target: \"select\" } } %>\n"
-        html += "          </div>\n"
-        html += conditional_wrapper_end
-        html
+      if field.data_source?
+        options_expr = field.data_source_query_code
+        selected_expr = "@#{form_template.file_name}.#{field.field_name}"
       else
-        if field.data_source?
-          options_expr = field.data_source_query_code
-          selected_expr = "@#{form_template.file_name}.#{field.field_name}"
-        else
-          options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-          options_expr = "[#{options}]"
-          selected_expr = "@#{form_template.file_name}.#{field.field_name}"
-        end
-        html = ""
-        html += "        <% #{editable_check} %>\n" if editable_check
-        html += conditional_wrapper_start
-        html += <<~HTML
-                <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>"#{conditional_answer_attrs}>
-                  <%= form.label :#{field.field_name}, "#{field.label}" %>
-        HTML
-        html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-          html += "            <%= form.select :#{field.field_name},\n"
-        html += "                  options_for_select(#{options_expr}, #{selected_expr}),\n"
-        html += "                  { include_blank: \"Select...\" },\n"
-        html += "                  { #{select_attrs_str} } %>\n"
-        html += "          </div>\n"
-        html += conditional_wrapper_end
-        html
+        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+        options_expr = "[#{options}]"
+        selected_expr = "@#{form_template.file_name}.#{field.field_name}"
       end
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>"#{conditional_answer_attrs}>
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+        html += "            <%= form.select :#{field.field_name},\n"
+      html += "                  options_for_select(#{options_expr}, #{selected_expr}),\n"
+      html += "                  { include_blank: \"Select...\" },\n"
+      html += "                  { #{select_attrs_str} } %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
     when 'choices_dropdown'
-      has_agency_filter = field.data_source? && field.options&.dig('data_source_filter') == 'agency'
-      if has_agency_filter
-        col = field.data_source_column || 'full_name'
-        record_var = "@#{form_template.file_name}"
-        div_data = "data-controller=\"dependent-select choices\" data-dependent-select-url-value=\"/lookups/employees\" data-dependent-select-param-value=\"agency\" data-dependent-select-column-value=\"#{col}\" data-dependent-select-source-selector-value=\"#agency-select\""
-        html = ""
-        html += "        <% #{editable_check} %>\n" if editable_check
-        html += conditional_wrapper_start
-        html += "          <div class=\"form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>\" #{div_data}#{conditional_answer_attrs}>\n"
-        html += "            <%= form.label :#{field.field_name}, \"#{field.label}\" %>\n"
-        html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-          html += "            <%= form.select :#{field.field_name},\n"
-        html += "                  options_for_select([]),\n"
-        html += "                  { include_blank: false },\n"
-        html += "                  { #{select_attrs_str}, multiple: true, data: { dependent_select_target: \"select\", choices_target: \"select\", placeholder: \"Select agency first...\" } } %>\n"
-        html += "          </div>\n"
-        html += conditional_wrapper_end
-        html
+      if field.data_source?
+        options_expr = field.data_source_query_code
       else
-        if field.data_source?
-          options_expr = field.data_source_query_code
-        else
-          options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-          options_expr = "[#{options}]"
-        end
-        html = ""
-        html += "        <% #{editable_check} %>\n" if editable_check
-        html += conditional_wrapper_start
-        html += <<~HTML
-                <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>"#{conditional_answer_attrs} data-controller="choices">
-                  <%= form.label :#{field.field_name}, "#{field.label}" %>
-        HTML
-        html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-          html += "            <%= form.select :#{field.field_name},\n"
-        html += "                  options_for_select(#{options_expr}),\n"
-        html += "                  { include_blank: false },\n"
-        html += "                  { #{select_attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
-        html += "          </div>\n"
-        html += conditional_wrapper_end
-        html
+        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+        options_expr = "[#{options}]"
       end
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>"#{conditional_answer_attrs} data-controller="choices">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+        html += "            <%= form.select :#{field.field_name},\n"
+      html += "                  options_for_select(#{options_expr}),\n"
+      html += "                  { include_blank: false },\n"
+      html += "                  { #{select_attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
     when 'date'
       html = ""
       html += "        <% #{editable_check} %>\n" if editable_check
@@ -1711,88 +1671,49 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'dropdown'
-      has_agency_filter = field.data_source? && field.options&.dig('data_source_filter') == 'agency'
-      if has_agency_filter
-        # Cascading: options loaded dynamically via dependent-select controller
-        col = field.data_source_column || 'full_name'
-        div_data = "data-controller=\"dependent-select\" data-dependent-select-url-value=\"/lookups/employees\" data-dependent-select-param-value=\"agency\" data-dependent-select-column-value=\"#{col}\" data-dependent-select-source-selector-value=\"#agency-select\""
-        html = ""
-        html += "        <% #{editable_check} %>\n" if editable_check
-        html += conditional_wrapper_start
-        html += "          <div class=\"form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>\" #{div_data}#{conditional_answer_attrs}>\n"
-        html += "            <%= form.label :#{field.field_name}, \"#{field.label}\" %>\n"
-        html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-          html += "            <%= form.select :#{field.field_name},\n"
-        html += "                  options_for_select([]),\n"
-        html += "                  { include_blank: \"Select agency first...\" },\n"
-        html += "                  { #{select_attrs_str}, data: { dependent_select_target: \"select\" } } %>\n"
-        html += "          </div>\n"
-        html += conditional_wrapper_end
-        html
+      if field.data_source?
+        options_expr = field.data_source_query_code
       else
-        if field.data_source?
-          options_expr = field.data_source_query_code
-        else
-          options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-          options_expr = "[#{options}]"
-        end
-        html = ""
-        html += "        <% #{editable_check} %>\n" if editable_check
-        html += conditional_wrapper_start
-        html += <<~HTML
-                <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>"#{conditional_answer_attrs}>
-                  <%= form.label :#{field.field_name}, "#{field.label}" %>
-        HTML
-        html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-          html += "            <%= form.select :#{field.field_name},\n"
-        html += "                  options_for_select(#{options_expr}),\n"
-        html += "                  { include_blank: \"Select...\" },\n"
-        html += "                  { #{select_attrs_str} } %>\n"
-        html += "          </div>\n"
-        html += conditional_wrapper_end
-        html
+        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+        options_expr = "[#{options}]"
       end
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>"#{conditional_answer_attrs}>
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+        html += "            <%= form.select :#{field.field_name},\n"
+      html += "                  options_for_select(#{options_expr}),\n"
+      html += "                  { include_blank: \"Select...\" },\n"
+      html += "                  { #{select_attrs_str} } %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
     when 'choices_dropdown'
-      has_agency_filter = field.data_source? && field.options&.dig('data_source_filter') == 'agency'
-      if has_agency_filter
-        col = field.data_source_column || 'full_name'
-        div_data = "data-controller=\"dependent-select choices\" data-dependent-select-url-value=\"/lookups/employees\" data-dependent-select-param-value=\"agency\" data-dependent-select-column-value=\"#{col}\" data-dependent-select-source-selector-value=\"#agency-select\""
-        html = ""
-        html += "        <% #{editable_check} %>\n" if editable_check
-        html += conditional_wrapper_start
-        html += "          <div class=\"form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>\" #{div_data}>\n"
-        html += "            <%= form.label :#{field.field_name}, \"#{field.label}\" %>\n"
-        html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-          html += "            <%= form.select :#{field.field_name},\n"
-        html += "                  options_for_select([]),\n"
-        html += "                  { include_blank: false },\n"
-        html += "                  { #{select_attrs_str}, multiple: true, data: { dependent_select_target: \"select\", choices_target: \"select\", placeholder: \"Select agency first...\" } } %>\n"
-        html += "          </div>\n"
-        html += conditional_wrapper_end
-        html
+      if field.data_source?
+        options_expr = field.data_source_query_code
       else
-        if field.data_source?
-          options_expr = field.data_source_query_code
-        else
-          options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-          options_expr = "[#{options}]"
-        end
-        html = ""
-        html += "        <% #{editable_check} %>\n" if editable_check
-        html += conditional_wrapper_start
-        html += <<~HTML
-                <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>" data-controller="choices">
-                  <%= form.label :#{field.field_name}, "#{field.label}" %>
-        HTML
-        html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-          html += "            <%= form.select :#{field.field_name},\n"
-        html += "                  options_for_select(#{options_expr}),\n"
-        html += "                  { include_blank: false },\n"
-        html += "                  { #{select_attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
-        html += "          </div>\n"
-        html += conditional_wrapper_end
-        html
+        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
+        options_expr = "[#{options}]"
       end
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>" data-controller="choices">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+        html += "            <%= form.select :#{field.field_name},\n"
+      html += "                  options_for_select(#{options_expr}),\n"
+      html += "                  { include_blank: false },\n"
+      html += "                  { #{select_attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
     when 'date'
       html = ""
       html += "        <% #{editable_check} %>\n" if editable_check

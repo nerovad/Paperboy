@@ -137,12 +137,12 @@
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-          <div class="form-group flex-fill<%= '' %>" data-controller="dependent-select" data-dependent-select-url-value="/lookups/employees" data-dependent-select-param-value="agency" data-dependent-select-column-value="full_name" data-dependent-select-source-selector-value="#agency-select">
+          <div class="form-group flex-fill<%= '' %>">
             <%= form.label :staff_involved, "Staff Involved" %>
             <%= form.select :staff_involved,
-                  options_for_select([]),
-                  { include_blank: "Select agency first..." },
-                  { class: "form-control", required: true, data: { dependent_select_target: "select" } } %>
+                  options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: true } %>
           </div>
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :incident_details, "Incident Details" %>
@@ -196,12 +196,12 @@
           </div>
           </div>
           <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Employee&quot;]" style="display: none;">
-          <div class="form-group flex-fill<%= '' %>" data-controller="dependent-select choices" data-dependent-select-url-value="/lookups/employees" data-dependent-select-param-value="agency" data-dependent-select-column-value="full_name" data-dependent-select-source-selector-value="#agency-select">
+          <div class="form-group flex-fill<%= '' %>" data-controller="choices">
             <%= form.label :employee, "Employee" %>
             <%= form.select :employee,
-                  options_for_select([]),
+                  options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
                   { include_blank: false },
-                  { class: "form-control", multiple: true, data: { dependent_select_target: "select", choices_target: "select", placeholder: "Select agency first..." } } %>
+                  { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
           </div>
         </div>
