@@ -9,6 +9,30 @@
              locals: { record: @<%= file_name %>,
                        exclude: %w[id created_at updated_at approver_id deny_reason] } %>
 
+  <%% # Display media attachments %>
+  <%% @<%= file_name %>.class.reflect_on_all_attachments.each do |attachment_ref| %>
+    <%% name = attachment_ref.name %>
+    <%% attachments = @<%= file_name %>.public_send(name) %>
+    <%% if attachments.respond_to?(:attached?) && attachments.attached? %>
+      <div class="media-section">
+        <h3><%%= name.to_s.humanize %></h3>
+        <div class="file-preview-grid">
+          <%% attachments.each do |attachment| %>
+            <div class="file-preview-item">
+              <%% if attachment.content_type.start_with?('image/') %>
+                <%%= image_tag rails_blob_path(attachment, disposition: 'inline'), class: 'file-preview-thumb' %>
+              <%% else %>
+                <div class="file-preview-icon"><i class="fas fa-file-pdf"></i></div>
+              <%% end %>
+              <span class="file-preview-name"><%%= attachment.filename %></span>
+              <span class="file-preview-name text-muted"><%%= number_to_human_size(attachment.byte_size) %></span>
+            </div>
+          <%% end %>
+        </div>
+      </div>
+    <%% end %>
+  <%% end %>
+
   <div class="form-actions" style="margin-top: 16px;">
     <%%= link_to "Back to Inbox", inbox_queue_path, class: "form-btn" %>
     <%%= link_to "Download PDF", pdf_<%= file_name %>_path(@<%= file_name %>), target: "_blank", class: "form-btn" %>

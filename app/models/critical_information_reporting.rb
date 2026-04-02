@@ -5,6 +5,8 @@ class CriticalInformationReporting < ApplicationRecord
   include Reassignable
   include TrackableStatus
 
+  has_many_attached :media_photo_pdf_etc
+
 enum :status, {
   in_progress: 0,
     scheduled: 1,
@@ -29,7 +31,6 @@ STATUS_LABELS = {
 }.freeze
 
   # ActiveStorage attachments for media files (multiple)
-  has_many_attached :media
 
   # Callbacks
   before_validation :assign_manager_based_on_location, on: :create
@@ -84,10 +85,6 @@ STATUS_LABELS = {
   self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
 end
 
-  def assigned_manager_name
-    assigned_manager&.then { |e| "#{e.first_name} #{e.last_name}" } || "Unassigned"
-  end
-
   # Reassignable concern implementation
   def current_assignee_id
     assigned_manager_id
@@ -96,6 +93,25 @@ end
   def assignment_field_name
     'assigned_manager_id'
   end
+
+def acceptable_media_photo_pdf_etc_files
+  return unless media_photo_pdf_etc.attached?
+
+  if media_photo_pdf_etc.count > 10
+    errors.add(:media_photo_pdf_etc, "can have a maximum of 10 files")
+  end
+
+  media_photo_pdf_etc.each do |file|
+    unless file.content_type.in?(%w[image/jpeg image/png image/gif application/pdf])
+      errors.add(:media_photo_pdf_etc, "must be a JPEG, PNG, GIF, or PDF")
+    end
+
+    if file.byte_size > 10.megabytes
+      errors.add(:media_photo_pdf_etc, "file size must be less than 10MB")
+    end
+  end
+end
+
 
   private
 

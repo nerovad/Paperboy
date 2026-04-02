@@ -229,9 +229,11 @@
             <%= form.text_area :next_steps, rows: 3, class: "form-control", required: true %>
           </div>
 <!-- FIELD:next_steps END -->
-<!-- FIELD:media_photo_pdf_etc START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:media_photo_pdf_etc START --><div class="form-group flex-fill<%= '' %>" data-controller="file-preview" data-file-preview-max-value="10">
   <%= form.label :media_photo_pdf_etc, "Media (Photo, PDF, etc.)" %>
-            <%= form.text_field :media_photo_pdf_etc, class: "form-control" %>
+            <%= form.file_field :media_photo_pdf_etc, multiple: true, class: "form-control", direct_upload: true, accept: "image/jpeg,image/png,image/gif,application/pdf", data: { file_preview_target: "input", action: "change->file-preview#preview" } %>
+            <small class="form-text text-muted">You can select files multiple times — up to 10 total. <span data-file-preview-target="count"></span></small>
+            <div data-file-preview-target="preview" class="file-preview-grid"></div>
           </div>
 <!-- FIELD:media_photo_pdf_etc END -->
         </div>

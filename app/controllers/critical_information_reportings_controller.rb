@@ -258,6 +258,11 @@ class CriticalInformationReportingsController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
+def download_media_photo_pdf_etc
+  attachment = @critical_information_reporting.media_photo_pdf_etc.find(params[:attachment_id])
+  redirect_to rails_blob_path(attachment, disposition: "attachment")
+end
+
 
   private
 

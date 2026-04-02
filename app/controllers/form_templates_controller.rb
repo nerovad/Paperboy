@@ -126,6 +126,9 @@ class FormTemplatesController < ApplicationController
         # Customize generated controller based on submission routing
         customize_generated_controller(@form_template)
 
+        # Add media download routes if needed
+        add_media_download_routes(@form_template)
+
         # Generate dynamic views based on template configuration
         generate_dynamic_view(class_name)
         generate_dynamic_edit_view(class_name)
@@ -201,13 +204,14 @@ class FormTemplatesController < ApplicationController
         generate_dynamic_edit_view(@form_template.class_name)
       end
 
-      # Only regenerate model when statuses or routing changed (enum needs to match)
-      if statuses_changed || routing_changed
+      # Regenerate model when statuses, routing, or fields changed (enum + has_many_attached)
+      if statuses_changed || routing_changed || fields_changed
         customize_generated_model(@form_template)
       end
 
-      if routing_changed
+      if routing_changed || fields_changed
         customize_generated_controller(@form_template)
+        add_media_download_routes(@form_template)
         Rails.logger.info "Regenerated controller for #{@form_template.class_name}"
       end
 
@@ -460,6 +464,63 @@ class FormTemplatesController < ApplicationController
       generate_unified_status_enum(form_template, content)
     end
 
+    # Add has_many_attached declarations for media_attachment fields
+    media_fields = form_template.form_fields.where(field_type: 'media_attachment')
+    if media_fields.any?
+      # Remove existing has_many_attached lines (in case of regeneration)
+      content.gsub!(/^\s*has_many_attached :\w+\n/, '')
+      content.gsub!(/^\s*validate :acceptable_\w+_files\n/, '')
+      content.gsub!(/^\s*def acceptable_\w+_files.*?end\n/m, '')
+
+      # Build attachment declarations and validations
+      attachment_lines = media_fields.map { |f| "  has_many_attached :#{f.field_name}" }.join("\n")
+      validation_lines = media_fields.map { |f| "  validate :acceptable_#{f.field_name}_files" }.join("\n")
+
+      validation_methods = media_fields.map do |f|
+        <<~RUBY
+
+  def acceptable_#{f.field_name}_files
+    return unless #{f.field_name}.attached?
+
+    if #{f.field_name}.count > 10
+      errors.add(:#{f.field_name}, "can have a maximum of 10 files")
+    end
+
+    #{f.field_name}.each do |file|
+      unless file.content_type.in?(%w[image/jpeg image/png image/gif application/pdf])
+        errors.add(:#{f.field_name}, "must be a JPEG, PNG, GIF, or PDF")
+      end
+
+      if file.byte_size > 10.megabytes
+        errors.add(:#{f.field_name}, "file size must be less than 10MB")
+      end
+    end
+  end
+        RUBY
+      end.join
+
+      # Insert after `include TrackableStatus`
+      content.sub!(/include TrackableStatus\n/) do |match|
+        "#{match}\n#{attachment_lines}\n"
+      end
+
+      # Insert validations after existing validates lines
+      content.sub!(/validates :name, :email, presence: true\n/) do |match|
+        "#{match}#{validation_lines}\n"
+      end
+
+      # Insert validation methods before the private section or end of class
+      if content.include?("private\n")
+        content.sub!(/^(\s*private\n)/) do |match|
+          "#{validation_methods}\n#{match}"
+        end
+      else
+        content.sub!(/^end\s*\z/) do |match|
+          "#{validation_methods}\n#{match}"
+        end
+      end
+    end
+
     # Update status_label method to use STATUS_LABELS
     status_label_code = <<~RUBY.chomp
       def status_label
@@ -551,7 +612,62 @@ class FormTemplatesController < ApplicationController
       )
     end
 
+    # Add media attachment fields to permitted params
+    media_fields = form_template.form_fields.where(field_type: 'media_attachment')
+    if media_fields.any?
+      media_params = media_fields.map { |f| "#{f.field_name}: []" }.join(", ")
+      # Append media params to the permit list
+      content.gsub!(
+        /(:name, :phone, :email, :agency, :division, :department, :unit)\s*\)/,
+        "\\1,\n      #{media_params}\n    )"
+      )
+
+      # Add download_media action and route support
+      download_actions = media_fields.map do |f|
+        <<~RUBY
+  def download_#{f.field_name}
+    attachment = @#{form_template.file_name}.#{f.field_name}.find(params[:attachment_id])
+    redirect_to rails_blob_path(attachment, disposition: "attachment")
+  end
+        RUBY
+      end.join("\n")
+
+      # Insert download actions before the private section
+      content.sub!(/^\s*private\n/) do |match|
+        "#{download_actions}\n#{match}"
+      end
+
+      # Add download actions to before_action
+      download_method_names = media_fields.map { |f| ":download_#{f.field_name}" }.join(", ")
+      content.sub!(
+        /before_action :set_#{form_template.file_name}, only: \[([^\]]+)\]/,
+        "before_action :set_#{form_template.file_name}, only: [\\1, #{download_method_names}]"
+      )
+    end
+
     File.write(controller_path, content)
+  end
+
+  def add_media_download_routes(form_template)
+    media_fields = form_template.form_fields.where(field_type: 'media_attachment')
+    return unless media_fields.any?
+
+    routes_path = Rails.root.join("config/routes.rb")
+    content = File.read(routes_path)
+
+    media_fields.each do |field|
+      route_line = "get :download_#{field.field_name}"
+      # Only add if not already present
+      next if content.include?(route_line)
+
+      # Insert into the member block for this resource
+      content.sub!(
+        /(resources :#{form_template.plural_file_name} do\s*\n\s*member do\n)/,
+        "\\1            #{route_line}\n"
+      )
+    end
+
+    File.write(routes_path, content)
   end
 
   def routing_fields_changed?
@@ -1498,6 +1614,41 @@ class FormTemplatesController < ApplicationController
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
+    when 'media_attachment'
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>" data-controller="file-preview" data-file-preview-max-value="10">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      # Show existing attachments on edit
+      html += "            <% if @#{form_template.file_name}.#{field.field_name}.attached? %>\n"
+      html += "              <div class=\"existing-attachments\">\n"
+      html += "                <small class=\"form-text text-muted\">Currently attached:</small>\n"
+      html += "                <div class=\"file-preview-grid\">\n"
+      html += "                  <% @#{form_template.file_name}.#{field.field_name}.each do |attachment| %>\n"
+      html += "                    <div class=\"file-preview-item\">\n"
+      html += "                      <% if attachment.content_type.start_with?('image/') %>\n"
+      html += "                        <%= image_tag rails_blob_path(attachment, disposition: 'inline'), class: 'file-preview-thumb' %>\n"
+      html += "                      <% else %>\n"
+      html += "                        <div class=\"file-preview-icon\"><i class=\"fas fa-file-pdf\"></i></div>\n"
+      html += "                      <% end %>\n"
+      html += "                      <span class=\"file-preview-name\"><%= attachment.filename %></span>\n"
+      html += "                    </div>\n"
+      html += "                  <% end %>\n"
+      html += "                </div>\n"
+      html += "              </div>\n"
+      html += "            <% end %>\n"
+      html += "            <%= form.file_field :#{field.field_name}, multiple: true, class: \"form-control\", direct_upload: true, accept: \"image/jpeg,image/png,image/gif,application/pdf\""
+      html += ", disabled: true" if disabled_attr.present?
+      html += ", data: { file_preview_target: \"input\", action: \"change->file-preview#preview\" } %>\n"
+      html += "            <small class=\"form-text text-muted\">You can select files multiple times — up to 10 total. <span data-file-preview-target=\"count\"></span></small>\n"
+      html += "            <div data-file-preview-target=\"preview\" class=\"file-preview-grid\"></div>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
     end
   end
 
@@ -1852,6 +2003,23 @@ class FormTemplatesController < ApplicationController
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.time_field :#{field.field_name}, #{attrs_str} %>\n"
+      html += "          </div>\n"
+      html += conditional_wrapper_end
+      html
+    when 'media_attachment'
+      html = ""
+      html += "        <% #{editable_check} %>\n" if editable_check
+      html += conditional_wrapper_start
+      html += <<~HTML
+              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>" data-controller="file-preview" data-file-preview-max-value="10">
+                <%= form.label :#{field.field_name}, "#{field.label}" %>
+      HTML
+      html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <%= form.file_field :#{field.field_name}, multiple: true, class: \"form-control\", direct_upload: true, accept: \"image/jpeg,image/png,image/gif,application/pdf\""
+      html += ", disabled: true" if disabled_attr.present?
+      html += ", data: { file_preview_target: \"input\", action: \"change->file-preview#preview\" } %>\n"
+      html += "            <small class=\"form-text text-muted\">You can select files multiple times — up to 10 total. <span data-file-preview-target=\"count\"></span></small>\n"
+      html += "            <div data-file-preview-target=\"preview\" class=\"file-preview-grid\"></div>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
