@@ -112,42 +112,49 @@
 <div class="form-page" style="display:none;">
   <h2>Incident Info</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:incident_type START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :incident_type, "Incident Type" %>
             <%= form.select :incident_type,
                   options_for_select(['Approved Event Permit', 'CEO Interest', 'Elevator Outage (Entrapment)', 'Elevator Outage (No Entrapment)', 'Generator of Alarm Testing', 'HVAC', 'Natural Disaster', 'Planned Outage', 'Unplanned Outage', 'Safety Incident', 'Tree Removal'], @critical_information_reporting.incident_type),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>" data-answer-depends-on="incident_type" data-answer-mappings="{&quot;Approved Event Permit&quot;:&quot;Before it happens&quot;,&quot;CEO Interest&quot;:&quot;Earliest convenience&quot;,&quot;Elevator Outage (Entrapment)&quot;:&quot;Immediate&quot;,&quot;Elevator Outage (No Entrapment)&quot;:&quot;Immediate&quot;,&quot;Generator of Alarm Testing&quot;:&quot;Before it happens&quot;,&quot;HVAC&quot;:&quot;Earliest convenience&quot;,&quot;Natural Disaster&quot;:&quot;Immediate&quot;,&quot;Planned Outage&quot;:&quot;Earliest convenience&quot;,&quot;Unplanned Outage&quot;:&quot;Immediate&quot;,&quot;Safety Incident&quot;:&quot;Earliest convenience&quot;,&quot;Tree Removal&quot;:&quot;Before it happens&quot;}">
+<!-- FIELD:incident_type END -->
+<!-- FIELD:urgency_of_reporting START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="incident_type" data-answer-mappings="{&quot;Approved Event Permit&quot;:&quot;Before it happens&quot;,&quot;CEO Interest&quot;:&quot;Earliest convenience&quot;,&quot;Elevator Outage (Entrapment)&quot;:&quot;Immediate&quot;,&quot;Elevator Outage (No Entrapment)&quot;:&quot;Immediate&quot;,&quot;Generator of Alarm Testing&quot;:&quot;Before it happens&quot;,&quot;HVAC&quot;:&quot;Earliest convenience&quot;,&quot;Natural Disaster&quot;:&quot;Immediate&quot;,&quot;Planned Outage&quot;:&quot;Earliest convenience&quot;,&quot;Unplanned Outage&quot;:&quot;Immediate&quot;,&quot;Safety Incident&quot;:&quot;Earliest convenience&quot;,&quot;Tree Removal&quot;:&quot;Before it happens&quot;}">
   <%= form.label :urgency_of_reporting, "Urgency of Reporting" %>
             <%= form.select :urgency_of_reporting,
                   options_for_select(['Immediate', 'Earliest convenience', 'Before it happens'], @critical_information_reporting.urgency_of_reporting),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:urgency_of_reporting END -->
+<!-- FIELD:where_location START --><div class="form-group flex-fill overflow-visible" data-controller="choices">
   <%= form.label :where_location, "Where: Location" %>
             <%= form.select :where_location,
-                  options_for_select(['1', '2', '3'], @critical_information_reporting.where_location),
+                  options_for_select(@location_options, @critical_information_reporting.where_location),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control", required: true,
+                    data: { choices_target: "select", placeholder: "Search for a location..." } } %>
           </div>
-          <div class="form-group flex-fill<%= '' %>">
-            <%= form.label :staff_involved, "Staff Involved" %>
+<!-- FIELD:where_location END -->
+<!-- FIELD:staff_involved START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
+  <%= form.label :staff_involved, "Staff Involved" %>
             <%= form.select :staff_involved,
-                  options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }, @critical_information_reporting.staff_involved),
-                  { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
+                  { include_blank: false },
+                  { class: "form-control", required: true, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:staff_involved END -->
+<!-- FIELD:incident_details START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :incident_details, "Incident Details" %>
             <%= form.text_area :incident_details, rows: 5, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:incident_details END -->
+<!-- FIELD:cause START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :cause, "Cause" %>
             <%= form.text_area :cause, rows: 5, class: "form-control", required: true %>
           </div>
+<!-- FIELD:cause END -->
         </div>
       </div>
 
@@ -155,25 +162,28 @@
 <div class="form-page" style="display:none;">
   <h2>Impact</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:impact START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :impact, "Impact" %>
             <%= form.select :impact,
                   options_for_select(['Low', 'Medium', 'High'], @critical_information_reporting.impact),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:impact END -->
+<!-- FIELD:when_impact_started START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :when_impact_started, "When: Impact Started" %>
             <%= form.datetime_local_field :when_impact_started, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>" data-controller="choices">
+<!-- FIELD:when_impact_started END -->
+<!-- FIELD:impacted_customers START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :impacted_customers, "Impacted Customers" %>
             <%= form.select :impacted_customers,
                   options_for_select(['Building', 'Agency', 'Employee']),
                   { include_blank: false },
                   { class: "form-control", data: { conditional_trigger: 'impacted_customers' }, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
-          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Building&quot;]" style="<%= ["Building"].include?(@critical_information_reporting.impacted_customers) ? '' : 'display: none;' %>">
+<!-- FIELD:impacted_customers END -->
+<!-- FIELD:building START -->          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Building&quot;]" style="<%= ["Building"].include?(@critical_information_reporting.impacted_customers) ? '' : 'display: none;' %>">
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :building, "Building" %>
             <%= form.select :building,
@@ -182,7 +192,8 @@
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
           </div>
-          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Agency&quot;]" style="<%= ["Agency"].include?(@critical_information_reporting.impacted_customers) ? '' : 'display: none;' %>">
+<!-- FIELD:building END -->
+<!-- FIELD:agency START -->          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Agency&quot;]" style="<%= ["Agency"].include?(@critical_information_reporting.impacted_customers) ? '' : 'display: none;' %>">
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :agency, "Agency" %>
             <%= form.select :agency,
@@ -191,15 +202,17 @@
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
           </div>
-          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Employee&quot;]" style="<%= ["Employee"].include?(@critical_information_reporting.impacted_customers) ? '' : 'display: none;' %>">
-          <div class="form-group flex-fill<%= '' %>" data-controller="choices">
-            <%= form.label :employee, "Employee" %>
+<!-- FIELD:agency END -->
+<!-- FIELD:employee START -->          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Employee&quot;]" style="<%= ["Employee"].include?(@critical_information_reporting.impacted_customers) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>" data-controller="choices">
+  <%= form.label :employee, "Employee" %>
             <%= form.select :employee,
-                  options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
+                  options_for_select(Employee.where(Agency: 'GSA').order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
           </div>
+<!-- FIELD:employee END -->
         </div>
       </div>
 
@@ -207,14 +220,16 @@
 <div class="form-page" style="display:none;">
   <h2>Outcome</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:next_steps START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :next_steps, "Next Steps" %>
             <%= form.text_area :next_steps, rows: 3, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:next_steps END -->
+<!-- FIELD:media_photo_pdf_etc START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :media_photo_pdf_etc, "Media (Photo, PDF, etc.)" %>
             <%= form.text_field :media_photo_pdf_etc, class: "form-control" %>
           </div>
+<!-- FIELD:media_photo_pdf_etc END -->
         </div>
       </div>
 

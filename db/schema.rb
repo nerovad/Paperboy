@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_02_182621) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_02_200000) do
   create_table "AimUsers", id: false, force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.string "FirstName", limit: 50, null: false
@@ -521,6 +521,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_182621) do
     t.string "read_only", default: "none"
     t.integer "conditional_answer_field_id"
     t.text "conditional_answer_mappings"
+    t.boolean "has_custom_view", default: false, null: false
     t.index ["conditional_answer_field_id"], name: "index_form_fields_on_conditional_answer_field_id"
     t.index ["conditional_field_id"], name: "index_form_fields_on_conditional_field_id"
     t.index ["form_template_id", "page_number"], name: "index_form_fields_on_form_template_id_and_page_number"

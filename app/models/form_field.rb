@@ -86,6 +86,7 @@ class FormField < ApplicationRecord
   scope :dropdowns, -> { where(field_type: ['dropdown', 'choices_dropdown']) }
   scope :conditional, -> { where.not(conditional_field_id: nil) }
   scope :unconditional, -> { where(conditional_field_id: nil) }
+  scope :custom_view, -> { where(has_custom_view: true) }
   
   def text_field?
     field_type == 'text'

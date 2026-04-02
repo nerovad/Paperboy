@@ -576,7 +576,7 @@ class FormTemplatesController < ApplicationController
     return false unless @form_template
 
     current_fields = @form_template.form_fields.ordered.map do |f|
-      { label: f.label, field_type: f.field_type, page_number: f.page_number, required: f.required, read_only: f.read_only || 'none', options: f.options }
+      { label: f.label, field_type: f.field_type, page_number: f.page_number, required: f.required, read_only: f.read_only || 'none', has_custom_view: f.has_custom_view, options: f.options }
     end
 
     new_fields = (params[:fields] || []).map do |f|
@@ -586,6 +586,7 @@ class FormTemplatesController < ApplicationController
         page_number: f[:page_number].to_i,
         required: f[:required] == '1',
         read_only: f[:read_only].presence || 'none',
+        has_custom_view: f[:has_custom_view] == '1',
         options: case f[:field_type]
                  when 'text_box' then { 'rows' => f[:rows].to_i }
                  when 'dropdown', 'choices_dropdown'
@@ -811,7 +812,8 @@ class FormTemplatesController < ApplicationController
           restricted_to_type: field_data[:restricted_to_type].presence || 'none',
           restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
           restricted_to_group_id: field_data[:restricted_to_group_id].presence,
-          read_only: field_data[:read_only].presence || 'none'
+          read_only: field_data[:read_only].presence || 'none',
+          has_custom_view: field_data[:has_custom_view] == '1'
         )
         created_fields << field
 
@@ -966,6 +968,9 @@ class FormTemplatesController < ApplicationController
 
     view_path = Rails.root.join("app/views/#{form_template.plural_file_name}/new.html.erb")
 
+    # Extract existing custom field blocks before regenerating
+    existing_blocks = extract_existing_field_blocks(view_path)
+
     # Determine which Stimulus controllers to attach
     controllers = ["form-navigation"]
     controllers << "conditional-fields" if form_template.form_fields.conditional.any? || form_template.form_fields.any?(&:conditional_answer?)
@@ -982,38 +987,45 @@ class FormTemplatesController < ApplicationController
         <%= form_with model: @#{form_template.file_name}, local: true do |form| %>
 
     HTML
-    
+
     # Generate each page
     (1..form_template.page_count).each do |page_num|
       page_header = form_template.page_header(page_num)
       fields_for_page = form_template.form_fields.for_page(page_num)
-      
+
       display_style = page_num == 1 ? "" : " style=\"display:none;\""
-      
+
       content += <<~HTML
             <!-- Page #{page_num}: #{page_header} -->
             <div class="form-page"#{display_style}>
               <h2>#{page_header}</h2>
       HTML
-      
+
       # Add standard fields for pages 1 and 2
       if page_num == 1
         content += generate_employee_info_fields
       elsif page_num == 2
         content += generate_agency_info_fields
       end
-      
+
       # Add custom fields
       if fields_for_page.any?
         content += "        <div class=\"form-row d-flex flex-wrap\">\n"
-        
+
         fields_for_page.each do |field|
-          content += generate_field_html(field)
+          content += "<!-- FIELD:#{field.field_name} START -->"
+          if field.has_custom_view && existing_blocks[field.field_name]
+            # Preserve the existing custom HTML for this field
+            content += existing_blocks[field.field_name]
+          else
+            content += generate_field_html(field)
+          end
+          content += "<!-- FIELD:#{field.field_name} END -->\n"
         end
-        
+
         content += "        </div>\n"
       end
-      
+
       content += "      </div>\n\n"
     end
     
@@ -1054,6 +1066,9 @@ class FormTemplatesController < ApplicationController
     return unless form_template
 
     view_path = Rails.root.join("app/views/#{form_template.plural_file_name}/edit.html.erb")
+
+    # Extract existing custom field blocks before regenerating
+    existing_blocks = extract_existing_field_blocks(view_path)
 
     # Determine which Stimulus controllers to attach
     controllers = ["form-navigation"]
@@ -1097,7 +1112,14 @@ class FormTemplatesController < ApplicationController
         content += "        <div class=\"form-row d-flex flex-wrap\">\n"
 
         fields_for_page.each do |field|
-          content += generate_field_html_for_edit(field, form_template)
+          content += "<!-- FIELD:#{field.field_name} START -->"
+          if field.has_custom_view && existing_blocks[field.field_name]
+            # Preserve the existing custom HTML for this field
+            content += existing_blocks[field.field_name]
+          else
+            content += generate_field_html_for_edit(field, form_template)
+          end
+          content += "<!-- FIELD:#{field.field_name} END -->\n"
         end
 
         content += "        </div>\n"
@@ -1477,6 +1499,20 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     end
+  end
+
+  # Extract existing field blocks from a view file using marker comments.
+  # Returns a hash of { field_name => html_block } for fields wrapped in
+  # <!-- FIELD:field_name START --> ... <!-- FIELD:field_name END --> markers.
+  def extract_existing_field_blocks(view_path)
+    return {} unless File.exist?(view_path)
+
+    existing_content = File.read(view_path)
+    blocks = {}
+    existing_content.scan(/<!-- FIELD:(\w+) START -->(.+?)<!-- FIELD:\1 END -->/m) do |name, html|
+      blocks[name] = html
+    end
+    blocks
   end
 
   def generate_employee_info_fields
