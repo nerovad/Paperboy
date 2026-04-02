@@ -475,6 +475,17 @@
                                <%= 'checked' if field.required %>>
                       </div>
 
+                      <div class="field-input" style="flex: 0 0 140px;">
+                        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Read Only</label>
+                        <select name="fields[][read_only]"
+                                class="form-control form-control-sm"
+                                style="min-width: 120px;">
+                          <option value="none" <%= 'selected' if field.read_only == 'none' || field.read_only.nil? %>>No</option>
+                          <option value="always" <%= 'selected' if field.read_only == 'always' %>>Always</option>
+                          <option value="initial" <%= 'selected' if field.read_only == 'initial' %>>Initial Filing Only</option>
+                        </select>
+                      </div>
+
                       <div style="flex: 0 0 auto;">
                         <label style="font-size: 0.9em; color: transparent; display: block; margin-bottom: 5px;">-</label>
                         <button type="button"

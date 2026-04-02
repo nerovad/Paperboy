@@ -7,6 +7,7 @@ class FormField < ApplicationRecord
 
   FIELD_TYPES = %w[text text_box dropdown choices_dropdown date phone email number yes_no time].freeze
   RESTRICTION_TYPES = %w[none employee group].freeze
+  READ_ONLY_TYPES = %w[none always initial].freeze
 
   # Whitelisted database tables and columns available as dropdown data sources
   DATA_SOURCES = {
@@ -65,6 +66,7 @@ class FormField < ApplicationRecord
   validates :field_name, presence: true
   validates :field_type, inclusion: { in: FIELD_TYPES }
   validates :restricted_to_type, inclusion: { in: RESTRICTION_TYPES }, allow_nil: true
+  validates :read_only, inclusion: { in: READ_ONLY_TYPES }, allow_nil: true
   validates :restricted_to_employee_id, presence: true, if: :restricted_to_employee?
   validates :restricted_to_group_id, presence: true, if: :restricted_to_group?
   validates :page_number, numericality: {
@@ -180,6 +182,19 @@ class FormField < ApplicationRecord
     restricted_to_type == 'group'
   end
 
+  # Read-only checks
+  def read_only?
+    read_only.present? && read_only != 'none'
+  end
+
+  def read_only_always?
+    read_only == 'always'
+  end
+
+  def read_only_initial?
+    read_only == 'initial'
+  end
+
   # Check if a user can fill out this field
   def editable_by?(employee_id, user_groups = [])
     return true if unrestricted?
@@ -267,6 +282,7 @@ class FormField < ApplicationRecord
 
   def set_default_restriction_type
     self.restricted_to_type ||= 'none'
+    self.read_only ||= 'none'
   end
 
   def generate_field_name

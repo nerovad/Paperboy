@@ -361,6 +361,17 @@
                value="1">
       </div>
 
+      <div class="field-input">
+        <label>Read Only</label>
+        <select name="fields[][read_only]"
+                class="form-control form-control-sm"
+                style="min-width: 120px;">
+          <option value="none">No</option>
+          <option value="always">Always</option>
+          <option value="initial">Initial Filing Only</option>
+        </select>
+      </div>
+
       <button type="button"
               class="btn btn-danger btn-sm"
               data-action="click->form-builder#removeField">

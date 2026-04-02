@@ -43,7 +43,8 @@ class FormTemplatesController < ApplicationController
             options: build_field_options(field_data),
             restricted_to_type: field_data[:restricted_to_type].presence || 'none',
             restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
-            restricted_to_group_id: field_data[:restricted_to_group_id].presence
+            restricted_to_group_id: field_data[:restricted_to_group_id].presence,
+            read_only: field_data[:read_only].presence || 'none'
           )
           created_fields << field
 
@@ -544,7 +545,7 @@ class FormTemplatesController < ApplicationController
     return false unless @form_template
 
     current_fields = @form_template.form_fields.ordered.map do |f|
-      { label: f.label, field_type: f.field_type, page_number: f.page_number, required: f.required, options: f.options }
+      { label: f.label, field_type: f.field_type, page_number: f.page_number, required: f.required, read_only: f.read_only || 'none', options: f.options }
     end
 
     new_fields = (params[:fields] || []).map do |f|
@@ -553,6 +554,7 @@ class FormTemplatesController < ApplicationController
         field_type: f[:field_type],
         page_number: f[:page_number].to_i,
         required: f[:required] == '1',
+        read_only: f[:read_only].presence || 'none',
         options: case f[:field_type]
                  when 'text_box' then { 'rows' => f[:rows].to_i }
                  when 'dropdown', 'choices_dropdown'
@@ -776,7 +778,8 @@ class FormTemplatesController < ApplicationController
           options: build_field_options(field_data),
           restricted_to_type: field_data[:restricted_to_type].presence || 'none',
           restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
-          restricted_to_group_id: field_data[:restricted_to_group_id].presence
+          restricted_to_group_id: field_data[:restricted_to_group_id].presence,
+          read_only: field_data[:read_only].presence || 'none'
         )
         created_fields << field
 
@@ -1204,15 +1207,25 @@ class FormTemplatesController < ApplicationController
       end
     end
 
+    # Read-only handling: on edit view, only 'always' is readonly ('initial' becomes editable)
+    is_read_only = field.read_only_always?
+    readonly_attr = is_read_only ? "readonly: true" : nil
+
     # Build attributes hash string
-    attrs = ["class: \"form-control\""]
+    attrs = ["class: \"form-control#{ is_read_only ? ' field-readonly' : '' }\""]
     attrs << required_logic if required_logic.present?
     attrs << disabled_attr if disabled_attr.present?
+    attrs << readonly_attr if readonly_attr.present?
     # Add data attribute for dropdowns that have conditional dependencies
     if (field.dropdown? || field.choices_dropdown?) && has_conditional_dependents?(field)
       attrs << "data: { conditional_trigger: '#{field.field_name}' }"
     end
     attrs_str = attrs.join(", ")
+
+    # For select/dropdown fields, use disabled instead of readonly (readonly doesn't work on selects)
+    select_attrs = attrs.reject { |a| a == "readonly: true" }
+    select_attrs << "disabled: true" if is_read_only && disabled_attr.nil?
+    select_attrs_str = select_attrs.join(", ")
 
     case field.field_type
     when 'text'
@@ -1224,6 +1237,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.text_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
@@ -1237,6 +1251,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.text_area :#{field.field_name}, rows: #{field.rows}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
@@ -1253,10 +1268,11 @@ class FormTemplatesController < ApplicationController
         html += "          <div class=\"form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>\" #{div_data}>\n"
         html += "            <%= form.label :#{field.field_name}, \"#{field.label}\" %>\n"
         html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+        html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
         html += "            <%= form.select :#{field.field_name},\n"
         html += "                  options_for_select(#{record_var}.agency.present? ? Employee.where(Agency: #{record_var}.agency).order(:Last_Name).map { |e| \"\#{e.last_name}, \#{e.first_name}\" } : [], #{record_var}.#{field.field_name}),\n"
         html += "                  { include_blank: \"Select agency first...\" },\n"
-        html += "                  { #{attrs_str}, data: { dependent_select_target: \"select\" } } %>\n"
+        html += "                  { #{select_attrs_str}, data: { dependent_select_target: \"select\" } } %>\n"
         html += "          </div>\n"
         html += conditional_wrapper_end
         html
@@ -1277,10 +1293,11 @@ class FormTemplatesController < ApplicationController
                   <%= form.label :#{field.field_name}, "#{field.label}" %>
         HTML
         html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+        html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
         html += "            <%= form.select :#{field.field_name},\n"
         html += "                  options_for_select(#{options_expr}, #{selected_expr}),\n"
         html += "                  { include_blank: \"Select...\" },\n"
-        html += "                  { #{attrs_str} } %>\n"
+        html += "                  { #{select_attrs_str} } %>\n"
         html += "          </div>\n"
         html += conditional_wrapper_end
         html
@@ -1297,10 +1314,11 @@ class FormTemplatesController < ApplicationController
         html += "          <div class=\"form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>\" #{div_data}>\n"
         html += "            <%= form.label :#{field.field_name}, \"#{field.label}\" %>\n"
         html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+        html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
         html += "            <%= form.select :#{field.field_name},\n"
         html += "                  options_for_select([]),\n"
         html += "                  { include_blank: false },\n"
-        html += "                  { #{attrs_str}, multiple: true, data: { dependent_select_target: \"select\", choices_target: \"select\", placeholder: \"Select agency first...\" } } %>\n"
+        html += "                  { #{select_attrs_str}, multiple: true, data: { dependent_select_target: \"select\", choices_target: \"select\", placeholder: \"Select agency first...\" } } %>\n"
         html += "          </div>\n"
         html += conditional_wrapper_end
         html
@@ -1319,10 +1337,11 @@ class FormTemplatesController < ApplicationController
                   <%= form.label :#{field.field_name}, "#{field.label}" %>
         HTML
         html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+        html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
         html += "            <%= form.select :#{field.field_name},\n"
         html += "                  options_for_select(#{options_expr}),\n"
         html += "                  { include_blank: false },\n"
-        html += "                  { #{attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
+        html += "                  { #{select_attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
         html += "          </div>\n"
         html += conditional_wrapper_end
         html
@@ -1336,15 +1355,17 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.datetime_local_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
     when 'phone'
       phone_id = field.field_name.camelize(:lower)
-      phone_attrs = ["class: \"form-control\""]
+      phone_attrs = ["class: \"form-control#{ is_read_only ? ' field-readonly' : '' }\""]
       phone_attrs << required_logic if required_logic.present?
       phone_attrs << disabled_attr if disabled_attr.present?
+      phone_attrs << readonly_attr if readonly_attr.present?
       phone_attrs << "placeholder: \"e.g. 555-555-5555\""
       phone_attrs << "title: \"Enter a 10-digit phone number like 555-555-5555\""
       phone_attrs << "data: { controller: \"phone\", phone_target: \"input\", action: \"input->phone#format paste->phone#format blur->phone#validate\" }"
@@ -1361,6 +1382,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.text_field :#{field.field_name},\n"
       html += "                  #{phone_attrs_str} %>\n"
       html += "            <small id=\"#{phone_id}Help\" class=\"help-text text-muted\"></small>\n"
@@ -1369,9 +1391,10 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'email'
-      email_attrs = ["class: \"form-control\""]
+      email_attrs = ["class: \"form-control#{ is_read_only ? ' field-readonly' : '' }\""]
       email_attrs << required_logic if required_logic.present?
       email_attrs << disabled_attr if disabled_attr.present?
+      email_attrs << readonly_attr if readonly_attr.present?
       email_attrs << "placeholder: \"e.g. name@example.com\""
       email_attrs << "autocomplete: \"email\""
       email_attrs_str = email_attrs.join(", ")
@@ -1383,6 +1406,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.email_field :#{field.field_name}, #{email_attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
@@ -1396,6 +1420,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.number_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
@@ -1409,10 +1434,11 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.select :#{field.field_name},\n"
       html += "                  options_for_select(['Yes', 'No'], @#{form_template.file_name}.#{field.field_name}),\n"
       html += "                  { include_blank: \"Select...\" },\n"
-      html += "                  { #{attrs_str} } %>\n"
+      html += "                  { #{select_attrs_str} } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
@@ -1425,6 +1451,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.time_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
@@ -1566,15 +1593,25 @@ class FormTemplatesController < ApplicationController
       end
     end
 
+    # Read-only handling: on the new view, both 'always' and 'initial' are readonly
+    is_read_only = field.read_only_always? || field.read_only_initial?
+    readonly_attr = is_read_only ? "readonly: true" : nil
+
     # Build attributes hash string
-    attrs = ["class: \"form-control\""]
+    attrs = ["class: \"form-control#{ is_read_only ? ' field-readonly' : '' }\""]
     attrs << required_logic if required_logic.present?
     attrs << disabled_attr if disabled_attr.present?
+    attrs << readonly_attr if readonly_attr.present?
     # Add data attribute for dropdowns that have conditional dependencies
     if (field.dropdown? || field.choices_dropdown?) && has_conditional_dependents?(field)
       attrs << "data: { conditional_trigger: '#{field.field_name}' }"
     end
     attrs_str = attrs.join(", ")
+
+    # For select/dropdown fields, use disabled instead of readonly (readonly doesn't work on selects)
+    select_attrs = attrs.reject { |a| a == "readonly: true" }
+    select_attrs << "disabled: true" if is_read_only && disabled_attr.nil?
+    select_attrs_str = select_attrs.join(", ")
 
     case field.field_type
     when 'text'
@@ -1586,6 +1623,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.text_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
@@ -1599,6 +1637,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.text_area :#{field.field_name}, rows: #{field.rows}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
@@ -1615,10 +1654,11 @@ class FormTemplatesController < ApplicationController
         html += "          <div class=\"form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>\" #{div_data}>\n"
         html += "            <%= form.label :#{field.field_name}, \"#{field.label}\" %>\n"
         html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+        html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
         html += "            <%= form.select :#{field.field_name},\n"
         html += "                  options_for_select([]),\n"
         html += "                  { include_blank: \"Select agency first...\" },\n"
-        html += "                  { #{attrs_str}, data: { dependent_select_target: \"select\" } } %>\n"
+        html += "                  { #{select_attrs_str}, data: { dependent_select_target: \"select\" } } %>\n"
         html += "          </div>\n"
         html += conditional_wrapper_end
         html
@@ -1637,10 +1677,11 @@ class FormTemplatesController < ApplicationController
                   <%= form.label :#{field.field_name}, "#{field.label}" %>
         HTML
         html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+        html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
         html += "            <%= form.select :#{field.field_name},\n"
         html += "                  options_for_select(#{options_expr}),\n"
         html += "                  { include_blank: \"Select...\" },\n"
-        html += "                  { #{attrs_str} } %>\n"
+        html += "                  { #{select_attrs_str} } %>\n"
         html += "          </div>\n"
         html += conditional_wrapper_end
         html
@@ -1656,10 +1697,11 @@ class FormTemplatesController < ApplicationController
         html += "          <div class=\"form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>\" #{div_data}>\n"
         html += "            <%= form.label :#{field.field_name}, \"#{field.label}\" %>\n"
         html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+        html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
         html += "            <%= form.select :#{field.field_name},\n"
         html += "                  options_for_select([]),\n"
         html += "                  { include_blank: false },\n"
-        html += "                  { #{attrs_str}, multiple: true, data: { dependent_select_target: \"select\", choices_target: \"select\", placeholder: \"Select agency first...\" } } %>\n"
+        html += "                  { #{select_attrs_str}, multiple: true, data: { dependent_select_target: \"select\", choices_target: \"select\", placeholder: \"Select agency first...\" } } %>\n"
         html += "          </div>\n"
         html += conditional_wrapper_end
         html
@@ -1678,10 +1720,11 @@ class FormTemplatesController < ApplicationController
                   <%= form.label :#{field.field_name}, "#{field.label}" %>
         HTML
         html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+        html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
         html += "            <%= form.select :#{field.field_name},\n"
         html += "                  options_for_select(#{options_expr}),\n"
         html += "                  { include_blank: false },\n"
-        html += "                  { #{attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
+        html += "                  { #{select_attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
         html += "          </div>\n"
         html += conditional_wrapper_end
         html
@@ -1695,6 +1738,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.datetime_local_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
@@ -1702,9 +1746,10 @@ class FormTemplatesController < ApplicationController
     when 'phone'
       phone_id = field.field_name.camelize(:lower)
       # Build phone attrs separately since we need data hash
-      phone_attrs = ["class: \"form-control\""]
+      phone_attrs = ["class: \"form-control#{ is_read_only ? ' field-readonly' : '' }\""]
       phone_attrs << required_logic if required_logic.present?
       phone_attrs << disabled_attr if disabled_attr.present?
+      phone_attrs << readonly_attr if readonly_attr.present?
       phone_attrs << "placeholder: \"e.g. 555-555-5555\""
       phone_attrs << "title: \"Enter a 10-digit phone number like 555-555-5555\""
       phone_attrs << "data: { controller: \"phone\", phone_target: \"input\", action: \"input->phone#format paste->phone#format blur->phone#validate\" }"
@@ -1721,6 +1766,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.text_field :#{field.field_name},\n"
       html += "                  #{phone_attrs_str} %>\n"
       html += "            <small id=\"#{phone_id}Help\" class=\"help-text text-muted\"></small>\n"
@@ -1729,9 +1775,10 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'email'
-      email_attrs = ["class: \"form-control\""]
+      email_attrs = ["class: \"form-control#{ is_read_only ? ' field-readonly' : '' }\""]
       email_attrs << required_logic if required_logic.present?
       email_attrs << disabled_attr if disabled_attr.present?
+      email_attrs << readonly_attr if readonly_attr.present?
       email_attrs << "placeholder: \"e.g. name@example.com\""
       email_attrs << "autocomplete: \"email\""
       email_attrs_str = email_attrs.join(", ")
@@ -1743,6 +1790,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.email_field :#{field.field_name}, #{email_attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
@@ -1756,6 +1804,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.number_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
@@ -1769,10 +1818,11 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.select :#{field.field_name},\n"
       html += "                  options_for_select(['Yes', 'No']),\n"
       html += "                  { include_blank: \"Select...\" },\n"
-      html += "                  { #{attrs_str} } %>\n"
+      html += "                  { #{select_attrs_str} } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
@@ -1785,6 +1835,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
+      html += "            <small class=\"restriction-notice\">Read only</small>\n" if is_read_only
       html += "            <%= form.time_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
