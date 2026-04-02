@@ -210,7 +210,7 @@ class FormTemplatesController < ApplicationController
       end
 
       if routing_changed || fields_changed
-        customize_generated_controller(@form_template)
+        customize_generated_controller(@form_template, update_routing: routing_changed)
         add_media_download_routes(@form_template)
         Rails.logger.info "Regenerated controller for #{@form_template.class_name}"
       end
@@ -467,17 +467,28 @@ class FormTemplatesController < ApplicationController
     # Add has_many_attached declarations for media_attachment fields
     media_fields = form_template.form_fields.where(field_type: 'media_attachment')
     if media_fields.any?
-      # Remove existing has_many_attached lines (in case of regeneration)
-      content.gsub!(/^\s*has_many_attached :\w+\n/, '')
-      content.gsub!(/^\s*validate :acceptable_\w+_files\n/, '')
-      content.gsub!(/^\s*def acceptable_\w+_files.*?end\n/m, '')
+      # Add only missing declarations (idempotent on re-runs)
+      media_fields.each do |f|
+        # Add has_many_attached if not already present
+        unless content.include?("has_many_attached :#{f.field_name}")
+          content.sub!(/include TrackableStatus\n/) do |match|
+            "#{match}\n  has_many_attached :#{f.field_name}\n"
+          end
+        end
 
-      # Build attachment declarations and validations
-      attachment_lines = media_fields.map { |f| "  has_many_attached :#{f.field_name}" }.join("\n")
-      validation_lines = media_fields.map { |f| "  validate :acceptable_#{f.field_name}_files" }.join("\n")
+        # Add validate callback if not already present
+        unless content.include?("validate :acceptable_#{f.field_name}_files")
+          # Insert after validates :name line if it exists, otherwise after has_many_attached
+          if content =~ /validates :name.*\n/
+            content.sub!(/validates :name.*\n/) do |match|
+              "#{match}  validate :acceptable_#{f.field_name}_files\n"
+            end
+          end
+        end
 
-      validation_methods = media_fields.map do |f|
-        <<~RUBY
+        # Add validation method if not already present
+        unless content.include?("def acceptable_#{f.field_name}_files")
+          validation_method = <<~RUBY
 
   def acceptable_#{f.field_name}_files
     return unless #{f.field_name}.attached?
@@ -496,27 +507,17 @@ class FormTemplatesController < ApplicationController
       end
     end
   end
-        RUBY
-      end.join
+          RUBY
 
-      # Insert after `include TrackableStatus`
-      content.sub!(/include TrackableStatus\n/) do |match|
-        "#{match}\n#{attachment_lines}\n"
-      end
-
-      # Insert validations after existing validates lines
-      content.sub!(/validates :name, :email, presence: true\n/) do |match|
-        "#{match}#{validation_lines}\n"
-      end
-
-      # Insert validation methods before the private section or end of class
-      if content.include?("private\n")
-        content.sub!(/^(\s*private\n)/) do |match|
-          "#{validation_methods}\n#{match}"
-        end
-      else
-        content.sub!(/^end\s*\z/) do |match|
-          "#{validation_methods}\n#{match}"
+          if content.include?("private\n")
+            content.sub!(/^(\s*private\n)/) do |match|
+              "#{validation_method}\n#{match}"
+            end
+          else
+            content.sub!(/^end\s*\z/) do |match|
+              "#{validation_method}\n#{match}"
+            end
+          end
         end
       end
     end
@@ -528,8 +529,8 @@ class FormTemplatesController < ApplicationController
       end
     RUBY
 
-    if content =~ /def status_label\n.*?\n  end/m
-      content.gsub!(/def status_label\n.*?\n  end/m, status_label_code)
+    if content =~ /def status_label\b.*?\nend/m
+      content.gsub!(/def status_label\b.*?\nend/m, status_label_code)
     end
 
     File.write(model_path, content)
@@ -594,55 +595,79 @@ class FormTemplatesController < ApplicationController
     end
   end
 
-  def customize_generated_controller(form_template)
+  def customize_generated_controller(form_template, update_routing: true)
     controller_path = Rails.root.join("app/controllers/#{form_template.plural_file_name}_controller.rb")
     return unless File.exist?(controller_path)
 
     content = File.read(controller_path)
 
-    # Find the create action and customize it based on submission routing
-    if form_template.requires_approval?
+    # Only update routing logic when routing actually changed (or on initial create)
+    if update_routing && form_template.requires_approval?
       # Add routing logic to the create action
       routing_logic = generate_approval_routing_logic(form_template)
 
-      # Replace the redirect in the create action with our custom routing logic
-      content.gsub!(
-        /redirect_to form_success_path.*$/,
-        routing_logic
-      )
+      # Replace the entire routing block between markers (idempotent on re-runs)
+      if content.include?('# ROUTING_BLOCK_START')
+        content.gsub!(
+          /# ROUTING_BLOCK_START.*?# ROUTING_BLOCK_END/m,
+          "# ROUTING_BLOCK_START\n      #{routing_logic}\n      # ROUTING_BLOCK_END"
+        )
+      else
+        # Legacy controller without markers — replace entire save-success block
+        # Match from after "if @form.save" up to "else" to avoid leaving stale routing code
+        save_pattern = /(if @#{Regexp.escape(form_template.file_name)}\.save\n).+?(    else)/m
+        if content.match?(save_pattern)
+          replacement = "\\1      # ROUTING_BLOCK_START\n      #{routing_logic}\n      # ROUTING_BLOCK_END\n\\2"
+          content.sub!(save_pattern, replacement)
+        else
+          # Absolute fallback — just replace the redirect line
+          content.gsub!(
+            /redirect_to form_success_path.*$/,
+            "# ROUTING_BLOCK_START\n      #{routing_logic}\n      # ROUTING_BLOCK_END"
+          )
+        end
+      end
     end
 
     # Add media attachment fields to permitted params
     media_fields = form_template.form_fields.where(field_type: 'media_attachment')
     if media_fields.any?
       media_params = media_fields.map { |f| "#{f.field_name}: []" }.join(", ")
-      # Append media params to the permit list
-      content.gsub!(
-        /(:name, :phone, :email, :agency, :division, :department, :unit)\s*\)/,
-        "\\1,\n      #{media_params}\n    )"
-      )
+      # Only append media params if not already present
+      unless content.include?(media_params)
+        content.gsub!(
+          /(:name, :phone, :email, :agency, :division, :department, :unit)\s*\)/,
+          "\\1,\n      #{media_params}\n    )"
+        )
+      end
 
-      # Add download_media action and route support
-      download_actions = media_fields.map do |f|
-        <<~RUBY
+      # Add download actions only if not already present
+      media_fields.each do |f|
+        next if content.include?("def download_#{f.field_name}")
+
+        download_action = <<~RUBY
   def download_#{f.field_name}
     attachment = @#{form_template.file_name}.#{f.field_name}.find(params[:attachment_id])
     redirect_to rails_blob_path(attachment, disposition: "attachment")
   end
-        RUBY
-      end.join("\n")
 
-      # Insert download actions before the private section
-      content.sub!(/^\s*private\n/) do |match|
-        "#{download_actions}\n#{match}"
+        RUBY
+
+        content.sub!(/^\s*private\n/) do |match|
+          "#{download_action}#{match}"
+        end
       end
 
-      # Add download actions to before_action
-      download_method_names = media_fields.map { |f| ":download_#{f.field_name}" }.join(", ")
-      content.sub!(
-        /before_action :set_#{form_template.file_name}, only: \[([^\]]+)\]/,
-        "before_action :set_#{form_template.file_name}, only: [\\1, #{download_method_names}]"
-      )
+      # Add download actions to before_action only if not already present
+      media_fields.each do |f|
+        method_sym = ":download_#{f.field_name}"
+        next if content.include?(method_sym)
+
+        content.sub!(
+          /before_action :set_#{form_template.file_name}, only: \[([^\]]+)\]/,
+          "before_action :set_#{form_template.file_name}, only: [\\1, #{method_sym}]"
+        )
+      end
     end
 
     File.write(controller_path, content)
@@ -909,6 +934,10 @@ class FormTemplatesController < ApplicationController
   end
 
   def rebuild_form_fields
+    # Preserve existing field_names before destroying (keyed by label)
+    # so manually-corrected column names survive rebuild
+    existing_field_names = @form_template.form_fields.pluck(:label, :field_name).to_h
+
     @form_template.form_fields.destroy_all
 
     if params[:fields].present?
@@ -920,6 +949,7 @@ class FormTemplatesController < ApplicationController
       params[:fields].each_with_index do |field_data, index|
         field = @form_template.form_fields.create!(
           label: field_data[:label],
+          field_name: existing_field_names[field_data[:label]],
           field_type: field_data[:field_type],
           page_number: field_data[:page_number].to_i,
           position: index,
@@ -1001,25 +1031,34 @@ class FormTemplatesController < ApplicationController
     end
 
     # Legacy single-step routing
+    # Use the actual first status from the form's statuses
+    pending_status = form_template.statuses.find_by(category: 'pending')&.key ||
+                     form_template.statuses.ordered.first&.key ||
+                     'pending'
+    table_name = form_template.class_name.constantize.table_name rescue form_template.table_name
+    has_approver = ActiveRecord::Base.connection.column_exists?(table_name, :approver_id) rescue false
+
     case form_template.approval_routing_to
     when 'supervisor'
       <<~RUBY.chomp
         # Route to supervisor for approval
-        @#{form_template.file_name}.update(status: :pending)
+        @#{form_template.file_name}.update(status: :#{pending_status})
         # TODO: Send notification to supervisor
         redirect_to form_success_path, notice: 'Form submitted and routed to your supervisor for approval.', allow_other_host: false, status: :see_other
       RUBY
     when 'department_head'
       <<~RUBY.chomp
         # Route to department head for approval
-        @#{form_template.file_name}.update(status: :pending)
+        @#{form_template.file_name}.update(status: :#{pending_status})
         # TODO: Send notification to department head
         redirect_to form_success_path, notice: 'Form submitted and routed to your department head for approval.', allow_other_host: false, status: :see_other
       RUBY
     when 'employee'
+      update_attrs = "status: :#{pending_status}"
+      update_attrs += ", approver_id: #{form_template.approval_employee_id}" if has_approver
       <<~RUBY.chomp
         # Route to specific employee for approval
-        @#{form_template.file_name}.update(status: :pending, approver_id: #{form_template.approval_employee_id})
+        @#{form_template.file_name}.update(#{update_attrs})
         # TODO: Send notification to employee with ID #{form_template.approval_employee_id}
         redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
       RUBY
@@ -1035,11 +1074,24 @@ class FormTemplatesController < ApplicationController
     step_description = routing_step_description(first_step)
     approver_logic = generate_approver_lookup(first_step)
 
+    # Use the actual first routing status from the form's statuses
+    first_routing_status = form_template.statuses.find_by(key: 'step_1_pending')&.key ||
+                           form_template.statuses.where(auto_generated: true).ordered.first&.key ||
+                           form_template.statuses.ordered.first&.key ||
+                           'step_1_pending'
+
+    # Check if the model's table has an approver_id column
+    table_name = form_template.class_name.constantize.table_name rescue form_template.table_name
+    has_approver = ActiveRecord::Base.connection.column_exists?(table_name, :approver_id) rescue false
+
+    update_attrs = "status: :#{first_routing_status}"
+    update_attrs += ", approver_id: approver_id" if has_approver
+
     <<~RUBY.chomp
       # Multi-step approval routing (#{steps.count} steps)
       # Step 1: #{step_description}
       #{approver_logic}
-      @#{form_template.file_name}.update(status: :step_1_pending, approver_id: approver_id)
+      @#{form_template.file_name}.update(#{update_attrs})
       # TODO: Send notification to #{step_description}
       redirect_to form_success_path, notice: 'Form submitted and routed to #{step_description} for approval.', allow_other_host: false, status: :see_other
     RUBY
@@ -1495,6 +1547,12 @@ class FormTemplatesController < ApplicationController
         options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
         options_expr = "[#{options}]"
       end
+      # Build merged data hash for choices_dropdown (avoid duplicate data: keys)
+      data_entries = ["choices_target: \"select\"", "placeholder: \"Select options...\""]
+      data_entries << "conditional_trigger: '#{field.field_name}'" if has_conditional_dependents?(field)
+      # Use select_attrs without the standalone data: key (we merge it into one)
+      choices_attrs = select_attrs.reject { |a| a.start_with?("data:") }
+      choices_attrs_str = choices_attrs.join(", ")
       html = ""
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
@@ -1506,7 +1564,7 @@ class FormTemplatesController < ApplicationController
         html += "            <%= form.select :#{field.field_name},\n"
       html += "                  options_for_select(#{options_expr}),\n"
       html += "                  { include_blank: false },\n"
-      html += "                  { #{select_attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
+      html += "                  { #{choices_attrs_str}, multiple: true, data: { #{data_entries.join(', ')} } } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
@@ -1886,6 +1944,11 @@ class FormTemplatesController < ApplicationController
         options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
         options_expr = "[#{options}]"
       end
+      # Build merged data hash for choices_dropdown (avoid duplicate data: keys)
+      edit_data_entries = ["choices_target: \"select\"", "placeholder: \"Select options...\""]
+      edit_data_entries << "conditional_trigger: '#{field.field_name}'" if has_conditional_dependents?(field)
+      edit_choices_attrs = select_attrs.reject { |a| a.start_with?("data:") }
+      edit_choices_attrs_str = edit_choices_attrs.join(", ")
       html = ""
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
@@ -1897,7 +1960,7 @@ class FormTemplatesController < ApplicationController
         html += "            <%= form.select :#{field.field_name},\n"
       html += "                  options_for_select(#{options_expr}),\n"
       html += "                  { include_blank: false },\n"
-      html += "                  { #{select_attrs_str}, multiple: true, data: { choices_target: \"select\", placeholder: \"Select options...\" } } %>\n"
+      html += "                  { #{edit_choices_attrs_str}, multiple: true, data: { #{edit_data_entries.join(', ')} } } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html

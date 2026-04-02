@@ -66,8 +66,9 @@ class <%= class_name.pluralize %>Controller < ApplicationController
     @<%= file_name %>.employee_id = employee_id if @<%= file_name %>.respond_to?(:employee_id=)
 
     if @<%= file_name %>.save
-      # Keep success behavior simple for the template; you can extend per form.
+      # ROUTING_BLOCK_START
       redirect_to form_success_path, allow_other_host: false, status: :see_other
+      # ROUTING_BLOCK_END
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)

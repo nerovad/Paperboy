@@ -205,15 +205,21 @@ class CriticalInformationReportingsController < ApplicationController
     employee      = session[:user]
     employee_id   = employee&.dig("employee_id").to_s
 
-    @critical_information_reporting = CriticalInformationReporting.new(critical_information_reporting_params)
+    permitted = critical_information_reporting_params
+    Rails.logger.info "[CIR CREATE] Raw params keys: #{params[:critical_information_reporting]&.keys}"
+    Rails.logger.info "[CIR CREATE] Permitted params: #{permitted.to_h}"
+
+    @critical_information_reporting = CriticalInformationReporting.new(permitted)
     @critical_information_reporting.employee_id = employee_id if @critical_information_reporting.respond_to?(:employee_id=)
 
     if @critical_information_reporting.save
+      # ROUTING_BLOCK_START
       NotifyTeamsJob.perform_later(@critical_information_reporting.id) if @critical_information_reporting.urgency == "Immediate"
-      # Route to assigned manager (set by location router in before_validation callback)
-      @critical_information_reporting.update(status: :step_1_pending)
       redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
+      # ROUTING_BLOCK_END
     else
+      Rails.logger.warn "[CIR CREATE] Validation failed: #{@critical_information_reporting.errors.full_messages}"
+      Rails.logger.warn "[CIR CREATE] Attribute values: #{@critical_information_reporting.attributes.select { |_k, v| v.present? }.keys}"
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
       emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
@@ -276,7 +282,7 @@ end
       :impact, :next_steps,
       staff_involved: [],
       impacted_customers: [],
-      media: []
+      media_photo_pdf_etc: []
     )
 
     # Normalize multi-select arrays into comma-separated strings

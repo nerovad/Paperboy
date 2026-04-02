@@ -124,23 +124,24 @@
                   { class: "form-control", required: true } %>
           </div>
 <!-- FIELD:incident_type END -->
-<!-- FIELD:urgency_of_reporting START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="incident_type" data-answer-mappings="{&quot;Approved Event Permit&quot;:&quot;Before it happens&quot;,&quot;CEO Interest&quot;:&quot;Earliest convenience&quot;,&quot;Elevator Outage (Entrapment)&quot;:&quot;Immediate&quot;,&quot;Elevator Outage (No Entrapment)&quot;:&quot;Immediate&quot;,&quot;Generator of Alarm Testing&quot;:&quot;Before it happens&quot;,&quot;HVAC&quot;:&quot;Earliest convenience&quot;,&quot;Natural Disaster&quot;:&quot;Immediate&quot;,&quot;Planned Outage&quot;:&quot;Earliest convenience&quot;,&quot;Unplanned Outage&quot;:&quot;Immediate&quot;,&quot;Safety Incident&quot;:&quot;Earliest convenience&quot;,&quot;Tree Removal&quot;:&quot;Before it happens&quot;}">
-  <%= form.label :urgency_of_reporting, "Urgency of Reporting" %>
-            <%= form.select :urgency_of_reporting,
+<!-- FIELD:urgency START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="incident_type" data-answer-mappings="{&quot;Approved Event Permit&quot;:&quot;Before it happens&quot;,&quot;CEO Interest&quot;:&quot;Earliest convenience&quot;,&quot;Elevator Outage (Entrapment)&quot;:&quot;Immediate&quot;,&quot;Elevator Outage (No Entrapment)&quot;:&quot;Immediate&quot;,&quot;Generator of Alarm Testing&quot;:&quot;Before it happens&quot;,&quot;HVAC&quot;:&quot;Earliest convenience&quot;,&quot;Natural Disaster&quot;:&quot;Immediate&quot;,&quot;Planned Outage&quot;:&quot;Earliest convenience&quot;,&quot;Unplanned Outage&quot;:&quot;Immediate&quot;,&quot;Safety Incident&quot;:&quot;Earliest convenience&quot;,&quot;Tree Removal&quot;:&quot;Before it happens&quot;}">
+  <%= form.label :urgency, "Urgency of Reporting" %>
+            <%= form.select :urgency,
                   options_for_select(['Immediate', 'Earliest convenience', 'Before it happens']),
                   { include_blank: "Select..." },
-                  { class: "form-control field-readonly", required: true, disabled: true } %>
+                  { class: "form-control field-readonly", disabled: true, id: "urgency_display" } %>
+            <%= form.hidden_field :urgency, id: "critical_information_reporting_urgency" %>
           </div>
-<!-- FIELD:urgency_of_reporting END -->
-<!-- FIELD:where_location START --><div class="form-group flex-fill overflow-visible" data-controller="choices">
-  <%= form.label :where_location, "Where: Location" %>
-            <%= form.select :where_location,
+<!-- FIELD:urgency END -->
+<!-- FIELD:location START --><div class="form-group flex-fill overflow-visible" data-controller="choices">
+  <%= form.label :location, "Where: Location" %>
+            <%= form.select :location,
                   options_for_select(@location_options),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true,
                     data: { choices_target: "select", placeholder: "Search for a location..." } } %>
           </div>
-<!-- FIELD:where_location END -->
+<!-- FIELD:location END -->
 <!-- FIELD:staff_involved START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :staff_involved, "Staff Involved" %>
             <%= form.select :staff_involved,
@@ -174,49 +175,56 @@
                   { class: "form-control", required: true } %>
           </div>
 <!-- FIELD:impact END -->
-<!-- FIELD:when_impact_started START --><div class="form-group flex-fill<%= '' %>">
-  <%= form.label :when_impact_started, "When: Impact Started" %>
-            <%= form.datetime_local_field :when_impact_started, class: "form-control", required: true %>
+<!-- FIELD:impact_started START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :impact_started, "When: Impact Started" %>
+            <%= form.datetime_local_field :impact_started, class: "form-control", required: true %>
           </div>
-<!-- FIELD:when_impact_started END -->
+<!-- FIELD:impact_started END -->
 <!-- FIELD:impacted_customers START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :impacted_customers, "Impacted Customers" %>
             <%= form.select :impacted_customers,
                   options_for_select(['Building', 'Agency', 'Employee']),
                   { include_blank: false },
-                  { class: "form-control", data: { conditional_trigger: 'impacted_customers' }, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                  { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'impacted_customers' } } %>
           </div>
 <!-- FIELD:impacted_customers END -->
 <!-- FIELD:building START -->          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Building&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :building, "Building" %>
             <%= form.select :building,
-                  options_for_select(['HOA', 'JJC', 'Service Building']),
+                  options_for_select(['HOA', 'JJC', 'Service Building', 'Other']),
                   { include_blank: false },
-                  { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                  { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'building' } } %>
           </div>
           </div>
 <!-- FIELD:building END -->
-<!-- FIELD:agency START -->          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Agency&quot;]" style="display: none;">
+<!-- FIELD:other_building START -->          <div class="conditional-field" data-depends-on="building" data-show-values="[&quot;Other&quot;]" style="display: none;">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :other_building, "Other Building" %>
+            <%= form.text_field :other_building, class: "form-control" %>
+          </div>
+          </div>
+<!-- FIELD:other_building END -->
+<!-- FIELD:impacted_agency START -->          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Agency&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
-  <%= form.label :agency, "Agency" %>
-            <%= form.select :agency,
+  <%= form.label :impacted_agency, "Agency" %>
+            <%= form.select :impacted_agency,
                   options_for_select(Agency.order(:long_name).pluck(:long_name).uniq),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
           </div>
-<!-- FIELD:agency END -->
-<!-- FIELD:employee START -->          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Employee&quot;]" style="display: none;">
+<!-- FIELD:impacted_agency END -->
+<!-- FIELD:impacted_employee START -->          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Employee&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
-  <%= form.label :employee, "Employee" %>
-            <%= form.select :employee,
+  <%= form.label :impacted_employee, "Employee" %>
+            <%= form.select :impacted_employee,
                   options_for_select(Employee.where(Agency: 'GSA').order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
           </div>
-<!-- FIELD:employee END -->
+<!-- FIELD:impacted_employee END -->
         </div>
       </div>
 

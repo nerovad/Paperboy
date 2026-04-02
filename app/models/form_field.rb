@@ -329,7 +329,8 @@ class FormField < ApplicationRecord
 
   def generate_field_name
     return if label.blank?
-    
+    return if field_name.present?
+
     self.field_name = label.downcase.gsub(/[^a-z0-9\s]/, '').gsub(/\s+/, '_')
   end
   

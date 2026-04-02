@@ -87,6 +87,15 @@ export default class extends Controller {
     if (mappedAnswer) {
       targetSelect.value = mappedAnswer
 
+      // Also update any companion hidden field (for disabled selects that don't submit)
+      const selectName = targetSelect.getAttribute('name')
+      if (selectName) {
+        const hiddenField = this.element.querySelector(`input[type="hidden"][name="${selectName}"]`)
+        if (hiddenField) {
+          hiddenField.value = mappedAnswer
+        }
+      }
+
       // Trigger change event so other listeners (Choices.js, other conditionals) pick it up
       targetSelect.dispatchEvent(new Event('change', { bubbles: true }))
     }

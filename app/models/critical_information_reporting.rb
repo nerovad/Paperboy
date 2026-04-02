@@ -5,8 +5,6 @@ class CriticalInformationReporting < ApplicationRecord
   include Reassignable
   include TrackableStatus
 
-  has_many_attached :media_photo_pdf_etc
-
 enum :status, {
   in_progress: 0,
     scheduled: 1,
@@ -30,6 +28,8 @@ STATUS_LABELS = {
     cancelled: "Cancelled"
 }.freeze
 
+  has_many_attached :media_photo_pdf_etc
+
   # ActiveStorage attachments for media files (multiple)
 
   # Callbacks
@@ -38,6 +38,7 @@ STATUS_LABELS = {
   # Validations for Employee Info (Page 1)
   validates :employee_id, presence: true
   validates :name, presence: true
+  validate :acceptable_media_photo_pdf_etc_files
   validates :phone, presence: true, format: { with: /\A\d{3}-\d{3}-\d{4}\z/, message: "must be in format XXX-XXX-XXXX" }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
 
@@ -68,9 +69,6 @@ STATUS_LABELS = {
   validates :impacted_customers, presence: true
   validates :next_steps, presence: true
 
-  # Media attachment validation - optional, accepts common file types
-  validate :acceptable_media_file
-
   # Scopes for common queries
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
   scope :by_status, ->(status) { where(status: status) }
@@ -85,56 +83,25 @@ STATUS_LABELS = {
   self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
 end
 
-  # Reassignable concern implementation
-  def current_assignee_id
-    assigned_manager_id
-  end
+  def acceptable_media_photo_pdf_etc_files
+    return unless media_photo_pdf_etc.attached?
 
-  def assignment_field_name
-    'assigned_manager_id'
-  end
-
-def acceptable_media_photo_pdf_etc_files
-  return unless media_photo_pdf_etc.attached?
-
-  if media_photo_pdf_etc.count > 10
-    errors.add(:media_photo_pdf_etc, "can have a maximum of 10 files")
-  end
-
-  media_photo_pdf_etc.each do |file|
-    unless file.content_type.in?(%w[image/jpeg image/png image/gif application/pdf])
-      errors.add(:media_photo_pdf_etc, "must be a JPEG, PNG, GIF, or PDF")
+    if media_photo_pdf_etc.count > 10
+      errors.add(:media_photo_pdf_etc, "can have a maximum of 10 files")
     end
 
-    if file.byte_size > 10.megabytes
-      errors.add(:media_photo_pdf_etc, "file size must be less than 10MB")
+    media_photo_pdf_etc.each do |file|
+      unless file.content_type.in?(%w[image/jpeg image/png image/gif application/pdf])
+        errors.add(:media_photo_pdf_etc, "must be a JPEG, PNG, GIF, or PDF")
+      end
+
+      if file.byte_size > 10.megabytes
+        errors.add(:media_photo_pdf_etc, "file size must be less than 10MB")
+      end
     end
   end
-end
-
 
   private
-
-  def acceptable_media_file
-    return unless media.attached?
-
-    if media.count > 10
-      errors.add(:media, "cannot exceed 10 files")
-      return
-    end
-
-    acceptable_types = ["image/jpeg", "image/png", "image/gif", "application/pdf"]
-
-    media.each do |file|
-      unless file.blob.byte_size <= 10.megabytes
-        errors.add(:media, "\"#{file.filename}\" is too large (maximum is 10 MB per file)")
-      end
-
-      unless acceptable_types.include?(file.blob.content_type)
-        errors.add(:media, "\"#{file.filename}\" must be a JPEG, PNG, GIF, or PDF")
-      end
-    end
-  end
 
   def assign_manager_based_on_location
     # Auto-assign the incident manager based on location
