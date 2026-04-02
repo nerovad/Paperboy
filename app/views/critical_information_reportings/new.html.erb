@@ -195,12 +195,14 @@
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
           </div>
+          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Employee&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :employee, "Employee" %>
             <%= form.select :employee,
-                  options_for_select([]),
+                  options_for_select(Agency.order(:long_name).pluck(:long_name).uniq),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+          </div>
           </div>
         </div>
       </div>

@@ -660,9 +660,19 @@ export default class extends Controller {
   handleDataSourceTableChange(event) {
     const fieldItem = event.target.closest('.field-item')
     const columnSelect = fieldItem.querySelector('.data-source-column-select')
+    const filterOption = fieldItem.querySelector('.data-source-filter-option')
     const selectedOption = event.target.selectedOptions[0]
 
     columnSelect.innerHTML = '<option value="">Select column...</option>'
+
+    // Show/hide the "Filter by Agency" checkbox (only for employees)
+    if (filterOption) {
+      filterOption.style.display = (selectedOption?.value === 'employees') ? 'block' : 'none'
+      if (selectedOption?.value !== 'employees') {
+        const checkbox = filterOption.querySelector('input[type="checkbox"]')
+        if (checkbox) checkbox.checked = false
+      }
+    }
 
     if (!selectedOption || !selectedOption.value) return
 

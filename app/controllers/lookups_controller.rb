@@ -50,4 +50,26 @@ class LookupsController < ApplicationController
       format.html { head :not_acceptable }
     end
   end
+
+  def employees
+    scope = Employee.order(:Last_Name)
+    scope = scope.where(Agency: params[:agency]) if params[:agency].present?
+
+    column = params[:column].presence || 'full_name'
+    allowed_columns = %w[full_name first_name last_name email]
+    column = 'full_name' unless allowed_columns.include?(column)
+
+    options = case column
+              when 'full_name'
+                scope.map { |e| "#{e.last_name}, #{e.first_name}" }
+              when 'first_name'
+                scope.pluck(:First_Name).uniq
+              when 'last_name'
+                scope.pluck(:Last_Name).uniq
+              when 'email'
+                scope.pluck(:EE_Email).compact.uniq
+              end
+
+    render json: options
+  end
 end

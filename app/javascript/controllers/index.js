@@ -36,6 +36,7 @@ import OrgPermissionsController from "controllers/org_permissions_controller"
 import ToastController from "controllers/toast_controller"
 import DeleteFormController from "controllers/delete_form_controller"
 import SelectAllController from "controllers/select_all_controller"
+import DependentSelectController from "controllers/dependent_select_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -73,3 +74,4 @@ application.register("org-permissions", OrgPermissionsController)
 application.register("toast", ToastController)
 application.register("delete-form", DeleteFormController)
 application.register("select-all", SelectAllController)
+application.register("dependent-select", DependentSelectController)
