@@ -624,6 +624,21 @@ export default class extends Controller {
       dropdownOptions.style.display = 'block'
     }
 
+    // Show/hide conditional answer options (only for dropdown types)
+    const conditionalAnswerOptions = fieldItem.querySelector('.conditional-answer-options')
+    if (conditionalAnswerOptions) {
+      if (fieldType === 'dropdown' || fieldType === 'choices_dropdown') {
+        conditionalAnswerOptions.style.display = 'block'
+      } else {
+        conditionalAnswerOptions.style.display = 'none'
+        // Clear conditional answer config when switching away from dropdown
+        const conditionalAnswerToggle = fieldItem.querySelector('.conditional-answer-toggle')
+        if (conditionalAnswerToggle) conditionalAnswerToggle.checked = false
+        const conditionalAnswerConfig = fieldItem.querySelector('.conditional-answer-config')
+        if (conditionalAnswerConfig) conditionalAnswerConfig.style.display = 'none'
+      }
+    }
+
     // Refresh conditional dropdowns in other fields (they may now see this as a dropdown option)
     this.refreshConditionalDropdowns()
   }
@@ -922,6 +937,10 @@ export default class extends Controller {
       if (conditionalToggle && conditionalToggle.checked) {
         this.updateConditionalFieldDropdown(field)
       }
+      const answerToggle = field.querySelector('.conditional-answer-toggle')
+      if (answerToggle && answerToggle.checked) {
+        this.updateConditionalAnswerFieldDropdown(field)
+      }
     })
   }
 
@@ -941,6 +960,158 @@ export default class extends Controller {
         // This field depends on the changed dropdown - refresh its value checkboxes
         this.updateConditionalValues({ target: conditionalSelect })
       }
+
+      // Also refresh conditional answer mappings that reference this field
+      const answerSelect = field.querySelector('.conditional-answer-field-select')
+      if (answerSelect && answerSelect.value === `field_${changedFieldIndex}`) {
+        this.updateConditionalAnswerMappings({ target: answerSelect })
+      }
+    })
+  }
+
+  // Toggle conditional answer options visibility
+  toggleConditionalAnswerOptions(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const config = fieldItem.querySelector('.conditional-answer-config')
+    const isChecked = event.target.checked
+
+    if (config) {
+      config.style.display = isChecked ? 'block' : 'none'
+
+      if (isChecked) {
+        this.updateConditionalAnswerFieldDropdown(fieldItem)
+      } else {
+        const answerSelect = fieldItem.querySelector('.conditional-answer-field-select')
+        if (answerSelect) answerSelect.value = ''
+        const mappingsContainer = fieldItem.querySelector('.conditional-answer-mappings-container')
+        if (mappingsContainer) {
+          mappingsContainer.innerHTML = '<span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a trigger dropdown first</span>'
+        }
+      }
+    }
+  }
+
+  // Update the conditional answer field dropdown with available dropdown fields
+  updateConditionalAnswerFieldDropdown(fieldItem) {
+    const answerSelect = fieldItem.querySelector('.conditional-answer-field-select')
+    if (!answerSelect) return
+
+    const currentValue = answerSelect.value
+    const allFields = this.fieldsContainerTarget.querySelectorAll('.field-item')
+    const currentFieldIndex = Array.from(allFields).indexOf(fieldItem)
+
+    answerSelect.innerHTML = '<option value="">Select dropdown...</option>'
+
+    allFields.forEach((field, index) => {
+      if (index === currentFieldIndex) return
+
+      const typeSelect = field.querySelector('select[name="fields[][field_type]"]')
+      const labelInput = field.querySelector('input[name="fields[][label]"]')
+      const dropdownValuesInput = field.querySelector('input[name="fields[][dropdown_values]"]')
+
+      if (typeSelect && (typeSelect.value === 'dropdown' || typeSelect.value === 'choices_dropdown') && labelInput) {
+        const option = document.createElement('option')
+        option.value = `field_${index}`
+        option.textContent = labelInput.value || `Field ${index + 1}`
+        option.dataset.fieldIndex = index
+
+        if (dropdownValuesInput && dropdownValuesInput.value) {
+          option.dataset.values = JSON.stringify(
+            dropdownValuesInput.value.split(',').map(v => v.trim()).filter(v => v)
+          )
+        }
+
+        answerSelect.appendChild(option)
+      }
+    })
+
+    if (currentValue) {
+      const matchingOption = answerSelect.querySelector(`option[value="${currentValue}"]`)
+      if (matchingOption) answerSelect.value = currentValue
+    }
+  }
+
+  // Update conditional answer mapping rows when a trigger dropdown is selected
+  updateConditionalAnswerMappings(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const mappingsContainer = fieldItem.querySelector('.conditional-answer-mappings-container')
+    const selectedOption = event.target.selectedOptions[0]
+
+    if (!mappingsContainer) return
+    mappingsContainer.innerHTML = ''
+
+    if (!selectedOption || !selectedOption.value) {
+      mappingsContainer.innerHTML = '<span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a trigger dropdown first</span>'
+      return
+    }
+
+    // Get trigger dropdown values
+    let triggerValues = []
+    if (selectedOption.dataset.fieldIndex !== undefined) {
+      const allFields = this.fieldsContainerTarget.querySelectorAll('.field-item')
+      const targetField = allFields[parseInt(selectedOption.dataset.fieldIndex)]
+      if (targetField) {
+        const dropdownValuesInput = targetField.querySelector('input[name="fields[][dropdown_values]"]')
+        if (dropdownValuesInput && dropdownValuesInput.value) {
+          triggerValues = dropdownValuesInput.value.split(',').map(v => v.trim()).filter(v => v)
+        }
+      }
+    }
+    if (triggerValues.length === 0 && selectedOption.dataset.values) {
+      try { triggerValues = JSON.parse(selectedOption.dataset.values) } catch (e) { /* ignore */ }
+    }
+
+    if (triggerValues.length === 0) {
+      mappingsContainer.innerHTML = '<span style="font-size: 0.8em; color: #6c757d; font-style: italic;">No values defined for this dropdown</span>'
+      return
+    }
+
+    // Get this field's own dropdown values (for the answer select)
+    let ownValues = []
+    const ownDropdownValuesInput = fieldItem.querySelector('input[name="fields[][dropdown_values]"]')
+    if (ownDropdownValuesInput && ownDropdownValuesInput.value) {
+      ownValues = ownDropdownValuesInput.value.split(',').map(v => v.trim()).filter(v => v)
+    }
+
+    if (ownValues.length === 0) {
+      mappingsContainer.innerHTML = '<span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Add dropdown values to this field first</span>'
+      return
+    }
+
+    // Create mapping rows: trigger value → answer select
+    triggerValues.forEach(triggerValue => {
+      const row = document.createElement('div')
+      row.style.cssText = 'display: flex; align-items: center; gap: 8px; font-size: 0.8em;'
+
+      const label = document.createElement('span')
+      label.style.cssText = 'min-width: 120px; background: #fff; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd;'
+      label.textContent = triggerValue
+
+      const arrow = document.createElement('span')
+      arrow.style.color = '#495057'
+      arrow.innerHTML = '&rarr;'
+
+      const select = document.createElement('select')
+      select.name = `fields[][conditional_answer_mappings][${triggerValue}]`
+      select.className = 'form-control form-control-sm'
+      select.style.cssText = 'width: auto; min-width: 120px;'
+
+      const emptyOption = document.createElement('option')
+      emptyOption.value = ''
+      emptyOption.textContent = 'No auto-answer'
+      select.appendChild(emptyOption)
+
+      ownValues.forEach(answerValue => {
+        const opt = document.createElement('option')
+        opt.value = answerValue
+        opt.textContent = answerValue
+        select.appendChild(opt)
+      })
+
+      row.appendChild(label)
+      row.appendChild(arrow)
+      row.appendChild(select)
+      mappingsContainer.appendChild(row)
     })
   }
 

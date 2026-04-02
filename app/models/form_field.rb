@@ -2,6 +2,7 @@ class FormField < ApplicationRecord
   # Serialize options as JSON (Rails 7.1+ syntax)
   attribute :options, :json
   attribute :conditional_values, :json
+  attribute :conditional_answer_mappings, :json
 
   belongs_to :form_template
 
@@ -276,6 +277,33 @@ class FormField < ApplicationRecord
     return nil unless field
     values = conditional_values.join(', ')
     "Shows when \"#{field.label}\" is: #{values}"
+  end
+
+  # Conditional answer logic - auto-select a value based on another dropdown's selection
+  def conditional_answer?
+    conditional_answer_field_id.present? && conditional_answer_mappings.present? && conditional_answer_mappings.any?
+  end
+
+  def conditional_answer_field
+    return nil unless conditional_answer_field_id.present?
+    form_template.form_fields.find_by(id: conditional_answer_field_id)
+  end
+
+  def conditional_answer_field_label
+    conditional_answer_field&.label
+  end
+
+  def answer_for_value(value)
+    return nil unless conditional_answer?
+    conditional_answer_mappings[value.to_s]
+  end
+
+  def conditional_answer_label
+    return nil unless conditional_answer?
+    field = conditional_answer_field
+    return nil unless field
+    mappings = conditional_answer_mappings.map { |k, v| "#{k} → #{v}" }.join(', ')
+    "Auto-answers based on \"#{field.label}\": #{mappings}"
   end
 
   private

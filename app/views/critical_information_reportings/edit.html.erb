@@ -115,18 +115,11 @@
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :incident_type, "Incident Type" %>
             <%= form.select :incident_type,
-                  options_for_select([], @critical_information_reporting.incident_type),
+                  options_for_select(['Approved Event Permit', 'CEO Interest', 'Elevator Outage (Entrapment)', 'Elevator Outage (No Entrapment)', 'Generator of Alarm Testing', 'HVAC', 'Natural Disaster', 'Planned Outage', 'Unplanned Outage', 'Safety Incident', 'Tree Removal'], @critical_information_reporting.incident_type),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
-  <%= form.label :where_location, "Where: Location" %>
-            <%= form.select :where_location,
-                  options_for_select([], @critical_information_reporting.where_location),
-                  { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
-          </div>
-<div class="form-group flex-fill<%= '' %>">
+<div class="form-group flex-fill<%= '' %>" data-answer-depends-on="incident_type" data-answer-mappings="{&quot;Approved Event Permit&quot;:&quot;Before it happens&quot;,&quot;CEO Interest&quot;:&quot;Earliest convenience&quot;,&quot;Elevator Outage (Entrapment)&quot;:&quot;Immediate&quot;,&quot;Elevator Outage (No Entrapment)&quot;:&quot;Immediate&quot;,&quot;Generator of Alarm Testing&quot;:&quot;Before it happens&quot;,&quot;HVAC&quot;:&quot;Earliest convenience&quot;,&quot;Natural Disaster&quot;:&quot;Immediate&quot;,&quot;Planned Outage&quot;:&quot;Earliest convenience&quot;,&quot;Unplanned Outage&quot;:&quot;Immediate&quot;,&quot;Safety Incident&quot;:&quot;Earliest convenience&quot;,&quot;Tree Removal&quot;:&quot;Before it happens&quot;}">
   <%= form.label :urgency_of_reporting, "Urgency of Reporting" %>
             <%= form.select :urgency_of_reporting,
                   options_for_select(['Immediate', 'Earliest convenience', 'Before it happens'], @critical_information_reporting.urgency_of_reporting),
@@ -134,11 +127,18 @@
                   { class: "form-control", required: true } %>
           </div>
 <div class="form-group flex-fill<%= '' %>">
-  <%= form.label :staff_involved, "Staff Involved" %>
-            <%= form.select :staff_involved,
-                  options_for_select([], @critical_information_reporting.staff_involved),
+  <%= form.label :where_location, "Where: Location" %>
+            <%= form.select :where_location,
+                  options_for_select(['1', '2', '3'], @critical_information_reporting.where_location),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
+          </div>
+          <div class="form-group flex-fill<%= '' %>" data-controller="dependent-select" data-dependent-select-url-value="/lookups/employees" data-dependent-select-param-value="agency" data-dependent-select-column-value="full_name" data-dependent-select-source-selector-value="#agency-select">
+            <%= form.label :staff_involved, "Staff Involved" %>
+            <%= form.select :staff_involved,
+                  options_for_select(@critical_information_reporting.agency.present? ? Employee.where(Agency: @critical_information_reporting.agency).order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" } : [], @critical_information_reporting.staff_involved),
+                  { include_blank: "Select agency first..." },
+                  { class: "form-control", required: true, data: { dependent_select_target: "select" } } %>
           </div>
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :incident_details, "Incident Details" %>
@@ -186,18 +186,18 @@
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :agency, "Agency" %>
             <%= form.select :agency,
-                  options_for_select([]),
+                  options_for_select(Agency.order(:long_name).pluck(:long_name).uniq),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
           </div>
           <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Employee&quot;]" style="<%= ["Employee"].include?(@critical_information_reporting.impacted_customers) ? '' : 'display: none;' %>">
-<div class="form-group flex-fill<%= '' %>" data-controller="choices">
-  <%= form.label :employee, "Employee" %>
+          <div class="form-group flex-fill<%= '' %>" data-controller="dependent-select choices" data-dependent-select-url-value="/lookups/employees" data-dependent-select-param-value="agency" data-dependent-select-column-value="full_name" data-dependent-select-source-selector-value="#agency-select">
+            <%= form.label :employee, "Employee" %>
             <%= form.select :employee,
-                  options_for_select(Agency.order(:long_name).pluck(:long_name).uniq),
+                  options_for_select([]),
                   { include_blank: false },
-                  { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                  { class: "form-control", multiple: true, data: { dependent_select_target: "select", choices_target: "select", placeholder: "Select agency first..." } } %>
           </div>
           </div>
         </div>

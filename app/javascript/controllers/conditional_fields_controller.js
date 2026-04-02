@@ -6,6 +6,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   connect() {
     this.setupConditionalFields()
+    this.setupConditionalAnswers()
   }
 
   setupConditionalFields() {
@@ -32,6 +33,63 @@ export default class extends Controller {
       // Initial check
       handler()
     })
+  }
+
+  setupConditionalAnswers() {
+    // Find all fields with conditional answer mappings
+    const answerFields = this.element.querySelectorAll('[data-answer-depends-on]')
+
+    answerFields.forEach(answerEl => {
+      const dependsOn = answerEl.dataset.answerDependsOn
+      if (!dependsOn) return
+
+      // Find the trigger select
+      const triggerSelect = this.element.querySelector(`select[name$="[${dependsOn}]"]`) ||
+                            this.element.querySelector(`select[name$="[${dependsOn}][]"]`)
+      if (!triggerSelect) return
+
+      // Find the target select inside this element
+      const targetSelect = answerEl.querySelector('select')
+      if (!targetSelect) return
+
+      const handler = () => this.updateConditionalAnswer(answerEl, triggerSelect, targetSelect)
+
+      triggerSelect.addEventListener('change', handler)
+      triggerSelect.addEventListener('addItem', handler)
+      triggerSelect.addEventListener('removeItem', handler)
+    })
+  }
+
+  updateConditionalAnswer(answerEl, triggerSelect, targetSelect) {
+    let selectedValue
+    if (triggerSelect.multiple) {
+      // For multi-select, use the first selected value for mapping
+      const selected = Array.from(triggerSelect.selectedOptions).map(o => o.value)
+      selectedValue = selected[0] || ''
+    } else {
+      selectedValue = triggerSelect.value || ''
+    }
+
+    if (!selectedValue) return
+
+    let mappings = {}
+    try {
+      const rawMappings = answerEl.dataset.answerMappings
+      if (rawMappings) {
+        mappings = JSON.parse(rawMappings.replace(/&quot;/g, '"'))
+      }
+    } catch (e) {
+      console.error('Error parsing conditional answer mappings:', e)
+      return
+    }
+
+    const mappedAnswer = mappings[selectedValue]
+    if (mappedAnswer) {
+      targetSelect.value = mappedAnswer
+
+      // Trigger change event so other listeners (Choices.js, other conditionals) pick it up
+      targetSelect.dispatchEvent(new Event('change', { bubbles: true }))
+    }
   }
 
   updateConditionalField(conditionalEl, triggerSelect) {

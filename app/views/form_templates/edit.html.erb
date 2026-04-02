@@ -669,6 +669,65 @@
                         </div>
                       </div>
                     </div>
+
+                    <!-- Conditional Answer Options (dropdown fields only) -->
+                    <%
+                      conditional_answer_field_index = field.conditional_answer_field_id ? ordered_fields.index { |f| f.id == field.conditional_answer_field_id } : nil
+                    %>
+                    <div class="field-options conditional-answer-options" style="margin-top: 10px; padding: 8px; background: #d4edda; border-radius: 4px; border-left: 3px solid #28a745; <%= 'display: none;' unless field.dropdown? || field.choices_dropdown? %>">
+                      <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+                        <label style="margin: 0; font-size: 0.85em; color: #495057; padding-top: 5px;">
+                          <input type="checkbox"
+                                 class="conditional-answer-toggle"
+                                 data-action="change->form-builder#toggleConditionalAnswerOptions"
+                                 style="margin-right: 5px;"
+                                 <%= 'checked' if field.conditional_answer? %>>
+                          Answer conditionally
+                        </label>
+
+                        <div class="conditional-answer-config" style="<%= 'display: none;' unless field.conditional_answer? %> flex: 1; min-width: 300px;">
+                          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+                            <span style="font-size: 0.85em; color: #495057;">When</span>
+                            <select class="form-control form-control-sm conditional-answer-field-select"
+                                    name="fields[][conditional_answer_field_id]"
+                                    data-action="change->form-builder#updateConditionalAnswerMappings"
+                                    style="width: auto; min-width: 150px;">
+                              <option value="">Select dropdown...</option>
+                              <% dropdown_fields_with_index.each do |dropdown, dropdown_index| %>
+                                <% next if dropdown.id == field.id %>
+                                <option value="field_<%= dropdown_index %>"
+                                        data-field-index="<%= dropdown_index %>"
+                                        data-values="<%= dropdown.dropdown_values.to_json %>"
+                                        <%= 'selected' if conditional_answer_field_index == dropdown_index %>>
+                                  <%= dropdown.label %>
+                                </option>
+                              <% end %>
+                            </select>
+                            <span style="font-size: 0.85em; color: #495057;">equals, set this answer to:</span>
+                          </div>
+                          <div class="conditional-answer-mappings-container" style="display: flex; flex-direction: column; gap: 6px;">
+                            <% if field.conditional_answer? && field.conditional_answer_field %>
+                              <% field.conditional_answer_field.dropdown_values.each do |trigger_value| %>
+                                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8em;">
+                                  <span style="min-width: 120px; background: #fff; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd;"><%= trigger_value %></span>
+                                  <span style="color: #495057;">&rarr;</span>
+                                  <select name="fields[][conditional_answer_mappings][<%= trigger_value %>]"
+                                          class="form-control form-control-sm"
+                                          style="width: auto; min-width: 120px;">
+                                    <option value="">No auto-answer</option>
+                                    <% field.dropdown_values.each do |answer_value| %>
+                                      <option value="<%= answer_value %>" <%= 'selected' if field.conditional_answer_mappings&.dig(trigger_value) == answer_value %>><%= answer_value %></option>
+                                    <% end %>
+                                  </select>
+                                </div>
+                              <% end %>
+                            <% else %>
+                              <span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a trigger dropdown first</span>
+                            <% end %>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 <% end %>
               <% end %>
@@ -972,6 +1031,35 @@
           </div>
           <div class="conditional-values-container" style="display: flex; flex-wrap: wrap; gap: 8px;">
             <span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a dropdown field first</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conditional Answer Options (dropdown fields only) -->
+    <div class="field-options conditional-answer-options" style="margin-top: 10px; padding: 8px; background: #d4edda; border-radius: 4px; border-left: 3px solid #28a745; display: none;">
+      <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+        <label style="margin: 0; font-size: 0.85em; color: #495057; padding-top: 5px;">
+          <input type="checkbox"
+                 class="conditional-answer-toggle"
+                 data-action="change->form-builder#toggleConditionalAnswerOptions"
+                 style="margin-right: 5px;">
+          Answer conditionally
+        </label>
+
+        <div class="conditional-answer-config" style="display: none; flex: 1; min-width: 300px;">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+            <span style="font-size: 0.85em; color: #495057;">When</span>
+            <select class="form-control form-control-sm conditional-answer-field-select"
+                    name="fields[][conditional_answer_field_id]"
+                    data-action="change->form-builder#updateConditionalAnswerMappings"
+                    style="width: auto; min-width: 150px;">
+              <option value="">Select dropdown...</option>
+            </select>
+            <span style="font-size: 0.85em; color: #495057;">equals, set this answer to:</span>
+          </div>
+          <div class="conditional-answer-mappings-container" style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a trigger dropdown first</span>
           </div>
         </div>
       </div>
