@@ -1,4 +1,4 @@
-class Unit < ApplicationRecord
+class Unit < GsabssBase
   self.primary_key = 'unit_id'
 
   belongs_to :agency, foreign_key: "agency_id", optional: true

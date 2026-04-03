@@ -1,13 +1,12 @@
 # config/database.yml
 
-# Primary connection: SQL Server (GSABSS on gsasql16)
-default: &default
+# Shared connection settings for GSABSS SQL Server
+sqlserver: &sqlserver
   adapter: sqlserver
   host: <%= ENV.fetch("GSABSS_HOST") %>
   port: <%= ENV.fetch("GSABSS_PORT").to_i %>
   username: <%= ENV.fetch("GSABSS_USERNAME") %>
   password: <%= ENV.fetch("GSABSS_PASSWORD") %>
-  database: <%= ENV.fetch("GSABSS_DATABASE", "GSABSS") %>
   timeout: <%= ENV.fetch("GSABSS_TIMEOUT", 5).to_i %>
   encoding: utf8
   pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
@@ -22,24 +21,28 @@ default: &default
 #   encoding: unicode
 #   pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
 
+# Primary connection: Paperboy-specific database for form submissions, etc.
 development:
-  <<: *default
+  <<: *sqlserver
+  database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Dev") %>
 
 test:
-  <<: *default
+  <<: *sqlserver
+  database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Dev") %>
 
 production:
-  <<: *default
+  <<: *sqlserver
+  database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Prod") %>
+
+# Shared GSABSS tables (Employees, Groups, Employee_Groups, Group_Permissions)
+# Read-only reference data owned by the org, not Paperboy
+gsabss:
+  <<: *sqlserver
+  database: <%= ENV.fetch("GSABSS_DATABASE", "GSABSS") %>
 
 # MSSQL connection for billing stored procedures (TC60, Invoices)
 # Same DB server, separate connection pool
 billing:
-  adapter: sqlserver
-  host: <%= ENV.fetch("GSABSS_HOST") %>
-  port: <%= ENV.fetch("GSABSS_PORT").to_i %>
-  username: <%= ENV.fetch("GSABSS_USERNAME") %>
-  password: <%= ENV.fetch("GSABSS_PASSWORD") %>
+  <<: *sqlserver
   database: <%= ENV.fetch("GSABSS_DATABASE", "GSABSS") %>
   azure: false
-  timeout: <%= ENV.fetch("GSABSS_TIMEOUT", 5).to_i %>
-  encoding: utf8

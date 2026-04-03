@@ -1,5 +1,5 @@
 # app/models/employee.rb
-class Employee < ApplicationRecord
+class Employee < GsabssBase
   self.table_name = 'Employees'
   self.primary_key = 'EmployeeID'
 
