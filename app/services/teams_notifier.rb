@@ -51,7 +51,7 @@ class TeamsNotifier
               {
                 type: "Action.OpenUrl",
                 title: "View in Paperboy",
-                url: Rails.application.routes.url_helpers.critical_information_reporting_url(cir, host: ENV.fetch('APP_HOST', 'localhost:3000'))
+                url: "#{ENV.fetch('APP_HOST', 'http://localhost:3001')}/critical_information_reportings/#{cir.id}"
               }
             ]
           }
