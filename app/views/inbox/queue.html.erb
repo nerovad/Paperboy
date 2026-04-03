@@ -103,8 +103,8 @@
                     class: "btn pdf",
                     data: { turbo: false } %>
 
-                <% if submission.media.attached? %>
-                  <% submission.media.each do |attachment| %>
+                <% if submission.media_photo_pdf_etc.attached? %>
+                  <% submission.media_photo_pdf_etc.each do |attachment| %>
                     <%= link_to attachment.filename,
                         download_media_critical_information_reporting_path(submission, attachment_id: attachment.id),
                         class: "btn pdf",

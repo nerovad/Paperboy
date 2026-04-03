@@ -107,10 +107,10 @@
     </section>
 
     <!-- Media Attachments -->
-    <% if @critical_information_reporting.media.attached? %>
+    <% if @critical_information_reporting.media_photo_pdf_etc.attached? %>
       <section class="media-section">
-        <h3>Attached Media (<%= @critical_information_reporting.media.count %>)</h3>
-        <% @critical_information_reporting.media.each do |attachment| %>
+        <h3>Attached Media (<%= @critical_information_reporting.media_photo_pdf_etc.count %>)</h3>
+        <% @critical_information_reporting.media_photo_pdf_etc.each do |attachment| %>
           <div class="media-attachment">
             <% if attachment.content_type.start_with?("image/") %>
               <%= image_tag rails_blob_path(attachment), class: "attached-image", alt: attachment.filename %>

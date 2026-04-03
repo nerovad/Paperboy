@@ -83,6 +83,19 @@ STATUS_LABELS = {
   self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
 end
 
+  def current_assignee_id
+    assigned_manager_id
+  end
+
+  def assignment_field_name
+    'assigned_manager_id'
+  end
+
+  def assigned_manager_name
+    employee = Employee.find_by(employee_id: assigned_manager_id)
+    employee ? "#{employee.first_name} #{employee.last_name}" : nil
+  end
+
   def acceptable_media_photo_pdf_etc_files
     return unless media_photo_pdf_etc.attached?
 
@@ -107,7 +120,8 @@ end
     # Auto-assign the incident manager based on location
     if location.present? && assigned_manager_id.blank?
       manager_id = CriticalInformationLocationRouter.find_manager_for_location(location)
-      self.assigned_manager_id = manager_id if manager_id.present?
+      # Skip self-assignment — submitter shouldn't also be the assigned manager
+      self.assigned_manager_id = manager_id if manager_id.present? && manager_id.to_s != employee_id.to_s
     end
   end
 end
