@@ -27,7 +27,7 @@ class TeamsNotifier
                 type: "TextBlock",
                 size: "Large",
                 weight: "Bolder",
-                text: "🚨 Immediate CIR Submitted",
+                text: "🚨 CIR Submitted",
                 style: "heading"
               },
               {

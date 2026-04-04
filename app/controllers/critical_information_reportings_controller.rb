@@ -214,7 +214,7 @@ class CriticalInformationReportingsController < ApplicationController
 
     if @critical_information_reporting.save
       # ROUTING_BLOCK_START
-      NotifyTeamsJob.perform_later(@critical_information_reporting.id) if @critical_information_reporting.urgency == "Immediate"
+      NotifyTeamsJob.perform_later(@critical_information_reporting.id)
       redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
       # ROUTING_BLOCK_END
     else
