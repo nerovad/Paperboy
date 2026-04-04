@@ -117,11 +117,11 @@ end
   private
 
   def assign_manager_based_on_location
-    # Auto-assign the incident manager based on location
+    # Auto-assign the incident manager based on location (including self-assignment
+    # so the form appears in the manager's inbox for action)
     if location.present? && assigned_manager_id.blank?
       manager_id = CriticalInformationLocationRouter.find_manager_for_location(location)
-      # Skip self-assignment — submitter shouldn't also be the assigned manager
-      self.assigned_manager_id = manager_id if manager_id.present? && manager_id.to_s != employee_id.to_s
+      self.assigned_manager_id = manager_id if manager_id.present?
     end
   end
 end

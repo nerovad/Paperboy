@@ -24,6 +24,9 @@ class SubmissionsController < ApplicationController
 
     @status_items = []
 
+    # Compute subordinate IDs once for manager scoping
+    @subordinate_ids = Employee.subordinate_ids(employee_id) if @is_manager
+
     # Load legacy hardcoded forms (with SQL-level filters applied)
     load_legacy_forms(employee_id)
 
@@ -185,9 +188,10 @@ class SubmissionsController < ApplicationController
       includes_list = []
       includes_list << :parking_lot_vehicles if model_class.reflect_on_association(:parking_lot_vehicles)
 
-      # Start with base scope
+      # Start with base scope — managers see their own + their reporting chain
       scope = if @is_manager
-                model_class.all
+                report_ids = @subordinate_ids || []
+                model_class.where(employee_id: [employee_id] + report_ids)
               else
                 model_class.for_employee(employee_id)
               end
@@ -225,9 +229,10 @@ class SubmissionsController < ApplicationController
       # Check if model includes TrackableStatus (has status_category method)
       next unless model_class.new.respond_to?(:status_category)
 
-      # Start with base scope
+      # Start with base scope — managers see their own + their reporting chain
       scope = if @is_manager
-                model_class.all
+                report_ids = @subordinate_ids || []
+                model_class.where(employee_id: [employee_id] + report_ids)
               else
                 if model_class.respond_to?(:for_employee)
                   model_class.for_employee(employee_id)

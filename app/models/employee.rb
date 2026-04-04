@@ -35,4 +35,23 @@ class Employee < GsabssBase
   def in_any_group?(*group_names)
     groups.where(Group_Name: group_names).exists?
   end
+
+  # Returns all employee IDs in the reporting chain beneath the given manager
+  # (direct reports, their reports, etc.) Does NOT include the manager themselves.
+  def self.subordinate_ids(manager_id)
+    collected = []
+    queue = [manager_id.to_s]
+
+    while queue.any?
+      direct_report_ids = where(Supervisor_ID: queue).pluck(:EmployeeID).map(&:to_s)
+      direct_report_ids -= collected # avoid cycles
+      direct_report_ids -= [manager_id.to_s]
+      break if direct_report_ids.empty?
+
+      collected.concat(direct_report_ids)
+      queue = direct_report_ids
+    end
+
+    collected
+  end
 end
