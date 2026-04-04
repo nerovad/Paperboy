@@ -217,11 +217,17 @@ class SubmissionsController < ApplicationController
     end
   end
 
+  # Model names already loaded by LEGACY_FORMS to avoid double-counting
+  LEGACY_MODEL_NAMES = LEGACY_FORMS.map { |f| f[:model] }.to_set.freeze
+
   def load_form_template_submissions(employee_id)
     # Find all form templates that have statuses configured
     FormTemplate.joins(:statuses).distinct.each do |template|
       # Skip templates that don't match the type filter
       next if params[:filter_type].present? && params[:filter_type] != template.name
+
+      # Skip models already handled by LEGACY_FORMS
+      next if LEGACY_MODEL_NAMES.include?(template.class_name)
 
       model_class = template.class_name.constantize
       next unless model_class.table_exists?
