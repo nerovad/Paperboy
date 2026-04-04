@@ -84,7 +84,7 @@ class CriticalInformationReportingsController < ApplicationController
 
   def download_media
     @critical_information_reporting = CriticalInformationReporting.find(params[:id])
-    attachment = @critical_information_reporting.media.find_by(id: params[:attachment_id])
+    attachment = @critical_information_reporting.media_photo_pdf_etc.find_by(id: params[:attachment_id])
 
     if attachment
       redirect_to rails_blob_path(attachment, disposition: "attachment")
@@ -136,7 +136,7 @@ class CriticalInformationReportingsController < ApplicationController
     @critical_information_reporting = CriticalInformationReporting.find(params[:id])
 
     if @critical_information_reporting.update(critical_information_reporting_params)
-      redirect_to inbox_queue_path, notice: "Critical Information Report updated successfully."
+      redirect_to form_success_path, notice: "Form submitted and routed for approval.", allow_other_host: false, status: :see_other
     else
       # Reload options on failure
       @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
@@ -280,14 +280,21 @@ end
       :impact_started, :location,
       :urgency,
       :impact, :next_steps,
+      :other_building,
       staff_involved: [],
       impacted_customers: [],
+      building: [],
+      impacted_agency: [],
+      impacted_employee: [],
       media_photo_pdf_etc: []
     )
 
     # Normalize multi-select arrays into comma-separated strings
     raw[:staff_involved] = Array(raw[:staff_involved]).reject(&:blank?).join(",")
     raw[:impacted_customers] = Array(raw[:impacted_customers]).reject(&:blank?).join(",")
+    raw[:building] = Array(raw[:building]).reject(&:blank?).join(",")
+    raw[:impacted_agency] = Array(raw[:impacted_agency]).reject(&:blank?).join(",")
+    raw[:impacted_employee] = Array(raw[:impacted_employee]).reject(&:blank?).join(",")
 
     raw
   end

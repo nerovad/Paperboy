@@ -79,11 +79,11 @@ class CriticalInformationPdfGenerator
       end
 
       # Include media attachments if present
-      if cir.media.attached?
+      if cir.media_photo_pdf_etc.attached?
         pdf.move_down 15
-        pdf.text "Attached Media (#{cir.media.count})", size: 14, style: :bold
+        pdf.text "Attached Media (#{cir.media_photo_pdf_etc.count})", size: 14, style: :bold
 
-        cir.media.each do |attachment|
+        cir.media_photo_pdf_etc.each do |attachment|
           pdf.move_down 5
 
           if attachment.content_type.start_with?('image/')
