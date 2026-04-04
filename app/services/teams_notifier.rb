@@ -51,7 +51,7 @@ class TeamsNotifier
               {
                 type: "Action.OpenUrl",
                 title: "View in Paperboy",
-                url: "#{ENV.fetch('APP_HOST', 'http://localhost:3001')}/critical_information_reportings/#{cir.id}"
+                url: "#{ENV.fetch('APP_HOST', 'https://gsa-forms')}/submissions/critical_information_reportings/#{cir.id}"
               }
             ]
           }
