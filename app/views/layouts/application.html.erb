@@ -16,16 +16,6 @@
     <%= javascript_importmap_tags %>
   </head>
   <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %>">
-    <!-- Emulation Banner -->
-    <% if session[:impersonating] && session[:user] %>
-      <div style="background: #ff9800; color: white; padding: 10px; text-align: center;">
-        ⚠️ You are emulating <%= session[:user]["first_name"] %> <%= session[:user]["last_name"] %>
-        <%= button_to "Stop Emulating", admin_impersonation_path(1), 
-                      method: :delete, 
-                      class: "btn pdf",
-                      style: "margin-left: 10px;" %>
-      </div>
-    <% end %>
     
     <!-- Hamburger button (mobile only) -->
     <% if session[:user_id] %>
@@ -74,6 +64,11 @@
             <% end %>
           <% else %>
             <div class="profile-dropdown" data-controller="profile-dropdown">
+              <% if session[:impersonating] %>
+                <%= button_to "Stop Emulating", admin_impersonation_path(1),
+                              method: :delete,
+                              style: "background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer;" %>
+              <% end %>
               <button id="profile-toggle"
                       class="profile-icon"
                       data-action="click->profile-dropdown#toggle"
