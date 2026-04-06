@@ -37,7 +37,7 @@ class HelpTicketsController < ApplicationController
         employee_id: @help_ticket.employee_id
       ).deliver_later
 
-      redirect_to help_tickets_path, notice: "Ticket submitted successfully.", status: :see_other
+      redirect_to ticket_success_path, status: :see_other
     else
       render :new, status: :unprocessable_entity
     end

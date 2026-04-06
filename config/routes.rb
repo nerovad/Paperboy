@@ -73,6 +73,7 @@ Rails.application.routes.draw do
   root "forms#home"
   get "forms/home"
   get "/form_success", to: "shared#form_success", as: :form_success
+  get "/ticket_success", to: "shared#ticket_success", as: :ticket_success
 
   # ============================================================================
   # Authentication & Sessions

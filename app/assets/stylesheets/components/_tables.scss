@@ -139,6 +139,24 @@
   }
 }
 
+/* Clickable rows - entire row navigates to a URL */
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba($primary-color, 0.06);
+  }
+
+  &:active {
+    background-color: rgba($primary-color, 0.12);
+  }
+
+  td {
+    color: $text-color;
+  }
+}
+
 /* Selectable rows */
 .selectable-row {
   cursor: pointer;

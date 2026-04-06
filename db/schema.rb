@@ -585,6 +585,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_04_201542) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "user_settings", force: :cascade do |t|
+    t.string "employee_id", null: false
+    t.boolean "inbox_email_notifications", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id"], name: "index_user_settings_on_employee_id", unique: true
+  end
+
   create_table "work_schedule_or_location_update_forms", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
