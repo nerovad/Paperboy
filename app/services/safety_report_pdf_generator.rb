@@ -1,6 +1,6 @@
 require "prawn"
 
-class Rm75FormPdfGenerator
+class SafetyReportPdfGenerator
   def self.generate(submission)
     logo_path = Rails.root.join("app", "assets", "images", "Ventura_Logo.png")
 
@@ -9,7 +9,7 @@ class Rm75FormPdfGenerator
       pdf.image(logo_path.to_s, width: 80) if File.exist?(logo_path)
 
       pdf.move_down 10
-      pdf.text "Rm75 Form", size: 22, style: :bold, align: :center
+      pdf.text "Safety Reporting", size: 22, style: :bold, align: :center
       pdf.move_down 20
 
       # Employee Info

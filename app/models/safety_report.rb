@@ -1,35 +1,35 @@
-class Rm75Form < ApplicationRecord
+class SafetyReport < ApplicationRecord
   include TrackableStatus
 
-enum :status, {
-  in_progress: 0,
+  enum :status, {
+    in_progress: 0,
     step_1_pending: 1,
     approved: 2,
     denied: 3,
     cancelled: 4
-}, default: :in_progress
+  }, default: :in_progress
 
-# Normalized status categories for cross-form reporting
-STATUS_CATEGORIES = {
-  in_progress: :in_review,
+  # Normalized status categories for cross-form reporting
+  STATUS_CATEGORIES = {
+    in_progress: :in_review,
     step_1_pending: :in_review,
     approved: :approved,
     denied: :denied,
     cancelled: :cancelled
-}.freeze
+  }.freeze
 
-# Human-readable status labels
-STATUS_LABELS = {
-  in_progress: "In Progress",
+  # Human-readable status labels
+  STATUS_LABELS = {
+    in_progress: "In Progress",
     step_1_pending: "Sent to Supervisor",
     approved: "Approved",
     denied: "Denied",
     cancelled: "Cancelled"
-}.freeze
+  }.freeze
 
   GARY_HOWARD_ID = '135272'.freeze
 
-  # RM75 → OSHA 301 field mapping
+  # Safety Report → OSHA 301 field mapping
   OSHA301_FIELD_MAP = {
     employee_id:                          :employee_id,
     name:                                 :name,
@@ -59,21 +59,21 @@ STATUS_LABELS = {
 
   # For inbox queue display
   def status_label
-  self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
-end
+    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
+  end
 
   # Get the form template for this model (for button configuration)
   def form_template
     @form_template ||= FormTemplate.find_by(class_name: self.class.name)
   end
 
-  # Create a pre-filled OSHA 301 form from this RM75's data
+  # Create a pre-filled OSHA 301 form from this Safety Report's data
   def create_osha301!
-    attrs = OSHA301_FIELD_MAP.each_with_object({}) do |(rm75_field, osha_field), hash|
-      hash[osha_field] = send(rm75_field)
+    attrs = OSHA301_FIELD_MAP.each_with_object({}) do |(source_field, osha_field), hash|
+      hash[osha_field] = send(source_field)
     end
     attrs[:approver_id] = GARY_HOWARD_ID
-    attrs[:rm75_form_id] = id
+    attrs[:safety_report_id] = id
 
     create_osha301_form!(attrs)
   end

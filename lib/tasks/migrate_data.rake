@@ -118,7 +118,7 @@ namespace :db do
       parking_lot_submissions parking_lot_vehicles probation_transfer_requests
       critical_information_reportings creative_job_requests
       carpool_forms gym_locker_forms social_media_forms brown_mail_forms
-      osha301_forms rm75_forms leave_of_absence_forms
+      osha301_forms safety_reports leave_of_absence_forms
       work_schedule_or_location_update_forms workplace_violence_forms
       notice_of_change_forms testyyy_forms authorization_fos
     ]

@@ -18,7 +18,7 @@ STATUS_LABELS = {
     approved: "Approved"
 }.freeze
 
-  belongs_to :rm75_form, optional: true
+  belongs_to :safety_report, optional: true
 
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }

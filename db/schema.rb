@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_04_201542) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_08_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -298,7 +298,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_04_201542) do
     t.text "deny_reason"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "rm75_form_id"
+    t.bigint "safety_report_id"
     t.string "street"
     t.string "city"
     t.string "state"
@@ -441,7 +441,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_04_201542) do
     t.string "approved_destination"
   end
 
-  create_table "rm75_forms", force: :cascade do |t|
+  create_table "safety_reports", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
     t.string "phone"

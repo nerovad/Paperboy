@@ -21,7 +21,7 @@ class AclController < ApplicationController
 
   LEGACY_FORMS = [
     { key: 'creative_job_request', label: 'Creative Job Request' },
-    { key: 'rm75',                 label: 'RM-75' },
+    { key: 'safety_reporting',     label: 'Safety Reporting' },
     { key: 'leave_of_absence',     label: 'Leave of Absence' },
     { key: 'osha301',              label: 'OSHA 301' },
     { key: 'workplace_violence',   label: 'Workplace Violence' },

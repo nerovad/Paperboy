@@ -1,9 +1,8 @@
-class Rm75FormsController < ApplicationController
-  # Generated controller for Rm75Form form
-  before_action :set_rm75_form, only: [:show, :edit, :update, :pdf, :approve, :deny, :update_status]
+class SafetyReportsController < ApplicationController
+  before_action :set_safety_report, only: [:show, :edit, :update, :pdf, :approve, :deny, :update_status]
 
   def new
-    @rm75_form = Rm75Form.new
+    @safety_report = SafetyReport.new
 
     employee_id = session.dig(:user, "employee_id").to_s
     @employee   = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
@@ -21,7 +20,7 @@ class Rm75FormsController < ApplicationController
     division    = department ? Division.find_by(division_id: department.division_id) : nil
     agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
 
-    # --- Prefill values (everything prefilled exactly like you do now) ---
+    # --- Prefill values ---
     @prefill_data = {
       employee_id: @employee.employee_id,
       name:        [@employee.first_name, @employee.last_name].compact.join(" "),
@@ -33,7 +32,6 @@ class Rm75FormsController < ApplicationController
       unit:        unit&.unit_id
     }
 
-    # --- Select options (IDs/order match gsabss_selects_controller.js expectations) ---
     @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
 
     @division_options = if agency
@@ -48,7 +46,6 @@ class Rm75FormsController < ApplicationController
       []
     end
 
-    # Unit label = "unit_id - long_name", value = unit_id (your current pattern)
     @unit_options = if department
       Unit.where(department_id: department.department_id)
           .order(:unit_id)
@@ -62,26 +59,23 @@ class Rm75FormsController < ApplicationController
     employee      = session[:user]
     employee_id   = employee&.dig("employee_id").to_s
 
-    @rm75_form = Rm75Form.new(rm75_form_params)
-    @rm75_form.employee_id = employee_id if @rm75_form.respond_to?(:employee_id=)
+    @safety_report = SafetyReport.new(safety_report_params)
+    @safety_report.employee_id = employee_id if @safety_report.respond_to?(:employee_id=)
 
-    if @rm75_form.save
+    if @safety_report.save
       # Route to submitter's supervisor for approval
       employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
       supervisor_id = employee&.supervisor_id&.to_s
-      @rm75_form.update(approver_id: supervisor_id)
+      @safety_report.update(approver_id: supervisor_id)
 
-      # Multi-step approval routing (1 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-approver_id = employee&.supervisor_id&.to_s
-@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+      # Multi-step approval routing (1 step)
+      # Step 1: supervisor
+      employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+      approver_id = employee&.supervisor_id&.to_s
+      @safety_report.update(status: :step_1_pending, approver_id: approver_id)
+      # TODO: Send notification to supervisor
+      redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
     else
-      # Rebuild options on failure (same as in new)
-      # (We intentionally repeat the logic to keep this template self-contained.)
       emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
       unit        = emp ? Unit.find_by(unit_id: emp&.unit) : nil
       department  = unit ? Department.find_by(department_id: unit.department_id) : nil
@@ -115,29 +109,25 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
   end
 
   def show
-    # Display the submission details
   end
 
   def edit
-    # Edit form - rebuild options same as new
     setup_form_options
   end
 
   def update
-    if @rm75_form.update(rm75_form_params)
+    if @safety_report.update(safety_report_params)
       # Auto-create OSHA 301 when Gary marks as reportable
-      if @rm75_form.osha_reportable == 'Yes' && @rm75_form.osha301_form.blank?
-        @rm75_form.create_osha301!
+      if @safety_report.osha_reportable == 'Yes' && @safety_report.osha301_form.blank?
+        @safety_report.create_osha301!
       end
 
-      # Multi-step approval routing (1 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-approver_id = employee&.supervisor_id&.to_s
-@rm75_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+      # Multi-step approval routing (1 step)
+      employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+      approver_id = employee&.supervisor_id&.to_s
+      @safety_report.update(status: :step_1_pending, approver_id: approver_id)
+      # TODO: Send notification to supervisor
+      redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
     else
       setup_form_options
       render :edit, status: :unprocessable_entity
@@ -145,17 +135,17 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
   end
 
   def pdf
-    pdf_data = Rm75FormPdfGenerator.generate(@rm75_form)
+    pdf_data = SafetyReportPdfGenerator.generate(@safety_report)
 
     send_data pdf_data,
-              filename: "Rm75Form_#{@rm75_form.id}.pdf",
+              filename: "SafetyReport_#{@safety_report.id}.pdf",
               type: "application/pdf",
               disposition: "inline"
   end
 
   def approve
-    if @rm75_form.respond_to?(:approved!)
-      @rm75_form.approved!
+    if @safety_report.respond_to?(:approved!)
+      @safety_report.approved!
       redirect_to inbox_queue_path, notice: 'Submission approved.'
     else
       redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
@@ -164,9 +154,9 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
 
   def deny
     reason = params[:deny_reason]
-    if @rm75_form.respond_to?(:denied!)
-      @rm75_form.denied!
-      @rm75_form.update(deny_reason: reason) if @rm75_form.respond_to?(:deny_reason=) && reason.present?
+    if @safety_report.respond_to?(:denied!)
+      @safety_report.denied!
+      @safety_report.update(deny_reason: reason) if @safety_report.respond_to?(:deny_reason=) && reason.present?
       redirect_to inbox_queue_path, notice: 'Submission denied.'
     else
       redirect_to inbox_queue_path, alert: 'Unable to deny this submission.'
@@ -175,8 +165,8 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
 
   def update_status
     new_status = params[:status]
-    if new_status.present? && @rm75_form.respond_to?("#{new_status}!")
-      @rm75_form.send("#{new_status}!")
+    if new_status.present? && @safety_report.respond_to?("#{new_status}!")
+      @safety_report.send("#{new_status}!")
       redirect_to inbox_queue_path, notice: 'Status updated.'
     else
       redirect_to inbox_queue_path, alert: 'Unable to update status.'
@@ -185,8 +175,8 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
 
   private
 
-  def set_rm75_form
-    @rm75_form = Rm75Form.find(params[:id])
+  def set_safety_report
+    @safety_report = SafetyReport.find(params[:id])
   end
 
   def setup_form_options
@@ -219,11 +209,10 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
       []
     end
 
-    # Load user groups for field restrictions
     @current_user_groups = current_user_group_ids
   end
 
-  def rm75_form_params
+  def safety_report_params
     permitted = [
       :name, :phone, :email, :agency, :division, :department, :unit,
       :report_type, :bloodborne_pathogen_exposure, :supervisor_name,
@@ -238,7 +227,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
       :hospital_phone, :hospitalized_overnight
     ]
 
-    if session.dig(:user, 'employee_id').to_s == Rm75Form::GARY_HOWARD_ID
+    if session.dig(:user, 'employee_id').to_s == SafetyReport::GARY_HOWARD_ID
       permitted += [
         :investigator_name, :investigator_title, :investigator_phone,
         :nature_of_incident, :cause_of_incident, :root_cause,
@@ -253,6 +242,6 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
       ]
     end
 
-    params.require(:rm75_form).permit(permitted)
+    params.require(:safety_report).permit(permitted)
   end
 end

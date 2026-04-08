@@ -41,7 +41,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :rm75_forms do
+  resources :safety_reports do
     member do
       get :pdf
       patch :approve
