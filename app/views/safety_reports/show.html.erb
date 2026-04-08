@@ -9,10 +9,10 @@
              locals: { record: @safety_report,
                        exclude: %w[id created_at updated_at approver_id deny_reason] } %>
 
-  <% if @safety_report.osha301_form.present? %>
+  <% if @safety_report.osha_report.present? %>
     <div class="form-group" style="margin-top: 16px;">
-      <strong>Generated OSHA 301:</strong>
-      <%= link_to "View OSHA 301 Form ##{@safety_report.osha301_form.id}", osha301_form_path(@safety_report.osha301_form) %>
+      <strong>Generated OSHA Report:</strong>
+      <%= link_to "View OSHA Report ##{@safety_report.osha_report.id}", osha_report_path(@safety_report.osha_report) %>
     </div>
   <% end %>
 

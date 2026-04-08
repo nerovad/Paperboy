@@ -29,8 +29,8 @@ class SafetyReport < ApplicationRecord
 
   GARY_HOWARD_ID = '135272'.freeze
 
-  # Safety Report → OSHA 301 field mapping
-  OSHA301_FIELD_MAP = {
+  # Safety Report → OSHA Reporting field mapping
+  OSHA_REPORT_FIELD_MAP = {
     employee_id:                          :employee_id,
     name:                                 :name,
     phone:                                :phone,
@@ -49,7 +49,7 @@ class SafetyReport < ApplicationRecord
     hospital_address:                     :facility_street_address
   }.freeze
 
-  has_one :osha301_form
+  has_one :osha_report
 
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
@@ -67,14 +67,14 @@ class SafetyReport < ApplicationRecord
     @form_template ||= FormTemplate.find_by(class_name: self.class.name)
   end
 
-  # Create a pre-filled OSHA 301 form from this Safety Report's data
-  def create_osha301!
-    attrs = OSHA301_FIELD_MAP.each_with_object({}) do |(source_field, osha_field), hash|
+  # Create a pre-filled OSHA Report from this Safety Report's data
+  def create_osha_report!
+    attrs = OSHA_REPORT_FIELD_MAP.each_with_object({}) do |(source_field, osha_field), hash|
       hash[osha_field] = send(source_field)
     end
     attrs[:approver_id] = GARY_HOWARD_ID
     attrs[:safety_report_id] = id
 
-    create_osha301_form!(attrs)
+    create_osha_report(attrs).tap(&:save!)
   end
 end

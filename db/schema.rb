@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_08_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_08_000002) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -284,7 +284,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_08_000001) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "osha301_forms", force: :cascade do |t|
+  create_table "osha_reports", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
     t.string "phone"

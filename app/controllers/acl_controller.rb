@@ -23,7 +23,7 @@ class AclController < ApplicationController
     { key: 'creative_job_request', label: 'Creative Job Request' },
     { key: 'safety_reporting',     label: 'Safety Reporting' },
     { key: 'leave_of_absence',     label: 'Leave of Absence' },
-    { key: 'osha301',              label: 'OSHA 301' },
+    { key: 'osha_reporting',       label: 'OSHA Reporting' },
     { key: 'workplace_violence',   label: 'Workplace Violence' },
     { key: 'notice_of_change',     label: 'Notice of Change' },
   ].freeze

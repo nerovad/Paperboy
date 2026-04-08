@@ -1,6 +1,6 @@
 require "prawn"
 
-class Osha301FormPdfGenerator
+class OshaReportPdfGenerator
   def self.generate(submission)
     logo_path = Rails.root.join("app", "assets", "images", "Ventura_Logo.png")
 
@@ -9,7 +9,7 @@ class Osha301FormPdfGenerator
       pdf.image(logo_path.to_s, width: 80) if File.exist?(logo_path)
 
       pdf.move_down 10
-      pdf.text "Osha301 Form", size: 22, style: :bold, align: :center
+      pdf.text "OSHA Reporting", size: 22, style: :bold, align: :center
       pdf.move_down 20
 
       # Employee Info

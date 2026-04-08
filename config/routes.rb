@@ -25,7 +25,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :osha301_forms do
+  resources :osha_reports do
     member do
       get :pdf
       patch :approve

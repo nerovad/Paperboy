@@ -117,9 +117,9 @@ class SafetyReportsController < ApplicationController
 
   def update
     if @safety_report.update(safety_report_params)
-      # Auto-create OSHA 301 when Gary marks as reportable
-      if @safety_report.osha_reportable == 'Yes' && @safety_report.osha301_form.blank?
-        @safety_report.create_osha301!
+      # Auto-create OSHA Report when Gary marks as reportable
+      if @safety_report.osha_reportable == 'Yes' && @safety_report.osha_report.blank?
+        @safety_report.create_osha_report!
       end
 
       # Multi-step approval routing (1 step)

@@ -1,24 +1,24 @@
 <div class="form-header">
-  <h1>Osha301 Form</h1>
+  <h1>OSHA Reporting</h1>
 </div>
 
 <div class="form-wrapper">
   <div class="form-inner">
 
   <%= render partial: "shared/readonly_record",
-             locals: { record: @osha301_form,
+             locals: { record: @osha_report,
                        exclude: %w[id created_at updated_at approver_id deny_reason] } %>
 
-  <% if @osha301_form.safety_report.present? %>
+  <% if @osha_report.safety_report.present? %>
     <div class="form-group" style="margin-top: 16px;">
       <strong>Source Safety Report:</strong>
-      <%= link_to "View Safety Report ##{@osha301_form.safety_report.id}", safety_report_path(@osha301_form.safety_report) %>
+      <%= link_to "View Safety Report ##{@osha_report.safety_report.id}", safety_report_path(@osha_report.safety_report) %>
     </div>
   <% end %>
 
   <div class="form-actions" style="margin-top: 16px;">
     <%= link_to "Back to Inbox", inbox_queue_path, class: "form-btn" %>
-    <%= link_to "Download PDF", pdf_osha301_form_path(@osha301_form), target: "_blank", class: "form-btn" %>
+    <%= link_to "Download PDF", pdf_osha_report_path(@osha_report), target: "_blank", class: "form-btn" %>
   </div>
   </div>
 </div>
