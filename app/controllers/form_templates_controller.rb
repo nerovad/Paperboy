@@ -525,13 +525,11 @@ class FormTemplatesController < ApplicationController
     # Update status_label method to use STATUS_LABELS
     status_label_code = <<~RUBY.chomp
       def status_label
-        self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
-      end
+          self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
+        end
     RUBY
 
-    if content =~ /def status_label\b.*?\nend/m
-      content.gsub!(/def status_label\b.*?\nend/m, status_label_code)
-    end
+    content.sub!(/def status_label\b.*?^(\s*)end\b/m, status_label_code)
 
     File.write(model_path, content)
   end
