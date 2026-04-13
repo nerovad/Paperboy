@@ -19,13 +19,24 @@ class SubmissionsController < ApplicationController
 
   def index
     employee_id = session.dig(:user, "employee_id").to_s
-    @is_manager = current_user_group_names.include?("status managers")
     @saved_searches = SavedSearch.for_employee(employee_id).order(:name)
 
     @status_items = []
 
-    # Compute subordinate IDs once for manager scoping
-    @subordinate_ids = Employee.subordinate_ids(employee_id) if @is_manager
+    # Check if user has any subordinates (direct or indirect)
+    @subordinate_ids = Employee.subordinate_ids(employee_id)
+    @has_subordinates = @subordinate_ids.any?
+
+    # Determine which employee IDs to load submissions for based on filter
+    @scoped_employee_ids = if @has_subordinates && params[:filter_employee].present?
+                             if params[:filter_employee] == "all"
+                               [employee_id] + @subordinate_ids
+                             else
+                               [params[:filter_employee]]
+                             end
+                           else
+                             [employee_id]
+                           end
 
     # Load legacy hardcoded forms (with SQL-level filters applied)
     load_legacy_forms(employee_id)
@@ -33,12 +44,9 @@ class SubmissionsController < ApplicationController
     # Load dynamic forms from FormTemplates that have statuses configured
     load_form_template_submissions(employee_id)
 
-    if @is_manager
-      # Load employees from GSABSS for filter dropdowns
-      @employees = Employee.order(:last_name, :first_name)
-
-      # Current user info for "Myself" filter option
-      @current_user_name = "#{session.dig(:user, 'first_name')} #{session.dig(:user, 'last_name')}"
+    if @has_subordinates
+      # Load only subordinate employees for the filter dropdown
+      @employees = Employee.where(EmployeeID: @subordinate_ids).order(:last_name, :first_name)
       @current_user_id = employee_id
     end
 
@@ -188,21 +196,11 @@ class SubmissionsController < ApplicationController
       includes_list = []
       includes_list << :parking_lot_vehicles if model_class.reflect_on_association(:parking_lot_vehicles)
 
-      # Start with base scope — managers see their own + their reporting chain
-      scope = if @is_manager
-                report_ids = @subordinate_ids || []
-                model_class.where(employee_id: [employee_id] + report_ids)
-              else
-                model_class.for_employee(employee_id)
-              end
+      # Scope to the determined employee IDs (own, specific subordinate, or all)
+      scope = model_class.where(employee_id: @scoped_employee_ids)
 
       # Apply SQL-level date filters
       scope = apply_scope_date_filters(scope, submission_scope_date_filters)
-
-      # Apply SQL-level employee_id filter (manager filtering by specific employee)
-      if @is_manager && params[:filter_employee_id].present?
-        scope = scope.where(employee_id: params[:filter_employee_id])
-      end
 
       # Apply eager loading
       scope = scope.includes(includes_list) if includes_list.any?
@@ -235,25 +233,11 @@ class SubmissionsController < ApplicationController
       # Check if model includes TrackableStatus (has status_category method)
       next unless model_class.new.respond_to?(:status_category)
 
-      # Start with base scope — managers see their own + their reporting chain
-      scope = if @is_manager
-                report_ids = @subordinate_ids || []
-                model_class.where(employee_id: [employee_id] + report_ids)
-              else
-                if model_class.respond_to?(:for_employee)
-                  model_class.for_employee(employee_id)
-                else
-                  model_class.where(employee_id: employee_id)
-                end
-              end
+      # Scope to the determined employee IDs (own, specific subordinate, or all)
+      scope = model_class.where(employee_id: @scoped_employee_ids)
 
       # Apply SQL-level date filters
       scope = apply_scope_date_filters(scope, submission_scope_date_filters)
-
-      # Apply SQL-level employee_id filter (manager filtering by specific employee)
-      if @is_manager && params[:filter_employee_id].present?
-        scope = scope.where(employee_id: params[:filter_employee_id])
-      end
 
       scope.each do |submission|
         # Generate path dynamically based on the model's route
@@ -343,11 +327,6 @@ class SubmissionsController < ApplicationController
       { param: :filter_category, extractor: ->(item) { item[:status_category_label] } }
     ]
 
-    if @is_manager
-      configs << { param: :filter_employee_name, extractor: ->(item) { item[:employee_name] } }
-      # employee_id is handled at SQL level, but keep for in-memory consistency
-    end
-
     configs
   end
 
@@ -366,9 +345,8 @@ class SubmissionsController < ApplicationController
       'updated_at' => ->(item) { item[:updated_at].to_s }
     }
 
-    if @is_manager
+    if @has_subordinates
       configs['employee_name'] = ->(item) { item[:employee_name].to_s }
-      configs['employee_id'] = ->(item) { item[:employee_id].to_s }
     end
 
     configs
