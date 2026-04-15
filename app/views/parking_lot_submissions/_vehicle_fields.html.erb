@@ -55,7 +55,14 @@
         required: is_first %>
 </div>
 <div class="form-group">
-  <%= vf.text_field :license_plate, placeholder: "License Plate", class: "form-control", required: is_first %>
+  <%= vf.text_field :license_plate,
+        placeholder: "License Plate",
+        class: "form-control",
+        required: is_first,
+        maxlength: 7,
+        pattern: "[A-Za-z0-9]{1,7}",
+        title: "Up to 7 letters or numbers",
+        style: "text-transform: uppercase;" %>
 </div>
 <div class="form-group">
   <%= vf.select :parking_lot,
