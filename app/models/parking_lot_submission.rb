@@ -76,8 +76,8 @@ STATUS_LABELS = {
   
   # With enum, status returns a symbol like :submitted, :approved, etc.
   def status_label
-  self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
-end
+    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
+  end
 
   def current_assignee_id
     if pending_delegated_approval?

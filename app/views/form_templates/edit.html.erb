@@ -903,6 +903,26 @@
                style="margin-top: 10px;">
       </div>
 
+      <div class="field-input" style="flex: 0 0 140px;">
+        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Read Only</label>
+        <select name="fields[][read_only]"
+                class="form-control form-control-sm"
+                style="min-width: 120px;">
+          <option value="none">No</option>
+          <option value="always">Always</option>
+          <option value="initial">Initial Filing Only</option>
+        </select>
+      </div>
+
+      <div class="field-input" style="flex: 0 0 100px;">
+        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Custom View</label>
+        <input type="checkbox"
+               name="fields[][has_custom_view]"
+               value="1"
+               style="margin-top: 10px;"
+               title="When checked, this field's view HTML will be preserved during form updates">
+      </div>
+
       <div style="flex: 0 0 auto;">
         <label style="font-size: 0.9em; color: transparent; display: block; margin-bottom: 5px;">-</label>
         <button type="button"
