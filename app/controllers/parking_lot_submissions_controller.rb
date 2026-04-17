@@ -266,6 +266,9 @@ end
       :division,
       :department,
       :unit,
+      :other_permit_type,
+      permit_type: [],
+      carpool_participants: [],
       parking_lot_vehicles_attributes: [
         :id,
         :make,
@@ -273,8 +276,6 @@ end
         :color,
         :year,
         :license_plate,
-        :parking_lot,
-        :other_parking_lot,
         :_destroy
       ]
     )

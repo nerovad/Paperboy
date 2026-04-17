@@ -1,13 +1,5 @@
 <% is_first = vf.index.nil? || vf.index == 0 %>
 
-<%
-  all_lots = [
-    "Carpool", "Courier", "G Lot", "Grand Jury Parking",
-    "Loading Docks", "Maintenance", "R Lot", "Traffic Circle", "Other"
-  ]
-  lots = @is_mb3 ? all_lots : (all_lots - ["R Lot"])
-%>
-
 <div class="form-group">
   <%= vf.select :year,
         options_for_select((1920..Date.today.year).to_a.reverse),
@@ -63,13 +55,4 @@
         pattern: "[A-Za-z0-9]{1,7}",
         title: "Up to 7 letters or numbers",
         style: "text-transform: uppercase;" %>
-</div>
-<div class="form-group">
-  <%= vf.select :parking_lot,
-        options_for_select(lots),
-        { prompt: "Select Permit Type" },
-        class: "form-control parking-lot-select" %>
-</div>
-<div class="form-group">
-  <%= vf.text_field :other_parking_lot, placeholder: "If Other, enter name", class: "form-control other-lot-field", style: "display: none;" %>
 </div>

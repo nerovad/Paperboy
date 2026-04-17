@@ -3,6 +3,9 @@ class ParkingLotSubmission < ApplicationRecord
   include Reassignable
   include TrackableStatus
 
+  serialize :permit_type, coder: JSON, type: Array
+  serialize :carpool_participants, coder: JSON, type: Array
+
 enum :status, {
   submitted: 0,
     pending_delegated_approval: 1,

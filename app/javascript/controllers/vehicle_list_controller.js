@@ -17,17 +17,4 @@ export default class extends Controller {
     if (!event.target.classList.contains("remove-vehicle-btn")) return
     event.target.closest(".vehicle-fields")?.remove()
   }
-
-  toggleOtherLot(event) {
-    if (!event.target.classList.contains("parking-lot-select")) return
-    const group = event.target.closest(".vehicle-fields")
-    const otherInput = group?.querySelector(".other-lot-field")
-    if (!otherInput) return
-    if (event.target.value === "Other") {
-      otherInput.style.display = "block"
-    } else {
-      otherInput.style.display = "none"
-      otherInput.value = ""
-    }
-  }
 }
