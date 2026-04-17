@@ -3,9 +3,6 @@ class ParkingLotSubmission < ApplicationRecord
   include Reassignable
   include TrackableStatus
 
-  serialize :permit_type, coder: JSON, type: Array
-  serialize :carpool_participants, coder: JSON, type: Array
-
 enum :status, {
   submitted: 0,
     pending_delegated_approval: 1,
@@ -31,6 +28,9 @@ STATUS_LABELS = {
     approved: "Approved",
     sent_to_security: "Sent to security"
 }.freeze
+
+  serialize :permit_type, coder: JSON, type: Array
+  serialize :carpool_participants, coder: JSON, type: Array
 
   # Stored columns on this model for org hierarchy are *codes/IDs*:
   #   agency, division, department, unit

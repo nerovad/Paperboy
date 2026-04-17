@@ -3,7 +3,7 @@
   <h1>Parking Permit Application</h1>
 </div>
 
-<div class="form-wrapper" data-controller="form-navigation conditional-fields">
+<div class="form-wrapper" data-controller="form-navigation">
   <%= form_with model: @parking_lot_submission, local: true do |form| %>
 
 <!-- Page 1: Employee Info -->
@@ -117,54 +117,68 @@
   <h2>Vehicle and Parking Info</h2>
         <div class="form-row d-flex flex-wrap">
 <!-- FIELD:vehicles START -->
-        <div data-controller="vehicle-list"
-             data-action="click->vehicle-list#remove">
-          <div id="vehicle-wrapper" data-vehicle-list-target="wrapper">
+        <div data-controller="vehicle-list" style="flex: 0 0 100%;">
+          <div id="vehicle-wrapper">
             <%= form.fields_for :parking_lot_vehicles do |vf| %>
-              <div class="vehicle-fields form-row border p-3 rounded mb-4" data-controller="nhtsa-vehicle">
-                <%= render partial: "vehicle_fields", locals: { vf: vf } %>
+              <div class="vehicle-block">
+                <div class="vehicle-fields border p-3 rounded" data-controller="nhtsa-vehicle">
+                  <div class="form-row">
+                    <%= render partial: "vehicle_fields", locals: { vf: vf } %>
+                    <% if vf.index.nil? || vf.index == 0 %>
+                      <div class="form-group flex-fill" data-controller="choices">
+                        <%= form.label :permit_type, "Permit Type" %>
+                        <%= form.select :permit_type,
+                              options_for_select(['Carpool', 'Courier', 'G Lot', 'Grand Jury Parking', 'Loading Docks', 'Maintenance', 'Traffic Circle', 'Other']),
+                              { include_blank: false },
+                              { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'permit_type' } } %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+                <div class="vehicle-row-actions">
+                  <button type="button" class="remove-vehicle-btn">− Remove</button>
+                </div>
               </div>
             <% end %>
           </div>
-          <div class="vehicle-list-actions">
-            <button type="button" id="add-vehicle" class="add-vehicle-btn"
-                    data-action="click->vehicle-list#add">+ Add Vehicle</button>
+
+          <div class="form-row d-flex flex-wrap">
+            <div class="conditional-field" data-depends-on="permit_type" data-show-values="[&quot;Carpool&quot;]" style="display: none;">
+              <div class="form-group flex-fill" data-controller="choices">
+                <%= form.label :carpool_participants, "Carpool Participants" %>
+                <%= form.select :carpool_participants,
+                      options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
+                      { include_blank: false },
+                      { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+              </div>
+            </div>
+            <div class="conditional-field" data-depends-on="permit_type" data-show-values="[&quot;Other&quot;]" style="display: none;">
+              <div class="form-group flex-fill">
+                <%= form.label :other_permit_type, "Other Permit Type" %>
+                <%= form.text_field :other_permit_type, class: "form-control" %>
+              </div>
+            </div>
           </div>
-          <div id="vehicle-template" data-vehicle-list-target="template" style="display: none;">
+
+          <div class="vehicle-list-actions">
+            <button type="button" id="add-vehicle" class="add-vehicle-btn">+ Add Vehicle</button>
+          </div>
+          <div id="vehicle-template" style="display: none;">
             <%= form.fields_for :parking_lot_vehicles, ParkingLotVehicle.new, child_index: "NEW_RECORD" do |vf| %>
-              <div class="vehicle-fields form-row border p-3 rounded mb-4" data-controller="nhtsa-vehicle">
-                <%= render partial: "vehicle_fields", locals: { vf: vf } %>
-                <button type="button" class="remove-vehicle-btn">− Remove</button>
+              <div class="vehicle-block">
+                <div class="vehicle-fields border p-3 rounded" data-controller="nhtsa-vehicle">
+                  <div class="form-row">
+                    <%= render partial: "vehicle_fields", locals: { vf: vf } %>
+                  </div>
+                </div>
+                <div class="vehicle-row-actions">
+                  <button type="button" class="remove-vehicle-btn">− Remove</button>
+                </div>
               </div>
             <% end %>
           </div>
         </div>
 <!-- FIELD:vehicles END -->
-<!-- FIELD:permit_type START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
-  <%= form.label :permit_type, "Permit Type" %>
-            <%= form.select :permit_type,
-                  options_for_select(['Carpool', 'Courier', 'G Lot', 'Grand Jury Parking', 'Loading Docks', 'Maintenance', 'Traffic Circle', 'Other']),
-                  { include_blank: false },
-                  { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'permit_type' } } %>
-          </div>
-<!-- FIELD:permit_type END -->
-<!-- FIELD:carpool_participants START -->          <div class="conditional-field" data-depends-on="permit_type" data-show-values="[&quot;Carpool&quot;]" style="display: none;">
-<div class="form-group flex-fill<%= '' %>" data-controller="choices">
-  <%= form.label :carpool_participants, "Carpool Participants" %>
-            <%= form.select :carpool_participants,
-                  options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
-                  { include_blank: false },
-                  { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
-          </div>
-          </div>
-<!-- FIELD:carpool_participants END -->
-<!-- FIELD:other_permit_type START -->          <div class="conditional-field" data-depends-on="permit_type" data-show-values="[&quot;Other&quot;]" style="display: none;">
-<div class="form-group flex-fill<%= '' %>">
-  <%= form.label :other_permit_type, "Other Permit Type" %>
-            <%= form.text_field :other_permit_type, class: "form-control" %>
-          </div>
-          </div>
-<!-- FIELD:other_permit_type END -->
         </div>
       </div>
 

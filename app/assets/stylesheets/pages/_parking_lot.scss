@@ -2,18 +2,30 @@
 
 #vehicle-wrapper .vehicle-fields {
   position: relative;
-  margin-bottom: 16px;
-}
-#vehicle-wrapper > .vehicle-fields:only-child {
-  margin-bottom: 32px;
 }
 
-/* Actions row that holds the single Add button */
+/* Per-vehicle remove-button row, sits directly below its vehicle box */
+.vehicle-block {
+  margin-bottom: 16px;
+}
+.vehicle-block:last-child {
+  margin-bottom: 0;
+}
+.vehicle-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 20px 0;
+  min-height: 44px;
+  align-items: center;
+}
+
+/* Actions row that holds the single Add button, overlapped up
+   onto the last vehicle's remove-row line */
 .vehicle-list-actions {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  margin-top: -72px;
+  margin-top: -44px;
   padding-left: 20px;
   margin-bottom: 10px;
   position: relative;

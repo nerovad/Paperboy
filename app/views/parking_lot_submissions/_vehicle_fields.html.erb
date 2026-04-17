@@ -1,6 +1,7 @@
 <% is_first = vf.index.nil? || vf.index == 0 %>
 
 <div class="form-group">
+  <%= vf.label :year, "Year" %>
   <%= vf.select :year,
         options_for_select((1920..Date.today.year).to_a.reverse),
         { prompt: "Select Year" },
@@ -12,6 +13,7 @@
         } %>
 </div>
 <div class="form-group">
+  <%= vf.label :make, "Make" %>
   <select data-nhtsa-vehicle-target="make"
           data-action="change->nhtsa-vehicle#makeChanged"
           class="form-control" disabled>
@@ -26,6 +28,7 @@
          data-action="input->nhtsa-vehicle#otherMakeTyped">
 </div>
 <div class="form-group">
+  <%= vf.label :model, "Model" %>
   <select data-nhtsa-vehicle-target="model"
           data-action="change->nhtsa-vehicle#modelChanged"
           class="form-control" disabled>
@@ -40,6 +43,7 @@
          data-action="input->nhtsa-vehicle#otherModelTyped">
 </div>
 <div class="form-group">
+  <%= vf.label :color, "Color" %>
   <%= vf.select :color,
         options_for_select(%w[White Black Silver Blue Red Green Yellow Gray Brown]),
         { prompt: "Select Color" },
@@ -47,6 +51,7 @@
         required: is_first %>
 </div>
 <div class="form-group">
+  <%= vf.label :license_plate, "License Plate" %>
   <%= vf.text_field :license_plate,
         placeholder: "License Plate",
         class: "form-control",
