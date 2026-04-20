@@ -17,7 +17,7 @@ export default class extends Controller {
 
     this.handleRemove = (event) => {
       if (!event.target.classList.contains("remove-vehicle-btn")) return
-      event.target.closest(".vehicle-fields")?.remove()
+      event.target.closest(".vehicle-block")?.remove()
     }
 
     this.addBtn.addEventListener("click", this.handleAdd)
