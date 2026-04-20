@@ -1,109 +1,40 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Handles conditional field visibility on generated forms
-// Fields with data-depends-on and data-show-values attributes will show/hide
-// based on the value of the trigger dropdown
+// Handles conditional field visibility on generated forms.
+// Fields with data-depends-on and data-show-values show/hide based on
+// the value of the trigger select. When the conditional field is inside
+// a .vehicle-block (per-vehicle conditional), its scope is that block;
+// otherwise the scope is the whole form.
 export default class extends Controller {
   connect() {
-    this.setupConditionalFields()
+    this.update = () => this.updateAll()
+
+    this.element.addEventListener("change", this.update)
+    this.element.addEventListener("addItem", this.update)
+    this.element.addEventListener("removeItem", this.update)
+
+    this.updateAll()
     this.setupConditionalAnswers()
   }
 
-  setupConditionalFields() {
-    // Find all conditional fields
-    const conditionalFields = this.element.querySelectorAll('.conditional-field')
-
-    conditionalFields.forEach(conditionalEl => {
-      const dependsOn = conditionalEl.dataset.dependsOn
-      if (!dependsOn) return
-
-      const matches = (el) => el?.matches?.(
-        `select[name$="[${dependsOn}]"], select[name$="[${dependsOn}][]"]`
-      )
-
-      const handler = () => this.updateConditionalField(conditionalEl, dependsOn)
-
-      // Event delegation so dynamically-added triggers (e.g. cloned vehicle
-      // rows) are covered without re-binding on add.
-      this.element.addEventListener('change', (e) => { if (matches(e.target)) handler() })
-      this.element.addEventListener('addItem', (e) => { if (matches(e.target)) handler() })
-      this.element.addEventListener('removeItem', (e) => { if (matches(e.target)) handler() })
-
-      // Initial check
-      handler()
-    })
+  disconnect() {
+    this.element.removeEventListener("change", this.update)
+    this.element.removeEventListener("addItem", this.update)
+    this.element.removeEventListener("removeItem", this.update)
   }
 
-  setupConditionalAnswers() {
-    // Find all fields with conditional answer mappings
-    const answerFields = this.element.querySelectorAll('[data-answer-depends-on]')
-
-    answerFields.forEach(answerEl => {
-      const dependsOn = answerEl.dataset.answerDependsOn
-      if (!dependsOn) return
-
-      // Find the trigger select
-      const triggerSelect = this.element.querySelector(`select[name$="[${dependsOn}]"]`) ||
-                            this.element.querySelector(`select[name$="[${dependsOn}][]"]`)
-      if (!triggerSelect) return
-
-      // Find the target select inside this element
-      const targetSelect = answerEl.querySelector('select')
-      if (!targetSelect) return
-
-      const handler = () => this.updateConditionalAnswer(answerEl, triggerSelect, targetSelect)
-
-      triggerSelect.addEventListener('change', handler)
-      triggerSelect.addEventListener('addItem', handler)
-      triggerSelect.addEventListener('removeItem', handler)
+  updateAll() {
+    this.element.querySelectorAll(".conditional-field").forEach(el => {
+      const dependsOn = el.dataset.dependsOn
+      if (dependsOn) this.updateConditionalField(el, dependsOn)
     })
-  }
-
-  updateConditionalAnswer(answerEl, triggerSelect, targetSelect) {
-    let selectedValue
-    if (triggerSelect.multiple) {
-      // For multi-select, use the first selected value for mapping
-      const selected = Array.from(triggerSelect.selectedOptions).map(o => o.value)
-      selectedValue = selected[0] || ''
-    } else {
-      selectedValue = triggerSelect.value || ''
-    }
-
-    if (!selectedValue) return
-
-    let mappings = {}
-    try {
-      const rawMappings = answerEl.dataset.answerMappings
-      if (rawMappings) {
-        mappings = JSON.parse(rawMappings.replace(/&quot;/g, '"'))
-      }
-    } catch (e) {
-      console.error('Error parsing conditional answer mappings:', e)
-      return
-    }
-
-    const mappedAnswer = mappings[selectedValue]
-    if (mappedAnswer) {
-      targetSelect.value = mappedAnswer
-
-      // Also update any companion hidden field (for disabled selects that don't submit)
-      const selectName = targetSelect.getAttribute('name')
-      if (selectName) {
-        const hiddenField = this.element.querySelector(`input[type="hidden"][name="${selectName}"]`)
-        if (hiddenField) {
-          hiddenField.value = mappedAnswer
-        }
-      }
-
-      // Trigger change event so other listeners (Choices.js, other conditionals) pick it up
-      targetSelect.dispatchEvent(new Event('change', { bubbles: true }))
-    }
   }
 
   updateConditionalField(conditionalEl, dependsOn) {
-    // Aggregate selected values from ALL matching triggers (e.g. every
-    // vehicle's permit_type select), not just the first one.
-    const triggerSelects = this.element.querySelectorAll(
+    if (conditionalEl.closest("#vehicle-template")) return
+
+    const scope = conditionalEl.closest(".vehicle-block") || this.element
+    const triggerSelects = scope.querySelectorAll(
       `select[name$="[${dependsOn}]"], select[name$="[${dependsOn}][]"]`
     )
 
@@ -118,35 +49,91 @@ export default class extends Controller {
     })
 
     let showValues = []
-
     try {
-      // Parse the show-values data attribute (may be HTML-encoded)
       const rawValues = conditionalEl.dataset.showValues
       if (rawValues) {
         showValues = JSON.parse(rawValues.replace(/&quot;/g, '"'))
       }
     } catch (e) {
-      console.error('Error parsing conditional values:', e)
+      console.error("Error parsing conditional values:", e)
       return
     }
 
     const shouldShow = selectedValues.some(v => showValues.includes(v))
 
     if (shouldShow) {
-      conditionalEl.style.display = 'block'
-      // Re-enable required validation for inputs inside
-      conditionalEl.querySelectorAll('[data-was-required]').forEach(input => {
+      conditionalEl.style.display = "block"
+      conditionalEl.querySelectorAll("[data-was-required]").forEach(input => {
         input.required = true
       })
     } else {
-      conditionalEl.style.display = 'none'
-      // Disable required validation and optionally clear values
-      conditionalEl.querySelectorAll('input, select, textarea').forEach(input => {
+      conditionalEl.style.display = "none"
+      conditionalEl.querySelectorAll("input, select, textarea").forEach(input => {
         if (input.required) {
-          input.dataset.wasRequired = 'true'
+          input.dataset.wasRequired = "true"
           input.required = false
         }
       })
+    }
+  }
+
+  setupConditionalAnswers() {
+    const answerFields = this.element.querySelectorAll("[data-answer-depends-on]")
+
+    answerFields.forEach(answerEl => {
+      const dependsOn = answerEl.dataset.answerDependsOn
+      if (!dependsOn) return
+
+      const triggerSelect = this.element.querySelector(`select[name$="[${dependsOn}]"]`) ||
+                            this.element.querySelector(`select[name$="[${dependsOn}][]"]`)
+      if (!triggerSelect) return
+
+      const targetSelect = answerEl.querySelector("select")
+      if (!targetSelect) return
+
+      const handler = () => this.updateConditionalAnswer(answerEl, triggerSelect, targetSelect)
+
+      triggerSelect.addEventListener("change", handler)
+      triggerSelect.addEventListener("addItem", handler)
+      triggerSelect.addEventListener("removeItem", handler)
+    })
+  }
+
+  updateConditionalAnswer(answerEl, triggerSelect, targetSelect) {
+    let selectedValue
+    if (triggerSelect.multiple) {
+      const selected = Array.from(triggerSelect.selectedOptions).map(o => o.value)
+      selectedValue = selected[0] || ""
+    } else {
+      selectedValue = triggerSelect.value || ""
+    }
+
+    if (!selectedValue) return
+
+    let mappings = {}
+    try {
+      const rawMappings = answerEl.dataset.answerMappings
+      if (rawMappings) {
+        mappings = JSON.parse(rawMappings.replace(/&quot;/g, '"'))
+      }
+    } catch (e) {
+      console.error("Error parsing conditional answer mappings:", e)
+      return
+    }
+
+    const mappedAnswer = mappings[selectedValue]
+    if (mappedAnswer) {
+      targetSelect.value = mappedAnswer
+
+      const selectName = targetSelect.getAttribute("name")
+      if (selectName) {
+        const hiddenField = this.element.querySelector(`input[type="hidden"][name="${selectName}"]`)
+        if (hiddenField) {
+          hiddenField.value = mappedAnswer
+        }
+      }
+
+      targetSelect.dispatchEvent(new Event("change", { bubbles: true }))
     }
   }
 }

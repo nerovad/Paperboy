@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_20_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_20_000002) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -368,8 +368,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_20_000001) do
     t.string "delegated_approver_email"
     t.string "delegated_approved_by"
     t.datetime "delegated_approved_at"
-    t.text "carpool_participants"
-    t.string "other_permit_type", limit: 200
   end
 
   create_table "parking_lot_vehicles", force: :cascade do |t|
@@ -384,6 +382,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_20_000001) do
     t.datetime "updated_at", null: false
     t.string "other_parking_lot", limit: 100
     t.text "permit_type"
+    t.text "carpool_participants"
+    t.string "other_permit_type", limit: 200
   end
 
   create_table "pcard_inventories", force: :cascade do |t|

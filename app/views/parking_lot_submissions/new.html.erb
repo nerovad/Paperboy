@@ -133,6 +133,24 @@
                             { include_blank: false },
                             { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'permit_type' } } %>
                     </div>
+                    <div class="form-group flex-fill conditional-field"
+                         data-controller="choices"
+                         data-depends-on="permit_type"
+                         data-show-values="[&quot;Carpool&quot;]"
+                         style="display: none;">
+                      <%= vf.label :carpool_participants, "Carpool Participants" %>
+                      <%= vf.select :carpool_participants,
+                            options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }, vf.object.carpool_participants),
+                            { include_blank: false },
+                            { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                    </div>
+                    <div class="form-group flex-fill conditional-field"
+                         data-depends-on="permit_type"
+                         data-show-values="[&quot;Other&quot;]"
+                         style="display: none;">
+                      <%= vf.label :other_permit_type, "Other Permit Type" %>
+                      <%= vf.text_field :other_permit_type, class: "form-control" %>
+                    </div>
                   </div>
                 </div>
                 <div class="vehicle-row-actions">
@@ -147,24 +165,6 @@
             <% end %>
           </div>
 
-          <div class="form-row d-flex flex-wrap">
-            <div class="conditional-field" data-depends-on="permit_type" data-show-values="[&quot;Carpool&quot;]" style="display: none;">
-              <div class="form-group flex-fill" data-controller="choices">
-                <%= form.label :carpool_participants, "Carpool Participants" %>
-                <%= form.select :carpool_participants,
-                      options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
-                      { include_blank: false },
-                      { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
-              </div>
-            </div>
-            <div class="conditional-field" data-depends-on="permit_type" data-show-values="[&quot;Other&quot;]" style="display: none;">
-              <div class="form-group flex-fill">
-                <%= form.label :other_permit_type, "Other Permit Type" %>
-                <%= form.text_field :other_permit_type, class: "form-control" %>
-              </div>
-            </div>
-          </div>
-
           <div id="vehicle-template" style="display: none;">
             <%= form.fields_for :parking_lot_vehicles, ParkingLotVehicle.new, child_index: "NEW_RECORD" do |vf| %>
               <div class="vehicle-block" data-vehicle-index="NEW_RECORD">
@@ -177,6 +177,24 @@
                             options_for_select(['Carpool', 'Courier', 'G Lot', 'Grand Jury Parking', 'Loading Docks', 'Maintenance', 'Traffic Circle', 'Other'], vf.object.permit_type),
                             { include_blank: false },
                             { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'permit_type' } } %>
+                    </div>
+                    <div class="form-group flex-fill conditional-field"
+                         data-controller="choices"
+                         data-depends-on="permit_type"
+                         data-show-values="[&quot;Carpool&quot;]"
+                         style="display: none;">
+                      <%= vf.label :carpool_participants, "Carpool Participants" %>
+                      <%= vf.select :carpool_participants,
+                            options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }, vf.object.carpool_participants),
+                            { include_blank: false },
+                            { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                    </div>
+                    <div class="form-group flex-fill conditional-field"
+                         data-depends-on="permit_type"
+                         data-show-values="[&quot;Other&quot;]"
+                         style="display: none;">
+                      <%= vf.label :other_permit_type, "Other Permit Type" %>
+                      <%= vf.text_field :other_permit_type, class: "form-control" %>
                     </div>
                   </div>
                 </div>

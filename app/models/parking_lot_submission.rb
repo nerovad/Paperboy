@@ -29,8 +29,6 @@ STATUS_LABELS = {
     sent_to_security: "Sent to security"
 }.freeze
 
-  serialize :carpool_participants, coder: JSON, type: Array
-
   # Stored columns on this model for org hierarchy are *codes/IDs*:
   #   agency, division, department, unit
   # === Associations to lookup tables (resolve codes -> LongName) ===
