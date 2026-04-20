@@ -4,32 +4,27 @@
   position: relative;
 }
 
-/* Per-vehicle remove-button row, sits directly below its vehicle box */
 .vehicle-block {
   margin-bottom: 16px;
 }
 .vehicle-block:last-child {
   margin-bottom: 0;
 }
+
+/* Per-vehicle actions row, sits directly below its vehicle box.
+   Holds the per-vehicle Remove button and, on the last vehicle, the
+   shared + Add Vehicle button (relocated by vehicle_list_controller). */
 .vehicle-row-actions {
   display: flex;
   justify-content: flex-end;
-  padding: 8px 20px 0;
-  min-height: 44px;
   align-items: center;
+  gap: 8px;
 }
-
-/* Actions row that holds the single Add button, overlapped up
-   onto the last vehicle's remove-row line */
-.vehicle-list-actions {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-top: -44px;
-  padding-left: 20px;
-  margin-bottom: 10px;
-  position: relative;
-  z-index: 1;
+.vehicle-row-actions:has(*) {
+  padding: 8px 20px 0;
+}
+.vehicle-row-actions:not(:has(*)) {
+  display: none;
 }
 
 .add-vehicle-btn {

@@ -119,8 +119,10 @@
 <!-- FIELD:vehicles START -->
         <div data-controller="vehicle-list" style="flex: 0 0 100%;">
           <div id="vehicle-wrapper">
+            <% vehicles_count = @parking_lot_submission.parking_lot_vehicles.size %>
             <%= form.fields_for :parking_lot_vehicles do |vf| %>
-              <div class="vehicle-block">
+              <% is_last = vf.index == vehicles_count - 1 %>
+              <div class="vehicle-block" data-vehicle-index="<%= vf.index %>">
                 <div class="vehicle-fields border p-3 rounded" data-controller="nhtsa-vehicle">
                   <div class="form-row">
                     <%= render partial: "vehicle_fields", locals: { vf: vf } %>
@@ -134,7 +136,12 @@
                   </div>
                 </div>
                 <div class="vehicle-row-actions">
-                  <button type="button" class="remove-vehicle-btn">− Remove</button>
+                  <% if vf.index && vf.index.to_i > 0 %>
+                    <button type="button" class="remove-vehicle-btn">− Remove</button>
+                  <% end %>
+                  <% if is_last %>
+                    <button type="button" id="add-vehicle" class="add-vehicle-btn">+ Add Vehicle</button>
+                  <% end %>
                 </div>
               </div>
             <% end %>
@@ -158,12 +165,9 @@
             </div>
           </div>
 
-          <div class="vehicle-list-actions">
-            <button type="button" id="add-vehicle" class="add-vehicle-btn">+ Add Vehicle</button>
-          </div>
           <div id="vehicle-template" style="display: none;">
             <%= form.fields_for :parking_lot_vehicles, ParkingLotVehicle.new, child_index: "NEW_RECORD" do |vf| %>
-              <div class="vehicle-block">
+              <div class="vehicle-block" data-vehicle-index="NEW_RECORD">
                 <div class="vehicle-fields border p-3 rounded" data-controller="nhtsa-vehicle">
                   <div class="form-row">
                     <%= render partial: "vehicle_fields", locals: { vf: vf } %>
