@@ -5,6 +5,8 @@ export default class extends Controller {
   static targets = ["select"];
 
   connect() {
+    if (this.element.closest("#vehicle-template")) return;
+
     const ChoicesLib = window.Choices;
     if (!ChoicesLib) {
       console.error("Choices global not found (window.Choices is undefined)");

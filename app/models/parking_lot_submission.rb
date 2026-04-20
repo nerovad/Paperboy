@@ -29,7 +29,6 @@ STATUS_LABELS = {
     sent_to_security: "Sent to security"
 }.freeze
 
-  serialize :permit_type, coder: JSON, type: Array
   serialize :carpool_participants, coder: JSON, type: Array
 
   # Stored columns on this model for org hierarchy are *codes/IDs*:

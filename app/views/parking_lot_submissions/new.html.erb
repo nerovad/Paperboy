@@ -3,7 +3,7 @@
   <h1>Parking Permit Application</h1>
 </div>
 
-<div class="form-wrapper" data-controller="form-navigation">
+<div class="form-wrapper" data-controller="form-navigation conditional-fields">
   <%= form_with model: @parking_lot_submission, local: true do |form| %>
 
 <!-- Page 1: Employee Info -->
@@ -124,15 +124,13 @@
                 <div class="vehicle-fields border p-3 rounded" data-controller="nhtsa-vehicle">
                   <div class="form-row">
                     <%= render partial: "vehicle_fields", locals: { vf: vf } %>
-                    <% if vf.index.nil? || vf.index == 0 %>
-                      <div class="form-group flex-fill" data-controller="choices">
-                        <%= form.label :permit_type, "Permit Type" %>
-                        <%= form.select :permit_type,
-                              options_for_select(['Carpool', 'Courier', 'G Lot', 'Grand Jury Parking', 'Loading Docks', 'Maintenance', 'Traffic Circle', 'Other']),
-                              { include_blank: false },
-                              { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'permit_type' } } %>
-                      </div>
-                    <% end %>
+                    <div class="form-group flex-fill" data-controller="choices">
+                      <%= vf.label :permit_type, "Permit Type" %>
+                      <%= vf.select :permit_type,
+                            options_for_select(['Carpool', 'Courier', 'G Lot', 'Grand Jury Parking', 'Loading Docks', 'Maintenance', 'Traffic Circle', 'Other'], vf.object.permit_type),
+                            { include_blank: false },
+                            { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'permit_type' } } %>
+                    </div>
                   </div>
                 </div>
                 <div class="vehicle-row-actions">
@@ -169,6 +167,13 @@
                 <div class="vehicle-fields border p-3 rounded" data-controller="nhtsa-vehicle">
                   <div class="form-row">
                     <%= render partial: "vehicle_fields", locals: { vf: vf } %>
+                    <div class="form-group flex-fill" data-controller="choices">
+                      <%= vf.label :permit_type, "Permit Type" %>
+                      <%= vf.select :permit_type,
+                            options_for_select(['Carpool', 'Courier', 'G Lot', 'Grand Jury Parking', 'Loading Docks', 'Maintenance', 'Traffic Circle', 'Other'], vf.object.permit_type),
+                            { include_blank: false },
+                            { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'permit_type' } } %>
+                    </div>
                   </div>
                 </div>
                 <div class="vehicle-row-actions">

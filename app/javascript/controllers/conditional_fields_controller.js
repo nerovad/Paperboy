@@ -17,18 +17,17 @@ export default class extends Controller {
       const dependsOn = conditionalEl.dataset.dependsOn
       if (!dependsOn) return
 
-      // Find the trigger select by field name (also handles multi-select where Rails appends [])
-      const triggerSelect = this.element.querySelector(`select[name$="[${dependsOn}]"]`) ||
-                            this.element.querySelector(`select[name$="[${dependsOn}][]"]`)
-      if (!triggerSelect) return
+      const matches = (el) => el?.matches?.(
+        `select[name$="[${dependsOn}]"], select[name$="[${dependsOn}][]"]`
+      )
 
-      const handler = () => this.updateConditionalField(conditionalEl, triggerSelect)
+      const handler = () => this.updateConditionalField(conditionalEl, dependsOn)
 
-      // Add change listener
-      triggerSelect.addEventListener('change', handler)
-      // Also listen for Choices.js events (for multi-select dropdowns)
-      triggerSelect.addEventListener('addItem', handler)
-      triggerSelect.addEventListener('removeItem', handler)
+      // Event delegation so dynamically-added triggers (e.g. cloned vehicle
+      // rows) are covered without re-binding on add.
+      this.element.addEventListener('change', (e) => { if (matches(e.target)) handler() })
+      this.element.addEventListener('addItem', (e) => { if (matches(e.target)) handler() })
+      this.element.addEventListener('removeItem', (e) => { if (matches(e.target)) handler() })
 
       // Initial check
       handler()
@@ -101,14 +100,22 @@ export default class extends Controller {
     }
   }
 
-  updateConditionalField(conditionalEl, triggerSelect) {
-    // Support both single-select and multi-select triggers
-    let selectedValues
-    if (triggerSelect.multiple) {
-      selectedValues = Array.from(triggerSelect.selectedOptions).map(o => o.value)
-    } else {
-      selectedValues = triggerSelect.value ? [triggerSelect.value] : []
-    }
+  updateConditionalField(conditionalEl, dependsOn) {
+    // Aggregate selected values from ALL matching triggers (e.g. every
+    // vehicle's permit_type select), not just the first one.
+    const triggerSelects = this.element.querySelectorAll(
+      `select[name$="[${dependsOn}]"], select[name$="[${dependsOn}][]"]`
+    )
+
+    const selectedValues = []
+    triggerSelects.forEach(triggerSelect => {
+      if (triggerSelect.closest("#vehicle-template")) return
+      if (triggerSelect.multiple) {
+        Array.from(triggerSelect.selectedOptions).forEach(o => selectedValues.push(o.value))
+      } else if (triggerSelect.value) {
+        selectedValues.push(triggerSelect.value)
+      }
+    })
 
     let showValues = []
 
