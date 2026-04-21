@@ -14,15 +14,15 @@ echo "==> Installing gems..."
 bundle install --without development test
 
 echo "==> Clobbering old assets..."
-RAILS_ENV=production bundle exec rails assets:clobber
+RAILS_ENV=staging bundle exec rails assets:clobber
 
 echo "==> Precompiling assets..."
-RAILS_ENV=production bundle exec rails assets:precompile
+RAILS_ENV=staging bundle exec rails assets:precompile
 
 echo "==> Restarting Puma..."
-sudo systemctl restart paperboy
+sudo systemctl restart paperboy-stage
 
 echo "==> Restarting Sidekiq..."
-sudo systemctl restart paperboy-sidekiq
+sudo systemctl restart paperboy-stage-sidekiq
 
-echo "==> Deploy complete!"
+echo "==> Stage deploy complete!"

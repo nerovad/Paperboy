@@ -30,6 +30,10 @@ test:
   <<: *sqlserver
   database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Dev") %>
 
+staging:
+  <<: *sqlserver
+  database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Stage") %>
+
 production:
   <<: *sqlserver
   database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Prod") %>

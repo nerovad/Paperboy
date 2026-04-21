@@ -1,0 +1,37 @@
+#!/bin/bash
+# Generate a CSR + private key for a Paperboy environment.
+# Usage (run on the target server, with sudo):
+#   sudo bin/gen-csr dev 10.135.204.167
+#   sudo bin/gen-csr stage 10.135.204.162
+set -e
+
+ENV_NAME="$1"
+SERVER_IP="$2"
+
+if [ -z "$ENV_NAME" ] || [ -z "$SERVER_IP" ]; then
+  echo "Usage: sudo bin/gen-csr <env> <server-ip>"
+  echo "  e.g. sudo bin/gen-csr dev 10.135.204.167"
+  exit 1
+fi
+
+HOSTNAME="${ENV_NAME}-gsa-forms"
+KEY_PATH="/etc/ssl/private/${HOSTNAME}.key"
+CSR_PATH="/tmp/${HOSTNAME}.csr"
+
+echo "==> Generating CSR and key for ${HOSTNAME} (IP: ${SERVER_IP})"
+
+openssl req -new -newkey rsa:2048 -nodes \
+  -keyout "${KEY_PATH}" \
+  -out "${CSR_PATH}" \
+  -subj "/C=US/ST=CA/L=Ventura/O=County of Ventura/OU=GSA IT/CN=${HOSTNAME}" \
+  -addext "subjectAltName=DNS:${HOSTNAME},IP:${SERVER_IP}"
+
+chmod 600 "${KEY_PATH}"
+
+echo ""
+echo "==> Done."
+echo "    Private key: ${KEY_PATH} (mode 600, do not share)"
+echo "    CSR to send to GSA IT: ${CSR_PATH}"
+echo ""
+echo "    Once GSA IT returns the signed cert, install it as:"
+echo "      /etc/ssl/certs/${HOSTNAME}-fullchain.crt"

@@ -1,5 +1,5 @@
 [Unit]
-Description=Paperboy Puma Rails Server
+Description=Paperboy Puma Rails Server (Development)
 After=network.target
 
 [Service]
@@ -9,9 +9,9 @@ Group=matthew
 WorkingDirectory=/home/matthew/gitea/Paperboy
 
 EnvironmentFile=/home/matthew/gitea/Paperboy/.env
-Environment=RAILS_ENV=production
+Environment=RAILS_ENV=development
 
-ExecStart=/bin/bash -lc 'bundle exec puma -C config/puma/production.rb'
+ExecStart=/bin/bash -lc 'bundle exec puma -C config/puma/development.rb'
 ExecReload=/bin/kill -USR1 $MAINPID
 Restart=always
 RestartSec=5

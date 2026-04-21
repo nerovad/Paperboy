@@ -10,19 +10,19 @@ git fetch origin
 git checkout "$BRANCH"
 git pull origin "$BRANCH"
 
-echo "==> Installing gems..."
-bundle install --without development test
+echo "==> Installing gems (including development/test)..."
+bundle install
 
 echo "==> Clobbering old assets..."
-RAILS_ENV=production bundle exec rails assets:clobber
+RAILS_ENV=development bundle exec rails assets:clobber
 
 echo "==> Precompiling assets..."
-RAILS_ENV=production bundle exec rails assets:precompile
+RAILS_ENV=development bundle exec rails assets:precompile
 
 echo "==> Restarting Puma..."
-sudo systemctl restart paperboy
+sudo systemctl restart paperboy-dev
 
 echo "==> Restarting Sidekiq..."
-sudo systemctl restart paperboy-sidekiq
+sudo systemctl restart paperboy-dev-sidekiq
 
-echo "==> Deploy complete!"
+echo "==> Dev deploy complete!"

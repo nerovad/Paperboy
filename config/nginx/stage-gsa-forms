@@ -1,0 +1,55 @@
+# /etc/nginx/sites-available/stage-gsa-forms
+
+upstream puma_stage_gsa_forms {
+    server 127.0.0.1:3001;
+}
+
+# Redirect http → https
+server {
+    listen 80;
+    server_name stage-gsa-forms stage-gsa-forms.ent.co.ventura.ca.us;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name stage-gsa-forms stage-gsa-forms.ent.co.ventura.ca.us;
+
+    root /home/matthew/gitea/Paperboy/public;
+
+    # TLS certs
+    ssl_certificate           /etc/ssl/certs/stage-gsa-forms-fullchain.crt;  # leaf + intermediate
+    ssl_certificate_key       /etc/ssl/private/stage-gsa-forms.key;          # private key
+    ssl_trusted_certificate   /etc/ssl/certs/CountyRootCA.crt;               # root CA
+
+    # Reasonable TLS settings
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    # Proxy to Puma
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port 443;
+        proxy_redirect off;
+
+        # Fix upstream sent too big header errors
+        proxy_buffer_size 16k;
+        proxy_buffers 4 16k;
+        proxy_busy_buffers_size 16k;
+    }
+
+    # Serve precompiled assets directly
+    location ~ ^/(assets|packs|uploads)/ {
+        expires max;
+        gzip_static on;
+        add_header Cache-Control public;
+        try_files $uri =404;
+    }
+
+    access_log /var/log/nginx/stage-gsa-forms.access.log;
+    error_log  /var/log/nginx/stage-gsa-forms.error.log;
+}
