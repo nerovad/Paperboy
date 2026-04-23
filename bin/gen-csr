@@ -1,16 +1,22 @@
 #!/bin/bash
 # Generate a CSR + private key for a Paperboy environment.
 # Usage (run on the target server, with sudo):
+#   sudo bin/gen-csr <env> <server-ip> [extra-dns-name ...]
+#
+# Examples:
 #   sudo bin/gen-csr dev 10.135.204.167
+#   sudo bin/gen-csr dev 10.135.204.167 gsa-linux01
 #   sudo bin/gen-csr stage 10.135.204.162
 set -e
 
 ENV_NAME="$1"
 SERVER_IP="$2"
+shift 2 || true
+EXTRA_NAMES=("$@")
 
 if [ -z "$ENV_NAME" ] || [ -z "$SERVER_IP" ]; then
-  echo "Usage: sudo bin/gen-csr <env> <server-ip>"
-  echo "  e.g. sudo bin/gen-csr dev 10.135.204.167"
+  echo "Usage: sudo bin/gen-csr <env> <server-ip> [extra-dns-name ...]"
+  echo "  e.g. sudo bin/gen-csr dev 10.135.204.167 gsa-linux01"
   exit 1
 fi
 
@@ -18,13 +24,20 @@ HOSTNAME="${ENV_NAME}-gsa-forms"
 KEY_PATH="/etc/ssl/private/${HOSTNAME}.key"
 CSR_PATH="/tmp/${HOSTNAME}.csr"
 
-echo "==> Generating CSR and key for ${HOSTNAME} (IP: ${SERVER_IP})"
+SAN="DNS:${HOSTNAME}"
+for name in "${EXTRA_NAMES[@]}"; do
+  SAN="${SAN},DNS:${name}"
+done
+SAN="${SAN},IP:${SERVER_IP}"
+
+echo "==> Generating CSR and key for ${HOSTNAME}"
+echo "    SAN: ${SAN}"
 
 openssl req -new -newkey rsa:2048 -nodes \
   -keyout "${KEY_PATH}" \
   -out "${CSR_PATH}" \
   -subj "/C=US/ST=CA/L=Ventura/O=County of Ventura/OU=GSA IT/CN=${HOSTNAME}" \
-  -addext "subjectAltName=DNS:${HOSTNAME},IP:${SERVER_IP}"
+  -addext "subjectAltName=${SAN}"
 
 chmod 600 "${KEY_PATH}"
 

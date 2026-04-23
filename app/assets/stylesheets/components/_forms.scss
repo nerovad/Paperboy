@@ -85,6 +85,24 @@
     width: 100%;
     box-sizing: border-box;
   }
+
+  .currency-input-wrapper {
+    position: relative;
+
+    .currency-prefix {
+      position: absolute;
+      top: 50%;
+      left: 12px;
+      transform: translateY(-50%);
+      color: $label-color;
+      font-size: 1em;
+      pointer-events: none;
+    }
+
+    input[type="number"].form-control {
+      padding-left: 24px;
+    }
+  }
 }
 
 /* Form nav buttons (Prev/Next/Submit) */
