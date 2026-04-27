@@ -25,3 +25,32 @@
 .badge.is-manager-approved { @extend .badge.is-approved; }
 .badge.is-sent             { @extend .badge.is-in-review; }
 .badge.is-canceled         { @extend .badge.is-cancelled; }
+
+/* Environment indicator — visible in dev/stage so it's obvious which server you're on */
+.env-badge {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.env-badge.is-development {
+  background: #fde68a;
+  color: #78350f;
+  border: 1px solid #f59e0b;
+}
+
+.env-badge.is-staging {
+  background: #bfdbfe;
+  color: #1e3a8a;
+  border: 1px solid #3b82f6;
+}

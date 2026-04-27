@@ -16,7 +16,13 @@
     <%= javascript_importmap_tags %>
   </head>
   <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %>">
-    
+
+    <% if Rails.env.development? %>
+      <div class="env-badge is-development">Development</div>
+    <% elsif Rails.env.staging? %>
+      <div class="env-badge is-staging">Stage</div>
+    <% end %>
+
     <!-- Hamburger button (mobile only) -->
     <% if session[:user_id] %>
       <button class="hamburger-btn" data-controller="sidebar" data-action="click->sidebar#toggle">
