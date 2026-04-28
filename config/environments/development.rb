@@ -28,9 +28,11 @@ Rails.application.configure do
   # Change to :null_store to avoid any caching.
   config.cache_store = :memory_store
 
-  # Behind nginx with HTTPS termination on the dev server (https://dev-gsa-forms)
-  config.assume_ssl = true
-  config.force_ssl  = true
+  # Behind nginx with HTTPS termination on the dev server (https://dev-gsa-forms).
+  # Disabled until the dev cert + nginx vhost are live — turn back on once
+  # https://dev-gsa-forms is reachable end-to-end.
+  # config.assume_ssl = true
+  # config.force_ssl  = true
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local

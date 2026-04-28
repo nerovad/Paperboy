@@ -6,7 +6,7 @@ class FormField < ApplicationRecord
 
   belongs_to :form_template
 
-  FIELD_TYPES = %w[text text_box dropdown choices_dropdown date phone email number currency yes_no time media_attachment].freeze
+  FIELD_TYPES = %w[text text_box dropdown choices_dropdown date date_time phone email number currency yes_no time media_attachment].freeze
   RESTRICTION_TYPES = %w[none employee group].freeze
   READ_ONLY_TYPES = %w[none always initial].freeze
 
@@ -106,6 +106,10 @@ class FormField < ApplicationRecord
 
   def date?
     field_type == 'date'
+  end
+
+  def date_time?
+    field_type == 'date_time'
   end
 
   def phone?

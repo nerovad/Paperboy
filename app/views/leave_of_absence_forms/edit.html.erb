@@ -112,40 +112,47 @@
 <div class="form-page" style="display:none;">
   <h2>Leave Details</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:last_date_worked START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :last_date_worked, "Last Date Worked" %>
             <%= form.datetime_local_field :last_date_worked, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:last_date_worked END -->
+<!-- FIELD:leave_start_date START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :leave_start_date, "Leave Start Date" %>
-            <%= form.datetime_local_field :leave_start_date, class: "form-control", required: true %>
+            <%= form.time_field :leave_start_date, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:leave_start_date END -->
+<!-- FIELD:leave_end_date START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :leave_end_date, "Leave End Date" %>
             <%= form.datetime_local_field :leave_end_date, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:leave_end_date END -->
+<!-- FIELD:is_this_an_extension START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :is_this_an_extension, "Is this an extension?" %>
             <%= form.select :is_this_an_extension,
                   options_for_select(['Yes', 'No'], @leave_of_absence_form.is_this_an_extension),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
-  <%= form.label :reason_for_leave, "Reason for Leave" %>
-            <%= form.text_area :reason_for_leave, rows: 5, class: "form-control", required: true %>
-          </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:is_this_an_extension END -->
+<!-- FIELD:pay_status_during_leave START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :pay_status_during_leave, "Pay Status During Leave" %>
             <%= form.text_field :pay_status_during_leave, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:pay_status_during_leave END -->
+<!-- FIELD:type_of_leave START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :type_of_leave, "Type of Leave" %>
             <%= form.select :type_of_leave,
                   options_for_select(['FMLA', 'Personal', 'Disability'], @leave_of_absence_form.type_of_leave),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
+<!-- FIELD:type_of_leave END -->
+<!-- FIELD:reason_for_leave START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :reason_for_leave, "Reason for Leave" %>
+            <%= form.text_area :reason_for_leave, rows: 5, class: "form-control", required: true %>
+          </div>
+<!-- FIELD:reason_for_leave END -->
         </div>
       </div>
 
@@ -153,31 +160,35 @@
 <div class="form-page" style="display:none;">
   <h2>Employee Declarations</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:are_you_applying_for_disability_benefits START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :are_you_applying_for_disability_benefits, "Are you applying for disability benefits?" %>
             <%= form.select :are_you_applying_for_disability_benefits,
                   options_for_select(['Yes', 'No'], @leave_of_absence_form.are_you_applying_for_disability_benefits),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:are_you_applying_for_disability_benefits END -->
+<!-- FIELD:do_you_waive_benefits_from_any_sources START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :do_you_waive_benefits_from_any_sources, "Do you waive benefits from any sources?" %>
             <%= form.select :do_you_waive_benefits_from_any_sources,
                   options_for_select(['Yes', 'No'], @leave_of_absence_form.do_you_waive_benefits_from_any_sources),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:do_you_waive_benefits_from_any_sources END -->
+<!-- FIELD:did_the_employee_confirm_this_request_via_email START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :did_the_employee_confirm_this_request_via_email, "Did the employee confirm this request via email?" %>
             <%= form.select :did_the_employee_confirm_this_request_via_email,
                   options_for_select(['Yes', 'No'], @leave_of_absence_form.did_the_employee_confirm_this_request_via_email),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:did_the_employee_confirm_this_request_via_email END -->
+<!-- FIELD:additional_notes_or_comments START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :additional_notes_or_comments, "Additional Notes or Comments" %>
             <%= form.text_area :additional_notes_or_comments, rows: 5, class: "form-control", required: true %>
           </div>
+<!-- FIELD:additional_notes_or_comments END -->
         </div>
       </div>
 

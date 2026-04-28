@@ -66,7 +66,7 @@ class LeaveOfAbsenceFormsController < ApplicationController
     @leave_of_absence_form.employee_id = employee_id if @leave_of_absence_form.respond_to?(:employee_id=)
 
     if @leave_of_absence_form.save
-      # Keep success behavior simple for the template; you can extend per form.
+      # ROUTING_BLOCK_START
       # Multi-step approval routing (1 steps)
 # Step 1: supervisor
 # Look up the submitter's supervisor
@@ -74,14 +74,8 @@ employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
 approver_id = employee&.supervisor_id&.to_s
 @leave_of_absence_form.update(status: :step_1_pending, approver_id: approver_id)
 # TODO: Send notification to supervisor
-# Multi-step approval routing (1 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-approver_id = employee&.supervisor_id&.to_s
-@leave_of_absence_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
 redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+      # ROUTING_BLOCK_END
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
