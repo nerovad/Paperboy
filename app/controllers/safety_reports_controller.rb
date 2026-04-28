@@ -63,18 +63,16 @@ class SafetyReportsController < ApplicationController
     @safety_report.employee_id = employee_id if @safety_report.respond_to?(:employee_id=)
 
     if @safety_report.save
-      # Route to submitter's supervisor for approval
-      employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-      supervisor_id = employee&.supervisor_id&.to_s
-      @safety_report.update(approver_id: supervisor_id)
-
-      # Multi-step approval routing (1 step)
-      # Step 1: supervisor
-      employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-      approver_id = employee&.supervisor_id&.to_s
-      @safety_report.update(status: :step_1_pending, approver_id: approver_id)
-      # TODO: Send notification to supervisor
-      redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+      # ROUTING_BLOCK_START
+      # Multi-step approval routing (1 steps)
+# Step 1: supervisor
+# Look up the submitter's supervisor
+employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+approver_id = employee&.supervisor_id&.to_s
+@safety_report.update(status: :step_1_pending, approver_id: approver_id)
+# TODO: Send notification to supervisor
+redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+      # ROUTING_BLOCK_END
     else
       emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
       unit        = emp ? Unit.find_by(unit_id: emp&.unit) : nil
