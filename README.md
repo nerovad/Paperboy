@@ -12,6 +12,17 @@ Paperboy is a Ruby on Rails 8.x application for managing internal forms (e.g., P
 It integrates with Microsoft SQL Server and uses Sidekiq for background jobs.
 
 ---
+## Dev deployment systemd - Only PUMA restart
+sudo systemctl restart paperboy-dev
+# Deploying with git pull, bundle install, pre-compile, puma restart, Sidekiq restart
+bin/deploy-dev 
+# Check Logs
+sudo journalctl -u paperboy-dev -f
+sudo journalctl -u paperboy-dev-sidekiq -f
+# Stop temporarily (e.g. to run rails s manually)
+sudo systemctl stop paperboy-dev
+# When done:
+sudo systemctl start paperboy-dev
 
 ## Pushing to Github
 Push code from dev server to github
