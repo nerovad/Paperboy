@@ -51,6 +51,7 @@ Rails.application.routes.draw do
   end
   resources :leave_of_absence_forms do
     member do
+            get :download_doctors_note_attachment
       get :pdf
       patch :approve
       patch :deny

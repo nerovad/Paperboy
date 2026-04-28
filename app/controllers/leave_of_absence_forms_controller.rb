@@ -1,6 +1,6 @@
 class LeaveOfAbsenceFormsController < ApplicationController
   # Generated controller for LeaveOfAbsenceForm form
-  before_action :set_leave_of_absence_form, only: [:show, :edit, :update, :pdf, :approve, :deny, :update_status]
+  before_action :set_leave_of_absence_form, only: [:show, :edit, :update, :pdf, :approve, :deny, :update_status, :download_doctors_note_attachment]
 
   def new
     @leave_of_absence_form = LeaveOfAbsenceForm.new
@@ -167,6 +167,11 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
       redirect_to inbox_queue_path, alert: 'Unable to update status.'
     end
   end
+def download_doctors_note_attachment
+  attachment = @leave_of_absence_form.doctors_note_attachment.find(params[:attachment_id])
+  redirect_to rails_blob_path(attachment, disposition: "attachment")
+end
+
 
   private
 
@@ -211,7 +216,8 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
   def leave_of_absence_form_params
     # Only the baseline fields you asked for
     params.require(:leave_of_absence_form).permit(
-      :name, :phone, :email, :agency, :division, :department, :unit
+      :name, :phone, :email, :agency, :division, :department, :unit,
+      doctors_note_attachment: []
     )
   end
 end

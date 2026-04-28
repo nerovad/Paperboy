@@ -3,7 +3,7 @@
   <h1>Edit Leave of Absence</h1>
 </div>
 
-<div class="form-wrapper" data-controller="form-navigation">
+<div class="form-wrapper" data-controller="form-navigation conditional-fields">
   <%= form_with model: @leave_of_absence_form, local: true do |form| %>
 
 <!-- Page 1: Employee Info -->
@@ -114,17 +114,17 @@
         <div class="form-row d-flex flex-wrap">
 <!-- FIELD:last_date_worked START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :last_date_worked, "Last Date Worked" %>
-            <%= form.datetime_local_field :last_date_worked, class: "form-control", required: true %>
+            <%= form.date_field :last_date_worked, class: "form-control", required: true %>
           </div>
 <!-- FIELD:last_date_worked END -->
 <!-- FIELD:leave_start_date START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :leave_start_date, "Leave Start Date" %>
-            <%= form.time_field :leave_start_date, class: "form-control", required: true %>
+            <%= form.date_field :leave_start_date, class: "form-control", required: true %>
           </div>
 <!-- FIELD:leave_start_date END -->
 <!-- FIELD:leave_end_date START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :leave_end_date, "Leave End Date" %>
-            <%= form.datetime_local_field :leave_end_date, class: "form-control", required: true %>
+            <%= form.date_field :leave_end_date, class: "form-control", required: true %>
           </div>
 <!-- FIELD:leave_end_date END -->
 <!-- FIELD:is_this_an_extension START --><div class="form-group flex-fill<%= '' %>">
@@ -150,9 +150,72 @@
 <!-- FIELD:type_of_leave END -->
 <!-- FIELD:reason_for_leave START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :reason_for_leave, "Reason for Leave" %>
-            <%= form.text_area :reason_for_leave, rows: 5, class: "form-control", required: true %>
+            <%= form.select :reason_for_leave,
+                  options_for_select(['Employee Health Condition', 'Disabled by Pregnancy or Childbirth', 'Care for Immediate Family Member', 'Bonding Leave', 'Military Service Leave', 'Emergency Rescue Personnel Leave', 'To assist a child spouse or parent who is a member of the National Guard or Reserves with a qualifying exigency related to active duty or a call of active duty status in support of a contingency operation', 'To care for a child spouse parent or next of kin service member of the United States Armed Forces with serious injury or illness incurred in the line of duty', 'Donor Leave', 'Personal Leave', 'Other'], @leave_of_absence_form.reason_for_leave),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: true, data: { conditional_trigger: 'reason_for_leave' } } %>
           </div>
 <!-- FIELD:reason_for_leave END -->
+<!-- FIELD:work_related_injury START -->          <div class="conditional-field" data-depends-on="reason_for_leave" data-show-values="[&quot;Employee Health Condition&quot;]" style="<%= ["Employee Health Condition"].include?(@leave_of_absence_form.reason_for_leave) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :work_related_injury, "Work related Injury?" %>
+            <%= form.select :work_related_injury,
+                  options_for_select(['Yes', 'No'], @leave_of_absence_form.work_related_injury),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
+          </div>
+          </div>
+<!-- FIELD:work_related_injury END -->
+<!-- FIELD:injury_date START -->          <div class="conditional-field" data-depends-on="reason_for_leave" data-show-values="[&quot;Employee Health Condition&quot;]" style="<%= ["Employee Health Condition"].include?(@leave_of_absence_form.reason_for_leave) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :injury_date, "Injury Date" %>
+            <%= form.date_field :injury_date, class: "form-control" %>
+          </div>
+          </div>
+<!-- FIELD:injury_date END -->
+<!-- FIELD:accomodations_upon_return_to_work START -->          <div class="conditional-field" data-depends-on="reason_for_leave" data-show-values="[&quot;Employee Health Condition&quot;]" style="<%= ["Employee Health Condition"].include?(@leave_of_absence_form.reason_for_leave) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :accomodations_upon_return_to_work, "Accomodations Upon Return to Work?" %>
+            <%= form.select :accomodations_upon_return_to_work,
+                  options_for_select(['Yes', 'No'], @leave_of_absence_form.accomodations_upon_return_to_work),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
+          </div>
+          </div>
+<!-- FIELD:accomodations_upon_return_to_work END -->
+<!-- FIELD:doctors_note_attachment START -->          <div class="conditional-field" data-depends-on="reason_for_leave" data-show-values="[&quot;Employee Health Condition&quot;]" style="<%= ["Employee Health Condition"].include?(@leave_of_absence_form.reason_for_leave) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>" data-controller="file-preview" data-file-preview-max-value="10">
+  <%= form.label :doctors_note_attachment, "Doctors Note Attachment" %>
+            <% if @leave_of_absence_form.doctors_note_attachment.attached? %>
+              <div class="existing-attachments">
+                <small class="form-text text-muted">Currently attached:</small>
+                <div class="file-preview-grid">
+                  <% @leave_of_absence_form.doctors_note_attachment.each do |attachment| %>
+                    <div class="file-preview-item">
+                      <% if attachment.content_type.start_with?('image/') %>
+                        <%= image_tag rails_blob_path(attachment, disposition: 'inline'), class: 'file-preview-thumb' %>
+                      <% else %>
+                        <div class="file-preview-icon"><i class="fas fa-file-pdf"></i></div>
+                      <% end %>
+                      <span class="file-preview-name"><%= attachment.filename %></span>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            <%= form.file_field :doctors_note_attachment, multiple: true, class: "form-control", direct_upload: true, accept: "image/jpeg,image/png,image/gif,application/pdf", data: { file_preview_target: "input", action: "change->file-preview#preview" } %>
+            <small class="form-text text-muted">You can select files multiple times — up to 10 total. <span data-file-preview-target="count"></span></small>
+            <div data-file-preview-target="preview" class="file-preview-grid"></div>
+          </div>
+          </div>
+<!-- FIELD:doctors_note_attachment END -->
+<!-- FIELD:other_reason START -->          <div class="conditional-field" data-depends-on="reason_for_leave" data-show-values="[&quot;Other&quot;]" style="<%= ["Other"].include?(@leave_of_absence_form.reason_for_leave) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :other_reason, "Other Reason" %>
+            <%= form.text_area :other_reason, rows: 5, class: "form-control" %>
+          </div>
+          </div>
+<!-- FIELD:other_reason END -->
         </div>
       </div>
 
