@@ -24,6 +24,23 @@ sudo systemctl stop paperboy-dev
 # When done:
 sudo systemctl start paperboy-dev
 
+## Stage Deployment
+  Restart Puma (just Puma):
+  sudo systemctl restart paperboy-stage
+
+  Restart both (Puma + Sidekiq):
+  sudo systemctl restart paperboy-stage paperboy-stage-sidekiq
+
+  Full deploy (git pull → bundle → assets:clobber → assets:precompile → restart both):
+  bin/deploy-stage              # deploys master
+  bin/deploy-stage some-branch  # deploys a different branch
+
+  It mirrors bin/deploy-dev exactly, except it runs RAILS_ENV=staging, bundle install --without development test, and restarts
+  the paperboy-stage* units. You'll get prompted for your sudo password at the two systemctl restart calls near the end.
+
+  Tail logs while debugging:
+  journalctl -u paperboy-stage -f
+  journalctl -u paperboy-stage-sidekiq -f
 ## Pushing to Github
 Push code from dev server to github
 git status
