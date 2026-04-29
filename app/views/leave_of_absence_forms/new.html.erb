@@ -141,7 +141,10 @@
 <!-- FIELD:is_this_an_extension END -->
 <!-- FIELD:pay_status_during_leave START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :pay_status_during_leave, "Pay Status During Leave" %>
-            <%= form.text_field :pay_status_during_leave, class: "form-control" %>
+            <%= form.select :pay_status_during_leave,
+                  options_for_select(['Full integration with disability benefits up to 100% of base biweekly compensation (Required if receiving disability benefits optional if receiving TTD)', 'Leave bank hours equal to total biweekly scheduled work hours (Required if not receiving disability benefits or if disability benefits waived)', 'Leave without pay (LWOP) equal to total biweekly scheduled work hours (Fully unpaid no leave bank hours may be reported for the duration of the leave)', 'Partial integration with temporary total disability (TTD) benefits (Reported hours must be consistent each pay period)']),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:pay_status_during_leave END -->
 <!-- FIELD:type_of_leave START --><div class="form-group flex-fill<%= '' %>">
@@ -256,6 +259,31 @@
          data-required-acknowledgement="true">
 </div>
 <!-- FIELD:terms END -->
+<!-- FIELD:waiver_of_disability_benefits START --><div class="form-group flex-fill information-field"
+     data-controller="information-field"
+     data-information-field-acknowledgeable-value="true"
+     data-information-field-label-value="Waiver of Disability Benefits"
+     data-information-field-text-value="If you choose not to file a claim for disability benefits with your group disability plan(s) and are requesting a paid leave, you&#10;must read and sign this waiver, and submit it to your agency/department in advance of your leave of absence. After&#10;receiving the signed Waiver, you will be allowed to use the appropriate hours from your leave bank balances in increments&#10;to equal your full biweekly schedule, and until balances are exhausted or you stop authorizing leave bank usage.&#10;By not filing a claim with your disability plan(s), you may be forfeiting a variety of benefits including but not limited to: full&#10;and partial disability benefit payments, Return to Work Incentive payments, Reasonable Accommodation Expense&#10;Benefits and Temporary Recovery benefits. Please note that each plan has an application deadline, after which you forfeit&#10;all rights to benefits. Your department representative may provide a copy of this signed Waiver to your group disability&#10;plan(s) and to County Human Resources.&#10;I understand that leave bank usage must begin at the onset of my leave of absence. I further understand that if I change&#10;my decision and later elect to file a claim for any group disability plan(s), I will be expected to repay the County of Ventura&#10;and/or any group disability plan(s) that has paid me any disability benefit(s) for the same time period of this Waiver.&#10;I have read this form and acknowledge that I understand and agree not to file for disability benefits with any group&#10;disability plan(s) for this leave of absence. I authorize use of my leave bank balances in order to receive pay equal to my&#10;full regular work schedule for the following period(s):">
+  <button type="button"
+          class="btn information-trigger"
+          data-action="click->information-field#open"
+          data-information-field-target="trigger">
+    Waiver of Disability Benefits <span class="information-required-indicator">*</span>
+  </button>
+  <span class="information-status" data-information-field-target="status"></span>
+  <input type="hidden"
+         data-information-field-target="acknowledgedInput"
+         data-required-acknowledgement="true">
+</div>
+<!-- FIELD:waiver_of_disability_benefits END -->
+<!-- FIELD:benefits_waived START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
+  <%= form.label :benefits_waived, "Benefits Waived" %>
+            <%= form.select :benefits_waived,
+                  options_for_select(['SDI (State Disability Insurance)', 'PFL (Paid Family Leave)', 'LTD (COV Group Plan)', 'Wage Supplement Plan']),
+                  { include_blank: false },
+                  { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+          </div>
+<!-- FIELD:benefits_waived END -->
         </div>
       </div>
 
