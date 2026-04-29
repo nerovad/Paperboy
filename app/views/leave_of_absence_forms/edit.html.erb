@@ -114,17 +114,17 @@
         <div class="form-row d-flex flex-wrap">
 <!-- FIELD:last_date_worked START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :last_date_worked, "Last Date Worked" %>
-            <%= form.date_field :last_date_worked, class: "form-control", required: true %>
+            <%= form.date_field :last_date_worked, class: "form-control" %>
           </div>
 <!-- FIELD:last_date_worked END -->
 <!-- FIELD:leave_start_date START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :leave_start_date, "Leave Start Date" %>
-            <%= form.date_field :leave_start_date, class: "form-control", required: true %>
+            <%= form.date_field :leave_start_date, class: "form-control" %>
           </div>
 <!-- FIELD:leave_start_date END -->
 <!-- FIELD:leave_end_date START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :leave_end_date, "Leave End Date" %>
-            <%= form.date_field :leave_end_date, class: "form-control", required: true %>
+            <%= form.date_field :leave_end_date, class: "form-control" %>
           </div>
 <!-- FIELD:leave_end_date END -->
 <!-- FIELD:is_this_an_extension START --><div class="form-group flex-fill<%= '' %>">
@@ -132,12 +132,12 @@
             <%= form.select :is_this_an_extension,
                   options_for_select(['Yes', 'No'], @leave_of_absence_form.is_this_an_extension),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:is_this_an_extension END -->
 <!-- FIELD:pay_status_during_leave START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :pay_status_during_leave, "Pay Status During Leave" %>
-            <%= form.text_field :pay_status_during_leave, class: "form-control", required: true %>
+            <%= form.text_field :pay_status_during_leave, class: "form-control" %>
           </div>
 <!-- FIELD:pay_status_during_leave END -->
 <!-- FIELD:type_of_leave START --><div class="form-group flex-fill<%= '' %>">
@@ -145,7 +145,7 @@
             <%= form.select :type_of_leave,
                   options_for_select(['FMLA', 'Personal', 'Disability'], @leave_of_absence_form.type_of_leave),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:type_of_leave END -->
 <!-- FIELD:reason_for_leave START --><div class="form-group flex-fill<%= '' %>">
@@ -153,7 +153,7 @@
             <%= form.select :reason_for_leave,
                   options_for_select(['Employee Health Condition', 'Disabled by Pregnancy or Childbirth', 'Care for Immediate Family Member', 'Bonding Leave', 'Military Service Leave', 'Emergency Rescue Personnel Leave', 'To assist a child spouse or parent who is a member of the National Guard or Reserves with a qualifying exigency related to active duty or a call of active duty status in support of a contingency operation', 'To care for a child spouse parent or next of kin service member of the United States Armed Forces with serious injury or illness incurred in the line of duty', 'Donor Leave', 'Personal Leave', 'Other'], @leave_of_absence_form.reason_for_leave),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true, data: { conditional_trigger: 'reason_for_leave' } } %>
+                  { class: "form-control", data: { conditional_trigger: 'reason_for_leave' } } %>
           </div>
 <!-- FIELD:reason_for_leave END -->
 <!-- FIELD:work_related_injury START -->          <div class="conditional-field" data-depends-on="reason_for_leave" data-show-values="[&quot;Employee Health Condition&quot;]" style="<%= ["Employee Health Condition"].include?(@leave_of_absence_form.reason_for_leave) ? '' : 'display: none;' %>">
@@ -228,7 +228,7 @@
             <%= form.select :are_you_applying_for_disability_benefits,
                   options_for_select(['Yes', 'No'], @leave_of_absence_form.are_you_applying_for_disability_benefits),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:are_you_applying_for_disability_benefits END -->
 <!-- FIELD:do_you_waive_benefits_from_any_sources START --><div class="form-group flex-fill<%= '' %>">
@@ -236,7 +236,7 @@
             <%= form.select :do_you_waive_benefits_from_any_sources,
                   options_for_select(['Yes', 'No'], @leave_of_absence_form.do_you_waive_benefits_from_any_sources),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:do_you_waive_benefits_from_any_sources END -->
 <!-- FIELD:did_the_employee_confirm_this_request_via_email START --><div class="form-group flex-fill<%= '' %>">
@@ -244,14 +244,31 @@
             <%= form.select :did_the_employee_confirm_this_request_via_email,
                   options_for_select(['Yes', 'No'], @leave_of_absence_form.did_the_employee_confirm_this_request_via_email),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:did_the_employee_confirm_this_request_via_email END -->
 <!-- FIELD:additional_notes_or_comments START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :additional_notes_or_comments, "Additional Notes or Comments" %>
-            <%= form.text_area :additional_notes_or_comments, rows: 5, class: "form-control", required: true %>
+            <%= form.text_area :additional_notes_or_comments, rows: 5, class: "form-control" %>
           </div>
 <!-- FIELD:additional_notes_or_comments END -->
+<!-- FIELD:terms START --><div class="form-group flex-fill information-field"
+     data-controller="information-field"
+     data-information-field-acknowledgeable-value="true"
+     data-information-field-label-value="Terms"
+     data-information-field-text-value=".*&#10;Initial Here*: CRC Date*: 10/31/2022 Employee ID 130799 Employee Name*: Carmen Contreras *:&#10;1. I am bound by all the terms and conditions of the County’s Leave of Absence Program and that the County has the&#10;right to grant or deny any request for a leave of absence or an extension thereof, subject by provisions of the Federal&#10;Family Medical Leave Act, the California Family Rights Act, the California Pregnancy Disability Leave rights,&#10;applicable collective bargaining agreements, Article 22, Section 2203 of the County of Ventura Personnel Rules and&#10;Regulations, and the County Administrative Policy Manual.&#10;2. I may be required to make premium payments directly to the County or its third-party administrator while on leave of&#10;absence. If I fail to make payments on a timely basis, coverage under that benefit will be canceled until I return from&#10;leave and deductions resume. If the County mistakenly pays any premiums on my behalf, I agree to repay the County&#10;directly or through wage/salary deduction.&#10;3. The failure to return to work on the day following the “Date Leave Ends” may be considered inexcusable absence&#10;without leave and subject me to disciplinary action. I also understand that if I am absent from work without&#10;authorization for three (3) days or two (2) consecutive twenty-four hour work shifts beginning with the day following&#10;the “Date Leave Ends” I have entered on the front of this form, the County may deem that I have voluntarily&#10;abandoned my job under Article 22, Section 2203, of the County of Ventura Personnel Rules and Regulations.&#10;4. Failure to provide a complete and sufficient medical certification may result in a denial of my leave of absence&#10;request. I further understand that I may be required to provide periodic reports on my status and intent to return to&#10;work. I agree to notify BOTH, my supervisor and leave of absence coordinator of my availability to return to full or&#10;restricted duty if I am released by my doctor prior to the end of an approved medical leave of absence.&#10;5. I agree to comply with the County’s Integration policy to which employees may use approved leave bank hours in&#10;conjunction with disability benefits that result in the employee’s full biweekly base pay. The policy prevents employees&#10;from using leave bank hours that result in pay that is greater than their biweekly base rate. I understand that the&#10;appropriate use of your leave bank hours must be because of and consistent with the leave granted and that I have&#10;provided my department with payroll instructions during my leave of absence.&#10;6. My dependent(s) eligibility for health care coverage is contingent on my submitting the proper forms within 31 days&#10;of (1) acquiring a new dependent (birth, marriage, placement for adoption, permanent legal custody), (2) a current&#10;dependent losing eligibility (divorce, dependent child turns age 26, death), even when the event occurs during my&#10;leave of absence.&#10;7. I must comply with the Flexible Benefits Program Open Enrollment rules even if I am on leave of absence. Any&#10;applicable forms must be completed and submitted during the open enrollment period, not when I return from leave of&#10;absence and failure to comply may jeopardize my participation.&#10;8. I agree to notify my department of any change of address and/or phone number. I understand and agree that all&#10;communications from the County of Ventura will be sent to the address I have on file and that I am responsible for&#10;acknowledging information sent to the address on file. READ THE TERMS CAREFULLY BEFORE INITIALING. I understand that:&#10;I am bound by all the terms and conditions of the County’s Leave of Absence Program and that the County has the&#10;right to grant or deny any request for a leave of absence or an extension thereof, subject by provisions of the Federal&#10;Family Medical Leave Act, the California Family Rights Act, the California Pregnancy Disability Leave rights,&#10;applicable collective bargaining agreements, Article 22, Section 2203 of the County of Ventura Personnel Rules and&#10;Regulations, and the County Administrative Policy Manual.&#10;I may be required to make premium payments directly to the County or its third-party administrator while on leave of&#10;absence. If I fail to make payments on a timely basis, coverage under that benefit will be canceled until I return from&#10;leave and deductions resume. If the County mistakenly pays any premiums on my behalf, I agree to repay the County&#10;directly or through wage/salary deduction.&#10;The failure to return to work on the day following the “Date Leave Ends” may be considered inexcusable absence&#10;without leave and subject me to disciplinary action. I also understand that if I am absent from work without&#10;authorization for three (3) days or two (2) consecutive twenty-four hour work shifts beginning with the day following&#10;the “Date Leave Ends” I have entered on the front of this form, the County may deem that I have voluntarily&#10;abandoned my job under Article 22, Section 2203, of the County of Ventura Personnel Rules and Regulations.&#10;Failure to provide a complete and sufficient medical certification may result in a denial of my leave of absence&#10;request. I further understand that I may be required to provide periodic reports on my status and intent to return to&#10;work. I agree to notify BOTH, my supervisor and leave of absence coordinator of my availability to return to full or&#10;restricted duty if I am released by my doctor prior to the end of an approved medical leave of absence.&#10;I agree to comply with the County’s Integration policy to which employees may use approved leave bank hours in&#10;conjunction with disability benefits that result in the employee’s full biweekly base pay. The policy prevents employees&#10;from using leave bank hours that result in pay that is greater than their biweekly base rate. I understand that the&#10;appropriate use of your leave bank hours must be because of and consistent with the leave granted and that I have&#10;provided my department with payroll instructions during my leave of absence.&#10;My dependent(s) eligibility for health care coverage is contingent on my submitting the proper forms within 31 days of&#10;(1) acquiring a new dependent (birth, marriage, placement for adoption, permanent legal custody), (2) a current&#10;dependent losing eligibility (divorce, dependent child turns age 26, death), even when the event occurs during my&#10;leave of absence.&#10;I must comply with the Flexible Benefits Program Open Enrollment rules even if I am on leave of absence. Any&#10;applicable forms must be completed and submitted during the open enrollment period, not when I return from leave of&#10;absence and failure to comply may jeopardize my participation.&#10;I agree to notify my department of any change of address and/or phone number. I understand and agree that all&#10;communications from the County of Ventura will be sent to the address I have on file and that I am responsible for&#10;acknowledging information sent to the address on file.&#10;&#10;I affirm that I have read, understand, and agree to the terms of this request as stated above.&#10;I have received the Leave of Absence Handbook (see LOA Handbook button) and the&#10;informational packet (see Resources Packet button) and will be provided with appropriate&#10;entitlement notices by the LOA Coordinator once the leave request has been processed">
+  <button type="button"
+          class="btn information-trigger"
+          data-action="click->information-field#open"
+          data-information-field-target="trigger">
+    Terms <span class="information-required-indicator">*</span>
+  </button>
+  <span class="information-status" data-information-field-target="status"></span>
+  <input type="hidden"
+         data-information-field-target="acknowledgedInput"
+         data-required-acknowledgement="true">
+</div>
+<!-- FIELD:terms END -->
         </div>
       </div>
 

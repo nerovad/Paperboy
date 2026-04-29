@@ -430,6 +430,9 @@ class FormTemplatesController < ApplicationController
       elsif field_data[:dropdown_values].present?
         options['values'] = field_data[:dropdown_values].split(',').map(&:strip)
       end
+    when 'information'
+      options['information_text'] = field_data[:information_text].to_s
+      options['acknowledgeable'] = field_data[:acknowledgeable] == '1'
     end
 
     options
@@ -738,6 +741,11 @@ class FormTemplatesController < ApplicationController
                    else
                      {}
                    end
+                 when 'information'
+                   {
+                     'information_text' => f[:information_text].to_s,
+                     'acknowledgeable' => f[:acknowledgeable] == '1'
+                   }
                  else {}
                  end
       }
@@ -1738,6 +1746,12 @@ class FormTemplatesController < ApplicationController
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
+    when 'information'
+      html = ""
+      html += conditional_wrapper_start
+      html += generate_information_field_html(field)
+      html += conditional_wrapper_end
+      html
     end
   end
 
@@ -2150,11 +2164,46 @@ class FormTemplatesController < ApplicationController
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
+    when 'information'
+      html = ""
+      html += conditional_wrapper_start
+      html += generate_information_field_html(field)
+      html += conditional_wrapper_end
+      html
     end
   end
 
   def has_conditional_dependents?(field)
     field.form_template.form_fields.any? { |f| f.conditional_field_id == field.id }
+  end
+
+  # Generate the ERB markup for an "information" field — a button that opens
+  # a modal with display-only text. When `acknowledgeable` is true, the user
+  # must click "I Agree" before the form will allow submission. No DB column
+  # is written; agreement is enforced entirely on the client.
+  def generate_information_field_html(field)
+    text_escaped = ERB::Util.html_escape(field.information_text.to_s).gsub("\r\n", "\n").gsub("\n", '&#10;')
+    label_escaped = ERB::Util.html_escape(field.label.to_s)
+    ack_value = field.acknowledgeable? ? 'true' : 'false'
+
+    <<~HTML
+              <div class="form-group flex-fill information-field"
+                   data-controller="information-field"
+                   data-information-field-acknowledgeable-value="#{ack_value}"
+                   data-information-field-label-value="#{label_escaped}"
+                   data-information-field-text-value="#{text_escaped}">
+                <button type="button"
+                        class="btn information-trigger"
+                        data-action="click->information-field#open"
+                        data-information-field-target="trigger">
+                  #{label_escaped}#{' <span class="information-required-indicator">*</span>' if field.acknowledgeable?}
+                </button>
+                <span class="information-status" data-information-field-target="status"></span>
+                <input type="hidden"
+                       data-information-field-target="acknowledgedInput"
+                       data-required-acknowledgement="#{ack_value}">
+              </div>
+    HTML
   end
 
   def generate_editable_check(field)

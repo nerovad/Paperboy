@@ -1,31 +1,31 @@
 class SafetyReport < ApplicationRecord
   include TrackableStatus
 
-  enum :status, {
-    in_progress: 0,
+enum :status, {
+  in_progress: 0,
     step_1_pending: 1,
     approved: 2,
     denied: 3,
     cancelled: 4
-  }, default: :in_progress
+}, default: :in_progress
 
-  # Normalized status categories for cross-form reporting
-  STATUS_CATEGORIES = {
-    in_progress: :in_review,
+# Normalized status categories for cross-form reporting
+STATUS_CATEGORIES = {
+  in_progress: :in_review,
     step_1_pending: :in_review,
     approved: :approved,
     denied: :denied,
     cancelled: :cancelled
-  }.freeze
+}.freeze
 
-  # Human-readable status labels
-  STATUS_LABELS = {
-    in_progress: "In Progress",
+# Human-readable status labels
+STATUS_LABELS = {
+  in_progress: "In Progress",
     step_1_pending: "Sent to Supervisor",
     approved: "Approved",
     denied: "Denied",
     cancelled: "Cancelled"
-  }.freeze
+}.freeze
 
   GARY_HOWARD_ID = '135272'.freeze
 

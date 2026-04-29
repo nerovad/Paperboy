@@ -344,6 +344,7 @@
           <option value="yes_no">Yes / No</option>
           <option value="time">Time</option>
           <option value="media_attachment">Media Attachment</option>
+          <option value="information">Information</option>
         </select>
       </div>
 
@@ -488,6 +489,19 @@
           </select>
         </div>
       </div>
+    </div>
+
+    <!-- Information Options -->
+    <div class="field-options information-options" style="display: none; margin-top: 8px; padding: 8px; background: #e8f4f8; border-radius: 4px; border-left: 3px solid #0c5460;">
+      <label style="font-size: 0.85em; color: #495057; display: block; margin-bottom: 4px;">Information Text (shown in modal):</label>
+      <textarea name="fields[][information_text]"
+                class="form-control form-control-sm"
+                rows="4"
+                placeholder="Enter the terms or information that will appear in the modal..."></textarea>
+      <label style="font-size: 0.85em; color: #495057; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px;">
+        <input type="checkbox" name="fields[][acknowledgeable]" value="1">
+        Requires acknowledgement (user must agree before submitting)
+      </label>
     </div>
 
     <!-- Conditional Logic Options -->

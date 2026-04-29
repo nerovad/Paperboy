@@ -39,6 +39,7 @@ import DeleteFormController from "controllers/delete_form_controller"
 import SelectAllController from "controllers/select_all_controller"
 import DependentSelectController from "controllers/dependent_select_controller"
 import ClickableRowController from "controllers/clickable_row_controller"
+import InformationFieldController from "controllers/information_field_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -79,3 +80,4 @@ application.register("delete-form", DeleteFormController)
 application.register("select-all", SelectAllController)
 application.register("dependent-select", DependentSelectController)
 application.register("clickable-row", ClickableRowController)
+application.register("information-field", InformationFieldController)

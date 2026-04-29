@@ -102,3 +102,95 @@
   font-size: 20px;
   cursor: pointer;
 }
+
+/* Information field (form builder field type "information") */
+.information-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.information-trigger {
+  background: #0c5460;
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.95rem;
+
+  &:hover { background: #094047; }
+
+  .information-required-indicator {
+    color: #ffd166;
+    margin-left: 4px;
+  }
+}
+
+.information-status {
+  font-size: 0.85em;
+
+  &--pending { color: #856404; }
+  &--acknowledged { color: #155724; font-weight: 600; }
+}
+
+.information-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1100;
+  opacity: 0;
+  transition: opacity 120ms ease;
+
+  &.show { opacity: 1; }
+}
+
+.information-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 600px;
+  max-width: 92vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+}
+
+.information-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid #eee;
+
+  h3 { margin: 0; font-size: 1.1rem; }
+}
+
+.information-modal__close {
+  background: transparent;
+  border: 0;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.information-modal__body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex: 1;
+  line-height: 1.5;
+
+  p { margin: 0 0 0.85em; }
+  p:last-child { margin-bottom: 0; }
+}
+
+.information-modal__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 18px;
+  border-top: 1px solid #eee;
+}

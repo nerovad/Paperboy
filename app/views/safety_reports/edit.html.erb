@@ -112,20 +112,22 @@
 <div class="form-page" style="display:none;">
   <h2>Report</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:report_type START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :report_type, "Report Type" %>
             <%= form.select :report_type,
                   options_for_select(['Inital', 'Follow-up'], @safety_report.report_type),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:report_type END -->
+<!-- FIELD:bloodborne_pathogen_exposure START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :bloodborne_pathogen_exposure, "Bloodborne Pathogen Exposure?" %>
             <%= form.select :bloodborne_pathogen_exposure,
                   options_for_select(['Yes', 'No'], @safety_report.bloodborne_pathogen_exposure),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
+<!-- FIELD:bloodborne_pathogen_exposure END -->
         </div>
       </div>
 
@@ -133,15 +135,17 @@
 <div class="form-page" style="display:none;">
   <h2>Supervisor and Witness Info</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:supervisor_name START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :supervisor_name, "Supervisor Name" %>
             <%= form.text_field :supervisor_name, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:supervisor_name END -->
+<!-- FIELD:witness_name START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :witness_name, "Witness Name" %>
             <%= form.text_field :witness_name, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:witness_name END -->
+<!-- FIELD:witness_phone START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :witness_phone, "Witness Phone" %>
             <%= form.text_field :witness_phone,
                   class: "form-control",
@@ -156,6 +160,7 @@
             <small id="witnessPhoneHelp" class="help-text text-muted"></small>
             <div id="witnessPhoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
           </div>
+<!-- FIELD:witness_phone END -->
         </div>
       </div>
 
@@ -163,44 +168,52 @@
 <div class="form-page" style="display:none;">
   <h2>Incident Dates and Status</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:date_of_injury_or_illness START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_of_injury_or_illness, "Date of Injury or Illness" %>
-            <%= form.datetime_local_field :date_of_injury_or_illness, class: "form-control", required: true %>
+            <%= form.date_field :date_of_injury_or_illness, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:date_of_injury_or_illness END -->
+<!-- FIELD:date_employer_notified START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_employer_notified, "Date Employer Notified" %>
-            <%= form.datetime_local_field :date_employer_notified, class: "form-control", required: true %>
+            <%= form.date_field :date_employer_notified, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:date_employer_notified END -->
+<!-- FIELD:date_dwc1_given START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_dwc1_given, "Date DWC-1 Given" %>
-            <%= form.datetime_local_field :date_dwc1_given, class: "form-control", required: true %>
+            <%= form.date_field :date_dwc1_given, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:date_dwc1_given END -->
+<!-- FIELD:who_gave_the_dwc1 START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :who_gave_the_dwc1, "Who Gave the DWC-1" %>
-            <%= form.text_field :who_gave_the_dwc1, class: "form-control", required: true %>
+            <%= form.date_field :who_gave_the_dwc1, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:who_gave_the_dwc1 END -->
+<!-- FIELD:date_last_worked START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_last_worked, "Date Last Worked" %>
-            <%= form.datetime_local_field :date_last_worked, class: "form-control", required: true %>
+            <%= form.date_field :date_last_worked, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:date_last_worked END -->
+<!-- FIELD:date_returned_to_work START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_returned_to_work, "Date Returned to Work" %>
-            <%= form.datetime_local_field :date_returned_to_work, class: "form-control", required: true %>
+            <%= form.date_field :date_returned_to_work, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:date_returned_to_work END -->
+<!-- FIELD:missed_full_work_day_ START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :missed_full_work_day_, "Missed Full Work Day? " %>
             <%= form.select :missed_full_work_day_,
                   options_for_select(['Yes', 'No'], @safety_report.missed_full_work_day_),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:missed_full_work_day_ END -->
+<!-- FIELD:still_off_work START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :still_off_work, "Still off Work?" %>
             <%= form.select :still_off_work,
                   options_for_select(['Yes', 'No'], @safety_report.still_off_work),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
+<!-- FIELD:still_off_work END -->
         </div>
       </div>
 
@@ -208,36 +221,42 @@
 <div class="form-page" style="display:none;">
   <h2>Incident Description</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:specific_injury_and_body_part_affected START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :specific_injury_and_body_part_affected, "Specific Injury and Body Part Affected" %>
             <%= form.text_area :specific_injury_and_body_part_affected, rows: 5, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:specific_injury_and_body_part_affected END -->
+<!-- FIELD:location_of_incident START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :location_of_incident, "Location of Incident" %>
             <%= form.select :location_of_incident,
                   options_for_select(['Yes', 'No'], @safety_report.location_of_incident),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:location_of_incident END -->
+<!-- FIELD:on_employer_premises START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :on_employer_premises, "On Employer Premises?" %>
             <%= form.select :on_employer_premises,
                   options_for_select(['Yes', 'No'], @safety_report.on_employer_premises),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:on_employer_premises END -->
+<!-- FIELD:department_where_event_occurred START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :department_where_event_occurred, "Department Where Event Occurred" %>
             <%= form.text_field :department_where_event_occurred, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:department_where_event_occurred END -->
+<!-- FIELD:activity_at_time_of_incident START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :activity_at_time_of_incident, "Activity at Time of Incident" %>
             <%= form.text_area :activity_at_time_of_incident, rows: 5, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:activity_at_time_of_incident END -->
+<!-- FIELD:how_the_injury_occurred START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :how_the_injury_occurred, "How the Injury Occurred" %>
             <%= form.text_area :how_the_injury_occurred, rows: 5, class: "form-control", required: true %>
           </div>
+<!-- FIELD:how_the_injury_occurred END -->
         </div>
       </div>
 
@@ -245,37 +264,44 @@
 <div class="form-page" style="display:none;">
   <h2>Medical Info</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:physician_name START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :physician_name, "Physician Name" %>
             <%= form.text_field :physician_name, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:physician_name END -->
+<!-- FIELD:physician_address START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :physician_address, "Physician Address" %>
             <%= form.text_field :physician_address, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:physician_address END -->
+<!-- FIELD:physician_phone START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :physician_phone, "Physician Phone" %>
             <%= form.text_field :physician_phone, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:physician_phone END -->
+<!-- FIELD:hospital_name START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :hospital_name, "Hospital Name" %>
             <%= form.text_field :hospital_name, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:hospital_name END -->
+<!-- FIELD:hospital_address START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :hospital_address, "Hospital Address" %>
             <%= form.text_field :hospital_address, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:hospital_address END -->
+<!-- FIELD:hospital_phone START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :hospital_phone, "Hospital Phone" %>
             <%= form.text_field :hospital_phone, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:hospital_phone END -->
+<!-- FIELD:hospitalized_overnight START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :hospitalized_overnight, "Hospitalized Overnight?" %>
             <%= form.select :hospitalized_overnight,
                   options_for_select(['Yes', 'No'], @safety_report.hospitalized_overnight),
                   { include_blank: "Select..." },
                   { class: "form-control" } %>
           </div>
+<!-- FIELD:hospitalized_overnight END -->
         </div>
       </div>
 
@@ -283,26 +309,31 @@
 <div class="form-page" style="display:none;">
   <h2>Investigation Details</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:investigator_name START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :investigator_name, "Investigator Name" %>
             <%= form.text_field :investigator_name, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:investigator_name END -->
+<!-- FIELD:investigator_title START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :investigator_title, "Investigator Title" %>
             <%= form.text_field :investigator_title, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:investigator_title END -->
+<!-- FIELD:investigator_phone START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :investigator_phone, "Investigator Phone" %>
             <%= form.text_field :investigator_phone, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:investigator_phone END -->
+<!-- FIELD:nature_of_incident START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :nature_of_incident, "Nature of Incident" %>
             <%= form.text_area :nature_of_incident, rows: 5, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:nature_of_incident END -->
+<!-- FIELD:cause_of_incident START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :cause_of_incident, "Cause of Incident" %>
             <%= form.text_area :cause_of_incident, rows: 5, class: "form-control" %>
           </div>
+<!-- FIELD:cause_of_incident END -->
         </div>
       </div>
 
@@ -310,18 +341,21 @@
 <div class="form-page" style="display:none;">
   <h2>Severity & Root Cause</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:root_cause START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :root_cause, "Root Cause" %>
             <%= form.text_area :root_cause, rows: 5, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:root_cause END -->
+<!-- FIELD:assessment_of_future_severity_potential START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :assessment_of_future_severity_potential, "Assessment of Future Severity Potential" %>
             <%= form.text_area :assessment_of_future_severity_potential, rows: 5, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:assessment_of_future_severity_potential END -->
+<!-- FIELD:assessment_of_probability_of_recurrence START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :assessment_of_probability_of_recurrence, "Assessment of Probability of Recurrence" %>
             <%= form.text_area :assessment_of_probability_of_recurrence, rows: 5, class: "form-control" %>
           </div>
+<!-- FIELD:assessment_of_probability_of_recurrence END -->
         </div>
       </div>
 
@@ -329,36 +363,42 @@
 <div class="form-page" style="display:none;">
   <h2>Corrective Actions</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:unsafe_condition_corrected_immediately START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :unsafe_condition_corrected_immediately, "Unsafe condition corrected immediately?" %>
             <%= form.select :unsafe_condition_corrected_immediately,
                   options_for_select(['Yes', 'No'], @safety_report.unsafe_condition_corrected_immediately),
                   { include_blank: "Select..." },
                   { class: "form-control" } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:unsafe_condition_corrected_immediately END -->
+<!-- FIELD:checklistprocedurestraining_modified START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :checklistprocedurestraining_modified, "Checklist/procedures/training modified?" %>
             <%= form.select :checklistprocedurestraining_modified,
                   options_for_select(['Yes', 'No'], @safety_report.checklistprocedurestraining_modified),
                   { include_blank: "Select..." },
                   { class: "form-control" } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:checklistprocedurestraining_modified END -->
+<!-- FIELD:person_responsible_for_corrective_action START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :person_responsible_for_corrective_action, "Person Responsible for Corrective Action" %>
             <%= form.text_field :person_responsible_for_corrective_action, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:person_responsible_for_corrective_action END -->
+<!-- FIELD:title START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :title, "Title" %>
             <%= form.text_field :title, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:title END -->
+<!-- FIELD:targeted_completion_date START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :targeted_completion_date, "Targeted Completion Date" %>
-            <%= form.datetime_local_field :targeted_completion_date, class: "form-control" %>
+            <%= form.date_field :targeted_completion_date, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:targeted_completion_date END -->
+<!-- FIELD:actual_completion_date START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :actual_completion_date, "Actual Completion Date" %>
-            <%= form.datetime_local_field :actual_completion_date, class: "form-control" %>
+            <%= form.date_field :actual_completion_date, class: "form-control" %>
           </div>
+<!-- FIELD:actual_completion_date END -->
         </div>
       </div>
 
@@ -366,24 +406,27 @@
 <div class="form-page" style="display:none;">
   <h2>OSHA Info</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:osha_recordable START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :osha_recordable, "OSHA Recordable" %>
             <%= form.select :osha_recordable,
                   options_for_select(['Yes', 'No'], @safety_report.osha_recordable),
                   { include_blank: "Select..." },
                   { class: "form-control" } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:osha_recordable END -->
+<!-- FIELD:osha_reportable START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :osha_reportable, "OSHA Reportable" %>
             <%= form.select :osha_reportable,
                   options_for_select(['Yes', 'No'], @safety_report.osha_reportable),
                   { include_blank: "Select..." },
                   { class: "form-control" } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:osha_reportable END -->
+<!-- FIELD:reportable_injury_codes START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :reportable_injury_codes, "Reportable Injury Codes" %>
             <%= form.text_field :reportable_injury_codes, class: "form-control" %>
           </div>
+<!-- FIELD:reportable_injury_codes END -->
         </div>
       </div>
 

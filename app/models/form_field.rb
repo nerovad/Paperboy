@@ -6,7 +6,7 @@ class FormField < ApplicationRecord
 
   belongs_to :form_template
 
-  FIELD_TYPES = %w[text text_box dropdown choices_dropdown date date_time phone email number currency yes_no time media_attachment].freeze
+  FIELD_TYPES = %w[text text_box dropdown choices_dropdown date date_time phone email number currency yes_no time media_attachment information].freeze
   RESTRICTION_TYPES = %w[none employee group].freeze
   READ_ONLY_TYPES = %w[none always initial].freeze
 
@@ -139,7 +139,19 @@ class FormField < ApplicationRecord
   def media_attachment?
     field_type == 'media_attachment'
   end
-  
+
+  def information?
+    field_type == 'information'
+  end
+
+  def information_text
+    options&.dig('information_text').to_s
+  end
+
+  def acknowledgeable?
+    !!options&.dig('acknowledgeable')
+  end
+
   def rows
     options&.dig('rows') || 5
   end
@@ -350,6 +362,9 @@ class FormField < ApplicationRecord
       self.options['rows'] ||= 5
     when 'dropdown', 'choices_dropdown'
       self.options['values'] ||= []
+    when 'information'
+      self.options['information_text'] ||= ''
+      self.options['acknowledgeable'] = false unless self.options.key?('acknowledgeable')
     end
   end
 end

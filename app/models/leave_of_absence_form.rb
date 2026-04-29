@@ -1,8 +1,6 @@
 class LeaveOfAbsenceForm < ApplicationRecord
   include TrackableStatus
 
-  has_many_attached :doctors_note_attachment
-
 enum :status, {
   in_progress: 0,
     step_1_pending: 1,
@@ -28,6 +26,8 @@ STATUS_LABELS = {
     denied: "Denied",
     cancelled: "Cancelled"
 }.freeze
+
+  has_many_attached :doctors_note_attachment
 
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }

@@ -612,16 +612,20 @@ export default class extends Controller {
     const fieldType = event.target.value
     const textBoxOptions = fieldItem.querySelector('.text-box-options')
     const dropdownOptions = fieldItem.querySelector('.dropdown-options')
+    const informationOptions = fieldItem.querySelector('.information-options')
 
     // Hide all options first
     textBoxOptions.style.display = 'none'
     dropdownOptions.style.display = 'none'
+    if (informationOptions) informationOptions.style.display = 'none'
 
     // Show relevant options
     if (fieldType === 'text_box') {
       textBoxOptions.style.display = 'block'
     } else if (fieldType === 'dropdown' || fieldType === 'choices_dropdown') {
       dropdownOptions.style.display = 'block'
+    } else if (fieldType === 'information' && informationOptions) {
+      informationOptions.style.display = 'block'
     }
 
     // Show/hide conditional answer options (only for dropdown types)
