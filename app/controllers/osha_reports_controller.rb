@@ -101,7 +101,10 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
 
   def update
     if @osha_report.update(osha_report_params)
-      redirect_to @osha_report, notice: 'Submission updated successfully.'
+      redirect_to form_success_path,
+                  notice: 'Form updated successfully.',
+                  allow_other_host: false,
+                  status: :see_other
     else
       setup_form_options
       render :edit, status: :unprocessable_entity

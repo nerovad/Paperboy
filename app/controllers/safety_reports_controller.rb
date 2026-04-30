@@ -122,12 +122,10 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
         @safety_report.create_osha_report!
       end
 
-      # Multi-step approval routing (1 step)
-      employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-      approver_id = employee&.supervisor_id&.to_s
-      @safety_report.update(status: :step_1_pending, approver_id: approver_id)
-      # TODO: Send notification to supervisor
-      redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+      redirect_to form_success_path,
+                  notice: 'Form updated successfully.',
+                  allow_other_host: false,
+                  status: :see_other
     else
       setup_form_options
       render :edit, status: :unprocessable_entity
