@@ -37,8 +37,9 @@ class InboxController < ApplicationController
     # Dynamically generated forms with approval workflows
     @submissions += fetch_dynamic_form_submissions(employee_id)
 
-    # Deduplicate (a submission could match both supervisor and delegated approver)
-    @submissions.uniq!(&:id)
+    # Deduplicate (a submission could match both supervisor and delegated approver).
+    # Key by class + id so different form types with the same numeric id aren't collapsed.
+    @submissions.uniq! { |s| [s.class, s.id] }
 
     # Collect unique values for filter dropdowns BEFORE in-memory filtering
     @filter_options = collect_filter_options(@submissions, inbox_field_mappings)

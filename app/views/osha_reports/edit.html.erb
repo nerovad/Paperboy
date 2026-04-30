@@ -112,47 +112,55 @@
 <div class="form-page" style="display:none;">
   <h2>Additonal Employee Info</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:street START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :street, "Street" %>
-            <%= form.text_field :street, class: "form-control", required: true %>
+            <%= form.text_field :street, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:street END -->
+<!-- FIELD:city START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :city, "City" %>
             <%= form.select :city,
                   options_for_select(['Ventura', 'Ojai', 'Santa Barbara', 'Camarillo', 'Los Angeles', 'Thousand Oaks', 'Somis', 'Oxnard'], @osha_report.city),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:city END -->
+<!-- FIELD:state START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :state, "State" %>
             <%= form.select :state,
                   options_for_select(['California'], @osha_report.state),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:state END -->
+<!-- FIELD:zip START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :zip, "ZIP" %>
-            <%= form.text_field :zip, class: "form-control", required: true %>
+            <%= form.text_field :zip, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:zip END -->
+<!-- FIELD:date_of_birth START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_of_birth, "Date of Birth" %>
-            <%= form.datetime_local_field :date_of_birth, class: "form-control", required: true %>
+            <%= form.date_field :date_of_birth, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:date_of_birth END -->
+<!-- FIELD:date_hired START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_hired, "Date Hired" %>
-            <%= form.datetime_local_field :date_hired, class: "form-control", required: true %>
+            <%= form.date_field :date_hired, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:date_hired END -->
+<!-- FIELD:sex START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :sex, "Sex" %>
             <%= form.select :sex,
                   options_for_select(['Male', 'Female'], @osha_report.sex),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:sex END -->
+<!-- FIELD:name_of_physician_or_other_health_care_professional START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :name_of_physician_or_other_health_care_professional, "Name of physician or other health care professional" %>
-            <%= form.text_field :name_of_physician_or_other_health_care_professional, class: "form-control", required: true %>
+            <%= form.text_field :name_of_physician_or_other_health_care_professional, class: "form-control" %>
           </div>
+<!-- FIELD:name_of_physician_or_other_health_care_professional END -->
         </div>
       </div>
 
@@ -160,57 +168,74 @@
 <div class="form-page" style="display:none;">
   <h2>Physician Information</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:was_treatment_given_away_from_the_worksite START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :was_treatment_given_away_from_the_worksite, "Was treatment given away from the worksite?" %>
             <%= form.select :was_treatment_given_away_from_the_worksite,
                   options_for_select(['Yes', 'No'], @osha_report.was_treatment_given_away_from_the_worksite),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true, data: { conditional_trigger: 'was_treatment_given_away_from_the_worksite' } } %>
+                  { class: "form-control", data: { conditional_trigger: 'was_treatment_given_away_from_the_worksite' } } %>
           </div>
-          <div class="conditional-field" data-depends-on="was_treatment_given_away_from_the_worksite" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@osha_report.was_treatment_given_away_from_the_worksite) ? '' : 'display: none;' %>">
+<!-- FIELD:was_treatment_given_away_from_the_worksite END -->
+<!-- FIELD:facility_name START -->          <div class="conditional-field" data-depends-on="was_treatment_given_away_from_the_worksite" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@osha_report.was_treatment_given_away_from_the_worksite) ? '' : 'display: none;' %>">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :facility_name, "Facility Name" %>
             <%= form.text_field :facility_name, class: "form-control" %>
           </div>
           </div>
-          <div class="conditional-field" data-depends-on="was_treatment_given_away_from_the_worksite" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@osha_report.was_treatment_given_away_from_the_worksite) ? '' : 'display: none;' %>">
+<!-- FIELD:facility_name END -->
+<!-- FIELD:facility_street_address START -->          <div class="conditional-field" data-depends-on="was_treatment_given_away_from_the_worksite" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@osha_report.was_treatment_given_away_from_the_worksite) ? '' : 'display: none;' %>">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :facility_street_address, "Facility Street Address" %>
             <%= form.text_field :facility_street_address, class: "form-control" %>
           </div>
           </div>
-          <div class="conditional-field" data-depends-on="was_treatment_given_away_from_the_worksite" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@osha_report.was_treatment_given_away_from_the_worksite) ? '' : 'display: none;' %>">
+<!-- FIELD:facility_street_address END -->
+<!-- FIELD:facility_city START -->          <div class="conditional-field" data-depends-on="was_treatment_given_away_from_the_worksite" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@osha_report.was_treatment_given_away_from_the_worksite) ? '' : 'display: none;' %>">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :facility_city, "Facility City" %>
-            <%= form.text_field :facility_city, class: "form-control" %>
+            <%= form.select :facility_city,
+                  options_for_select(['Ventura', 'Oxnard', 'Camarillo', 'Thousand Oaks'], @osha_report.facility_city),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
           </div>
-          <div class="conditional-field" data-depends-on="was_treatment_given_away_from_the_worksite" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@osha_report.was_treatment_given_away_from_the_worksite) ? '' : 'display: none;' %>">
+<!-- FIELD:facility_city END -->
+<!-- FIELD:facility_state START -->          <div class="conditional-field" data-depends-on="was_treatment_given_away_from_the_worksite" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@osha_report.was_treatment_given_away_from_the_worksite) ? '' : 'display: none;' %>">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :facility_state, "Facility State" %>
-            <%= form.text_field :facility_state, class: "form-control" %>
+            <%= form.select :facility_state,
+                  options_for_select(['California'], @osha_report.facility_state),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
           </div>
-          <div class="conditional-field" data-depends-on="was_treatment_given_away_from_the_worksite" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@osha_report.was_treatment_given_away_from_the_worksite) ? '' : 'display: none;' %>">
+<!-- FIELD:facility_state END -->
+<!-- FIELD:facility_zip START -->          <div class="conditional-field" data-depends-on="was_treatment_given_away_from_the_worksite" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@osha_report.was_treatment_given_away_from_the_worksite) ? '' : 'display: none;' %>">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :facility_zip, "Facility ZIP" %>
-            <%= form.text_field :facility_zip, class: "form-control" %>
+            <%= form.select :facility_zip,
+                  options_for_select(['Yes', 'No'], @osha_report.facility_zip),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:facility_zip END -->
+<!-- FIELD:was_the_employee_treated_in_an_emergency_room START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :was_the_employee_treated_in_an_emergency_room, "Was the employee treated in an emergency room?" %>
             <%= form.select :was_the_employee_treated_in_an_emergency_room,
                   options_for_select(['Yes', 'No'], @osha_report.was_the_employee_treated_in_an_emergency_room),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:was_the_employee_treated_in_an_emergency_room END -->
+<!-- FIELD:was_the_employee_hospitalized_overnight_as_an_inpatient START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :was_the_employee_hospitalized_overnight_as_an_inpatient, "Was the employee hospitalized overnight as an in-patient?" %>
             <%= form.select :was_the_employee_hospitalized_overnight_as_an_inpatient,
                   options_for_select(['Yes', 'No'], @osha_report.was_the_employee_hospitalized_overnight_as_an_inpatient),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
+<!-- FIELD:was_the_employee_hospitalized_overnight_as_an_inpatient END -->
         </div>
       </div>
 
@@ -218,51 +243,61 @@
 <div class="form-page" style="display:none;">
   <h2>Case Information</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:case_number_from_the_log START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :case_number_from_the_log, "Case Number from the Log" %>
-            <%= form.text_field :case_number_from_the_log, class: "form-control", required: true %>
+            <%= form.text_field :case_number_from_the_log, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:case_number_from_the_log END -->
+<!-- FIELD:date_of_injury_or_illness START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_of_injury_or_illness, "Date of Injury or Illness" %>
-            <%= form.datetime_local_field :date_of_injury_or_illness, class: "form-control", required: true %>
+            <%= form.date_field :date_of_injury_or_illness, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:date_of_injury_or_illness END -->
+<!-- FIELD:time_employee_began_work START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :time_employee_began_work, "Time employee began work" %>
-            <%= form.datetime_local_field :time_employee_began_work, class: "form-control", required: true %>
+            <%= form.time_field :time_employee_began_work, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:time_employee_began_work END -->
+<!-- FIELD:time_of_event START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :time_of_event, "Time of Event" %>
-            <%= form.datetime_local_field :time_of_event, class: "form-control", required: true %>
+            <%= form.time_field :time_of_event, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
-  <%= form.label :what_was_the_employee_doing_just_before_the_incident_occurred, "What was the employee doing just before the incident occurred?" %>
-            <%= form.text_area :what_was_the_employee_doing_just_before_the_incident_occurred, rows: 5, class: "form-control", required: true %>
-          </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:time_of_event END -->
+<!-- FIELD:what_happened_tell_us_how_the_injury_occurred START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :what_happened_tell_us_how_the_injury_occurred, "What happened? Tell us how the injury occurred." %>
-            <%= form.text_area :what_happened_tell_us_how_the_injury_occurred, rows: 5, class: "form-control", required: true %>
+            <%= form.text_area :what_happened_tell_us_how_the_injury_occurred, rows: 5, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:what_happened_tell_us_how_the_injury_occurred END -->
+<!-- FIELD:what_was_the_injury_or_illness START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :what_was_the_injury_or_illness, "What was the injury or illness?" %>
-            <%= form.text_area :what_was_the_injury_or_illness, rows: 5, class: "form-control", required: true %>
+            <%= form.text_area :what_was_the_injury_or_illness, rows: 5, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:what_was_the_injury_or_illness END -->
+<!-- FIELD:what_was_the_employee_doing_just_before_the_incident_occurred START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :what_was_the_employee_doing_just_before_the_incident_occurred, "What was the employee doing just before the incident occurred?" %>
+            <%= form.text_area :what_was_the_employee_doing_just_before_the_incident_occurred, rows: 5, class: "form-control" %>
+          </div>
+<!-- FIELD:what_was_the_employee_doing_just_before_the_incident_occurred END -->
+<!-- FIELD:what_object_or_substance_directly_harmed_the_employee START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :what_object_or_substance_directly_harmed_the_employee, "What object or substance directly harmed the employee?" %>
-            <%= form.text_area :what_object_or_substance_directly_harmed_the_employee, rows: 5, class: "form-control", required: true %>
+            <%= form.text_area :what_object_or_substance_directly_harmed_the_employee, rows: 5, class: "form-control" %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:what_object_or_substance_directly_harmed_the_employee END -->
+<!-- FIELD:did_employee_die START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :did_employee_die, "Did employee die?" %>
             <%= form.select :did_employee_die,
                   options_for_select(['Yes', 'No'], @osha_report.did_employee_die),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true, data: { conditional_trigger: 'did_employee_die' } } %>
+                  { class: "form-control", data: { conditional_trigger: 'did_employee_die' } } %>
           </div>
-          <div class="conditional-field" data-depends-on="did_employee_die" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@osha_report.did_employee_die) ? '' : 'display: none;' %>">
+<!-- FIELD:did_employee_die END -->
+<!-- FIELD:date_of_death START -->          <div class="conditional-field" data-depends-on="did_employee_die" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@osha_report.did_employee_die) ? '' : 'display: none;' %>">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_of_death, "Date of Death" %>
-            <%= form.datetime_local_field :date_of_death, class: "form-control" %>
+            <%= form.date_field :date_of_death, class: "form-control" %>
           </div>
           </div>
+<!-- FIELD:date_of_death END -->
         </div>
       </div>
 

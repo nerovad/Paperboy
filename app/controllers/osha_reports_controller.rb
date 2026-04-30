@@ -49,7 +49,16 @@ class OshaReportsController < ApplicationController
     @osha_report.employee_id = employee_id if @osha_report.respond_to?(:employee_id=)
 
     if @osha_report.save
-      redirect_to form_success_path, allow_other_host: false, status: :see_other
+      # ROUTING_BLOCK_START
+      # Multi-step approval routing (1 steps)
+# Step 1: supervisor
+# Look up the submitter's supervisor
+employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+approver_id = employee&.supervisor_id&.to_s
+@osha_report.update(status: :step_1_pending, approver_id: approver_id)
+# TODO: Send notification to supervisor
+redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+      # ROUTING_BLOCK_END
     else
       emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
       unit        = emp ? Unit.find_by(unit_id: emp&.unit) : nil
