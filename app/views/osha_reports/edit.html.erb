@@ -298,6 +298,36 @@
           </div>
           </div>
 <!-- FIELD:date_of_death END -->
+<!-- FIELD:case_type START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :case_type, "Case Type" %>
+            <%= form.select :case_type,
+                  options_for_select(['Injury', 'Skin Disorder', 'Respiratory Condition', 'Poisoning', 'Hearing Loss', 'Other Illness'], @osha_report.case_type),
+                  { include_blank: "Select..." },
+                  { class: "form-control", data: { conditional_trigger: 'case_type' } } %>
+          </div>
+<!-- FIELD:case_type END -->
+<!-- FIELD:case_classification START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :case_classification, "Case Classification" %>
+            <%= form.select :case_classification,
+                  options_for_select(['Death', 'DAFW', 'DTJR', 'Other'], @osha_report.case_classification),
+                  { include_blank: "Select..." },
+                  { class: "form-control", data: { conditional_trigger: 'case_classification' } } %>
+          </div>
+<!-- FIELD:case_classification END -->
+<!-- FIELD:other_case_classfication START -->          <div class="conditional-field" data-depends-on="case_classification" data-show-values="[&quot;Other&quot;]" style="<%= ["Other"].include?(@osha_report.case_classification) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :other_case_classfication, "Other Case Classfication" %>
+            <%= form.text_field :other_case_classfication, class: "form-control" %>
+          </div>
+          </div>
+<!-- FIELD:other_case_classfication END -->
+<!-- FIELD:other_illness START -->          <div class="conditional-field" data-depends-on="case_type" data-show-values="[&quot;Other Illness&quot;]" style="<%= ["Other Illness"].include?(@osha_report.case_type) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :other_illness, "Other Illness" %>
+            <%= form.text_field :other_illness, class: "form-control" %>
+          </div>
+          </div>
+<!-- FIELD:other_illness END -->
         </div>
       </div>
 

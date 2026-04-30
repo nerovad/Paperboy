@@ -3,19 +3,25 @@ class OshaReport < ApplicationRecord
 
 enum :status, {
   in_progress: 0,
-    approved: 1
+    step_1_pending: 1,
+    approved: 2,
+    denied: 3
 }, default: :in_progress
 
 # Normalized status categories for cross-form reporting
 STATUS_CATEGORIES = {
   in_progress: :in_review,
-    approved: :approved
+    step_1_pending: :in_review,
+    approved: :approved,
+    denied: :denied
 }.freeze
 
 # Human-readable status labels
 STATUS_LABELS = {
   in_progress: "In Progress",
-    approved: "Approved"
+    step_1_pending: "Sent to Supervisor",
+    approved: "Approved",
+    denied: "Denied"
 }.freeze
 
   belongs_to :safety_report, optional: true

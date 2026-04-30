@@ -202,7 +202,8 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
       :what_was_the_injury_or_illness,
       :what_was_the_employee_doing_just_before_the_incident_occurred,
       :what_object_or_substance_directly_harmed_the_employee,
-      :did_employee_die, :date_of_death
+      :did_employee_die, :date_of_death,
+      :case_classification, :case_type, :restricted_duty_days
     )
   end
 end

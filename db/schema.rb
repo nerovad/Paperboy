@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_30_053633) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_30_072641) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -320,6 +320,39 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_053633) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "osha_300a_entries", force: :cascade do |t|
+    t.bigint "osha_establishment_id", null: false
+    t.integer "year", null: false
+    t.integer "annual_average_employees", default: 0, null: false
+    t.bigint "total_hours_worked", default: 0, null: false
+    t.string "change_reason", limit: 100
+    t.datetime "submitted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "submitted_payload"
+    t.text "submission_response"
+    t.string "submitted_by_id"
+    t.index ["osha_establishment_id", "year"], name: "index_osha_300a_entries_on_osha_establishment_id_and_year", unique: true
+    t.index ["osha_establishment_id"], name: "index_osha_300a_entries_on_osha_establishment_id"
+  end
+
+  create_table "osha_establishments", force: :cascade do |t|
+    t.string "name", limit: 100, null: false
+    t.string "ein", limit: 9, null: false
+    t.string "company_name", limit: 100
+    t.string "street_address", limit: 100, null: false
+    t.string "city", limit: 100, null: false
+    t.string "state", limit: 2, null: false
+    t.string "zip", limit: 9, null: false
+    t.integer "naics_code", null: false
+    t.string "industry_description", limit: 300
+    t.integer "size", null: false
+    t.integer "establishment_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_osha_establishments_on_name", unique: true
+  end
+
   create_table "osha_reports", force: :cascade do |t|
     t.string "employee_id"
     t.string "name"
@@ -361,6 +394,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_053633) do
     t.text "what_object_or_substance_directly_harmed_the_employee"
     t.string "did_employee_die"
     t.datetime "date_of_death"
+    t.string "case_classification"
+    t.string "case_type"
+    t.integer "restricted_duty_days"
   end
 
   create_table "parking_lot_submissions", force: :cascade do |t|
@@ -670,6 +706,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_053633) do
   add_foreign_key "form_template_routing_steps", "form_template_statuses"
   add_foreign_key "form_template_routing_steps", "form_templates"
   add_foreign_key "form_template_statuses", "form_templates"
+  add_foreign_key "osha_300a_entries", "osha_establishments"
   add_foreign_key "parking_lot_vehicles", "parking_lot_submissions"
   add_foreign_key "pcard_inventories", "pcard_request_forms"
 end

@@ -15,6 +15,7 @@ class AclController < ApplicationController
     { key: 'acl',           label: 'ACL' },
     { key: 'auth_console',  label: 'Auth Console' },
     { key: 'lookup_tables', label: 'Lookup Tables' },
+    { key: 'osha_log',      label: 'OSHA 300 Log' },
   ].freeze
 
   DEFAULT_PUBLIC_DROPDOWN_KEYS = DROPDOWN_ITEMS.select { |i| i[:default_public] }.map { |i| i[:key] }.freeze

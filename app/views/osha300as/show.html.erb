@@ -1,0 +1,190 @@
+<div class="form-header">
+  <h1>OSHA Form 300A &mdash; Summary of Work-Related Injuries and Illnesses</h1>
+</div>
+
+<div class="form-wrapper">
+  <%# Year selector %>
+  <div class="form-row d-flex flex-wrap" style="align-items: end; gap: 12px; margin-bottom: 20px;">
+    <%= form_with url: osha_300a_path, method: :get, local: true, data: { turbo: false } do |f| %>
+      <div class="form-group" style="margin-right: 8px;">
+        <%= f.label :year, "Filing Year" %>
+        <%= f.number_field :year, value: @year, min: 1970, max: Date.current.year + 1, class: "form-control" %>
+      </div>
+      <%= f.submit "View", class: "btn" %>
+    <% end %>
+    <%= link_to "View 300 Log", osha_log_path(year: @year), class: "btn", data: { turbo: false } %>
+  </div>
+
+  <% if flash[:alert] %>
+    <div class="alert alert-danger" style="margin-bottom: 16px;"><%= flash[:alert] %></div>
+  <% end %>
+
+  <%# ---------- Submission status ---------- %>
+  <% if @entry.submitted? %>
+    <div class="alert alert-info" style="margin-bottom: 20px; padding: 12px; background: #e8f4fd; border-left: 4px solid #2c7be5;">
+      <strong>Submitted to OSHA:</strong>
+      <%= @entry.submitted_at.strftime('%B %d, %Y at %I:%M %p') %>
+      <% if @entry.submitted_by_id.present? %>by employee <%= @entry.submitted_by_id %><% end %>.
+      Edits to this year's 300A now require a Change Reason.
+    </div>
+  <% else %>
+    <div class="alert" style="margin-bottom: 20px; padding: 12px; background: #fff8e1; border-left: 4px solid #f0ad4e;">
+      <strong>Not yet submitted.</strong>
+      Save the establishment + workforce first, then download the JSON payload or mark as submitted.
+    </div>
+  <% end %>
+
+  <%= form_with url: osha_300a_path(year: @year), method: :patch, local: true, data: { turbo: false } do |form| %>
+
+    <%# ---------- Establishment Information ---------- %>
+    <h2>Establishment Information</h2>
+    <%= fields_for :osha_establishment, @establishment do |est| %>
+      <div class="form-row d-flex flex-wrap">
+        <div class="form-group flex-fill">
+          <%= est.label :name, "Establishment Name *" %>
+          <%= est.text_field :name, class: "form-control", maxlength: 100, required: true %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= est.label :ein, "EIN * (9 digits, no dashes)" %>
+          <%= est.text_field :ein, class: "form-control", maxlength: 9, pattern: "\\d{9}", required: true %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= est.label :company_name, "Company Name" %>
+          <%= est.text_field :company_name, class: "form-control", maxlength: 100 %>
+        </div>
+      </div>
+      <div class="form-row d-flex flex-wrap">
+        <div class="form-group flex-fill">
+          <%= est.label :street_address, "Street Address *" %>
+          <%= est.text_field :street_address, class: "form-control", maxlength: 100, required: true %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= est.label :city, "City *" %>
+          <%= est.text_field :city, class: "form-control", maxlength: 100, required: true %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= est.label :state, "State * (2-char code)" %>
+          <%= est.text_field :state, class: "form-control", maxlength: 2, required: true %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= est.label :zip, "ZIP * (5 or 9 digits)" %>
+          <%= est.text_field :zip, class: "form-control", maxlength: 9, pattern: "\\d{5}(\\d{4})?", required: true %>
+        </div>
+      </div>
+      <div class="form-row d-flex flex-wrap">
+        <div class="form-group flex-fill">
+          <%= est.label :naics_code, "NAICS Code * (6 digits)" %>
+          <%= est.text_field :naics_code, class: "form-control", maxlength: 6, pattern: "\\d{6}", required: true %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= est.label :industry_description, "Industry Description" %>
+          <%= est.text_field :industry_description, class: "form-control", maxlength: 300 %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= est.label :size, "Size *" %>
+          <%= est.select :size,
+                options_for_select(OshaEstablishment::SIZE_OPTIONS.map { |k, v| ["#{k} — #{v}", k] }, @establishment.size),
+                { include_blank: "Select..." },
+                class: "form-control", required: true %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= est.label :establishment_type, "Establishment Type" %>
+          <%= est.select :establishment_type,
+                options_for_select(OshaEstablishment::ESTABLISHMENT_TYPE_OPTIONS.map { |k, v| ["#{k} — #{v}", k] }, @establishment.establishment_type),
+                { include_blank: "Select..." },
+                class: "form-control" %>
+        </div>
+      </div>
+    <% end %>
+
+    <%# ---------- Annual Workforce ---------- %>
+    <h2 style="margin-top: 28px;">Annual Workforce (<%= @year %>)</h2>
+    <%= fields_for :osha_300a_entry, @entry do |entry| %>
+      <div class="form-row d-flex flex-wrap">
+        <div class="form-group flex-fill">
+          <%= entry.label :annual_average_employees, "Annual Average # of Employees *" %>
+          <%= entry.number_field :annual_average_employees, class: "form-control", min: 1, max: 24999, required: true %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= entry.label :total_hours_worked, "Total Hours Worked *" %>
+          <%= entry.number_field :total_hours_worked, class: "form-control", min: 1, required: true %>
+        </div>
+        <div class="form-group flex-fill">
+          <%= entry.label :change_reason, "Change Reason (only when amending a submitted summary)" %>
+          <%= entry.text_field :change_reason, class: "form-control", maxlength: 100 %>
+        </div>
+      </div>
+    <% end %>
+
+    <div style="margin-top: 16px; margin-bottom: 28px;">
+      <%= form.submit "Save Establishment & Workforce", class: "btn approve" %>
+    </div>
+  <% end %>
+
+  <%# ---------- Computed Totals ---------- %>
+  <h2>Computed Totals (read-only)</h2>
+  <p style="color: #555; margin-bottom: 12px;">
+    Computed from <strong><%= @totals[:case_count] %></strong> approved
+    <%= "OshaReport".pluralize(@totals[:case_count]) %> for <strong><%= @year %></strong>.
+    <%= link_to "View 300 Log →", osha_log_path(year: @year), data: { turbo: false } %>
+  </p>
+
+  <table class="data-table" style="max-width: 700px;">
+    <tbody>
+      <tr><th colspan="2" style="text-align: left;">Reporting flag</th></tr>
+      <tr>
+        <td>no_injuries_illnesses</td>
+        <td><strong><%= @totals[:no_injuries_illnesses] %></strong> &mdash;
+          <%= @totals[:no_injuries_illnesses] == 1 ? "Had recordable injuries/illnesses" : "No recordable injuries/illnesses" %>
+        </td>
+      </tr>
+
+      <tr><th colspan="2" style="text-align: left; padding-top: 12px;">Case classification (G–J)</th></tr>
+      <tr><td>total_deaths (G)</td>            <td><strong><%= @totals[:total_deaths] %></strong></td></tr>
+      <tr><td>total_dafw_cases (H)</td>        <td><strong><%= @totals[:total_dafw_cases] %></strong></td></tr>
+      <tr><td>total_djtr_cases (I)</td>        <td><strong><%= @totals[:total_djtr_cases] %></strong></td></tr>
+      <tr><td>total_other_cases (J)</td>       <td><strong><%= @totals[:total_other_cases] %></strong></td></tr>
+
+      <tr><th colspan="2" style="text-align: left; padding-top: 12px;">Day counts (K–L)</th></tr>
+      <tr><td>total_dafw_days (K)</td>         <td><strong><%= @totals[:total_dafw_days] %></strong></td></tr>
+      <tr><td>total_djtr_days (L)</td>         <td><strong><%= @totals[:total_djtr_days] %></strong></td></tr>
+
+      <tr><th colspan="2" style="text-align: left; padding-top: 12px;">Type breakdown (M1–M6)</th></tr>
+      <tr><td>total_injuries (M1)</td>               <td><strong><%= @totals[:total_injuries] %></strong></td></tr>
+      <tr><td>total_skin_disorders (M2)</td>         <td><strong><%= @totals[:total_skin_disorders] %></strong></td></tr>
+      <tr><td>total_respiratory_conditions (M3)</td> <td><strong><%= @totals[:total_respiratory_conditions] %></strong></td></tr>
+      <tr><td>total_poisonings (M4)</td>             <td><strong><%= @totals[:total_poisonings] %></strong></td></tr>
+      <tr><td>total_hearing_loss (M5)</td>           <td><strong><%= @totals[:total_hearing_loss] %></strong></td></tr>
+      <tr><td>total_other_illnesses (M6)</td>        <td><strong><%= @totals[:total_other_illnesses] %></strong></td></tr>
+    </tbody>
+  </table>
+
+  <%# ---------- Submission actions ---------- %>
+  <div style="margin-top: 28px; padding-top: 18px; border-top: 1px solid #ddd;">
+    <h2>Submission</h2>
+    <% if @establishment.persisted? && @entry.persisted? %>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+        <%= link_to "Download JSON Payload",
+              osha_300a_payload_path(year: @year),
+              class: "btn pdf",
+              data: { turbo: false } %>
+
+        <% if @entry.submitted? %>
+          <%= button_to "Re-mark as Submitted",
+                osha_300a_submit_path(year: @year),
+                method: :post,
+                class: "btn",
+                data: { confirm: "This year's 300A is already marked submitted on #{@entry.submitted_at.strftime('%b %d, %Y')}. Mark again with the current totals?" } %>
+        <% else %>
+          <%= button_to "Mark as Submitted to OSHA",
+                osha_300a_submit_path(year: @year),
+                method: :post,
+                class: "btn approve",
+                data: { confirm: "Lock the #{@year} 300A and record the current totals as submitted? Use this after you've actually filed via OSHA's ITA portal." } %>
+        <% end %>
+      </div>
+    <% else %>
+      <p style="color: #777;">Save the establishment and workforce first to enable submission actions.</p>
+    <% end %>
+  </div>
+</div>
