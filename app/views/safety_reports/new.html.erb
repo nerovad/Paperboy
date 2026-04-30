@@ -3,7 +3,7 @@
   <h1>Safety Reporting</h1>
 </div>
 
-<div class="form-wrapper" data-controller="form-navigation">
+<div class="form-wrapper" data-controller="form-navigation conditional-fields">
   <%= form_with model: @safety_report, local: true do |form| %>
 
 <!-- Page 1: Employee Info -->
@@ -121,7 +121,7 @@
             <%= form.select :report_type,
                   options_for_select(['Inital', 'Follow-up']),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:report_type END -->
 <!-- FIELD:bloodborne_pathogen_exposure START --><div class="form-group flex-fill<%= '' %>">
@@ -129,7 +129,7 @@
             <%= form.select :bloodborne_pathogen_exposure,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:bloodborne_pathogen_exposure END -->
         </div>
@@ -141,19 +141,20 @@
         <div class="form-row d-flex flex-wrap">
 <!-- FIELD:supervisor_name START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :supervisor_name, "Supervisor Name" %>
-            <%= form.text_field :supervisor_name, class: "form-control", required: true %>
+            <%= form.text_field :supervisor_name,
+                  value: (@safety_report.supervisor_name.presence || @prefill_data[:supervisor_name]),
+                  class: "form-control", required: true %>
           </div>
 <!-- FIELD:supervisor_name END -->
 <!-- FIELD:witness_name START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :witness_name, "Witness Name" %>
-            <%= form.text_field :witness_name, class: "form-control", required: true %>
+            <%= form.text_field :witness_name, class: "form-control" %>
           </div>
 <!-- FIELD:witness_name END -->
 <!-- FIELD:witness_phone START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :witness_phone, "Witness Phone" %>
             <%= form.text_field :witness_phone,
                   class: "form-control",
-                  required: true,
                   placeholder: "e.g. 555-555-5555",
                   title: "Enter a 10-digit phone number like 555-555-5555",
                   data: { controller: "phone", phone_target: "input", action: "input->phone#format paste->phone#format blur->phone#validate" },
@@ -174,32 +175,35 @@
         <div class="form-row d-flex flex-wrap">
 <!-- FIELD:date_of_injury_or_illness START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_of_injury_or_illness, "Date of Injury or Illness" %>
-            <%= form.date_field :date_of_injury_or_illness, class: "form-control", required: true %>
+            <%= form.date_field :date_of_injury_or_illness, class: "form-control" %>
           </div>
 <!-- FIELD:date_of_injury_or_illness END -->
 <!-- FIELD:date_employer_notified START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_employer_notified, "Date Employer Notified" %>
-            <%= form.date_field :date_employer_notified, class: "form-control", required: true %>
+            <%= form.date_field :date_employer_notified, class: "form-control" %>
           </div>
 <!-- FIELD:date_employer_notified END -->
 <!-- FIELD:date_dwc1_given START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_dwc1_given, "Date DWC-1 Given" %>
-            <%= form.date_field :date_dwc1_given, class: "form-control", required: true %>
+            <%= form.date_field :date_dwc1_given, class: "form-control" %>
           </div>
 <!-- FIELD:date_dwc1_given END -->
 <!-- FIELD:who_gave_the_dwc1 START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :who_gave_the_dwc1, "Who Gave the DWC-1" %>
-            <%= form.date_field :who_gave_the_dwc1, class: "form-control", required: true %>
+            <%= form.select :who_gave_the_dwc1,
+                  options_for_select(Employee.where(Agency: 'HCA').order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:who_gave_the_dwc1 END -->
 <!-- FIELD:date_last_worked START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_last_worked, "Date Last Worked" %>
-            <%= form.date_field :date_last_worked, class: "form-control", required: true %>
+            <%= form.date_field :date_last_worked, class: "form-control" %>
           </div>
 <!-- FIELD:date_last_worked END -->
 <!-- FIELD:date_returned_to_work START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_returned_to_work, "Date Returned to Work" %>
-            <%= form.date_field :date_returned_to_work, class: "form-control", required: true %>
+            <%= form.date_field :date_returned_to_work, class: "form-control" %>
           </div>
 <!-- FIELD:date_returned_to_work END -->
 <!-- FIELD:missed_full_work_day_ START --><div class="form-group flex-fill<%= '' %>">
@@ -207,15 +211,17 @@
             <%= form.select :missed_full_work_day_,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control", data: { conditional_trigger: 'missed_full_work_day_' } } %>
           </div>
 <!-- FIELD:missed_full_work_day_ END -->
-<!-- FIELD:still_off_work START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:still_off_work START -->          <div class="conditional-field" data-depends-on="missed_full_work_day_" data-show-values="[&quot;Yes&quot;]" style="display: none;">
+<div class="form-group flex-fill<%= '' %>">
   <%= form.label :still_off_work, "Still off Work?" %>
             <%= form.select :still_off_work,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
+          </div>
           </div>
 <!-- FIELD:still_off_work END -->
         </div>
@@ -227,15 +233,15 @@
         <div class="form-row d-flex flex-wrap">
 <!-- FIELD:specific_injury_and_body_part_affected START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :specific_injury_and_body_part_affected, "Specific Injury and Body Part Affected" %>
-            <%= form.text_area :specific_injury_and_body_part_affected, rows: 5, class: "form-control", required: true %>
+            <%= form.text_area :specific_injury_and_body_part_affected, rows: 5, class: "form-control" %>
           </div>
 <!-- FIELD:specific_injury_and_body_part_affected END -->
 <!-- FIELD:location_of_incident START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :location_of_incident, "Location of Incident" %>
             <%= form.select :location_of_incident,
-                  options_for_select(['Yes', 'No']),
+                  options_for_select(['HCA', 'JJC', 'HOA', 'Service Building']),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:location_of_incident END -->
 <!-- FIELD:on_employer_premises START --><div class="form-group flex-fill<%= '' %>">
@@ -243,22 +249,25 @@
             <%= form.select :on_employer_premises,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:on_employer_premises END -->
 <!-- FIELD:department_where_event_occurred START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :department_where_event_occurred, "Department Where Event Occurred" %>
-            <%= form.text_field :department_where_event_occurred, class: "form-control", required: true %>
+            <%= form.select :department_where_event_occurred,
+                  options_for_select(Department.order(:long_name).pluck(:long_name).uniq),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:department_where_event_occurred END -->
 <!-- FIELD:activity_at_time_of_incident START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :activity_at_time_of_incident, "Activity at Time of Incident" %>
-            <%= form.text_area :activity_at_time_of_incident, rows: 5, class: "form-control", required: true %>
+            <%= form.text_area :activity_at_time_of_incident, rows: 5, class: "form-control" %>
           </div>
 <!-- FIELD:activity_at_time_of_incident END -->
 <!-- FIELD:how_the_injury_occurred START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :how_the_injury_occurred, "How the Injury Occurred" %>
-            <%= form.text_area :how_the_injury_occurred, rows: 5, class: "form-control", required: true %>
+            <%= form.text_area :how_the_injury_occurred, rows: 5, class: "form-control" %>
           </div>
 <!-- FIELD:how_the_injury_occurred END -->
         </div>
@@ -270,17 +279,27 @@
         <div class="form-row d-flex flex-wrap">
 <!-- FIELD:physician_name START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :physician_name, "Physician Name" %>
-            <%= form.text_field :physician_name, class: "form-control", required: true %>
+            <%= form.text_field :physician_name, class: "form-control" %>
           </div>
 <!-- FIELD:physician_name END -->
 <!-- FIELD:physician_address START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :physician_address, "Physician Address" %>
-            <%= form.text_field :physician_address, class: "form-control", required: true %>
+            <%= form.text_field :physician_address, class: "form-control" %>
           </div>
 <!-- FIELD:physician_address END -->
 <!-- FIELD:physician_phone START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :physician_phone, "Physician Phone" %>
-            <%= form.text_field :physician_phone, class: "form-control", required: true %>
+            <%= form.text_field :physician_phone,
+                  class: "form-control",
+                  placeholder: "e.g. 555-555-5555",
+                  title: "Enter a 10-digit phone number like 555-555-5555",
+                  data: { controller: "phone", phone_target: "input", action: "input->phone#format paste->phone#format blur->phone#validate" },
+                  "aria-describedby": "physicianPhoneHelp physicianPhoneError",
+                  pattern: "\\d{3}-\\d{3}-\\d{4}",
+                  inputmode: "numeric",
+                  autocomplete: "tel" %>
+            <small id="physicianPhoneHelp" class="help-text text-muted"></small>
+            <div id="physicianPhoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
           </div>
 <!-- FIELD:physician_phone END -->
 <!-- FIELD:hospital_name START --><div class="form-group flex-fill<%= '' %>">
@@ -295,7 +314,17 @@
 <!-- FIELD:hospital_address END -->
 <!-- FIELD:hospital_phone START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :hospital_phone, "Hospital Phone" %>
-            <%= form.text_field :hospital_phone, class: "form-control" %>
+            <%= form.text_field :hospital_phone,
+                  class: "form-control",
+                  placeholder: "e.g. 555-555-5555",
+                  title: "Enter a 10-digit phone number like 555-555-5555",
+                  data: { controller: "phone", phone_target: "input", action: "input->phone#format paste->phone#format blur->phone#validate" },
+                  "aria-describedby": "hospitalPhoneHelp hospitalPhoneError",
+                  pattern: "\\d{3}-\\d{3}-\\d{4}",
+                  inputmode: "numeric",
+                  autocomplete: "tel" %>
+            <small id="hospitalPhoneHelp" class="help-text text-muted"></small>
+            <div id="hospitalPhoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
           </div>
 <!-- FIELD:hospital_phone END -->
 <!-- FIELD:hospitalized_overnight START --><div class="form-group flex-fill<%= '' %>">
@@ -313,29 +342,50 @@
 <div class="form-page" style="display:none;">
   <h2>Investigation Details</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:investigator_name START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:investigator_name START -->        <% field_2277_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2277_editable %>">
   <%= form.label :investigator_name, "Investigator Name" %>
-            <%= form.text_field :investigator_name, class: "form-control" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :investigator_name, class: "form-control", disabled: !field_2277_editable %>
           </div>
 <!-- FIELD:investigator_name END -->
-<!-- FIELD:investigator_title START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:investigator_title START -->        <% field_2278_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2278_editable %>">
   <%= form.label :investigator_title, "Investigator Title" %>
-            <%= form.text_field :investigator_title, class: "form-control" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :investigator_title, class: "form-control", disabled: !field_2278_editable %>
           </div>
 <!-- FIELD:investigator_title END -->
-<!-- FIELD:investigator_phone START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:investigator_phone START -->        <% field_2279_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2279_editable %>">
   <%= form.label :investigator_phone, "Investigator Phone" %>
-            <%= form.text_field :investigator_phone, class: "form-control" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :investigator_phone,
+                  class: "form-control",
+                  disabled: !field_2279_editable,
+                  placeholder: "e.g. 555-555-5555",
+                  title: "Enter a 10-digit phone number like 555-555-5555",
+                  data: { controller: "phone", phone_target: "input", action: "input->phone#format paste->phone#format blur->phone#validate" },
+                  "aria-describedby": "investigatorPhoneHelp investigatorPhoneError",
+                  pattern: "\\d{3}-\\d{3}-\\d{4}",
+                  inputmode: "numeric",
+                  autocomplete: "tel" %>
+            <small id="investigatorPhoneHelp" class="help-text text-muted"></small>
+            <div id="investigatorPhoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
           </div>
 <!-- FIELD:investigator_phone END -->
-<!-- FIELD:nature_of_incident START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:nature_of_incident START -->        <% field_2280_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2280_editable %>">
   <%= form.label :nature_of_incident, "Nature of Incident" %>
-            <%= form.text_area :nature_of_incident, rows: 5, class: "form-control" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_area :nature_of_incident, rows: 5, class: "form-control", disabled: !field_2280_editable %>
           </div>
 <!-- FIELD:nature_of_incident END -->
-<!-- FIELD:cause_of_incident START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:cause_of_incident START -->        <% field_2281_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2281_editable %>">
   <%= form.label :cause_of_incident, "Cause of Incident" %>
-            <%= form.text_area :cause_of_incident, rows: 5, class: "form-control" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_area :cause_of_incident, rows: 5, class: "form-control", disabled: !field_2281_editable %>
           </div>
 <!-- FIELD:cause_of_incident END -->
         </div>
@@ -345,19 +395,25 @@
 <div class="form-page" style="display:none;">
   <h2>Severity & Root Cause</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:root_cause START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:root_cause START -->        <% field_2282_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2282_editable %>">
   <%= form.label :root_cause, "Root Cause" %>
-            <%= form.text_area :root_cause, rows: 5, class: "form-control" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_area :root_cause, rows: 5, class: "form-control", disabled: !field_2282_editable %>
           </div>
 <!-- FIELD:root_cause END -->
-<!-- FIELD:assessment_of_future_severity_potential START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:assessment_of_future_severity_potential START -->        <% field_2283_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2283_editable %>">
   <%= form.label :assessment_of_future_severity_potential, "Assessment of Future Severity Potential" %>
-            <%= form.text_area :assessment_of_future_severity_potential, rows: 5, class: "form-control" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_area :assessment_of_future_severity_potential, rows: 5, class: "form-control", disabled: !field_2283_editable %>
           </div>
 <!-- FIELD:assessment_of_future_severity_potential END -->
-<!-- FIELD:assessment_of_probability_of_recurrence START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:assessment_of_probability_of_recurrence START -->        <% field_2284_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2284_editable %>">
   <%= form.label :assessment_of_probability_of_recurrence, "Assessment of Probability of Recurrence" %>
-            <%= form.text_area :assessment_of_probability_of_recurrence, rows: 5, class: "form-control" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_area :assessment_of_probability_of_recurrence, rows: 5, class: "form-control", disabled: !field_2284_editable %>
           </div>
 <!-- FIELD:assessment_of_probability_of_recurrence END -->
         </div>
@@ -367,25 +423,31 @@
 <div class="form-page" style="display:none;">
   <h2>Corrective Actions</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:unsafe_condition_corrected_immediately START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:unsafe_condition_corrected_immediately START -->        <% field_2285_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2285_editable %>">
   <%= form.label :unsafe_condition_corrected_immediately, "Unsafe condition corrected immediately?" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
             <%= form.select :unsafe_condition_corrected_immediately,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", disabled: !field_2285_editable } %>
           </div>
 <!-- FIELD:unsafe_condition_corrected_immediately END -->
-<!-- FIELD:checklistprocedurestraining_modified START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:checklistprocedurestraining_modified START -->        <% field_2286_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2286_editable %>">
   <%= form.label :checklistprocedurestraining_modified, "Checklist/procedures/training modified?" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
             <%= form.select :checklistprocedurestraining_modified,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", disabled: !field_2286_editable } %>
           </div>
 <!-- FIELD:checklistprocedurestraining_modified END -->
-<!-- FIELD:person_responsible_for_corrective_action START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:person_responsible_for_corrective_action START -->        <% field_2287_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2287_editable %>">
   <%= form.label :person_responsible_for_corrective_action, "Person Responsible for Corrective Action" %>
-            <%= form.text_field :person_responsible_for_corrective_action, class: "form-control" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :person_responsible_for_corrective_action, class: "form-control", disabled: !field_2287_editable %>
           </div>
 <!-- FIELD:person_responsible_for_corrective_action END -->
 <!-- FIELD:title START --><div class="form-group flex-fill<%= '' %>">
@@ -393,14 +455,18 @@
             <%= form.text_field :title, class: "form-control" %>
           </div>
 <!-- FIELD:title END -->
-<!-- FIELD:targeted_completion_date START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:targeted_completion_date START -->        <% field_2289_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2289_editable %>">
   <%= form.label :targeted_completion_date, "Targeted Completion Date" %>
-            <%= form.date_field :targeted_completion_date, class: "form-control" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.date_field :targeted_completion_date, class: "form-control", disabled: !field_2289_editable %>
           </div>
 <!-- FIELD:targeted_completion_date END -->
-<!-- FIELD:actual_completion_date START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:actual_completion_date START -->        <% field_2290_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2290_editable %>">
   <%= form.label :actual_completion_date, "Actual Completion Date" %>
-            <%= form.date_field :actual_completion_date, class: "form-control" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.date_field :actual_completion_date, class: "form-control", disabled: !field_2290_editable %>
           </div>
 <!-- FIELD:actual_completion_date END -->
         </div>
@@ -410,25 +476,31 @@
 <div class="form-page" style="display:none;">
   <h2>OSHA Info</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:osha_recordable START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:osha_recordable START -->        <% field_2291_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2291_editable %>">
   <%= form.label :osha_recordable, "OSHA Recordable" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
             <%= form.select :osha_recordable,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", disabled: !field_2291_editable } %>
           </div>
 <!-- FIELD:osha_recordable END -->
-<!-- FIELD:osha_reportable START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:osha_reportable START -->        <% field_2292_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2292_editable %>">
   <%= form.label :osha_reportable, "OSHA Reportable" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
             <%= form.select :osha_reportable,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", disabled: !field_2292_editable } %>
           </div>
 <!-- FIELD:osha_reportable END -->
-<!-- FIELD:reportable_injury_codes START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:reportable_injury_codes START -->        <% field_2293_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2293_editable %>">
   <%= form.label :reportable_injury_codes, "Reportable Injury Codes" %>
-            <%= form.text_field :reportable_injury_codes, class: "form-control" %>
+            <small class="restriction-notice">To be filled by: Gary Howard</small>
+            <%= form.text_field :reportable_injury_codes, class: "form-control", disabled: !field_2293_editable %>
           </div>
 <!-- FIELD:reportable_injury_codes END -->
         </div>

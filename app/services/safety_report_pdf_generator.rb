@@ -5,14 +5,12 @@ class SafetyReportPdfGenerator
     logo_path = Rails.root.join("app", "assets", "images", "Ventura_Logo.png")
 
     Prawn::Document.new(page_size: 'A4', margin: 40) do |pdf|
-      # Header with logo
       pdf.image(logo_path.to_s, width: 80) if File.exist?(logo_path)
 
       pdf.move_down 10
       pdf.text "Safety Reporting", size: 22, style: :bold, align: :center
       pdf.move_down 20
 
-      # Employee Info
       pdf.text "Employee Information", size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Name: #{submission.name}"
@@ -28,6 +26,8 @@ class SafetyReportPdfGenerator
       pdf.text "Department: #{lookup_department_name(submission.department)}"
       pdf.text "Unit: #{lookup_unit_name(submission.unit)}"
 
+      render_form_builder_fields(pdf, submission)
+
       pdf.move_down 15
       pdf.text "Status: #{submission.status.to_s.tr('_', ' ').titleize}", size: 12, style: :bold
 
@@ -36,7 +36,64 @@ class SafetyReportPdfGenerator
     end.render
   end
 
-  private
+  def self.render_form_builder_fields(pdf, submission)
+    template = submission.form_template
+    return unless template
+
+    fields = template.form_fields.ordered.where('page_number >= 3').to_a
+    return if fields.empty?
+
+    fields.group_by(&:page_number).each do |page_num, page_fields|
+      visible = page_fields.select { |f| field_visible?(f, submission) }
+      next if visible.empty?
+
+      pdf.move_down 15
+      pdf.text(template.page_header(page_num).presence || "Page #{page_num}", size: 14, style: :bold)
+      pdf.move_down 5
+
+      visible.each do |field|
+        if field.information?
+          pdf.text field.information_text.to_s, style: :italic if field.information_text.present?
+          next
+        end
+
+        next if field.field_type == 'media_attachment'
+
+        value = format_value(field, submission)
+        pdf.text "#{field.label}: #{value}"
+      end
+    end
+  end
+
+  def self.field_visible?(field, submission)
+    return true unless field.conditional?
+
+    parent = field.conditional_field
+    return true unless parent
+
+    parent_value = submission.send(parent.field_name) if submission.respond_to?(parent.field_name)
+    field.visible_for_value?(parent_value)
+  end
+
+  def self.format_value(field, submission)
+    return "—" unless submission.respond_to?(field.field_name)
+
+    raw = submission.send(field.field_name)
+    return "—" if raw.nil? || (raw.respond_to?(:blank?) && raw.blank?)
+
+    case field.field_type
+    when 'date'
+      raw.respond_to?(:strftime) ? raw.strftime('%B %d, %Y') : raw.to_s
+    when 'date_time'
+      raw.respond_to?(:strftime) ? raw.strftime('%B %d, %Y at %I:%M %p') : raw.to_s
+    when 'time'
+      raw.respond_to?(:strftime) ? raw.strftime('%I:%M %p') : raw.to_s
+    when 'currency'
+      ActionController::Base.helpers.number_to_currency(raw)
+    else
+      raw.to_s
+    end
+  end
 
   def self.lookup_agency_name(agency_id)
     return agency_id if agency_id.blank?

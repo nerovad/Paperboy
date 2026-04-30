@@ -22,14 +22,15 @@ class SafetyReportsController < ApplicationController
 
     # --- Prefill values ---
     @prefill_data = {
-      employee_id: @employee.employee_id,
-      name:        [@employee.first_name, @employee.last_name].compact.join(" "),
-      phone:       @employee.work_phone,
-      email:       @employee.email,
-      agency:      agency&.agency_id,
-      division:    division&.division_id,
-      department:  department&.department_id,
-      unit:        unit&.unit_id
+      employee_id:     @employee.employee_id,
+      name:            [@employee.first_name, @employee.last_name].compact.join(" "),
+      phone:           @employee.work_phone,
+      email:           @employee.email,
+      agency:          agency&.agency_id,
+      division:        division&.division_id,
+      department:      department&.department_id,
+      unit:            unit&.unit_id,
+      supervisor_name: [@employee.supervisor_first_name, @employee.supervisor_last_name].compact.join(" ").presence
     }
 
     @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
@@ -81,14 +82,15 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
       agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
 
       @prefill_data = {
-        employee_id: emp&.employee_id,
-        name:        emp ? [emp&.first_name, emp&.last_name].compact.join(" ") : nil,
-        phone:       emp&.work_phone,
-        email:       emp&.email,
-        agency:      agency&.agency_id,
-        division:    division&.division_id,
-        department:  department&.department_id,
-        unit:        unit&.unit_id
+        employee_id:     emp&.employee_id,
+        name:            emp ? [emp&.first_name, emp&.last_name].compact.join(" ") : nil,
+        phone:           emp&.work_phone,
+        email:           emp&.email,
+        agency:          agency&.agency_id,
+        division:        division&.division_id,
+        department:      department&.department_id,
+        unit:            unit&.unit_id,
+        supervisor_name: emp ? [emp&.supervisor_first_name, emp&.supervisor_last_name].compact.join(" ").presence : nil
       }
 
       @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
