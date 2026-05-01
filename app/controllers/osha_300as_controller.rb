@@ -14,16 +14,21 @@ class Osha300asController < ApplicationController
     end
 
     OshaEstablishment.transaction do
-      if params[:osha_establishment].present?
-        @establishment.assign_attributes(establishment_params)
+      @establishment.assign_attributes(establishment_params) if params[:osha_establishment].present?
+
+      unless @establishment.save
+        flash.now[:alert] = @establishment.errors.full_messages.join('; ')
+        @totals = Osha300aTotals.for(@year)
+        return render :show, status: :unprocessable_entity
       end
 
+      @entry.osha_establishment = @establishment
       @entry.assign_attributes(entry_params) if params[:osha_300a_entry].present?
 
-      if @establishment.save && @entry.save
+      if @entry.save
         redirect_to osha_300a_path(year: @year), notice: "300A summary saved."
       else
-        flash.now[:alert] = (@establishment.errors.full_messages + @entry.errors.full_messages).join('; ')
+        flash.now[:alert] = @entry.errors.full_messages.join('; ')
         @totals = Osha300aTotals.for(@year)
         render :show, status: :unprocessable_entity
       end
@@ -75,7 +80,7 @@ class Osha300asController < ApplicationController
     @entry = if @establishment.persisted?
                Osha300aEntry.find_or_initialize_by(osha_establishment: @establishment, year: @year)
              else
-               Osha300aEntry.new(year: @year)
+               Osha300aEntry.new(osha_establishment: @establishment, year: @year)
              end
   end
 
