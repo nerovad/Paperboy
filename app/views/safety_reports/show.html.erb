@@ -17,7 +17,8 @@
   <% end %>
 
   <div class="form-actions" style="margin-top: 16px;">
-    <%= link_to "Back to Inbox", inbox_queue_path, class: "form-btn" %>
+    <%= link_to "Back to Submissions", submissions_path, class: "form-btn" %>
+    <%= link_to "Edit", edit_safety_report_path(@safety_report), class: "form-btn" %>
     <%= link_to "Download PDF", pdf_safety_report_path(@safety_report), target: "_blank", class: "form-btn" %>
   </div>
   </div>
