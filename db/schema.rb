@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_30_072641) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_04_224411) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -188,6 +188,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_072641) do
     t.integer "conditional_answer_field_id"
     t.text "conditional_answer_mappings"
     t.boolean "has_custom_view", default: false, null: false
+  end
+
+  create_table "form_request_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.integer "status", default: 0
+    t.string "approver_id"
+    t.text "deny_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["approver_id"], name: "index_form_request_forms_on_approver_id"
+    t.index ["employee_id"], name: "index_form_request_forms_on_employee_id"
   end
 
   create_table "form_template_routing_steps", force: :cascade do |t|
