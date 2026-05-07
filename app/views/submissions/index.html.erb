@@ -61,7 +61,7 @@
             } %>
       </div>
 
-      <% if @has_subordinates && @employees.present? %>
+      <% if @show_employee_filter && @employees.present? %>
         <div class="filter-group">
           <label for="filter_employee">Employee</label>
           <%= select_tag :filter_employee,
@@ -145,7 +145,7 @@
           <% end %>
         <% end %>
       </th>
-      <% if @has_subordinates %>
+      <% if @show_employee_filter %>
         <th>
           <%= link_to submissions_path(sort_by: 'employee_name', sort_direction: params[:sort_by] == 'employee_name' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
             Employee
@@ -188,7 +188,7 @@
         <tr class="status-row">
           <td class="col-type"><%= item[:type] %></td>
           <td class="col-title"><%= item[:title] %></td>
-          <% if @has_subordinates %>
+          <% if @show_employee_filter %>
             <td class="col-employee-name"><%= item[:employee_name] %></td>
           <% end %>
           <td class="col-status">
@@ -202,7 +202,7 @@
         </tr>
       <% end %>
     <% else %>
-      <tr><td colspan="<%= @has_subordinates ? 8 : 7 %>">No submissions found.</td></tr>
+      <tr><td colspan="<%= @show_employee_filter ? 8 : 7 %>">No submissions found.</td></tr>
     <% end %>
   </tbody>
 </table>

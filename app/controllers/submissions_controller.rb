@@ -23,14 +23,18 @@ class SubmissionsController < ApplicationController
 
     @status_items = []
 
-    # Check if user has any subordinates (direct or indirect)
+    # System admins can filter across every employee; otherwise the dropdown
+    # is gated on having subordinates in the supervisor chain.
+    @is_system_admin = current_user_group_names.include?("system_admins")
     @subordinate_ids = Employee.subordinate_ids(employee_id)
     @has_subordinates = @subordinate_ids.any?
+    @show_employee_filter = @is_system_admin || @has_subordinates
 
-    # Determine which employee IDs to load submissions for based on filter
-    @scoped_employee_ids = if @has_subordinates && params[:filter_employee].present?
+    # Determine which employee IDs to load submissions for based on filter.
+    # nil means "no employee_id restriction" (system admin viewing All).
+    @scoped_employee_ids = if @show_employee_filter && params[:filter_employee].present?
                              if params[:filter_employee] == "all"
-                               [employee_id] + @subordinate_ids
+                               @is_system_admin ? nil : [employee_id] + @subordinate_ids
                              else
                                [params[:filter_employee]]
                              end
@@ -44,9 +48,13 @@ class SubmissionsController < ApplicationController
     # Load dynamic forms from FormTemplates that have statuses configured
     load_form_template_submissions(employee_id)
 
-    if @has_subordinates
-      # Load only subordinate employees for the filter dropdown
-      @employees = Employee.where(EmployeeID: @subordinate_ids).order(:last_name, :first_name)
+    if @show_employee_filter
+      # System admins see every employee; supervisors see only their reporting chain.
+      @employees = if @is_system_admin
+                     Employee.order(:last_name, :first_name)
+                   else
+                     Employee.where(EmployeeID: @subordinate_ids).order(:last_name, :first_name)
+                   end
       @current_user_id = employee_id
     end
 
@@ -197,7 +205,8 @@ class SubmissionsController < ApplicationController
       includes_list << :parking_lot_vehicles if model_class.reflect_on_association(:parking_lot_vehicles)
 
       # Scope to the determined employee IDs (own, specific subordinate, or all)
-      scope = model_class.where(employee_id: @scoped_employee_ids)
+      # nil = no employee_id restriction (system admin viewing All)
+      scope = @scoped_employee_ids ? model_class.where(employee_id: @scoped_employee_ids) : model_class.all
 
       # Apply SQL-level date filters
       scope = apply_scope_date_filters(scope, submission_scope_date_filters)
@@ -234,7 +243,8 @@ class SubmissionsController < ApplicationController
       next unless model_class.new.respond_to?(:status_category)
 
       # Scope to the determined employee IDs (own, specific subordinate, or all)
-      scope = model_class.where(employee_id: @scoped_employee_ids)
+      # nil = no employee_id restriction (system admin viewing All)
+      scope = @scoped_employee_ids ? model_class.where(employee_id: @scoped_employee_ids) : model_class.all
 
       # Apply SQL-level date filters
       scope = apply_scope_date_filters(scope, submission_scope_date_filters)
@@ -345,7 +355,7 @@ class SubmissionsController < ApplicationController
       'updated_at' => ->(item) { item[:updated_at].to_s }
     }
 
-    if @has_subordinates
+    if @show_employee_filter
       configs['employee_name'] = ->(item) { item[:employee_name].to_s }
     end
 
