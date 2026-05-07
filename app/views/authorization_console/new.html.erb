@@ -18,13 +18,17 @@
 
     <%= form.hidden_field :department_id, value: @department_id %>
 
-    <div class="form-group">
+    <div class="form-group" data-controller="choices">
       <%= form.label :employee_id, "Employee" %>
       <%= form.select :employee_id,
             options_for_select(@department_employees.map { |e| [e[:name], e[:id]] }, @authorized_approver.employee_id),
             { prompt: "Select Employee" },
             class: "form-control",
-            required: true %>
+            required: true,
+            data: {
+              choices_target: "select",
+              placeholder: "Search for an employee..."
+            } %>
     </div>
 
     <!-- Wrap all key-related fields under one Stimulus controller -->
