@@ -46,6 +46,19 @@
               data: { action: "change->auto-submit#submit" } %>
         </div>
 
+        <% if @show_employee_filter && @filter_employees.present? %>
+          <div class="filter-group">
+            <label for="filter_employee">Employee</label>
+            <%= select_tag :filter_employee,
+                options_for_select(
+                  [["Me", ''], ['All', 'all']] + @filter_employees.map { |e| ["#{e.last_name}, #{e.first_name}", e.employee_id.to_s] },
+                  params[:filter_employee]
+                ),
+                class: 'filter-select',
+                data: { action: "change->auto-submit#submit" } %>
+          </div>
+        <% end %>
+
         <div class="filter-group">
           <label for="filter_date_from">Created From</label>
           <%= date_field_tag :filter_date_from, params[:filter_date_from],
@@ -60,7 +73,7 @@
               data: { action: "change->auto-submit#submit" } %>
         </div>
 
-        <% if params[:filter_form_type].present? || params[:filter_name].present? || params[:filter_unit].present? || params[:filter_email].present? || params[:filter_status].present? || params[:filter_date_from].present? || params[:filter_date_to].present? %>
+        <% if params[:filter_form_type].present? || params[:filter_name].present? || params[:filter_unit].present? || params[:filter_email].present? || params[:filter_status].present? || params[:filter_date_from].present? || params[:filter_date_to].present? || params[:filter_employee].present? %>
           <%= link_to "Clear Filters", inbox_queue_path(sort_by: params[:sort_by], sort_direction: params[:sort_direction]), class: 'btn clear-filters', data: { turbo: false } %>
         <% end %>
       </div>
@@ -207,7 +220,7 @@
       <thead>
         <tr>
           <th>
-            <%= link_to inbox_queue_path(sort_by: 'form_type', sort_direction: params[:sort_by] == 'form_type' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to]), class: 'sortable-header', data: { turbo: false } do %>
+            <%= link_to inbox_queue_path(sort_by: 'form_type', sort_direction: params[:sort_by] == 'form_type' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
               Form Type
               <% if params[:sort_by] == 'form_type' %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -215,7 +228,7 @@
             <% end %>
           </th>
           <th>
-            <%= link_to inbox_queue_path(sort_by: 'name', sort_direction: params[:sort_by] == 'name' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to]), class: 'sortable-header', data: { turbo: false } do %>
+            <%= link_to inbox_queue_path(sort_by: 'name', sort_direction: params[:sort_by] == 'name' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
               Name
               <% if params[:sort_by] == 'name' %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -223,7 +236,7 @@
             <% end %>
           </th>
           <th>
-            <%= link_to inbox_queue_path(sort_by: 'unit', sort_direction: params[:sort_by] == 'unit' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to]), class: 'sortable-header', data: { turbo: false } do %>
+            <%= link_to inbox_queue_path(sort_by: 'unit', sort_direction: params[:sort_by] == 'unit' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
               Unit
               <% if params[:sort_by] == 'unit' %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -231,7 +244,7 @@
             <% end %>
           </th>
           <th>
-            <%= link_to inbox_queue_path(sort_by: 'email', sort_direction: params[:sort_by] == 'email' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to]), class: 'sortable-header', data: { turbo: false } do %>
+            <%= link_to inbox_queue_path(sort_by: 'email', sort_direction: params[:sort_by] == 'email' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
               Email
               <% if params[:sort_by] == 'email' %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -239,7 +252,7 @@
             <% end %>
           </th>
           <th>
-            <%= link_to inbox_queue_path(sort_by: 'status', sort_direction: params[:sort_by] == 'status' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to]), class: 'sortable-header', data: { turbo: false } do %>
+            <%= link_to inbox_queue_path(sort_by: 'status', sort_direction: params[:sort_by] == 'status' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
               Status
               <% if params[:sort_by] == 'status' %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -247,7 +260,7 @@
             <% end %>
           </th>
           <th>
-            <%= link_to inbox_queue_path(sort_by: 'created_at', sort_direction: params[:sort_by] == 'created_at' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to]), class: 'sortable-header', data: { turbo: false } do %>
+            <%= link_to inbox_queue_path(sort_by: 'created_at', sort_direction: params[:sort_by] == 'created_at' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
               Created
               <% if params[:sort_by] == 'created_at' || params[:sort_by].nil? %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>

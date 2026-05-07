@@ -10,32 +10,50 @@ class InboxController < ApplicationController
     employee_id = employee["employee_id"].to_s
     @submissions = []
 
-    # Parking Lot Submissions where employee is either:
+    # System admins can filter across every employee's inbox; otherwise the
+    # dropdown is gated on having subordinates in the supervisor chain.
+    @is_system_admin = current_user_group_names.include?("system_admins")
+    @subordinate_ids = Employee.subordinate_ids(employee_id)
+    @has_subordinates = @subordinate_ids.any?
+    @show_employee_filter = @is_system_admin || @has_subordinates
+
+    # nil means "no assignee restriction" (system admin viewing All).
+    @scoped_employee_ids = if @show_employee_filter && params[:filter_employee].present?
+                             if params[:filter_employee] == "all"
+                               @is_system_admin ? nil : [employee_id] + @subordinate_ids
+                             else
+                               [params[:filter_employee]]
+                             end
+                           else
+                             [employee_id]
+                           end
+
+    # Parking Lot Submissions where assignee is either:
     # 1. Supervisor (Dept Head) - all statuses stay in inbox
     # 2. Delegated Approver - all statuses stay in inbox
     @submissions += apply_scope_date_filters(
-      ParkingLotSubmission.where(supervisor_id: employee_id),
+      scope_by_assignee(ParkingLotSubmission, :supervisor_id),
       inbox_scope_date_filters
     ).to_a
     @submissions += apply_scope_date_filters(
-      ParkingLotSubmission.where(delegated_approver_id: employee_id),
+      scope_by_assignee(ParkingLotSubmission, :delegated_approver_id),
       inbox_scope_date_filters
     ).to_a
 
     # Probation Transfer Requests - all statuses stay in inbox (except canceled)
     @submissions += apply_scope_date_filters(
-      ProbationTransferRequest.where(supervisor_id: employee_id, canceled_at: nil),
+      scope_by_assignee(ProbationTransferRequest, :supervisor_id).where(canceled_at: nil),
       inbox_scope_date_filters
     ).to_a
 
     # Critical Information Reporting forms assigned to this manager (all statuses stay in inbox)
     @submissions += apply_scope_date_filters(
-      CriticalInformationReporting.where(assigned_manager_id: employee_id),
+      scope_by_assignee(CriticalInformationReporting, :assigned_manager_id),
       inbox_scope_date_filters
     ).to_a
 
     # Dynamically generated forms with approval workflows
-    @submissions += fetch_dynamic_form_submissions(employee_id)
+    @submissions += fetch_dynamic_form_submissions
 
     # Deduplicate (a submission could match both supervisor and delegated approver).
     # Key by class + id so different form types with the same numeric id aren't collapsed.
@@ -59,11 +77,23 @@ class InboxController < ApplicationController
     # Paginate the final sorted array
     @pagy, @submissions = pagy(:offset, @submissions, count: @submissions.size)
 
-    # Load employees for reassignment dropdown
+    # Reassignment modal needs every employee regardless of filter scope.
     @employees = Employee.order(:last_name, :first_name)
+
+    # Filter dropdown: system admins see every employee; supervisors see only their reporting chain.
+    if @show_employee_filter
+      @filter_employees = @is_system_admin ? @employees : Employee.where(EmployeeID: @subordinate_ids).order(:last_name, :first_name)
+      @current_user_id = employee_id
+    end
   end
 
   private
+
+  # Apply assignee-column filter based on @scoped_employee_ids.
+  # nil = no restriction (system admin viewing All).
+  def scope_by_assignee(model_class, column)
+    @scoped_employee_ids ? model_class.where(column => @scoped_employee_ids) : model_class.all
+  end
 
   # SQL-level date filter config
   def inbox_scope_date_filters
@@ -110,7 +140,7 @@ class InboxController < ApplicationController
   end
 
   # Fetch submissions from dynamically generated forms that need approval
-  def fetch_dynamic_form_submissions(employee_id)
+  def fetch_dynamic_form_submissions
     submissions = []
 
     # Get all form templates that have approval workflows
@@ -119,9 +149,9 @@ class InboxController < ApplicationController
         # Try to get the model class for this form template
         model_class = template.class_name.constantize
 
-        # Query for submissions where this employee is the approver
+        # Query for submissions where the configured employee(s) is the approver
         if model_class.column_names.include?('approver_id')
-          scope = model_class.where(approver_id: employee_id)
+          scope = scope_by_assignee(model_class, :approver_id)
           scope = apply_scope_date_filters(scope, inbox_scope_date_filters)
           submissions += scope.to_a
         end
