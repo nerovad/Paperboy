@@ -31,12 +31,20 @@ class InboxController < ApplicationController
     # Parking Lot Submissions where assignee is either:
     # 1. Supervisor (Dept Head) - all statuses stay in inbox
     # 2. Delegated Approver - all statuses stay in inbox
+    # 3. Unclaimed (supervisor_id IS NULL) and the scoped employee is one of
+    #    the authorized approvers for the submission's unit. Restricted to
+    #    pending submissions; once an approver acts, supervisor_id is set
+    #    via the claim and path 1 takes over.
     @submissions += apply_scope_date_filters(
       scope_by_assignee(ParkingLotSubmission, :supervisor_id),
       inbox_scope_date_filters
     ).to_a
     @submissions += apply_scope_date_filters(
       scope_by_assignee(ParkingLotSubmission, :delegated_approver_id),
+      inbox_scope_date_filters
+    ).to_a
+    @submissions += apply_scope_date_filters(
+      scope_unclaimed_by_authorization(ParkingLotSubmission, service_type: 'P'),
       inbox_scope_date_filters
     ).to_a
 
@@ -93,6 +101,22 @@ class InboxController < ApplicationController
   # nil = no restriction (system admin viewing All).
   def scope_by_assignee(model_class, column)
     @scoped_employee_ids ? model_class.where(column => @scoped_employee_ids) : model_class.all
+  end
+
+  # Pending submissions with no claimed approver yet, where one of the scoped
+  # employees is in the AuthorizedApprover list for the submission's unit.
+  # When @scoped_employee_ids is nil (system admin "all") every unclaimed
+  # pending submission is included.
+  def scope_unclaimed_by_authorization(model_class, service_type:)
+    base = model_class.where(supervisor_id: nil, status: 0)
+    return base if @scoped_employee_ids.nil?
+
+    units = @scoped_employee_ids.flat_map { |eid|
+      AuthorizedApprover.authorized_unit_ids_for(employee_id: eid, service_type: service_type)
+    }.uniq
+    return model_class.none if units.empty?
+
+    base.where(unit: units)
   end
 
   # SQL-level date filter config

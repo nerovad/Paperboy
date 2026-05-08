@@ -117,10 +117,12 @@ def create
     @parking_lot_submission.approved_by   = employee_id # or "SYSTEM"
     @parking_lot_submission.approved_at   = Time.current
   else
-    # Normal path: submitted and routed to authorized approver for their budget unit
+    # Multi-approver path: leave supervisor_id null so every authorized
+    # approver for this unit sees it in their inbox. Whoever acts first
+    # claims it (see #approve / #deny).
     @parking_lot_submission.status           = 0 # submitted
-    @parking_lot_submission.supervisor_id    = authorized_approvers.first
-    @parking_lot_submission.supervisor_email = fetch_employee_email(authorized_approvers.first)
+    @parking_lot_submission.supervisor_id    = nil
+    @parking_lot_submission.supervisor_email = nil
   end
 
   if @parking_lot_submission.save
@@ -159,12 +161,23 @@ def approve
     sean_payne_id = "104236"
     sean_payne_email = "Sean.Payne@ventura.org"
 
+    # Claim the submission for this approver so the existing supervisor_id-based
+    # inbox query keeps showing it under them post-approval, and the other
+    # authorized approvers stop seeing it as pending.
+    claim_attrs = if @submission.supervisor_id.blank?
+      { supervisor_id: approver_id, supervisor_email: fetch_employee_email(approver_id) }
+    else
+      {}
+    end
+
     @submission.update!(
-      status: 1,  # pending_delegated_approval
-      approved_by: approver_id,
-      approved_at: Time.current,
-      delegated_approver_id: sean_payne_id,
-      delegated_approver_email: sean_payne_email
+      claim_attrs.merge(
+        status: 1,  # pending_delegated_approval
+        approved_by: approver_id,
+        approved_at: Time.current,
+        delegated_approver_id: sean_payne_id,
+        delegated_approver_email: sean_payne_email
+      )
     )
 
     # Send notification to Sean Payne
@@ -197,11 +210,21 @@ def deny
   denier_id    = session.dig(:user, "employee_id").to_s
   reason       = params[:denial_reason].to_s.strip
 
+  # Claim the submission on deny too, so it stays in the denying approver's
+  # inbox and disappears from the other authorized approvers' inboxes.
+  claim_attrs = if @submission.supervisor_id.blank?
+    { supervisor_id: denier_id, supervisor_email: fetch_employee_email(denier_id) }
+  else
+    {}
+  end
+
   @submission.update!(
-    status: 2,                        # use your correct denied code
-    denied_by: denier_id,
-    denied_at: Time.current,
-    denial_reason: reason.presence || "No reason provided"
+    claim_attrs.merge(
+      status: 2,                        # use your correct denied code
+      denied_by: denier_id,
+      denied_at: Time.current,
+      denial_reason: reason.presence || "No reason provided"
+    )
   )
 
   SecurityMailer.denied(@submission).deliver_later

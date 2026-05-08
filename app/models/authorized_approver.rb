@@ -72,4 +72,22 @@ class AuthorizedApprover < ApplicationRecord
       a.span == 'A' || a.budget_units.to_s.split(',').map(&:strip).include?(unit_str)
     }.map(&:employee_id).uniq
   end
+
+  # Returns every unit_id this employee is authorized to approve for the given
+  # service type. Span 'A' expands to all units in the approver's department;
+  # other spans use the explicit budget_units list.
+  def self.authorized_unit_ids_for(employee_id:, service_type:)
+    rows = where(employee_id: employee_id, service_type: service_type)
+    return [] if rows.empty?
+
+    unit_ids = Set.new
+    rows.each do |a|
+      if a.span == 'A'
+        Unit.where(department_id: a.department_id).pluck(:unit_id).each { |u| unit_ids << u.to_s }
+      else
+        a.budget_units.to_s.split(',').map(&:strip).each { |u| unit_ids << u if u.present? }
+      end
+    end
+    unit_ids.to_a
+  end
 end
