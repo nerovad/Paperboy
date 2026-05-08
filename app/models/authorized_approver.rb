@@ -5,9 +5,9 @@ class AuthorizedApprover < ApplicationRecord
   validates :service_type, presence: true, inclusion: { in: %w[P E V C K] }
   validates :key_type, inclusion: { in: %w[1 2 3 4 5 6 7] }, if: -> { service_type == 'K' }
   validates :span, inclusion: { in: %w[A B C D E] }, allow_blank: true
-  validates :service_type, uniqueness: {
-    scope: [:department_id, :key_type],
-    message: "already has an approver assigned for this service type in this department"
+  validates :employee_id, uniqueness: {
+    scope: [:department_id, :service_type, :key_type],
+    message: "is already authorized for this service type in this department"
   }
   
   SERVICE_TYPES = {
