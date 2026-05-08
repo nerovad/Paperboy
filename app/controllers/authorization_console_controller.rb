@@ -40,26 +40,43 @@ class AuthorizationConsoleController < ApplicationController
   def new
     @department_id = params[:department_id]
     @authorized_approver = AuthorizedApprover.new(department_id: @department_id)
+    @selected_service_types = []
 
     @building_options     = fetch_buildings_for_department(@department_id)
     @budget_unit_options  = fetch_managed_budget_units
     @department_employees = fetch_managed_employees
   end
-  
-  def create
-    @authorized_approver = AuthorizedApprover.new(authorized_approver_params)
-    @authorized_approver.authorized_by = session.dig(:user, "employee_id").to_s
-    resolve_department_from_units(@authorized_approver)
 
-    if @authorized_approver.save
-      redirect_to authorization_console_index_path(department_id: @authorized_approver.department_id),
-                  notice: "Approver authorization added successfully."
+  def create
+    shared = authorized_approver_create_params
+    service_types = Array(shared.delete(:service_type)).reject(&:blank?)
+    authorized_by = session.dig(:user, "employee_id").to_s
+
+    if service_types.empty?
+      @authorized_approver = AuthorizedApprover.new(shared)
+      @authorized_approver.authorized_by = authorized_by
+      @authorized_approver.errors.add(:service_type, "must be selected")
+      @selected_service_types = []
+      return rerender_new
+    end
+
+    approvers = service_types.map do |st|
+      a = AuthorizedApprover.new(shared.merge(service_type: st))
+      a.authorized_by = authorized_by
+      resolve_department_from_units(a)
+      a
+    end
+
+    if approvers.all?(&:valid?)
+      AuthorizedApprover.transaction { approvers.each(&:save!) }
+      count = approvers.size
+      noun = count == 1 ? "authorization" : "authorizations"
+      redirect_to authorization_console_index_path(department_id: approvers.first.department_id),
+                  notice: "#{count} approver #{noun} added successfully."
     else
-      @department_id         = @authorized_approver.department_id
-      @department_employees  = fetch_managed_employees
-      @building_options      = fetch_buildings_for_department(@department_id)
-      @budget_unit_options   = fetch_managed_budget_units
-      render :new, status: :unprocessable_entity
+      @authorized_approver = approvers.find { |a| a.errors.any? } || approvers.first
+      @selected_service_types = service_types
+      rerender_new
     end
   end
   
@@ -186,5 +203,30 @@ class AuthorizationConsoleController < ApplicationController
     raw[:budget_units]  = Array(raw[:budget_units]).reject(&:blank?).join(",")
 
     raw
+  end
+
+  def authorized_approver_create_params
+    raw = params.require(:authorized_approver).permit(
+      :employee_id,
+      :department_id,
+      :key_type,
+      :span,
+      service_type: [],
+      locations: [],
+      budget_units: []
+    )
+
+    raw[:locations]    = Array(raw[:locations]).reject(&:blank?).join(",")
+    raw[:budget_units] = Array(raw[:budget_units]).reject(&:blank?).join(",")
+
+    raw
+  end
+
+  def rerender_new
+    @department_id        = @authorized_approver.department_id
+    @department_employees = fetch_managed_employees
+    @building_options     = fetch_buildings_for_department(@department_id)
+    @budget_unit_options  = fetch_managed_budget_units
+    render :new, status: :unprocessable_entity
   end
 end

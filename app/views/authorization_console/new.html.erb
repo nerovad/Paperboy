@@ -33,16 +33,19 @@
 
     <!-- Wrap all key-related fields under one Stimulus controller -->
     <div data-controller="authorization-select">
-      <div class="form-group">
+      <div class="form-group" data-controller="choices">
         <%= form.label :service_type, "Service Type" %>
         <%= form.select :service_type,
-              options_for_select(AuthorizedApprover::SERVICE_TYPES.map { |k, v| ["#{v} (#{k})", k] }, @authorized_approver.service_type),
-              { prompt: "Select Service Type" },
+              options_for_select(AuthorizedApprover::SERVICE_TYPES.map { |k, v| ["#{v} (#{k})", k] }, @selected_service_types || []),
+              {},
+              multiple: true,
               class: "form-control",
               required: true,
               data: {
                 authorization_select_target: "serviceType",
-                action: "change->authorization-select#toggleFields"
+                choices_target: "select",
+                action: "change->authorization-select#toggleFields",
+                placeholder: "Select service type(s)…"
               } %>
       </div>
 
