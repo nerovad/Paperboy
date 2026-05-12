@@ -10,9 +10,9 @@
         <%= f.label :year, "Filing Year" %>
         <%= f.number_field :year, value: @year, min: 1970, max: Date.current.year + 1, class: "form-control" %>
       </div>
-      <%= f.submit "View", class: "btn" %>
+      <%= f.submit "View", class: "btn secondary" %>
     <% end %>
-    <%= link_to "View 300 Log", osha_log_path(year: @year), class: "btn", data: { turbo: false } %>
+    <%= link_to "View 300 Log", osha_log_path(year: @year), class: "btn secondary", data: { turbo: false } %>
   </div>
 
   <% if flash[:alert] %>
@@ -72,7 +72,7 @@
               <% end %>
             </div>
           </div>
-          <button type="button" class="btn" data-action="click->card-toggle#edit">Edit</button>
+          <button type="button" class="btn secondary" data-action="click->card-toggle#edit">Edit</button>
         </div>
       </div>
     <% end %>
