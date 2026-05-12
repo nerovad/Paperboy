@@ -40,6 +40,7 @@ import SelectAllController from "controllers/select_all_controller"
 import DependentSelectController from "controllers/dependent_select_controller"
 import ClickableRowController from "controllers/clickable_row_controller"
 import InformationFieldController from "controllers/information_field_controller"
+import CardToggleController from "controllers/card_toggle_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -81,3 +82,4 @@ application.register("select-all", SelectAllController)
 application.register("dependent-select", DependentSelectController)
 application.register("clickable-row", ClickableRowController)
 application.register("information-field", InformationFieldController)
+application.register("card-toggle", CardToggleController)

@@ -27,6 +27,11 @@
       <% if @entry.submitted_by_id.present? %>by employee <%= @entry.submitted_by_id %><% end %>.
       Edits to this year's 300A now require a Change Reason.
     </div>
+  <% elsif @establishment.persisted? && @entry.persisted? %>
+    <div class="alert" style="margin-bottom: 20px; padding: 12px; background: #fff8e1; border-left: 4px solid #f0ad4e;">
+      <strong>Saved, not yet submitted.</strong>
+      Establishment and workforce are saved. Download the JSON payload or mark as submitted when you've filed via OSHA's ITA portal.
+    </div>
   <% else %>
     <div class="alert" style="margin-bottom: 20px; padding: 12px; background: #fff8e1; border-left: 4px solid #f0ad4e;">
       <strong>Not yet submitted.</strong>
@@ -34,92 +39,137 @@
     </div>
   <% end %>
 
-  <%= form_with url: osha_300a_path(year: @year), method: :patch, local: true, data: { turbo: false } do |form| %>
+  <%
+    saved = @establishment.persisted? && @entry.persisted?
+    has_errors = flash[:alert].present?
+    start_collapsed = saved && !has_errors
+  %>
 
-    <%# ---------- Establishment Information ---------- %>
-    <h2>Establishment Information</h2>
-    <%= fields_for :osha_establishment, @establishment do |est| %>
-      <div class="form-row d-flex flex-wrap">
-        <div class="form-group flex-fill">
-          <%= est.label :name, "Establishment Name *" %>
-          <%= est.text_field :name, class: "form-control", maxlength: 100, required: true %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= est.label :ein, "EIN * (9 digits, no dashes)" %>
-          <%= est.text_field :ein, class: "form-control", maxlength: 9, pattern: "\\d{9}", required: true %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= est.label :company_name, "Company Name" %>
-          <%= est.text_field :company_name, class: "form-control", maxlength: 100 %>
-        </div>
-      </div>
-      <div class="form-row d-flex flex-wrap">
-        <div class="form-group flex-fill">
-          <%= est.label :street_address, "Street Address *" %>
-          <%= est.text_field :street_address, class: "form-control", maxlength: 100, required: true %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= est.label :city, "City *" %>
-          <%= est.text_field :city, class: "form-control", maxlength: 100, required: true %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= est.label :state, "State * (2-char code)" %>
-          <%= est.text_field :state, class: "form-control", maxlength: 2, required: true %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= est.label :zip, "ZIP * (5 or 9 digits)" %>
-          <%= est.text_field :zip, class: "form-control", maxlength: 9, pattern: "\\d{5}(\\d{4})?", required: true %>
-        </div>
-      </div>
-      <div class="form-row d-flex flex-wrap">
-        <div class="form-group flex-fill">
-          <%= est.label :naics_code, "NAICS Code * (6 digits)" %>
-          <%= est.text_field :naics_code, class: "form-control", maxlength: 6, pattern: "\\d{6}", required: true %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= est.label :industry_description, "Industry Description" %>
-          <%= est.text_field :industry_description, class: "form-control", maxlength: 300 %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= est.label :size, "Size *" %>
-          <%= est.select :size,
-                options_for_select(OshaEstablishment::SIZE_OPTIONS.map { |k, v| ["#{k} — #{v}", k] }, @establishment.size),
-                { include_blank: "Select..." },
-                class: "form-control", required: true %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= est.label :establishment_type, "Establishment Type" %>
-          <%= est.select :establishment_type,
-                options_for_select(OshaEstablishment::ESTABLISHMENT_TYPE_OPTIONS.map { |k, v| ["#{k} — #{v}", k] }, @establishment.establishment_type),
-                { include_blank: "Select..." },
-                class: "form-control" %>
+  <div data-controller="card-toggle">
+
+    <%# ---------- Collapsed summary card (when saved) ---------- %>
+    <% if saved %>
+      <div data-card-toggle-target="card" <%= 'hidden' unless start_collapsed %>
+           style="border: 1px solid #d1d9e3; border-radius: 6px; padding: 16px 18px; background: #f8fafc; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 280px;">
+            <div style="font-size: 13px; color: #667085; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px;">
+              Saved <%= @year %> Workforce
+            </div>
+            <div style="font-size: 17px; font-weight: 600; color: #1a2233; margin-bottom: 6px;">
+              <%= @establishment.name.presence || "(no establishment name)" %>
+              <% if @establishment.city.present? && @establishment.state.present? %>
+                <span style="color: #667085; font-weight: 400;"> &mdash; <%= @establishment.city %>, <%= @establishment.state %></span>
+              <% end %>
+            </div>
+            <div style="color: #344054; font-size: 14px;">
+              <strong><%= number_with_delimiter(@entry.annual_average_employees) %></strong> avg employees
+              &nbsp;·&nbsp;
+              <strong><%= number_with_delimiter(@entry.total_hours_worked) %></strong> total hours
+              <% if @entry.respond_to?(:hours_per_employee) && @entry.hours_per_employee %>
+                &nbsp;·&nbsp;
+                <span style="color: #667085;"><%= @entry.hours_per_employee.round(1) %> hrs/employee</span>
+              <% end %>
+            </div>
+          </div>
+          <button type="button" class="btn" data-action="click->card-toggle#edit">Edit</button>
         </div>
       </div>
     <% end %>
 
-    <%# ---------- Annual Workforce ---------- %>
-    <h2 style="margin-top: 28px;">Annual Workforce (<%= @year %>)</h2>
-    <%= fields_for :osha_300a_entry, @entry do |entry| %>
-      <div class="form-row d-flex flex-wrap">
-        <div class="form-group flex-fill">
-          <%= entry.label :annual_average_employees, "Annual Average # of Employees *" %>
-          <%= entry.number_field :annual_average_employees, class: "form-control", min: 1, max: 24999, required: true %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= entry.label :total_hours_worked, "Total Hours Worked *" %>
-          <%= entry.number_field :total_hours_worked, class: "form-control", min: 1, required: true %>
-        </div>
-        <div class="form-group flex-fill">
-          <%= entry.label :change_reason, "Change Reason (only when amending a submitted summary)" %>
-          <%= entry.text_field :change_reason, class: "form-control", maxlength: 100 %>
-        </div>
-      </div>
-    <% end %>
+    <%# ---------- Edit form ---------- %>
+    <div data-card-toggle-target="form" <%= 'hidden' if start_collapsed %>>
+      <%= form_with url: osha_300a_path(year: @year), method: :patch, local: true, data: { turbo: false } do |form| %>
 
-    <div style="margin-top: 16px; margin-bottom: 28px;">
-      <%= form.submit "Save Establishment & Workforce", class: "btn approve" %>
+        <%# ---------- Establishment Information ---------- %>
+        <h2>Establishment Information</h2>
+        <%= fields_for :osha_establishment, @establishment do |est| %>
+          <div class="form-row d-flex flex-wrap">
+            <div class="form-group flex-fill">
+              <%= est.label :name, "Establishment Name *" %>
+              <%= est.text_field :name, class: "form-control", maxlength: 100, required: true %>
+            </div>
+            <div class="form-group flex-fill">
+              <%= est.label :ein, "EIN * (9 digits, no dashes)" %>
+              <%= est.text_field :ein, class: "form-control", maxlength: 9, pattern: "\\d{9}", required: true %>
+            </div>
+            <div class="form-group flex-fill">
+              <%= est.label :company_name, "Company Name" %>
+              <%= est.text_field :company_name, class: "form-control", maxlength: 100 %>
+            </div>
+          </div>
+          <div class="form-row d-flex flex-wrap">
+            <div class="form-group flex-fill">
+              <%= est.label :street_address, "Street Address *" %>
+              <%= est.text_field :street_address, class: "form-control", maxlength: 100, required: true %>
+            </div>
+            <div class="form-group flex-fill">
+              <%= est.label :city, "City *" %>
+              <%= est.text_field :city, class: "form-control", maxlength: 100, required: true %>
+            </div>
+            <div class="form-group flex-fill">
+              <%= est.label :state, "State * (2-char code)" %>
+              <%= est.text_field :state, class: "form-control", maxlength: 2, required: true %>
+            </div>
+            <div class="form-group flex-fill">
+              <%= est.label :zip, "ZIP * (5 or 9 digits)" %>
+              <%= est.text_field :zip, class: "form-control", maxlength: 9, pattern: "\\d{5}(\\d{4})?", required: true %>
+            </div>
+          </div>
+          <div class="form-row d-flex flex-wrap">
+            <div class="form-group flex-fill">
+              <%= est.label :naics_code, "NAICS Code * (6 digits)" %>
+              <%= est.text_field :naics_code, class: "form-control", maxlength: 6, pattern: "\\d{6}", required: true %>
+            </div>
+            <div class="form-group flex-fill">
+              <%= est.label :industry_description, "Industry Description" %>
+              <%= est.text_field :industry_description, class: "form-control", maxlength: 300 %>
+            </div>
+            <div class="form-group flex-fill">
+              <%= est.label :size, "Size *" %>
+              <%= est.select :size,
+                    options_for_select(OshaEstablishment::SIZE_OPTIONS.map { |k, v| ["#{k} — #{v}", k] }, @establishment.size),
+                    { include_blank: "Select..." },
+                    class: "form-control", required: true %>
+            </div>
+            <div class="form-group flex-fill">
+              <%= est.label :establishment_type, "Establishment Type" %>
+              <%= est.select :establishment_type,
+                    options_for_select(OshaEstablishment::ESTABLISHMENT_TYPE_OPTIONS.map { |k, v| ["#{k} — #{v}", k] }, @establishment.establishment_type),
+                    { include_blank: "Select..." },
+                    class: "form-control" %>
+            </div>
+          </div>
+        <% end %>
+
+        <%# ---------- Annual Workforce ---------- %>
+        <h2 style="margin-top: 28px;">Annual Workforce (<%= @year %>)</h2>
+        <%= fields_for :osha_300a_entry, @entry do |entry| %>
+          <div class="form-row d-flex flex-wrap">
+            <div class="form-group flex-fill">
+              <%= entry.label :annual_average_employees, "Annual Average # of Employees *" %>
+              <%= entry.number_field :annual_average_employees, class: "form-control", min: 1, max: 24999, required: true %>
+            </div>
+            <div class="form-group flex-fill">
+              <%= entry.label :total_hours_worked, "Total Hours Worked *" %>
+              <%= entry.number_field :total_hours_worked, class: "form-control", min: 1, required: true %>
+            </div>
+            <div class="form-group flex-fill">
+              <%= entry.label :change_reason, "Change Reason (only when amending a submitted summary)" %>
+              <%= entry.text_field :change_reason, class: "form-control", maxlength: 100 %>
+            </div>
+          </div>
+        <% end %>
+
+        <div style="margin-top: 16px; margin-bottom: 28px; display: flex; gap: 8px;">
+          <%= form.submit "Save Establishment & Workforce", class: "btn approve" %>
+          <% if saved %>
+            <button type="button" class="btn" data-action="click->card-toggle#collapse">Cancel</button>
+          <% end %>
+        </div>
+      <% end %>
     </div>
-  <% end %>
+  </div>
 
   <%# ---------- Computed Totals ---------- %>
   <h2>Computed Totals (read-only)</h2>
