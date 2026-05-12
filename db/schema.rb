@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_04_224411) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_12_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -243,13 +243,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_04_224411) do
     t.string "submission_type", default: "database"
     t.string "approval_routing_to"
     t.integer "approval_employee_id"
-    t.string "powerbi_workspace_id"
-    t.string "powerbi_report_id"
     t.boolean "has_dashboard", default: false
     t.text "inbox_buttons"
     t.string "status_transition_mode", default: "automatic"
     t.text "tags"
     t.string "visibility", default: "restricted", null: false
+    t.integer "metabase_dashboard_id"
   end
 
   create_table "gym_locker_forms", force: :cascade do |t|

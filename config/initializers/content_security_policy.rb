@@ -11,31 +11,15 @@ Rails.application.configure do
     policy.img_src     :self, :https, :data, :blob
     policy.object_src  :none
     policy.script_src  :self, :https, :unsafe_inline, :unsafe_eval,
-                       'https://cdn.jsdelivr.net',
-                       'https://app.powerbi.com',
-                       'https://app.powerbigov.us',
-                       'https://login.microsoftonline.com',
-                       'https://login.microsoftonline.us'
+                       'https://cdn.jsdelivr.net'
     policy.style_src   :self, :https, :unsafe_inline,
                        'https://cdn.jsdelivr.net'
 
-    # Allow Power BI iframes
-    policy.frame_src   :self,
-                       'https://app.powerbi.com',
-                       'https://app.powerbigov.us',
-                       'https://login.microsoftonline.com',
-                       'https://login.microsoftonline.us'
+    # Allow Metabase iframes
+    metabase_url = ENV.fetch('METABASE_SITE_URL', 'http://localhost:3000')
+    policy.frame_src   :self, metabase_url
 
-    # Allow connections to Power BI services
-    policy.connect_src :self,
-                       'https://app.powerbi.com',
-                       'https://app.powerbigov.us',
-                       'https://api.powerbi.com',
-                       'https://api.powerbigov.us',
-                       'https://login.microsoftonline.com',
-                       'https://login.microsoftonline.us',
-                       'https://wabi-us-gov-virginia-api.analysis.usgovcloudapi.net',
-                       'wss://wabi-us-gov-virginia-api.analysis.usgovcloudapi.net'
+    policy.connect_src :self
   end
 
   # Generate session nonces for permitted importmap and inline scripts only
