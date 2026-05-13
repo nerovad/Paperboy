@@ -79,6 +79,8 @@ class FormTemplate < ApplicationRecord
   before_validation :generate_class_name, on: :create
 
   scope :with_dashboards, -> { where(has_dashboard: true) }
+  scope :active, -> { where(archived: false) }
+  scope :archived, -> { where(archived: true) }
   
   def requires_approval?
     submission_type == 'approval'

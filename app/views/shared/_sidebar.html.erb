@@ -47,7 +47,7 @@
     # Cache form templates with their field labels and tags for search
     form_field_labels = {}
     form_tags = {}
-    FormTemplate.includes(:form_fields).each do |template|
+    FormTemplate.active.includes(:form_fields).each do |template|
       form_field_labels[template.name] = template.form_fields.pluck(:label).join(", ")
       form_tags[template.name] = template.tags_array.join(", ")
     end
@@ -64,7 +64,8 @@
     }
 
     # Add form templates — non-admins only see those granted by ACL
-    FormTemplate.all.each do |template|
+    # Archived templates are excluded from the sidebar but remain in Manage Form Templates.
+    FormTemplate.active.each do |template|
       path = resolve_path.call(template)
       next unless path
       next if available_forms.any? { |f| f[0] == template.name }

@@ -199,7 +199,12 @@ Rails.application.routes.draw do
   # ============================================================================
   # Form Templates & Builder
   # ============================================================================
-  resources :form_templates
+  resources :form_templates do
+    member do
+      patch :archive
+      patch :unarchive
+    end
+  end
 
   # ============================================================================
   # Workflow Forms (with approval/denial workflows)

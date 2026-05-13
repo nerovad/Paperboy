@@ -1,6 +1,6 @@
 class FormTemplatesController < ApplicationController
   before_action :require_system_admin
-  before_action :set_form_template, only: [:show, :edit, :update, :destroy]
+  before_action :set_form_template, only: [:show, :edit, :update, :destroy, :archive, :unarchive]
   
   def index
     @form_templates = FormTemplate.includes(:form_fields).order(:name)
@@ -290,9 +290,25 @@ class FormTemplatesController < ApplicationController
     end
   end
   
+  def archive
+    if @form_template.update(archived: true)
+      redirect_to form_templates_path, notice: "#{@form_template.name} archived. It is now hidden from the sidebar."
+    else
+      redirect_to form_templates_path, alert: "Failed to archive form template."
+    end
+  end
+
+  def unarchive
+    if @form_template.update(archived: false)
+      redirect_to form_templates_path, notice: "#{@form_template.name} restored to the sidebar."
+    else
+      redirect_to form_templates_path, alert: "Failed to unarchive form template."
+    end
+  end
+
   private
-  
-  def set_form_template 
+
+  def set_form_template
     @form_template = FormTemplate.find(params[:id])
   end
   
