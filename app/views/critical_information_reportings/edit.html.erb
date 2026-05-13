@@ -140,7 +140,7 @@
 <!-- FIELD:staff_involved START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :staff_involved, "Staff Involved" %>
             <%= form.select :staff_involved,
-                  options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }, @critical_information_reporting.staff_involved.to_s.split(/,(?! )/)),
+                  options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
                   { include_blank: false },
                   { class: "form-control", required: true, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
@@ -172,28 +172,28 @@
 <!-- FIELD:impact END -->
 <!-- FIELD:impact_started START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :impact_started, "When: Impact Started" %>
-            <%= form.datetime_local_field :impact_started, class: "form-control", required: true %>
+            <%= form.date_field :impact_started, class: "form-control", required: true %>
           </div>
 <!-- FIELD:impact_started END -->
 <!-- FIELD:impacted_customers START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :impacted_customers, "Impacted Customers" %>
             <%= form.select :impacted_customers,
-                  options_for_select(['Building', 'Agency', 'Employee'], @critical_information_reporting.impacted_customers.to_s.split(",")),
+                  options_for_select(['Building', 'Agency', 'Employee']),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'impacted_customers' } } %>
           </div>
 <!-- FIELD:impacted_customers END -->
-<!-- FIELD:building START -->          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Building&quot;]" style="<%= (@critical_information_reporting.impacted_customers.to_s.split(",") & ["Building"]).any? ? '' : 'display: none;' %>">
+<!-- FIELD:building START -->          <div class="conditional-field" data-depends-on="impacted_customers" data-show-values="[&quot;Building&quot;]" style="<%= ["Building"].include?(@critical_information_reporting.impacted_customers) ? '' : 'display: none;' %>">
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :building, "Building" %>
             <%= form.select :building,
-                  options_for_select(['HOA', 'JJC', 'Service Building', 'Other'], @critical_information_reporting.building.to_s.split(",")),
+                  options_for_select(['HOA', 'JJC', 'Service Building', 'Other']),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'building' } } %>
           </div>
           </div>
 <!-- FIELD:building END -->
-<!-- FIELD:other_building START -->          <div class="conditional-field" data-depends-on="building" data-show-values="[&quot;Other&quot;]" style="<%= (@critical_information_reporting.building.to_s.split(",") & ["Other"]).any? ? '' : 'display: none;' %>">
+<!-- FIELD:other_building START -->          <div class="conditional-field" data-depends-on="building" data-show-values="[&quot;Other&quot;]" style="<%= ["Other"].include?(@critical_information_reporting.building) ? '' : 'display: none;' %>">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :other_building, "Other Building" %>
             <%= form.text_field :other_building, class: "form-control" %>

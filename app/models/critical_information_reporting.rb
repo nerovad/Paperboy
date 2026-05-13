@@ -80,8 +80,8 @@ STATUS_LABELS = {
   # Instance methods
   # With enum, status returns a symbol like :in_progress, :resolved, etc.
   def status_label
-  self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
-end
+    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
+  end
 
   def current_assignee_id
     assigned_manager_id

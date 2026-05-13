@@ -342,27 +342,27 @@
 <div class="form-page" style="display:none;">
   <h2>Investigation Details</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:investigator_name START -->        <% field_2277_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2277_editable %>">
+<!-- FIELD:investigator_name START -->        <% field_2435_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2435_editable %>">
   <%= form.label :investigator_name, "Investigator Name" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.text_field :investigator_name, class: "form-control", disabled: !field_2277_editable %>
+            <%= form.text_field :investigator_name, class: "form-control", disabled: !field_2435_editable %>
           </div>
 <!-- FIELD:investigator_name END -->
-<!-- FIELD:investigator_title START -->        <% field_2278_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2278_editable %>">
+<!-- FIELD:investigator_title START -->        <% field_2436_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2436_editable %>">
   <%= form.label :investigator_title, "Investigator Title" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.text_field :investigator_title, class: "form-control", disabled: !field_2278_editable %>
+            <%= form.text_field :investigator_title, class: "form-control", disabled: !field_2436_editable %>
           </div>
 <!-- FIELD:investigator_title END -->
-<!-- FIELD:investigator_phone START -->        <% field_2279_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2279_editable %>">
+<!-- FIELD:investigator_phone START -->        <% field_2437_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2437_editable %>">
   <%= form.label :investigator_phone, "Investigator Phone" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
             <%= form.text_field :investigator_phone,
                   class: "form-control",
-                  disabled: !field_2279_editable,
+                  disabled: !field_2437_editable,
                   placeholder: "e.g. 555-555-5555",
                   title: "Enter a 10-digit phone number like 555-555-5555",
                   data: { controller: "phone", phone_target: "input", action: "input->phone#format paste->phone#format blur->phone#validate" },
@@ -374,18 +374,18 @@
             <div id="investigatorPhoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
           </div>
 <!-- FIELD:investigator_phone END -->
-<!-- FIELD:nature_of_incident START -->        <% field_2280_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2280_editable %>">
+<!-- FIELD:nature_of_incident START -->        <% field_2438_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2438_editable %>">
   <%= form.label :nature_of_incident, "Nature of Incident" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.text_area :nature_of_incident, rows: 5, class: "form-control", disabled: !field_2280_editable %>
+            <%= form.text_area :nature_of_incident, rows: 5, class: "form-control", disabled: !field_2438_editable %>
           </div>
 <!-- FIELD:nature_of_incident END -->
-<!-- FIELD:cause_of_incident START -->        <% field_2281_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2281_editable %>">
+<!-- FIELD:cause_of_incident START -->        <% field_2439_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2439_editable %>">
   <%= form.label :cause_of_incident, "Cause of Incident" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.text_area :cause_of_incident, rows: 5, class: "form-control", disabled: !field_2281_editable %>
+            <%= form.text_area :cause_of_incident, rows: 5, class: "form-control", disabled: !field_2439_editable %>
           </div>
 <!-- FIELD:cause_of_incident END -->
         </div>
@@ -395,25 +395,25 @@
 <div class="form-page" style="display:none;">
   <h2>Severity & Root Cause</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:root_cause START -->        <% field_2282_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2282_editable %>">
+<!-- FIELD:root_cause START -->        <% field_2440_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2440_editable %>">
   <%= form.label :root_cause, "Root Cause" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.text_area :root_cause, rows: 5, class: "form-control", disabled: !field_2282_editable %>
+            <%= form.text_area :root_cause, rows: 5, class: "form-control", disabled: !field_2440_editable %>
           </div>
 <!-- FIELD:root_cause END -->
-<!-- FIELD:assessment_of_future_severity_potential START -->        <% field_2283_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2283_editable %>">
+<!-- FIELD:assessment_of_future_severity_potential START -->        <% field_2441_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2441_editable %>">
   <%= form.label :assessment_of_future_severity_potential, "Assessment of Future Severity Potential" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.text_area :assessment_of_future_severity_potential, rows: 5, class: "form-control", disabled: !field_2283_editable %>
+            <%= form.text_area :assessment_of_future_severity_potential, rows: 5, class: "form-control", disabled: !field_2441_editable %>
           </div>
 <!-- FIELD:assessment_of_future_severity_potential END -->
-<!-- FIELD:assessment_of_probability_of_recurrence START -->        <% field_2284_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2284_editable %>">
+<!-- FIELD:assessment_of_probability_of_recurrence START -->        <% field_2442_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2442_editable %>">
   <%= form.label :assessment_of_probability_of_recurrence, "Assessment of Probability of Recurrence" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.text_area :assessment_of_probability_of_recurrence, rows: 5, class: "form-control", disabled: !field_2284_editable %>
+            <%= form.text_area :assessment_of_probability_of_recurrence, rows: 5, class: "form-control", disabled: !field_2442_editable %>
           </div>
 <!-- FIELD:assessment_of_probability_of_recurrence END -->
         </div>
@@ -423,31 +423,31 @@
 <div class="form-page" style="display:none;">
   <h2>Corrective Actions</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:unsafe_condition_corrected_immediately START -->        <% field_2285_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2285_editable %>">
+<!-- FIELD:unsafe_condition_corrected_immediately START -->        <% field_2443_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2443_editable %>">
   <%= form.label :unsafe_condition_corrected_immediately, "Unsafe condition corrected immediately?" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
             <%= form.select :unsafe_condition_corrected_immediately,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_2285_editable } %>
+                  { class: "form-control", disabled: !field_2443_editable } %>
           </div>
 <!-- FIELD:unsafe_condition_corrected_immediately END -->
-<!-- FIELD:checklistprocedurestraining_modified START -->        <% field_2286_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2286_editable %>">
+<!-- FIELD:checklistprocedurestraining_modified START -->        <% field_2444_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2444_editable %>">
   <%= form.label :checklistprocedurestraining_modified, "Checklist/procedures/training modified?" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
             <%= form.select :checklistprocedurestraining_modified,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_2286_editable } %>
+                  { class: "form-control", disabled: !field_2444_editable } %>
           </div>
 <!-- FIELD:checklistprocedurestraining_modified END -->
-<!-- FIELD:person_responsible_for_corrective_action START -->        <% field_2287_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2287_editable %>">
+<!-- FIELD:person_responsible_for_corrective_action START -->        <% field_2445_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2445_editable %>">
   <%= form.label :person_responsible_for_corrective_action, "Person Responsible for Corrective Action" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.text_field :person_responsible_for_corrective_action, class: "form-control", disabled: !field_2287_editable %>
+            <%= form.text_field :person_responsible_for_corrective_action, class: "form-control", disabled: !field_2445_editable %>
           </div>
 <!-- FIELD:person_responsible_for_corrective_action END -->
 <!-- FIELD:title START --><div class="form-group flex-fill<%= '' %>">
@@ -455,18 +455,18 @@
             <%= form.text_field :title, class: "form-control" %>
           </div>
 <!-- FIELD:title END -->
-<!-- FIELD:targeted_completion_date START -->        <% field_2289_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2289_editable %>">
+<!-- FIELD:targeted_completion_date START -->        <% field_2447_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2447_editable %>">
   <%= form.label :targeted_completion_date, "Targeted Completion Date" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.date_field :targeted_completion_date, class: "form-control", disabled: !field_2289_editable %>
+            <%= form.date_field :targeted_completion_date, class: "form-control", disabled: !field_2447_editable %>
           </div>
 <!-- FIELD:targeted_completion_date END -->
-<!-- FIELD:actual_completion_date START -->        <% field_2290_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2290_editable %>">
+<!-- FIELD:actual_completion_date START -->        <% field_2448_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2448_editable %>">
   <%= form.label :actual_completion_date, "Actual Completion Date" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.date_field :actual_completion_date, class: "form-control", disabled: !field_2290_editable %>
+            <%= form.date_field :actual_completion_date, class: "form-control", disabled: !field_2448_editable %>
           </div>
 <!-- FIELD:actual_completion_date END -->
         </div>
@@ -476,31 +476,31 @@
 <div class="form-page" style="display:none;">
   <h2>OSHA Info</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:osha_recordable START -->        <% field_2291_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2291_editable %>">
+<!-- FIELD:osha_recordable START -->        <% field_2449_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2449_editable %>">
   <%= form.label :osha_recordable, "OSHA Recordable" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
             <%= form.select :osha_recordable,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_2291_editable } %>
+                  { class: "form-control", disabled: !field_2449_editable } %>
           </div>
 <!-- FIELD:osha_recordable END -->
-<!-- FIELD:osha_reportable START -->        <% field_2292_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2292_editable %>">
+<!-- FIELD:osha_reportable START -->        <% field_2450_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2450_editable %>">
   <%= form.label :osha_reportable, "OSHA Reportable" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
             <%= form.select :osha_reportable,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_2292_editable } %>
+                  { class: "form-control", disabled: !field_2450_editable } %>
           </div>
 <!-- FIELD:osha_reportable END -->
-<!-- FIELD:reportable_injury_codes START -->        <% field_2293_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_2293_editable %>">
+<!-- FIELD:reportable_injury_codes START -->        <% field_2451_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_2451_editable %>">
   <%= form.label :reportable_injury_codes, "Reportable Injury Codes" %>
             <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.text_field :reportable_injury_codes, class: "form-control", disabled: !field_2293_editable %>
+            <%= form.text_field :reportable_injury_codes, class: "form-control", disabled: !field_2451_editable %>
           </div>
 <!-- FIELD:reportable_injury_codes END -->
         </div>
