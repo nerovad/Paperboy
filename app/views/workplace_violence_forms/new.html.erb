@@ -116,84 +116,112 @@
 <div class="form-page" style="display:none;">
   <h2>Incident Details</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:date_of_incident START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :date_of_incident, "Date of Incident" %>
-            <%= form.datetime_local_field :date_of_incident, class: "form-control", required: true %>
+            <%= form.date_field :date_of_incident, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:date_of_incident END -->
+<!-- FIELD:location_where_event_occurred START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :location_where_event_occurred, "Location Where Event Occurred" %>
             <%= form.select :location_where_event_occurred,
                   options_for_select(['HOA', 'Service Building', 'JJC']),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:location_where_event_occurred END -->
+<!-- FIELD:witness_name START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :witness_name, "Witness Name" %>
             <%= form.text_field :witness_name, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:witness_name END -->
+<!-- FIELD:witness_phone START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :witness_phone, "Witness Phone" %>
-            <%= form.text_field :witness_phone, class: "form-control", required: true %>
+            <%= form.select :witness_phone,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:witness_phone END -->
+<!-- FIELD:was_the_victim_injured START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :was_the_victim_injured, "Was the victim injured" %>
             <%= form.select :was_the_victim_injured,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true, data: { conditional_trigger: 'was_the_victim_injured' } } %>
           </div>
-          <div class="conditional-field" data-depends-on="was_the_victim_injured" data-show-values="[&quot;Yes&quot;]" style="display: none;">
+<!-- FIELD:was_the_victim_injured END -->
+<!-- FIELD:specify_the_injuries START -->          <div class="conditional-field" data-depends-on="was_the_victim_injured" data-show-values="[&quot;Yes&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :specify_the_injuries, "Specify the injuries" %>
-            <%= form.text_field :specify_the_injuries, class: "form-control" %>
+            <%= form.select :specify_the_injuries,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:specify_the_injuries END -->
+<!-- FIELD:were_the_police_involved START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :were_the_police_involved, "Were the Police Involved" %>
             <%= form.select :were_the_police_involved,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true, data: { conditional_trigger: 'were_the_police_involved' } } %>
           </div>
-          <div class="conditional-field" data-depends-on="were_the_police_involved" data-show-values="[&quot;Yes&quot;]" style="display: none;">
+<!-- FIELD:were_the_police_involved END -->
+<!-- FIELD:which_police_department START -->          <div class="conditional-field" data-depends-on="were_the_police_involved" data-show-values="[&quot;Yes&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :which_police_department, "Which Police Department" %>
-            <%= form.text_field :which_police_department, class: "form-control" %>
+            <%= form.select :which_police_department,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:which_police_department END -->
+<!-- FIELD:police_report_filed START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :police_report_filed, "Police Report Filed" %>
             <%= form.select :police_report_filed,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true, data: { conditional_trigger: 'police_report_filed' } } %>
           </div>
-          <div class="conditional-field" data-depends-on="police_report_filed" data-show-values="[&quot;Yes&quot;]" style="display: none;">
+<!-- FIELD:police_report_filed END -->
+<!-- FIELD:police_report_number START -->          <div class="conditional-field" data-depends-on="police_report_filed" data-show-values="[&quot;Yes&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :police_report_number, "Police Report Number" %>
-            <%= form.text_field :police_report_number, class: "form-control" %>
+            <%= form.select :police_report_number,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:police_report_number END -->
+<!-- FIELD:was_the_victims_union_rep_notified START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :was_the_victims_union_rep_notified, "Was the Victims Union Rep Notified" %>
             <%= form.select :was_the_victims_union_rep_notified,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true, data: { conditional_trigger: 'was_the_victims_union_rep_notified' } } %>
           </div>
-          <div class="conditional-field" data-depends-on="was_the_victims_union_rep_notified" data-show-values="[&quot;Yes&quot;]" style="display: none;">
+<!-- FIELD:was_the_victims_union_rep_notified END -->
+<!-- FIELD:union_rep_name START -->          <div class="conditional-field" data-depends-on="was_the_victims_union_rep_notified" data-show-values="[&quot;Yes&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :union_rep_name, "Union Rep Name" %>
-            <%= form.text_field :union_rep_name, class: "form-control" %>
+            <%= form.select :union_rep_name,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:union_rep_name END -->
+<!-- FIELD:was_the_victims_supervisor_notified START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :was_the_victims_supervisor_notified, "Was the Victims Supervisor Notified" %>
             <%= form.select :was_the_victims_supervisor_notified,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
+<!-- FIELD:was_the_victims_supervisor_notified END -->
         </div>
       </div>
 
@@ -201,64 +229,75 @@
 <div class="form-page" style="display:none;">
   <h2>Incident Details Cont'd</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:any_action_taken_by_employer START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :any_action_taken_by_employer, "Any Action Taken by Employer" %>
             <%= form.select :any_action_taken_by_employer,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true, data: { conditional_trigger: 'any_action_taken_by_employer' } } %>
           </div>
-          <div class="conditional-field" data-depends-on="any_action_taken_by_employer" data-show-values="[&quot;Yes&quot;]" style="display: none;">
+<!-- FIELD:any_action_taken_by_employer END -->
+<!-- FIELD:describe_action_taken_ START -->          <div class="conditional-field" data-depends-on="any_action_taken_by_employer" data-show-values="[&quot;Yes&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :describe_action_taken_, "Describe Action Taken " %>
             <%= form.text_area :describe_action_taken_, rows: 5, class: "form-control" %>
           </div>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:describe_action_taken_ END -->
+<!-- FIELD:assailantperpetrator START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :assailantperpetrator, "Assailant/Perpetrator" %>
             <%= form.select :assailantperpetrator,
                   options_for_select(['Intruder', 'Customer', 'Patient', 'Resident', 'Client', 'Visitor', 'Student', 'Co-Worker', 'Former Worker', 'Supervisor', 'Family', 'Friend', 'Other']),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true, data: { conditional_trigger: 'assailantperpetrator' } } %>
+                  { class: "form-control", required: true } %>
           </div>
-          <div class="conditional-field" data-depends-on="assailantperpetrator" data-show-values="[&quot;Other&quot;]" style="display: none;">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:assailantperpetrator END -->
+<!-- FIELD:other START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :other, "Other" %>
-            <%= form.text_field :other, class: "form-control" %>
+            <%= form.text_field :other, class: "form-control", required: true %>
           </div>
-          </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:other END -->
+<!-- FIELD:assailantperpetrator_name START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :assailantperpetrator_name, "Assailant/Perpetrator Name" %>
             <%= form.text_field :assailantperpetrator_name, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:assailantperpetrator_name END -->
+<!-- FIELD:describe_the_incident START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :describe_the_incident, "Describe the Incident" %>
             <%= form.text_area :describe_the_incident, rows: 5, class: "form-control", required: true %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:describe_the_incident END -->
+<!-- FIELD:incident_disposition START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :incident_disposition, "Incident Disposition" %>
             <%= form.select :incident_disposition,
                   options_for_select(['No Action Taken', 'Arrest', 'Warning', 'Suspension', 'Reprimand', 'Other']),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:incident_disposition END -->
+<!-- FIELD:other_specify START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :other_specify, "Other, Specify" %>
-            <%= form.text_field :other_specify, class: "form-control", required: true %>
+            <%= form.select :other_specify,
+                  options_for_select(['Yes', 'No']),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: true } %>
           </div>
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:other_specify END -->
+<!-- FIELD:did_the_incident_involve_a_weapon START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :did_the_incident_involve_a_weapon, "Did the Incident Involve a Weapon" %>
             <%= form.select :did_the_incident_involve_a_weapon,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true, data: { conditional_trigger: 'did_the_incident_involve_a_weapon' } } %>
           </div>
-          <div class="conditional-field" data-depends-on="did_the_incident_involve_a_weapon" data-show-values="[&quot;Yes&quot;]" style="display: none;">
+<!-- FIELD:did_the_incident_involve_a_weapon END -->
+<!-- FIELD:describe_the_weapon START -->          <div class="conditional-field" data-depends-on="did_the_incident_involve_a_weapon" data-show-values="[&quot;Yes&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :describe_the_weapon, "Describe the Weapon" %>
             <%= form.text_area :describe_the_weapon, rows: 5, class: "form-control" %>
           </div>
           </div>
+<!-- FIELD:describe_the_weapon END -->
         </div>
       </div>
 
@@ -266,42 +305,37 @@
 <div class="form-page" style="display:none;">
   <h2>Corrective Action Safety Officer Only</h2>
         <div class="form-row d-flex flex-wrap">
-        <% field_654_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_654_editable %>">
+<!-- FIELD:was_the_problem_corrected_immediately START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :was_the_problem_corrected_immediately, "Was the Problem Corrected Immediately" %>
-            <small class="restriction-notice">To be filled by: Gary Howard</small>
             <%= form.select :was_the_problem_corrected_immediately,
                   options_for_select(['Yes', 'No', 'No corrective action required']),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: field_654_editable && true, disabled: !field_654_editable } %>
+                  { class: "form-control" } %>
           </div>
-        <% field_655_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_655_editable %>">
+<!-- FIELD:was_the_problem_corrected_immediately END -->
+<!-- FIELD:will_inspection_checklists_procedures_andor_training_have_to_be_modified_to_prevent_recurrence START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :will_inspection_checklists_procedures_andor_training_have_to_be_modified_to_prevent_recurrence, "Will inspection checklists, procedures and/or training have to be modified to prevent recurrence" %>
-            <small class="restriction-notice">To be filled by: Gary Howard</small>
             <%= form.select :will_inspection_checklists_procedures_andor_training_have_to_be_modified_to_prevent_recurrence,
                   options_for_select(['Yes', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: field_655_editable && true, disabled: !field_655_editable } %>
+                  { class: "form-control" } %>
           </div>
-        <% field_656_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_656_editable %>">
+<!-- FIELD:will_inspection_checklists_procedures_andor_training_have_to_be_modified_to_prevent_recurrence END -->
+<!-- FIELD:additional_comments START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :additional_comments, "Additional Comments" %>
-            <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.text_area :additional_comments, rows: 5, class: "form-control", disabled: !field_656_editable %>
+            <%= form.text_area :additional_comments, rows: 5, class: "form-control" %>
           </div>
-        <% field_657_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_657_editable %>">
+<!-- FIELD:additional_comments END -->
+<!-- FIELD:targeted_corrective_action_completion_date START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :targeted_corrective_action_completion_date, "Targeted Corrective Action Completion Date" %>
-            <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.datetime_local_field :targeted_corrective_action_completion_date, class: "form-control", required: field_657_editable && true, disabled: !field_657_editable %>
+            <%= form.date_field :targeted_corrective_action_completion_date, class: "form-control" %>
           </div>
-        <% field_658_editable = (session.dig(:user, 'employee_id').to_s == '135272') %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_658_editable %>">
+<!-- FIELD:targeted_corrective_action_completion_date END -->
+<!-- FIELD:actual_corrective_action_completion_date START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :actual_corrective_action_completion_date, "Actual Corrective Action Completion Date" %>
-            <small class="restriction-notice">To be filled by: Gary Howard</small>
-            <%= form.datetime_local_field :actual_corrective_action_completion_date, class: "form-control", disabled: !field_658_editable %>
+            <%= form.date_field :actual_corrective_action_completion_date, class: "form-control" %>
           </div>
+<!-- FIELD:actual_corrective_action_completion_date END -->
         </div>
       </div>
 
