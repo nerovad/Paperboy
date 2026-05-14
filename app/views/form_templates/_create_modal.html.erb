@@ -541,6 +541,7 @@
           <option value="supervisor">Supervisor</option>
           <option value="department_head">Department Head</option>
           <option value="employee">Specific Employee</option>
+          <option value="group">Group</option>
         </select>
       </div>
 
@@ -548,6 +549,13 @@
         <select name="routing_steps[][employee_id]"
                 class="form-control form-control-sm step-employee-dropdown">
           <option value="">Select employee...</option>
+        </select>
+      </div>
+
+      <div class="step-group-select" style="flex: 1; min-width: 200px; display: none;">
+        <select name="routing_steps[][group_id]"
+                class="form-control form-control-sm step-group-dropdown">
+          <option value="">Select group...</option>
         </select>
       </div>
 

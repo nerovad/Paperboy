@@ -202,6 +202,17 @@ export default class extends Controller {
       })
     }
 
+    // Populate group dropdown
+    const groupSelect = clone.querySelector('.step-group-dropdown')
+    if (groupSelect && this.aclGroupsValue) {
+      this.aclGroupsValue.forEach(grp => {
+        const option = document.createElement('option')
+        option.value = grp[1]  // GroupID
+        option.textContent = grp[0]  // group_name
+        groupSelect.appendChild(option)
+      })
+    }
+
     this.routingStepsContainerTarget.appendChild(clone)
   }
 
@@ -231,12 +242,14 @@ export default class extends Controller {
     })
   }
 
-  // Toggle employee select for a specific routing step
+  // Toggle employee/group select for a specific routing step
   toggleStepEmployeeSelect(event) {
     const routingType = event.target.value
     const stepItem = event.target.closest('.routing-step-item')
     const employeeSelectContainer = stepItem.querySelector('.step-employee-select')
     const employeeSelect = stepItem.querySelector('.step-employee-dropdown')
+    const groupSelectContainer = stepItem.querySelector('.step-group-select')
+    const groupSelect = stepItem.querySelector('.step-group-dropdown')
 
     if (routingType === 'employee') {
       employeeSelectContainer.style.display = 'block'
@@ -245,6 +258,17 @@ export default class extends Controller {
       employeeSelectContainer.style.display = 'none'
       employeeSelect.required = false
       employeeSelect.value = ''
+    }
+
+    if (groupSelectContainer && groupSelect) {
+      if (routingType === 'group') {
+        groupSelectContainer.style.display = 'block'
+        groupSelect.required = true
+      } else {
+        groupSelectContainer.style.display = 'none'
+        groupSelect.required = false
+        groupSelect.value = ''
+      }
     }
 
     // Also update the display name placeholder
@@ -262,7 +286,8 @@ export default class extends Controller {
     const labels = {
       'supervisor': 'Sent to Supervisor',
       'department_head': 'Sent to Department Head',
-      'employee': 'Sent to Employee'
+      'employee': 'Sent to Employee',
+      'group': 'Sent to Group'
     }
     displayNameInput.placeholder = labels[routingType] || 'e.g. Sent to HR (auto-generated if blank)'
   }

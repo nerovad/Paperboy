@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_13_200556) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_14_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -217,6 +217,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_13_200556) do
     t.datetime "updated_at", null: false
     t.bigint "form_template_status_id"
     t.string "display_name"
+    t.integer "group_id"
   end
 
   create_table "form_template_statuses", force: :cascade do |t|

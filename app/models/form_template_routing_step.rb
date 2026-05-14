@@ -1,17 +1,22 @@
 class FormTemplateRoutingStep < ApplicationRecord
   belongs_to :form_template
 
-  ROUTING_TYPES = %w[supervisor department_head employee].freeze
+  ROUTING_TYPES = %w[supervisor department_head employee group].freeze
 
   validates :step_number, presence: true, numericality: { greater_than: 0 }
   validates :routing_type, presence: true, inclusion: { in: ROUTING_TYPES }
   validates :employee_id, presence: true, if: :routes_to_employee?
+  validates :group_id, presence: true, if: :routes_to_group?
   validates :step_number, uniqueness: { scope: :form_template_id }
 
   scope :ordered, -> { order(:step_number) }
 
   def routes_to_employee?
     routing_type == 'employee'
+  end
+
+  def routes_to_group?
+    routing_type == 'group'
   end
 
   def routing_label
@@ -22,6 +27,8 @@ class FormTemplateRoutingStep < ApplicationRecord
       'Department Head'
     when 'employee'
       employee_name || "Employee ##{employee_id}"
+    when 'group'
+      group_name || "Group ##{group_id}"
     end
   end
 
@@ -29,6 +36,13 @@ class FormTemplateRoutingStep < ApplicationRecord
     return nil unless employee_id
     employee = Employee.find_by(employee_id: employee_id)
     employee ? "#{employee.first_name} #{employee.last_name}" : nil
+  rescue
+    nil
+  end
+
+  def group_name
+    return nil unless group_id
+    Group.find_by(group_id: group_id)&.group_name
   rescue
     nil
   end

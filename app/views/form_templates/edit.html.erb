@@ -178,6 +178,7 @@
                           <option value="supervisor" <%= 'selected' if step.routing_type == 'supervisor' %>>Supervisor</option>
                           <option value="department_head" <%= 'selected' if step.routing_type == 'department_head' %>>Department Head</option>
                           <option value="employee" <%= 'selected' if step.routing_type == 'employee' %>>Specific Employee</option>
+                          <option value="group" <%= 'selected' if step.routing_type == 'group' %>>Group</option>
                         </select>
                       </div>
 
@@ -187,6 +188,16 @@
                           <option value="">Select employee...</option>
                           <% @employees.each do |emp| %>
                             <option value="<%= emp[1] %>" <%= 'selected' if step.employee_id == emp[1] %>><%= emp[0] %></option>
+                          <% end %>
+                        </select>
+                      </div>
+
+                      <div class="step-group-select" style="flex: 1; min-width: 200px; <%= 'display: none;' unless step.routing_type == 'group' %>">
+                        <select name="routing_steps[][group_id]"
+                                class="form-control form-control-sm step-group-dropdown">
+                          <option value="">Select group...</option>
+                          <% @acl_groups.each do |grp| %>
+                            <option value="<%= grp[1] %>" <%= 'selected' if step.group_id == grp[1] %>><%= grp[0] %></option>
                           <% end %>
                         </select>
                       </div>
@@ -224,6 +235,7 @@
                         <option value="supervisor" <%= 'selected' if @form_template.approval_routing_to == 'supervisor' %>>Supervisor</option>
                         <option value="department_head" <%= 'selected' if @form_template.approval_routing_to == 'department_head' %>>Department Head</option>
                         <option value="employee" <%= 'selected' if @form_template.approval_routing_to == 'employee' %>>Specific Employee</option>
+                        <option value="group">Group</option>
                       </select>
                     </div>
 
@@ -233,6 +245,16 @@
                         <option value="">Select employee...</option>
                         <% @employees.each do |emp| %>
                           <option value="<%= emp[1] %>" <%= 'selected' if @form_template.approval_employee_id == emp[1] %>><%= emp[0] %></option>
+                        <% end %>
+                      </select>
+                    </div>
+
+                    <div class="step-group-select" style="flex: 1; min-width: 200px; display: none;">
+                      <select name="routing_steps[][group_id]"
+                              class="form-control form-control-sm step-group-dropdown">
+                        <option value="">Select group...</option>
+                        <% @acl_groups.each do |grp| %>
+                          <option value="<%= grp[1] %>"><%= grp[0] %></option>
                         <% end %>
                       </select>
                     </div>
