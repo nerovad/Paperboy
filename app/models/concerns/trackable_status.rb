@@ -86,6 +86,25 @@ module TrackableStatus
     status_changes.chronological
   end
 
+  # Advances a multi-step approval form to the next step, or marks it fully
+  # approved when no further steps remain.
+  def advance_approval!
+    template = approval_template
+    return approved! unless template
+
+    steps = template.routing_steps.ordered.to_a
+    return approved! if steps.empty?
+
+    current = current_routing_step_number
+    return approved! if current.nil? || current >= steps.size
+
+    next_step = steps[current]
+    update!(
+      status: "step_#{next_step.step_number}_pending",
+      approver_id: approver_id_for_routing_step(next_step)
+    )
+  end
+
   # Returns the normalized category for the current status
   def status_category
     self.class.status_category_for(status)
@@ -97,6 +116,38 @@ module TrackableStatus
   end
 
   private
+
+  def approval_template
+    respond_to?(:form_template) ? form_template : nil
+  rescue
+    nil
+  end
+
+  def current_routing_step_number
+    status&.to_s&.match(/\Astep_(\d+)_pending\z/)&.captures&.first&.to_i
+  end
+
+  def approver_id_for_routing_step(step)
+    case step.routing_type
+    when 'supervisor'
+      submitter_employee&.supervisor_id&.to_s
+    when 'department_head'
+      emp = submitter_employee
+      return nil unless emp
+      unit = Unit.find_by(unit_id: emp.unit)
+      department = unit ? Department.find_by(department_id: unit.department_id) : nil
+      department&.department_head_id&.to_s
+    when 'employee'
+      step.employee_id.to_s
+    when 'group'
+      nil
+    end
+  end
+
+  def submitter_employee
+    return nil unless respond_to?(:employee_id) && employee_id.present?
+    Employee.find_by(employee_id: employee_id)
+  end
 
   def record_initial_status
     status_changes.create!(

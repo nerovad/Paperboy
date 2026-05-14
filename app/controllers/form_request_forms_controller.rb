@@ -132,9 +132,10 @@ class FormRequestFormsController < ApplicationController
   end
 
   def approve
-    if @form_request_form.respond_to?(:approved!)
-      @form_request_form.approved!
-      redirect_to inbox_queue_path, notice: 'Submission approved.'
+    if @form_request_form.respond_to?(:advance_approval!)
+      @form_request_form.advance_approval!
+      notice = @form_request_form.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
+      redirect_to inbox_queue_path, notice: notice
     else
       redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
     end

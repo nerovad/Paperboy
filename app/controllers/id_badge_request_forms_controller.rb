@@ -139,9 +139,10 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
   end
 
   def approve
-    if @id_badge_request_form.respond_to?(:approved!)
-      @id_badge_request_form.approved!
-      redirect_to inbox_queue_path, notice: 'Submission approved.'
+    if @id_badge_request_form.respond_to?(:advance_approval!)
+      @id_badge_request_form.advance_approval!
+      notice = @id_badge_request_form.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
+      redirect_to inbox_queue_path, notice: notice
     else
       redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
     end

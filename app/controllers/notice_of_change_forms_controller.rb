@@ -141,9 +141,10 @@ redirect_to form_success_path, notice: 'Form submitted and routed to employee #1
   end
 
   def approve
-    if @notice_of_change_form.respond_to?(:approved!)
-      @notice_of_change_form.approved!
-      redirect_to inbox_queue_path, notice: 'Submission approved.'
+    if @notice_of_change_form.respond_to?(:advance_approval!)
+      @notice_of_change_form.advance_approval!
+      notice = @notice_of_change_form.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
+      redirect_to inbox_queue_path, notice: notice
     else
       redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
     end

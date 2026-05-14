@@ -135,22 +135,10 @@ class WorkScheduleOrLocationUpdateFormsController < ApplicationController
   end
 
   def approve
-    form = @work_schedule_or_location_update_form
-
-    # Multi-step routing: check current status and route to next step
-    if form.step_1_pending?
-      # Step 1 approved -> route to step 2
-      next_approver_id = determine_approver_for_step(2, form)
-      form.update(status: :step_2_pending, approver_id: next_approver_id)
-      redirect_to inbox_queue_path, notice: 'Step 1 approved. Form routed to next approver.'
-    elsif form.step_2_pending?
-      # Step 2 approved -> final approval
-      form.approved!
-      redirect_to inbox_queue_path, notice: 'Form fully approved.'
-    elsif form.respond_to?(:approved!)
-      # Fallback for single-step approval
-      form.approved!
-      redirect_to inbox_queue_path, notice: 'Submission approved.'
+    if @work_schedule_or_location_update_form.respond_to?(:advance_approval!)
+      @work_schedule_or_location_update_form.advance_approval!
+      notice = @work_schedule_or_location_update_form.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
+      redirect_to inbox_queue_path, notice: notice
     else
       redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
     end
@@ -239,28 +227,4 @@ class WorkScheduleOrLocationUpdateFormsController < ApplicationController
     )
   end
 
-  # Determine the approver for a given routing step based on form template configuration
-  def determine_approver_for_step(step_number, form)
-    form_template = FormTemplate.find_by(class_name: 'WorkScheduleOrLocationUpdateForm')
-    return nil unless form_template
-
-    routing_step = form_template.routing_steps.find_by(step_number: step_number)
-    return nil unless routing_step
-
-    case routing_step.routing_type
-    when 'supervisor'
-      # Look up the submitter's supervisor
-      employee = Employee.find_by(employee_id: form.employee_id)
-      employee&.supervisor_id&.to_s
-    when 'department_head'
-      # Look up the submitter's department head
-      employee = Employee.find_by(employee_id: form.employee_id)
-      unit = employee ? Unit.find_by(unit_id: employee.unit) : nil
-      department = unit ? Department.find_by(department_id: unit.department_id) : nil
-      department&.department_head_id&.to_s
-    when 'employee'
-      # Route to the specific employee configured in the routing step
-      routing_step.employee_id.to_s
-    end
-  end
 end

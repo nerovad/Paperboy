@@ -152,10 +152,14 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
   end
 
   def approve
-    if @pcard_request_form.respond_to?(:approved!)
-      @pcard_request_form.approved!
-      create_pcard_inventory_record(@pcard_request_form)
-      redirect_to inbox_queue_path, notice: 'Submission approved.'
+    if @pcard_request_form.respond_to?(:advance_approval!)
+      @pcard_request_form.advance_approval!
+      if @pcard_request_form.approved?
+        create_pcard_inventory_record(@pcard_request_form)
+        redirect_to inbox_queue_path, notice: 'Submission approved.'
+      else
+        redirect_to inbox_queue_path, notice: 'Approved and routed to the next step.'
+      end
     else
       redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
     end

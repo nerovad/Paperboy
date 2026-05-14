@@ -139,9 +139,10 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
   end
 
   def approve
-    if @workplace_violence_form.respond_to?(:approved!)
-      @workplace_violence_form.approved!
-      redirect_to inbox_queue_path, notice: 'Submission approved.'
+    if @workplace_violence_form.respond_to?(:advance_approval!)
+      @workplace_violence_form.advance_approval!
+      notice = @workplace_violence_form.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
+      redirect_to inbox_queue_path, notice: notice
     else
       redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
     end

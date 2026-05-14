@@ -137,9 +137,10 @@ redirect_to form_success_path, notice: 'Form submitted and routed to employee #1
   end
 
   def approve
-    if @bike_locker_form.respond_to?(:approved!)
-      @bike_locker_form.approved!
-      redirect_to inbox_queue_path, notice: 'Submission approved.'
+    if @bike_locker_form.respond_to?(:advance_approval!)
+      @bike_locker_form.advance_approval!
+      notice = @bike_locker_form.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
+      redirect_to inbox_queue_path, notice: notice
     else
       redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
     end

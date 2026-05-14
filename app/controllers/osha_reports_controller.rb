@@ -121,9 +121,10 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
   end
 
   def approve
-    if @osha_report.respond_to?(:approved!)
-      @osha_report.approved!
-      redirect_to inbox_queue_path, notice: 'Submission approved.'
+    if @osha_report.respond_to?(:advance_approval!)
+      @osha_report.advance_approval!
+      notice = @osha_report.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
+      redirect_to inbox_queue_path, notice: notice
     else
       redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
     end
