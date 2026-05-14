@@ -1140,7 +1140,7 @@ class FormTemplatesController < ApplicationController
       "approver_id = '#{step.employee_id}'"
     when 'group'
       <<~RUBY.chomp
-        # TODO: Group routing — surface this form in every member of group #{step.group_id} via inbox query
+        # Group routing — inbox query surfaces this form to every member of group #{step.group_id}
         approver_id = nil
       RUBY
     else

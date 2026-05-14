@@ -167,18 +167,37 @@ class InboxController < ApplicationController
   def fetch_dynamic_form_submissions
     submissions = []
 
+    # Union of group_ids the scoped employees belong to. nil = system admin
+    # viewing All (no restriction — every group-routed step is visible).
+    scoped_group_ids = if @scoped_employee_ids.nil?
+                         nil
+                       else
+                         EmployeeGroup.where(EmployeeID: @scoped_employee_ids).distinct.pluck(:GroupID)
+                       end
+
     # Get all form templates that have approval workflows
     FormTemplate.where(submission_type: 'approval').find_each do |template|
       begin
         # Try to get the model class for this form template
         model_class = template.class_name.constantize
+        next unless model_class.column_names.include?('approver_id')
 
-        # Query for submissions where the configured employee(s) is the approver
-        if model_class.column_names.include?('approver_id')
-          scope = scope_by_assignee(model_class, :approver_id)
-          scope = apply_scope_date_filters(scope, inbox_scope_date_filters)
-          submissions += scope.to_a
-        end
+        group_status_keys = group_routed_status_keys(template, scoped_group_ids)
+
+        scope = if @scoped_employee_ids.nil?
+                  # System admin viewing All — every approval form
+                  model_class.all
+                else
+                  by_approver = model_class.where(approver_id: @scoped_employee_ids)
+                  if group_status_keys.any?
+                    by_approver.or(model_class.where(status: group_status_keys))
+                  else
+                    by_approver
+                  end
+                end
+
+        scope = apply_scope_date_filters(scope, inbox_scope_date_filters)
+        submissions += scope.to_a
       rescue NameError
         # Model class doesn't exist yet (form not generated), skip it
         Rails.logger.debug "Skipping inbox query for #{template.class_name} - model not found"
@@ -188,5 +207,15 @@ class InboxController < ApplicationController
     end
 
     submissions
+  end
+
+  # Status keys (e.g. "step_2_pending") for routing steps that route to a group
+  # the scoped employees are in. When scoped_group_ids is nil, all group-routed
+  # steps qualify (system admin viewing All).
+  def group_routed_status_keys(template, scoped_group_ids)
+    template.routing_steps.where(routing_type: 'group').filter_map do |step|
+      next if scoped_group_ids && !scoped_group_ids.include?(step.group_id)
+      "step_#{step.step_number}_pending"
+    end
   end
 end
