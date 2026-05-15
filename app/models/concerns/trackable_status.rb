@@ -86,8 +86,28 @@ module TrackableStatus
     status_changes.chronological
   end
 
-  # Advances a multi-step approval form to the next step, or marks it fully
-  # approved when no further steps remain.
+  # Starts a multi-step approval flow from the first step whose condition
+  # matches the submitted form. If no step matches, marks the form approved
+  # immediately (treated as a no-op approval).
+  def start_approval!
+    template = approval_template
+    return unless template
+
+    steps = template.routing_steps.ordered.to_a
+    return if steps.empty?
+
+    first_step = steps.find { |s| s.matches?(self) }
+    return approved! unless first_step
+
+    update!(
+      status: "step_#{first_step.step_number}_pending",
+      approver_id: approver_id_for_routing_step(first_step)
+    )
+  end
+
+  # Advances a multi-step approval form to the next matching step, skipping
+  # steps whose conditions evaluate false. Marks the form fully approved when
+  # no further matching step remains.
   def advance_approval!
     template = approval_template
     return approved! unless template
@@ -96,9 +116,11 @@ module TrackableStatus
     return approved! if steps.empty?
 
     current = current_routing_step_number
-    return approved! if current.nil? || current >= steps.size
+    return approved! if current.nil?
 
-    next_step = steps[current]
+    next_step = steps.find { |s| s.step_number > current && s.matches?(self) }
+    return approved! unless next_step
+
     update!(
       status: "step_#{next_step.step_number}_pending",
       approver_id: approver_id_for_routing_step(next_step)

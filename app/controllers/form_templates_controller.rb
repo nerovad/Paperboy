@@ -1092,74 +1092,16 @@ class FormTemplatesController < ApplicationController
 
   def generate_multi_step_routing_logic(form_template)
     steps = form_template.routing_steps.ordered
-    first_step = steps.first
-
-    step_description = routing_step_description(first_step)
-    approver_logic = generate_approver_lookup(first_step)
-
-    # Use the actual first routing status from the form's statuses
-    first_routing_status = form_template.statuses.find_by(key: 'step_1_pending')&.key ||
-                           form_template.statuses.where(auto_generated: true).ordered.first&.key ||
-                           form_template.statuses.ordered.first&.key ||
-                           'step_1_pending'
-
-    # Check if the model's table has an approver_id column
-    table_name = form_template.class_name.constantize.table_name rescue form_template.table_name
-    has_approver = ActiveRecord::Base.connection.column_exists?(table_name, :approver_id) rescue false
-
-    update_attrs = "status: :#{first_routing_status}"
-    update_attrs += ", approver_id: approver_id" if has_approver
 
     <<~RUBY.chomp
       # Multi-step approval routing (#{steps.count} steps)
-      # Step 1: #{step_description}
-      #{approver_logic}
-      @#{form_template.file_name}.update(#{update_attrs})
-      # TODO: Send notification to #{step_description}
-      redirect_to form_success_path, notice: 'Form submitted and routed to #{step_description} for approval.', allow_other_host: false, status: :see_other
+      # Delegates to TrackableStatus#start_approval!, which picks the first
+      # step whose condition matches the submitted record.
+      @#{form_template.file_name}.start_approval!
+      redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
     RUBY
   end
 
-  def generate_approver_lookup(step)
-    case step.routing_type
-    when 'supervisor'
-      <<~RUBY.chomp
-        # Look up the submitter's supervisor
-        employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-        approver_id = employee&.supervisor_id&.to_s
-      RUBY
-    when 'department_head'
-      <<~RUBY.chomp
-        # Look up the submitter's department head
-        employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-        unit = employee ? Unit.find_by(unit_id: employee.unit) : nil
-        department = unit ? Department.find_by(department_id: unit.department_id) : nil
-        approver_id = department&.department_head_id&.to_s
-      RUBY
-    when 'employee'
-      "approver_id = '#{step.employee_id}'"
-    when 'group'
-      <<~RUBY.chomp
-        # Group routing — inbox query surfaces this form to every member of group #{step.group_id}
-        approver_id = nil
-      RUBY
-    else
-      "approver_id = nil"
-    end
-  end
-
-  def routing_step_description(step)
-    case step.routing_type
-    when 'supervisor'
-      'supervisor'
-    when 'department_head'
-      'department head'
-    when 'employee'
-      "employee ##{step.employee_id}"
-    when 'group'
-      "group ##{step.group_id}"
-    end
-  end
   def generate_dynamic_view(class_name)
     form_template = FormTemplate.find_by(class_name: class_name)
     return unless form_template
