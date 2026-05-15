@@ -1,7 +1,19 @@
+<%
+  form_fields_for_conditions = @form_template.form_fields.ordered.map do |field|
+    {
+      id: field.id,
+      label: field.label,
+      field_name: field.field_name,
+      field_type: field.field_type,
+      dropdown_values: field.dropdown_values
+    }
+  end
+%>
 <div class="edit-wizard-wrapper form-builder-modal"
      data-controller="form-builder"
      data-form-builder-acl-groups-value="<%= @acl_groups.to_json %>"
      data-form-builder-employees-value="<%= @employees.to_json %>"
+     data-form-builder-form-fields-value="<%= form_fields_for_conditions.to_json %>"
      data-form-builder-predefined-statuses-value="<%= FormTemplateStatus::PREDEFINED_STATUSES.to_json %>"
      data-form-builder-valid-categories-value="<%= FormTemplateStatus::VALID_CATEGORIES.to_json %>"
      data-form-builder-edit-mode-value="true">
@@ -217,6 +229,42 @@
                               style="padding: 4px 8px;">
                         Remove
                       </button>
+                    </div>
+
+                    <div class="step-condition-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #6c757d;">
+                      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <label style="margin: 0; font-size: 0.85em; color: #495057; display: flex; align-items: center; gap: 4px;">
+                          <input type="checkbox"
+                                 class="step-condition-toggle"
+                                 data-action="change->form-builder#toggleStepCondition"
+                                 <%= 'checked' if step.conditional? %>>
+                          Only run this step if
+                        </label>
+
+                        <select name="routing_steps[][condition_field_id]"
+                                class="form-control form-control-sm step-condition-field"
+                                data-action="change->form-builder#updateStepConditionValue"
+                                style="width: auto; min-width: 160px; <%= 'display: none;' unless step.conditional? %>"
+                                data-selected-id="<%= step.condition_field_id %>">
+                          <option value="">Select field...</option>
+                        </select>
+
+                        <select name="routing_steps[][condition_operator]"
+                                class="form-control form-control-sm step-condition-operator"
+                                style="width: auto; <%= 'display: none;' unless step.conditional? %>">
+                          <option value="equals" <%= 'selected' if step.condition_operator == 'equals' %>>equals</option>
+                          <option value="not_equals" <%= 'selected' if step.condition_operator == 'not_equals' %>>does not equal</option>
+                        </select>
+
+                        <span class="step-condition-value-wrapper" style="<%= 'display: none;' unless step.conditional? %>"
+                              data-selected-value="<%= step.condition_value %>">
+                          <input type="text"
+                                 name="routing_steps[][condition_value]"
+                                 class="form-control form-control-sm step-condition-value"
+                                 value="<%= step.condition_value %>"
+                                 placeholder="value">
+                        </span>
+                      </div>
                     </div>
                   </div>
                 <% end %>
@@ -1159,6 +1207,7 @@
           <option value="supervisor">Supervisor</option>
           <option value="department_head">Department Head</option>
           <option value="employee">Specific Employee</option>
+          <option value="group">Group</option>
         </select>
       </div>
 
@@ -1166,9 +1215,13 @@
         <select name="routing_steps[][employee_id]"
                 class="form-control form-control-sm step-employee-dropdown">
           <option value="">Select employee...</option>
-          <% @employees&.each do |emp| %>
-            <option value="<%= emp[1] %>"><%= emp[0] %></option>
-          <% end %>
+        </select>
+      </div>
+
+      <div class="step-group-select" style="flex: 1; min-width: 200px; display: none;">
+        <select name="routing_steps[][group_id]"
+                class="form-control form-control-sm step-group-dropdown">
+          <option value="">Select group...</option>
         </select>
       </div>
 
@@ -1186,6 +1239,38 @@
               style="padding: 4px 8px;">
         Remove
       </button>
+    </div>
+
+    <div class="step-condition-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #6c757d;">
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <label style="margin: 0; font-size: 0.85em; color: #495057; display: flex; align-items: center; gap: 4px;">
+          <input type="checkbox"
+                 class="step-condition-toggle"
+                 data-action="change->form-builder#toggleStepCondition">
+          Only run this step if
+        </label>
+
+        <select name="routing_steps[][condition_field_id]"
+                class="form-control form-control-sm step-condition-field"
+                data-action="change->form-builder#updateStepConditionValue"
+                style="width: auto; min-width: 160px; display: none;">
+          <option value="">Select field...</option>
+        </select>
+
+        <select name="routing_steps[][condition_operator]"
+                class="form-control form-control-sm step-condition-operator"
+                style="width: auto; display: none;">
+          <option value="equals">equals</option>
+          <option value="not_equals">does not equal</option>
+        </select>
+
+        <span class="step-condition-value-wrapper" style="display: none;">
+          <input type="text"
+                 name="routing_steps[][condition_value]"
+                 class="form-control form-control-sm step-condition-value"
+                 placeholder="value">
+        </span>
+      </div>
     </div>
   </div>
 </template>

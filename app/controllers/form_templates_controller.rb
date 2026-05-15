@@ -719,11 +719,27 @@ class FormTemplatesController < ApplicationController
 
     # Check if routing steps changed
     current_steps = @form_template.routing_steps.ordered.map do |step|
-      { routing_type: step.routing_type, employee_id: step.employee_id, group_id: step.group_id, display_name: step.display_name }
+      {
+        routing_type: step.routing_type,
+        employee_id: step.employee_id,
+        group_id: step.group_id,
+        display_name: step.display_name,
+        condition_field_id: step.condition_field_id,
+        condition_operator: step.condition_operator,
+        condition_value: step.condition_value
+      }
     end
 
     new_steps = (params[:routing_steps] || []).map do |step|
-      { routing_type: step[:routing_type], employee_id: step[:employee_id]&.to_i.presence, group_id: step[:group_id]&.to_i.presence, display_name: step[:display_name].presence }
+      {
+        routing_type: step[:routing_type],
+        employee_id: step[:employee_id]&.to_i.presence,
+        group_id: step[:group_id]&.to_i.presence,
+        display_name: step[:display_name].presence,
+        condition_field_id: step[:condition_field_id]&.to_i.presence,
+        condition_operator: step[:condition_operator].presence,
+        condition_value: step[:condition_value].presence
+      }
     end.reject { |s| s[:routing_type].blank? }
 
     current_steps != new_steps
@@ -801,7 +817,10 @@ class FormTemplatesController < ApplicationController
         routing_type: step_data[:routing_type],
         employee_id: step_data[:employee_id].presence,
         group_id: step_data[:group_id].presence,
-        display_name: step_data[:display_name].presence
+        display_name: step_data[:display_name].presence,
+        condition_field_id: step_data[:condition_field_id].presence,
+        condition_operator: step_data[:condition_operator].presence,
+        condition_value: step_data[:condition_value].presence
       )
     end
   end
@@ -946,7 +965,10 @@ class FormTemplatesController < ApplicationController
         routing_type: step_data[:routing_type],
         employee_id: step_data[:employee_id].presence,
         group_id: step_data[:group_id].presence,
-        display_name: step_data[:display_name].presence
+        display_name: step_data[:display_name].presence,
+        condition_field_id: step_data[:condition_field_id].presence,
+        condition_operator: step_data[:condition_operator].presence,
+        condition_value: step_data[:condition_value].presence
       )
     end
 

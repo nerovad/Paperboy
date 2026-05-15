@@ -35,6 +35,7 @@ export default class extends Controller {
   static values = {
     aclGroups: Array,
     employees: Array,
+    formFields: Array,
     predefinedStatuses: Array,
     validCategories: Array,
     editMode: { type: Boolean, default: false }
@@ -55,6 +56,19 @@ export default class extends Controller {
 
     // Initialize wizard navigation
     this.initializeWizard()
+
+    // Hydrate routing-step condition editors that were rendered server-side
+    this.initializeRoutingStepConditions()
+  }
+
+  // Populate the field dropdown for each server-rendered routing step
+  // and rebuild the value input to match the previously-selected field's type.
+  initializeRoutingStepConditions() {
+    if (!this.hasRoutingStepsContainerTarget) return
+
+    this.routingStepItemTargets.forEach(stepItem => {
+      this.populateStepConditionFields(stepItem)
+    })
   }
 
   // Initialize SortableJS for drag-and-drop field reordering
@@ -214,6 +228,12 @@ export default class extends Controller {
     }
 
     this.routingStepsContainerTarget.appendChild(clone)
+
+    // Populate the just-added step's condition field dropdown
+    const addedStep = this.routingStepsContainerTarget.lastElementChild
+    if (addedStep) {
+      this.populateStepConditionFields(addedStep)
+    }
   }
 
   // Remove a routing step
@@ -290,6 +310,148 @@ export default class extends Controller {
       'group': 'Sent to Group'
     }
     displayNameInput.placeholder = labels[routingType] || 'e.g. Sent to HR (auto-generated if blank)'
+  }
+
+  // Populate a routing step's condition field dropdown from the form's fields.
+  // If a previously-selected field id is stored on the select via data-selected-id,
+  // restore that selection and rebuild the value input.
+  populateStepConditionFields(stepItem) {
+    const fieldSelect = stepItem.querySelector('.step-condition-field')
+    if (!fieldSelect) return
+
+    const fields = this.hasFormFieldsValue ? this.formFieldsValue : []
+    const selectedId = fieldSelect.dataset.selectedId
+
+    // Clear and re-populate, preserving the placeholder option
+    fieldSelect.innerHTML = '<option value="">Select field...</option>'
+
+    fields.forEach(field => {
+      const option = document.createElement('option')
+      option.value = field.id
+      option.textContent = field.label
+      option.dataset.fieldType = field.field_type
+      option.dataset.fieldName = field.field_name
+      option.dataset.dropdownValues = JSON.stringify(field.dropdown_values || [])
+      if (selectedId && String(selectedId) === String(field.id)) {
+        option.selected = true
+      }
+      fieldSelect.appendChild(option)
+    })
+
+    // If a field is already selected, rebuild the value input to match its type
+    if (fieldSelect.value) {
+      this.rebuildStepConditionValueInput(stepItem, true)
+    }
+  }
+
+  // Show/hide the condition controls when the "Only run this step if" toggle changes
+  toggleStepCondition(event) {
+    const stepItem = event.target.closest('.routing-step-item')
+    if (!stepItem) return
+
+    const enabled = event.target.checked
+    const fieldSelect = stepItem.querySelector('.step-condition-field')
+    const operatorSelect = stepItem.querySelector('.step-condition-operator')
+    const valueWrapper = stepItem.querySelector('.step-condition-value-wrapper')
+
+    const display = enabled ? '' : 'none'
+    if (fieldSelect) fieldSelect.style.display = display
+    if (operatorSelect) operatorSelect.style.display = display
+    if (valueWrapper) valueWrapper.style.display = display
+
+    if (!enabled) {
+      // Clear the condition state so it doesn't get persisted
+      if (fieldSelect) fieldSelect.value = ''
+      const valueInput = stepItem.querySelector('.step-condition-value')
+      if (valueInput) valueInput.value = ''
+    }
+  }
+
+  // Replace the condition value input with an appropriate control
+  // (text input, yes/no select, or values dropdown) based on the selected field's type.
+  updateStepConditionValue(event) {
+    const stepItem = event.target.closest('.routing-step-item')
+    if (!stepItem) return
+    this.rebuildStepConditionValueInput(stepItem, false)
+  }
+
+  rebuildStepConditionValueInput(stepItem, preserveValue) {
+    const fieldSelect = stepItem.querySelector('.step-condition-field')
+    const valueWrapper = stepItem.querySelector('.step-condition-value-wrapper')
+    if (!fieldSelect || !valueWrapper) return
+
+    const selectedOption = fieldSelect.selectedOptions[0]
+    const fieldType = selectedOption ? selectedOption.dataset.fieldType : null
+
+    // Determine the value to preserve. On initial hydration we read the
+    // previously-saved value from data-selected-value; on user-driven changes
+    // we keep the current input value if it's still meaningful.
+    let currentValue = ''
+    if (preserveValue && valueWrapper.dataset.selectedValue !== undefined) {
+      currentValue = valueWrapper.dataset.selectedValue
+    } else {
+      const existing = valueWrapper.querySelector('.step-condition-value')
+      if (existing) currentValue = existing.value
+    }
+
+    valueWrapper.innerHTML = ''
+
+    if (fieldType === 'yes_no') {
+      const select = document.createElement('select')
+      select.name = 'routing_steps[][condition_value]'
+      select.className = 'form-control form-control-sm step-condition-value'
+      select.style.width = 'auto'
+      ;['Yes', 'No'].forEach(v => {
+        const option = document.createElement('option')
+        option.value = v
+        option.textContent = v
+        if (v === currentValue) option.selected = true
+        select.appendChild(option)
+      })
+      valueWrapper.appendChild(select)
+    } else if (fieldType === 'dropdown' || fieldType === 'choices_dropdown') {
+      let values = []
+      try {
+        values = JSON.parse(selectedOption.dataset.dropdownValues || '[]')
+      } catch (e) {
+        values = []
+      }
+
+      if (values.length === 0) {
+        // Fall back to free-text when the dropdown has no defined values
+        // (e.g. data-source-backed dropdowns).
+        this.appendStepConditionTextInput(valueWrapper, currentValue)
+      } else {
+        const select = document.createElement('select')
+        select.name = 'routing_steps[][condition_value]'
+        select.className = 'form-control form-control-sm step-condition-value'
+        select.style.width = 'auto'
+        const placeholder = document.createElement('option')
+        placeholder.value = ''
+        placeholder.textContent = 'Select value...'
+        select.appendChild(placeholder)
+        values.forEach(v => {
+          const option = document.createElement('option')
+          option.value = v
+          option.textContent = v
+          if (v === currentValue) option.selected = true
+          select.appendChild(option)
+        })
+        valueWrapper.appendChild(select)
+      }
+    } else {
+      this.appendStepConditionTextInput(valueWrapper, currentValue)
+    }
+  }
+
+  appendStepConditionTextInput(wrapper, value) {
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.name = 'routing_steps[][condition_value]'
+    input.className = 'form-control form-control-sm step-condition-value'
+    input.placeholder = 'value'
+    if (value) input.value = value
+    wrapper.appendChild(input)
   }
 
   // ============================================
