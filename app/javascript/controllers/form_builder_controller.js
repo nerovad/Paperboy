@@ -342,25 +342,41 @@ export default class extends Controller {
     if (fieldSelect.value) {
       this.rebuildStepConditionValueInput(stepItem, true)
     }
+
+    // Mirror the toggle state onto the controls so an unchecked condition
+    // disables its inputs (and they don't get submitted with stale defaults).
+    const toggle = stepItem.querySelector('.step-condition-toggle')
+    this.applyStepConditionEnabled(stepItem, toggle ? toggle.checked : false)
   }
 
-  // Show/hide the condition controls when the "Only run this step if" toggle changes
+  // Show/hide the condition controls when the "Only run this step if" toggle changes.
+  // Also disables the inputs when off so the browser doesn't submit their default values.
   toggleStepCondition(event) {
     const stepItem = event.target.closest('.routing-step-item')
     if (!stepItem) return
+    this.applyStepConditionEnabled(stepItem, event.target.checked)
+  }
 
-    const enabled = event.target.checked
+  applyStepConditionEnabled(stepItem, enabled) {
     const fieldSelect = stepItem.querySelector('.step-condition-field')
     const operatorSelect = stepItem.querySelector('.step-condition-operator')
     const valueWrapper = stepItem.querySelector('.step-condition-value-wrapper')
 
     const display = enabled ? '' : 'none'
-    if (fieldSelect) fieldSelect.style.display = display
-    if (operatorSelect) operatorSelect.style.display = display
-    if (valueWrapper) valueWrapper.style.display = display
+    if (fieldSelect) {
+      fieldSelect.style.display = display
+      fieldSelect.disabled = !enabled
+    }
+    if (operatorSelect) {
+      operatorSelect.style.display = display
+      operatorSelect.disabled = !enabled
+    }
+    if (valueWrapper) {
+      valueWrapper.style.display = display
+      valueWrapper.querySelectorAll('input, select').forEach(el => { el.disabled = !enabled })
+    }
 
     if (!enabled) {
-      // Clear the condition state so it doesn't get persisted
       if (fieldSelect) fieldSelect.value = ''
       const valueInput = stepItem.querySelector('.step-condition-value')
       if (valueInput) valueInput.value = ''

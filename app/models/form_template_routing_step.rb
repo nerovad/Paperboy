@@ -10,7 +10,7 @@ class FormTemplateRoutingStep < ApplicationRecord
   validates :group_id, presence: true, if: :routes_to_group?
   validates :step_number, uniqueness: { scope: :form_template_id }
   validates :condition_operator, inclusion: { in: CONDITION_OPERATORS }, allow_blank: true
-  validates :condition_field_id, presence: true, if: -> { condition_operator.present? }
+  validates :condition_operator, presence: true, if: -> { condition_field_id.present? }
 
   scope :ordered, -> { order(:step_number) }
 
