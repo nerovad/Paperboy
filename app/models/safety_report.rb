@@ -4,15 +4,19 @@ class SafetyReport < ApplicationRecord
 enum :status, {
   in_progress: 0,
     step_1_pending: 1,
-    approved: 2,
-    denied: 3,
-    cancelled: 4
+    step_1_approved: 2,
+    step_2_pending: 3,
+    approved: 4,
+    denied: 5,
+    cancelled: 6
 }, default: :in_progress
 
 # Normalized status categories for cross-form reporting
 STATUS_CATEGORIES = {
   in_progress: :in_review,
     step_1_pending: :in_review,
+    step_1_approved: :in_review,
+    step_2_pending: :in_review,
     approved: :approved,
     denied: :denied,
     cancelled: :cancelled
@@ -21,7 +25,9 @@ STATUS_CATEGORIES = {
 # Human-readable status labels
 STATUS_LABELS = {
   in_progress: "In Progress",
-    step_1_pending: "Sent to Supervisor",
+    step_1_pending: "Sent to Group #18",
+    step_1_approved: "Group #18 Approved",
+    step_2_pending: "Sent to Group #19",
     approved: "Approved",
     denied: "Denied",
     cancelled: "Cancelled"

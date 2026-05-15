@@ -65,14 +65,11 @@ class SafetyReportsController < ApplicationController
 
     if @safety_report.save
       # ROUTING_BLOCK_START
-      # Multi-step approval routing (1 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-approver_id = employee&.supervisor_id&.to_s
-@safety_report.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+      # Multi-step approval routing (2 steps)
+# Delegates to TrackableStatus#start_approval!, which picks the first
+# step whose condition matches the submitted record.
+@safety_report.start_approval!
+redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
       # ROUTING_BLOCK_END
     else
       emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
