@@ -295,21 +295,43 @@ export default class extends Controller {
     this.updateStepDisplayName(event)
   }
 
-  // Update the display name input placeholder based on routing type
+  // Update the display name input placeholder based on routing type and the
+  // currently-selected employee/group, so the placeholder shows the actual
+  // target name (e.g. "Sent to Gary Howard") rather than a generic label.
   updateStepDisplayName(event) {
-    const routingType = event.target.value
     const stepItem = event.target.closest('.routing-step-item')
-    const displayNameInput = stepItem.querySelector('.step-display-name-input')
+    if (!stepItem) return
+    this.refreshStepDisplayNamePlaceholder(stepItem)
+  }
 
+  refreshStepDisplayNamePlaceholder(stepItem) {
+    const displayNameInput = stepItem.querySelector('.step-display-name-input')
     if (!displayNameInput) return
 
-    const labels = {
-      'supervisor': 'Sent to Supervisor',
-      'department_head': 'Sent to Department Head',
-      'employee': 'Sent to Employee',
-      'group': 'Sent to Group'
+    const routingType = stepItem.querySelector('.routing-type-select')?.value
+    let target
+    switch (routingType) {
+      case 'supervisor':
+        target = 'Supervisor'
+        break
+      case 'department_head':
+        target = 'Department Head'
+        break
+      case 'employee': {
+        const select = stepItem.querySelector('.step-employee-dropdown')
+        target = select?.selectedOptions[0]?.textContent?.trim() || 'Employee'
+        break
+      }
+      case 'group': {
+        const select = stepItem.querySelector('.step-group-dropdown')
+        target = select?.selectedOptions[0]?.textContent?.trim() || 'Group'
+        break
+      }
+      default:
+        displayNameInput.placeholder = 'e.g. Sent to HR (auto-generated if blank)'
+        return
     }
-    displayNameInput.placeholder = labels[routingType] || 'e.g. Sent to HR (auto-generated if blank)'
+    displayNameInput.placeholder = `Sent to ${target}`
   }
 
   // Populate a routing step's condition field dropdown from the form's fields.
@@ -320,19 +342,20 @@ export default class extends Controller {
     if (!fieldSelect) return
 
     const fields = this.hasFormFieldsValue ? this.formFieldsValue : []
-    const selectedId = fieldSelect.dataset.selectedId
+    const selectedName = fieldSelect.dataset.selectedName
 
     // Clear and re-populate, preserving the placeholder option
     fieldSelect.innerHTML = '<option value="">Select field...</option>'
 
     fields.forEach(field => {
       const option = document.createElement('option')
-      option.value = field.id
+      // Reference by stable field_name; the integer id is renumbered on
+      // every form-fields rebuild and would lose the selection.
+      option.value = field.field_name
       option.textContent = field.label
       option.dataset.fieldType = field.field_type
-      option.dataset.fieldName = field.field_name
       option.dataset.dropdownValues = JSON.stringify(field.dropdown_values || [])
-      if (selectedId && String(selectedId) === String(field.id)) {
+      if (selectedName && selectedName === field.field_name) {
         option.selected = true
       }
       fieldSelect.appendChild(option)

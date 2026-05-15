@@ -724,22 +724,22 @@ class FormTemplatesController < ApplicationController
         employee_id: step.employee_id,
         group_id: step.group_id,
         display_name: step.display_name,
-        condition_field_id: step.condition_field_id,
+        condition_field_name: step.condition_field_name,
         condition_operator: step.condition_operator,
         condition_value: step.condition_value
       }
     end
 
     new_steps = (params[:routing_steps] || []).map do |step|
-      condition_field_id = step[:condition_field_id]&.to_i.presence
+      condition_field_name = step[:condition_field_name].presence
       {
         routing_type: step[:routing_type],
         employee_id: step[:employee_id]&.to_i.presence,
         group_id: step[:group_id]&.to_i.presence,
         display_name: step[:display_name].presence,
-        condition_field_id: condition_field_id,
-        condition_operator: condition_field_id ? step[:condition_operator].presence : nil,
-        condition_value: condition_field_id ? step[:condition_value].presence : nil
+        condition_field_name: condition_field_name,
+        condition_operator: condition_field_name ? step[:condition_operator].presence : nil,
+        condition_value: condition_field_name ? step[:condition_value].presence : nil
       }
     end.reject { |s| s[:routing_type].blank? }
 
@@ -813,16 +813,16 @@ class FormTemplatesController < ApplicationController
     params[:routing_steps].each do |step_data|
       next if step_data[:routing_type].blank?
 
-      condition_field_id = step_data[:condition_field_id].presence
+      condition_field_name = step_data[:condition_field_name].presence
       form_template.routing_steps.create!(
         step_number: step_data[:step_number].to_i,
         routing_type: step_data[:routing_type],
         employee_id: step_data[:employee_id].presence,
         group_id: step_data[:group_id].presence,
         display_name: step_data[:display_name].presence,
-        condition_field_id: condition_field_id,
-        condition_operator: condition_field_id ? step_data[:condition_operator].presence : nil,
-        condition_value: condition_field_id ? step_data[:condition_value].presence : nil
+        condition_field_name: condition_field_name,
+        condition_operator: condition_field_name ? step_data[:condition_operator].presence : nil,
+        condition_value: condition_field_name ? step_data[:condition_value].presence : nil
       )
     end
   end
@@ -962,16 +962,16 @@ class FormTemplatesController < ApplicationController
     params[:routing_steps].each_with_index do |step_data, index|
       next if step_data[:routing_type].blank?
 
-      condition_field_id = step_data[:condition_field_id].presence
+      condition_field_name = step_data[:condition_field_name].presence
       form_template.routing_steps.create!(
         step_number: index + 1,
         routing_type: step_data[:routing_type],
         employee_id: step_data[:employee_id].presence,
         group_id: step_data[:group_id].presence,
         display_name: step_data[:display_name].presence,
-        condition_field_id: condition_field_id,
-        condition_operator: condition_field_id ? step_data[:condition_operator].presence : nil,
-        condition_value: condition_field_id ? step_data[:condition_value].presence : nil
+        condition_field_name: condition_field_name,
+        condition_operator: condition_field_name ? step_data[:condition_operator].presence : nil,
+        condition_value: condition_field_name ? step_data[:condition_value].presence : nil
       )
     end
 

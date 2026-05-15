@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_15_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_15_000002) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -218,9 +218,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_000001) do
     t.bigint "form_template_status_id"
     t.string "display_name"
     t.integer "group_id"
-    t.integer "condition_field_id"
     t.string "condition_operator"
     t.string "condition_value"
+    t.string "condition_field_name"
   end
 
   create_table "form_template_statuses", force: :cascade do |t|

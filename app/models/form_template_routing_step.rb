@@ -10,7 +10,7 @@ class FormTemplateRoutingStep < ApplicationRecord
   validates :group_id, presence: true, if: :routes_to_group?
   validates :step_number, uniqueness: { scope: :form_template_id }
   validates :condition_operator, inclusion: { in: CONDITION_OPERATORS }, allow_blank: true
-  validates :condition_operator, presence: true, if: -> { condition_field_id.present? }
+  validates :condition_operator, presence: true, if: -> { condition_field_name.present? }
 
   scope :ordered, -> { order(:step_number) }
 
@@ -45,7 +45,7 @@ class FormTemplateRoutingStep < ApplicationRecord
 
   def group_name
     return nil unless group_id
-    Group.find_by(group_id: group_id)&.group_name
+    Group.find_by(GroupID: group_id)&.group_name
   rescue
     nil
   end
@@ -72,27 +72,21 @@ class FormTemplateRoutingStep < ApplicationRecord
 
   # True when this step has a condition that gates whether it runs.
   def conditional?
-    condition_field_id.present? && condition_operator.present?
+    condition_field_name.present? && condition_operator.present?
   end
 
-  # The form field this step's condition checks.
+  # The form field this step's condition checks. Looked up by stable
+  # field_name so it survives form-field rebuilds that renumber ids.
   def condition_field
-    return nil unless condition_field_id
-    form_template.form_fields.find_by(id: condition_field_id)
-  end
-
-  # Stable column name on the form record (e.g. "osha_reportable") used to read the value.
-  def condition_field_name
-    condition_field&.field_name
+    return nil unless condition_field_name.present?
+    form_template.form_fields.find_by(field_name: condition_field_name)
   end
 
   # Evaluates the condition against a submitted form record.
   # Returns true when the step has no condition or the condition matches; false otherwise.
   def matches?(form_record)
     return true unless conditional?
-    name = condition_field_name
-    return true if name.blank?
-    actual = form_record.respond_to?(name) ? form_record.public_send(name) : nil
+    actual = form_record.respond_to?(condition_field_name) ? form_record.public_send(condition_field_name) : nil
     case condition_operator
     when 'equals'
       actual.to_s == condition_value.to_s

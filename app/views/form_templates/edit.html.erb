@@ -196,7 +196,8 @@
 
                       <div class="step-employee-select" style="flex: 1; min-width: 200px; <%= 'display: none;' unless step.routing_type == 'employee' %>">
                         <select name="routing_steps[][employee_id]"
-                                class="form-control form-control-sm step-employee-dropdown">
+                                class="form-control form-control-sm step-employee-dropdown"
+                                data-action="change->form-builder#updateStepDisplayName">
                           <option value="">Select employee...</option>
                           <% @employees.each do |emp| %>
                             <option value="<%= emp[1] %>" <%= 'selected' if step.employee_id == emp[1] %>><%= emp[0] %></option>
@@ -206,7 +207,8 @@
 
                       <div class="step-group-select" style="flex: 1; min-width: 200px; <%= 'display: none;' unless step.routing_type == 'group' %>">
                         <select name="routing_steps[][group_id]"
-                                class="form-control form-control-sm step-group-dropdown">
+                                class="form-control form-control-sm step-group-dropdown"
+                                data-action="change->form-builder#updateStepDisplayName">
                           <option value="">Select group...</option>
                           <% @acl_groups.each do |grp| %>
                             <option value="<%= grp[1] %>" <%= 'selected' if step.group_id == grp[1] %>><%= grp[0] %></option>
@@ -241,11 +243,11 @@
                           Only run this step if
                         </label>
 
-                        <select name="routing_steps[][condition_field_id]"
+                        <select name="routing_steps[][condition_field_name]"
                                 class="form-control form-control-sm step-condition-field"
                                 data-action="change->form-builder#updateStepConditionValue"
                                 style="width: auto; min-width: 160px; <%= 'display: none;' unless step.conditional? %>"
-                                data-selected-id="<%= step.condition_field_id %>">
+                                data-selected-name="<%= step.condition_field_name %>">
                           <option value="">Select field...</option>
                         </select>
 
@@ -1213,14 +1215,16 @@
 
       <div class="step-employee-select" style="flex: 1; min-width: 200px; display: none;">
         <select name="routing_steps[][employee_id]"
-                class="form-control form-control-sm step-employee-dropdown">
+                class="form-control form-control-sm step-employee-dropdown"
+                data-action="change->form-builder#updateStepDisplayName">
           <option value="">Select employee...</option>
         </select>
       </div>
 
       <div class="step-group-select" style="flex: 1; min-width: 200px; display: none;">
         <select name="routing_steps[][group_id]"
-                class="form-control form-control-sm step-group-dropdown">
+                class="form-control form-control-sm step-group-dropdown"
+                data-action="change->form-builder#updateStepDisplayName">
           <option value="">Select group...</option>
         </select>
       </div>
@@ -1250,7 +1254,7 @@
           Only run this step if
         </label>
 
-        <select name="routing_steps[][condition_field_id]"
+        <select name="routing_steps[][condition_field_name]"
                 class="form-control form-control-sm step-condition-field"
                 data-action="change->form-builder#updateStepConditionValue"
                 style="width: auto; min-width: 160px; display: none;">
