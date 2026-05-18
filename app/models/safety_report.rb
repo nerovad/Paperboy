@@ -25,9 +25,9 @@ STATUS_CATEGORIES = {
 # Human-readable status labels
 STATUS_LABELS = {
   in_progress: "In Progress",
-    step_1_pending: "Sent to Group #18",
-    step_1_approved: "Group #18 Approved",
-    step_2_pending: "Sent to Group #19",
+    step_1_pending: "Sent to HCA_HR",
+    step_1_approved: "HCA_HR Approved",
+    step_2_pending: "Sent to HCA_Safety_Officers",
     approved: "Approved",
     denied: "Denied",
     cancelled: "Cancelled"
