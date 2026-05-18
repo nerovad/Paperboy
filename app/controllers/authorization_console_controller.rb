@@ -42,7 +42,7 @@ class AuthorizationConsoleController < ApplicationController
     @authorized_approver = AuthorizedApprover.new(department_id: @department_id)
     @selected_service_types = []
 
-    @building_options     = fetch_buildings_for_department(@department_id)
+    @location_options     = location_options
     @budget_unit_options  = fetch_managed_budget_units
     @department_employees = fetch_managed_employees
   end
@@ -84,7 +84,7 @@ class AuthorizationConsoleController < ApplicationController
     @authorized_approver   = AuthorizedApprover.find(params[:id])
     @department_id         = @authorized_approver.department_id
     @department_employees  = fetch_managed_employees
-    @building_options      = fetch_buildings_for_department(@department_id)
+    @location_options      = location_options
     @budget_unit_options   = fetch_managed_budget_units
   end
   
@@ -99,7 +99,7 @@ class AuthorizationConsoleController < ApplicationController
     else
       @department_id         = @authorized_approver.department_id
       @department_employees  = fetch_managed_employees
-      @building_options      = fetch_buildings_for_department(@department_id)
+      @location_options      = location_options
       @budget_unit_options   = fetch_managed_budget_units
       render :edit, status: :unprocessable_entity
     end
@@ -154,14 +154,8 @@ class AuthorizationConsoleController < ApplicationController
     end
   end
   
-  def fetch_buildings_for_department(department_id)
-    # Replace this with your real logic / query
-    # e.g. Building.where(department_id:).order(:name).pluck(:name)
-    [
-      "Hall of Administration",
-      "Government Center - A",
-      "Government Center - B"
-    ]
+  def location_options
+    AuthorizedApprover::LOCATIONS.map { |loc| [loc, loc] }
   end
 
   def fetch_managed_budget_units
@@ -225,7 +219,7 @@ class AuthorizationConsoleController < ApplicationController
   def rerender_new
     @department_id        = @authorized_approver.department_id
     @department_employees = fetch_managed_employees
-    @building_options     = fetch_buildings_for_department(@department_id)
+    @location_options     = location_options
     @budget_unit_options  = fetch_managed_budget_units
     render :new, status: :unprocessable_entity
   end

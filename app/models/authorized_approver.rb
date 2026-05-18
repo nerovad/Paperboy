@@ -35,6 +35,52 @@ class AuthorizedApprover < ApplicationRecord
     'D' => 'Single Budget Unit - Multiple Locations',
     'E' => 'Single Budget Unit - Single Location'
   }.freeze
+
+  LOCATIONS = [
+    "1190 S. Victoria Ave., Suite 200, Ventura, CA 93003",
+    "2220 E Gonzales Rd.",
+    "2220 Gonzales, 2240 Gonzales, 1801 Solar Dr, 1701 Solar Dr",
+    "2240 E Gonzales Rd.",
+    "5171 Verdugo Way, Camarillo, CA 93012 / HOJ, Room 302, Ventura, CA 93009",
+    "555 Airport Way, Suite B, Camarillo",
+    "A/B/C/D/E",
+    "All Ambulatory Care",
+    "All ANM Bldgs",
+    "All ANM Buildings",
+    "All GSA Maint. Bldgs during Project",
+    "All GSA Maintained Buildings",
+    "All GSA-Maint. Bldgs during Projects",
+    "All GSA-Maintained Bldgs",
+    "All GSA-maintained buildings",
+    "All HSA Facilities",
+    "All ITSD Locations",
+    "All JF Locations",
+    "All Locations",
+    "All Units/VCPA Locations",
+    "APCD",
+    "C",
+    "Camarillo/Santa Paula/Saticoy",
+    "District office, Gov't Center",
+    "Fillmore Clinic Activity",
+    "FIRE FCC",
+    "Harbor",
+    "HOA",
+    "HOA & JJC",
+    "HOA EHS",
+    "HOA HCA General Access",
+    "HOA Lower Plaza",
+    "HOA/Main/Assessor",
+    "HOJ, ECC, JC, Hill & Ralston",
+    "HOJ, UBB, JJC",
+    "Law Library",
+    "Magnolia Clinic activity",
+    "MEO & E. Cnty Sheriff gate (gas)",
+    "Parks, Facilities",
+    "Same Budget #'s and Locations for all employees listed",
+    "Saticoy",
+    "Svc Bldg",
+    "Svc Bldg, HOA"
+  ].freeze
   
   def employee
     Employee.find_by(employee_id: employee_id)

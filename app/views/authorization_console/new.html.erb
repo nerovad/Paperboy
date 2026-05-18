@@ -59,31 +59,6 @@
               class: "form-control",
               data: { authorization_select_target: "keyType" } %>
       </div>
-
-      <div class="form-group"
-          data-authorization-select-target="locationsWrapper"
-          data-controller="choices"
-          style="display:none;">
-        <%= form.label :locations, "Building Locations" %>
-
-        <%= form.select :locations,
-              options_for_select(
-                (@building_options || []),
-                @authorized_approver.locations&.split(",")
-              ),
-              {},
-              multiple: true,
-              class: "form-control",
-              data: {
-                authorization_select_target: "locations",
-                choices_target: "select",                 # 👈 tell Stimulus this is the select
-                placeholder: "Select building(s)…"
-              } %>
-
-        <small class="help-text">
-          Leave blank to allow all locations
-        </small>
-      </div>
     </div>
 
     <div class="form-group">
@@ -112,6 +87,27 @@
 
       <small class="help-text">
         Leave blank to allow all budget units
+      </small>
+    </div>
+
+    <div class="form-group" data-controller="choices">
+      <%= form.label :locations, "Locations" %>
+
+      <%= form.select :locations,
+            options_for_select(
+              (@location_options || []),
+              @authorized_approver.locations&.split(",")
+            ),
+            {},
+            multiple: true,
+            class: "form-control",
+            data: {
+              choices_target: "select",
+              placeholder: "Select location(s)…"
+            } %>
+
+      <small class="help-text">
+        Leave blank to allow all locations
       </small>
     </div>
 
