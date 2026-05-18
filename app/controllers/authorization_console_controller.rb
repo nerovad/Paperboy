@@ -128,9 +128,7 @@ class AuthorizationConsoleController < ApplicationController
   
   def set_managed_departments
     if auth_console_admin?
-      gsa = Agency.find_by(long_name: "General Services Agency")
-      division_ids = gsa ? Division.where(agency_id: gsa.agency_id).pluck(:division_id) : []
-      @managed_departments = Department.where(division_id: division_ids).order(:department_id).to_a
+      @managed_departments = Department.order(:department_id).to_a
     else
       dept_id = current_user_org_chain[:department_id]
       dept = dept_id ? Department.find_by(department_id: dept_id) : nil
