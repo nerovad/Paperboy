@@ -175,6 +175,12 @@ class InboxController < ApplicationController
                          EmployeeGroup.where(EmployeeID: @scoped_employee_ids).distinct.pluck(:GroupID)
                        end
 
+    # Submitter-org values the scoped employees can stand in for. Used to
+    # narrow org-filtered group routing steps to forms whose submitter shares
+    # the right org level with at least one scoped employee. nil = no scope
+    # restriction (system admin "all").
+    submitter_org_filter = @scoped_employee_ids ? compute_submitter_org_filter(@scoped_employee_ids) : nil
+
     # Get all form templates that have approval workflows
     FormTemplate.where(submission_type: 'approval').find_each do |template|
       begin
@@ -182,18 +188,15 @@ class InboxController < ApplicationController
         model_class = template.class_name.constantize
         next unless model_class.column_names.include?('approver_id')
 
-        group_status_keys = group_routed_status_keys(template, scoped_group_ids)
-
         scope = if @scoped_employee_ids.nil?
                   # System admin viewing All — every approval form
                   model_class.all
                 else
-                  by_approver = model_class.where(approver_id: @scoped_employee_ids)
-                  if group_status_keys.any?
-                    by_approver.or(model_class.where(status: group_status_keys))
-                  else
-                    by_approver
+                  parts = [model_class.where(approver_id: @scoped_employee_ids)]
+                  group_routing_scopes(template, model_class, scoped_group_ids, submitter_org_filter).each do |s|
+                    parts << s
                   end
+                  parts.reduce(:or)
                 end
 
         scope = apply_scope_date_filters(scope, inbox_scope_date_filters)
@@ -209,13 +212,51 @@ class InboxController < ApplicationController
     submissions
   end
 
-  # Status keys (e.g. "step_2_pending") for routing steps that route to a group
-  # the scoped employees are in. When scoped_group_ids is nil, all group-routed
-  # steps qualify (system admin viewing All).
-  def group_routed_status_keys(template, scoped_group_ids)
+  # Returns AR scopes (one per qualifying group-routed step) on model_class
+  # that should be OR'd into the inbox query. For unfiltered steps the scope
+  # matches every form in step_N_pending; for org-filtered steps it also
+  # narrows by the submitter-org column. Returns [] when the scoped
+  # employees aren't in the step's group, or when the org filter resolves
+  # to no values (e.g. submitter has no division on file).
+  def group_routing_scopes(template, model_class, scoped_group_ids, submitter_org_filter)
     template.routing_steps.where(routing_type: 'group').filter_map do |step|
       next if scoped_group_ids && !scoped_group_ids.include?(step.group_id)
-      "step_#{step.step_number}_pending"
+      status_key = "step_#{step.step_number}_pending"
+
+      if step.org_filtered? && submitter_org_filter
+        level = step.org_filter_level
+        values = submitter_org_filter[level.to_sym]
+        next if values.blank?
+        next unless model_class.column_names.include?(level)
+        model_class.where(status: status_key, level => values)
+      else
+        model_class.where(status: status_key)
+      end
     end
+  end
+
+  # Builds the set of submitter-org values that "match" the given scoped
+  # employees, per org level. For agency/division/department we look the
+  # employee's Unit up in the org tables; for unit we just take the column
+  # off the Employee row directly. Values are stringified to align with the
+  # form tables' string org columns.
+  def compute_submitter_org_filter(employee_ids)
+    employees = Employee.where(EmployeeID: employee_ids).to_a
+    unit_ids = employees.map(&:unit).compact.uniq
+    units = unit_ids.any? ? Unit.where(unit_id: unit_ids).index_by { |u| u.unit_id.to_s } : {}
+
+    filter = { agency: [], division: [], department: [], unit: [] }
+    employees.each do |emp|
+      unit_value = emp.unit
+      filter[:unit] << unit_value.to_s if unit_value.present?
+
+      unit = units[unit_value.to_s]
+      next unless unit
+      filter[:agency]     << unit.agency_id.to_s     if unit.agency_id.present?
+      filter[:division]   << unit.division_id.to_s   if unit.division_id.present?
+      filter[:department] << unit.department_id.to_s if unit.department_id.present?
+    end
+
+    filter.transform_values(&:uniq)
   end
 end

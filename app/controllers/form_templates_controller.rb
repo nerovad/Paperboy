@@ -723,6 +723,7 @@ class FormTemplatesController < ApplicationController
         routing_type: step.routing_type,
         employee_id: step.employee_id,
         group_id: step.group_id,
+        org_filter_level: step.org_filter_level,
         display_name: step.display_name,
         condition_field_name: step.condition_field_name,
         condition_operator: step.condition_operator,
@@ -732,10 +733,12 @@ class FormTemplatesController < ApplicationController
 
     new_steps = (params[:routing_steps] || []).map do |step|
       condition_field_name = step[:condition_field_name].presence
+      group_routed = step[:routing_type] == 'group'
       {
         routing_type: step[:routing_type],
         employee_id: step[:employee_id]&.to_i.presence,
         group_id: step[:group_id]&.to_i.presence,
+        org_filter_level: group_routed ? step[:org_filter_level].presence : nil,
         display_name: step[:display_name].presence,
         condition_field_name: condition_field_name,
         condition_operator: condition_field_name ? step[:condition_operator].presence : nil,
@@ -814,11 +817,13 @@ class FormTemplatesController < ApplicationController
       next if step_data[:routing_type].blank?
 
       condition_field_name = step_data[:condition_field_name].presence
+      group_routed = step_data[:routing_type] == 'group'
       form_template.routing_steps.create!(
         step_number: step_data[:step_number].to_i,
         routing_type: step_data[:routing_type],
         employee_id: step_data[:employee_id].presence,
         group_id: step_data[:group_id].presence,
+        org_filter_level: group_routed ? step_data[:org_filter_level].presence : nil,
         display_name: step_data[:display_name].presence,
         condition_field_name: condition_field_name,
         condition_operator: condition_field_name ? step_data[:condition_operator].presence : nil,

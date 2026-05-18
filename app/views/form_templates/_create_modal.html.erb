@@ -559,6 +559,17 @@
         </select>
       </div>
 
+      <div class="step-org-filter-select" style="flex: 1; min-width: 200px; display: none;">
+        <select name="routing_steps[][org_filter_level]"
+                class="form-control form-control-sm step-org-filter-dropdown"
+                title="Restrict group members to those matching the submitter at this org level">
+          <option value="">Filter by submitter's…</option>
+          <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+            <option value="<%= lvl %>">Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+          <% end %>
+        </select>
+      </div>
+
       <div class="step-display-name" style="flex: 1; min-width: 180px;">
         <input type="text" name="routing_steps[][display_name]"
                class="form-control form-control-sm step-display-name-input"

@@ -270,6 +270,8 @@ export default class extends Controller {
     const employeeSelect = stepItem.querySelector('.step-employee-dropdown')
     const groupSelectContainer = stepItem.querySelector('.step-group-select')
     const groupSelect = stepItem.querySelector('.step-group-dropdown')
+    const orgFilterContainer = stepItem.querySelector('.step-org-filter-select')
+    const orgFilterSelect = stepItem.querySelector('.step-org-filter-dropdown')
 
     if (routingType === 'employee') {
       employeeSelectContainer.style.display = 'block'
@@ -288,6 +290,16 @@ export default class extends Controller {
         groupSelectContainer.style.display = 'none'
         groupSelect.required = false
         groupSelect.value = ''
+      }
+    }
+
+    // Org filter is only meaningful when routing to a group.
+    if (orgFilterContainer && orgFilterSelect) {
+      if (routingType === 'group') {
+        orgFilterContainer.style.display = 'block'
+      } else {
+        orgFilterContainer.style.display = 'none'
+        orgFilterSelect.value = ''
       }
     }
 
@@ -325,6 +337,12 @@ export default class extends Controller {
       case 'group': {
         const select = stepItem.querySelector('.step-group-dropdown')
         target = select?.selectedOptions[0]?.textContent?.trim() || 'Group'
+        const filterSelect = stepItem.querySelector('.step-org-filter-dropdown')
+        const filterLevel = filterSelect?.value
+        if (filterLevel) {
+          const labelMap = { agency: 'Agency', division: 'Division', department: 'Department', unit: 'Unit' }
+          target = `${target} (submitter's ${labelMap[filterLevel] || filterLevel})`
+        }
         break
       }
       default:

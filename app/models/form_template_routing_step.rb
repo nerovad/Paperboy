@@ -3,6 +3,13 @@ class FormTemplateRoutingStep < ApplicationRecord
 
   ROUTING_TYPES = %w[supervisor department_head employee group].freeze
   CONDITION_OPERATORS = %w[equals not_equals].freeze
+  ORG_FILTER_LEVELS = %w[agency division department unit].freeze
+  ORG_FILTER_LABELS = {
+    'agency' => 'Agency',
+    'division' => 'Division',
+    'department' => 'Department',
+    'unit' => 'Unit'
+  }.freeze
 
   validates :step_number, presence: true, numericality: { greater_than: 0 }
   validates :routing_type, presence: true, inclusion: { in: ROUTING_TYPES }
@@ -11,6 +18,8 @@ class FormTemplateRoutingStep < ApplicationRecord
   validates :step_number, uniqueness: { scope: :form_template_id }
   validates :condition_operator, inclusion: { in: CONDITION_OPERATORS }, allow_blank: true
   validates :condition_operator, presence: true, if: -> { condition_field_name.present? }
+  validates :org_filter_level, inclusion: { in: ORG_FILTER_LEVELS }, allow_blank: true
+  validate :org_filter_only_for_group_routing
 
   scope :ordered, -> { order(:step_number) }
 
@@ -31,8 +40,19 @@ class FormTemplateRoutingStep < ApplicationRecord
     when 'employee'
       employee_name || "Employee ##{employee_id}"
     when 'group'
-      group_name || "Group ##{group_id}"
+      base = group_name || "Group ##{group_id}"
+      org_filtered? ? "#{base} (submitter's #{org_filter_label})" : base
     end
+  end
+
+  # True when this is a group-routed step that's narrowed to members who
+  # share the submitter's value at the configured org level.
+  def org_filtered?
+    routes_to_group? && org_filter_level.present?
+  end
+
+  def org_filter_label
+    ORG_FILTER_LABELS[org_filter_level]
   end
 
   def employee_name
@@ -104,5 +124,13 @@ class FormTemplateRoutingStep < ApplicationRecord
     return nil unless field
     op = condition_operator == 'not_equals' ? '≠' : '='
     %(Only if "#{field.label}" #{op} "#{condition_value}")
+  end
+
+  private
+
+  def org_filter_only_for_group_routing
+    return if org_filter_level.blank?
+    return if routes_to_group?
+    errors.add(:org_filter_level, 'is only valid for group routing steps')
   end
 end
