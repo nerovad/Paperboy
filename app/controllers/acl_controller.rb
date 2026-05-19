@@ -42,8 +42,11 @@ class AclController < ApplicationController
       search = params[:search].strip
       sanitized = ActiveRecord::Base.sanitize_sql_like(search)
       @search_results = Employee
-        .where("First_Name LIKE :q OR Last_Name LIKE :q OR CAST(EmployeeID AS VARCHAR) LIKE :q",
-               q: "%#{sanitized}%")
+        .where(
+          "First_Name LIKE :q OR Last_Name LIKE :q OR CAST(EmployeeID AS VARCHAR) LIKE :q " \
+          "OR (First_Name + ' ' + Last_Name) LIKE :q",
+          q: "%#{sanitized}%"
+        )
         .order(:last_name, :first_name)
         .limit(20)
     end
