@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_19_000004) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_19_000005) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -189,6 +189,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_19_000004) do
     t.text "conditional_answer_mappings"
     t.boolean "has_custom_view", default: false, null: false
     t.boolean "visible_to_filler", default: false, null: false
+    t.string "restricted_to_org_filter_level"
   end
 
   create_table "form_request_forms", force: :cascade do |t|

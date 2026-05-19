@@ -832,6 +832,18 @@
                           </select>
                         </div>
 
+                        <div class="restriction-org-filter-select" style="<%= 'display: none;' unless field.restricted_to_type == 'group' %>">
+                          <select name="fields[][restricted_to_org_filter_level]"
+                                  class="form-control form-control-sm restriction-org-filter-dropdown"
+                                  style="min-width: 200px;"
+                                  title="Restrict group members to those matching the submitter at this org level">
+                            <option value="">Filter by submitter's…</option>
+                            <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+                              <option value="<%= lvl %>" <%= 'selected' if field.restricted_to_org_filter_level == lvl %>>Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+                            <% end %>
+                          </select>
+                        </div>
+
                         <div class="restriction-visibility-select" style="<%= 'display: none;' if field.restricted_to_type.blank? || field.restricted_to_type == 'none' %>">
                           <label style="margin: 0 6px 0 0; font-size: 0.85em; color: #495057;">Visible to:</label>
                           <select name="fields[][visible_to_filler]"
@@ -1257,6 +1269,18 @@
             <option value="">Select group...</option>
             <% @acl_groups&.each do |group| %>
               <option value="<%= group[1] %>"><%= group[0] %></option>
+            <% end %>
+          </select>
+        </div>
+
+        <div class="restriction-org-filter-select" style="display: none;">
+          <select name="fields[][restricted_to_org_filter_level]"
+                  class="form-control form-control-sm restriction-org-filter-dropdown"
+                  style="min-width: 200px;"
+                  title="Restrict group members to those matching the submitter at this org level">
+            <option value="">Filter by submitter's…</option>
+            <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+              <option value="<%= lvl %>">Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
             <% end %>
           </select>
         </div>

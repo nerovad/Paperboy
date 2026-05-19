@@ -48,6 +48,7 @@ class FormTemplatesController < ApplicationController
             restricted_to_type: field_data[:restricted_to_type].presence || 'none',
             restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
             restricted_to_group_id: field_data[:restricted_to_group_id].presence,
+            restricted_to_org_filter_level: (field_data[:restricted_to_type] == 'group' ? field_data[:restricted_to_org_filter_level].presence : nil),
             visible_to_filler: field_data[:visible_to_filler] == '1',
             read_only: field_data[:read_only].presence || 'none'
           )
@@ -1078,6 +1079,7 @@ class FormTemplatesController < ApplicationController
           restricted_to_type: field_data[:restricted_to_type].presence || 'none',
           restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
           restricted_to_group_id: field_data[:restricted_to_group_id].presence,
+          restricted_to_org_filter_level: (field_data[:restricted_to_type] == 'group' ? field_data[:restricted_to_org_filter_level].presence : nil),
           visible_to_filler: field_data[:visible_to_filler] == '1',
           read_only: field_data[:read_only].presence || 'none',
           has_custom_view: field_data[:has_custom_view] == '1'
@@ -1264,7 +1266,7 @@ class FormTemplatesController < ApplicationController
             # Preserve the existing custom HTML for this field
             content += existing_blocks[field.field_name]
           else
-            content += generate_field_html(field)
+            content += generate_field_html(field, form_template)
           end
           content += "<!-- FIELD:#{field.field_name} END -->\n"
         end
@@ -1523,7 +1525,7 @@ class FormTemplatesController < ApplicationController
   def generate_field_html_for_edit(field, form_template)
     # Generate restriction check and attributes
     if field.restricted?
-      editable_check = generate_editable_check(field)
+      editable_check = generate_editable_check(field, form_template)
       required_logic = field.required ? "required: field_#{field.id}_editable && #{field.required}" : ""
       disabled_attr = "disabled: !field_#{field.id}_editable"
       restriction_label = field.restriction_label
@@ -1959,10 +1961,10 @@ class FormTemplatesController < ApplicationController
     HTML
   end
 
-  def generate_field_html(field)
+  def generate_field_html(field, form_template)
     # Generate restriction check and attributes
     if field.restricted?
-      editable_check = generate_editable_check(field)
+      editable_check = generate_editable_check(field, form_template)
       required_logic = field.required ? "required: field_#{field.id}_editable && #{field.required}" : ""
       disabled_attr = "disabled: !field_#{field.id}_editable"
       restriction_label = field.restriction_label
@@ -2290,15 +2292,9 @@ class FormTemplatesController < ApplicationController
     HTML
   end
 
-  def generate_editable_check(field)
-    case field.restricted_to_type
-    when 'employee'
-      "field_#{field.id}_editable = (session.dig(:user, 'employee_id').to_s == '#{field.restricted_to_employee_id}')"
-    when 'group'
-      "field_#{field.id}_editable = @current_user_groups&.include?(#{field.restricted_to_group_id})"
-    else
-      nil
-    end
+  def generate_editable_check(field, form_template)
+    expr = field_restriction_expression(field, form_template)
+    expr ? "field_#{field.id}_editable = #{expr}" : nil
   end
 
   # Returns a Ruby expression (as a string) that evaluates to true when the
@@ -2314,7 +2310,7 @@ class FormTemplatesController < ApplicationController
     return nil if fields.empty?
     return nil if fields.any? { |f| !f.restrict_visibility? }
 
-    checks = fields.map { |f| field_restriction_expression(f) }.compact.uniq
+    checks = fields.map { |f| field_restriction_expression(f, form_template) }.compact.uniq
     return nil if checks.empty?
 
     "(#{checks.join(' || ')} || system_admin?)"
@@ -2330,12 +2326,18 @@ class FormTemplatesController < ApplicationController
     lines.join + "\n"
   end
 
-  def field_restriction_expression(field)
+  def field_restriction_expression(field, form_template)
     case field.restricted_to_type
     when 'employee'
       "(session.dig(:user, 'employee_id').to_s == '#{field.restricted_to_employee_id}')"
     when 'group'
-      "@current_user_groups&.include?(#{field.restricted_to_group_id})"
+      base = "@current_user_groups&.include?(#{field.restricted_to_group_id})"
+      if field.org_filtered?
+        level = field.restricted_to_org_filter_level
+        "(#{base} && current_user_org_chain[:#{level}_id].to_s == @#{form_template.file_name}.#{level}.to_s)"
+      else
+        base
+      end
     end
   end
 

@@ -70,6 +70,10 @@ class FormField < ApplicationRecord
   validates :read_only, inclusion: { in: READ_ONLY_TYPES }, allow_nil: true
   validates :restricted_to_employee_id, presence: true, if: :restricted_to_employee?
   validates :restricted_to_group_id, presence: true, if: :restricted_to_group?
+  validates :restricted_to_org_filter_level,
+            inclusion: { in: FormTemplateRoutingStep::ORG_FILTER_LEVELS },
+            allow_blank: true
+  validate :org_filter_only_for_group_restriction
   validates :page_number, numericality: {
     greater_than_or_equal_to: 1,
     less_than_or_equal_to: ->(field) { field.form_template&.page_count || 30 }
@@ -224,6 +228,17 @@ class FormField < ApplicationRecord
     restricted? && visible_to_filler?
   end
 
+  # Mirrors FormTemplateRoutingStep#org_filtered? — narrows a group
+  # restriction to members who share the submitter's value at this org
+  # level. Only valid on group restrictions.
+  def org_filtered?
+    restricted_to_group? && restricted_to_org_filter_level.present?
+  end
+
+  def org_filter_label
+    FormTemplateRoutingStep::ORG_FILTER_LABELS[restricted_to_org_filter_level]
+  end
+
   # Read-only checks
   def read_only?
     read_only.present? && read_only != 'none'
@@ -279,7 +294,8 @@ class FormField < ApplicationRecord
     when 'employee'
       "To be filled by: #{restricted_employee_name}"
     when 'group'
-      "To be filled by: #{restricted_group_name}"
+      base = "To be filled by: #{restricted_group_name}"
+      org_filtered? ? "#{base} (submitter's #{org_filter_label})" : base
     else
       nil
     end
@@ -348,6 +364,12 @@ class FormField < ApplicationRecord
   end
 
   private
+
+  def org_filter_only_for_group_restriction
+    return if restricted_to_org_filter_level.blank?
+    return if restricted_to_group?
+    errors.add(:restricted_to_org_filter_level, 'is only valid for group restrictions')
+  end
 
   def set_default_restriction_type
     self.restricted_to_type ||= 'none'
