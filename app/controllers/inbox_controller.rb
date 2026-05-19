@@ -166,6 +166,7 @@ class InboxController < ApplicationController
   # Fetch submissions from dynamically generated forms that need approval
   def fetch_dynamic_form_submissions
     submissions = []
+    @copy_submission_ids ||= {}
 
     # Union of group_ids the scoped employees belong to. nil = system admin
     # viewing All (no restriction — every group-routed step is visible).
@@ -188,6 +189,9 @@ class InboxController < ApplicationController
         model_class = template.class_name.constantize
         next unless model_class.column_names.include?('approver_id')
 
+        copy_ids = copy_submission_ids_for(model_class)
+        @copy_submission_ids[model_class.name] = copy_ids if copy_ids.any?
+
         scope = if @scoped_employee_ids.nil?
                   # System admin viewing All — every approval form
                   model_class.all
@@ -196,6 +200,7 @@ class InboxController < ApplicationController
                   group_routing_scopes(template, model_class, scoped_group_ids, submitter_org_filter).each do |s|
                     parts << s
                   end
+                  parts << model_class.where(id: copy_ids) if copy_ids.any?
                   parts.reduce(:or)
                 end
 
@@ -210,6 +215,18 @@ class InboxController < ApplicationController
     end
 
     submissions
+  end
+
+  # IDs of submissions of the given class that have an active (undismissed)
+  # copy row for any of the scoped employees. Returns [] when the scope is
+  # "all" (system admin) — copies in that view are best surfaced via the
+  # approver/group rules so we don't artificially balloon the result set.
+  def copy_submission_ids_for(model_class)
+    return [] if @scoped_employee_ids.nil?
+    FormSubmissionCopy
+      .active
+      .where(submission_type: model_class.name, recipient_employee_id: @scoped_employee_ids)
+      .pluck(:submission_id)
   end
 
   # Returns AR scopes (one per qualifying group-routed step) on model_class

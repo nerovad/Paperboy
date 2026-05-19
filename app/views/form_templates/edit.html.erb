@@ -398,6 +398,79 @@
             </button>
 
           </div>
+
+          <div class="form-group"
+               data-form-builder-target="copyRecipientsContainer"
+               style="<%= 'display: none;' unless @form_template.requires_approval? %>; margin-top: 24px;">
+            <label>Send a Copy To</label>
+            <small class="form-text" style="display: block; margin-bottom: 10px;">
+              Recipients added here receive a read-only inbox row but are <strong>not</strong> part of the approval workflow.
+            </small>
+
+            <div class="copy-recipients-list" data-form-builder-target="copyRecipientsList">
+              <% @form_template.copy_recipients.ordered.each do |recipient| %>
+                <div class="copy-recipient-item" data-form-builder-target="copyRecipientItem" style="background: #f0f4f8; padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #6c757d;">
+                  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div style="flex: 0 0 150px;">
+                      <select name="copy_recipients[][recipient_type]"
+                              class="form-control form-control-sm copy-recipient-type"
+                              data-action="change->form-builder#toggleCopyRecipientTarget"
+                              required>
+                        <option value="">Type…</option>
+                        <option value="employee" <%= 'selected' if recipient.recipient_type == 'employee' %>>Specific Employee</option>
+                        <option value="group" <%= 'selected' if recipient.recipient_type == 'group' %>>Group</option>
+                        <option value="supervisor" <%= 'selected' if recipient.recipient_type == 'supervisor' %>>Submitter's Supervisor</option>
+                      </select>
+                    </div>
+
+                    <div class="copy-recipient-employee" style="flex: 1; min-width: 200px; <%= 'display: none;' unless recipient.recipient_type == 'employee' %>">
+                      <select name="copy_recipients[][employee_id]"
+                              class="form-control form-control-sm copy-recipient-employee-select">
+                        <option value="">Select employee...</option>
+                        <% @employees.each do |emp| %>
+                          <option value="<%= emp[1] %>" <%= 'selected' if recipient.employee_id == emp[1] %>><%= emp[0] %></option>
+                        <% end %>
+                      </select>
+                    </div>
+
+                    <div class="copy-recipient-group" style="flex: 1; min-width: 200px; <%= 'display: none;' unless recipient.recipient_type == 'group' %>">
+                      <select name="copy_recipients[][group_id]"
+                              class="form-control form-control-sm copy-recipient-group-select">
+                        <option value="">Select group...</option>
+                        <% @acl_groups.each do |grp| %>
+                          <option value="<%= grp[1] %>" <%= 'selected' if recipient.group_id == grp[1] %>><%= grp[0] %></option>
+                        <% end %>
+                      </select>
+                    </div>
+
+                    <div style="flex: 0 0 180px;">
+                      <select name="copy_recipients[][trigger_event]"
+                              class="form-control form-control-sm copy-recipient-trigger"
+                              required>
+                        <option value="submit" <%= 'selected' if recipient.trigger_event == 'submit' %>>On submission</option>
+                        <option value="approval" <%= 'selected' if recipient.trigger_event == 'approval' %>>On final approval</option>
+                        <option value="either" <%= 'selected' if recipient.trigger_event == 'either' %>>On either</option>
+                      </select>
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-danger btn-sm"
+                            data-action="click->form-builder#removeCopyRecipient"
+                            style="padding: 4px 8px;">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+
+            <button type="button"
+                    class="btn btn-secondary btn-sm"
+                    data-action="click->form-builder#addCopyRecipient"
+                    style="margin-top: 8px;">
+              + Add Copy Recipient
+            </button>
+          </div>
         </div>
 
         <!-- ========== Page 4: Statuses ========== -->
@@ -1355,6 +1428,56 @@
           </label>
         <% end %>
       </div>
+    </div>
+  </div>
+</template>
+
+<!-- Copy Recipient Template (hidden, used for cloning) -->
+<template id="copy-recipient-template">
+  <div class="copy-recipient-item" data-form-builder-target="copyRecipientItem" style="background: #f0f4f8; padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #6c757d;">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <div style="flex: 0 0 150px;">
+        <select name="copy_recipients[][recipient_type]"
+                class="form-control form-control-sm copy-recipient-type"
+                data-action="change->form-builder#toggleCopyRecipientTarget"
+                required>
+          <option value="">Type…</option>
+          <option value="employee">Specific Employee</option>
+          <option value="group">Group</option>
+          <option value="supervisor">Submitter's Supervisor</option>
+        </select>
+      </div>
+
+      <div class="copy-recipient-employee" style="flex: 1; min-width: 200px; display: none;">
+        <select name="copy_recipients[][employee_id]"
+                class="form-control form-control-sm copy-recipient-employee-select">
+          <option value="">Select employee...</option>
+        </select>
+      </div>
+
+      <div class="copy-recipient-group" style="flex: 1; min-width: 200px; display: none;">
+        <select name="copy_recipients[][group_id]"
+                class="form-control form-control-sm copy-recipient-group-select">
+          <option value="">Select group...</option>
+        </select>
+      </div>
+
+      <div style="flex: 0 0 180px;">
+        <select name="copy_recipients[][trigger_event]"
+                class="form-control form-control-sm copy-recipient-trigger"
+                required>
+          <option value="submit">On submission</option>
+          <option value="approval" selected>On final approval</option>
+          <option value="either">On either</option>
+        </select>
+      </div>
+
+      <button type="button"
+              class="btn btn-danger btn-sm"
+              data-action="click->form-builder#removeCopyRecipient"
+              style="padding: 4px 8px;">
+        Remove
+      </button>
     </div>
   </div>
 </template>

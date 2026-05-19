@@ -182,6 +182,12 @@ Rails.application.routes.draw do
   get "/submissions/status_options", to: "submissions#status_options", as: :submissions_status_options
   resources :saved_searches, only: [:create, :destroy]
 
+  resources :form_submission_copies, only: [] do
+    member do
+      delete :dismiss
+    end
+  end
+
   # Task Reassignment Routes
   resources :task_reassignments, only: [] do
     collection do

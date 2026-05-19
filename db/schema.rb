@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_19_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_19_000003) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -206,6 +206,31 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_19_000001) do
     t.datetime "updated_at", null: false
     t.index ["approver_id"], name: "index_form_request_forms_on_approver_id"
     t.index ["employee_id"], name: "index_form_request_forms_on_employee_id"
+  end
+
+  create_table "form_submission_copies", force: :cascade do |t|
+    t.string "submission_type", null: false
+    t.bigint "submission_id", null: false
+    t.integer "recipient_employee_id", null: false
+    t.string "delivered_via", null: false
+    t.datetime "dismissed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recipient_employee_id"], name: "index_form_submission_copies_on_recipient_employee_id"
+    t.index ["submission_type", "submission_id", "recipient_employee_id"], name: "index_form_submission_copies_unique_per_recipient", unique: true
+    t.index ["submission_type", "submission_id"], name: "index_form_submission_copies_on_submission"
+  end
+
+  create_table "form_template_copy_recipients", force: :cascade do |t|
+    t.bigint "form_template_id", null: false
+    t.string "recipient_type", null: false
+    t.integer "employee_id"
+    t.integer "group_id"
+    t.string "trigger_event", default: "approval", null: false
+    t.integer "position", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["form_template_id"], name: "index_form_template_copy_recipients_on_form_template_id"
   end
 
   create_table "form_template_routing_steps", force: :cascade do |t|
@@ -728,6 +753,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_19_000001) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "form_fields", "form_templates"
+  add_foreign_key "form_template_copy_recipients", "form_templates"
   add_foreign_key "form_template_routing_steps", "form_template_statuses"
   add_foreign_key "form_template_routing_steps", "form_templates"
   add_foreign_key "form_template_statuses", "form_templates"

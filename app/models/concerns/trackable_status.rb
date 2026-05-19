@@ -8,8 +8,11 @@ module TrackableStatus
 
   included do
     has_many :status_changes, as: :trackable, dependent: :destroy
+    has_many :form_submission_copies, as: :submission, dependent: :destroy
     after_create :record_initial_status
+    after_create :deliver_copy_recipients_on_submit
     after_update :record_status_change, if: :saved_change_to_status?
+    after_update :deliver_copy_recipients_on_approval, if: :saved_change_to_status?
   end
 
   # Class method to convert status value to label
@@ -187,6 +190,35 @@ module TrackableStatus
       changed_by_id: Current.user&.dig("employee_id")&.to_s,
       changed_by_name: current_user_display_name
     )
+  end
+
+  def deliver_copy_recipients_on_submit
+    deliver_copy_recipients(:submit)
+  end
+
+  # When status transitions to a terminally-approved value, fan out copies for
+  # any approval-trigger recipients. Skipped for in-flight transitions and for
+  # non-approval terminal states (denied/cancelled).
+  def deliver_copy_recipients_on_approval
+    return unless self.class.status_category_for(saved_change_to_status.last) == :approved
+    deliver_copy_recipients(:approval)
+  end
+
+  def deliver_copy_recipients(event)
+    template = approval_template
+    return unless template&.respond_to?(:copy_recipients)
+    template.copy_recipients.for_event(event).ordered.each do |recipient|
+      recipient.resolve_recipient_ids(self).uniq.each do |emp_id|
+        next if emp_id.blank?
+        FormSubmissionCopy.find_or_create_by!(
+          submission_type: self.class.name,
+          submission_id: id,
+          recipient_employee_id: emp_id.to_i
+        ) { |row| row.delivered_via = event.to_s }
+      end
+    end
+  rescue ActiveRecord::RecordNotUnique
+    # Concurrent creates race the unique index — treat as already delivered.
   end
 
   def current_user_display_name

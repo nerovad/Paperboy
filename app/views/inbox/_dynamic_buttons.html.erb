@@ -3,6 +3,25 @@
 
 <% template = form_template_for(submission) %>
 <% return unless template %>
+<%
+  viewer_id = session.dig(:user, "employee_id").to_s
+  approver_id_match = submission.respond_to?(:approver_id) && submission.approver_id.to_s == viewer_id && viewer_id.present?
+  copy_row = approver_id_match ? nil : copy_row_for(submission)
+%>
+<% if copy_row %>
+  <span class="badge" style="background: #6c757d; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75em; margin-right: 8px;">Copy</span>
+
+  <% pdf_path = inbox_pdf_path(submission) %>
+  <% if pdf_path %>
+    <%= link_to "View PDF", pdf_path, class: "btn pdf", target: "_blank", data: { turbo: false } %>
+  <% end %>
+
+  <%= button_to "Dismiss",
+        dismiss_form_submission_copy_path(copy_row),
+        method: :delete,
+        class: "btn deny",
+        form: { data: { turbo: false } } %>
+<% else %>
 <% button_source = current_routing_step_for(submission, template) || template %>
 
 <!-- View PDF -->
@@ -89,4 +108,5 @@
           class: "btn take-back",
           form: { data: { turbo: false } } %>
   <% end %>
+<% end %>
 <% end %>

@@ -18,6 +18,9 @@ export default class extends Controller {
     "approvalRoutingContainer",
     "routingStepsContainer",
     "routingStepItem",
+    "copyRecipientsContainer",
+    "copyRecipientsList",
+    "copyRecipientItem",
     "statusConfigSection",
     "statusAutoMessage",
     "statusManualConfig",
@@ -190,6 +193,13 @@ export default class extends Controller {
       this.routingStepsContainerTarget.innerHTML = ''
     }
 
+    if (this.hasCopyRecipientsContainerTarget) {
+      this.copyRecipientsContainerTarget.style.display = isApproval ? 'block' : 'none'
+      if (!isApproval && this.hasCopyRecipientsListTarget) {
+        this.copyRecipientsListTarget.innerHTML = ''
+      }
+    }
+
     // Toggle status config: approval shows auto message, database shows manual config
     if (this.hasStatusAutoMessageTarget) {
       this.statusAutoMessageTarget.style.display = isApproval ? 'block' : 'none'
@@ -278,6 +288,58 @@ export default class extends Controller {
         stepInput.value = stepNumber
       }
     })
+  }
+
+  // Add a new copy-recipient row
+  addCopyRecipient(event) {
+    if (event) event.preventDefault()
+    const template = document.getElementById('copy-recipient-template')
+    if (!template || !this.hasCopyRecipientsListTarget) return
+
+    const clone = template.content.cloneNode(true)
+
+    const employeeSelect = clone.querySelector('.copy-recipient-employee-select')
+    if (employeeSelect && this.employeesValue) {
+      this.employeesValue.forEach(emp => {
+        const opt = document.createElement('option')
+        opt.value = emp[1]
+        opt.textContent = emp[0]
+        employeeSelect.appendChild(opt)
+      })
+    }
+
+    const groupSelect = clone.querySelector('.copy-recipient-group-select')
+    if (groupSelect && this.aclGroupsValue) {
+      this.aclGroupsValue.forEach(grp => {
+        const opt = document.createElement('option')
+        opt.value = grp[1]
+        opt.textContent = grp[0]
+        groupSelect.appendChild(opt)
+      })
+    }
+
+    this.copyRecipientsListTarget.appendChild(clone)
+  }
+
+  removeCopyRecipient(event) {
+    event.preventDefault()
+    const item = event.target.closest('.copy-recipient-item')
+    if (item) item.remove()
+  }
+
+  // Show the employee/group picker (or neither, for supervisor) when the
+  // recipient type changes. The controller filters fields by recipient_type
+  // server-side, so we don't need to disable the hidden inputs.
+  toggleCopyRecipientTarget(event) {
+    const item = event.target.closest('.copy-recipient-item')
+    if (!item) return
+    const type = event.target.value
+
+    const employeeBlock = item.querySelector('.copy-recipient-employee')
+    const groupBlock = item.querySelector('.copy-recipient-group')
+
+    if (employeeBlock) employeeBlock.style.display = type === 'employee' ? 'block' : 'none'
+    if (groupBlock) groupBlock.style.display = type === 'group' ? 'block' : 'none'
   }
 
   // Toggle employee/group select for a specific routing step

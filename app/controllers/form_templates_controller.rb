@@ -24,6 +24,9 @@ class FormTemplatesController < ApplicationController
       # Save routing steps
       save_routing_steps(@form_template)
 
+      # Save copy recipients
+      save_copy_recipients(@form_template)
+
       # Sync statuses (user-configured + auto-generated from routing steps)
       sync_statuses(@form_template)
 
@@ -179,6 +182,7 @@ class FormTemplatesController < ApplicationController
     routing_changed = routing_fields_changed?
     fields_changed = form_fields_changed?
     statuses_changed = statuses_fields_changed?
+    copy_recipients_changed = copy_recipients_fields_changed?
     visibility_changed_to_public = @form_template.visibility != 'public' && form_template_params[:visibility] == 'public'
 
     # Set pending routing steps to pass validation (same as create)
@@ -195,6 +199,11 @@ class FormTemplatesController < ApplicationController
       # Only sync statuses when statuses or routing changed
       if statuses_changed || routing_changed
         sync_statuses(@form_template)
+      end
+
+      # Rebuild copy recipients when they changed
+      if copy_recipients_changed
+        rebuild_copy_recipients(@form_template)
       end
 
       # Only rebuild fields and regenerate views when fields actually changed
@@ -839,6 +848,51 @@ class FormTemplatesController < ApplicationController
     raw = step_data[:inbox_buttons]
     return [] if raw.blank?
     Array(raw).map(&:to_s).reject(&:blank?) & FormTemplate::INBOX_BUTTON_TYPES.keys
+  end
+
+  def save_copy_recipients(form_template)
+    return unless params[:copy_recipients].present?
+
+    params[:copy_recipients].each_with_index do |row, index|
+      next if row[:recipient_type].blank?
+
+      form_template.copy_recipients.create!(
+        recipient_type: row[:recipient_type],
+        employee_id: row[:recipient_type] == 'employee' ? row[:employee_id].presence : nil,
+        group_id: row[:recipient_type] == 'group' ? row[:group_id].presence : nil,
+        trigger_event: row[:trigger_event].presence || 'approval',
+        position: index
+      )
+    end
+  end
+
+  def rebuild_copy_recipients(form_template)
+    form_template.copy_recipients.destroy_all
+    save_copy_recipients(form_template)
+  end
+
+  def copy_recipients_fields_changed?
+    return false unless @form_template
+
+    current = @form_template.copy_recipients.ordered.map do |r|
+      {
+        recipient_type: r.recipient_type,
+        employee_id: r.employee_id,
+        group_id: r.group_id,
+        trigger_event: r.trigger_event
+      }
+    end
+
+    incoming = (params[:copy_recipients] || []).map do |r|
+      {
+        recipient_type: r[:recipient_type],
+        employee_id: r[:recipient_type] == 'employee' ? r[:employee_id]&.to_i.presence : nil,
+        group_id: r[:recipient_type] == 'group' ? r[:group_id]&.to_i.presence : nil,
+        trigger_event: r[:trigger_event].presence || 'approval'
+      }
+    end.reject { |r| r[:recipient_type].blank? }
+
+    current != incoming
   end
 
   def sync_statuses(form_template)

@@ -44,6 +44,25 @@ module InboxHelper
     template.routing_steps.find_by(step_number: match[1].to_i)
   end
 
+  # The active (undismissed) FormSubmissionCopy this submission represents
+  # for the current viewer, or nil if the viewer isn't a copy recipient.
+  # Looked up against @copy_submission_ids prepopulated by InboxController.
+  def copy_row_for(submission)
+    ids_by_class = @copy_submission_ids
+    return nil unless ids_by_class.is_a?(Hash)
+    ids = ids_by_class[submission.class.name]
+    return nil unless ids&.include?(submission.id)
+    employee_id = session.dig(:user, "employee_id").to_s
+    return nil if employee_id.blank?
+    @copy_rows_cache ||= {}
+    @copy_rows_cache[[submission.class.name, submission.id]] ||=
+      FormSubmissionCopy.active.find_by(
+        submission_type: submission.class.name,
+        submission_id: submission.id,
+        recipient_employee_id: employee_id
+      )
+  end
+
   # Get the PDF path for any submission type
   def inbox_pdf_path(submission)
     case submission
