@@ -179,7 +179,10 @@
                 <% @form_template.routing_steps.ordered.each_with_index do |step, index| %>
                   <div class="routing-step-item" data-form-builder-target="routingStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #007bff;">
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                      <span class="step-number" style="font-weight: bold; color: #495057; min-width: 60px;">Step <%= index + 1 %>:</span>
+                      <div class="routing-step-drag-handle" title="Drag to reorder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: grab; padding: 6px 10px; background: #dde6f1; border-radius: 4px; min-width: 60px;">
+                        <span class="step-number" style="font-size: 12px; font-weight: 700; color: #495057;">Step <%= index + 1 %></span>
+                        <span style="font-size: 14px; color: #6c757d;">&#x2630;</span>
+                      </div>
 
                       <div style="flex: 1; min-width: 150px;">
                         <select name="routing_steps[][routing_type]"
@@ -306,7 +309,10 @@
                 <!-- Convert legacy single routing to step format -->
                 <div class="routing-step-item" data-form-builder-target="routingStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #007bff;">
                   <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <span class="step-number" style="font-weight: bold; color: #495057; min-width: 60px;">Step 1:</span>
+                    <div class="routing-step-drag-handle" title="Drag to reorder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: grab; padding: 6px 10px; background: #dde6f1; border-radius: 4px; min-width: 60px;">
+                      <span class="step-number" style="font-size: 12px; font-weight: 700; color: #495057;">Step 1</span>
+                      <span style="font-size: 14px; color: #6c757d;">&#x2630;</span>
+                    </div>
 
                     <div style="flex: 1; min-width: 150px;">
                       <select name="routing_steps[][routing_type]"
@@ -1238,7 +1244,10 @@
 <template id="routing-step-template">
   <div class="routing-step-item" data-form-builder-target="routingStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #007bff;">
     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-      <span class="step-number" style="font-weight: bold; color: #495057; min-width: 60px;">Step 1:</span>
+      <div class="routing-step-drag-handle" title="Drag to reorder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: grab; padding: 6px 10px; background: #dde6f1; border-radius: 4px; min-width: 60px;">
+        <span class="step-number" style="font-size: 12px; font-weight: 700; color: #495057;">Step 1</span>
+        <span style="font-size: 14px; color: #6c757d;">&#x2630;</span>
+      </div>
 
       <div style="flex: 1; min-width: 150px;">
         <select name="routing_steps[][routing_type]"

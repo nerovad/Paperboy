@@ -54,6 +54,9 @@ export default class extends Controller {
     // Initialize sortable on fields container
     this.initializeSortable()
 
+    // Initialize sortable on routing steps container
+    this.initializeRoutingStepsSortable()
+
     // Initialize wizard navigation
     this.initializeWizard()
 
@@ -85,6 +88,21 @@ export default class extends Controller {
         }
       })
     }
+  }
+
+  // Initialize SortableJS for drag-and-drop routing step reordering
+  initializeRoutingStepsSortable() {
+    if (!this.hasRoutingStepsContainerTarget) return
+    this.routingStepsSortable = new Sortable(this.routingStepsContainerTarget, {
+      animation: 150,
+      handle: '.routing-step-drag-handle',
+      ghostClass: 'field-item-ghost',
+      chosenClass: 'field-item-chosen',
+      dragClass: 'field-item-drag',
+      onEnd: () => {
+        this.renumberRoutingSteps()
+      }
+    })
   }
 
   // Update visual position indicators after reorder
@@ -197,7 +215,7 @@ export default class extends Controller {
     const stepNumber = this.routingStepItemTargets.length + 1
     const stepLabel = clone.querySelector('.step-number')
     if (stepLabel) {
-      stepLabel.textContent = `Step ${stepNumber}:`
+      stepLabel.textContent = `Step ${stepNumber}`
     }
 
     const stepInput = clone.querySelector('.step-number-input')
@@ -247,13 +265,13 @@ export default class extends Controller {
     }
   }
 
-  // Renumber routing steps after removal
+  // Renumber routing steps after removal or drag reorder
   renumberRoutingSteps() {
     this.routingStepItemTargets.forEach((item, index) => {
       const stepNumber = index + 1
       const stepLabel = item.querySelector('.step-number')
       if (stepLabel) {
-        stepLabel.textContent = `Step ${stepNumber}:`
+        stepLabel.textContent = `Step ${stepNumber}`
       }
       const stepInput = item.querySelector('.step-number-input')
       if (stepInput) {
