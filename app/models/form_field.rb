@@ -217,6 +217,13 @@ class FormField < ApplicationRecord
     restricted_to_type == 'group'
   end
 
+  # True when the field should be hidden from anyone who can't fill it.
+  # Only meaningful in combination with a restriction; an unrestricted field
+  # has no "filler" to gate visibility on.
+  def restrict_visibility?
+    restricted? && visible_to_filler?
+  end
+
   # Read-only checks
   def read_only?
     read_only.present? && read_only != 'none'

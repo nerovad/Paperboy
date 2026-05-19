@@ -1057,12 +1057,15 @@ export default class extends Controller {
     const restrictionType = event.target.value
     const employeeContainer = fieldItem.querySelector('.restriction-employee-select')
     const groupContainer = fieldItem.querySelector('.restriction-group-select')
+    const visibilityContainer = fieldItem.querySelector('.restriction-visibility-select')
     const employeeSelect = fieldItem.querySelector('.restriction-employee-dropdown')
     const groupSelect = fieldItem.querySelector('.restriction-group-dropdown')
+    const visibilitySelect = fieldItem.querySelector('.restriction-visibility-dropdown')
 
     // Hide all restriction selects first
     employeeContainer.style.display = 'none'
     groupContainer.style.display = 'none'
+    if (visibilityContainer) visibilityContainer.style.display = 'none'
 
     // Clear required attributes
     if (employeeSelect) employeeSelect.required = false
@@ -1075,6 +1078,15 @@ export default class extends Controller {
     } else if (restrictionType === 'group') {
       groupContainer.style.display = 'inline-block'
       if (groupSelect) groupSelect.required = true
+    }
+
+    // Visibility option only matters when the field is restricted
+    if (visibilityContainer) {
+      if (restrictionType === 'employee' || restrictionType === 'group') {
+        visibilityContainer.style.display = 'inline-block'
+      } else if (visibilitySelect) {
+        visibilitySelect.value = '0'
+      }
     }
   }
 

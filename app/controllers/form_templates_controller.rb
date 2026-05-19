@@ -48,6 +48,7 @@ class FormTemplatesController < ApplicationController
             restricted_to_type: field_data[:restricted_to_type].presence || 'none',
             restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
             restricted_to_group_id: field_data[:restricted_to_group_id].presence,
+            visible_to_filler: field_data[:visible_to_filler] == '1',
             read_only: field_data[:read_only].presence || 'none'
           )
           created_fields << field
@@ -1077,6 +1078,7 @@ class FormTemplatesController < ApplicationController
           restricted_to_type: field_data[:restricted_to_type].presence || 'none',
           restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
           restricted_to_group_id: field_data[:restricted_to_group_id].presence,
+          visible_to_filler: field_data[:visible_to_filler] == '1',
           read_only: field_data[:read_only].presence || 'none',
           has_custom_view: field_data[:has_custom_view] == '1'
         )
@@ -1814,7 +1816,7 @@ class FormTemplatesController < ApplicationController
       html += generate_information_field_html(field)
       html += conditional_wrapper_end
       html
-    end
+    end.then { |rendered| wrap_visibility(field, editable_check, rendered) }
   end
 
   # Extract existing field blocks from a view file using marker comments.
@@ -2232,7 +2234,7 @@ class FormTemplatesController < ApplicationController
       html += generate_information_field_html(field)
       html += conditional_wrapper_end
       html
-    end
+    end.then { |rendered| wrap_visibility(field, editable_check, rendered) }
   end
 
   def has_conditional_dependents?(field)
@@ -2276,6 +2278,24 @@ class FormTemplatesController < ApplicationController
       "field_#{field.id}_editable = @current_user_groups&.include?(#{field.restricted_to_group_id})"
     else
       nil
+    end
+  end
+
+  # When a restricted field is set to "Visible to: Only the filler", hide its
+  # entire rendered block from non-fillers. system_admin? always sees through
+  # the gate. The editable_check line must stay OUTSIDE the wrapper so the
+  # field_X_editable variable is defined when the wrapper evaluates it.
+  def wrap_visibility(field, editable_check, rendered)
+    return rendered unless field.restrict_visibility? && editable_check
+
+    editable_line = "        <% #{editable_check} %>\n"
+    visibility_open = "        <% if field_#{field.id}_editable || system_admin? %>\n"
+    visibility_close = "        <% end %>\n"
+
+    if rendered.include?(editable_line)
+      rendered.sub(editable_line, editable_line + visibility_open) + visibility_close
+    else
+      visibility_open + rendered + visibility_close
     end
   end
 end
