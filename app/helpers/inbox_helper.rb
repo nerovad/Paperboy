@@ -26,7 +26,22 @@ module InboxHelper
     template = form_template_for(submission)
     return false unless template
 
+    step = current_routing_step_for(submission, template)
+    return step.has_inbox_button?(button_type) if step
+
     template.has_inbox_button?(button_type)
+  end
+
+  # Find the routing step a submission is currently sitting at, based on its
+  # `step_N_pending` status. Returns nil for non-routed forms or unmatched
+  # statuses; callers should fall back to the template-level buttons.
+  def current_routing_step_for(submission, template = nil)
+    template ||= form_template_for(submission)
+    return nil unless template
+    status = submission.respond_to?(:status) ? submission.status.to_s : ''
+    match = status.match(/\Astep_(\d+)_pending\z/)
+    return nil unless match
+    template.routing_steps.find_by(step_number: match[1].to_i)
   end
 
   # Get the PDF path for any submission type

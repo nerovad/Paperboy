@@ -1,4 +1,6 @@
 class FormTemplateRoutingStep < ApplicationRecord
+  attribute :inbox_buttons, :json, default: []
+
   belongs_to :form_template
 
   ROUTING_TYPES = %w[supervisor department_head employee group].freeze
@@ -22,6 +24,20 @@ class FormTemplateRoutingStep < ApplicationRecord
   validate :org_filter_only_for_group_routing
 
   scope :ordered, -> { order(:step_number) }
+
+  # Guards against double-encoded JSON the way FormTemplate#inbox_buttons does.
+  def inbox_buttons
+    val = super
+    return [] if val.nil?
+    val = JSON.parse(val) while val.is_a?(String)
+    val.is_a?(Array) ? val : []
+  rescue JSON::ParserError
+    []
+  end
+
+  def has_inbox_button?(button_type)
+    inbox_buttons.include?(button_type.to_s)
+  end
 
   def routes_to_employee?
     routing_type == 'employee'

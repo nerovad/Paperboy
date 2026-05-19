@@ -280,6 +280,26 @@
                         </span>
                       </div>
                     </div>
+
+                    <div class="step-inbox-buttons-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #007bff;">
+                      <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Inbox queue buttons at this step</div>
+                      <div class="step-inbox-buttons-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+                          <label style="flex: 0 0 calc(50% - 8px); display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 0.85em; cursor: pointer;">
+                            <input type="checkbox"
+                                   name="routing_steps[][inbox_buttons][]"
+                                   value="<%= key %>"
+                                   class="step-inbox-button-checkbox"
+                                   style="margin-top: 3px;"
+                                   <%= 'checked' if step.has_inbox_button?(key) %>>
+                            <span>
+                              <strong><%= config[:label] %></strong>
+                              <small style="display: block; color: #6c757d; font-weight: normal;"><%= config[:description] %></small>
+                            </span>
+                          </label>
+                        <% end %>
+                      </div>
+                    </div>
                   </div>
                 <% end %>
               <% elsif @form_template.approval_routing_to.present? %>
@@ -341,6 +361,26 @@
                       Remove
                     </button>
                   </div>
+
+                  <div class="step-inbox-buttons-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #007bff;">
+                    <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Inbox queue buttons at this step</div>
+                    <div class="step-inbox-buttons-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                      <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+                        <label style="flex: 0 0 calc(50% - 8px); display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 0.85em; cursor: pointer;">
+                          <input type="checkbox"
+                                 name="routing_steps[][inbox_buttons][]"
+                                 value="<%= key %>"
+                                 class="step-inbox-button-checkbox"
+                                 style="margin-top: 3px;"
+                                 <%= 'checked' if @form_template.has_inbox_button?(key) %>>
+                          <span>
+                            <strong><%= config[:label] %></strong>
+                            <small style="display: block; color: #6c757d; font-weight: normal;"><%= config[:description] %></small>
+                          </span>
+                        </label>
+                      <% end %>
+                    </div>
+                  </div>
                 </div>
               <% end %>
             </div>
@@ -354,31 +394,8 @@
           </div>
         </div>
 
-        <!-- ========== Page 4: Statuses & Buttons ========== -->
-        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Statuses &amp; Buttons" style="display: none;">
-          <div class="form-group">
-            <label>Inbox Queue Buttons</label>
-            <small class="form-text" style="display: block; margin-bottom: 10px; color: #6c757d;">
-              Select which action buttons should appear in the inbox queue for this form type.
-            </small>
-            <div class="inbox-buttons-container" style="display: flex; flex-wrap: wrap; gap: 15px;">
-              <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
-                <div class="inbox-button-option" style="flex: 0 0 calc(50% - 10px); display: flex; align-items: flex-start; gap: 8px; background: #f8f9fa; padding: 10px; border-radius: 6px;">
-                  <input type="checkbox"
-                         name="form_template[inbox_buttons][]"
-                         value="<%= key %>"
-                         id="edit_inbox_button_<%= key %>"
-                         style="margin-top: 3px;"
-                         <%= 'checked' if @form_template.has_inbox_button?(key) %>>
-                  <label for="edit_inbox_button_<%= key %>" style="margin: 0; cursor: pointer;">
-                    <strong><%= config[:label] %></strong>
-                    <small style="display: block; color: #6c757d; font-weight: normal;"><%= config[:description] %></small>
-                  </label>
-                </div>
-              <% end %>
-            </div>
-          </div>
-
+        <!-- ========== Page 4: Statuses ========== -->
+        <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Statuses" style="display: none;">
           <div class="form-group" data-form-builder-target="statusConfigSection">
             <label>Status Configuration</label>
 
@@ -1309,6 +1326,25 @@
                  class="form-control form-control-sm step-condition-value"
                  placeholder="value">
         </span>
+      </div>
+    </div>
+
+    <div class="step-inbox-buttons-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #007bff;">
+      <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Inbox queue buttons at this step</div>
+      <div class="step-inbox-buttons-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+          <label style="flex: 0 0 calc(50% - 8px); display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 0.85em; cursor: pointer;">
+            <input type="checkbox"
+                   name="routing_steps[][inbox_buttons][]"
+                   value="<%= key %>"
+                   class="step-inbox-button-checkbox"
+                   style="margin-top: 3px;">
+            <span>
+              <strong><%= config[:label] %></strong>
+              <small style="display: block; color: #6c757d; font-weight: normal;"><%= config[:description] %></small>
+            </span>
+          </label>
+        <% end %>
       </div>
     </div>
   </div>

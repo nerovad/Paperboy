@@ -727,7 +727,8 @@ class FormTemplatesController < ApplicationController
         display_name: step.display_name,
         condition_field_name: step.condition_field_name,
         condition_operator: step.condition_operator,
-        condition_value: step.condition_value
+        condition_value: step.condition_value,
+        inbox_buttons: step.inbox_buttons.sort
       }
     end
 
@@ -742,7 +743,8 @@ class FormTemplatesController < ApplicationController
         display_name: step[:display_name].presence,
         condition_field_name: condition_field_name,
         condition_operator: condition_field_name ? step[:condition_operator].presence : nil,
-        condition_value: condition_field_name ? step[:condition_value].presence : nil
+        condition_value: condition_field_name ? step[:condition_value].presence : nil,
+        inbox_buttons: extract_step_inbox_buttons(step).sort
       }
     end.reject { |s| s[:routing_type].blank? }
 
@@ -827,9 +829,16 @@ class FormTemplatesController < ApplicationController
         display_name: step_data[:display_name].presence,
         condition_field_name: condition_field_name,
         condition_operator: condition_field_name ? step_data[:condition_operator].presence : nil,
-        condition_value: condition_field_name ? step_data[:condition_value].presence : nil
+        condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
+        inbox_buttons: extract_step_inbox_buttons(step_data)
       )
     end
+  end
+
+  def extract_step_inbox_buttons(step_data)
+    raw = step_data[:inbox_buttons]
+    return [] if raw.blank?
+    Array(raw).map(&:to_s).reject(&:blank?) & FormTemplate::INBOX_BUTTON_TYPES.keys
   end
 
   def sync_statuses(form_template)
@@ -968,15 +977,18 @@ class FormTemplatesController < ApplicationController
       next if step_data[:routing_type].blank?
 
       condition_field_name = step_data[:condition_field_name].presence
+      group_routed = step_data[:routing_type] == 'group'
       form_template.routing_steps.create!(
         step_number: index + 1,
         routing_type: step_data[:routing_type],
         employee_id: step_data[:employee_id].presence,
         group_id: step_data[:group_id].presence,
+        org_filter_level: group_routed ? step_data[:org_filter_level].presence : nil,
         display_name: step_data[:display_name].presence,
         condition_field_name: condition_field_name,
         condition_operator: condition_field_name ? step_data[:condition_operator].presence : nil,
-        condition_value: condition_field_name ? step_data[:condition_value].presence : nil
+        condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
+        inbox_buttons: extract_step_inbox_buttons(step_data)
       )
     end
 
