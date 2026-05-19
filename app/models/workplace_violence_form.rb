@@ -21,7 +21,7 @@ STATUS_CATEGORIES = {
 # Human-readable status labels
 STATUS_LABELS = {
   in_progress: "In Progress",
-    step_1_pending: "Sent to Supervisor",
+    step_1_pending: "Sent to HCA_HR",
     approved: "Approved",
     denied: "Denied",
     cancelled: "Cancelled"
