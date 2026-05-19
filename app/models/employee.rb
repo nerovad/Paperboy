@@ -24,7 +24,9 @@ class Employee < GsabssBase
   alias_attribute :position, :Position
 
   has_many :employee_groups, foreign_key: 'EmployeeID', primary_key: 'EmployeeID'
-  has_many :groups, through: :employee_groups
+  # disable_joins: Employee_Groups/Groups live in the Paperboy DB while this
+  # model lives in GSABSS — Rails cannot JOIN across connections.
+  has_many :groups, through: :employee_groups, disable_joins: true
 
   # Helper method to check group membership
   def in_group?(name)

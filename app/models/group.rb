@@ -9,6 +9,8 @@ class Group < ApplicationRecord
   alias_attribute :created_at, :Created_At
 
   has_many :employee_groups, foreign_key: 'GroupID', dependent: :destroy
-  has_many :employees, through: :employee_groups
+  # disable_joins: Employees lives in the GSABSS DB while Employee_Groups
+  # lives in the Paperboy DB — Rails cannot JOIN across connections.
+  has_many :employees, through: :employee_groups, disable_joins: true
   has_many :group_permissions, foreign_key: 'GroupID', dependent: :destroy
 end
