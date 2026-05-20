@@ -76,16 +76,18 @@ class ApplicationController < ActionController::Base
 
     employee_id = session.dig(:user, "employee_id")
     if employee_id.present?
-      employee   = Employee.find_by(employee_id: employee_id)
-      unit       = employee ? Unit.find_by(unit_id: employee.unit) : nil
-      department = unit ? Department.find_by(department_id: unit.department_id) : nil
-      division   = department ? Division.find_by(division_id: department.division_id) : nil
-      agency     = division ? Agency.find_by(agency_id: division.agency_id) : nil
+      employee = Employee.find_by(employee_id: employee_id)
+      unit     = employee ? Unit.find_by(unit_id: employee&.unit) : nil
 
+      # agency_id comes straight off the Employee row (validated to match
+      # Agency.agency_id by EmployeeDataValidator). The Unit lookup is only used
+      # for the deeper FKs — and is often missing in GSABSS (e.g. unit "C480"
+      # exists on Employees but not in Units), which previously zeroed out the
+      # whole chain and skipped every org-level grant in load_user_permissions.
       @_current_user_org_chain = {
-        agency_id:     agency&.agency_id,
-        division_id:   division&.division_id,
-        department_id: department&.department_id,
+        agency_id:     employee&.agency,
+        division_id:   unit&.division_id,
+        department_id: unit&.department_id,
         unit_id:       unit&.unit_id
       }
     else
