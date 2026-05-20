@@ -193,29 +193,30 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
   end
 
   def setup_form_options
-    employee_id = session.dig(:user, "employee_id").to_s
-    emp = employee_id.present? ? Employee.find_by(EmployeeID: employee_id) : nil
-    unit        = Unit.resolve_for_employee(emp)
-    department  = unit ? Department.find_by(department_id: unit["department_id"]) : nil
-    division    = department ? Division.find_by(division_id: department["division_id"]) : nil
-    agency      = division ? Agency.find_by(agency_id: division["agency_id"]) : nil
+    # Build dropdown options around the SAVED form's org chain, not the
+    # current viewer's. Otherwise an approver in a different agency would
+    # see the saved division/department/unit drop out of the lists and a
+    # different value render as the visible default.
+    agency_id     = @pcard_request_form&.agency
+    division_id   = @pcard_request_form&.division
+    department_id = @pcard_request_form&.department
 
     @prefill_data = {
-      employee_id: emp&.[]("EmployeeID"),
-      name:        emp ? [emp["First_Name"], emp["Last_Name"]].compact.join(" ") : nil,
-      phone:       emp&.[]("Work_Phone"),
-      email:       emp&.[]("EE_Email"),
-      agency:      agency&.agency_id,
-      division:    division&.division_id,
-      department:  department&.department_id,
-      unit:        unit&.unit_id
+      employee_id: @pcard_request_form&.employee_id,
+      name:        @pcard_request_form&.name,
+      phone:       @pcard_request_form&.phone,
+      email:       @pcard_request_form&.email,
+      agency:      agency_id,
+      division:    division_id,
+      department:  department_id,
+      unit:        @pcard_request_form&.unit
     }
 
-    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
-    @division_options = agency ? Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
-    @department_options = division ? Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
-    @unit_options = if department
-      Unit.where(department_id: department.department_id)
+    @agency_options     = Agency.order(:long_name).pluck(:long_name, :agency_id)
+    @division_options   = agency_id ? Division.where(agency_id: agency_id).order(:long_name).pluck(:long_name, :division_id) : []
+    @department_options = division_id ? Department.where(division_id: division_id).order(:long_name).pluck(:long_name, :department_id) : []
+    @unit_options = if department_id
+      Unit.where(department_id: department_id)
           .order(:unit_id)
           .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
     else
