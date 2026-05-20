@@ -33,8 +33,6 @@ STATUS_LABELS = {
     cancelled: "Cancelled"
 }.freeze
 
-  GARY_HOWARD_ID = '135272'.freeze
-
   # Safety Report → OSHA Reporting field mapping
   OSHA_REPORT_FIELD_MAP = {
     employee_id:                          :employee_id,
@@ -73,12 +71,14 @@ STATUS_LABELS = {
     @form_template ||= FormTemplate.find_by(class_name: self.class.name)
   end
 
-  # Create a pre-filled OSHA Report from this Safety Report's data
-  def create_osha_report!
+  # Create a pre-filled OSHA Report from this Safety Report's data.
+  # approver_id is the safety officer who flipped osha_reportable to Yes —
+  # they own the resulting OSHA Report.
+  def create_osha_report!(approver_id:)
     attrs = OSHA_REPORT_FIELD_MAP.each_with_object({}) do |(source_field, osha_field), hash|
       hash[osha_field] = send(source_field)
     end
-    attrs[:approver_id] = GARY_HOWARD_ID
+    attrs[:approver_id] = approver_id
     attrs[:safety_report_id] = id
 
     create_osha_report(attrs).tap(&:save!)

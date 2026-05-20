@@ -114,9 +114,10 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
 
   def update
     if @safety_report.update(safety_report_params)
-      # Auto-create OSHA Report when Gary marks as reportable
+      # Auto-create OSHA Report when the safety officer marks as reportable.
+      # The editing user becomes the approver on the spawned OSHA Report.
       if @safety_report.osha_reportable == 'Yes' && @safety_report.osha_report.blank?
-        @safety_report.create_osha_report!
+        @safety_report.create_osha_report!(approver_id: session.dig(:user, "employee_id"))
       end
 
       redirect_to form_success_path,
@@ -223,7 +224,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
       :hospital_phone, :hospitalized_overnight
     ]
 
-    if session.dig(:user, 'employee_id').to_s == SafetyReport::GARY_HOWARD_ID
+    if current_user_group_names.include?('hca_safety_officers')
       permitted += [
         :investigator_name, :investigator_title, :investigator_phone,
         :nature_of_incident, :cause_of_incident, :root_cause,
