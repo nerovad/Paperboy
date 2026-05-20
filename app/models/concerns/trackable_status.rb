@@ -6,6 +6,8 @@ module TrackableStatus
   # Each model must define STATUS_CATEGORIES mapping its statuses to these categories
   VALID_CATEGORIES = %i[pending in_review approved denied cancelled scheduled].freeze
 
+  TERMINAL_STATUSES = %w[approved denied cancelled].freeze
+
   included do
     has_many :status_changes, as: :trackable, dependent: :destroy
     has_many :form_submission_copies, as: :submission, dependent: :destroy
@@ -13,6 +15,7 @@ module TrackableStatus
     after_create :deliver_copy_recipients_on_submit
     after_update :record_status_change, if: :saved_change_to_status?
     after_update :deliver_copy_recipients_on_approval, if: :saved_change_to_status?
+    after_update :stamp_actor_on_terminal_status, if: :saved_change_to_status?
   end
 
   # Class method to convert status value to label
@@ -113,16 +116,16 @@ module TrackableStatus
   # no further matching step remains.
   def advance_approval!
     template = approval_template
-    return approved! unless template
+    return finalize_approval! unless template
 
     steps = template.routing_steps.ordered.to_a
-    return approved! if steps.empty?
+    return finalize_approval! if steps.empty?
 
     current = current_routing_step_number
-    return approved! if current.nil?
+    return finalize_approval! if current.nil?
 
     next_step = steps.find { |s| s.step_number > current && s.matches?(self) }
-    return approved! unless next_step
+    return finalize_approval! unless next_step
 
     update!(
       status: "step_#{next_step.step_number}_pending",
@@ -141,6 +144,25 @@ module TrackableStatus
   end
 
   private
+
+  def finalize_approval!
+    approved!
+  end
+
+  # Whenever status transitions to a terminal state (approved/denied/cancelled),
+  # stamp approver_id with the acting user so the record stays in their inbox.
+  # Group-routed forms would otherwise leave approver_id nil at the terminal
+  # step and drop out of every inbox the moment the action is taken.
+  def stamp_actor_on_terminal_status
+    return unless self.class.column_names.include?("approver_id")
+    return unless TERMINAL_STATUSES.include?(status.to_s)
+
+    actor_id = Current.user&.dig("employee_id")&.to_s.presence
+    return unless actor_id
+    return if approver_id.to_s == actor_id
+
+    update_columns(approver_id: actor_id)
+  end
 
   def approval_template
     respond_to?(:form_template) ? form_template : nil
