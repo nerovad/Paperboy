@@ -55,6 +55,14 @@ class ReportsController < ApplicationController
 
       model_class = template.class_name.constantize
 
+      # Prefer the model's human-readable STATUS_LABELS (via TrackableStatus)
+      # over the raw enum/STATUS_MAP key — "Sent to HCA_HR" instead of
+      # "Step 1 Pending". Falls back to titleized key when no label is defined.
+      label_for = ->(int_value, fallback_key) {
+        (model_class.respond_to?(:status_label_for) && model_class.status_label_for(int_value)) ||
+          fallback_key.to_s.titleize
+      }
+
       # Check if model has STATUS_MAP constant
       if model_class.const_defined?(:STATUS_MAP)
         status_map = model_class::STATUS_MAP
@@ -63,7 +71,7 @@ class ReportsController < ApplicationController
         options = status_map.map do |int_value, label|
           {
             value: int_value.to_s,
-            label: label.titleize
+            label: label_for.call(int_value, label)
           }
         end.sort_by { |opt| opt[:value].to_i }
 
@@ -77,7 +85,7 @@ class ReportsController < ApplicationController
         options = status_enum.map do |label, int_value|
           {
             value: int_value.to_s,
-            label: label.titleize
+            label: label_for.call(int_value, label)
           }
         end.sort_by { |opt| opt[:value].to_i }
 
