@@ -203,7 +203,7 @@ end
     employee_id = session[:user]["employee_id"]
     @employee = Employee.find_by(employee_id: employee_id)
 
-    unit = Unit.find_by(unit_id: @employee&.unit)
+    unit = Unit.resolve_for_employee(@employee)
     department = Department.find_by(department_id: unit&.department_id)
     division   = Division.find_by(division_id: department&.division_id)
     agency     = Agency.find_by(agency_id: division&.agency_id)

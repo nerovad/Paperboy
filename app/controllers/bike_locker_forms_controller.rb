@@ -16,7 +16,7 @@ class BikeLockerFormsController < ApplicationController
     @current_user_groups = current_user_group_ids
 
     # --- Organization chain (same pattern you use now) ---
-    unit        = Unit.find_by(unit_id: @employee["Unit"])
+    unit        = Unit.resolve_for_employee(@employee)
     department  = unit ? Department.find_by(department_id: unit["department_id"]) : nil
     division    = department ? Division.find_by(division_id: department["division_id"]) : nil
     agency      = division ? Agency.find_by(agency_id: division["agency_id"]) : nil
@@ -78,7 +78,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to employee #1
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
       emp = employee_id.present? ? Employee.find_by(EmployeeID: employee_id) : nil
-      unit        = emp ? Unit.find_by(unit_id: emp["Unit"]) : nil
+      unit        = Unit.resolve_for_employee(emp)
       department  = unit ? Department.find_by(department_id: unit["department_id"]) : nil
       division    = department ? Division.find_by(division_id: department["division_id"]) : nil
       agency      = division ? Agency.find_by(agency_id: division["agency_id"]) : nil
@@ -176,7 +176,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to employee #1
   def setup_form_options
     employee_id = session.dig(:user, "employee_id").to_s
     emp = employee_id.present? ? Employee.find_by(EmployeeID: employee_id) : nil
-    unit        = emp ? Unit.find_by(unit_id: emp["Unit"]) : nil
+    unit        = Unit.resolve_for_employee(emp)
     department  = unit ? Department.find_by(department_id: unit["department_id"]) : nil
     division    = department ? Division.find_by(division_id: department["division_id"]) : nil
     agency      = division ? Agency.find_by(agency_id: division["agency_id"]) : nil

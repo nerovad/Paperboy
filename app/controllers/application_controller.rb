@@ -41,8 +41,7 @@ class ApplicationController < ActionController::Base
     employee = Employee.find_by(employee_id: employee_id)
     return {} unless employee
 
-    unit_code = employee.unit
-    unit = Unit.find_by(unit_id: unit_code)
+    unit = Unit.resolve_for_employee(employee)
     department = Department.find_by(department_id: unit&.department_id)
     division   = Division.find_by(division_id: department&.division_id)
     agency     = Agency.find_by(agency_id: division&.agency_id)
@@ -77,7 +76,7 @@ class ApplicationController < ActionController::Base
     employee_id = session.dig(:user, "employee_id")
     if employee_id.present?
       employee = Employee.find_by(employee_id: employee_id)
-      unit     = employee ? Unit.find_by(unit_id: employee&.unit) : nil
+      unit     = Unit.resolve_for_employee(employee)
 
       # agency_id comes straight off the Employee row (validated to match
       # Agency.agency_id by EmployeeDataValidator). The Unit lookup is only used

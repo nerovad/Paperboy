@@ -24,7 +24,7 @@ def new
   @is_mb3 = @employee.union_code.to_s.upcase == "MB3"
 
   # Org lookups (guard each step)
-  unit        = Unit.find_by(unit_id: @employee.unit)
+  unit        = Unit.resolve_for_employee(@employee)
   department  = unit ? Department.find_by(department_id: unit.department_id) : nil
   division    = department ? Division.find_by(division_id: department.division_id) : nil
   agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
@@ -79,7 +79,7 @@ def create
   is_mb3 = (union_code == "MB3")
 
   # Get employee's department for authorized approver lookup
-  unit = Unit.find_by(unit_id: emp_record&.unit)
+  unit = Unit.resolve_for_employee(emp_record)
   department = unit ? Department.find_by(department_id: unit.department_id) : nil
 
   # Build the submission early so we can access the submitted unit
@@ -268,7 +268,7 @@ end
   end
 
   def reload_form_options(emp_record)
-    unit       = Unit.find_by(unit_id: emp_record&.unit)
+    unit       = Unit.resolve_for_employee(emp_record)
     department = unit ? Department.find_by(department_id: unit.department_id) : nil
     division   = department ? Division.find_by(division_id: department.division_id) : nil
     agency     = division ? Agency.find_by(agency_id: division.agency_id) : nil

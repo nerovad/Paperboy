@@ -15,7 +15,7 @@ class SafetyReportsController < ApplicationController
     @current_user_groups = current_user_group_ids
 
     # --- Organization chain (same pattern you use now) ---
-    unit        = Unit.find_by(unit_id: @employee.unit)
+    unit        = Unit.resolve_for_employee(@employee)
     department  = unit ? Department.find_by(department_id: unit.department_id) : nil
     division    = department ? Division.find_by(division_id: department.division_id) : nil
     agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
@@ -73,7 +73,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
       # ROUTING_BLOCK_END
     else
       emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
-      unit        = emp ? Unit.find_by(unit_id: emp&.unit) : nil
+      unit        = Unit.resolve_for_employee(emp)
       department  = unit ? Department.find_by(department_id: unit.department_id) : nil
       division    = department ? Division.find_by(division_id: department.division_id) : nil
       agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
@@ -179,7 +179,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
   def setup_form_options
     employee_id = session.dig(:user, "employee_id").to_s
     emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
-    unit        = emp ? Unit.find_by(unit_id: emp&.unit) : nil
+    unit        = Unit.resolve_for_employee(emp)
     department  = unit ? Department.find_by(department_id: unit.department_id) : nil
     division    = department ? Division.find_by(division_id: department.division_id) : nil
     agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
