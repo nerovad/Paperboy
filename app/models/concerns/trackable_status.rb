@@ -21,58 +21,83 @@ module TrackableStatus
   # Class method to convert status value to label
   # Works with both enum-based and STATUS_MAP-based models
   class_methods do
+    # Resolves a stored status value to its canonical string key. Handles both
+    # enum-backed models (status is already the key) and legacy STATUS_MAP
+    # models (status is a raw integer).
+    def status_key_for(status_value)
+      return nil if status_value.nil?
+      return status_value.to_s unless status_value.is_a?(Integer)
+
+      if defined_enums['status'].present?
+        defined_enums['status'].key(status_value)
+      elsif const_defined?(:STATUS_MAP)
+        self::STATUS_MAP[status_value]
+      else
+        status_value.to_s
+      end
+    end
+
+    # key => FormTemplateStatus for this model's template, cached per class.
+    # Empty for models with no template (legacy/custom forms), which then fall
+    # back to their own STATUS_LABELS / STATUS_CATEGORIES / STATUS_MAP constants.
+    def central_status_definitions
+      return @central_status_definitions if defined?(@central_status_definitions)
+
+      @central_status_definitions =
+        begin
+          template = FormTemplate.find_by(class_name: name)
+          template ? template.statuses.index_by { |s| s.key.to_s } : {}
+        rescue StandardError
+          {}
+        end
+    end
+
     def status_label_for(status_value)
       return nil if status_value.nil?
+      key = status_key_for(status_value)
 
-      # Prefer STATUS_LABELS for human-readable display names
+      # 1. Central source of truth: form_template_statuses
+      if key && (definition = central_status_definitions[key])
+        return definition.name
+      end
+
+      # 2. Legacy fallback: per-model STATUS_LABELS constant
       if const_defined?(:STATUS_LABELS)
-        key = if status_value.is_a?(Integer) && defined_enums['status'].present?
-                defined_enums['status'].key(status_value)&.to_sym
-              else
-                status_value.to_s.to_sym
-              end
-        label = self::STATUS_LABELS[key]
+        label = self::STATUS_LABELS[key&.to_sym]
         return label if label
       end
 
-      # Fall back to enum/STATUS_MAP humanization
-      if defined_enums['status'].present?
-        if status_value.is_a?(Integer)
-          key = defined_enums['status'].key(status_value)
-          key&.to_s&.humanize || "Unknown"
-        else
-          status_value.to_s.humanize
-        end
-      elsif const_defined?(:STATUS_MAP)
-        self::STATUS_MAP[status_value]&.humanize || "Unknown"
-      else
-        status_value.to_s.humanize
-      end
+      key ? key.humanize : "Unknown"
     end
 
-    # Returns the normalized category for a given status value
-    # Requires the model to define STATUS_CATEGORIES constant
+    # Returns the normalized category (symbol) for a given status value.
     def status_category_for(status_value)
       return nil if status_value.nil?
-      return nil unless const_defined?(:STATUS_CATEGORIES)
+      key = status_key_for(status_value)
+      return nil unless key
 
-      # Normalize status to symbol key
-      status_key = if status_value.is_a?(Integer) && const_defined?(:STATUS_MAP)
-                     self::STATUS_MAP[status_value]&.to_sym
-                   elsif status_value.is_a?(Integer) && defined_enums['status'].present?
-                     defined_enums['status'].key(status_value)&.to_sym
-                   else
-                     status_value.to_s.to_sym
-                   end
+      # 1. Central source of truth
+      if (definition = central_status_definitions[key])
+        return definition.category.to_sym
+      end
 
-      self::STATUS_CATEGORIES[status_key]
+      # 2. Legacy fallback: per-model STATUS_CATEGORIES constant
+      return self::STATUS_CATEGORIES[key.to_sym] if const_defined?(:STATUS_CATEGORIES)
+
+      nil
     end
 
-    # Returns all statuses that belong to a given category
+    # Returns all status keys (symbols) that belong to a given category.
     def statuses_for_category(category)
-      return [] unless const_defined?(:STATUS_CATEGORIES)
+      cat = category.to_s
+      if central_status_definitions.any?
+        return central_status_definitions.values
+                 .select { |s| s.category.to_s == cat }
+                 .map { |s| s.key.to_sym }
+      end
 
-      self::STATUS_CATEGORIES.select { |_, cat| cat == category.to_sym }.keys
+      return [] unless const_defined?(:STATUS_CATEGORIES)
+      self::STATUS_CATEGORIES.select { |_, c| c.to_s == cat }.keys
     end
 
     # Returns hash of category => human-readable label
@@ -131,6 +156,12 @@ module TrackableStatus
       status: "step_#{next_step.step_number}_pending",
       approver_id: approver_id_for_routing_step(next_step)
     )
+  end
+
+  # Human-readable label for the current status. Sourced from
+  # form_template_statuses, falling back to the model's own constants.
+  def status_label
+    self.class.status_label_for(status)
   end
 
   # Returns the normalized category for the current status
