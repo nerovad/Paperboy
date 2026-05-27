@@ -953,20 +953,6 @@ class FormTemplatesController < ApplicationController
             auto_generated: true
           )
           position += 1
-
-          # Create step_N_approved for non-final steps
-          unless step_num == steps.count
-            form_template.statuses.create!(
-              name: step.approved_display_name,
-              key: "step_#{step_num}_approved",
-              category: 'in_review',
-              position: position,
-              is_initial: false,
-              is_end: false,
-              auto_generated: true
-            )
-            position += 1
-          end
         end
       end
 
@@ -981,7 +967,7 @@ class FormTemplatesController < ApplicationController
 
       # Default initial status
       form_template.statuses.create!(
-        name: 'Submitted', key: 'submitted', category: 'pending',
+        name: 'In Progress', key: 'in_progress', category: 'pending',
         position: position, is_initial: true, is_end: false, auto_generated: false
       )
       position += 1
@@ -998,17 +984,6 @@ class FormTemplatesController < ApplicationController
           is_initial: false, is_end: false, auto_generated: true
         )
         position += 1
-
-        unless step_num == steps.count
-          form_template.statuses.create!(
-            name: step.approved_display_name,
-            key: "step_#{step_num}_approved",
-            category: 'in_review',
-            position: position,
-            is_initial: false, is_end: false, auto_generated: true
-          )
-          position += 1
-        end
       end
 
       # Default terminal statuses
