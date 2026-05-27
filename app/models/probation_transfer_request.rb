@@ -45,39 +45,25 @@ class ProbationTransferRequest < ApplicationRecord
     end
   end
 
-  STATUS_MAP = {
-    0 => "submitted",
-    1 => "manager_approved",
-    2 => "denied",
-    3 => "sent_to_security"
-  }.freeze
-
-  # Normalized status categories for cross-form reporting
-  STATUS_CATEGORIES = {
-    submitted: :pending,
-    manager_approved: :in_review,
-    denied: :denied,
-    sent_to_security: :in_review
-  }.freeze
+  enum :status, {
+    in_progress: "in_progress",
+    manager_approved: "manager_approved",
+    sent_to_security: "sent_to_security",
+    denied: "denied"
+  }, default: :in_progress
 
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
 
   scope :not_canceled, -> { where(canceled_at: nil) }
   scope :not_expired,  -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
-  scope :active,       -> { where(status: 0).not_canceled.not_expired } # “submitted” and still valid
+  scope :active,       -> { in_progress.not_canceled.not_expired } # active = in_progress and still valid
 
+  # Surface the cancellation state on top of the workflow status; otherwise the
+  # label comes from form_template_statuses via TrackableStatus.
   def status_label
-    if canceled_at.present?
-      "canceled"
-    else
-      STATUS_MAP[status] || "unknown"
-    end
+    return "Canceled" if canceled_at.present?
+    super
   end
-
-  def submitted?;          status == 0; end
-  def manager_approved?;   status == 1; end
-  def denied?;             status == 2; end
-  def sent_to_security?;   status == 3; end
 
 def ensure_expires!
   return if expires_at.present?

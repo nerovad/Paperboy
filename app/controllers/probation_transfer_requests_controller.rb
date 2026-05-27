@@ -2,7 +2,7 @@ class ProbationTransferRequestsController < ApplicationController
   before_action :set_probation_transfer_request, only: [:show, :edit, :update, :destroy, :pdf, :approve, :deny, :withdraw]
 
   def index
-    @probation_transfer_requests = ProbationTransferRequest.where(status: 0, supervisor_id: session[:user]["employee_id"])
+    @probation_transfer_requests = ProbationTransferRequest.where(status: "in_progress", supervisor_id: session[:user]["employee_id"])
   employee = session[:user]
 
   if employee.present? && employee["employee_id"].present?
@@ -12,7 +12,7 @@ class ProbationTransferRequestsController < ApplicationController
 
     @pending_submissions = ProbationTransferRequest
                               .where(supervisor_id: employee["employee_id"].to_s)
-                              .where(status: 0)
+                              .where(status: "in_progress")
                               .order(created_at: :desc)
   else
     Rails.logger.warn "No logged-in employee found"
@@ -60,7 +60,7 @@ end
   sup_email = fetch_employee_email(sup_id)
 
   @probation_transfer_request = ProbationTransferRequest.new(probation_transfer_request_params)
-  @probation_transfer_request.status = 0
+  @probation_transfer_request.status = "in_progress"
   @probation_transfer_request.supervisor_id    = sup_id
   @probation_transfer_request.supervisor_email = sup_email
 
@@ -143,7 +143,7 @@ def approve
   approver_email = session.dig(:user, "email") || fetch_employee_email(approver_id)
 
   @submission.update!(
-    status: 1,                        # manager_approved
+    status: "manager_approved",
     approved_by: approver_id,
     approved_at: Time.current,
     supervisor_email: @submission.supervisor_email.presence || approver_email,
@@ -162,7 +162,7 @@ def deny
   reason       = params[:denial_reason].to_s.strip
 
   @submission.update!(
-    status: 2,                        # denied
+    status: "denied",
     denied_by: denier_id,
     denied_at: Time.current,
     denial_reason: reason.presence || "No reason provided",

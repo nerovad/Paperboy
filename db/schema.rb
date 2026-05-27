@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_27_165456) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_27_165928) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -550,7 +550,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_27_165456) do
     t.string "work_location", limit: 100
     t.date "current_assignment_date"
     t.text "desired_transfer_destination"
-    t.integer "status", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "other_transfer_destination", limit: 200
@@ -566,6 +565,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_27_165456) do
     t.string "canceled_reason", limit: 100
     t.bigint "superseded_by_id"
     t.string "approved_destination"
+    t.string "status", default: "in_progress", null: false
   end
 
   create_table "safety_reports", force: :cascade do |t|
