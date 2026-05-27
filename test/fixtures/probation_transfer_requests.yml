@@ -12,7 +12,7 @@ one:
   work_location: MyString
   current_assignment_date: 2025-07-14
   desired_transfer_destination: MyText
-  status: 1
+  status: manager_approved
 
 two:
   employee_id: MyString
@@ -26,4 +26,4 @@ two:
   work_location: MyString
   current_assignment_date: 2025-07-14
   desired_transfer_destination: MyText
-  status: 1
+  status: manager_approved
