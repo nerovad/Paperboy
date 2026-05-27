@@ -2,27 +2,11 @@ class BikeLockerForm < ApplicationRecord
   include TrackableStatus
 
 enum :status, {
-  submitted: 0,
-    step_1_pending: 1,
-    approved: 2,
-    denied: 3
-}, default: :submitted
-
-# Normalized status categories for cross-form reporting
-STATUS_CATEGORIES = {
-  submitted: :pending,
-    step_1_pending: :in_review,
-    approved: :approved,
-    denied: :denied
-}.freeze
-
-# Human-readable status labels
-STATUS_LABELS = {
-  submitted: "Submitted",
-    step_1_pending: "Sent to Reyleen Dowler",
-    approved: "Approved",
-    denied: "Denied"
-}.freeze
+  in_progress: "in_progress",
+    step_1_pending: "step_1_pending",
+    approved: "approved",
+    denied: "denied"
+}, default: :in_progress
 
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
@@ -39,11 +23,6 @@ STATUS_LABELS = {
         errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.")
       end
     end
-  end
-
-  # For inbox queue display
-  def status_label
-    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
   end
 
   # For inbox queue filtering - returns the form type name

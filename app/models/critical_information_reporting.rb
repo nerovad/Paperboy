@@ -6,27 +6,11 @@ class CriticalInformationReporting < ApplicationRecord
   include TrackableStatus
 
 enum :status, {
-  in_progress: 0,
-    scheduled: 1,
-    resolved: 2,
-    cancelled: 3
+  in_progress: "in_progress",
+    scheduled: "scheduled",
+    resolved: "resolved",
+    cancelled: "cancelled"
 }, default: :in_progress
-
-# Normalized status categories for cross-form reporting
-STATUS_CATEGORIES = {
-  in_progress: :in_review,
-    scheduled: :scheduled,
-    resolved: :approved,
-    cancelled: :cancelled
-}.freeze
-
-# Human-readable status labels
-STATUS_LABELS = {
-  in_progress: "In progress",
-    scheduled: "Scheduled",
-    resolved: "Resolved",
-    cancelled: "Cancelled"
-}.freeze
 
   has_many_attached :media_photo_pdf_etc
 
@@ -76,12 +60,6 @@ STATUS_LABELS = {
   scope :recent, -> { order(created_at: :desc) }
   scope :high_urgency, -> { where(urgency: 'Immediate') }
   scope :assigned_to, ->(manager_id) { where(assigned_manager_id: manager_id) }
-
-  # Instance methods
-  # With enum, status returns a symbol like :in_progress, :resolved, etc.
-  def status_label
-    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
-  end
 
   def current_assignee_id
     assigned_manager_id

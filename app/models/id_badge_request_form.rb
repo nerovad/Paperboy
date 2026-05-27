@@ -2,33 +2,12 @@ class IdBadgeRequestForm < ApplicationRecord
   include TrackableStatus
 
 enum :status, {
-  submitted: 0,
-    step_1_pending: 1,
-    step_1_approved: 2,
-    step_2_pending: 3,
-    approved: 4,
-    denied: 5
-}, default: :submitted
-
-# Normalized status categories for cross-form reporting
-STATUS_CATEGORIES = {
-  submitted: :pending,
-    step_1_pending: :in_review,
-    step_1_approved: :in_review,
-    step_2_pending: :in_review,
-    approved: :approved,
-    denied: :denied
-}.freeze
-
-# Human-readable status labels
-STATUS_LABELS = {
-  submitted: "Submitted",
-    step_1_pending: "Sent to Supervisor",
-    step_1_approved: "Supervisor Approved",
-    step_2_pending: "Sent to Sean Payne",
-    approved: "Approved",
-    denied: "Denied"
-}.freeze
+  in_progress: "in_progress",
+    step_1_pending: "step_1_pending",
+    step_2_pending: "step_2_pending",
+    approved: "approved",
+    denied: "denied"
+}, default: :in_progress
 
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
@@ -45,11 +24,6 @@ STATUS_LABELS = {
         errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.")
       end
     end
-  end
-
-  # For inbox queue display
-  def status_label
-    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
   end
 
   # For inbox queue filtering - returns the form type name

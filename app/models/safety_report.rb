@@ -2,36 +2,13 @@ class SafetyReport < ApplicationRecord
   include TrackableStatus
 
 enum :status, {
-  in_progress: 0,
-    step_1_pending: 1,
-    step_1_approved: 2,
-    step_2_pending: 3,
-    approved: 4,
-    denied: 5,
-    cancelled: 6
+  in_progress: "in_progress",
+    step_1_pending: "step_1_pending",
+    step_2_pending: "step_2_pending",
+    approved: "approved",
+    denied: "denied",
+    cancelled: "cancelled"
 }, default: :in_progress
-
-# Normalized status categories for cross-form reporting
-STATUS_CATEGORIES = {
-  in_progress: :in_review,
-    step_1_pending: :in_review,
-    step_1_approved: :in_review,
-    step_2_pending: :in_review,
-    approved: :approved,
-    denied: :denied,
-    cancelled: :cancelled
-}.freeze
-
-# Human-readable status labels
-STATUS_LABELS = {
-  in_progress: "In Progress",
-    step_1_pending: "Sent to HCA_HR",
-    step_1_approved: "HCA_HR Approved",
-    step_2_pending: "Sent to HCA_Safety_Officers",
-    approved: "Approved",
-    denied: "Denied",
-    cancelled: "Cancelled"
-}.freeze
 
   # Safety Report → OSHA Reporting field mapping
   OSHA_REPORT_FIELD_MAP = {
@@ -60,11 +37,6 @@ STATUS_LABELS = {
 
   # Minimal baseline validations; adjust or remove as needed
   validates :name, :email, presence: true
-
-  # For inbox queue display
-  def status_label
-    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
-  end
 
   # Get the form template for this model (for button configuration)
   def form_template
