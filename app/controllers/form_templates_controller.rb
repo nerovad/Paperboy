@@ -551,14 +551,10 @@ class FormTemplatesController < ApplicationController
       end
     end
 
-    # Update status_label method to use STATUS_LABELS
-    status_label_code = <<~RUBY.chomp
-      def status_label
-          self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
-        end
-    RUBY
-
-    content.sub!(/def status_label\b.*?^(\s*)end\b/m, status_label_code)
+    # Drop any per-model status_label override (and its doc comment); TrackableStatus
+    # provides it by reading the central form_template_statuses table.
+    content.gsub!(/(?:^[ \t]*#[^\n]*\n)*^[ \t]*def status_label\b.*?^[ \t]*end\b\n/m, '')
+    content.gsub!(/\n{3,}/, "\n\n")
 
     File.write(model_path, content)
   end
@@ -571,35 +567,17 @@ class FormTemplatesController < ApplicationController
     initial_status = all_statuses.find(&:is_initial) || all_statuses.first
     default_key = initial_status.key
 
-    # Build enum entries
-    enum_entries = all_statuses.each_with_index.map do |status, index|
-      "#{status.key}: #{index}"
+    # Build enum entries (string-backed: the column stores the key itself)
+    enum_entries = all_statuses.map do |status|
+      "#{status.key}: #{status.key.inspect}"
     end
 
-    # Build STATUS_CATEGORIES
-    category_entries = all_statuses.map do |status|
-      "#{status.key}: :#{status.category}"
-    end
-
-    # Build STATUS_LABELS
-    label_entries = all_statuses.map do |status|
-      "#{status.key}: \"#{status.name}\""
-    end
-
+    # Labels and categories are no longer copied into the model — they are read
+    # at runtime from form_template_statuses (see TrackableStatus).
     new_block = <<~RUBY.chomp
       enum :status, {
         #{enum_entries.join(",\n    ")}
       }, default: :#{default_key}
-
-      # Normalized status categories for cross-form reporting
-      STATUS_CATEGORIES = {
-        #{category_entries.join(",\n    ")}
-      }.freeze
-
-      # Human-readable status labels
-      STATUS_LABELS = {
-        #{label_entries.join(",\n    ")}
-      }.freeze
     RUBY
 
     # Remove existing blocks first, then insert the new unified block

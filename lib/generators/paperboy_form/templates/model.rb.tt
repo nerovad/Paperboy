@@ -2,11 +2,10 @@ class <%= class_name %> < ApplicationRecord
   include TrackableStatus
 
   enum :status, {
-    submitted: 0,
-    pending: 1,
-    denied: 2,
-    approved: 3,
-  }
+    in_progress: "in_progress",
+    approved: "approved",
+    denied: "denied",
+  }, default: :in_progress
 
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
@@ -23,11 +22,6 @@ class <%= class_name %> < ApplicationRecord
         errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.")
       end
     end
-  end
-
-  # For inbox queue display
-  def status_label
-    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
   end
 
   # For inbox queue filtering - returns the form type name
