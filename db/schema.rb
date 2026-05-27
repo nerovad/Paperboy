@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_27_171930) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_27_182638) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -116,9 +116,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_27_171930) do
     t.string "division"
     t.string "department"
     t.string "unit"
-    t.integer "status", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "approver_id"
+    t.string "status", default: "in_progress", null: false
   end
 
   create_table "creative_job_requests", force: :cascade do |t|
@@ -201,11 +202,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_27_171930) do
     t.string "division"
     t.string "department"
     t.string "unit"
-    t.integer "status", default: 0
     t.string "approver_id"
     t.text "deny_reason"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "in_progress", null: false
     t.index ["approver_id"], name: "index_form_request_forms_on_approver_id"
     t.index ["employee_id"], name: "index_form_request_forms_on_employee_id"
   end
@@ -295,9 +296,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_27_171930) do
     t.string "division"
     t.string "department"
     t.string "unit"
-    t.integer "status", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "in_progress", null: false
   end
 
   create_table "help_tickets", force: :cascade do |t|
@@ -306,9 +307,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_27_171930) do
     t.string "employee_id", null: false
     t.string "employee_name"
     t.string "employee_email"
-    t.integer "status", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "open", null: false
   end
 
   create_table "id_badge_request_forms", force: :cascade do |t|
@@ -663,9 +664,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_27_171930) do
     t.string "division"
     t.string "department"
     t.string "unit"
-    t.integer "status", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "in_progress", null: false
   end
 
   create_table "status_changes", force: :cascade do |t|
@@ -729,11 +730,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_27_171930) do
     t.string "division"
     t.string "department"
     t.string "unit"
-    t.integer "status", default: 0
     t.string "approver_id"
     t.text "deny_reason"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "in_progress", null: false
   end
 
   create_table "workplace_violence_forms", force: :cascade do |t|

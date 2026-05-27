@@ -66,7 +66,7 @@ class CarpoolFormsController < ApplicationController
       # Multi-step approval routing (1 steps)
 # Step 1: employee #134622
 approver_id = '134622'
-@carpool_form.update(status: :step_1_pending)
+@carpool_form.update(status: :step_1_pending, approver_id: approver_id)
 # TODO: Send notification to employee #134622
 redirect_to form_success_path, notice: 'Form submitted and routed to employee #134622 for approval.', allow_other_host: false, status: :see_other
       # ROUTING_BLOCK_END
