@@ -48,6 +48,12 @@ class InboxController < ApplicationController
       inbox_scope_date_filters
     ).to_a
 
+    # Approved parking permits are visible to the GSA_Security group for awareness.
+    @submissions += apply_scope_date_filters(
+      scope_group_visible(ParkingLotSubmission, status: "approved", group_name: "GSA_Security"),
+      inbox_scope_date_filters
+    ).to_a
+
     # Probation Transfer Requests - all statuses stay in inbox (except canceled)
     @submissions += apply_scope_date_filters(
       scope_by_assignee(ProbationTransferRequest, :supervisor_id).where(canceled_at: nil),
@@ -117,6 +123,23 @@ class InboxController < ApplicationController
     return model_class.none if units.empty?
 
     base.where(unit: units)
+  end
+
+  # Forms in a given status that members of the named group should see in their
+  # inbox for awareness (e.g. approved parking permits for GSA_Security). When
+  # the inbox scope is "all" (system admin, @scoped_employee_ids nil), no
+  # membership filter is applied. Group is looked up by name so it works across
+  # environments (group ids differ per DB).
+  def scope_group_visible(model_class, status:, group_name:)
+    group_id = Group.where(group_name: group_name).pick(:GroupID)
+    return model_class.none unless group_id
+
+    if @scoped_employee_ids
+      member = EmployeeGroup.where(GroupID: group_id, EmployeeID: @scoped_employee_ids).exists?
+      return model_class.none unless member
+    end
+
+    model_class.where(status: status)
   end
 
   # SQL-level date filter config

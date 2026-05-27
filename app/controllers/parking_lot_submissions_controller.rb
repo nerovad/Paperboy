@@ -112,7 +112,7 @@ def create
 
   if is_mb3
     # Auto-approve: no manager routing
-    @parking_lot_submission.status        = 1 # manager_approved
+    @parking_lot_submission.status        = "pending_delegated_approval"
     @parking_lot_submission.supervisor_id = nil
     @parking_lot_submission.approved_by   = employee_id # or "SYSTEM"
     @parking_lot_submission.approved_at   = Time.current
@@ -120,7 +120,7 @@ def create
     # Multi-approver path: leave supervisor_id null so every authorized
     # approver for this unit sees it in their inbox. Whoever acts first
     # claims it (see #approve / #deny).
-    @parking_lot_submission.status           = 0 # submitted
+    @parking_lot_submission.status           = "in_progress"
     @parking_lot_submission.supervisor_id    = nil
     @parking_lot_submission.supervisor_email = nil
   end
@@ -156,7 +156,7 @@ def approve
   @submission = ParkingLotSubmission.find(params[:id])
   approver_id = session.dig(:user, "employee_id").to_s
 
-  if @submission.submitted?
+  if @submission.in_progress?
     # AUTHORIZED APPROVER APPROVAL - always routes to Sean Payne for final approval
     sean_payne_id = "104236"
     sean_payne_email = "Sean.Payne@ventura.org"
@@ -172,7 +172,7 @@ def approve
 
     @submission.update!(
       claim_attrs.merge(
-        status: 1,  # pending_delegated_approval
+        status: "pending_delegated_approval",
         approved_by: approver_id,
         approved_at: Time.current,
         delegated_approver_id: sean_payne_id,
@@ -193,10 +193,8 @@ def approve
       delegated_approved_at: Time.current
     )
 
-    # Send to Security
+    # Notify Security; the approved request now appears in the GSA_Security inbox.
     NotifySecurityJob.perform_later(@submission.id)
-
-    @submission.update!(status: 4)  # sent_to_security
 
     redirect_to inbox_queue_path, notice: "Request approved and sent to Security."
   else
@@ -220,7 +218,7 @@ def deny
 
   @submission.update!(
     claim_attrs.merge(
-      status: 2,                        # use your correct denied code
+      status: "denied",
       denied_by: denier_id,
       denied_at: Time.current,
       denial_reason: reason.presence || "No reason provided"
@@ -244,7 +242,7 @@ end
 
       @pending_submissions = ParkingLotSubmission
                                .where(supervisor_id: employee["employee_id"].to_s)
-                               .where(status: 0)
+                               .where(status: "in_progress")
                                .order(created_at: :desc)
     else
       Rails.logger.warn "No logged-in employee found"
