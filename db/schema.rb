@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_27_165928) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_27_171118) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false

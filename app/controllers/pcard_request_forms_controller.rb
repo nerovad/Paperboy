@@ -67,27 +67,10 @@ class PcardRequestFormsController < ApplicationController
 
     if @pcard_request_form.save
       # Keep success behavior simple for the template; you can extend per form.
-      # Multi-step approval routing (4 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-approver_id = employee&.supervisor_id&.to_s
-@pcard_request_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (4 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-approver_id = employee&.supervisor_id&.to_s
-@pcard_request_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
-# Multi-step approval routing (4 steps)
-# Step 1: supervisor
-# Look up the submitter's supervisor
-employee = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
-approver_id = employee&.supervisor_id&.to_s
-@pcard_request_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to supervisor
+      # Step 1: route to the submitter's supervisor
+      supervisor = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
+      @pcard_request_form.update(status: :step_1_pending, approver_id: supervisor&.supervisor_id&.to_s)
+      # TODO: notify the supervisor
 redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)

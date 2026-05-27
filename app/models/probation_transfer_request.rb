@@ -48,7 +48,6 @@ class ProbationTransferRequest < ApplicationRecord
   enum :status, {
     in_progress: "in_progress",
     manager_approved: "manager_approved",
-    sent_to_security: "sent_to_security",
     denied: "denied"
   }, default: :in_progress
 
