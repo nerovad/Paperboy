@@ -6,6 +6,11 @@
 <div class="form-wrapper" data-controller="form-navigation">
   <%= form_with model: @bike_locker_form, local: true do |form| %>
 
+        <% _page_1_visible = true %>
+        <% _page_2_visible = true %>
+        <% _page_3_visible = true %>
+        <% _visible_page_count = [_page_1_visible, _page_2_visible, _page_3_visible].count(true) %>
+
 <!-- Page 1: Employee Info -->
 <div class="form-page">
   <h2>Employee Info</h2>
@@ -128,6 +133,14 @@
                   { class: "form-control" } %>
           </div>
 <!-- FIELD:locker_number END -->
+<!-- FIELD:number_of_bikes START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :number_of_bikes, "Number of Bikes" %>
+            <%= form.select :number_of_bikes,
+                  options_for_select(['1', '2', '3', '4', '5', '6'], @bike_locker_form.number_of_bikes),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
+          </div>
+<!-- FIELD:number_of_bikes END -->
         </div>
       </div>
 
@@ -148,7 +161,7 @@
         <div class="progress-bar" id="progressBar"></div>
       </div>
       <div class="progress-dots">
-        <% 3.times do |index| %>
+        <% _visible_page_count.times do |index| %>
           <div class="dot <%= 'active' if index == 0 %>"></div>
         <% end %>
       </div>
