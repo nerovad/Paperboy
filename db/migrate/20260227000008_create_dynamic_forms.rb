@@ -42,20 +42,6 @@ class CreateDynamicForms < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    # Brown Mail Forms
-    create_table :brown_mail_forms do |t|
-      t.string :employee_id
-      t.string :name
-      t.string :phone
-      t.string :email
-      t.string :agency
-      t.string :division
-      t.string :department
-      t.string :unit
-      t.integer :status, default: 0
-      t.timestamps
-    end
-
     # Leave of Absence Forms
     create_table :leave_of_absence_forms do |t|
       t.string :employee_id
