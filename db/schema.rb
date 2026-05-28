@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_27_182638) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_28_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -698,19 +698,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_27_182638) do
     t.string "task_id", limit: 4, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
-  end
-
-  create_table "testyyy_forms", force: :cascade do |t|
-    t.string "employee_id"
-    t.string "name"
-    t.string "phone"
-    t.string "email"
-    t.string "agency"
-    t.string "division"
-    t.string "department"
-    t.string "unit"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "user_settings", force: :cascade do |t|
