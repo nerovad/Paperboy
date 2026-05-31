@@ -238,8 +238,8 @@ export default class extends Controller {
     if (employeeSelect && this.employeesValue) {
       this.employeesValue.forEach(emp => {
         const option = document.createElement('option')
-        option.value = emp[1]  // EmployeeID
-        option.textContent = emp[0]  // "First Last (EmployeeID)"
+        option.value = emp[1]  // id
+        option.textContent = emp[0]  // "First Last (id)"
         employeeSelect.appendChild(option)
       })
     }
@@ -1107,8 +1107,8 @@ export default class extends Controller {
       employeeSelect.innerHTML = '<option value="">Select employee...</option>'
       this.employeesValue.forEach(emp => {
         const option = document.createElement('option')
-        option.value = emp[1]  // EmployeeID
-        option.textContent = emp[0]  // "First Last (EmployeeID)"
+        option.value = emp[1]  // id
+        option.textContent = emp[0]  // "First Last (id)"
         employeeSelect.appendChild(option)
       })
     }

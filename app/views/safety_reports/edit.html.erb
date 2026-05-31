@@ -198,7 +198,7 @@
 <!-- FIELD:who_gave_the_dwc1 START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :who_gave_the_dwc1, "Who Gave the DWC-1" %>
             <%= form.select :who_gave_the_dwc1,
-                  options_for_select(Employee.where(Agency: 'HCA').order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }, @safety_report.who_gave_the_dwc1),
+                  options_for_select(Employee.where(agency: 'HCA').order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }, @safety_report.who_gave_the_dwc1),
                   { include_blank: "Select..." },
                   { class: "form-control" } %>
           </div>

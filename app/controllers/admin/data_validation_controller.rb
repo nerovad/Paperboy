@@ -26,7 +26,7 @@ module Admin
         @filtered_results = @filtered_results.select do |r|
           emp = r.employee
           "#{emp.first_name} #{emp.last_name}".downcase.include?(term) ||
-            emp.EmployeeID.to_s.include?(term) ||
+            emp.employee_id.to_s.include?(term) ||
             emp.email&.downcase&.include?(term) ||
             emp.agency&.downcase&.include?(term) ||
             emp.unit&.downcase&.include?(term)
@@ -53,7 +53,7 @@ module Admin
         rows.each do |result|
           emp = result.employee
           csv << [
-            emp.EmployeeID,
+            emp.employee_id,
             emp.first_name,
             emp.last_name,
             emp.email,

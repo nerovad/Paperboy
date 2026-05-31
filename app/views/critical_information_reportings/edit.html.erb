@@ -140,7 +140,7 @@
 <!-- FIELD:staff_involved START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :staff_involved, "Staff Involved" %>
             <%= form.select :staff_involved,
-                  options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
+                  options_for_select(Employee.order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }),
                   { include_blank: false },
                   { class: "form-control", required: true, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
@@ -214,7 +214,7 @@
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :impacted_employee, "Employee" %>
             <%= form.select :impacted_employee,
-                  options_for_select(Employee.where(Agency: 'GSA').order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }, @critical_information_reporting.impacted_employee.to_s.split(/,(?! )/)),
+                  options_for_select(Employee.where(agency: 'GSA').order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }, @critical_information_reporting.impacted_employee.to_s.split(/,(?! )/)),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>

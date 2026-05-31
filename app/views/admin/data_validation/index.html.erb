@@ -94,7 +94,7 @@
         <% @filtered_results.each do |result| %>
           <% emp = result.employee %>
           <tr class="<%= result.error_count > 0 ? 'dv-row--error' : (result.warning_count > 0 ? 'dv-row--warning' : 'dv-row--ok') %>">
-            <td><%= emp.EmployeeID %></td>
+            <td><%= emp.employee_id %></td>
             <td><%= emp.first_name %> <%= emp.last_name %></td>
             <td class="<%= 'dv-cell--error' if result.issues.any? { |i| i.category == :email } %>">
               <%= emp.email %>

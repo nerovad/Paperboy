@@ -140,7 +140,7 @@
                          style="display: none;">
                       <%= vf.label :carpool_participants, "Carpool Participants" %>
                       <%= vf.select :carpool_participants,
-                            options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }, vf.object.carpool_participants),
+                            options_for_select(Employee.order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }, vf.object.carpool_participants),
                             { include_blank: false },
                             { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
                     </div>
@@ -185,7 +185,7 @@
                          style="display: none;">
                       <%= vf.label :carpool_participants, "Carpool Participants" %>
                       <%= vf.select :carpool_participants,
-                            options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }, vf.object.carpool_participants),
+                            options_for_select(Employee.order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }, vf.object.carpool_participants),
                             { include_blank: false },
                             { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
                     </div>

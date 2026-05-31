@@ -136,7 +136,7 @@
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :specific_employee, "Specific Employee" %>
             <%= form.select :specific_employee,
-                  options_for_select(Employee.order(:Last_Name).map { |e| "#{e.last_name}, #{e.first_name}" }),
+                  options_for_select(Employee.order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>

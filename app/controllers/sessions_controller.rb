@@ -14,7 +14,7 @@ class SessionsController < ApplicationController
     Rails.logger.info "Looking up username: #{username}"
 
     # Case-insensitive search for any email starting with this username
-    employee = Employee.where("EE_Email LIKE ?", "#{username}@%").first
+    employee = Employee.where("email LIKE ?", "#{username}@%").first
 
     Rails.logger.info "Employee found: #{employee.inspect}"
 

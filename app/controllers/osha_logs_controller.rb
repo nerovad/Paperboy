@@ -44,7 +44,7 @@ class OshaLogsController < ApplicationController
     return [] if reports.empty?
 
     employee_ids = reports.map { |r| r.employee_id.to_s }.reject(&:blank?).uniq
-    employees_by_id = Employee.where(EmployeeID: employee_ids).index_by { |e| e.employee_id.to_s }
+    employees_by_id = Employee.where(employee_id: employee_ids).index_by { |e| e.employee_id.to_s }
 
     safety_ids = reports.map(&:safety_report_id).compact.uniq
     safety_by_id = SafetyReport.where(id: safety_ids).index_by(&:id)

@@ -52,8 +52,8 @@ class LookupsController < ApplicationController
   end
 
   def employees
-    scope = Employee.order(:Last_Name)
-    scope = scope.where(Agency: params[:agency]) if params[:agency].present?
+    scope = Employee.order(:last_name)
+    scope = scope.where(agency: params[:agency]) if params[:agency].present?
 
     column = params[:column].presence || 'full_name'
     allowed_columns = %w[full_name first_name last_name email]
@@ -63,11 +63,11 @@ class LookupsController < ApplicationController
               when 'full_name'
                 scope.map { |e| "#{e.last_name}, #{e.first_name}" }
               when 'first_name'
-                scope.pluck(:First_Name).uniq
+                scope.pluck(:first_name).uniq
               when 'last_name'
-                scope.pluck(:Last_Name).uniq
+                scope.pluck(:last_name).uniq
               when 'email'
-                scope.pluck(:EE_Email).compact.uniq
+                scope.pluck(:email).compact.uniq
               end
 
     render json: options

@@ -8,6 +8,6 @@ class EmployeeGroup < ApplicationRecord
   alias_attribute :assigned_at, :Assigned_At
   alias_attribute :assigned_by, :Assigned_By
 
-  belongs_to :employee, foreign_key: 'EmployeeID', primary_key: 'EmployeeID'
+  belongs_to :employee, foreign_key: 'EmployeeID', primary_key: 'id'
   belongs_to :group, foreign_key: 'GroupID'
 end

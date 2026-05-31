@@ -96,7 +96,7 @@ class InboxController < ApplicationController
 
     # Filter dropdown: system admins see every employee; supervisors see only their reporting chain.
     if @show_employee_filter
-      @filter_employees = @is_system_admin ? @employees : Employee.where(EmployeeID: @subordinate_ids).order(:last_name, :first_name)
+      @filter_employees = @is_system_admin ? @employees : Employee.where(employee_id: @subordinate_ids).order(:last_name, :first_name)
       @current_user_id = employee_id
     end
   end
@@ -281,7 +281,7 @@ class InboxController < ApplicationController
   # off the Employee row directly. Values are stringified to align with the
   # form tables' string org columns.
   def compute_submitter_org_filter(employee_ids)
-    employees = Employee.where(EmployeeID: employee_ids).to_a
+    employees = Employee.where(employee_id: employee_ids).to_a
     unit_ids = employees.map(&:unit).compact.uniq
     units = unit_ids.any? ? Unit.where(unit_id: unit_ids).index_by { |u| u.unit_id.to_s } : {}
 

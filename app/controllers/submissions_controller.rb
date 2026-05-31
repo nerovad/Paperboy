@@ -53,7 +53,7 @@ class SubmissionsController < ApplicationController
       @employees = if @is_system_admin
                      Employee.order(:last_name, :first_name)
                    else
-                     Employee.where(EmployeeID: @subordinate_ids).order(:last_name, :first_name)
+                     Employee.where(employee_id: @subordinate_ids).order(:last_name, :first_name)
                    end
       @current_user_id = employee_id
     end

@@ -74,7 +74,7 @@ class EmployeeDataValidator
     end
 
     @valid_agency_ids = Set.new(Agency.pluck(:agency_id).map(&:strip))
-    @valid_employee_ids = Set.new(Employee.pluck(:EmployeeID))
+    @valid_employee_ids = Set.new(Employee.pluck(:id))
     @employees_with_groups = Set.new(EmployeeGroup.distinct.pluck(:EmployeeID))
   end
 
@@ -172,7 +172,7 @@ class EmployeeDataValidator
   end
 
   def check_group_membership(emp, issues)
-    unless @employees_with_groups.include?(emp.EmployeeID)
+    unless @employees_with_groups.include?(emp.employee_id)
       issues << Issue.new(
         category: :groups, field: "Groups",
         message: "Not a member of any group",

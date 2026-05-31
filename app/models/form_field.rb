@@ -54,7 +54,7 @@ class FormField < ApplicationRecord
     'employees' => {
       model: 'Employee',
       label: 'Employees',
-      order: ':Last_Name',
+      order: ':last_name',
       columns: {
         'full_name'  => 'Full Name (Last, First)',
         'first_name' => 'First Name',
