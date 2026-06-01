@@ -74,7 +74,7 @@
       <%= form.select :locations,
             options_for_select(
               (@location_options || []),
-              @authorized_approver.locations&.split(",")
+              @authorized_approver.locations
             ),
             {},
             multiple: true,

@@ -195,8 +195,8 @@ class AuthorizationConsoleController < ApplicationController
       budget_units: []
     )
 
-    # Normalize multi-select arrays into comma-separated strings
-    raw[:locations]     = Array(raw[:locations]).reject(&:blank?).join(",")
+    # locations is a JSON array column; budget_units stays a comma-joined string.
+    raw[:locations]     = Array(raw[:locations]).reject(&:blank?)
     raw[:budget_units]  = Array(raw[:budget_units]).reject(&:blank?).join(",")
 
     raw
@@ -213,7 +213,7 @@ class AuthorizationConsoleController < ApplicationController
       budget_units: []
     )
 
-    raw[:locations]    = Array(raw[:locations]).reject(&:blank?).join(",")
+    raw[:locations]    = Array(raw[:locations]).reject(&:blank?)
     raw[:budget_units] = Array(raw[:budget_units]).reject(&:blank?).join(",")
 
     raw

@@ -1,5 +1,9 @@
 # app/models/authorized_approver.rb
 class AuthorizedApprover < ApplicationRecord
+  # Locations are chosen from the buildings table and can contain commas, so we
+  # store the multi-select as a JSON array rather than a comma-joined string.
+  serialize :locations, coder: JSON, type: Array
+
   validates :employee_id, presence: true
   validates :department_id, presence: true
   validates :service_type, presence: true, inclusion: { in: %w[P E V C K] }

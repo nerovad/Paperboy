@@ -73,7 +73,7 @@
                     <% if approval.locations.present? %>
                       <div class="detail-row">
                         <span class="label">Locations:</span>
-                        <span class="value"><%= approval.locations %></span>
+                        <span class="value"><%= Array(approval.locations).join(", ") %></span>
                       </div>
                     <% end %>
                   </div>
