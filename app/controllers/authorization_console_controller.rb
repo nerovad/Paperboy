@@ -153,7 +153,12 @@ class AuthorizationConsoleController < ApplicationController
   end
   
   def location_options
-    AuthorizedApprover::LOCATIONS.map { |loc| [loc, loc] }
+    Building.for_authorization_console
+            .order(:occupant_description, :address)
+            .map(&:location_label)
+            .reject(&:blank?)
+            .uniq
+            .map { |label| [label, label] }
   end
 
   def fetch_managed_budget_units
