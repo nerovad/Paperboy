@@ -5,8 +5,11 @@ class Building < GsabssBase
   # Console. SQL Server's default collation matches these case-insensitively.
   AUTH_CONSOLE_SITE_DESCRIPTIONS = %w[Office Administration].freeze
 
+  # Office/Administration buildings, plus any building hand-tagged with a
+  # short_name (curated selectable sites whose real site type may be something
+  # else, e.g. the Hall of Justice / PTDF on the Government Center campus).
   scope :for_authorization_console, -> {
-    where(site_description: AUTH_CONSOLE_SITE_DESCRIPTIONS)
+    where("site_description IN (?) OR short_name IS NOT NULL", AUTH_CONSOLE_SITE_DESCRIPTIONS)
       .where.not(occupant_description: [nil, ""])
   }
 
