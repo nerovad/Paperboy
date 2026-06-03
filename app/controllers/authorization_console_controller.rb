@@ -6,7 +6,7 @@ class AuthorizationConsoleController < ApplicationController
   before_action :set_managed_departments
   
   def index
-    @department_id = params[:department_id] || "all"
+    @department_id = params[:department_id].presence || "all"
     managed_dept_ids = @managed_departments.map(&:department_id)
 
     if @department_id == "all"

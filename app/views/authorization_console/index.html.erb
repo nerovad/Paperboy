@@ -8,16 +8,16 @@
     <div class="console-filters">
       <%= form_with url: authorization_console_index_path, method: :get, data: { turbo: false, controller: "auto-submit" } do %>
         <% if @managed_departments.size > 1 %>
-          <div class="filter-group">
-            <label>Department</label>
+          <div class="filter-group" data-controller="choices">
+            <label>Budget Unit</label>
             <%= select_tag :department_id,
                   options_for_select(
-                    [["All Departments", "all"]] +
+                    [["All Budget Units", "all"]] +
                     @managed_departments.map { |d| ["#{d.department_id} - #{d.long_name}", d.department_id] },
                     @department_id.to_s
                   ),
                   class: "form-control",
-                  data: { action: "change->auto-submit#submit" } %>
+                  data: { choices_target: "select", action: "change->auto-submit#submit", placeholder: "All Budget Units" } %>
           </div>
         <% else %>
           <%= hidden_field_tag :department_id, @department_id %>
@@ -31,12 +31,12 @@
                 data: { choices_target: "select", action: "change->auto-submit#submit", placeholder: "All Employees" } %>
         </div>
 
-        <div class="filter-group">
+        <div class="filter-group" data-controller="choices">
           <label>Service Type</label>
           <%= select_tag :service_type,
                 options_for_select([["All Service Types", ""]] + @service_type_filter_options, @service_type_filter.to_s),
                 class: "form-control",
-                data: { action: "change->auto-submit#submit" } %>
+                data: { choices_target: "select", action: "change->auto-submit#submit", placeholder: "All Service Types" } %>
         </div>
 
         <div class="filter-group" data-controller="choices">
