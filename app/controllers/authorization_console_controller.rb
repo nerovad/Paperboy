@@ -36,12 +36,33 @@ class AuthorizationConsoleController < ApplicationController
         }
     end
 
-    @groups_by_employee = build_groups(@authorized_approvers || [])
+    scoped = @authorized_approvers || []
+
+    # Filter dropdown options are built from the department-scoped set (before
+    # the employee/service/location filters apply) so you can always switch.
+    @employee_filter_options = Employee.where(id: scoped.map(&:employee_id).uniq)
+                                       .sort_by { |e| [e.last_name.to_s, e.first_name.to_s] }
+                                       .map { |e| ["#{e.first_name} #{e.last_name} (#{e.id})", e.id.to_s] }
+    @service_type_filter_options = scoped.map(&:service_type).uniq
+                                         .sort_by { |s| SERVICE_ORDER.index(s) || 99 }
+                                         .map { |s| [AuthorizedApprover::SERVICE_TYPES[s] || s, s] }
+    @location_filter_options = scoped.flat_map { |a| Array(a.locations) }.uniq.sort
+
+    @employee_id_filter  = params[:employee_id].presence
+    @service_type_filter = params[:service_type].presence
+    @location_filter     = params[:location].presence
+
+    scoped = scoped.select { |a| a.employee_id.to_s == @employee_id_filter } if @employee_id_filter
+    scoped = scoped.select { |a| a.service_type == @service_type_filter }    if @service_type_filter
+    scoped = scoped.select { |a| Array(a.locations).include?(@location_filter) } if @location_filter
+
+    @authorized_approvers = scoped
+    @groups_by_employee = build_groups(scoped)
 
     respond_to do |format|
       format.html
       format.csv do
-        send_data authorized_approvers_csv(@authorized_approvers || []),
+        send_data authorized_approvers_csv(scoped),
                   filename: "authorized_approvers_#{@department_id}_#{Date.current}.csv",
                   type: "text/csv"
       end

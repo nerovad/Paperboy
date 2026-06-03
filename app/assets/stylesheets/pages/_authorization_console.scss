@@ -37,24 +37,36 @@
   }
 }
 
-// Department selector at the top
-.department-selector {
+// Filter bar at the top
+.console-filters {
   margin-bottom: 30px;
   padding: 20px;
   background-color: #f9f9f9;
   border-radius: $radius-6;
   border: 1px solid $border-color;
 
-  label {
-    display: block;
-    font-weight: 600;
-    color: $label-color;
-    margin-bottom: 8px;
-    font-size: 0.95rem;
+  form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
   }
 
-  .form-control {
-    max-width: 400px;
+  .filter-group {
+    flex: 1 1 200px;
+    min-width: 180px;
+
+    label {
+      display: block;
+      font-weight: 600;
+      color: $label-color;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .form-control {
+      width: 100%;
+    }
   }
 }
 

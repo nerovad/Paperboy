@@ -4,18 +4,48 @@
 </div>
 
 <div class="form-wrapper authorization-console" data-controller="confirm-modal">
-  <% if @managed_departments.size > 1 %>
-    <div class="department-selector">
-      <label>Select Department:</label>
+  <% if @managed_departments.any? %>
+    <div class="console-filters">
       <%= form_with url: authorization_console_index_path, method: :get, data: { turbo: false, controller: "auto-submit" } do %>
-        <%= select_tag :department_id,
-              options_for_select(
-                [["All Departments", "all"]] +
-                @managed_departments.map { |d| ["#{d.department_id} - #{d.long_name}", d.department_id] },
-                @department_id.to_s
-              ),
-              class: "form-control",
-              data: { action: "change->auto-submit#submit" } %>
+        <% if @managed_departments.size > 1 %>
+          <div class="filter-group">
+            <label>Department</label>
+            <%= select_tag :department_id,
+                  options_for_select(
+                    [["All Departments", "all"]] +
+                    @managed_departments.map { |d| ["#{d.department_id} - #{d.long_name}", d.department_id] },
+                    @department_id.to_s
+                  ),
+                  class: "form-control",
+                  data: { action: "change->auto-submit#submit" } %>
+          </div>
+        <% else %>
+          <%= hidden_field_tag :department_id, @department_id %>
+        <% end %>
+
+        <div class="filter-group" data-controller="choices">
+          <label>Employee</label>
+          <%= select_tag :employee_id,
+                options_for_select([["All Employees", ""]] + @employee_filter_options, @employee_id_filter.to_s),
+                class: "form-control",
+                data: { choices_target: "select", action: "change->auto-submit#submit", placeholder: "All Employees" } %>
+        </div>
+
+        <div class="filter-group">
+          <label>Service Type</label>
+          <%= select_tag :service_type,
+                options_for_select([["All Service Types", ""]] + @service_type_filter_options, @service_type_filter.to_s),
+                class: "form-control",
+                data: { action: "change->auto-submit#submit" } %>
+        </div>
+
+        <div class="filter-group" data-controller="choices">
+          <label>Location</label>
+          <%= select_tag :location,
+                options_for_select([["All Locations", ""]] + @location_filter_options.map { |l| [l, l] }, @location_filter.to_s),
+                class: "form-control",
+                data: { choices_target: "select", action: "change->auto-submit#submit", placeholder: "All Locations" } %>
+        </div>
       <% end %>
     </div>
   <% end %>
@@ -31,7 +61,8 @@
             new_authorization_console_path(department_id: @department&.department_id || @managed_departments.first&.department_id),
             class: "btn approve" %>
       <%= link_to "Export CSV",
-            authorization_console_index_path(format: :csv, department_id: @department_id),
+            authorization_console_index_path(format: :csv, department_id: @department_id,
+              employee_id: @employee_id_filter, service_type: @service_type_filter, location: @location_filter),
             class: "btn pdf", data: { turbo: false } %>
     </div>
     
