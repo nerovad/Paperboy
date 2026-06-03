@@ -249,7 +249,8 @@ class AuthorizationConsoleController < ApplicationController
 
   def set_managed_departments
     if auth_console_admin?
-      @managed_departments = Department.order(:department_id).to_a
+      # GSABSS departments table has duplicate rows; collapse by department_id.
+      @managed_departments = Department.order(:department_id).to_a.uniq(&:department_id)
     else
       dept_id = current_user_org_chain[:department_id]
       dept = dept_id ? Department.find_by(department_id: dept_id) : nil
@@ -287,10 +288,11 @@ class AuthorizationConsoleController < ApplicationController
     return [] if dept_ids.empty?
 
     dept_names = @managed_departments.index_by(&:department_id)
+    # GSABSS units table has duplicate rows; collapse options by unit_id.
     Unit.where(department_id: dept_ids).order(:unit_id).map do |u|
       label = "#{u.unit_id} - #{dept_names[u.department_id]&.long_name}"
       [label, u.unit_id.to_s]
-    end
+    end.uniq { |_label, id| id }
   end
 
   # Derive department_id from the first selected budget unit's actual department.
