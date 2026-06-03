@@ -6,40 +6,29 @@ class AuthorizationConsoleController < ApplicationController
   before_action :set_managed_departments
   
   def index
-    @department_id = params[:department_id].presence || "all"
     managed_dept_ids = @managed_departments.map(&:department_id)
+    @department_ids  = Array(params[:department_id]).reject(&:blank?).reject { |d| d == "all" }
 
-    if @department_id == "all"
-      @department = nil
-      @authorized_approvers = AuthorizedApprover
-        .where(department_id: managed_dept_ids)
-        .order(:employee_id, :service_type)
-        .to_a
-    elsif managed_dept_ids.include?(@department_id)
-      @department = Department.find_by(department_id: @department_id)
+    scoped = AuthorizedApprover
+      .where(department_id: managed_dept_ids)
+      .order(:employee_id, :service_type)
+      .to_a
 
-      # Find all budget-unit IDs that belong to this department
-      dept_unit_ids = Unit.where(department_id: @department_id)
-                         .pluck(:unit_id).map(&:to_s).to_set
-
-      # Show approvers whose budget units overlap with this department's
-      # units, OR whose department_id matches when no units are specified.
-      @authorized_approvers = AuthorizedApprover
-        .where(department_id: managed_dept_ids)
-        .order(:employee_id, :service_type)
-        .select { |a|
-          if a.budget_units.present?
-            (a.budget_units.split(",").map(&:strip).to_set & dept_unit_ids).any?
-          else
-            a.department_id == @department_id
-          end
-        }
+    # Budget Unit filter: keep approvers whose budget units overlap a selected
+    # department's units (or whose department matches when no units are set).
+    if @department_ids.any?
+      sel_unit_ids = Unit.where(department_id: @department_ids).pluck(:unit_id).map(&:to_s).to_set
+      scoped = scoped.select do |a|
+        if a.budget_units.present?
+          (a.budget_units.split(",").map(&:strip).to_set & sel_unit_ids).any?
+        else
+          @department_ids.include?(a.department_id)
+        end
+      end
     end
 
-    scoped = @authorized_approvers || []
-
-    # Filter dropdown options are built from the department-scoped set (before
-    # the employee/service/location filters apply) so you can always switch.
+    # Filter options come from the budget-unit-scoped set (before the
+    # employee/service/location filters) so values stay switchable.
     @employee_filter_options = Employee.where(id: scoped.map(&:employee_id).uniq)
                                        .sort_by { |e| [e.last_name.to_s, e.first_name.to_s] }
                                        .map { |e| ["#{e.first_name} #{e.last_name} (#{e.id})", e.id.to_s] }
@@ -48,22 +37,22 @@ class AuthorizationConsoleController < ApplicationController
                                          .map { |s| [AuthorizedApprover::SERVICE_TYPES[s] || s, s] }
     @location_filter_options = scoped.flat_map { |a| Array(a.locations) }.uniq.sort
 
-    @employee_id_filter  = params[:employee_id].presence
-    @service_type_filter = params[:service_type].presence
-    @location_filter     = params[:location].presence
+    @employee_id_filter  = Array(params[:employee_id]).reject(&:blank?)
+    @service_type_filter = Array(params[:service_type]).reject(&:blank?)
+    @location_filter     = Array(params[:location]).reject(&:blank?)
 
-    scoped = scoped.select { |a| a.employee_id.to_s == @employee_id_filter } if @employee_id_filter
-    scoped = scoped.select { |a| a.service_type == @service_type_filter }    if @service_type_filter
-    scoped = scoped.select { |a| Array(a.locations).include?(@location_filter) } if @location_filter
+    scoped = scoped.select { |a| @employee_id_filter.include?(a.employee_id.to_s) } if @employee_id_filter.any?
+    scoped = scoped.select { |a| @service_type_filter.include?(a.service_type) }    if @service_type_filter.any?
+    scoped = scoped.select { |a| (Array(a.locations) & @location_filter).any? }      if @location_filter.any?
 
     @authorized_approvers = scoped
-    @groups_by_employee = build_groups(scoped)
+    @groups_by_employee   = build_groups(scoped)
 
     respond_to do |format|
       format.html
       format.csv do
         send_data authorized_approvers_csv(scoped),
-                  filename: "authorized_approvers_#{@department_id}_#{Date.current}.csv",
+                  filename: "authorized_approvers_#{@department_ids.presence&.join('-') || 'all'}_#{Date.current}.csv",
                   type: "text/csv"
       end
     end

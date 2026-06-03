@@ -12,21 +12,20 @@
             <label>Budget Unit</label>
             <%= select_tag :department_id,
                   options_for_select(
-                    [["All Budget Units", "all"]] +
                     @managed_departments.map { |d| ["#{d.department_id} - #{d.long_name}", d.department_id] },
-                    @department_id.to_s
+                    @department_ids
                   ),
+                  multiple: true,
                   class: "form-control",
                   data: { choices_target: "select", action: "change->auto-submit#submit", placeholder: "All Budget Units" } %>
           </div>
-        <% else %>
-          <%= hidden_field_tag :department_id, @department_id %>
         <% end %>
 
         <div class="filter-group" data-controller="choices">
           <label>Employee</label>
           <%= select_tag :employee_id,
-                options_for_select([["All Employees", ""]] + @employee_filter_options, @employee_id_filter.to_s),
+                options_for_select(@employee_filter_options, @employee_id_filter),
+                multiple: true,
                 class: "form-control",
                 data: { choices_target: "select", action: "change->auto-submit#submit", placeholder: "All Employees" } %>
         </div>
@@ -34,7 +33,8 @@
         <div class="filter-group" data-controller="choices">
           <label>Service Type</label>
           <%= select_tag :service_type,
-                options_for_select([["All Service Types", ""]] + @service_type_filter_options, @service_type_filter.to_s),
+                options_for_select(@service_type_filter_options, @service_type_filter),
+                multiple: true,
                 class: "form-control",
                 data: { choices_target: "select", action: "change->auto-submit#submit", placeholder: "All Service Types" } %>
         </div>
@@ -42,30 +42,24 @@
         <div class="filter-group" data-controller="choices">
           <label>Location</label>
           <%= select_tag :location,
-                options_for_select([["All Locations", ""]] + @location_filter_options.map { |l| [l, l] }, @location_filter.to_s),
+                options_for_select(@location_filter_options.map { |l| [l, l] }, @location_filter),
+                multiple: true,
                 class: "form-control",
                 data: { choices_target: "select", action: "change->auto-submit#submit", placeholder: "All Locations" } %>
         </div>
       <% end %>
     </div>
-  <% end %>
 
-  <% if @department || @department_id == "all" %>
     <div class="department-header">
-      <% if @department %>
-        <h2><%= @department.long_name %> (<%= @department.department_id %>)</h2>
-      <% else %>
-        <h2>All Departments</h2>
-      <% end %>
       <%= link_to "+ Add New Authorized Approver",
-            new_authorization_console_path(department_id: @department&.department_id || @managed_departments.first&.department_id),
+            new_authorization_console_path(department_id: @department_ids.first || @managed_departments.first&.department_id),
             class: "btn approve" %>
       <%= link_to "Export CSV",
-            authorization_console_index_path(format: :csv, department_id: @department_id,
+            authorization_console_index_path(format: :csv, department_id: @department_ids,
               employee_id: @employee_id_filter, service_type: @service_type_filter, location: @location_filter),
             class: "btn pdf", data: { turbo: false } %>
     </div>
-    
+
     <% if @groups_by_employee.any? %>
       <div class="approvers-list">
         <% @groups_by_employee.each do |employee_id, groups| %>
@@ -118,7 +112,7 @@
 
                   <div class="approval-actions">
                     <%= link_to "Edit",
-                          group_edit_authorization_console_index_path(ids: group[:ids], department_id: @department_id),
+                          group_edit_authorization_console_index_path(ids: group[:ids]),
                           class: "btn" %>
                     <button type="button"
                             class="btn deny"
