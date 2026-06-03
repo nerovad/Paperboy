@@ -30,62 +30,71 @@
       <%= link_to "+ Add New Authorized Approver",
             new_authorization_console_path(department_id: @department&.department_id || @managed_departments.first&.department_id),
             class: "btn approve" %>
+      <%= link_to "Export CSV",
+            authorization_console_index_path(format: :csv, department_id: @department_id),
+            class: "btn pdf", data: { turbo: false } %>
     </div>
     
-    <% if @approvers_by_employee.any? %>
+    <% if @groups_by_employee.any? %>
       <div class="approvers-list">
-        <% @approvers_by_employee.each do |employee_id, approvals| %>
+        <% @groups_by_employee.each do |employee_id, groups| %>
+          <% employee = groups.first[:record].employee %>
           <div class="approver-card">
             <div class="approver-header">
               <h3>
-                <%= approvals.first.employee&.first_name %> <%= approvals.first.employee&.last_name %>
+                <%= employee&.first_name %> <%= employee&.last_name %>
                 <span class="employee-id">(<%= employee_id %>)</span>
               </h3>
             </div>
-            
+
             <div class="approvals-list">
-              <% approvals.each do |approval| %>
+              <% groups.each do |group| %>
+                <% a = group[:record] %>
                 <div class="approval-item">
                   <div class="approval-details">
-                    <strong><%= approval.service_type_label %> (<%= approval.service_type %>)</strong>
-                    
-                    <% if approval.service_type == 'K' && approval.key_type.present? %>
+                    <strong>
+                      <%= group[:service_types].map { |s| "#{AuthorizedApprover::SERVICE_TYPES[s]} (#{s})" }.join(", ") %>
+                    </strong>
+
+                    <% if group[:key_types].any? %>
                       <div class="detail-row">
-                        <span class="label">Key Type:</span>
-                        <span class="value"><%= approval.key_type_label %></span>
+                        <span class="label">Key Types:</span>
+                        <span class="value"><%= group[:key_types].map { |k| AuthorizedApprover::KEY_TYPES[k] || k }.join(", ") %></span>
                       </div>
                     <% end %>
-                    
-                    <% if approval.span.present? %>
+
+                    <% if a.span.present? %>
                       <div class="detail-row">
                         <span class="label">Scope:</span>
-                        <span class="value"><%= approval.span_label %></span>
+                        <span class="value"><%= a.span_label %></span>
                       </div>
                     <% end %>
-                    
-                    <% if approval.budget_units.present? %>
+
+                    <% if a.budget_units.present? %>
                       <div class="detail-row">
                         <span class="label">Budget Units:</span>
-                        <span class="value"><%= approval.budget_units %></span>
+                        <span class="value"><%= a.budget_units %></span>
                       </div>
                     <% end %>
-                    
-                    <% if approval.locations.present? %>
+
+                    <% if a.locations.present? %>
                       <div class="detail-row">
                         <span class="label">Locations:</span>
-                        <span class="value"><%= Array(approval.locations).join(", ") %></span>
+                        <span class="value"><%= Array(a.locations).join(", ") %></span>
                       </div>
                     <% end %>
                   </div>
-                  
+
                   <div class="approval-actions">
-                    <%= link_to "Edit", edit_authorization_console_path(approval), class: "btn" %>
+                    <%= link_to "Edit",
+                          group_edit_authorization_console_index_path(ids: group[:ids], department_id: @department_id),
+                          class: "btn" %>
                     <button type="button"
                             class="btn deny"
                             data-action="click->confirm-modal#open"
-                            data-delete-path="<%= authorization_console_path(approval) %>"
+                            data-delete-path="<%= group_destroy_authorization_console_index_path(ids: group[:ids]) %>"
                             data-confirm-title="Remove Authorization"
-                            data-confirm-message="Are you sure you want to remove the authorization for <%= approval.service_type_label %> from <%= approvals.first.employee&.first_name %> <%= approvals.first.employee&.last_name %>?">
+                            data-confirm-message="Remove this authorization (<%= group[:service_types].join("/") %>) for <%= employee&.first_name %> <%= employee&.last_name %>?">
                       Remove
                     </button>
                   </div>

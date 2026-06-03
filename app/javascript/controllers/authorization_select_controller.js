@@ -16,7 +16,8 @@ export default class extends Controller {
       this.keyTypeWrapperTarget.style.display = hasKey ? "" : "none";
     }
     if (!hasKey && this.hasKeyTypeTarget) {
-      this.keyTypeTarget.value = "";
+      // clear any selected key types when 'K' is removed (multi-select)
+      Array.from(this.keyTypeTarget.options).forEach((o) => (o.selected = false));
     }
   }
 

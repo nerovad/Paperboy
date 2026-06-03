@@ -130,9 +130,12 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :authorization_console, only: [:index, :new, :create, :edit, :update, :destroy] do
+  resources :authorization_console, only: [:index, :new, :create] do
     collection do
       delete :destroy_all_for_employee
+      get    :group_edit
+      patch  :group_update
+      delete :group_destroy
     end
   end
 
