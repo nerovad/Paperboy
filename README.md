@@ -11,6 +11,8 @@ Rails 8.0.2
 Paperboy is a Ruby on Rails 8.x application for managing internal forms (e.g., Parking Lot Submissions, Probation Transfer Requests, Safety Reporting, etc.) with a modernized workflow.  
 It integrates with Microsoft SQL Server and uses Sidekiq for background jobs.
 
+For the product story / sales pitch, see [docs/PITCH.md](docs/PITCH.md).
+
 ---
 ## Dev deployment systemd - Only PUMA restart
 sudo systemctl restart paperboy-dev
