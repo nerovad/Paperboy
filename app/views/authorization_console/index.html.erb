@@ -60,6 +60,7 @@
             class: "btn pdf", data: { turbo: false } %>
     </div>
 
+    <div class="approvers-scroll">
     <% if @groups_by_employee.any? %>
       <div class="approvers-list">
         <% @groups_by_employee.each do |employee_id, groups| %>
@@ -135,6 +136,7 @@
         <p class="empty-state-hint">Click "+ Add New Authorized Approver" to get started.</p>
       </div>
     <% end %>
+    </div>
   <% else %>
     <div class="empty-state">
       <p>No departments assigned to manage.</p>

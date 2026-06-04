@@ -2,9 +2,25 @@
 @import "base/tokens";
 
 .authorization-console {
-  max-height: calc(100vh - 180px);
-  overflow-y: auto;
+  // Fixed-height flex column: filters + buttons stay pinned, list scrolls
+  // (same pattern as the inbox / submissions pages).
+  height: calc(100vh - 180px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   margin: 0 auto;
+
+  > .console-filters,
+  > .department-header {
+    flex-shrink: 0;
+  }
+
+  .approvers-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 20px;
+  }
 }
 
 /* Header section */
