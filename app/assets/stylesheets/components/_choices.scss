@@ -8,7 +8,8 @@
 
 /* Set width on the wrapper (match "Other" input patterns) */
 .form-group .choices,
-.impersonation-wrapper .choices {
+.impersonation-wrapper .choices,
+.console-filters .choices {
   position: relative;
   display: block;
   width: 100%;
@@ -19,7 +20,8 @@
 
 /* Inner fills the wrapper */
 .form-group .choices__inner,
-.impersonation-wrapper .choices__inner {
+.impersonation-wrapper .choices__inner,
+.console-filters .choices__inner {
   width: 100%;
   min-height: 44px;
   box-sizing: border-box;
@@ -28,7 +30,8 @@
 
 /* Dropdown matches wrapper width */
 .form-group .choices__list--dropdown,
-.impersonation-wrapper .choices__list--dropdown {
+.impersonation-wrapper .choices__list--dropdown,
+.console-filters .choices__list--dropdown {
   position: absolute;
   inset-inline: 0;
   width: 100%;
@@ -63,7 +66,8 @@
 /* Mobile: let selects go full width */
 @media (max-width: 768px) {
   .form-group .choices,
-  .impersonation-wrapper .choices {
+  .impersonation-wrapper .choices,
+  .console-filters .choices {
     width: 100%;
     max-width: 100%;
   }
