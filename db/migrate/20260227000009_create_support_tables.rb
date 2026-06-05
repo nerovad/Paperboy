@@ -14,7 +14,7 @@ class CreateSupportTables < ActiveRecord::Migration[8.0]
       t.string :department_id, null: false
       t.string :service_type, null: false
       t.string :key_type
-      t.boolean :all_budget_units, default: false, null: false
+      t.string :span
       t.text :budget_units
       t.text :locations
       t.string :authorized_by
