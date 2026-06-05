@@ -63,11 +63,11 @@
   </div>
 
   <div class="form-group">
-    <%= form.label :span, "Authorization Span" %>
-    <%= form.select :span,
-          options_for_select(AuthorizedApprover::SPANS.map { |k, v| ["#{k} = #{v}", k] }, @authorized_approver.span),
-          { prompt: "Select Span" },
-          class: "form-control" %>
+    <label class="permission-checkbox">
+      <%= form.check_box :all_budget_units %>
+      <span>All Budget Units</span>
+    </label>
+    <small class="help-text">Authorizes every budget unit in the department, including units added later</small>
   </div>
 
   <div class="form-group" data-controller="choices">
@@ -78,7 +78,7 @@
           multiple: true,
           class: "form-control",
           data: { choices_target: "select", placeholder: "Select budget unit(s)…" } %>
-    <small class="help-text">Leave blank to allow all budget units</small>
+    <small class="help-text">Ignored when "All Budget Units" is checked</small>
   </div>
 
   <div class="form-group" data-controller="choices">

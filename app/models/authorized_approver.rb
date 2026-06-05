@@ -8,7 +8,6 @@ class AuthorizedApprover < ApplicationRecord
   validates :department_id, presence: true
   validates :service_type, presence: true, inclusion: { in: %w[P E V C K] }
   validates :key_type, inclusion: { in: %w[1 2 3 4 5 6 7] }, if: -> { service_type == 'K' }
-  validates :span, inclusion: { in: %w[A B C D E] }, allow_blank: true
   validates :employee_id, uniqueness: {
     scope: [:department_id, :service_type, :key_type],
     message: "is already authorized for this service type in this department"
@@ -32,14 +31,6 @@ class AuthorizedApprover < ApplicationRecord
     '7' => 'File/Desk/Storage Cabinet Keys'
   }.freeze
   
-  SPANS = {
-    'A' => 'All Budget Units - All Locations',
-    'B' => 'Multiple Budget Units - All Locations',
-    'C' => 'Multiple Budget Units - Multiple Locations',
-    'D' => 'Single Budget Unit - Multiple Locations',
-    'E' => 'Single Budget Unit - Single Location'
-  }.freeze
-
   def employee
     Employee.find_by(employee_id: employee_id)
   end
@@ -56,37 +47,33 @@ class AuthorizedApprover < ApplicationRecord
     KEY_TYPES[key_type] || key_type
   end
   
-  def span_label
-    SPANS[span] || span
-  end
-  
   # Find approvers for a given department and service type
   def self.approvers_for(department_id:, service_type:)
     where(department_id: department_id, service_type: service_type).pluck(:employee_id).uniq
   end
 
   # Find approvers for a given department, service type, and budget unit.
-  # Span 'A' (All Budget Units) matches any unit. All other spans require
-  # the unit to appear in the approver's comma-separated budget_units list.
+  # all_budget_units matches any unit; otherwise the unit must appear in the
+  # approver's comma-separated budget_units list.
   def self.approver_for_unit(department_id:, service_type:, unit_id:)
     candidates = where(department_id: department_id, service_type: service_type)
     unit_str = unit_id.to_s
 
     candidates.select { |a|
-      a.span == 'A' || a.budget_units.to_s.split(',').map(&:strip).include?(unit_str)
+      a.all_budget_units? || a.budget_units.to_s.split(',').map(&:strip).include?(unit_str)
     }.map(&:employee_id).uniq
   end
 
   # Returns every unit_id this employee is authorized to approve for the given
-  # service type. Span 'A' expands to all units in the approver's department;
-  # other spans use the explicit budget_units list.
+  # service type. all_budget_units expands to all units in the approver's
+  # department; otherwise the explicit budget_units list is used.
   def self.authorized_unit_ids_for(employee_id:, service_type:)
     rows = where(employee_id: employee_id, service_type: service_type)
     return [] if rows.empty?
 
     unit_ids = Set.new
     rows.each do |a|
-      if a.span == 'A'
+      if a.all_budget_units?
         Unit.where(department_id: a.department_id).pluck(:unit_id).each { |u| unit_ids << u.to_s }
       else
         a.budget_units.to_s.split(',').map(&:strip).each { |u| unit_ids << u if u.present? }

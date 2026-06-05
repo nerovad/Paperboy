@@ -15,11 +15,12 @@ class AuthorizationConsoleController < ApplicationController
       .to_a
 
     # Budget Unit filter: keep approvers whose budget units overlap a selected
-    # department's units (or whose department matches when no units are set).
+    # department's units. all_budget_units rows (and incomplete rows with no
+    # units recorded) match via their department instead.
     if @department_ids.any?
       sel_unit_ids = Unit.where(department_id: @department_ids).pluck(:unit_id).map(&:to_s).to_set
       scoped = scoped.select do |a|
-        if a.budget_units.present?
+        if !a.all_budget_units? && a.budget_units.present?
           (a.budget_units.split(",").map(&:strip).to_set & sel_unit_ids).any?
         else
           @department_ids.include?(a.department_id)
@@ -100,7 +101,7 @@ class AuthorizationConsoleController < ApplicationController
   end
   
   # Edit a whole authorization group (all service/key-type rows that share the
-  # same employee/dept/span/budget/locations), identified by ids[].
+  # same employee/dept/budget/locations), identified by ids[].
   def group_edit
     records = scoped_group(params[:ids])
     return redirect_to(authorization_console_index_path, alert: "Authorization not found.") if records.empty?
@@ -108,7 +109,7 @@ class AuthorizationConsoleController < ApplicationController
     rep = records.first
     @authorized_approver = AuthorizedApprover.new(
       employee_id: rep.employee_id, department_id: rep.department_id,
-      span: rep.span, budget_units: rep.budget_units, locations: rep.locations
+      all_budget_units: rep.all_budget_units, budget_units: rep.budget_units, locations: rep.locations
     )
     @selected_service_types = records.map(&:service_type).uniq
     @selected_key_types     = records.map(&:key_type).compact.uniq
@@ -178,10 +179,10 @@ class AuthorizationConsoleController < ApplicationController
   private
 
   # Collapse per-(service_type, key_type) rows into one group per real
-  # authorization (same employee/dept/span/budget/locations) for display.
+  # authorization (same employee/dept/budget/locations) for display.
   def build_groups(approvers)
     approvers.group_by(&:employee_id).transform_values do |recs|
-      recs.group_by { |a| [a.department_id, a.span, a.budget_units, Array(a.locations).sort] }.values.map do |g|
+      recs.group_by { |a| [a.department_id, a.all_budget_units?, a.budget_units, Array(a.locations).sort] }.values.map do |g|
         { ids:           g.map(&:id),
           record:        g.first,
           service_types: g.map(&:service_type).uniq.sort_by { |s| SERVICE_ORDER.index(s) || 99 },
@@ -222,13 +223,13 @@ class AuthorizationConsoleController < ApplicationController
     depts = Department.where(department_id: approvers.map(&:department_id).uniq).index_by(&:department_id)
 
     # Collapse the per-service-type rows back into one line per real
-    # authorization (same employee/dept/span/budget/locations).
-    groups = approvers.group_by { |a| [a.employee_id, a.department_id, a.span, a.budget_units, Array(a.locations).sort] }
+    # authorization (same employee/dept/budget/locations).
+    groups = approvers.group_by { |a| [a.employee_id, a.department_id, a.all_budget_units?, a.budget_units, Array(a.locations).sort] }
 
     CSV.generate do |csv|
       csv << ["Employee ID", "Employee Name", "Department ID", "Department", "Service Types",
-              "Key Types", "Span", "Budget Units", "Locations", "Authorized By", "Created At"]
-      groups.each do |(emp_id, dept_id, span, budget, locations), rows|
+              "Key Types", "Budget Units", "Locations", "Authorized By", "Created At"]
+      groups.each do |(emp_id, dept_id, all_budget_units, budget, locations), rows|
         e = emps[emp_id.to_s]
         service_types = rows.map(&:service_type).uniq.sort_by { |s| SERVICE_ORDER.index(s) || 99 }
         key_types     = rows.map(&:key_type).compact.uniq.sort
@@ -238,8 +239,7 @@ class AuthorizationConsoleController < ApplicationController
                 depts[dept_id]&.long_name,
                 service_types.join(","),
                 key_types.join(","),
-                span,
-                excel_text(budget),
+                all_budget_units ? "ALL" : excel_text(budget),
                 locations.join(" | "),
                 rows.first.authorized_by,
                 rows.first.created_at&.strftime("%Y-%m-%d")]
@@ -319,7 +319,7 @@ class AuthorizationConsoleController < ApplicationController
       :department_id,
       :service_type,
       :key_type,
-      :span,
+      :all_budget_units,
       locations: [],
       budget_units: []
     )
@@ -327,6 +327,7 @@ class AuthorizationConsoleController < ApplicationController
     # locations is a JSON array column; budget_units stays a comma-joined string.
     raw[:locations]     = Array(raw[:locations]).reject(&:blank?)
     raw[:budget_units]  = Array(raw[:budget_units]).reject(&:blank?).join(",")
+    raw[:budget_units]  = "" if ActiveModel::Type::Boolean.new.cast(raw[:all_budget_units])
 
     raw
   end
@@ -335,7 +336,7 @@ class AuthorizationConsoleController < ApplicationController
     raw = params.require(:authorized_approver).permit(
       :employee_id,
       :department_id,
-      :span,
+      :all_budget_units,
       service_type: [],
       key_types: [],
       locations: [],
@@ -344,6 +345,7 @@ class AuthorizationConsoleController < ApplicationController
 
     raw[:locations]    = Array(raw[:locations]).reject(&:blank?)
     raw[:budget_units] = Array(raw[:budget_units]).reject(&:blank?).join(",")
+    raw[:budget_units] = "" if ActiveModel::Type::Boolean.new.cast(raw[:all_budget_units])
 
     raw
   end

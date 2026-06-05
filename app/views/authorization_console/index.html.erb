@@ -89,17 +89,10 @@
                       </div>
                     <% end %>
 
-                    <% if a.span.present? %>
-                      <div class="detail-row">
-                        <span class="label">Scope:</span>
-                        <span class="value"><%= a.span_label %></span>
-                      </div>
-                    <% end %>
-
-                    <% if a.budget_units.present? %>
+                    <% if a.all_budget_units? || a.budget_units.present? %>
                       <div class="detail-row">
                         <span class="label">Budget Units:</span>
-                        <span class="value"><%= a.budget_units %></span>
+                        <span class="value"><%= a.all_budget_units? ? "All" : a.budget_units %></span>
                       </div>
                     <% end %>
 

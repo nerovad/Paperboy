@@ -81,7 +81,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_28_000001) do
     t.string "department_id", null: false
     t.string "service_type", null: false
     t.string "key_type"
-    t.string "span"
+    t.boolean "all_budget_units", default: false, null: false
     t.text "budget_units"
     t.text "locations"
     t.string "authorized_by"
