@@ -81,12 +81,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_05_000001) do
     t.string "department_id", null: false
     t.string "service_type", null: false
     t.string "key_type"
-    t.boolean "all_budget_units", default: false, null: false
     t.text "budget_units"
     t.text "locations"
     t.string "authorized_by"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "all_budget_units", default: false, null: false
   end
 
   create_table "bike_locker_forms", force: :cascade do |t|
