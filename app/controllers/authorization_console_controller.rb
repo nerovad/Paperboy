@@ -244,18 +244,12 @@ class AuthorizationConsoleController < ApplicationController
                 depts[dept_id]&.long_name,
                 service_types.join(","),
                 key_types.join(","),
-                all_budget_units ? "ALL" : excel_text(budget),
+                all_budget_units ? "ALL" : budget.to_s.split(",").map(&:strip).reject(&:blank?).join(" | "),
                 all_locations ? "ALL" : locations.join(" | "),
                 rows.first.authorized_by,
                 rows.first.created_at&.strftime("%Y-%m-%d")]
       end
     end
-  end
-
-  # Wrap a value as an Excel text formula (="0123") so Excel doesn't strip
-  # leading zeros when it opens the CSV. Blank values pass through untouched.
-  def excel_text(value)
-    value.present? ? %(="#{value}") : value
   end
 
   def set_managed_departments
