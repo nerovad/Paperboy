@@ -198,7 +198,11 @@ class AuthorizationConsoleController < ApplicationController
     service_types.flat_map do |st|
       kts = st == "K" ? (key_types.presence || [nil]) : [nil]
       kts.map do |kt|
-        a = AuthorizedApprover.new(shared.merge(service_type: st, key_type: kt))
+        attrs = shared.merge(service_type: st, key_type: kt)
+        # Locations/buildings apply to Facility Keys only — a mixed P+K
+        # submission must not stamp the key's locations onto the parking row.
+        attrs = attrs.merge(locations: [], all_locations: false) unless st == "K"
+        a = AuthorizedApprover.new(attrs)
         a.authorized_by = authorized_by
         a
       end
@@ -351,12 +355,6 @@ class AuthorizationConsoleController < ApplicationController
     raw[:budget_units] = Array(raw[:budget_units]).reject(&:blank?).join(",")
     raw[:budget_units] = "" if truthy(raw[:all_budget_units])
     raw[:locations]    = [] if truthy(raw[:all_locations])
-
-    # Locations apply to Facility Keys (K) only; drop them when K isn't selected.
-    unless Array(raw[:service_type]).include?("K")
-      raw[:locations]     = []
-      raw[:all_locations] = false
-    end
 
     raw
   end
