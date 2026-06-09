@@ -2,22 +2,43 @@
 import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-  static targets = ["serviceType", "keyTypeWrapper", "keyType"];
+  static targets = [
+    "serviceType",
+    "keyTypeWrapper",
+    "keyType",
+    "locationsWrapper",
+    "locations",
+    "allLocations",
+  ];
 
   connect() {
     this.toggleFields();
   }
 
+  // Key Type and Building/Locations only apply to Facility Keys (service
+  // type 'K'); show them only when 'K' is among the selected service types.
   toggleFields() {
-    const values = this.selectedServiceTypes();
-    const hasKey = values.includes("K");
+    const hasKey = this.selectedServiceTypes().includes("K");
 
     if (this.hasKeyTypeWrapperTarget) {
       this.keyTypeWrapperTarget.style.display = hasKey ? "" : "none";
     }
-    if (!hasKey && this.hasKeyTypeTarget) {
-      // clear any selected key types when 'K' is removed (multi-select)
-      Array.from(this.keyTypeTarget.options).forEach((o) => (o.selected = false));
+    if (this.hasLocationsWrapperTarget) {
+      this.locationsWrapperTarget.style.display = hasKey ? "" : "none";
+    }
+
+    if (!hasKey) {
+      // Clear key/location selections when 'K' is removed so hidden fields
+      // don't submit stale values.
+      if (this.hasKeyTypeTarget) {
+        Array.from(this.keyTypeTarget.options).forEach((o) => (o.selected = false));
+      }
+      if (this.hasLocationsTarget) {
+        Array.from(this.locationsTarget.options).forEach((o) => (o.selected = false));
+      }
+      if (this.hasAllLocationsTarget) {
+        this.allLocationsTarget.checked = false;
+      }
     }
   }
 

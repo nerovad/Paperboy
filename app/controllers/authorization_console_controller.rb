@@ -109,7 +109,8 @@ class AuthorizationConsoleController < ApplicationController
     rep = records.first
     @authorized_approver = AuthorizedApprover.new(
       employee_id: rep.employee_id, department_id: rep.department_id,
-      all_budget_units: rep.all_budget_units, budget_units: rep.budget_units, locations: rep.locations
+      all_budget_units: rep.all_budget_units, budget_units: rep.budget_units,
+      all_locations: rep.all_locations, locations: rep.locations
     )
     @selected_service_types = records.map(&:service_type).uniq
     @selected_key_types     = records.map(&:key_type).compact.uniq
@@ -182,7 +183,7 @@ class AuthorizationConsoleController < ApplicationController
   # authorization (same employee/dept/budget/locations) for display.
   def build_groups(approvers)
     approvers.group_by(&:employee_id).transform_values do |recs|
-      recs.group_by { |a| [a.department_id, a.all_budget_units?, a.budget_units, Array(a.locations).sort] }.values.map do |g|
+      recs.group_by { |a| [a.department_id, a.all_budget_units?, a.budget_units, a.all_locations?, Array(a.locations).sort] }.values.map do |g|
         { ids:           g.map(&:id),
           record:        g.first,
           service_types: g.map(&:service_type).uniq.sort_by { |s| SERVICE_ORDER.index(s) || 99 },
@@ -224,12 +225,12 @@ class AuthorizationConsoleController < ApplicationController
 
     # Collapse the per-service-type rows back into one line per real
     # authorization (same employee/dept/budget/locations).
-    groups = approvers.group_by { |a| [a.employee_id, a.department_id, a.all_budget_units?, a.budget_units, Array(a.locations).sort] }
+    groups = approvers.group_by { |a| [a.employee_id, a.department_id, a.all_budget_units?, a.budget_units, a.all_locations?, Array(a.locations).sort] }
 
     CSV.generate do |csv|
       csv << ["Employee ID", "Employee Name", "Department ID", "Department", "Service Types",
               "Key Types", "Budget Units", "Locations", "Authorized By", "Created At"]
-      groups.each do |(emp_id, dept_id, all_budget_units, budget, locations), rows|
+      groups.each do |(emp_id, dept_id, all_budget_units, budget, all_locations, locations), rows|
         e = emps[emp_id.to_s]
         service_types = rows.map(&:service_type).uniq.sort_by { |s| SERVICE_ORDER.index(s) || 99 }
         key_types     = rows.map(&:key_type).compact.uniq.sort
@@ -240,7 +241,7 @@ class AuthorizationConsoleController < ApplicationController
                 service_types.join(","),
                 key_types.join(","),
                 all_budget_units ? "ALL" : excel_text(budget),
-                locations.join(" | "),
+                all_locations ? "ALL" : locations.join(" | "),
                 rows.first.authorized_by,
                 rows.first.created_at&.strftime("%Y-%m-%d")]
       end
@@ -320,6 +321,7 @@ class AuthorizationConsoleController < ApplicationController
       :service_type,
       :key_type,
       :all_budget_units,
+      :all_locations,
       locations: [],
       budget_units: []
     )
@@ -327,7 +329,8 @@ class AuthorizationConsoleController < ApplicationController
     # locations is a JSON array column; budget_units stays a comma-joined string.
     raw[:locations]     = Array(raw[:locations]).reject(&:blank?)
     raw[:budget_units]  = Array(raw[:budget_units]).reject(&:blank?).join(",")
-    raw[:budget_units]  = "" if ActiveModel::Type::Boolean.new.cast(raw[:all_budget_units])
+    raw[:budget_units]  = "" if truthy(raw[:all_budget_units])
+    raw[:locations]     = [] if truthy(raw[:all_locations])
 
     raw
   end
@@ -337,6 +340,7 @@ class AuthorizationConsoleController < ApplicationController
       :employee_id,
       :department_id,
       :all_budget_units,
+      :all_locations,
       service_type: [],
       key_types: [],
       locations: [],
@@ -345,9 +349,20 @@ class AuthorizationConsoleController < ApplicationController
 
     raw[:locations]    = Array(raw[:locations]).reject(&:blank?)
     raw[:budget_units] = Array(raw[:budget_units]).reject(&:blank?).join(",")
-    raw[:budget_units] = "" if ActiveModel::Type::Boolean.new.cast(raw[:all_budget_units])
+    raw[:budget_units] = "" if truthy(raw[:all_budget_units])
+    raw[:locations]    = [] if truthy(raw[:all_locations])
+
+    # Locations apply to Facility Keys (K) only; drop them when K isn't selected.
+    unless Array(raw[:service_type]).include?("K")
+      raw[:locations]     = []
+      raw[:all_locations] = false
+    end
 
     raw
+  end
+
+  def truthy(value)
+    ActiveModel::Type::Boolean.new.cast(value)
   end
 
   def rerender_new

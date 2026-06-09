@@ -26,7 +26,7 @@
           data: { choices_target: "select", placeholder: "Search for an employee..." } %>
   </div>
 
-  <!-- Service types + key types share the toggle controller -->
+  <!-- Service / key / location fields share the conditional-toggle controller -->
   <div data-controller="authorization-select">
     <div class="form-group" data-controller="choices">
       <%= form.label :service_type, "Service Type" %>
@@ -60,36 +60,47 @@
             } %>
       <small class="help-text">Applies to Facility Keys &amp; Security Access (K)</small>
     </div>
-  </div>
 
-  <div class="form-group">
-    <label class="permission-checkbox">
-      <%= form.check_box :all_budget_units %>
-      <span>All Budget Units</span>
-    </label>
-    <small class="help-text">Authorizes every budget unit in the department, including units added later</small>
-  </div>
+    <div class="form-group">
+      <label class="permission-checkbox">
+        <%= form.check_box :all_budget_units %>
+        <span>All Budget Units</span>
+      </label>
+      <small class="help-text">Authorizes every budget unit in the department, including units added later</small>
+    </div>
 
-  <div class="form-group" data-controller="choices">
-    <%= form.label :budget_units, "Budget Units" %>
-    <%= form.select :budget_units,
-          options_for_select((@budget_unit_options || []), @authorized_approver.budget_units&.split(",")),
-          {},
-          multiple: true,
-          class: "form-control",
-          data: { choices_target: "select", placeholder: "Select budget unit(s)…" } %>
-    <small class="help-text">Ignored when "All Budget Units" is checked</small>
-  </div>
+    <div class="form-group" data-controller="choices">
+      <%= form.label :budget_units, "Budget Units" %>
+      <%= form.select :budget_units,
+            options_for_select((@budget_unit_options || []), @authorized_approver.budget_units&.split(",")),
+            {},
+            multiple: true,
+            class: "form-control",
+            data: { choices_target: "select", placeholder: "Select budget unit(s)…" } %>
+      <small class="help-text">Ignored when "All Budget Units" is checked</small>
+    </div>
 
-  <div class="form-group" data-controller="choices">
-    <%= form.label :locations, "Locations" %>
-    <%= form.select :locations,
-          options_for_select((@location_options || []), @authorized_approver.locations),
-          {},
-          multiple: true,
-          class: "form-control",
-          data: { choices_target: "select", placeholder: "Select location(s)…" } %>
-    <small class="help-text">Leave blank to allow all locations</small>
+    <!-- Locations apply to Facility Keys only; toggled with Key Types -->
+    <div data-authorization-select-target="locationsWrapper" style="display:none;">
+      <div class="form-group">
+        <label class="permission-checkbox">
+          <%= form.check_box :all_locations, data: { authorization_select_target: "allLocations" } %>
+          <span>All Locations</span>
+        </label>
+        <small class="help-text">Authorizes every building/location, including ones added later</small>
+      </div>
+
+      <div class="form-group" data-controller="choices">
+        <%= form.label :locations, "Buildings / Locations" %>
+        <%= form.select :locations,
+              options_for_select((@location_options || []), @authorized_approver.locations),
+              {},
+              multiple: true,
+              class: "form-control",
+              data: { authorization_select_target: "locations", choices_target: "select", placeholder: "Select location(s)…" } %>
+        <small class="help-text">Ignored when "All Locations" is checked</small>
+      </div>
+    </div>
   </div>
 
   <div class="form-actions">

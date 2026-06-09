@@ -96,10 +96,10 @@
                       </div>
                     <% end %>
 
-                    <% if a.locations.present? %>
+                    <% if a.all_locations? || a.locations.present? %>
                       <div class="detail-row">
                         <span class="label">Locations:</span>
-                        <span class="value"><%= Array(a.locations).join(", ") %></span>
+                        <span class="value"><%= a.all_locations? ? "All" : Array(a.locations).join(", ") %></span>
                       </div>
                     <% end %>
                   </div>
