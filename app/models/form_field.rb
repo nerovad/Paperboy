@@ -61,8 +61,37 @@ class FormField < ApplicationRecord
         'last_name'  => 'Last Name',
         'email'      => 'Email'
       }
+    },
+    # Categorized source: one table backs many dropdowns, selected by category
+    # rather than by column. The dropdown's options are the value-column rows
+    # for the chosen category, ordered by `order`.
+    'injury_classifications' => {
+      model: 'InjuryClassificationView',
+      label: 'Injury Classifications',
+      kind: :categorized,
+      order: ':sort_order',
+      category_id_column: 'injury_category_id',
+      category_label_column: 'injury_category_description',
+      value_column: 'injury_classification_description'
     }
   }.freeze
+
+  # True when the named data source picks an option-list by category instead of
+  # by column (drives the form-builder UI and query generation).
+  def self.categorized_source?(key)
+    DATA_SOURCES.dig(key, :kind) == :categorized
+  end
+
+  # Distinct categories ([label, id] pairs) for a categorized data source.
+  def self.category_options_for(key)
+    config = DATA_SOURCES[key]
+    return [] unless config && config[:kind] == :categorized
+
+    config[:model].constantize
+      .order(config[:category_id_column])
+      .pluck(config[:category_label_column], config[:category_id_column])
+      .uniq
+  end
 
   validates :field_name, presence: true
   validates :field_type, inclusion: { in: FIELD_TYPES }
@@ -181,6 +210,14 @@ class FormField < ApplicationRecord
     options&.dig('data_source_agency')
   end
 
+  def data_source_category
+    options&.dig('data_source_category')
+  end
+
+  def categorized_data_source?
+    data_source? && self.class.categorized_source?(data_source_table)
+  end
+
   # Returns Ruby code string for use in generated ERB views
   def data_source_query_code
     return nil unless data_source?
@@ -188,6 +225,20 @@ class FormField < ApplicationRecord
     config = DATA_SOURCES[data_source_table]
     return nil unless config
 
+    model = config[:model]
+    order = config[:order]
+
+    # Categorized source: filter the shared table to the chosen category and
+    # pluck the value column (stored value == displayed label).
+    if config[:kind] == :categorized
+      return nil unless data_source_category.present?
+      "#{model}.where(#{config[:category_id_column]}: #{data_source_category.to_i}).order(#{order}).pluck(:#{config[:value_column]}).uniq"
+    else
+      column_data_source_query_code(config)
+    end
+  end
+
+  def column_data_source_query_code(config)
     col = data_source_column
     model = config[:model]
     order = config[:order]
