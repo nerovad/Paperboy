@@ -971,35 +971,139 @@ export default class extends Controller {
     this.refreshConditionalDropdowns()
   }
 
-  // Toggle between manual values and database table for dropdown source
+  // Toggle between manual values, a curated database table, and a custom lookup
   handleDropdownSourceChange(event) {
     const fieldItem = event.target.closest('.field-item')
     const source = event.target.value
     const manualSection = fieldItem.querySelector('.dropdown-manual-values')
     const dataSourceSection = fieldItem.querySelector('.dropdown-data-source')
+    const customSection = fieldItem.querySelector('.dropdown-custom-source')
 
     // Uncheck other radios in this field item (since they share no name attribute)
     fieldItem.querySelectorAll('.dropdown-source-radio').forEach(radio => {
       radio.checked = (radio === event.target)
     })
 
-    if (source === 'database') {
-      manualSection.style.display = 'none'
-      dataSourceSection.style.display = 'block'
-    } else {
-      manualSection.style.display = 'block'
-      dataSourceSection.style.display = 'none'
-      // Clear data source selects when switching back to manual
+    manualSection.style.display = source === 'manual' ? 'block' : 'none'
+    dataSourceSection.style.display = source === 'database' ? 'block' : 'none'
+    if (customSection) customSection.style.display = source === 'custom' ? 'block' : 'none'
+
+    // Clear the curated data-source selects unless that's the active mode
+    if (source !== 'database') {
       const tableSelect = fieldItem.querySelector('.data-source-table-select')
       const columnSelect = fieldItem.querySelector('.data-source-column-select')
       const categorySelect = fieldItem.querySelector('.data-source-category-select')
       if (tableSelect) tableSelect.value = ''
-      if (columnSelect) {
-        columnSelect.innerHTML = '<option value="">Select column...</option>'
-      }
-      if (categorySelect) {
-        categorySelect.innerHTML = '<option value="">Select category...</option>'
-      }
+      if (columnSelect) columnSelect.innerHTML = '<option value="">Select column...</option>'
+      if (categorySelect) categorySelect.innerHTML = '<option value="">Select category...</option>'
+    }
+
+    // Clear the custom-lookup selects unless that's the active mode
+    if (source !== 'custom') {
+      this.resetCustomLookup(fieldItem)
+    }
+  }
+
+  resetCustomLookup(fieldItem) {
+    const db = fieldItem.querySelector('.custom-database-select')
+    if (db) db.value = ''
+    const resets = {
+      '.custom-table-select': 'Select table...',
+      '.custom-column-select': 'Select column...',
+      '.custom-category-column-select': '— none —',
+      '.custom-category-value-select': 'Select category...',
+      '.custom-order-column-select': '— default (by value) —'
+    }
+    for (const [sel, label] of Object.entries(resets)) {
+      const el = fieldItem.querySelector(sel)
+      if (el) el.innerHTML = `<option value="">${label}</option>`
+    }
+    const catWrapper = fieldItem.querySelector('.custom-category-value-wrapper')
+    if (catWrapper) catWrapper.style.display = 'none'
+  }
+
+  // Database chosen -> load that database's tables
+  async handleCustomDatabaseChange(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const database = event.target.value
+    // Reset everything downstream of the database
+    const tableSelect = fieldItem.querySelector('.custom-table-select')
+    tableSelect.innerHTML = '<option value="">Select table...</option>'
+    this.clearColumnSelects(fieldItem)
+    if (!database) return
+    const tables = await this.fetchJson(`/lookups/tables?database=${encodeURIComponent(database)}`)
+    this.fillSelect(tableSelect, tables)
+  }
+
+  // Table chosen -> load its columns into the column / category / order selects
+  async handleCustomTableChange(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const database = fieldItem.querySelector('.custom-database-select')?.value
+    const table = event.target.value
+    this.clearColumnSelects(fieldItem)
+    if (!database || !table) return
+    const columns = await this.fetchJson(
+      `/lookups/columns?database=${encodeURIComponent(database)}&table=${encodeURIComponent(table)}`
+    )
+    this.fillSelect(fieldItem.querySelector('.custom-column-select'), columns)
+    this.fillSelect(fieldItem.querySelector('.custom-category-column-select'), columns)
+    this.fillSelect(fieldItem.querySelector('.custom-order-column-select'), columns)
+  }
+
+  // Category column chosen -> load its distinct values (or hide the value select)
+  async handleCustomCategoryColumnChange(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const database = fieldItem.querySelector('.custom-database-select')?.value
+    const table = fieldItem.querySelector('.custom-table-select')?.value
+    const column = event.target.value
+    const wrapper = fieldItem.querySelector('.custom-category-value-wrapper')
+    const valueSelect = fieldItem.querySelector('.custom-category-value-select')
+    valueSelect.innerHTML = '<option value="">Select category...</option>'
+    if (!column) {
+      if (wrapper) wrapper.style.display = 'none'
+      return
+    }
+    if (wrapper) wrapper.style.display = 'block'
+    if (!database || !table) return
+    const values = await this.fetchJson(
+      `/lookups/category_values?database=${encodeURIComponent(database)}&table=${encodeURIComponent(table)}&column=${encodeURIComponent(column)}`
+    )
+    this.fillSelect(valueSelect, values)
+  }
+
+  clearColumnSelects(fieldItem) {
+    const map = {
+      '.custom-column-select': 'Select column...',
+      '.custom-category-column-select': '— none —',
+      '.custom-category-value-select': 'Select category...',
+      '.custom-order-column-select': '— default (by value) —'
+    }
+    for (const [sel, label] of Object.entries(map)) {
+      const el = fieldItem.querySelector(sel)
+      if (el) el.innerHTML = `<option value="">${label}</option>`
+    }
+    const wrapper = fieldItem.querySelector('.custom-category-value-wrapper')
+    if (wrapper) wrapper.style.display = 'none'
+  }
+
+  // Append string options to a select, preserving its leading placeholder
+  fillSelect(select, values) {
+    if (!select || !Array.isArray(values)) return
+    values.forEach(v => {
+      const option = document.createElement('option')
+      option.value = v
+      option.textContent = v
+      select.appendChild(option)
+    })
+  }
+
+  async fetchJson(url) {
+    try {
+      const response = await fetch(url)
+      return await response.json()
+    } catch (e) {
+      console.error(`Error fetching ${url}:`, e)
+      return []
     }
   }
 

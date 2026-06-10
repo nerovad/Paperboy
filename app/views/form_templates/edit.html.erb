@@ -720,7 +720,7 @@
                         <label style="margin: 0; font-size: 0.85em; color: #495057;">Source:</label>
                         <label style="margin: 0; font-size: 0.85em; cursor: pointer;">
                           <input type="radio" class="dropdown-source-radio" value="manual"
-                                 <%= 'checked' unless field.data_source? %>
+                                 <%= 'checked' unless field.data_source? || field.custom_lookup? %>
                                  data-action="change->form-builder#handleDropdownSourceChange"
                                  style="margin-right: 4px;">
                           Manual Values
@@ -732,9 +732,16 @@
                                  style="margin-right: 4px;">
                           Database Table
                         </label>
+                        <label style="margin: 0; font-size: 0.85em; cursor: pointer;">
+                          <input type="radio" class="dropdown-source-radio" value="custom"
+                                 <%= 'checked' if field.custom_lookup? %>
+                                 data-action="change->form-builder#handleDropdownSourceChange"
+                                 style="margin-right: 4px;">
+                          Custom (any table)
+                        </label>
                       </div>
 
-                      <div class="dropdown-manual-values" style="<%= 'display: none;' if field.data_source? %>">
+                      <div class="dropdown-manual-values" style="<%= 'display: none;' if field.data_source? || field.custom_lookup? %>">
                         <label style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
                         <input type="text"
                                name="fields[][dropdown_values]"
@@ -795,6 +802,76 @@
                               <option value="<%= agency.agency_id %>" <%= 'selected' if field.options&.dig('data_source_agency') == agency.agency_id.to_s %>><%= agency.long_name %></option>
                             <% end %>
                           </select>
+                        </div>
+                      </div>
+
+                      <% custom_cfg = field.custom_lookup_config || {} %>
+                      <div class="dropdown-custom-source" style="<%= 'display: none;' unless field.custom_lookup? %>">
+                        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                          <div style="flex: 1; min-width: 130px;">
+                            <label style="font-size: 0.9em; color: #495057;">Database:</label>
+                            <select name="fields[][custom_database]"
+                                    class="form-control form-control-sm custom-database-select"
+                                    data-action="change->form-builder#handleCustomDatabaseChange">
+                              <option value="">Select database...</option>
+                              <option value="paperboy" <%= 'selected' if custom_cfg['database'] == 'paperboy' %>>Paperboy</option>
+                              <option value="gsabss" <%= 'selected' if custom_cfg['database'] == 'gsabss' %>>GSABSS</option>
+                            </select>
+                          </div>
+                          <div style="flex: 1; min-width: 130px;">
+                            <label style="font-size: 0.9em; color: #495057;">Table:</label>
+                            <select name="fields[][custom_table]"
+                                    class="form-control form-control-sm custom-table-select"
+                                    data-action="change->form-builder#handleCustomTableChange">
+                              <option value="">Select table...</option>
+                              <% if custom_cfg['table'].present? %>
+                                <option value="<%= custom_cfg['table'] %>" selected><%= custom_cfg['table'] %></option>
+                              <% end %>
+                            </select>
+                          </div>
+                          <div style="flex: 1; min-width: 130px;">
+                            <label style="font-size: 0.9em; color: #495057;">Column (values):</label>
+                            <select name="fields[][custom_column]"
+                                    class="form-control form-control-sm custom-column-select">
+                              <option value="">Select column...</option>
+                              <% if custom_cfg['column'].present? %>
+                                <option value="<%= custom_cfg['column'] %>" selected><%= custom_cfg['column'] %></option>
+                              <% end %>
+                            </select>
+                          </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 8px;">
+                          <div style="flex: 1; min-width: 130px;">
+                            <label style="font-size: 0.9em; color: #495057;">Category Column (optional):</label>
+                            <select name="fields[][custom_category_column]"
+                                    class="form-control form-control-sm custom-category-column-select"
+                                    data-action="change->form-builder#handleCustomCategoryColumnChange">
+                              <option value="">— none —</option>
+                              <% if custom_cfg['category_column'].present? %>
+                                <option value="<%= custom_cfg['category_column'] %>" selected><%= custom_cfg['category_column'] %></option>
+                              <% end %>
+                            </select>
+                          </div>
+                          <div class="custom-category-value-wrapper" style="flex: 1; min-width: 130px; <%= 'display: none;' if custom_cfg['category_column'].blank? %>">
+                            <label style="font-size: 0.9em; color: #495057;">Category:</label>
+                            <select name="fields[][custom_category_value]"
+                                    class="form-control form-control-sm custom-category-value-select">
+                              <option value="">Select category...</option>
+                              <% if custom_cfg['category_value'].present? %>
+                                <option value="<%= custom_cfg['category_value'] %>" selected><%= custom_cfg['category_value'] %></option>
+                              <% end %>
+                            </select>
+                          </div>
+                          <div style="flex: 1; min-width: 130px;">
+                            <label style="font-size: 0.9em; color: #495057;">Order by (optional):</label>
+                            <select name="fields[][custom_order_column]"
+                                    class="form-control form-control-sm custom-order-column-select">
+                              <option value="">— default (by value) —</option>
+                              <% if custom_cfg['order_column'].present? %>
+                                <option value="<%= custom_cfg['order_column'] %>" selected><%= custom_cfg['order_column'] %></option>
+                              <% end %>
+                            </select>
+                          </div>
                         </div>
                       </div>
                     </div>
