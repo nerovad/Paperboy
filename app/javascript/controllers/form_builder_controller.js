@@ -992,21 +992,37 @@ export default class extends Controller {
       // Clear data source selects when switching back to manual
       const tableSelect = fieldItem.querySelector('.data-source-table-select')
       const columnSelect = fieldItem.querySelector('.data-source-column-select')
+      const categorySelect = fieldItem.querySelector('.data-source-category-select')
       if (tableSelect) tableSelect.value = ''
       if (columnSelect) {
         columnSelect.innerHTML = '<option value="">Select column...</option>'
       }
+      if (categorySelect) {
+        categorySelect.innerHTML = '<option value="">Select category...</option>'
+      }
     }
   }
 
-  // Populate column dropdown when a data source table is selected
+  // Populate column (or category) dropdown when a data source table is selected
   handleDataSourceTableChange(event) {
     const fieldItem = event.target.closest('.field-item')
+    const columnWrapper = fieldItem.querySelector('.data-source-column-wrapper')
+    const categoryWrapper = fieldItem.querySelector('.data-source-category-wrapper')
     const columnSelect = fieldItem.querySelector('.data-source-column-select')
+    const categorySelect = fieldItem.querySelector('.data-source-category-select')
     const agencyOption = fieldItem.querySelector('.data-source-agency-option')
     const selectedOption = event.target.selectedOptions[0]
+    const isCategorized = selectedOption?.dataset.categorized === 'true'
 
     columnSelect.innerHTML = '<option value="">Select column...</option>'
+
+    // Categorized sources pick a category instead of a column; swap the selects
+    if (columnWrapper) columnWrapper.style.display = isCategorized ? 'none' : 'block'
+    if (categoryWrapper) categoryWrapper.style.display = isCategorized ? 'block' : 'none'
+    if (categorySelect) {
+      categorySelect.innerHTML = '<option value="">Select category...</option>'
+      if (isCategorized) this.populateCategorySelect(categorySelect, selectedOption.value)
+    }
 
     // Show/hide the Agency filter dropdown (only for employees)
     if (agencyOption) {
@@ -1020,7 +1036,7 @@ export default class extends Controller {
       }
     }
 
-    if (!selectedOption || !selectedOption.value) return
+    if (isCategorized || !selectedOption || !selectedOption.value) return
 
     try {
       const columns = JSON.parse(selectedOption.dataset.columns)
@@ -1048,6 +1064,22 @@ export default class extends Controller {
       })
     } catch (e) {
       console.error('Error loading agencies:', e)
+    }
+  }
+
+  async populateCategorySelect(select, source) {
+    if (!select) return
+    try {
+      const response = await fetch(`/lookups/categories?source=${encodeURIComponent(source)}`)
+      const categories = await response.json()
+      categories.forEach(([name, id]) => {
+        const option = document.createElement('option')
+        option.value = id
+        option.textContent = name
+        select.appendChild(option)
+      })
+    } catch (e) {
+      console.error('Error loading categories:', e)
     }
   }
 

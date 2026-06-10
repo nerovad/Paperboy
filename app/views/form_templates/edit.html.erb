@@ -744,6 +744,7 @@
                                data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
                       </div>
 
+                      <% categorized = field.categorized_data_source? %>
                       <div class="dropdown-data-source" style="<%= 'display: none;' unless field.data_source? %>">
                         <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
                           <div style="flex: 1; min-width: 150px;">
@@ -753,19 +754,33 @@
                                     data-action="change->form-builder#handleDataSourceTableChange">
                               <option value="">Select table...</option>
                               <% FormField::DATA_SOURCES.each do |key, config| %>
-                                <option value="<%= key %>" data-columns="<%= config[:columns].to_json %>"
+                                <option value="<%= key %>"
+                                        data-columns="<%= (config[:columns] || {}).to_json %>"
+                                        data-categorized="<%= config[:kind] == :categorized %>"
                                         <%= 'selected' if field.data_source_table == key %>><%= config[:label] %></option>
                               <% end %>
                             </select>
                           </div>
-                          <div style="flex: 1; min-width: 150px;">
+                          <div class="data-source-column-wrapper" style="flex: 1; min-width: 150px; <%= 'display: none;' if categorized %>">
                             <label style="font-size: 0.9em; color: #495057;">Column:</label>
                             <select name="fields[][data_source_column]"
                                     class="form-control form-control-sm data-source-column-select">
                               <option value="">Select column...</option>
                               <% if field.data_source? && FormField::DATA_SOURCES[field.data_source_table] %>
-                                <% FormField::DATA_SOURCES[field.data_source_table][:columns].each do |col_key, col_label| %>
+                                <% (FormField::DATA_SOURCES[field.data_source_table][:columns] || {}).each do |col_key, col_label| %>
                                   <option value="<%= col_key %>" <%= 'selected' if field.data_source_column == col_key %>><%= col_label %></option>
+                                <% end %>
+                              <% end %>
+                            </select>
+                          </div>
+                          <div class="data-source-category-wrapper" style="flex: 1; min-width: 150px; <%= 'display: none;' unless categorized %>">
+                            <label style="font-size: 0.9em; color: #495057;">Category:</label>
+                            <select name="fields[][data_source_category]"
+                                    class="form-control form-control-sm data-source-category-select">
+                              <option value="">Select category...</option>
+                              <% if categorized %>
+                                <% FormField.category_options_for(field.data_source_table).each do |cat_label, cat_id| %>
+                                  <option value="<%= cat_id %>" <%= 'selected' if field.data_source_category.to_s == cat_id.to_s %>><%= cat_label %></option>
                                 <% end %>
                               <% end %>
                             </select>
