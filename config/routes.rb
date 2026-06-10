@@ -270,6 +270,9 @@ Rails.application.routes.draw do
   get "/lookups/units", to: "lookups#units"
   get "/lookups/employees", to: "lookups#employees"
   get "/lookups/categories", to: "lookups#categories"
+  get "/lookups/tables", to: "lookups#tables"
+  get "/lookups/columns", to: "lookups#columns"
+  get "/lookups/category_values", to: "lookups#category_values"
 
   # NHTSA vehicle lookup proxy (CSP blocks direct browser fetch)
   get "/api/nhtsa/makes", to: "api/nhtsa#makes"

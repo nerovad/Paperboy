@@ -82,4 +82,38 @@ class LookupsController < ApplicationController
 
     render json: FormField.category_options_for(params[:source])
   end
+
+  # --- Generic ("custom") lookup builder endpoints ---------------------------
+  # Schema introspection for the form builder's custom data source. database is
+  # a logical name (paperboy/gsabss); names are validated and quoted before SQL.
+
+  def tables
+    conn = FormLookup.connection_for(params[:database])
+    return render(json: []) unless conn
+
+    names = conn.tables
+    names += conn.views if conn.respond_to?(:views)
+    render json: names.uniq.sort
+  end
+
+  def columns
+    conn = FormLookup.connection_for(params[:database])
+    return render(json: []) unless conn && FormLookup.table_exists_in?(conn, params[:table])
+
+    render json: conn.columns(params[:table]).map(&:name)
+  end
+
+  def category_values
+    conn = FormLookup.connection_for(params[:database])
+    table = params[:table]
+    column = params[:column]
+    return render(json: []) unless conn && FormLookup.table_exists_in?(conn, table)
+    return render(json: []) unless conn.columns(table).map(&:name).include?(column)
+
+    qt = conn.quote_table_name(table)
+    qc = conn.quote_column_name(column)
+    values = conn.exec_query("SELECT DISTINCT #{qc} AS val FROM #{qt} ORDER BY #{qc}")
+                 .map { |r| r["val"] }.compact
+    render json: values
+  end
 end
