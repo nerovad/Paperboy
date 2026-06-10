@@ -442,6 +442,18 @@ class FormTemplatesController < ApplicationController
     )
   end
   
+  # Normalize a custom (generic) lookup config from submitted field params.
+  def build_custom_lookup(f)
+    {
+      'database'        => f[:custom_database],
+      'table'           => f[:custom_table],
+      'column'          => f[:custom_column],
+      'category_column' => f[:custom_category_column].presence,
+      'category_value'  => f[:custom_category_value].presence,
+      'order_column'    => f[:custom_order_column].presence
+    }
+  end
+
   def build_field_options(field_data)
     options = {}
 
@@ -449,7 +461,9 @@ class FormTemplatesController < ApplicationController
     when 'text_box'
       options['rows'] = field_data[:rows].to_i if field_data[:rows].present?
     when 'dropdown', 'choices_dropdown'
-      if field_data[:data_source].present?
+      if field_data[:custom_table].present?
+        options['custom_lookup'] = build_custom_lookup(field_data)
+      elsif field_data[:data_source].present?
         options['data_source'] = field_data[:data_source]
         options['data_source_column'] = field_data[:data_source_column]
         options['data_source_agency'] = field_data[:data_source_agency] if field_data[:data_source_agency].present?
@@ -759,7 +773,9 @@ class FormTemplatesController < ApplicationController
         options: case f[:field_type]
                  when 'text_box' then { 'rows' => f[:rows].to_i }
                  when 'dropdown', 'choices_dropdown'
-                   if f[:data_source].present?
+                   if f[:custom_table].present?
+                     { 'custom_lookup' => build_custom_lookup(f) }
+                   elsif f[:data_source].present?
                      opts = { 'data_source' => f[:data_source], 'data_source_column' => f[:data_source_column] }
                      opts['data_source_agency'] = f[:data_source_agency] if f[:data_source_agency].present?
                      opts['data_source_category'] = f[:data_source_category] if f[:data_source_category].present?
@@ -1564,7 +1580,10 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'dropdown'
-      if field.data_source?
+      if field.custom_lookup?
+        options_expr = "FormLookup.options(#{field.id})"
+        selected_expr = "@#{form_template.file_name}.#{field.field_name}"
+      elsif field.data_source?
         options_expr = field.data_source_query_code
         selected_expr = "@#{form_template.file_name}.#{field.field_name}"
       else
@@ -1588,7 +1607,9 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'choices_dropdown'
-      if field.data_source?
+      if field.custom_lookup?
+        options_expr = "FormLookup.options(#{field.id})"
+      elsif field.data_source?
         options_expr = field.data_source_query_code
       else
         options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
@@ -2002,7 +2023,9 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'dropdown'
-      if field.data_source?
+      if field.custom_lookup?
+        options_expr = "FormLookup.options(#{field.id})"
+      elsif field.data_source?
         options_expr = field.data_source_query_code
       else
         options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
@@ -2024,7 +2047,9 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'choices_dropdown'
-      if field.data_source?
+      if field.custom_lookup?
+        options_expr = "FormLookup.options(#{field.id})"
+      elsif field.data_source?
         options_expr = field.data_source_query_code
       else
         options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
