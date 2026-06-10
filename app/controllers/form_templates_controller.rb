@@ -453,6 +453,7 @@ class FormTemplatesController < ApplicationController
         options['data_source'] = field_data[:data_source]
         options['data_source_column'] = field_data[:data_source_column]
         options['data_source_agency'] = field_data[:data_source_agency] if field_data[:data_source_agency].present?
+        options['data_source_category'] = field_data[:data_source_category] if field_data[:data_source_category].present?
       elsif field_data[:dropdown_values].present?
         options['values'] = field_data[:dropdown_values].split(',').map(&:strip)
       end
@@ -761,6 +762,7 @@ class FormTemplatesController < ApplicationController
                    if f[:data_source].present?
                      opts = { 'data_source' => f[:data_source], 'data_source_column' => f[:data_source_column] }
                      opts['data_source_agency'] = f[:data_source_agency] if f[:data_source_agency].present?
+                     opts['data_source_category'] = f[:data_source_category] if f[:data_source_category].present?
                      opts
                    elsif f[:dropdown_values].present?
                      { 'values' => f[:dropdown_values].split(',').map(&:strip) }
