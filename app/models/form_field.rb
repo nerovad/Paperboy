@@ -103,6 +103,7 @@ class FormField < ApplicationRecord
             inclusion: { in: FormTemplateRoutingStep::ORG_FILTER_LEVELS },
             allow_blank: true
   validate :org_filter_only_for_group_restriction
+  validate :custom_lookup_config_valid
   validates :page_number, numericality: {
     greater_than_or_equal_to: 1,
     less_than_or_equal_to: ->(field) { field.form_template&.page_count || 30 }
@@ -216,6 +217,17 @@ class FormField < ApplicationRecord
 
   def categorized_data_source?
     data_source? && self.class.categorized_source?(data_source_table)
+  end
+
+  # Generic ("custom") lookup: a fully UI-configured source against any
+  # table/column in either database, resolved at render time by FormLookup.
+  def custom_lookup_config
+    options&.dig('custom_lookup')
+  end
+
+  def custom_lookup?
+    cfg = custom_lookup_config
+    cfg.is_a?(Hash) && cfg['database'].present? && cfg['table'].present? && cfg['column'].present?
   end
 
   # Returns Ruby code string for use in generated ERB views
@@ -415,6 +427,27 @@ class FormField < ApplicationRecord
   end
 
   private
+
+  # Reject custom lookups that reference a missing database/table/column at save
+  # time. Infrastructure errors (e.g. GSABSS unreachable) are logged but don't
+  # block the save — FormLookup re-validates at render.
+  def custom_lookup_config_valid
+    return unless custom_lookup?
+
+    cfg  = custom_lookup_config
+    conn = FormLookup.connection_for(cfg['database'])
+    return errors.add(:base, "Custom lookup: unknown database '#{cfg['database']}'") unless conn
+    return errors.add(:base, "Custom lookup: table '#{cfg['table']}' not found") unless FormLookup.table_exists_in?(conn, cfg['table'])
+
+    columns = conn.columns(cfg['table']).map(&:name)
+    errors.add(:base, "Custom lookup: column '#{cfg['column']}' not found") unless columns.include?(cfg['column'])
+    [cfg['category_column'], cfg['order_column']].each do |c|
+      next if c.blank?
+      errors.add(:base, "Custom lookup: column '#{c}' not found") unless columns.include?(c)
+    end
+  rescue => e
+    Rails.logger.warn("custom_lookup_config_valid skipped: #{e.class}: #{e.message}")
+  end
 
   def org_filter_only_for_group_restriction
     return if restricted_to_org_filter_level.blank?
