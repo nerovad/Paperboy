@@ -450,7 +450,8 @@ class FormTemplatesController < ApplicationController
       'column'          => f[:custom_column],
       'category_column' => f[:custom_category_column].presence,
       'category_value'  => f[:custom_category_value].presence,
-      'order_column'    => f[:custom_order_column].presence
+      'order_column'    => f[:custom_order_column].presence,
+      'order_direction' => (f[:custom_order_direction] == 'desc' ? 'desc' : 'asc')
     }
   end
 

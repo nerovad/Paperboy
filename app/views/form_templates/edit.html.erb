@@ -872,6 +872,14 @@
                               <% end %>
                             </select>
                           </div>
+                          <div style="flex: 1; min-width: 130px;">
+                            <label style="font-size: 0.9em; color: #495057;">Sort direction:</label>
+                            <select name="fields[][custom_order_direction]"
+                                    class="form-control form-control-sm custom-order-direction-select">
+                              <option value="asc" <%= 'selected' unless custom_cfg['order_direction'] == 'desc' %>>Ascending (A→Z, 1→9)</option>
+                              <option value="desc" <%= 'selected' if custom_cfg['order_direction'] == 'desc' %>>Descending (Z→A, 9→1)</option>
+                            </select>
+                          </div>
                         </div>
                       </div>
                     </div>

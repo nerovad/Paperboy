@@ -56,14 +56,18 @@ class FormLookup
       where_sql = " WHERE #{conn.quote_column_name(cat_col)} = #{conn.quote(cfg["category_value"])}"
     end
 
+    # Direction is a fixed keyword (never interpolated raw). Ascending/descending
+    # is the only knob needed — numeric vs alphabetical follows the column type.
+    dir = cfg["order_direction"].to_s.downcase == "desc" ? "DESC" : "ASC"
+
     sql =
       if order_col && order_col != col
         # SQL Server requires ORDER BY columns to appear in a DISTINCT select
         # list, so carry the order column along and project only the value.
         qo = conn.quote_column_name(order_col)
-        "SELECT DISTINCT #{qc} AS val, #{qo} AS sort_val FROM #{qt}#{where_sql} ORDER BY #{qo}"
+        "SELECT DISTINCT #{qc} AS val, #{qo} AS sort_val FROM #{qt}#{where_sql} ORDER BY #{qo} #{dir}"
       else
-        "SELECT DISTINCT #{qc} AS val FROM #{qt}#{where_sql} ORDER BY #{qc}"
+        "SELECT DISTINCT #{qc} AS val FROM #{qt}#{where_sql} ORDER BY #{qc} #{dir}"
       end
 
     conn.exec_query(sql).map { |row| row["val"] }.compact

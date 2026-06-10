@@ -1018,6 +1018,9 @@ export default class extends Controller {
       const el = fieldItem.querySelector(sel)
       if (el) el.innerHTML = `<option value="">${label}</option>`
     }
+    // Direction is a static select — reset its value rather than its options
+    const dir = fieldItem.querySelector('.custom-order-direction-select')
+    if (dir) dir.value = 'asc'
     const catWrapper = fieldItem.querySelector('.custom-category-value-wrapper')
     if (catWrapper) catWrapper.style.display = 'none'
   }
