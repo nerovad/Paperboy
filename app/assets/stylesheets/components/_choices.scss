@@ -1,5 +1,14 @@
 @import "base/tokens";
 
+/* Prevent a flash of the native <select> before Choices.js enhances it.
+   Pre-init the select is a direct child of its [data-controller~="choices"]
+   host, so it's hidden and never painted as a tall native listbox. Once
+   Choices wraps it, the select moves inside the generated .choices container,
+   the child combinator stops matching, and Choices manages visibility. */
+[data-controller~="choices"] > select[data-choices-target="select"] {
+  display: none;
+}
+
 /* Let dropdown overflow if needed */
 .form-group.overflow-visible { overflow: visible; }
 
