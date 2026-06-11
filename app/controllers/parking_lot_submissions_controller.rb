@@ -20,8 +20,9 @@ def new
     return
   end
 
-  # MB3 flag
-  @is_mb3 = @employee.union_code.to_s.upcase == "MB3"
+  # MB3 flag. The live Employees table has no union_code column, so read it
+  # defensively — everyone is treated as non-MB3 until a real source exists.
+  @is_mb3 = employee_union_code(@employee) == "MB3"
 
   # Org lookups (guard each step)
   unit        = Unit.resolve_for_employee(@employee)
@@ -73,10 +74,10 @@ def create
   employee      = session[:user]
   employee_id   = employee["employee_id"].to_s
 
-  # Check Union Code from DB (trust server-side)
+  # Check Union Code from DB (trust server-side). Read defensively — the live
+  # Employees table has no union_code column yet, so this defaults to non-MB3.
   emp_record = Employee.find_by(employee_id: employee_id)
-  union_code = emp_record&.union_code.to_s.upcase
-  is_mb3 = (union_code == "MB3")
+  is_mb3 = (employee_union_code(emp_record) == "MB3")
 
   # Get employee's department for authorized approver lookup
   unit = Unit.resolve_for_employee(emp_record)
@@ -251,6 +252,16 @@ end
   end
 
   private
+
+  # Returns the employee's union code, upcased, or "" when unavailable. The live
+  # GSABSS Employees table currently has no union_code column, so this guards
+  # with respond_to? — if the column is restored later, MB3 logic resumes
+  # automatically with no further changes here.
+  def employee_union_code(emp_record)
+    return "" unless emp_record.respond_to?(:union_code)
+
+    emp_record.union_code.to_s.upcase
+  end
 
   def set_parking_lot_submission
     @parking_lot_submission = ParkingLotSubmission.find(params[:id])
