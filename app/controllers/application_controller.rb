@@ -27,12 +27,12 @@ class ApplicationController < ActionController::Base
     eid = user["employee_id"].to_s
 
     # Parking Lot: pending for this supervisor
-    pl = ParkingLotSubmission.where(supervisor_id: eid, status: 0)
+    pl = ParkingLotSubmission.where(supervisor_id: eid, status: :in_progress)
     # If you later add cancelation to parking lot, this line will automatically exclude them:
     pl = pl.where(canceled_at: nil) if ParkingLotSubmission.column_names.include?("canceled_at")
 
     # Probation Transfer: pending & NOT canceled
-    ptr = ProbationTransferRequest.where(supervisor_id: eid, status: 0, canceled_at: nil)
+    ptr = ProbationTransferRequest.where(supervisor_id: eid, status: :in_progress, canceled_at: nil)
 
     @inbox_count = pl.count + ptr.count
   end

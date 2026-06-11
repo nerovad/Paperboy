@@ -9,7 +9,7 @@ module ApplicationHelper
     
     submissions = ParkingLotSubmission.where(
       supervisor_id: session[:user]["employee_id"],
-      status: 0
+      status: :in_progress
     )
     
     if session[:last_seen_inbox_at].present?

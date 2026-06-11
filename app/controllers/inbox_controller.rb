@@ -114,7 +114,7 @@ class InboxController < ApplicationController
   # When @scoped_employee_ids is nil (system admin "all") every unclaimed
   # pending submission is included.
   def scope_unclaimed_by_authorization(model_class, service_type:)
-    base = model_class.where(supervisor_id: nil, status: 0)
+    base = model_class.where(supervisor_id: nil, status: :in_progress)
     return base if @scoped_employee_ids.nil?
 
     units = @scoped_employee_ids.flat_map { |eid|

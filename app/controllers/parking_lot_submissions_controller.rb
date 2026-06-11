@@ -189,7 +189,7 @@ def approve
   elsif @submission.pending_delegated_approval?
     # SEAN PAYNE FINAL APPROVAL - sends to Security after approval
     @submission.update!(
-      status: 3,  # approved
+      status: :approved,
       delegated_approved_by: approver_id,
       delegated_approved_at: Time.current
     )
