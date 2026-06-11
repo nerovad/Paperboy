@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_09_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_11_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -168,6 +168,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_09_000001) do
     t.string "impacted_agency"
     t.string "impacted_employee"
     t.string "status", default: "in_progress", null: false
+  end
+
+  create_table "employee_union_codes", force: :cascade do |t|
+    t.string "employee_id", null: false
+    t.string "union_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id"], name: "index_employee_union_codes_on_employee_id", unique: true
   end
 
   create_table "form_fields", force: :cascade do |t|
@@ -329,6 +337,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_09_000001) do
     t.string "status", default: "in_progress", null: false
     t.index ["approver_id"], name: "index_id_badge_request_forms_on_approver_id"
     t.index ["employee_id"], name: "index_id_badge_request_forms_on_employee_id"
+  end
+
+  create_table "injury_categories", force: :cascade do |t|
+    t.text "description", null: false
+  end
+
+  create_table "injury_classification_views", id: false, force: :cascade do |t|
+    t.bigint "injury_category_id", null: false
+    t.text "injury_category_description", null: false
+    t.bigint "injury_classification_id", null: false
+    t.text "injury_classification_description", null: false
+    t.integer "sort_order", null: false
+  end
+
+  create_table "injury_classifications", force: :cascade do |t|
+    t.text "description", null: false
   end
 
   create_table "leave_of_absence_forms", force: :cascade do |t|
