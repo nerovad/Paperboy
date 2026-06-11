@@ -1,6 +1,7 @@
 # app/models/employee.rb
 class Employee < GsabssBase
   self.table_name = 'Employees'
+  self.primary_key = 'id'
 
   # The GSABSS Employees table was renamed to snake_case columns; `id` is the
   # PK (previously EmployeeID). A small alias preserves the historical
