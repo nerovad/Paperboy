@@ -120,9 +120,7 @@
 <!-- Page 3: Locker Information -->
 <div class="form-page" style="display:none;">
   <h2>Locker Information</h2>
-        <div class="form-row d-flex flex-wrap"
-             data-controller="bike-locker-selects"
-             data-bike-locker-selects-url-value="<%= available_lockers_bike_locker_forms_path %>">
+        <div class="form-row d-flex flex-wrap">
 <!-- FIELD:locker_location START --><div class="form-group flex-fill">
   <%= label_tag "lot_id", "Locker Location" %>
             <%= select_tag "lot_id",
@@ -131,7 +129,8 @@
                   class: "form-control",
                   required: true,
                   data: {
-                    bike_locker_selects_target: "lot",
+                    controller: "bike-locker-selects",
+                    "bike-locker-selects-url-value": available_lockers_bike_locker_forms_path,
                     action: "change->bike-locker-selects#loadLockers"
                   } %>
           </div>
@@ -141,10 +140,10 @@
             <%= form.select :locker_id,
                   options_for_select(@locker_options, @bike_locker_form.locker_id),
                   { prompt: "Select..." },
-                  { class: "form-control",
+                  { id: "bike-locker-number-select",
+                    class: "form-control",
                     required: true,
-                    disabled: @locker_options.blank?,
-                    data: { bike_locker_selects_target: "locker" } } %>
+                    disabled: @locker_options.blank? } %>
           </div>
 <!-- FIELD:locker_number END -->
 <!-- FIELD:number_of_bikes START --><div class="form-group flex-fill<%= '' %>">
@@ -159,7 +158,7 @@
      data-controller="information-field"
      data-information-field-acknowledgeable-value="true"
      data-information-field-label-value="Terms and Conditions"
-     data-information-field-text-value="&#10;&#10;Terms and Conditions&#10;&#10; &#10;&#10;1. The County and the Employee Transportation Program disclaim any liability for the loss of personal&#10;property stored in the bike lockers.&#10;&#10; &#10;&#10;2. Bike Lockers are reserved for workday storage of bicycles only.&#10;&#10; &#10;&#10;3. The County and the Employee Transportation Program reserve the right to revoke this permit at their&#10;discretion.&#10;&#10; &#10;&#10;4. The user understands and agrees that this locker permit is issued because the user frequently commutes&#10;by bicycle to the Government Center complex or off-site County location. If regular bicycle commuting&#10;ceases, the user agrees to relinquish this permit, vacate the locker and notify the Employee Transportation&#10;Coordinator at 805-654-2051.&#10;&#10; &#10;&#10;5. If a locker appears to be unused or abandoned, the Employee Transportation Coordinator will contact&#10;the registered user by telephone or e-mail and by posting a written notice on the locker. If the user cannot&#10;be found and if a response to the written notice is not received after five (5) working days, the County&#10;retains the right to cut the lock and remove the locker contents.&#10;&#10; &#10;&#10;6. The user agrees to keep the padlock (provided by the user) in a clean and rust free condition. Please see&#10;a list of recommended locks here:&#10;&#10; &#10;&#10; &#10;&#10;7. The user agrees to keep the locker clean and clutter free and will be responsible for any damages due to&#10;misuse or abuse.&#10;&#10; &#10;&#10;8. The user agrees to remove the padlock and the contents from the locker when notified via email of&#10;upcoming locker maintenance.&#10;&#10;9. By clicking &quot;Submit&quot; I agree to the above Conditions.">
+     data-information-field-text-value="&#10;Terms and Conditions&#10;&#10; &#10;&#10;1. The County and the Employee Transportation Program disclaim any liability for the loss of personal&#10;property stored in the bike lockers.&#10;&#10; &#10;&#10;2. Bike Lockers are reserved for workday storage of bicycles only.&#10;&#10; &#10;&#10;3. The County and the Employee Transportation Program reserve the right to revoke this permit at their&#10;discretion.&#10;&#10; &#10;&#10;4. The user understands and agrees that this locker permit is issued because the user frequently commutes&#10;by bicycle to the Government Center complex or off-site County location. If regular bicycle commuting&#10;ceases, the user agrees to relinquish this permit, vacate the locker and notify the Employee Transportation&#10;Coordinator at 805-654-2051.&#10;&#10; &#10;&#10;5. If a locker appears to be unused or abandoned, the Employee Transportation Coordinator will contact&#10;the registered user by telephone or e-mail and by posting a written notice on the locker. If the user cannot&#10;be found and if a response to the written notice is not received after five (5) working days, the County&#10;retains the right to cut the lock and remove the locker contents.&#10;&#10; &#10;&#10;6. The user agrees to keep the padlock (provided by the user) in a clean and rust free condition. Please see&#10;a list of recommended locks here:&#10;&#10; &#10;&#10; &#10;&#10;7. The user agrees to keep the locker clean and clutter free and will be responsible for any damages due to&#10;misuse or abuse.&#10;&#10; &#10;&#10;8. The user agrees to remove the padlock and the contents from the locker when notified via email of&#10;upcoming locker maintenance.&#10;&#10;9. By clicking &quot;Submit&quot; I agree to the above Conditions.">
   <button type="button"
           class="btn information-trigger"
           data-action="click->information-field#open"
