@@ -3,7 +3,7 @@
 <p>A new parking permit submission has been approved for the following permit type(s):</p>
 <ul>
   <% @submission.parking_lot_vehicles.each do |vehicle| %>
-    <li><strong><%= vehicle.display_parking_lot %></strong></li>
+    <li><strong><%= vehicle.display_permit_type %></strong></li>
   <% end %>
 </ul>
 
