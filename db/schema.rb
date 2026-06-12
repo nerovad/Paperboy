@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_11_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_12_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -106,6 +106,26 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_11_000001) do
     t.string "status", default: "in_progress", null: false
     t.index ["approver_id"], name: "index_bike_locker_forms_on_approver_id"
     t.index ["employee_id"], name: "index_bike_locker_forms_on_employee_id"
+  end
+
+  create_table "bike_locker_lots", force: :cascade do |t|
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_bike_locker_lots_on_name", unique: true
+  end
+
+  create_table "bike_lockers", force: :cascade do |t|
+    t.bigint "lot_id", null: false
+    t.integer "locker_number", null: false
+    t.string "status", default: "available", null: false
+    t.string "assigned_employee_id"
+    t.datetime "assigned_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["lot_id", "locker_number"], name: "index_bike_lockers_on_lot_id_and_locker_number", unique: true
+    t.index ["lot_id", "status"], name: "index_bike_lockers_on_lot_id_and_status"
+    t.index ["lot_id"], name: "index_bike_lockers_on_lot_id"
   end
 
   create_table "carpool_forms", force: :cascade do |t|
