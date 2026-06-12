@@ -29,6 +29,13 @@ class BikeLockerFormPdfGenerator
       pdf.text "Unit: #{lookup_unit_name(submission.unit)}"
 
       pdf.move_down 15
+      pdf.text "Locker Information", size: 14, style: :bold
+      pdf.move_down 5
+      pdf.text "Locker Location: #{submission.locker_location}"
+      pdf.text "Locker Number: #{submission.locker_number}"
+      pdf.text "Number of Bikes: #{submission.number_of_bikes}"
+
+      pdf.move_down 15
       pdf.text "Status: #{submission.status.to_s.tr('_', ' ').titleize}", size: 12, style: :bold
 
       pdf.move_down 25

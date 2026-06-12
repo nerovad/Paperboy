@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_12_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_12_000002) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -104,8 +104,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_12_000001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "status", default: "in_progress", null: false
+    t.bigint "locker_id"
+    t.string "locker_location"
+    t.string "locker_number"
+    t.integer "number_of_bikes"
     t.index ["approver_id"], name: "index_bike_locker_forms_on_approver_id"
     t.index ["employee_id"], name: "index_bike_locker_forms_on_employee_id"
+    t.index ["locker_id"], name: "index_bike_locker_forms_on_locker_id"
   end
 
   create_table "bike_locker_lots", force: :cascade do |t|

@@ -56,6 +56,14 @@ class BikeLockerFormsController < ApplicationController
     else
       []
     end
+
+    setup_locker_options
+  end
+
+  # Feeds the lot -> locker dependent dropdown. Returns [number, id] pairs for
+  # the available lockers in the chosen lot (JSON).
+  def available_lockers
+    render json: available_locker_pairs(params[:lot_id], params[:current_locker_id])
   end
 
   def create
@@ -65,7 +73,15 @@ class BikeLockerFormsController < ApplicationController
     @bike_locker_form = BikeLockerForm.new(bike_locker_form_params)
     @bike_locker_form.employee_id = employee_id if @bike_locker_form.respond_to?(:employee_id=)
 
-    if @bike_locker_form.save
+    saved = ActiveRecord::Base.transaction do
+      next false unless @bike_locker_form.save
+      # Hold the locker the moment the request is filed so two people can't
+      # claim the same one while it sits in the approval queue.
+      @bike_locker_form.reserve_locker!
+      true
+    end
+
+    if saved
       # ROUTING_BLOCK_START
       # Multi-step approval routing (1 steps)
 # Delegates to TrackableStatus#start_approval!, which picks the first
@@ -104,6 +120,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
         []
       end
 
+      setup_locker_options
       render :new, status: :unprocessable_entity
     end
   end
@@ -138,6 +155,8 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
   def approve
     if @bike_locker_form.respond_to?(:advance_approval!)
       @bike_locker_form.advance_approval!
+      # Final approval turns the held reservation into a firm assignment.
+      @bike_locker_form.assign_locker! if @bike_locker_form.approved?
       notice = @bike_locker_form.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
       redirect_to inbox_queue_path, notice: notice
     else
@@ -150,6 +169,8 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
     if @bike_locker_form.respond_to?(:denied!)
       @bike_locker_form.denied!
       @bike_locker_form.update(deny_reason: reason) if @bike_locker_form.respond_to?(:deny_reason=) && reason.present?
+      # Denial releases the locker back into the available pool.
+      @bike_locker_form.release_locker!
       redirect_to inbox_queue_path, notice: 'Submission denied.'
     else
       redirect_to inbox_queue_path, alert: 'Unable to deny this submission.'
@@ -205,12 +226,41 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
 
     # Load user groups for field restrictions
     @current_user_groups = current_user_group_ids
+
+    setup_locker_options
+  end
+
+  # Lot dropdown options + the locker options for whichever lot is currently
+  # chosen (none on a fresh form). Edit pre-selects the saved lot and keeps the
+  # already-chosen locker selectable even though it's now reserved.
+  def setup_locker_options
+    @lot_options     = BikeLockerLot.order(:name).pluck(:name, :id)
+    @selected_lot_id = @bike_locker_form&.locker&.lot_id
+    @locker_options  = @selected_lot_id ? available_locker_pairs(@selected_lot_id, @bike_locker_form&.locker_id) : []
+  end
+
+  def available_locker_pairs(lot_id, current_locker_id = nil)
+    return [] if lot_id.blank?
+
+    lockers = BikeLocker.available_for_lot(lot_id).to_a
+    # Keep the locker this submission already holds in the list (it's reserved,
+    # so it wouldn't show up as available).
+    if current_locker_id.present?
+      held = BikeLocker.find_by(id: current_locker_id, lot_id: lot_id)
+      if held && lockers.none? { |l| l.id == held.id }
+        lockers << held
+        lockers.sort_by!(&:locker_number)
+      end
+    end
+    lockers.map { |l| [l.locker_number.to_s, l.id] }
   end
 
   def bike_locker_form_params
-    # Only the baseline fields you asked for
+    # Baseline fields + the locker selection. locker_location / locker_number
+    # are NOT permitted: they're derived from locker_id in the model.
     params.require(:bike_locker_form).permit(
-      :name, :phone, :email, :agency, :division, :department, :unit
+      :name, :phone, :email, :agency, :division, :department, :unit,
+      :locker_id, :number_of_bikes
     )
   end
 end

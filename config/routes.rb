@@ -18,6 +18,9 @@ Rails.application.routes.draw do
     end
   end
   resources :bike_locker_forms do
+    collection do
+      get :available_lockers
+    end
     member do
       get :pdf
       patch :approve

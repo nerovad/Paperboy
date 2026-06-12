@@ -7,7 +7,7 @@
 
   <%= render partial: "shared/readonly_record",
              locals: { record: @bike_locker_form,
-                       exclude: %w[id created_at updated_at approver_id deny_reason] } %>
+                       exclude: %w[id created_at updated_at approver_id deny_reason locker_id] } %>
 
   <% # Display media attachments %>
   <% @bike_locker_form.class.reflect_on_all_attachments.each do |attachment_ref| %>
