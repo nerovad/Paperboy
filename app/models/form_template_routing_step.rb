@@ -3,7 +3,7 @@ class FormTemplateRoutingStep < ApplicationRecord
 
   belongs_to :form_template
 
-  ROUTING_TYPES = %w[supervisor department_head employee group].freeze
+  ROUTING_TYPES = %w[supervisor department_head employee group authorization].freeze
   CONDITION_OPERATORS = %w[equals not_equals].freeze
   ORG_FILTER_LEVELS = %w[agency division department unit].freeze
   ORG_FILTER_LABELS = {
@@ -17,6 +17,9 @@ class FormTemplateRoutingStep < ApplicationRecord
   validates :routing_type, presence: true, inclusion: { in: ROUTING_TYPES }
   validates :employee_id, presence: true, if: :routes_to_employee?
   validates :group_id, presence: true, if: :routes_to_group?
+  validates :authorization_service_type, presence: true,
+            inclusion: { in: AuthorizedApprover::SERVICE_TYPES.keys },
+            if: :routes_to_authorization?
   validates :step_number, uniqueness: { scope: :form_template_id }
   validates :condition_operator, inclusion: { in: CONDITION_OPERATORS }, allow_blank: true
   validates :condition_operator, presence: true, if: -> { condition_field_name.present? }
@@ -47,6 +50,15 @@ class FormTemplateRoutingStep < ApplicationRecord
     routing_type == 'group'
   end
 
+  def routes_to_authorization?
+    routing_type == 'authorization'
+  end
+
+  # Human label for the chosen authorization service type (e.g. "Parking Permits").
+  def authorization_service_type_label
+    AuthorizedApprover::SERVICE_TYPES[authorization_service_type] || authorization_service_type
+  end
+
   def routing_label
     case routing_type
     when 'supervisor'
@@ -58,6 +70,8 @@ class FormTemplateRoutingStep < ApplicationRecord
     when 'group'
       base = group_name || "Group ##{group_id}"
       org_filtered? ? "#{base} (submitter's #{org_filter_label})" : base
+    when 'authorization'
+      "Authorized approver — #{authorization_service_type_label}"
     end
   end
 

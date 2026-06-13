@@ -219,7 +219,10 @@ module TrackableStatus
       department&.department_head_id&.to_s
     when 'employee'
       step.employee_id.to_s
-    when 'group'
+    when 'group', 'authorization'
+      # Multi-approver queue: approver_id stays nil so every eligible approver
+      # (group members / authorized approvers for the budget unit) sees it in
+      # their inbox; the first to act claims it.
       nil
     end
   end

@@ -207,6 +207,19 @@
                           <option value="department_head" <%= 'selected' if step.routing_type == 'department_head' %>>Department Head</option>
                           <option value="employee" <%= 'selected' if step.routing_type == 'employee' %>>Specific Employee</option>
                           <option value="group" <%= 'selected' if step.routing_type == 'group' %>>Group</option>
+                          <option value="authorization" <%= 'selected' if step.routing_type == 'authorization' %>>Authorization Console</option>
+                        </select>
+                      </div>
+
+                      <div class="step-authorization-select" style="flex: 1; min-width: 220px; <%= 'display: none;' unless step.routing_type == 'authorization' %>">
+                        <select name="routing_steps[][authorization_service_type]"
+                                class="form-control form-control-sm step-authorization-dropdown"
+                                data-action="change->form-builder#updateStepDisplayName"
+                                title="Route to whoever holds this authorization for the submitter's budget unit">
+                          <option value="">Select authorization…</option>
+                          <% AuthorizedApprover::SERVICE_TYPES.each do |code, label| %>
+                            <option value="<%= code %>" <%= 'selected' if step.authorization_service_type == code %>><%= label %></option>
+                          <% end %>
                         </select>
                       </div>
 
@@ -337,6 +350,7 @@
                         <option value="department_head" <%= 'selected' if @form_template.approval_routing_to == 'department_head' %>>Department Head</option>
                         <option value="employee" <%= 'selected' if @form_template.approval_routing_to == 'employee' %>>Specific Employee</option>
                         <option value="group">Group</option>
+                        <option value="authorization">Authorization Console</option>
                       </select>
                     </div>
 
@@ -356,6 +370,17 @@
                         <option value="">Select group...</option>
                         <% @acl_groups.each do |grp| %>
                           <option value="<%= grp[1] %>"><%= grp[0] %></option>
+                        <% end %>
+                      </select>
+                    </div>
+
+                    <div class="step-authorization-select" style="flex: 1; min-width: 220px; display: none;">
+                      <select name="routing_steps[][authorization_service_type]"
+                              class="form-control form-control-sm step-authorization-dropdown"
+                              title="Route to whoever holds this authorization for the submitter's budget unit">
+                        <option value="">Select authorization…</option>
+                        <% AuthorizedApprover::SERVICE_TYPES.each do |code, label| %>
+                          <option value="<%= code %>"><%= label %></option>
                         <% end %>
                       </select>
                     </div>
@@ -1622,6 +1647,19 @@
           <option value="department_head">Department Head</option>
           <option value="employee">Specific Employee</option>
           <option value="group">Group</option>
+          <option value="authorization">Authorization Console</option>
+        </select>
+      </div>
+
+      <div class="step-authorization-select" style="flex: 1; min-width: 220px; display: none;">
+        <select name="routing_steps[][authorization_service_type]"
+                class="form-control form-control-sm step-authorization-dropdown"
+                data-action="change->form-builder#updateStepDisplayName"
+                title="Route to whoever holds this authorization for the submitter's budget unit">
+          <option value="">Select authorization…</option>
+          <% AuthorizedApprover::SERVICE_TYPES.each do |code, label| %>
+            <option value="<%= code %>"><%= label %></option>
+          <% end %>
         </select>
       </div>
 

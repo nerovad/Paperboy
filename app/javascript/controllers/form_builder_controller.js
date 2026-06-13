@@ -442,6 +442,20 @@ export default class extends Controller {
     const groupSelect = stepItem.querySelector('.step-group-dropdown')
     const orgFilterContainer = stepItem.querySelector('.step-org-filter-select')
     const orgFilterSelect = stepItem.querySelector('.step-org-filter-dropdown')
+    const authorizationContainer = stepItem.querySelector('.step-authorization-select')
+    const authorizationSelect = stepItem.querySelector('.step-authorization-dropdown')
+
+    // Authorization Console routing: pick which authorization service type.
+    if (authorizationContainer && authorizationSelect) {
+      if (routingType === 'authorization') {
+        authorizationContainer.style.display = 'block'
+        authorizationSelect.required = true
+      } else {
+        authorizationContainer.style.display = 'none'
+        authorizationSelect.required = false
+        authorizationSelect.value = ''
+      }
+    }
 
     if (routingType === 'employee') {
       employeeSelectContainer.style.display = 'block'
@@ -513,6 +527,12 @@ export default class extends Controller {
           const labelMap = { agency: 'Agency', division: 'Division', department: 'Department', unit: 'Unit' }
           target = `${target} (submitter's ${labelMap[filterLevel] || filterLevel})`
         }
+        break
+      }
+      case 'authorization': {
+        const select = stepItem.querySelector('.step-authorization-dropdown')
+        const label = select?.selectedOptions[0]?.textContent?.trim()
+        target = label && select?.value ? `Authorized approver — ${label}` : 'Authorized approver'
         break
       }
       default:

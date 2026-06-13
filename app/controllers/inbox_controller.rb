@@ -223,6 +223,9 @@ class InboxController < ApplicationController
                   group_routing_scopes(template, model_class, scoped_group_ids, submitter_org_filter).each do |s|
                     parts << s
                   end
+                  authorization_routing_scopes(template, model_class, @scoped_employee_ids).each do |s|
+                    parts << s
+                  end
                   parts << model_class.where(id: copy_ids) if copy_ids.any?
                   parts.reduce(:or)
                 end
@@ -272,6 +275,28 @@ class InboxController < ApplicationController
       else
         model_class.where(status: status_key)
       end
+    end
+  end
+
+  # Returns AR scopes (one per authorization-routed step) on model_class to OR
+  # into the inbox query. A submission at an authorization step is visible to a
+  # scoped employee when its budget unit (the form's `unit` column) is one the
+  # employee is authorized to approve for the step's service type — mirroring
+  # the parking-permit flow via AuthorizedApprover.authorized_unit_ids_for.
+  def authorization_routing_scopes(template, model_class, scoped_employee_ids)
+    return [] if scoped_employee_ids.nil?
+    return [] unless model_class.column_names.include?('unit')
+
+    template.routing_steps.where(routing_type: 'authorization').filter_map do |step|
+      service_type = step.authorization_service_type
+      next if service_type.blank?
+
+      authorized_units = scoped_employee_ids.flat_map { |eid|
+        AuthorizedApprover.authorized_unit_ids_for(employee_id: eid, service_type: service_type)
+      }.uniq
+      next if authorized_units.empty?
+
+      model_class.where(status: "step_#{step.step_number}_pending", unit: authorized_units)
     end
   end
 
