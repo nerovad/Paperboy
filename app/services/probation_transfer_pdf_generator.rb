@@ -39,6 +39,8 @@ class ProbationTransferPdfGenerator
       pdf.text "Approved Destination: #{request.approved_destination.presence || '—'}"
 
       pdf.move_down 25
+      PdfWorkflowHistory.render(pdf, request)
+
       pdf.text "Submitted on: #{request.created_at.strftime('%B %d, %Y at %I:%M %p')}", size: 10, align: :right
     end.render
   end

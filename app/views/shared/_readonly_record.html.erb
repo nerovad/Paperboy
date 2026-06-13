@@ -27,3 +27,16 @@
     </dd>
   <% end %>
 </dl>
+
+<%# Workflow lifecycle: when each step was approved/denied and by whom.
+    Shown on every submission detail page that renders this partial. %>
+<% if record.respond_to?(:status_timeline) %>
+  <% timeline = record.status_timeline.to_a %>
+  <% if timeline.any? %>
+    <section class="workflow-history" style="margin-top: 24px;">
+      <h3>Workflow History</h3>
+      <%= render partial: "submissions/status_timeline",
+                 locals: { status_changes: timeline, item_id: record.id } %>
+    </section>
+  <% end %>
+<% end %>

@@ -32,6 +32,8 @@ class FormRequestFormPdfGenerator
       pdf.text "Status: #{submission.status.to_s.tr('_', ' ').titleize}", size: 12, style: :bold
 
       pdf.move_down 25
+      PdfWorkflowHistory.render(pdf, submission)
+
       pdf.text "Submitted on: #{submission.created_at.strftime('%B %d, %Y at %I:%M %p')}", size: 10, align: :right
     end.render
   end

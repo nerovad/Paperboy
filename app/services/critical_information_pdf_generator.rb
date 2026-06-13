@@ -116,6 +116,8 @@ class CriticalInformationPdfGenerator
       end
 
       pdf.move_down 25
+      PdfWorkflowHistory.render(pdf, cir)
+
       pdf.text "Submitted on: #{cir.created_at.strftime('%B %d, %Y at %I:%M %p')}", size: 10, align: :right
     end.render
   end
