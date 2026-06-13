@@ -13,8 +13,10 @@ module TrackableStatus
     has_many :form_submission_copies, as: :submission, dependent: :destroy
     after_create :record_initial_status
     after_create :deliver_copy_recipients_on_submit
+    after_create :deliver_email_steps_on_submit
     after_update :record_status_change, if: :saved_change_to_status?
     after_update :deliver_copy_recipients_on_approval, if: :saved_change_to_status?
+    after_update :deliver_email_steps_on_status_change, if: :saved_change_to_status?
     after_update :stamp_actor_on_terminal_status, if: :saved_change_to_status?
   end
 
@@ -272,6 +274,57 @@ module TrackableStatus
     end
   rescue ActiveRecord::RecordNotUnique
     # Concurrent creates race the unique index — treat as already delivered.
+  end
+
+  # --- Configurable workflow emails (FormTemplateEmailStep) ---
+
+  # Fire any "On submission" email rules right after the record is created.
+  def deliver_email_steps_on_submit
+    fire_email_steps('submit')
+  end
+
+  # Translate a status transition into the email rules it should fire.
+  # `acted_step` is the step whose action caused the transition (derived from a
+  # `step_N_pending` *from*-status). A nil step_number selects the form's final
+  # approved/denied rules.
+  def deliver_email_steps_on_status_change
+    from_key = self.class.status_key_for(status_before_last_save)
+    to_key   = self.class.status_key_for(status)
+    acted_step = from_key.to_s[/\Astep_(\d+)_pending\z/, 1]&.to_i
+    to_category = self.class.status_category_for(status)
+
+    if to_category == :approved
+      fire_email_steps('approved', step_number: acted_step) if acted_step
+      fire_email_steps('approved', step_number: nil)
+    elsif to_category == :denied
+      fire_email_steps('denied', step_number: acted_step) if acted_step
+      fire_email_steps('denied', step_number: nil)
+    elsif acted_step && to_key.to_s.match?(/\Astep_\d+_pending\z/)
+      # Advanced from one approval step to the next: the prior step was approved.
+      fire_email_steps('approved', step_number: acted_step)
+    end
+  rescue StandardError => e
+    Rails.logger.warn("TrackableStatus email dispatch failed: #{e.message}")
+  end
+
+  # Enqueue mailers for every email rule matching this event (and step, when
+  # given). A nil step_number matches only final-outcome rules; omitting it
+  # matches any rule for the event (used for submit).
+  def fire_email_steps(event, step_number: :__any__)
+    template = approval_template
+    return unless template.respond_to?(:email_steps)
+
+    rules = if step_number == :__any__
+              template.email_steps.for_event(event)
+            else
+              template.email_steps.for_event(event, step_number: step_number)
+            end
+
+    rules.each do |email_step|
+      FormWorkflowMailer.notify(email_step.id, self.class.name, id).deliver_later
+    end
+  rescue StandardError => e
+    Rails.logger.warn("TrackableStatus fire_email_steps(#{event}) failed: #{e.message}")
   end
 
   def current_user_display_name

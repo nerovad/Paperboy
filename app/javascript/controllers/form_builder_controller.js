@@ -21,6 +21,9 @@ export default class extends Controller {
     "copyRecipientsContainer",
     "copyRecipientsList",
     "copyRecipientItem",
+    "emailStepsContainer",
+    "emailStepsList",
+    "emailStepItem",
     "statusConfigSection",
     "statusAutoMessage",
     "statusManualConfig",
@@ -39,6 +42,8 @@ export default class extends Controller {
     aclGroups: Array,
     employees: Array,
     formFields: Array,
+    routingStepChoices: Array,
+    emailFieldChoices: Array,
     predefinedStatuses: Array,
     validCategories: Array,
     editMode: { type: Boolean, default: false }
@@ -340,6 +345,91 @@ export default class extends Controller {
 
     if (employeeBlock) employeeBlock.style.display = type === 'employee' ? 'block' : 'none'
     if (groupBlock) groupBlock.style.display = type === 'group' ? 'block' : 'none'
+  }
+
+  // --- Email Notifications ---
+
+  // Add a new email-notification row, populating its dynamic dropdowns.
+  addEmailStep(event) {
+    if (event) event.preventDefault()
+    const template = document.getElementById('email-step-template')
+    if (!template || !this.hasEmailStepsListTarget) return
+
+    const clone = template.content.cloneNode(true)
+
+    const employeeSelect = clone.querySelector('.email-step-employee-select')
+    if (employeeSelect && this.employeesValue) {
+      this.employeesValue.forEach(emp => {
+        const opt = document.createElement('option')
+        opt.value = emp[1]
+        opt.textContent = emp[0]
+        employeeSelect.appendChild(opt)
+      })
+    }
+
+    const groupSelect = clone.querySelector('.email-step-group-select')
+    if (groupSelect && this.aclGroupsValue) {
+      this.aclGroupsValue.forEach(grp => {
+        const opt = document.createElement('option')
+        opt.value = grp[1]
+        opt.textContent = grp[0]
+        groupSelect.appendChild(opt)
+      })
+    }
+
+    const stepSelect = clone.querySelector('.email-step-routing-step-select')
+    if (stepSelect && this.routingStepChoicesValue) {
+      this.routingStepChoicesValue.forEach(choice => {
+        const opt = document.createElement('option')
+        opt.value = choice[1]
+        opt.textContent = choice[0]
+        stepSelect.appendChild(opt)
+      })
+    }
+
+    const fieldSelect = clone.querySelector('.email-step-field-select')
+    if (fieldSelect && this.emailFieldChoicesValue) {
+      this.emailFieldChoicesValue.forEach(choice => {
+        const opt = document.createElement('option')
+        opt.value = choice[1]
+        opt.textContent = choice[0]
+        fieldSelect.appendChild(opt)
+      })
+    }
+
+    this.emailStepsListTarget.appendChild(clone)
+  }
+
+  removeEmailStep(event) {
+    event.preventDefault()
+    const item = event.target.closest('.email-step-item')
+    if (item) item.remove()
+  }
+
+  // Show the routing-step picker only for approval/denial triggers.
+  toggleEmailTriggerStep(event) {
+    const item = event.target.closest('.email-step-item')
+    if (!item) return
+    const stepBlock = item.querySelector('.email-step-routing-step')
+    const bound = event.target.value === 'approved' || event.target.value === 'denied'
+    if (stepBlock) stepBlock.style.display = bound ? 'block' : 'none'
+  }
+
+  // Reveal the recipient input matching the chosen recipient type.
+  toggleEmailRecipientFields(event) {
+    const item = event.target.closest('.email-step-item')
+    if (!item) return
+    const type = event.target.value
+
+    const blocks = {
+      employee: item.querySelector('.email-step-employee'),
+      group: item.querySelector('.email-step-group'),
+      custom_email: item.querySelector('.email-step-custom'),
+      form_field: item.querySelector('.email-step-field')
+    }
+    Object.entries(blocks).forEach(([key, el]) => {
+      if (el) el.style.display = key === type ? 'block' : 'none'
+    })
   }
 
   // Toggle employee/group select for a specific routing step

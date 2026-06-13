@@ -27,6 +27,9 @@ class FormTemplatesController < ApplicationController
       # Save copy recipients
       save_copy_recipients(@form_template)
 
+      # Save workflow email steps
+      save_email_steps(@form_template)
+
       # Sync statuses (user-configured + auto-generated from routing steps)
       sync_statuses(@form_template)
 
@@ -185,6 +188,7 @@ class FormTemplatesController < ApplicationController
     fields_changed = form_fields_changed?
     statuses_changed = statuses_fields_changed?
     copy_recipients_changed = copy_recipients_fields_changed?
+    email_steps_changed = email_steps_fields_changed?
     visibility_changed_to_public = @form_template.visibility != 'public' && form_template_params[:visibility] == 'public'
 
     # Set pending routing steps to pass validation (same as create)
@@ -206,6 +210,11 @@ class FormTemplatesController < ApplicationController
       # Rebuild copy recipients when they changed
       if copy_recipients_changed
         rebuild_copy_recipients(@form_template)
+      end
+
+      # Rebuild workflow email steps when they changed
+      if email_steps_changed
+        rebuild_email_steps(@form_template)
       end
 
       # Only rebuild fields and regenerate views when fields actually changed
@@ -888,6 +897,77 @@ class FormTemplatesController < ApplicationController
         employee_id: r[:recipient_type] == 'employee' ? r[:employee_id]&.to_i.presence : nil,
         group_id: r[:recipient_type] == 'group' ? r[:group_id]&.to_i.presence : nil,
         trigger_event: r[:trigger_event].presence || 'approval'
+      }
+    end.reject { |r| r[:recipient_type].blank? }
+
+    current != incoming
+  end
+
+  def save_email_steps(form_template)
+    return unless params[:email_steps].present?
+
+    params[:email_steps].each_with_index do |row, index|
+      next if row[:recipient_type].blank?
+
+      trigger = row[:trigger_event].presence || 'submit'
+      step_bound = %w[approved denied].include?(trigger) && row[:routing_step_number].present?
+
+      form_template.email_steps.create!(
+        trigger_event: trigger,
+        routing_step_number: step_bound ? row[:routing_step_number].to_i : nil,
+        recipient_type: row[:recipient_type],
+        employee_id: row[:recipient_type] == 'employee' ? row[:employee_id].presence : nil,
+        group_id: row[:recipient_type] == 'group' ? row[:group_id].presence : nil,
+        custom_email: row[:recipient_type] == 'custom_email' ? row[:custom_email].presence : nil,
+        recipient_field_name: row[:recipient_type] == 'form_field' ? row[:recipient_field_name].presence : nil,
+        subject: row[:subject].presence,
+        body: row[:body].presence,
+        attach_pdf: row[:attach_pdf] == '1',
+        attach_media: row[:attach_media] == '1',
+        position: index
+      )
+    end
+  end
+
+  def rebuild_email_steps(form_template)
+    form_template.email_steps.destroy_all
+    save_email_steps(form_template)
+  end
+
+  def email_steps_fields_changed?
+    return false unless @form_template
+
+    current = @form_template.email_steps.ordered.map do |e|
+      {
+        trigger_event: e.trigger_event,
+        routing_step_number: e.routing_step_number,
+        recipient_type: e.recipient_type,
+        employee_id: e.employee_id,
+        group_id: e.group_id,
+        custom_email: e.custom_email,
+        recipient_field_name: e.recipient_field_name,
+        subject: e.subject,
+        body: e.body,
+        attach_pdf: e.attach_pdf,
+        attach_media: e.attach_media
+      }
+    end
+
+    incoming = (params[:email_steps] || []).map do |r|
+      trigger = r[:trigger_event].presence || 'submit'
+      step_bound = %w[approved denied].include?(trigger) && r[:routing_step_number].present?
+      {
+        trigger_event: trigger,
+        routing_step_number: step_bound ? r[:routing_step_number].to_i : nil,
+        recipient_type: r[:recipient_type],
+        employee_id: r[:recipient_type] == 'employee' ? r[:employee_id]&.to_i.presence : nil,
+        group_id: r[:recipient_type] == 'group' ? r[:group_id]&.to_i.presence : nil,
+        custom_email: r[:recipient_type] == 'custom_email' ? r[:custom_email].presence : nil,
+        recipient_field_name: r[:recipient_type] == 'form_field' ? r[:recipient_field_name].presence : nil,
+        subject: r[:subject].presence,
+        body: r[:body].presence,
+        attach_pdf: r[:attach_pdf] == '1',
+        attach_media: r[:attach_media] == '1'
       }
     end.reject { |r| r[:recipient_type].blank? }
 

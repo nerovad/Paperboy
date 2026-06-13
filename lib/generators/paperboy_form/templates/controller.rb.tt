@@ -144,8 +144,10 @@ class <%= class_name.pluralize %>Controller < ApplicationController
   def deny
     reason = params[:deny_reason]
     if @<%= file_name %>.respond_to?(:denied!)
+      # Set the reason in the same save as the status change so the denial email
+      # (fired by TrackableStatus on the status transition) can interpolate it.
+      @<%= file_name %>.deny_reason = reason if @<%= file_name %>.respond_to?(:deny_reason=) && reason.present?
       @<%= file_name %>.denied!
-      @<%= file_name %>.update(deny_reason: reason) if @<%= file_name %>.respond_to?(:deny_reason=) && reason.present?
       redirect_to inbox_queue_path, notice: 'Submission denied.'
     else
       redirect_to inbox_queue_path, alert: 'Unable to deny this submission.'

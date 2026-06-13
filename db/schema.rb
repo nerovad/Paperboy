@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_12_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_13_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -268,6 +268,25 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_12_000002) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["form_template_id"], name: "index_form_template_copy_recipients_on_form_template_id"
+  end
+
+  create_table "form_template_email_steps", force: :cascade do |t|
+    t.bigint "form_template_id", null: false
+    t.string "trigger_event", default: "submit", null: false
+    t.integer "routing_step_number"
+    t.string "recipient_type", null: false
+    t.integer "employee_id"
+    t.integer "group_id"
+    t.string "custom_email"
+    t.string "recipient_field_name"
+    t.string "subject"
+    t.text "body"
+    t.boolean "attach_pdf", default: false, null: false
+    t.boolean "attach_media", default: false, null: false
+    t.integer "position", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["form_template_id"], name: "index_form_template_email_steps_on_form_template_id"
   end
 
   create_table "form_template_routing_steps", force: :cascade do |t|
@@ -794,6 +813,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_12_000002) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "form_fields", "form_templates"
   add_foreign_key "form_template_copy_recipients", "form_templates"
+  add_foreign_key "form_template_email_steps", "form_templates"
   add_foreign_key "form_template_routing_steps", "form_template_statuses"
   add_foreign_key "form_template_routing_steps", "form_templates"
   add_foreign_key "form_template_statuses", "form_templates"

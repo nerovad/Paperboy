@@ -8,12 +8,25 @@
       dropdown_values: field.dropdown_values
     }
   end
+
+  # [label, step_number] pairs for the "bind email to step" dropdown.
+  routing_step_choices = @form_template.routing_steps.ordered.map do |s|
+    ["Step #{s.step_number} — #{s.routing_label}", s.step_number]
+  end
+  # Email-type fields usable as a recipient address.
+  email_field_choices = @form_template.form_fields.ordered
+                          .select { |f| f.field_type == 'email' }
+                          .map { |f| [f.label, f.field_name] }
+  # Stable field names for the placeholder cheatsheet.
+  email_token_field_names = @form_template.form_fields.ordered.map(&:field_name).compact
 %>
 <div class="edit-wizard-wrapper form-builder-modal"
      data-controller="form-builder"
      data-form-builder-acl-groups-value="<%= @acl_groups.to_json %>"
      data-form-builder-employees-value="<%= @employees.to_json %>"
      data-form-builder-form-fields-value="<%= form_fields_for_conditions.to_json %>"
+     data-form-builder-routing-step-choices-value="<%= routing_step_choices.to_json %>"
+     data-form-builder-email-field-choices-value="<%= email_field_choices.to_json %>"
      data-form-builder-predefined-statuses-value="<%= FormTemplateStatus::PREDEFINED_STATUSES.to_json %>"
      data-form-builder-valid-categories-value="<%= FormTemplateStatus::VALID_CATEGORIES.to_json %>"
      data-form-builder-edit-mode-value="true">
@@ -469,6 +482,139 @@
                     data-action="click->form-builder#addCopyRecipient"
                     style="margin-top: 8px;">
               + Add Copy Recipient
+            </button>
+          </div>
+
+          <div class="form-group"
+               data-form-builder-target="emailStepsContainer"
+               style="margin-top: 24px;">
+            <label>Email Notifications</label>
+            <small class="form-text" style="display: block; margin-bottom: 10px;">
+              Send a templated email when the form is submitted, or when a routing step (or the
+              whole form) is approved or denied. Each email can attach the generated PDF and/or any
+              media attached to the form. Use placeholders like
+              <code>{{submitter_name}}</code>, <code>{{form_name}}</code>,
+              <code>{{status_label}}</code>, <code>{{deny_reason}}</code> and
+              <code>{{field.your_field_name}}</code> in the subject and body.
+              <% if email_token_field_names.any? %>
+                <br>Field tokens: <%= email_token_field_names.map { |n| "{{field.#{n}}}" }.join(", ") %>
+              <% end %>
+            </small>
+
+            <div class="email-steps-list" data-form-builder-target="emailStepsList">
+              <% @form_template.email_steps.ordered.each do |estep| %>
+                <div class="email-step-item" data-form-builder-target="emailStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #17a2b8;">
+                  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div style="flex: 0 0 160px;">
+                      <select name="email_steps[][trigger_event]"
+                              class="form-control form-control-sm email-step-trigger"
+                              data-action="change->form-builder#toggleEmailTriggerStep"
+                              required>
+                        <option value="submit" <%= 'selected' if estep.trigger_event == 'submit' %>>On submission</option>
+                        <option value="approved" <%= 'selected' if estep.trigger_event == 'approved' %>>On approval</option>
+                        <option value="denied" <%= 'selected' if estep.trigger_event == 'denied' %>>On denial</option>
+                      </select>
+                    </div>
+
+                    <div class="email-step-routing-step" style="flex: 0 0 200px; <%= 'display: none;' unless %w[approved denied].include?(estep.trigger_event) %>">
+                      <select name="email_steps[][routing_step_number]"
+                              class="form-control form-control-sm email-step-routing-step-select">
+                        <option value="">Final outcome</option>
+                        <% routing_step_choices.each do |label, num| %>
+                          <option value="<%= num %>" <%= 'selected' if estep.routing_step_number == num %>><%= label %></option>
+                        <% end %>
+                      </select>
+                    </div>
+
+                    <div style="flex: 0 0 160px;">
+                      <select name="email_steps[][recipient_type]"
+                              class="form-control form-control-sm email-step-recipient-type"
+                              data-action="change->form-builder#toggleEmailRecipientFields"
+                              required>
+                        <option value="">Recipient…</option>
+                        <option value="submitter" <%= 'selected' if estep.recipient_type == 'submitter' %>>Submitter</option>
+                        <option value="employee" <%= 'selected' if estep.recipient_type == 'employee' %>>Specific Employee</option>
+                        <option value="group" <%= 'selected' if estep.recipient_type == 'group' %>>Group</option>
+                        <option value="custom_email" <%= 'selected' if estep.recipient_type == 'custom_email' %>>Custom Email</option>
+                        <option value="form_field" <%= 'selected' if estep.recipient_type == 'form_field' %>>Email Field on Form</option>
+                      </select>
+                    </div>
+
+                    <div class="email-step-employee" style="flex: 1; min-width: 200px; <%= 'display: none;' unless estep.recipient_type == 'employee' %>">
+                      <select name="email_steps[][employee_id]" class="form-control form-control-sm email-step-employee-select">
+                        <option value="">Select employee...</option>
+                        <% @employees.each do |emp| %>
+                          <option value="<%= emp[1] %>" <%= 'selected' if estep.employee_id == emp[1] %>><%= emp[0] %></option>
+                        <% end %>
+                      </select>
+                    </div>
+
+                    <div class="email-step-group" style="flex: 1; min-width: 200px; <%= 'display: none;' unless estep.recipient_type == 'group' %>">
+                      <select name="email_steps[][group_id]" class="form-control form-control-sm email-step-group-select">
+                        <option value="">Select group...</option>
+                        <% @acl_groups.each do |grp| %>
+                          <option value="<%= grp[1] %>" <%= 'selected' if estep.group_id == grp[1] %>><%= grp[0] %></option>
+                        <% end %>
+                      </select>
+                    </div>
+
+                    <div class="email-step-custom" style="flex: 1; min-width: 200px; <%= 'display: none;' unless estep.recipient_type == 'custom_email' %>">
+                      <input type="text" name="email_steps[][custom_email]"
+                             class="form-control form-control-sm email-step-custom-input"
+                             value="<%= estep.custom_email %>"
+                             placeholder="name@venturacounty.gov">
+                    </div>
+
+                    <div class="email-step-field" style="flex: 1; min-width: 200px; <%= 'display: none;' unless estep.recipient_type == 'form_field' %>">
+                      <select name="email_steps[][recipient_field_name]" class="form-control form-control-sm email-step-field-select">
+                        <option value="">Select email field...</option>
+                        <% email_field_choices.each do |label, fname| %>
+                          <option value="<%= fname %>" <%= 'selected' if estep.recipient_field_name == fname %>><%= label %></option>
+                        <% end %>
+                      </select>
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-danger btn-sm"
+                            data-action="click->form-builder#removeEmailStep"
+                            style="padding: 4px 8px;">
+                      Remove
+                    </button>
+                  </div>
+
+                  <div style="margin-top: 8px;">
+                    <input type="text" name="email_steps[][subject]"
+                           class="form-control form-control-sm email-step-subject"
+                           value="<%= estep.subject %>"
+                           placeholder="Subject (supports {{tokens}})">
+                  </div>
+
+                  <div style="margin-top: 8px;">
+                    <textarea name="email_steps[][body]"
+                              class="form-control form-control-sm email-step-body"
+                              rows="4"
+                              placeholder="Email body (supports {{tokens}})"><%= estep.body %></textarea>
+                  </div>
+
+                  <div style="margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap;">
+                    <label style="margin: 0; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                      <input type="checkbox" name="email_steps[][attach_pdf]" value="1" class="email-step-attach-pdf" <%= 'checked' if estep.attach_pdf %>>
+                      Attach form PDF
+                    </label>
+                    <label style="margin: 0; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                      <input type="checkbox" name="email_steps[][attach_media]" value="1" class="email-step-attach-media" <%= 'checked' if estep.attach_media %>>
+                      Attach media attachments
+                    </label>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+
+            <button type="button"
+                    class="btn btn-secondary btn-sm"
+                    data-action="click->form-builder#addEmailStep"
+                    style="margin-top: 8px;">
+              + Add Email Notification
             </button>
           </div>
         </div>
@@ -1622,6 +1768,99 @@
               style="padding: 4px 8px;">
         Remove
       </button>
+    </div>
+  </div>
+</template>
+
+<!-- Email Notification Template (hidden, used for cloning) -->
+<template id="email-step-template">
+  <div class="email-step-item" data-form-builder-target="emailStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #17a2b8;">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <div style="flex: 0 0 160px;">
+        <select name="email_steps[][trigger_event]"
+                class="form-control form-control-sm email-step-trigger"
+                data-action="change->form-builder#toggleEmailTriggerStep"
+                required>
+          <option value="submit">On submission</option>
+          <option value="approved">On approval</option>
+          <option value="denied">On denial</option>
+        </select>
+      </div>
+
+      <div class="email-step-routing-step" style="flex: 0 0 200px; display: none;">
+        <select name="email_steps[][routing_step_number]" class="form-control form-control-sm email-step-routing-step-select">
+          <option value="">Final outcome</option>
+        </select>
+      </div>
+
+      <div style="flex: 0 0 160px;">
+        <select name="email_steps[][recipient_type]"
+                class="form-control form-control-sm email-step-recipient-type"
+                data-action="change->form-builder#toggleEmailRecipientFields"
+                required>
+          <option value="">Recipient…</option>
+          <option value="submitter">Submitter</option>
+          <option value="employee">Specific Employee</option>
+          <option value="group">Group</option>
+          <option value="custom_email">Custom Email</option>
+          <option value="form_field">Email Field on Form</option>
+        </select>
+      </div>
+
+      <div class="email-step-employee" style="flex: 1; min-width: 200px; display: none;">
+        <select name="email_steps[][employee_id]" class="form-control form-control-sm email-step-employee-select">
+          <option value="">Select employee...</option>
+        </select>
+      </div>
+
+      <div class="email-step-group" style="flex: 1; min-width: 200px; display: none;">
+        <select name="email_steps[][group_id]" class="form-control form-control-sm email-step-group-select">
+          <option value="">Select group...</option>
+        </select>
+      </div>
+
+      <div class="email-step-custom" style="flex: 1; min-width: 200px; display: none;">
+        <input type="text" name="email_steps[][custom_email]"
+               class="form-control form-control-sm email-step-custom-input"
+               placeholder="name@venturacounty.gov">
+      </div>
+
+      <div class="email-step-field" style="flex: 1; min-width: 200px; display: none;">
+        <select name="email_steps[][recipient_field_name]" class="form-control form-control-sm email-step-field-select">
+          <option value="">Select email field...</option>
+        </select>
+      </div>
+
+      <button type="button"
+              class="btn btn-danger btn-sm"
+              data-action="click->form-builder#removeEmailStep"
+              style="padding: 4px 8px;">
+        Remove
+      </button>
+    </div>
+
+    <div style="margin-top: 8px;">
+      <input type="text" name="email_steps[][subject]"
+             class="form-control form-control-sm email-step-subject"
+             placeholder="Subject (supports {{tokens}})">
+    </div>
+
+    <div style="margin-top: 8px;">
+      <textarea name="email_steps[][body]"
+                class="form-control form-control-sm email-step-body"
+                rows="4"
+                placeholder="Email body (supports {{tokens}})"></textarea>
+    </div>
+
+    <div style="margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap;">
+      <label style="margin: 0; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+        <input type="checkbox" name="email_steps[][attach_pdf]" value="1" class="email-step-attach-pdf">
+        Attach form PDF
+      </label>
+      <label style="margin: 0; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+        <input type="checkbox" name="email_steps[][attach_media]" value="1" class="email-step-attach-media">
+        Attach media attachments
+      </label>
     </div>
   </div>
 </template>
