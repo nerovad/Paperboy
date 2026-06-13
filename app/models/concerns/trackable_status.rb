@@ -136,6 +136,7 @@ module TrackableStatus
       status: "step_#{first_step.step_number}_pending",
       approver_id: approver_id_for_routing_step(first_step)
     )
+    warn_if_no_eligible_approver(first_step)
   end
 
   # Advances a multi-step approval form to the next matching step, skipping
@@ -158,6 +159,7 @@ module TrackableStatus
       status: "step_#{next_step.step_number}_pending",
       approver_id: approver_id_for_routing_step(next_step)
     )
+    warn_if_no_eligible_approver(next_step)
   end
 
   # Human-readable label for the current status. Sourced from
@@ -277,6 +279,24 @@ module TrackableStatus
     end
   rescue ActiveRecord::RecordNotUnique
     # Concurrent creates race the unique index — treat as already delivered.
+  end
+
+  # When a submission lands on a routing step that resolves to nobody (e.g. the
+  # submitter has no supervisor, an empty group, or no one holds the required
+  # authorization for the budget unit), it would otherwise sit invisibly at
+  # step_N_pending. Log it and alert the form creator + system admins so a human
+  # is told. The submission is left in place (visible to admins in the inbox).
+  def warn_if_no_eligible_approver(step)
+    return unless step
+    return if step.eligible_approver_ids(self).present?
+
+    Rails.logger.warn(
+      "No eligible approver: #{self.class.name} ##{id} stuck at step #{step.step_number} " \
+      "(#{step.routing_type}#{step.routes_to_authorization? ? " / #{step.authorization_service_type}" : ''})"
+    )
+    StuckSubmissionMailer.no_eligible_approver(self.class.name, id, step.id).deliver_later
+  rescue StandardError => e
+    Rails.logger.warn("no-eligible-approver guard failed: #{e.message}")
   end
 
   # --- Configurable workflow emails (FormTemplateEmailStep) ---

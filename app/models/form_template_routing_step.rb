@@ -147,6 +147,31 @@ class FormTemplateRoutingStep < ApplicationRecord
     end
   end
 
+  # The concrete employee_ids that could act on `submission` at this step.
+  # Centralizes the per-type resolution so the runtime guard (and anyone else)
+  # can tell when a step would route to nobody. Mirrors how approver_id is set
+  # in TrackableStatus and how the inbox surfaces group/authorization steps.
+  def eligible_approver_ids(submission)
+    case routing_type
+    when 'supervisor'
+      sup = step_submitter_employee(submission)&.supervisor_id
+      sup.present? ? [sup.to_s] : []
+    when 'department_head'
+      head = step_submitter_department(submission)&.department_head_id
+      head.present? ? [head.to_s] : []
+    when 'employee'
+      employee_id.present? ? [employee_id.to_s] : []
+    when 'group'
+      group_eligible_ids(submission)
+    when 'authorization'
+      authorization_eligible_ids(submission)
+    else
+      []
+    end
+  rescue StandardError
+    []
+  end
+
   # Human-readable summary of the condition for badges/display.
   def condition_label
     return nil unless conditional?
@@ -157,6 +182,54 @@ class FormTemplateRoutingStep < ApplicationRecord
   end
 
   private
+
+  def step_submitter_employee(submission)
+    eid = submission.respond_to?(:employee_id) ? submission.employee_id : nil
+    eid.present? ? Employee.find_by(employee_id: eid) : nil
+  end
+
+  # The submitter's department, derived from their unit — same chain the
+  # department_head/authorization resolution uses in TrackableStatus.
+  def step_submitter_department(submission)
+    emp = step_submitter_employee(submission)
+    return nil unless emp
+    unit = Unit.find_by(unit_id: emp.unit)
+    unit ? Department.find_by(department_id: unit.department_id) : nil
+  end
+
+  # Group members, narrowed to those sharing the submitter's value at the
+  # configured org level when org filtering is on.
+  def group_eligible_ids(submission)
+    return [] unless group_id
+    member_ids = EmployeeGroup.where(GroupID: group_id).pluck(:EmployeeID).map(&:to_s)
+    return member_ids unless org_filtered?
+
+    submitter_value = (submission.public_send(org_filter_level) if submission.respond_to?(org_filter_level))
+    return [] if submitter_value.blank?
+
+    members = Employee.where(id: member_ids).to_a
+    if org_filter_level == 'unit'
+      members.select { |e| e.unit.to_s == submitter_value.to_s }.map { |e| e.id.to_s }
+    else
+      unit_ids = members.map(&:unit).compact.uniq
+      units = unit_ids.any? ? Unit.where(unit_id: unit_ids).index_by { |u| u.unit_id.to_s } : {}
+      col = "#{org_filter_level}_id"
+      members.select do |e|
+        u = units[e.unit.to_s]
+        u && u.public_send(col).to_s == submitter_value.to_s
+      end.map { |e| e.id.to_s }
+    end
+  end
+
+  # Everyone holding this authorization for the submission's budget unit.
+  def authorization_eligible_ids(submission)
+    return [] if authorization_service_type.blank?
+    return [] unless submission.respond_to?(:unit) && submission.unit.present?
+    AuthorizedApprover.approver_ids_covering_unit(
+      service_type: authorization_service_type,
+      unit_id: submission.unit
+    ).map(&:to_s)
+  end
 
   def org_filter_only_for_group_routing
     return if org_filter_level.blank?

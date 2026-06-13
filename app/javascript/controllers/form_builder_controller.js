@@ -1777,10 +1777,14 @@ export default class extends Controller {
         if (data.success) {
           ToastController.show('success', data.message)
 
+          const hasWarnings = data.warnings && data.warnings.length
+          if (hasWarnings) ToastController.show('warning', data.warnings.join(' '))
+          const delay = hasWarnings ? 6000 : 1000
+
           if (data.redirect) {
-            setTimeout(() => { window.location.href = data.redirect }, 1000)
+            setTimeout(() => { window.location.href = data.redirect }, delay)
           } else {
-            setTimeout(() => { window.location.reload() }, 1000)
+            setTimeout(() => { window.location.reload() }, delay)
           }
         } else {
           ToastController.show('error', 'Error updating form: ' + data.errors.join(', '))
@@ -1953,12 +1957,16 @@ export default class extends Controller {
           ToastController.show('success', data.message)
           this.closeModal(new Event('click'))
 
+          const hasWarnings = data.warnings && data.warnings.length
+          if (hasWarnings) ToastController.show('warning', data.warnings.join(' '))
+          const delay = hasWarnings ? 6000 : 1000
+
           console.log("About to redirect to:", data.redirect)
 
           if (data.redirect) {
-            setTimeout(() => { window.location.href = data.redirect }, 1000)
+            setTimeout(() => { window.location.href = data.redirect }, delay)
           } else {
-            setTimeout(() => { window.location.reload() }, 1000)
+            setTimeout(() => { window.location.reload() }, delay)
           }
         } else {
           this.removeLoadingOverlay(overlay)

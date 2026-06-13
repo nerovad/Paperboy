@@ -64,6 +64,25 @@ class AuthorizedApprover < ApplicationRecord
     }.map(&:employee_id).uniq
   end
 
+  # True when this authorization row covers the given budget unit. Mirrors the
+  # expansion used by authorized_unit_ids_for: all_budget_units covers any unit
+  # in the approver's department; otherwise the unit must be listed explicitly.
+  def covers_unit?(unit_id)
+    if all_budget_units?
+      Unit.exists?(unit_id: unit_id, department_id: department_id)
+    else
+      budget_units.to_s.split(',').map(&:strip).include?(unit_id.to_s)
+    end
+  end
+
+  # Every employee_id eligible to approve the given service type for a budget
+  # unit, regardless of which department the approver is configured under. This
+  # is the inverse of authorized_unit_ids_for and matches the inbox's
+  # authorization visibility exactly.
+  def self.approver_ids_covering_unit(service_type:, unit_id:)
+    where(service_type: service_type).select { |a| a.covers_unit?(unit_id) }.map(&:employee_id).uniq
+  end
+
   # Returns every unit_id this employee is authorized to approve for the given
   # service type. all_budget_units expands to all units in the approver's
   # department; otherwise the explicit budget_units list is used.

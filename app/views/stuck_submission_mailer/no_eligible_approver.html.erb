@@ -1,0 +1,13 @@
+<p>A submission has reached an approval step with <strong>no eligible approver</strong> and is currently stuck.</p>
+
+<ul>
+  <li><strong>Form:</strong> <%= @form_name %></li>
+  <li><strong>Submission ID:</strong> <%= @submission.id %></li>
+  <li><strong>Stuck at:</strong> Step <%= @step.step_number %> — <%= @step_label %></li>
+</ul>
+
+<p>
+  No one currently matches this step's routing for this submission's budget unit / org.
+  Please assign the appropriate authorization (or routing) so it can be acted on.
+  System administrators can locate it in the inbox "All" view.
+</p>

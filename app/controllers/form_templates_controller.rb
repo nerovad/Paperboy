@@ -154,6 +154,7 @@ class FormTemplatesController < ApplicationController
         render json: {
           success: true,
           message: "Form created and generated successfully! The form should now appear in your sidebar.",
+          warnings: routing_approver_warnings(@form_template),
           redirect: form_templates_path
         }
         else
@@ -239,9 +240,11 @@ class FormTemplatesController < ApplicationController
         "Form template updated successfully. Controller was regenerated." :
         "Form template updated successfully."
 
+      warnings = routing_approver_warnings(@form_template)
+
       respond_to do |format|
-        format.json { render json: { success: true, message: message, redirect: form_template_path(@form_template) } }
-        format.html { redirect_to form_template_path(@form_template), notice: message }
+        format.json { render json: { success: true, message: message, warnings: warnings, redirect: form_template_path(@form_template) } }
+        format.html { redirect_to form_template_path(@form_template), notice: [message, *warnings].join(" ") }
       end
     else
       respond_to do |format|
@@ -854,6 +857,29 @@ class FormTemplatesController < ApplicationController
         condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
         inbox_buttons: extract_step_inbox_buttons(step_data)
       )
+    end
+  end
+
+  # Non-blocking heads-up for routing steps that currently can't route to
+  # anyone: an authorization step whose service type no employee holds, or a
+  # group step whose group has no members. (supervisor/department_head/employee
+  # depend on the runtime submitter, so they can't be pre-checked here.)
+  def routing_approver_warnings(form_template)
+    form_template.routing_steps.ordered.filter_map do |step|
+      case step.routing_type
+      when 'authorization'
+        next if step.authorization_service_type.blank?
+        if AuthorizedApprover.where(service_type: step.authorization_service_type).none?
+          "Step #{step.step_number}: no employees currently hold the " \
+          "'#{step.authorization_service_type_label}' authorization, so it may route to no one."
+        end
+      when 'group'
+        next if step.group_id.blank?
+        if EmployeeGroup.where(GroupID: step.group_id).none?
+          "Step #{step.step_number}: the group '#{step.group_name || "##{step.group_id}"}' " \
+          "has no members, so it may route to no one."
+        end
+      end
     end
   end
 
