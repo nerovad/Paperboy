@@ -39,16 +39,37 @@ class LookupsController < ApplicationController
   end
 
   def units
-    @unit_options = Unit
-      .where(department_id: params[:department])
-      .order(:unit_id)
-      .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+    # Department-scoped (the agency→division→department→unit cascade) or, for the
+    # contractor admin's shorter agency→unit cascade, agency-scoped directly off
+    # Unit.agency_id (populated for every unit).
+    scope =
+      if params[:department].present?
+        Unit.where(department_id: params[:department])
+      elsif params[:agency].present?
+        Unit.where(agency_id: params[:agency])
+      else
+        Unit.none
+      end
+
+    @unit_options = scope.order(:unit_id).map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
 
     respond_to do |format|
       format.turbo_stream
       format.json { render json: @unit_options }
       format.html { head :not_acceptable }
     end
+  end
+
+  # Employees in a given unit, as [label, employee_id] pairs for a searchable
+  # supervisor select. Requires a unit so the list stays scoped/manageable.
+  def supervisors
+    return render(json: []) if params[:unit].blank?
+
+    options = Employee.where(unit: params[:unit])
+                      .order(:last_name, :first_name)
+                      .map { |e| ["#{e.last_name}, #{e.first_name} (#{e.id})", e.id] }
+
+    render json: options
   end
 
   def employees

@@ -1,0 +1,62 @@
+<%# Shared contractor fields for the Add (acl/show) and Edit (acl/edit_contractor) forms.
+    Expects `f` (form builder for a Contractor) and @agency_options.
+    Agency → Unit → Supervisor cascade is wired via the contractor-selects controller;
+    unit/supervisor are searchable (Choices) and enforced required server-side. %>
+<div class="acl-contractor-grid"
+     data-controller="contractor-selects"
+     data-contractor-selects-current-unit-value="<%= f.object.unit %>"
+     data-contractor-selects-current-supervisor-value="<%= f.object.supervisor_id %>">
+  <div class="form-group">
+    <%= f.label :first_name, "First name" %>
+    <%= f.text_field :first_name, required: true, class: "form-control" %>
+  </div>
+  <div class="form-group">
+    <%= f.label :last_name, "Last name" %>
+    <%= f.text_field :last_name, required: true, class: "form-control" %>
+  </div>
+  <div class="form-group">
+    <%= f.label :email, "Email" %>
+    <%= f.email_field :email, required: true, class: "form-control" %>
+  </div>
+  <div class="form-group">
+    <%= f.label :work_phone, "Phone (optional)" %>
+    <%= f.telephone_field :work_phone,
+          class: "form-control",
+          placeholder: "555-555-5555",
+          title: "Enter a 10-digit phone number like 555-555-5555",
+          data: { controller: "phone", phone_target: "input",
+                  action: "input->phone#format paste->phone#format blur->phone#validate" } %>
+  </div>
+  <div class="form-group">
+    <%= f.label :agency, "Agency (business unit)" %>
+    <%= f.select :agency,
+          options_for_select(@agency_options, f.object.agency),
+          { include_blank: "— Select agency —" },
+          { required: true, class: "form-control",
+            data: { contractor_selects_target: "agency",
+                    action: "change->contractor-selects#agencyChanged" } } %>
+  </div>
+  <div class="form-group">
+    <%= f.label :unit, "Unit" %>
+    <%= f.select :unit,
+          options_for_select(contractor_unit_options(f.object), f.object.unit),
+          { include_blank: "— Select agency first —" },
+          { class: "form-control",
+            data: { contractor_selects_target: "unit",
+                    action: "change->contractor-selects#unitChanged" } } %>
+  </div>
+  <div class="form-group">
+    <%= f.label :supervisor_id, "Supervisor" %>
+    <%= f.select :supervisor_id,
+          options_for_select(contractor_supervisor_options(f.object), f.object.supervisor_id),
+          { include_blank: "— Select unit first —" },
+          { class: "form-control",
+            data: { contractor_selects_target: "supervisor" } } %>
+  </div>
+  <div class="form-group">
+    <%= f.label :expires_at, "Access expires" %>
+    <%= f.date_field :expires_at,
+          value: (f.object.expires_at&.to_date || Date.current + 1.year),
+          required: true, class: "form-control" %>
+  </div>
+</div>

@@ -64,41 +64,8 @@
       them to this group and emails them a link to set their password.
     </p>
 
-    <%= form_with url: add_contractor_acl_path(@group), method: :post, scope: :contractor, local: true do |f| %>
-      <div class="acl-contractor-grid">
-        <div class="form-group">
-          <%= f.label :first_name, "First name" %>
-          <%= f.text_field :first_name, required: true, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= f.label :last_name, "Last name" %>
-          <%= f.text_field :last_name, required: true, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= f.label :email, "Email" %>
-          <%= f.email_field :email, required: true, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= f.label :work_phone, "Phone" %>
-          <%= f.telephone_field :work_phone, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= f.label :agency, "Agency (business unit)" %>
-          <%= f.select :agency, options_for_select(@agency_options), { include_blank: "— Select agency —" }, class: "form-control" %>
-        </div>
-        <div class="form-group">
-          <%= f.label :unit, "Unit code" %>
-          <%= f.text_field :unit, class: "form-control", placeholder: "e.g. 4601" %>
-        </div>
-        <div class="form-group">
-          <%= f.label :supervisor_id, "Supervisor (employee ID)" %>
-          <%= f.text_field :supervisor_id, class: "form-control", placeholder: "Routes approvals to this employee" %>
-        </div>
-        <div class="form-group">
-          <%= f.label :expires_at, "Access expires" %>
-          <%= f.date_field :expires_at, value: (Date.current + 1.year), class: "form-control" %>
-        </div>
-      </div>
+    <%= form_with model: Contractor.new, url: add_contractor_acl_path(@group), method: :post, local: true do |f| %>
+      <%= render "contractor_fields", f: f %>
       <div class="form-actions">
         <%= f.submit "Create Contractor & Send Invite", class: "btn approve" %>
       </div>

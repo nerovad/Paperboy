@@ -287,6 +287,7 @@ Rails.application.routes.draw do
   get "/lookups/divisions", to: "lookups#divisions"
   get "/lookups/departments", to: "lookups#departments"
   get "/lookups/units", to: "lookups#units"
+  get "/lookups/supervisors", to: "lookups#supervisors"
   get "/lookups/employees", to: "lookups#employees"
   get "/lookups/categories", to: "lookups#categories"
   get "/lookups/tables", to: "lookups#tables"

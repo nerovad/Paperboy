@@ -33,9 +33,14 @@ class Contractor < ApplicationRecord
   validates :first_name, :last_name, presence: true
   validates :email, presence: true, uniqueness: { case_sensitive: false },
                     format: { with: URI::MailTo::EMAIL_REGEXP }
+  # Business unit + supervisor + expiry are required (admin sets them at
+  # creation). Enforced here because the unit/supervisor selects are
+  # Choices-enhanced and can't rely on the HTML `required` attribute. Phone is
+  # intentionally optional.
+  validates :agency, :unit, :supervisor_id, :expires_at, presence: true
 
   before_validation :normalize_email
-  before_create :set_default_expiry
+  before_validation :set_default_expiry, on: :create
 
   scope :active, -> { where(active: true) }
 
