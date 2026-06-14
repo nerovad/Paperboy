@@ -28,27 +28,10 @@ class InboxController < ApplicationController
                              [employee_id]
                            end
 
-    # Parking Lot Submissions where assignee is either:
-    # 1. Supervisor (Dept Head) - all statuses stay in inbox
-    # 2. Delegated Approver - all statuses stay in inbox
-    # 3. Unclaimed (supervisor_id IS NULL) and the scoped employee is one of
-    #    the authorized approvers for the submission's unit. Restricted to
-    #    pending submissions; once an approver acts, supervisor_id is set
-    #    via the claim and path 1 takes over.
-    @submissions += apply_scope_date_filters(
-      scope_by_assignee(ParkingLotSubmission, :supervisor_id),
-      inbox_scope_date_filters
-    ).to_a
-    @submissions += apply_scope_date_filters(
-      scope_by_assignee(ParkingLotSubmission, :delegated_approver_id),
-      inbox_scope_date_filters
-    ).to_a
-    @submissions += apply_scope_date_filters(
-      scope_unclaimed_by_authorization(ParkingLotSubmission, service_type: 'P'),
-      inbox_scope_date_filters
-    ).to_a
-
-    # Approved parking permits are visible to the GSA_Security group for awareness.
+    # Parking Lot Submissions now route via form-builder steps (Authorization ->
+    # Sean Payne -> GSA_Security) and are surfaced by fetch_dynamic_form_submissions
+    # (approver_id + group + authorization scopes). The only parking-specific rule
+    # left is awareness: approved permits are visible to the GSA_Security group.
     @submissions += apply_scope_date_filters(
       scope_group_visible(ParkingLotSubmission, status: "approved", group_name: "GSA_Security"),
       inbox_scope_date_filters

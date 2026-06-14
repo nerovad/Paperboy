@@ -2,7 +2,6 @@ module InboxHelper
   # Known hardcoded form types that have custom handling
   HARDCODED_FORM_TYPES = %w[
     CriticalInformationReporting
-    ParkingLotSubmission
     ProbationTransferRequest
   ].freeze
 

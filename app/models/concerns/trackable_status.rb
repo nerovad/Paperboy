@@ -122,14 +122,17 @@ module TrackableStatus
   # Starts a multi-step approval flow from the first step whose condition
   # matches the submitted form. If no step matches, marks the form approved
   # immediately (treated as a no-op approval).
-  def start_approval!
+  # `skip_types` lets a caller bypass routing steps of certain types when
+  # picking the first step (e.g. MB3 parking submitters skip the 'authorization'
+  # step). Approver resolution stays centralized in approver_id_for_routing_step.
+  def start_approval!(skip_types: [])
     template = approval_template
     return unless template
 
     steps = template.routing_steps.ordered.to_a
     return if steps.empty?
 
-    first_step = steps.find { |s| s.matches?(self) }
+    first_step = steps.find { |s| !skip_types.include?(s.routing_type) && s.matches?(self) }
     return approved! unless first_step
 
     update!(

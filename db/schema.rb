@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_14_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_14_000002) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -546,6 +546,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_14_000001) do
     t.string "delegated_approved_by"
     t.datetime "delegated_approved_at"
     t.string "status", default: "in_progress", null: false
+    t.string "approver_id"
   end
 
   create_table "parking_lot_vehicles", force: :cascade do |t|

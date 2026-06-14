@@ -88,55 +88,34 @@ def create
   @parking_lot_submission.employee_id = employee_id
   submitted_unit = @parking_lot_submission.unit
 
-  # Find authorized approver for parking permits matching the submitter's budget unit
-  authorized_approvers = if department && submitted_unit.present?
-    AuthorizedApprover.approver_for_unit(
-      department_id: department.department_id,
-      service_type: 'P',
-      unit_id: submitted_unit
-    )
-  else
-    []
-  end
-
-  # MB3 employees skip approval routing entirely
+  # Non-MB3 submitters route through the Authorization step (step 1): block here
+  # if no one holds the Parking Permits authorization for their budget unit, so
+  # the request never routes into a dead end. MB3 employees skip that step.
   unless is_mb3
+    authorized_approvers = if department && submitted_unit.present?
+      AuthorizedApprover.approver_for_unit(
+        department_id: department.department_id,
+        service_type: 'P',
+        unit_id: submitted_unit
+      )
+    else
+      []
+    end
+
     if authorized_approvers.empty?
       @parking_lot_submission.errors.add(:base, "No authorized approver found for Parking Permits in your budget unit. Please contact your department's authorization manager.")
-      @is_mb3 = false
-      base_lots = ["A Lot", "B Lot", "C Lot", "D Lot", "Employee Lot", "Visitor Lot"]
-      @allowed_parking_lots = base_lots
-      reload_form_options(emp_record)
-      render :new, status: :unprocessable_entity and return
+      render_new_with_options(emp_record, is_mb3) and return
     end
-  end
-
-  if is_mb3
-    # Auto-approve: no manager routing
-    @parking_lot_submission.status        = "pending_delegated_approval"
-    @parking_lot_submission.supervisor_id = nil
-    @parking_lot_submission.approved_by   = employee_id # or "SYSTEM"
-    @parking_lot_submission.approved_at   = Time.current
-  else
-    # Multi-approver path: leave supervisor_id null so every authorized
-    # approver for this unit sees it in their inbox. Whoever acts first
-    # claims it (see #approve / #deny).
-    @parking_lot_submission.status           = "in_progress"
-    @parking_lot_submission.supervisor_id    = nil
-    @parking_lot_submission.supervisor_email = nil
   end
 
   if @parking_lot_submission.save
-    if is_mb3
-      NotifySecurityJob.perform_later(@parking_lot_submission.id)
-    end
+    # Routing is defined in the form builder (Authorization -> Sean Payne ->
+    # GSA_Security) and executed by TrackableStatus. MB3 employees skip the
+    # authorization step and enter at the next step.
+    @parking_lot_submission.start_approval!(skip_types: is_mb3 ? ['authorization'] : [])
     redirect_to form_success_path, allow_other_host: false, status: :see_other
   else
-    @is_mb3 = is_mb3
-    base_lots = ["A Lot", "B Lot", "C Lot", "D Lot", "Employee Lot", "Visitor Lot"]
-    @allowed_parking_lots = is_mb3 ? (base_lots + ["R Lot"]) : base_lots
-    reload_form_options(emp_record)
-    render :new, status: :unprocessable_entity
+    render_new_with_options(emp_record, is_mb3)
   end
 end
 
@@ -154,79 +133,33 @@ end
   end
 
 def approve
-  @submission = ParkingLotSubmission.find(params[:id])
-  approver_id = session.dig(:user, "employee_id").to_s
+  # @parking_lot_submission set by before_action. Routing is driven by the
+  # form-builder steps via TrackableStatus; advance to the next matching step
+  # (or finalize as approved).
+  actor = session.dig(:user, "employee_id").to_s
+  @parking_lot_submission.advance_approval!
 
-  if @submission.in_progress?
-    # AUTHORIZED APPROVER APPROVAL - always routes to Sean Payne for final approval
-    sean_payne_id = "104236"
-    sean_payne_email = "Sean.Payne@ventura.org"
-
-    # Claim the submission for this approver so the existing supervisor_id-based
-    # inbox query keeps showing it under them post-approval, and the other
-    # authorized approvers stop seeing it as pending.
-    claim_attrs = if @submission.supervisor_id.blank?
-      { supervisor_id: approver_id, supervisor_email: fetch_employee_email(approver_id) }
-    else
-      {}
-    end
-
-    @submission.update!(
-      claim_attrs.merge(
-        status: "pending_delegated_approval",
-        approved_by: approver_id,
-        approved_at: Time.current,
-        delegated_approver_id: sean_payne_id,
-        delegated_approver_email: sean_payne_email
-      )
-    )
-
-    # Send notification to Sean Payne
-    SecurityMailer.notify_delegated_approver(@submission).deliver_later
-
-    redirect_to inbox_queue_path, notice: "Request approved and sent to Sean Payne for final approval."
-
-  elsif @submission.pending_delegated_approval?
-    # SEAN PAYNE FINAL APPROVAL - sends to Security after approval
-    @submission.update!(
-      status: :approved,
-      delegated_approved_by: approver_id,
-      delegated_approved_at: Time.current
-    )
-
-    # Notify Security; the approved request now appears in the GSA_Security inbox.
-    NotifySecurityJob.perform_later(@submission.id)
-
-    redirect_to inbox_queue_path, notice: "Request approved and sent to Security."
+  if @parking_lot_submission.approved?
+    @parking_lot_submission.update_columns(approved_by: actor, approved_at: Time.current)
+    notice = "Request approved."
   else
-    redirect_to inbox_queue_path, alert: "Invalid approval state."
+    notice = "Approved and routed to the next step."
   end
+
+  redirect_to inbox_queue_path, notice: notice
 end
 
 def deny
-  @submission = ParkingLotSubmission.find(params[:id])
-
-  denier_id    = session.dig(:user, "employee_id").to_s
-  reason       = params[:denial_reason].to_s.strip
-
-  # Claim the submission on deny too, so it stays in the denying approver's
-  # inbox and disappears from the other authorized approvers' inboxes.
-  claim_attrs = if @submission.supervisor_id.blank?
-    { supervisor_id: denier_id, supervisor_email: fetch_employee_email(denier_id) }
-  else
-    {}
-  end
-
-  @submission.update!(
-    claim_attrs.merge(
-      status: "denied",
-      denied_by: denier_id,
-      denied_at: Time.current,
-      denial_reason: reason.presence || "No reason provided"
-    )
+  reason = params[:denial_reason].to_s.strip
+  @parking_lot_submission.assign_attributes(
+    denial_reason: reason.presence || "No reason provided",
+    denied_by: session.dig(:user, "employee_id").to_s,
+    denied_at: Time.current
   )
+  @parking_lot_submission.denied!
 
-  SecurityMailer.denied(@submission).deliver_later
+  # Notify the submitter of the denial + reason (in-app routing handles approvers).
+  SecurityMailer.denied(@parking_lot_submission).deliver_later
 
   redirect_to inbox_queue_path, alert: "Parking request denied."
 end
@@ -255,6 +188,15 @@ end
 
   def set_parking_lot_submission
     @parking_lot_submission = ParkingLotSubmission.find(params[:id])
+  end
+
+  # Rebuild the option ivars and re-render the new form on a failed create.
+  def render_new_with_options(emp_record, is_mb3)
+    @is_mb3 = is_mb3
+    base_lots = ["A Lot", "B Lot", "C Lot", "D Lot", "Employee Lot", "Visitor Lot"]
+    @allowed_parking_lots = is_mb3 ? (base_lots + ["R Lot"]) : base_lots
+    reload_form_options(emp_record)
+    render :new, status: :unprocessable_entity
   end
 
   def fetch_supervisor_id(employee_id)
