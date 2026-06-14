@@ -1,7 +1,9 @@
 class FormSubmissionCopy < ApplicationRecord
   belongs_to :submission, polymorphic: true
 
-  DELIVERY_EVENTS = %w[submit approval].freeze
+  # submit/approval = configured copy recipients; pool_action = the read-only
+  # tracking row left for an approver who cleared a multi-approver pool step.
+  DELIVERY_EVENTS = %w[submit approval pool_action].freeze
 
   validates :recipient_employee_id, presence: true
   validates :delivered_via, presence: true, inclusion: { in: DELIVERY_EVENTS }

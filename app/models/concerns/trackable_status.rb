@@ -158,6 +158,13 @@ module TrackableStatus
     next_step = steps.find { |s| s.step_number > current && s.matches?(self) }
     return finalize_approval! unless next_step
 
+    # Before handing the form to the next approver, leave a read-only tracking
+    # copy in the acting approver's inbox if the step they just cleared was a
+    # multi-approver pool (group/authorization). Without this the form would
+    # vanish from every pool member's queue the moment one of them acts —
+    # including the person who actually actioned it.
+    record_pool_step_tracking_copy(steps.find { |s| s.step_number == current })
+
     update!(
       status: "step_#{next_step.step_number}_pending",
       approver_id: approver_id_for_routing_step(next_step)
@@ -200,6 +207,30 @@ module TrackableStatus
     return if approver_id.to_s == actor_id
 
     update_columns(approver_id: actor_id)
+  end
+
+  # Pool steps (group / authorization) carry approver_id == nil so every
+  # eligible approver sees the form and the first to act wins. When the form
+  # then advances to a later step, drop a read-only copy row into the acting
+  # approver's inbox so they keep tracking it; the other pool members simply
+  # lose it from their queue. Terminal pool steps don't need this — the actor
+  # is kept on via stamp_actor_on_terminal_status instead.
+  def record_pool_step_tracking_copy(step)
+    return unless step
+    return unless %w[group authorization].include?(step.routing_type.to_s)
+
+    actor_id = Current.user&.dig("employee_id")&.to_s.presence
+    return unless actor_id
+
+    FormSubmissionCopy.find_or_create_by!(
+      submission_type: self.class.name,
+      submission_id: id,
+      recipient_employee_id: actor_id.to_i
+    ) { |row| row.delivered_via = "pool_action" }
+  rescue ActiveRecord::RecordNotUnique
+    # Concurrent action raced the unique index — the tracking copy already exists.
+  rescue StandardError => e
+    Rails.logger.warn("pool-step tracking copy failed for #{self.class.name} ##{id}: #{e.message}")
   end
 
   def approval_template
