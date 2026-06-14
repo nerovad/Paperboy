@@ -185,7 +185,8 @@ class FormTemplateRoutingStep < ApplicationRecord
 
   def step_submitter_employee(submission)
     eid = submission.respond_to?(:employee_id) ? submission.employee_id : nil
-    eid.present? ? Employee.find_by(employee_id: eid) : nil
+    # Employee or Contractor — both expose supervisor_id/unit for routing.
+    eid.present? ? Submitter.resolve(eid) : nil
   end
 
   # The submitter's department, derived from their unit — same chain the

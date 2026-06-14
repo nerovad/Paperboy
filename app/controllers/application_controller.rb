@@ -38,7 +38,7 @@ class ApplicationController < ActionController::Base
   end
 
   def build_prefill_data(employee_id)
-    employee = Employee.find_by(employee_id: employee_id)
+    employee = Submitter.resolve(employee_id)
     return {} unless employee
 
     unit = Unit.resolve_for_employee(employee)
@@ -75,7 +75,7 @@ class ApplicationController < ActionController::Base
 
     employee_id = session.dig(:user, "employee_id")
     if employee_id.present?
-      employee = Employee.find_by(employee_id: employee_id)
+      employee = Submitter.resolve(employee_id)
       unit     = Unit.resolve_for_employee(employee)
 
       # agency_id comes straight off the Employee row (validated to match

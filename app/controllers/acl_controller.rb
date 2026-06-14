@@ -1,7 +1,8 @@
 # app/controllers/acl_controller.rb
 class AclController < ApplicationController
   before_action :require_system_admin
-  before_action :set_group, only: [:show, :edit, :update, :destroy, :add_member, :remove_member, :permissions, :update_permissions]
+  before_action :set_group, only: [:show, :edit, :update, :destroy, :add_member, :remove_member, :permissions, :update_permissions,
+                                   :add_contractor, :edit_contractor, :update_contractor, :toggle_contractor, :resend_contractor_welcome]
 
   DROPDOWN_ITEMS = [
     { key: 'inbox',         label: 'Inbox',          default_public: true },
@@ -36,7 +37,13 @@ class AclController < ApplicationController
   end
 
   def show
+    # Employee members. Contractor ids start at 1,000,000,000 so they never
+    # match an Employee row and are naturally excluded here — they're listed
+    # separately via @contractor_members.
     @members = @group.employees.order(:last_name, :first_name)
+    member_ids = @group.employee_groups.pluck(:employee_id)
+    @contractor_members = Contractor.where(id: member_ids).order(:last_name, :first_name)
+    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
 
     if params[:search].present?
       search = params[:search].strip
@@ -103,6 +110,71 @@ class AclController < ApplicationController
     eg = @group.employee_groups.find_by(employee_id: params[:employee_id])
     eg&.destroy
     redirect_to acl_path(@group), notice: "Member removed."
+  end
+
+  # --- Contractors (non-Active-Directory members) ---
+  # Provisioning a contractor lives on the group screen so it sits right next to
+  # "Add Member" (the AD-user search). Creating one also adds the Employee_Groups
+  # membership in the same step, so the existing ACL/permission pipeline picks
+  # them up unchanged.
+  def add_contractor
+    @contractor = Contractor.new(contractor_params)
+
+    # supervisor_id drives approval routing — a bad id would silently route to
+    # nobody, so validate it points at a real Employee before saving.
+    if @contractor.supervisor_id.present? && !Employee.exists?(employee_id: @contractor.supervisor_id)
+      return redirect_to acl_path(@group), alert: "Supervisor ID #{@contractor.supervisor_id} does not match any employee."
+    end
+
+    if @contractor.save
+      unless @group.employee_groups.exists?(employee_id: @contractor.id)
+        @group.employee_groups.create!(employee_id: @contractor.id)
+      end
+      ContractorMailer.welcome(@contractor).deliver_later
+      redirect_to acl_path(@group),
+                  notice: "Contractor #{@contractor.full_name} created. A set-password email was sent to #{@contractor.email}."
+    else
+      redirect_to acl_path(@group),
+                  alert: "Could not create contractor: #{@contractor.errors.full_messages.to_sentence}"
+    end
+  end
+
+  def edit_contractor
+    @contractor = Contractor.find(params[:contractor_id])
+    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+  end
+
+  def update_contractor
+    @contractor = Contractor.find(params[:contractor_id])
+    @contractor.assign_attributes(contractor_params)
+
+    sup = @contractor.supervisor_id
+    if sup.present? && !Employee.exists?(employee_id: sup)
+      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+      flash.now[:alert] = "Supervisor ID #{sup} does not match any employee."
+      return render :edit_contractor, status: :unprocessable_entity
+    end
+
+    if @contractor.save
+      redirect_to acl_path(@group), notice: "Contractor #{@contractor.full_name} updated."
+    else
+      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+      flash.now[:alert] = @contractor.errors.full_messages.to_sentence
+      render :edit_contractor, status: :unprocessable_entity
+    end
+  end
+
+  def toggle_contractor
+    contractor = Contractor.find(params[:contractor_id])
+    contractor.update!(active: !contractor.active)
+    state = contractor.active? ? "reactivated" : "deactivated"
+    redirect_to acl_path(@group), notice: "Contractor #{contractor.full_name} #{state}."
+  end
+
+  def resend_contractor_welcome
+    contractor = Contractor.find(params[:contractor_id])
+    ContractorMailer.welcome(contractor).deliver_later
+    redirect_to acl_path(@group), notice: "Set-password email re-sent to #{contractor.email}."
   end
 
   def permissions
@@ -258,6 +330,13 @@ class AclController < ApplicationController
 
   def group_params
     params.require(:group).permit(:group_name, :description)
+  end
+
+  def contractor_params
+    params.require(:contractor).permit(
+      :first_name, :last_name, :email, :work_phone,
+      :agency, :department, :unit, :supervisor_id, :expires_at
+    )
   end
 
   def build_org_label

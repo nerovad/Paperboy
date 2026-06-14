@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_14_000003) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_14_000004) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -146,6 +146,23 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_14_000003) do
     t.datetime "updated_at", null: false
     t.string "approver_id"
     t.string "status", default: "in_progress", null: false
+  end
+
+  create_table "contractors", force: :cascade do |t|
+    t.string "first_name", null: false
+    t.string "last_name", null: false
+    t.string "email", null: false
+    t.string "work_phone"
+    t.string "agency"
+    t.string "department"
+    t.string "unit"
+    t.integer "supervisor_id"
+    t.string "password_digest"
+    t.boolean "active", default: true, null: false
+    t.datetime "expires_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_contractors_on_email", unique: true
   end
 
   create_table "creative_job_requests", force: :cascade do |t|

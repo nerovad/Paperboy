@@ -56,6 +56,110 @@
     <% end %>
   </div>
 
+  <!-- Add Contractor (non-Active-Directory user) -->
+  <div class="acl-search-section">
+    <h3>Add Contractor</h3>
+    <p class="form-intro">
+      Contractors don't have a Microsoft (AD) account. Creating one here adds
+      them to this group and emails them a link to set their password.
+    </p>
+
+    <%= form_with url: add_contractor_acl_path(@group), method: :post, scope: :contractor, local: true do |f| %>
+      <div class="acl-contractor-grid">
+        <div class="form-group">
+          <%= f.label :first_name, "First name" %>
+          <%= f.text_field :first_name, required: true, class: "form-control" %>
+        </div>
+        <div class="form-group">
+          <%= f.label :last_name, "Last name" %>
+          <%= f.text_field :last_name, required: true, class: "form-control" %>
+        </div>
+        <div class="form-group">
+          <%= f.label :email, "Email" %>
+          <%= f.email_field :email, required: true, class: "form-control" %>
+        </div>
+        <div class="form-group">
+          <%= f.label :work_phone, "Phone" %>
+          <%= f.telephone_field :work_phone, class: "form-control" %>
+        </div>
+        <div class="form-group">
+          <%= f.label :agency, "Agency (business unit)" %>
+          <%= f.select :agency, options_for_select(@agency_options), { include_blank: "— Select agency —" }, class: "form-control" %>
+        </div>
+        <div class="form-group">
+          <%= f.label :unit, "Unit code" %>
+          <%= f.text_field :unit, class: "form-control", placeholder: "e.g. 4601" %>
+        </div>
+        <div class="form-group">
+          <%= f.label :supervisor_id, "Supervisor (employee ID)" %>
+          <%= f.text_field :supervisor_id, class: "form-control", placeholder: "Routes approvals to this employee" %>
+        </div>
+        <div class="form-group">
+          <%= f.label :expires_at, "Access expires" %>
+          <%= f.date_field :expires_at, value: (Date.current + 1.year), class: "form-control" %>
+        </div>
+      </div>
+      <div class="form-actions">
+        <%= f.submit "Create Contractor & Send Invite", class: "btn approve" %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Contractor Members -->
+  <% if @contractor_members.any? %>
+    <div class="acl-members-section">
+      <h3>Contractor Members (<%= @contractor_members.size %>)</h3>
+      <table class="submission-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Expires</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @contractor_members.each do |contractor| %>
+            <tr>
+              <td><%= contractor.id %></td>
+              <td><%= contractor.full_name %></td>
+              <td><%= contractor.email %></td>
+              <td>
+                <% if !contractor.active? %>
+                  <span class="badge is-cancelled">Inactive</span>
+                <% elsif contractor.expired? %>
+                  <span class="badge is-cancelled">Expired</span>
+                <% elsif contractor.password_digest.blank? %>
+                  <span class="badge is-pending">Invite sent</span>
+                <% else %>
+                  <span class="badge is-approved">Active</span>
+                <% end %>
+              </td>
+              <td><%= contractor.expires_at&.to_date %></td>
+              <td class="action-buttons">
+                <%= link_to "Edit", edit_contractor_acl_path(@group, contractor_id: contractor.id), class: "btn" %>
+                <%= button_to "Resend invite", resend_contractor_welcome_acl_path(@group, contractor_id: contractor.id), method: :post, class: "btn" %>
+                <%= button_to (contractor.active? ? "Deactivate" : "Reactivate"),
+                      toggle_contractor_acl_path(@group, contractor_id: contractor.id), method: :patch,
+                      class: (contractor.active? ? "btn deny" : "btn approve") %>
+                <button type="button"
+                        class="btn deny"
+                        data-action="click->confirm-modal#open"
+                        data-delete-path="<%= remove_member_acl_path(@group, employee_id: contractor.id) %>"
+                        data-confirm-title="Remove Contractor"
+                        data-confirm-message="Remove <%= contractor.full_name %> from <%= @group.group_name %>? (This only removes group membership; the account is kept.)">
+                  Remove
+                </button>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
   <!-- Current Members -->
   <div class="acl-members-section">
     <h3>Members (<%= @members.size %>)</h3>

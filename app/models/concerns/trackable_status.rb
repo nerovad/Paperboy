@@ -265,7 +265,8 @@ module TrackableStatus
 
   def submitter_employee
     return nil unless respond_to?(:employee_id) && employee_id.present?
-    Employee.find_by(employee_id: employee_id)
+    # Employee or Contractor — both expose supervisor_id/unit for routing.
+    Submitter.resolve(employee_id)
   end
 
   def record_initial_status

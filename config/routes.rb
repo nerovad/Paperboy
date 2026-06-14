@@ -119,6 +119,16 @@ Rails.application.routes.draw do
   post "/login", to: "sessions#create_legacy"
   delete "/logout", to: "sessions#destroy"
 
+  # Contractor (non-Active-Directory) password login + set/reset password
+  get    "/contractor/login",  to: "contractor_sessions#new",     as: :contractor_login
+  post   "/contractor/login",  to: "contractor_sessions#create"
+  delete "/contractor/logout", to: "contractor_sessions#destroy", as: :contractor_logout
+
+  get   "/contractor/password/new",  to: "contractor_passwords#new",    as: :new_contractor_password
+  post  "/contractor/password",      to: "contractor_passwords#create", as: :contractor_password
+  get   "/contractor/password/edit", to: "contractor_passwords#edit",   as: :edit_contractor_password
+  patch "/contractor/password",      to: "contractor_passwords#update"
+
   # ============================================================================
   # Admin & Tools
   # ============================================================================
@@ -148,6 +158,11 @@ Rails.application.routes.draw do
       delete :remove_member
       get :permissions
       patch :update_permissions
+      post  :add_contractor
+      get   :edit_contractor
+      patch :update_contractor
+      patch :toggle_contractor
+      post  :resend_contractor_welcome
     end
     collection do
       get :org_permissions

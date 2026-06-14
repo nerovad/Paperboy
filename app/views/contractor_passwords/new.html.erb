@@ -1,0 +1,24 @@
+<!-- app/views/contractor_passwords/new.html.erb -->
+<div class="form-header">
+  <h1>Reset Password</h1>
+</div>
+
+<div class="form-wrapper">
+  <p class="form-intro">
+    Enter the email address on your contractor account and we'll send you a link
+    to set a new password.
+  </p>
+
+  <%= form_with url: contractor_password_path, method: :post, local: true do %>
+    <div class="form-group">
+      <%= label_tag :email, "Email" %>
+      <%= email_field_tag :email, params[:email], required: true, autofocus: true,
+            autocomplete: "username", class: "form-control" %>
+    </div>
+
+    <div class="form-actions">
+      <%= submit_tag "Send reset link", class: "btn approve" %>
+      <%= link_to "Back to sign in", contractor_login_path, class: "btn" %>
+    </div>
+  <% end %>
+</div>

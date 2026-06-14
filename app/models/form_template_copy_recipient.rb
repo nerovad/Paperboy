@@ -49,7 +49,7 @@ class FormTemplateCopyRecipient < ApplicationRecord
   def submitter_supervisor_id(submission)
     employee_id = submission.respond_to?(:employee_id) ? submission.employee_id : nil
     return nil unless employee_id
-    Employee.find_by(employee_id: employee_id)&.supervisor_id
+    Submitter.resolve(employee_id)&.supervisor_id
   rescue
     nil
   end
