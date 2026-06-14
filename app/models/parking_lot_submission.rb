@@ -6,6 +6,10 @@ class ParkingLotSubmission < ApplicationRecord
 enum :status, {
   in_progress: "in_progress",
     pending_delegated_approval: "pending_delegated_approval",
+    step_1_pending: "step_1_pending",
+    step_2_pending: "step_2_pending",
+    step_3_pending: "step_3_pending",
+    step_4_pending: "step_4_pending",
     denied: "denied",
     approved: "approved"
 }, default: :in_progress

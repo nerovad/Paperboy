@@ -115,6 +115,18 @@
             </small>
           </div>
 
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <%= f.check_box :skip_code_generation %>
+              This form has custom code (don't regenerate controller/views)
+            </label>
+            <small class="form-text" style="color: #6c757d;">
+              For hand-coded forms (custom JS, APIs, bespoke controllers). The builder will still
+              manage routing steps, statuses and email notifications, but will never overwrite this
+              form's controller, views, or model.
+            </small>
+          </div>
+
         </div>
 
         <!-- ========== Page 2: Page Setup ========== -->

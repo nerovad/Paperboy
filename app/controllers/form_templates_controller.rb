@@ -218,22 +218,30 @@ class FormTemplatesController < ApplicationController
         rebuild_email_steps(@form_template)
       end
 
-      # Only rebuild fields and regenerate views when fields actually changed
-      if fields_changed
-        rebuild_form_fields
-        generate_dynamic_view(@form_template.class_name)
-        generate_dynamic_edit_view(@form_template.class_name)
-      end
+      # Rebuild field records when fields changed (this is data, not code).
+      rebuild_form_fields if fields_changed
 
-      # Regenerate model when statuses, routing, or fields changed (enum + has_many_attached)
-      if statuses_changed || routing_changed || fields_changed
-        customize_generated_model(@form_template)
-      end
+      # Code generation (controller / views / model / routes) is skipped for
+      # hand-coded forms — the builder still manages their routing/status/email
+      # records above, but never overwrites their custom controller or views.
+      if @form_template.skip_code_generation?
+        Rails.logger.info "Skipping code generation for #{@form_template.class_name} (skip_code_generation)"
+      else
+        if fields_changed
+          generate_dynamic_view(@form_template.class_name)
+          generate_dynamic_edit_view(@form_template.class_name)
+        end
 
-      if routing_changed || fields_changed
-        customize_generated_controller(@form_template, update_routing: routing_changed)
-        add_media_download_routes(@form_template)
-        Rails.logger.info "Regenerated controller for #{@form_template.class_name}"
+        # Regenerate model when statuses, routing, or fields changed (enum + has_many_attached)
+        if statuses_changed || routing_changed || fields_changed
+          customize_generated_model(@form_template)
+        end
+
+        if routing_changed || fields_changed
+          customize_generated_controller(@form_template, update_routing: routing_changed)
+          add_media_download_routes(@form_template)
+          Rails.logger.info "Regenerated controller for #{@form_template.class_name}"
+        end
       end
 
       message = routing_changed ?
@@ -449,6 +457,7 @@ class FormTemplatesController < ApplicationController
       :metabase_dashboard_id,
       :status_transition_mode,
       :tags,
+      :skip_code_generation,
       page_headers: [],
       inbox_buttons: []
     )
@@ -633,6 +642,14 @@ class FormTemplatesController < ApplicationController
     return unless File.exist?(controller_path)
 
     content = File.read(controller_path)
+
+    # Safety net: never rewrite a controller the builder didn't generate. The
+    # block-replacement below assumes the generated structure; on a hand-written
+    # controller its regex can match greedily and destroy unrelated actions.
+    unless content.include?("# Generated controller for")
+      Rails.logger.warn "Refusing to customize hand-written controller #{controller_path} (no generated marker)"
+      return
+    end
 
     # Only update routing logic when routing actually changed (or on initial create)
     if update_routing && form_template.requires_approval?

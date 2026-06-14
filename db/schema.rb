@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_13_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_14_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -338,6 +338,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_13_000002) do
     t.string "visibility", default: "restricted", null: false
     t.integer "metabase_dashboard_id"
     t.boolean "archived", default: false, null: false
+    t.boolean "skip_code_generation", default: false, null: false
     t.index ["archived"], name: "index_form_templates_on_archived"
   end
 
