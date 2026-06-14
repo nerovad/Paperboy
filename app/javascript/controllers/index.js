@@ -43,6 +43,7 @@ import ClickableRowController from "controllers/clickable_row_controller"
 import InformationFieldController from "controllers/information_field_controller"
 import CardToggleController from "controllers/card_toggle_controller"
 import AuthorizationSelectController from "controllers/authorization_select_controller"
+import StatusHistoryModalController from "controllers/status_history_modal_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -87,3 +88,4 @@ application.register("clickable-row", ClickableRowController)
 application.register("information-field", InformationFieldController)
 application.register("card-toggle", CardToggleController)
 application.register("authorization-select", AuthorizationSelectController)
+application.register("status-history-modal", StatusHistoryModalController)

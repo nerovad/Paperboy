@@ -95,6 +95,27 @@
   box-sizing: border-box;
 }
 
+/* Status-history modal: wider, with a scrollable timeline body */
+.status-history-modal {
+  width: 600px;
+}
+
+.status-history-modal .deny-modal__body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.status-history-modal .status-timeline .timeline-header {
+  display: none; /* the modal header already says "Status History" */
+}
+
+.status-history-modal__loading,
+.status-history-modal__error {
+  text-align: center;
+  color: #6c757d;
+  padding: 20px 0;
+}
+
 /* (fixed class name) */
 .deny-modal__close {
   background: transparent;

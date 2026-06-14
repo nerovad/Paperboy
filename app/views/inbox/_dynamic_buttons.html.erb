@@ -109,4 +109,15 @@
           form: { data: { turbo: false } } %>
   <% end %>
 <% end %>
+
+<!-- Status History -->
+<% if button_source.has_inbox_button?('status_history') %>
+  <button type="button"
+          class="btn status-history"
+          data-action="click->status-history-modal#open"
+          data-history-url="<%= inbox_status_history_path(type: submission.class.name, id: submission.id) %>"
+          data-record-title="<%= "#{submission.class.name.demodulize.titleize} ##{submission.id}" %>">
+    Status History
+  </button>
+<% end %>
 <% end %>

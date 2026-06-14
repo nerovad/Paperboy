@@ -52,7 +52,8 @@ class FormTemplate < ApplicationRecord
     'deny' => { label: 'Deny', description: 'Deny button with reason modal' },
     'reassign' => { label: 'Reassign', description: 'Reassign to another employee' },
     'take_back' => { label: 'Take Back', description: 'Take back a reassigned task' },
-    'status_dropdown' => { label: 'Status Dropdown', description: 'Quick status change dropdown' }
+    'status_dropdown' => { label: 'Status Dropdown', description: 'Quick status change dropdown' },
+    'status_history' => { label: 'Status History', description: 'View the workflow status timeline in a modal' }
   }.freeze
 
   has_many :form_fields, dependent: :destroy

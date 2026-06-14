@@ -183,6 +183,7 @@ Rails.application.routes.draw do
   # Inbox & Submissions
   # ============================================================================
   get "/inboxqueue", to: "inbox#queue", as: "inbox_queue"
+  get "/inbox/status_history/:type/:id", to: "inbox#status_history", as: "inbox_status_history"
   get "/submissions", to: "submissions#index", as: :submissions
   get "/submissions/status_options", to: "submissions#status_options", as: :submissions_status_options
   resources :saved_searches, only: [:create, :destroy]
