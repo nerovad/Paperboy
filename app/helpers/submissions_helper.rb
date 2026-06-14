@@ -57,7 +57,7 @@ module SubmissionsHelper
     case status_string
     when "submitted"
       :pending
-    when "pending_delegated_approval", "step_1_pending", "step_2_pending",
+    when "step_1_pending", "step_2_pending", "step_3_pending", "step_4_pending",
          "manager_approved", "sent_to_security", "sent_to_hr", "sent_to_next", "in_progress"
       :in_review
     when "approved", "step_1_approved", "step_2_approved", "resolved"

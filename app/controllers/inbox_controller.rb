@@ -92,21 +92,6 @@ class InboxController < ApplicationController
     @scoped_employee_ids ? model_class.where(column => @scoped_employee_ids) : model_class.all
   end
 
-  # Pending submissions with no claimed approver yet, where one of the scoped
-  # employees is in the AuthorizedApprover list for the submission's unit.
-  # When @scoped_employee_ids is nil (system admin "all") every unclaimed
-  # pending submission is included.
-  def scope_unclaimed_by_authorization(model_class, service_type:)
-    base = model_class.where(supervisor_id: nil, status: :in_progress)
-    return base if @scoped_employee_ids.nil?
-
-    units = @scoped_employee_ids.flat_map { |eid|
-      AuthorizedApprover.authorized_unit_ids_for(employee_id: eid, service_type: service_type)
-    }.uniq
-    return model_class.none if units.empty?
-
-    base.where(unit: units)
-  end
 
   # Forms in a given status that members of the named group should see in their
   # inbox for awareness (e.g. approved parking permits for GSA_Security). When

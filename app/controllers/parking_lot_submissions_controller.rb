@@ -199,15 +199,6 @@ end
     render :new, status: :unprocessable_entity
   end
 
-  def fetch_supervisor_id(employee_id)
-    Employee.find_by(employee_id: employee_id)&.supervisor_id
-  end
-
-  def fetch_employee_email(emp_id)
-    return nil if emp_id.blank?
-    Employee.find_by(employee_id: emp_id)&.email
-  end
-
   def reload_form_options(emp_record)
     unit       = Unit.resolve_for_employee(emp_record)
     department = unit ? Department.find_by(department_id: unit.department_id) : nil

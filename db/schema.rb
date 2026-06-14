@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_14_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_14_000003) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -541,10 +541,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_14_000002) do
     t.datetime "denied_at"
     t.text "denial_reason"
     t.string "supervisor_email", limit: 200
-    t.string "delegated_approver_id"
-    t.string "delegated_approver_email"
-    t.string "delegated_approved_by"
-    t.datetime "delegated_approved_at"
     t.string "status", default: "in_progress", null: false
     t.string "approver_id"
   end

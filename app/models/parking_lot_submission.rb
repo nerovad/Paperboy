@@ -5,7 +5,6 @@ class ParkingLotSubmission < ApplicationRecord
 
 enum :status, {
   in_progress: "in_progress",
-    pending_delegated_approval: "pending_delegated_approval",
     step_1_pending: "step_1_pending",
     step_2_pending: "step_2_pending",
     step_3_pending: "step_3_pending",
@@ -65,19 +64,13 @@ enum :status, {
 
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
   
+  # The current step's assignee is tracked in approver_id (set by the routing
+  # engine); reassignment writes the same column.
   def current_assignee_id
-    if pending_delegated_approval?
-      delegated_approver_id
-    else
-      supervisor_id
-    end
+    approver_id
   end
 
   def assignment_field_name
-    if pending_delegated_approval?
-      'delegated_approver_id'
-    else
-      'supervisor_id'
-    end
+    'approver_id'
   end
 end
