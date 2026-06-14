@@ -129,7 +129,7 @@
                     <div class="form-group flex-fill" data-controller="choices">
                       <%= vf.label :permit_type, "Permit Type" %>
                       <%= vf.select :permit_type,
-                            options_for_select(['Carpool', 'Courier', 'G Lot', 'Grand Jury Parking', 'Loading Docks', 'Maintenance', 'Traffic Circle', 'Other'], vf.object.permit_type),
+                            options_for_select(['Carpool', 'Courier', 'Grand Jury Parking', 'Loading Docks', 'Maintenance', 'Traffic Circle', 'Other'], vf.object.permit_type),
                             { include_blank: false },
                             { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'permit_type' } } %>
                     </div>
