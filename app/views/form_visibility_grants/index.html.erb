@@ -1,0 +1,53 @@
+<!-- app/views/form_visibility_grants/index.html.erb -->
+<div class="form-header">
+  <h1>Inbox Visibility</h1>
+</div>
+
+<div class="form-wrapper">
+  <div class="department-header">
+    <h2>Full Submission Visibility</h2>
+    <%= link_to "← Back to Form Templates", form_templates_path, class: "btn" %>
+  </div>
+
+  <p class="form-help" style="margin-bottom: 16px;">
+    Members of a granted group can see <strong>every</strong> submission of the
+    chosen form in their inbox — including forms from people outside their
+    reporting chain. The submissions only appear once they filter the inbox to
+    that form type. Manage who is in a group from the
+    <%= link_to "ACL screen", acl_index_path %>.
+  </p>
+
+  <% @form_types.each do |ft| %>
+    <% grants = @grants_by_type[ft[:class_name]] || [] %>
+    <div class="approver-card" style="margin-bottom: 12px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <strong><%= ft[:label] %></strong>
+          <span style="color: #6c757d; font-size: 0.85em;"> (<%= ft[:class_name] %>)</span>
+        </div>
+
+        <%= form_with url: form_visibility_grants_path, method: :post, data: { turbo: false }, style: "display: flex; gap: 8px; align-items: center;" do %>
+          <%= hidden_field_tag :form_type, ft[:class_name] %>
+          <%= select_tag :group_id,
+                options_for_select([["Select a group…", ""]] + @groups.map { |g| [g.group_name, g.GroupID] }),
+                class: "form-control form-control-sm" %>
+          <%= submit_tag "Grant", class: "btn approve" %>
+        <% end %>
+      </div>
+
+      <% if grants.any? %>
+        <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
+          <% grants.each do |grant| %>
+            <span style="display: inline-flex; align-items: center; gap: 6px; background: #f0f4f8; padding: 4px 8px; border-radius: 6px;">
+              <%= grant.group&.group_name || "Group ##{grant.group_id}" %>
+              <%= button_to "✕", form_visibility_grant_path(grant), method: :delete,
+                    class: "btn deny btn-sm",
+                    form: { style: "display: inline;", data: { turbo: false } },
+                    style: "padding: 0 6px; line-height: 1.4;" %>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

@@ -233,6 +233,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :form_visibility_grants, only: [:index, :create, :destroy]
+
   # ============================================================================
   # Workflow Forms (with approval/denial workflows)
   # ============================================================================
