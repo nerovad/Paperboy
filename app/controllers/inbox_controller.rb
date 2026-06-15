@@ -17,6 +17,11 @@ class InboxController < ApplicationController
     @has_subordinates = @subordinate_ids.any?
     @show_employee_filter = @is_system_admin || @has_subordinates
 
+    # Form-wide visibility grants: class names of forms this user may see every
+    # submission of (via a granted group). Surfaced only when the user explicitly
+    # filters the inbox to that form type — see #granted_submissions.
+    @viewer_form_types = FormVisibilityGrant.form_types_for(employee_id, current_user_group_ids)
+
     # nil means "no assignee restriction" (system admin viewing All).
     @scoped_employee_ids = if @show_employee_filter && params[:filter_employee].present?
                              if params[:filter_employee] == "all"
@@ -52,12 +57,32 @@ class InboxController < ApplicationController
     # Dynamically generated forms with approval workflows
     @submissions += fetch_dynamic_form_submissions
 
+    # Form-wide visibility grants — every submission of a granted form type,
+    # only when the user has filtered the inbox to that exact form type.
+    @viewer_form_types.each do |class_name|
+      model = class_name.safe_constantize
+      next unless model.is_a?(Class) && model < ActiveRecord::Base
+      @submissions += granted_submissions(model).to_a
+    rescue StandardError => e
+      Rails.logger.warn "Inbox visibility grant query failed for #{class_name}: #{e.message}"
+    end
+
     # Deduplicate (a submission could match both supervisor and delegated approver).
     # Key by class + id so different form types with the same numeric id aren't collapsed.
     @submissions.uniq! { |s| [s.class, s.id] }
 
     # Collect unique values for filter dropdowns BEFORE in-memory filtering
     @filter_options = collect_filter_options(@submissions, inbox_field_mappings)
+
+    # Granted form types must be selectable even when no rows are loaded yet —
+    # their submissions only load once this filter is applied.
+    granted_labels = @viewer_form_types.filter_map do |class_name|
+      class_name.safe_constantize&.name&.demodulize&.titleize
+    end
+    if granted_labels.any?
+      @filter_options[:form_types] = (@filter_options[:form_types] + granted_labels)
+                                     .uniq.sort_by { |v| v.to_s.downcase }
+    end
 
     # Apply in-memory filters
     @submissions = apply_filters(@submissions,
@@ -173,6 +198,15 @@ class InboxController < ApplicationController
       'status' => ->(s) { s.status_label.to_s },
       'created_at' => ->(s) { s.created_at.to_s }
     }
+  end
+
+  # Every submission of a form the current user holds a visibility grant for —
+  # but only when they've explicitly filtered the inbox to that form type.
+  # Membership (whether the user actually holds the grant) is already enforced
+  # by @viewer_form_types; this guards the "only when filtered" rule.
+  def granted_submissions(model)
+    return model.none unless params[:filter_form_type] == model.name.demodulize.titleize
+    apply_scope_date_filters(model.all, inbox_scope_date_filters)
   end
 
   # Fetch submissions from dynamically generated forms that need approval
