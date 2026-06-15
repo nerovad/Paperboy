@@ -6,6 +6,13 @@
 <div class="form-wrapper" data-controller="form-navigation conditional-fields">
   <%= form_with model: @critical_information_reporting, local: true do |form| %>
 
+        <% _page_1_visible = true %>
+        <% _page_2_visible = true %>
+        <% _page_3_visible = true %>
+        <% _page_4_visible = true %>
+        <% _page_5_visible = true %>
+        <% _visible_page_count = [_page_1_visible, _page_2_visible, _page_3_visible, _page_4_visible, _page_5_visible].count(true) %>
+
 <!-- Page 1: Employee Info -->
 <div class="form-page">
   <h2>Employee Info</h2>
@@ -264,7 +271,7 @@
         <div class="progress-bar" id="progressBar"></div>
       </div>
       <div class="progress-dots">
-        <% 5.times do |index| %>
+        <% _visible_page_count.times do |index| %>
           <div class="dot <%= 'active' if index == 0 %>"></div>
         <% end %>
       </div>
