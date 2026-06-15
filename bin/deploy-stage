@@ -13,6 +13,12 @@ git pull origin "$BRANCH"
 echo "==> Installing gems..."
 bundle install --without development test
 
+echo "==> Running migrations..."
+# staging isn't in the dotenv-rails group, so load the same env file systemd
+# hands to Puma (EnvironmentFile=.env) before running any rails command.
+set -a; source "$APP_DIR/.env"; set +a
+RAILS_ENV=staging bundle exec rails db:migrate
+
 echo "==> Clobbering old assets..."
 RAILS_ENV=staging bundle exec rails assets:clobber
 
