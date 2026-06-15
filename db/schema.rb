@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_14_000004) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_15_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -357,6 +357,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_14_000004) do
     t.boolean "archived", default: false, null: false
     t.boolean "skip_code_generation", default: false, null: false
     t.index ["archived"], name: "index_form_templates_on_archived"
+  end
+
+  create_table "form_visibility_grants", force: :cascade do |t|
+    t.string "form_type", null: false
+    t.string "grantee_type", null: false
+    t.integer "group_id"
+    t.integer "employee_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["form_type"], name: "index_form_visibility_grants_on_form_type"
+    t.index ["grantee_type", "group_id"], name: "index_form_visibility_grants_on_grantee_type_and_group_id"
   end
 
   create_table "gym_locker_forms", force: :cascade do |t|
