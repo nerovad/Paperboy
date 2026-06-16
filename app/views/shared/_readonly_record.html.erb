@@ -2,6 +2,11 @@
 <dl class="readonly-form">
   <% excluded = Array(exclude) + %w[id created_at updated_at] %>
 
+  <% if (reference = FormReference.reference_for(record)).present? %>
+    <dt>Reference</dt>
+    <dd><span class="reference-badge"><%= reference %></span></dd>
+  <% end %>
+
   <% record.attribute_names.each do |attr| %>
     <% next if excluded.include?(attr) %>
 

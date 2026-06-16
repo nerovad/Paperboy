@@ -10,6 +10,7 @@ class ParkingLotPdfGenerator
 
       pdf.move_down 10
       pdf.text "Parking Lot Submission", size: 22, style: :bold, align: :center
+      PdfReference.render(pdf, submission)
       pdf.move_down 20
 
       # Employee Info

@@ -9,6 +9,7 @@ class SafetyReportPdfGenerator
 
       pdf.move_down 10
       pdf.text "Safety Reporting", size: 22, style: :bold, align: :center
+      PdfReference.render(pdf, submission)
       pdf.move_down 20
 
       pdf.text "Employee Information", size: 14, style: :bold

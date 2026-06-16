@@ -10,6 +10,7 @@ class OshaReportPdfGenerator
 
       pdf.move_down 10
       pdf.text "OSHA Reporting", size: 22, style: :bold, align: :center
+      PdfReference.render(pdf, submission)
       pdf.move_down 20
 
       # Employee Info

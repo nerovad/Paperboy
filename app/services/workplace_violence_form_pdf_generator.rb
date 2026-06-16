@@ -10,6 +10,7 @@ class WorkplaceViolenceFormPdfGenerator
 
       pdf.move_down 10
       pdf.text "Workplace Violence Form", size: 22, style: :bold, align: :center
+      PdfReference.render(pdf, submission)
       pdf.move_down 20
 
       # Employee Info

@@ -13,6 +13,7 @@ class CriticalInformationPdfGenerator
 
       pdf.move_down 10
       pdf.text "Critical Information Report", size: 22, style: :bold, align: :center
+      PdfReference.render(pdf, cir)
       pdf.move_down 20
 
       # Employee Info

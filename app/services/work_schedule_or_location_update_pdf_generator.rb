@@ -10,6 +10,7 @@ class WorkScheduleOrLocationUpdatePdfGenerator
 
       pdf.move_down 10
       pdf.text "Work Schedule or Location Update", size: 22, style: :bold, align: :center
+      PdfReference.render(pdf, submission)
       pdf.move_down 20
 
       # Employee Info

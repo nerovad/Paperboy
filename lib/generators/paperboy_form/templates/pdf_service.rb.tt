@@ -12,6 +12,8 @@ class <%= class_name %>PdfGenerator
       pdf.text "<%= class_name.titleize %>", size: 22, style: :bold, align: :center
       pdf.move_down 20
 
+      PdfReference.render(pdf, submission)
+
       # Employee Info
       pdf.text "Employee Information", size: 14, style: :bold
       pdf.move_down 5

@@ -12,6 +12,7 @@ class ProbationTransferPdfGenerator
 
       pdf.move_down 10
       pdf.text "Probation Transfer Request", size: 22, style: :bold, align: :center
+      PdfReference.render(pdf, request)
       pdf.move_down 20
 
       # Employee Info
