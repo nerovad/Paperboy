@@ -1788,7 +1788,10 @@ class FormTemplatesController < ApplicationController
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
         html += "            <%= form.select :#{field.field_name},\n"
-      html += "                  options_for_select(#{options_expr}),\n"
+      # Pre-select the saved values on edit. Stored as a comma-joined string;
+      # split on commas NOT followed by a space so values that contain a comma
+      # (e.g. "Last, First" names) survive the round-trip.
+      html += "                  options_for_select(#{options_expr}, @#{form_template.file_name}.#{field.field_name}.to_s.split(/,(?! )/)),\n"
       html += "                  { include_blank: false },\n"
       html += "                  { #{choices_attrs_str}, multiple: true, data: { #{data_entries.join(', ')} } } %>\n"
       html += "          </div>\n"
