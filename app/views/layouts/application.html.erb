@@ -62,12 +62,16 @@
             <%= yield %>
           <% end %>
           
-          <!-- Login Button (over image) -->
+          <!-- Login Buttons (over image) -->
           <% unless session[:user_id] %>
-            <%= form_with url: auth_setup_path, method: :post, 
-                          data: { turbo: false } do |f| %>
-              <%= f.submit "Login with Microsoft", class: "login-button-over-image" %>
-            <% end %>
+            <div class="login-buttons-over-image">
+              <%= form_with url: auth_setup_path, method: :post,
+                            data: { turbo: false } do |f| %>
+                <%= f.submit "Employee Login", class: "login-button-over-image" %>
+              <% end %>
+              <%= link_to "Contractor Login", contractor_login_path,
+                          class: "login-button-over-image", data: { turbo: false } %>
+            </div>
           <% else %>
             <div class="profile-dropdown" data-controller="profile-dropdown">
               <% if session[:impersonating] %>
