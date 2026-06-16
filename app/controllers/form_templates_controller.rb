@@ -1337,6 +1337,17 @@ class FormTemplatesController < ApplicationController
       <div class="form-wrapper" data-controller="#{controllers_attr}">
         <%= form_with model: @#{form_template.file_name}, local: true do |form| %>
 
+        <% if @#{form_template.file_name}.errors.any? %>
+          <div class="form-errors" role="alert" data-form-navigation-target="errorSummary">
+            <strong><%= pluralize(@#{form_template.file_name}.errors.count, "error") %> prevented this form from being submitted:</strong>
+            <ul>
+              <% @#{form_template.file_name}.errors.each do |error| %>
+                <li><%= error.full_message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
     HTML
 
     content += render_page_visibility_decls(page_visibility)
@@ -1445,6 +1456,17 @@ class FormTemplatesController < ApplicationController
 
       <div class="form-wrapper" data-controller="#{controllers_attr}">
         <%= form_with model: @#{form_template.file_name}, local: true do |form| %>
+
+        <% if @#{form_template.file_name}.errors.any? %>
+          <div class="form-errors" role="alert" data-form-navigation-target="errorSummary">
+            <strong><%= pluralize(@#{form_template.file_name}.errors.count, "error") %> prevented this form from being submitted:</strong>
+            <ul>
+              <% @#{form_template.file_name}.errors.each do |error| %>
+                <li><%= error.full_message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
 
     HTML
 

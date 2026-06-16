@@ -6,6 +6,17 @@
 <div class="form-wrapper" data-controller="form-navigation">
   <%= form_with model: @bike_locker_form, local: true do |form| %>
 
+  <% if @bike_locker_form.errors.any? %>
+    <div class="form-errors" role="alert" data-form-navigation-target="errorSummary">
+      <strong><%= pluralize(@bike_locker_form.errors.count, "error") %> prevented this form from being submitted:</strong>
+      <ul>
+        <% @bike_locker_form.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
         <% _page_1_visible = true %>
         <% _page_2_visible = true %>
         <% _page_3_visible = true %>

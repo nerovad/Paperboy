@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 // Handles page show/hide, Next/Prev/Submit button visibility,
 // progress dots, and page-by-page validation on Next.
 export default class extends Controller {
-  static targets = ["submitButton"]
+  static targets = ["submitButton", "errorSummary"]
 
   connect() {
     this.form = this.element.querySelector("form") || this.element.closest("form")
@@ -20,8 +20,21 @@ export default class extends Controller {
     // selects) and silently blocks submission when it can't show a popup.
     if (this.form) this.form.setAttribute("novalidate", "")
 
-    this.current = 0
+    // After a failed submit the server re-renders the form. Open the first page
+    // that contains an errored field (Rails wraps these in .field_with_errors)
+    // instead of silently dropping the user back on page 1.
+    this.current = this.firstErroredPage()
     this.showCurrentPage()
+
+    if (this.hasErrorSummaryTarget) {
+      this.errorSummaryTarget.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }
+
+  // Index of the first page containing a validation error, or 0 if none.
+  firstErroredPage() {
+    const idx = this.pages.findIndex(page => page.querySelector(".field_with_errors"))
+    return idx >= 0 ? idx : 0
   }
 
   showCurrentPage() {

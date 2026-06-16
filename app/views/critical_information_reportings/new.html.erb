@@ -6,6 +6,17 @@
 <div class="form-wrapper" data-controller="form-navigation conditional-fields">
   <%= form_with model: @critical_information_reporting, local: true do |form| %>
 
+        <% if @critical_information_reporting.errors.any? %>
+          <div class="form-errors" role="alert" data-form-navigation-target="errorSummary">
+            <strong><%= pluralize(@critical_information_reporting.errors.count, "error") %> prevented this form from being submitted:</strong>
+            <ul>
+              <% @critical_information_reporting.errors.each do |error| %>
+                <li><%= error.full_message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
         <% _page_1_visible = true %>
         <% _page_2_visible = true %>
         <% _page_3_visible = true %>
