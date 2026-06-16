@@ -61,15 +61,26 @@ class FormLookup
       "#{conn.quote_column_name(display_cols[i])} AS #{conn.quote_column_name("c#{i}")}"
     end
 
-    # Each category filter narrows the result to rows where a column equals a
-    # chosen value; multiple filters are combined with AND. Unknown columns and
-    # blank values are skipped. Values are bound via #quote.
-    clauses = field.custom_lookup_category_filters.filter_map do |f|
+    # Category filters narrow the result set. Multiple values picked for the SAME
+    # column are OR'd (an IN list); filters on DIFFERENT columns are AND'd. So
+    # site=Clinic/Office/Hospital matches any of the three, and adding agency=HCA
+    # further requires that agency. Unknown columns and blank values are skipped;
+    # values are bound via #quote.
+    grouped = field.custom_lookup_category_filters.each_with_object({}) do |f, h|
       fcol = f["column"]
       fval = f["value"]
       next unless columns.include?(fcol)
       next if fval.nil? || fval.to_s.empty?
-      "#{conn.quote_column_name(fcol)} = #{conn.quote(fval)}"
+      (h[fcol] ||= []) << fval
+    end
+    clauses = grouped.map do |fcol, vals|
+      qcol = conn.quote_column_name(fcol)
+      vals = vals.uniq
+      if vals.size == 1
+        "#{qcol} = #{conn.quote(vals.first)}"
+      else
+        "#{qcol} IN (#{vals.map { |v| conn.quote(v) }.join(", ")})"
+      end
     end
     where_sql = clauses.any? ? " WHERE #{clauses.join(" AND ")}" : ""
 
