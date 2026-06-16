@@ -21,7 +21,7 @@
   <form action="<%= submissions_path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
     <div class="filter-controls">
       <div class="filter-group">
-        <label for="filter_type">Type</label>
+        <label for="filter_type">Form</label>
         <%= select_tag :filter_type,
             options_for_select([['All', '']] + @filter_options[:types].map { |t| [t, t] }, params[:filter_type]),
             class: 'filter-select',
