@@ -82,8 +82,8 @@ enum :status, {
     end
 
     media_photo_pdf_etc.each do |file|
-      unless file.content_type.in?(%w[image/jpeg image/png image/gif application/pdf])
-        errors.add(:media_photo_pdf_etc, "must be a JPEG, PNG, GIF, or PDF")
+      unless file.content_type.in?(%w[image/jpeg image/png image/gif image/webp image/heic image/heif application/pdf])
+        errors.add(:media_photo_pdf_etc, "must be a JPEG, PNG, GIF, WebP, HEIC, or PDF")
       end
 
       if file.byte_size > 10.megabytes

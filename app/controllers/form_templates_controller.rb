@@ -565,8 +565,8 @@ class FormTemplatesController < ApplicationController
     end
 
     #{f.field_name}.each do |file|
-      unless file.content_type.in?(%w[image/jpeg image/png image/gif application/pdf])
-        errors.add(:#{f.field_name}, "must be a JPEG, PNG, GIF, or PDF")
+      unless file.content_type.in?(%w[image/jpeg image/png image/gif image/webp image/heic image/heif application/pdf])
+        errors.add(:#{f.field_name}, "must be a JPEG, PNG, GIF, WebP, HEIC, or PDF")
       end
 
       if file.byte_size > 10.megabytes
@@ -1958,7 +1958,7 @@ class FormTemplatesController < ApplicationController
       html += "                </div>\n"
       html += "              </div>\n"
       html += "            <% end %>\n"
-      html += "            <%= form.file_field :#{field.field_name}, multiple: true, class: \"form-control\", direct_upload: true, accept: \"image/jpeg,image/png,image/gif,application/pdf\""
+      html += "            <%= form.file_field :#{field.field_name}, multiple: true, class: \"form-control\", direct_upload: true, accept: \"image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,application/pdf\""
       html += ", disabled: true" if disabled_attr.present?
       html += ", data: { file_preview_target: \"input\", action: \"change->file-preview#preview\" } %>\n"
       html += "            <small class=\"form-text text-muted\">You can select files multiple times — up to 10 total. <span data-file-preview-target=\"count\"></span></small>\n"
@@ -2380,7 +2380,7 @@ class FormTemplatesController < ApplicationController
                 <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-      html += "            <%= form.file_field :#{field.field_name}, multiple: true, class: \"form-control\", direct_upload: true, accept: \"image/jpeg,image/png,image/gif,application/pdf\""
+      html += "            <%= form.file_field :#{field.field_name}, multiple: true, class: \"form-control\", direct_upload: true, accept: \"image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,application/pdf\""
       html += ", disabled: true" if disabled_attr.present?
       html += ", data: { file_preview_target: \"input\", action: \"change->file-preview#preview\" } %>\n"
       html += "            <small class=\"form-text text-muted\">You can select files multiple times — up to 10 total. <span data-file-preview-target=\"count\"></span></small>\n"

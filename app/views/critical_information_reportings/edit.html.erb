@@ -269,7 +269,7 @@
                 </div>
               </div>
             <% end %>
-            <%= form.file_field :media_photo_pdf_etc, multiple: true, class: "form-control", direct_upload: true, accept: "image/jpeg,image/png,image/gif,application/pdf", data: { file_preview_target: "input", action: "change->file-preview#preview" } %>
+            <%= form.file_field :media_photo_pdf_etc, multiple: true, class: "form-control", direct_upload: true, accept: "image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,application/pdf", data: { file_preview_target: "input", action: "change->file-preview#preview" } %>
             <small class="form-text text-muted">You can select files multiple times — up to 10 total. <span data-file-preview-target="count"></span></small>
             <div data-file-preview-target="preview" class="file-preview-grid"></div>
           </div>
