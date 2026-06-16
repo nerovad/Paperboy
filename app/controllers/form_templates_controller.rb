@@ -449,6 +449,7 @@ class FormTemplatesController < ApplicationController
     params.require(:form_template).permit(
       :name,
       :visibility,
+      :reference_prefix,
       :page_count,
       :submission_type,
       :approval_routing_to,

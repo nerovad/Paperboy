@@ -116,6 +116,21 @@
           </div>
 
           <div class="form-group">
+            <label for="form_reference_prefix">Reference Prefix</label>
+            <%= f.text_field :reference_prefix,
+                            id: "form_reference_prefix",
+                            class: "form-control",
+                            value: @form_template.reference_prefix,
+                            maxlength: 10,
+                            placeholder: "e.g. LOA",
+                            style: "text-transform: uppercase;" %>
+            <small class="form-text" style="color: #6c757d;">
+              Fronts each submission's reference number (e.g. <code>LOA-1042</code>), used to search
+              the inbox. Letters/numbers only, unique across forms. Auto-filled from the form name if left blank.
+            </small>
+          </div>
+
+          <div class="form-group">
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
               <%= f.check_box :skip_code_generation %>
               This form has custom code (don't regenerate controller/views)

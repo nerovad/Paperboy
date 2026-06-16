@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_15_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_16_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -356,7 +356,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_15_000001) do
     t.integer "metabase_dashboard_id"
     t.boolean "archived", default: false, null: false
     t.boolean "skip_code_generation", default: false, null: false
+    t.string "reference_prefix"
     t.index ["archived"], name: "index_form_templates_on_archived"
+    t.index ["reference_prefix"], name: "index_form_templates_on_reference_prefix", unique: true, where: "([reference_prefix] IS NOT NULL)"
   end
 
   create_table "form_visibility_grants", force: :cascade do |t|

@@ -75,11 +75,17 @@ class FormTemplate < ApplicationRecord
   validates :approval_employee_id, presence: true, if: :routes_to_specific_employee?
   validates :metabase_dashboard_id, presence: true, if: :has_dashboard?
   validates :status_transition_mode, inclusion: { in: TRANSITION_MODES }, allow_nil: true
+  validates :reference_prefix,
+            uniqueness: { case_sensitive: false },
+            format: { with: /\A[A-Z0-9]+\z/, message: "must be letters and numbers only" },
+            allow_blank: true
 
   validate :page_count_cannot_orphan_fields, on: :update
   validate :approval_must_have_terminal_statuses
 
   before_validation :generate_class_name, on: :create
+  before_validation :normalize_reference_prefix
+  before_validation :assign_reference_prefix, on: :create
 
   scope :with_dashboards, -> { where(has_dashboard: true) }
   scope :active, -> { where(archived: false) }
@@ -151,6 +157,34 @@ class FormTemplate < ApplicationRecord
     return if name.blank?
 
     self.class_name = name.gsub(/[^a-zA-Z0-9\s]/, '').split.map(&:capitalize).join + 'Form'
+  end
+
+  # Upcase/strip any admin-entered prefix so "loa" and "LOA " store as "LOA".
+  def normalize_reference_prefix
+    self.reference_prefix = reference_prefix.to_s.strip.upcase if reference_prefix.present?
+  end
+
+  # Seed a unique prefix from the class name's initials when the admin didn't
+  # supply one (e.g. "LeaveOfAbsenceForm" => "LOA", deduped to "LOA2" on clash).
+  def assign_reference_prefix
+    return if reference_prefix.present? || class_name.blank?
+
+    candidate = FormReference::PREFIX_SEEDS[class_name] || FormReference.derive_prefix(class_name)
+    self.reference_prefix = unique_reference_prefix(candidate)
+  end
+
+  def unique_reference_prefix(candidate)
+    taken = self.class.where.not(id: id)
+                .where.not(reference_prefix: [nil, ""])
+                .pluck(:reference_prefix)
+                .map(&:upcase)
+                .to_set
+
+    return candidate unless taken.include?(candidate.upcase)
+
+    suffix = 2
+    suffix += 1 while taken.include?("#{candidate}#{suffix}".upcase)
+    "#{candidate}#{suffix}"
   end
 
   def approval_must_have_terminal_statuses
