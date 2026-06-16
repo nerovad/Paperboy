@@ -467,16 +467,22 @@ class FormTemplatesController < ApplicationController
   # Normalize a custom (generic) lookup config from submitted field params.
   def build_custom_lookup(f)
     join_sep = f[:custom_join_separator].to_s
+    cat_cols = Array(f[:custom_category_columns])
+    cat_vals = Array(f[:custom_category_values])
+    category_filters = cat_cols.each_with_index.filter_map do |col, i|
+      col = col.to_s.strip
+      next if col.blank?
+      { 'column' => col, 'value' => cat_vals[i].to_s }
+    end
     {
-      'database'        => f[:custom_database],
-      'table'           => f[:custom_table],
-      'column'          => f[:custom_column],
-      'join_columns'    => Array(f[:custom_join_columns]).reject(&:blank?),
-      'join_separator'  => (join_sep.empty? ? ' ' : join_sep),
-      'category_column' => f[:custom_category_column].presence,
-      'category_value'  => f[:custom_category_value].presence,
-      'order_column'    => f[:custom_order_column].presence,
-      'order_direction' => (f[:custom_order_direction] == 'desc' ? 'desc' : 'asc')
+      'database'         => f[:custom_database],
+      'table'            => f[:custom_table],
+      'column'           => f[:custom_column],
+      'join_columns'     => Array(f[:custom_join_columns]).reject(&:blank?),
+      'join_separator'   => (join_sep.empty? ? ' ' : join_sep),
+      'category_filters' => category_filters,
+      'order_column'     => f[:custom_order_column].presence,
+      'order_direction'  => (f[:custom_order_direction] == 'desc' ? 'desc' : 'asc')
     }
   end
 

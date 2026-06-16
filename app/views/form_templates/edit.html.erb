@@ -1078,28 +1078,41 @@
                             <small style="display: block; color: #6c757d; font-size: 0.78em; margin-top: 2px;">Placed between joined values. Defaults to a space.</small>
                           </div>
                         </div>
+                        <div class="custom-category-filters-section" style="margin-top: 8px;">
+                          <label style="font-size: 0.9em; color: #495057;">Category Filters (optional):</label>
+                          <% category_filters = field.custom_lookup_category_filters %>
+                          <div class="custom-category-filters">
+                            <% category_filters.each do |cf| %>
+                              <div class="custom-category-filter-row" style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 6px;">
+                                <div style="flex: 1; min-width: 130px;">
+                                  <select name="fields[][custom_category_columns][]"
+                                          class="form-control form-control-sm custom-category-column-select"
+                                          data-action="change->form-builder#handleCustomCategoryColumnChange">
+                                    <option value="">— select column —</option>
+                                    <option value="<%= cf['column'] %>" selected><%= cf['column'] %></option>
+                                  </select>
+                                </div>
+                                <div style="flex: 0 0 auto; padding-bottom: 6px; color: #6c757d;">=</div>
+                                <div style="flex: 1; min-width: 130px;">
+                                  <select name="fields[][custom_category_values][]"
+                                          class="form-control form-control-sm custom-category-value-select">
+                                    <option value="">Select value...</option>
+                                    <% if cf['value'].present? %>
+                                      <option value="<%= cf['value'] %>" selected><%= cf['value'] %></option>
+                                    <% end %>
+                                  </select>
+                                </div>
+                                <button type="button" class="btn btn-sm" style="flex: 0 0 auto;"
+                                        data-action="click->form-builder#removeCustomCategoryFilter"
+                                        title="Remove filter">×</button>
+                              </div>
+                            <% end %>
+                          </div>
+                          <button type="button" class="btn btn-sm"
+                                  data-action="click->form-builder#addCustomCategoryFilter">+ Add category filter</button>
+                          <small style="display: block; color: #6c757d; font-size: 0.78em; margin-top: 2px;">Limit values to rows matching every filter (combined with AND). Pick a column, then one of its values.</small>
+                        </div>
                         <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 8px;">
-                          <div style="flex: 1; min-width: 130px;">
-                            <label style="font-size: 0.9em; color: #495057;">Category Column (optional):</label>
-                            <select name="fields[][custom_category_column]"
-                                    class="form-control form-control-sm custom-category-column-select"
-                                    data-action="change->form-builder#handleCustomCategoryColumnChange">
-                              <option value="">— none —</option>
-                              <% if custom_cfg['category_column'].present? %>
-                                <option value="<%= custom_cfg['category_column'] %>" selected><%= custom_cfg['category_column'] %></option>
-                              <% end %>
-                            </select>
-                          </div>
-                          <div class="custom-category-value-wrapper" style="flex: 1; min-width: 130px; <%= 'display: none;' if custom_cfg['category_column'].blank? %>">
-                            <label style="font-size: 0.9em; color: #495057;">Category:</label>
-                            <select name="fields[][custom_category_value]"
-                                    class="form-control form-control-sm custom-category-value-select">
-                              <option value="">Select category...</option>
-                              <% if custom_cfg['category_value'].present? %>
-                                <option value="<%= custom_cfg['category_value'] %>" selected><%= custom_cfg['category_value'] %></option>
-                              <% end %>
-                            </select>
-                          </div>
                           <div style="flex: 1; min-width: 130px;">
                             <label style="font-size: 0.9em; color: #495057;">Order by (optional):</label>
                             <select name="fields[][custom_order_column]"
@@ -1403,6 +1416,29 @@
     </div>
   </div>
 </div>
+
+<!-- Custom-lookup category filter row (cloned by + Add category filter) -->
+<template id="custom-category-filter-template">
+  <div class="custom-category-filter-row" style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 6px;">
+    <div style="flex: 1; min-width: 130px;">
+      <select name="fields[][custom_category_columns][]"
+              class="form-control form-control-sm custom-category-column-select"
+              data-action="change->form-builder#handleCustomCategoryColumnChange">
+        <option value="">— select column —</option>
+      </select>
+    </div>
+    <div style="flex: 0 0 auto; padding-bottom: 6px; color: #6c757d;">=</div>
+    <div style="flex: 1; min-width: 130px;">
+      <select name="fields[][custom_category_values][]"
+              class="form-control form-control-sm custom-category-value-select">
+        <option value="">Select value...</option>
+      </select>
+    </div>
+    <button type="button" class="btn btn-sm" style="flex: 0 0 auto;"
+            data-action="click->form-builder#removeCustomCategoryFilter"
+            title="Remove filter">×</button>
+  </div>
+</template>
 
 <!-- Field Template (hidden, used for cloning when adding new fields) -->
 <template id="field-template">

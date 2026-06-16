@@ -51,8 +51,6 @@ class FormLookup
     sep          = cfg["join_separator"]
     sep          = " " unless sep.is_a?(String) && !sep.empty?
 
-    cat_col   = cfg["category_column"].presence
-    cat_col   = nil unless cat_col && columns.include?(cat_col)
     order_col = cfg["order_column"].presence
     order_col = nil unless order_col && columns.include?(order_col)
 
@@ -63,10 +61,17 @@ class FormLookup
       "#{conn.quote_column_name(display_cols[i])} AS #{conn.quote_column_name("c#{i}")}"
     end
 
-    where_sql = ""
-    if cat_col && cfg["category_value"].present?
-      where_sql = " WHERE #{conn.quote_column_name(cat_col)} = #{conn.quote(cfg["category_value"])}"
+    # Each category filter narrows the result to rows where a column equals a
+    # chosen value; multiple filters are combined with AND. Unknown columns and
+    # blank values are skipped. Values are bound via #quote.
+    clauses = field.custom_lookup_category_filters.filter_map do |f|
+      fcol = f["column"]
+      fval = f["value"]
+      next unless columns.include?(fcol)
+      next if fval.nil? || fval.to_s.empty?
+      "#{conn.quote_column_name(fcol)} = #{conn.quote(fval)}"
     end
+    where_sql = clauses.any? ? " WHERE #{clauses.join(" AND ")}" : ""
 
     # Direction is a fixed keyword (never interpolated raw). Ascending/descending
     # is the only knob needed — numeric vs alphabetical follows the column type.

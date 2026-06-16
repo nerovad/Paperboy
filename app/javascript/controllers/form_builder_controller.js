@@ -1120,8 +1120,6 @@ export default class extends Controller {
     const resets = {
       '.custom-table-select': 'Select table...',
       '.custom-column-select': 'Select column...',
-      '.custom-category-column-select': '— none —',
-      '.custom-category-value-select': 'Select category...',
       '.custom-order-column-select': '— default (by value) —'
     }
     for (const [sel, label] of Object.entries(resets)) {
@@ -1136,8 +1134,9 @@ export default class extends Controller {
     if (dir) dir.value = 'asc'
     const joinSep = fieldItem.querySelector('.custom-join-separator-input')
     if (joinSep) joinSep.value = ' '
-    const catWrapper = fieldItem.querySelector('.custom-category-value-wrapper')
-    if (catWrapper) catWrapper.style.display = 'none'
+    // Category filters are repeatable rows — drop them all
+    const catFilters = fieldItem.querySelector('.custom-category-filters')
+    if (catFilters) catFilters.innerHTML = ''
   }
 
   // Database chosen -> load that database's tables
@@ -1165,25 +1164,41 @@ export default class extends Controller {
     )
     this.fillSelect(fieldItem.querySelector('.custom-column-select'), columns)
     this.fillSelect(fieldItem.querySelector('.custom-join-columns-select'), columns)
-    this.fillSelect(fieldItem.querySelector('.custom-category-column-select'), columns)
     this.fillSelect(fieldItem.querySelector('.custom-order-column-select'), columns)
   }
 
-  // Category column chosen -> load its distinct values (or hide the value select)
+  // Add a blank category-filter row and load the current table's columns into it
+  async addCustomCategoryFilter(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const container = fieldItem.querySelector('.custom-category-filters')
+    const template = document.getElementById('custom-category-filter-template')
+    if (!container || !template) return
+    container.appendChild(template.content.cloneNode(true))
+    const newRow = container.lastElementChild
+    const database = fieldItem.querySelector('.custom-database-select')?.value
+    const table = fieldItem.querySelector('.custom-table-select')?.value
+    if (!database || !table) return
+    const columns = await this.fetchJson(
+      `/lookups/columns?database=${encodeURIComponent(database)}&table=${encodeURIComponent(table)}`
+    )
+    this.fillSelect(newRow.querySelector('.custom-category-column-select'), columns)
+  }
+
+  removeCustomCategoryFilter(event) {
+    const row = event.target.closest('.custom-category-filter-row')
+    if (row) row.remove()
+  }
+
+  // Category column chosen in a filter row -> load that column's distinct values
   async handleCustomCategoryColumnChange(event) {
     const fieldItem = event.target.closest('.field-item')
+    const row = event.target.closest('.custom-category-filter-row')
     const database = fieldItem.querySelector('.custom-database-select')?.value
     const table = fieldItem.querySelector('.custom-table-select')?.value
     const column = event.target.value
-    const wrapper = fieldItem.querySelector('.custom-category-value-wrapper')
-    const valueSelect = fieldItem.querySelector('.custom-category-value-select')
-    valueSelect.innerHTML = '<option value="">Select category...</option>'
-    if (!column) {
-      if (wrapper) wrapper.style.display = 'none'
-      return
-    }
-    if (wrapper) wrapper.style.display = 'block'
-    if (!database || !table) return
+    const valueSelect = row?.querySelector('.custom-category-value-select')
+    if (valueSelect) valueSelect.innerHTML = '<option value="">Select value...</option>'
+    if (!valueSelect || !column || !database || !table) return
     const values = await this.fetchJson(
       `/lookups/category_values?database=${encodeURIComponent(database)}&table=${encodeURIComponent(table)}&column=${encodeURIComponent(column)}`
     )
@@ -1193,8 +1208,6 @@ export default class extends Controller {
   clearColumnSelects(fieldItem) {
     const map = {
       '.custom-column-select': 'Select column...',
-      '.custom-category-column-select': '— none —',
-      '.custom-category-value-select': 'Select category...',
       '.custom-order-column-select': '— default (by value) —'
     }
     for (const [sel, label] of Object.entries(map)) {
@@ -1204,8 +1217,9 @@ export default class extends Controller {
     // Multi-select has no placeholder option — just empty it
     const joinSel = fieldItem.querySelector('.custom-join-columns-select')
     if (joinSel) joinSel.innerHTML = ''
-    const wrapper = fieldItem.querySelector('.custom-category-value-wrapper')
-    if (wrapper) wrapper.style.display = 'none'
+    // Category filters are repeatable rows — drop them when the table changes
+    const catFilters = fieldItem.querySelector('.custom-category-filters')
+    if (catFilters) catFilters.innerHTML = ''
   }
 
   // Append string options to a select, preserving its leading placeholder

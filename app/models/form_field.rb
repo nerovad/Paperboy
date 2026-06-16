@@ -230,6 +230,28 @@ class FormField < ApplicationRecord
     cfg.is_a?(Hash) && cfg['database'].present? && cfg['table'].present? && cfg['column'].present?
   end
 
+  # Normalized category filters [{ 'column' =>, 'value' => }, …] for the custom
+  # lookup, combined with AND at query time. Falls back to the legacy single
+  # category_column/category_value pair for configs saved before multi-filter.
+  def custom_lookup_category_filters
+    cfg = custom_lookup_config
+    return [] unless cfg.is_a?(Hash)
+
+    raw = cfg['category_filters']
+    if raw.is_a?(Array)
+      raw.filter_map do |f|
+        next unless f.is_a?(Hash)
+        col = f['column'].to_s
+        next if col.blank?
+        { 'column' => col, 'value' => f['value'] }
+      end
+    elsif cfg['category_column'].present?
+      [{ 'column' => cfg['category_column'], 'value' => cfg['category_value'] }]
+    else
+      []
+    end
+  end
+
   # Returns Ruby code string for use in generated ERB views
   def data_source_query_code
     return nil unless data_source?
@@ -445,9 +467,12 @@ class FormField < ApplicationRecord
       next if c.blank?
       errors.add(:base, "Custom lookup: join column '#{c}' not found") unless columns.include?(c)
     end
-    [cfg['category_column'], cfg['order_column']].each do |c|
-      next if c.blank?
-      errors.add(:base, "Custom lookup: column '#{c}' not found") unless columns.include?(c)
+    custom_lookup_category_filters.each do |f|
+      c = f['column']
+      errors.add(:base, "Custom lookup: category column '#{c}' not found") unless columns.include?(c)
+    end
+    if cfg['order_column'].present? && !columns.include?(cfg['order_column'])
+      errors.add(:base, "Custom lookup: column '#{cfg['order_column']}' not found")
     end
   rescue => e
     Rails.logger.warn("custom_lookup_config_valid skipped: #{e.class}: #{e.message}")
