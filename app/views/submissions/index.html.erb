@@ -131,7 +131,7 @@
     <tr>
       <th>
         <%= link_to submissions_path(sort_by: 'type', sort_direction: params[:sort_by] == 'type' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_title: params[:filter_title], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
-          Type
+          Form
           <% if params[:sort_by] == 'type' %>
             <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
           <% end %>
