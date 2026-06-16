@@ -13,6 +13,9 @@ git pull origin "$BRANCH"
 echo "==> Installing gems..."
 bundle install --without development test
 
+echo "==> Running database migrations..."
+RAILS_ENV=production bundle exec rails db:migrate
+
 echo "==> Clobbering old assets..."
 RAILS_ENV=production bundle exec rails assets:clobber
 
