@@ -1058,6 +1058,26 @@
                             </select>
                           </div>
                         </div>
+                        <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; margin-top: 8px;">
+                          <div style="flex: 1; min-width: 130px;">
+                            <label style="font-size: 0.9em; color: #495057;">Also join columns (optional):</label>
+                            <select name="fields[][custom_join_columns][]" multiple size="4"
+                                    class="form-control form-control-sm custom-join-columns-select">
+                              <% Array(custom_cfg['join_columns']).each do |jc| %>
+                                <option value="<%= jc %>" selected><%= jc %></option>
+                              <% end %>
+                            </select>
+                            <small style="display: block; color: #6c757d; font-size: 0.78em; margin-top: 2px;">Ctrl/⌘-click to add columns. Their values are appended to the column above (e.g. first + last name).</small>
+                          </div>
+                          <div style="flex: 1; min-width: 130px;">
+                            <label style="font-size: 0.9em; color: #495057;">Join separator:</label>
+                            <input type="text" name="fields[][custom_join_separator]"
+                                   class="form-control form-control-sm custom-join-separator-input"
+                                   value="<%= custom_cfg['join_separator'] || ' ' %>"
+                                   placeholder="(space)">
+                            <small style="display: block; color: #6c757d; font-size: 0.78em; margin-top: 2px;">Placed between joined values. Defaults to a space.</small>
+                          </div>
+                        </div>
                         <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 8px;">
                           <div style="flex: 1; min-width: 130px;">
                             <label style="font-size: 0.9em; color: #495057;">Category Column (optional):</label>

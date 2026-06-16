@@ -1128,9 +1128,14 @@ export default class extends Controller {
       const el = fieldItem.querySelector(sel)
       if (el) el.innerHTML = `<option value="">${label}</option>`
     }
-    // Direction is a static select — reset its value rather than its options
+    // Multi-select has no placeholder option — just empty it
+    const joinSel = fieldItem.querySelector('.custom-join-columns-select')
+    if (joinSel) joinSel.innerHTML = ''
+    // Direction / separator are static inputs — reset their values
     const dir = fieldItem.querySelector('.custom-order-direction-select')
     if (dir) dir.value = 'asc'
+    const joinSep = fieldItem.querySelector('.custom-join-separator-input')
+    if (joinSep) joinSep.value = ' '
     const catWrapper = fieldItem.querySelector('.custom-category-value-wrapper')
     if (catWrapper) catWrapper.style.display = 'none'
   }
@@ -1159,6 +1164,7 @@ export default class extends Controller {
       `/lookups/columns?database=${encodeURIComponent(database)}&table=${encodeURIComponent(table)}`
     )
     this.fillSelect(fieldItem.querySelector('.custom-column-select'), columns)
+    this.fillSelect(fieldItem.querySelector('.custom-join-columns-select'), columns)
     this.fillSelect(fieldItem.querySelector('.custom-category-column-select'), columns)
     this.fillSelect(fieldItem.querySelector('.custom-order-column-select'), columns)
   }
@@ -1195,6 +1201,9 @@ export default class extends Controller {
       const el = fieldItem.querySelector(sel)
       if (el) el.innerHTML = `<option value="">${label}</option>`
     }
+    // Multi-select has no placeholder option — just empty it
+    const joinSel = fieldItem.querySelector('.custom-join-columns-select')
+    if (joinSel) joinSel.innerHTML = ''
     const wrapper = fieldItem.querySelector('.custom-category-value-wrapper')
     if (wrapper) wrapper.style.display = 'none'
   }

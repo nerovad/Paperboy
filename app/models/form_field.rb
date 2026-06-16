@@ -441,6 +441,10 @@ class FormField < ApplicationRecord
 
     columns = conn.columns(cfg['table']).map(&:name)
     errors.add(:base, "Custom lookup: column '#{cfg['column']}' not found") unless columns.include?(cfg['column'])
+    Array(cfg['join_columns']).each do |c|
+      next if c.blank?
+      errors.add(:base, "Custom lookup: join column '#{c}' not found") unless columns.include?(c)
+    end
     [cfg['category_column'], cfg['order_column']].each do |c|
       next if c.blank?
       errors.add(:base, "Custom lookup: column '#{c}' not found") unless columns.include?(c)

@@ -43,13 +43,25 @@ class FormLookup
     col     = cfg["column"]
     return [] unless columns.include?(col)
 
+    # The chosen column plus any "join" columns are concatenated into each
+    # option's value/label, in order, so e.g. first_name + last_name display
+    # together. Unknown columns are silently dropped; the primary column leads.
+    join_cols    = Array(cfg["join_columns"]).select { |c| c.present? && columns.include?(c) }
+    display_cols = ([col] + join_cols).uniq
+    sep          = cfg["join_separator"]
+    sep          = " " unless sep.is_a?(String) && !sep.empty?
+
     cat_col   = cfg["category_column"].presence
     cat_col   = nil unless cat_col && columns.include?(cat_col)
     order_col = cfg["order_column"].presence
     order_col = nil unless order_col && columns.include?(order_col)
 
     qt = conn.quote_table_name(table)
-    qc = conn.quote_column_name(col)
+    # Project each display column under a stable alias (c0, c1, …) so the row
+    # values can be re-joined in Ruby regardless of the real column names.
+    select_aliases = display_cols.each_index.map do |i|
+      "#{conn.quote_column_name(display_cols[i])} AS #{conn.quote_column_name("c#{i}")}"
+    end
 
     where_sql = ""
     if cat_col && cfg["category_value"].present?
@@ -60,17 +72,26 @@ class FormLookup
     # is the only knob needed — numeric vs alphabetical follows the column type.
     dir = cfg["order_direction"].to_s.downcase == "desc" ? "DESC" : "ASC"
 
-    sql =
-      if order_col && order_col != col
-        # SQL Server requires ORDER BY columns to appear in a DISTINCT select
-        # list, so carry the order column along and project only the value.
-        qo = conn.quote_column_name(order_col)
-        "SELECT DISTINCT #{qc} AS val, #{qo} AS sort_val FROM #{qt}#{where_sql} ORDER BY #{qo} #{dir}"
-      else
-        "SELECT DISTINCT #{qc} AS val FROM #{qt}#{where_sql} ORDER BY #{qc} #{dir}"
-      end
+    # SQL Server requires every ORDER BY column to appear in a DISTINCT select
+    # list. The display columns are always projected; carry the order column
+    # along only when it isn't one of them.
+    if order_col && !display_cols.include?(order_col)
+      qo          = conn.quote_column_name(order_col)
+      select_list = (select_aliases + ["#{qo} AS sort_val"]).join(", ")
+      order_by    = "#{qo} #{dir}"
+    else
+      select_list = select_aliases.join(", ")
+      order_by    = "#{conn.quote_column_name(order_col || display_cols.first)} #{dir}"
+    end
 
-    conn.exec_query(sql).map { |row| row["val"] }.compact
+    sql = "SELECT DISTINCT #{select_list} FROM #{qt}#{where_sql} ORDER BY #{order_by}"
+
+    conn.exec_query(sql).map do |row|
+      display_cols.each_index
+                  .map { |i| row["c#{i}"] }
+                  .reject { |v| v.nil? || v.to_s.empty? }
+                  .join(sep)
+    end.reject(&:empty?).uniq
   rescue => e
     Rails.logger.error("FormLookup.options(#{field_id}) failed: #{e.class}: #{e.message}")
     []

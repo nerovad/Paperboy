@@ -466,10 +466,13 @@ class FormTemplatesController < ApplicationController
   
   # Normalize a custom (generic) lookup config from submitted field params.
   def build_custom_lookup(f)
+    join_sep = f[:custom_join_separator].to_s
     {
       'database'        => f[:custom_database],
       'table'           => f[:custom_table],
       'column'          => f[:custom_column],
+      'join_columns'    => Array(f[:custom_join_columns]).reject(&:blank?),
+      'join_separator'  => (join_sep.empty? ? ' ' : join_sep),
       'category_column' => f[:custom_category_column].presence,
       'category_value'  => f[:custom_category_value].presence,
       'order_column'    => f[:custom_order_column].presence,
