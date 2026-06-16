@@ -42,6 +42,19 @@ class FormTemplateRoutingStep < ApplicationRecord
     inbox_buttons.include?(button_type.to_s)
   end
 
+  # Text for the inbox Approve button at this step. An optional per-step
+  # override (e.g. "Permit Printed") that still performs the normal approve
+  # action; blank falls back to the default "Approve".
+  def approve_button_text
+    approve_button_label.presence || 'Approve'
+  end
+
+  # Text for the inbox Deny button at this step, with the same override
+  # semantics as approve_button_text.
+  def deny_button_text
+    deny_button_label.presence || 'Deny'
+  end
+
   def routes_to_employee?
     routing_type == 'employee'
   end

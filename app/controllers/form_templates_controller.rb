@@ -873,7 +873,9 @@ class FormTemplatesController < ApplicationController
         condition_field_name: condition_field_name,
         condition_operator: condition_field_name ? step_data[:condition_operator].presence : nil,
         condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
-        inbox_buttons: extract_step_inbox_buttons(step_data)
+        inbox_buttons: extract_step_inbox_buttons(step_data),
+        approve_button_label: step_data[:approve_button_label].presence,
+        deny_button_label: step_data[:deny_button_label].presence
       )
     end
   end
@@ -1147,7 +1149,9 @@ class FormTemplatesController < ApplicationController
         condition_field_name: condition_field_name,
         condition_operator: condition_field_name ? step_data[:condition_operator].presence : nil,
         condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
-        inbox_buttons: extract_step_inbox_buttons(step_data)
+        inbox_buttons: extract_step_inbox_buttons(step_data),
+        approve_button_label: step_data[:approve_button_label].presence,
+        deny_button_label: step_data[:deny_button_label].presence
       )
     end
 

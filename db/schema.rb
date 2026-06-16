@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_16_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_16_000002) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -322,6 +322,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_16_000001) do
     t.string "org_filter_level"
     t.text "inbox_buttons"
     t.string "authorization_service_type"
+    t.string "approve_button_label"
+    t.string "deny_button_label"
   end
 
   create_table "form_template_statuses", force: :cascade do |t|

@@ -61,7 +61,8 @@
 <% if button_source.has_inbox_button?('approve') %>
   <% approve_path = inbox_approve_path(submission) %>
   <% if approve_path %>
-    <%= button_to "Approve",
+    <% approve_label = button_source.respond_to?(:approve_button_text) ? button_source.approve_button_text : "Approve" %>
+    <%= button_to approve_label,
           approve_path,
           method: :patch,
           class: "btn approve" %>
@@ -72,12 +73,13 @@
 <% if button_source.has_inbox_button?('deny') %>
   <% deny_path = inbox_deny_path(submission) %>
   <% if deny_path %>
+    <% deny_label = button_source.respond_to?(:deny_button_text) ? button_source.deny_button_text : "Deny" %>
     <button type="button"
             class="btn deny"
             data-action="click->deny-modal#open"
             data-deny-path="<%= deny_path %>"
             data-record-title="<%= "#{submission.class.name.demodulize.titleize} #{inbox_reference(submission)}" %>">
-      Deny
+      <%= deny_label %>
     </button>
   <% end %>
 <% end %>

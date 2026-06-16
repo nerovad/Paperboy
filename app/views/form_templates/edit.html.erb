@@ -355,6 +355,26 @@
                           </label>
                         <% end %>
                       </div>
+                      <div class="step-button-labels" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;">
+                        <label style="flex: 1; min-width: 140px; font-size: 0.85em; color: #495057;">
+                          Approve button label
+                          <input type="text"
+                                 name="routing_steps[][approve_button_label]"
+                                 class="form-control form-control-sm step-approve-button-label"
+                                 placeholder="Approve"
+                                 value="<%= step.approve_button_label %>">
+                          <small style="display: block; color: #6c757d;">Optional — e.g. "Permit Printed". Still advances the workflow.</small>
+                        </label>
+                        <label style="flex: 1; min-width: 140px; font-size: 0.85em; color: #495057;">
+                          Deny button label
+                          <input type="text"
+                                 name="routing_steps[][deny_button_label]"
+                                 class="form-control form-control-sm step-deny-button-label"
+                                 placeholder="Deny"
+                                 value="<%= step.deny_button_label %>">
+                          <small style="display: block; color: #6c757d;">Optional. Leave blank for the default "Deny".</small>
+                        </label>
+                      </div>
                     </div>
                   </div>
                 <% end %>
@@ -1782,6 +1802,24 @@
             </span>
           </label>
         <% end %>
+      </div>
+      <div class="step-button-labels" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;">
+        <label style="flex: 1; min-width: 140px; font-size: 0.85em; color: #495057;">
+          Approve button label
+          <input type="text"
+                 name="routing_steps[][approve_button_label]"
+                 class="form-control form-control-sm step-approve-button-label"
+                 placeholder="Approve">
+          <small style="display: block; color: #6c757d;">Optional — e.g. "Permit Printed". Still advances the workflow.</small>
+        </label>
+        <label style="flex: 1; min-width: 140px; font-size: 0.85em; color: #495057;">
+          Deny button label
+          <input type="text"
+                 name="routing_steps[][deny_button_label]"
+                 class="form-control form-control-sm step-deny-button-label"
+                 placeholder="Deny">
+          <small style="display: block; color: #6c757d;">Optional. Leave blank for the default "Deny".</small>
+        </label>
       </div>
     </div>
   </div>
