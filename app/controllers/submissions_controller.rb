@@ -22,6 +22,7 @@ class SubmissionsController < ApplicationController
     @saved_searches = SavedSearch.for_employee(employee_id).order(:name)
 
     @status_items = []
+    @prefix_map = FormReference.prefix_map
 
     # System admins can filter across every employee; otherwise the dropdown
     # is gated on having subordinates in the supervisor chain.
@@ -61,11 +62,17 @@ class SubmissionsController < ApplicationController
     # Collect unique values for filter dropdowns BEFORE in-memory filtering
     @filter_options = collect_filter_options(@status_items, status_field_mappings)
 
-    # Apply in-memory filters (type, title, category — these span multiple tables)
+    # Apply in-memory filters (type, category, status — these span multiple tables)
     @status_items = apply_filters(@status_items,
       filter_configs: status_filter_configs,
       date_filters: status_date_filters
     )
+
+    # Reference-number (ID) search, e.g. "PLS-845", "pls-845" or "845".
+    if params[:filter_reference].present?
+      query = params[:filter_reference]
+      @status_items = @status_items.select { |item| FormReference.matches?(item[:reference], query) }
+    end
 
     # Apply sorting
     sort_by = params[:sort_by] || 'updated_at'
@@ -75,9 +82,6 @@ class SubmissionsController < ApplicationController
 
     # Build status options mapping for JavaScript dynamic filtering
     @status_options_by_type = build_status_options_by_type
-
-    # Build title options mapping for JavaScript dynamic filtering
-    @title_options_by_type = build_title_options_by_type(@status_items)
 
     # Paginate the final sorted array
     @pagy, @status_items = pagy(:offset, @status_items, count: @status_items.size)
@@ -118,22 +122,6 @@ class SubmissionsController < ApplicationController
     rescue NameError
       next
     end
-
-    options
-  end
-
-  def build_title_options_by_type(status_items)
-    options = {}
-
-    status_items.each do |item|
-      type = item[:type]
-      title = item[:title]
-      options[type] ||= []
-      options[type] << title unless options[type].include?(title)
-    end
-
-    # Sort titles within each type
-    options.each { |_type, titles| titles.sort! }
 
     options
   end
@@ -307,6 +295,7 @@ class SubmissionsController < ApplicationController
 
     {
       id: submission.id,
+      reference: FormReference.reference_for(submission, @prefix_map),
       type: type,
       title: title,
       status: submission.status_label,
@@ -323,7 +312,6 @@ class SubmissionsController < ApplicationController
   def status_field_mappings
     {
       types: ->(item) { item[:type] },
-      titles: ->(item) { item[:title] },
       statuses: ->(item) { item[:status].to_s.tr('_', ' ').titleize },
       categories: ->(item) { item[:status_category_label] }
     }
@@ -332,7 +320,6 @@ class SubmissionsController < ApplicationController
   def status_filter_configs
     configs = [
       { param: :filter_type, extractor: ->(item) { item[:type] } },
-      { param: :filter_title, extractor: ->(item) { item[:title] } },
       { param: :filter_status, extractor: ->(item) { item[:status].to_s.tr('_', ' ').titleize } },
       { param: :filter_category, extractor: ->(item) { item[:status_category_label] } }
     ]
@@ -349,7 +336,11 @@ class SubmissionsController < ApplicationController
   def status_sort_configs
     configs = {
       'type' => ->(item) { item[:type].to_s },
-      'title' => ->(item) { item[:title].to_s },
+      'reference' => ->(item) {
+        prefix, id = item[:reference].to_s.split("-")
+        # Zero-pad the id so it sorts numerically within a prefix.
+        format("%s-%012d", prefix.to_s, id.to_i)
+      },
       'status' => ->(item) { item[:status].to_s },
       'submitted_at' => ->(item) { item[:submitted_at].to_s },
       'updated_at' => ->(item) { item[:updated_at].to_s }
