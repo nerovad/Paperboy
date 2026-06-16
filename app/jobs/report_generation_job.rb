@@ -113,11 +113,15 @@ class ReportGenerationJob < ApplicationJob
     
     # Get all attribute names from the first submission
     headers = submissions.first.attributes.keys
-    
+
+    # Every report covers a single form type, so the reference prefix is uniform —
+    # resolve it once and prepend a "Reference" column (e.g. LOA-1042).
+    reference_prefix = FormReference.prefix_for(submissions.first.class)
+
     # Generate CSV
     CSV.open(csv_filename, 'wb') do |csv|
       # Write headers
-      csv << headers
+      csv << (['Reference'] + headers)
       
       # Write each submission as a row
       submissions.each do |submission|
@@ -140,8 +144,8 @@ class ReportGenerationJob < ApplicationJob
             value.to_s
           end
         end
-        
-        csv << row
+
+        csv << (["#{reference_prefix}-#{submission.id}"] + row)
       end
     end
     
@@ -196,7 +200,7 @@ class ReportGenerationJob < ApplicationJob
       pdf.font 'Helvetica', size: 12
       
       # Basic Info
-      pdf.text "Submission ID: #{submission.id}", style: :bold
+      pdf.text "Reference: #{FormReference.reference_for(submission)}", style: :bold
       pdf.move_down 5
       
       # Created/Submitted Date
