@@ -76,7 +76,7 @@
             class="btn deny"
             data-action="click->deny-modal#open"
             data-deny-path="<%= deny_path %>"
-            data-record-title="<%= "#{submission.class.name.demodulize.titleize} ##{submission.id}" %>">
+            data-record-title="<%= "#{submission.class.name.demodulize.titleize} #{inbox_reference(submission)}" %>">
       Deny
     </button>
   <% end %>

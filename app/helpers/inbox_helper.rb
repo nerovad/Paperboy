@@ -20,6 +20,13 @@ module InboxHelper
     !HARDCODED_FORM_TYPES.include?(submission.class.name)
   end
 
+  # Human-facing reference number for a submission, e.g. "LOA-1042". Memoizes
+  # the class_name => prefix map so rendering a page of rows is a single query.
+  def inbox_reference(submission)
+    @prefix_map ||= FormReference.prefix_map
+    FormReference.reference_for(submission, @prefix_map)
+  end
+
   # Check if a button should be shown for this submission
   def show_inbox_button?(submission, button_type)
     template = form_template_for(submission)

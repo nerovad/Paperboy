@@ -7,6 +7,15 @@
     <form action="<%= inbox_queue_path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
       <div class="filter-controls">
         <div class="filter-group">
+          <label for="filter_reference">Reference</label>
+          <%= text_field_tag :filter_reference, params[:filter_reference],
+              class: 'filter-select',
+              placeholder: 'e.g. LOA-1042',
+              autocomplete: 'off',
+              data: { action: "change->auto-submit#submit" } %>
+        </div>
+
+        <div class="filter-group">
           <label for="filter_form_type">Form Type</label>
           <%= select_tag :filter_form_type,
               options_for_select([['All', '']] + @filter_options[:form_types].map { |ft| [ft, ft] }, params[:filter_form_type]),
@@ -73,7 +82,7 @@
               data: { action: "change->auto-submit#submit" } %>
         </div>
 
-        <% if params[:filter_form_type].present? || params[:filter_name].present? || params[:filter_unit].present? || params[:filter_email].present? || params[:filter_status].present? || params[:filter_date_from].present? || params[:filter_date_to].present? || params[:filter_employee].present? %>
+        <% if params[:filter_reference].present? || params[:filter_form_type].present? || params[:filter_name].present? || params[:filter_unit].present? || params[:filter_email].present? || params[:filter_status].present? || params[:filter_date_from].present? || params[:filter_date_to].present? || params[:filter_employee].present? %>
           <%= link_to "Clear Filters", inbox_queue_path(sort_by: params[:sort_by], sort_direction: params[:sort_direction]), class: 'btn clear-filters', data: { turbo: false } %>
         <% end %>
       </div>
@@ -95,6 +104,7 @@
                style="display: none;">
 
             <div class="action-panel-label">
+              <span class="label-reference"><%= inbox_reference(submission) %></span>
               <span class="label-form-type"><%= submission.class.name.demodulize.titleize %></span>
               <span class="label-name"><%= submission.name %></span>
             </div>
@@ -168,7 +178,7 @@
                           data-action="click->approve-modal#open"
                           data-approve-modal-approve-path-value="<%= polymorphic_path(submission, action: :approve) %>"
                           data-approve-modal-options-value="<%= submission.desired_destinations_array.to_json %>"
-                          data-approve-modal-title-value="<%= "Approve Transfer ##{submission.id}" %>">
+                          data-approve-modal-title-value="<%= "Approve Transfer #{inbox_reference(submission)}" %>">
                     Approve
                   </button>
                 <% end %>
@@ -177,7 +187,7 @@
                         class="btn deny"
                         data-action="click->deny-modal#open"
                         data-deny-path="<%= polymorphic_path(submission, action: :deny) %>"
-                        data-record-title="<%= "#{submission.class.name.demodulize.titleize} ##{submission.id}" %>">
+                        data-record-title="<%= "#{submission.class.name.demodulize.titleize} #{inbox_reference(submission)}" %>">
                   Deny
                 </button>
               <% end %>
@@ -220,7 +230,15 @@
       <thead>
         <tr>
           <th>
-            <%= link_to inbox_queue_path(sort_by: 'form_type', sort_direction: params[:sort_by] == 'form_type' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
+            <%= link_to inbox_queue_path(sort_by: 'reference', sort_direction: params[:sort_by] == 'reference' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_reference: params[:filter_reference], filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
+              Reference
+              <% if params[:sort_by] == 'reference' %>
+                <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
+              <% end %>
+            <% end %>
+          </th>
+          <th>
+            <%= link_to inbox_queue_path(sort_by: 'form_type', sort_direction: params[:sort_by] == 'form_type' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_reference: params[:filter_reference], filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
               Form Type
               <% if params[:sort_by] == 'form_type' %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -228,7 +246,7 @@
             <% end %>
           </th>
           <th>
-            <%= link_to inbox_queue_path(sort_by: 'name', sort_direction: params[:sort_by] == 'name' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
+            <%= link_to inbox_queue_path(sort_by: 'name', sort_direction: params[:sort_by] == 'name' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_reference: params[:filter_reference], filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
               Name
               <% if params[:sort_by] == 'name' %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -236,7 +254,7 @@
             <% end %>
           </th>
           <th>
-            <%= link_to inbox_queue_path(sort_by: 'unit', sort_direction: params[:sort_by] == 'unit' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
+            <%= link_to inbox_queue_path(sort_by: 'unit', sort_direction: params[:sort_by] == 'unit' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_reference: params[:filter_reference], filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
               Unit
               <% if params[:sort_by] == 'unit' %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -244,7 +262,7 @@
             <% end %>
           </th>
           <th>
-            <%= link_to inbox_queue_path(sort_by: 'email', sort_direction: params[:sort_by] == 'email' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
+            <%= link_to inbox_queue_path(sort_by: 'email', sort_direction: params[:sort_by] == 'email' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_reference: params[:filter_reference], filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
               Email
               <% if params[:sort_by] == 'email' %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -252,7 +270,7 @@
             <% end %>
           </th>
           <th>
-            <%= link_to inbox_queue_path(sort_by: 'status', sort_direction: params[:sort_by] == 'status' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
+            <%= link_to inbox_queue_path(sort_by: 'status', sort_direction: params[:sort_by] == 'status' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_reference: params[:filter_reference], filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
               Status
               <% if params[:sort_by] == 'status' %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -260,7 +278,7 @@
             <% end %>
           </th>
           <th>
-            <%= link_to inbox_queue_path(sort_by: 'created_at', sort_direction: params[:sort_by] == 'created_at' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
+            <%= link_to inbox_queue_path(sort_by: 'created_at', sort_direction: params[:sort_by] == 'created_at' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_reference: params[:filter_reference], filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
               Created
               <% if params[:sort_by] == 'created_at' || params[:sort_by].nil? %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
@@ -277,6 +295,7 @@
                 data-task-type="<%= submission.class.name %>"
                 data-task-id="<%= submission.id %>"
                 data-action="click->task-selection#select">
+              <td><span class="reference-badge"><%= inbox_reference(submission) %></span></td>
               <td><%= submission.class.name.demodulize.titleize %></td>
               <td><%= submission.name %></td>
               <td><%= submission.try(:unit) || "—" %></td>
@@ -290,7 +309,7 @@
             </tr>
           <% end %>
         <% else %>
-          <tr><td colspan="6">No submissions found.</td></tr>
+          <tr><td colspan="7">No submissions found.</td></tr>
         <% end %>
       </tbody>
     </table>

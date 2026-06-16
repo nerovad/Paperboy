@@ -90,6 +90,16 @@ class InboxController < ApplicationController
       date_filters: inbox_date_filters
     )
 
+    # Reference-number search (e.g. "LOA-1042", "loa-1042" or "1042"). Filters
+    # the already-scoped list, so a reference the viewer can't see won't match.
+    @prefix_map = FormReference.prefix_map
+    if params[:filter_reference].present?
+      query = params[:filter_reference]
+      @submissions = @submissions.select do |s|
+        FormReference.matches?(FormReference.reference_for(s, @prefix_map), query)
+      end
+    end
+
     # Apply sorting
     sort_by = params[:sort_by] || 'created_at'
     sort_direction = params[:sort_direction] || 'desc'
@@ -191,6 +201,13 @@ class InboxController < ApplicationController
 
   def inbox_sort_configs
     {
+      'reference' => ->(s) {
+        ref = FormReference.reference_for(s, @prefix_map) || ""
+        prefix, id = ref.split("-")
+        # Zero-pad the id so it sorts numerically within a prefix (the sort
+        # helper compares the stringified value).
+        format("%s-%012d", prefix.to_s, id.to_i)
+      },
       'form_type' => ->(s) { s.class.name.demodulize.titleize },
       'name' => ->(s) { s.name.to_s },
       'unit' => ->(s) { (s.try(:unit) || '').to_s },

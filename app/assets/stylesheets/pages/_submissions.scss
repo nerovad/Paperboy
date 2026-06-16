@@ -410,3 +410,16 @@
     padding: 12px;
   }
 }
+
+/* Reference number (e.g. LOA-1042) — reads as a compact, monospaced id. */
+.reference-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.action-panel-label .label-reference {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700;
+  margin-right: 8px;
+}
