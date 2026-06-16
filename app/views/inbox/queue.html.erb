@@ -7,7 +7,7 @@
     <form action="<%= inbox_queue_path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
       <div class="filter-controls">
         <div class="filter-group">
-          <label for="filter_reference">Reference</label>
+          <label for="filter_reference">ID</label>
           <%= text_field_tag :filter_reference, params[:filter_reference],
               class: 'filter-select',
               placeholder: 'e.g. LOA-1042',
@@ -231,7 +231,7 @@
         <tr>
           <th>
             <%= link_to inbox_queue_path(sort_by: 'reference', sort_direction: params[:sort_by] == 'reference' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_reference: params[:filter_reference], filter_form_type: params[:filter_form_type], filter_name: params[:filter_name], filter_unit: params[:filter_unit], filter_email: params[:filter_email], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
-              Reference
+              ID
               <% if params[:sort_by] == 'reference' %>
                 <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
               <% end %>
