@@ -430,7 +430,7 @@
    (navy accent + count badge), Submissions reads as a calmer tracker (muted
    accent). */
 $inbox-accent: $brand-navy;
-$submissions-accent: $muted;
+$submissions-accent: $primary-color;
 
 .work-tabs {
   display: flex;
@@ -494,11 +494,27 @@ $submissions-accent: $muted;
   border-radius: 10px;
 }
 
-/* Per-view table accent reinforces the active tab's color */
-.inbox-page-wrapper .submission-table {
-  border-top: 3px solid $inbox-accent;
+/* Per-view column-header theming makes the two tables unmistakably distinct:
+   Inbox headers are navy (action workspace), Submissions headers are green
+   (tracker). White header text keeps the sortable links legible. */
+.inbox-page-wrapper .submission-table thead th {
+  background-color: $inbox-accent;
+  color: #fff;
+
+  a.sortable-header {
+    color: #fff;
+
+    &:hover { color: rgba(255, 255, 255, 0.75); }
+  }
 }
 
-.submissions-page-wrapper .status-table {
-  border-top: 3px solid $submissions-accent;
+.submissions-page-wrapper .status-table thead th {
+  background: $submissions-accent;
+  color: #fff;
+
+  a.sortable-header {
+    color: #fff;
+
+    &:hover { color: rgba(255, 255, 255, 0.75); }
+  }
 }
