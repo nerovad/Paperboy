@@ -1,6 +1,6 @@
 <!-- app/views/inbox/queue.html.erb -->
 <div class="inbox-page-wrapper" data-controller="task-selection approve-modal deny-modal reassign-modal status-history-modal">
-  <h1 class="page-title">Inbox</h1>
+  <%= render "shared/work_tabs", active: :inbox %>
 
   <!-- Filter Form -->
   <div class="filter-wrapper">

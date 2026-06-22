@@ -1,0 +1,23 @@
+<%# Tab bar shared by the Inbox and Submissions pages. `active` is :inbox or
+    :submissions. Tab visibility mirrors the navbar dropdown permission checks so
+    a user only ever sees (and can switch to) tabs they're allowed to view. %>
+<nav class="work-tabs work-tabs--<%= active %>" aria-label="My Work">
+  <% if system_admin? || current_user_dropdown_permissions.include?('inbox') %>
+    <%= link_to inbox_queue_path,
+        class: "work-tab work-tab--inbox #{'is-active' if active == :inbox}",
+        aria: { current: ("page" if active == :inbox) } do %>
+      Inbox
+      <% if inbox_count > 0 %>
+        <span class="work-tab-badge"><%= inbox_count %></span>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% if system_admin? || current_user_dropdown_permissions.include?('submissions') %>
+    <%= link_to submissions_path,
+        class: "work-tab work-tab--submissions #{'is-active' if active == :submissions}",
+        aria: { current: ("page" if active == :submissions) } do %>
+      Submissions
+    <% end %>
+  <% end %>
+</nav>
