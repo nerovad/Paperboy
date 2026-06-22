@@ -423,3 +423,82 @@
   font-weight: 700;
   margin-right: 8px;
 }
+
+/* ── Work tabs (shared Inbox / Submissions header) ─────────────────────────
+   Inbox and Submissions share one tab bar but are themed distinctly so users
+   always know which view they're on: Inbox reads as an action workspace
+   (navy accent + count badge), Submissions reads as a calmer tracker (muted
+   accent). */
+$inbox-accent: $brand-navy;
+$submissions-accent: $muted;
+
+.work-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid $border-color;
+}
+
+/* Keep the tab bar fixed when it sits inside the scrolling submissions layout */
+.submissions-page-wrapper .work-tabs {
+  flex-shrink: 0;
+}
+
+.work-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: $muted;
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px; /* overlap the bar's border so the active underline aligns */
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    color: $text-color;
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  &.is-active {
+    font-weight: 700;
+  }
+
+  &--inbox.is-active {
+    color: $inbox-accent;
+    border-bottom-color: $inbox-accent;
+  }
+
+  &--submissions.is-active {
+    color: $submissions-accent;
+    border-bottom-color: $submissions-accent;
+  }
+}
+
+/* Action-needed count — only ever rendered on the Inbox tab */
+.work-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: $danger;
+  border-radius: 10px;
+}
+
+/* Per-view table accent reinforces the active tab's color */
+.inbox-page-wrapper .submission-table {
+  border-top: 3px solid $inbox-accent;
+}
+
+.submissions-page-wrapper .status-table {
+  border-top: 3px solid $submissions-accent;
+}
