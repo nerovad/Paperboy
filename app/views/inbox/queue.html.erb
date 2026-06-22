@@ -136,7 +136,7 @@
                 <% end %>
               <% else %>
                 <%= link_to "View PDF",
-                    submission.is_a?(ParkingLotSubmission) ? pdf_parking_lot_submission_path(submission) : pdf_probation_transfer_request_path(submission),
+                    pdf_probation_transfer_request_path(submission),
                     target: "_blank",
                     class: "btn pdf" %>
               <% end %>
@@ -164,24 +164,16 @@
                 <% end %>
               <% end %>
 
-              <!-- DECISION ACTIONS (Parking/Probation) -->
-              <% if submission.is_a?(ParkingLotSubmission) || submission.is_a?(ProbationTransferRequest) %>
-                <% if submission.is_a?(ParkingLotSubmission) %>
-                  <%= button_to "Approve",
-                        polymorphic_path(submission, action: :approve),
-                        method: :patch,
-                        class: "btn approve" %>
-
-                <% elsif submission.is_a?(ProbationTransferRequest) %>
-                  <button type="button"
-                          class="btn approve"
-                          data-action="click->approve-modal#open"
-                          data-approve-modal-approve-path-value="<%= polymorphic_path(submission, action: :approve) %>"
-                          data-approve-modal-options-value="<%= submission.desired_destinations_array.to_json %>"
-                          data-approve-modal-title-value="<%= "Approve Transfer #{inbox_reference(submission)}" %>">
-                    Approve
-                  </button>
-                <% end %>
+              <!-- DECISION ACTIONS (Probation Transfer) -->
+              <% if submission.is_a?(ProbationTransferRequest) %>
+                <button type="button"
+                        class="btn approve"
+                        data-action="click->approve-modal#open"
+                        data-approve-modal-approve-path-value="<%= polymorphic_path(submission, action: :approve) %>"
+                        data-approve-modal-options-value="<%= submission.desired_destinations_array.to_json %>"
+                        data-approve-modal-title-value="<%= "Approve Transfer #{inbox_reference(submission)}" %>">
+                  Approve
+                </button>
 
                 <button type="button"
                         class="btn deny"

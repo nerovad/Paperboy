@@ -33,14 +33,12 @@ class InboxController < ApplicationController
                              [employee_id]
                            end
 
-    # Parking Lot Submissions now route via form-builder steps (Authorization ->
-    # Sean Payne -> GSA_Security) and are surfaced by fetch_dynamic_form_submissions
-    # (approver_id + group + authorization scopes). The only parking-specific rule
-    # left is awareness: approved permits are visible to the GSA_Security group.
-    @submissions += apply_scope_date_filters(
-      scope_group_visible(ParkingLotSubmission, status: "approved", group_name: "GSA_Security"),
-      inbox_scope_date_filters
-    ).to_a
+    # Parking Lot Submissions route entirely via form-builder steps (Authorization
+    # -> Sean Payne -> GSA_Security "Permit Printed" -> GSA_Security "Permit Picked
+    # Up") and are surfaced by fetch_dynamic_form_submissions. The print/pickup
+    # steps are non-terminal, so they stay in the GSA_Security inbox as actionable;
+    # the final approved (picked-up) permit drops out via the terminal-status sweep
+    # below. No parking-specific awareness rule is needed any more.
 
     # Probation Transfer Requests - all statuses stay in inbox (except canceled)
     @submissions += apply_scope_date_filters(
@@ -70,6 +68,13 @@ class InboxController < ApplicationController
     # Deduplicate (a submission could match both supervisor and delegated approver).
     # Key by class + id so different form types with the same numeric id aren't collapsed.
     @submissions.uniq! { |s| [s.class, s.id] }
+
+    # The inbox is a work queue, not an archive: once a submission reaches an end
+    # state (approved/denied/cancelled — per each form's is_end status flags) it
+    # leaves the inbox and lives on only in Submissions. This also clears the
+    # actioning approver's lingering copy of finished dynamic-form approvals
+    # (approver_id is stamped on terminal transitions; without this they'd persist).
+    @submissions.reject! { |s| s.respond_to?(:terminal?) && s.terminal? }
 
     # Collect unique values for filter dropdowns BEFORE in-memory filtering
     @filter_options = collect_filter_options(@submissions, inbox_field_mappings)
@@ -148,23 +153,6 @@ class InboxController < ApplicationController
     @scoped_employee_ids ? model_class.where(column => @scoped_employee_ids) : model_class.all
   end
 
-
-  # Forms in a given status that members of the named group should see in their
-  # inbox for awareness (e.g. approved parking permits for GSA_Security). When
-  # the inbox scope is "all" (system admin, @scoped_employee_ids nil), no
-  # membership filter is applied. Group is looked up by name so it works across
-  # environments (group ids differ per DB).
-  def scope_group_visible(model_class, status:, group_name:)
-    group_id = Group.where(group_name: group_name).pick(:GroupID)
-    return model_class.none unless group_id
-
-    if @scoped_employee_ids
-      member = EmployeeGroup.where(GroupID: group_id, EmployeeID: @scoped_employee_ids).exists?
-      return model_class.none unless member
-    end
-
-    model_class.where(status: status)
-  end
 
   # SQL-level date filter config
   def inbox_scope_date_filters
