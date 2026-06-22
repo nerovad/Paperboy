@@ -89,6 +89,29 @@ module TrackableStatus
       nil
     end
 
+    # True when the given status is a configured END STATE for this form —
+    # one that nothing further happens after (approved / denied / cancelled,
+    # or any custom status a form marks as final). The inbox uses this to drop
+    # finished work; Submissions keeps everything regardless.
+    #
+    # Authoritative source is the per-status `is_end` flag on
+    # form_template_statuses. Models without a template (or statuses missing
+    # from it) fall back to the terminal categories and the hardcoded
+    # TERMINAL_STATUSES keys.
+    def terminal_status?(status_value)
+      key = status_key_for(status_value)
+      return false unless key
+
+      if (definition = central_status_definitions[key])
+        return !!definition.is_end
+      end
+
+      category = status_category_for(status_value)
+      return true if category && %i[approved denied cancelled].include?(category)
+
+      TERMINAL_STATUSES.include?(key.to_s)
+    end
+
     # Returns all status keys (symbols) that belong to a given category.
     def statuses_for_category(category)
       cat = category.to_s
@@ -186,6 +209,13 @@ module TrackableStatus
   # Returns the human-readable label for the current status category
   def status_category_label
     self.class.category_labels[status_category] || "Unknown"
+  end
+
+  # Whether this submission has reached an end state — see terminal_status?.
+  def terminal?
+    self.class.terminal_status?(status)
+  rescue StandardError
+    false
   end
 
   private
