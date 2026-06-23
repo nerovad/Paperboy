@@ -18,23 +18,20 @@ class ApplicationController < ActionController::Base
     )
   end
 
-    def inbox_count
+  # Number of items in the signed-in user's inbox, for the profile/tab badges.
+  # Runs the same InboxQuery the inbox page uses (scoped to the user's own
+  # queue), so the badge always matches the page and never clears on viewing.
+  # Memoized per request — the badge renders more than once.
+  def inbox_count
     return @inbox_count if defined?(@inbox_count)
 
     user = session[:user]
-    return @inbox_count = 0 unless user && user["employee_id"].present?
-
-    eid = user["employee_id"].to_s
-
-    # Parking Lot: pending for this supervisor
-    pl = ParkingLotSubmission.where(supervisor_id: eid, status: :in_progress)
-    # If you later add cancelation to parking lot, this line will automatically exclude them:
-    pl = pl.where(canceled_at: nil) if ParkingLotSubmission.column_names.include?("canceled_at")
-
-    # Probation Transfer: pending & NOT canceled
-    ptr = ProbationTransferRequest.where(supervisor_id: eid, status: :in_progress, canceled_at: nil)
-
-    @inbox_count = pl.count + ptr.count
+    @inbox_count =
+      if user && user["employee_id"].present?
+        InboxQuery.new(scoped_employee_ids: [user["employee_id"].to_s]).count
+      else
+        0
+      end
   end
 
   def build_prefill_data(employee_id)
