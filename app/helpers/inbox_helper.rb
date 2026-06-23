@@ -5,6 +5,18 @@ module InboxHelper
     ProbationTransferRequest
   ].freeze
 
+  # Filter params on the inbox queue. Used both for the "Clear Filters" link and
+  # to tell a genuinely-cleared inbox ("Inbox Zero!") apart from a filter that
+  # simply matched nothing.
+  INBOX_FILTER_PARAMS = %i[
+    filter_reference filter_form_type filter_name filter_unit filter_email
+    filter_status filter_date_from filter_date_to filter_employee
+  ].freeze
+
+  def inbox_filters_active?
+    INBOX_FILTER_PARAMS.any? { |key| params[key].present? }
+  end
+
   # Look up the FormTemplate for a given submission
   # Returns nil for hardcoded forms or if no template exists
   def form_template_for(submission)

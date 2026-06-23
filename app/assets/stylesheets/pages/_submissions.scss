@@ -518,3 +518,42 @@ $submissions-accent: $primary-color;
     &:hover { color: rgba(255, 255, 255, 0.75); }
   }
 }
+
+/* ── Inbox Zero celebration ────────────────────────────────────────────────
+   Shown in place of the table when the inbox is genuinely cleared. */
+.inbox-zero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 64px 24px;
+  min-height: 320px;
+
+  &__icon {
+    font-size: 4rem;
+    line-height: 1;
+    margin-bottom: 16px;
+    animation: inbox-zero-pop 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+  }
+
+  &__title {
+    margin: 0 0 8px;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $brand-navy;
+  }
+
+  &__message {
+    margin: 0;
+    max-width: 460px;
+    font-size: 1.05rem;
+    color: $muted;
+  }
+}
+
+@keyframes inbox-zero-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}

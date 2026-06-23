@@ -1,0 +1,15 @@
+<%# Celebratory empty state — shown only when the inbox is genuinely cleared
+    (no items AND no active filters). See InboxController#queue / inbox_filters_active?. %>
+<% messages = [
+     "You've handled every item in your queue. Go enjoy the rest of your day.",
+     "Nothing left to action — nice work!",
+     "Your inbox is spotless. That's everything done.",
+     "All caught up. Take a well-earned breather.",
+     "Every task cleared. You're on top of it.",
+     "Done and dusted. The whole queue is empty."
+   ] %>
+<div class="inbox-zero">
+  <div class="inbox-zero__icon" aria-hidden="true">🎉</div>
+  <h2 class="inbox-zero__title">Inbox Zero!</h2>
+  <p class="inbox-zero__message"><%= messages.sample %></p>
+</div>

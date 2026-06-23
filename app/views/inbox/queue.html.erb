@@ -2,7 +2,13 @@
 <div class="inbox-page-wrapper" data-controller="task-selection approve-modal deny-modal reassign-modal status-history-modal">
   <%= render "shared/work_tabs", active: :inbox %>
 
+  <%# Inbox Zero: nothing left to action AND the user hasn't filtered to an
+      empty subset. Drives the celebratory empty state (and hides the filters,
+      which have nothing to act on). %>
+  <% inbox_zero = @submissions.blank? && !inbox_filters_active? %>
+
   <!-- Filter Form -->
+  <% unless inbox_zero %>
   <div class="filter-wrapper">
     <form action="<%= inbox_queue_path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
       <div class="filter-controls">
@@ -82,7 +88,7 @@
               data: { action: "change->auto-submit#submit" } %>
         </div>
 
-        <% if params[:filter_reference].present? || params[:filter_form_type].present? || params[:filter_name].present? || params[:filter_unit].present? || params[:filter_email].present? || params[:filter_status].present? || params[:filter_date_from].present? || params[:filter_date_to].present? || params[:filter_employee].present? %>
+        <% if inbox_filters_active? %>
           <%= link_to "Clear Filters", inbox_queue_path(sort_by: params[:sort_by], sort_direction: params[:sort_direction]), class: 'btn clear-filters', data: { turbo: false } %>
         <% end %>
       </div>
@@ -92,6 +98,7 @@
       <%= hidden_field_tag :sort_direction, params[:sort_direction] %>
     </form>
   </div>
+  <% end %>
 
   <!-- Action Panel (shown when a task is selected) -->
   <div class="action-panel" data-task-selection-target="actionPanel" style="display: none;">
@@ -218,6 +225,9 @@
   </div>
 
   <div class="table-wrapper">
+    <% if inbox_zero %>
+      <%= render "inbox/inbox_zero" %>
+    <% else %>
     <table class="submission-table">
       <thead>
         <tr>
@@ -301,7 +311,7 @@
             </tr>
           <% end %>
         <% else %>
-          <tr><td colspan="7">No submissions found.</td></tr>
+          <tr><td colspan="7">No submissions match your filters.</td></tr>
         <% end %>
       </tbody>
     </table>
@@ -313,6 +323,7 @@
           Showing <%= @pagy.from %>–<%= @pagy.to %> of <%= @pagy.count %> items
         </p>
       </div>
+    <% end %>
     <% end %>
   </div>
 
