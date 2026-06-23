@@ -19,7 +19,7 @@ class InboxController < ApplicationController
 
     # Form-wide visibility grants: class names of forms this user may see every
     # submission of (via a granted group). Surfaced only when the user explicitly
-    # filters the inbox to that form type — see #granted_submissions.
+    # filters the inbox to that form type — see InboxQuery#granted_submissions.
     @viewer_form_types = FormVisibilityGrant.form_types_for(employee_id, current_user_group_ids)
 
     # nil means "no assignee restriction" (system admin viewing All).
@@ -33,48 +33,21 @@ class InboxController < ApplicationController
                              [employee_id]
                            end
 
-    # Parking Lot Submissions route entirely via form-builder steps (Authorization
-    # -> Sean Payne -> GSA_Security "Permit Printed" -> GSA_Security "Permit Picked
-    # Up") and are surfaced by fetch_dynamic_form_submissions. The print/pickup
-    # steps are non-terminal, so they stay in the GSA_Security inbox as actionable;
-    # the final approved (picked-up) permit drops out via the terminal-status sweep
-    # below. No parking-specific awareness rule is needed any more.
-
-    # Probation Transfer Requests - all statuses stay in inbox (except canceled)
-    @submissions += apply_scope_date_filters(
-      scope_by_assignee(ProbationTransferRequest, :supervisor_id).where(canceled_at: nil),
-      inbox_scope_date_filters
-    ).to_a
-
-    # Critical Information Reporting forms assigned to this manager (all statuses stay in inbox)
-    @submissions += apply_scope_date_filters(
-      scope_by_assignee(CriticalInformationReporting, :assigned_manager_id),
-      inbox_scope_date_filters
-    ).to_a
-
-    # Dynamically generated forms with approval workflows
-    @submissions += fetch_dynamic_form_submissions
-
-    # Form-wide visibility grants — every submission of a granted form type,
-    # only when the user has filtered the inbox to that exact form type.
-    @viewer_form_types.each do |class_name|
-      model = class_name.safe_constantize
-      next unless model.is_a?(Class) && model < ActiveRecord::Base
-      @submissions += granted_submissions(model).to_a
-    rescue StandardError => e
-      Rails.logger.warn "Inbox visibility grant query failed for #{class_name}: #{e.message}"
-    end
-
-    # Deduplicate (a submission could match both supervisor and delegated approver).
-    # Key by class + id so different form types with the same numeric id aren't collapsed.
-    @submissions.uniq! { |s| [s.class, s.id] }
-
-    # The inbox is a work queue, not an archive: once a submission reaches an end
-    # state (approved/denied/cancelled — per each form's is_end status flags) it
-    # leaves the inbox and lives on only in Submissions. This also clears the
-    # actioning approver's lingering copy of finished dynamic-form approvals
-    # (approver_id is stamped on terminal transitions; without this they'd persist).
-    @submissions.reject! { |s| s.respond_to?(:terminal?) && s.terminal? }
+    # Assemble the inbox contents (probation, CIR, routed dynamic forms, and
+    # granted form types — deduped, with terminal items dropped). Shared with the
+    # profile/tab badge via InboxQuery so the count can't drift from the page.
+    # Parking permits flow entirely through the dynamic-form path: their print/
+    # pickup steps are non-terminal and stay actionable, while a picked-up
+    # (approved) permit drops out with the rest of the terminal items.
+    inbox = InboxQuery.new(
+      scoped_employee_ids: @scoped_employee_ids,
+      viewer_form_types: @viewer_form_types,
+      filter_form_type: params[:filter_form_type],
+      date_from: params[:filter_date_from],
+      date_to: params[:filter_date_to]
+    )
+    @submissions = inbox.submissions
+    @copy_submission_ids = inbox.copy_submission_ids
 
     # Collect unique values for filter dropdowns BEFORE in-memory filtering
     @filter_options = collect_filter_options(@submissions, inbox_field_mappings)
@@ -147,21 +120,6 @@ class InboxController < ApplicationController
 
   private
 
-  # Apply assignee-column filter based on @scoped_employee_ids.
-  # nil = no restriction (system admin viewing All).
-  def scope_by_assignee(model_class, column)
-    @scoped_employee_ids ? model_class.where(column => @scoped_employee_ids) : model_class.all
-  end
-
-
-  # SQL-level date filter config
-  def inbox_scope_date_filters
-    [
-      { param: :filter_date_from, column: :created_at, comparison: :from },
-      { param: :filter_date_to, column: :created_at, comparison: :to }
-    ]
-  end
-
   def inbox_field_mappings
     {
       form_types: ->(s) { s.class.name.demodulize.titleize },
@@ -205,151 +163,4 @@ class InboxController < ApplicationController
     }
   end
 
-  # Every submission of a form the current user holds a visibility grant for —
-  # but only when they've explicitly filtered the inbox to that form type.
-  # Membership (whether the user actually holds the grant) is already enforced
-  # by @viewer_form_types; this guards the "only when filtered" rule.
-  def granted_submissions(model)
-    return model.none unless params[:filter_form_type] == model.name.demodulize.titleize
-    apply_scope_date_filters(model.all, inbox_scope_date_filters)
-  end
-
-  # Fetch submissions from dynamically generated forms that need approval
-  def fetch_dynamic_form_submissions
-    submissions = []
-    @copy_submission_ids ||= {}
-
-    # Union of group_ids the scoped employees belong to. nil = system admin
-    # viewing All (no restriction — every group-routed step is visible).
-    scoped_group_ids = if @scoped_employee_ids.nil?
-                         nil
-                       else
-                         EmployeeGroup.where(EmployeeID: @scoped_employee_ids).distinct.pluck(:GroupID)
-                       end
-
-    # Submitter-org values the scoped employees can stand in for. Used to
-    # narrow org-filtered group routing steps to forms whose submitter shares
-    # the right org level with at least one scoped employee. nil = no scope
-    # restriction (system admin "all").
-    submitter_org_filter = @scoped_employee_ids ? compute_submitter_org_filter(@scoped_employee_ids) : nil
-
-    # Get all form templates that have approval workflows
-    FormTemplate.where(submission_type: 'approval').find_each do |template|
-      begin
-        # Try to get the model class for this form template
-        model_class = template.class_name.constantize
-        next unless model_class.column_names.include?('approver_id')
-
-        copy_ids = copy_submission_ids_for(model_class)
-        @copy_submission_ids[model_class.name] = copy_ids if copy_ids.any?
-
-        scope = if @scoped_employee_ids.nil?
-                  # System admin viewing All — every approval form
-                  model_class.all
-                else
-                  parts = [model_class.where(approver_id: @scoped_employee_ids)]
-                  group_routing_scopes(template, model_class, scoped_group_ids, submitter_org_filter).each do |s|
-                    parts << s
-                  end
-                  authorization_routing_scopes(template, model_class, @scoped_employee_ids).each do |s|
-                    parts << s
-                  end
-                  parts << model_class.where(id: copy_ids) if copy_ids.any?
-                  parts.reduce(:or)
-                end
-
-        scope = apply_scope_date_filters(scope, inbox_scope_date_filters)
-        submissions += scope.to_a
-      rescue NameError
-        # Model class doesn't exist yet (form not generated), skip it
-        Rails.logger.debug "Skipping inbox query for #{template.class_name} - model not found"
-      rescue => e
-        Rails.logger.warn "Error querying #{template.class_name} for inbox: #{e.message}"
-      end
-    end
-
-    submissions
-  end
-
-  # IDs of submissions of the given class that have an active (undismissed)
-  # copy row for any of the scoped employees. Returns [] when the scope is
-  # "all" (system admin) — copies in that view are best surfaced via the
-  # approver/group rules so we don't artificially balloon the result set.
-  def copy_submission_ids_for(model_class)
-    return [] if @scoped_employee_ids.nil?
-    FormSubmissionCopy
-      .active
-      .where(submission_type: model_class.name, recipient_employee_id: @scoped_employee_ids)
-      .pluck(:submission_id)
-  end
-
-  # Returns AR scopes (one per qualifying group-routed step) on model_class
-  # that should be OR'd into the inbox query. For unfiltered steps the scope
-  # matches every form in step_N_pending; for org-filtered steps it also
-  # narrows by the submitter-org column. Returns [] when the scoped
-  # employees aren't in the step's group, or when the org filter resolves
-  # to no values (e.g. submitter has no division on file).
-  def group_routing_scopes(template, model_class, scoped_group_ids, submitter_org_filter)
-    template.routing_steps.where(routing_type: 'group').filter_map do |step|
-      next if scoped_group_ids && !scoped_group_ids.include?(step.group_id)
-      status_key = "step_#{step.step_number}_pending"
-
-      if step.org_filtered? && submitter_org_filter
-        level = step.org_filter_level
-        values = submitter_org_filter[level.to_sym]
-        next if values.blank?
-        next unless model_class.column_names.include?(level)
-        model_class.where(status: status_key, level => values)
-      else
-        model_class.where(status: status_key)
-      end
-    end
-  end
-
-  # Returns AR scopes (one per authorization-routed step) on model_class to OR
-  # into the inbox query. A submission at an authorization step is visible to a
-  # scoped employee when its budget unit (the form's `unit` column) is one the
-  # employee is authorized to approve for the step's service type — mirroring
-  # the parking-permit flow via AuthorizedApprover.authorized_unit_ids_for.
-  def authorization_routing_scopes(template, model_class, scoped_employee_ids)
-    return [] if scoped_employee_ids.nil?
-    return [] unless model_class.column_names.include?('unit')
-
-    template.routing_steps.where(routing_type: 'authorization').filter_map do |step|
-      service_type = step.authorization_service_type
-      next if service_type.blank?
-
-      authorized_units = scoped_employee_ids.flat_map { |eid|
-        AuthorizedApprover.authorized_unit_ids_for(employee_id: eid, service_type: service_type)
-      }.uniq
-      next if authorized_units.empty?
-
-      model_class.where(status: "step_#{step.step_number}_pending", unit: authorized_units)
-    end
-  end
-
-  # Builds the set of submitter-org values that "match" the given scoped
-  # employees, per org level. For agency/division/department we look the
-  # employee's Unit up in the org tables; for unit we just take the column
-  # off the Employee row directly. Values are stringified to align with the
-  # form tables' string org columns.
-  def compute_submitter_org_filter(employee_ids)
-    employees = Employee.where(employee_id: employee_ids).to_a
-    unit_ids = employees.map(&:unit).compact.uniq
-    units = unit_ids.any? ? Unit.where(unit_id: unit_ids).index_by { |u| u.unit_id.to_s } : {}
-
-    filter = { agency: [], division: [], department: [], unit: [] }
-    employees.each do |emp|
-      unit_value = emp.unit
-      filter[:unit] << unit_value.to_s if unit_value.present?
-
-      unit = units[unit_value.to_s]
-      next unless unit
-      filter[:agency]     << unit.agency_id.to_s     if unit.agency_id.present?
-      filter[:division]   << unit.division_id.to_s   if unit.division_id.present?
-      filter[:department] << unit.department_id.to_s if unit.department_id.present?
-    end
-
-    filter.transform_values(&:uniq)
-  end
 end

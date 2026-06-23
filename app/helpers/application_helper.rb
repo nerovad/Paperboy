@@ -4,19 +4,20 @@ module ApplicationHelper
     session[:user]
   end
   
+  # Number of items currently in the signed-in user's inbox, for the profile
+  # and tab badges. Uses the same InboxQuery the inbox page runs (scoped to the
+  # user's own queue), so the badge always matches the page and never "clears"
+  # on viewing. Memoized per request — the badge renders more than once.
   def inbox_count
-    return 0 unless session[:user]&.dig("employee_id")
-    
-    submissions = ParkingLotSubmission.where(
-      supervisor_id: session[:user]["employee_id"],
-      status: :in_progress
-    )
-    
-    if session[:last_seen_inbox_at].present?
-      submissions = submissions.where("created_at > ?", session[:last_seen_inbox_at])
-    end
-    
-    submissions.count
+    return @inbox_count if defined?(@inbox_count)
+
+    employee_id = session[:user]&.dig("employee_id")
+    @inbox_count =
+      if employee_id.blank?
+        0
+      else
+        InboxQuery.new(scoped_employee_ids: [employee_id.to_s]).count
+      end
   end
   
   def format_phone(digits)

@@ -8,8 +8,6 @@ class ProbationTransferRequestsController < ApplicationController
   if employee.present? && employee["employee_id"].present?
     Rails.logger.info "Logged in as employee #{employee["employee_id"]}"
 
-    session[:last_seen_inbox_at] = Time.current
-
     @pending_submissions = ProbationTransferRequest
                               .where(supervisor_id: employee["employee_id"].to_s)
                               .where(status: "in_progress")

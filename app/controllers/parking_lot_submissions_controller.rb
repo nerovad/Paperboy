@@ -172,7 +172,6 @@ end
 
     if employee.present? && employee["employee_id"].present?
       Rails.logger.info "Logged in as employee #{employee["employee_id"]}"
-      session[:last_seen_inbox_at] = Time.current
 
       @pending_submissions = ParkingLotSubmission
                                .where(supervisor_id: employee["employee_id"].to_s)
