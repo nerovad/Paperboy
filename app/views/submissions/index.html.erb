@@ -139,7 +139,7 @@
           <% end %>
         <% end %>
       </th>
-      <% if @show_employee_filter %>
+      <% if @show_employee_column %>
         <th>
           <%= link_to submissions_path(sort_by: 'employee_name', sort_direction: params[:sort_by] == 'employee_name' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_reference: params[:filter_reference], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
             Employee
@@ -182,7 +182,7 @@
         <tr class="status-row">
           <td class="col-reference"><span class="reference-badge"><%= item[:reference] %></span></td>
           <td class="col-type"><%= item[:type] %></td>
-          <% if @show_employee_filter %>
+          <% if @show_employee_column %>
             <td class="col-employee-name"><%= item[:employee_name] %></td>
           <% end %>
           <td class="col-status">
@@ -196,7 +196,7 @@
         </tr>
       <% end %>
     <% else %>
-      <tr><td colspan="<%= @show_employee_filter ? 8 : 7 %>">No submissions found.</td></tr>
+      <tr><td colspan="<%= @show_employee_column ? 8 : 7 %>">No submissions found.</td></tr>
     <% end %>
   </tbody>
 </table>

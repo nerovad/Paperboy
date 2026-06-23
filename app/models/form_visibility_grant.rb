@@ -1,9 +1,11 @@
-# Grants a group full inbox visibility of every submission of a given form
-# type (keyed by model class name, so it works for both dynamic form-builder
-# forms and legacy hand-written forms like CriticalInformationReporting).
+# Grants a group full visibility of every submission of a given form type,
+# in both the Inbox and the Submissions page (keyed by model class name, so it
+# works for both dynamic form-builder forms and legacy hand-written forms like
+# CriticalInformationReporting).
 #
-# The grant only surfaces submissions when the holder explicitly filters the
-# inbox to that form type — see InboxController#granted_submissions.
+# In the inbox the grant only surfaces submissions when the holder filters to
+# that form type (InboxController#granted_submissions); on the Submissions page
+# granted form types are always included (SubmissionsController#submission_scope_for).
 class FormVisibilityGrant < ApplicationRecord
   GRANTEE_TYPES = %w[group employee].freeze
 

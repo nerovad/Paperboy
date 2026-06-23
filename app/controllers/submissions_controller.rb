@@ -43,6 +43,16 @@ class SubmissionsController < ApplicationController
                              [employee_id]
                            end
 
+    # Form types the viewer holds a visibility grant for (direct or via a
+    # group) — see FormVisibilityGrant. These widen the list to every
+    # submission of that type regardless of submitter, the same grant that
+    # widens the inbox.
+    @viewer_form_types = FormVisibilityGrant.form_types_for(employee_id, current_user_group_ids)
+
+    # Show the owner column whenever the viewer can see submissions that aren't
+    # their own — as a supervisor/admin, or via a visibility grant.
+    @show_employee_column = @show_employee_filter || @viewer_form_types.any?
+
     # Load legacy hardcoded forms (with SQL-level filters applied)
     load_legacy_forms(employee_id)
 
@@ -192,9 +202,9 @@ class SubmissionsController < ApplicationController
       includes_list = []
       includes_list << :parking_lot_vehicles if model_class.reflect_on_association(:parking_lot_vehicles)
 
-      # Scope to the determined employee IDs (own, specific subordinate, or all)
-      # nil = no employee_id restriction (system admin viewing All)
-      scope = @scoped_employee_ids ? model_class.where(employee_id: @scoped_employee_ids) : model_class.all
+      # Scope to the determined employee IDs (own, specific subordinate, or all);
+      # a visibility grant on this form type widens it to every submission.
+      scope = submission_scope_for(model_class)
 
       # Apply SQL-level date filters
       scope = apply_scope_date_filters(scope, submission_scope_date_filters)
@@ -230,9 +240,9 @@ class SubmissionsController < ApplicationController
       # Check if model includes TrackableStatus (has status_category method)
       next unless model_class.new.respond_to?(:status_category)
 
-      # Scope to the determined employee IDs (own, specific subordinate, or all)
-      # nil = no employee_id restriction (system admin viewing All)
-      scope = @scoped_employee_ids ? model_class.where(employee_id: @scoped_employee_ids) : model_class.all
+      # Scope to the determined employee IDs (own, specific subordinate, or all);
+      # a visibility grant on this form type widens it to every submission.
+      scope = submission_scope_for(model_class)
 
       # Apply SQL-level date filters
       scope = apply_scope_date_filters(scope, submission_scope_date_filters)
@@ -246,6 +256,16 @@ class SubmissionsController < ApplicationController
       # Model doesn't exist yet (form template created but not generated), skip
       next
     end
+  end
+
+  # Records of model_class to load for the Submissions list. A visibility grant
+  # (FormVisibilityGrant) lets the viewer see every submission of a granted form
+  # type regardless of who submitted it — the same grant that widens the inbox.
+  # Otherwise the list is scoped to the viewer's own/subordinate ids (nil = no
+  # restriction, i.e. system admin viewing All).
+  def submission_scope_for(model_class)
+    return model_class.all if @viewer_form_types.include?(model_class.name)
+    @scoped_employee_ids ? model_class.where(employee_id: @scoped_employee_ids) : model_class.all
   end
 
   # SQL-level date filter config (applied per-table before combining)
@@ -346,7 +366,7 @@ class SubmissionsController < ApplicationController
       'updated_at' => ->(item) { item[:updated_at].to_s }
     }
 
-    if @show_employee_filter
+    if @show_employee_column
       configs['employee_name'] = ->(item) { item[:employee_name].to_s }
     end
 
