@@ -1,6 +1,6 @@
 <!-- app/views/form_visibility_grants/index.html.erb -->
 <div class="form-header">
-  <h1>Inbox Visibility</h1>
+  <h1>Inbox and Submissions Visibility</h1>
 </div>
 
 <div class="form-wrapper">
@@ -11,10 +11,11 @@
 
   <p class="form-help" style="margin-bottom: 16px;">
     Members of a granted group can see <strong>every</strong> submission of the
-    chosen form in their inbox — including forms from people outside their
-    reporting chain. The submissions only appear once they filter the inbox to
-    that form type. Manage who is in a group from the
-    <%= link_to "ACL screen", acl_index_path %>.
+    chosen form — including forms from people outside their reporting chain —
+    in both their <strong>Inbox</strong> and on the <strong>Submissions</strong>
+    page. On the Submissions page they appear automatically; in the Inbox they
+    appear once the user filters to that form type. Manage who is in a group
+    from the <%= link_to "ACL screen", acl_index_path %>.
   </p>
 
   <% @form_types.each do |ft| %>
