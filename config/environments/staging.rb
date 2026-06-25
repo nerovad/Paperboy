@@ -29,6 +29,16 @@ Rails.application.configure do
 
   config.action_mailer.default_url_options = { host: "stage-gsa-forms" }
 
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.smtp_settings = {
+    address:              "smtp4.co.ventura.ca.us",
+    port:                 25,
+    domain:               "co.ventura.ca.us",
+    enable_starttls_auto: false,
+    openssl_verify_mode:  "none"
+    # No user_name, password, or authentication!
+  }
+
   config.i18n.fallbacks = true
   config.active_record.dump_schema_after_migration = false
   config.active_record.attributes_for_inspect = [:id]
