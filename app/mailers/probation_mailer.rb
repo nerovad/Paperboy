@@ -8,7 +8,7 @@ class ProbationMailer < ApplicationMailer
       ProbationTransferPdfGenerator.generate(submission)
 
     mail(
-      to: "matthew.davoren@ventura.org",
+      to: @submission.email, # employee who submitted
       subject: "Probation Transfer Request Approved"
     )
   end
