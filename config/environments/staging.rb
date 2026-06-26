@@ -30,6 +30,8 @@ Rails.application.configure do
   config.action_mailer.default_url_options = { host: "stage-gsa-forms" }
 
   config.action_mailer.delivery_method = :smtp
+  # Surface SMTP failures instead of silently dropping mail (matches dev).
+  config.action_mailer.raise_delivery_errors = true
   config.action_mailer.smtp_settings = {
     address:              "smtp4.co.ventura.ca.us",
     port:                 25,
