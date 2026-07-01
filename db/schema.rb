@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_22_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_01_220000) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -218,6 +218,38 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_22_000001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["employee_id"], name: "index_employee_union_codes_on_employee_id", unique: true
+  end
+
+  create_table "fleet_vehicle_garaging_forms", force: :cascade do |t|
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "email"
+    t.string "agency"
+    t.string "division"
+    t.string "department"
+    t.string "unit"
+    t.integer "status", default: 0
+    t.string "approver_id"
+    t.text "deny_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "location"
+    t.index ["approver_id"], name: "index_fleet_vehicle_garaging_forms_on_approver_id"
+    t.index ["employee_id"], name: "index_fleet_vehicle_garaging_forms_on_employee_id"
+  end
+
+  create_table "fleet_vehicles", force: :cascade do |t|
+    t.bigint "fleet_vehicle_garaging_form_id", null: false
+    t.integer "year"
+    t.string "make", limit: 50
+    t.string "model", limit: 50
+    t.string "color", limit: 20
+    t.string "license_plate", limit: 15
+    t.string "garaging_location", limit: 200
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fleet_vehicle_garaging_form_id"], name: "index_fleet_vehicles_on_fleet_vehicle_garaging_form_id"
   end
 
   create_table "form_fields", force: :cascade do |t|

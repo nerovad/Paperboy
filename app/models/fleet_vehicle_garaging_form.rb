@@ -1,0 +1,46 @@
+class FleetVehicleGaragingForm < ApplicationRecord
+  include TrackableStatus
+
+enum :status, {
+  in_progress: "in_progress",
+    step_1_pending: "step_1_pending",
+    approved: "approved",
+    denied: "denied"
+}, default: :in_progress
+
+  # Vehicles (nested — each submission can garage multiple fleet vehicles)
+  has_many :fleet_vehicles, dependent: :destroy
+  accepts_nested_attributes_for :fleet_vehicles, allow_destroy: true
+
+  # Scopes
+  scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
+
+  # Minimal baseline validations; adjust or remove as needed
+  validates :name, :email, presence: true
+  validate :column_names_must_be_valid_identifiers
+
+  # Rejects any column name starting with a digit — these break ERB symbol syntax.
+  # e.g. :30_day_spending_limit is invalid; use :spending_limit_30_day instead.
+  def column_names_must_be_valid_identifiers
+    self.class.column_names.each do |col|
+      unless col.match?(/\A[a-zA-Z_]/)
+        errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.")
+      end
+    end
+  end
+
+  # For inbox queue filtering - returns the form type name
+  def form_type
+    self.class.name.demodulize.titleize
+  end
+
+  # For inbox reassignment - returns the current approver's ID
+  def current_assignee_id
+    approver_id
+  end
+
+  # Get the form template for this model (for button configuration)
+  def form_template
+    @form_template ||= FormTemplate.find_by(class_name: self.class.name)
+  end
+end
