@@ -5,3 +5,6 @@
 /public/assets/*
 
 .env
+
+# Per-environment bundler config (set BUNDLE_WITHOUT via deploy env, do not commit)
+/.bundle/
