@@ -70,6 +70,9 @@ class CriticalInformationReportingsController < ApplicationController
   def show
     @critical_information_reporting = CriticalInformationReporting.includes(:status_changes).find(params[:id])
     @status_changes = @critical_information_reporting.status_changes.chronological
+    # Offer the reopen control only for closed reports, and only to people
+    # allowed to act on them (the assigned manager or a system admin).
+    @can_reopen = @critical_information_reporting.terminal? && reopen_permitted?(@critical_information_reporting)
   end
 
   def pdf
@@ -183,6 +186,29 @@ class CriticalInformationReportingsController < ApplicationController
     end
   end
 
+  # Reopens a closed (resolved/cancelled) report, moving it back to a
+  # non-terminal status so it re-appears in the assigned manager's inbox.
+  # Restricted to the assigned manager and system admins.
+  def reopen
+    @critical_information_reporting = CriticalInformationReporting.find(params[:id])
+
+    unless reopen_permitted?(@critical_information_reporting)
+      redirect_to critical_information_reporting_path(@critical_information_reporting),
+                  alert: "You don't have permission to reopen this report." and return
+    end
+
+    unless @critical_information_reporting.terminal?
+      redirect_to critical_information_reporting_path(@critical_information_reporting),
+                  notice: "This report is already active." and return
+    end
+
+    new_status = params[:status].to_s.presence_in(%w[in_progress scheduled]) || "in_progress"
+    @critical_information_reporting.update!(status: new_status)
+
+    redirect_to critical_information_reporting_path(@critical_information_reporting),
+                notice: "Report reopened as #{new_status.titleize} and returned to the inbox."
+  end
+
   def approve
     @critical_information_reporting = CriticalInformationReporting.find(params[:id])
 
@@ -271,6 +297,15 @@ end
 
 
   private
+
+  # True when the current user may reopen this report: the assigned incident
+  # manager, or any system admin. Mirrors who can action it in the inbox.
+  def reopen_permitted?(reporting)
+    return true if current_user_group_names.include?("system_admins")
+
+    assigned_id = reporting.assigned_manager_id.to_s
+    assigned_id.present? && assigned_id == session.dig(:user, "employee_id").to_s
+  end
 
   def critical_information_reporting_params
     raw = params.require(:critical_information_reporting).permit(

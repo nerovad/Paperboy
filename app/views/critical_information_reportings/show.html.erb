@@ -154,6 +154,20 @@
       <% end %>
     </details>
 
+    <!-- Reopen (only for closed reports, shown to the assigned manager / admins) -->
+    <% if @can_reopen %>
+      <div class="reopen-panel">
+        <p class="reopen-note">This report is closed. Reopening returns it to the assigned manager's inbox.</p>
+        <%= form_with url: reopen_critical_information_reporting_path(@critical_information_reporting),
+                      method: :patch, data: { turbo: false }, class: "reopen-form" do |f| %>
+          <%= f.select :status,
+                options_for_select([["In Progress", "in_progress"], ["Scheduled", "scheduled"]], "in_progress"),
+                {}, class: "status-dropdown" %>
+          <%= f.submit "Reopen Report", class: "form-btn" %>
+        <% end %>
+      </div>
+    <% end %>
+
     <!-- Action Buttons -->
     <div class="form-actions">
       <%= link_to "Back to Submissions", submissions_path, class: "form-btn" %>

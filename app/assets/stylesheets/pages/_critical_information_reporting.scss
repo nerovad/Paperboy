@@ -350,3 +350,25 @@
   gap: 12px;
   flex-wrap: wrap;
 }
+
+// Reopen panel — shown on closed reports for the assigned manager / admins
+.reopen-panel {
+  margin-top: 24px;
+  padding: 16px;
+  background: #fff3cd;
+  border: 1px solid #ffe69c;
+  border-radius: 6px;
+
+  .reopen-note {
+    margin: 0 0 12px;
+    color: #856404;
+    font-size: 14px;
+  }
+
+  .reopen-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}

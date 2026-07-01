@@ -270,6 +270,7 @@ Rails.application.routes.draw do
       patch :approve
       patch :deny
       patch :update_status
+      patch :reopen
     end
   end
 
