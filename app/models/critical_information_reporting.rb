@@ -12,6 +12,14 @@ enum :status, {
     cancelled: "cancelled"
 }, default: :in_progress
 
+  # End states that pull this report out of the active inbox queue. CIR has no
+  # form_template_statuses catalog, so TrackableStatus falls back to this
+  # constant (see TrackableStatus.terminal_status?). "resolved" and "cancelled"
+  # are terminal; "in_progress"/"scheduled" keep it active. Reopening a report
+  # (CriticalInformationReportingsController#reopen) moves it back to a
+  # non-terminal status, which re-surfaces it in the assigned manager's inbox.
+  TERMINAL_STATUS_KEYS = %w[resolved cancelled].freeze
+
   has_many_attached :media_photo_pdf_etc
 
   # ActiveStorage attachments for media files (multiple)

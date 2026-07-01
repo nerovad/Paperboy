@@ -96,8 +96,8 @@ module TrackableStatus
     #
     # Authoritative source is the per-status `is_end` flag on
     # form_template_statuses. Models without a template (or statuses missing
-    # from it) fall back to the terminal categories and the hardcoded
-    # TERMINAL_STATUSES keys.
+    # from it) fall back to the terminal categories, then to a model-declared
+    # TERMINAL_STATUS_KEYS constant, and finally the global TERMINAL_STATUSES.
     def terminal_status?(status_value)
       key = status_key_for(status_value)
       return false unless key
@@ -109,7 +109,11 @@ module TrackableStatus
       category = status_category_for(status_value)
       return true if category && %i[approved denied cancelled].include?(category)
 
-      TERMINAL_STATUSES.include?(key.to_s)
+      # Legacy/custom forms with no template can declare their own end states
+      # (e.g. CIR's "resolved") via TERMINAL_STATUS_KEYS; otherwise use the
+      # global approved/denied/cancelled default.
+      terminal_keys = const_defined?(:TERMINAL_STATUS_KEYS) ? self::TERMINAL_STATUS_KEYS : TERMINAL_STATUSES
+      terminal_keys.map(&:to_s).include?(key.to_s)
     end
 
     # Returns all status keys (symbols) that belong to a given category.
