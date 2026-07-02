@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_01_220000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_02_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -837,6 +837,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_01_220000) do
     t.boolean "inbox_email_notifications", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "column_prefs"
     t.index ["employee_id"], name: "index_user_settings_on_employee_id", unique: true
   end
 

@@ -25,4 +25,35 @@ module ApplicationHelper
   rescue
     []
   end
+
+  # Catalog of dynamic forms and their fields, for the column customizer's
+  # "add a field from a form" picker. Shape:
+  #   { "Leave Of Absence" => { "class_name" => "LeaveOfAbsenceForm",
+  #       "fields" => [{ "name" => "reason", "label" => "Leave Reason" }, ...] } }
+  # Only fields backed by a real column on the form's table are offered
+  # (excludes media/information fields and anything not persisted as a column).
+  def table_field_catalog
+    non_display = %w[media_attachment information]
+    catalog = {}
+
+    FormTemplate.includes(:form_fields).order(:name).each do |template|
+      klass = template.class_name.safe_constantize
+      next unless klass && klass.respond_to?(:column_names)
+      columns = klass.column_names
+
+      fields = template.form_fields
+                       .reject { |f| non_display.include?(f.field_type) }
+                       .select { |f| columns.include?(f.field_name.to_s) }
+                       .map { |f| { "name" => f.field_name, "label" => (f.label.presence || f.field_name.to_s.tr("_", " ").titleize) } }
+                       .uniq { |h| h["name"] }
+
+      next if fields.empty?
+      catalog[template.name] = { "class_name" => template.class_name, "fields" => fields }
+    end
+
+    catalog
+  rescue => e
+    Rails.logger.warn("table_field_catalog failed: #{e.class}: #{e.message}")
+    {}
+  end
 end

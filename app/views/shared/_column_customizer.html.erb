@@ -1,0 +1,68 @@
+<%# Column customizer modal. The `column-customizer` Stimulus controller lives on
+    an ancestor (the page wrapper), which also carries the page/save-url/catalog
+    values and the tableContainer target used for the width-fit check.
+    locals: page, columns, employee_column %>
+<div class="cc-modal-backdrop" data-column-customizer-target="backdrop" style="display:none;" data-action="click->column-customizer#backdropClick">
+  <div class="cc-modal" role="dialog" aria-modal="true" aria-label="Customize columns">
+    <div class="cc-modal__header">
+      <h3>Customize columns &amp; filters</h3>
+      <button type="button" class="cc-modal__close" data-action="column-customizer#close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="cc-modal__body">
+      <p class="cc-hint">
+        Drag to reorder. Drag a field between <strong>Shown</strong> and <strong>Available</strong> to show or hide it.
+        <span class="cc-capacity" data-column-customizer-target="capacity"></span>
+      </p>
+
+      <div class="cc-lists">
+        <div class="cc-list-col">
+          <h4>Shown</h4>
+          <ul class="cc-list cc-shown" data-column-customizer-target="shownList">
+            <% columns.each do |col| %>
+              <li class="cc-chip<%= ' is-locked' if col.locked? %>"
+                  data-id="<%= col.id %>"
+                  data-locked="<%= col.locked? %>"
+                  data-custom="<%= col.custom? %>"
+                  <% if col.custom? %>data-form="<%= col.form %>" data-field="<%= col.field %>" data-label="<%= col.label %>"<% end %>>
+                <span class="cc-chip__label"><%= col.label %></span>
+                <% unless col.locked? %>
+                  <button type="button" class="cc-chip__remove" data-action="column-customizer#remove" aria-label="Hide column">✕</button>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+
+        <div class="cc-list-col">
+          <h4>Available</h4>
+          <ul class="cc-list cc-available" data-column-customizer-target="availableList">
+            <% available_builtin_columns(page, columns, employee_column: employee_column).each do |key, label| %>
+              <li class="cc-chip" data-id="<%= key %>" data-custom="false">
+                <span class="cc-chip__label"><%= label %></span>
+              </li>
+            <% end %>
+          </ul>
+
+          <div class="cc-add-field">
+            <h4>Add a field from a form</h4>
+            <div class="cc-add-field__row">
+              <select class="filter-select" data-column-customizer-target="formSelect" data-action="change->column-customizer#formChanged">
+                <option value="">Select a form…</option>
+              </select>
+              <select class="filter-select" data-column-customizer-target="fieldSelect">
+                <option value="">Select a field…</option>
+              </select>
+              <button type="button" class="btn" data-column-customizer-target="addButton" data-action="column-customizer#addField">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cc-modal__footer">
+      <button type="button" class="btn" data-action="column-customizer#close">Cancel</button>
+      <button type="button" class="btn approve" data-action="column-customizer#save" data-column-customizer-target="saveButton">Save</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,20 @@
+<%# Column-driven filter controls. Each visible, filterable column renders as a
+    search box (reference) or a dropdown. Non-column filters (employee, date
+    range, category, saved searches) are rendered by the page itself.
+    locals: columns, filter_options, page %>
+<% columns.each do |col| %>
+  <% next unless col.filterable? %>
+  <div class="filter-group">
+    <label for="<%= col.filter_param %>"><%= col.label %></label>
+    <% if col.search_filter? %>
+      <%= text_field_tag col.filter_param, params[col.filter_param],
+            class: 'filter-select', placeholder: 'e.g. PLS-845', autocomplete: 'off',
+            data: { action: "change->auto-submit#submit" } %>
+    <% else %>
+      <%= select_tag col.filter_param,
+            options_for_select([['All', '']] + Array(filter_options[col.filter_param.to_s]).map { |v| [v, v] }, params[col.filter_param]),
+            class: 'filter-select',
+            data: column_filter_data(col, page) %>
+    <% end %>
+  </div>
+<% end %>
