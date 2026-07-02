@@ -43,10 +43,16 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.env-badge.is-development {
+.env-badge.is-localhost {
   background: #fde68a;
   color: #78350f;
   border: 1px solid #f59e0b;
+}
+
+.env-badge.is-development {
+  background: #bbf7d0;
+  color: #14532d;
+  border: 1px solid #22c55e;
 }
 
 .env-badge.is-staging {

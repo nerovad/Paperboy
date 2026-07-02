@@ -17,10 +17,8 @@
   </head>
   <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %>">
 
-    <% if Rails.env.development? %>
-      <div class="env-badge is-development">Development</div>
-    <% elsif Rails.env.staging? %>
-      <div class="env-badge is-staging">Stage</div>
+    <% if (badge = environment_badge) %>
+      <div class="env-badge <%= badge[:css_class] %>"><%= badge[:label] %></div>
     <% end %>
 
     <!-- Hamburger button (mobile only) -->
