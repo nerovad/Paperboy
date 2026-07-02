@@ -1,12 +1,17 @@
 <!-- app/views/submissions/index.html.erb -->
-<div class="submissions-page-wrapper">
+<div class="submissions-page-wrapper"
+     data-controller="column-customizer"
+     data-column-customizer-page-value="submissions"
+     data-column-customizer-save-url-value="<%= settings_table_layout_path %>"
+     data-column-customizer-catalog-value="<%= table_field_catalog.to_json %>"
+     data-column-customizer-min-col-px-value="150">
 <%= render "shared/work_tabs", active: :submissions %>
 
 <!-- Filter Form -->
 <div class="submissions-filters-and-table"
      data-controller="status-filters"
      data-status-filters-status-options-value='<%= @status_options_by_type.to_json %>'
-     data-status-filters-all-statuses-value='<%= @filter_options[:statuses].to_json %>'>
+     data-status-filters-all-statuses-value='<%= Array(@filter_options["filter_status"]).to_json %>'>
 <div class="filter-wrapper" data-controller="saved-search">
   <!-- Hidden delete form (outside the GET filter form to avoid nesting) -->
   <form data-saved-search-target="deleteForm" method="post" style="display: none;">
@@ -16,43 +21,14 @@
 
   <form action="<%= submissions_path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
     <div class="filter-controls">
-      <div class="filter-group">
-        <label for="filter_reference">ID</label>
-        <%= text_field_tag :filter_reference, params[:filter_reference],
-            class: 'filter-select',
-            placeholder: 'e.g. PLS-845',
-            autocomplete: 'off',
-            data: { action: "change->auto-submit#submit" } %>
-      </div>
-
-      <div class="filter-group">
-        <label for="filter_type">Form</label>
-        <%= select_tag :filter_type,
-            options_for_select([['All', '']] + @filter_options[:types].map { |t| [t, t] }, params[:filter_type]),
-            class: 'filter-select',
-            data: {
-              status_filters_target: "type",
-              action: "change->status-filters#typeChanged change->auto-submit#submit"
-            } %>
-      </div>
+      <%= render "shared/column_filters", columns: @columns, filter_options: @filter_options, page: "submissions" %>
 
       <div class="filter-group">
         <label for="filter_category">Category</label>
         <%= select_tag :filter_category,
-            options_for_select([['All', '']] + @filter_options[:categories].map { |c| [c, c] }, params[:filter_category]),
+            options_for_select([['All', '']] + Array(@filter_options["filter_category"]).map { |c| [c, c] }, params[:filter_category]),
             class: 'filter-select',
             data: { action: "change->auto-submit#submit" } %>
-      </div>
-
-      <div class="filter-group">
-        <label for="filter_status">Status</label>
-        <%= select_tag :filter_status,
-            options_for_select([['All', '']] + @filter_options[:statuses].map { |s| [s, s] }, params[:filter_status]),
-            class: 'filter-select',
-            data: {
-              status_filters_target: "status",
-              action: "change->auto-submit#submit"
-            } %>
       </div>
 
       <% if @show_employee_filter && @employees.present? %>
@@ -82,7 +58,7 @@
             data: { action: "change->auto-submit#submit" } %>
       </div>
 
-      <% has_filters = params[:filter_reference].present? || params[:filter_type].present? || params[:filter_category].present? || params[:filter_status].present? || params[:filter_date_from].present? || params[:filter_date_to].present? || params[:filter_employee].present? %>
+      <% has_filters = request.query_parameters.keys.any? { |k| k.to_s.start_with?("filter_") } %>
       <% if has_filters %>
         <%= link_to "Clear Filters", submissions_path(sort_by: params[:sort_by], sort_direction: params[:sort_direction]), class: 'btn clear-filters', data: { turbo: false } %>
       <% end %>
@@ -118,85 +94,31 @@
   </form>
 </div>
 
-<div class="submissions-table-scroll">
+<div class="submissions-table-scroll" data-column-customizer-target="tableContainer">
 <div class="form-wrapper status-wrapper">
 <table class="status-table">
   <thead>
     <tr>
-      <th>
-        <%= link_to submissions_path(sort_by: 'reference', sort_direction: params[:sort_by] == 'reference' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_reference: params[:filter_reference], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
-          ID
-          <% if params[:sort_by] == 'reference' %>
-            <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
-          <% end %>
-        <% end %>
-      </th>
-      <th>
-        <%= link_to submissions_path(sort_by: 'type', sort_direction: params[:sort_by] == 'type' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_reference: params[:filter_reference], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
-          Form
-          <% if params[:sort_by] == 'type' %>
-            <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
-          <% end %>
-        <% end %>
-      </th>
-      <% if @show_employee_column %>
-        <th>
-          <%= link_to submissions_path(sort_by: 'employee_name', sort_direction: params[:sort_by] == 'employee_name' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_reference: params[:filter_reference], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
-            Employee
-            <% if params[:sort_by] == 'employee_name' %>
-              <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
-            <% end %>
-          <% end %>
-        </th>
+      <% @columns.each do |column| %>
+        <th><%= sortable_column_header(column) %></th>
       <% end %>
-      <th>
-        <%= link_to submissions_path(sort_by: 'status', sort_direction: params[:sort_by] == 'status' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_reference: params[:filter_reference], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
-          Status
-          <% if params[:sort_by] == 'status' %>
-            <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
-          <% end %>
-        <% end %>
+      <th class="cc-th">
+        <button type="button" class="cc-trigger" data-action="column-customizer#open" title="Customize columns" aria-label="Customize columns">+</button>
       </th>
-      <th>
-        <%= link_to submissions_path(sort_by: 'submitted_at', sort_direction: params[:sort_by] == 'submitted_at' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_reference: params[:filter_reference], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
-          Submitted
-          <% if params[:sort_by] == 'submitted_at' %>
-            <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
-          <% end %>
-        <% end %>
-      </th>
-      <th>
-        <%= link_to submissions_path(sort_by: 'updated_at', sort_direction: params[:sort_by] == 'updated_at' && params[:sort_direction] == 'asc' ? 'desc' : 'asc', filter_type: params[:filter_type], filter_reference: params[:filter_reference], filter_category: params[:filter_category], filter_status: params[:filter_status], filter_date_from: params[:filter_date_from], filter_date_to: params[:filter_date_to], filter_employee: params[:filter_employee]), class: 'sortable-header', data: { turbo: false } do %>
-          Last Updated
-          <% if params[:sort_by] == 'updated_at' || params[:sort_by].nil? %>
-            <span class="sort-indicator"><%= params[:sort_direction] == 'asc' ? '▲' : '▼' %></span>
-          <% end %>
-        <% end %>
-      </th>
-      <th></th>
     </tr>
   </thead>
   <tbody>
     <% if @status_items.present? %>
       <% @status_items.each do |item| %>
         <tr class="status-row">
-          <td class="col-reference"><span class="reference-badge"><%= item[:reference] %></span></td>
-          <td class="col-type"><%= item[:type] %></td>
-          <% if @show_employee_column %>
-            <td class="col-employee-name"><%= item[:employee_name] %></td>
+          <% @columns.each do |column| %>
+            <td class="col-<%= column.id.gsub(/[^0-9a-z]+/i, '-') %>"><%= table_cell_content(column, item) %></td>
           <% end %>
-          <td class="col-status">
-            <span class="badge <%= category_badge_class(item[:status_category]) %>">
-              <%= item[:status].to_s.tr('_', ' ') %>
-            </span>
-          </td>
-          <td class="col-submitted"><%= format_pst(item[:submitted_at]) %></td>
-          <td class="col-updated"><%= format_pst(item[:updated_at]) %></td>
           <td class="col-actions"><%= link_to "Open", item[:path], class: "btn" %></td>
         </tr>
       <% end %>
     <% else %>
-      <tr><td colspan="<%= @show_employee_column ? 8 : 7 %>">No submissions found.</td></tr>
+      <tr><td colspan="<%= @columns.size + 1 %>">No submissions found.</td></tr>
     <% end %>
   </tbody>
 </table>
@@ -212,4 +134,6 @@
 </div>
 </div>
 </div>
+
+<%= render "shared/column_customizer", page: "submissions", columns: @columns, employee_column: @show_employee_column %>
 </div>

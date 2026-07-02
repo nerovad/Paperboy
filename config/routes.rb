@@ -211,6 +211,9 @@ Rails.application.routes.draw do
   get "/submissions/status_options", to: "submissions#status_options", as: :submissions_status_options
   resources :saved_searches, only: [:create, :destroy]
 
+  # Per-user column/filter layout for the Inbox & Submissions tables
+  patch "/settings/table_layout", to: "settings#table_layout", as: :settings_table_layout
+
   resources :form_submission_copies, only: [] do
     member do
       delete :dismiss
