@@ -65,7 +65,8 @@
           <!-- Login Buttons (over image) -->
           <% unless session[:user_id] %>
             <div class="login-buttons-over-image">
-              <%= form_with url: auth_setup_path, method: :post,
+              <%= form_with url: auth_setup_path, method: :post, local: true,
+                            authenticity_token: true,
                             data: { turbo: false } do |f| %>
                 <%= f.submit "Employee Login", class: "login-button-over-image" %>
               <% end %>

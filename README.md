@@ -94,6 +94,22 @@ Frontend (Rails server):
 Dev:
 bin/rails s -p 3001
 
+Direct localhost development runs over HTTP:
+
+APP_HOST=http://localhost:3001
+PAPERBOY_ASSUME_SSL=false
+
+When running development behind nginx with HTTPS termination
+(https://dev-gsa-forms), opt in to Rails SSL assumptions:
+
+APP_HOST=https://dev-gsa-forms
+PAPERBOY_ASSUME_SSL=true
+
+Employee Login uses OmniAuth 2 and must submit with POST plus a Rails
+authenticity token. If login raises ActionController::InvalidAuthenticityToken
+on localhost, confirm the browser origin and APP_HOST are both HTTP and
+PAPERBOY_ASSUME_SSL is false.
+
 Production:
 RAILS_ENV=production bin/rails s -b 127.0.0.1 -p 3001
 

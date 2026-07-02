@@ -28,9 +28,11 @@ Rails.application.configure do
   # Change to :null_store to avoid any caching.
   config.cache_store = :memory_store
 
-  # Behind nginx with HTTPS termination on the dev server (https://dev-gsa-forms)
-  config.assume_ssl = true
-  config.force_ssl  = true
+  # Enable when development runs behind nginx with HTTPS termination
+  # (https://dev-gsa-forms). Leave disabled for direct http://localhost.
+  dev_https = ENV.fetch("PAPERBOY_ASSUME_SSL", "false") == "true"
+  config.assume_ssl = dev_https
+  config.force_ssl  = dev_https
 
   # Allow the dev hostname through Rails 8's Host Authorization middleware
   # (defaults only allow localhost). Cert SANs cover these names.
