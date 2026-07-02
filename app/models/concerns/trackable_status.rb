@@ -30,8 +30,8 @@ module TrackableStatus
       return nil if status_value.nil?
       return status_value.to_s unless status_value.is_a?(Integer)
 
-      if defined_enums['status'].present?
-        defined_enums['status'].key(status_value)
+      if defined_enums["status"].present?
+        defined_enums["status"].key(status_value)
       elsif const_defined?(:STATUS_MAP)
         self::STATUS_MAP[status_value]
       else
@@ -279,17 +279,17 @@ module TrackableStatus
 
   def approver_id_for_routing_step(step)
     case step.routing_type
-    when 'supervisor'
+    when "supervisor"
       submitter_employee&.supervisor_id&.to_s
-    when 'department_head'
+    when "department_head"
       emp = submitter_employee
       return nil unless emp
       unit = Unit.find_by(unit_id: emp.unit)
       department = unit ? Department.find_by(department_id: unit.department_id) : nil
       department&.department_head_id&.to_s
-    when 'employee'
+    when "employee"
       step.employee_id.to_s
-    when 'group', 'authorization'
+    when "group", "authorization"
       # Multi-approver queue: approver_id stays nil so every eligible approver
       # (group members / authorized approvers for the budget unit) sees it in
       # their inbox; the first to act claims it.
@@ -372,7 +372,7 @@ module TrackableStatus
 
   # Fire any "On submission" email rules right after the record is created.
   def deliver_email_steps_on_submit
-    fire_email_steps('submit')
+    fire_email_steps("submit")
   end
 
   # Translate a status transition into the email rules it should fire.
@@ -386,14 +386,14 @@ module TrackableStatus
     to_category = self.class.status_category_for(status)
 
     if to_category == :approved
-      fire_email_steps('approved', step_number: acted_step) if acted_step
-      fire_email_steps('approved', step_number: nil)
+      fire_email_steps("approved", step_number: acted_step) if acted_step
+      fire_email_steps("approved", step_number: nil)
     elsif to_category == :denied
-      fire_email_steps('denied', step_number: acted_step) if acted_step
-      fire_email_steps('denied', step_number: nil)
+      fire_email_steps("denied", step_number: acted_step) if acted_step
+      fire_email_steps("denied", step_number: nil)
     elsif acted_step && to_key.to_s.match?(/\Astep_\d+_pending\z/)
       # Advanced from one approval step to the next: the prior step was approved.
-      fire_email_steps('approved', step_number: acted_step)
+      fire_email_steps("approved", step_number: acted_step)
     end
   rescue StandardError => e
     Rails.logger.warn("TrackableStatus email dispatch failed: #{e.message}")
@@ -408,9 +408,9 @@ module TrackableStatus
 
     rules = if step_number == :__any__
               template.email_steps.for_event(event)
-            else
+    else
               template.email_steps.for_event(event, step_number: step_number)
-            end
+    end
 
     rules.each do |email_step|
       FormWorkflowMailer.notify(email_step.id, self.class.name, id).deliver_later
@@ -421,7 +421,7 @@ module TrackableStatus
 
   def current_user_display_name
     return nil unless Current.user
-    [Current.user["first_name"], Current.user["last_name"]].compact.join(" ").presence
+    [ Current.user["first_name"], Current.user["last_name"] ].compact.join(" ").presence
   end
 
   def status_label_was

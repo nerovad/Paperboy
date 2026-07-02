@@ -56,7 +56,7 @@ module InboxHelper
   def current_routing_step_for(submission, template = nil)
     template ||= form_template_for(submission)
     return nil unless template
-    status = submission.respond_to?(:status) ? submission.status.to_s : ''
+    status = submission.respond_to?(:status) ? submission.status.to_s : ""
     match = status.match(/\Astep_(\d+)_pending\z/)
     return nil unless match
     template.routing_steps.find_by(step_number: match[1].to_i)
@@ -73,7 +73,7 @@ module InboxHelper
     employee_id = session.dig(:user, "employee_id").to_s
     return nil if employee_id.blank?
     @copy_rows_cache ||= {}
-    @copy_rows_cache[[submission.class.name, submission.id]] ||=
+    @copy_rows_cache[[ submission.class.name, submission.id ]] ||=
       FormSubmissionCopy.active.find_by(
         submission_type: submission.class.name,
         submission_id: submission.id,
@@ -137,8 +137,8 @@ module InboxHelper
     if submission.class.respond_to?(:statuses)
       labels = submission.class.const_defined?(:STATUS_LABELS) ? submission.class::STATUS_LABELS : {}
       submission.class.statuses.keys.map do |status|
-        label = labels[status.to_sym] || status.to_s.tr('_', ' ').titleize
-        [label, status]
+        label = labels[status.to_sym] || status.to_s.tr("_", " ").titleize
+        [ label, status ]
       end
     else
       []

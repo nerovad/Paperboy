@@ -8,7 +8,7 @@ class FormSubmissionCopy < ApplicationRecord
   validates :recipient_employee_id, presence: true
   validates :delivered_via, presence: true, inclusion: { in: DELIVERY_EVENTS }
   validates :submission_id,
-            uniqueness: { scope: [:submission_type, :recipient_employee_id] }
+            uniqueness: { scope: [ :submission_type, :recipient_employee_id ] }
 
   scope :active, -> { where(dismissed_at: nil) }
   scope :for_recipient, ->(employee_ids) { where(recipient_employee_id: employee_ids) }

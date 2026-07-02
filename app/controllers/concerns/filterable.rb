@@ -59,12 +59,12 @@ module Filterable
 
   # Sort a collection by a given field
   # sort_configs: Hash of { sort_key => lambda to extract sort value }
-  def sort_collection(collection, sort_by, sort_direction, sort_configs, default_sort: 'created_at')
+  def sort_collection(collection, sort_by, sort_direction, sort_configs, default_sort: "created_at")
     sort_key = sort_configs.key?(sort_by) ? sort_by : default_sort
     extractor = sort_configs[sort_key]
 
     sorted = collection.sort_by { |item| extractor.call(item).to_s.downcase }
-    sort_direction == 'desc' ? sorted.reverse : sorted
+    sort_direction == "desc" ? sorted.reverse : sorted
   end
 
   # Apply SQL-level WHERE clauses to an ActiveRecord scope
@@ -91,9 +91,9 @@ module Filterable
       date = Date.parse(value)
       scope = if config[:comparison] == :from
                 scope.where(config[:column] => date.beginning_of_day..)
-              else
+      else
                 scope.where(config[:column] => ..date.end_of_day)
-              end
+      end
     end
     scope
   end

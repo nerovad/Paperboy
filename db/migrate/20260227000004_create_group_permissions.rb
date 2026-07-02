@@ -7,7 +7,7 @@ class CreateGroupPermissions < ActiveRecord::Migration[8.0]
       t.datetime :created_at, default: -> { "CURRENT_TIMESTAMP" }, null: false
     end
 
-    add_index :group_permissions, [:group_id, :permission_type, :permission_key], unique: true, name: "idx_group_permissions_unique"
+    add_index :group_permissions, [ :group_id, :permission_type, :permission_key ], unique: true, name: "idx_group_permissions_unique"
     add_foreign_key :group_permissions, :groups
   end
 end

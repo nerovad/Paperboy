@@ -1,33 +1,33 @@
 # app/controllers/acl_controller.rb
 class AclController < ApplicationController
   before_action :require_system_admin
-  before_action :set_group, only: [:show, :edit, :update, :destroy, :add_member, :remove_member, :permissions, :update_permissions,
-                                   :add_contractor, :edit_contractor, :update_contractor, :toggle_contractor, :resend_contractor_welcome]
+  before_action :set_group, only: [ :show, :edit, :update, :destroy, :add_member, :remove_member, :permissions, :update_permissions,
+                                   :add_contractor, :edit_contractor, :update_contractor, :toggle_contractor, :resend_contractor_welcome ]
 
   DROPDOWN_ITEMS = [
-    { key: 'inbox',         label: 'Inbox',          default_public: true },
-    { key: 'submissions',   label: 'Submissions',    default_public: true },
-    { key: 'settings',      label: 'Settings',       default_public: true },
-    { key: 'help',          label: 'Help',           default_public: true },
-    { key: 'reports',       label: 'Reports' },
-    { key: 'dashboards',    label: 'Dashboards' },
-    { key: 'manage_forms',  label: 'Manage Forms' },
-    { key: 'emulate',       label: 'Emulate' },
-    { key: 'acl',           label: 'ACL' },
-    { key: 'auth_console',  label: 'Auth Console' },
-    { key: 'lookup_tables', label: 'Lookup Tables' },
-    { key: 'osha_log',      label: 'OSHA 300 Log' },
+    { key: "inbox",         label: "Inbox",          default_public: true },
+    { key: "submissions",   label: "Submissions",    default_public: true },
+    { key: "settings",      label: "Settings",       default_public: true },
+    { key: "help",          label: "Help",           default_public: true },
+    { key: "reports",       label: "Reports" },
+    { key: "dashboards",    label: "Dashboards" },
+    { key: "manage_forms",  label: "Manage Forms" },
+    { key: "emulate",       label: "Emulate" },
+    { key: "acl",           label: "ACL" },
+    { key: "auth_console",  label: "Auth Console" },
+    { key: "lookup_tables", label: "Lookup Tables" },
+    { key: "osha_log",      label: "OSHA 300 Log" }
   ].freeze
 
   DEFAULT_PUBLIC_DROPDOWN_KEYS = DROPDOWN_ITEMS.select { |i| i[:default_public] }.map { |i| i[:key] }.freeze
 
   LEGACY_FORMS = [
-    { key: 'creative_job_request', label: 'Creative Job Request' },
-    { key: 'safety_reporting',     label: 'Safety Reporting' },
-    { key: 'leave_of_absence',     label: 'Leave of Absence' },
-    { key: 'osha_reporting',       label: 'OSHA Reporting' },
-    { key: 'workplace_violence',   label: 'Workplace Violence' },
-    { key: 'notice_of_change',     label: 'Notice of Change' },
+    { key: "creative_job_request", label: "Creative Job Request" },
+    { key: "safety_reporting",     label: "Safety Reporting" },
+    { key: "leave_of_absence",     label: "Leave of Absence" },
+    { key: "osha_reporting",       label: "OSHA Reporting" },
+    { key: "workplace_violence",   label: "Workplace Violence" },
+    { key: "notice_of_change",     label: "Notice of Change" }
   ].freeze
 
   def index
@@ -69,7 +69,7 @@ class AclController < ApplicationController
     if @group.save
       # Auto-grant default public dropdown items to the new group
       DEFAULT_PUBLIC_DROPDOWN_KEYS.each do |key|
-        @group.group_permissions.create(permission_type: 'dropdown', permission_key: key)
+        @group.group_permissions.create(permission_type: "dropdown", permission_key: key)
       end
       redirect_to acl_index_path, notice: "Group created successfully."
     else
@@ -181,8 +181,8 @@ class AclController < ApplicationController
     @dropdown_items = DROPDOWN_ITEMS
     @all_forms = build_all_forms_list
     @current_permissions = @group.group_permissions.pluck(:permission_type, :permission_key)
-    @dropdown_keys = @current_permissions.select { |t, _| t == 'dropdown' }.map(&:last).to_set
-    @form_keys = @current_permissions.select { |t, _| t == 'form' }.map(&:last).to_set
+    @dropdown_keys = @current_permissions.select { |t, _| t == "dropdown" }.map(&:last).to_set
+    @form_keys = @current_permissions.select { |t, _| t == "form" }.map(&:last).to_set
 
     # If no permissions exist yet for this group, pre-check default public items
     if @current_permissions.empty?
@@ -198,11 +198,11 @@ class AclController < ApplicationController
       @group.group_permissions.destroy_all
 
       dropdown_keys.each do |key|
-        @group.group_permissions.create!(permission_type: 'dropdown', permission_key: key)
+        @group.group_permissions.create!(permission_type: "dropdown", permission_key: key)
       end
 
       form_keys.each do |key|
-        @group.group_permissions.create!(permission_type: 'form', permission_key: key)
+        @group.group_permissions.create!(permission_type: "form", permission_key: key)
       end
     end
 
@@ -229,7 +229,7 @@ class AclController < ApplicationController
     department = @department_id.presence
     unit = @unit_id.presence
 
-    chain_conditions = [{ agency_id: nil, division_id: nil, department_id: nil, unit_id: nil }]
+    chain_conditions = [ { agency_id: nil, division_id: nil, department_id: nil, unit_id: nil } ]
     chain_conditions << { agency_id: agency, division_id: nil, department_id: nil, unit_id: nil } if agency
     chain_conditions << { agency_id: agency, division_id: division, department_id: nil, unit_id: nil } if division
     chain_conditions << { agency_id: agency, division_id: division, department_id: department, unit_id: nil } if department
@@ -238,8 +238,8 @@ class AclController < ApplicationController
     query = chain_conditions.map { |c| OrgPermission.where(c) }.reduce(:or)
     @current_org_permissions = query.pluck(:permission_type, :permission_key)
 
-    @org_dropdown_keys = @current_org_permissions.select { |t, _| t == 'dropdown' }.map(&:last).to_set
-    @org_form_keys = @current_org_permissions.select { |t, _| t == 'form' }.map(&:last).to_set
+    @org_dropdown_keys = @current_org_permissions.select { |t, _| t == "dropdown" }.map(&:last).to_set
+    @org_form_keys = @current_org_permissions.select { |t, _| t == "form" }.map(&:last).to_set
 
     # If no permissions exist yet for this scope, pre-check default public items
     if @current_org_permissions.empty?
@@ -276,7 +276,7 @@ class AclController < ApplicationController
           division_id: division_id,
           department_id: department_id,
           unit_id: unit_id,
-          permission_type: 'dropdown',
+          permission_type: "dropdown",
           permission_key: key
         )
       end
@@ -287,7 +287,7 @@ class AclController < ApplicationController
           division_id: division_id,
           department_id: department_id,
           unit_id: unit_id,
-          permission_type: 'form',
+          permission_type: "form",
           permission_key: key
         )
       end

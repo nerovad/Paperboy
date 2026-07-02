@@ -1,6 +1,6 @@
 class PcardInventoryController < ApplicationController
   before_action :require_pcard_admin
-  before_action :set_pcard_inventory, only: [:edit, :update]
+  before_action :set_pcard_inventory, only: [ :edit, :update ]
 
   def index
     @pcard_inventories = PcardInventory.order(:last_name, :first_name)

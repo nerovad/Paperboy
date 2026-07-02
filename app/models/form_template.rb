@@ -46,21 +46,21 @@ class FormTemplate < ApplicationRecord
 
   # Available inbox button types
   INBOX_BUTTON_TYPES = {
-    'view_pdf' => { label: 'View PDF', description: 'Download or view the form as PDF' },
-    'edit' => { label: 'Edit', description: 'Edit the submitted form' },
-    'approve' => { label: 'Approve', description: 'Approve button for approval workflows' },
-    'deny' => { label: 'Deny', description: 'Deny button with reason modal' },
-    'reassign' => { label: 'Reassign', description: 'Reassign to another employee' },
-    'take_back' => { label: 'Take Back', description: 'Take back a reassigned task' },
-    'status_dropdown' => { label: 'Status Dropdown', description: 'Quick status change dropdown' },
-    'status_history' => { label: 'Status History', description: 'View the workflow status timeline in a modal' }
+    "view_pdf" => { label: "View PDF", description: "Download or view the form as PDF" },
+    "edit" => { label: "Edit", description: "Edit the submitted form" },
+    "approve" => { label: "Approve", description: "Approve button for approval workflows" },
+    "deny" => { label: "Deny", description: "Deny button with reason modal" },
+    "reassign" => { label: "Reassign", description: "Reassign to another employee" },
+    "take_back" => { label: "Take Back", description: "Take back a reassigned task" },
+    "status_dropdown" => { label: "Status Dropdown", description: "Quick status change dropdown" },
+    "status_history" => { label: "Status History", description: "View the workflow status timeline in a modal" }
   }.freeze
 
   has_many :form_fields, dependent: :destroy
-  has_many :routing_steps, -> { order(:step_number) }, class_name: 'FormTemplateRoutingStep', dependent: :destroy
-  has_many :statuses, -> { order(:position) }, class_name: 'FormTemplateStatus', dependent: :destroy
-  has_many :copy_recipients, -> { order(:position, :id) }, class_name: 'FormTemplateCopyRecipient', dependent: :destroy
-  has_many :email_steps, -> { order(:position, :id) }, class_name: 'FormTemplateEmailStep', dependent: :destroy
+  has_many :routing_steps, -> { order(:step_number) }, class_name: "FormTemplateRoutingStep", dependent: :destroy
+  has_many :statuses, -> { order(:position) }, class_name: "FormTemplateStatus", dependent: :destroy
+  has_many :copy_recipients, -> { order(:position, :id) }, class_name: "FormTemplateCopyRecipient", dependent: :destroy
+  has_many :email_steps, -> { order(:position, :id) }, class_name: "FormTemplateEmailStep", dependent: :destroy
   accepts_nested_attributes_for :routing_steps, allow_destroy: true, reject_if: :all_blank
   accepts_nested_attributes_for :statuses, allow_destroy: true, reject_if: :all_blank
 
@@ -90,13 +90,13 @@ class FormTemplate < ApplicationRecord
   scope :with_dashboards, -> { where(has_dashboard: true) }
   scope :active, -> { where(archived: false) }
   scope :archived, -> { where(archived: true) }
-  
+
   def requires_approval?
-    submission_type == 'approval'
+    submission_type == "approval"
   end
 
   def routes_to_specific_employee?
-    requires_approval? && approval_routing_to == 'employee'
+    requires_approval? && approval_routing_to == "employee"
   end
 
   def requires_legacy_routing?
@@ -116,11 +116,11 @@ class FormTemplate < ApplicationRecord
   end
 
   def automatic_status_transitions?
-    status_transition_mode == 'automatic'
+    status_transition_mode == "automatic"
   end
 
   def manual_status_transitions?
-    status_transition_mode == 'manual'
+    status_transition_mode == "manual"
   end
 
   def has_inbox_button?(button_type)
@@ -130,33 +130,33 @@ class FormTemplate < ApplicationRecord
   def enabled_inbox_buttons
     inbox_buttons || []
   end
-  
+
   def table_name
     class_name.underscore.pluralize
   end
-  
+
   def file_name
     class_name.underscore
   end
-  
+
   def plural_file_name
     file_name.pluralize
   end
-  
+
   def page_header(page_num)
     return "Employee Info" if page_num == 1
     return "Agency Info" if page_num == 2
-    
+
     headers = page_headers || []
     headers[page_num - 3]
   end
-  
+
   private
 
   def generate_class_name
     return if name.blank?
 
-    self.class_name = name.gsub(/[^a-zA-Z0-9\s]/, '').split.map(&:capitalize).join + 'Form'
+    self.class_name = name.gsub(/[^a-zA-Z0-9\s]/, "").split.map(&:capitalize).join + "Form"
   end
 
   # Upcase/strip any admin-entered prefix so "loa" and "LOA " store as "LOA".
@@ -175,7 +175,7 @@ class FormTemplate < ApplicationRecord
 
   def unique_reference_prefix(candidate)
     taken = self.class.where.not(id: id)
-                .where.not(reference_prefix: [nil, ""])
+                .where.not(reference_prefix: [ nil, "" ])
                 .pluck(:reference_prefix)
                 .map(&:upcase)
                 .to_set
@@ -193,8 +193,8 @@ class FormTemplate < ApplicationRecord
     return if pending_routing_steps.present?
     return unless statuses.user_configured.any?
 
-    has_approved = statuses.user_configured.any? { |s| s.category == 'approved' }
-    has_denied = statuses.user_configured.any? { |s| s.category == 'denied' }
+    has_approved = statuses.user_configured.any? { |s| s.category == "approved" }
+    has_denied = statuses.user_configured.any? { |s| s.category == "denied" }
 
     errors.add(:base, "Approval forms must have at least one status with the 'Approved' category") unless has_approved
     errors.add(:base, "Approval forms must have at least one status with the 'Denied' category") unless has_denied

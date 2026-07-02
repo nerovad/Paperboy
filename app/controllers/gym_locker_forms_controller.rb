@@ -20,7 +20,7 @@ class GymLockerFormsController < ApplicationController
     # --- Prefill values (everything prefilled exactly like you do now) ---
     @prefill_data = {
       employee_id: @employee.employee_id,
-      name:        [@employee.first_name, @employee.last_name].compact.join(" "),
+      name:        [ @employee.first_name, @employee.last_name ].compact.join(" "),
       phone:       @employee.work_phone,
       email:       @employee.email,
       agency:      agency&.agency_id,
@@ -48,7 +48,7 @@ class GymLockerFormsController < ApplicationController
     @unit_options = if department
       Unit.where(department_id: department.department_id)
           .order(:unit_id)
-          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
     else
       []
     end
@@ -75,7 +75,7 @@ class GymLockerFormsController < ApplicationController
 
       @prefill_data = {
         employee_id: emp&.employee_id,
-        name:        emp ? [emp&.first_name, emp&.last_name].compact.join(" ") : nil,
+        name:        emp ? [ emp&.first_name, emp&.last_name ].compact.join(" ") : nil,
         phone:       emp&.work_phone,
         email:       emp&.email,
         agency:      agency&.agency_id,
@@ -90,7 +90,7 @@ class GymLockerFormsController < ApplicationController
       @unit_options = if department
         Unit.where(department_id: department.department_id)
             .order(:unit_id)
-            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+            .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
       else
         []
       end

@@ -63,7 +63,7 @@ enum :status, {
   # Status enum - provides submitted?, approved?, etc. automatically
 
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
-  
+
   # The current step's assignee is tracked in approver_id (set by the routing
   # engine); reassignment writes the same column.
   def current_assignee_id
@@ -71,6 +71,6 @@ enum :status, {
   end
 
   def assignment_field_name
-    'approver_id'
+    "approver_id"
   end
 end

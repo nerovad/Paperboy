@@ -6,7 +6,7 @@ module AclHelper
     return [] if contractor.unit.blank?
     unit = Unit.find_by(unit_id: contractor.unit)
     label = unit ? "#{unit.unit_id} - #{unit.long_name}" : contractor.unit
-    [[label, contractor.unit]]
+    [ [ label, contractor.unit ] ]
   end
 
   # Same idea for the saved supervisor (an Employee id).
@@ -14,6 +14,6 @@ module AclHelper
     return [] if contractor.supervisor_id.blank?
     emp = Employee.find_by(id: contractor.supervisor_id)
     label = emp ? "#{emp.last_name}, #{emp.first_name} (#{emp.id})" : contractor.supervisor_id.to_s
-    [[label, contractor.supervisor_id]]
+    [ [ label, contractor.supervisor_id ] ]
   end
 end

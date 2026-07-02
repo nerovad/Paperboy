@@ -31,7 +31,7 @@ class StuckSubmissionMailer < ApplicationMailer
 
   def creator_email(template)
     return [] unless template&.created_by.present?
-    [Employee.find_by(employee_id: template.created_by)&.email]
+    [ Employee.find_by(employee_id: template.created_by)&.email ]
   end
 
   def system_admin_emails

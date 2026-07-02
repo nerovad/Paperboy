@@ -57,7 +57,7 @@ enum :status, {
   validates :urgency, presence: true
 
   # Validations for Impact (Page 6)
-  validates :impact, presence: true, inclusion: { in: ['Low', 'Medium', 'High'] }
+  validates :impact, presence: true, inclusion: { in: [ "Low", "Medium", "High" ] }
   validates :impacted_customers, presence: true
   validates :next_steps, presence: true
 
@@ -66,7 +66,7 @@ enum :status, {
   scope :by_status, ->(status) { where(status: status) }
   scope :by_impact, ->(impact) { where(impact: impact) }
   scope :recent, -> { order(created_at: :desc) }
-  scope :high_urgency, -> { where(urgency: 'Immediate') }
+  scope :high_urgency, -> { where(urgency: "Immediate") }
   scope :assigned_to, ->(manager_id) { where(assigned_manager_id: manager_id) }
 
   def current_assignee_id
@@ -74,7 +74,7 @@ enum :status, {
   end
 
   def assignment_field_name
-    'assigned_manager_id'
+    "assigned_manager_id"
   end
 
   def assigned_manager_name

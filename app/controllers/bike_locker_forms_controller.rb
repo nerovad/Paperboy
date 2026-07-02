@@ -1,6 +1,6 @@
 class BikeLockerFormsController < ApplicationController
   # Generated controller for BikeLockerForm form
-  before_action :set_bike_locker_form, only: [:show, :edit, :update, :pdf, :approve, :deny, :update_status]
+  before_action :set_bike_locker_form, only: [ :show, :edit, :update, :pdf, :approve, :deny, :update_status ]
 
   def new
     @bike_locker_form = BikeLockerForm.new
@@ -24,7 +24,7 @@ class BikeLockerFormsController < ApplicationController
     # --- Prefill values (everything prefilled exactly like you do now) ---
     @prefill_data = {
       employee_id: @employee["id"],
-      name:        [@employee["first_name"], @employee["last_name"]].compact.join(" "),
+      name:        [ @employee["first_name"], @employee["last_name"] ].compact.join(" "),
       phone:       @employee["work_phone"],
       email:       @employee["email"],
       agency:      agency&.agency_id,
@@ -52,7 +52,7 @@ class BikeLockerFormsController < ApplicationController
     @unit_options = if department
       Unit.where(department_id: department.department_id)
           .order(:unit_id)
-          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
     else
       []
     end
@@ -82,12 +82,12 @@ class BikeLockerFormsController < ApplicationController
     end
 
     if saved
-      # ROUTING_BLOCK_START
-      # Multi-step approval routing (1 steps)
+# ROUTING_BLOCK_START
+# Multi-step approval routing (1 steps)
 # Delegates to TrackableStatus#start_approval!, which picks the first
 # step whose condition matches the submitted record.
 @bike_locker_form.start_approval!
-redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
+redirect_to form_success_path, notice: "Form submitted and routed for approval.", allow_other_host: false, status: :see_other
       # ROUTING_BLOCK_END
     else
       # Rebuild options on failure (same as in new)
@@ -100,7 +100,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
 
       @prefill_data = {
         employee_id: emp&.[]("id"),
-        name:        emp ? [emp["first_name"], emp["last_name"]].compact.join(" ") : nil,
+        name:        emp ? [ emp["first_name"], emp["last_name"] ].compact.join(" ") : nil,
         phone:       emp&.[]("work_phone"),
         email:       emp&.[]("email"),
         agency:      agency&.agency_id,
@@ -115,7 +115,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
       @unit_options = if department
         Unit.where(department_id: department.department_id)
             .order(:unit_id)
-            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+            .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
       else
         []
       end
@@ -136,7 +136,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
 
   def update
     if @bike_locker_form.update(bike_locker_form_params)
-      redirect_to @bike_locker_form, notice: 'Submission updated successfully.'
+      redirect_to @bike_locker_form, notice: "Submission updated successfully."
     else
       setup_form_options
       render :edit, status: :unprocessable_entity
@@ -157,10 +157,10 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
       @bike_locker_form.advance_approval!
       # Final approval turns the held reservation into a firm assignment.
       @bike_locker_form.assign_locker! if @bike_locker_form.approved?
-      notice = @bike_locker_form.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
+      notice = @bike_locker_form.approved? ? "Submission approved." : "Approved and routed to the next step."
       redirect_to inbox_queue_path, notice: notice
     else
-      redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
+      redirect_to inbox_queue_path, alert: "Unable to approve this submission."
     end
   end
 
@@ -171,19 +171,18 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
       @bike_locker_form.update(deny_reason: reason) if @bike_locker_form.respond_to?(:deny_reason=) && reason.present?
       # Denial releases the locker back into the available pool.
       @bike_locker_form.release_locker!
-      redirect_to inbox_queue_path, notice: 'Submission denied.'
+      redirect_to inbox_queue_path, notice: "Submission denied."
     else
-      redirect_to inbox_queue_path, alert: 'Unable to deny this submission.'
+      redirect_to inbox_queue_path, alert: "Unable to deny this submission."
     end
   end
 
   def update_status
     new_status = params[:status]
-    if new_status.present? && @bike_locker_form.respond_to?("#{new_status}!")
-      @bike_locker_form.send("#{new_status}!")
-      redirect_to inbox_queue_path, notice: 'Status updated.'
+    if update_trackable_status(@bike_locker_form, new_status)
+      redirect_to inbox_queue_path, notice: "Status updated."
     else
-      redirect_to inbox_queue_path, alert: 'Unable to update status.'
+      redirect_to inbox_queue_path, alert: "Unable to update status."
     end
   end
 
@@ -219,7 +218,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
     @unit_options = if department_id
       Unit.where(department_id: department_id)
           .order(:unit_id)
-          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
     else
       []
     end
@@ -252,7 +251,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
         lockers.sort_by!(&:locker_number)
       end
     end
-    lockers.map { |l| [l.locker_number.to_s, l.id] }
+    lockers.map { |l| [ l.locker_number.to_s, l.id ] }
   end
 
   def bike_locker_form_params

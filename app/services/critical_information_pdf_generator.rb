@@ -5,7 +5,7 @@ class CriticalInformationPdfGenerator
   def self.generate(cir)
     logo_path = Rails.root.join("app", "assets", "images", "Ventura_Logo.png")
 
-    Prawn::Document.new(page_size: 'A4', margin: 40) do |pdf|
+    Prawn::Document.new(page_size: "A4", margin: 40) do |pdf|
       # Header with logo
       if File.exist?(logo_path)
         pdf.image logo_path.to_s, width: 80
@@ -87,9 +87,9 @@ class CriticalInformationPdfGenerator
         cir.media_photo_pdf_etc.each do |attachment|
           pdf.move_down 5
 
-          if attachment.content_type.start_with?('image/')
+          if attachment.content_type.start_with?("image/")
             begin
-              tempfile = Tempfile.new(['media', File.extname(attachment.filename.to_s)])
+              tempfile = Tempfile.new([ "media", File.extname(attachment.filename.to_s) ])
               tempfile.binmode
               tempfile.write(attachment.download)
               tempfile.rewind
@@ -97,18 +97,18 @@ class CriticalInformationPdfGenerator
               max_width = pdf.bounds.width
               max_height = 300
 
-              pdf.image tempfile.path, fit: [max_width, max_height], position: :left
+              pdf.image tempfile.path, fit: [ max_width, max_height ], position: :left
               pdf.move_down 5
               pdf.text "Filename: #{attachment.filename}", size: 9, style: :italic
 
               tempfile.close
               tempfile.unlink
             rescue => e
-              pdf.text "Error loading image: #{e.message}", size: 9, color: 'FF0000'
+              pdf.text "Error loading image: #{e.message}", size: 9, color: "FF0000"
             end
-          elsif attachment.content_type == 'application/pdf'
+          elsif attachment.content_type == "application/pdf"
             pdf.text "PDF Document: #{attachment.filename}", size: 10
-            pdf.text "(See separate attachment)", size: 9, style: :italic, color: '666666'
+            pdf.text "(See separate attachment)", size: 9, style: :italic, color: "666666"
           else
             pdf.text "File: #{attachment.filename}", size: 10
             pdf.text "Type: #{attachment.content_type}", size: 9, style: :italic

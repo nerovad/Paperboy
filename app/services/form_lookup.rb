@@ -47,7 +47,7 @@ class FormLookup
     # option's value/label, in order, so e.g. first_name + last_name display
     # together. Unknown columns are silently dropped; the primary column leads.
     join_cols    = Array(cfg["join_columns"]).select { |c| c.present? && columns.include?(c) }
-    display_cols = ([col] + join_cols).uniq
+    display_cols = ([ col ] + join_cols).uniq
     sep          = cfg["join_separator"]
     sep          = " " unless sep.is_a?(String) && !sep.empty?
 
@@ -93,7 +93,7 @@ class FormLookup
     # along only when it isn't one of them.
     if order_col && !display_cols.include?(order_col)
       qo          = conn.quote_column_name(order_col)
-      select_list = (select_aliases + ["#{qo} AS sort_val"]).join(", ")
+      select_list = (select_aliases + [ "#{qo} AS sort_val" ]).join(", ")
       order_by    = "#{qo} #{dir}"
     else
       select_list = select_aliases.join(", ")

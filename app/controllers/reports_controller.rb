@@ -4,7 +4,7 @@ class ReportsController < ApplicationController
 
   def index
     @forms = available_forms
-    
+
     # Load user's scheduled reports (if model exists)
     employee_id = session.dig(:user, "employee_id")
     if defined?(ScheduledReport) && employee_id
@@ -53,7 +53,11 @@ class ReportsController < ApplicationController
         return
       end
 
-      model_class = template.class_name.constantize
+      model_class = application_record_class_named(template.class_name)
+      unless model_class
+        render json: { status_options: [] }
+        return
+      end
 
       # Prefer the model's human-readable STATUS_LABELS (via TrackableStatus)
       # over the raw enum/STATUS_MAP key — "Sent to HCA_HR" instead of
@@ -77,8 +81,8 @@ class ReportsController < ApplicationController
 
         render json: { status_options: options }
       # Check if model uses Rails enum for status
-      elsif model_class.defined_enums.key?('status')
-        status_enum = model_class.defined_enums['status']
+      elsif model_class.defined_enums.key?("status")
+        status_enum = model_class.defined_enums["status"]
 
         # Convert enum hash to array of {value, label} for the dropdown
         # Enum returns {"submitted" => 0, "approved" => 1, ...}
@@ -150,7 +154,7 @@ class ReportsController < ApplicationController
     scheduled_report.next_run_at = scheduled_report.calculate_next_run
 
     if scheduled_report.save
-      next_run = scheduled_report.next_run_at.strftime('%B %d at %I:%M %p')
+      next_run = scheduled_report.next_run_at.strftime("%B %d at %I:%M %p")
       redirect_to reports_path, notice: "Scheduled report created successfully. Next run: #{next_run}"
     else
       redirect_to reports_path, alert: "Error creating scheduled report: #{scheduled_report.errors.full_messages.join(', ')}"
@@ -181,7 +185,7 @@ class ReportsController < ApplicationController
   end
 
   def require_reports_access
-    unless current_user_group_names.include?("system_admins") || current_user_dropdown_permissions.include?('reports')
+    unless current_user_group_names.include?("system_admins") || current_user_dropdown_permissions.include?("reports")
       redirect_to root_path, alert: "Access denied."
     end
   end

@@ -32,7 +32,7 @@ module FormReference
   # rendering many rows so each row doesn't re-hit the database.
   def prefix_map
     PREFIX_SEEDS.merge(
-      FormTemplate.where.not(reference_prefix: [nil, ""])
+      FormTemplate.where.not(reference_prefix: [ nil, "" ])
                   .pluck(:class_name, :reference_prefix)
                   .to_h
     )
@@ -45,7 +45,7 @@ module FormReference
     class_name = record_or_class.is_a?(Class) ? record_or_class.name : record_or_class.class.name
     return (map[class_name] || derive_prefix(class_name)) if map
 
-    FormTemplate.where(class_name: class_name).where.not(reference_prefix: [nil, ""]).pick(:reference_prefix) ||
+    FormTemplate.where(class_name: class_name).where.not(reference_prefix: [ nil, "" ]).pick(:reference_prefix) ||
       PREFIX_SEEDS[class_name] ||
       derive_prefix(class_name)
   end

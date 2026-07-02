@@ -45,5 +45,4 @@ def acceptable_doctors_note_attachment_files
     end
   end
 end
-
 end

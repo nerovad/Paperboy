@@ -1,15 +1,14 @@
 # app/controllers/sessions_controller.rb
 class SessionsController < ApplicationController
-
   # NEW: OAuth/Entra ID login
   def create_oauth
-    auth = request.env['omniauth.auth']
+    auth = request.env["omniauth.auth"]
 
     Rails.logger.info "=== OAuth Callback ==="
     Rails.logger.info "Email from Entra: #{auth.info.email}"
 
     # Extract just the username part (before @)
-    username = auth.info.email.split('@').first.downcase
+    username = auth.info.email.split("@").first.downcase
 
     Rails.logger.info "Looking up username: #{username}"
 

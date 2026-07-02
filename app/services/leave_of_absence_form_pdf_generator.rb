@@ -4,7 +4,7 @@ class LeaveOfAbsenceFormPdfGenerator
   def self.generate(submission)
     logo_path = Rails.root.join("app", "assets", "images", "Ventura_Logo.png")
 
-    Prawn::Document.new(page_size: 'A4', margin: 40) do |pdf|
+    Prawn::Document.new(page_size: "A4", margin: 40) do |pdf|
       # Header with logo
       pdf.image(logo_path.to_s, width: 80) if File.exist?(logo_path)
 

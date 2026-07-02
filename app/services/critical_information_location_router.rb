@@ -296,7 +296,7 @@ class CriticalInformationLocationRouter
     return false if addr1_words.empty? || addr2_words.empty?
 
     # At least 70% of the street name words should match
-    shorter_words, longer_words = [addr1_words, addr2_words].sort_by(&:length)
+    shorter_words, longer_words = [ addr1_words, addr2_words ].sort_by(&:length)
     matches = shorter_words.count { |word| longer_words.any? { |w| w == word || w.include?(word) || word.include?(w) } }
     match_percentage = matches.to_f / shorter_words.length
 
@@ -307,9 +307,9 @@ class CriticalInformationLocationRouter
     # Split on the dash that separates city from address
     parts = location.split(/\s*-\s*/, 2)
     if parts.length == 2
-      [parts[0].strip, parts[1].strip]
+      [ parts[0].strip, parts[1].strip ]
     else
-      ["", location.strip]
+      [ "", location.strip ]
     end
   end
 

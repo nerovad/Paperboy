@@ -4,7 +4,7 @@ require "csv"
 class AuthorizationConsoleController < ApplicationController
   before_action :require_auth_console
   before_action :set_managed_departments
-  
+
   def index
     managed_dept_ids = @managed_departments.map(&:department_id)
     @department_ids  = Array(params[:department_id]).reject(&:blank?).reject { |d| d == "all" }
@@ -31,11 +31,11 @@ class AuthorizationConsoleController < ApplicationController
     # Filter options come from the budget-unit-scoped set (before the
     # employee/service/location filters) so values stay switchable.
     @employee_filter_options = Employee.where(id: scoped.map(&:employee_id).uniq)
-                                       .sort_by { |e| [e.last_name.to_s, e.first_name.to_s] }
-                                       .map { |e| ["#{e.first_name} #{e.last_name} (#{e.id})", e.id.to_s] }
+                                       .sort_by { |e| [ e.last_name.to_s, e.first_name.to_s ] }
+                                       .map { |e| [ "#{e.first_name} #{e.last_name} (#{e.id})", e.id.to_s ] }
     @service_type_filter_options = scoped.map(&:service_type).uniq
                                          .sort_by { |s| SERVICE_ORDER.index(s) || 99 }
-                                         .map { |s| [AuthorizedApprover::SERVICE_TYPES[s] || s, s] }
+                                         .map { |s| [ AuthorizedApprover::SERVICE_TYPES[s] || s, s ] }
     @location_filter_options = scoped.flat_map { |a| Array(a.locations) }.uniq.sort
 
     @employee_id_filter  = Array(params[:employee_id]).reject(&:blank?)
@@ -58,7 +58,7 @@ class AuthorizationConsoleController < ApplicationController
       end
     end
   end
-  
+
   def new
     @department_id = params[:department_id]
     @authorized_approver = AuthorizedApprover.new(department_id: @department_id)
@@ -99,7 +99,7 @@ class AuthorizationConsoleController < ApplicationController
       rerender_new
     end
   end
-  
+
   # Edit a whole authorization group (all service/key-type rows that share the
   # same employee/dept/budget/locations), identified by ids[].
   def group_edit
@@ -166,24 +166,24 @@ class AuthorizationConsoleController < ApplicationController
     redirect_to authorization_console_index_path(department_id: dept),
                 notice: "Authorization removed."
   end
-  
+
   def destroy_all_for_employee
     employee_id   = params[:employee_id]
     department_id = params[:department_id]
-    
+
     AuthorizedApprover.where(employee_id: employee_id, department_id: department_id).destroy_all
-    
+
     redirect_to authorization_console_index_path(department_id: department_id),
                 notice: "All authorizations removed for employee #{employee_id}."
   end
-  
+
   private
 
   # Collapse per-(service_type, key_type) rows into one group per real
   # authorization (same employee/dept/budget/locations) for display.
   def build_groups(approvers)
     approvers.group_by(&:employee_id).transform_values do |recs|
-      recs.group_by { |a| [a.department_id, a.all_budget_units?, a.budget_units, a.all_locations?, Array(a.locations).sort] }.values.map do |g|
+      recs.group_by { |a| [ a.department_id, a.all_budget_units?, a.budget_units, a.all_locations?, Array(a.locations).sort ] }.values.map do |g|
         { ids:           g.map(&:id),
           record:        g.first,
           service_types: g.map(&:service_type).uniq.sort_by { |s| SERVICE_ORDER.index(s) || 99 },
@@ -196,7 +196,7 @@ class AuthorizationConsoleController < ApplicationController
   # per key type for the 'K' service. Shared by create and group_update.
   def build_approvers(shared, service_types, key_types, authorized_by)
     service_types.flat_map do |st|
-      kts = st == "K" ? (key_types.presence || [nil]) : [nil]
+      kts = st == "K" ? (key_types.presence || [ nil ]) : [ nil ]
       kts.map do |kt|
         attrs = shared.merge(service_type: st, key_type: kt)
         # Locations/buildings apply to Facility Keys only — a mixed P+K
@@ -229,16 +229,16 @@ class AuthorizationConsoleController < ApplicationController
 
     # Collapse the per-service-type rows back into one line per real
     # authorization (same employee/dept/budget/locations).
-    groups = approvers.group_by { |a| [a.employee_id, a.department_id, a.all_budget_units?, a.budget_units, a.all_locations?, Array(a.locations).sort] }
+    groups = approvers.group_by { |a| [ a.employee_id, a.department_id, a.all_budget_units?, a.budget_units, a.all_locations?, Array(a.locations).sort ] }
 
     CSV.generate do |csv|
-      csv << ["Employee ID", "Employee Name", "Department ID", "Department", "Service Types",
-              "Key Types", "Budget Units", "Locations", "Authorized By", "Created At"]
+      csv << [ "Employee ID", "Employee Name", "Department ID", "Department", "Service Types",
+              "Key Types", "Budget Units", "Locations", "Authorized By", "Created At" ]
       groups.each do |(emp_id, dept_id, all_budget_units, budget, all_locations, locations), rows|
         e = emps[emp_id.to_s]
         service_types = rows.map(&:service_type).uniq.sort_by { |s| SERVICE_ORDER.index(s) || 99 }
         key_types     = rows.map(&:key_type).compact.uniq.sort
-        csv << [emp_id,
+        csv << [ emp_id,
                 (e && "#{e.first_name} #{e.last_name}"),
                 dept_id,
                 depts[dept_id]&.long_name,
@@ -247,7 +247,7 @@ class AuthorizationConsoleController < ApplicationController
                 all_budget_units ? "ALL" : budget.to_s.split(",").map(&:strip).reject(&:blank?).join(" | "),
                 all_locations ? "ALL" : locations.join(" | "),
                 rows.first.authorized_by,
-                rows.first.created_at&.strftime("%Y-%m-%d")]
+                rows.first.created_at&.strftime("%Y-%m-%d") ]
       end
     end
   end
@@ -259,10 +259,10 @@ class AuthorizationConsoleController < ApplicationController
     else
       dept_id = current_user_org_chain[:department_id]
       dept = dept_id ? Department.find_by(department_id: dept_id) : nil
-      @managed_departments = [dept].compact
+      @managed_departments = [ dept ].compact
     end
   end
-  
+
   def fetch_managed_employees
     dept_ids = @managed_departments.map(&:department_id)
     return [] if dept_ids.empty?
@@ -278,14 +278,14 @@ class AuthorizationConsoleController < ApplicationController
       }
     end
   end
-  
+
   def location_options
     Building.for_authorization_console
             .order(:occupant_description, :address)
             .map(&:location_label)
             .reject(&:blank?)
             .uniq
-            .map { |label| [label, label] }
+            .map { |label| [ label, label ] }
   end
 
   def fetch_managed_budget_units
@@ -296,7 +296,7 @@ class AuthorizationConsoleController < ApplicationController
     # GSABSS units table has duplicate rows; collapse options by unit_id.
     Unit.where(department_id: dept_ids).order(:unit_id).map do |u|
       label = "#{u.unit_id} - #{dept_names[u.department_id]&.long_name}"
-      [label, u.unit_id.to_s]
+      [ label, u.unit_id.to_s ]
     end.uniq { |_label, id| id }
   end
 

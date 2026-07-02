@@ -1,17 +1,17 @@
 class OshaEstablishment < ApplicationRecord
-  has_many :entries, class_name: 'Osha300aEntry', dependent: :destroy
+  has_many :entries, class_name: "Osha300aEntry", dependent: :destroy
 
   SIZE_OPTIONS = {
-    1  => 'Less than 20 employees',
-    21 => '20-99 employees',
-    22 => '100-249 employees',
-    3  => '250+ employees'
+    1  => "Less than 20 employees",
+    21 => "20-99 employees",
+    22 => "100-249 employees",
+    3  => "250+ employees"
   }.freeze
 
   ESTABLISHMENT_TYPE_OPTIONS = {
-    1 => 'Not a government entity',
-    2 => 'State Government',
-    3 => 'Local Government'
+    1 => "Not a government entity",
+    2 => "State Government",
+    3 => "Local Government"
   }.freeze
 
   validates :name, :street_address, :city, :state, :zip, :naics_code, :size, presence: true

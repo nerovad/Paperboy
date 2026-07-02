@@ -1,5 +1,5 @@
 class ProbationTransferRequestsController < ApplicationController
-  before_action :set_probation_transfer_request, only: [:show, :edit, :update, :destroy, :pdf, :approve, :deny, :withdraw]
+  before_action :set_probation_transfer_request, only: [ :show, :edit, :update, :destroy, :pdf, :approve, :deny, :withdraw ]
 
   def index
     @probation_transfer_requests = ProbationTransferRequest.where(status: "in_progress", supervisor_id: session[:user]["employee_id"])
@@ -25,7 +25,7 @@ end
         render pdf: "transfer_request_#{@probation_transfer_request.id}",
                template: "probation_transfer_requests/pdf",
                locals: { request: @probation_transfer_request },
-               formats: [:html]
+               formats: [ :html ]
       end
     end
   end
@@ -132,7 +132,7 @@ def approve
   selected_dest = params[:approved_destination].to_s.strip.presence
 
   # If the request listed choices, require one to be selected
-  options = @submission.desired_transfer_destination.to_s.split(';').map(&:strip).reject(&:blank?)
+  options = @submission.desired_transfer_destination.to_s.split(";").map(&:strip).reject(&:blank?)
   if options.any? && selected_dest.blank?
     return redirect_to inbox_queue_path, alert: "Please choose an approved destination."
   end
@@ -217,16 +217,16 @@ end
       unit: unit&.unit_id
     }
 
-    @agency_options = Agency.all.map { |a| [a.long_name, a.agency_id] }
+    @agency_options = Agency.all.map { |a| [ a.long_name, a.agency_id ] }
 
     @division_options = if agency
-      Division.where(agency_id: agency.agency_id).map { |d| [d.long_name, d.division_id] }
+      Division.where(agency_id: agency.agency_id).map { |d| [ d.long_name, d.division_id ] }
     else
       []
     end
 
     @department_options = if division
-      Department.where(division_id: division.division_id).map { |d| [d.long_name, d.department_id] }
+      Department.where(division_id: division.division_id).map { |d| [ d.long_name, d.department_id ] }
     else
       []
     end
@@ -234,7 +234,7 @@ end
 @unit_options = if department
   Unit.where(department_id: department.department_id)
       .order(:unit_id)
-      .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+      .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
 else
   []
 end
@@ -259,31 +259,31 @@ end
         fields: [
           { name: "work_location", label: "Work Location", type: "text", required: true },
           { name: "current_assignment_date", label: "Current Assignment Date", type: "text", required: true },
-          { name: "desired_transfer_destination", label: "Desired Transfer Destination", type: "multi-select", options: ["East County", "West County", "Downtown", "Remote", "Other"] }
+          { name: "desired_transfer_destination", label: "Desired Transfer Destination", type: "multi-select", options: [ "East County", "West County", "Downtown", "Remote", "Other" ] }
         ]
       }
     ]
 
 @work_location_options = [
-  ["Adult Investigations (AI-I II III)", "Adult Investigations (AI-I II III)"],
-  ["East County Field Services (ECFS)", "East County Field Services (ECFS)"],
-  ["East County Probation/Post-Release (ECPPR)", "East County Probation/Post-Release (ECPPR)"],
-  ["Force Options Training (FOT)", "Force Options Training (FOT)"],
-  ["Intensive Supervision Services - Juvenile (ISSJ)", "Intensive Supervision Services - Juvenile (ISSJ)"],
-  ["Juvenile Facilities Housing/Operations (JF)", "Juvenile Facilities Housing/Operations (JF)"],
-  ["Juvenile Field Services (JFS)", "Juvenile Field Services (JFS)"],
-  ["Juvenile Intake/Community Confinement (JINT/CC)", "Juvenile Intake/Community Confinement (JINT/CC)"],
-  ["Juvenile Investigations (JINV)", "Juvenile Investigations (JINV)"],
-  ["Juvenile Specialty Programs (JSP)", "Juvenile Specialty Programs (JSP)"],
-  ["Oxnard Field Services (OFS I/II)", "Oxnard Field Services (OFS I/II)"],
-  ["Oxnard Probation/Post-Release (OPPR I/II)", "Oxnard Probation/Post-Release (OPPR I/II)"],
-  ["Pretrial Risk Assessment and Monitoring Services (PRAMS)", "Pretrial Risk Assessment and Monitoring Services (PRAMS)"],
-  ["Professional Standards Unit (PSU)", "Professional Standards Unit (PSU)"],
-  ["Specialized Services Unit (SSU)", "Specialized Services Unit (SSU)"],
-  ["Staff Training Unit (STU)", "Staff Training Unit (STU)"],
-  ["Ventura Field Services (VFS)", "Ventura Field Services (VFS)"],
-  ["Ventura Probation/Post-Release (VPPR)", "Ventura Probation/Post-Release (VPPR)"],
-  ["Work Release (WR)", "Work Release (WR)"]
+  [ "Adult Investigations (AI-I II III)", "Adult Investigations (AI-I II III)" ],
+  [ "East County Field Services (ECFS)", "East County Field Services (ECFS)" ],
+  [ "East County Probation/Post-Release (ECPPR)", "East County Probation/Post-Release (ECPPR)" ],
+  [ "Force Options Training (FOT)", "Force Options Training (FOT)" ],
+  [ "Intensive Supervision Services - Juvenile (ISSJ)", "Intensive Supervision Services - Juvenile (ISSJ)" ],
+  [ "Juvenile Facilities Housing/Operations (JF)", "Juvenile Facilities Housing/Operations (JF)" ],
+  [ "Juvenile Field Services (JFS)", "Juvenile Field Services (JFS)" ],
+  [ "Juvenile Intake/Community Confinement (JINT/CC)", "Juvenile Intake/Community Confinement (JINT/CC)" ],
+  [ "Juvenile Investigations (JINV)", "Juvenile Investigations (JINV)" ],
+  [ "Juvenile Specialty Programs (JSP)", "Juvenile Specialty Programs (JSP)" ],
+  [ "Oxnard Field Services (OFS I/II)", "Oxnard Field Services (OFS I/II)" ],
+  [ "Oxnard Probation/Post-Release (OPPR I/II)", "Oxnard Probation/Post-Release (OPPR I/II)" ],
+  [ "Pretrial Risk Assessment and Monitoring Services (PRAMS)", "Pretrial Risk Assessment and Monitoring Services (PRAMS)" ],
+  [ "Professional Standards Unit (PSU)", "Professional Standards Unit (PSU)" ],
+  [ "Specialized Services Unit (SSU)", "Specialized Services Unit (SSU)" ],
+  [ "Staff Training Unit (STU)", "Staff Training Unit (STU)" ],
+  [ "Ventura Field Services (VFS)", "Ventura Field Services (VFS)" ],
+  [ "Ventura Probation/Post-Release (VPPR)", "Ventura Probation/Post-Release (VPPR)" ],
+  [ "Work Release (WR)", "Work Release (WR)" ]
 ]
   end
 end

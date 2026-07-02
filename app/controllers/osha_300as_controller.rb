@@ -17,7 +17,7 @@ class Osha300asController < ApplicationController
       @establishment.assign_attributes(establishment_params) if params[:osha_establishment].present?
 
       unless @establishment.save
-        flash.now[:alert] = @establishment.errors.full_messages.join('; ')
+        flash.now[:alert] = @establishment.errors.full_messages.join("; ")
         @totals = Osha300aTotals.for(@year)
         return render :show, status: :unprocessable_entity
       end
@@ -28,7 +28,7 @@ class Osha300asController < ApplicationController
       if @entry.save
         redirect_to osha_300a_path(year: @year), notice: "300A summary saved."
       else
-        flash.now[:alert] = @entry.errors.full_messages.join('; ')
+        flash.now[:alert] = @entry.errors.full_messages.join("; ")
         @totals = Osha300aTotals.for(@year)
         render :show, status: :unprocessable_entity
       end
@@ -79,9 +79,9 @@ class Osha300asController < ApplicationController
     @establishment = OshaEstablishment.first || OshaEstablishment.new
     @entry = if @establishment.persisted?
                Osha300aEntry.find_or_initialize_by(osha_establishment: @establishment, year: @year)
-             else
+    else
                Osha300aEntry.new(osha_establishment: @establishment, year: @year)
-             end
+    end
   end
 
   def establishment_params
@@ -98,8 +98,8 @@ class Osha300asController < ApplicationController
   end
 
   def require_osha_log_access
-    return if current_user_group_names.include?('system_admins')
-    return if current_user_dropdown_permissions.include?('osha_log')
+    return if current_user_group_names.include?("system_admins")
+    return if current_user_dropdown_permissions.include?("osha_log")
     redirect_to root_path, alert: "Access denied."
   end
 end

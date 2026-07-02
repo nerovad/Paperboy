@@ -29,8 +29,8 @@ class SeedDefaultPublicDropdownPermissions < ActiveRecord::Migration[8.0]
     agencies = execute("SELECT agency_id FROM agencies")
     agency_ids = agencies.map { |r| r["agency_id"] }
 
-    all_scopes = scopes.map { |r| [r["agency_id"], r["division_id"], r["department_id"], r["unit_id"]] }.to_set
-    agency_ids.each { |aid| all_scopes << [aid, nil, nil, nil] }
+    all_scopes = scopes.map { |r| [ r["agency_id"], r["division_id"], r["department_id"], r["unit_id"] ] }.to_set
+    agency_ids.each { |aid| all_scopes << [ aid, nil, nil, nil ] }
 
     all_scopes.each do |agency_id, division_id, department_id, unit_id|
       default_keys.each do |key|

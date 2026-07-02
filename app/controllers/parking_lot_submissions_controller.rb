@@ -1,6 +1,6 @@
 # app/controllers/parking_lot_submissions_controller.rb
 class ParkingLotSubmissionsController < ApplicationController
-  before_action :set_parking_lot_submission, only: [:show, :pdf, :approve, :deny]
+  before_action :set_parking_lot_submission, only: [ :show, :pdf, :approve, :deny ]
 
 def new
   @parking_lot_submission = ParkingLotSubmission.new
@@ -33,7 +33,7 @@ def new
   # Prefill with IDs (unit = ID only)
   @prefill_data = {
     employee_id: @employee.employee_id,
-    name:        [@employee.first_name, @employee.last_name].compact.join(" "),
+    name:        [ @employee.first_name, @employee.last_name ].compact.join(" "),
     phone:       @employee.work_phone,
     email:       @employee.email,
     agency:      agency&.agency_id,
@@ -44,7 +44,7 @@ def new
 
   # Parking lots
   base_lots             = %w[A\ Lot B\ Lot C\ Lot D\ Lot Employee\ Lot Visitor\ Lot]
-  @allowed_parking_lots = @is_mb3 ? (base_lots + ["R Lot"]) : base_lots
+  @allowed_parking_lots = @is_mb3 ? (base_lots + [ "R Lot" ]) : base_lots
 
   # Dropdowns
   @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
@@ -64,7 +64,7 @@ def new
   @unit_options = if department
     Unit.where(department_id: department.department_id)
         .order(:unit_id)
-        .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+        .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
   else
     []
   end
@@ -95,7 +95,7 @@ def create
     authorized_approvers = if department && submitted_unit.present?
       AuthorizedApprover.approver_for_unit(
         department_id: department.department_id,
-        service_type: 'P',
+        service_type: "P",
         unit_id: submitted_unit
       )
     else
@@ -112,7 +112,7 @@ def create
     # Routing is defined in the form builder (Authorization -> Sean Payne ->
     # GSA_Security) and executed by TrackableStatus. MB3 employees skip the
     # authorization step and enter at the next step.
-    @parking_lot_submission.start_approval!(skip_types: is_mb3 ? ['authorization'] : [])
+    @parking_lot_submission.start_approval!(skip_types: is_mb3 ? [ "authorization" ] : [])
     redirect_to form_success_path, allow_other_host: false, status: :see_other
   else
     render_new_with_options(emp_record, is_mb3)
@@ -192,8 +192,8 @@ end
   # Rebuild the option ivars and re-render the new form on a failed create.
   def render_new_with_options(emp_record, is_mb3)
     @is_mb3 = is_mb3
-    base_lots = ["A Lot", "B Lot", "C Lot", "D Lot", "Employee Lot", "Visitor Lot"]
-    @allowed_parking_lots = is_mb3 ? (base_lots + ["R Lot"]) : base_lots
+    base_lots = [ "A Lot", "B Lot", "C Lot", "D Lot", "Employee Lot", "Visitor Lot" ]
+    @allowed_parking_lots = is_mb3 ? (base_lots + [ "R Lot" ]) : base_lots
     reload_form_options(emp_record)
     render :new, status: :unprocessable_entity
   end
@@ -207,7 +207,7 @@ end
     @agency_options     = Agency.order(:long_name).pluck(:long_name, :agency_id)
     @division_options   = division ? Division.where(agency_id: agency&.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
     @department_options = department ? Department.where(division_id: division&.division_id).order(:long_name).pluck(:long_name, :department_id) : []
-    @unit_options       = department ? Unit.where(department_id: department.department_id).order(:unit_id).map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] } : []
+    @unit_options       = department ? Unit.where(department_id: department.department_id).order(:unit_id).map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] } : []
   end
 
   def parking_lot_submission_params

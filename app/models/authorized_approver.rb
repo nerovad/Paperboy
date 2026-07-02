@@ -7,46 +7,46 @@ class AuthorizedApprover < ApplicationRecord
   validates :employee_id, presence: true
   validates :department_id, presence: true
   validates :service_type, presence: true, inclusion: { in: %w[P E V C K] }
-  validates :key_type, inclusion: { in: %w[1 2 3 4 5 6 7] }, if: -> { service_type == 'K' }
+  validates :key_type, inclusion: { in: %w[1 2 3 4 5 6 7] }, if: -> { service_type == "K" }
   validates :employee_id, uniqueness: {
-    scope: [:department_id, :service_type, :key_type],
+    scope: [ :department_id, :service_type, :key_type ],
     message: "is already authorized for this service type in this department"
   }
-  
+
   SERVICE_TYPES = {
-    'P' => 'Parking Permits',
-    'E' => 'Employee Identification Badges',
-    'V' => 'Volunteer ID Badges',
-    'C' => 'Vendor ID Badges',
-    'K' => 'Facility Keys and Security Access'
+    "P" => "Parking Permits",
+    "E" => "Employee Identification Badges",
+    "V" => "Volunteer ID Badges",
+    "C" => "Vendor ID Badges",
+    "K" => "Facility Keys and Security Access"
   }.freeze
-  
+
   KEY_TYPES = {
-    '1' => 'Master Keys',
-    '2' => 'Access Cards',
-    '3' => 'Site Keys',
-    '4' => 'Area / Room Keys',
-    '5' => 'Perimeter Fence Gates',
-    '6' => 'Equipment Closet Keys',
-    '7' => 'File/Desk/Storage Cabinet Keys'
+    "1" => "Master Keys",
+    "2" => "Access Cards",
+    "3" => "Site Keys",
+    "4" => "Area / Room Keys",
+    "5" => "Perimeter Fence Gates",
+    "6" => "Equipment Closet Keys",
+    "7" => "File/Desk/Storage Cabinet Keys"
   }.freeze
-  
+
   def employee
     Employee.find_by(employee_id: employee_id)
   end
-  
+
   def department
     Department.find_by(department_id: department_id)
   end
-  
+
   def service_type_label
     SERVICE_TYPES[service_type] || service_type
   end
-  
+
   def key_type_label
     KEY_TYPES[key_type] || key_type
   end
-  
+
   # Find approvers for a given department and service type
   def self.approvers_for(department_id:, service_type:)
     where(department_id: department_id, service_type: service_type).pluck(:employee_id).uniq
@@ -60,7 +60,7 @@ class AuthorizedApprover < ApplicationRecord
     unit_str = unit_id.to_s
 
     candidates.select { |a|
-      a.all_budget_units? || a.budget_units.to_s.split(',').map(&:strip).include?(unit_str)
+      a.all_budget_units? || a.budget_units.to_s.split(",").map(&:strip).include?(unit_str)
     }.map(&:employee_id).uniq
   end
 
@@ -71,7 +71,7 @@ class AuthorizedApprover < ApplicationRecord
     if all_budget_units?
       Unit.exists?(unit_id: unit_id, department_id: department_id)
     else
-      budget_units.to_s.split(',').map(&:strip).include?(unit_id.to_s)
+      budget_units.to_s.split(",").map(&:strip).include?(unit_id.to_s)
     end
   end
 
@@ -95,7 +95,7 @@ class AuthorizedApprover < ApplicationRecord
       if a.all_budget_units?
         Unit.where(department_id: a.department_id).pluck(:unit_id).each { |u| unit_ids << u.to_s }
       else
-        a.budget_units.to_s.split(',').map(&:strip).each { |u| unit_ids << u if u.present? }
+        a.budget_units.to_s.split(",").map(&:strip).each { |u| unit_ids << u if u.present? }
       end
     end
     unit_ids.to_a

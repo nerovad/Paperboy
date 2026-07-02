@@ -1,6 +1,6 @@
 class PcardRequestFormsController < ApplicationController
   # Generated controller for PcardRequestForm form
-  before_action :set_pcard_request_form, only: [:show, :edit, :update, :pdf, :approve, :deny, :update_status]
+  before_action :set_pcard_request_form, only: [ :show, :edit, :update, :pdf, :approve, :deny, :update_status ]
 
   def new
     @pcard_request_form = PcardRequestForm.new
@@ -24,7 +24,7 @@ class PcardRequestFormsController < ApplicationController
     # --- Prefill values (everything prefilled exactly like you do now) ---
     @prefill_data = {
       employee_id: @employee["id"],
-      name:        [@employee["first_name"], @employee["last_name"]].compact.join(" "),
+      name:        [ @employee["first_name"], @employee["last_name"] ].compact.join(" "),
       phone:       @employee["work_phone"],
       email:       @employee["email"],
       agency:      agency&.agency_id,
@@ -52,7 +52,7 @@ class PcardRequestFormsController < ApplicationController
     @unit_options = if department
       Unit.where(department_id: department.department_id)
           .order(:unit_id)
-          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
     else
       []
     end
@@ -70,8 +70,8 @@ class PcardRequestFormsController < ApplicationController
       # Step 1: route to the submitter's supervisor
       supervisor = Employee.find_by(employee_id: session.dig(:user, "employee_id"))
       @pcard_request_form.update(status: :step_1_pending, approver_id: supervisor&.supervisor_id&.to_s)
-      # TODO: notify the supervisor
-redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+# TODO: notify the supervisor
+redirect_to form_success_path, notice: "Form submitted and routed to supervisor for approval.", allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
@@ -83,7 +83,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
 
       @prefill_data = {
         employee_id: emp&.[]("id"),
-        name:        emp ? [emp["first_name"], emp["last_name"]].compact.join(" ") : nil,
+        name:        emp ? [ emp["first_name"], emp["last_name"] ].compact.join(" ") : nil,
         phone:       emp&.[]("work_phone"),
         email:       emp&.[]("email"),
         agency:      agency&.agency_id,
@@ -98,7 +98,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
       @unit_options = if department
         Unit.where(department_id: department.department_id)
             .order(:unit_id)
-            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+            .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
       else
         []
       end
@@ -118,7 +118,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
 
   def update
     if @pcard_request_form.update(pcard_request_form_params)
-      redirect_to @pcard_request_form, notice: 'Submission updated successfully.'
+      redirect_to @pcard_request_form, notice: "Submission updated successfully."
     else
       setup_form_options
       render :edit, status: :unprocessable_entity
@@ -139,12 +139,12 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
       @pcard_request_form.advance_approval!
       if @pcard_request_form.approved?
         create_pcard_inventory_record(@pcard_request_form)
-        redirect_to inbox_queue_path, notice: 'Submission approved.'
+        redirect_to inbox_queue_path, notice: "Submission approved."
       else
-        redirect_to inbox_queue_path, notice: 'Approved and routed to the next step.'
+        redirect_to inbox_queue_path, notice: "Approved and routed to the next step."
       end
     else
-      redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
+      redirect_to inbox_queue_path, alert: "Unable to approve this submission."
     end
   end
 
@@ -153,19 +153,18 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
     if @pcard_request_form.respond_to?(:denied!)
       @pcard_request_form.denied!
       @pcard_request_form.update(deny_reason: reason) if @pcard_request_form.respond_to?(:deny_reason=) && reason.present?
-      redirect_to inbox_queue_path, notice: 'Submission denied.'
+      redirect_to inbox_queue_path, notice: "Submission denied."
     else
-      redirect_to inbox_queue_path, alert: 'Unable to deny this submission.'
+      redirect_to inbox_queue_path, alert: "Unable to deny this submission."
     end
   end
 
   def update_status
     new_status = params[:status]
-    if new_status.present? && @pcard_request_form.respond_to?("#{new_status}!")
-      @pcard_request_form.send("#{new_status}!")
-      redirect_to inbox_queue_path, notice: 'Status updated.'
+    if update_trackable_status(@pcard_request_form, new_status)
+      redirect_to inbox_queue_path, notice: "Status updated."
     else
-      redirect_to inbox_queue_path, alert: 'Unable to update status.'
+      redirect_to inbox_queue_path, alert: "Unable to update status."
     end
   end
 
@@ -201,7 +200,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to supervisor 
     @unit_options = if department_id
       Unit.where(department_id: department_id)
           .order(:unit_id)
-          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
     else
       []
     end

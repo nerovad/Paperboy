@@ -1,5 +1,5 @@
 class Unit < GsabssBase
-  self.primary_key = 'unit_id'
+  self.primary_key = "unit_id"
 
   belongs_to :agency, foreign_key: "agency_id", optional: true
   belongs_to :division, foreign_key: "division_id", optional: true

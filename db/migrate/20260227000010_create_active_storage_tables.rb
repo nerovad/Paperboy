@@ -19,12 +19,12 @@ class CreateActiveStorageTables < ActiveRecord::Migration[8.0]
       t.references :blob, null: false, foreign_key: { to_table: :active_storage_blobs }
       t.datetime :created_at, null: false
     end
-    add_index :active_storage_attachments, [:record_type, :record_id, :name, :blob_id], name: "index_active_storage_attachments_uniqueness", unique: true
+    add_index :active_storage_attachments, [ :record_type, :record_id, :name, :blob_id ], name: "index_active_storage_attachments_uniqueness", unique: true
 
     create_table :active_storage_variant_records do |t|
       t.references :blob, null: false, foreign_key: { to_table: :active_storage_blobs }
       t.string :variation_digest, null: false
     end
-    add_index :active_storage_variant_records, [:blob_id, :variation_digest], name: "index_active_storage_variant_records_uniqueness", unique: true
+    add_index :active_storage_variant_records, [ :blob_id, :variation_digest ], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 end

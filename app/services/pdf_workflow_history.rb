@@ -14,12 +14,12 @@ class PdfWorkflowHistory
     pdf.move_down 5
 
     changes.each do |change|
-      when_str = change.created_at&.strftime('%b %d, %Y %I:%M %p')
+      when_str = change.created_at&.strftime("%b %d, %Y %I:%M %p")
       transition = if change.from_status.present?
                      "#{change.from_status} -> #{change.to_status}"
-                   else
+      else
                      change.to_status.to_s
-                   end
+      end
       actor = change.changed_by_name.presence || "System"
       pdf.text "#{when_str} - #{transition} (by #{actor})", size: 10
     end

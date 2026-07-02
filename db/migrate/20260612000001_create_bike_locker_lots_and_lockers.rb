@@ -30,8 +30,8 @@ class CreateBikeLockerLotsAndLockers < ActiveRecord::Migration[8.0]
     end
 
     # A locker number is unique only WITHIN a lot (lots 1/4/6/12 all have a "1").
-    add_index :bike_lockers, [:lot_id, :locker_number], unique: true
+    add_index :bike_lockers, [ :lot_id, :locker_number ], unique: true
     # Drives the availability lookup: free lockers for the chosen lot.
-    add_index :bike_lockers, [:lot_id, :status]
+    add_index :bike_lockers, [ :lot_id, :status ]
   end
 end

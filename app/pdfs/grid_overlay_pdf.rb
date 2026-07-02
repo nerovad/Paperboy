@@ -1,5 +1,5 @@
-require 'prawn'
-require 'prawn/templates'
+require "prawn"
+require "prawn/templates"
 
 class GridOverlayPdf < Prawn::Document
   # {{{ Initialzie InvoiceOverlayPdf
@@ -23,11 +23,11 @@ class GridOverlayPdf < Prawn::Document
 
   def draw_grid(step = 20)
     (0..bounds.width.to_i).step(step) do |x|
-      stroke_line [x, 0], [x, bounds.height]
+      stroke_line [ x, 0 ], [ x, bounds.height ]
     end
 
     (0..bounds.height.to_i).step(step) do |y|
-      stroke_line [0, y], [bounds.width, y]
+      stroke_line [ 0, y ], [ bounds.width, y ]
     end
   end
 
@@ -39,11 +39,11 @@ class GridOverlayPdf < Prawn::Document
     size = 6
 
     (0..bounds.width.to_i).step(step) do |x|
-      draw_text x.to_s, size: size, at: [x + 2, 10]
+      draw_text x.to_s, size: size, at: [ x + 2, 10 ]
     end
 
     (0..bounds.height.to_i).step(step) do |y|
-      draw_text y.to_s, size: size, at: [2, y + 2]
+      draw_text y.to_s, size: size, at: [ 2, y + 2 ]
     end
   end
 

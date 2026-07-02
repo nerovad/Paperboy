@@ -1,6 +1,6 @@
 class NoticeOfChangeFormsController < ApplicationController
   # Generated controller for NoticeOfChangeForm form
-  before_action :set_notice_of_change_form, only: [:show, :edit, :update, :pdf, :approve, :deny, :update_status]
+  before_action :set_notice_of_change_form, only: [ :show, :edit, :update, :pdf, :approve, :deny, :update_status ]
 
   def new
     @notice_of_change_form = NoticeOfChangeForm.new
@@ -24,7 +24,7 @@ class NoticeOfChangeFormsController < ApplicationController
     # --- Prefill values (everything prefilled exactly like you do now) ---
     @prefill_data = {
       employee_id: @employee.employee_id,
-      name:        [@employee.first_name, @employee.last_name].compact.join(" "),
+      name:        [ @employee.first_name, @employee.last_name ].compact.join(" "),
       phone:       @employee.work_phone,
       email:       @employee.email,
       agency:      agency&.agency_id,
@@ -52,7 +52,7 @@ class NoticeOfChangeFormsController < ApplicationController
     @unit_options = if department
       Unit.where(department_id: department.department_id)
           .order(:unit_id)
-          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
     else
       []
     end
@@ -66,18 +66,18 @@ class NoticeOfChangeFormsController < ApplicationController
     @notice_of_change_form.employee_id = employee_id if @notice_of_change_form.respond_to?(:employee_id=)
 
     if @notice_of_change_form.save
-      # Keep success behavior simple for the template; you can extend per form.
-      # Multi-step approval routing (1 steps)
+# Keep success behavior simple for the template; you can extend per form.
+# Multi-step approval routing (1 steps)
 # Step 1: employee #135272
-approver_id = '135272'
+approver_id = "135272"
 @notice_of_change_form.update(status: :step_1_pending, approver_id: approver_id)
 # TODO: Send notification to employee #135272
 # Multi-step approval routing (1 steps)
 # Step 1: employee #123385
-approver_id = '123385'
+approver_id = "123385"
 @notice_of_change_form.update(status: :step_1_pending, approver_id: approver_id)
 # TODO: Send notification to employee #123385
-redirect_to form_success_path, notice: 'Form submitted and routed to employee #123385 for approval.', allow_other_host: false, status: :see_other
+redirect_to form_success_path, notice: "Form submitted and routed to employee #123385 for approval.", allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
@@ -89,7 +89,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to employee #1
 
       @prefill_data = {
         employee_id: emp&.employee_id,
-        name:        emp ? [emp&.first_name, emp&.last_name].compact.join(" ") : nil,
+        name:        emp ? [ emp&.first_name, emp&.last_name ].compact.join(" ") : nil,
         phone:       emp&.work_phone,
         email:       emp&.email,
         agency:      agency&.agency_id,
@@ -104,7 +104,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to employee #1
       @unit_options = if department
         Unit.where(department_id: department.department_id)
             .order(:unit_id)
-            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+            .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
       else
         []
       end
@@ -124,7 +124,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to employee #1
 
   def update
     if @notice_of_change_form.update(notice_of_change_form_params)
-      redirect_to @notice_of_change_form, notice: 'Submission updated successfully.'
+      redirect_to @notice_of_change_form, notice: "Submission updated successfully."
     else
       setup_form_options
       render :edit, status: :unprocessable_entity
@@ -143,10 +143,10 @@ redirect_to form_success_path, notice: 'Form submitted and routed to employee #1
   def approve
     if @notice_of_change_form.respond_to?(:advance_approval!)
       @notice_of_change_form.advance_approval!
-      notice = @notice_of_change_form.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
+      notice = @notice_of_change_form.approved? ? "Submission approved." : "Approved and routed to the next step."
       redirect_to inbox_queue_path, notice: notice
     else
-      redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
+      redirect_to inbox_queue_path, alert: "Unable to approve this submission."
     end
   end
 
@@ -155,19 +155,18 @@ redirect_to form_success_path, notice: 'Form submitted and routed to employee #1
     if @notice_of_change_form.respond_to?(:denied!)
       @notice_of_change_form.denied!
       @notice_of_change_form.update(deny_reason: reason) if @notice_of_change_form.respond_to?(:deny_reason=) && reason.present?
-      redirect_to inbox_queue_path, notice: 'Submission denied.'
+      redirect_to inbox_queue_path, notice: "Submission denied."
     else
-      redirect_to inbox_queue_path, alert: 'Unable to deny this submission.'
+      redirect_to inbox_queue_path, alert: "Unable to deny this submission."
     end
   end
 
   def update_status
     new_status = params[:status]
-    if new_status.present? && @notice_of_change_form.respond_to?("#{new_status}!")
-      @notice_of_change_form.send("#{new_status}!")
-      redirect_to inbox_queue_path, notice: 'Status updated.'
+    if update_trackable_status(@notice_of_change_form, new_status)
+      redirect_to inbox_queue_path, notice: "Status updated."
     else
-      redirect_to inbox_queue_path, alert: 'Unable to update status.'
+      redirect_to inbox_queue_path, alert: "Unable to update status."
     end
   end
 
@@ -203,7 +202,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to employee #1
     @unit_options = if department_id
       Unit.where(department_id: department_id)
           .order(:unit_id)
-          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
     else
       []
     end

@@ -1,5 +1,5 @@
 class Osha300aEntry < ApplicationRecord
-  self.table_name = 'osha_300a_entries'
+  self.table_name = "osha_300a_entries"
 
   attribute :submitted_payload,   :json
   attribute :submission_response, :json

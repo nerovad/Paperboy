@@ -28,7 +28,7 @@ class ApplicationController < ActionController::Base
     user = session[:user]
     @inbox_count =
       if user && user["employee_id"].present?
-        InboxQuery.new(scoped_employee_ids: [user["employee_id"].to_s]).count
+        InboxQuery.new(scoped_employee_ids: [ user["employee_id"].to_s ]).count
       else
         0
       end
@@ -110,12 +110,12 @@ class ApplicationController < ActionController::Base
 
   def current_user_dropdown_permissions
     return @_current_user_dropdown_permissions if defined?(@_current_user_dropdown_permissions)
-    @_current_user_dropdown_permissions = load_user_permissions('dropdown')
+    @_current_user_dropdown_permissions = load_user_permissions("dropdown")
   end
 
   def current_user_form_permission_keys
     return @_current_user_form_permission_keys if defined?(@_current_user_form_permission_keys)
-    @_current_user_form_permission_keys = load_user_permissions('form')
+    @_current_user_form_permission_keys = load_user_permissions("form")
   end
 
   def require_system_admin
@@ -131,6 +131,20 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def update_trackable_status(record, new_status)
+    status = new_status.to_s
+    return false unless record.class.respond_to?(:statuses)
+    return false unless record.class.statuses.key?(status)
+
+    record.update(status: status)
+  end
+
+  def application_record_class_named(class_name)
+    Rails.application.eager_load! unless Rails.application.config.eager_load
+
+    ApplicationRecord.descendants.find { |model_class| model_class.name == class_name.to_s }
+  end
 
   def load_current_user_groups
     employee_id = session.dig(:user, "employee_id")

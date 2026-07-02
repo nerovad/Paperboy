@@ -1,17 +1,17 @@
 namespace :powerbi do
   desc "Get Power BI workspace ID for debugging"
   task get_workspace_id: :environment do
-    require 'net/http'
-    require 'uri'
-    require 'json'
+    require "net/http"
+    require "uri"
+    require "json"
 
     puts "Fetching Power BI workspaces..."
     puts "Using GCC endpoints (commercial auth, gov Power BI)"
     puts
 
     # Get Azure AD access token
-    authority_url = ENV['POWERBI_AUTHORITY_URL'] || 'https://login.microsoftonline.com'
-    tenant_id = ENV['POWERBI_TENANT_ID']
+    authority_url = ENV["POWERBI_AUTHORITY_URL"] || "https://login.microsoftonline.com"
+    tenant_id = ENV["POWERBI_TENANT_ID"]
 
     if tenant_id.blank?
       puts "ERROR: POWERBI_TENANT_ID not set in .env"
@@ -25,57 +25,57 @@ namespace :powerbi do
 
     request = Net::HTTP::Post.new(token_uri.request_uri)
     request.set_form_data(
-      'grant_type' => 'client_credentials',
-      'client_id' => ENV['POWERBI_CLIENT_ID'],
-      'client_secret' => ENV['POWERBI_CLIENT_SECRET'],
-      'scope' => ENV['POWERBI_SCOPE']
+      "grant_type" => "client_credentials",
+      "client_id" => ENV["POWERBI_CLIENT_ID"],
+      "client_secret" => ENV["POWERBI_CLIENT_SECRET"],
+      "scope" => ENV["POWERBI_SCOPE"]
     )
 
     begin
       response = http.request(request)
       token_data = JSON.parse(response.body)
 
-      if token_data['error']
+      if token_data["error"]
         puts "ERROR getting access token:"
         puts "  #{token_data['error']}: #{token_data['error_description']}"
         exit 1
       end
 
-      access_token = token_data['access_token']
+      access_token = token_data["access_token"]
       puts "✓ Successfully obtained access token"
       puts
 
       # Get workspaces
-      api_url = ENV['POWERBI_API_URL'] || 'https://api.powerbigov.us'
+      api_url = ENV["POWERBI_API_URL"] || "https://api.powerbigov.us"
       workspaces_uri = URI.parse("#{api_url}/v1.0/myorg/groups")
 
       http = Net::HTTP.new(workspaces_uri.host, workspaces_uri.port)
       http.use_ssl = true
 
       request = Net::HTTP::Get.new(workspaces_uri.request_uri)
-      request['Authorization'] = "Bearer #{access_token}"
+      request["Authorization"] = "Bearer #{access_token}"
 
       response = http.request(request)
       puts "API Response: #{response.code} #{response.message}"
-      puts "WWW-Authenticate: #{response['WWW-Authenticate']}" if response['WWW-Authenticate']
+      puts "WWW-Authenticate: #{response['WWW-Authenticate']}" if response["WWW-Authenticate"]
       puts "Response body: #{response.body[0..500]}" if response.body.present?
 
       # Decode token to check audience
-      token_parts = access_token.split('.')
+      token_parts = access_token.split(".")
       if token_parts.length >= 2
-        payload = JSON.parse(Base64.decode64(token_parts[1] + '=='))
+        payload = JSON.parse(Base64.decode64(token_parts[1] + "=="))
         puts
         puts "Token audience (aud): #{payload['aud']}"
         puts "Token issuer (iss):   #{payload['iss']}"
         puts "Token roles:          #{payload['roles']&.join(', ') || 'NONE'}"
         puts "Token app ID:         #{payload['appid'] || payload['azp']}"
-        puts "Token expires:        #{Time.at(payload['exp']).utc}" if payload['exp']
+        puts "Token expires:        #{Time.at(payload['exp']).utc}" if payload["exp"]
       end
 
-      exit(1) if response.code != '200'
+      exit(1) if response.code != "200"
       workspaces_data = JSON.parse(response.body)
 
-      if workspaces_data['error']
+      if workspaces_data["error"]
         puts "ERROR getting workspaces:"
         puts "  #{workspaces_data['error']['code']}: #{workspaces_data['error']['message']}"
         exit 1
@@ -84,7 +84,7 @@ namespace :powerbi do
       puts "Available workspaces:"
       puts "=" * 80
 
-      workspaces_data['value'].each do |workspace|
+      workspaces_data["value"].each do |workspace|
         puts "Name: #{workspace['name']}"
         puts "ID:   #{workspace['id']}"
         puts "Type: #{workspace['type'] || 'Workspace'}"

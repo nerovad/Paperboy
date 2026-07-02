@@ -61,9 +61,9 @@ class TeamsNotifier
   end
 
   def self.post_to_teams(webhook_url, payload)
-    require 'net/http'
-    require 'uri'
-    require 'json'
+    require "net/http"
+    require "uri"
+    require "json"
 
     uri = URI.parse(webhook_url)
 
@@ -73,7 +73,7 @@ class TeamsNotifier
     http.open_timeout = 5
 
     request = Net::HTTP::Post.new(uri.request_uri)
-    request['Content-Type'] = 'application/json'
+    request["Content-Type"] = "application/json"
     request.body = payload.to_json
 
     response = http.request(request)

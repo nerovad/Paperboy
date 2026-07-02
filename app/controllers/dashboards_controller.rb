@@ -28,7 +28,7 @@ class DashboardsController < ApplicationController
       return
     end
 
-    unless current_user_group_names.include?("system_admins") || current_user_dropdown_permissions.include?('dashboards')
+    unless current_user_group_names.include?("system_admins") || current_user_dropdown_permissions.include?("dashboards")
       redirect_to root_path, alert: "Access denied."
     end
   end

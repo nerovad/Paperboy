@@ -1,4 +1,4 @@
-require 'sidekiq/web'
+require "sidekiq/web"
 
 Rails.application.routes.draw do
   resources :fleet_vehicle_garaging_forms do
@@ -68,11 +68,11 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  get 'osha_log', to: 'osha_logs#index', as: :osha_log
-  get   'osha_300a',         to: 'osha_300as#show',    as: :osha_300a
-  patch 'osha_300a',         to: 'osha_300as#update'
-  get   'osha_300a/payload', to: 'osha_300as#payload', as: :osha_300a_payload
-  post  'osha_300a/submit',  to: 'osha_300as#submit',  as: :osha_300a_submit
+  get "osha_log", to: "osha_logs#index", as: :osha_log
+  get   "osha_300a",         to: "osha_300as#show",    as: :osha_300a
+  patch "osha_300a",         to: "osha_300as#update"
+  get   "osha_300a/payload", to: "osha_300as#payload", as: :osha_300a_payload
+  post  "osha_300a/submit",  to: "osha_300as#submit",  as: :osha_300a_submit
   resources :leave_of_absence_forms do
     member do
             get :download_doctors_note_attachment
@@ -119,9 +119,9 @@ Rails.application.routes.draw do
   # Authentication & Sessions
   # ============================================================================
   # OAuth/Entra ID routes
-  get '/auth/callback', to: 'sessions#create_oauth'
-  get '/auth/failure', to: 'sessions#failure'
-  post '/auth/entra_id', to: 'sessions#setup', as: :auth_setup
+  get "/auth/callback", to: "sessions#create_oauth"
+  get "/auth/failure", to: "sessions#failure"
+  post "/auth/entra_id", to: "sessions#setup", as: :auth_setup
 
   # Legacy login (keep for admin impersonation)
   post "/login", to: "sessions#create_legacy"
@@ -141,17 +141,17 @@ Rails.application.routes.draw do
   # Admin & Tools
   # ============================================================================
   namespace :admin do
-    resources :impersonations, only: [:new, :create, :destroy]
-    resources :data_validation, only: [:index]
+    resources :impersonations, only: [ :new, :create, :destroy ]
+    resources :data_validation, only: [ :index ]
   end
 
-  resources :pcard_inventory, only: [:index, :new, :create, :edit, :update] do
+  resources :pcard_inventory, only: [ :index, :new, :create, :edit, :update ] do
     collection do
       get :export
     end
   end
 
-  resources :authorization_console, only: [:index, :new, :create] do
+  resources :authorization_console, only: [ :index, :new, :create ] do
     collection do
       delete :destroy_all_for_employee
       get    :group_edit
@@ -160,7 +160,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :acl, only: [:index, :show, :new, :create, :edit, :update, :destroy] do
+  resources :acl, only: [ :index, :show, :new, :create, :edit, :update, :destroy ] do
     member do
       post :add_member
       delete :remove_member
@@ -178,7 +178,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :billing_tools, only: [:new, :create] do
+  resources :billing_tools, only: [ :new, :create ] do
     collection do
       post :move_to_production
       post :run_monthly_billing
@@ -187,14 +187,14 @@ Rails.application.routes.draw do
     end
   end
 
-  mount Sidekiq::Web => '/sidekiq'
+  mount Sidekiq::Web => "/sidekiq"
 
   # ============================================================================
   # Reports & Scheduled Reports
   # ============================================================================
-  get 'reports', to: 'reports#index', as: 'reports'
-  post 'reports/generate', to: 'reports#generate', as: 'reports_generate'
-  get 'reports/status_options', to: 'reports#status_options', as: 'reports_status_options'
+  get "reports", to: "reports#index", as: "reports"
+  post "reports/generate", to: "reports#generate", as: "reports_generate"
+  get "reports/status_options", to: "reports#status_options", as: "reports_status_options"
 
   resources :scheduled_reports do
     member do
@@ -209,7 +209,7 @@ Rails.application.routes.draw do
   get "/inbox/status_history/:type/:id", to: "inbox#status_history", as: "inbox_status_history"
   get "/submissions", to: "submissions#index", as: :submissions
   get "/submissions/status_options", to: "submissions#status_options", as: :submissions_status_options
-  resources :saved_searches, only: [:create, :destroy]
+  resources :saved_searches, only: [ :create, :destroy ]
 
   resources :form_submission_copies, only: [] do
     member do
@@ -241,12 +241,12 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :form_visibility_grants, only: [:index, :create, :destroy]
+  resources :form_visibility_grants, only: [ :index, :create, :destroy ]
 
   # ============================================================================
   # Workflow Forms (with approval/denial workflows)
   # ============================================================================
-  resources :parking_lot_submissions, only: [:new, :create, :index, :show] do
+  resources :parking_lot_submissions, only: [ :new, :create, :index, :show ] do
     member do
       get :pdf
       patch :approve
@@ -254,7 +254,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :probation_transfer_requests, only: [:new, :create, :index, :show] do
+  resources :probation_transfer_requests, only: [ :new, :create, :index, :show ] do
     member do
       get :pdf
       patch :approve
@@ -263,7 +263,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :critical_information_reportings, only: [:new, :create, :show, :edit, :update] do
+  resources :critical_information_reportings, only: [ :new, :create, :show, :edit, :update ] do
     member do
       get :pdf
       get "download_media/:attachment_id", action: :download_media, as: :download_media
@@ -277,10 +277,10 @@ Rails.application.routes.draw do
   # ============================================================================
   # Standard Forms (alphabetical)
   # ============================================================================
-  resources :creative_job_requests, only: [:new, :create]
+  resources :creative_job_requests, only: [ :new, :create ]
   get "help", to: "help#index", as: :help
-  resource :settings, only: [:show, :update]
-  resources :help_tickets, only: [:new, :create, :index, :show] do
+  resource :settings, only: [ :show, :update ]
+  resources :help_tickets, only: [ :new, :create, :index, :show ] do
     member do
       patch :close
     end
@@ -289,7 +289,7 @@ Rails.application.routes.draw do
   # ============================================================================
   # Lookup Tables Management
   # ============================================================================
-  resources :lookup_tables, only: [:index, :show, :new, :create]
+  resources :lookup_tables, only: [ :index, :show, :new, :create ]
 
   # ============================================================================
   # Lookups & Dynamic Data

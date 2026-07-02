@@ -97,6 +97,6 @@ end
   end
 
   def assignment_field_name
-    'supervisor_id'
+    "supervisor_id"
   end
 end

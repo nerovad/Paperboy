@@ -79,14 +79,13 @@ Rails.application.configure do
 
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
-  address:              'smtp4.co.ventura.ca.us',
+  address:              "smtp4.co.ventura.ca.us",
   port:                 25,
-  domain:               'co.ventura.ca.us',
+  domain:               "co.ventura.ca.us",
   enable_starttls_auto: false,
-  openssl_verify_mode: 'none'  # optional if using TLS
+  openssl_verify_mode: "none"  # optional if using TLS
   # No user_name, password, or authentication!
 }
 
   config.action_mailer.default_url_options = { host: "dev-gsa-forms" }
-
 end

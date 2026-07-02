@@ -25,13 +25,13 @@ class InboxController < ApplicationController
     # nil means "no assignee restriction" (system admin viewing All).
     @scoped_employee_ids = if @show_employee_filter && params[:filter_employee].present?
                              if params[:filter_employee] == "all"
-                               @is_system_admin ? nil : [employee_id] + @subordinate_ids
+                               @is_system_admin ? nil : [ employee_id ] + @subordinate_ids
                              else
-                               [params[:filter_employee]]
+                               [ params[:filter_employee] ]
                              end
-                           else
-                             [employee_id]
-                           end
+    else
+                             [ employee_id ]
+    end
 
     # Assemble the inbox contents (probation, CIR, routed dynamic forms, and
     # granted form types — deduped, with terminal items dropped). Shared with the
@@ -79,8 +79,8 @@ class InboxController < ApplicationController
     end
 
     # Apply sorting
-    sort_by = params[:sort_by] || 'created_at'
-    sort_direction = params[:sort_direction] || 'desc'
+    sort_by = params[:sort_by] || "created_at"
+    sort_direction = params[:sort_direction] || "desc"
 
     @submissions = sort_collection(@submissions, sort_by, sort_direction, inbox_sort_configs)
 
@@ -102,7 +102,7 @@ class InboxController < ApplicationController
   # to models that actually track status (include TrackableStatus) so the type
   # param can't be used to render arbitrary records.
   def status_history
-    klass = params[:type].to_s.safe_constantize
+    klass = application_record_class_named(params[:type])
 
     unless klass.is_a?(Class) && klass < ApplicationRecord && klass.include?(TrackableStatus)
       head :not_found and return
@@ -147,20 +147,19 @@ class InboxController < ApplicationController
 
   def inbox_sort_configs
     {
-      'reference' => ->(s) {
+      "reference" => ->(s) {
         ref = FormReference.reference_for(s, @prefix_map) || ""
         prefix, id = ref.split("-")
         # Zero-pad the id so it sorts numerically within a prefix (the sort
         # helper compares the stringified value).
         format("%s-%012d", prefix.to_s, id.to_i)
       },
-      'form_type' => ->(s) { s.class.name.demodulize.titleize },
-      'name' => ->(s) { s.name.to_s },
-      'unit' => ->(s) { (s.try(:unit) || '').to_s },
-      'email' => ->(s) { s.email.to_s },
-      'status' => ->(s) { s.status_label.to_s },
-      'created_at' => ->(s) { s.created_at.to_s }
+      "form_type" => ->(s) { s.class.name.demodulize.titleize },
+      "name" => ->(s) { s.name.to_s },
+      "unit" => ->(s) { (s.try(:unit) || "").to_s },
+      "email" => ->(s) { s.email.to_s },
+      "status" => ->(s) { s.status_label.to_s },
+      "created_at" => ->(s) { s.created_at.to_s }
     }
   end
-
 end

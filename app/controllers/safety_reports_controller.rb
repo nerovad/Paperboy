@@ -1,5 +1,5 @@
 class SafetyReportsController < ApplicationController
-  before_action :set_safety_report, only: [:show, :edit, :update, :pdf, :approve, :deny, :update_status]
+  before_action :set_safety_report, only: [ :show, :edit, :update, :pdf, :approve, :deny, :update_status ]
 
   def new
     @safety_report = SafetyReport.new
@@ -23,14 +23,14 @@ class SafetyReportsController < ApplicationController
     # --- Prefill values ---
     @prefill_data = {
       employee_id:     @employee.employee_id,
-      name:            [@employee.first_name, @employee.last_name].compact.join(" "),
+      name:            [ @employee.first_name, @employee.last_name ].compact.join(" "),
       phone:           @employee.work_phone,
       email:           @employee.email,
       agency:          agency&.agency_id,
       division:        division&.division_id,
       department:      department&.department_id,
       unit:            unit&.unit_id,
-      supervisor_name: [@employee.supervisor_first_name, @employee.supervisor_last_name].compact.join(" ").presence
+      supervisor_name: [ @employee.supervisor_first_name, @employee.supervisor_last_name ].compact.join(" ").presence
     }
 
     @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
@@ -50,7 +50,7 @@ class SafetyReportsController < ApplicationController
     @unit_options = if department
       Unit.where(department_id: department.department_id)
           .order(:unit_id)
-          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
     else
       []
     end
@@ -64,12 +64,12 @@ class SafetyReportsController < ApplicationController
     @safety_report.employee_id = employee_id if @safety_report.respond_to?(:employee_id=)
 
     if @safety_report.save
-      # ROUTING_BLOCK_START
-      # Multi-step approval routing (2 steps)
+# ROUTING_BLOCK_START
+# Multi-step approval routing (2 steps)
 # Delegates to TrackableStatus#start_approval!, which picks the first
 # step whose condition matches the submitted record.
 @safety_report.start_approval!
-redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
+redirect_to form_success_path, notice: "Form submitted and routed for approval.", allow_other_host: false, status: :see_other
       # ROUTING_BLOCK_END
     else
       emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
@@ -80,14 +80,14 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
 
       @prefill_data = {
         employee_id:     emp&.employee_id,
-        name:            emp ? [emp&.first_name, emp&.last_name].compact.join(" ") : nil,
+        name:            emp ? [ emp&.first_name, emp&.last_name ].compact.join(" ") : nil,
         phone:           emp&.work_phone,
         email:           emp&.email,
         agency:          agency&.agency_id,
         division:        division&.division_id,
         department:      department&.department_id,
         unit:            unit&.unit_id,
-        supervisor_name: emp ? [emp&.supervisor_first_name, emp&.supervisor_last_name].compact.join(" ").presence : nil
+        supervisor_name: emp ? [ emp&.supervisor_first_name, emp&.supervisor_last_name ].compact.join(" ").presence : nil
       }
 
       @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
@@ -96,7 +96,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
       @unit_options = if department
         Unit.where(department_id: department.department_id)
             .order(:unit_id)
-            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+            .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
       else
         []
       end
@@ -116,12 +116,12 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
     if @safety_report.update(safety_report_params)
       # Auto-create OSHA Report when the safety officer marks as reportable.
       # The editing user becomes the approver on the spawned OSHA Report.
-      if @safety_report.osha_reportable == 'Yes' && @safety_report.osha_report.blank?
+      if @safety_report.osha_reportable == "Yes" && @safety_report.osha_report.blank?
         @safety_report.create_osha_report!(approver_id: session.dig(:user, "employee_id"))
       end
 
       redirect_to form_success_path,
-                  notice: 'Form updated successfully.',
+                  notice: "Form updated successfully.",
                   allow_other_host: false,
                   status: :see_other
     else
@@ -142,10 +142,10 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
   def approve
     if @safety_report.respond_to?(:advance_approval!)
       @safety_report.advance_approval!
-      notice = @safety_report.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
+      notice = @safety_report.approved? ? "Submission approved." : "Approved and routed to the next step."
       redirect_to inbox_queue_path, notice: notice
     else
-      redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
+      redirect_to inbox_queue_path, alert: "Unable to approve this submission."
     end
   end
 
@@ -154,19 +154,18 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
     if @safety_report.respond_to?(:denied!)
       @safety_report.denied!
       @safety_report.update(deny_reason: reason) if @safety_report.respond_to?(:deny_reason=) && reason.present?
-      redirect_to inbox_queue_path, notice: 'Submission denied.'
+      redirect_to inbox_queue_path, notice: "Submission denied."
     else
-      redirect_to inbox_queue_path, alert: 'Unable to deny this submission.'
+      redirect_to inbox_queue_path, alert: "Unable to deny this submission."
     end
   end
 
   def update_status
     new_status = params[:status]
-    if new_status.present? && @safety_report.respond_to?("#{new_status}!")
-      @safety_report.send("#{new_status}!")
-      redirect_to inbox_queue_path, notice: 'Status updated.'
+    if update_trackable_status(@safety_report, new_status)
+      redirect_to inbox_queue_path, notice: "Status updated."
     else
-      redirect_to inbox_queue_path, alert: 'Unable to update status.'
+      redirect_to inbox_queue_path, alert: "Unable to update status."
     end
   end
 
@@ -204,7 +203,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
     @unit_options = if department_id
       Unit.where(department_id: department_id)
           .order(:unit_id)
-          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
     else
       []
     end
@@ -227,7 +226,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
       :hospital_phone, :hospitalized_overnight
     ]
 
-    if current_user_group_names.include?('hca_safety_officers')
+    if current_user_group_names.include?("hca_safety_officers")
       permitted += [
         :investigator_name, :investigator_title, :investigator_phone,
         :nature_of_incident, :cause_of_incident, :root_cause,

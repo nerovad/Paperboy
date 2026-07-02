@@ -4,7 +4,7 @@ source "https://rubygems.org"
 gem "rails", "~> 8.0.2"
 
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
-#gem "propshaft"
+# gem "propshaft"
 gem "sass-rails", ">= 6"
 
 # Use sqlite3 as the database for Active Record
@@ -30,7 +30,7 @@ gem "stimulus-rails"
 gem "jbuilder"
 
 # Backend Queuing Manager
-gem 'sidekiq'
+gem "sidekiq"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 gem "bcrypt", "~> 3.1.7"
@@ -38,36 +38,36 @@ gem "sidekiq-cron"
 gem "redis"
 
 # Metabase signed embedding
-gem 'jwt'
+gem "jwt"
 
-#PDF Generation
-gem 'prawn'
+# PDF Generation
+gem "prawn"
 gem "prawn-table"
 gem "prawn-templates"
 
-#CSV Generation
-gem 'csv'
+# CSV Generation
+gem "csv"
 
 # ZIP file generation for report bundles
-gem 'rubyzip', require: 'zip'
+gem "rubyzip", require: "zip"
 
 # Duo 2 factor auth login
-gem 'duo_web'
+gem "duo_web"
 
-gem 'omniauth'
-gem 'omniauth-rails_csrf_protection'
-gem 'omniauth-entra-id'
+gem "omniauth"
+gem "omniauth-rails_csrf_protection"
+gem "omniauth-entra-id"
 
 # Gemfile
-gem 'dotenv-rails', groups: %i[development test production]
+gem "dotenv-rails", groups: %i[development test production]
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
 # Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
-gem "solid_cache", group: [:development, :test]
-gem "solid_queue", group: [:development, :test]
-gem "solid_cable", group: [:development, :test]
+gem "solid_cache", group: [ :development, :test ]
+gem "solid_queue", group: [ :development, :test ]
+gem "solid_cable", group: [ :development, :test ]
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
@@ -90,6 +90,10 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Provides the task runner used by Paperboy and Rails maintenance tasks.
+  # https://github.com/ruby/rake
+  gem "rake"
 end
 
 group :development do
@@ -101,9 +105,10 @@ group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
+  gem "bundler-audit", require: false
 end
 
 gem "sass-embedded", "~> 1.94"
 
 # Pagination
-gem 'pagy'
+gem "pagy"

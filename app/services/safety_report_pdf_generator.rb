@@ -4,7 +4,7 @@ class SafetyReportPdfGenerator
   def self.generate(submission)
     logo_path = Rails.root.join("app", "assets", "images", "Ventura_Logo.png")
 
-    Prawn::Document.new(page_size: 'A4', margin: 40) do |pdf|
+    Prawn::Document.new(page_size: "A4", margin: 40) do |pdf|
       pdf.image(logo_path.to_s, width: 80) if File.exist?(logo_path)
 
       pdf.move_down 10
@@ -43,7 +43,7 @@ class SafetyReportPdfGenerator
     template = submission.form_template
     return unless template
 
-    fields = template.form_fields.ordered.where('page_number >= 3').to_a
+    fields = template.form_fields.ordered.where("page_number >= 3").to_a
     return if fields.empty?
 
     fields.group_by(&:page_number).each do |page_num, page_fields|
@@ -60,7 +60,7 @@ class SafetyReportPdfGenerator
           next
         end
 
-        next if field.field_type == 'media_attachment'
+        next if field.field_type == "media_attachment"
 
         value = format_value(field, submission)
         pdf.text "#{field.label}: #{value}"
@@ -85,13 +85,13 @@ class SafetyReportPdfGenerator
     return "—" if raw.nil? || (raw.respond_to?(:blank?) && raw.blank?)
 
     case field.field_type
-    when 'date'
-      raw.respond_to?(:strftime) ? raw.strftime('%B %d, %Y') : raw.to_s
-    when 'date_time'
-      raw.respond_to?(:strftime) ? raw.strftime('%B %d, %Y at %I:%M %p') : raw.to_s
-    when 'time'
-      raw.respond_to?(:strftime) ? raw.strftime('%I:%M %p') : raw.to_s
-    when 'currency'
+    when "date"
+      raw.respond_to?(:strftime) ? raw.strftime("%B %d, %Y") : raw.to_s
+    when "date_time"
+      raw.respond_to?(:strftime) ? raw.strftime("%B %d, %Y at %I:%M %p") : raw.to_s
+    when "time"
+      raw.respond_to?(:strftime) ? raw.strftime("%I:%M %p") : raw.to_s
+    when "currency"
       ActionController::Base.helpers.number_to_currency(raw)
     else
       raw.to_s

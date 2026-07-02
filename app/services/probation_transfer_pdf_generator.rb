@@ -4,7 +4,7 @@ class ProbationTransferPdfGenerator
   def self.generate(request)
     logo_path = Rails.root.join("app", "assets", "images", "Ventura_Logo.png")
 
-    Prawn::Document.new(page_size: 'A4', margin: 40) do |pdf|
+    Prawn::Document.new(page_size: "A4", margin: 40) do |pdf|
       # Header with logo
       if File.exist?(logo_path)
         pdf.image logo_path.to_s, width: 80

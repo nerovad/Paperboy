@@ -31,8 +31,8 @@ class BillingToolsController < ApplicationController
 
   def date_params
     {
-      sDate: params[:s_date].presence || '2023-07-01',
-      eDate: params[:e_date].presence || '2062-12-31'
+      sDate: params[:s_date].presence || "2023-07-01",
+      eDate: params[:e_date].presence || "2062-12-31"
     }
   end
 
@@ -42,7 +42,7 @@ class BillingToolsController < ApplicationController
     values = args.values
 
     BillingBase.connection.exec_query(
-      ActiveRecord::Base.send(:sanitize_sql_array, [sql, *values])
+      ActiveRecord::Base.send(:sanitize_sql_array, [ sql, *values ])
     )
   end
 end

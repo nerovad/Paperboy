@@ -35,9 +35,9 @@ module MatthewTestYay
 
         logo_path = Rails.root.join("app/assets/images/report_logo.png")
         if File.exist?(logo_path)
-          @pdf.image(logo_path.to_s, at: [38, 780], width: 600)
+          @pdf.image(logo_path.to_s, at: [ 38, 780 ], width: 600)
         else
-          @pdf.text_box("MISSING LOGO", at: [38, 780], width: 200, height: 20)
+          @pdf.text_box("MISSING LOGO", at: [ 38, 780 ], width: 200, height: 20)
         end
 
         @mapping.each do |field, coords|
@@ -48,7 +48,7 @@ module MatthewTestYay
 
           @pdf.text_box(
             "#{field.to_s.upcase}:",
-            at: [x - 90, y],
+            at: [ x - 90, y ],
             width: 90,
             height: 20,
             overflow: :truncate,
@@ -57,7 +57,7 @@ module MatthewTestYay
 
           @pdf.text_box(
             value.to_s,
-            at: [x, y],
+            at: [ x, y ],
             width: 200,
             height: 20,
             overflow: :truncate,
@@ -68,11 +68,10 @@ module MatthewTestYay
 
       @pdf.number_pages(
         "<page> of <total>",
-        at: [500, 20],
+        at: [ 500, 20 ],
         width: 100,
         align: :right
       )
     end
-
   end
 end

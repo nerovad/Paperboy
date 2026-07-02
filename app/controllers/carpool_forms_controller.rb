@@ -20,7 +20,7 @@ class CarpoolFormsController < ApplicationController
     # --- Prefill values (everything prefilled exactly like you do now) ---
     @prefill_data = {
       employee_id: @employee.employee_id,
-      name:        [@employee.first_name, @employee.last_name].compact.join(" "),
+      name:        [ @employee.first_name, @employee.last_name ].compact.join(" "),
       phone:       @employee.work_phone,
       email:       @employee.email,
       agency:      agency&.agency_id,
@@ -48,7 +48,7 @@ class CarpoolFormsController < ApplicationController
     @unit_options = if department
       Unit.where(department_id: department.department_id)
           .order(:unit_id)
-          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
     else
       []
     end
@@ -62,13 +62,13 @@ class CarpoolFormsController < ApplicationController
     @carpool_form.employee_id = employee_id if @carpool_form.respond_to?(:employee_id=)
 
     if @carpool_form.save
-      # ROUTING_BLOCK_START
-      # Multi-step approval routing (1 steps)
+# ROUTING_BLOCK_START
+# Multi-step approval routing (1 steps)
 # Step 1: employee #134622
-approver_id = '134622'
+approver_id = "134622"
 @carpool_form.update(status: :step_1_pending, approver_id: approver_id)
 # TODO: Send notification to employee #134622
-redirect_to form_success_path, notice: 'Form submitted and routed to employee #134622 for approval.', allow_other_host: false, status: :see_other
+redirect_to form_success_path, notice: "Form submitted and routed to employee #134622 for approval.", allow_other_host: false, status: :see_other
       # ROUTING_BLOCK_END
     else
       # Rebuild options on failure (same as in new)
@@ -81,7 +81,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to employee #1
 
       @prefill_data = {
         employee_id: emp&.employee_id,
-        name:        emp ? [emp&.first_name, emp&.last_name].compact.join(" ") : nil,
+        name:        emp ? [ emp&.first_name, emp&.last_name ].compact.join(" ") : nil,
         phone:       emp&.work_phone,
         email:       emp&.email,
         agency:      agency&.agency_id,
@@ -96,7 +96,7 @@ redirect_to form_success_path, notice: 'Form submitted and routed to employee #1
       @unit_options = if department
         Unit.where(department_id: department.department_id)
             .order(:unit_id)
-            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+            .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
       else
         []
       end

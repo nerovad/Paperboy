@@ -21,7 +21,7 @@ class FormVisibilityGrantsController < ApplicationController
       redirect_to form_visibility_grants_path, alert: "Pick a form and a group." and return
     end
 
-    grant = FormVisibilityGrant.new(form_type: form_type, grantee_type: 'group', group_id: group_id)
+    grant = FormVisibilityGrant.new(form_type: form_type, grantee_type: "group", group_id: group_id)
     if grant.save
       redirect_to form_visibility_grants_path, notice: "Visibility grant added."
     else

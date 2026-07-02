@@ -4,7 +4,7 @@ namespace :paperboy do
   #   rails paperboy:rebuild_form_templates           # only populate empty records
   #   FORCE=1 rails paperboy:rebuild_form_templates   # destroy and re-populate all records
   task rebuild_form_templates: :environment do
-    force = ENV['FORCE'] == '1'
+    force = ENV["FORCE"] == "1"
     # Standard fields on pages 1-2 that should NOT be treated as custom fields
     standard_fields = %w[employee_id name phone email agency division department unit]
 
@@ -13,8 +13,8 @@ namespace :paperboy do
     # so we can read the corrected value and re-save it to fix the DB permanently.
     puts "== Repairing double-encoded JSON fields =="
     FormTemplate.find_each do |ft|
-      raw_headers = ft.read_attribute_before_type_cast('page_headers')
-      raw_buttons = ft.read_attribute_before_type_cast('inbox_buttons')
+      raw_headers = ft.read_attribute_before_type_cast("page_headers")
+      raw_buttons = ft.read_attribute_before_type_cast("inbox_buttons")
 
       needs_fix = false
 
@@ -79,7 +79,7 @@ namespace :paperboy do
       if force || ft.routing_steps.empty?
         ft.routing_steps.destroy_all if force && ft.routing_steps.any?
 
-        if controller_content.include?('Multi-step approval routing')
+        if controller_content.include?("Multi-step approval routing")
           step_count_match = controller_content.match(/Multi-step approval routing \((\d+) steps?\)/)
           if step_count_match
             puts "  Found #{step_count_match[1]}-step routing in controller"
@@ -90,12 +90,12 @@ namespace :paperboy do
               next if steps_parsed.any? { |s| s[:step_number] == step_num }
 
               desc = description.strip
-              if desc == 'supervisor'
-                steps_parsed << { step_number: step_num, routing_type: 'supervisor', employee_id: nil }
-              elsif desc == 'department head'
-                steps_parsed << { step_number: step_num, routing_type: 'department_head', employee_id: nil }
+              if desc == "supervisor"
+                steps_parsed << { step_number: step_num, routing_type: "supervisor", employee_id: nil }
+              elsif desc == "department head"
+                steps_parsed << { step_number: step_num, routing_type: "department_head", employee_id: nil }
               elsif desc =~ /employee #(\d+)/
-                steps_parsed << { step_number: step_num, routing_type: 'employee', employee_id: $1.to_i }
+                steps_parsed << { step_number: step_num, routing_type: "employee", employee_id: $1.to_i }
               end
             end
 
@@ -104,11 +104,11 @@ namespace :paperboy do
               puts "    Step #{step_data[:step_number]}: #{step_data[:routing_type]}#{step_data[:employee_id] ? " (employee #{step_data[:employee_id]})" : ''}"
             end
 
-            ft.update_columns(submission_type: 'approval') unless ft.submission_type == 'approval'
+            ft.update_columns(submission_type: "approval") unless ft.submission_type == "approval"
           end
         else
           # No routing comments found — set submission_type to database if not already set
-          ft.update_columns(submission_type: 'database') if ft.submission_type.blank?
+          ft.update_columns(submission_type: "database") if ft.submission_type.blank?
           puts "  No routing steps found — submission_type: #{ft.submission_type || 'database'}"
         end
       end
@@ -184,7 +184,7 @@ namespace :paperboy do
           # Detect conditional wrapper
           if line =~ /class="conditional-field"\s+data-depends-on="(\w+)"\s+data-show-values="([^"]+)"/
             trigger_field = $1
-            raw_values = $2.gsub('&quot;', '"')
+            raw_values = $2.gsub("&quot;", '"')
             begin
               current_conditional = { field: trigger_field, values: JSON.parse(raw_values) }
             rescue
@@ -200,45 +200,45 @@ namespace :paperboy do
             next if standard_fields.include?(field_name)
 
             # Look ahead in surrounding lines for field type
-            field_context = view_content[view_content.index(line), 500] || ''
+            field_context = view_content[view_content.index(line), 500] || ""
 
             field_type = if field_context =~ /form\.text_area\s+:#{field_name}/
-                           'text_box'
-                         elsif field_context =~ /form\.select\s+:#{field_name}/
-                           'dropdown'
-                         elsif field_context =~ /form\.datetime_local_field\s+:#{field_name}|form\.date_field\s+:#{field_name}/
-                           'date'
-                         elsif field_context =~ /form\.time_field\s+:#{field_name}/
-                           'time'
-                         elsif field_context =~ /form\.number_field\s+:#{field_name}/
-                           'number'
-                         elsif field_context =~ /form\.email_field\s+:#{field_name}/
-                           'email'
-                         elsif field_context =~ /form\.telephone_field\s+:#{field_name}|form\.phone_field\s+:#{field_name}|data-controller="phone"/
-                           'phone'
-                         elsif field_context =~ /options_for_select\(\[.*?'Yes'.*?'No'/m
-                           'yes_no'
-                         else
-                           'text'
-                         end
+                           "text_box"
+            elsif field_context =~ /form\.select\s+:#{field_name}/
+                           "dropdown"
+            elsif field_context =~ /form\.datetime_local_field\s+:#{field_name}|form\.date_field\s+:#{field_name}/
+                           "date"
+            elsif field_context =~ /form\.time_field\s+:#{field_name}/
+                           "time"
+            elsif field_context =~ /form\.number_field\s+:#{field_name}/
+                           "number"
+            elsif field_context =~ /form\.email_field\s+:#{field_name}/
+                           "email"
+            elsif field_context =~ /form\.telephone_field\s+:#{field_name}|form\.phone_field\s+:#{field_name}|data-controller="phone"/
+                           "phone"
+            elsif field_context =~ /options_for_select\(\[.*?'Yes'.*?'No'/m
+                           "yes_no"
+            else
+                           "text"
+            end
 
             required = !!(field_context =~ /required:\s*true/)
 
             options = {}
 
             # Extract rows for text_box
-            if field_type == 'text_box'
+            if field_type == "text_box"
               rows_match = field_context.match(/rows:\s*(\d+)/)
-              options['rows'] = rows_match[1].to_i if rows_match
+              options["rows"] = rows_match[1].to_i if rows_match
             end
 
             # Extract dropdown values (static options only)
-            if field_type == 'dropdown'
+            if field_type == "dropdown"
               values_match = field_context.match(/options_for_select\(\[\s*(.*?)\s*\]\)/m)
               if values_match
                 raw = values_match[1]
                 # Match both single-quoted and double-quoted strings
-                options['values'] = raw.scan(/['"]([^'"]+)['"]/).flatten
+                options["values"] = raw.scan(/['"]([^'"]+)['"]/).flatten
               end
             end
 
@@ -249,7 +249,7 @@ namespace :paperboy do
               position: position,
               required: required,
               options: options.presence || {},
-              restricted_to_type: 'none'
+              restricted_to_type: "none"
             )
             position += 1
 
@@ -307,25 +307,25 @@ namespace :paperboy do
           ctrl = controller_content
 
           # view_pdf: controller has a pdf action
-          buttons << 'view_pdf' if ctrl =~ /def pdf\b/
+          buttons << "view_pdf" if ctrl =~ /def pdf\b/
 
           # edit: controller has an edit action
-          buttons << 'edit' if ctrl =~ /def edit\b/
+          buttons << "edit" if ctrl =~ /def edit\b/
 
           # approve: controller has an approve action
-          buttons << 'approve' if ctrl =~ /def approve\b/
+          buttons << "approve" if ctrl =~ /def approve\b/
 
           # deny: controller has a deny action
-          buttons << 'deny' if ctrl =~ /def deny\b/
+          buttons << "deny" if ctrl =~ /def deny\b/
 
           # status_dropdown: controller has an update_status action
-          buttons << 'status_dropdown' if ctrl =~ /def update_status\b/
+          buttons << "status_dropdown" if ctrl =~ /def update_status\b/
 
           # reassign: always available (handled by task_reassignments_controller)
-          buttons << 'reassign'
+          buttons << "reassign"
 
           # take_back: always available (handled by task_reassignments_controller)
-          buttons << 'take_back'
+          buttons << "take_back"
         end
 
         # Fallback for basic forms with no controller actions
@@ -345,16 +345,16 @@ end
 def guess_category(key)
   case key
   when /submitted|pending|in_progress/
-    'pending'
+    "pending"
   when /approved|resolved|completed/
-    'approved'
+    "approved"
   when /denied|rejected/
-    'denied'
+    "denied"
   when /cancelled/
-    'cancelled'
+    "cancelled"
   when /scheduled/
-    'scheduled'
+    "scheduled"
   else
-    'in_review'
+    "in_review"
   end
 end

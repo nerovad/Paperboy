@@ -26,4 +26,3 @@ class Api::DropdownsController < ApplicationController
     render json: units
   end
 end
-

@@ -54,7 +54,7 @@ class InboxQuery
 
     # Deduplicate (a submission could match several rules). Key by class + id so
     # different form types that share a numeric id aren't collapsed.
-    items.uniq! { |s| [s.class, s.id] }
+    items.uniq! { |s| [ s.class, s.id ] }
 
     # The inbox is a work queue, not an archive: drop anything that has reached
     # an end state (per each form's is_end status flags). This also clears the
@@ -105,18 +105,18 @@ class InboxQuery
     # viewing All (no restriction — every group-routed step is visible).
     scoped_group_ids = if @scoped_employee_ids.nil?
                          nil
-                       else
+    else
                          EmployeeGroup.where(EmployeeID: @scoped_employee_ids).distinct.pluck(:GroupID)
-                       end
+    end
 
     # Submitter-org values the scoped employees can stand in for. Used to narrow
     # org-filtered group routing steps. nil = no scope restriction.
     submitter_org_filter = @scoped_employee_ids ? compute_submitter_org_filter(@scoped_employee_ids) : nil
 
-    FormTemplate.where(submission_type: 'approval').find_each do |template|
+    FormTemplate.where(submission_type: "approval").find_each do |template|
       begin
         model_class = template.class_name.constantize
-        next unless model_class.column_names.include?('approver_id')
+        next unless model_class.column_names.include?("approver_id")
 
         copy_ids = copy_submission_ids_for(model_class)
         @copy_submission_ids[model_class.name] = copy_ids if copy_ids.any?
@@ -124,8 +124,8 @@ class InboxQuery
         scope = if @scoped_employee_ids.nil?
                   # System admin viewing All — every approval form.
                   model_class.all
-                else
-                  parts = [model_class.where(approver_id: @scoped_employee_ids)]
+        else
+                  parts = [ model_class.where(approver_id: @scoped_employee_ids) ]
                   group_routing_scopes(template, model_class, scoped_group_ids, submitter_org_filter).each do |s|
                     parts << s
                   end
@@ -134,7 +134,7 @@ class InboxQuery
                   end
                   parts << model_class.where(id: copy_ids) if copy_ids.any?
                   parts.reduce(:or)
-                end
+        end
 
         scope = apply_date_filters(scope)
         submissions += scope.to_a
@@ -161,7 +161,7 @@ class InboxQuery
 
   # AR scopes (one per qualifying group-routed step) to OR into the query.
   def group_routing_scopes(template, model_class, scoped_group_ids, submitter_org_filter)
-    template.routing_steps.where(routing_type: 'group').filter_map do |step|
+    template.routing_steps.where(routing_type: "group").filter_map do |step|
       next if scoped_group_ids && !scoped_group_ids.include?(step.group_id)
       status_key = "step_#{step.step_number}_pending"
 
@@ -182,9 +182,9 @@ class InboxQuery
   # budget unit is one they're authorized to approve for the step's service type.
   def authorization_routing_scopes(template, model_class, scoped_employee_ids)
     return [] if scoped_employee_ids.nil?
-    return [] unless model_class.column_names.include?('unit')
+    return [] unless model_class.column_names.include?("unit")
 
-    template.routing_steps.where(routing_type: 'authorization').filter_map do |step|
+    template.routing_steps.where(routing_type: "authorization").filter_map do |step|
       service_type = step.authorization_service_type
       next if service_type.blank?
 

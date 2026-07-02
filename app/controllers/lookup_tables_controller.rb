@@ -16,10 +16,10 @@ class LookupTablesController < ApplicationController
     { key: "tasks",            name: "Tasks",            table: "tasks" },
     { key: "objects",          name: "Objects",          table: "objects" },
     { key: "sub_objects",      name: "Sub Objects",      table: "sub_objects" },
-    { key: "revenue_sources",  name: "Revenue Sources",  table: "revenue_sources" },
+    { key: "revenue_sources",  name: "Revenue Sources",  table: "revenue_sources" }
   ].freeze
 
-  before_action :set_table_config, only: [:show, :new, :create]
+  before_action :set_table_config, only: [ :show, :new, :create ]
 
   def index
     @tables = TABLES
@@ -49,10 +49,7 @@ class LookupTablesController < ApplicationController
       return
     end
 
-    cols = values.keys.map { |c| connection.quote_column_name(c) }.join(", ")
-    vals = values.values.map { |v| connection.quote(v) }.join(", ")
-
-    connection.execute("INSERT INTO #{connection.quote_table_name(table_name)} (#{cols}) VALUES (#{vals})")
+    lookup_model(table_name).create!(values)
 
     redirect_to lookup_table_path(id: @table_config[:key]), notice: "Record added successfully."
   rescue => e
@@ -73,11 +70,16 @@ class LookupTablesController < ApplicationController
   end
 
   def fetch_rows(table_name)
-    result = connection.exec_query("SELECT * FROM #{connection.quote_table_name(table_name)}")
-    result.to_a
+    lookup_model(table_name).all.map(&:attributes)
   end
 
   def connection
     ActiveRecord::Base.connection
+  end
+
+  def lookup_model(table_name)
+    Class.new(ApplicationRecord) do
+      self.table_name = table_name
+    end
   end
 end

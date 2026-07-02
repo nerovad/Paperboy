@@ -11,7 +11,7 @@ class AddReferencePrefixToFormTemplates < ActiveRecord::Migration[8.0]
     say_with_time "Backfilling form_templates.reference_prefix" do
       used = Set.new
       FormTemplate.reset_column_information
-      FormTemplate.where(reference_prefix: [nil, ""]).order(:id).each do |template|
+      FormTemplate.where(reference_prefix: [ nil, "" ]).order(:id).each do |template|
         seed = FormReference::PREFIX_SEEDS[template.class_name] ||
                FormReference.derive_prefix(template.class_name)
         prefix = unique_prefix(seed, used)

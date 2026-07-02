@@ -18,9 +18,9 @@ module Seeds
         "Vendor Issue", "Power/Utility", "Staffing Disruption", "Other"
       ].freeze
 
-      urgencies = ["Low", "Medium", "High", "Critical"].freeze
-      impacts = ["Low", "Medium", "High"].freeze
-      locations = ["HOA", "Government Center", "Field Office - East", "Field Office - West", "Remote"].freeze
+      urgencies = [ "Low", "Medium", "High", "Critical" ].freeze
+      impacts = [ "Low", "Medium", "High" ].freeze
+      locations = [ "HOA", "Government Center", "Field Office - East", "Field Office - West", "Remote" ].freeze
 
       ActiveRecord::Base.transaction do
         count.times do
@@ -37,11 +37,11 @@ module Seeds
           location = locations.sample
 
           status = case rand
-                   when 0...0.50 then :in_progress
-                   when 0.50...0.65 then :scheduled
-                   when 0.65...0.85 then :resolved
-                   else :cancelled
-                   end
+          when 0...0.50 then :in_progress
+          when 0.50...0.65 then :scheduled
+          when 0.65...0.85 then :resolved
+          else :cancelled
+          end
 
           actual_completion_date =
             if status == :resolved && rand < 0.8
@@ -76,15 +76,15 @@ module Seeds
 
           next_steps =
             if status == :cancelled
-              "No action taken. #{["Need more details and resubmit.", "Duplicate report.", "Route to correct team."].sample}"
+              "No action taken. #{[ "Need more details and resubmit.", "Duplicate report.", "Route to correct team." ].sample}"
             else
-              ["Monitor and confirm stability.", "Notify stakeholders.", "Create follow-up ticket.", "Schedule RCA review."].sample
+              [ "Monitor and confirm stability.", "Notify stakeholders.", "Create follow-up ticket.", "Schedule RCA review." ].sample
             end
 
           ::CriticalInformationReporting.create!(
             employee_id: Seeds.employee_id,
             name: person,
-            phone: phone = "%03d-%03d-%04d" % [805, rand(200..999), rand(1000..9999)],
+            phone: phone = "%03d-%03d-%04d" % [ 805, rand(200..999), rand(1000..9999) ],
             email: Seeds.email_for(person),
             agency: AGENCIES.sample,
             division: DIVISIONS.sample,

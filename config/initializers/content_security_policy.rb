@@ -11,12 +11,12 @@ Rails.application.configure do
     policy.img_src     :self, :https, :data, :blob
     policy.object_src  :none
     policy.script_src  :self, :https, :unsafe_inline, :unsafe_eval,
-                       'https://cdn.jsdelivr.net'
+                       "https://cdn.jsdelivr.net"
     policy.style_src   :self, :https, :unsafe_inline,
-                       'https://cdn.jsdelivr.net'
+                       "https://cdn.jsdelivr.net"
 
     # Allow Metabase iframes
-    metabase_url = ENV.fetch('METABASE_SITE_URL', 'http://localhost:3000')
+    metabase_url = ENV.fetch("METABASE_SITE_URL", "http://localhost:3000")
     policy.frame_src   :self, metabase_url
 
     policy.connect_src :self
@@ -25,7 +25,7 @@ Rails.application.configure do
   # Generate session nonces for permitted importmap and inline scripts only
   # Note: Removing style-src from nonces to allow inline styles (for impersonation banner, modals, etc.)
   config.content_security_policy_nonce_generator = ->(request) { request.session.id.to_s }
-  config.content_security_policy_nonce_directives = %w(script-src)
+  config.content_security_policy_nonce_directives = %w[script-src]
 
   # Report violations without enforcing the policy (for initial testing)
   # Uncomment to enforce after testing:

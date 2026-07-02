@@ -41,8 +41,8 @@ class CreateFormSystem < ActiveRecord::Migration[8.0]
       t.text :conditional_values
       t.timestamps
     end
-    add_index :form_fields, [:form_template_id, :page_number]
-    add_index :form_fields, [:form_template_id, :position]
+    add_index :form_fields, [ :form_template_id, :page_number ]
+    add_index :form_fields, [ :form_template_id, :position ]
     add_index :form_fields, :restricted_to_type
     add_index :form_fields, :conditional_field_id
 
@@ -57,8 +57,8 @@ class CreateFormSystem < ActiveRecord::Migration[8.0]
       t.boolean :is_end, default: false
       t.timestamps
     end
-    add_index :form_template_statuses, [:form_template_id, :key], unique: true
-    add_index :form_template_statuses, [:form_template_id, :position]
+    add_index :form_template_statuses, [ :form_template_id, :key ], unique: true
+    add_index :form_template_statuses, [ :form_template_id, :position ]
 
     # Form Template Routing Steps
     create_table :form_template_routing_steps do |t|
@@ -69,6 +69,6 @@ class CreateFormSystem < ActiveRecord::Migration[8.0]
       t.references :form_template_status, foreign_key: true
       t.timestamps
     end
-    add_index :form_template_routing_steps, [:form_template_id, :step_number], unique: true, name: "idx_routing_steps_template_step"
+    add_index :form_template_routing_steps, [ :form_template_id, :step_number ], unique: true, name: "idx_routing_steps_template_step"
   end
 end

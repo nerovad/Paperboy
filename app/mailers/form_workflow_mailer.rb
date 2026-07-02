@@ -47,7 +47,7 @@ class FormWorkflowMailer < ApplicationMailer
   # Form-builder forms use "<ClassName>PdfGenerator" (e.g. BikeLockerFormPdfGenerator);
   # some legacy forms drop the trailing "Form". Try both.
   def pdf_generator_for(class_name)
-    candidates = ["#{class_name}PdfGenerator", "#{class_name.sub(/Form\z/, '')}PdfGenerator"].uniq
+    candidates = [ "#{class_name}PdfGenerator", "#{class_name.sub(/Form\z/, '')}PdfGenerator" ].uniq
     candidates.filter_map { |name| name.safe_constantize }.first
   end
 

@@ -5,16 +5,16 @@ class SubmissionsController < ApplicationController
 
   # Legacy forms that are hardcoded (not created via FormTemplate)
   LEGACY_FORMS = [
-    { model: 'ParkingLotSubmission', type: 'Parking Lot', path_helper: :parking_lot_submission_path },
-    { model: 'ProbationTransferRequest', type: 'Probation Transfer', path_helper: :probation_transfer_request_path },
-    { model: 'CriticalInformationReporting', type: 'Critical Information Report', path_helper: :critical_information_reporting_path }
+    { model: "ParkingLotSubmission", type: "Parking Lot", path_helper: :parking_lot_submission_path },
+    { model: "ProbationTransferRequest", type: "Probation Transfer", path_helper: :probation_transfer_request_path },
+    { model: "CriticalInformationReporting", type: "Critical Information Report", path_helper: :critical_information_reporting_path }
   ].freeze
 
   # Map form type display names to model classes
   FORM_TYPE_TO_MODEL = {
-    'Parking Lot' => 'ParkingLotSubmission',
-    'Probation Transfer' => 'ProbationTransferRequest',
-    'Critical Information Report' => 'CriticalInformationReporting'
+    "Parking Lot" => "ParkingLotSubmission",
+    "Probation Transfer" => "ProbationTransferRequest",
+    "Critical Information Report" => "CriticalInformationReporting"
   }.freeze
 
   def index
@@ -35,13 +35,13 @@ class SubmissionsController < ApplicationController
     # nil means "no employee_id restriction" (system admin viewing All).
     @scoped_employee_ids = if @show_employee_filter && params[:filter_employee].present?
                              if params[:filter_employee] == "all"
-                               @is_system_admin ? nil : [employee_id] + @subordinate_ids
+                               @is_system_admin ? nil : [ employee_id ] + @subordinate_ids
                              else
-                               [params[:filter_employee]]
+                               [ params[:filter_employee] ]
                              end
-                           else
-                             [employee_id]
-                           end
+    else
+                             [ employee_id ]
+    end
 
     # Form types the viewer holds a visibility grant for (direct or via a
     # group) — see FormVisibilityGrant. These widen the list to every
@@ -63,9 +63,9 @@ class SubmissionsController < ApplicationController
       # System admins see every employee; supervisors see only their reporting chain.
       @employees = if @is_system_admin
                      Employee.order(:last_name, :first_name)
-                   else
+      else
                      Employee.where(employee_id: @subordinate_ids).order(:last_name, :first_name)
-                   end
+      end
       @current_user_id = employee_id
     end
 
@@ -85,10 +85,10 @@ class SubmissionsController < ApplicationController
     end
 
     # Apply sorting
-    sort_by = params[:sort_by] || 'updated_at'
-    sort_direction = params[:sort_direction] || 'desc'
+    sort_by = params[:sort_by] || "updated_at"
+    sort_direction = params[:sort_direction] || "desc"
 
-    @status_items = sort_collection(@status_items, sort_by, sort_direction, status_sort_configs, default_sort: 'updated_at')
+    @status_items = sort_collection(@status_items, sort_by, sort_direction, status_sort_configs, default_sort: "updated_at")
 
     # Build status options mapping for JavaScript dynamic filtering
     @status_options_by_type = build_status_options_by_type
@@ -126,11 +126,10 @@ class SubmissionsController < ApplicationController
 
     # Dynamic forms from FormTemplates
     FormTemplate.joins(:statuses).distinct.each do |template|
-      model_class = template.class_name.constantize
+      model_class = application_record_class_named(template.class_name)
+      next unless model_class
       statuses = statuses_from_model(model_class)
       options[template.name] = statuses
-    rescue NameError
-      next
     end
 
     options
@@ -148,7 +147,8 @@ class SubmissionsController < ApplicationController
     # Check dynamic forms
     template = FormTemplate.find_by(name: form_type)
     if template
-      model_class = template.class_name.constantize
+      model_class = application_record_class_named(template.class_name)
+      return [] unless model_class
       return statuses_from_model(model_class)
     end
 
@@ -160,10 +160,10 @@ class SubmissionsController < ApplicationController
   def statuses_from_model(model_class)
     if model_class.respond_to?(:statuses)
       # Model uses enum :status
-      model_class.statuses.keys.map { |s| s.to_s.tr('_', ' ').titleize }
+      model_class.statuses.keys.map { |s| s.to_s.tr("_", " ").titleize }
     elsif model_class.const_defined?(:STATUS_MAP)
       # Model uses STATUS_MAP (like ProbationTransferRequest)
-      model_class::STATUS_MAP.values.map { |s| s.to_s.tr('_', ' ').titleize }
+      model_class::STATUS_MAP.values.map { |s| s.to_s.tr("_", " ").titleize }
     else
       []
     end
@@ -180,10 +180,9 @@ class SubmissionsController < ApplicationController
     end
 
     FormTemplate.joins(:statuses).distinct.each do |template|
-      model_class = template.class_name.constantize
+      model_class = application_record_class_named(template.class_name)
+      next unless model_class
       all_statuses.merge(statuses_from_model(model_class))
-    rescue NameError
-      next
     end
 
     all_statuses.to_a.sort
@@ -297,21 +296,21 @@ class SubmissionsController < ApplicationController
 
   def build_status_item(submission, type, path)
     title = case type
-            when 'Critical Information Report'
+    when "Critical Information Report"
               if submission.respond_to?(:incident_type) && submission.incident_type.present?
                 submission.incident_type
               else
                 "#{type} ##{submission.id}"
               end
-            when 'Parking Lot'
+    when "Parking Lot"
               if submission.respond_to?(:parking_lot_vehicles) && submission.parking_lot_vehicles.first&.parking_lot.present?
                 submission.parking_lot_vehicles.first.display_parking_lot
               else
                 "#{type} ##{submission.id}"
               end
-            else
+    else
               "#{type} ##{submission.id}"
-            end
+    end
 
     {
       id: submission.id,
@@ -325,14 +324,14 @@ class SubmissionsController < ApplicationController
       updated_at: submission.updated_at,
       path: path,
       employee_id: submission.employee_id,
-      employee_name: submission.name,
+      employee_name: submission.name
     }
   end
 
   def status_field_mappings
     {
       types: ->(item) { item[:type] },
-      statuses: ->(item) { item[:status].to_s.tr('_', ' ').titleize },
+      statuses: ->(item) { item[:status].to_s.tr("_", " ").titleize },
       categories: ->(item) { item[:status_category_label] }
     }
   end
@@ -340,7 +339,7 @@ class SubmissionsController < ApplicationController
   def status_filter_configs
     configs = [
       { param: :filter_type, extractor: ->(item) { item[:type] } },
-      { param: :filter_status, extractor: ->(item) { item[:status].to_s.tr('_', ' ').titleize } },
+      { param: :filter_status, extractor: ->(item) { item[:status].to_s.tr("_", " ").titleize } },
       { param: :filter_category, extractor: ->(item) { item[:status_category_label] } }
     ]
 
@@ -355,19 +354,19 @@ class SubmissionsController < ApplicationController
 
   def status_sort_configs
     configs = {
-      'type' => ->(item) { item[:type].to_s },
-      'reference' => ->(item) {
+      "type" => ->(item) { item[:type].to_s },
+      "reference" => ->(item) {
         prefix, id = item[:reference].to_s.split("-")
         # Zero-pad the id so it sorts numerically within a prefix.
         format("%s-%012d", prefix.to_s, id.to_i)
       },
-      'status' => ->(item) { item[:status].to_s },
-      'submitted_at' => ->(item) { item[:submitted_at].to_s },
-      'updated_at' => ->(item) { item[:updated_at].to_s }
+      "status" => ->(item) { item[:status].to_s },
+      "submitted_at" => ->(item) { item[:submitted_at].to_s },
+      "updated_at" => ->(item) { item[:updated_at].to_s }
     }
 
     if @show_employee_column
-      configs['employee_name'] = ->(item) { item[:employee_name].to_s }
+      configs["employee_name"] = ->(item) { item[:employee_name].to_s }
     end
 
     configs

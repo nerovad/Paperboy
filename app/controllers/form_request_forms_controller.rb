@@ -1,6 +1,6 @@
 class FormRequestFormsController < ApplicationController
   # Generated controller for FormRequestForm form
-  before_action :set_form_request_form, only: [:show, :edit, :update, :pdf, :approve, :deny, :update_status]
+  before_action :set_form_request_form, only: [ :show, :edit, :update, :pdf, :approve, :deny, :update_status ]
 
   def new
     @form_request_form = FormRequestForm.new
@@ -24,7 +24,7 @@ class FormRequestFormsController < ApplicationController
     # --- Prefill values (everything prefilled exactly like you do now) ---
     @prefill_data = {
       employee_id: @employee["id"],
-      name:        [@employee["first_name"], @employee["last_name"]].compact.join(" "),
+      name:        [ @employee["first_name"], @employee["last_name"] ].compact.join(" "),
       phone:       @employee["work_phone"],
       email:       @employee["email"],
       agency:      agency&.agency_id,
@@ -52,7 +52,7 @@ class FormRequestFormsController < ApplicationController
     @unit_options = if department
       Unit.where(department_id: department.department_id)
           .order(:unit_id)
-          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
     else
       []
     end
@@ -80,7 +80,7 @@ class FormRequestFormsController < ApplicationController
 
       @prefill_data = {
         employee_id: emp&.[]("id"),
-        name:        emp ? [emp["first_name"], emp["last_name"]].compact.join(" ") : nil,
+        name:        emp ? [ emp["first_name"], emp["last_name"] ].compact.join(" ") : nil,
         phone:       emp&.[]("work_phone"),
         email:       emp&.[]("email"),
         agency:      agency&.agency_id,
@@ -95,7 +95,7 @@ class FormRequestFormsController < ApplicationController
       @unit_options = if department
         Unit.where(department_id: department.department_id)
             .order(:unit_id)
-            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+            .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
       else
         []
       end
@@ -115,7 +115,7 @@ class FormRequestFormsController < ApplicationController
 
   def update
     if @form_request_form.update(form_request_form_params)
-      redirect_to @form_request_form, notice: 'Submission updated successfully.'
+      redirect_to @form_request_form, notice: "Submission updated successfully."
     else
       setup_form_options
       render :edit, status: :unprocessable_entity
@@ -134,10 +134,10 @@ class FormRequestFormsController < ApplicationController
   def approve
     if @form_request_form.respond_to?(:advance_approval!)
       @form_request_form.advance_approval!
-      notice = @form_request_form.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
+      notice = @form_request_form.approved? ? "Submission approved." : "Approved and routed to the next step."
       redirect_to inbox_queue_path, notice: notice
     else
-      redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
+      redirect_to inbox_queue_path, alert: "Unable to approve this submission."
     end
   end
 
@@ -146,19 +146,18 @@ class FormRequestFormsController < ApplicationController
     if @form_request_form.respond_to?(:denied!)
       @form_request_form.denied!
       @form_request_form.update(deny_reason: reason) if @form_request_form.respond_to?(:deny_reason=) && reason.present?
-      redirect_to inbox_queue_path, notice: 'Submission denied.'
+      redirect_to inbox_queue_path, notice: "Submission denied."
     else
-      redirect_to inbox_queue_path, alert: 'Unable to deny this submission.'
+      redirect_to inbox_queue_path, alert: "Unable to deny this submission."
     end
   end
 
   def update_status
     new_status = params[:status]
-    if new_status.present? && @form_request_form.respond_to?("#{new_status}!")
-      @form_request_form.send("#{new_status}!")
-      redirect_to inbox_queue_path, notice: 'Status updated.'
+    if update_trackable_status(@form_request_form, new_status)
+      redirect_to inbox_queue_path, notice: "Status updated."
     else
-      redirect_to inbox_queue_path, alert: 'Unable to update status.'
+      redirect_to inbox_queue_path, alert: "Unable to update status."
     end
   end
 
@@ -194,7 +193,7 @@ class FormRequestFormsController < ApplicationController
     @unit_options = if department_id
       Unit.where(department_id: department_id)
           .order(:unit_id)
-          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
     else
       []
     end

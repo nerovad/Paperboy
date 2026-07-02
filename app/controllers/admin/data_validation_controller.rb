@@ -34,10 +34,10 @@ module Admin
       end
 
       @total_filtered = @filtered_results.size
-      @page = [params[:page].to_i, 1].max
+      @page = [ params[:page].to_i, 1 ].max
       @per_page = 50
       @total_pages = (@total_filtered / @per_page.to_f).ceil
-      @page = [@page, @total_pages].min if @total_pages > 0
+      @page = [ @page, @total_pages ].min if @total_pages > 0
       @filtered_results = @filtered_results[(@page - 1) * @per_page, @per_page] || []
     end
 
@@ -47,8 +47,8 @@ module Admin
       filename = "data_validation_#{@filter}_#{Date.current.iso8601}.csv"
 
       csv_data = CSV.generate do |csv|
-        csv << ["Employee ID", "First Name", "Last Name", "Email", "Agency", "Department", "Unit",
-                "Supervisor ID", "Work Phone", "Status", "Errors", "Warnings", "Issues"]
+        csv << [ "Employee ID", "First Name", "Last Name", "Email", "Agency", "Department", "Unit",
+                "Supervisor ID", "Work Phone", "Status", "Errors", "Warnings", "Issues" ]
 
         rows.each do |result|
           emp = result.employee
