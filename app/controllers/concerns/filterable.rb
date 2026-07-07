@@ -67,6 +67,14 @@ module Filterable
     sort_direction == "desc" ? sorted.reverse : sorted
   end
 
+  # Pick a safe default sort key from a set of resolved TableColumns::Column.
+  # Prefers the first key in `prefer` that is present among sortable columns,
+  # else the first sortable column, else "reference" (always present/locked).
+  def default_sort_key(columns, prefer: [])
+    keys = Array(columns).select(&:sortable?).map(&:sort_key)
+    Array(prefer).find { |k| keys.include?(k) } || keys.first || 'reference'
+  end
+
   # Apply SQL-level WHERE clauses to an ActiveRecord scope
   # scope_filters: Array of { param:, column: } hashes
   # Example: { param: :filter_status, column: :status, transform: ->(v) { v.downcase.tr(' ', '_') } }

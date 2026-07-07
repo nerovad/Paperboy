@@ -49,22 +49,34 @@ class InboxController < ApplicationController
     @submissions = inbox.submissions
     @copy_submission_ids = inbox.copy_submission_ids
 
-    # Collect unique values for filter dropdowns BEFORE in-memory filtering
-    @filter_options = collect_filter_options(@submissions, inbox_field_mappings)
+    # Resolve the viewer's customized column/filter layout for this page. Each
+    # visible column can render as a table column and, when it carries a select
+    # filter, as a filter-bar dropdown.
+    @layout = UserSetting.for_employee(employee_id).layout_for(:inbox)
+    @columns = TableColumns.resolve(:inbox, @layout)
+    @filter_columns = @columns.select(&:select_filter?)
+
+    # Collect unique values for filter dropdowns BEFORE in-memory filtering,
+    # keyed by each column's filter param.
+    field_mappings = @filter_columns.index_by { |c| c.filter_param.to_s }
+                                    .transform_values(&:value)
+    @filter_options = collect_filter_options(@submissions, field_mappings)
 
     # Granted form types must be selectable even when no rows are loaded yet —
     # their submissions only load once this filter is applied.
-    granted_labels = @viewer_form_types.filter_map do |class_name|
-      class_name.safe_constantize&.name&.demodulize&.titleize
-    end
-    if granted_labels.any?
-      @filter_options[:form_types] = (@filter_options[:form_types] + granted_labels)
-                                     .uniq.sort_by { |v| v.to_s.downcase }
+    if @filter_options.key?("filter_form_type")
+      granted_labels = @viewer_form_types.filter_map do |class_name|
+        class_name.safe_constantize&.name&.demodulize&.titleize
+      end
+      if granted_labels.any?
+        @filter_options["filter_form_type"] =
+          (@filter_options["filter_form_type"] + granted_labels).uniq.sort_by { |v| v.to_s.downcase }
+      end
     end
 
-    # Apply in-memory filters
+    # Apply in-memory filters — one exact-match config per select-filter column.
     @submissions = apply_filters(@submissions,
-      filter_configs: inbox_filter_configs,
+      filter_configs: @filter_columns.map { |c| { param: c.filter_param.to_s, extractor: c.value } },
       date_filters: inbox_date_filters
     )
 
@@ -78,11 +90,13 @@ class InboxController < ApplicationController
       end
     end
 
-    # Apply sorting
-    sort_by = params[:sort_by] || "created_at"
+    # Apply sorting. The default falls back gracefully if the user hid the
+    # Created column so it can't be a phantom sort key.
+    @default_sort = default_sort_key(@columns, prefer: %w[created_at updated_at])
+    sort_by = params[:sort_by].presence || @default_sort
     sort_direction = params[:sort_direction] || "desc"
 
-    @submissions = sort_collection(@submissions, sort_by, sort_direction, inbox_sort_configs)
+    @submissions = sort_collection(@submissions, sort_by, sort_direction, inbox_sort_configs, default_sort: @default_sort)
 
     # Paginate the final sorted array
     @pagy, @submissions = pagy(:offset, @submissions, count: @submissions.size)
@@ -120,46 +134,28 @@ class InboxController < ApplicationController
 
   private
 
-  def inbox_field_mappings
-    {
-      form_types: ->(s) { s.class.name.demodulize.titleize },
-      names: ->(s) { s.name },
-      units: ->(s) { s.try(:unit) },
-      emails: ->(s) { s.email },
-      statuses: ->(s) { s.status_label }
-    }
-  end
-
-  def inbox_filter_configs
-    [
-      { param: :filter_form_type, extractor: ->(s) { s.class.name.demodulize.titleize } },
-      { param: :filter_name, extractor: ->(s) { s.name } },
-      { param: :filter_unit, extractor: ->(s) { s.try(:unit) } },
-      { param: :filter_email, extractor: ->(s) { s.email } },
-      { param: :filter_status, extractor: ->(s) { s.status_label } }
-    ]
-  end
-
   def inbox_date_filters
     # Date filters are now applied at SQL level
     []
   end
 
+  # Sort configs derived from the visible columns. Reference keeps its custom
+  # zero-padded key so ids sort numerically within a prefix; every other
+  # sortable column sorts on its raw extractor value.
   def inbox_sort_configs
-    {
+    configs = {
       "reference" => ->(s) {
         ref = FormReference.reference_for(s, @prefix_map) || ""
         prefix, id = ref.split("-")
-        # Zero-pad the id so it sorts numerically within a prefix (the sort
-        # helper compares the stringified value).
         format("%s-%012d", prefix.to_s, id.to_i)
-      },
-      "form_type" => ->(s) { s.class.name.demodulize.titleize },
-      "name" => ->(s) { s.name.to_s },
-      "unit" => ->(s) { (s.try(:unit) || "").to_s },
-      "email" => ->(s) { s.email.to_s },
-      "status" => ->(s) { s.status_label.to_s },
-      "created_at" => ->(s) { s.created_at.to_s }
+      }
     }
+    Array(@columns).each do |col|
+      next unless col.sortable?
+      next if col.sort_key == 'reference'
+      extractor = col.value
+      configs[col.sort_key] = ->(s) { extractor.call(s).to_s }
+    end
+    configs
   end
 end

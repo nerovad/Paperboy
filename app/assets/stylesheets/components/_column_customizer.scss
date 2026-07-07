@@ -1,0 +1,174 @@
+// Column customizer: the "+" trigger in the table header and the modal that
+// lets a user reorder / show / hide / add columns on the My Work tables.
+
+.cc-th {
+  width: 40px;
+  text-align: center;
+}
+
+.cc-trigger {
+  background: transparent;
+  border: 1px solid $border-color;
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  line-height: 1;
+  font-size: 18px;
+  color: $brand-navy;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: rgba($brand-navy, 0.08);
+    border-color: $brand-navy;
+  }
+}
+
+.cc-td { width: 40px; }
+
+.cc-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1000;
+}
+
+.cc-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 720px;
+  max-width: 94vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.cc-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  border-bottom: 1px solid #eee;
+
+  h3 { margin: 0; font-size: 18px; }
+}
+
+.cc-modal__close {
+  background: transparent;
+  border: 0;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.cc-modal__body {
+  padding: 16px 18px;
+  overflow-y: auto;
+}
+
+.cc-modal__footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 18px;
+  border-top: 1px solid #eee;
+}
+
+.cc-hint {
+  margin: 0 0 14px;
+  color: $label-color;
+  font-size: 13px;
+}
+
+.cc-capacity {
+  display: inline-block;
+  margin-left: 6px;
+  font-weight: 600;
+  color: $muted;
+
+  &.is-full { color: $danger; }
+}
+
+.cc-lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+
+  h4 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: $muted;
+  }
+}
+
+.cc-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  min-height: 120px;
+  border: 1px dashed $border-color;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.cc-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  margin-bottom: 6px;
+  background: #fff;
+  border: 1px solid $border-color;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: grab;
+
+  &:last-child { margin-bottom: 0; }
+
+  &.is-locked {
+    cursor: default;
+    opacity: 0.7;
+    background: #f2f2f2;
+  }
+
+  &__label { flex: 1; }
+
+  &__remove {
+    background: transparent;
+    border: 0;
+    color: $muted;
+    font-size: 14px;
+    cursor: pointer;
+
+    &:hover { color: $danger; }
+  }
+}
+
+.sortable-ghost { opacity: 0.4; }
+
+.cc-add-field {
+  margin-top: 16px;
+
+  h4 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: $muted;
+  }
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+
+    .filter-select { flex: 1 1 140px; }
+  }
+}

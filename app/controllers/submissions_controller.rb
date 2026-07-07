@@ -53,6 +53,14 @@ class SubmissionsController < ApplicationController
     # their own — as a supervisor/admin, or via a visibility grant.
     @show_employee_column = @show_employee_filter || @viewer_form_types.any?
 
+    # Resolve the viewer's customized column/filter layout. Done before loading
+    # items so build_status_item can populate custom form-field values. The
+    # employee column is gated on permission via context.
+    @layout = UserSetting.for_employee(employee_id).layout_for(:submissions)
+    @columns = TableColumns.resolve(:submissions, @layout, context: { employee_column: @show_employee_column })
+    @filter_columns = @columns.select(&:select_filter?)
+    @custom_columns = @columns.select(&:custom?)
+
     # Load legacy hardcoded forms (with SQL-level filters applied)
     load_legacy_forms(employee_id)
 
@@ -69,12 +77,19 @@ class SubmissionsController < ApplicationController
       @current_user_id = employee_id
     end
 
-    # Collect unique values for filter dropdowns BEFORE in-memory filtering
-    @filter_options = collect_filter_options(@status_items, status_field_mappings)
+    # Collect unique values for filter dropdowns BEFORE in-memory filtering,
+    # keyed by each column's filter param. Category is a standalone filter (not
+    # tied to a column) and is always available.
+    field_mappings = @filter_columns.index_by { |c| c.filter_param.to_s }
+                                    .transform_values(&:value)
+    field_mappings["filter_category"] = ->(item) { item[:status_category_label] }
+    @filter_options = collect_filter_options(@status_items, field_mappings)
 
-    # Apply in-memory filters (type, category, status — these span multiple tables)
+    # Apply in-memory filters — one exact-match config per select-filter column,
+    # plus the standalone category filter.
     @status_items = apply_filters(@status_items,
-      filter_configs: status_filter_configs,
+      filter_configs: @filter_columns.map { |c| { param: c.filter_param.to_s, extractor: c.value } } +
+                      [{ param: "filter_category", extractor: ->(item) { item[:status_category_label] } }],
       date_filters: status_date_filters
     )
 
@@ -84,11 +99,12 @@ class SubmissionsController < ApplicationController
       @status_items = @status_items.select { |item| FormReference.matches?(item[:reference], query) }
     end
 
-    # Apply sorting
-    sort_by = params[:sort_by] || "updated_at"
+    # Apply sorting. Default falls back gracefully if the user hid Last Updated.
+    @default_sort = default_sort_key(@columns, prefer: %w[updated_at submitted_at])
+    sort_by = params[:sort_by].presence || @default_sort
     sort_direction = params[:sort_direction] || "desc"
 
-    @status_items = sort_collection(@status_items, sort_by, sort_direction, status_sort_configs, default_sort: "updated_at")
+    @status_items = sort_collection(@status_items, sort_by, sort_direction, status_sort_configs, default_sort: @default_sort)
 
     # Build status options mapping for JavaScript dynamic filtering
     @status_options_by_type = build_status_options_by_type
@@ -312,7 +328,7 @@ class SubmissionsController < ApplicationController
               "#{type} ##{submission.id}"
     end
 
-    {
+    item = {
       id: submission.id,
       reference: FormReference.reference_for(submission, @prefix_map),
       type: type,
@@ -324,26 +340,18 @@ class SubmissionsController < ApplicationController
       updated_at: submission.updated_at,
       path: path,
       employee_id: submission.employee_id,
-      employee_name: submission.name
+      employee_name: submission.name,
+      unit: submission.try(:unit)
     }
-  end
 
-  def status_field_mappings
-    {
-      types: ->(item) { item[:type] },
-      statuses: ->(item) { item[:status].to_s.tr("_", " ").titleize },
-      categories: ->(item) { item[:status_category_label] }
-    }
-  end
+    # Populate any custom form-field columns the viewer added. A field only
+    # exists on its own form's rows; others stay blank.
+    Array(@custom_columns).each do |col|
+      (item[:custom] ||= {})[col.id] =
+        submission.respond_to?(col.field) ? submission.public_send(col.field) : nil
+    end
 
-  def status_filter_configs
-    configs = [
-      { param: :filter_type, extractor: ->(item) { item[:type] } },
-      { param: :filter_status, extractor: ->(item) { item[:status].to_s.tr("_", " ").titleize } },
-      { param: :filter_category, extractor: ->(item) { item[:status_category_label] } }
-    ]
-
-    configs
+    item
   end
 
   def status_date_filters
@@ -352,23 +360,22 @@ class SubmissionsController < ApplicationController
     []
   end
 
+  # Sort configs derived from the visible columns. Reference keeps its custom
+  # zero-padded key so ids sort numerically within a prefix; every other
+  # sortable column sorts on its raw extractor value.
   def status_sort_configs
     configs = {
-      "type" => ->(item) { item[:type].to_s },
       "reference" => ->(item) {
         prefix, id = item[:reference].to_s.split("-")
-        # Zero-pad the id so it sorts numerically within a prefix.
         format("%s-%012d", prefix.to_s, id.to_i)
-      },
-      "status" => ->(item) { item[:status].to_s },
-      "submitted_at" => ->(item) { item[:submitted_at].to_s },
-      "updated_at" => ->(item) { item[:updated_at].to_s }
+      }
     }
-
-    if @show_employee_column
-      configs["employee_name"] = ->(item) { item[:employee_name].to_s }
+    Array(@columns).each do |col|
+      next unless col.sortable?
+      next if col.sort_key == "reference"
+      extractor = col.value
+      configs[col.sort_key] = ->(item) { extractor.call(item).to_s }
     end
-
     configs
   end
 end

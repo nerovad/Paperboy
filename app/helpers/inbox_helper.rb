@@ -9,7 +9,7 @@ module InboxHelper
   # to tell a genuinely-cleared inbox ("Inbox Zero!") apart from a filter that
   # simply matched nothing.
   INBOX_FILTER_PARAMS = %i[
-    filter_reference filter_form_type filter_name filter_unit filter_email
+    filter_reference filter_form_type filter_unit
     filter_status filter_date_from filter_date_to filter_employee
   ].freeze
 
