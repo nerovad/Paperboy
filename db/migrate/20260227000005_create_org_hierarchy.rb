@@ -116,11 +116,11 @@ class CreateOrgHierarchy < ActiveRecord::Migration[8.0]
 
     # Revenue Sources
     create_table :revenue_sources, id: false do |t|
-      t.integer :revenue_id, limit: 2, null: false
+      t.integer :revenue_source_id, limit: 2, null: false
       t.string :long_name, limit: 100, null: false
       t.string :short_name, limit: 50, null: false
     end
-    execute "ALTER TABLE revenue_sources ADD PRIMARY KEY (revenue_id)"
+    execute "ALTER TABLE revenue_sources ADD PRIMARY KEY (revenue_source_id)"
 
     # Objects
     create_table :objects, id: false do |t|

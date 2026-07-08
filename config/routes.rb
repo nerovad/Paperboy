@@ -294,6 +294,27 @@ Rails.application.routes.draw do
   # ============================================================================
   resources :lookup_tables, only: [ :index, :show, :new, :create ]
 
+  namespace :coa do
+    root to: "list#index"
+    get "list", to: "list#index"
+
+    resources :agencies
+    resources :activities
+    resources :departments
+    resources :divisions
+    resources :functions
+    resources :funds
+    resources :major_programs
+    resources :objects
+    resources :phases
+    resources :programs
+    resources :revenue_sources
+    resources :object_inferences
+    resources :sub_units
+    resources :tasks
+    resources :units
+  end
+
   # ============================================================================
   # Lookups & Dynamic Data
   # ============================================================================

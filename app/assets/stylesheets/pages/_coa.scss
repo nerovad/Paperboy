@@ -1,0 +1,114 @@
+@import "base/tokens";
+
+.coa-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.coa-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.coa-header h1 {
+  margin: 0;
+  color: $text-color;
+}
+
+.coa-subtitle {
+  margin: 6px 0 0;
+  color: $text-muted;
+}
+
+.coa-header-actions,
+.coa-actions,
+.coa-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.coa-actions form {
+  margin: 0;
+}
+
+.coa-actions-column {
+  width: 220px;
+}
+
+.coa-table-wrapper {
+  overflow-x: auto;
+}
+
+.coa-table td,
+.coa-table th {
+  vertical-align: middle;
+}
+
+.coa-detail-list {
+  margin: 0;
+  border: 1px solid $border-muted;
+  border-radius: $radius-6;
+  background: $surface-base;
+}
+
+.coa-detail-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) 1fr;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid $border-faint;
+}
+
+.coa-detail-row:last-child {
+  border-bottom: 0;
+}
+
+.coa-detail-row dt {
+  font-weight: 700;
+  color: $label-color;
+}
+
+.coa-detail-row dd {
+  margin: 0;
+  color: $text-color;
+}
+
+.coa-form {
+  max-width: 760px;
+}
+
+.coa-errors {
+  max-width: 760px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid $form-error-border;
+  border-left: 4px solid $red-form-border;
+  border-radius: $radius-6;
+  background: $form-error-bg;
+  color: $form-error-text;
+}
+
+@media (max-width: 768px) {
+  .coa-page {
+    padding: 16px;
+  }
+
+  .coa-header,
+  .coa-detail-row {
+    display: block;
+  }
+
+  .coa-header-actions {
+    margin-top: 12px;
+  }
+
+  .coa-detail-row dt {
+    margin-bottom: 4px;
+  }
+}
