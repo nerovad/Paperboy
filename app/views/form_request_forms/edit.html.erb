@@ -6,6 +6,26 @@
 <div class="form-wrapper" data-controller="form-navigation conditional-fields">
   <%= form_with model: @form_request_form, local: true do |form| %>
 
+  <% if @form_request_form.errors.any? %>
+    <div class="form-errors" role="alert" data-form-navigation-target="errorSummary">
+      <strong><%= pluralize(@form_request_form.errors.count, "error") %> prevented this form from being submitted:</strong>
+      <ul>
+        <% @form_request_form.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+        <% _page_1_visible = true %>
+        <% _page_2_visible = true %>
+        <% _page_3_visible = true %>
+        <% _page_4_visible = true %>
+        <% _page_5_visible = true %>
+        <% _page_6_visible = true %>
+        <% _page_7_visible = true %>
+        <% _visible_page_count = [_page_1_visible, _page_2_visible, _page_3_visible, _page_4_visible, _page_5_visible, _page_6_visible, _page_7_visible].count(true) %>
+
 <!-- Page 1: Employee Info -->
 <div class="form-page">
   <h2>Employee Info</h2>
@@ -108,9 +128,9 @@
 </div>
       </div>
 
-<!-- Page 3: Workflow -->
+<!-- Page 3: About -->
 <div class="form-page" style="display:none;">
-  <h2>Workflow</h2>
+  <h2>About</h2>
         <div class="form-row d-flex flex-wrap">
 <!-- FIELD:about_the_form START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :about_the_form, "About the Form" %>
@@ -120,14 +140,50 @@
         </div>
       </div>
 
-<!-- Page 4: Routing -->
+<!-- Page 4: Fields -->
+<div class="form-page" style="display:none;">
+  <h2>Fields</h2>
+        <div class="form-row d-flex flex-wrap">
+<!-- FIELD:list_all_fields_on_form START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :list_all_fields_on_form, "List all Fields on Form" %>
+            <%= form.text_area :list_all_fields_on_form, rows: 10, class: "form-control" %>
+          </div>
+<!-- FIELD:list_all_fields_on_form END -->
+<!-- FIELD:attach_existing_pdf_form START --><div class="form-group flex-fill<%= '' %>" data-controller="file-preview" data-file-preview-max-value="10">
+  <%= form.label :attach_existing_pdf_form, "Attach Existing PDF Form" %>
+            <% if @form_request_form.attach_existing_pdf_form.attached? %>
+              <div class="existing-attachments">
+                <small class="form-text text-muted">Currently attached:</small>
+                <div class="file-preview-grid">
+                  <% @form_request_form.attach_existing_pdf_form.each do |attachment| %>
+                    <div class="file-preview-item">
+                      <% if attachment.content_type.start_with?('image/') %>
+                        <%= image_tag rails_blob_path(attachment, disposition: 'inline'), class: 'file-preview-thumb' %>
+                      <% else %>
+                        <div class="file-preview-icon"><i class="fas fa-file-pdf"></i></div>
+                      <% end %>
+                      <span class="file-preview-name"><%= attachment.filename %></span>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            <%= form.file_field :attach_existing_pdf_form, multiple: true, class: "form-control", direct_upload: true, accept: "image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,application/pdf", data: { file_preview_target: "input", action: "change->file-preview#preview" } %>
+            <small class="form-text text-muted">You can select files multiple times — up to 10 total. <span data-file-preview-target="count"></span></small>
+            <div data-file-preview-target="preview" class="file-preview-grid"></div>
+          </div>
+<!-- FIELD:attach_existing_pdf_form END -->
+        </div>
+      </div>
+
+<!-- Page 5: Routing -->
 <div class="form-page" style="display:none;">
   <h2>Routing</h2>
         <div class="form-row d-flex flex-wrap">
 <!-- FIELD:form_routing START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :form_routing, "Form Routing" %>
             <%= form.select :form_routing,
-                  options_for_select(['Database', 'Supervisor', 'Specific Employee', 'Other']),
+                  options_for_select(['Database', 'Supervisor', 'Group', 'Specific Employee', 'Other'], @form_request_form.form_routing.to_s.split(/,(?! )/)),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'form_routing' } } %>
           </div>
@@ -136,7 +192,7 @@
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :specific_employee, "Specific Employee" %>
             <%= form.select :specific_employee,
-                  options_for_select(Employee.order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }),
+                  options_for_select(Employee.order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }, @form_request_form.specific_employee.to_s.split(/,(?! )/)),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
@@ -149,34 +205,49 @@
           </div>
           </div>
 <!-- FIELD:other_routing END -->
+<!-- FIELD:group_name START -->          <div class="conditional-field" data-depends-on="form_routing" data-show-values="[&quot;Group&quot;]" style="<%= ["Group"].include?(@form_request_form.form_routing) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :group_name, "Group Name" %>
+            <%= form.text_field :group_name, class: "form-control" %>
+          </div>
+          </div>
+<!-- FIELD:group_name END -->
+<!-- FIELD:employees_in_group START -->          <div class="conditional-field" data-depends-on="form_routing" data-show-values="[&quot;Group&quot;]" style="<%= ["Group"].include?(@form_request_form.form_routing) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>" data-controller="choices">
+  <%= form.label :employees_in_group, "Employees in Group" %>
+            <%= form.select :employees_in_group,
+                  options_for_select(Employee.order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }, @form_request_form.employees_in_group.to_s.split(/,(?! )/)),
+                  { include_blank: false },
+                  { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+          </div>
+          </div>
+<!-- FIELD:employees_in_group END -->
+        </div>
+      </div>
+
+<!-- Page 6: Notifications -->
+<div class="form-page" style="display:none;">
+  <h2>Notifications</h2>
+        <div class="form-row d-flex flex-wrap">
 <!-- FIELD:email_or_teams_notifications START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :email_or_teams_notifications, "Email or Teams Notifications" %>
             <%= form.select :email_or_teams_notifications,
-                  options_for_select(['Email', 'Teams', 'Other']),
+                  options_for_select(['Email', 'Teams', 'Other'], @form_request_form.email_or_teams_notifications.to_s.split(/,(?! )/)),
                   { include_blank: false },
-                  { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'email_or_teams_notifications' } } %>
+                  { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
 <!-- FIELD:email_or_teams_notifications END -->
-<!-- FIELD:other_notification START -->          <div class="conditional-field" data-depends-on="email_or_teams_notifications" data-show-values="[&quot;Other&quot;]" style="<%= ["Other"].include?(@form_request_form.email_or_teams_notifications) ? '' : 'display: none;' %>">
-<div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:other_notification START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :other_notification, "Other Notification" %>
             <%= form.text_field :other_notification, class: "form-control" %>
-          </div>
           </div>
 <!-- FIELD:other_notification END -->
         </div>
       </div>
 
-<!-- Page 5: Fields -->
+<!-- Page 7: Extras -->
 <div class="form-page" style="display:none;">
-  <h2>Fields</h2>
-        <div class="form-row d-flex flex-wrap">
-<!-- FIELD:list_all_fields_on_form START --><div class="form-group flex-fill<%= '' %>">
-  <%= form.label :list_all_fields_on_form, "List all Fields on Form" %>
-            <%= form.text_area :list_all_fields_on_form, rows: 10, class: "form-control" %>
-          </div>
-<!-- FIELD:list_all_fields_on_form END -->
-        </div>
+  <h2>Extras</h2>
       </div>
 
     <!-- Navigation Buttons -->
@@ -190,13 +261,13 @@
       </div>
     </div>
 
-    <!-- Progress (5 steps) -->
+    <!-- Progress (7 steps) -->
     <div class="progress-wrapper">
       <div class="progress-bar-container">
         <div class="progress-bar" id="progressBar"></div>
       </div>
       <div class="progress-dots">
-        <% 5.times do |index| %>
+        <% _visible_page_count.times do |index| %>
           <div class="dot <%= 'active' if index == 0 %>"></div>
         <% end %>
       </div>

@@ -1,6 +1,6 @@
 class FormRequestFormsController < ApplicationController
   # Generated controller for FormRequestForm form
-  before_action :set_form_request_form, only: [ :show, :edit, :update, :pdf, :approve, :deny, :update_status ]
+  before_action :set_form_request_form, only: [ :show, :edit, :update, :pdf, :approve, :deny, :update_status , :download_attach_existing_pdf_form]
 
   def new
     @form_request_form = FormRequestForm.new
@@ -160,6 +160,11 @@ class FormRequestFormsController < ApplicationController
       redirect_to inbox_queue_path, alert: "Unable to update status."
     end
   end
+def download_attach_existing_pdf_form
+  attachment = @form_request_form.attach_existing_pdf_form.find(params[:attachment_id])
+  redirect_to rails_blob_path(attachment, disposition: "attachment")
+end
+
 
   private
 
@@ -205,7 +210,8 @@ class FormRequestFormsController < ApplicationController
   def form_request_form_params
     # Only the baseline fields you asked for
     params.require(:form_request_form).permit(
-      :name, :phone, :email, :agency, :division, :department, :unit
+      :name, :phone, :email, :agency, :division, :department, :unit,
+      attach_existing_pdf_form: []
     )
   end
 end
