@@ -5,7 +5,7 @@
   /* Sections */
   .billing-section {
     padding: 1.25rem 1.5rem;
-    background: #fff;
+    background: $surface-base;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   }
@@ -15,7 +15,7 @@
     font-size: 1.1rem;
     font-weight: 600;
     margin: 0 0 1rem 0;
-    color: #333;
+    color: $text-color;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
@@ -47,7 +47,7 @@
     font-size: 0.95rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.2px;
-    color: #333 !important;
+    color: $text-color !important;
     text-align: center;
 
     transition: background 0.3s, transform 0.2s, border-color 0.2s, color 0.2s;
@@ -64,7 +64,7 @@
   .billing-btn.prod-back:hover {
     background-color: $primary-color !important;
     border-color: $primary-color !important;
-    color: #fff !important;
+    color: $surface-base !important;
   }
 
   @media (max-width: 600px) {
@@ -86,12 +86,12 @@
   .billing-modal-content {
     width: 92vw;
     max-width: 560px;
-    background: #fff;
-    color: #1f2937;
+    background: $surface-base;
+    color: $neutral-900;
     border-radius: 14px;
     padding: 18px 18px 20px;
     box-shadow: 0 10px 36px rgba(0,0,0,.25);
-    border: 1px solid #e9ecef;
+    border: 1px solid $neutral-border-soft;
     position: relative;
   }
 
@@ -107,7 +107,7 @@
     right: .6rem;
     top: .5rem;
     font-size: 1.25rem;
-    color: #97a6b2;
+    color: $blue-gray-muted;
     cursor: pointer;
   }
 
@@ -130,7 +130,7 @@
   box-sizing: border-box; /* ensure padding/border are included in width */
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid $neutral-border-light;
   border-radius: 8px;
   font-size: .95rem;
   min-width: 0; /* override browser min-content stubbornness */
@@ -140,7 +140,7 @@
 .date-group label {
   display: block;
   font-size: .9rem;
-  color: #374151;
+  color: $neutral-700;
   margin-bottom: 4px;
 }
 
@@ -149,10 +149,10 @@
   .date-row { grid-template-columns: 1fr; }
 }
 
-  /* Keep the "Cancel" button gray only inside this modal */
+  /* Keep the "Cancel" button neutral only inside this modal */
   .billing-modal .btn.deny {
-    background: #edf2f7;
-    color: #111827;
+    background: $neutral-button-bg;
+    color: $neutral-950;
   }
   .billing-modal .btn.deny:hover { filter: brightness(.97); }
 }

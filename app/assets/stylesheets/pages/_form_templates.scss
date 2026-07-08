@@ -66,7 +66,7 @@
 
     .btn-primary {
       background: $primary-color;
-      color: white;
+      color: $form-bg;
       border: none;
       padding: 10px 20px;
       border-radius: $radius-6;
@@ -93,7 +93,7 @@
     border: 1px solid $border-color;
 
     thead {
-      background: #f5f5f5;
+      background: $surface-control;
       border-bottom: 2px solid $border-color;
     }
 
@@ -117,7 +117,7 @@
       font-size: 14px;
 
       code {
-        background: #f5f5f5;
+        background: $surface-control;
         padding: 2px 6px;
         border-radius: 3px;
         font-size: 12px;
@@ -135,7 +135,7 @@
       transition: background-color 0.2s ease;
 
       &:hover {
-        background: #fafafa;
+        background: $surface-muted;
       }
 
       &:last-child td {
@@ -157,19 +157,19 @@
     margin-right: 8px;
 
     &.btn-info {
-      background: #17a2b8;
-      color: white;
-      border: 1px solid #17a2b8;
+      background: $cyan-action;
+      color: $form-bg;
+      border: 1px solid $cyan-action;
 
       &:hover {
-        background: #138496;
-        border-color: #138496;
+        background: $cyan-action-hover;
+        border-color: $cyan-action-hover;
       }
     }
 
     &.btn-danger {
       background: $danger;
-      color: white;
+      color: $form-bg;
       border: 1px solid $danger;
 
       &:hover {
@@ -197,7 +197,7 @@
 
     .btn-primary {
       background: $primary-color;
-      color: white;
+      color: $form-bg;
       border: none;
       padding: 12px 24px;
       border-radius: $radius-6;
@@ -223,33 +223,33 @@
   letter-spacing: 0.5px;
 
   &.badge-success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background: $success-bg;
+    color: $success-text;
+    border: 1px solid $success-border;
   }
 
   &.badge-warning {
-    background: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
+    background: $warning-bg;
+    color: $warning-text;
+    border: 1px solid $warning-border;
   }
 
   &.badge-primary {
-    background: #cce5ff;
-    color: #004085;
-    border: 1px solid #b8daff;
+    background: $info-bg;
+    color: $info-text;
+    border: 1px solid $blue-info-border;
   }
 
   &.badge-danger {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background: $error-bg;
+    color: $error-text;
+    border: 1px solid $error-border;
   }
 
   &.badge-info {
-    background: #d1ecf1;
-    color: #0c5460;
-    border: 1px solid #bee5eb;
+    background: $teal-info-bg;
+    color: $teal-dark;
+    border: 1px solid $teal-info-border;
   }
 }
 
@@ -294,7 +294,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #f8f9fa;
+    background: $surface-panel;
     flex-shrink: 0; // Don't shrink
 
     h2 {
@@ -339,7 +339,7 @@
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    background: #f8f9fa;
+    background: $surface-panel;
     flex-shrink: 0; // Don't shrink
     position: sticky; // Make footer sticky
     bottom: 0;
@@ -372,7 +372,7 @@
       .dot {
         width: 10px;
         height: 10px;
-        background-color: #ccc;
+        background-color: $neutral-disabled;
         border-radius: 50%;
         transition: background-color 0.3s ease;
 
@@ -450,7 +450,7 @@
     border-radius: $radius-6;
     padding: 20px;
     margin-bottom: 12px;
-    background: #fafafa;
+    background: $surface-muted;
     min-height: 120px;
     max-height: none; /* Allow it to grow */
   }
@@ -477,14 +477,14 @@
     justify-content: center;
     cursor: grab;
     padding: 8px 12px;
-    background: #f0f4f8;
+    background: $blue-gray-panel;
     border-radius: 4px;
     min-width: 50px;
     user-select: none;
     transition: background-color 0.2s ease;
 
     &:hover {
-      background: #e3e8ed;
+      background: $blue-gray-panel-hover;
     }
 
     &:active {
@@ -508,7 +508,7 @@
   /* Sortable ghost/chosen/drag states */
   .field-item-ghost {
     opacity: 0.4;
-    background: #e3f2fd;
+    background: $blue-notice-bg;
     border: 2px dashed $primary-color;
   }
 
@@ -574,7 +574,7 @@
 
     &.btn-primary {
       background-color: $primary-color;
-      color: white;
+      color: $form-bg;
 
       &:hover {
         background-color: $primary-hover;
@@ -582,18 +582,18 @@
     }
 
     &.btn-secondary {
-      background-color: #f5f5f5;
+      background-color: $surface-control;
       color: $text-color;
       border: 1px solid $border-color;
 
       &:hover {
-        background-color: #e6e6e6;
+        background-color: $neutral-border-subtle;
       }
     }
 
     &.btn-danger {
       background-color: $danger;
-      color: white;
+      color: $form-bg;
 
       &:hover {
         background-color: $danger-700;
@@ -612,7 +612,7 @@
   .page-headers-container {
     margin-top: 12px;
     padding: 16px;
-    background: #fafafa;
+    background: $surface-muted;
     border: 1px solid $border-color;
     border-radius: $radius-6;
   }
@@ -734,22 +734,22 @@
     padding: 16px 20px;
     margin: 20px 0;
     border-radius: $radius-6;
-    border: 1px solid transparent;
+    border: 1px solid $alpha-clear;
     font-size: 14px;
 
     &.alert-success {
-      background: #d4edda;
-      border-color: #c3e6cb;
-      color: #155724;
+      background: $success-bg;
+      border-color: $success-border;
+      color: $success-text;
 
       strong {
-        color: #0f4419;
+        color: $green-deep;
       }
     }
   }
 
   .btn-secondary {
-    background: #f5f5f5;
+    background: $surface-control;
     color: $text-color;
     border: 1px solid $border-color;
     padding: 10px 20px;
@@ -760,14 +760,14 @@
     transition: all 0.2s ease;
 
     &:hover {
-      background: #e6e6e6;
+      background: $neutral-border-subtle;
       transform: translateY(-1px);
     }
   }
 
   .btn-primary {
     background: $primary-color;
-    color: white;
+    color: $form-bg;
     border: none;
     padding: 10px 20px;
     border-radius: $radius-6;
@@ -797,7 +797,7 @@
   align-items: center;
 
   .modal-content {
-    background: white;
+    background: $form-bg;
     border-radius: $radius-12;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   }
@@ -872,13 +872,13 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: #e8f5e9;
-    color: #2e7d32;
+    background: $green-status-bg;
+    color: $green-status-text;
     padding: 4px 8px;
     border-radius: 16px;
     font-size: 13px;
     font-weight: 500;
-    border: 1px solid #a5d6a7;
+    border: 1px solid $green-soft-border;
 
     .tag-chip-remove {
       display: inline-flex;
@@ -888,7 +888,7 @@
       height: 18px;
       border: none;
       background: rgba(0, 0, 0, 0.1);
-      color: #2e7d32;
+      color: $green-status-text;
       border-radius: 50%;
       font-size: 14px;
       line-height: 1;
@@ -909,7 +909,7 @@
     outline: none;
     font-size: 14px;
     padding: 4px 0;
-    background: transparent;
+    background: $alpha-clear;
 
     &::placeholder {
       color: $muted;
@@ -939,11 +939,11 @@
 
       &:hover,
       &.selected {
-        background: #f5f5f5;
+        background: $surface-control;
       }
 
       &.selected {
-        background: #e8f5e9;
+        background: $green-status-bg;
       }
     }
   }
@@ -956,7 +956,7 @@
     border-radius: $radius-6;
     padding: 16px;
     margin-bottom: 12px;
-    background: #fafafa;
+    background: $surface-muted;
     min-height: 80px;
 
     &:empty::before {
@@ -983,8 +983,8 @@
     }
 
     &.custom-status-item {
-      background: #fffbeb;
-      border-color: #fde68a;
+      background: $warning-soft-bg;
+      border-color: $amber-soft-border;
     }
   }
 
@@ -1026,7 +1026,7 @@
     // Override the modal fixed positioning - this is a full page, not an overlay
     position: static;
     display: block;
-    background: transparent;
+    background: $alpha-clear;
     padding: 40px 20px 0;
     overflow-y: auto;
     max-height: calc(100vh - 60px);
@@ -1053,15 +1053,15 @@
 
   .approver-card.archived {
     opacity: 0.65;
-    background: #f5f5f5;
+    background: $surface-control;
   }
 
   .archived-badge {
     display: inline-block;
     margin-left: 8px;
     padding: 2px 8px;
-    background: #6c757d;
-    color: white;
+    background: $muted;
+    color: $form-bg;
     border-radius: 4px;
     font-size: 11px;
     font-weight: 600;

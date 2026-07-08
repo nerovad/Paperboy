@@ -40,12 +40,12 @@
   .btn {
     padding: 6px 14px;
     font-size: 0.9rem;
-    background-color: #f9f9f9;
+    background-color: $surface-subtle;
     border: 1px solid $border-color;
 
     &.active {
       background-color: $primary-color;
-      color: white;
+      color: $form-bg;
       border-color: $primary-color;
     }
   }
@@ -75,7 +75,7 @@
   }
 
   th {
-    background-color: #f9f9f9;
+    background-color: $surface-subtle;
     font-weight: 600;
     color: $label-color;
     position: sticky;
@@ -87,7 +87,7 @@
     transition: background-color 0.15s ease;
 
     &:hover {
-      background-color: #fafafa;
+      background-color: $surface-muted;
     }
   }
 
@@ -124,18 +124,18 @@
   font-weight: 600;
 
   &.active-card {
-    background-color: #e8f5e9;
-    color: #2e7d32;
+    background-color: $green-status-bg;
+    color: $green-status-text;
   }
 
   &.expired {
-    background-color: #fff3e0;
-    color: #e65100;
+    background-color: $orange-status-bg;
+    color: $orange-status-text;
   }
 
   &.canceled {
-    background-color: #ffebee;
-    color: #c62828;
+    background-color: $red-status-bg;
+    color: $red-status-text;
   }
 }
 

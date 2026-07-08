@@ -1,3 +1,5 @@
+@import "base/tokens";
+
 .help-tabs {
   display: flex;
   border-bottom: 2px solid $border-color;
@@ -11,7 +13,7 @@
     color: $muted;
     background: none;
     border: none;
-    border-bottom: 3px solid transparent;
+    border-bottom: 3px solid $alpha-clear;
     cursor: pointer;
     margin-bottom: -2px;
     transition: color 0.15s, border-color 0.15s;
@@ -92,7 +94,7 @@
 }
 
 .docs-card {
-  background: #f8f9fa;
+  background: $surface-panel;
   border: 1px solid $border-color;
   border-radius: $radius-6;
   padding: 16px;
