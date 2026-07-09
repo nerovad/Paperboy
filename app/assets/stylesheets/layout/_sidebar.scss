@@ -100,8 +100,8 @@
     .sidebar-home-link {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
+      justify-content: flex-start;
+      gap: 8px;
       color: inherit;
       text-decoration: none;
       cursor: pointer;
@@ -110,7 +110,7 @@
       &:hover { color: $primary-color; }
 
       .sidebar-logo {
-        height: 2.4em;
+        height: 3.6em;
         width: auto;
         flex: 0 0 auto;
       }
