@@ -17,7 +17,7 @@ class Unit < GsabssBase
     direct = find_by(unit_id: emp.unit)
     return direct if direct
 
-    parent_id = SubUnit.where(subunit_id: emp.unit, agency_id: emp.agency).limit(1).pick(:unit_id)
+    parent_id = SubUnit.where(sub_unit_id: emp.unit, agency_id: emp.agency).limit(1).pick(:unit_id)
     parent_id ? find_by(unit_id: parent_id) : nil
   end
 end

@@ -142,9 +142,9 @@ class CreateOrgHierarchy < ActiveRecord::Migration[8.0]
     create_table :sub_units, id: false do |t|
       t.string :agency_id, limit: 3, null: false
       t.string :unit_id, limit: 4, null: false
-      t.string :subunit_id, limit: 4, null: false
+      t.string :sub_unit_id, limit: 4, null: false
       t.string :short_name, limit: 50, null: false
     end
-    execute "ALTER TABLE sub_units ADD PRIMARY KEY (agency_id, unit_id, subunit_id)"
+    execute "ALTER TABLE sub_units ADD PRIMARY KEY (agency_id, unit_id, sub_unit_id)"
   end
 end
