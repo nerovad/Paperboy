@@ -35,21 +35,21 @@
   }
 
   &::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: $scrollbar-track;
     border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #888;
+    background: $scrollbar-thumb;
     border-radius: 4px;
 
     &:hover {
-      background: #666;
+      background: $text-muted;
     }
   }
 
   scrollbar-width: thin;
-  scrollbar-color: #888 #f1f1f1;
+  scrollbar-color: $scrollbar-thumb $scrollbar-track;
 }
 
 /* Saved Search bar — lives inside .filter-form, above .filter-controls */
@@ -150,7 +150,7 @@
   padding: 6px 10px;
   border-radius: 6px;
   background: $primary-color;
-  color: #fff;
+  color: $surface-base;
   text-decoration: none;
   border: none;
   font-size: 13px;
@@ -184,7 +184,7 @@
   justify-content: center;
   padding: 4px;
   margin-left: 8px;
-  background: transparent;
+  background: $alpha-clear;
   border: 1px solid $border-color;
   border-radius: 4px;
   cursor: pointer;
@@ -200,7 +200,7 @@
   &.active {
     background: $primary-color;
     border-color: $primary-color;
-    color: #fff;
+    color: $surface-base;
   }
 
   svg {
@@ -211,7 +211,7 @@
 
 /* Timeline row */
 .timeline-row {
-  background: #f9fafb;
+  background: $surface-raised;
 
   td {
     padding: 0 !important;
@@ -261,7 +261,7 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #fff;
+    background: $surface-base;
     border: 2px solid $border-color;
     flex-shrink: 0;
   }
@@ -364,7 +364,7 @@
       // Current page
       &[aria-current="page"] {
         background: $primary-color;
-        color: #fff;
+        color: $surface-base;
         border-color: $primary-color;
         font-weight: 600;
         cursor: default;
@@ -372,8 +372,8 @@
 
       // Gap (ellipsis)
       &[role="separator"] {
-        border-color: transparent;
-        background: transparent;
+        border-color: $alpha-clear;
+        background: $alpha-clear;
         cursor: default;
       }
 
@@ -454,7 +454,7 @@ $submissions-accent: $primary-color;
   font-weight: 600;
   color: $muted;
   text-decoration: none;
-  border-bottom: 3px solid transparent;
+  border-bottom: 3px solid $alpha-clear;
   margin-bottom: -1px; /* overlap the bar's border so the active underline aligns */
   transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 
@@ -489,20 +489,20 @@ $submissions-accent: $primary-color;
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
-  color: #fff;
+  color: $surface-base;
   background: $danger;
   border-radius: 10px;
 }
 
 /* Per-view column-header theming makes the two tables unmistakably distinct:
-   Inbox headers are navy (action workspace), Submissions headers are green
-   (tracker). White header text keeps the sortable links legible. */
+   Inbox headers are navy (action workspace), Submissions headers use the primary action token
+   (tracker). $form-bg header text keeps the sortable links legible. */
 .inbox-page-wrapper .submission-table thead th {
   background-color: $inbox-accent;
-  color: #fff;
+  color: $surface-base;
 
   a.sortable-header {
-    color: #fff;
+    color: $surface-base;
 
     &:hover { color: rgba(255, 255, 255, 0.75); }
   }
@@ -510,10 +510,10 @@ $submissions-accent: $primary-color;
 
 .submissions-page-wrapper .status-table thead th {
   background: $submissions-accent;
-  color: #fff;
+  color: $surface-base;
 
   a.sortable-header {
-    color: #fff;
+    color: $surface-base;
 
     &:hover { color: rgba(255, 255, 255, 0.75); }
   }

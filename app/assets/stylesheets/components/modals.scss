@@ -12,7 +12,7 @@
 }
 
 .modal-content {
-  background-color: #fff;
+  background-color: $surface-base;
   margin: 10% auto;
   padding: 2rem;
   border-radius: 10px;
@@ -27,7 +27,7 @@
   position: absolute;
   right: 1rem; top: 1rem;
   font-size: 1.5rem;
-  color: #999;
+  color: $neutral-400;
   cursor: pointer;
 }
 
@@ -39,19 +39,19 @@
 }
 .modal-content input[type="text"] {
   padding: 0.75rem;
-  border: 1px solid #ccc;
+  border: 1px solid $neutral-disabled;
   border-radius: 6px;
 }
 .modal-content button[type="submit"] {
   padding: 0.75rem;
-  background-color: #004976;
-  color: #fff;
+  background-color: $brand-navy;
+  color: $surface-base;
   border: none;
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
 }
-.modal-content button[type="submit"]:hover { background-color: #0066a1; }
+.modal-content button[type="submit"]:hover { background-color: $brand-navy-hover; }
 
 /* Deny/Approve modal (shared shell) */
 .deny-modal-backdrop {
@@ -65,7 +65,7 @@
 }
 
 .deny-modal {
-  background: #fff;
+  background: $surface-base;
   border-radius: 12px;
   width: 520px;
   max-width: 92vw;
@@ -77,7 +77,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 2px 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid $border-faint;
 }
 
 .deny-modal__body { padding: 16px 20px; }
@@ -112,13 +112,13 @@
 .status-history-modal__loading,
 .status-history-modal__error {
   text-align: center;
-  color: #6c757d;
+  color: $muted;
   padding: 20px 0;
 }
 
 /* (fixed class name) */
 .deny-modal__close {
-  background: transparent;
+  background: $alpha-clear;
   border: 0;
   font-size: 20px;
   cursor: pointer;
@@ -133,18 +133,18 @@
 }
 
 .information-trigger {
-  background: #0c5460;
-  color: #fff;
+  background: $teal-dark;
+  color: $surface-base;
   border: 0;
   border-radius: 6px;
   padding: 8px 16px;
   cursor: pointer;
   font-size: 0.95rem;
 
-  &:hover { background: #094047; }
+  &:hover { background: $teal-dark-hover; }
 
   .information-required-indicator {
-    color: #ffd166;
+    color: $amber-accent;
     margin-left: 4px;
   }
 }
@@ -152,8 +152,8 @@
 .information-status {
   font-size: 0.85em;
 
-  &--pending { color: #856404; }
-  &--acknowledged { color: #155724; font-weight: 600; }
+  &--pending { color: $warning-text; }
+  &--acknowledged { color: $success-text; font-weight: 600; }
 }
 
 .information-modal-backdrop {
@@ -171,7 +171,7 @@
 }
 
 .information-modal {
-  background: #fff;
+  background: $surface-base;
   border-radius: 12px;
   width: 600px;
   max-width: 92vw;
@@ -186,13 +186,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 18px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid $border-faint;
 
   h3 { margin: 0; font-size: 1.1rem; }
 }
 
 .information-modal__close {
-  background: transparent;
+  background: $alpha-clear;
   border: 0;
   font-size: 20px;
   cursor: pointer;
@@ -213,5 +213,5 @@
   gap: 10px;
   justify-content: flex-end;
   padding: 12px 18px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid $border-faint;
 }

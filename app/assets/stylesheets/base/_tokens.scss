@@ -1,19 +1,163 @@
 /* Design tokens (UI variables) */
-$form-bg:       #ffffff;
+$alpha-clear: transparent;
+
+/* Core palette */
+$neutral-black: #000;
+$surface-base: #ffffff;
+$neutral-950: #111827;
+$neutral-900: #1f2937;
+$neutral-700: #374151;
+$neutral-600: #616161;
+$neutral-500: #6b7280;
+$neutral-400: #999;
+$neutral-disabled: #ccc;
+$neutral-border-light: #e5e7eb;
+$neutral-border-soft: #e9ecef;
+$neutral-border-subtle: #e6e6e6;
+$neutral-button-bg: #edf2f7;
+$neutral-badge-bg: #f2f2f2;
+$neutral-pill-bg: #f3f4f6;
+
+/* Surfaces and borders */
+$app-bg: #f0f2f5;
+$surface-panel: #f8f9fa;
+$surface-subtle: #f9f9f9;
+$surface-muted: #fafafa;
+$surface-control: #f5f5f5;
+$surface-control-hover: #e9e9e9;
+$surface-hover: #f0f0f0;
+$surface-raised: #f9fafb;
+$border-color: #ddd;
+$border-muted: #e0e0e0;
+$border-faint: #eee;
+
+/* Brand and navigation */
+$brand-navy: #004976;
+$brand-navy-hover: #0066a1;
+$sidebar-navy: #2c3e50;
+$nav-hover-bg: #f4f7fb;
+
+/* Text */
+$text-color: #333;
+$text-strong: #1a1a1a;
+$label-color: #555;
+$text-muted: #666;
+$muted: #6c757d;
+$blue-gray-muted: #97a6b2;
+
+/* Actions */
 $primary-color: #4caf50;
 $primary-hover: #45a049;
+$green-action-hover: #43a047;
+$blue-action: #3b82f6;
+$blue-action-hover: #2563eb;
+$green-teal: #10b981;
+$green-teal-hover: #059669;
+$slate-action: #64748b;
+$slate-action-hover: #475569;
+$cyan-action: #17a2b8;
+$cyan-action-hover: #138496;
+$orange-action: #e67e22;
+$warning-action: #ff9800;
+$button-disabled-bg: #cfcfcf;
 
-$text-color:    #333;
-$label-color:   #555;
-$border-color:  #ddd;
+/* Status: success */
+$success-bg: #d4edda;
+$success-text: #155724;
+$success-border: #c3e6cb;
+$success-border-strong: #28a745;
+$green-status-bg: #e8f5e9;
+$green-status-text: #2e7d32;
+$green-soft-border: #a5d6a7;
+$green-deep: #0f4419;
+$green-approved-bg: #e8f6ee;
+$green-approved-text: #1f7a3a;
+$green-approved-border: #cfeedd;
 
-/* You already use these values in multiple places; optional now, handy soon */
-$brand-navy:    #004976;
-$muted:         #6c757d;
-$danger:        #e53935;
-$danger-700:    #d32f2f;
+/* Status: warning */
+$warning-bg: #fff3cd;
+$warning-text: #856404;
+$warning-border: #ffeeba;
+$warning-border-soft: #ffe69c;
+$warning-border-strong: #ffc107;
+$warning-soft-bg: #fffbeb;
+$warning-row-bg: #fef3cd;
+$amber-review-bg: #fef3c7;
+$amber-review-text: #92400e;
+$amber-soft-border: #fde68a;
+$amber-accent: #ffd166;
+$orange-status-bg: #fff3e0;
+$orange-status-text: #e65100;
+$orange-warning-bg: #fff3e6;
+$orange-warning-text: #a85b14;
+$orange-warning-border: #e0a672;
+
+/* Status: danger */
+$danger: #e53935;
+$danger-700: #d32f2f;
+$danger-dark: #b42318;
+$danger-deep: #b71c1c;
+$error-bg: #f8d7da;
+$error-text: #721c24;
+$error-border: #f5c6cb;
+$red-alert-border: #dc3545;
+$red-required: #c00;
+$red-delete: #e74c3c;
+$red-status-bg: #ffebee;
+$red-status-text: #c62828;
+$red-row-bg: #fff5f5;
+$red-denied-bg: #fde8e8;
+$red-denied-border: #f8d3d3;
+$red-danger-text: #c9302c;
+$red-danger-border: #e0a0a0;
+$red-danger-border-short: #d88;
+$red-danger-hover-bg: #fdf1f1;
+$red-danger-active-bg: #f8dada;
+$red-form-border: #c0392b;
+$form-error-bg: #fdecea;
+$form-error-text: #8a1f1f;
+$form-error-border: #f0b4b4;
+
+/* Status: info */
+$info-bg: #cce5ff;
+$info-text: #004085;
+$blue-info-border: #b8daff;
+$blue-notice-bg: #e3f2fd;
+$blue-notice-text: #0d47a1;
+$blue-notice-border: #90caf9;
+$link-blue: #007bff;
+$google-blue: #1a73e8;
+$blue-tooltip: #1e40af;
+$indigo-selection-bg: #eef2ff;
+$indigo-scheduled-bg: #e0e7ff;
+$indigo-scheduled-text: #3730a3;
+$indigo-scheduled-border: #c7d2fe;
+$blue-env-bg: #bfdbfe;
+$blue-env-text: #1e3a8a;
+
+/* Teal and blue-gray accents */
+$teal-dark: #0c5460;
+$teal-dark-hover: #094047;
+$teal-info-bg: #d1ecf1;
+$teal-info-border: #bee5eb;
+$blue-gray-panel: #f0f4f8;
+$blue-gray-panel-hover: #e3e8ed;
+
+/* Environment badges */
+$amber-env-text: #78350f;
+$amber-env-border: #f59e0b;
+$green-env-bg: #bbf7d0;
+$green-env-text: #14532d;
+$green-env-border: #22c55e;
+
+/* Scrollbars */
+$scrollbar-track: #f1f1f1;
+$scrollbar-thumb: #888;
+
+/* Semantic aliases */
+$form-bg: $surface-base;
 
 $font-sans: 'Helvetica Neue', Arial, sans-serif;
 $radius-6: 6px;
 $radius-12: 12px;
-$shadow-soft: 0 6px 18px rgba(0,0,0,0.08);
+$shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.08);

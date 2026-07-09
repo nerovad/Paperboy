@@ -23,7 +23,7 @@
 }
 
 .dv-card {
-  background: #f9f9f9;
+  background: $surface-subtle;
   border: 1px solid $border-color;
   border-radius: $radius-6;
   padding: 20px;
@@ -34,7 +34,7 @@
 
   &--ok { border-left: 4px solid $primary-color; }
   &--error { border-left: 4px solid $danger; }
-  &--warning { border-left: 4px solid #ff9800; }
+  &--warning { border-left: 4px solid $warning-action; }
 }
 
 .dv-card-count {
@@ -77,25 +77,25 @@
   padding: 6px 14px;
   border: 1px solid $border-color;
   border-radius: 20px;
-  background: #f9f9f9;
+  background: $surface-subtle;
   color: $text-color;
   text-decoration: none;
   font-size: 0.9rem;
   transition: background-color 0.15s, border-color 0.15s;
 
   &:hover {
-    background: #eef2ff;
+    background: $indigo-selection-bg;
     border-color: $brand-navy;
   }
 
   &--active {
     background: $brand-navy;
     border-color: $brand-navy;
-    color: #fff;
+    color: $surface-base;
 
     .dv-pill-count {
       background: rgba(255,255,255,0.2);
-      color: #fff;
+      color: $surface-base;
     }
   }
 }
@@ -156,15 +156,15 @@
 }
 
 .dv-row--error {
-  background: #fff5f5;
+  background: $red-row-bg;
 }
 
 .dv-row--warning {
-  background: #fffbeb;
+  background: $warning-soft-bg;
 }
 
 .dv-row--ok {
-  background: #fff;
+  background: $surface-base;
 }
 
 .dv-cell--error {
@@ -182,18 +182,18 @@
   white-space: nowrap;
 
   &--error {
-    background: #fde8e8;
+    background: $red-denied-bg;
     color: $danger;
   }
 
   &--warning {
-    background: #fef3cd;
-    color: #856404;
+    background: $warning-row-bg;
+    color: $warning-text;
   }
 
   &--ok {
-    background: #d4edda;
-    color: #155724;
+    background: $success-bg;
+    color: $success-text;
   }
 }
 
@@ -212,13 +212,13 @@
   line-height: 1.4;
 
   &--error {
-    background: #fde8e8;
+    background: $red-denied-bg;
     color: $danger-700;
   }
 
   &--warning {
-    background: #fef3cd;
-    color: #856404;
+    background: $warning-row-bg;
+    color: $warning-text;
   }
 }
 

@@ -1,3 +1,5 @@
+@import "base/tokens";
+
 /* Header: profile dropdown badge sizing tweaks */
 
 .profile-icon {
@@ -9,8 +11,8 @@
   position: absolute;
   top: -6px;
   right: -10px;
-  background-color: #b42318; /* red */
-  color: #fff;
+  background-color: $danger-dark; 
+  color: $surface-base;
   font-size: 0.65rem;
   font-weight: 600;
   padding: 2px 2px;
@@ -19,6 +21,6 @@
   display: inline-block;
   min-width: 18px;
   text-align: center;
-  box-shadow: 0 0 0 1px white;
+  box-shadow: 0 0 0 1px $form-bg;
   font-family: sans-serif;
 }

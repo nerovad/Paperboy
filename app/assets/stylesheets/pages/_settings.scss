@@ -1,3 +1,5 @@
+@import "base/tokens";
+
 .settings-notice {
   background: lighten($primary-color, 40%);
   color: darken($primary-color, 20%);
@@ -26,7 +28,7 @@
 
 .settings-option {
   padding: 14px 16px;
-  background: #f8f9fa;
+  background: $surface-panel;
   border: 1px solid $border-color;
   border-radius: $radius-6;
   margin-bottom: 12px;

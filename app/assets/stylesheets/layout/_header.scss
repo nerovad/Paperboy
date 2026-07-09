@@ -34,8 +34,8 @@
 /* Auth controls */
 .login-button {
   padding: 10px 15px;
-  background: #004976;
-  color: #fff;
+  background: $brand-navy;
+  color: $surface-base;
   text-decoration: none;
   border-radius: 5px;
   border: none;
@@ -61,8 +61,8 @@
 }
 
 .login-button-over-image {
-  background: #004976;
-  color: #fff;
+  background: $brand-navy;
+  color: $surface-base;
   border: none;
   padding: 10px 15px;
   border-radius: 5px;
@@ -70,7 +70,7 @@
   text-align: center;
   cursor: pointer;
 
-  &:hover { background-color: #45a049; }
+  &:hover { background-color: $primary-hover; }
 
   /* Mobile adjustments */
   @media (max-width: 768px) {
@@ -109,8 +109,8 @@
   border: none;
   cursor: pointer;
 
-  background: #004976;
-  color: #fff;
+  background: $brand-navy;
+  color: $surface-base;
   font-size: 0.95rem;
   font-weight: 500;
 
@@ -150,7 +150,7 @@
 }
 
 .profile-icon:hover {
-  background-color: #0066a1;
+  background-color: $brand-navy-hover;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
   transform: translateY(-1px);
 }
@@ -161,8 +161,8 @@
   display: inline-block;
   width: 6px;
   height: 6px;
-  border-right: 2px solid #fff;
-  border-bottom: 2px solid #fff;
+  border-right: 2px solid $surface-base;
+  border-bottom: 2px solid $surface-base;
   transform: rotate(45deg) translateY(-1px);
   transition: transform 0.16s ease-out, opacity 0.16s ease-out;
   opacity: 0.9;
@@ -183,8 +183,8 @@
   border-radius: 999px;
   font-size: 11px;
   line-height: 1;
-  background: #b42318;
-  color: #fff;
+  background: $danger-dark;
+  color: $surface-base;
   text-align: center;
   border: 1px solid rgba(0, 0, 0, 0.06);
   
@@ -205,7 +205,7 @@
   padding: 8px 0;
   border-radius: 10px;
 
-  background-color: #ffffff;
+  background-color: $surface-base;
   box-shadow:
     0 10px 30px rgba(0, 0, 0, 0.18),
     0 0 0 1px rgba(0, 0, 0, 0.03);
@@ -250,11 +250,11 @@
 
   text-align: left;
   text-decoration: none;
-  color: #333;
+  color: $text-color;
 
   border-radius: 0;
   border: none;
-  background: transparent;
+  background: $alpha-clear;
 
   font-size: 0.92rem;
 
@@ -272,8 +272,8 @@
 
 /* Hover state for items */
 .dropdown-content a:hover {
-  background-color: #f4f7fb;
-  color: #004976;
+  background-color: $nav-hover-bg;
+  color: $brand-navy;
   padding-left: 20px;
   
   @media (max-width: 768px) {
@@ -297,8 +297,8 @@
   border-radius: 8px;
   padding: 9px 12px;
 
-  background: #e53935;
-  color: #fff;
+  background: $danger;
+  color: $surface-base;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -316,7 +316,7 @@
 }
 
 .logout-btn:hover {
-  background: #d32f2f;
+  background: $danger-700;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(229, 57, 53, 0.4);
 }

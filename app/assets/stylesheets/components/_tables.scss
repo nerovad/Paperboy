@@ -21,22 +21,22 @@
     }
 
     &::-webkit-scrollbar-track {
-      background: #f1f1f1;
+      background: $scrollbar-track;
       border-radius: 4px;
     }
 
     &::-webkit-scrollbar-thumb {
-      background: #888;
+      background: $scrollbar-thumb;
       border-radius: 4px;
 
       &:hover {
-        background: #666;
+        background: $text-muted;
       }
     }
 
     /* Firefox scrollbar styling */
     scrollbar-width: thin;
-    scrollbar-color: #888 #f1f1f1;
+    scrollbar-color: $scrollbar-thumb $scrollbar-track;
   }
 }
 
@@ -47,7 +47,7 @@
   padding: 0 30px;
 
   .action-panel-content {
-    background: #fff;
+    background: $surface-base;
     border-radius: 8px;
     padding: 16px 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -81,7 +81,7 @@
       padding: 0 12px;
       border: 1px solid $border-color;
       border-radius: 6px;
-      background: white;
+      background: $form-bg;
       font-size: 0.9em;
       font-weight: 600;
       cursor: pointer;
@@ -89,7 +89,7 @@
 
       &:hover {
         border-color: darken($border-color, 15%);
-        background: #f8f9fa;
+        background: $surface-panel;
       }
 
       &:focus {
@@ -100,19 +100,19 @@
     }
 
     .btn.edit {
-      background-color: #ff9800;
+      background-color: $warning-action;
 
       &:hover {
-        background-color: darken(#ff9800, 8%);
+        background-color: darken($warning-action, 8%);
       }
     }
 
     .btn.close-panel {
-      background-color: #6c757d;
+      background-color: $muted;
       margin-left: auto;
 
       &:hover {
-        background-color: darken(#6c757d, 10%);
+        background-color: darken($muted, 10%);
       }
     }
 
@@ -183,7 +183,7 @@
 }
 
 .filter-form {
-  background: #fff;
+  background: $surface-base;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -217,7 +217,7 @@
   padding: 8px 12px;
   border: 1px solid $border-color;
   border-radius: 4px;
-  background: white;
+  background: $form-bg;
   font-size: 0.95em;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -235,8 +235,8 @@
 
 .btn.clear-filters {
   padding: 8px 16px;
-  background-color: #6c757d;
-  color: white;
+  background-color: $muted;
+  color: $form-bg;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -247,7 +247,7 @@
   align-self: flex-end;
 
   &:hover {
-    background-color: darken(#6c757d, 10%);
+    background-color: darken($muted, 10%);
   }
 }
 
@@ -263,7 +263,7 @@
 .submission-table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
+  background: $surface-base;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   border-radius: 8px;
   overflow: hidden;
@@ -276,7 +276,7 @@
   }
 
   th {
-    background-color: #f9f9f9;
+    background-color: $surface-subtle;
     color: $label-color;
     font-weight: bold;
     text-transform: uppercase;
@@ -347,7 +347,7 @@
     padding: 0 12px;
     border: 1px solid $border-color;
     border-radius: 6px;
-    background: white;
+    background: $form-bg;
     font-size: 0.9em;
     font-weight: 600;
     cursor: pointer;
@@ -358,7 +358,7 @@
 
     &:hover {
       border-color: darken($border-color, 15%);
-      background: #f8f9fa;
+      background: $surface-panel;
     }
 
     &:focus {
@@ -370,10 +370,10 @@
 
   /* Edit button - use a distinct color */
   .button-container .btn.edit {
-    background-color: #ff9800;
+    background-color: $warning-action;
 
     &:hover {
-      background-color: darken(#ff9800, 8%);
+      background-color: darken($warning-action, 8%);
     }
   }
 
