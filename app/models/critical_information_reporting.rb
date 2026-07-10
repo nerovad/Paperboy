@@ -5,12 +5,12 @@ class CriticalInformationReporting < ApplicationRecord
   include Reassignable
   include TrackableStatus
 
-enum :status, {
-  in_progress: "in_progress",
-    scheduled: "scheduled",
-    resolved: "resolved",
-    cancelled: "cancelled"
-}, default: :in_progress
+  enum :status, {
+    in_progress: 'in_progress',
+    scheduled: 'scheduled',
+    resolved: 'resolved',
+    cancelled: 'cancelled'
+  }, default: :in_progress
 
   # End states that pull this report out of the active inbox queue. CIR has no
   # form_template_statuses catalog, so TrackableStatus falls back to this
@@ -31,7 +31,7 @@ enum :status, {
   validates :employee_id, presence: true
   validates :name, presence: true
   validate :acceptable_media_photo_pdf_etc_files
-  validates :phone, presence: true, format: { with: /\A\d{3}-\d{3}-\d{4}\z/, message: "must be in format XXX-XXX-XXXX" }
+  validates :phone, presence: true, format: { with: /\A\d{3}-\d{3}-\d{4}\z/, message: 'must be in format XXX-XXX-XXXX' }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
 
   # Validations for Agency Info (Page 2)
@@ -57,7 +57,7 @@ enum :status, {
   validates :urgency, presence: true
 
   # Validations for Impact (Page 6)
-  validates :impact, presence: true, inclusion: { in: [ "Low", "Medium", "High" ] }
+  validates :impact, presence: true, inclusion: { in: %w[Low Medium High] }
   validates :impacted_customers, presence: true
   validates :next_steps, presence: true
 
@@ -66,7 +66,7 @@ enum :status, {
   scope :by_status, ->(status) { where(status: status) }
   scope :by_impact, ->(impact) { where(impact: impact) }
   scope :recent, -> { order(created_at: :desc) }
-  scope :high_urgency, -> { where(urgency: "Immediate") }
+  scope :high_urgency, -> { where(urgency: 'Immediate') }
   scope :assigned_to, ->(manager_id) { where(assigned_manager_id: manager_id) }
 
   def current_assignee_id
@@ -74,7 +74,7 @@ enum :status, {
   end
 
   def assignment_field_name
-    "assigned_manager_id"
+    'assigned_manager_id'
   end
 
   def assigned_manager_name
@@ -85,18 +85,14 @@ enum :status, {
   def acceptable_media_photo_pdf_etc_files
     return unless media_photo_pdf_etc.attached?
 
-    if media_photo_pdf_etc.count > 10
-      errors.add(:media_photo_pdf_etc, "can have a maximum of 10 files")
-    end
+    errors.add(:media_photo_pdf_etc, 'can have a maximum of 10 files') if media_photo_pdf_etc.count > 10
 
     media_photo_pdf_etc.each do |file|
       unless file.content_type.in?(%w[image/jpeg image/png image/gif image/webp image/heic image/heif application/pdf])
-        errors.add(:media_photo_pdf_etc, "must be a JPEG, PNG, GIF, WebP, HEIC, or PDF")
+        errors.add(:media_photo_pdf_etc, 'must be a JPEG, PNG, GIF, WebP, HEIC, or PDF')
       end
 
-      if file.byte_size > 10.megabytes
-        errors.add(:media_photo_pdf_etc, "file size must be less than 10MB")
-      end
+      errors.add(:media_photo_pdf_etc, 'file size must be less than 10MB') if file.byte_size > 10.megabytes
     end
   end
 
@@ -105,9 +101,9 @@ enum :status, {
   def assign_manager_based_on_location
     # Auto-assign the incident manager based on location (including self-assignment
     # so the form appears in the manager's inbox for action)
-    if location.present? && assigned_manager_id.blank?
-      manager_id = CriticalInformationLocationRouter.find_manager_for_location(location)
-      self.assigned_manager_id = manager_id if manager_id.present?
-    end
+    return unless location.present? && assigned_manager_id.blank?
+
+    manager_id = CriticalInformationLocationRouter.find_manager_for_location(location)
+    self.assigned_manager_id = manager_id if manager_id.present?
   end
 end

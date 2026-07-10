@@ -1,13 +1,13 @@
 class IdBadgeRequestForm < ApplicationRecord
   include TrackableStatus
 
-enum :status, {
-  in_progress: "in_progress",
-    step_1_pending: "step_1_pending",
-    step_2_pending: "step_2_pending",
-    approved: "approved",
-    denied: "denied"
-}, default: :in_progress
+  enum :status, {
+    in_progress: 'in_progress',
+    step_1_pending: 'step_1_pending',
+    step_2_pending: 'step_2_pending',
+    approved: 'approved',
+    denied: 'denied'
+  }, default: :in_progress
 
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
@@ -20,9 +20,7 @@ enum :status, {
   # e.g. :30_day_spending_limit is invalid; use :spending_limit_30_day instead.
   def column_names_must_be_valid_identifiers
     self.class.column_names.each do |col|
-      unless col.match?(/\A[a-zA-Z_]/)
-        errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.")
-      end
+      errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.") unless col.match?(/\A[a-zA-Z_]/)
     end
   end
 

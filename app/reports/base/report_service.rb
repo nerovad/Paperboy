@@ -14,9 +14,9 @@ module Base
 
       PdfRenderer.new(
         template: template,
-        mapping:  mapping,
-        data:     data,
-        report:   report_name
+        mapping: mapping,
+        data: data,
+        report: report_name
       ).render
     end
 

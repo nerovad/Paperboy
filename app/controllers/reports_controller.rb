@@ -6,33 +6,33 @@ class ReportsController < ApplicationController
     @forms = available_forms
 
     # Load user's scheduled reports (if model exists)
-    employee_id = session.dig(:user, "employee_id")
-    if defined?(ScheduledReport) && employee_id
-      @scheduled_reports = ScheduledReport.for_employee(employee_id).order(created_at: :desc)
-    else
-      @scheduled_reports = []
-    end
+    employee_id = session.dig(:user, 'employee_id')
+    @scheduled_reports = if defined?(ScheduledReport) && employee_id
+                           ScheduledReport.for_employee(employee_id).order(created_at: :desc)
+                         else
+                           []
+                         end
   end
 
   def generate
     form_type = params[:form_type]
     format_param = params[:format]
     status = params[:status] # Optional status filter
-    employee_id = session.dig(:user, "employee_id")
+    employee_id = session.dig(:user, 'employee_id')
 
     if form_type.blank? || format_param.blank?
-      redirect_to reports_path, alert: "Please fill in all required fields"
+      redirect_to reports_path, alert: 'Please fill in all required fields'
       return
     end
 
     # Verify user has form-level permission for this form type
-    unless current_user_group_names.include?("system_admins") || permitted_form_type?(form_type)
-      redirect_to reports_path, alert: "You do not have permission to generate reports for this form."
+    unless current_user_group_names.include?('system_admins') || permitted_form_type?(form_type)
+      redirect_to reports_path, alert: 'You do not have permission to generate reports for this form.'
       return
     end
 
     # Check if this is a scheduled report
-    if params[:schedule] == "1"
+    if params[:schedule] == '1'
       # Create scheduled report
       create_scheduled_report(employee_id, form_type, format_param, status)
     else
@@ -62,7 +62,7 @@ class ReportsController < ApplicationController
       # Prefer the model's human-readable STATUS_LABELS (via TrackableStatus)
       # over the raw enum/STATUS_MAP key — "Sent to HCA_HR" instead of
       # "Step 1 Pending". Falls back to titleized key when no label is defined.
-      label_for = ->(int_value, fallback_key) {
+      label_for = lambda { |int_value, fallback_key|
         (model_class.respond_to?(:status_label_for) && model_class.status_label_for(int_value)) ||
           fallback_key.to_s.titleize
       }
@@ -81,8 +81,8 @@ class ReportsController < ApplicationController
 
         render json: { status_options: options }
       # Check if model uses Rails enum for status
-      elsif model_class.defined_enums.key?("status")
-        status_enum = model_class.defined_enums["status"]
+      elsif model_class.defined_enums.key?('status')
+        status_enum = model_class.defined_enums['status']
 
         # Convert enum hash to array of {value, label} for the dropdown
         # Enum returns {"submitted" => 0, "approved" => 1, ...}
@@ -107,16 +107,24 @@ class ReportsController < ApplicationController
   private
 
   def generate_one_time_report(employee_id, form_type, format, status)
-    start_date = Date.parse(params[:start_date]) rescue nil
-    end_date = Date.parse(params[:end_date]) rescue nil
+    start_date = begin
+      Date.parse(params[:start_date])
+    rescue StandardError
+      nil
+    end
+    end_date = begin
+      Date.parse(params[:end_date])
+    rescue StandardError
+      nil
+    end
 
     if start_date.nil? || end_date.nil?
-      redirect_to reports_path, alert: "Invalid date format"
+      redirect_to reports_path, alert: 'Invalid date format'
       return
     end
 
     if start_date > end_date
-      redirect_to reports_path, alert: "Start date must be before end date"
+      redirect_to reports_path, alert: 'Start date must be before end date'
       return
     end
 
@@ -135,7 +143,7 @@ class ReportsController < ApplicationController
 
   def create_scheduled_report(employee_id, form_type, format, status)
     unless defined?(ScheduledReport)
-      redirect_to reports_path, alert: "Scheduled reports feature is not yet set up. Please complete the installation steps."
+      redirect_to reports_path, alert: 'Scheduled reports feature is not yet set up. Please complete the installation steps.'
       return
     end
 
@@ -154,7 +162,7 @@ class ReportsController < ApplicationController
     scheduled_report.next_run_at = scheduled_report.calculate_next_run
 
     if scheduled_report.save
-      next_run = scheduled_report.next_run_at.strftime("%B %d at %I:%M %p")
+      next_run = scheduled_report.next_run_at.strftime('%B %d at %I:%M %p')
       redirect_to reports_path, notice: "Scheduled report created successfully. Next run: #{next_run}"
     else
       redirect_to reports_path, alert: "Error creating scheduled report: #{scheduled_report.errors.full_messages.join(', ')}"
@@ -165,7 +173,7 @@ class ReportsController < ApplicationController
     templates = FormTemplate.all.order(:name)
 
     # Non-admins only see forms they have ACL permission for
-    unless current_user_group_names.include?("system_admins")
+    unless current_user_group_names.include?('system_admins')
       perm_keys = current_user_form_permission_keys
       templates = templates.select { |t| perm_keys.include?(t.id.to_s) }
     end
@@ -173,7 +181,7 @@ class ReportsController < ApplicationController
     templates.map do |template|
       {
         name: template.name,
-        value: template.class_name.tableize  # Converts "ParkingLotSubmission" → "parking_lot_submissions"
+        value: template.class_name.tableize # Converts "ParkingLotSubmission" → "parking_lot_submissions"
       }
     end
   end
@@ -181,12 +189,13 @@ class ReportsController < ApplicationController
   def permitted_form_type?(form_type)
     template = FormTemplate.all.find { |t| t.class_name.tableize == form_type }
     return false unless template
+
     current_user_form_permission_keys.include?(template.id.to_s)
   end
 
   def require_reports_access
-    unless current_user_group_names.include?("system_admins") || current_user_dropdown_permissions.include?("reports")
-      redirect_to root_path, alert: "Access denied."
-    end
+    return if current_user_group_names.include?('system_admins') || current_user_dropdown_permissions.include?('reports')
+
+    redirect_to root_path, alert: 'Access denied.'
   end
 end

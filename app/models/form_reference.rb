@@ -16,9 +16,9 @@ module FormReference
   # FormTemplate#reference_prefix is the source of truth at runtime — these only
   # supply the initial value and act as a fallback when no prefix is stored.
   PREFIX_SEEDS = {
-    "ParkingLotSubmission"         => "PLS",
-    "ProbationTransferRequest"     => "PTR",
-    "CriticalInformationReporting" => "CIR"
+    'ParkingLotSubmission' => 'PLS',
+    'ProbationTransferRequest' => 'PTR',
+    'CriticalInformationReporting' => 'CIR'
   }.freeze
 
   # Common class-name suffixes stripped before deriving an initials prefix.
@@ -32,7 +32,7 @@ module FormReference
   # rendering many rows so each row doesn't re-hit the database.
   def prefix_map
     PREFIX_SEEDS.merge(
-      FormTemplate.where.not(reference_prefix: [ nil, "" ])
+      FormTemplate.where.not(reference_prefix: [nil, ''])
                   .pluck(:class_name, :reference_prefix)
                   .to_h
     )
@@ -43,9 +43,9 @@ module FormReference
   # the same way) to avoid a query when resolving many records.
   def prefix_for(record_or_class, map = nil)
     class_name = record_or_class.is_a?(Class) ? record_or_class.name : record_or_class.class.name
-    return (map[class_name] || derive_prefix(class_name)) if map
+    return map[class_name] || derive_prefix(class_name) if map
 
-    FormTemplate.where(class_name: class_name).where.not(reference_prefix: [ nil, "" ]).pick(:reference_prefix) ||
+    FormTemplate.where(class_name: class_name).where.not(reference_prefix: [nil, '']).pick(:reference_prefix) ||
       PREFIX_SEEDS[class_name] ||
       derive_prefix(class_name)
   end
@@ -53,6 +53,7 @@ module FormReference
   # Human-facing reference, e.g. "PLS-845". Returns nil for an unsaved record.
   def reference_for(record, map = nil)
     return nil unless record.respond_to?(:id) && record.id
+
     "#{prefix_for(record, map)}-#{record.id}"
   end
 
@@ -61,10 +62,10 @@ module FormReference
   # as a last resort when no prefix is stored. Not guaranteed unique on its own —
   # callers that need uniqueness (template creation/backfill) must dedupe.
   def derive_prefix(class_name)
-    base = class_name.to_s.demodulize.sub(SUFFIX_RE, "")
+    base = class_name.to_s.demodulize.sub(SUFFIX_RE, '')
     letters = base.scan(/[A-Z]/).join
     letters = base[0, 3].to_s.upcase if letters.length < 2
-    letters.presence || "FORM"
+    letters.presence || 'FORM'
   end
 
   # Normalize a user-typed reference for matching: trim and upcase.
@@ -77,9 +78,10 @@ module FormReference
   # id portion whole or partial ("845" / "84").
   def matches?(reference, query)
     return false if reference.blank? || query.blank?
+
     ref = reference.upcase
     q   = normalize(query)
-    id_part = ref.split("-").last.to_s
+    id_part = ref.split('-').last.to_s
     ref.start_with?(q) || id_part.start_with?(q)
   end
 end

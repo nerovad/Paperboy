@@ -51,56 +51,56 @@ class TableColumns
 
   def self.inbox_builtins
     {
-      "reference"  => { label: "ID",           sort: "reference",  kind: :reference, locked: true,
-                        filter: { param: :filter_reference, kind: :search }, value: nil },
-      "form_type"  => { label: "Form",         sort: "form_type",  kind: :text,
-                        filter: { param: :filter_form_type, kind: :select },
-                        value: ->(s) { s.class.name.demodulize.titleize } },
-      "name"       => { label: "Employee",     sort: "name",       kind: :text,
-                        value: ->(s) { s.name } },
-      "unit"       => { label: "Unit",         sort: "unit",       kind: :text,
-                        filter: { param: :filter_unit, kind: :select },
-                        value: ->(s) { s.try(:unit) } },
-      "email"      => { label: "Email",        sort: "email",      kind: :text,
-                        filter: { param: :filter_email, kind: :select },
-                        value: ->(s) { s.try(:email) } },
-      "status"     => { label: "Status",       sort: "status",     kind: :status,
-                        filter: { param: :filter_status, kind: :select },
-                        value: ->(s) { s.status_label } },
-      "created_at" => { label: "Created",      sort: "created_at", kind: :datetime,
+      'reference' => { label: 'ID',           sort: 'reference',  kind: :reference, locked: true,
+                       filter: { param: :filter_reference, kind: :search }, value: nil },
+      'form_type' => { label: 'Form',         sort: 'form_type',  kind: :text,
+                       filter: { param: :filter_form_type, kind: :select },
+                       value: ->(s) { s.class.name.demodulize.titleize } },
+      'name' => { label: 'Employee',     sort: 'name',       kind: :text,
+                  value: ->(s) { s.name } },
+      'unit' => { label: 'Unit',         sort: 'unit',       kind: :text,
+                  filter: { param: :filter_unit, kind: :select },
+                  value: ->(s) { s.try(:unit) } },
+      'email' => { label: 'Email', sort: 'email', kind: :text,
+                   filter: { param: :filter_email, kind: :select },
+                   value: ->(s) { s.try(:email) } },
+      'status' => { label: 'Status', sort: 'status', kind: :status,
+                    filter: { param: :filter_status, kind: :select },
+                    value: ->(s) { s.status_label } },
+      'created_at' => { label: 'Created',      sort: 'created_at', kind: :datetime,
                         value: ->(s) { s.created_at } },
-      "updated_at" => { label: "Last Updated", sort: "updated_at", kind: :datetime,
+      'updated_at' => { label: 'Last Updated', sort: 'updated_at', kind: :datetime,
                         value: ->(s) { s.updated_at } }
     }
   end
 
   def self.submissions_builtins
     {
-      "reference"     => { label: "ID",           sort: "reference",     kind: :reference, locked: true,
-                           filter: { param: :filter_reference, kind: :search },
-                           value: ->(i) { i[:reference] } },
-      "type"          => { label: "Form",         sort: "type",          kind: :text,
-                           filter: { param: :filter_type, kind: :select },
-                           value: ->(i) { i[:type] } },
-      "employee_name" => { label: "Employee",     sort: "employee_name", kind: :text, permission: :employee_column,
+      'reference' => { label: 'ID', sort: 'reference',     kind: :reference, locked: true,
+                       filter: { param: :filter_reference, kind: :search },
+                       value: ->(i) { i[:reference] } },
+      'type' => { label: 'Form', sort: 'type', kind: :text,
+                  filter: { param: :filter_type, kind: :select },
+                  value: ->(i) { i[:type] } },
+      'employee_name' => { label: 'Employee', sort: 'employee_name', kind: :text, permission: :employee_column,
                            value: ->(i) { i[:employee_name] } },
-      "unit"          => { label: "Unit",         sort: "unit",          kind: :text,
-                           filter: { param: :filter_unit, kind: :select },
-                           value: ->(i) { i[:unit] } },
-      "status"        => { label: "Status",       sort: "status",        kind: :status,
-                           filter: { param: :filter_status, kind: :select },
-                           value: ->(i) { i[:status].to_s.tr("_", " ").titleize } },
-      "submitted_at"  => { label: "Created",      sort: "submitted_at",  kind: :datetime,
-                           value: ->(i) { i[:submitted_at] } },
-      "updated_at"    => { label: "Last Updated", sort: "updated_at",    kind: :datetime,
-                           value: ->(i) { i[:updated_at] } }
+      'unit' => { label: 'Unit', sort: 'unit', kind: :text,
+                  filter: { param: :filter_unit, kind: :select },
+                  value: ->(i) { i[:unit] } },
+      'status' => { label: 'Status', sort: 'status', kind: :status,
+                    filter: { param: :filter_status, kind: :select },
+                    value: ->(i) { i[:status].to_s.tr('_', ' ').titleize } },
+      'submitted_at' => { label: 'Created', sort: 'submitted_at', kind: :datetime,
+                          value: ->(i) { i[:submitted_at] } },
+      'updated_at' => { label: 'Last Updated', sort: 'updated_at', kind: :datetime,
+                        value: ->(i) { i[:updated_at] } }
     }
   end
 
   # The normalized default layout shown when a user hasn't customized. A subset
   # of the built-ins — e.g. Email is addable but hidden by default on the inbox.
   DEFAULT_LAYOUTS = {
-    inbox:       %w[reference form_type name unit status created_at updated_at],
+    inbox: %w[reference form_type name unit status created_at updated_at],
     submissions: %w[reference type employee_name unit status submitted_at updated_at]
   }.freeze
 
@@ -122,23 +122,27 @@ class TableColumns
         key = entry.to_s
         next unless keys.include?(key)
         next if seen[key]
+
         seen[key] = true
         result << key
       elsif entry.respond_to?(:[])
-        form  = (entry["form"]  || entry[:form]).to_s
-        field = (entry["field"] || entry[:field]).to_s
+        form  = (entry['form']  || entry[:form]).to_s
+        field = (entry['field'] || entry[:field]).to_s
         next if form.blank? || field.blank?
+
         cid = custom_id(form, field)
         next if seen[cid]
+
         seen[cid] = true
-        label = (entry["label"] || entry[:label]).presence || field.tr("_", " ").titleize
-        result << { "type" => "field", "form" => form, "field" => field, "label" => label }
+        label = (entry['label'] || entry[:label]).presence || field.tr('_', ' ').titleize
+        result << { 'type' => 'field', 'form' => form, 'field' => field, 'label' => label }
       end
     end
 
     builtins(page).each do |key, cfg|
       next unless cfg[:locked]
       next if seen[key]
+
       result.unshift(key)
     end
 
@@ -154,6 +158,7 @@ class TableColumns
         cfg = defs[entry]
         next unless cfg
         next if cfg[:permission] && !context[cfg[:permission]]
+
         Column.new(
           id: entry, label: cfg[:label], sort_key: cfg[:sort], kind: cfg[:kind],
           locked: cfg[:locked], custom: false,
@@ -161,7 +166,7 @@ class TableColumns
           value: cfg[:value]
         )
       else
-        build_custom_column(page, entry["form"], entry["field"], entry["label"])
+        build_custom_column(page, entry['form'], entry['field'], entry['label'])
       end
     end
   end
@@ -177,7 +182,7 @@ class TableColumns
 
     Column.new(
       id: cid,
-      label: label.presence || field.to_s.tr("_", " ").titleize,
+      label: label.presence || field.to_s.tr('_', ' ').titleize,
       sort_key: cid,
       kind: :text,
       custom: true,

@@ -19,7 +19,7 @@ class FormGenerator
       add_sidebar_link
 
       true
-    rescue => e
+    rescue StandardError => e
       @errors << "Generation failed: #{e.message}"
       Rails.logger.error("Form generation error: #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
@@ -31,7 +31,7 @@ class FormGenerator
 
   def validate_template
     if form_template.form_fields.empty?
-      @errors << "Form must have at least one field"
+      @errors << 'Form must have at least one field'
       return false
     end
 
@@ -44,9 +44,9 @@ class FormGenerator
     # Build field definitions for migration
     field_definitions = form_template.form_fields.map do |field|
       case field.field_type
-      when "text", "dropdown", "choices_dropdown"
+      when 'text', 'dropdown', 'choices_dropdown'
         "  # #{field.label}\n  attribute :#{field.field_name}, :string"
-      when "text_box"
+      when 'text_box'
         "  # #{field.label}\n  attribute :#{field.field_name}, :text"
       end
     end.join("\n")
@@ -92,15 +92,15 @@ class FormGenerator
   end
 
   def generate_migration
-    timestamp = Time.now.utc.strftime("%Y%m%d%H%M%S")
+    timestamp = Time.now.utc.strftime('%Y%m%d%H%M%S')
     migration_path = Rails.root.join("db/migrate/#{timestamp}_create_#{form_template.table_name}.rb")
 
     # Build column definitions
     columns = form_template.form_fields.map do |field|
       case field.field_type
-      when "text", "dropdown", "choices_dropdown"
+      when 'text', 'dropdown', 'choices_dropdown'
         "      t.string :#{field.field_name}"
-      when "text_box"
+      when 'text_box'
         "      t.text :#{field.field_name}"
       end
     end.join("\n")
@@ -212,7 +212,7 @@ class FormGenerator
     FileUtils.mkdir_p(view_dir)
 
     # Generate new.html.erb with multi-page support
-    view_path = view_dir.join("new.html.erb")
+    view_path = view_dir.join('new.html.erb')
 
     content = generate_view_content
 
@@ -278,40 +278,40 @@ class FormGenerator
 
   def generate_field_html(field)
     case field.field_type
-    when "text"
+    when 'text'
       <<~HTML
         <div class="form-group">
           <%= f.label :#{field.field_name}, "#{field.label}" %>
-          <%= f.text_field :#{field.field_name}, class: "form-control"#{field.required ? ', required: true' : ''} %>
+          <%= f.text_field :#{field.field_name}, class: "form-control"#{', required: true' if field.required} %>
         </div>
       HTML
-    when "text_box"
+    when 'text_box'
       <<~HTML
         <div class="form-group">
           <%= f.label :#{field.field_name}, "#{field.label}" %>
-          <%= f.text_area :#{field.field_name}, rows: #{field.rows}, class: "form-control"#{field.required ? ', required: true' : ''} %>
+          <%= f.text_area :#{field.field_name}, rows: #{field.rows}, class: "form-control"#{', required: true' if field.required} %>
         </div>
       HTML
-    when "dropdown"
-      values = field.dropdown_values.map { |v| "'#{v}'" }.join(", ")
+    when 'dropdown'
+      values = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
       <<~HTML
         <div class="form-group">
           <%= f.label :#{field.field_name}, "#{field.label}" %>
           <%= f.select :#{field.field_name},
                       options_for_select([#{values}]),
                       { include_blank: "Select..." },
-                      { class: "form-control"#{field.required ? ', required: true' : ''} } %>
+                      { class: "form-control"#{', required: true' if field.required} } %>
         </div>
       HTML
-    when "choices_dropdown"
-      values = field.dropdown_values.map { |v| "'#{v}'" }.join(", ")
+    when 'choices_dropdown'
+      values = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
       <<~HTML
         <div class="form-group" data-controller="choices">
           <%= f.label :#{field.field_name}, "#{field.label}" %>
           <%= f.select :#{field.field_name},
                       options_for_select([#{values}]),
                       { include_blank: false },
-                      { class: "form-control"#{field.required ? ', required: true' : ''}, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                      { class: "form-control"#{', required: true' if field.required}, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
         </div>
       HTML
     end
@@ -322,11 +322,11 @@ class FormGenerator
       "  validates :#{field.field_name}, presence: true"
     end.join("\n")
 
-    validations.presence || "  # No required fields"
+    validations.presence || '  # No required fields'
   end
 
   def generate_access_check
-    "true  # Access controlled via ACL Manager"
+    'true  # Access controlled via ACL Manager'
   end
 
   def generate_permitted_params
@@ -341,7 +341,7 @@ class FormGenerator
   end
 
   def add_route
-    routes_path = Rails.root.join("config/routes.rb")
+    routes_path = Rails.root.join('config/routes.rb')
     routes_content = File.read(routes_path)
 
     route_line = "  resources :#{form_template.plural_file_name}\n"
@@ -355,7 +355,7 @@ class FormGenerator
   end
 
   def add_sidebar_link
-    sidebar_path = Rails.root.join("app/views/shared/_sidebar.html.erb")
+    sidebar_path = Rails.root.join('app/views/shared/_sidebar.html.erb')
     return unless File.exist?(sidebar_path)
 
     sidebar_content = File.read(sidebar_path)

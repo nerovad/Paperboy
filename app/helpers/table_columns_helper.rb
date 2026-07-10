@@ -6,21 +6,21 @@ module TableColumnsHelper
   # except the sort keys) and shows the active sort indicator. Non-sortable
   # columns render as plain label text.
   def sortable_column_header(column)
-    return content_tag(:span, column.label, class: "th-label") unless column.sortable?
+    return content_tag(:span, column.label, class: 'th-label') unless column.sortable?
 
     effective = params[:sort_by].presence || @default_sort
-    next_dir = (params[:sort_by].to_s == column.sort_key && params[:sort_direction] == "asc") ? "desc" : "asc"
-    qp = request.query_parameters.except("sort_by", "sort_direction")
-         .merge("sort_by" => column.sort_key, "sort_direction" => next_dir)
+    next_dir = params[:sort_by].to_s == column.sort_key && params[:sort_direction] == 'asc' ? 'desc' : 'asc'
+    qp = request.query_parameters.except('sort_by', 'sort_direction')
+                .merge('sort_by' => column.sort_key, 'sort_direction' => next_dir)
 
-    link_to "#{request.path}?#{qp.to_query}", class: "sortable-header", data: { turbo: false } do
+    link_to "#{request.path}?#{qp.to_query}", class: 'sortable-header', data: { turbo: false } do
       indicator =
         if effective == column.sort_key
-          content_tag(:span, (params[:sort_direction] == "asc" ? "▲" : "▼"), class: "sort-indicator")
+          content_tag(:span, (params[:sort_direction] == 'asc' ? '▲' : '▼'), class: 'sort-indicator')
         else
-          "".html_safe
+          ''.html_safe
         end
-      safe_join([column.label, " ", indicator])
+      safe_join([column.label, ' ', indicator])
     end
   end
 
@@ -30,32 +30,32 @@ module TableColumnsHelper
     case column.kind
     when :reference
       ref = row.is_a?(Hash) ? row[:reference] : inbox_reference(row)
-      content_tag(:span, ref, class: "reference-badge")
+      content_tag(:span, ref, class: 'reference-badge')
     when :status
       if row.is_a?(Hash)
-        content_tag(:span, row[:status].to_s.tr("_", " "),
+        content_tag(:span, row[:status].to_s.tr('_', ' '),
                     class: "badge #{category_badge_class(row[:status_category])}")
       else
         content_tag(:span, row.status_label,
                     class: "badge #{status_badge_class(row.status_label)}")
       end
     when :datetime
-      format_pst(column.value&.call(row)) || "—"
+      format_pst(column.value&.call(row)) || '—'
     else
       value = column.value&.call(row)
-      value.present? ? value : "—"
+      value.present? ? value : '—'
     end
   end
 
   # data-* attributes for a column's filter control. Preserves the status-filters
   # Stimulus wiring for the Submissions type/status dropdowns.
   def column_filter_data(column, page)
-    attrs = { action: "change->auto-submit#submit" }
-    if page.to_s == "submissions" && column.id == "type"
-      attrs[:status_filters_target] = "type"
-      attrs[:action] = "change->status-filters#typeChanged change->auto-submit#submit"
-    elsif page.to_s == "submissions" && column.id == "status"
-      attrs[:status_filters_target] = "status"
+    attrs = { action: 'change->auto-submit#submit' }
+    if page.to_s == 'submissions' && column.id == 'type'
+      attrs[:status_filters_target] = 'type'
+      attrs[:action] = 'change->status-filters#typeChanged change->auto-submit#submit'
+    elsif page.to_s == 'submissions' && column.id == 'status'
+      attrs[:status_filters_target] = 'status'
     end
     attrs
   end
@@ -67,6 +67,7 @@ module TableColumnsHelper
     TableColumns.builtins(page).filter_map do |key, cfg|
       next if shown_ids.include?(key)
       next if cfg[:permission] && cfg[:permission] == :employee_column && !employee_column
+
       [key, cfg[:label]]
     end
   end

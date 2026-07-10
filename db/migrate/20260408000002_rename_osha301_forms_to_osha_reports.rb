@@ -18,13 +18,13 @@ class RenameOsha301FormsToOshaReports < ActiveRecord::Migration[8.0]
     end
 
     # Update FormTemplate class_name reference if one exists
-    if ActiveRecord::Base.connection.table_exists?(:form_templates)
-      execute <<~SQL
-        UPDATE form_templates
-        SET class_name = 'OshaReport'
-        WHERE class_name = 'Osha301Form'
-      SQL
-    end
+    return unless ActiveRecord::Base.connection.table_exists?(:form_templates)
+
+    execute <<~SQL
+      UPDATE form_templates
+      SET class_name = 'OshaReport'
+      WHERE class_name = 'Osha301Form'
+    SQL
   end
 
   def down

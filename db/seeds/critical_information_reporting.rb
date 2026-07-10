@@ -1,30 +1,28 @@
 # db/seeds/critical_information_reporting.rb
-require "securerandom"
-require_relative "shared"
+require 'securerandom'
+require_relative 'shared'
 
 module Seeds
   module CriticalInformationReporting
     module_function
 
-    def run(count: ENV.fetch("CIR", "80").to_i, replant: ENV["REPLANT"] == "1")
-      if replant
-        ::CriticalInformationReporting.delete_all
-      end
+    def run(count: ENV.fetch('CIR', '80').to_i, replant: ENV['REPLANT'] == '1')
+      ::CriticalInformationReporting.delete_all if replant
 
       puts "→ Seeding #{count} critical information reports…"
 
       incident_types = [
-        "Network Outage", "Application Issue", "Facilities Problem", "Security Incident",
-        "Vendor Issue", "Power/Utility", "Staffing Disruption", "Other"
+        'Network Outage', 'Application Issue', 'Facilities Problem', 'Security Incident',
+        'Vendor Issue', 'Power/Utility', 'Staffing Disruption', 'Other'
       ].freeze
 
-      urgencies = [ "Low", "Medium", "High", "Critical" ].freeze
-      impacts = [ "Low", "Medium", "High" ].freeze
-      locations = [ "HOA", "Government Center", "Field Office - East", "Field Office - West", "Remote" ].freeze
+      urgencies = %w[Low Medium High Critical].freeze
+      impacts = %w[Low Medium High].freeze
+      locations = ['HOA', 'Government Center', 'Field Office - East', 'Field Office - West', 'Remote'].freeze
 
       ActiveRecord::Base.transaction do
         count.times do
-          sup = SUPERVISORS.sample
+          SUPERVISORS.sample
           person = Seeds.name
 
           created_at = rand(120).days.ago + rand(0..23).hours + rand(0..59).minutes
@@ -37,11 +35,11 @@ module Seeds
           location = locations.sample
 
           status = case rand
-          when 0...0.50 then :in_progress
-          when 0.50...0.65 then :scheduled
-          when 0.65...0.85 then :resolved
-          else :cancelled
-          end
+                   when 0...0.50 then :in_progress
+                   when 0.50...0.65 then :scheduled
+                   when 0.65...0.85 then :resolved
+                   else :cancelled
+                   end
 
           actual_completion_date =
             if status == :resolved && rand < 0.8
@@ -58,33 +56,33 @@ module Seeds
           TEXT
 
           cause = [
-            "Configuration change", "Hardware failure", "Vendor outage",
-            "Human error", "Unknown / under investigation", "Capacity constraints"
+            'Configuration change', 'Hardware failure', 'Vendor outage',
+            'Human error', 'Unknown / under investigation', 'Capacity constraints'
           ].sample
 
           staff_involved = [
-            "IT Ops", "Facilities", "Security", "Vendor Support", "Field Staff", "None"
+            'IT Ops', 'Facilities', 'Security', 'Vendor Support', 'Field Staff', 'None'
           ].sample
 
           impacted_customers =
             case impact
-            when "Minor"    then rand(1..10).to_s
-            when "Moderate" then rand(10..50).to_s
-            when "Major"    then rand(50..200).to_s
+            when 'Minor'    then rand(1..10).to_s
+            when 'Moderate' then rand(10..50).to_s
+            when 'Major'    then rand(50..200).to_s
             else                 rand(200..1000).to_s
             end
 
           next_steps =
             if status == :cancelled
-              "No action taken. #{[ "Need more details and resubmit.", "Duplicate report.", "Route to correct team." ].sample}"
+              "No action taken. #{['Need more details and resubmit.', 'Duplicate report.', 'Route to correct team.'].sample}"
             else
-              [ "Monitor and confirm stability.", "Notify stakeholders.", "Create follow-up ticket.", "Schedule RCA review." ].sample
+              ['Monitor and confirm stability.', 'Notify stakeholders.', 'Create follow-up ticket.', 'Schedule RCA review.'].sample
             end
 
           ::CriticalInformationReporting.create!(
             employee_id: Seeds.employee_id,
             name: person,
-            phone: phone = "%03d-%03d-%04d" % [ 805, rand(200..999), rand(1000..9999) ],
+            phone: format('%03d-%03d-%04d', 805, rand(200..999), rand(1000..9999)),
             email: Seeds.email_for(person),
             agency: AGENCIES.sample,
             division: DIVISIONS.sample,

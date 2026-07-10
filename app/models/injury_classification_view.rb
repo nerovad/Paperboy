@@ -3,7 +3,7 @@
 # injury_category_id (e.g. Report Type, Nature of Incident, Cause of Incident).
 # Selected per-field in the form builder via FormField::DATA_SOURCES.
 class InjuryClassificationView < ApplicationRecord
-  self.table_name = "injury_classification_views"
+  self.table_name = 'injury_classification_views'
 
   # Distinct categories as [label, id] pairs, ordered for display.
   def self.category_options

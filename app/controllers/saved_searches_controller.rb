@@ -1,6 +1,6 @@
 class SavedSearchesController < ApplicationController
   def create
-    employee_id = session.dig(:user, "employee_id").to_s
+    employee_id = session.dig(:user, 'employee_id').to_s
 
     saved_search = SavedSearch.find_or_initialize_by(
       employee_id: employee_id,
@@ -16,13 +16,13 @@ class SavedSearchesController < ApplicationController
   end
 
   def destroy
-    employee_id = session.dig(:user, "employee_id").to_s
+    employee_id = session.dig(:user, 'employee_id').to_s
     saved_search = SavedSearch.find_by!(id: params[:id], employee_id: employee_id)
     saved_search.destroy!
 
     redirect_to submissions_path, notice: "Search \"#{saved_search.name}\" deleted."
   rescue ActiveRecord::RecordNotFound
-    redirect_to submissions_path, alert: "Saved search not found."
+    redirect_to submissions_path, alert: 'Saved search not found.'
   end
 
   private

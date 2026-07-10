@@ -1,14 +1,14 @@
-require "test_helper"
+require 'test_helper'
 
 class FormsControllerTest < ActionDispatch::IntegrationTest
   self.fixture_table_names = []
 
-  test "should get home" do
+  test 'should get home' do
     get forms_home_url
     assert_response :success
   end
 
-  test "employee login form includes csrf token" do
+  test 'employee login form includes csrf token' do
     previous_forgery_protection = ActionController::Base.allow_forgery_protection
     ActionController::Base.allow_forgery_protection = true
 

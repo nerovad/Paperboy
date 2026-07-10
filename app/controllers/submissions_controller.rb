@@ -5,20 +5,20 @@ class SubmissionsController < ApplicationController
 
   # Legacy forms that are hardcoded (not created via FormTemplate)
   LEGACY_FORMS = [
-    { model: "ParkingLotSubmission", type: "Parking Lot", path_helper: :parking_lot_submission_path },
-    { model: "ProbationTransferRequest", type: "Probation Transfer", path_helper: :probation_transfer_request_path },
-    { model: "CriticalInformationReporting", type: "Critical Information Report", path_helper: :critical_information_reporting_path }
+    { model: 'ParkingLotSubmission', type: 'Parking Lot', path_helper: :parking_lot_submission_path },
+    { model: 'ProbationTransferRequest', type: 'Probation Transfer', path_helper: :probation_transfer_request_path },
+    { model: 'CriticalInformationReporting', type: 'Critical Information Report', path_helper: :critical_information_reporting_path }
   ].freeze
 
   # Map form type display names to model classes
   FORM_TYPE_TO_MODEL = {
-    "Parking Lot" => "ParkingLotSubmission",
-    "Probation Transfer" => "ProbationTransferRequest",
-    "Critical Information Report" => "CriticalInformationReporting"
+    'Parking Lot' => 'ParkingLotSubmission',
+    'Probation Transfer' => 'ProbationTransferRequest',
+    'Critical Information Report' => 'CriticalInformationReporting'
   }.freeze
 
   def index
-    employee_id = session.dig(:user, "employee_id").to_s
+    employee_id = session.dig(:user, 'employee_id').to_s
     @saved_searches = SavedSearch.for_employee(employee_id).order(:name)
 
     @status_items = []
@@ -26,7 +26,7 @@ class SubmissionsController < ApplicationController
 
     # System admins can filter across every employee; otherwise the dropdown
     # is gated on having subordinates in the supervisor chain.
-    @is_system_admin = current_user_group_names.include?("system_admins")
+    @is_system_admin = current_user_group_names.include?('system_admins')
     @subordinate_ids = Employee.subordinate_ids(employee_id)
     @has_subordinates = @subordinate_ids.any?
     @show_employee_filter = @is_system_admin || @has_subordinates
@@ -34,14 +34,14 @@ class SubmissionsController < ApplicationController
     # Determine which employee IDs to load submissions for based on filter.
     # nil means "no employee_id restriction" (system admin viewing All).
     @scoped_employee_ids = if @show_employee_filter && params[:filter_employee].present?
-                             if params[:filter_employee] == "all"
-                               @is_system_admin ? nil : [ employee_id ] + @subordinate_ids
+                             if params[:filter_employee] == 'all'
+                               @is_system_admin ? nil : [employee_id] + @subordinate_ids
                              else
-                               [ params[:filter_employee] ]
+                               [params[:filter_employee]]
                              end
-    else
-                             [ employee_id ]
-    end
+                           else
+                             [employee_id]
+                           end
 
     # Form types the viewer holds a visibility grant for (direct or via a
     # group) — see FormVisibilityGrant. These widen the list to every
@@ -71,9 +71,9 @@ class SubmissionsController < ApplicationController
       # System admins see every employee; supervisors see only their reporting chain.
       @employees = if @is_system_admin
                      Employee.order(:last_name, :first_name)
-      else
+                   else
                      Employee.where(employee_id: @subordinate_ids).order(:last_name, :first_name)
-      end
+                   end
       @current_user_id = employee_id
     end
 
@@ -82,16 +82,15 @@ class SubmissionsController < ApplicationController
     # tied to a column) and is always available.
     field_mappings = @filter_columns.index_by { |c| c.filter_param.to_s }
                                     .transform_values(&:value)
-    field_mappings["filter_category"] = ->(item) { item[:status_category_label] }
+    field_mappings['filter_category'] = ->(item) { item[:status_category_label] }
     @filter_options = collect_filter_options(@status_items, field_mappings)
 
     # Apply in-memory filters — one exact-match config per select-filter column,
     # plus the standalone category filter.
     @status_items = apply_filters(@status_items,
-      filter_configs: @filter_columns.map { |c| { param: c.filter_param.to_s, extractor: c.value } } +
-                      [{ param: "filter_category", extractor: ->(item) { item[:status_category_label] } }],
-      date_filters: status_date_filters
-    )
+                                  filter_configs: @filter_columns.map { |c| { param: c.filter_param.to_s, extractor: c.value } } +
+                                                  [{ param: 'filter_category', extractor: ->(item) { item[:status_category_label] } }],
+                                  date_filters: status_date_filters)
 
     # Reference-number (ID) search, e.g. "PLS-845", "pls-845" or "845".
     if params[:filter_reference].present?
@@ -102,7 +101,7 @@ class SubmissionsController < ApplicationController
     # Apply sorting. Default falls back gracefully if the user hid Last Updated.
     @default_sort = default_sort_key(@columns, prefer: %w[updated_at submitted_at])
     sort_by = params[:sort_by].presence || @default_sort
-    sort_direction = params[:sort_direction] || "desc"
+    sort_direction = params[:sort_direction] || 'desc'
 
     @status_items = sort_collection(@status_items, sort_by, sort_direction, status_sort_configs, default_sort: @default_sort)
 
@@ -144,6 +143,7 @@ class SubmissionsController < ApplicationController
     FormTemplate.joins(:statuses).distinct.each do |template|
       model_class = application_record_class_named(template.class_name)
       next unless model_class
+
       statuses = statuses_from_model(model_class)
       options[template.name] = statuses
     end
@@ -165,6 +165,7 @@ class SubmissionsController < ApplicationController
     if template
       model_class = application_record_class_named(template.class_name)
       return [] unless model_class
+
       return statuses_from_model(model_class)
     end
 
@@ -176,10 +177,10 @@ class SubmissionsController < ApplicationController
   def statuses_from_model(model_class)
     if model_class.respond_to?(:statuses)
       # Model uses enum :status
-      model_class.statuses.keys.map { |s| s.to_s.tr("_", " ").titleize }
+      model_class.statuses.keys.map { |s| s.to_s.tr('_', ' ').titleize }
     elsif model_class.const_defined?(:STATUS_MAP)
       # Model uses STATUS_MAP (like ProbationTransferRequest)
-      model_class::STATUS_MAP.values.map { |s| s.to_s.tr("_", " ").titleize }
+      model_class::STATUS_MAP.values.map { |s| s.to_s.tr('_', ' ').titleize }
     else
       []
     end
@@ -198,13 +199,14 @@ class SubmissionsController < ApplicationController
     FormTemplate.joins(:statuses).distinct.each do |template|
       model_class = application_record_class_named(template.class_name)
       next unless model_class
+
       all_statuses.merge(statuses_from_model(model_class))
     end
 
     all_statuses.to_a.sort
   end
 
-  def load_legacy_forms(employee_id)
+  def load_legacy_forms(_employee_id)
     LEGACY_FORMS.each do |form_config|
       # Skip tables that don't match the type filter (avoids querying unnecessary tables)
       next if params[:filter_type].present? && params[:filter_type] != form_config[:type]
@@ -240,7 +242,7 @@ class SubmissionsController < ApplicationController
   # Model names already loaded by LEGACY_FORMS to avoid double-counting
   LEGACY_MODEL_NAMES = LEGACY_FORMS.map { |f| f[:model] }.to_set.freeze
 
-  def load_form_template_submissions(employee_id)
+  def load_form_template_submissions(_employee_id)
     # Find all form templates that have statuses configured
     FormTemplate.joins(:statuses).distinct.each do |template|
       # Skip templates that don't match the type filter
@@ -280,6 +282,7 @@ class SubmissionsController < ApplicationController
   # restriction, i.e. system admin viewing All).
   def submission_scope_for(model_class)
     return model_class.all if @viewer_form_types.include?(model_class.name)
+
     @scoped_employee_ids ? model_class.where(employee_id: @scoped_employee_ids) : model_class.all
   end
 
@@ -312,21 +315,21 @@ class SubmissionsController < ApplicationController
 
   def build_status_item(submission, type, path)
     title = case type
-    when "Critical Information Report"
+            when 'Critical Information Report'
               if submission.respond_to?(:incident_type) && submission.incident_type.present?
                 submission.incident_type
               else
                 "#{type} ##{submission.id}"
               end
-    when "Parking Lot"
+            when 'Parking Lot'
               if submission.respond_to?(:parking_lot_vehicles) && submission.parking_lot_vehicles.first&.parking_lot.present?
                 submission.parking_lot_vehicles.first.display_parking_lot
               else
                 "#{type} ##{submission.id}"
               end
-    else
+            else
               "#{type} ##{submission.id}"
-    end
+            end
 
     item = {
       id: submission.id,
@@ -365,14 +368,15 @@ class SubmissionsController < ApplicationController
   # sortable column sorts on its raw extractor value.
   def status_sort_configs
     configs = {
-      "reference" => ->(item) {
-        prefix, id = item[:reference].to_s.split("-")
-        format("%s-%012d", prefix.to_s, id.to_i)
+      'reference' => lambda { |item|
+        prefix, id = item[:reference].to_s.split('-')
+        format('%s-%012d', prefix.to_s, id.to_i)
       }
     }
     Array(@columns).each do |col|
       next unless col.sortable?
-      next if col.sort_key == "reference"
+      next if col.sort_key == 'reference'
+
       extractor = col.value
       configs[col.sort_key] = ->(item) { extractor.call(item).to_s }
     end

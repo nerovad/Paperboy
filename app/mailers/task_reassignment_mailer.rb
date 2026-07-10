@@ -1,7 +1,7 @@
 # app/mailers/task_reassignment_mailer.rb
 
 class TaskReassignmentMailer < ApplicationMailer
-  default from: "gsa-forms@ventura.org"
+  default from: 'gsa-forms@ventura.org'
 
   def reassignment_notification(task_reassignment_id)
     @reassignment = TaskReassignment.find(task_reassignment_id)

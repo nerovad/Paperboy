@@ -11,12 +11,12 @@ Rails.application.configure do
     policy.img_src     :self, :https, :data, :blob
     policy.object_src  :none
     policy.script_src  :self, :https, :unsafe_inline, :unsafe_eval,
-                       "https://cdn.jsdelivr.net"
+                       'https://cdn.jsdelivr.net'
     policy.style_src   :self, :https, :unsafe_inline,
-                       "https://cdn.jsdelivr.net"
+                       'https://cdn.jsdelivr.net'
 
     # Allow Metabase iframes
-    metabase_url = ENV.fetch("METABASE_SITE_URL", "http://localhost:3000")
+    metabase_url = ENV.fetch('METABASE_SITE_URL', 'http://localhost:3000')
     policy.frame_src   :self, metabase_url
 
     policy.connect_src :self

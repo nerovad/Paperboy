@@ -1,7 +1,6 @@
 class FormRequestForm < ApplicationRecord
   include TrackableStatus
 
-
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
 
@@ -13,15 +12,13 @@ class FormRequestForm < ApplicationRecord
   # e.g. :30_day_spending_limit is invalid; use :spending_limit_30_day instead.
   def column_names_must_be_valid_identifiers
     self.class.column_names.each do |col|
-      unless col.match?(/\A[a-zA-Z_]/)
-        errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.")
-      end
+      errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.") unless col.match?(/\A[a-zA-Z_]/)
     end
   end
 
   # For inbox queue display
   def status_label
-    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || "Unknown") : (status&.to_s&.humanize || "Unknown")
+    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || 'Unknown') : (status&.to_s&.humanize || 'Unknown')
   end
 
   # For inbox queue filtering - returns the form type name

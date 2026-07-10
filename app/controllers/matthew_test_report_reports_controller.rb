@@ -1,6 +1,6 @@
 class MatthewTestReportReportsController < ApplicationController
   def show
-    @report_name = "matthew_test_report"
+    @report_name = 'matthew_test_report'
   end
 
   def run
@@ -10,6 +10,6 @@ class MatthewTestReportReportsController < ApplicationController
     )
 
     redirect_to root_path,
-      notice: "MatthewTestReport report submitted for generation."
+                notice: 'MatthewTestReport report submitted for generation.'
   end
 end

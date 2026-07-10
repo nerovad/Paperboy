@@ -3,15 +3,15 @@ class ParkingLotSubmission < ApplicationRecord
   include Reassignable
   include TrackableStatus
 
-enum :status, {
-  in_progress: "in_progress",
-    step_1_pending: "step_1_pending",
-    step_2_pending: "step_2_pending",
-    step_3_pending: "step_3_pending",
-    step_4_pending: "step_4_pending",
-    denied: "denied",
-    approved: "approved"
-}, default: :in_progress
+  enum :status, {
+    in_progress: 'in_progress',
+    step_1_pending: 'step_1_pending',
+    step_2_pending: 'step_2_pending',
+    step_3_pending: 'step_3_pending',
+    step_4_pending: 'step_4_pending',
+    denied: 'denied',
+    approved: 'approved'
+  }, default: :in_progress
 
   # Links this hand-written model to its form-builder template so TrackableStatus
   # can run the UI-defined routing steps (Authorization -> Sean Payne -> GSA_Security).
@@ -23,22 +23,22 @@ enum :status, {
   #   agency, division, department, unit
   # === Associations to lookup tables (resolve codes -> LongName) ===
   belongs_to :agency_record,
-             class_name: "Agency",
+             class_name: 'Agency',
              primary_key: :agency_id,
              foreign_key: :agency,
              optional: true
   belongs_to :division_record,
-             class_name: "Division",
+             class_name: 'Division',
              primary_key: :division_id,
              foreign_key: :division,
              optional: true
   belongs_to :department_record,
-             class_name: "Department",
+             class_name: 'Department',
              primary_key: :department_id,
              foreign_key: :department,
              optional: true
   belongs_to :unit_record,
-             class_name: "Unit",
+             class_name: 'Unit',
              primary_key: :unit_id,
              foreign_key: :unit,
              optional: true
@@ -47,6 +47,7 @@ enum :status, {
   def division_long_name   = division_record&.long_name   || division
   def department_long_name = department_record&.long_name || department
   def unit_long_name       = unit_record&.long_name       || unit
+
   # New: Unit display with "unit_id - long_name"
   def unit_display
     if unit.present? && unit_long_name.present?
@@ -71,6 +72,6 @@ enum :status, {
   end
 
   def assignment_field_name
-    "approver_id"
+    'approver_id'
   end
 end

@@ -5,7 +5,7 @@ class EmployeeUnionCode < ApplicationRecord
   # Returns the employee's union code upcased, or "" when none is recorded.
   # Keyed by employee_id value because Employees lives in GSABSS (no FK / JOIN).
   def self.code_for(employee_id)
-    return "" if employee_id.blank?
+    return '' if employee_id.blank?
 
     where(employee_id: employee_id.to_s).limit(1).pick(:union_code).to_s.upcase
   end

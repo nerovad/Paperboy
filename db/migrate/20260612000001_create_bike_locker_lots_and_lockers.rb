@@ -20,18 +20,18 @@ class CreateBikeLockerLotsAndLockers < ActiveRecord::Migration[8.0]
     add_index :bike_locker_lots, :name, unique: true
 
     create_table :bike_lockers do |t|
-      t.references :lot, null: false   # -> bike_locker_lots
+      t.references :lot, null: false # -> bike_locker_lots
       t.integer :locker_number, null: false
       # available | assigned | reserved | out_of_service
-      t.string :status, null: false, default: "available"
-      t.string :assigned_employee_id   # keys to Employees by value; nil when free
+      t.string :status, null: false, default: 'available'
+      t.string :assigned_employee_id # keys to Employees by value; nil when free
       t.datetime :assigned_at
       t.timestamps
     end
 
     # A locker number is unique only WITHIN a lot (lots 1/4/6/12 all have a "1").
-    add_index :bike_lockers, [ :lot_id, :locker_number ], unique: true
+    add_index :bike_lockers, %i[lot_id locker_number], unique: true
     # Drives the availability lookup: free lockers for the chosen lot.
-    add_index :bike_lockers, [ :lot_id, :status ]
+    add_index :bike_lockers, %i[lot_id status]
   end
 end

@@ -1,4 +1,4 @@
-require "active_support/core_ext/integer/time"
+require 'active_support/core_ext/integer/time'
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -8,7 +8,7 @@ Rails.application.configure do
 
   config.consider_all_requests_local = false
   config.action_controller.perform_caching = true
-  config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
+  config.public_file_server.headers = { 'cache-control' => "public, max-age=#{1.year.to_i}" }
 
   config.active_storage.service = :local
 
@@ -16,32 +16,32 @@ Rails.application.configure do
   config.assume_ssl = true
   config.force_ssl  = true
 
-  config.log_tags = [ :request_id ]
+  config.log_tags = [:request_id]
   config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
-  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
-  config.silence_healthcheck_path = "/up"
+  config.log_level = ENV.fetch('RAILS_LOG_LEVEL', 'info')
+  config.silence_healthcheck_path = '/up'
 
   config.active_support.report_deprecations = false
 
-  config.cache_store = :file_store, Rails.root.join("tmp/cache")
+  config.cache_store = :file_store, Rails.root.join('tmp/cache')
 
   config.active_job.queue_adapter = :sidekiq
 
-  config.action_mailer.default_url_options = { host: "stage-gsa-forms" }
+  config.action_mailer.default_url_options = { host: 'stage-gsa-forms' }
 
   config.action_mailer.delivery_method = :smtp
   # Surface SMTP failures instead of silently dropping mail (matches dev).
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.smtp_settings = {
-    address:              "smtp4.co.ventura.ca.us",
-    port:                 25,
-    domain:               "co.ventura.ca.us",
+    address: 'smtp4.co.ventura.ca.us',
+    port: 25,
+    domain: 'co.ventura.ca.us',
     enable_starttls_auto: false,
-    openssl_verify_mode:  "none"
+    openssl_verify_mode: 'none'
     # No user_name, password, or authentication!
   }
 
   config.i18n.fallbacks = true
   config.active_record.dump_schema_after_migration = false
-  config.active_record.attributes_for_inspect = [ :id ]
+  config.active_record.attributes_for_inspect = [:id]
 end

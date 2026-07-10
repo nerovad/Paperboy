@@ -6,7 +6,7 @@ class ContractorMailer < ApplicationMailer
     @contractor = contractor
     token = contractor.generate_token_for(:password_setup)
     @url = edit_contractor_password_url(token: token)
-    mail(to: @contractor.email, subject: "Set up your GSA Forms contractor account")
+    mail(to: @contractor.email, subject: 'Set up your GSA Forms contractor account')
   end
 
   # Self-service / admin-triggered password reset. Token valid for 2 hours.
@@ -14,6 +14,6 @@ class ContractorMailer < ApplicationMailer
     @contractor = contractor
     token = contractor.generate_token_for(:password_reset)
     @url = edit_contractor_password_url(token: token)
-    mail(to: @contractor.email, subject: "Reset your GSA Forms password")
+    mail(to: @contractor.email, subject: 'Reset your GSA Forms password')
   end
 end

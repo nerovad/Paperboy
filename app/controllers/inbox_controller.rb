@@ -5,14 +5,14 @@ class InboxController < ApplicationController
 
   def queue
     employee = session[:user]
-    return @submissions = [] unless employee.present? && employee["employee_id"].present?
+    return @submissions = [] unless employee.present? && employee['employee_id'].present?
 
-    employee_id = employee["employee_id"].to_s
+    employee_id = employee['employee_id'].to_s
     @submissions = []
 
     # System admins can filter across every employee's inbox; otherwise the
     # dropdown is gated on having subordinates in the supervisor chain.
-    @is_system_admin = current_user_group_names.include?("system_admins")
+    @is_system_admin = current_user_group_names.include?('system_admins')
     @subordinate_ids = Employee.subordinate_ids(employee_id)
     @has_subordinates = @subordinate_ids.any?
     @show_employee_filter = @is_system_admin || @has_subordinates
@@ -24,14 +24,14 @@ class InboxController < ApplicationController
 
     # nil means "no assignee restriction" (system admin viewing All).
     @scoped_employee_ids = if @show_employee_filter && params[:filter_employee].present?
-                             if params[:filter_employee] == "all"
-                               @is_system_admin ? nil : [ employee_id ] + @subordinate_ids
+                             if params[:filter_employee] == 'all'
+                               @is_system_admin ? nil : [employee_id] + @subordinate_ids
                              else
-                               [ params[:filter_employee] ]
+                               [params[:filter_employee]]
                              end
-    else
-                             [ employee_id ]
-    end
+                           else
+                             [employee_id]
+                           end
 
     # Assemble the inbox contents (probation, CIR, routed dynamic forms, and
     # granted form types — deduped, with terminal items dropped). Shared with the
@@ -64,21 +64,20 @@ class InboxController < ApplicationController
 
     # Granted form types must be selectable even when no rows are loaded yet —
     # their submissions only load once this filter is applied.
-    if @filter_options.key?("filter_form_type")
+    if @filter_options.key?('filter_form_type')
       granted_labels = @viewer_form_types.filter_map do |class_name|
         class_name.safe_constantize&.name&.demodulize&.titleize
       end
       if granted_labels.any?
-        @filter_options["filter_form_type"] =
-          (@filter_options["filter_form_type"] + granted_labels).uniq.sort_by { |v| v.to_s.downcase }
+        @filter_options['filter_form_type'] =
+          (@filter_options['filter_form_type'] + granted_labels).uniq.sort_by { |v| v.to_s.downcase }
       end
     end
 
     # Apply in-memory filters — one exact-match config per select-filter column.
     @submissions = apply_filters(@submissions,
-      filter_configs: @filter_columns.map { |c| { param: c.filter_param.to_s, extractor: c.value } },
-      date_filters: inbox_date_filters
-    )
+                                 filter_configs: @filter_columns.map { |c| { param: c.filter_param.to_s, extractor: c.value } },
+                                 date_filters: inbox_date_filters)
 
     # Reference-number search (e.g. "LOA-1042", "loa-1042" or "1042"). Filters
     # the already-scoped list, so a reference the viewer can't see won't match.
@@ -94,7 +93,7 @@ class InboxController < ApplicationController
     # Created column so it can't be a phantom sort key.
     @default_sort = default_sort_key(@columns, prefer: %w[created_at updated_at])
     sort_by = params[:sort_by].presence || @default_sort
-    sort_direction = params[:sort_direction] || "desc"
+    sort_direction = params[:sort_direction] || 'desc'
 
     @submissions = sort_collection(@submissions, sort_by, sort_direction, inbox_sort_configs, default_sort: @default_sort)
 
@@ -105,10 +104,10 @@ class InboxController < ApplicationController
     @employees = Employee.order(:last_name, :first_name)
 
     # Filter dropdown: system admins see every employee; supervisors see only their reporting chain.
-    if @show_employee_filter
-      @filter_employees = @is_system_admin ? @employees : Employee.where(employee_id: @subordinate_ids).order(:last_name, :first_name)
-      @current_user_id = employee_id
-    end
+    return unless @show_employee_filter
+
+    @filter_employees = @is_system_admin ? @employees : Employee.where(employee_id: @subordinate_ids).order(:last_name, :first_name)
+    @current_user_id = employee_id
   end
 
   # Renders the workflow status timeline for a single submission as an HTML
@@ -118,14 +117,12 @@ class InboxController < ApplicationController
   def status_history
     klass = application_record_class_named(params[:type])
 
-    unless klass.is_a?(Class) && klass < ApplicationRecord && klass.include?(TrackableStatus)
-      head :not_found and return
-    end
+    head :not_found and return unless klass.is_a?(Class) && klass < ApplicationRecord && klass.include?(TrackableStatus)
 
     record = klass.find(params[:id])
     changes = record.status_timeline.to_a
 
-    render partial: "submissions/status_timeline",
+    render partial: 'submissions/status_timeline',
            locals: { status_changes: changes, item_id: "inbox-#{klass.name}-#{record.id}" },
            layout: false
   rescue ActiveRecord::RecordNotFound
@@ -144,15 +141,16 @@ class InboxController < ApplicationController
   # sortable column sorts on its raw extractor value.
   def inbox_sort_configs
     configs = {
-      "reference" => ->(s) {
-        ref = FormReference.reference_for(s, @prefix_map) || ""
-        prefix, id = ref.split("-")
-        format("%s-%012d", prefix.to_s, id.to_i)
+      'reference' => lambda { |s|
+        ref = FormReference.reference_for(s, @prefix_map) || ''
+        prefix, id = ref.split('-')
+        format('%s-%012d', prefix.to_s, id.to_i)
       }
     }
     Array(@columns).each do |col|
       next unless col.sortable?
       next if col.sort_key == 'reference'
+
       extractor = col.value
       configs[col.sort_key] = ->(s) { extractor.call(s).to_s }
     end

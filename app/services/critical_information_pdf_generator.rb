@@ -1,23 +1,21 @@
-require "prawn"
-require "tempfile"
+require 'prawn'
+require 'tempfile'
 
 class CriticalInformationPdfGenerator
   def self.generate(cir)
-    logo_path = Rails.root.join("app", "assets", "images", "Ventura_Logo.png")
+    logo_path = Rails.root.join('app', 'assets', 'images', 'Ventura_Logo.png')
 
-    Prawn::Document.new(page_size: "A4", margin: 40) do |pdf|
+    Prawn::Document.new(page_size: 'A4', margin: 40) do |pdf|
       # Header with logo
-      if File.exist?(logo_path)
-        pdf.image logo_path.to_s, width: 80
-      end
+      pdf.image logo_path.to_s, width: 80 if File.exist?(logo_path)
 
       pdf.move_down 10
-      pdf.text "Critical Information Report", size: 22, style: :bold, align: :center
+      pdf.text 'Critical Information Report', size: 22, style: :bold, align: :center
       PdfReference.render(pdf, cir)
       pdf.move_down 20
 
       # Employee Info
-      pdf.text "Employee Information", size: 14, style: :bold
+      pdf.text 'Employee Information', size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Name: #{cir.name}"
       pdf.text "Email: #{cir.email}"
@@ -25,7 +23,7 @@ class CriticalInformationPdfGenerator
       pdf.text "Employee ID: #{cir.employee_id}"
 
       pdf.move_down 15
-      pdf.text "Agency Information", size: 14, style: :bold
+      pdf.text 'Agency Information', size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Agency: #{cir.agency}"
       pdf.text "Division: #{cir.division}"
@@ -33,45 +31,45 @@ class CriticalInformationPdfGenerator
       pdf.text "Unit: #{cir.unit}"
 
       pdf.move_down 15
-      pdf.text "Incident Information", size: 14, style: :bold
+      pdf.text 'Incident Information', size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Incident Type: #{cir.incident_type}"
       pdf.text "Location: #{cir.location}"
       pdf.text "Impact Started: #{cir.impact_started.strftime('%B %d, %Y at %I:%M %p') if cir.impact_started.present?}"
       pdf.move_down 10
-      pdf.text "Incident Details:", style: :bold
+      pdf.text 'Incident Details:', style: :bold
       pdf.text cir.incident_details.to_s, indent_paragraphs: 20
       pdf.move_down 10
-      pdf.text "Cause:", style: :bold
+      pdf.text 'Cause:', style: :bold
       pdf.text cir.cause.to_s, indent_paragraphs: 20
 
       pdf.move_down 15
-      pdf.text "Staff & Management", size: 14, style: :bold
+      pdf.text 'Staff & Management', size: 14, style: :bold
       pdf.move_down 5
 
       # Handle comma-separated employee IDs for staff_involved
       if cir.staff_involved.present?
-        staff_ids = cir.staff_involved.split(",").map(&:strip)
+        staff_ids = cir.staff_involved.split(',').map(&:strip)
         staff_names = staff_ids.map do |employee_id|
           employee = Employee.find_by(employee_id: employee_id)
           employee ? "#{employee.first_name} #{employee.last_name}" : employee_id
         end
         pdf.text "Staff Involved: #{staff_names.join(', ')}"
       else
-        pdf.text "Staff Involved: None"
+        pdf.text 'Staff Involved: None'
       end
 
       pdf.text "Assigned Manager: #{cir.assigned_manager_name}"
 
       pdf.move_down 15
-      pdf.text "Status & Impact", size: 14, style: :bold
+      pdf.text 'Status & Impact', size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Status: #{cir.status_label}"
       pdf.text "Urgency: #{cir.urgency}"
       pdf.text "Impact: #{cir.impact}"
       pdf.text "Impacted Customers: #{cir.impacted_customers}"
       pdf.move_down 10
-      pdf.text "Next Steps:", style: :bold
+      pdf.text 'Next Steps:', style: :bold
       pdf.text cir.next_steps.to_s, indent_paragraphs: 20
 
       if cir.actual_completion_date.present?
@@ -87,9 +85,9 @@ class CriticalInformationPdfGenerator
         cir.media_photo_pdf_etc.each do |attachment|
           pdf.move_down 5
 
-          if attachment.content_type.start_with?("image/")
+          if attachment.content_type.start_with?('image/')
             begin
-              tempfile = Tempfile.new([ "media", File.extname(attachment.filename.to_s) ])
+              tempfile = Tempfile.new(['media', File.extname(attachment.filename.to_s)])
               tempfile.binmode
               tempfile.write(attachment.download)
               tempfile.rewind
@@ -97,18 +95,18 @@ class CriticalInformationPdfGenerator
               max_width = pdf.bounds.width
               max_height = 300
 
-              pdf.image tempfile.path, fit: [ max_width, max_height ], position: :left
+              pdf.image tempfile.path, fit: [max_width, max_height], position: :left
               pdf.move_down 5
               pdf.text "Filename: #{attachment.filename}", size: 9, style: :italic
 
               tempfile.close
               tempfile.unlink
-            rescue => e
-              pdf.text "Error loading image: #{e.message}", size: 9, color: "FF0000"
+            rescue StandardError => e
+              pdf.text "Error loading image: #{e.message}", size: 9, color: 'FF0000'
             end
-          elsif attachment.content_type == "application/pdf"
+          elsif attachment.content_type == 'application/pdf'
             pdf.text "PDF Document: #{attachment.filename}", size: 10
-            pdf.text "(See separate attachment)", size: 9, style: :italic, color: "666666"
+            pdf.text '(See separate attachment)', size: 9, style: :italic, color: '666666'
           else
             pdf.text "File: #{attachment.filename}", size: 10
             pdf.text "Type: #{attachment.content_type}", size: 9, style: :italic

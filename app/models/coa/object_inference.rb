@@ -1,6 +1,6 @@
 module Coa
   class ObjectInference < BaseRecord
-    self.table_name = "agency_objects"
+    self.table_name = 'agency_objects'
     self.primary_key = %i[agency_id agency_object_code]
 
     belongs_to :agency, foreign_key: :agency_id, inverse_of: :object_inferences

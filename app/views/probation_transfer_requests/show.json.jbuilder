@@ -1,1 +1,1 @@
-json.partial! "probation_transfer_requests/probation_transfer_request", probation_transfer_request: @probation_transfer_request
+json.partial! 'probation_transfer_requests/probation_transfer_request', probation_transfer_request: @probation_transfer_request

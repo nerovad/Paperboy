@@ -26,9 +26,7 @@ module Reassignable
     raise ActiveRecord::RecordNotFound, "Employee #{new_assignee_id} not found" unless new_assignee
 
     # Don't allow reassigning to the same person
-    if old_assignee_id.to_s == new_assignee_id.to_s
-      raise ArgumentError, "Task is already assigned to this employee"
-    end
+    raise ArgumentError, 'Task is already assigned to this employee' if old_assignee_id.to_s == new_assignee_id.to_s
 
     transaction do
       # Create history record
@@ -58,19 +56,17 @@ module Reassignable
     # and are not the current assignee
     return false if current_assignee_id.to_s == employee_id.to_s
 
-    task_reassignments.where("from_employee_id = ? OR to_employee_id = ?", employee_id, employee_id).exists?
+    task_reassignments.where('from_employee_id = ? OR to_employee_id = ?', employee_id, employee_id).exists?
   end
 
   # Take back a task (reassign to someone from the history)
   def take_back!(employee_id)
-    unless can_take_back?(employee_id)
-      raise ArgumentError, "Employee #{employee_id} cannot take back this task"
-    end
+    raise ArgumentError, "Employee #{employee_id} cannot take back this task" unless can_take_back?(employee_id)
 
     reassign_to!(
       new_assignee_id: employee_id,
       reassigned_by_id: employee_id,
-      reason: "Task taken back from reassignment chain"
+      reason: 'Task taken back from reassignment chain'
     )
   end
 

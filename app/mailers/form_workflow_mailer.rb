@@ -37,7 +37,7 @@ class FormWorkflowMailer < ApplicationMailer
     return unless generator
 
     attachments["#{template.class_name}_#{submission.id}.pdf"] = {
-      mime_type: "application/pdf",
+      mime_type: 'application/pdf',
       content: generator.generate(submission)
     }
   rescue StandardError => e
@@ -47,7 +47,7 @@ class FormWorkflowMailer < ApplicationMailer
   # Form-builder forms use "<ClassName>PdfGenerator" (e.g. BikeLockerFormPdfGenerator);
   # some legacy forms drop the trailing "Form". Try both.
   def pdf_generator_for(class_name)
-    candidates = [ "#{class_name}PdfGenerator", "#{class_name.sub(/Form\z/, '')}PdfGenerator" ].uniq
+    candidates = ["#{class_name}PdfGenerator", "#{class_name.sub(/Form\z/, '')}PdfGenerator"].uniq
     candidates.filter_map { |name| name.safe_constantize }.first
   end
 
@@ -56,9 +56,10 @@ class FormWorkflowMailer < ApplicationMailer
     template = submission.try(:form_template)
     return unless template
 
-    media_fields = template.form_fields.where(field_type: "media_attachment")
+    media_fields = template.form_fields.where(field_type: 'media_attachment')
     media_fields.each do |field|
       next unless submission.respond_to?(field.field_name)
+
       Array(submission.public_send(field.field_name)).each do |attached|
         blob = attached.respond_to?(:blob) ? attached.blob : attached
         attachments[blob.filename.to_s] = blob.download

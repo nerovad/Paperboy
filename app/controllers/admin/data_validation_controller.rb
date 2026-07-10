@@ -16,7 +16,7 @@ module Admin
     private
 
     def apply_filters
-      @filter = params[:filter] || "all"
+      @filter = params[:filter] || 'all'
       @search = params[:search]&.strip
 
       @filtered_results = filter_results(@results)
@@ -34,21 +34,21 @@ module Admin
       end
 
       @total_filtered = @filtered_results.size
-      @page = [ params[:page].to_i, 1 ].max
+      @page = [params[:page].to_i, 1].max
       @per_page = 50
       @total_pages = (@total_filtered / @per_page.to_f).ceil
-      @page = [ @page, @total_pages ].min if @total_pages > 0
+      @page = [@page, @total_pages].min if @total_pages > 0
       @filtered_results = @filtered_results[(@page - 1) * @per_page, @per_page] || []
     end
 
     def send_csv
-      @filter = params[:filter] || "all"
+      @filter = params[:filter] || 'all'
       rows = filter_results(@results)
       filename = "data_validation_#{@filter}_#{Date.current.iso8601}.csv"
 
       csv_data = CSV.generate do |csv|
-        csv << [ "Employee ID", "First Name", "Last Name", "Email", "Agency", "Department", "Unit",
-                "Supervisor ID", "Work Phone", "Status", "Errors", "Warnings", "Issues" ]
+        csv << ['Employee ID', 'First Name', 'Last Name', 'Email', 'Agency', 'Department', 'Unit',
+                'Supervisor ID', 'Work Phone', 'Status', 'Errors', 'Warnings', 'Issues']
 
         rows.each do |result|
           emp = result.employee
@@ -62,38 +62,42 @@ module Admin
             emp.unit,
             emp.supervisor_id,
             emp.work_phone,
-            result.error_count > 0 ? "error" : (result.warning_count > 0 ? "warning" : "clean"),
+            if result.error_count > 0
+              'error'
+            else
+              (result.warning_count > 0 ? 'warning' : 'clean')
+            end,
             result.error_count,
             result.warning_count,
-            result.issues.map(&:message).join("; ")
+            result.issues.map(&:message).join('; ')
           ]
         end
       end
 
-      send_data csv_data, filename: filename, type: "text/csv"
+      send_data csv_data, filename: filename, type: 'text/csv'
     end
 
     def filter_results(results)
       case @filter
-      when "errors"
+      when 'errors'
         results.select { |r| r.error_count > 0 }
-      when "warnings"
+      when 'warnings'
         results.select { |r| r.valid? && r.warning_count > 0 }
-      when "valid"
+      when 'valid'
         results.select(&:valid?)
-      when "email"
+      when 'email'
         results.select { |r| r.issues.any? { |i| i.category == :email } }
-      when "org_chain"
+      when 'org_chain'
         results.select { |r| r.issues.any? { |i| i.category == :org_chain } }
-      when "supervisor"
+      when 'supervisor'
         results.select { |r| r.issues.any? { |i| i.category == :supervisor } }
-      when "agency"
+      when 'agency'
         results.select { |r| r.issues.any? { |i| i.category == :agency } }
-      when "groups"
+      when 'groups'
         results.select { |r| r.issues.any? { |i| i.category == :groups } }
-      when "phone"
+      when 'phone'
         results.select { |r| r.issues.any? { |i| i.category == :phone } }
-      when "name"
+      when 'name'
         results.select { |r| r.issues.any? { |i| i.category == :name } }
       else
         results

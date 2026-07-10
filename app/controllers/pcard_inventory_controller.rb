@@ -1,18 +1,16 @@
 class PcardInventoryController < ApplicationController
   before_action :require_pcard_admin
-  before_action :set_pcard_inventory, only: [ :edit, :update ]
+  before_action :set_pcard_inventory, only: %i[edit update]
 
   def index
     @pcard_inventories = PcardInventory.order(:last_name, :first_name)
 
-    if params[:search].present?
-      @pcard_inventories = @pcard_inventories.search(params[:search])
-    end
+    @pcard_inventories = @pcard_inventories.search(params[:search]) if params[:search].present?
 
     case params[:filter]
-    when "active"
+    when 'active'
       @pcard_inventories = @pcard_inventories.active
-    when "canceled"
+    when 'canceled'
       @pcard_inventories = @pcard_inventories.canceled
     end
   end
@@ -25,21 +23,20 @@ class PcardInventoryController < ApplicationController
     @pcard_inventory = PcardInventory.new(pcard_inventory_params)
 
     if @pcard_inventory.save
-      redirect_to pcard_inventory_index_path, notice: "P-Card inventory record created."
+      redirect_to pcard_inventory_index_path, notice: 'P-Card inventory record created.'
     else
       render :new, status: :unprocessable_entity
     end
   end
 
-  def edit
-  end
+  def edit; end
 
   def update
     filtered_params = pcard_inventory_params
     filtered_params.delete(:card_number) if filtered_params[:card_number].blank?
 
     if @pcard_inventory.update(filtered_params)
-      redirect_to pcard_inventory_index_path, notice: "P-Card inventory record updated."
+      redirect_to pcard_inventory_index_path, notice: 'P-Card inventory record updated.'
     else
       render :edit, status: :unprocessable_entity
     end
@@ -48,27 +45,27 @@ class PcardInventoryController < ApplicationController
   def export
     @pcard_inventories = PcardInventory.order(:last_name, :first_name)
 
-    if params[:filter] == "active"
+    if params[:filter] == 'active'
       @pcard_inventories = @pcard_inventories.active
-    elsif params[:filter] == "canceled"
+    elsif params[:filter] == 'canceled'
       @pcard_inventories = @pcard_inventories.canceled
     end
 
     csv_data = generate_csv(@pcard_inventories)
-    send_data csv_data, filename: "pcard_inventory_#{Date.today}.csv", type: "text/csv"
+    send_data csv_data, filename: "pcard_inventory_#{Date.today}.csv", type: 'text/csv'
   end
 
   private
 
   def require_pcard_admin
-    unless pcard_admin?
-      redirect_to root_path, alert: "Access denied. P-Card admin access required."
-    end
+    return if pcard_admin?
+
+    redirect_to root_path, alert: 'Access denied. P-Card admin access required.'
   end
 
   def pcard_admin?
-    current_user_group_names.include?("system_admins") ||
-      current_user_group_names.include?("pcard_admin")
+    current_user_group_names.include?('system_admins') ||
+      current_user_group_names.include?('pcard_admin')
   end
 
   def set_pcard_inventory
@@ -87,15 +84,15 @@ class PcardInventoryController < ApplicationController
   end
 
   def generate_csv(records)
-    require "csv"
+    require 'csv'
     CSV.generate(headers: true) do |csv|
       csv << [
-        "Last Name", "First Name", "Agency/Depart", "Division", "Mail Stop",
-        "Address", "City", "State", "Zip", "Phone",
-        "Single Purchase Limit", "Monthly Limit", "Card Number",
-        "Issued Date", "Expiration Date", "Canceled Date",
-        "Agent", "Company", "Division #", "Approver Name",
-        "Org #", "Dept Head/Agency", "Billing Contact"
+        'Last Name', 'First Name', 'Agency/Depart', 'Division', 'Mail Stop',
+        'Address', 'City', 'State', 'Zip', 'Phone',
+        'Single Purchase Limit', 'Monthly Limit', 'Card Number',
+        'Issued Date', 'Expiration Date', 'Canceled Date',
+        'Agent', 'Company', 'Division #', 'Approver Name',
+        'Org #', 'Dept Head/Agency', 'Billing Contact'
       ]
       records.each do |r|
         csv << [

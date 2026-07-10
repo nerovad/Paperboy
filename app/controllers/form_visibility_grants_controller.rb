@@ -6,7 +6,7 @@ class FormVisibilityGrantsController < ApplicationController
   before_action :require_system_admin
 
   def index
-    @form_types  = form_type_catalog
+    @form_types = form_type_catalog
     @grants_by_type = FormVisibilityGrant.for_group(Group.pluck(:GroupID))
                                          .includes(:group)
                                          .group_by(&:form_type)
@@ -17,22 +17,20 @@ class FormVisibilityGrantsController < ApplicationController
     form_type = params[:form_type].to_s
     group_id  = params[:group_id].presence
 
-    if form_type.blank? || group_id.blank?
-      redirect_to form_visibility_grants_path, alert: "Pick a form and a group." and return
-    end
+    redirect_to form_visibility_grants_path, alert: 'Pick a form and a group.' and return if form_type.blank? || group_id.blank?
 
-    grant = FormVisibilityGrant.new(form_type: form_type, grantee_type: "group", group_id: group_id)
+    grant = FormVisibilityGrant.new(form_type: form_type, grantee_type: 'group', group_id: group_id)
     if grant.save
-      redirect_to form_visibility_grants_path, notice: "Visibility grant added."
+      redirect_to form_visibility_grants_path, notice: 'Visibility grant added.'
     else
-      redirect_to form_visibility_grants_path, alert: grant.errors.full_messages.to_sentence.presence || "Could not add grant."
+      redirect_to form_visibility_grants_path, alert: grant.errors.full_messages.to_sentence.presence || 'Could not add grant.'
     end
   end
 
   def destroy
     grant = FormVisibilityGrant.find(params[:id])
     grant.destroy
-    redirect_to form_visibility_grants_path, notice: "Visibility grant removed."
+    redirect_to form_visibility_grants_path, notice: 'Visibility grant removed.'
   end
 
   private

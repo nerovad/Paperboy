@@ -1,6 +1,6 @@
 module Coa
   class Unit < BaseRecord
-    self.table_name = "units"
+    self.table_name = 'units'
     self.primary_key = %i[agency_id division_id department_id unit_id]
 
     belongs_to :agency, foreign_key: :agency_id, inverse_of: :units

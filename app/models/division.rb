@@ -1,3 +1,3 @@
 class Division < GsabssBase
-  self.primary_key = "division_id"
+  self.primary_key = 'division_id'
 end

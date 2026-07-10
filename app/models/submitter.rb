@@ -10,6 +10,7 @@
 module Submitter
   def self.resolve(employee_id)
     return nil if employee_id.blank?
+
     Employee.find_by(employee_id: employee_id) || Contractor.find_by(id: employee_id)
   end
 end

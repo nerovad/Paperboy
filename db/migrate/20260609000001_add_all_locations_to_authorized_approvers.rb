@@ -4,9 +4,9 @@ class AddAllLocationsToAuthorizedApprovers < ActiveRecord::Migration[8.0]
   # Locations only apply to Facility Keys (service type K). Guarded with
   # column_exists? for environments altered by hand.
   def up
-    unless column_exists?(:authorized_approvers, :all_locations)
-      add_column :authorized_approvers, :all_locations, :boolean, default: false, null: false
-    end
+    return if column_exists?(:authorized_approvers, :all_locations)
+
+    add_column :authorized_approvers, :all_locations, :boolean, default: false, null: false
   end
 
   def down

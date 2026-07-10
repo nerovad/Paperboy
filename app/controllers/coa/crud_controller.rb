@@ -20,20 +20,20 @@ module Coa
 
     def index
       @records = model_class.order(primary_key_columns.index_with(:asc))
-      render "coa/crud/index"
+      render 'coa/crud/index'
     end
 
     def show
-      render "coa/crud/show"
+      render 'coa/crud/show'
     end
 
     def new
       @record = model_class.new
-      render "coa/crud/new"
+      render 'coa/crud/new'
     end
 
     def edit
-      render "coa/crud/edit"
+      render 'coa/crud/edit'
     end
 
     def create
@@ -42,7 +42,7 @@ module Coa
       if @record.save
         redirect_to member_path(@record), notice: "#{resource_name} was created."
       else
-        render "coa/crud/new", status: :unprocessable_entity
+        render 'coa/crud/new', status: :unprocessable_entity
       end
     end
 
@@ -50,7 +50,7 @@ module Coa
       if @record.update(record_params)
         redirect_to member_path(@record), notice: "#{resource_name} was updated."
       else
-        render "coa/crud/edit", status: :unprocessable_entity
+        render 'coa/crud/edit', status: :unprocessable_entity
       end
     end
 
@@ -65,13 +65,7 @@ module Coa
       self.class.coa_model_class
     end
 
-    def records
-      @records
-    end
-
-    def record
-      @record
-    end
+    attr_reader :records, :record
 
     def resource_name
       model_class.model_name.human
@@ -132,21 +126,21 @@ module Coa
 
     def coa_route_names
       {
-        "Coa::Agency" => { collection: "agencies", member: "agency" },
-        "Coa::Activity" => { collection: "activities", member: "activity" },
-        "Coa::Department" => { collection: "departments", member: "department" },
-        "Coa::Division" => { collection: "divisions", member: "division" },
-        "Coa::Function" => { collection: "functions", member: "function" },
-        "Coa::Fund" => { collection: "funds", member: "fund" },
-        "Coa::MajorProgram" => { collection: "major_programs", member: "major_program" },
-        "Coa::Object" => { collection: "objects", member: "object" },
-        "Coa::ObjectInference" => { collection: "object_inferences", member: "object_inference" },
-        "Coa::Phase" => { collection: "phases", member: "phase" },
-        "Coa::Program" => { collection: "programs", member: "program" },
-        "Coa::RevenueSource" => { collection: "revenue_sources", member: "revenue_source" },
-        "Coa::SubUnit" => { collection: "sub_units", member: "sub_unit" },
-        "Coa::Task" => { collection: "tasks", member: "task" },
-        "Coa::Unit" => { collection: "units", member: "unit" }
+        'Coa::Agency' => { collection: 'agencies', member: 'agency' },
+        'Coa::Activity' => { collection: 'activities', member: 'activity' },
+        'Coa::Department' => { collection: 'departments', member: 'department' },
+        'Coa::Division' => { collection: 'divisions', member: 'division' },
+        'Coa::Function' => { collection: 'functions', member: 'function' },
+        'Coa::Fund' => { collection: 'funds', member: 'fund' },
+        'Coa::MajorProgram' => { collection: 'major_programs', member: 'major_program' },
+        'Coa::Object' => { collection: 'objects', member: 'object' },
+        'Coa::ObjectInference' => { collection: 'object_inferences', member: 'object_inference' },
+        'Coa::Phase' => { collection: 'phases', member: 'phase' },
+        'Coa::Program' => { collection: 'programs', member: 'program' },
+        'Coa::RevenueSource' => { collection: 'revenue_sources', member: 'revenue_source' },
+        'Coa::SubUnit' => { collection: 'sub_units', member: 'sub_unit' },
+        'Coa::Task' => { collection: 'tasks', member: 'task' },
+        'Coa::Unit' => { collection: 'units', member: 'unit' }
       }
     end
   end

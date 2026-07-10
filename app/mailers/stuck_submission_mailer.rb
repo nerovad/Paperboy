@@ -31,12 +31,14 @@ class StuckSubmissionMailer < ApplicationMailer
 
   def creator_email(template)
     return [] unless template&.created_by.present?
-    [ Employee.find_by(employee_id: template.created_by)&.email ]
+
+    [Employee.find_by(employee_id: template.created_by)&.email]
   end
 
   def system_admin_emails
-    grp = Group.where("LOWER(Group_Name) = ?", "system_admins").first
+    grp = Group.where('LOWER(Group_Name) = ?', 'system_admins').first
     return [] unless grp
+
     ids = EmployeeGroup.where(GroupID: grp.GroupID).pluck(:EmployeeID)
     Employee.where(id: ids).pluck(:email)
   rescue StandardError

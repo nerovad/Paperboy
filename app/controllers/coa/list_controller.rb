@@ -32,21 +32,21 @@ module Coa
 
     def route_collection_name(model_class)
       {
-        "Coa::Agency" => "agencies",
-        "Coa::Activity" => "activities",
-        "Coa::Department" => "departments",
-        "Coa::Division" => "divisions",
-        "Coa::Function" => "functions",
-        "Coa::Fund" => "funds",
-        "Coa::MajorProgram" => "major_programs",
-        "Coa::Object" => "objects",
-        "Coa::ObjectInference" => "object_inferences",
-        "Coa::Phase" => "phases",
-        "Coa::Program" => "programs",
-        "Coa::RevenueSource" => "revenue_sources",
-        "Coa::SubUnit" => "sub_units",
-        "Coa::Task" => "tasks",
-        "Coa::Unit" => "units"
+        'Coa::Agency' => 'agencies',
+        'Coa::Activity' => 'activities',
+        'Coa::Department' => 'departments',
+        'Coa::Division' => 'divisions',
+        'Coa::Function' => 'functions',
+        'Coa::Fund' => 'funds',
+        'Coa::MajorProgram' => 'major_programs',
+        'Coa::Object' => 'objects',
+        'Coa::ObjectInference' => 'object_inferences',
+        'Coa::Phase' => 'phases',
+        'Coa::Program' => 'programs',
+        'Coa::RevenueSource' => 'revenue_sources',
+        'Coa::SubUnit' => 'sub_units',
+        'Coa::Task' => 'tasks',
+        'Coa::Unit' => 'units'
       }.fetch(model_class.name)
     end
   end

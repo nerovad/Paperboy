@@ -22,6 +22,6 @@ class CreateEmployees < ActiveRecord::Migration[8.0]
     end
 
     add_index :employees, :employee_id, unique: true
-    execute "ALTER TABLE employees ADD PRIMARY KEY (employee_id)"
+    execute 'ALTER TABLE employees ADD PRIMARY KEY (employee_id)'
   end
 end

@@ -13,6 +13,7 @@ class UserSetting < ApplicationRecord
   def layout_for(page)
     stored = (column_prefs || {})[page.to_s]
     return TableColumns.default_layout(page) unless stored.is_a?(Array) && stored.any?
+
     TableColumns.sanitize_layout(page, stored)
   end
 

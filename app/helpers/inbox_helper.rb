@@ -56,9 +56,11 @@ module InboxHelper
   def current_routing_step_for(submission, template = nil)
     template ||= form_template_for(submission)
     return nil unless template
-    status = submission.respond_to?(:status) ? submission.status.to_s : ""
+
+    status = submission.respond_to?(:status) ? submission.status.to_s : ''
     match = status.match(/\Astep_(\d+)_pending\z/)
     return nil unless match
+
     template.routing_steps.find_by(step_number: match[1].to_i)
   end
 
@@ -68,12 +70,15 @@ module InboxHelper
   def copy_row_for(submission)
     ids_by_class = @copy_submission_ids
     return nil unless ids_by_class.is_a?(Hash)
+
     ids = ids_by_class[submission.class.name]
     return nil unless ids&.include?(submission.id)
-    employee_id = session.dig(:user, "employee_id").to_s
+
+    employee_id = session.dig(:user, 'employee_id').to_s
     return nil if employee_id.blank?
+
     @copy_rows_cache ||= {}
-    @copy_rows_cache[[ submission.class.name, submission.id ]] ||=
+    @copy_rows_cache[[submission.class.name, submission.id]] ||=
       FormSubmissionCopy.active.find_by(
         submission_type: submission.class.name,
         submission_id: submission.id,
@@ -94,7 +99,7 @@ module InboxHelper
       # For dynamic forms, try to construct the path
       polymorphic_path(submission, action: :pdf)
     end
-  rescue
+  rescue StandardError
     nil
   end
 
@@ -107,28 +112,28 @@ module InboxHelper
       # For dynamic forms, try to construct the path
       edit_polymorphic_path(submission)
     end
-  rescue
+  rescue StandardError
     nil
   end
 
   # Get the approve path for any submission type
   def inbox_approve_path(submission)
     polymorphic_path(submission, action: :approve)
-  rescue
+  rescue StandardError
     nil
   end
 
   # Get the deny path for any submission type
   def inbox_deny_path(submission)
     polymorphic_path(submission, action: :deny)
-  rescue
+  rescue StandardError
     nil
   end
 
   # Get the update_status path for any submission type
   def inbox_update_status_path(submission)
     polymorphic_path(submission, action: :update_status)
-  rescue
+  rescue StandardError
     nil
   end
 
@@ -137,8 +142,8 @@ module InboxHelper
     if submission.class.respond_to?(:statuses)
       labels = submission.class.const_defined?(:STATUS_LABELS) ? submission.class::STATUS_LABELS : {}
       submission.class.statuses.keys.map do |status|
-        label = labels[status.to_sym] || status.to_s.tr("_", " ").titleize
-        [ label, status ]
+        label = labels[status.to_sym] || status.to_s.tr('_', ' ').titleize
+        [label, status]
       end
     else
       []

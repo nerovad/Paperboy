@@ -10,7 +10,7 @@ class FormEmailRenderer
   TOKEN_PATTERN = /\{\{\s*([\w.]+)\s*\}\}/
 
   def self.render(template_string, submission)
-    return "" if template_string.blank?
+    return '' if template_string.blank?
 
     template_string.gsub(TOKEN_PATTERN) do
       token_value(Regexp.last_match(1), submission).to_s
@@ -18,21 +18,21 @@ class FormEmailRenderer
   end
 
   def self.token_value(token, submission)
-    if token.start_with?("field.")
-      field_name = token.sub("field.", "")
-      return submission.respond_to?(field_name) ? submission.public_send(field_name) : ""
+    if token.start_with?('field.')
+      field_name = token.sub('field.', '')
+      return submission.respond_to?(field_name) ? submission.public_send(field_name) : ''
     end
 
     case token
-    when "submitter_name"  then submission.try(:name)
-    when "submitter_email" then submission.try(:email)
-    when "form_name"       then form_name(submission)
-    when "status_label"    then submission.try(:status_label)
-    when "deny_reason"     then submission.try(:deny_reason) || submission.try(:denial_reason)
-    else ""
+    when 'submitter_name'  then submission.try(:name)
+    when 'submitter_email' then submission.try(:email)
+    when 'form_name'       then form_name(submission)
+    when 'status_label'    then submission.try(:status_label)
+    when 'deny_reason'     then submission.try(:deny_reason) || submission.try(:denial_reason)
+    else ''
     end
   rescue StandardError
-    ""
+    ''
   end
 
   def self.form_name(submission)

@@ -1,33 +1,33 @@
 # app/controllers/acl_controller.rb
 class AclController < ApplicationController
   before_action :require_system_admin
-  before_action :set_group, only: [ :show, :edit, :update, :destroy, :add_member, :remove_member, :permissions, :update_permissions,
-                                   :add_contractor, :edit_contractor, :update_contractor, :toggle_contractor, :resend_contractor_welcome ]
+  before_action :set_group, only: %i[show edit update destroy add_member remove_member permissions update_permissions
+                                     add_contractor edit_contractor update_contractor toggle_contractor resend_contractor_welcome]
 
   DROPDOWN_ITEMS = [
-    { key: "inbox",         label: "Inbox",          default_public: true },
-    { key: "submissions",   label: "Submissions",    default_public: true },
-    { key: "settings",      label: "Settings",       default_public: true },
-    { key: "help",          label: "Help",           default_public: true },
-    { key: "reports",       label: "Reports" },
-    { key: "dashboards",    label: "Dashboards" },
-    { key: "manage_forms",  label: "Manage Forms" },
-    { key: "emulate",       label: "Emulate" },
-    { key: "acl",           label: "ACL" },
-    { key: "auth_console",  label: "Auth Console" },
-    { key: "lookup_tables", label: "Lookup Tables" },
-    { key: "osha_log",      label: "OSHA 300 Log" }
+    { key: 'inbox',         label: 'Inbox',          default_public: true },
+    { key: 'submissions',   label: 'Submissions',    default_public: true },
+    { key: 'settings',      label: 'Settings',       default_public: true },
+    { key: 'help',          label: 'Help',           default_public: true },
+    { key: 'reports',       label: 'Reports' },
+    { key: 'dashboards',    label: 'Dashboards' },
+    { key: 'manage_forms',  label: 'Manage Forms' },
+    { key: 'emulate',       label: 'Emulate' },
+    { key: 'acl',           label: 'ACL' },
+    { key: 'auth_console',  label: 'Auth Console' },
+    { key: 'lookup_tables', label: 'Lookup Tables' },
+    { key: 'osha_log',      label: 'OSHA 300 Log' }
   ].freeze
 
   DEFAULT_PUBLIC_DROPDOWN_KEYS = DROPDOWN_ITEMS.select { |i| i[:default_public] }.map { |i| i[:key] }.freeze
 
   LEGACY_FORMS = [
-    { key: "creative_job_request", label: "Creative Job Request" },
-    { key: "safety_reporting",     label: "Safety Reporting" },
-    { key: "leave_of_absence",     label: "Leave of Absence" },
-    { key: "osha_reporting",       label: "OSHA Reporting" },
-    { key: "workplace_violence",   label: "Workplace Violence" },
-    { key: "notice_of_change",     label: "Notice of Change" }
+    { key: 'creative_job_request', label: 'Creative Job Request' },
+    { key: 'safety_reporting',     label: 'Safety Reporting' },
+    { key: 'leave_of_absence',     label: 'Leave of Absence' },
+    { key: 'osha_reporting',       label: 'OSHA Reporting' },
+    { key: 'workplace_violence',   label: 'Workplace Violence' },
+    { key: 'notice_of_change',     label: 'Notice of Change' }
   ].freeze
 
   def index
@@ -45,18 +45,18 @@ class AclController < ApplicationController
     @contractor_members = Contractor.where(id: member_ids).order(:last_name, :first_name)
     @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
 
-    if params[:search].present?
-      search = params[:search].strip
-      sanitized = ActiveRecord::Base.sanitize_sql_like(search)
-      @search_results = Employee
-        .where(
-          "first_name LIKE :q OR last_name LIKE :q OR CAST(id AS VARCHAR) LIKE :q " \
-          "OR (first_name + ' ' + last_name) LIKE :q",
-          q: "%#{sanitized}%"
-        )
-        .order(:last_name, :first_name)
-        .limit(20)
-    end
+    return unless params[:search].present?
+
+    search = params[:search].strip
+    sanitized = ActiveRecord::Base.sanitize_sql_like(search)
+    @search_results = Employee
+                      .where(
+                        'first_name LIKE :q OR last_name LIKE :q OR CAST(id AS VARCHAR) LIKE :q ' \
+                        "OR (first_name + ' ' + last_name) LIKE :q",
+                        q: "%#{sanitized}%"
+                      )
+                      .order(:last_name, :first_name)
+                      .limit(20)
   end
 
   def new
@@ -69,20 +69,19 @@ class AclController < ApplicationController
     if @group.save
       # Auto-grant default public dropdown items to the new group
       DEFAULT_PUBLIC_DROPDOWN_KEYS.each do |key|
-        @group.group_permissions.create(permission_type: "dropdown", permission_key: key)
+        @group.group_permissions.create(permission_type: 'dropdown', permission_key: key)
       end
-      redirect_to acl_index_path, notice: "Group created successfully."
+      redirect_to acl_index_path, notice: 'Group created successfully.'
     else
       render :new, status: :unprocessable_entity
     end
   end
 
-  def edit
-  end
+  def edit; end
 
   def update
     if @group.update(group_params)
-      redirect_to acl_index_path, notice: "Group updated successfully."
+      redirect_to acl_index_path, notice: 'Group updated successfully.'
     else
       render :edit, status: :unprocessable_entity
     end
@@ -92,7 +91,7 @@ class AclController < ApplicationController
     @group.group_permissions.destroy_all
     @group.employee_groups.destroy_all
     @group.destroy
-    redirect_to acl_index_path, notice: "Group deleted."
+    redirect_to acl_index_path, notice: 'Group deleted.'
   end
 
   def add_member
@@ -100,16 +99,16 @@ class AclController < ApplicationController
 
     if employee_id.present? && !@group.employee_groups.exists?(employee_id: employee_id)
       @group.employee_groups.create!(employee_id: employee_id)
-      redirect_to acl_path(@group), notice: "Member added."
+      redirect_to acl_path(@group), notice: 'Member added.'
     else
-      redirect_to acl_path(@group), alert: "Employee is already a member or was not found."
+      redirect_to acl_path(@group), alert: 'Employee is already a member or was not found.'
     end
   end
 
   def remove_member
     eg = @group.employee_groups.find_by(employee_id: params[:employee_id])
     eg&.destroy
-    redirect_to acl_path(@group), notice: "Member removed."
+    redirect_to acl_path(@group), notice: 'Member removed.'
   end
 
   # --- Contractors (non-Active-Directory members) ---
@@ -127,9 +126,7 @@ class AclController < ApplicationController
     end
 
     if @contractor.save
-      unless @group.employee_groups.exists?(employee_id: @contractor.id)
-        @group.employee_groups.create!(employee_id: @contractor.id)
-      end
+      @group.employee_groups.create!(employee_id: @contractor.id) unless @group.employee_groups.exists?(employee_id: @contractor.id)
       ContractorMailer.welcome(@contractor).deliver_later
       redirect_to acl_path(@group),
                   notice: "Contractor #{@contractor.full_name} created. A set-password email was sent to #{@contractor.email}."
@@ -167,7 +164,7 @@ class AclController < ApplicationController
   def toggle_contractor
     contractor = Contractor.find(params[:contractor_id])
     contractor.update!(active: !contractor.active)
-    state = contractor.active? ? "reactivated" : "deactivated"
+    state = contractor.active? ? 'reactivated' : 'deactivated'
     redirect_to acl_path(@group), notice: "Contractor #{contractor.full_name} #{state}."
   end
 
@@ -181,13 +178,13 @@ class AclController < ApplicationController
     @dropdown_items = DROPDOWN_ITEMS
     @all_forms = build_all_forms_list
     @current_permissions = @group.group_permissions.pluck(:permission_type, :permission_key)
-    @dropdown_keys = @current_permissions.select { |t, _| t == "dropdown" }.map(&:last).to_set
-    @form_keys = @current_permissions.select { |t, _| t == "form" }.map(&:last).to_set
+    @dropdown_keys = @current_permissions.select { |t, _| t == 'dropdown' }.map(&:last).to_set
+    @form_keys = @current_permissions.select { |t, _| t == 'form' }.map(&:last).to_set
 
     # If no permissions exist yet for this group, pre-check default public items
-    if @current_permissions.empty?
-      @dropdown_keys = DEFAULT_PUBLIC_DROPDOWN_KEYS.to_set
-    end
+    return unless @current_permissions.empty?
+
+    @dropdown_keys = DEFAULT_PUBLIC_DROPDOWN_KEYS.to_set
   end
 
   def update_permissions
@@ -198,15 +195,15 @@ class AclController < ApplicationController
       @group.group_permissions.destroy_all
 
       dropdown_keys.each do |key|
-        @group.group_permissions.create!(permission_type: "dropdown", permission_key: key)
+        @group.group_permissions.create!(permission_type: 'dropdown', permission_key: key)
       end
 
       form_keys.each do |key|
-        @group.group_permissions.create!(permission_type: "form", permission_key: key)
+        @group.group_permissions.create!(permission_type: 'form', permission_key: key)
       end
     end
 
-    redirect_to permissions_acl_path(@group), notice: "Permissions saved successfully."
+    redirect_to permissions_acl_path(@group), notice: 'Permissions saved successfully.'
   end
 
   # --- Organization Permissions ---
@@ -229,7 +226,7 @@ class AclController < ApplicationController
     department = @department_id.presence
     unit = @unit_id.presence
 
-    chain_conditions = [ { agency_id: nil, division_id: nil, department_id: nil, unit_id: nil } ]
+    chain_conditions = [{ agency_id: nil, division_id: nil, department_id: nil, unit_id: nil }]
     chain_conditions << { agency_id: agency, division_id: nil, department_id: nil, unit_id: nil } if agency
     chain_conditions << { agency_id: agency, division_id: division, department_id: nil, unit_id: nil } if division
     chain_conditions << { agency_id: agency, division_id: division, department_id: department, unit_id: nil } if department
@@ -238,13 +235,13 @@ class AclController < ApplicationController
     query = chain_conditions.map { |c| OrgPermission.where(c) }.reduce(:or)
     @current_org_permissions = query.pluck(:permission_type, :permission_key)
 
-    @org_dropdown_keys = @current_org_permissions.select { |t, _| t == "dropdown" }.map(&:last).to_set
-    @org_form_keys = @current_org_permissions.select { |t, _| t == "form" }.map(&:last).to_set
+    @org_dropdown_keys = @current_org_permissions.select { |t, _| t == 'dropdown' }.map(&:last).to_set
+    @org_form_keys = @current_org_permissions.select { |t, _| t == 'form' }.map(&:last).to_set
 
     # If no permissions exist yet for this scope, pre-check default public items
-    if @current_org_permissions.empty?
-      @org_dropdown_keys = DEFAULT_PUBLIC_DROPDOWN_KEYS.to_set
-    end
+    return unless @current_org_permissions.empty?
+
+    @org_dropdown_keys = DEFAULT_PUBLIC_DROPDOWN_KEYS.to_set
   end
 
   def update_org_permissions
@@ -276,7 +273,7 @@ class AclController < ApplicationController
           division_id: division_id,
           department_id: department_id,
           unit_id: unit_id,
-          permission_type: "dropdown",
+          permission_type: 'dropdown',
           permission_key: key
         )
       end
@@ -287,7 +284,7 @@ class AclController < ApplicationController
           division_id: division_id,
           department_id: department_id,
           unit_id: unit_id,
-          permission_type: "form",
+          permission_type: 'form',
           permission_key: key
         )
       end
@@ -298,7 +295,7 @@ class AclController < ApplicationController
       division_id: division_id,
       department_id: department_id,
       unit_id: unit_id
-    ), notice: "Permissions saved successfully."
+    ), notice: 'Permissions saved successfully.'
   end
 
   private
@@ -317,6 +314,7 @@ class AclController < ApplicationController
     # Add legacy forms that don't exist as a FormTemplate
     LEGACY_FORMS.each do |form|
       next if template_names.include?(form[:label].downcase)
+
       forms << form
     end
 
@@ -357,6 +355,6 @@ class AclController < ApplicationController
       unit = Unit.find_by(unit_id: @unit_id)
       parts << "Unit: #{unit&.unit_id} - #{unit&.long_name || @unit_id}"
     end
-    parts.any? ? parts.join(" > ") : "Global (All Users)"
+    parts.any? ? parts.join(' > ') : 'Global (All Users)'
   end
 end

@@ -10,7 +10,7 @@ class InvoiceQuery
 
     sanitized = ActiveRecord::Base.send(
       :sanitize_sql_array,
-      [ sql, fiscal_year, agency, account ]
+      [sql, fiscal_year, agency, account]
     )
 
     result = BillingBase.connection.exec_query(sanitized)

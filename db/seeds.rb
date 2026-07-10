@@ -4,20 +4,20 @@ if !Rails.env.development? && !Rails.env.test?
   exit
 end
 
-require_relative "seeds/shared"
-require_relative "seeds/parking_lot"
-require_relative "seeds/probation"
-require_relative "seeds/critical_information_reporting"
+require_relative 'seeds/shared'
+require_relative 'seeds/parking_lot'
+require_relative 'seeds/probation'
+require_relative 'seeds/critical_information_reporting'
 
-only = ENV["ONLY"] # "parking" or "probation"
-replant = ENV["REPLANT"] == "1"
+only = ENV.fetch('ONLY', nil) # "parking" or "probation"
+replant = ENV['REPLANT'] == '1'
 
 case only
-when "parking"
+when 'parking'
   Seeds::ParkingLot.run(replant: replant)
-when "cir"
+when 'cir'
   Seeds::CriticalInformationReporting.run(replant: replant)
-when "probation"
+when 'probation'
   Seeds::Probation.run(replant: replant)
 else
   Seeds::ParkingLot.run(replant: replant)
@@ -25,4 +25,4 @@ else
   Seeds::CriticalInformationReporting.run(replant: replant)
 end
 
-puts "✅ Seeding complete."
+puts '✅ Seeding complete.'

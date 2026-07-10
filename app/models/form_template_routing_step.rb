@@ -7,10 +7,10 @@ class FormTemplateRoutingStep < ApplicationRecord
   CONDITION_OPERATORS = %w[equals not_equals].freeze
   ORG_FILTER_LEVELS = %w[agency division department unit].freeze
   ORG_FILTER_LABELS = {
-    "agency" => "Agency",
-    "division" => "Division",
-    "department" => "Department",
-    "unit" => "Unit"
+    'agency' => 'Agency',
+    'division' => 'Division',
+    'department' => 'Department',
+    'unit' => 'Unit'
   }.freeze
 
   validates :step_number, presence: true, numericality: { greater_than: 0 }
@@ -18,8 +18,8 @@ class FormTemplateRoutingStep < ApplicationRecord
   validates :employee_id, presence: true, if: :routes_to_employee?
   validates :group_id, presence: true, if: :routes_to_group?
   validates :authorization_service_type, presence: true,
-            inclusion: { in: AuthorizedApprover::SERVICE_TYPES.keys },
-            if: :routes_to_authorization?
+                                         inclusion: { in: AuthorizedApprover::SERVICE_TYPES.keys },
+                                         if: :routes_to_authorization?
   validates :step_number, uniqueness: { scope: :form_template_id }
   validates :condition_operator, inclusion: { in: CONDITION_OPERATORS }, allow_blank: true
   validates :condition_operator, presence: true, if: -> { condition_field_name.present? }
@@ -32,6 +32,7 @@ class FormTemplateRoutingStep < ApplicationRecord
   def inbox_buttons
     val = super
     return [] if val.nil?
+
     val = JSON.parse(val) while val.is_a?(String)
     val.is_a?(Array) ? val : []
   rescue JSON::ParserError
@@ -46,25 +47,25 @@ class FormTemplateRoutingStep < ApplicationRecord
   # override (e.g. "Permit Printed") that still performs the normal approve
   # action; blank falls back to the default "Approve".
   def approve_button_text
-    approve_button_label.presence || "Approve"
+    approve_button_label.presence || 'Approve'
   end
 
   # Text for the inbox Deny button at this step, with the same override
   # semantics as approve_button_text.
   def deny_button_text
-    deny_button_label.presence || "Deny"
+    deny_button_label.presence || 'Deny'
   end
 
   def routes_to_employee?
-    routing_type == "employee"
+    routing_type == 'employee'
   end
 
   def routes_to_group?
-    routing_type == "group"
+    routing_type == 'group'
   end
 
   def routes_to_authorization?
-    routing_type == "authorization"
+    routing_type == 'authorization'
   end
 
   # Human label for the chosen authorization service type (e.g. "Parking Permits").
@@ -74,16 +75,16 @@ class FormTemplateRoutingStep < ApplicationRecord
 
   def routing_label
     case routing_type
-    when "supervisor"
-      "Supervisor"
-    when "department_head"
-      "Department Head"
-    when "employee"
+    when 'supervisor'
+      'Supervisor'
+    when 'department_head'
+      'Department Head'
+    when 'employee'
       employee_name || "Employee ##{employee_id}"
-    when "group"
+    when 'group'
       base = group_name || "Group ##{group_id}"
       org_filtered? ? "#{base} (submitter's #{org_filter_label})" : base
-    when "authorization"
+    when 'authorization'
       "Authorized approver — #{authorization_service_type_label}"
     end
   end
@@ -100,16 +101,18 @@ class FormTemplateRoutingStep < ApplicationRecord
 
   def employee_name
     return nil unless employee_id
+
     employee = Employee.find_by(employee_id: employee_id)
     employee ? "#{employee.first_name} #{employee.last_name}" : nil
-  rescue
+  rescue StandardError
     nil
   end
 
   def group_name
     return nil unless group_id
+
     Group.find_by(GroupID: group_id)&.group_name
-  rescue
+  rescue StandardError
     nil
   end
 
@@ -142,6 +145,7 @@ class FormTemplateRoutingStep < ApplicationRecord
   # field_name so it survives form-field rebuilds that renumber ids.
   def condition_field
     return nil unless condition_field_name.present?
+
     form_template.form_fields.find_by(field_name: condition_field_name)
   end
 
@@ -149,11 +153,12 @@ class FormTemplateRoutingStep < ApplicationRecord
   # Returns true when the step has no condition or the condition matches; false otherwise.
   def matches?(form_record)
     return true unless conditional?
+
     actual = form_record.respond_to?(condition_field_name) ? form_record.public_send(condition_field_name) : nil
     case condition_operator
-    when "equals"
+    when 'equals'
       actual.to_s == condition_value.to_s
-    when "not_equals"
+    when 'not_equals'
       actual.to_s != condition_value.to_s
     else
       true
@@ -166,17 +171,17 @@ class FormTemplateRoutingStep < ApplicationRecord
   # in TrackableStatus and how the inbox surfaces group/authorization steps.
   def eligible_approver_ids(submission)
     case routing_type
-    when "supervisor"
+    when 'supervisor'
       sup = step_submitter_employee(submission)&.supervisor_id
-      sup.present? ? [ sup.to_s ] : []
-    when "department_head"
+      sup.present? ? [sup.to_s] : []
+    when 'department_head'
       head = step_submitter_department(submission)&.department_head_id
-      head.present? ? [ head.to_s ] : []
-    when "employee"
-      employee_id.present? ? [ employee_id.to_s ] : []
-    when "group"
+      head.present? ? [head.to_s] : []
+    when 'employee'
+      employee_id.present? ? [employee_id.to_s] : []
+    when 'group'
       group_eligible_ids(submission)
-    when "authorization"
+    when 'authorization'
       authorization_eligible_ids(submission)
     else
       []
@@ -188,9 +193,11 @@ class FormTemplateRoutingStep < ApplicationRecord
   # Human-readable summary of the condition for badges/display.
   def condition_label
     return nil unless conditional?
+
     field = condition_field
     return nil unless field
-    op = condition_operator == "not_equals" ? "≠" : "="
+
+    op = condition_operator == 'not_equals' ? '≠' : '='
     %(Only if "#{field.label}" #{op} "#{condition_value}")
   end
 
@@ -207,6 +214,7 @@ class FormTemplateRoutingStep < ApplicationRecord
   def step_submitter_department(submission)
     emp = step_submitter_employee(submission)
     return nil unless emp
+
     unit = Unit.find_by(unit_id: emp.unit)
     unit ? Department.find_by(department_id: unit.department_id) : nil
   end
@@ -215,6 +223,7 @@ class FormTemplateRoutingStep < ApplicationRecord
   # configured org level when org filtering is on.
   def group_eligible_ids(submission)
     return [] unless group_id
+
     member_ids = EmployeeGroup.where(GroupID: group_id).pluck(:EmployeeID).map(&:to_s)
     return member_ids unless org_filtered?
 
@@ -222,7 +231,7 @@ class FormTemplateRoutingStep < ApplicationRecord
     return [] if submitter_value.blank?
 
     members = Employee.where(id: member_ids).to_a
-    if org_filter_level == "unit"
+    if org_filter_level == 'unit'
       members.select { |e| e.unit.to_s == submitter_value.to_s }.map { |e| e.id.to_s }
     else
       unit_ids = members.map(&:unit).compact.uniq
@@ -239,6 +248,7 @@ class FormTemplateRoutingStep < ApplicationRecord
   def authorization_eligible_ids(submission)
     return [] if authorization_service_type.blank?
     return [] unless submission.respond_to?(:unit) && submission.unit.present?
+
     AuthorizedApprover.approver_ids_covering_unit(
       service_type: authorization_service_type,
       unit_id: submission.unit
@@ -248,6 +258,7 @@ class FormTemplateRoutingStep < ApplicationRecord
   def org_filter_only_for_group_routing
     return if org_filter_level.blank?
     return if routes_to_group?
-    errors.add(:org_filter_level, "is only valid for group routing steps")
+
+    errors.add(:org_filter_level, 'is only valid for group routing steps')
   end
 end

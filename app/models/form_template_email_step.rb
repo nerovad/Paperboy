@@ -12,10 +12,10 @@ class FormTemplateEmailStep < ApplicationRecord
 
   validates :trigger_event, presence: true, inclusion: { in: TRIGGER_EVENTS }
   validates :recipient_type, presence: true, inclusion: { in: RECIPIENT_TYPES }
-  validates :employee_id, presence: true, if: -> { recipient_type == "employee" }
-  validates :group_id, presence: true, if: -> { recipient_type == "group" }
-  validates :custom_email, presence: true, if: -> { recipient_type == "custom_email" }
-  validates :recipient_field_name, presence: true, if: -> { recipient_type == "form_field" }
+  validates :employee_id, presence: true, if: -> { recipient_type == 'employee' }
+  validates :group_id, presence: true, if: -> { recipient_type == 'group' }
+  validates :custom_email, presence: true, if: -> { recipient_type == 'custom_email' }
+  validates :recipient_field_name, presence: true, if: -> { recipient_type == 'form_field' }
 
   scope :ordered, -> { order(:position, :id) }
 
@@ -24,6 +24,7 @@ class FormTemplateEmailStep < ApplicationRecord
   scope :for_event, lambda { |event, step_number: :__any__|
     rel = where(trigger_event: event.to_s)
     return rel if step_number == :__any__
+
     rel.where(routing_step_number: step_number)
   }
 
@@ -36,19 +37,21 @@ class FormTemplateEmailStep < ApplicationRecord
   # Resolve this rule into concrete recipient email addresses for `submission`.
   def resolve_recipient_emails(submission)
     case recipient_type
-    when "submitter"
-      [ submission.try(:email) ].compact_blank
-    when "employee"
-      [ Employee.find_by(employee_id: employee_id)&.email ].compact_blank
-    when "group"
+    when 'submitter'
+      [submission.try(:email)].compact_blank
+    when 'employee'
+      [Employee.find_by(employee_id: employee_id)&.email].compact_blank
+    when 'group'
       return [] unless group_id
+
       member_ids = EmployeeGroup.where(GroupID: group_id).pluck(:EmployeeID)
       Employee.where(id: member_ids).pluck(:email).compact_blank
-    when "custom_email"
-      [ custom_email ].compact_blank
-    when "form_field"
+    when 'custom_email'
+      [custom_email].compact_blank
+    when 'form_field'
       return [] unless recipient_field_name.present?
-      [ submission.try(recipient_field_name) ].compact_blank
+
+      [submission.try(recipient_field_name)].compact_blank
     else
       []
     end
@@ -68,22 +71,22 @@ class FormTemplateEmailStep < ApplicationRecord
 
   def trigger_label
     case trigger_event
-    when "submit"   then "On submission"
-    when "approved" then step_bound? ? "On approval of Step #{routing_step_number}" : "On final approval"
-    when "denied"   then step_bound? ? "On denial of Step #{routing_step_number}" : "On final denial"
+    when 'submit'   then 'On submission'
+    when 'approved' then step_bound? ? "On approval of Step #{routing_step_number}" : 'On final approval'
+    when 'denied'   then step_bound? ? "On denial of Step #{routing_step_number}" : 'On final denial'
     else trigger_event.to_s.humanize
     end
   end
 
   def recipient_label
     case recipient_type
-    when "submitter"    then "Submitter"
-    when "employee"
+    when 'submitter' then 'Submitter'
+    when 'employee'
       emp = Employee.find_by(employee_id: employee_id)
       emp ? "#{emp.first_name} #{emp.last_name}" : "Employee ##{employee_id}"
-    when "group"        then Group.find_by(GroupID: group_id)&.group_name || "Group ##{group_id}"
-    when "custom_email" then custom_email
-    when "form_field"   then "Form field: #{recipient_field_name}"
+    when 'group'        then Group.find_by(GroupID: group_id)&.group_name || "Group ##{group_id}"
+    when 'custom_email' then custom_email
+    when 'form_field'   then "Form field: #{recipient_field_name}"
     end
   rescue StandardError
     recipient_type.to_s.humanize

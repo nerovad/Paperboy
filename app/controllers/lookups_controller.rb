@@ -2,8 +2,8 @@
 class LookupsController < ApplicationController
   def agencies
     @agency_options = Agency
-      .order(:long_name)
-      .pluck(:long_name, :agency_id)
+                      .order(:long_name)
+                      .pluck(:long_name, :agency_id)
 
     respond_to do |format|
       format.turbo_stream
@@ -14,9 +14,9 @@ class LookupsController < ApplicationController
 
   def divisions
     @division_options = Division
-      .where(agency_id: params[:agency])
-      .order(:long_name)
-      .pluck(:long_name, :division_id)
+                        .where(agency_id: params[:agency])
+                        .order(:long_name)
+                        .pluck(:long_name, :division_id)
 
     respond_to do |format|
       format.turbo_stream
@@ -27,9 +27,9 @@ class LookupsController < ApplicationController
 
   def departments
     @department_options = Department
-      .where(division_id: params[:division])
-      .order(:long_name)
-      .pluck(:long_name, :department_id)
+                          .where(division_id: params[:division])
+                          .order(:long_name)
+                          .pluck(:long_name, :department_id)
 
     respond_to do |format|
       format.turbo_stream
@@ -51,7 +51,7 @@ class LookupsController < ApplicationController
         Unit.none
       end
 
-    @unit_options = scope.order(:unit_id).map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
+    @unit_options = scope.order(:unit_id).map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
 
     respond_to do |format|
       format.turbo_stream
@@ -67,7 +67,7 @@ class LookupsController < ApplicationController
 
     options = Employee.where(unit: params[:unit])
                       .order(:last_name, :first_name)
-                      .map { |e| [ "#{e.last_name}, #{e.first_name} (#{e.id})", e.id ] }
+                      .map { |e| ["#{e.last_name}, #{e.first_name} (#{e.id})", e.id] }
 
     render json: options
   end
@@ -76,20 +76,20 @@ class LookupsController < ApplicationController
     scope = Employee.order(:last_name)
     scope = scope.where(agency: params[:agency]) if params[:agency].present?
 
-    column = params[:column].presence || "full_name"
+    column = params[:column].presence || 'full_name'
     allowed_columns = %w[full_name first_name last_name email]
-    column = "full_name" unless allowed_columns.include?(column)
+    column = 'full_name' unless allowed_columns.include?(column)
 
     options = case column
-    when "full_name"
+              when 'full_name'
                 scope.map { |e| "#{e.last_name}, #{e.first_name}" }
-    when "first_name"
+              when 'first_name'
                 scope.pluck(:first_name).uniq
-    when "last_name"
+              when 'last_name'
                 scope.pluck(:last_name).uniq
-    when "email"
+              when 'email'
                 scope.pluck(:email).compact.uniq
-    end
+              end
 
     render json: options
   end
@@ -97,9 +97,7 @@ class LookupsController < ApplicationController
   # Distinct categories for a categorized data source (e.g. injury_classifications).
   # Returns [label, id] pairs to match the agencies endpoint shape.
   def categories
-    unless FormField.categorized_source?(params[:source])
-      return render json: [], status: :not_found
-    end
+    return render json: [], status: :not_found unless FormField.categorized_source?(params[:source])
 
     render json: FormField.category_options_for(params[:source])
   end
@@ -134,7 +132,7 @@ class LookupsController < ApplicationController
     qt = conn.quote_table_name(table)
     qc = conn.quote_column_name(column)
     values = conn.exec_query("SELECT DISTINCT #{qc} AS val FROM #{qt} ORDER BY #{qc}")
-                 .map { |r| r["val"] }.compact
+                 .map { |r| r['val'] }.compact
     render json: values
   end
 end

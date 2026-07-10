@@ -1,11 +1,11 @@
 class Api::NhtsaController < ApplicationController
-  NHTSA_BASE = "https://vpic.nhtsa.dot.gov/api/vehicles".freeze
+  NHTSA_BASE = 'https://vpic.nhtsa.dot.gov/api/vehicles'.freeze
 
   def makes
     uri = URI("#{NHTSA_BASE}/GetMakesForVehicleType/car?format=json")
     data = fetch_nhtsa(uri)
-    render json: data["Results"]
-  rescue => e
+    render json: data['Results']
+  rescue StandardError => e
     Rails.logger.error("NHTSA makes fetch failed: #{e.message}")
     render json: { error: e.message }, status: :service_unavailable
   end
@@ -16,10 +16,10 @@ class Api::NhtsaController < ApplicationController
 
     uri = URI("#{NHTSA_BASE}/GetModelsForMakeYear/make/#{ERB::Util.url_encode(make)}/modelyear/#{ERB::Util.url_encode(year)}?format=json")
     data = fetch_nhtsa(uri)
-    render json: data["Results"]
+    render json: data['Results']
   rescue ActionController::ParameterMissing => e
     render json: { error: e.message }, status: :bad_request
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("NHTSA models fetch failed: #{e.message}")
     render json: { error: e.message }, status: :service_unavailable
   end

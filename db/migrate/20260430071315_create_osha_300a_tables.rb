@@ -27,7 +27,7 @@ class CreateOsha300aTables < ActiveRecord::Migration[8.0]
       t.datetime   :submitted_at
       t.timestamps
     end
-    add_index :osha_300a_entries, [ :osha_establishment_id, :year ], unique: true
+    add_index :osha_300a_entries, %i[osha_establishment_id year], unique: true
   end
 
   def down

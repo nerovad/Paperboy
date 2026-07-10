@@ -6,43 +6,43 @@ module SubmissionsHelper
     category = normalize_to_category(status_or_category)
 
     case category
-    when :pending    then "is-pending"
-    when :in_review  then "is-in-review"
-    when :approved   then "is-approved"
-    when :denied     then "is-denied"
-    when :cancelled  then "is-cancelled"
-    when :scheduled  then "is-scheduled"
+    when :pending    then 'is-pending'
+    when :in_review  then 'is-in-review'
+    when :approved   then 'is-approved'
+    when :denied     then 'is-denied'
+    when :cancelled  then 'is-cancelled'
+    when :scheduled  then 'is-scheduled'
     else
-      "is-pending"
+      'is-pending'
     end
   end
 
   # Returns CSS class based on category (use when you have the category directly)
   def category_badge_class(category)
-    return "is-pending" if category.nil?
+    return 'is-pending' if category.nil?
 
     case category.to_sym
-    when :pending    then "is-pending"
-    when :in_review  then "is-in-review"
-    when :approved   then "is-approved"
-    when :denied     then "is-denied"
-    when :cancelled  then "is-cancelled"
-    when :scheduled  then "is-scheduled"
+    when :pending    then 'is-pending'
+    when :in_review  then 'is-in-review'
+    when :approved   then 'is-approved'
+    when :denied     then 'is-denied'
+    when :cancelled  then 'is-cancelled'
+    when :scheduled  then 'is-scheduled'
     else
-      "is-pending"
+      'is-pending'
     end
   end
 
   # Human-readable label for a category
   def category_label(category)
     {
-      pending: "Pending",
-      in_review: "In Review",
-      approved: "Approved",
-      denied: "Denied",
-      cancelled: "Cancelled",
-      scheduled: "Scheduled"
-    }[category.to_sym] || "Unknown"
+      pending: 'Pending',
+      in_review: 'In Review',
+      approved: 'Approved',
+      denied: 'Denied',
+      cancelled: 'Cancelled',
+      scheduled: 'Scheduled'
+    }[category.to_sym] || 'Unknown'
   end
 
   private
@@ -55,18 +55,18 @@ module SubmissionsHelper
 
     # Legacy status string mappings
     case status_string
-    when "submitted"
+    when 'submitted'
       :pending
-    when "step_1_pending", "step_2_pending", "step_3_pending", "step_4_pending",
-         "manager_approved", "sent_to_security", "sent_to_hr", "sent_to_next", "in_progress"
+    when 'step_1_pending', 'step_2_pending', 'step_3_pending', 'step_4_pending',
+         'manager_approved', 'sent_to_security', 'sent_to_hr', 'sent_to_next', 'in_progress'
       :in_review
-    when "approved", "step_1_approved", "step_2_approved", "resolved"
+    when 'approved', 'step_1_approved', 'step_2_approved', 'resolved'
       :approved
-    when "denied"
+    when 'denied'
       :denied
-    when "cancelled", "canceled"
+    when 'cancelled', 'canceled'
       :cancelled
-    when "scheduled"
+    when 'scheduled'
       :scheduled
     else
       :pending

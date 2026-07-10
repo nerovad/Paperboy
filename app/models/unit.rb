@@ -1,9 +1,9 @@
 class Unit < GsabssBase
-  self.primary_key = "unit_id"
+  self.primary_key = 'unit_id'
 
-  belongs_to :agency, foreign_key: "agency_id", optional: true
-  belongs_to :division, foreign_key: "division_id", optional: true
-  belongs_to :department, foreign_key: "department_id", optional: true
+  belongs_to :agency, foreign_key: 'agency_id', optional: true
+  belongs_to :division, foreign_key: 'division_id', optional: true
+  belongs_to :department, foreign_key: 'department_id', optional: true
 
   # Resolve a Unit from an Employee's Unit code. HCA uses a 5-level hierarchy
   # (Agency/Division/Department/Unit/Sub-Unit), so HCA employees often have

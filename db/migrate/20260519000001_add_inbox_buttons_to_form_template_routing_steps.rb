@@ -4,7 +4,7 @@ class AddInboxButtonsToFormTemplateRoutingSteps < ActiveRecord::Migration[8.0]
 
     # Backfill each routing step with its parent template's inbox_buttons so
     # existing forms keep behavior. JSON-encoded to match the model accessor.
-    say_with_time "Backfilling inbox_buttons from form_templates" do
+    say_with_time 'Backfilling inbox_buttons from form_templates' do
       execute(<<~SQL)
         UPDATE rs
         SET rs.inbox_buttons = ft.inbox_buttons

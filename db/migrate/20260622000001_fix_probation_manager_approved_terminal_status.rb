@@ -6,11 +6,11 @@
 # key so it applies to whichever template row exists in each environment.
 class FixProbationManagerApprovedTerminalStatus < ActiveRecord::Migration[8.0]
   def up
-    set_status(category: "approved", is_end: 1)
+    set_status(category: 'approved', is_end: 1)
   end
 
   def down
-    set_status(category: "in_review", is_end: 0)
+    set_status(category: 'in_review', is_end: 0)
   end
 
   private

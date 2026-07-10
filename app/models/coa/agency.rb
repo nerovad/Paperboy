@@ -1,6 +1,6 @@
 module Coa
   class Agency < BaseRecord
-    self.table_name = "agencies"
+    self.table_name = 'agencies'
     self.primary_key = :agency_id
 
     has_many :activities, foreign_key: :agency_id, inverse_of: :agency

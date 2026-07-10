@@ -2,8 +2,8 @@ class MetabaseService
   class MetabaseError < StandardError; end
 
   def initialize
-    @site_url = ENV.fetch("METABASE_SITE_URL")
-    @secret_key = ENV.fetch("METABASE_SECRET_KEY")
+    @site_url = ENV.fetch('METABASE_SITE_URL')
+    @secret_key = ENV.fetch('METABASE_SECRET_KEY')
   end
 
   def embed_url(dashboard_id, params: {})

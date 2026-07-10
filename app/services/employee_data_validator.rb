@@ -81,46 +81,44 @@ class EmployeeDataValidator
   def check_email(emp, issues)
     email = emp.email&.strip
     if email.blank?
-      issues << Issue.new(category: :email, field: "EE_Email", message: "Email is blank", severity: :error)
+      issues << Issue.new(category: :email, field: 'EE_Email', message: 'Email is blank', severity: :error)
       return
     end
 
-    domain = email.split("@").last&.downcase
-    unless VALID_EMAIL_DOMAINS.include?(domain)
-      issues << Issue.new(
-        category: :email, field: "EE_Email",
-        message: "Non-county email domain: @#{domain}",
-        severity: :error
-      )
-    end
+    domain = email.split('@').last&.downcase
+    return if VALID_EMAIL_DOMAINS.include?(domain)
+
+    issues << Issue.new(
+      category: :email, field: 'EE_Email',
+      message: "Non-county email domain: @#{domain}",
+      severity: :error
+    )
   end
 
   def check_name(emp, issues)
-    if emp.first_name.blank?
-      issues << Issue.new(category: :name, field: "First_Name", message: "First name is blank", severity: :error)
-    end
-    if emp.last_name.blank?
-      issues << Issue.new(category: :name, field: "Last_Name", message: "Last name is blank", severity: :error)
-    end
+    issues << Issue.new(category: :name, field: 'First_Name', message: 'First name is blank', severity: :error) if emp.first_name.blank?
+    return unless emp.last_name.blank?
+
+    issues << Issue.new(category: :name, field: 'Last_Name', message: 'Last name is blank', severity: :error)
   end
 
   def check_work_phone(emp, issues)
-    if emp.work_phone.blank?
-      issues << Issue.new(category: :phone, field: "Work_Phone", message: "Work phone is blank", severity: :warning)
-    end
+    return unless emp.work_phone.blank?
+
+    issues << Issue.new(category: :phone, field: 'Work_Phone', message: 'Work phone is blank', severity: :warning)
   end
 
   def check_supervisor(emp, issues)
     sup_id = emp.supervisor_id
     if sup_id.blank?
       issues << Issue.new(
-        category: :supervisor, field: "Supervisor_ID",
-        message: "No supervisor assigned",
+        category: :supervisor, field: 'Supervisor_ID',
+        message: 'No supervisor assigned',
         severity: :error
       )
     elsif !@valid_employee_ids.include?(sup_id)
       issues << Issue.new(
-        category: :supervisor, field: "Supervisor_ID",
+        category: :supervisor, field: 'Supervisor_ID',
         message: "Supervisor ID #{sup_id} does not exist in Employees table",
         severity: :error
       )
@@ -130,29 +128,29 @@ class EmployeeDataValidator
   def check_agency(emp, issues)
     agency = emp.agency&.strip
     if agency.blank?
-      issues << Issue.new(category: :agency, field: "Agency", message: "Agency is blank", severity: :error)
+      issues << Issue.new(category: :agency, field: 'Agency', message: 'Agency is blank', severity: :error)
       return
     end
 
-    unless @valid_agency_ids.include?(agency)
-      issues << Issue.new(
-        category: :agency, field: "Agency",
-        message: "Agency \"#{agency}\" not found in agencies table",
-        severity: :error
-      )
-    end
+    return if @valid_agency_ids.include?(agency)
+
+    issues << Issue.new(
+      category: :agency, field: 'Agency',
+      message: "Agency \"#{agency}\" not found in agencies table",
+      severity: :error
+    )
   end
 
   def check_org_chain(emp, issues)
     unit_code = emp.unit&.strip
     if unit_code.blank?
-      issues << Issue.new(category: :org_chain, field: "Unit", message: "Unit is blank", severity: :error)
+      issues << Issue.new(category: :org_chain, field: 'Unit', message: 'Unit is blank', severity: :error)
       return
     end
 
     unless @valid_unit_keys.include?(unit_code)
       issues << Issue.new(
-        category: :org_chain, field: "Unit",
+        category: :org_chain, field: 'Unit',
         message: "Unit \"#{unit_code}\" not found in units table — org chain broken",
         severity: :error
       )
@@ -162,22 +160,22 @@ class EmployeeDataValidator
     # Unit exists — verify it belongs to the employee's agency
     chain = @unit_lookup[unit_code]
     emp_agency = emp.agency&.strip
-    if chain && emp_agency.present? && chain[:agency_id] != emp_agency
-      issues << Issue.new(
-        category: :org_chain, field: "Unit",
-        message: "Unit \"#{unit_code}\" belongs to agency \"#{chain[:agency_id]}\" but employee is in agency \"#{emp_agency}\"",
-        severity: :error
-      )
-    end
+    return unless chain && emp_agency.present? && chain[:agency_id] != emp_agency
+
+    issues << Issue.new(
+      category: :org_chain, field: 'Unit',
+      message: "Unit \"#{unit_code}\" belongs to agency \"#{chain[:agency_id]}\" but employee is in agency \"#{emp_agency}\"",
+      severity: :error
+    )
   end
 
   def check_group_membership(emp, issues)
-    unless @employees_with_groups.include?(emp.employee_id)
-      issues << Issue.new(
-        category: :groups, field: "Groups",
-        message: "Not a member of any group",
-        severity: :warning
-      )
-    end
+    return if @employees_with_groups.include?(emp.employee_id)
+
+    issues << Issue.new(
+      category: :groups, field: 'Groups',
+      message: 'Not a member of any group',
+      severity: :warning
+    )
   end
 end

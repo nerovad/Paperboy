@@ -1,5 +1,5 @@
 class ProbationMailer < ApplicationMailer
-  default from: "gsa-forms@ventura.org"
+  default from: 'gsa-forms@ventura.org'
 
   def notify(submission)
     @submission = submission
@@ -9,7 +9,7 @@ class ProbationMailer < ApplicationMailer
 
     mail(
       to: @submission.email, # employee who submitted
-      subject: "Probation Transfer Request Approved"
+      subject: 'Probation Transfer Request Approved'
     )
   end
 
@@ -19,7 +19,7 @@ class ProbationMailer < ApplicationMailer
 
     mail(
       to: @request.email, # employee who submitted
-      subject: "Probation Transfer Request Denied"
+      subject: 'Probation Transfer Request Denied'
     )
   end
 end

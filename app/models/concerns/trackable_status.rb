@@ -30,8 +30,8 @@ module TrackableStatus
       return nil if status_value.nil?
       return status_value.to_s unless status_value.is_a?(Integer)
 
-      if defined_enums["status"].present?
-        defined_enums["status"].key(status_value)
+      if defined_enums['status'].present?
+        defined_enums['status'].key(status_value)
       elsif const_defined?(:STATUS_MAP)
         self::STATUS_MAP[status_value]
       else
@@ -56,6 +56,7 @@ module TrackableStatus
 
     def status_label_for(status_value)
       return nil if status_value.nil?
+
       key = status_key_for(status_value)
 
       # 1. Central source of truth: form_template_statuses
@@ -69,12 +70,13 @@ module TrackableStatus
         return label if label
       end
 
-      key ? key.humanize : "Unknown"
+      key ? key.humanize : 'Unknown'
     end
 
     # Returns the normalized category (symbol) for a given status value.
     def status_category_for(status_value)
       return nil if status_value.nil?
+
       key = status_key_for(status_value)
       return nil unless key
 
@@ -121,23 +123,24 @@ module TrackableStatus
       cat = category.to_s
       if central_status_definitions.any?
         return central_status_definitions.values
-                 .select { |s| s.category.to_s == cat }
-                 .map { |s| s.key.to_sym }
+                                         .select { |s| s.category.to_s == cat }
+                                         .map { |s| s.key.to_sym }
       end
 
       return [] unless const_defined?(:STATUS_CATEGORIES)
+
       self::STATUS_CATEGORIES.select { |_, c| c.to_s == cat }.keys
     end
 
     # Returns hash of category => human-readable label
     def category_labels
       {
-        pending: "Pending",
-        in_review: "In Review",
-        approved: "Approved",
-        denied: "Denied",
-        cancelled: "Cancelled",
-        scheduled: "Scheduled"
+        pending: 'Pending',
+        in_review: 'In Review',
+        approved: 'Approved',
+        denied: 'Denied',
+        cancelled: 'Cancelled',
+        scheduled: 'Scheduled'
       }
     end
   end
@@ -212,7 +215,7 @@ module TrackableStatus
 
   # Returns the human-readable label for the current status category
   def status_category_label
-    self.class.category_labels[status_category] || "Unknown"
+    self.class.category_labels[status_category] || 'Unknown'
   end
 
   # Whether this submission has reached an end state — see terminal_status?.
@@ -233,10 +236,10 @@ module TrackableStatus
   # Group-routed forms would otherwise leave approver_id nil at the terminal
   # step and drop out of every inbox the moment the action is taken.
   def stamp_actor_on_terminal_status
-    return unless self.class.column_names.include?("approver_id")
+    return unless self.class.column_names.include?('approver_id')
     return unless TERMINAL_STATUSES.include?(status.to_s)
 
-    actor_id = Current.user&.dig("employee_id")&.to_s.presence
+    actor_id = Current.user&.dig('employee_id')&.to_s.presence
     return unless actor_id
     return if approver_id.to_s == actor_id
 
@@ -253,14 +256,14 @@ module TrackableStatus
     return unless step
     return unless %w[group authorization].include?(step.routing_type.to_s)
 
-    actor_id = Current.user&.dig("employee_id")&.to_s.presence
+    actor_id = Current.user&.dig('employee_id')&.to_s.presence
     return unless actor_id
 
     FormSubmissionCopy.find_or_create_by!(
       submission_type: self.class.name,
       submission_id: id,
       recipient_employee_id: actor_id.to_i
-    ) { |row| row.delivered_via = "pool_action" }
+    ) { |row| row.delivered_via = 'pool_action' }
   rescue ActiveRecord::RecordNotUnique
     # Concurrent action raced the unique index — the tracking copy already exists.
   rescue StandardError => e
@@ -269,7 +272,7 @@ module TrackableStatus
 
   def approval_template
     respond_to?(:form_template) ? form_template : nil
-  rescue
+  rescue StandardError
     nil
   end
 
@@ -279,17 +282,18 @@ module TrackableStatus
 
   def approver_id_for_routing_step(step)
     case step.routing_type
-    when "supervisor"
+    when 'supervisor'
       submitter_employee&.supervisor_id&.to_s
-    when "department_head"
+    when 'department_head'
       emp = submitter_employee
       return nil unless emp
+
       unit = Unit.find_by(unit_id: emp.unit)
       department = unit ? Department.find_by(department_id: unit.department_id) : nil
       department&.department_head_id&.to_s
-    when "employee"
+    when 'employee'
       step.employee_id.to_s
-    when "group", "authorization"
+    when 'group', 'authorization'
       # Multi-approver queue: approver_id stays nil so every eligible approver
       # (group members / authorized approvers for the budget unit) sees it in
       # their inbox; the first to act claims it.
@@ -299,6 +303,7 @@ module TrackableStatus
 
   def submitter_employee
     return nil unless respond_to?(:employee_id) && employee_id.present?
+
     # Employee or Contractor — both expose supervisor_id/unit for routing.
     Submitter.resolve(employee_id)
   end
@@ -307,7 +312,7 @@ module TrackableStatus
     status_changes.create!(
       from_status: nil,
       to_status: status_label,
-      changed_by_id: Current.user&.dig("employee_id")&.to_s,
+      changed_by_id: Current.user&.dig('employee_id')&.to_s,
       changed_by_name: current_user_display_name || name
     )
   end
@@ -316,7 +321,7 @@ module TrackableStatus
     status_changes.create!(
       from_status: status_label_was,
       to_status: status_label,
-      changed_by_id: Current.user&.dig("employee_id")&.to_s,
+      changed_by_id: Current.user&.dig('employee_id')&.to_s,
       changed_by_name: current_user_display_name
     )
   end
@@ -330,15 +335,18 @@ module TrackableStatus
   # non-approval terminal states (denied/cancelled).
   def deliver_copy_recipients_on_approval
     return unless self.class.status_category_for(saved_change_to_status.last) == :approved
+
     deliver_copy_recipients(:approval)
   end
 
   def deliver_copy_recipients(event)
     template = approval_template
     return unless template&.respond_to?(:copy_recipients)
+
     template.copy_recipients.for_event(event).ordered.each do |recipient|
       recipient.resolve_recipient_ids(self).uniq.each do |emp_id|
         next if emp_id.blank?
+
         FormSubmissionCopy.find_or_create_by!(
           submission_type: self.class.name,
           submission_id: id,
@@ -361,7 +369,7 @@ module TrackableStatus
 
     Rails.logger.warn(
       "No eligible approver: #{self.class.name} ##{id} stuck at step #{step.step_number} " \
-      "(#{step.routing_type}#{step.routes_to_authorization? ? " / #{step.authorization_service_type}" : ''})"
+      "(#{step.routing_type}#{" / #{step.authorization_service_type}" if step.routes_to_authorization?})"
     )
     StuckSubmissionMailer.no_eligible_approver(self.class.name, id, step.id).deliver_later
   rescue StandardError => e
@@ -372,7 +380,7 @@ module TrackableStatus
 
   # Fire any "On submission" email rules right after the record is created.
   def deliver_email_steps_on_submit
-    fire_email_steps("submit")
+    fire_email_steps('submit')
   end
 
   # Translate a status transition into the email rules it should fire.
@@ -386,14 +394,14 @@ module TrackableStatus
     to_category = self.class.status_category_for(status)
 
     if to_category == :approved
-      fire_email_steps("approved", step_number: acted_step) if acted_step
-      fire_email_steps("approved", step_number: nil)
+      fire_email_steps('approved', step_number: acted_step) if acted_step
+      fire_email_steps('approved', step_number: nil)
     elsif to_category == :denied
-      fire_email_steps("denied", step_number: acted_step) if acted_step
-      fire_email_steps("denied", step_number: nil)
+      fire_email_steps('denied', step_number: acted_step) if acted_step
+      fire_email_steps('denied', step_number: nil)
     elsif acted_step && to_key.to_s.match?(/\Astep_\d+_pending\z/)
       # Advanced from one approval step to the next: the prior step was approved.
-      fire_email_steps("approved", step_number: acted_step)
+      fire_email_steps('approved', step_number: acted_step)
     end
   rescue StandardError => e
     Rails.logger.warn("TrackableStatus email dispatch failed: #{e.message}")
@@ -408,9 +416,9 @@ module TrackableStatus
 
     rules = if step_number == :__any__
               template.email_steps.for_event(event)
-    else
+            else
               template.email_steps.for_event(event, step_number: step_number)
-    end
+            end
 
     rules.each do |email_step|
       FormWorkflowMailer.notify(email_step.id, self.class.name, id).deliver_later
@@ -421,7 +429,8 @@ module TrackableStatus
 
   def current_user_display_name
     return nil unless Current.user
-    [ Current.user["first_name"], Current.user["last_name"] ].compact.join(" ").presence
+
+    [Current.user['first_name'], Current.user['last_name']].compact.join(' ').presence
   end
 
   def status_label_was

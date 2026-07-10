@@ -1,6 +1,7 @@
 # app/models/session_user.rb
 class SessionUser
   include ActiveModel::Model
+
   attr_accessor :employee_id, :email, :first_name, :last_name
 
   def self.authenticate(emp_id_or_email)
@@ -15,7 +16,7 @@ class SessionUser
       last_name: employee.last_name,
       email: employee.email
     )
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("Login error: #{e.message}")
     nil
   end
@@ -28,12 +29,14 @@ class SessionUser
   # Check if user belongs to a specific group
   def in_group?(group_name)
     return false unless employee
+
     employee.in_group?(group_name)
   end
 
   # Check if user belongs to any of the specified groups
   def in_any_group?(*group_names)
     return false unless employee
+
     employee.in_any_group?(*group_names)
   end
 end

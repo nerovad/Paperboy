@@ -6,7 +6,8 @@ module Base
     end
 
     def path
-      fail "#{@path} missing." unless File.exist?(@path)
+      raise "#{@path} missing." unless File.exist?(@path)
+
       @path
     end
   end

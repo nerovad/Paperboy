@@ -1,18 +1,18 @@
 class Osha300aTotals
   CASE_TYPE_TO_FIELD = {
-    "Injury"                => :total_injuries,
-    "Skin Disorder"         => :total_skin_disorders,
-    "Respiratory Condition" => :total_respiratory_conditions,
-    "Poisoning"             => :total_poisonings,
-    "Hearing Loss"          => :total_hearing_loss,
-    "Other Illness"         => :total_other_illnesses
+    'Injury' => :total_injuries,
+    'Skin Disorder' => :total_skin_disorders,
+    'Respiratory Condition' => :total_respiratory_conditions,
+    'Poisoning' => :total_poisonings,
+    'Hearing Loss' => :total_hearing_loss,
+    'Other Illness' => :total_other_illnesses
   }.freeze
 
   CASE_CLASSIFICATION_TO_FIELD = {
-    "Death" => :total_deaths,
-    "DAFW"  => :total_dafw_cases,
-    "DJTR"  => :total_djtr_cases,
-    "Other" => :total_other_cases
+    'Death' => :total_deaths,
+    'DAFW' => :total_dafw_cases,
+    'DJTR' => :total_djtr_cases,
+    'Other' => :total_other_cases
   }.freeze
 
   def self.for(year)
@@ -26,9 +26,9 @@ class Osha300aTotals
   def compute
     range   = Date.new(@year, 1, 1)..Date.new(@year, 12, 31)
     reports = OshaReport
-                .where(status: :approved)
-                .where(date_of_injury_or_illness: range)
-                .to_a
+              .where(status: :approved)
+              .where(date_of_injury_or_illness: range)
+              .to_a
 
     safety_ids   = reports.map(&:safety_report_id).compact.uniq
     safety_by_id = SafetyReport.where(id: safety_ids).index_by(&:id)
@@ -52,19 +52,19 @@ class Osha300aTotals
 
   def empty_totals
     {
-      no_injuries_illnesses:        2,
-      total_deaths:                 0,
-      total_dafw_cases:             0,
-      total_djtr_cases:             0,
-      total_other_cases:            0,
-      total_dafw_days:              0,
-      total_djtr_days:              0,
-      total_injuries:               0,
-      total_skin_disorders:         0,
+      no_injuries_illnesses: 2,
+      total_deaths: 0,
+      total_dafw_cases: 0,
+      total_djtr_cases: 0,
+      total_other_cases: 0,
+      total_dafw_days: 0,
+      total_djtr_days: 0,
+      total_injuries: 0,
+      total_skin_disorders: 0,
       total_respiratory_conditions: 0,
-      total_poisonings:             0,
-      total_hearing_loss:           0,
-      total_other_illnesses:        0
+      total_poisonings: 0,
+      total_hearing_loss: 0,
+      total_other_illnesses: 0
     }
   end
 
@@ -87,6 +87,6 @@ class Osha300aTotals
 
     end_date = safety.date_returned_to_work.presence || Date.current
     days     = (end_date - last_worked).to_i
-    [ [ days, 0 ].max, 180 ].min
+    [[days, 0].max, 180].min
   end
 end

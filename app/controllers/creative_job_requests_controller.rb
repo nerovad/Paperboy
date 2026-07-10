@@ -6,7 +6,7 @@ class CreativeJobRequestsController < ApplicationController
   def create
     @creative_job_request = CreativeJobRequest.new(creative_job_request_params)
     if @creative_job_request.save
-      redirect_to root_path, notice: "Creative Job Request submitted successfully."
+      redirect_to root_path, notice: 'Creative Job Request submitted successfully.'
     else
       render :new, status: :unprocessable_entity
     end

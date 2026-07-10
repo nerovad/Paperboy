@@ -12,67 +12,67 @@ class FormField < ApplicationRecord
 
   # Whitelisted database tables and columns available as dropdown data sources
   DATA_SOURCES = {
-    "agencies" => {
-      model: "Agency",
-      label: "Agencies",
-      order: ":long_name",
+    'agencies' => {
+      model: 'Agency',
+      label: 'Agencies',
+      order: ':long_name',
       columns: {
-        "long_name"  => "Name",
-        "short_name" => "Short Name",
-        "agency_id"  => "Agency ID"
+        'long_name' => 'Name',
+        'short_name' => 'Short Name',
+        'agency_id' => 'Agency ID'
       }
     },
-    "divisions" => {
-      model: "Division",
-      label: "Divisions",
-      order: ":long_name",
+    'divisions' => {
+      model: 'Division',
+      label: 'Divisions',
+      order: ':long_name',
       columns: {
-        "long_name"   => "Name",
-        "short_name"  => "Short Name",
-        "division_id" => "Division ID"
+        'long_name' => 'Name',
+        'short_name' => 'Short Name',
+        'division_id' => 'Division ID'
       }
     },
-    "departments" => {
-      model: "Department",
-      label: "Departments",
-      order: ":long_name",
+    'departments' => {
+      model: 'Department',
+      label: 'Departments',
+      order: ':long_name',
       columns: {
-        "long_name"      => "Name",
-        "short_name"     => "Short Name",
-        "department_id"  => "Department ID"
+        'long_name' => 'Name',
+        'short_name' => 'Short Name',
+        'department_id' => 'Department ID'
       }
     },
-    "units" => {
-      model: "Unit",
-      label: "Units",
-      order: ":long_name",
+    'units' => {
+      model: 'Unit',
+      label: 'Units',
+      order: ':long_name',
       columns: {
-        "long_name" => "Name",
-        "unit_id"   => "Unit ID"
+        'long_name' => 'Name',
+        'unit_id' => 'Unit ID'
       }
     },
-    "employees" => {
-      model: "Employee",
-      label: "Employees",
-      order: ":last_name",
+    'employees' => {
+      model: 'Employee',
+      label: 'Employees',
+      order: ':last_name',
       columns: {
-        "full_name"  => "Full Name (Last, First)",
-        "first_name" => "First Name",
-        "last_name"  => "Last Name",
-        "email"      => "Email"
+        'full_name' => 'Full Name (Last, First)',
+        'first_name' => 'First Name',
+        'last_name' => 'Last Name',
+        'email' => 'Email'
       }
     },
     # Categorized source: one table backs many dropdowns, selected by category
     # rather than by column. The dropdown's options are the value-column rows
     # for the chosen category, ordered by `order`.
-    "injury_classifications" => {
-      model: "InjuryClassificationView",
-      label: "Injury Classifications",
+    'injury_classifications' => {
+      model: 'InjuryClassificationView',
+      label: 'Injury Classifications',
       kind: :categorized,
-      order: ":sort_order",
-      category_id_column: "injury_category_id",
-      category_label_column: "injury_category_description",
-      value_column: "injury_classification_description"
+      order: ':sort_order',
+      category_id_column: 'injury_category_id',
+      category_label_column: 'injury_category_description',
+      value_column: 'injury_classification_description'
     }
   }.freeze
 
@@ -88,9 +88,9 @@ class FormField < ApplicationRecord
     return [] unless config && config[:kind] == :categorized
 
     config[:model].constantize
-      .order(config[:category_id_column])
-      .pluck(config[:category_label_column], config[:category_id_column])
-      .uniq
+                  .order(config[:category_id_column])
+                  .pluck(config[:category_label_column], config[:category_id_column])
+                  .uniq
   end
 
   validates :field_name, presence: true
@@ -115,104 +115,104 @@ class FormField < ApplicationRecord
 
   scope :for_page, ->(page_num) { where(page_number: page_num).order(:position) }
   scope :ordered, -> { order(:page_number, :position) }
-  scope :unrestricted, -> { where(restricted_to_type: [ "none", nil ]) }
-  scope :restricted, -> { where.not(restricted_to_type: [ "none", nil ]) }
-  scope :dropdowns, -> { where(field_type: [ "dropdown", "choices_dropdown" ]) }
+  scope :unrestricted, -> { where(restricted_to_type: ['none', nil]) }
+  scope :restricted, -> { where.not(restricted_to_type: ['none', nil]) }
+  scope :dropdowns, -> { where(field_type: %w[dropdown choices_dropdown]) }
   scope :conditional, -> { where.not(conditional_field_id: nil) }
   scope :unconditional, -> { where(conditional_field_id: nil) }
   scope :custom_view, -> { where(has_custom_view: true) }
 
   def text_field?
-    field_type == "text"
+    field_type == 'text'
   end
 
   def text_box?
-    field_type == "text_box"
+    field_type == 'text_box'
   end
 
   def dropdown?
-    field_type == "dropdown"
+    field_type == 'dropdown'
   end
 
   def choices_dropdown?
-    field_type == "choices_dropdown"
+    field_type == 'choices_dropdown'
   end
 
   def date?
-    field_type == "date"
+    field_type == 'date'
   end
 
   def date_time?
-    field_type == "date_time"
+    field_type == 'date_time'
   end
 
   def phone?
-    field_type == "phone"
+    field_type == 'phone'
   end
 
   def email?
-    field_type == "email"
+    field_type == 'email'
   end
 
   def number?
-    field_type == "number"
+    field_type == 'number'
   end
 
   def currency?
-    field_type == "currency"
+    field_type == 'currency'
   end
 
   def yes_no?
-    field_type == "yes_no"
+    field_type == 'yes_no'
   end
 
   def time?
-    field_type == "time"
+    field_type == 'time'
   end
 
   def media_attachment?
-    field_type == "media_attachment"
+    field_type == 'media_attachment'
   end
 
   def information?
-    field_type == "information"
+    field_type == 'information'
   end
 
   def information_text
-    options&.dig("information_text").to_s
+    options&.dig('information_text').to_s
   end
 
   def acknowledgeable?
-    !!options&.dig("acknowledgeable")
+    !!options&.dig('acknowledgeable')
   end
 
   def rows
-    options&.dig("rows") || 5
+    options&.dig('rows') || 5
   end
 
   def dropdown_values
-    options&.dig("values") || []
+    options&.dig('values') || []
   end
 
   # Data source helpers
   def data_source?
-    options&.dig("data_source").present?
+    options&.dig('data_source').present?
   end
 
   def data_source_table
-    options&.dig("data_source")
+    options&.dig('data_source')
   end
 
   def data_source_column
-    options&.dig("data_source_column")
+    options&.dig('data_source_column')
   end
 
   def data_source_agency
-    options&.dig("data_source_agency")
+    options&.dig('data_source_agency')
   end
 
   def data_source_category
-    options&.dig("data_source_category")
+    options&.dig('data_source_category')
   end
 
   def categorized_data_source?
@@ -222,12 +222,12 @@ class FormField < ApplicationRecord
   # Generic ("custom") lookup: a fully UI-configured source against any
   # table/column in either database, resolved at render time by FormLookup.
   def custom_lookup_config
-    options&.dig("custom_lookup")
+    options&.dig('custom_lookup')
   end
 
   def custom_lookup?
     cfg = custom_lookup_config
-    cfg.is_a?(Hash) && cfg["database"].present? && cfg["table"].present? && cfg["column"].present?
+    cfg.is_a?(Hash) && cfg['database'].present? && cfg['table'].present? && cfg['column'].present?
   end
 
   # Normalized category filters [{ 'column' =>, 'value' => }, …] for the custom
@@ -237,16 +237,18 @@ class FormField < ApplicationRecord
     cfg = custom_lookup_config
     return [] unless cfg.is_a?(Hash)
 
-    raw = cfg["category_filters"]
+    raw = cfg['category_filters']
     if raw.is_a?(Array)
       raw.filter_map do |f|
         next unless f.is_a?(Hash)
-        col = f["column"].to_s
+
+        col = f['column'].to_s
         next if col.blank?
-        { "column" => col, "value" => f["value"] }
+
+        { 'column' => col, 'value' => f['value'] }
       end
-    elsif cfg["category_column"].present?
-      [ { "column" => cfg["category_column"], "value" => cfg["category_value"] } ]
+    elsif cfg['category_column'].present?
+      [{ 'column' => cfg['category_column'], 'value' => cfg['category_value'] }]
     else
       []
     end
@@ -266,6 +268,7 @@ class FormField < ApplicationRecord
     # pluck the value column (stored value == displayed label).
     if config[:kind] == :categorized
       return nil unless data_source_category.present?
+
       "#{model}.where(#{config[:category_id_column]}: #{data_source_category.to_i}).order(#{order}).pluck(:#{config[:value_column]}).uniq"
     else
       column_data_source_query_code(config)
@@ -277,12 +280,10 @@ class FormField < ApplicationRecord
     model = config[:model]
     order = config[:order]
 
-    agency_filter = ""
-    if data_source_table == "employees" && data_source_agency.present?
-      agency_filter = ".where(Agency: '#{data_source_agency}')"
-    end
+    agency_filter = ''
+    agency_filter = ".where(Agency: '#{data_source_agency}')" if data_source_table == 'employees' && data_source_agency.present?
 
-    if data_source_table == "employees" && col == "full_name"
+    if data_source_table == 'employees' && col == 'full_name'
       "#{model}#{agency_filter}.order(#{order}).map { |e| \"\#{e.last_name}, \#{e.first_name}\" }"
     else
       "#{model}#{agency_filter}.order(#{order}).pluck(:#{col}).uniq"
@@ -291,7 +292,7 @@ class FormField < ApplicationRecord
 
   # Restriction type checks
   def restricted?
-    restricted_to_type.present? && restricted_to_type != "none"
+    restricted_to_type.present? && restricted_to_type != 'none'
   end
 
   def unrestricted?
@@ -299,11 +300,11 @@ class FormField < ApplicationRecord
   end
 
   def restricted_to_employee?
-    restricted_to_type == "employee"
+    restricted_to_type == 'employee'
   end
 
   def restricted_to_group?
-    restricted_to_type == "group"
+    restricted_to_type == 'group'
   end
 
   # True when the field should be hidden from anyone who can't fill it.
@@ -326,15 +327,15 @@ class FormField < ApplicationRecord
 
   # Read-only checks
   def read_only?
-    read_only.present? && read_only != "none"
+    read_only.present? && read_only != 'none'
   end
 
   def read_only_always?
-    read_only == "always"
+    read_only == 'always'
   end
 
   def read_only_initial?
-    read_only == "initial"
+    read_only == 'initial'
   end
 
   # Check if a user can fill out this field
@@ -353,36 +354,37 @@ class FormField < ApplicationRecord
   # Check if field should be required for this user
   def required_for?(employee_id, user_groups = [])
     return required if unrestricted?
+
     required && editable_by?(employee_id, user_groups)
   end
 
   # Get the name of the restricted employee
   def restricted_employee_name
     return nil unless restricted_to_employee?
+
     employee = Employee.find_by(employee_id: restricted_to_employee_id)
     employee ? "#{employee.first_name} #{employee.last_name}" : "Employee ##{restricted_to_employee_id}"
-  rescue
+  rescue StandardError
     "Employee ##{restricted_to_employee_id}"
   end
 
   # Get the name of the restricted group
   def restricted_group_name
     return nil unless restricted_to_group?
+
     Group.find_by(GroupID: restricted_to_group_id)&.group_name || "Group ##{restricted_to_group_id}"
-  rescue
+  rescue StandardError
     "Group ##{restricted_to_group_id}"
   end
 
   # Human-readable restriction description
   def restriction_label
     case restricted_to_type
-    when "employee"
+    when 'employee'
       "To be filled by: #{restricted_employee_name}"
-    when "group"
+    when 'group'
       base = "To be filled by: #{restricted_group_name}"
       org_filtered? ? "#{base} (submitter's #{org_filter_label})" : base
-    else
-      nil
     end
   end
 
@@ -398,6 +400,7 @@ class FormField < ApplicationRecord
   # Get the field this depends on
   def conditional_field
     return nil unless conditional_field_id.present?
+
     form_template.form_fields.find_by(id: conditional_field_id)
   end
 
@@ -409,15 +412,18 @@ class FormField < ApplicationRecord
   # Check if this field should be visible given a dropdown value
   def visible_for_value?(value)
     return true if unconditional?
+
     conditional_values.include?(value.to_s)
   end
 
   # Human-readable conditional description
   def conditional_label
     return nil unless conditional?
+
     field = conditional_field
     return nil unless field
-    values = conditional_values.join(", ")
+
+    values = conditional_values.join(', ')
     "Shows when \"#{field.label}\" is: #{values}"
   end
 
@@ -428,6 +434,7 @@ class FormField < ApplicationRecord
 
   def conditional_answer_field
     return nil unless conditional_answer_field_id.present?
+
     form_template.form_fields.find_by(id: conditional_answer_field_id)
   end
 
@@ -437,14 +444,17 @@ class FormField < ApplicationRecord
 
   def answer_for_value(value)
     return nil unless conditional_answer?
+
     conditional_answer_mappings[value.to_s]
   end
 
   def conditional_answer_label
     return nil unless conditional_answer?
+
     field = conditional_answer_field
     return nil unless field
-    mappings = conditional_answer_mappings.map { |k, v| "#{k} → #{v}" }.join(", ")
+
+    mappings = conditional_answer_mappings.map { |k, v| "#{k} → #{v}" }.join(', ')
     "Auto-answers based on \"#{field.label}\": #{mappings}"
   end
 
@@ -457,56 +467,56 @@ class FormField < ApplicationRecord
     return unless custom_lookup?
 
     cfg  = custom_lookup_config
-    conn = FormLookup.connection_for(cfg["database"])
+    conn = FormLookup.connection_for(cfg['database'])
     return errors.add(:base, "Custom lookup: unknown database '#{cfg['database']}'") unless conn
-    return errors.add(:base, "Custom lookup: table '#{cfg['table']}' not found") unless FormLookup.table_exists_in?(conn, cfg["table"])
+    return errors.add(:base, "Custom lookup: table '#{cfg['table']}' not found") unless FormLookup.table_exists_in?(conn, cfg['table'])
 
-    columns = conn.columns(cfg["table"]).map(&:name)
-    errors.add(:base, "Custom lookup: column '#{cfg['column']}' not found") unless columns.include?(cfg["column"])
-    Array(cfg["join_columns"]).each do |c|
+    columns = conn.columns(cfg['table']).map(&:name)
+    errors.add(:base, "Custom lookup: column '#{cfg['column']}' not found") unless columns.include?(cfg['column'])
+    Array(cfg['join_columns']).each do |c|
       next if c.blank?
+
       errors.add(:base, "Custom lookup: join column '#{c}' not found") unless columns.include?(c)
     end
     custom_lookup_category_filters.each do |f|
-      c = f["column"]
+      c = f['column']
       errors.add(:base, "Custom lookup: category column '#{c}' not found") unless columns.include?(c)
     end
-    if cfg["order_column"].present? && !columns.include?(cfg["order_column"])
-      errors.add(:base, "Custom lookup: column '#{cfg['order_column']}' not found")
-    end
-  rescue => e
+    errors.add(:base, "Custom lookup: column '#{cfg['order_column']}' not found") if cfg['order_column'].present? && !columns.include?(cfg['order_column'])
+  rescue StandardError => e
     Rails.logger.warn("custom_lookup_config_valid skipped: #{e.class}: #{e.message}")
   end
 
   def org_filter_only_for_group_restriction
     return if restricted_to_org_filter_level.blank?
     return if restricted_to_group?
-    errors.add(:restricted_to_org_filter_level, "is only valid for group restrictions")
+
+    errors.add(:restricted_to_org_filter_level, 'is only valid for group restrictions')
   end
 
   def set_default_restriction_type
-    self.restricted_to_type ||= "none"
-    self.read_only ||= "none"
+    self.restricted_to_type ||= 'none'
+    self.read_only ||= 'none'
   end
 
   def generate_field_name
     return if label.blank?
     return if field_name.present?
 
-    self.field_name = label.downcase.gsub(/[^a-z0-9\s]/, "").gsub(/\s+/, "_")
+    self.field_name = label.downcase.gsub(/[^a-z0-9\s]/, '').gsub(/\s+/, '_')
   end
 
   def set_default_options
     self.options ||= {}
 
     case field_type
-    when "text_box"
-      self.options["rows"] ||= 5
-    when "dropdown", "choices_dropdown"
-      self.options["values"] ||= []
-    when "information"
-      self.options["information_text"] ||= ""
-      self.options["acknowledgeable"] = false unless self.options.key?("acknowledgeable")
+    when 'text_box'
+      options['rows'] ||= 5
+    when 'dropdown', 'choices_dropdown'
+      options['values'] ||= []
+    when 'information'
+      options['information_text'] ||= ''
+      options['acknowledgeable'] = false unless options.key?('acknowledgeable')
     end
   end
 end
