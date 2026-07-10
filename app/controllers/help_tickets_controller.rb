@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class HelpTicketsController < ApplicationController
   helper_method :ticket_admin?
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PcardRequestFormsController < ApplicationController
   # Generated controller for PcardRequestForm form
   before_action :set_pcard_request_form, only: %i[show edit update pdf approve deny update_status]

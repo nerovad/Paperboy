@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class UserSetting < ApplicationRecord
   # Per-user, per-page table layouts for the Inbox and Submissions "My Work"
   # tables (see TableColumns). Mirrors SavedSearch#filters JSON storage.

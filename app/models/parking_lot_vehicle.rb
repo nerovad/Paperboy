@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ParkingLotVehicle < ApplicationRecord
   belongs_to :parking_lot_submission
 

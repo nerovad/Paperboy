@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateOrgPermissions < ActiveRecord::Migration[8.0]
   def change
     create_table :org_permissions do |t|

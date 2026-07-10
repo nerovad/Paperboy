@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/reports/base/report_service.rb
 module Base
   class ReportService

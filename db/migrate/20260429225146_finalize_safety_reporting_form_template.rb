@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FinalizeSafetyReportingFormTemplate < ActiveRecord::Migration[8.0]
   def up
     template = ActiveRecord::Base.connection.select_one(

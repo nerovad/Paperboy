@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/concerns/reassignable.rb
 
 module Reassignable

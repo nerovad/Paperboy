@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module MatthewTestYay
   class MatthewTestYayService < Base::ReportService
     # TODO: Replace with the correct report-specific stored procedure.

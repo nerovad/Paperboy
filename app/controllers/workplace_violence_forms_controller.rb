@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class WorkplaceViolenceFormsController < ApplicationController
   # Generated controller for WorkplaceViolenceForm form
   before_action :set_workplace_violence_form, only: %i[show edit update pdf approve deny update_status]

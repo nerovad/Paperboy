@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'open3'
 
 class FormTemplatesController < ApplicationController
@@ -91,7 +93,7 @@ class FormTemplatesController < ApplicationController
                 conditional_values: ref_data[:values]
               )
             end
-          elsif ref_data[:ref].to_i > 0
+          elsif ref_data[:ref].to_i.positive?
             # Direct ID reference (for edit page)
             ref_data[:field].update!(
               conditional_field_id: ref_data[:ref].to_i,
@@ -110,7 +112,7 @@ class FormTemplatesController < ApplicationController
                 conditional_answer_mappings: ref_data[:mappings]
               )
             end
-          elsif ref_data[:ref].to_i > 0
+          elsif ref_data[:ref].to_i.positive?
             ref_data[:field].update!(
               conditional_answer_field_id: ref_data[:ref].to_i,
               conditional_answer_mappings: ref_data[:mappings]
@@ -371,7 +373,7 @@ class FormTemplatesController < ApplicationController
   def auto_grant_to_select_all_scopes(new_template)
     # Build the set of all form permission keys that existed BEFORE this template
     legacy_keys = AclController::LEGACY_FORMS.map { |f| f[:key] }
-    template_names = FormTemplate.pluck(:name).map(&:downcase).to_set
+    template_names = FormTemplate.pluck(:name).to_set(&:downcase)
     legacy_keys.reject! { |k| template_names.include?(AclController::LEGACY_FORMS.find { |f| f[:key] == k }&.dig(:label)&.downcase) }
     existing_keys = legacy_keys + FormTemplate.where.not(id: new_template.id).pluck(:id).map(&:to_s)
     expected_count = existing_keys.size
@@ -416,8 +418,7 @@ class FormTemplatesController < ApplicationController
     existing_scopes = OrgPermission
                       .select(:agency_id, :division_id, :department_id, :unit_id)
                       .distinct
-                      .map { |s| [s.agency_id, s.division_id, s.department_id, s.unit_id] }
-                      .to_set
+                      .to_set { |s| [s.agency_id, s.division_id, s.department_id, s.unit_id] }
 
     # Also ensure every agency has a grant (even if not yet in org_permissions)
     Agency.pluck(:agency_id).each do |aid|
@@ -717,10 +718,8 @@ class FormTemplatesController < ApplicationController
         content.sub!(/^\s*private\n/) do |match|
           "#{download_action}#{match}"
         end
-      end
 
-      # Add download actions to before_action only if not already present
-      media_fields.each do |f|
+        # Add download actions to before_action only if not already present
         method_sym = ":download_#{f.field_name}"
         next if content.include?(method_sym)
 
@@ -1241,7 +1240,7 @@ class FormTemplatesController < ApplicationController
             conditional_values: ref_data[:values]
           )
         end
-      elsif ref_data[:ref].to_i > 0
+      elsif ref_data[:ref].to_i.positive?
         # Direct ID reference (for edit page with existing fields)
         ref_data[:field].update!(
           conditional_field_id: ref_data[:ref].to_i,
@@ -1260,7 +1259,7 @@ class FormTemplatesController < ApplicationController
             conditional_answer_mappings: ref_data[:mappings]
           )
         end
-      elsif ref_data[:ref].to_i > 0
+      elsif ref_data[:ref].to_i.positive?
         ref_data[:field].update!(
           conditional_answer_field_id: ref_data[:ref].to_i,
           conditional_answer_mappings: ref_data[:mappings]
@@ -1344,9 +1343,9 @@ class FormTemplatesController < ApplicationController
     controllers << 'conditional-fields' if form_template.form_fields.conditional.any? || form_template.form_fields.any?(&:conditional_answer?)
     controllers_attr = controllers.join(' ')
 
-    page_visibility = (1..form_template.page_count).map do |n|
+    page_visibility = (1..form_template.page_count).to_h do |n|
       [n, generate_page_visibility_check(form_template, n)]
-    end.to_h
+    end
 
     # Build the dynamic view content
     content = <<~HTML
@@ -1464,9 +1463,9 @@ class FormTemplatesController < ApplicationController
     controllers << 'conditional-fields' if form_template.form_fields.conditional.any? || form_template.form_fields.any?(&:conditional_answer?)
     controllers_attr = controllers.join(' ')
 
-    page_visibility = (1..form_template.page_count).map do |n|
+    page_visibility = (1..form_template.page_count).to_h do |n|
       [n, generate_page_visibility_check(form_template, n)]
-    end.to_h
+    end
 
     # Build the dynamic edit view content
     content = <<~HTML
@@ -1759,15 +1758,13 @@ class FormTemplatesController < ApplicationController
     when 'dropdown'
       if field.custom_lookup?
         options_expr = "FormLookup.options(#{field.id})"
-        selected_expr = "@#{form_template.file_name}.#{field.field_name}"
       elsif field.data_source?
         options_expr = field.data_source_query_code
-        selected_expr = "@#{form_template.file_name}.#{field.field_name}"
       else
         options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
         options_expr = "[#{options}]"
-        selected_expr = "@#{form_template.file_name}.#{field.field_name}"
       end
+      selected_expr = "@#{form_template.file_name}.#{field.field_name}"
       html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
@@ -2481,7 +2478,7 @@ class FormTemplatesController < ApplicationController
     lines = page_visibility.map { |n, expr| "        <% _page_#{n}_visible = #{expr || 'true'} %>\n" }
     flags = page_visibility.keys.map { |n| "_page_#{n}_visible" }.join(', ')
     lines << "        <% _visible_page_count = [#{flags}].count(true) %>\n"
-    lines.join + "\n"
+    "#{lines.join}\n"
   end
 
   def field_restriction_expression(field, form_template)

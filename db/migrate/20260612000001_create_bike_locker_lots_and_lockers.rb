@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateBikeLockerLotsAndLockers < ActiveRecord::Migration[8.0]
   # Bike-locker reference data, Paperboy-owned (Rails migration, runs on deploy).
   #

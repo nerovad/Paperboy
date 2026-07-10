@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Contractors are non-Active-Directory users provisioned by a system admin. They
 # live in the Paperboy DB (GSABSS Employees is read-only) but deliberately mirror
 # the slice of the Employee interface the workflow/prefill/permission code reads,

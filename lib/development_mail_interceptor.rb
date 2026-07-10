@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # lib/development_mail_interceptor.rb
 class DevelopmentMailInterceptor
   def self.delivering_email(message)

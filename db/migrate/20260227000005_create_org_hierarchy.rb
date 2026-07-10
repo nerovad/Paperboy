@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateOrgHierarchy < ActiveRecord::Migration[8.0]
   def change
     # Agencies

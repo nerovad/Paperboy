@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FleetVehicleGaragingFormsController < ApplicationController
   # Generated controller for FleetVehicleGaragingForm form
   before_action :set_fleet_vehicle_garaging_form, only: %i[show edit update pdf approve deny update_status]

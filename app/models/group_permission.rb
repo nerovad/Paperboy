@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/group_permission.rb
 class GroupPermission < ApplicationRecord
   self.table_name = 'Group_Permissions'

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/services/critical_information_location_router.rb
 class CriticalInformationLocationRouter
   # Mapping of normalized location patterns to incident manager employee IDs

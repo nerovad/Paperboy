@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class MatthewTestReportReportsController < ApplicationController
   def show
     @report_name = 'matthew_test_report'

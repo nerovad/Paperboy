@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module AclHelper
   # Seed option(s) for a contractor's currently-saved unit, so the select holds
   # the value on first render (before the JS cascade fetches the full list, and

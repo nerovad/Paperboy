@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/concerns/filterable.rb
 module Filterable
   extend ActiveSupport::Concern

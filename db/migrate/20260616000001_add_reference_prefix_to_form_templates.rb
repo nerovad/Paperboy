@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddReferencePrefixToFormTemplates < ActiveRecord::Migration[8.0]
   # Short, human-readable code that fronts a submission's reference number
   # (the "LOA" in "LOA-1042"). Combined with the record id it gives every

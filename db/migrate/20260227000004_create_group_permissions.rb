@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateGroupPermissions < ActiveRecord::Migration[8.0]
   def change
     create_table :group_permissions do |t|

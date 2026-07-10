@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ParkingLotSubmission < ApplicationRecord
   include PhoneNumberable
   include Reassignable

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class IdBadgeRequestFormsController < ApplicationController
   # Generated controller for IdBadgeRequestForm form
   before_action :set_id_badge_request_form, only: %i[show edit update pdf approve deny update_status]

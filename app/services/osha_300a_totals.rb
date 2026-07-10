@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Osha300aTotals
   CASE_TYPE_TO_FIELD = {
     'Injury' => :total_injuries,

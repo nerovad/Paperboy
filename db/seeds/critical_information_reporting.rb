@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # db/seeds/critical_information_reporting.rb
 require 'securerandom'
 require_relative 'shared'

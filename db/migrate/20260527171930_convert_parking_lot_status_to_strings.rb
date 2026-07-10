@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ConvertParkingLotStatusToStrings < ActiveRecord::Migration[8.0]
   # Phase 5 (parking lot): convert the custom integer status to string keys and
   # retire sent_to_security. The final approved state now surfaces to the

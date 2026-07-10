@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :status do
   desc "Verify each TrackableStatus model's status enum matches its form_template_statuses keys"
   task check: :environment do

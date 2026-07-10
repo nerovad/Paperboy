@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Osha300asController < ApplicationController
   before_action :require_osha_log_access
   before_action :set_year_and_records

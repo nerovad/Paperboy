@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Default Puma config for local `rails s` / `bin/dev` sessions.
 # Systemd services use the per-environment configs under config/puma/.
 

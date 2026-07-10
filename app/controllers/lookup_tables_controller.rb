@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/lookup_tables_controller.rb
 class LookupTablesController < ApplicationController
   TABLES = [

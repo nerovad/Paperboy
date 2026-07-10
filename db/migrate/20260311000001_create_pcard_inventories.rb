@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreatePcardInventories < ActiveRecord::Migration[7.1]
   def change
     create_table :pcard_inventories do |t|

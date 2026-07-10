@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class OshaEstablishment < ApplicationRecord
   has_many :entries, class_name: 'Osha300aEntry', dependent: :destroy
 

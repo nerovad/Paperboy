@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/group.rb
 class Group < ApplicationRecord
   self.table_name = 'Groups'

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ProbationMailer < ApplicationMailer
   default from: 'gsa-forms@ventura.org'
 

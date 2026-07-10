@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DashboardsController < ApplicationController
   before_action :require_dashboards_access
 

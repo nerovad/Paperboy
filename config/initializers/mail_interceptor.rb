@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # config/initializers/mail_interceptor.rb
 if Rails.env.development?
   require Rails.root.join('lib', 'development_mail_interceptor')

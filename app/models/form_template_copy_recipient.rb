@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FormTemplateCopyRecipient < ApplicationRecord
   belongs_to :form_template
 

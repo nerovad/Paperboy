@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class OrgPermission < ApplicationRecord
   validates :permission_type, presence: true, inclusion: { in: %w[dropdown form] }
   validates :permission_key, presence: true

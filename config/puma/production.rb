@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 APP_DIR = '/home/matthew/gitea/Paperboy'
 
 threads_count = ENV.fetch('RAILS_MAX_THREADS', 3)

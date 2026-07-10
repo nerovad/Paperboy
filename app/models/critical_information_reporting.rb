@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/critical_information_reporting.rb
 
 class CriticalInformationReporting < ApplicationRecord

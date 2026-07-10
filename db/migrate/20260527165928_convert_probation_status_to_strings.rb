@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ConvertProbationStatusToStrings < ActiveRecord::Migration[8.0]
   # Phase 4 (probation): retire the legacy STATUS_MAP/integer status on
   # ProbationTransferRequest. Seeds its (previously empty) central status

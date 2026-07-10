@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Coa
   class Department < BaseRecord
     self.table_name = 'departments'

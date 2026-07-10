@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FormSubmissionCopiesController < ApplicationController
   def dismiss
     copy = FormSubmissionCopy.find(params[:id])

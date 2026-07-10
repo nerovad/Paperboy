@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class InvoicesController < ApplicationController
   # Simple form for staff to enter params
   def new; end

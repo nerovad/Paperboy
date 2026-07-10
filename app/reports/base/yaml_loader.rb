@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/reports/base/yaml_loader.rb
 module Base
   class YamlLoader

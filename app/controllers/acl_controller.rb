@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/acl_controller.rb
 class AclController < ApplicationController
   before_action :require_system_admin
@@ -178,8 +180,8 @@ class AclController < ApplicationController
     @dropdown_items = DROPDOWN_ITEMS
     @all_forms = build_all_forms_list
     @current_permissions = @group.group_permissions.pluck(:permission_type, :permission_key)
-    @dropdown_keys = @current_permissions.select { |t, _| t == 'dropdown' }.map(&:last).to_set
-    @form_keys = @current_permissions.select { |t, _| t == 'form' }.map(&:last).to_set
+    @dropdown_keys = @current_permissions.slice('dropdown').to_set(&:last)
+    @form_keys = @current_permissions.slice('form').to_set(&:last)
 
     # If no permissions exist yet for this group, pre-check default public items
     return unless @current_permissions.empty?
@@ -235,8 +237,8 @@ class AclController < ApplicationController
     query = chain_conditions.map { |c| OrgPermission.where(c) }.reduce(:or)
     @current_org_permissions = query.pluck(:permission_type, :permission_key)
 
-    @org_dropdown_keys = @current_org_permissions.select { |t, _| t == 'dropdown' }.map(&:last).to_set
-    @org_form_keys = @current_org_permissions.select { |t, _| t == 'form' }.map(&:last).to_set
+    @org_dropdown_keys = @current_org_permissions.slice('dropdown').to_set(&:last)
+    @org_form_keys = @current_org_permissions.slice('form').to_set(&:last)
 
     # If no permissions exist yet for this scope, pre-check default public items
     return unless @current_org_permissions.empty?
@@ -308,7 +310,7 @@ class AclController < ApplicationController
   # Each entry is { key: String, label: String } where key is either a legacy
   # string key or a template ID string.
   def build_all_forms_list
-    template_names = FormTemplate.pluck(:name).map(&:downcase).to_set
+    template_names = FormTemplate.pluck(:name).to_set(&:downcase)
     forms = []
 
     # Add legacy forms that don't exist as a FormTemplate

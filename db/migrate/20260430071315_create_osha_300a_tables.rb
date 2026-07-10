@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateOsha300aTables < ActiveRecord::Migration[8.0]
   def up
     add_column :osha_reports, :restricted_duty_days, :integer

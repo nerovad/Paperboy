@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddConditionalAnswerToFormFields < ActiveRecord::Migration[8.0]
   def change
     add_column :form_fields, :conditional_answer_field_id, :integer

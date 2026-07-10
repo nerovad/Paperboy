@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddAllLocationsToAuthorizedApprovers < ActiveRecord::Migration[8.0]
   # Mirrors all_budget_units: an explicit "all locations" flag instead of
   # leaning on a blank locations list (which now means "none / incomplete").

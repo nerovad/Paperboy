@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/parking_lot_submissions_controller.rb
 class ParkingLotSubmissionsController < ApplicationController
   before_action :set_parking_lot_submission, only: %i[show pdf approve deny]

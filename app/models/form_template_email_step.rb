@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Configurable workflow email attached to a form template. Fires on submission
 # or on the approval/denial of a routing step (or the form's final outcome) and
 # sends a templated email with optional PDF / media attachments.

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/helpers/submissions_helper.rb
 module SubmissionsHelper
   # Returns CSS class for a status badge based on the normalized category

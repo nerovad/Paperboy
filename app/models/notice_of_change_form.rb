@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class NoticeOfChangeForm < ApplicationRecord
   include TrackableStatus
 

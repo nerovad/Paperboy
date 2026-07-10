@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FormRequestFormsController < ApplicationController
   # Generated controller for FormRequestForm form
   before_action :set_form_request_form, only: %i[show edit update pdf approve deny update_status]

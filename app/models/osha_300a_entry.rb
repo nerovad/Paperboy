@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Osha300aEntry < ApplicationRecord
   self.table_name = 'osha_300a_entries'
 

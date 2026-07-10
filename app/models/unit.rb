@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Unit < GsabssBase
   self.primary_key = 'unit_id'
 

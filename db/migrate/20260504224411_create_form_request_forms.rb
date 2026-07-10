@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateFormRequestForms < ActiveRecord::Migration[7.1]
   def change
     create_table :form_request_forms do |t|

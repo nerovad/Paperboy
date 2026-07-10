@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/authorization_manager.rb
 class AuthorizationManager < ApplicationRecord
   validates :employee_id, presence: true

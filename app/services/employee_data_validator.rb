@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class EmployeeDataValidator
   VALID_EMAIL_DOMAINS = %w[ventura.org].freeze
 
@@ -47,7 +49,7 @@ class EmployeeDataValidator
     total = results.size
     valid = results.count(&:valid?)
     with_errors = total - valid
-    with_warnings = results.count { |r| r.valid? && r.warning_count > 0 }
+    with_warnings = results.count { |r| r.valid? && r.warning_count.positive? }
 
     by_category = Hash.new(0)
     results.each do |r|

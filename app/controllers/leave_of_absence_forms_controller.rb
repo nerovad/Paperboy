@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class LeaveOfAbsenceFormsController < ApplicationController
   # Generated controller for LeaveOfAbsenceForm form
   before_action :set_leave_of_absence_form, only: %i[show edit update pdf approve deny update_status download_doctors_note_attachment]

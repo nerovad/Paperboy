@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreativeJobRequestsController < ApplicationController
   def new
     @creative_job_request = CreativeJobRequest.new

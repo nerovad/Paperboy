@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Runtime resolver for the form builder's generic ("custom") dropdown data
 # source. Generated form views call FormLookup.options(field_id) with ONLY an
 # integer, so no user-supplied strings ever reach generated code on disk.

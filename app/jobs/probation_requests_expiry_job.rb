@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/jobs/probation_requests_expiry_job.rb
 class ProbationRequestsExpiryJob < ApplicationJob
   queue_as :default

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PcardInventory < ApplicationRecord
   belongs_to :pcard_request_form, optional: true
 

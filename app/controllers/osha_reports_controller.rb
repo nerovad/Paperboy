@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class OshaReportsController < ApplicationController
   before_action :set_osha_report, only: %i[show edit update pdf approve deny update_status]
 

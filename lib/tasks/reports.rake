@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # lib/tasks/reports.rake
 # {{{ task: new
 
@@ -348,7 +350,7 @@ namespace :reports do
     }
 
     puts "\nThe following items will be removed:\n\n"
-    paths.each do |_key, path|
+    paths.each_value do |path|
       exists = File.exist?(path) || Dir.exist?(path)
       puts "  #{exists ? '✓' : '✗'} #{path}"
     end
@@ -357,14 +359,14 @@ namespace :reports do
 
     unless ENV['FORCE']
       print "\nType 'yes' to continue: "
-      confirm = STDIN.gets.strip
+      confirm = $stdin.gets.strip
       unless confirm == 'yes'
         puts '✗ Aborted.'
         exit 1
       end
     end
 
-    paths.each do |_key, path|
+    paths.each_value do |path|
       if File.file?(path)
         File.delete(path)
         puts "Deleted file: #{path}"
@@ -405,7 +407,7 @@ namespace :reports do
     end
 
     base_dir = Rails.root.join('app/reports/base')
-    Dir[base_dir.join('*.rb')].sort.each do |file|
+    Dir[base_dir.join('*.rb')].each do |file|
       require file
     end
     require service_path.to_s
@@ -496,7 +498,7 @@ namespace :reports do
       SqlProvider: 'Base::SqlProvider',
       TemplateLoader: 'Base::TemplateLoader',
       YamlLoader: 'Base::YamlLoader'
-    }.each do |_short, full|
+    }.each_value do |full|
       print "   #{full} ... "
       begin
         full.constantize

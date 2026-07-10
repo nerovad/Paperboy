@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FormField < ApplicationRecord
   # Serialize options as JSON (Rails 7.1+ syntax)
   attribute :options, :json

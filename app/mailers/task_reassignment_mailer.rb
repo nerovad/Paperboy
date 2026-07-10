@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/mailers/task_reassignment_mailer.rb
 
 class TaskReassignmentMailer < ApplicationMailer

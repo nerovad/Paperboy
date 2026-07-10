@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RemoveAccessControlFromFormTemplates < ActiveRecord::Migration[8.0]
   def change
     remove_column :form_templates, :access_level, :string, default: 'public'

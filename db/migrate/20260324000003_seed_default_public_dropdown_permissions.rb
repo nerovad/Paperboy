@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SeedDefaultPublicDropdownPermissions < ActiveRecord::Migration[8.0]
   def up
     default_keys = %w[inbox submissions settings help]
@@ -29,7 +31,7 @@ class SeedDefaultPublicDropdownPermissions < ActiveRecord::Migration[8.0]
     agencies = execute('SELECT agency_id FROM agencies')
     agency_ids = agencies.map { |r| r['agency_id'] }
 
-    all_scopes = scopes.map { |r| [r['agency_id'], r['division_id'], r['department_id'], r['unit_id']] }.to_set
+    all_scopes = scopes.to_set { |r| [r['agency_id'], r['division_id'], r['department_id'], r['unit_id']] }
     agency_ids.each { |aid| all_scopes << [aid, nil, nil, nil] }
 
     all_scopes.each do |agency_id, division_id, department_id, unit_id|

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Coa
   class Function < BaseRecord
     self.table_name = 'functions'

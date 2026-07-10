@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class BillingToolsController < ApplicationController
   before_action :require_system_admin
 

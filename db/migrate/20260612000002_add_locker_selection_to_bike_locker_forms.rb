@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddLockerSelectionToBikeLockerForms < ActiveRecord::Migration[8.0]
   # Wire the bike locker request to the new lookup tables. locker_id is the
   # chosen physical locker (FK to bike_lockers, keyed on its id because

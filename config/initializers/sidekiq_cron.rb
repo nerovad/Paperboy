@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 if defined?(Sidekiq::Cron::Job) && !Rails.env.test?
   schedule_file = 'config/sidekiq_cron_schedule.yml'
 

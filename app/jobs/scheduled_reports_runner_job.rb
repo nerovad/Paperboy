@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/jobs/scheduled_reports_runner_job.rb
 class ScheduledReportsRunnerJob < ApplicationJob
   queue_as :default

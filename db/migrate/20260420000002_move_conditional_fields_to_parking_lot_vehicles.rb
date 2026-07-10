@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class MoveConditionalFieldsToParkingLotVehicles < ActiveRecord::Migration[8.0]
   def change
     add_column :parking_lot_vehicles, :carpool_participants, :text

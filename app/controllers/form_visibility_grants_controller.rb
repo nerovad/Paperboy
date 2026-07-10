@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Admin screen for "full inbox visibility" grants: gives every member of a
 # group the ability to see all submissions of a chosen form type in their
 # inbox (when they filter to that form type). Keyed by model class name, so it

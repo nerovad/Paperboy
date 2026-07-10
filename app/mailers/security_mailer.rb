@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SecurityMailer < ApplicationMailer
   default from: 'gsa-forms@ventura.org'
 

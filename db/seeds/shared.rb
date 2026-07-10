@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # db/seeds/shared.rb
 module Seeds
   SEED_KEY = (ENV['SEED_KEY'] || '2025-09-30').hash
@@ -40,7 +42,7 @@ module Seeds
   module_function
 
   def name = "#{FIRST.sample} #{LAST.sample}"
-  def email_for(n) = n.downcase.gsub(' ', '.') + '@ventura.org'
+  def email_for(n) = "#{n.downcase.gsub(' ', '.')}@ventura.org"
 
   def phone
     if rand < 0.2

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class WorkScheduleOrLocationUpdateFormsController < ApplicationController
   # Generated controller for WorkScheduleOrLocationUpdateForm form
   before_action :set_work_schedule_or_location_update_form, only: %i[show edit update pdf approve deny update_status]

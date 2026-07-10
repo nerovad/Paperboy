@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Resolves a form submitter from the integer id stored on a submission
 # (`employee_id`). Employees (GSABSS) and Contractors (Paperboy) share one id
 # space — contractor ids are seeded at 1,000,000,000 so they never collide with

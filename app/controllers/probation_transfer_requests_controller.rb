@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ProbationTransferRequestsController < ApplicationController
   before_action :set_probation_transfer_request, only: %i[show edit update destroy pdf approve deny withdraw]
 

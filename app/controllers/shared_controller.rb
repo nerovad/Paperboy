@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SharedController < ApplicationController
   def form_success
     render layout: 'application'

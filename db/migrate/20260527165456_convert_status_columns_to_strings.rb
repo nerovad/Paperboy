@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ConvertStatusColumnsToStrings < ActiveRecord::Migration[8.0]
   # Phase 4: move per-form status columns from integer enum ordinals to string
   # keys. Each table's legacy integer -> canonical key mapping is explicit (not

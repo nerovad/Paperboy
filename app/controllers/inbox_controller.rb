@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/inbox_controller.rb
 class InboxController < ApplicationController
   include Filterable

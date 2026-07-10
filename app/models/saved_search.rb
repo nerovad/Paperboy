@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SavedSearch < ApplicationRecord
   serialize :filters, coder: JSON
 

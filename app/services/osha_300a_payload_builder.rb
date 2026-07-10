@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Osha300aPayloadBuilder
   def initialize(establishment:, entry:, totals:)
     @establishment = establishment

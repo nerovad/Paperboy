@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class BikeLocker < ApplicationRecord
   belongs_to :lot, class_name: 'BikeLockerLot', foreign_key: :lot_id,
                    inverse_of: :bike_lockers

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # db/seeds.rb
 if !Rails.env.development? && !Rails.env.test?
   puts "Refusing to seed in #{Rails.env}"

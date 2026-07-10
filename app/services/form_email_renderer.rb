@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Renders an admin-authored email subject/body by substituting {{token}}
 # placeholders with values pulled from a form submission. Pure string
 # substitution — never evaluates the template as code.

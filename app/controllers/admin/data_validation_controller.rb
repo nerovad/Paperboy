@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Admin
   class DataValidationController < ApplicationController
     before_action :require_system_admin
@@ -37,7 +39,7 @@ module Admin
       @page = [params[:page].to_i, 1].max
       @per_page = 50
       @total_pages = (@total_filtered / @per_page.to_f).ceil
-      @page = [@page, @total_pages].min if @total_pages > 0
+      @page = [@page, @total_pages].min if @total_pages.positive?
       @filtered_results = @filtered_results[(@page - 1) * @per_page, @per_page] || []
     end
 
@@ -62,10 +64,10 @@ module Admin
             emp.unit,
             emp.supervisor_id,
             emp.work_phone,
-            if result.error_count > 0
+            if result.error_count.positive?
               'error'
             else
-              (result.warning_count > 0 ? 'warning' : 'clean')
+              (result.warning_count.positive? ? 'warning' : 'clean')
             end,
             result.error_count,
             result.warning_count,
@@ -80,9 +82,9 @@ module Admin
     def filter_results(results)
       case @filter
       when 'errors'
-        results.select { |r| r.error_count > 0 }
+        results.select { |r| r.error_count.positive? }
       when 'warnings'
-        results.select { |r| r.valid? && r.warning_count > 0 }
+        results.select { |r| r.valid? && r.warning_count.positive? }
       when 'valid'
         results.select(&:valid?)
       when 'email'

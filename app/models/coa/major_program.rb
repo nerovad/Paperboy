@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Coa
   class MajorProgram < BaseRecord
     self.table_name = 'major_programs'

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RestoreOshaReportingApprovalRouting < ActiveRecord::Migration[8.0]
   def up
     template = FormTemplate.find_by(class_name: 'OshaReport')

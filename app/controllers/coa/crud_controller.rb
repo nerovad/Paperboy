@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Coa
   class CrudController < BaseController
     before_action :set_record, only: %i[show edit update destroy]

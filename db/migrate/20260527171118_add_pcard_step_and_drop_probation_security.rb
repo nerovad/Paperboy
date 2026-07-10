@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddPcardStepAndDropProbationSecurity < ActiveRecord::Migration[8.0]
   # Phase 5 (central-table fixes):
   # - PcardRequestForm has a supervisor routing step but was missing its

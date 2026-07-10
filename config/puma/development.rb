@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 app_dir = ENV.fetch('APP_DIR', File.expand_path('../..', __dir__))
 
 threads_count = ENV.fetch('RAILS_MAX_THREADS', 3)

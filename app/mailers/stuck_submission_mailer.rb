@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Alerts the form's creator and system admins when a submission reaches a
 # routing step that has no eligible approver, so it doesn't sit silently stuck.
 class StuckSubmissionMailer < ApplicationMailer

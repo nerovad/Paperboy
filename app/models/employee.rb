@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/employee.rb
 class Employee < GsabssBase
   self.table_name = 'Employees'

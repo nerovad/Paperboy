@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PcardInventoryController < ApplicationController
   before_action :require_pcard_admin
   before_action :set_pcard_inventory, only: %i[edit update]

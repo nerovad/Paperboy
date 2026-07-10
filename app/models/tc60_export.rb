@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Tc60Export
   # Wrapper around dbo.Export_TC60_To_Billing_File
   #

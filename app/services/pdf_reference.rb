@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Renders a submission's human-readable reference number (e.g. "LOA-1042") into
 # a Prawn document. Shared by every PDF generator so the printable/emailable
 # record carries the same id users search on in the inbox. No-op for records

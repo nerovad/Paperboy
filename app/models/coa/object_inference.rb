@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Coa
   class ObjectInference < BaseRecord
     self.table_name = 'agency_objects'

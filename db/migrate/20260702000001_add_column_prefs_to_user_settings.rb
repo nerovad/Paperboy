@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddColumnPrefsToUserSettings < ActiveRecord::Migration[8.0]
   def change
     # Per-user, per-page column/filter layout for the Inbox and Submissions

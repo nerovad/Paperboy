@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class GymLockerFormsController < ApplicationController
   # Minimal controller for the two-page template (Employee Info + Agency Info)
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/form_reference.rb
 #
 # Human-facing reference numbers for form submissions, e.g. "PLS-845".

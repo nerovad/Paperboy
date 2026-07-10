@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Coa
   class SubUnit < BaseRecord
     self.table_name = 'sub_units'

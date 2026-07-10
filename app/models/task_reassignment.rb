@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/task_reassignment.rb
 
 class TaskReassignment < ApplicationRecord

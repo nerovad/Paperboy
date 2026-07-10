@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :powerbi do
   desc 'Get Power BI workspace ID for debugging'
   task get_workspace_id: :environment do
@@ -63,7 +65,7 @@ namespace :powerbi do
       # Decode token to check audience
       token_parts = access_token.split('.')
       if token_parts.length >= 2
-        payload = JSON.parse(Base64.decode64(token_parts[1] + '=='))
+        payload = JSON.parse(Base64.decode64("#{token_parts[1]}=="))
         puts
         puts "Token audience (aud): #{payload['aud']}"
         puts "Token issuer (iss):   #{payload['iss']}"

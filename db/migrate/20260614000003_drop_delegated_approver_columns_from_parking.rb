@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DropDelegatedApproverColumnsFromParking < ActiveRecord::Migration[8.0]
   def change
     # The delegated-approver (Sean Payne) flow is now a normal form-builder

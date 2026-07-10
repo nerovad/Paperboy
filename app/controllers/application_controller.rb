@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
@@ -8,7 +10,7 @@ class ApplicationController < ActionController::Base
 
   def current_user
     user_data = session[:user]
-    return nil unless user_data&.dig('employee_id') && user_data&.dig('email')
+    return nil unless user_data&.dig('employee_id') && user_data['email']
 
     @current_user ||= SessionUser.new(
       employee_id: user_data['employee_id'],
@@ -109,15 +111,15 @@ class ApplicationController < ActionController::Base
   end
 
   def current_user_dropdown_permissions
-    return @_current_user_dropdown_permissions if defined?(@_current_user_dropdown_permissions)
+    return @current_user_dropdown_permissions if defined?(@current_user_dropdown_permissions)
 
-    @_current_user_dropdown_permissions = load_user_permissions('dropdown')
+    @current_user_dropdown_permissions = load_user_permissions('dropdown')
   end
 
   def current_user_form_permission_keys
-    return @_current_user_form_permission_keys if defined?(@_current_user_form_permission_keys)
+    return @current_user_form_permission_keys if defined?(@current_user_form_permission_keys)
 
-    @_current_user_form_permission_keys = load_user_permissions('form')
+    @current_user_form_permission_keys = load_user_permissions('form')
   end
 
   def require_system_admin

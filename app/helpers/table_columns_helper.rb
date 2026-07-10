@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # View helpers for rendering the customizable "My Work" tables (Inbox +
 # Submissions) from a resolved list of TableColumns::Column. Presentation lives
 # here; the column metadata/extractors live in TableColumns.

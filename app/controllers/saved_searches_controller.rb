@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SavedSearchesController < ApplicationController
   def create
     employee_id = session.dig(:user, 'employee_id').to_s

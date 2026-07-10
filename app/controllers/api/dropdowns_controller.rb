@@ -1,28 +1,32 @@
-class Api::DropdownsController < ApplicationController
-  def divisions
-    divisions = Division.where(Agency: params[:agency])
-                        .select(:Division, :LongName)
-                        .distinct
-                        .map { |d| { value: d.Division, label: "#{d.LongName}" } }
+# frozen_string_literal: true
 
-    render json: divisions
-  end
+module Api
+  class DropdownsController < ApplicationController
+    def divisions
+      divisions = Division.where(Agency: params[:agency])
+                          .select(:Division, :LongName)
+                          .distinct
+                          .map { |d| { value: d.Division, label: d.LongName.to_s } }
 
-  def departments
-    departments = Department.where(Agency: params[:agency], Division: params[:division])
-                            .select(:Department, :LongName)
-                            .distinct
-                            .map { |d| { value: d.Department, label: "#{d.LongName}" } }
+      render json: divisions
+    end
 
-    render json: departments
-  end
+    def departments
+      departments = Department.where(Agency: params[:agency], Division: params[:division])
+                              .select(:Department, :LongName)
+                              .distinct
+                              .map { |d| { value: d.Department, label: d.LongName.to_s } }
 
-  def units
-    units = Unit.where(Agency: params[:agency], Division: params[:division], Department: params[:department])
-                .select(:Unit, :LongName)
-                .distinct
-                .map { |u| { value: u.Unit, label: "#{u.Unit} #{u.LongName}" } }
+      render json: departments
+    end
 
-    render json: units
+    def units
+      units = Unit.where(Agency: params[:agency], Division: params[:division], Department: params[:department])
+                  .select(:Unit, :LongName)
+                  .distinct
+                  .map { |u| { value: u.Unit, label: "#{u.Unit} #{u.LongName}" } }
+
+      render json: units
+    end
   end
 end

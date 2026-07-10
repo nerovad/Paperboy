@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # db/seeds/parking_lot.rb
 require_relative 'shared'
 

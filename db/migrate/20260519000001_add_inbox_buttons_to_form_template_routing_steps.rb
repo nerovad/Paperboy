@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddInboxButtonsToFormTemplateRoutingSteps < ActiveRecord::Migration[8.0]
   def up
     add_column :form_template_routing_steps, :inbox_buttons, :text

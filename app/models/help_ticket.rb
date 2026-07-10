@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class HelpTicket < ApplicationRecord
   enum :status, { open: 'open', closed: 'closed' }, default: :open
 

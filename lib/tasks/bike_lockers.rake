@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :bike_lockers do
   # Seeds the bike-locker reference data — the 13 lots and the physical locker
   # inventory — from the legacy repgen LotNames / LockerRanges tables. Every

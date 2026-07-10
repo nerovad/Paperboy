@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Delivers a single configurable workflow email defined by a FormTemplateEmailStep.
 # Invoked (via deliver_later) from TrackableStatus when a form is submitted or a
 # routing step is approved/denied. Loads everything by id so async delivery sees
@@ -48,7 +50,7 @@ class FormWorkflowMailer < ApplicationMailer
   # some legacy forms drop the trailing "Form". Try both.
   def pdf_generator_for(class_name)
     candidates = ["#{class_name}PdfGenerator", "#{class_name.sub(/Form\z/, '')}PdfGenerator"].uniq
-    candidates.filter_map { |name| name.safe_constantize }.first
+    candidates.filter_map(&:safe_constantize).first
   end
 
   # Attach every file from the submission's media_attachment fields.

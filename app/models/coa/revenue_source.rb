@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Coa
   class RevenueSource < BaseRecord
     self.table_name = 'revenue_sources'

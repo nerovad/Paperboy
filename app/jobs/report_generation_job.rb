@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/jobs/report_generation_job.rb
 require 'zip'
 require 'prawn'
@@ -28,7 +30,7 @@ class ReportGenerationJob < ApplicationJob
       ReportMailer.report_ready(employee, csv_filename, submissions.count, form_type, start_date, end_date).deliver_now
 
       # Clean up CSV file
-      File.delete(csv_filename) if File.exist?(csv_filename)
+      FileUtils.rm_f(csv_filename)
     else
       # Generate PDFs (original logic)
       pdf_files = generate_pdfs(submissions, form_type)
@@ -41,7 +43,7 @@ class ReportGenerationJob < ApplicationJob
 
       # Clean up temporary files
       cleanup_temp_files(pdf_files)
-      File.delete(zip_filename) if File.exist?(zip_filename)
+      FileUtils.rm_f(zip_filename)
     end
   rescue StandardError => e
     Rails.logger.error "Report generation failed: #{e.message}"
@@ -259,7 +261,7 @@ class ReportGenerationJob < ApplicationJob
 
   def cleanup_temp_files(pdf_files)
     pdf_files.each do |file|
-      File.delete(file) if File.exist?(file)
+      FileUtils.rm_f(file)
     end
 
     # Clean up the temp directory if empty

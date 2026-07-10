@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateFormSubmissionCopies < ActiveRecord::Migration[8.0]
   def change
     create_table :form_submission_copies do |t|

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/session_user.rb
 class SessionUser
   include ActiveModel::Model

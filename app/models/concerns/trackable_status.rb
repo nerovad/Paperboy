@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/concerns/trackable_status.rb
 module TrackableStatus
   extend ActiveSupport::Concern
@@ -341,7 +343,7 @@ module TrackableStatus
 
   def deliver_copy_recipients(event)
     template = approval_template
-    return unless template&.respond_to?(:copy_recipients)
+    return unless template.respond_to?(:copy_recipients)
 
     template.copy_recipients.for_event(event).ordered.each do |recipient|
       recipient.resolve_recipient_ids(self).uniq.each do |emp_id|

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class WorkplaceViolenceForm < ApplicationRecord
   include TrackableStatus
 

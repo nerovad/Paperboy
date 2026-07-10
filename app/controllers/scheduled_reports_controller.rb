@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/scheduled_reports_controller.rb
 class ScheduledReportsController < ApplicationController
   before_action :require_system_admin

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/task_reassignments_controller.rb
 
 class TaskReassignmentsController < ApplicationController

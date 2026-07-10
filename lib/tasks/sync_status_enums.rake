@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :paperboy do
   desc 'Reconstruct routing steps, statuses, fields, and page headers from generated files'
   # Usage:
@@ -86,11 +88,12 @@ namespace :paperboy do
               next if steps_parsed.any? { |s| s[:step_number] == step_num }
 
               desc = description.strip
-              if desc == 'supervisor'
+              case desc
+              when 'supervisor'
                 steps_parsed << { step_number: step_num, routing_type: 'supervisor', employee_id: nil }
-              elsif desc == 'department head'
+              when 'department head'
                 steps_parsed << { step_number: step_num, routing_type: 'department_head', employee_id: nil }
-              elsif desc =~ /employee #(\d+)/
+              when /employee #(\d+)/
                 steps_parsed << { step_number: step_num, routing_type: 'employee', employee_id: Regexp.last_match(1).to_i }
               end
             end
@@ -130,12 +133,12 @@ namespace :paperboy do
 
           entries.each_with_index do |(key, _value), index|
             category = categories[key] || guess_category(key)
-            is_initial = (key == default_key) || (index == 0 && default_key.nil?)
+            is_initial = (key == default_key) || (index.zero? && default_key.nil?)
             is_end = %w[approved denied cancelled resolved].include?(key)
             is_auto = key.match?(/^step_\d+_(pending|approved)$/)
 
             # Use STATUS_LABELS for proper name, fall back to humanize
-            status_name = status_labels[key] || key.humanize.gsub(/\b\w/) { |m| m.upcase }
+            status_name = status_labels[key] || key.humanize.gsub(/\b\w/, &:upcase)
 
             ft.statuses.create!(
               name: status_name,
@@ -195,27 +198,28 @@ namespace :paperboy do
           # Look ahead in surrounding lines for field type
           field_context = view_content[view_content.index(line), 500] || ''
 
-          field_type = if field_context =~ /form\.text_area\s+:#{field_name}/
+          field_type = case field_context
+                       when /form\.text_area\s+:#{field_name}/
                          'text_box'
-                       elsif field_context =~ /form\.select\s+:#{field_name}/
+                       when /form\.select\s+:#{field_name}/
                          'dropdown'
-                       elsif field_context =~ /form\.datetime_local_field\s+:#{field_name}|form\.date_field\s+:#{field_name}/
+                       when /form\.datetime_local_field\s+:#{field_name}|form\.date_field\s+:#{field_name}/
                          'date'
-                       elsif field_context =~ /form\.time_field\s+:#{field_name}/
+                       when /form\.time_field\s+:#{field_name}/
                          'time'
-                       elsif field_context =~ /form\.number_field\s+:#{field_name}/
+                       when /form\.number_field\s+:#{field_name}/
                          'number'
-                       elsif field_context =~ /form\.email_field\s+:#{field_name}/
+                       when /form\.email_field\s+:#{field_name}/
                          'email'
-                       elsif field_context =~ /form\.telephone_field\s+:#{field_name}|form\.phone_field\s+:#{field_name}|data-controller="phone"/
+                       when /form\.telephone_field\s+:#{field_name}|form\.phone_field\s+:#{field_name}|data-controller="phone"/
                          'phone'
-                       elsif field_context =~ /options_for_select\(\[.*?'Yes'.*?'No'/m
+                       when /options_for_select\(\[.*?'Yes'.*?'No'/m
                          'yes_no'
                        else
                          'text'
                        end
 
-          required = !!(field_context =~ /required:\s*true/)
+          required = !(field_context =~ /required:\s*true/).nil?
 
           options = {}
 

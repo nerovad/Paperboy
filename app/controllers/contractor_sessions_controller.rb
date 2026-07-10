@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Password-based login for contractors (non-Active-Directory users). Employees
 # sign in through Entra ID (SessionsController); contractors have no AD account,
 # so they authenticate with email + password here. On success we build the SAME

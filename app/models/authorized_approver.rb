@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/authorized_approver.rb
 class AuthorizedApprover < ApplicationRecord
   # Locations are chosen from the buildings table and can contain commas, so we

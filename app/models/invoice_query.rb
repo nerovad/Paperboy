@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class InvoiceQuery
   # Executes County stored procedure to fetch invoice data
   def self.fetch(fiscal_year:, agency:, account:)

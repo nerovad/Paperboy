@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/mailers/report_mailer.rb
 class ReportMailer < ApplicationMailer
   default from: ENV['SMTP_FROM_ADDRESS'] || 'noreply@ventura.org'

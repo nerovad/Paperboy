@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Coa
   class DepartmentsController < CrudController
     self.coa_model_class = Coa::Department

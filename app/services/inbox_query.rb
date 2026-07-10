@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Assembles the set of submissions that make up a user's inbox — the single
 # source of truth shared by InboxController#queue (which then text-filters,
 # sorts, and paginates) and the profile/tab badge counter (which just needs the

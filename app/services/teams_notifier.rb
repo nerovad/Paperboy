@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class TeamsNotifier
   def self.send_cir_alert(cir)
     webhook_url = Rails.application.config.teams_webhook_url

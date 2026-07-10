@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # manager_approved is the approved END STATE of a Probation Transfer Request, but
 # its form_template_statuses row was configured as category "in_review" /
 # is_end=false. That made approved transfers (a) linger in the inbox under the new

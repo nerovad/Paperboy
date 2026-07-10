@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ProbationTransferRequest < ApplicationRecord
   include PhoneNumberable
   include Reassignable

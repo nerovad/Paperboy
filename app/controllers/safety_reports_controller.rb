@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SafetyReportsController < ApplicationController
   before_action :set_safety_report, only: %i[show edit update pdf approve deny update_status]
 

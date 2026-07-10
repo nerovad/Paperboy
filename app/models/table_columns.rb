@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Single source of truth for the customizable columns on the "My Work" tables
 # (Inbox queue + Submissions index). Pure metadata + raw-value extractors — no
 # view helpers — so it can be used from both controllers and the UserSetting
@@ -57,7 +59,7 @@ class TableColumns
                        filter: { param: :filter_form_type, kind: :select },
                        value: ->(s) { s.class.name.demodulize.titleize } },
       'name' => { label: 'Employee',     sort: 'name',       kind: :text,
-                  value: ->(s) { s.name } },
+                  value: lambda(&:name) },
       'unit' => { label: 'Unit',         sort: 'unit',       kind: :text,
                   filter: { param: :filter_unit, kind: :select },
                   value: ->(s) { s.try(:unit) } },
@@ -66,11 +68,11 @@ class TableColumns
                    value: ->(s) { s.try(:email) } },
       'status' => { label: 'Status', sort: 'status', kind: :status,
                     filter: { param: :filter_status, kind: :select },
-                    value: ->(s) { s.status_label } },
+                    value: lambda(&:status_label) },
       'created_at' => { label: 'Created',      sort: 'created_at', kind: :datetime,
-                        value: ->(s) { s.created_at } },
+                        value: lambda(&:created_at) },
       'updated_at' => { label: 'Last Updated', sort: 'updated_at', kind: :datetime,
-                        value: ->(s) { s.updated_at } }
+                        value: lambda(&:updated_at) }
     }
   end
 

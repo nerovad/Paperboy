@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddCardLastFourToPcardInventories < ActiveRecord::Migration[8.0]
   def change
     add_column :pcard_inventories, :card_last_four, :string, limit: 4

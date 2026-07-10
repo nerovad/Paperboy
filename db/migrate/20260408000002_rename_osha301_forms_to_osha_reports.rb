@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RenameOsha301FormsToOshaReports < ActiveRecord::Migration[8.0]
   def up
     rename_table :osha301_forms, :osha_reports

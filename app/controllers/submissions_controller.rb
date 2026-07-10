@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/submissions_controller.rb
 class SubmissionsController < ApplicationController
   include Filterable
@@ -240,7 +242,7 @@ class SubmissionsController < ApplicationController
   end
 
   # Model names already loaded by LEGACY_FORMS to avoid double-counting
-  LEGACY_MODEL_NAMES = LEGACY_FORMS.map { |f| f[:model] }.to_set.freeze
+  LEGACY_MODEL_NAMES = LEGACY_FORMS.to_set { |f| f[:model] }.freeze
 
   def load_form_template_submissions(_employee_id)
     # Find all form templates that have statuses configured

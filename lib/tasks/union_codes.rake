@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :union_codes do
   # Seeds the employee_union_codes table with known union/bargaining-unit
   # memberships. Idempotent — safe to re-run, and safe across deploys. Edit

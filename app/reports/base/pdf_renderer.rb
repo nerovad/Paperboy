@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/reports/base/pdf_renderer.rb
 require 'prawn'
 

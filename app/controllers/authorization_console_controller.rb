@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/authorization_console_controller.rb
 require 'csv'
 
@@ -18,10 +20,10 @@ class AuthorizationConsoleController < ApplicationController
     # department's units. all_budget_units rows (and incomplete rows with no
     # units recorded) match via their department instead.
     if @department_ids.any?
-      sel_unit_ids = Unit.where(department_id: @department_ids).pluck(:unit_id).map(&:to_s).to_set
+      sel_unit_ids = Unit.where(department_id: @department_ids).pluck(:unit_id).to_set(&:to_s)
       scoped = scoped.select do |a|
         if !a.all_budget_units? && a.budget_units.present?
-          (a.budget_units.split(',').map(&:strip).to_set & sel_unit_ids).any?
+          (a.budget_units.split(',').to_set(&:strip) & sel_unit_ids).any?
         else
           @department_ids.include?(a.department_id)
         end

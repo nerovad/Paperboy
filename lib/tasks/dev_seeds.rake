@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # lib/tasks/dev_seeds.rake
 namespace :dev do
   desc 'Seed Parking Lot only (SUBMISSIONS=n, REPLANT=1 optional)'

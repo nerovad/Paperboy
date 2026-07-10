@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddOsha300aClassificationToOshaReports < ActiveRecord::Migration[8.0]
   def up
     add_column :osha_reports, :case_classification, :string

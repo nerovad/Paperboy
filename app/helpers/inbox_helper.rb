@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module InboxHelper
   # Known hardcoded form types that have custom handling
   HARDCODED_FORM_TYPES = %w[

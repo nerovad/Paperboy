@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FormTemplateRoutingStep < ApplicationRecord
   attribute :inbox_buttons, :json, default: []
 

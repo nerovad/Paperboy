@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateFleetVehicleGaragingForms < ActiveRecord::Migration[7.1]
   def change
     create_table :fleet_vehicle_garaging_forms do |t|

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/services/form_generator.rb
 class FormGenerator
   attr_reader :form_template, :errors

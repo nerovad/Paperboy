@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ReplaceSpanWithAllBudgetUnits < ActiveRecord::Migration[8.0]
   # Span letters B-E were derivable from the budget_units/locations lists;
   # the only real information was 'A' (all budget units), which becomes an

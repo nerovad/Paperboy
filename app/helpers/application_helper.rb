@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/helpers/application_helper.rb
 module ApplicationHelper
   def current_user
@@ -51,7 +53,7 @@ module ApplicationHelper
 
     FormTemplate.includes(:form_fields).order(:name).each do |template|
       klass = template.class_name.safe_constantize
-      next unless klass && klass.respond_to?(:column_names)
+      next unless klass.respond_to?(:column_names)
 
       columns = klass.column_names
 

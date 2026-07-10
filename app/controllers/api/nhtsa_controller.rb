@@ -1,40 +1,44 @@
-class Api::NhtsaController < ApplicationController
-  NHTSA_BASE = 'https://vpic.nhtsa.dot.gov/api/vehicles'.freeze
+# frozen_string_literal: true
 
-  def makes
-    uri = URI("#{NHTSA_BASE}/GetMakesForVehicleType/car?format=json")
-    data = fetch_nhtsa(uri)
-    render json: data['Results']
-  rescue StandardError => e
-    Rails.logger.error("NHTSA makes fetch failed: #{e.message}")
-    render json: { error: e.message }, status: :service_unavailable
-  end
+module Api
+  class NhtsaController < ApplicationController
+    NHTSA_BASE = 'https://vpic.nhtsa.dot.gov/api/vehicles'
 
-  def models
-    make = params.require(:make)
-    year = params.require(:year)
+    def makes
+      uri = URI("#{NHTSA_BASE}/GetMakesForVehicleType/car?format=json")
+      data = fetch_nhtsa(uri)
+      render json: data['Results']
+    rescue StandardError => e
+      Rails.logger.error("NHTSA makes fetch failed: #{e.message}")
+      render json: { error: e.message }, status: :service_unavailable
+    end
 
-    uri = URI("#{NHTSA_BASE}/GetModelsForMakeYear/make/#{ERB::Util.url_encode(make)}/modelyear/#{ERB::Util.url_encode(year)}?format=json")
-    data = fetch_nhtsa(uri)
-    render json: data['Results']
-  rescue ActionController::ParameterMissing => e
-    render json: { error: e.message }, status: :bad_request
-  rescue StandardError => e
-    Rails.logger.error("NHTSA models fetch failed: #{e.message}")
-    render json: { error: e.message }, status: :service_unavailable
-  end
+    def models
+      make = params.require(:make)
+      year = params.require(:year)
 
-  private
+      uri = URI("#{NHTSA_BASE}/GetModelsForMakeYear/make/#{ERB::Util.url_encode(make)}/modelyear/#{ERB::Util.url_encode(year)}?format=json")
+      data = fetch_nhtsa(uri)
+      render json: data['Results']
+    rescue ActionController::ParameterMissing => e
+      render json: { error: e.message }, status: :bad_request
+    rescue StandardError => e
+      Rails.logger.error("NHTSA models fetch failed: #{e.message}")
+      render json: { error: e.message }, status: :service_unavailable
+    end
 
-  def fetch_nhtsa(uri)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    http.open_timeout = 5
-    http.read_timeout = 10
+    private
 
-    response = http.request(Net::HTTP::Get.new(uri))
-    raise "NHTSA returned #{response.code}" unless response.is_a?(Net::HTTPSuccess)
+    def fetch_nhtsa(uri)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      http.open_timeout = 5
+      http.read_timeout = 10
 
-    JSON.parse(response.body)
+      response = http.request(Net::HTTP::Get.new(uri))
+      raise "NHTSA returned #{response.code}" unless response.is_a?(Net::HTTPSuccess)
+
+      JSON.parse(response.body)
+    end
   end
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Coa
   class Object < BaseRecord
     self.table_name = 'objects'

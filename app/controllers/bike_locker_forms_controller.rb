@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class BikeLockerFormsController < ApplicationController
   # Generated controller for BikeLockerForm form
   before_action :set_bike_locker_form, only: %i[show edit update pdf approve deny update_status]

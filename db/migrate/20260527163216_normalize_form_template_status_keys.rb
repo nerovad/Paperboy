@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class NormalizeFormTemplateStatusKeys < ActiveRecord::Migration[8.0]
   # Phase 1 of the status-key consolidation: normalize the central
   # form_template_statuses *definition* rows into the canonical vocabulary.

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FormTemplateStatus < ApplicationRecord
   belongs_to :form_template
 

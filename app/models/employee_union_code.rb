@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class EmployeeUnionCode < ApplicationRecord
   validates :employee_id, presence: true, uniqueness: true
   validates :union_code, presence: true

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Grants a group full visibility of every submission of a given form type,
 # in both the Inbox and the Submissions page (keyed by model class name, so it
 # works for both dynamic form-builder forms and legacy hand-written forms like

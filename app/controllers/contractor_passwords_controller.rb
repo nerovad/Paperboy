@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Handles both the initial "set your password" link (from the welcome email) and
 # self-service password resets. Both arrive at #edit carrying a signed,
 # stateless token (Contractor#generates_token_for) — no token is stored in the

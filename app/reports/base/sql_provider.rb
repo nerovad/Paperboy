@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/reports/base/sql_provider.rb
 module Base
   class SqlProvider

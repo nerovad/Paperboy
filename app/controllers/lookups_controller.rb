@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/lookups_controller.rb
 class LookupsController < ApplicationController
   def agencies

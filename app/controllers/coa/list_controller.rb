@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Coa
   class ListController < BaseController
     helper_method :coa_resources, :collection_path

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ContractorMailer < ApplicationMailer
   # Sent when a system admin provisions a contractor. No password exists yet;
   # this link lets them set one. The setup token invalidates once used (the

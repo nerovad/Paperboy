@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'active_support/core_ext/integer/time'
 
 Rails.application.configure do
@@ -17,7 +19,7 @@ Rails.application.configure do
   config.force_ssl  = true # now that HTTPS works, this should be on
 
   config.log_tags = [:request_id]
-  config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
+  config.logger   = ActiveSupport::TaggedLogging.logger($stdout)
   config.log_level = ENV.fetch('RAILS_LOG_LEVEL', 'info')
   config.silence_healthcheck_path = '/up'
 

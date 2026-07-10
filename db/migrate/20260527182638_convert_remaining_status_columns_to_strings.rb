@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ConvertRemainingStatusColumnsToStrings < ActiveRecord::Migration[8.0]
   # Finish the status string-key migration for the remaining integer columns:
   # the two approval forms that were never on TrackableStatus (carpool,

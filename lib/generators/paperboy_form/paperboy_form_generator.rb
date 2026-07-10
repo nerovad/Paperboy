@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # lib/generators/paperboy_form/paperboy_form_generator.rb
 require 'rails/generators'
 

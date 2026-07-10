@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :db do
   desc 'Migrate data from MSSQL (GSABSS) to PostgreSQL'
   task migrate_from_mssql: :environment do

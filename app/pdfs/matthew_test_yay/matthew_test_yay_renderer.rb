@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/pdfs/matthew_test_yay/matthew_test_yay_renderer.rb
 #
 # Developer-editable Prawn renderer.

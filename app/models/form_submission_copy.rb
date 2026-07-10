@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FormSubmissionCopy < ApplicationRecord
   belongs_to :submission, polymorphic: true
 

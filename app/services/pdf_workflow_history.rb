@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Renders a "Workflow History" section (status transitions + timestamps + who
 # acted) into a Prawn document. Shared by every PDF generator so the approval/
 # denial lifecycle appears on the printable/emailable record. No-op for records

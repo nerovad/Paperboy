@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class HelpTicketMailer < ApplicationMailer
   def ticket_submitted(subject:, description:, user_name:, user_email:, employee_id:)
     @description = description

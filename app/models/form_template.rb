@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FormTemplate < ApplicationRecord
   attribute :page_headers, :json
   attribute :inbox_buttons, :json, default: []
@@ -158,7 +160,7 @@ class FormTemplate < ApplicationRecord
   def generate_class_name
     return if name.blank?
 
-    self.class_name = name.gsub(/[^a-zA-Z0-9\s]/, '').split.map(&:capitalize).join + 'Form'
+    self.class_name = "#{name.gsub(/[^a-zA-Z0-9\s]/, '').split.map(&:capitalize).join}Form"
   end
 
   # Upcase/strip any admin-entered prefix so "loa" and "LOA " store as "LOA".
@@ -179,8 +181,7 @@ class FormTemplate < ApplicationRecord
     taken = self.class.where.not(id: id)
                 .where.not(reference_prefix: [nil, ''])
                 .pluck(:reference_prefix)
-                .map(&:upcase)
-                .to_set
+                .to_set(&:upcase)
 
     return candidate unless taken.include?(candidate.upcase)
 

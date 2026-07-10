@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class NoticeOfChangeFormsController < ApplicationController
   # Generated controller for NoticeOfChangeForm form
   before_action :set_notice_of_change_form, only: %i[show edit update pdf approve deny update_status]

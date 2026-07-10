@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 # app/models/scheduled_report.rb
 class ScheduledReport < ApplicationRecord
   FREQUENCIES = {
     'daily' => 'Every day',
     'weekly' => 'Weekly',
     'monthly' => 'Monthly'
-  }
+  }.freeze
 
   DATE_RANGE_TYPES = {
     'last_7_days' => 'Last 7 days',
@@ -13,12 +15,12 @@ class ScheduledReport < ApplicationRecord
     'last_week' => 'Last week (calendar)',
     'yesterday' => 'Yesterday',
     'today' => 'Today'
-  }
+  }.freeze
 
   FORMATS = {
     'csv' => 'CSV',
     'pdf' => 'PDF'
-  }
+  }.freeze
 
   # Validations
   validates :employee_id, presence: true

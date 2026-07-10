@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RevertMetabaseToPowerbi < ActiveRecord::Migration[8.0]
   def change
     add_column :form_templates, :powerbi_workspace_id, :string unless column_exists?(:form_templates, :powerbi_workspace_id)
