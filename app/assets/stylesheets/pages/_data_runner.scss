@@ -7,7 +7,6 @@
   .page-heading,
   .dsl-header,
   .hot-menu,
-  .data-runner-nav,
   .control-center,
   .empty-control-center,
   .login-panel,
@@ -110,42 +109,8 @@
 
   .hot-menu,
   .dsl-header,
-  .data-runner-nav,
   .page-heading {
     margin-bottom: 16px;
-  }
-
-  .data-runner-nav {
-    display: grid;
-    gap: 10px;
-    padding: 14px;
-    background: #fff;
-    border: 1px solid $border-color;
-    border-radius: 8px;
-  }
-
-  .data-runner-nav .sidebar-search {
-    max-width: 360px;
-  }
-
-  .nav-group {
-    border-top: 1px solid $border-color;
-    padding-top: 8px;
-  }
-
-  .nav-group summary {
-    cursor: pointer;
-    font-weight: 700;
-  }
-
-  .nav-link {
-    cursor: pointer;
-    display: inline-flex;
-    margin: 8px 8px 0 0;
-    border: 1px solid $border-color;
-    border-radius: 999px;
-    padding: 7px 10px;
-    background: #fafafa;
   }
 
   .task-menu {
@@ -241,28 +206,55 @@
     white-space: pre;
   }
 
+  .code-editor-highlight {
+    pointer-events: none;
+    z-index: 0;
+  }
+
   .code-editor-input {
     color: transparent;
     caret-color: #fff;
     background: transparent;
+    position: relative;
     resize: vertical;
+    z-index: 1;
   }
 
-  .highlight .k,
-  .highlight .ss {
+  .highlighted-output .highlight {
+    background: transparent;
+    color: inherit;
+  }
+
+  .highlighted-output .k,
+  .highlighted-output .kd,
+  .highlighted-output .kn,
+  .highlighted-output .kp,
+  .highlighted-output .kr,
+  .highlighted-output .kt,
+  .highlighted-output .ss {
     color: #ffb86c;
   }
 
-  .highlight .s {
+  .highlighted-output .s,
+  .highlighted-output .s1,
+  .highlighted-output .s2,
+  .highlighted-output .se,
+  .highlighted-output .sh {
     color: #a3e635;
   }
 
-  .highlight .c1 {
+  .highlighted-output .c,
+  .highlighted-output .c1,
+  .highlighted-output .cm {
     color: #94a3b8;
   }
 
-  .highlight .nc,
-  .highlight .mi {
+  .highlighted-output .nc,
+  .highlighted-output .nf,
+  .highlighted-output .nt,
+  .highlighted-output .mi,
+  .highlighted-output .mf,
+  .highlighted-output .mh {
     color: #67e8f9;
   }
 

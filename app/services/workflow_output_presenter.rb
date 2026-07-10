@@ -34,20 +34,21 @@ class WorkflowOutputPresenter
 
   def load_csv
     records = CSV.foreach(path, encoding: "bom|utf-8").take(MAX_ROWS + 2)
-    @headers = records.shift || []
+    headers = records.shift || []
     @truncated = records.size > MAX_ROWS
-    @rows = records.first(MAX_ROWS)
+    assign_table(headers, records.first(MAX_ROWS))
   end
 
   def load_xlsx
     workbook = @spreadsheet.open(path.to_s, extension: :xlsx)
     sheet = workbook.sheet(0)
     worksheet_header_row = @header_row ? @header_row + 1 : first_tabular_row(sheet)
-    @headers = worksheet_header_row ? sheet.row(worksheet_header_row) : []
+    headers = worksheet_header_row ? sheet.row(worksheet_header_row) : []
     first_data_row = worksheet_header_row.to_i + 1
     last_displayed_row = [ sheet.last_row.to_i, first_data_row + MAX_ROWS - 1 ].min
-    @rows = last_displayed_row >= first_data_row ? (first_data_row..last_displayed_row).map { |row_number| sheet.row(row_number) } : []
+    rows = last_displayed_row >= first_data_row ? (first_data_row..last_displayed_row).map { |row_number| sheet.row(row_number) } : []
     @truncated = sheet.last_row.to_i > last_displayed_row
+    assign_table(headers, rows)
   end
 
   def load_sql
@@ -58,5 +59,20 @@ class WorkflowOutputPresenter
 
   def first_tabular_row(sheet)
     (1..sheet.last_row.to_i).find { |row_number| sheet.row(row_number).compact_blank.size > 1 }
+  end
+
+  def assign_table(headers, rows)
+    rows = rows.map { |row| Array(row) }
+    width = ([ Array(headers).size ] + rows.map(&:size)).max.to_i
+    @headers = normalize_headers(headers, width)
+    @rows = rows.map { |row| row.first(width).fill(nil, row.size...width) }
+  end
+
+  def normalize_headers(headers, width)
+    Array(headers).first(width).each_with_index.map do |header, index|
+      header.presence || "Column #{index + 1}"
+    end.fill(nil, Array(headers).size...width).map.with_index do |header, index|
+      header || "Column #{index + 1}"
+    end
   end
 end

@@ -15,6 +15,15 @@ class WorkflowOutputPresenterTest < ActiveSupport::TestCase
     end
   end
 
+  test "normalizes ragged CSV rows for datatables" do
+    with_file("ragged.csv", "name,value\nAlpha,1,extra\nBeta\n") do |path|
+      output = WorkflowOutputPresenter.new(path)
+
+      assert_equal [ "name", "value", "Column 3" ], output.headers
+      assert_equal [ [ "Alpha", "1", "extra" ], [ "Beta", nil, nil ] ], output.rows
+    end
+  end
+
   test "presents SQL as browser-safe text" do
     with_file("sample.sql", "SELECT * FROM widgets;\n") do |path|
       output = WorkflowOutputPresenter.new(path)
@@ -46,6 +55,30 @@ class WorkflowOutputPresenterTest < ActiveSupport::TestCase
 
     assert_equal [ "Fiscal Year", "Department" ], output.headers
     assert_equal [ [ 2026, "GSA" ] ], output.rows
+  end
+
+  test "normalizes ragged XLSX rows for datatables" do
+    sheet = Struct.new(:last_row) do
+      def row(number)
+        {
+          1 => [ "Name", "Value" ],
+          2 => [ "Alpha", 1, "extra" ],
+          3 => [ "Beta" ]
+        }.fetch(number, [])
+      end
+    end.new(3)
+    workbook = Struct.new(:worksheet) do
+      def sheet(_index)
+        worksheet
+      end
+    end.new(sheet)
+    spreadsheet = Object.new
+    spreadsheet.define_singleton_method(:open) { |_path, extension:| workbook if extension == :xlsx }
+
+    output = WorkflowOutputPresenter.new(Pathname("ragged.xlsx"), spreadsheet: spreadsheet)
+
+    assert_equal [ "Name", "Value", "Column 3" ], output.headers
+    assert_equal [ [ "Alpha", 1, "extra" ], [ "Beta", nil, nil ] ], output.rows
   end
 
   private

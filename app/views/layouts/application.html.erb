@@ -111,6 +111,7 @@
                 <% if system_admin? || current_user_dropdown_permissions.include?('dashboards') %>
                   <%= link_to "Dashboards", dashboards_path, class: "btn btn-primary" %>
                 <% end %>
+                <%= link_to "DataRunner", data_runner_root_path, class: "btn btn-info" %>
 
                 <% if system_admin? || current_user_dropdown_permissions.include?('manage_forms') %>
                   <%= link_to "Manage Forms", form_templates_path, class: "btn btn-info" %>

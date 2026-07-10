@@ -151,6 +151,68 @@
   
   .nav-link.active { background-color: $primary-color; }
 
+  &.data-runner-sidebar {
+    .brand {
+      display: block;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid $primary-color;
+      color: #fff;
+      font-size: 1.2em;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .nav-group {
+      margin: 10px 0;
+      border-radius: 6px;
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-group[open] {
+      padding-bottom: 8px;
+    }
+
+    .nav-group summary {
+      cursor: pointer;
+      list-style-position: inside;
+      padding: 11px 12px;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .nav-group-link,
+    .nav-group-label {
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .nav-link {
+      margin: 6px 10px;
+      padding: 9px 10px;
+      text-align: left;
+      word-break: break-word;
+    }
+
+    .nav-link.dragging {
+      opacity: 0.45;
+    }
+
+    .drag-ghost {
+      position: fixed;
+      z-index: 1200;
+      pointer-events: none;
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: #004976;
+      color: #fff;
+      box-shadow: $shadow-soft;
+    }
+  }
+
   .nav-link mark {
     background-color: rgba(255, 255, 0, 0.4);
     color: inherit;
