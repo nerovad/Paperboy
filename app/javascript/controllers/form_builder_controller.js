@@ -1062,18 +1062,18 @@ export default class extends Controller {
       informationOptions.style.display = 'block'
     }
 
-    // Show/hide conditional answer options (only for dropdown types)
+    // Conditional answer options are available for every field type. Non-dropdown
+    // fields can't offer a static value->value mapping (they have no own values),
+    // so when the answer is enabled on a non-dropdown, default it to lookup mode.
     const conditionalAnswerOptions = fieldItem.querySelector('.conditional-answer-options')
     if (conditionalAnswerOptions) {
-      if (fieldType === 'dropdown' || fieldType === 'choices_dropdown') {
-        conditionalAnswerOptions.style.display = 'block'
-      } else {
-        conditionalAnswerOptions.style.display = 'none'
-        // Clear conditional answer config when switching away from dropdown
-        const conditionalAnswerToggle = fieldItem.querySelector('.conditional-answer-toggle')
-        if (conditionalAnswerToggle) conditionalAnswerToggle.checked = false
-        const conditionalAnswerConfig = fieldItem.querySelector('.conditional-answer-config')
-        if (conditionalAnswerConfig) conditionalAnswerConfig.style.display = 'none'
+      conditionalAnswerOptions.style.display = 'block'
+      const isDropdown = fieldType === 'dropdown' || fieldType === 'choices_dropdown'
+      const answerToggle = fieldItem.querySelector('.conditional-answer-toggle')
+      const lookupToggle = fieldItem.querySelector('.answer-lookup-toggle')
+      if (!isDropdown && answerToggle && answerToggle.checked && lookupToggle && !lookupToggle.checked) {
+        lookupToggle.checked = true
+        this.toggleAnswerMode({ target: lookupToggle })
       }
     }
 
@@ -1624,6 +1624,12 @@ export default class extends Controller {
         if (mappingsContainer) {
           mappingsContainer.innerHTML = '<span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a trigger dropdown first</span>'
         }
+        // Also clear lookup mode so nothing autofill-related is submitted
+        const lookupToggle = fieldItem.querySelector('.answer-lookup-toggle')
+        if (lookupToggle && lookupToggle.checked) {
+          lookupToggle.checked = false
+          this.toggleAnswerMode({ target: lookupToggle })
+        }
       }
     }
   }
@@ -1749,6 +1755,89 @@ export default class extends Controller {
       row.appendChild(arrow)
       row.appendChild(select)
       mappingsContainer.appendChild(row)
+    })
+  }
+
+  // Toggle between a static value->value mapping and table-lookup autofill.
+  toggleAnswerMode(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const useLookup = event.target.checked
+    const mappings = fieldItem.querySelector('.conditional-answer-mappings-container')
+    const lookupPanel = fieldItem.querySelector('.answer-lookup-panel')
+
+    if (mappings) mappings.style.display = useLookup ? 'none' : 'flex'
+    if (!lookupPanel) return
+
+    lookupPanel.style.display = useLookup ? 'flex' : 'none'
+    if (!useLookup) return
+
+    // Populate the table/column lists when entering lookup mode, preserving any
+    // saved selections (fetches are cheap and the endpoints are cached-ish).
+    const dbSelect = lookupPanel.querySelector('.answer-lookup-database')
+    this.loadAnswerLookupTables({ target: dbSelect })
+    const tableSelect = lookupPanel.querySelector('.answer-lookup-table')
+    if (tableSelect && tableSelect.value) {
+      this.loadAnswerLookupColumns({ target: tableSelect })
+    }
+  }
+
+  // Fetch the table list for the chosen database into the table <select>.
+  async loadAnswerLookupTables(event) {
+    const panel = event.target.closest('.answer-lookup-panel')
+    if (!panel) return
+    const database = panel.querySelector('.answer-lookup-database').value
+    const tableSelect = panel.querySelector('.answer-lookup-table')
+    const current = tableSelect.value
+
+    try {
+      const res = await fetch(`/lookups/tables?database=${encodeURIComponent(database)}`)
+      const tables = await res.json()
+      tableSelect.innerHTML = '<option value="">Select table...</option>'
+      tables.forEach(t => {
+        const opt = document.createElement('option')
+        opt.value = t
+        opt.textContent = t
+        if (t === current) opt.selected = true
+        tableSelect.appendChild(opt)
+      })
+    } catch (e) {
+      console.error('Failed to load answer-lookup tables:', e)
+    }
+  }
+
+  // Fetch the column list for the chosen table into both column <select>s.
+  async loadAnswerLookupColumns(event) {
+    const panel = event.target.closest('.answer-lookup-panel')
+    if (!panel) return
+    const database = panel.querySelector('.answer-lookup-database').value
+    const table = panel.querySelector('.answer-lookup-table').value
+    const matchSelect = panel.querySelector('.answer-lookup-match-column')
+    const returnSelect = panel.querySelector('.answer-lookup-return-column')
+    const prevMatch = matchSelect.value
+    const prevReturn = returnSelect.value
+    if (!table) return
+
+    try {
+      const res = await fetch(`/lookups/columns?database=${encodeURIComponent(database)}&table=${encodeURIComponent(table)}`)
+      let columns = await res.json()
+      // The employees table exposes a synthetic "full_name" (Last, First) key,
+      // mirroring FormLookup.synthetic_columns on the server.
+      if (table === 'employees') columns = [ 'full_name', ...columns ]
+      this.fillAnswerColumnSelect(matchSelect, columns, prevMatch)
+      this.fillAnswerColumnSelect(returnSelect, columns, prevReturn)
+    } catch (e) {
+      console.error('Failed to load answer-lookup columns:', e)
+    }
+  }
+
+  fillAnswerColumnSelect(select, columns, current) {
+    select.innerHTML = '<option value="">column...</option>'
+    columns.forEach(c => {
+      const opt = document.createElement('option')
+      opt.value = c
+      opt.textContent = c
+      if (c === current) opt.selected = true
+      select.appendChild(opt)
     })
   }
 

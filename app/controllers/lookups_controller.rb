@@ -104,6 +104,15 @@ class LookupsController < ApplicationController
     render json: FormField.category_options_for(params[:source])
   end
 
+  # Answer-lookup autofill: given the target field IDs (which carry the saved
+  # table/column config) and the trigger's selected text, return the values to
+  # fill, keyed by field id. No user-supplied table/column strings reach SQL —
+  # only integer field ids plus the match value.
+  def answer_fill
+    fills = FormLookup.answer_fills(Array(params[:field_ids]), params[:value].to_s)
+    render json: fills
+  end
+
   # --- Generic ("custom") lookup builder endpoints ---------------------------
   # Schema introspection for the form builder's custom data source. database is
   # a logical name (paperboy/gsabss); names are validated and quoted before SQL.

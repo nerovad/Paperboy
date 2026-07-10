@@ -26,6 +26,81 @@ class FormLookup
       (conn.respond_to?(:views) && conn.views.include?(table))
   end
 
+  # Synthetic (computed) columns a table exposes for answer lookups on top of its
+  # real columns. Only the employees "full_name" (Last, First) key today, which
+  # mirrors how employee dropdowns render their option labels.
+  def self.synthetic_columns(table)
+    table.to_s == "employees" ? %w[full_name] : []
+  end
+
+  # Answer-lookup autofill. Given target field IDs that share one trigger field
+  # and the trigger's selected display text, return { field_id => filled_value }.
+  # Fields are grouped by [database, table, match_column] so one query per group
+  # fills many fields. All identifiers are validated against the live schema and
+  # quoted; the match value is bound via #quote. Returns {} on any failure so a
+  # bad config or unreachable DB can never 500 a live form.
+  def self.answer_fills(field_ids, value)
+    return {} if value.to_s.strip.empty?
+
+    fields = FormField.where(id: field_ids).select(&:answer_lookup?)
+    return {} if fields.empty?
+
+    result = {}
+    fields.group_by { |f| f.answer_lookup_config.values_at("database", "table", "match_column") }
+          .each do |(database, table, match_column), group|
+      conn = connection_for(database)
+      next unless conn && table_exists_in?(conn, table)
+
+      columns   = conn.columns(table).map(&:name)
+      synthetic = synthetic_columns(table)
+      row = matched_row(conn, table, match_column, value, columns, synthetic)
+      next unless row
+
+      group.each do |field|
+        rc = field.answer_lookup_config["return_column"]
+        filled =
+          if synthetic.include?(rc)
+            synthesize(table, rc, row)
+          elsif columns.include?(rc)
+            row[rc]
+          end
+        result[field.id] = filled unless filled.nil? || filled.to_s.empty?
+      end
+    end
+    result
+  rescue => e
+    Rails.logger.error("FormLookup.answer_fills failed: #{e.class}: #{e.message}")
+    {}
+  end
+
+  # Fetch the single row matching `value` on `match_column`. Supports the
+  # employees "full_name" synthetic key by splitting "Last, First" and matching
+  # last_name/first_name. Returns a column=>value Hash or nil. SQL Server only.
+  def self.matched_row(conn, table, match_column, value, columns, synthetic)
+    qt = conn.quote_table_name(table)
+
+    where_sql =
+      if synthetic.include?(match_column) && table == "employees" && match_column == "full_name"
+        last, first = value.to_s.split(", ", 2)
+        return nil if last.to_s.empty?
+        clauses = [ "#{conn.quote_column_name('last_name')} = #{conn.quote(last)}" ]
+        clauses << "#{conn.quote_column_name('first_name')} = #{conn.quote(first)}" if first.present?
+        clauses.join(" AND ")
+      elsif columns.include?(match_column)
+        "#{conn.quote_column_name(match_column)} = #{conn.quote(value)}"
+      end
+    return nil unless where_sql
+
+    conn.exec_query("SELECT TOP 1 * FROM #{qt} WHERE #{where_sql}").first
+  end
+
+  # Build a synthetic column's value from a fetched row.
+  def self.synthesize(table, column, row)
+    return nil unless table == "employees" && column == "full_name"
+    "#{row['last_name']}, #{row['first_name']}"
+  end
+  private_class_method :matched_row, :synthesize
+
   # Distinct option values (value == label) for a custom-lookup field, ordered.
   # Returns [] for non-custom fields or any invalid/failed config so a bad
   # setting can never 500 a live form.
