@@ -16,13 +16,14 @@
   height: 26px;
   line-height: 1;
   font-size: 18px;
-  color: $brand-navy;
+  font-weight: 700;
+  color: $surface-base;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 
   &:hover {
-    background: rgba($brand-navy, 0.08);
-    border-color: $brand-navy;
+    background: rgba(255, 255, 255, 0.18);
+    border-color: $surface-base;
   }
 }
 
