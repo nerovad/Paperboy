@@ -20,7 +20,7 @@ module TableColumnsHelper
         else
           "".html_safe
         end
-      safe_join([column.label, " ", indicator])
+      safe_join([ column.label, " ", indicator ])
     end
   end
 
@@ -67,7 +67,7 @@ module TableColumnsHelper
     TableColumns.builtins(page).filter_map do |key, cfg|
       next if shown_ids.include?(key)
       next if cfg[:permission] && cfg[:permission] == :employee_column && !employee_column
-      [key, cfg[:label]]
+      [ key, cfg[:label] ]
     end
   end
 end

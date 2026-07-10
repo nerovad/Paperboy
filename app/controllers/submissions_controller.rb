@@ -89,7 +89,7 @@ class SubmissionsController < ApplicationController
     # plus the standalone category filter.
     @status_items = apply_filters(@status_items,
       filter_configs: @filter_columns.map { |c| { param: c.filter_param.to_s, extractor: c.value } } +
-                      [{ param: "filter_category", extractor: ->(item) { item[:status_category_label] } }],
+                      [ { param: "filter_category", extractor: ->(item) { item[:status_category_label] } } ],
       date_filters: status_date_filters
     )
 

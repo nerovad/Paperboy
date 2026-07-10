@@ -1,0 +1,14 @@
+<nav class="hot-menu run-log-menu" aria-label="Run log filters">
+  <%= link_to "Run Logs", data_runner_logs_path, class: "button" %>
+  <%= form_with url: data_runner_logs_path, method: :get, class: "run-log-filters" do %>
+    <div class="field compact"><%= label_tag :date, "Date" %><%= date_field_tag :date, @filters[:date], onchange: "this.form.requestSubmit()" %></div>
+    <div class="field compact"><%= label_tag :command, "Command" %><%= select_tag :command, options_for_select([["Any command", ""]] + @filter_options[:commands].map { |value| [value, value] }, @filters[:command]), onchange: "this.form.requestSubmit()" %></div>
+    <div class="field compact"><%= label_tag :dsl, "DSL" %><%= select_tag :dsl, options_for_select([["Any DSL", ""]] + @filter_options[:dsls].map { |value| [value, value] }, @filters[:dsl]), onchange: "this.form.requestSubmit()" %></div>
+    <div class="field compact"><%= label_tag :status, "Status" %><%= select_tag :status, options_for_select([["Any status", ""]] + @filter_options[:statuses].map { |value| [value, value] }, @filters[:status]), onchange: "this.form.requestSubmit()" %></div>
+    <div class="field compact"><%= label_tag :duration, "Duration" %><%= select_tag :duration, options_for_select([["Any duration", ""], ["Under 1s", "under_1s"], ["1s to 10s", "1s_to_10s"], ["10s to 1m", "10s_to_1m"], ["Over 1m", "over_1m"]], @filters[:duration]), onchange: "this.form.requestSubmit()" %></div>
+  <% end %>
+  <%= link_to "New Log", new_data_runner_log_path, class: "button primary" %>
+</nav>
+<section class="card table-wrap"><table><thead><tr><th>Started</th><th>Command</th><th>DSL</th><th>Status</th><th>Duration</th><th></th></tr></thead><tbody>
+  <% @logs.each do |log| %><tr><td><%= l(log.started_at, format: :short) %></td><td><%= link_to log.command, data_runner_log_path(log) %></td><td><%= log.selector %></td><td><span class="status <%= log.status %>"><%= log.status %></span></td><td><%= number_with_delimiter(log.duration_ms) %> ms</td><td><%= link_to "Edit", edit_data_runner_log_path(log) %></td></tr><% end %>
+</tbody></table></section>

@@ -1,0 +1,5 @@
+<div class="page-heading"><div><p class="eyebrow">Run <%= @log.run_id %></p><h1><%= @log.command %></h1></div><div><%= link_to "Edit", edit_data_runner_log_path(@log), class: "button" %></div></div>
+<section class="card"><dl class="record-details">
+  <% @log.attributes.each do |name, value| %><dt><%= name.humanize %></dt><dd><%= value.presence || "-" %></dd><% end %>
+</dl><%= button_to "Delete log", data_runner_log_path(@log), method: :delete, class: "button danger",
+                  data: { turbo_confirm: "Delete this log entry? This cannot be undone." } %></section>

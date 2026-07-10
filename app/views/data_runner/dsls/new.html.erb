@@ -1,0 +1,25 @@
+<div class="page-heading"><div><p class="eyebrow">Create configuration</p><h1>New DSL</h1></div></div>
+<%= form_with url: data_runner_dsls_path, class: "card new-dsl-form" do |form| %>
+  <div class="field">
+    <%= form.label :dsl_name, "DSL name" %>
+    <%= form.text_field :dsl_name, value: params[:dsl_name], required: true,
+                        pattern: "[A-Za-z0-9_]+|[^.]+\\.[^.]+\\.[^.]+\\.[A-Za-z0-9_]+",
+                        title: "Use dslname or server.database.namespace.dslname.",
+                        placeholder: "example_dataset or GSASQL16.GSA Scan.dbo.document_automation",
+                        autofocus: true %>
+    <small>Use dslname or server.database.namespace.dslname.</small>
+  </div>
+  <fieldset>
+    <legend>DataRunner commands</legend>
+    <p>Select the namespaced commands available from this DSL's hot menu.</p>
+    <div class="command-grid">
+      <% @commands.each do |command| %>
+        <label class="command-option">
+          <%= check_box_tag "commands[]", command, @selected_commands.include?(command), id: "command_#{command}" %>
+          <span><code>DataRunner:<%= command %></code></span>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+  <div class="form-actions"><%= form.submit "Create DSL", class: "button primary" %></div>
+<% end %>

@@ -1,0 +1,28 @@
+<nav class="data-runner-nav" data-controller="sidebar-search dsl-drag" aria-label="DataRunner DSLs">
+  <input class="sidebar-search" type="search" placeholder="Search DSLs"
+         data-sidebar-search-target="input" data-action="input->sidebar-search#filter">
+  <% DslCatalog.grouped.each do |group, entries| %>
+    <details class="nav-group" data-nav-group="<%= group %>" <%= "open" if @selected_group == group %>>
+      <summary><%= link_to group.humanize, data_runner_root_path(group: group), class: "nav-group-link" %></summary>
+      <% entries.each do |entry| %>
+        <div class="nav-link" role="link" tabindex="0"
+             onmousedown="window.DataRunnerStartDslDrag && window.DataRunnerStartDslDrag(event, this, 'nav')"
+             data-action="click->dsl-drag#open keydown->dsl-drag#open mousedown->dsl-drag#mousedown"
+             data-sidebar-search-target="item" data-search="<%= "#{entry.key} #{group} #{entry.slug}" %>"
+             data-dsl-slug="<%= entry.slug %>" data-dsl-key="<%= entry.key %>" data-dsl-enabled="<%= entry.enabled? %>"
+             data-href="<%= data_runner_dsl_path(entry.slug) %>"><%= entry.key %></div>
+      <% end %>
+    </details>
+  <% end %>
+  <details class="nav-group">
+    <summary><span class="nav-group-label">Other DSLs</span></summary>
+    <% DslCatalog.ungrouped.each do |entry| %>
+      <div class="nav-link" role="link" tabindex="0"
+           onmousedown="window.DataRunnerStartDslDrag && window.DataRunnerStartDslDrag(event, this, 'nav')"
+           data-action="click->dsl-drag#open keydown->dsl-drag#open mousedown->dsl-drag#mousedown"
+           data-sidebar-search-target="item" data-search="<%= "#{entry.key} #{entry.slug}" %>"
+           data-dsl-slug="<%= entry.slug %>" data-dsl-key="<%= entry.key %>" data-dsl-enabled="<%= entry.enabled? %>"
+           data-href="<%= data_runner_dsl_path(entry.slug) %>"><%= entry.key %></div>
+    <% end %>
+  </details>
+</nav>

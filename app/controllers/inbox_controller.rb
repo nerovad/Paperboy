@@ -152,7 +152,7 @@ class InboxController < ApplicationController
     }
     Array(@columns).each do |col|
       next unless col.sortable?
-      next if col.sort_key == 'reference'
+      next if col.sort_key == "reference"
       extractor = col.value
       configs[col.sort_key] = ->(s) { extractor.call(s).to_s }
     end

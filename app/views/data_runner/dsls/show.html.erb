@@ -1,0 +1,12 @@
+<%= render "data_runner/shared/dsl_header" %>
+<%= render "data_runner/shared/hot_menu" %>
+<pre class="output highlighted-output"><%= syntax_highlight(@source, language: "ruby") %></pre>
+<% if @task_output %>
+  <section class="task-result" aria-live="polite">
+    <div class="task-result-banner <%= @task_status %>">
+      <div><span class="task-result-label">Task output</span><strong>DataRunner:<%= @task_name %></strong></div>
+      <span class="task-result-state"><%= @task_status.humanize %></span>
+    </div>
+    <pre class="task-output-box highlighted-output"><%= syntax_highlight(@task_output, language: "shell") %></pre>
+  </section>
+<% end %>

@@ -1,0 +1,42 @@
+<%= render "data_runner/shared/dsl_header" %>
+<%= render "data_runner/shared/hot_menu" %>
+
+<div class="page-heading output-heading">
+  <div><p class="eyebrow">Download backups</p><h2><%= WorkflowPaths::DOWNLOAD_BACKUP_DIR_NAME %></h2></div>
+  <div class="inline-actions">
+    <% if @files.any? %>
+      <%= button_to "Delete all",
+                    destroy_backup_outputs_data_runner_dsl_path(@dsl.slug),
+                    method: :delete,
+                    class: "button danger",
+                    form: { data: { turbo_confirm: "Delete all backup files for #{@dsl.key}? This cannot be undone." } } %>
+    <% end %>
+    <%= link_to "Close", outputs_data_runner_dsl_path(@dsl.slug), class: "button" %>
+  </div>
+</div>
+
+<section class="card table-wrap"><table><thead><tr>
+  <th><%= link_to "File", backup_outputs_data_runner_dsl_path(@dsl.slug, sort: "file", direction: backup_sort_direction("file")) %></th>
+  <th><%= link_to "Size", backup_outputs_data_runner_dsl_path(@dsl.slug, sort: "size", direction: backup_sort_direction("size")) %></th>
+  <th><%= link_to "Modified", backup_outputs_data_runner_dsl_path(@dsl.slug, sort: "modified", direction: backup_sort_direction("modified")) %></th>
+  <th>Actions</th>
+</tr></thead><tbody>
+  <% @files.each do |file| %>
+    <tr>
+      <td><%= file.basename %></td>
+      <td><%= number_to_human_size(file.size) %></td>
+      <td><%= l(file.mtime, format: :short) %></td>
+      <td>
+        <div class="inline-actions">
+          <%= link_to "View", output_data_runner_dsl_path(@dsl.slug, path: file.relative_path_from(Rails.root)), class: "button" %>
+          <%= button_to "Delete",
+                        destroy_backup_output_data_runner_dsl_path(@dsl.slug, path: file.relative_path_from(Rails.root)),
+                        method: :delete,
+                        class: "button danger",
+                        form: { data: { turbo_confirm: "Delete #{file.basename}? This cannot be undone." } } %>
+        </div>
+      </td>
+    </tr>
+  <% end %>
+  <% if @files.empty? %><tr><td colspan="4">No matching backup files.</td></tr><% end %>
+</tbody></table></section>

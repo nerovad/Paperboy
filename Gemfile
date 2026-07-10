@@ -50,6 +50,12 @@ gem "csv"
 
 # ZIP file generation for report bundles
 gem "rubyzip", require: "zip"
+gem "roo"
+gem "nokogiri"
+gem "rexml"
+gem "rouge"
+gem "jquery-rails"
+gem "jquery-datatables"
 
 # Duo 2 factor auth login
 gem "duo_web"

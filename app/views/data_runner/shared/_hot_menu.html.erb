@@ -1,0 +1,21 @@
+<nav class="hot-menu" aria-label="DSL actions">
+  <%= link_to "Overview", data_runner_dsl_path(@dsl.slug), class: "button" %>
+  <%= link_to "Edit", edit_data_runner_dsl_path(@dsl.slug), class: "button success" %>
+  <% if action_name == "edit" %>
+    <%= submit_tag "Save", class: "button primary", form: "dsl-source-form" %>
+    <%= link_to "Cancel", data_runner_dsl_path(@dsl.slug), class: "button" %>
+  <% else %>
+    <%= button_to "Delete", data_runner_dsl_path(@dsl.slug), method: :delete, class: "button danger",
+                  data: { turbo_confirm: "Delete #{@dsl.key} and its workflow files? This cannot be undone." } %>
+    <%= link_to "Outputs", outputs_data_runner_dsl_path(@dsl.slug), class: "button" %>
+    <details>
+      <summary class="button primary">Run Task</summary>
+      <div class="task-menu">
+        <% (Array(@dsl.config[:commands]).map(&:to_s).presence || TaskRunner::TASKS).each do |task| %>
+          <%= button_to task.humanize, run_data_runner_dsl_path(@dsl.slug), params: { task_name: task },
+                        data: { turbo_confirm: "Run DataRunner:#{task} for #{@dsl.key}?" } %>
+        <% end %>
+      </div>
+    </details>
+  <% end %>
+</nav>

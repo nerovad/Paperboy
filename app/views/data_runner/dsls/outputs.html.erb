@@ -1,0 +1,21 @@
+<%= render "data_runner/shared/dsl_header" %>
+<%= render "data_runner/shared/hot_menu" %>
+<section class="card table-wrap"><table><thead><tr><th>Stage</th><th>File</th><th>Size</th><th>Modified</th></tr></thead><tbody>
+  <% @files.each do |file| %>
+    <tr>
+      <td><%= file.relative_path_from(Rails.root).each_filename.first %></td>
+      <td><%= link_to file.basename, output_data_runner_dsl_path(@dsl.slug, path: file.relative_path_from(Rails.root)) %></td>
+      <td><%= number_to_human_size(file.size) %></td>
+      <td><%= l(file.mtime, format: :short) %></td>
+    </tr>
+  <% end %>
+  <% if @backup_files.any? %>
+    <tr>
+      <td><%= WorkflowPaths::DOWNLOAD_BACKUP_DIR_NAME %></td>
+      <td><%= link_to WorkflowPaths::DOWNLOAD_BACKUP_DIR_NAME, backup_outputs_data_runner_dsl_path(@dsl.slug) %></td>
+      <td><%= pluralize(@backup_files.size, "file") %></td>
+      <td><%= l(@backup_files.map(&:mtime).max, format: :short) %></td>
+    </tr>
+  <% end %>
+  <% if @files.empty? && @backup_files.empty? %><tr><td colspan="4">No matching workflow outputs.</td></tr><% end %>
+</tbody></table></section>

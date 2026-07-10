@@ -72,7 +72,7 @@ module Filterable
   # else the first sortable column, else "reference" (always present/locked).
   def default_sort_key(columns, prefer: [])
     keys = Array(columns).select(&:sortable?).map(&:sort_key)
-    Array(prefer).find { |k| keys.include?(k) } || keys.first || 'reference'
+    Array(prefer).find { |k| keys.include?(k) } || keys.first || "reference"
   end
 
   # Apply SQL-level WHERE clauses to an ActiveRecord scope
