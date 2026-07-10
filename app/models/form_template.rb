@@ -77,7 +77,7 @@ class FormTemplate < ApplicationRecord
   validates :submission_type, inclusion: { in: %w[database approval] }
   validates :approval_routing_to, presence: true, if: :requires_legacy_routing?
   validates :approval_employee_id, presence: true, if: :routes_to_specific_employee?
-  validates :metabase_dashboard_id, presence: true, if: :has_dashboard?
+  validates :metabase_dashboard_id, presence: true, if: :dashboard?
   validates :status_transition_mode, inclusion: { in: TRANSITION_MODES }, allow_nil: true
   validates :reference_prefix,
             uniqueness: { case_sensitive: false },
@@ -104,18 +104,18 @@ class FormTemplate < ApplicationRecord
   end
 
   def requires_legacy_routing?
-    requires_approval? && !has_routing_steps?
+    requires_approval? && !routing_steps?
   end
 
-  def has_routing_steps?
+  def routing_steps?
     routing_steps.any? || pending_routing_steps.present?
   end
 
-  def has_multiple_routing_steps?
+  def multiple_routing_steps?
     routing_steps.count > 1
   end
 
-  def has_dashboard?
+  def dashboard?
     has_dashboard == true
   end
 
@@ -127,7 +127,7 @@ class FormTemplate < ApplicationRecord
     status_transition_mode == 'manual'
   end
 
-  def has_inbox_button?(button_type)
+  def inbox_button?(button_type)
     (inbox_buttons || []).include?(button_type.to_s)
   end
 

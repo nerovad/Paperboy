@@ -17,7 +17,7 @@ class DashboardsController < ApplicationController
                        @dashboard_forms.first
                      end
 
-    return unless @selected_form&.has_dashboard?
+    return unless @selected_form&.dashboard?
 
     @embed_url = MetabaseService.new.embed_url(@selected_form.metabase_dashboard_id)
   end

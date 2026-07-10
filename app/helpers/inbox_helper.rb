@@ -47,9 +47,9 @@ module InboxHelper
     return false unless template
 
     step = current_routing_step_for(submission, template)
-    return step.has_inbox_button?(button_type) if step
+    return step.inbox_button?(button_type) if step
 
-    template.has_inbox_button?(button_type)
+    template.inbox_button?(button_type)
   end
 
   # Find the routing step a submission is currently sitting at, based on its

@@ -112,7 +112,7 @@ namespace :powerbi do
       exit 1
     end
 
-    unless form.has_dashboard?
+    unless form.dashboard?
       puts "ERROR: Form doesn't have Power BI configuration yet"
       puts 'Run: rake powerbi:get_workspace_id to get your workspace ID first'
       exit 1

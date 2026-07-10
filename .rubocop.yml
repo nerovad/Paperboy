@@ -9,7 +9,7 @@ AllCops:
 Layout/LineLength:
   Max: 183
 
-Lint/RedundantCopDisableDirective:
+Layout/ExtraSpacing:
   Enabled: false
 
 Metrics/AbcSize:
@@ -36,14 +36,5 @@ Metrics/PerceivedComplexity:
 Naming/MethodParameterName:
   MinNameLength: 1
 
-Naming/PredicateMethod:
-  Enabled: false
-
-Naming/PredicatePrefix:
-  Enabled: false
-
 Style/Documentation:
-  Enabled: false
-
-Style/OptionalBooleanParameter:
   Enabled: false

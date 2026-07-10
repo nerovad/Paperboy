@@ -1720,7 +1720,7 @@ class FormTemplatesController < ApplicationController
     attrs << disabled_attr if disabled_attr.present?
     attrs << readonly_attr if readonly_attr.present?
     # Add data attribute for dropdowns that have conditional dependencies
-    attrs << "data: { conditional_trigger: '#{field.field_name}' }" if (field.dropdown? || field.choices_dropdown?) && has_conditional_dependents?(field)
+    attrs << "data: { conditional_trigger: '#{field.field_name}' }" if (field.dropdown? || field.choices_dropdown?) && conditional_dependents?(field)
     attrs_str = attrs.join(', ')
 
     # For select/dropdown fields, use disabled instead of readonly (readonly doesn't work on selects)
@@ -1791,7 +1791,7 @@ class FormTemplatesController < ApplicationController
       end
       # Build merged data hash for choices_dropdown (avoid duplicate data: keys)
       data_entries = ['choices_target: "select"', 'placeholder: "Select options..."']
-      data_entries << "conditional_trigger: '#{field.field_name}'" if has_conditional_dependents?(field)
+      data_entries << "conditional_trigger: '#{field.field_name}'" if conditional_dependents?(field)
       # Use select_attrs without the standalone data: key (we merge it into one)
       choices_attrs = select_attrs.reject { |a| a.start_with?('data:') }
       choices_attrs_str = choices_attrs.join(', ')
@@ -2162,7 +2162,7 @@ class FormTemplatesController < ApplicationController
     attrs << disabled_attr if disabled_attr.present?
     attrs << readonly_attr if readonly_attr.present?
     # Add data attribute for dropdowns that have conditional dependencies
-    attrs << "data: { conditional_trigger: '#{field.field_name}' }" if (field.dropdown? || field.choices_dropdown?) && has_conditional_dependents?(field)
+    attrs << "data: { conditional_trigger: '#{field.field_name}' }" if (field.dropdown? || field.choices_dropdown?) && conditional_dependents?(field)
     attrs_str = attrs.join(', ')
 
     # For select/dropdown fields, use disabled instead of readonly (readonly doesn't work on selects)
@@ -2232,7 +2232,7 @@ class FormTemplatesController < ApplicationController
       end
       # Build merged data hash for choices_dropdown (avoid duplicate data: keys)
       edit_data_entries = ['choices_target: "select"', 'placeholder: "Select options..."']
-      edit_data_entries << "conditional_trigger: '#{field.field_name}'" if has_conditional_dependents?(field)
+      edit_data_entries << "conditional_trigger: '#{field.field_name}'" if conditional_dependents?(field)
       edit_choices_attrs = select_attrs.reject { |a| a.start_with?('data:') }
       edit_choices_attrs_str = edit_choices_attrs.join(', ')
       html = ''
@@ -2414,7 +2414,7 @@ class FormTemplatesController < ApplicationController
     end.then { |rendered| wrap_visibility(field, editable_check, rendered) }
   end
 
-  def has_conditional_dependents?(field)
+  def conditional_dependents?(field)
     field.form_template.form_fields.any? { |f| f.conditional_field_id == field.id }
   end
 

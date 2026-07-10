@@ -24,7 +24,7 @@
     </div>
 
     <!-- Dashboard Container -->
-    <% if @selected_form&.has_dashboard? && @embed_url %>
+    <% if @selected_form&.dashboard? && @embed_url %>
       <div class="dashboard-container" data-dashboards-target="container">
         <iframe
           src="<%= @embed_url %>"

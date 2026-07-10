@@ -10,7 +10,7 @@ class FormGenerator
   end
 
   def generate!
-    return false unless validate_template
+    return false unless validate_template?
 
     begin
       generate_model
@@ -31,7 +31,7 @@ class FormGenerator
 
   private
 
-  def validate_template
+  def validate_template?
     if form_template.form_fields.empty?
       @errors << 'Form must have at least one field'
       return false

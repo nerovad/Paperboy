@@ -41,7 +41,7 @@ class FormTemplateRoutingStep < ApplicationRecord
     []
   end
 
-  def has_inbox_button?(button_type)
+  def inbox_button?(button_type)
     inbox_buttons.include?(button_type.to_s)
   end
 
