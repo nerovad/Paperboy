@@ -1813,30 +1813,36 @@ export default class extends Controller {
     const table = panel.querySelector('.answer-lookup-table').value
     const matchSelect = panel.querySelector('.answer-lookup-match-column')
     const returnSelect = panel.querySelector('.answer-lookup-return-column')
+    const returnJoin = panel.querySelector('.answer-lookup-return-join')
     const prevMatch = matchSelect.value
     const prevReturn = returnSelect.value
+    const prevReturnJoin = returnJoin ? Array.from(returnJoin.selectedOptions).map(o => o.value) : []
     if (!table) return
 
     try {
       const res = await fetch(`/lookups/columns?database=${encodeURIComponent(database)}&table=${encodeURIComponent(table)}`)
-      let columns = await res.json()
+      const columns = await res.json()
       // The employees table exposes a synthetic "full_name" (Last, First) key,
-      // mirroring FormLookup.synthetic_columns on the server.
-      if (table === 'employees') columns = [ 'full_name', ...columns ]
-      this.fillAnswerColumnSelect(matchSelect, columns, prevMatch)
-      this.fillAnswerColumnSelect(returnSelect, columns, prevReturn)
+      // mirroring FormLookup.synthetic_columns. It's only offered as a primary
+      // match/return column, never as an extra "join" column.
+      const withSynthetic = table === 'employees' ? [ 'full_name', ...columns ] : columns
+      this.fillAnswerColumnSelect(matchSelect, withSynthetic, prevMatch)
+      this.fillAnswerColumnSelect(returnSelect, withSynthetic, prevReturn)
+      if (returnJoin) this.fillAnswerColumnSelect(returnJoin, columns, prevReturnJoin)
     } catch (e) {
       console.error('Failed to load answer-lookup columns:', e)
     }
   }
 
   fillAnswerColumnSelect(select, columns, current) {
-    select.innerHTML = '<option value="">column...</option>'
+    const selected = Array.isArray(current) ? current : (current ? [ current ] : [])
+    // Multi-selects (join columns) have no blank placeholder; single selects keep one.
+    select.innerHTML = select.multiple ? '' : '<option value="">column...</option>'
     columns.forEach(c => {
       const opt = document.createElement('option')
       opt.value = c
       opt.textContent = c
-      if (c === current) opt.selected = true
+      if (selected.includes(c)) opt.selected = true
       select.appendChild(opt)
     })
   }

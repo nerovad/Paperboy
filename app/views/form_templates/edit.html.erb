@@ -1364,8 +1364,20 @@
                               <option value="">column...</option>
                               <% if al['return_column'].present? %><option value="<%= al['return_column'] %>" selected><%= al['return_column'] %></option><% end %>
                             </select>
+                            <span style="font-size: 0.8em; color: #495057;">+ also</span>
+                            <select class="form-control form-control-sm answer-lookup-return-join" multiple size="3"
+                                    name="fields[][answer_lookup][return_join_columns][]"
+                                    style="width: auto; min-width: 120px;">
+                              <% Array(al['return_join_columns']).each do |jc| %>
+                                <option value="<%= jc %>" selected><%= jc %></option>
+                              <% end %>
+                            </select>
+                            <input type="text" class="form-control form-control-sm answer-lookup-return-separator"
+                                   name="fields[][answer_lookup][return_join_separator]"
+                                   value="<%= al['return_join_separator'] || ' ' %>"
+                                   placeholder="(space)" style="width: 70px;">
                             <small style="flex-basis: 100%; font-size: 0.75em; color: #6c757d; font-style: italic;">
-                              The trigger dropdown's displayed value is matched against the match column, so the trigger should list values from this same table/column. First matching row wins.
+                              The trigger's displayed value is matched against the match column, so the trigger should list values from this same table/column. First matching row wins. Ctrl/&#8984;-click extra columns to combine them into the filled value (e.g. supervisor first + last name), joined by the separator.
                             </small>
                           </div>
                         </div>
@@ -1815,8 +1827,16 @@
                     style="width: auto; min-width: 120px;">
               <option value="">column...</option>
             </select>
+            <span style="font-size: 0.8em; color: #495057;">+ also</span>
+            <select class="form-control form-control-sm answer-lookup-return-join" multiple size="3"
+                    name="fields[][answer_lookup][return_join_columns][]"
+                    style="width: auto; min-width: 120px;">
+            </select>
+            <input type="text" class="form-control form-control-sm answer-lookup-return-separator"
+                   name="fields[][answer_lookup][return_join_separator]"
+                   value=" " placeholder="(space)" style="width: 70px;">
             <small style="flex-basis: 100%; font-size: 0.75em; color: #6c757d; font-style: italic;">
-              The trigger dropdown's displayed value is matched against the match column, so the trigger should list values from this same table/column. First matching row wins.
+              The trigger's displayed value is matched against the match column, so the trigger should list values from this same table/column. First matching row wins. Ctrl/&#8984;-click extra columns to combine them into the filled value (e.g. supervisor first + last name), joined by the separator.
             </small>
           </div>
         </div>

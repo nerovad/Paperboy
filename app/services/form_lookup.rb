@@ -57,13 +57,11 @@ class FormLookup
       next unless row
 
       group.each do |field|
-        rc = field.answer_lookup_config["return_column"]
-        filled =
-          if synthetic.include?(rc)
-            synthesize(table, rc, row)
-          elsif columns.include?(rc)
-            row[rc]
-          end
+        cfg = field.answer_lookup_config
+        filled = combined_value(
+          table, cfg["return_column"], cfg["return_join_columns"],
+          cfg["return_join_separator"], row, columns, synthetic
+        )
         result[field.id] = filled unless filled.nil? || filled.to_s.empty?
       end
     end
@@ -94,12 +92,24 @@ class FormLookup
     conn.exec_query("SELECT TOP 1 * FROM #{qt} WHERE #{where_sql}").first
   end
 
+  # Build the fill value by combining the primary return column with any extra
+  # "join" columns from the same row, in order, separated by `sep` (default a
+  # space). Mirrors the join_columns/join_separator option-source pattern. The
+  # employees "full_name" synthetic key is still honored for back-compat.
+  def self.combined_value(table, primary, join_cols, sep, row, columns, synthetic)
+    return synthesize(table, primary, row) if synthetic.include?(primary)
+
+    cols = ([ primary ] + Array(join_cols)).select { |c| columns.include?(c) }
+    sep  = " " unless sep.is_a?(String) && !sep.empty?
+    cols.map { |c| row[c] }.reject { |v| v.nil? || v.to_s.empty? }.join(sep)
+  end
+
   # Build a synthetic column's value from a fetched row.
   def self.synthesize(table, column, row)
     return nil unless table == "employees" && column == "full_name"
     "#{row['last_name']}, #{row['first_name']}"
   end
-  private_class_method :matched_row, :synthesize
+  private_class_method :matched_row, :combined_value, :synthesize
 
   # Distinct option values (value == label) for a custom-lookup field, ordered.
   # Returns [] for non-custom fields or any invalid/failed config so a bad

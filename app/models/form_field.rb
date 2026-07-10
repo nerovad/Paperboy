@@ -513,10 +513,14 @@ class FormField < ApplicationRecord
 
     columns   = conn.columns(cfg["table"]).map(&:name)
     synthetic = FormLookup.synthetic_columns(cfg["table"])
+    known = ->(col) { col.blank? || columns.include?(col) || synthetic.include?(col) }
+
     [ "match_column", "return_column" ].each do |key|
       col = cfg[key]
-      next if columns.include?(col) || synthetic.include?(col)
-      errors.add(:base, "Answer lookup: #{key.tr('_', ' ')} '#{col}' not found")
+      errors.add(:base, "Answer lookup: #{key.tr('_', ' ')} '#{col}' not found") unless known.call(col)
+    end
+    Array(cfg["return_join_columns"]).each do |col|
+      errors.add(:base, "Answer lookup: join column '#{col}' not found") unless known.call(col)
     end
   rescue => e
     Rails.logger.warn("answer_lookup_config_valid skipped: #{e.class}: #{e.message}")

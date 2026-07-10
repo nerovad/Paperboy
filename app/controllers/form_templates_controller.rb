@@ -535,11 +535,14 @@ class FormTemplatesController < ApplicationController
     if field_data[:answer_mode] == "lookup" && field_data[:answer_lookup].present?
       al = field_data[:answer_lookup]
       if al[:table].present? && al[:match_column].present? && al[:return_column].present?
+        join_sep = al[:return_join_separator].to_s
         options["answer_lookup"] = {
-          "database"      => al[:database].presence || "paperboy",
-          "table"         => al[:table],
-          "match_column"  => al[:match_column],
-          "return_column" => al[:return_column]
+          "database"              => al[:database].presence || "paperboy",
+          "table"                 => al[:table],
+          "match_column"          => al[:match_column],
+          "return_column"         => al[:return_column],
+          "return_join_columns"   => Array(al[:return_join_columns]).reject(&:blank?),
+          "return_join_separator" => (join_sep.empty? ? " " : join_sep)
         }
       end
     end
