@@ -835,12 +835,34 @@ class FormTemplatesController < ApplicationController
   def form_fields_changed?
     return false unless @form_template
 
+    param_fields = params[:fields] || []
+
     current_fields = @form_template.form_fields.ordered.map do |f|
-      { label: f.label, field_type: f.field_type, page_number: f.page_number, required: f.required, read_only: f.read_only || 'none', has_custom_view: f.has_custom_view,
-        options: f.options }
+      {
+        label: f.label, field_type: f.field_type, page_number: f.page_number,
+        required: f.required, read_only: f.read_only || 'none',
+        has_custom_view: f.has_custom_view, options: f.options,
+        # Conditional dependency normalized to the *label* of the target field so
+        # it can be compared against the field_N index refs the builder submits.
+        conditional_on: f.conditional_field&.label,
+        conditional_values: Array(f.conditional_values).map(&:to_s).sort,
+        conditional_answer_on: f.conditional_answer_field&.label,
+        conditional_answer_mappings: normalize_conditional_mappings(f.conditional_answer_mappings)
+      }
     end
 
-    new_fields = (params[:fields] || []).map do |f|
+    # Resolve a submitted conditional ref (either "field_N" index into the
+    # submitted fields, or a raw DB id) to the target field's label.
+    resolve_ref_label = lambda do |ref|
+      ref = ref.to_s
+      if ref =~ /^field_(\d+)$/
+        param_fields[::Regexp.last_match(1).to_i]&.dig(:label).presence
+      elsif ref.to_i.positive?
+        @form_template.form_fields.find_by(id: ref.to_i)&.label
+      end
+    end
+
+    new_fields = param_fields.map do |f|
       {
         label: f[:label],
         field_type: f[:field_type],
@@ -848,6 +870,10 @@ class FormTemplatesController < ApplicationController
         required: f[:required] == '1',
         read_only: f[:read_only].presence || 'none',
         has_custom_view: f[:has_custom_view] == '1',
+        conditional_on: resolve_ref_label.call(f[:conditional_field_id]),
+        conditional_values: Array(f[:conditional_values]).reject(&:blank?).map(&:to_s).sort,
+        conditional_answer_on: resolve_ref_label.call(f[:conditional_answer_field_id]),
+        conditional_answer_mappings: normalize_conditional_mappings(f[:conditional_answer_mappings]),
         options: case f[:field_type]
                  when 'text_box' then { 'rows' => f[:rows].to_i }
                  when 'dropdown', 'choices_dropdown'
@@ -874,6 +900,15 @@ class FormTemplatesController < ApplicationController
     end.reject { |f| f[:label].blank? }
 
     current_fields != new_fields
+  end
+
+  # Normalize conditional-answer mappings (from a DB JSON hash or submitted
+  # params) into a plain hash with blank values stripped, for comparison.
+  def normalize_conditional_mappings(raw)
+    return {} if raw.blank?
+
+    hash = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw
+    hash.to_h.transform_values(&:to_s).reject { |_, v| v.blank? }
   end
 
   def statuses_fields_changed?
@@ -1214,6 +1249,21 @@ class FormTemplatesController < ApplicationController
     # so manually-corrected column names survive rebuild
     existing_field_names = @form_template.form_fields.pluck(:label, :field_name).to_h
 
+    # Preserve existing conditional wiring (keyed by source-field label, with the
+    # *target* field referenced by label too) so links survive the destroy/recreate
+    # even when the builder UI fails to resubmit them (e.g. it resets the trigger
+    # select or value checkboxes on reorder/add/remove). Submitted params still win.
+    existing_conditionals = @form_template.form_fields.ordered.each_with_object({}) do |f, acc|
+      next unless f.conditional? || f.conditional_answer?
+
+      acc[f.label] = {
+        on_label: f.conditional_field&.label,
+        values: Array(f.conditional_values),
+        answer_on_label: f.conditional_answer_field&.label,
+        answer_mappings: f.conditional_answer_mappings
+      }
+    end
+
     @form_template.form_fields.destroy_all
 
     return unless params[:fields].present?
@@ -1222,6 +1272,10 @@ class FormTemplatesController < ApplicationController
     created_fields = []
     conditional_refs = []
     conditional_answer_refs = []
+    # Fields the user explicitly toggled OFF — these must NOT be restored from
+    # the pre-rebuild snapshot even though they submit no conditional data.
+    disabled_conditional = []
+    disabled_answer = []
 
     params[:fields].each_with_index do |field_data, index|
       field = @form_template.form_fields.create!(
@@ -1241,6 +1295,8 @@ class FormTemplatesController < ApplicationController
         has_custom_view: field_data[:has_custom_view] == '1'
       )
       created_fields << field
+      disabled_conditional << field if field_data[:conditional_enabled] == '0'
+      disabled_answer << field if field_data[:conditional_answer_enabled] == '0'
 
       # Store conditional reference if present
       if field_data[:conditional_field_id].present? && field_data[:conditional_values].present?
@@ -1299,6 +1355,30 @@ class FormTemplatesController < ApplicationController
           conditional_answer_mappings: ref_data[:mappings]
         )
       end
+    end
+
+    # Restore any conditional wiring the submission dropped. Fields whose params
+    # carried a conditional, or that the user explicitly toggled off, are left
+    # untouched so intentional edits win; the rest fall back to the pre-rebuild
+    # snapshot, resolving the target by label.
+    fields_with_param_conditional = conditional_refs.map { |r| r[:field] }
+    fields_with_param_answer = conditional_answer_refs.map { |r| r[:field] }
+
+    created_fields.each do |field|
+      snap = existing_conditionals[field.label]
+      next unless snap
+
+      if snap[:on_label].present? && snap[:values].any? &&
+         !fields_with_param_conditional.include?(field) && !disabled_conditional.include?(field)
+        target = created_fields.find { |c| c.label == snap[:on_label] }
+        field.update!(conditional_field_id: target.id, conditional_values: snap[:values]) if target
+      end
+
+      next unless snap[:answer_on_label].present? && snap[:answer_mappings].present?
+      next if fields_with_param_answer.include?(field) || disabled_answer.include?(field)
+
+      target = created_fields.find { |c| c.label == snap[:answer_on_label] }
+      field.update!(conditional_answer_field_id: target.id, conditional_answer_mappings: snap[:answer_mappings]) if target
     end
   end
 
