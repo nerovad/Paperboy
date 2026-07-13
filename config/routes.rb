@@ -3,6 +3,29 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  namespace :data_runner do
+    root 'dsls#index'
+
+    resources :logs
+    resources :dsls, only: %i[index show new create edit update destroy], param: :name do
+      member do
+        post :run
+        get :outputs
+        get 'outputs/backup', to: 'backup_outputs#index', as: :backup_outputs
+        delete 'outputs/backup', to: 'backup_outputs#destroy_all', as: :destroy_backup_outputs
+        delete 'outputs/backup/*path', to: 'backup_outputs#destroy', as: :destroy_backup_output, format: false
+        get 'outputs/*path', action: :output, as: :output, format: false
+      end
+    end
+    get '/dsl_groups/new', to: 'dsls#new_group', as: :new_dsl_group
+    post '/dsl_groups', to: 'dsls#create_group', as: :dsl_groups
+    patch '/dsl_groups/:group', to: 'dsls#update_group', as: :dsl_group
+    patch '/dsl_groups/:group/rename', to: 'dsls#rename_group', as: :rename_dsl_group
+    delete '/dsl_groups/:group', to: 'dsls#destroy_group', as: :destroy_dsl_group
+    post '/dsl_groups/:group/refresh', to: 'dsls#refresh_group', as: :refresh_dsl_group
+    get '/runs/:id', to: 'runs#show', as: :run
+  end
+
   resources :fleet_vehicle_garaging_forms do
     member do
       get :pdf

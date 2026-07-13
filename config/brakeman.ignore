@@ -1,0 +1,46 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Dangerous Eval",
+      "warning_code": 13,
+      "fingerprint": "26465519d2884fc39c356f9b50d5006f57a402992b26619059ce353f89ef7e56",
+      "check_name": "Evaluation",
+      "message": "Dynamic code evaluation",
+      "file": "app/services/dsl_catalog.rb",
+      "line": 44,
+      "link": "https://brakemanscanner.org/docs/warning_types/dangerous_eval/",
+      "code": "TOPLEVEL_BINDING.eval(path.read, path.to_s)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "DslCatalog",
+        "method": "self.load_entries"
+      },
+      "user_input": "path.read",
+      "confidence": "Weak",
+      "note": "DataRunner DSL files are repository-owned Ruby configuration files."
+    },
+    {
+      "warning_type": "File Access",
+      "warning_code": 16,
+      "fingerprint": "bb8db1ccfe3faec1614fb198e2af3cb0dfcf5bd47591c1a9e9873fa5fa272b34",
+      "check_name": "SendFile",
+      "message": "Parameter value used in file name",
+      "file": "app/controllers/data_runner/dsls_controller.rb",
+      "line": 114,
+      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
+      "code": "send_file(WorkflowOutputs.new(DslCatalog.find!(params[:name])).find!(params[:path]), :filename => WorkflowOutputs.new(DslCatalog.find!(params[:name])).find!(params[:path]).basename.to_s, :disposition => :attachment)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "DataRunner::DslsController",
+        "method": "output"
+      },
+      "user_input": "params[:path]",
+      "confidence": "Weak",
+      "note": "WorkflowOutputs#find! cleanpaths and limits files to known workflow output directories."
+    }
+  ],
+  "updated": "2026-07-10 14:08:00 -0700",
+  "brakeman_version": "8.0.5"
+}

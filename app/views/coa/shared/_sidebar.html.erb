@@ -1,0 +1,20 @@
+<div class="sidebar coa-sidebar">
+  <h2>
+    <%= link_to root_path, class: "sidebar-home-link", data: { turbo_frame: "main-content" } do %>
+      <%= image_tag "shouting_paperboy_icon.png",
+                    alt: "Paperboy",
+                    class: "sidebar-logo",
+                    width: 42,
+                    height: 42 %>
+      <span>Paperboy</span>
+    <% end %>
+  </h2>
+
+  <div class="coa-table-links">
+    <% coa_sidebar_resources.each do |model_class| %>
+      <%= link_to model_class.model_name.human(count: 2),
+                  coa_sidebar_collection_path(model_class),
+                  class: "nav-link" %>
+    <% end %>
+  </div>
+</div>

@@ -47,6 +47,11 @@ import AuthorizationSelectController from "controllers/authorization_select_cont
 import StatusHistoryModalController from "controllers/status_history_modal_controller"
 import ContractorSelectsController from "controllers/contractor_selects_controller"
 import DashboardsController from "controllers/dashboards_controller"
+import AccountMenuController from "controllers/account_menu_controller"
+import DslDragController from "controllers/dsl_drag_controller"
+import DslGroupController from "controllers/dsl_group_controller"
+import OutputTableController from "controllers/output_table_controller"
+import SourceEditorController from "controllers/source_editor_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -95,3 +100,8 @@ application.register("authorization-select", AuthorizationSelectController)
 application.register("status-history-modal", StatusHistoryModalController)
 application.register("contractor-selects", ContractorSelectsController)
 application.register("dashboards", DashboardsController)
+application.register("account-menu", AccountMenuController)
+application.register("dsl-drag", DslDragController)
+application.register("dsl-group", DslGroupController)
+application.register("output-table", OutputTableController)
+application.register("source-editor", SourceEditorController)

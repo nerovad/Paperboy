@@ -15,7 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
     <%= javascript_importmap_tags %>
   </head>
-  <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %>">
+  <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %> controller-path-<%= controller_path.tr("/", "-") %>">
 
     <% if (badge = environment_badge) %>
       <div class="env-badge <%= badge[:css_class] %>"><%= badge[:label] %></div>
@@ -109,6 +109,7 @@
                 <% if system_admin? || current_user_dropdown_permissions.include?('dashboards') %>
                   <%= link_to "Dashboards", dashboards_path, class: "btn btn-primary" %>
                 <% end %>
+                <%= link_to "DataRunner", data_runner_root_path, class: "btn btn-info" %>
 
                 <% if system_admin? || current_user_dropdown_permissions.include?('manage_forms') %>
                   <%= link_to "Manage Forms", form_templates_path, class: "btn btn-info" %>

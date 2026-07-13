@@ -3,3 +3,9 @@
 //= link application.js
 //= link_tree ../../javascript/controllers .js
 //= link form_navigation.js
+//= link jquery3.js
+//= link datatables/jquery.dataTables.js
+//= link datatables/extensions/Buttons/dataTables.buttons.js
+//= link datatables/extensions/Buttons/buttons.html5.js
+//= link datatables/extensions/Buttons/buttons.print.js
+//= link datatables/extensions/Responsive/dataTables.responsive.js

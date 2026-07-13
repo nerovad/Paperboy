@@ -1,5 +1,22 @@
 @import "base/tokens";
 
+.coa-home {
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.coa-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.coa-table-links {
+  display: grid;
+  gap: 8px;
+}
+
 .coa-page {
   max-width: 1200px;
   margin: 0 auto;
@@ -95,6 +112,10 @@
 }
 
 @media (max-width: 768px) {
+  .coa-home {
+    height: 100vh;
+  }
+
   .coa-page {
     padding: 16px;
   }

@@ -1,0 +1,10 @@
+<%= render "data_runner/shared/dsl_header" %>
+<%= render "data_runner/shared/hot_menu" %>
+<%= form_with url: data_runner_dsl_path(@dsl.slug), method: :patch, id: "dsl-source-form", class: "dsl-source-form" do %>
+  <div class="code-editor-wrap" data-controller="source-editor">
+    <pre class="code-editor-highlight highlighted-output" data-source-editor-target="highlight" aria-hidden="true"><%= syntax_highlight(@source, language: "ruby") %></pre>
+    <%= text_area_tag :source, @source, class: "code-editor code-editor-input",
+                      data: { source_editor_target: "input", action: "input->source-editor#update scroll->source-editor#syncScroll" },
+                      spellcheck: false, aria: { label: "DSL source" } %>
+  </div>
+<% end %>

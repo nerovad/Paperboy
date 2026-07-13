@@ -1,0 +1,11 @@
+<% if log.errors.any? %><div class="flash alert"><%= log.errors.full_messages.to_sentence %></div><% end %>
+<% form_url = log.persisted? ? data_runner_log_path(log) : data_runner_logs_path %>
+<%= form_with model: log, url: form_url, scope: :data_runner_log, class: "record-form" do |form| %>
+  <% %i[run_id command script arguments selector exit_status duration_ms cwd host_name os_user process_id git_sha error_class error_message].each do |field| %>
+    <div class="field"><%= form.label field %><%= form.text_field field %></div>
+  <% end %>
+  <div class="field"><%= form.label :status %><%= form.select :status, DataRunner::Log::STATUSES %></div>
+  <div class="field"><%= form.label :started_at %><%= form.datetime_local_field :started_at %></div>
+  <div class="field"><%= form.label :completed_at %><%= form.datetime_local_field :completed_at %></div>
+  <div class="form-actions"><%= form.submit class: "button primary" %></div>
+<% end %>

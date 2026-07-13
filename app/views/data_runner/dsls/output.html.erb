@@ -1,0 +1,37 @@
+<%= render "data_runner/shared/dsl_header" %>
+<%= render "data_runner/shared/hot_menu" %>
+<% if @output.kind.in?(%w[csv xlsx]) %>
+  <% content_for :head do %>
+    <%= javascript_include_tag "jquery3" %>
+    <%= javascript_include_tag "datatables/jquery.dataTables" %>
+    <%= javascript_include_tag "datatables/extensions/Buttons/dataTables.buttons" %>
+    <%= javascript_include_tag "datatables/extensions/Buttons/buttons.html5" %>
+    <%= javascript_include_tag "datatables/extensions/Buttons/buttons.print" %>
+    <%= javascript_include_tag "datatables/extensions/Responsive/dataTables.responsive" %>
+  <% end %>
+<% end %>
+<div class="page-heading output-heading">
+  <div><p class="eyebrow"><%= @output.kind.upcase %> output</p><h2><%= @output.path.relative_path_from(Rails.root) %></h2></div>
+  <div class="inline-actions">
+    <%= link_to "Download file", output_data_runner_dsl_path(@dsl.slug, path: @output.path.relative_path_from(Rails.root), download: 1), class: "button" %>
+    <% if @backup_output %><%= link_to "Close", backup_outputs_data_runner_dsl_path(@dsl.slug), class: "button" %><% end %>
+  </div>
+</div>
+
+<% if @output.kind == "sql" %>
+  <pre class="output highlighted-output"><%= syntax_highlight(@output.content, language: "sql") %></pre>
+<% else %>
+  <section class="card output-table-wrap">
+    <table class="output-table datatable-output" data-controller="output-table" data-export-title="<%= @output.path.basename %>">
+      <thead>
+        <tr><% @output.headers.each do |header| %><th><%= header %></th><% end %></tr>
+        <tr class="column-filters"><% @output.headers.each do |header| %><th><input type="search" placeholder="Filter <%= header.presence || 'column' %>"></th><% end %></tr>
+      </thead>
+      <tbody>
+        <% @output.rows.each do |row| %><tr><% row.each do |cell| %><td><%= cell %></td><% end %></tr><% end %>
+      </tbody>
+    </table>
+  </section>
+<% end %>
+
+<% if @output.truncated? %><p class="output-limit">Preview limited to the first <%= WorkflowOutputPresenter::MAX_ROWS %> rows.</p><% end %>

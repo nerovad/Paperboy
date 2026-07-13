@@ -2,7 +2,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["input", "formLink", "formsList"]
+  static targets = ["input", "formLink", "formsList", "item"]
 
   connect() {
     // Store original form names before any modifications
@@ -15,6 +15,11 @@ export default class extends Controller {
   }
 
   filter() {
+    if (this.hasItemTarget) {
+      this.filterItems()
+      return
+    }
+
     const searchTerm = this.inputTarget.value.toLowerCase().trim()
 
     if (searchTerm === "") {
@@ -109,6 +114,37 @@ export default class extends Controller {
       // Reorder in DOM
       this.formsListTarget.appendChild(link)
     })
+  }
+
+  filterItems() {
+    const query = this.inputTarget.value.toLowerCase().trim()
+    const scored = this.itemTargets.map(item => ({ item, score: this.score(query, item.dataset.search) }))
+
+    scored.sort((a, b) => b.score - a.score || a.item.dataset.search.localeCompare(b.item.dataset.search))
+    scored.forEach(({ item, score }) => {
+      item.hidden = query !== "" && score === 0
+      item.parentElement.appendChild(item)
+    })
+  }
+
+  score(pattern, text) {
+    if (pattern === "") return 1
+
+    let at = 0
+    let score = 0
+    let previous = -2
+    const value = text.toLowerCase()
+
+    for (let index = 0; index < value.length && at < pattern.length; index += 1) {
+      if (value[index] !== pattern[at]) continue
+
+      score += index === previous + 1 ? 8 : 2
+      score += index === 0 || " _-/".includes(value[index - 1]) ? 10 : 0
+      previous = index
+      at += 1
+    }
+
+    return at === pattern.length ? score + 100 : 0
   }
 
   fuzzyMatch(pattern, text) {

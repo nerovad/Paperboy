@@ -2,6 +2,13 @@
 
 # app/helpers/application_helper.rb
 module ApplicationHelper
+  def syntax_highlight(source, language: nil, filename: nil)
+    lexer = Rouge::Lexer.find_fancy(language || filename, source) || Rouge::Lexers::PlainText
+    formatter = Rouge::Formatters::HTML.new(css_class: 'highlight')
+
+    formatter.format(lexer.lex(source.to_s)).html_safe
+  end
+
   def current_user
     session[:user]
   end

@@ -1,0 +1,13 @@
+<div class="dsl-header">
+  <p class="eyebrow"><%= @dsl.group&.humanize || "Other DSLs" %></p>
+  <h1><%= @dsl.key %></h1>
+  <div class="detail-grid">
+    <section class="card"><h2>Source</h2><dl><dt>Strategy</dt><dd><%= @dsl.config.dig(:source, :strategy) || "-" %></dd><dt>File</dt><dd><%= @dsl.config.dig(:source, :local) || "-" %></dd></dl></section>
+    <section class="card"><h2>Destination</h2>
+      <% @dsl.config.fetch(:database_connections, []).each do |connection| %>
+        <p><code><%= [connection[:host], connection[:database], connection[:schema], connection[:table]].compact.join(".") %></code></p>
+      <% end %>
+    </section>
+    <section class="card"><h2>Workflow</h2><p><%= @dsl.config.dig(:steps, :enabled) ? "Enabled" : "Disabled" %></p><p><%= pluralize(@dsl.config.fetch(:header, []).size, "mapped column") %></p></section>
+  </div>
+</div>

@@ -1,0 +1,64 @@
+<% if user_signed_in? %>
+  <div class="page-heading"><div><p class="eyebrow">ETL control center</p><h1><%= @selected_group ? @selected_group.humanize : "DataRunner DSLs" %></h1></div></div>
+  <% if @selected_group %>
+    <%= form_with url: data_runner_dsl_group_path(@selected_group), method: :patch, class: "control-center",
+                  data: { controller: "dsl-group", dsl_group_selected_group_value: @selected_group,
+                          dsl_group_catalog_value: DslCatalog.entries.to_h { |entry| [entry.slug, { slug: entry.slug, key: entry.key, enabled: entry.enabled? }] }.to_json } do %>
+      <div class="control-center-toolbar">
+        <span data-dsl-group-target="count"><%= pluralize(@selected_entries.size, "DSL") %> in this group</span>
+        <div class="control-center-actions">
+          <%= submit_tag "Save DSLs", class: "button primary" %>
+          <div class="field compact inline-field">
+            <%= text_field_tag :new_group_name, nil,
+                               required: true,
+                               form: "rename-group-form",
+                               placeholder: "Rename dslGroup name",
+                               aria: { label: "Group name" },
+                               data: { dsl_group_target: "renameInput", action: "input->dsl-group#syncRenameButton" } %>
+          </div>
+          <%= button_tag "Update", type: "submit", class: "button",
+                         form: "rename-group-form",
+                         disabled: true,
+                         data: { dsl_group_target: "renameButton",
+                                 turbo_confirm: "Rename #{@selected_group.humanize}?" } %>
+          <%= button_tag "Delete", type: "submit", class: "button danger",
+                         form: "delete-group-form",
+                         data: { turbo_confirm: "Delete #{@selected_group.humanize} and remove it from associated DSLs?" } %>
+          <%= button_tag "Refresh", type: "submit", class: "button success",
+                         form: "refresh-group-form",
+                         data: { turbo_confirm: "Run DataRunner:refresh for #{@selected_group.humanize}?" } %>
+        </div>
+      </div>
+      <div class="dsl-dropzone" data-dsl-group-target="dropzone">
+        <div class="dsl-list" data-dsl-group-target="list">
+          <% @selected_entries.each do |entry| %>
+            <div class="dsl-pill <%= 'enabled' if entry.enabled? %>"
+                 data-dsl-group-target="item" data-dsl-slug="<%= entry.slug %>" data-dsl-key="<%= entry.key %>"
+                 data-dsl-enabled="<%= entry.enabled? %>"
+                 role="link" tabindex="0" data-href="<%= data_runner_dsl_path(entry.slug) %>"
+                 onmousedown="window.DataRunnerStartDslDrag && window.DataRunnerStartDslDrag(event, this, 'group')"
+                 data-action="click->dsl-group#open keydown->dsl-group#open mousedown->dsl-group#mousedown">
+              <span><%= entry.key %></span>
+              <%= hidden_field_tag "dsl_slugs[]", entry.slug %>
+            </div>
+          <% end %>
+        </div>
+        <p class="empty-palette" data-dsl-group-target="empty" <%= "hidden" if @selected_entries.any? %>>Drop DSLs here.</p>
+      </div>
+    <% end %>
+    <%= form_with url: data_runner_rename_dsl_group_path(@selected_group), method: :patch, id: "rename-group-form" do %><% end %>
+    <%= form_with url: data_runner_destroy_dsl_group_path(@selected_group), method: :delete, id: "delete-group-form" do %><% end %>
+    <%= form_with url: data_runner_refresh_dsl_group_path(@selected_group), method: :post, id: "refresh-group-form" do %><% end %>
+  <% else %>
+    <section class="empty-control-center">
+      <p class="eyebrow">No group selected</p>
+      <h2>Empty palette</h2>
+    </section>
+  <% end %>
+<% else %>
+  <section class="login-panel">
+    <p class="eyebrow">County of Ventura GSA</p><h1>DataRunner</h1>
+    <p>Sign in with your employee account to manage ETL workflows.</p>
+    <%= button_to "Employee sign in", auth_setup_path, method: :post, data: { turbo: false }, class: "button primary large" %>
+  </section>
+<% end %>

@@ -5,6 +5,19 @@
 /public/assets/*
 
 .env
+*.png
+00_Inbox/
+01_Download/
+02_Normalized/
+03_SQL_MAP/
+04_SQL_SCHEMA/
+05_DSL_Applied/
+06_Download_Backup/
+/config/master.key
+/config/credentials.yml.enc
+!/tmp/pids/
+/tmp/pids/*
+!/tmp/pids/.keep
 
 # Per-environment bundler config (set BUNDLE_WITHOUT via deploy env, do not commit)
 /.bundle/

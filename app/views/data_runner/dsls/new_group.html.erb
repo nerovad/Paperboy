@@ -1,0 +1,13 @@
+<div class="page-heading"><div><p class="eyebrow">ETL control center</p><h1>New Group</h1></div></div>
+
+<section class="card">
+  <%= form_with url: data_runner_dsl_groups_path, method: :post, class: "new-dsl-form" do %>
+    <div class="field">
+      <%= label_tag :group_name, "Group name" %>
+      <%= text_field_tag :group_name, nil, required: true, autofocus: true %>
+    </div>
+    <div class="form-actions">
+      <%= submit_tag "Add group name", class: "button primary" %>
+    </div>
+  <% end %>
+</section>

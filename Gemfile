@@ -51,6 +51,12 @@ gem 'prawn-templates'
 gem 'csv'
 
 # ZIP file generation for report bundles
+gem 'jquery-datatables'
+gem 'jquery-rails'
+gem 'nokogiri'
+gem 'rexml'
+gem 'roo'
+gem 'rouge'
 gem 'rubyzip', require: 'zip'
 
 # Duo 2 factor auth login
