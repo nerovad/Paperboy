@@ -21,7 +21,7 @@
 }
 
 /* Push content below the fixed logo / profile bar — except on the homepage */
-body:not(.page-forms-home) #main-content {
+body:not(.page-forms-home):not(.controller-path-coa-list) #main-content {
   padding-top: 80px;
 
   @media (max-width: 768px) {

@@ -1,31 +1,15 @@
-<section class="coa-page">
-  <div class="coa-header">
-    <div>
-      <h1>Chart of Accounts</h1>
-      <p class="coa-subtitle">Manage Paperboy chart of account lookup tables.</p>
+<section class="coa-home">
+  <div class="forms-homepage-wrapper">
+    <div class="slideshow" data-controller="slideshow">
+      <div data-slideshow-target="slide" class="slide active">
+        <%= image_tag "VenturaPier.png", alt: "Ventura coastline" %>
+      </div>
+      <div data-slideshow-target="slide" class="slide">
+        <%= image_tag "VenturaCross.png", alt: "Ventura hills" %>
+      </div>
+      <div data-slideshow-target="slide" class="slide">
+        <%= image_tag "VenturaCityHall.png", alt: "Ventura city hall" %>
+      </div>
     </div>
-  </div>
-
-  <div class="table-wrapper coa-table-wrapper">
-    <table class="submission-table coa-table">
-      <thead>
-        <tr>
-          <th>Table</th>
-          <th>Rows</th>
-          <th class="coa-actions-column">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% coa_resources.each do |model_class| %>
-          <tr>
-            <td><%= model_class.model_name.human(count: 2) %></td>
-            <td><%= number_with_delimiter(model_class.count) %></td>
-            <td class="coa-actions">
-              <%= link_to "Open", collection_path(model_class), class: "form-btn form-btn--secondary" %>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
   </div>
 </section>

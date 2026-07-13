@@ -1,5 +1,7 @@
 <% if controller_path.start_with?("data_runner/") %>
   <%= render "data_runner/shared/sidebar" %>
+<% elsif controller_path.start_with?("coa/") %>
+  <%= render "coa/shared/sidebar" %>
 <% else %>
   <%= render "shared/paperboy_sidebar" %>
 <% end %>
