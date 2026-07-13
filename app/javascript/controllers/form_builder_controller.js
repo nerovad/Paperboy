@@ -51,6 +51,13 @@ export default class extends Controller {
 
   connect() {
     console.log("Form Builder controller connected")
+
+    // Monotonic id used to give every field-item a stable identity so conditional
+    // references survive reorder/add/remove (positional field_N indices don't).
+    this.fieldUidSeq = 0
+    this.fieldsContainerTarget?.querySelectorAll('.field-item').forEach(f => this.assignFieldUid(f))
+    this.initializeConditionalUids()
+
     // Add one field by default only if we're in the create modal (not edit page)
     if (!this.editModeValue) {
       const template = document.getElementById('field-template')
@@ -107,6 +114,34 @@ export default class extends Controller {
     })
   }
 
+  // Give a field-item a stable uid if it doesn't have one yet, so conditional
+  // references can track a target across reorder/add/remove.
+  assignFieldUid(fieldItem) {
+    if (fieldItem && !fieldItem.dataset.fieldUid) {
+      fieldItem.dataset.fieldUid = `f${this.fieldUidSeq++}`
+    }
+  }
+
+  // Translate the server-rendered "field_N" conditional refs into stable uids so
+  // later reorder/add/remove can re-resolve them to the correct positional index.
+  initializeConditionalUids() {
+    if (!this.hasFieldsContainerTarget) return
+    const allFields = Array.from(this.fieldsContainerTarget.querySelectorAll('.field-item'))
+
+    const remember = (select) => {
+      if (!select || !select.value) return
+      const match = select.value.match(/^field_(\d+)$/)
+      if (!match) return
+      const target = allFields[parseInt(match[1])]
+      if (target) select.dataset.selectedUid = target.dataset.fieldUid
+    }
+
+    allFields.forEach(field => {
+      remember(field.querySelector('.conditional-field-select'))
+      remember(field.querySelector('.conditional-answer-field-select'))
+    })
+  }
+
   // Initialize SortableJS for drag-and-drop field reordering
   initializeSortable() {
     if (this.hasFieldsContainerTarget) {
@@ -118,6 +153,9 @@ export default class extends Controller {
         dragClass: 'field-item-drag',
         onEnd: () => {
           this.updateFieldPositions()
+          // Field positions changed, so every field_N conditional ref must be
+          // re-resolved to its target's new index.
+          this.refreshConditionalDropdowns()
         }
       })
     }
@@ -1047,11 +1085,15 @@ export default class extends Controller {
     // Populate restriction dropdowns for the newly added field
     const addedField = this.fieldsContainerTarget.lastElementChild
     if (addedField) {
+      this.assignFieldUid(addedField)
       this.populateRestrictionDropdowns(addedField)
     }
 
     // Update position indicators
     this.updateFieldPositions()
+    // A new trailing field doesn't shift existing indices, but refresh so other
+    // fields can offer it as a conditional target.
+    this.refreshConditionalDropdowns()
   }
 
   // Remove a field
@@ -1062,6 +1104,9 @@ export default class extends Controller {
       fieldItem.remove()
       // Update position indicators
       this.updateFieldPositions()
+      // Removing a field shifts the indices of everything after it, so re-resolve
+      // all field_N conditional refs.
+      this.refreshConditionalDropdowns()
     }
   }
 
@@ -1429,6 +1474,11 @@ export default class extends Controller {
     const conditionalConfig = fieldItem.querySelector('.conditional-config')
     const isChecked = event.target.checked
 
+    // Record the toggle state so the server can distinguish an intentional "off"
+    // from a conditional the builder simply failed to resubmit.
+    const enabledInput = fieldItem.querySelector('.conditional-enabled-input')
+    if (enabledInput) enabledInput.value = isChecked ? '1' : '0'
+
     if (conditionalConfig) {
       conditionalConfig.style.display = isChecked ? 'block' : 'none'
 
@@ -1438,7 +1488,10 @@ export default class extends Controller {
       } else {
         // Clear conditional field selection when unchecked
         const conditionalSelect = fieldItem.querySelector('.conditional-field-select')
-        if (conditionalSelect) conditionalSelect.value = ''
+        if (conditionalSelect) {
+          conditionalSelect.value = ''
+          conditionalSelect.dataset.selectedUid = ''
+        }
         const valuesContainer = fieldItem.querySelector('.conditional-values-container')
         if (valuesContainer) {
           valuesContainer.innerHTML = '<span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a dropdown field first</span>'
@@ -1452,8 +1505,10 @@ export default class extends Controller {
     const conditionalSelect = fieldItem.querySelector('.conditional-field-select')
     if (!conditionalSelect) return
 
-    // Preserve current selection to restore after rebuild
-    const currentValue = conditionalSelect.value
+    // Preserve the selected *target* by its stable uid (positional field_N values
+    // become stale after reorder/add/remove).
+    const selectedUid = conditionalSelect.dataset.selectedUid ||
+      conditionalSelect.selectedOptions[0]?.dataset.fieldUid || ''
 
     // Get all dropdown fields from the form
     const allFields = this.fieldsContainerTarget.querySelectorAll('.field-item')
@@ -1473,9 +1528,10 @@ export default class extends Controller {
       // Only include dropdown fields (regular and choices)
       if (typeSelect && (typeSelect.value === 'dropdown' || typeSelect.value === 'choices_dropdown') && labelInput) {
         const option = document.createElement('option')
-        option.value = `field_${index}` // Use index as identifier
+        option.value = `field_${index}` // Positional identifier submitted to the server
         option.textContent = labelInput.value || `Field ${index + 1}`
         option.dataset.fieldIndex = index
+        option.dataset.fieldUid = field.dataset.fieldUid || ''
 
         // Store dropdown values if available
         if (dropdownValuesInput && dropdownValuesInput.value) {
@@ -1488,11 +1544,15 @@ export default class extends Controller {
       }
     })
 
-    // Restore selection if it still exists in the new options
-    if (currentValue) {
-      const matchingOption = conditionalSelect.querySelector(`option[value="${currentValue}"]`)
+    // Restore selection by uid so it follows the target field across reindexing.
+    if (selectedUid) {
+      const matchingOption = Array.from(conditionalSelect.options).find(o => o.dataset.fieldUid === selectedUid)
       if (matchingOption) {
-        conditionalSelect.value = currentValue
+        conditionalSelect.value = matchingOption.value
+        conditionalSelect.dataset.selectedUid = selectedUid
+      } else {
+        // Target no longer exists (e.g. it was deleted) — drop the stale ref.
+        conditionalSelect.dataset.selectedUid = ''
       }
     }
   }
@@ -1504,6 +1564,15 @@ export default class extends Controller {
     const selectedOption = event.target.selectedOptions[0]
 
     if (!valuesContainer) return
+
+    // Keep the select's remembered target uid in sync with the chosen option.
+    event.target.dataset.selectedUid = selectedOption?.dataset.fieldUid || ''
+
+    // Preserve which trigger values were already checked so a rebuild (e.g. the
+    // trigger dropdown's own values changed) doesn't silently clear the choices.
+    const previouslyChecked = new Set(
+      Array.from(valuesContainer.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value)
+    )
 
     // Clear existing checkboxes
     valuesContainer.innerHTML = ''
@@ -1551,6 +1620,7 @@ export default class extends Controller {
       checkbox.type = 'checkbox'
       checkbox.name = 'fields[][conditional_values][]'
       checkbox.value = value
+      if (previouslyChecked.has(value)) checkbox.checked = true
 
       label.appendChild(checkbox)
       label.appendChild(document.createTextNode(value))
@@ -1637,6 +1707,9 @@ export default class extends Controller {
     const config = fieldItem.querySelector('.conditional-answer-config')
     const isChecked = event.target.checked
 
+    const enabledInput = fieldItem.querySelector('.conditional-answer-enabled-input')
+    if (enabledInput) enabledInput.value = isChecked ? '1' : '0'
+
     if (config) {
       config.style.display = isChecked ? 'block' : 'none'
 
@@ -1644,7 +1717,10 @@ export default class extends Controller {
         this.updateConditionalAnswerFieldDropdown(fieldItem)
       } else {
         const answerSelect = fieldItem.querySelector('.conditional-answer-field-select')
-        if (answerSelect) answerSelect.value = ''
+        if (answerSelect) {
+          answerSelect.value = ''
+          answerSelect.dataset.selectedUid = ''
+        }
         const mappingsContainer = fieldItem.querySelector('.conditional-answer-mappings-container')
         if (mappingsContainer) {
           mappingsContainer.innerHTML = '<span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a trigger dropdown first</span>'
@@ -1664,7 +1740,8 @@ export default class extends Controller {
     const answerSelect = fieldItem.querySelector('.conditional-answer-field-select')
     if (!answerSelect) return
 
-    const currentValue = answerSelect.value
+    const selectedUid = answerSelect.dataset.selectedUid ||
+      answerSelect.selectedOptions[0]?.dataset.fieldUid || ''
     const allFields = this.fieldsContainerTarget.querySelectorAll('.field-item')
     const currentFieldIndex = Array.from(allFields).indexOf(fieldItem)
 
@@ -1682,6 +1759,7 @@ export default class extends Controller {
         option.value = `field_${index}`
         option.textContent = labelInput.value || `Field ${index + 1}`
         option.dataset.fieldIndex = index
+        option.dataset.fieldUid = field.dataset.fieldUid || ''
 
         if (dropdownValuesInput && dropdownValuesInput.value) {
           option.dataset.values = JSON.stringify(
@@ -1693,9 +1771,14 @@ export default class extends Controller {
       }
     })
 
-    if (currentValue) {
-      const matchingOption = answerSelect.querySelector(`option[value="${currentValue}"]`)
-      if (matchingOption) answerSelect.value = currentValue
+    if (selectedUid) {
+      const matchingOption = Array.from(answerSelect.options).find(o => o.dataset.fieldUid === selectedUid)
+      if (matchingOption) {
+        answerSelect.value = matchingOption.value
+        answerSelect.dataset.selectedUid = selectedUid
+      } else {
+        answerSelect.dataset.selectedUid = ''
+      }
     }
   }
 
@@ -1706,6 +1789,17 @@ export default class extends Controller {
     const selectedOption = event.target.selectedOptions[0]
 
     if (!mappingsContainer) return
+
+    // Keep the trigger select's remembered target uid in sync.
+    event.target.dataset.selectedUid = selectedOption?.dataset.fieldUid || ''
+
+    // Preserve existing trigger-value → answer selections across the rebuild.
+    const previousMappings = {}
+    mappingsContainer.querySelectorAll('select[name^="fields[][conditional_answer_mappings]"]').forEach(sel => {
+      const key = sel.name.match(/\[conditional_answer_mappings\]\[(.*)\]$/)?.[1]
+      if (key !== undefined && sel.value) previousMappings[key] = sel.value
+    })
+
     mappingsContainer.innerHTML = ''
 
     if (!selectedOption || !selectedOption.value) {
@@ -1775,6 +1869,11 @@ export default class extends Controller {
         opt.textContent = answerValue
         select.appendChild(opt)
       })
+
+      // Restore a previously-chosen answer for this trigger value.
+      if (previousMappings[triggerValue] !== undefined) {
+        select.value = previousMappings[triggerValue]
+      }
 
       row.appendChild(label)
       row.appendChild(arrow)
