@@ -36,7 +36,7 @@
 <% button_source = current_step || template %>
 
 <!-- View PDF -->
-<% if button_source.has_inbox_button?('view_pdf') %>
+<% if button_source.inbox_button?('view_pdf') %>
   <% pdf_path = inbox_pdf_path(submission) %>
   <% if pdf_path %>
     <%= link_to "View PDF", pdf_path, class: "btn pdf", target: "_blank", data: { turbo: false } %>
@@ -44,7 +44,7 @@
 <% end %>
 
 <!-- Edit -->
-<% if button_source.has_inbox_button?('edit') %>
+<% if button_source.inbox_button?('edit') %>
   <% edit_path = inbox_edit_path(submission) %>
   <% if edit_path %>
     <%= link_to "Edit", edit_path, class: "btn edit", data: { turbo: false } %>
@@ -52,7 +52,7 @@
 <% end %>
 
 <!-- Status Dropdown -->
-<% if button_source.has_inbox_button?('status_dropdown') %>
+<% if button_source.inbox_button?('status_dropdown') %>
   <% status_path = inbox_update_status_path(submission) %>
   <% status_options = inbox_status_options(submission) %>
   <% if status_path && status_options.any? %>
@@ -69,7 +69,7 @@
 <% end %>
 
 <!-- Approve -->
-<% if button_source.has_inbox_button?('approve') %>
+<% if button_source.inbox_button?('approve') %>
   <% approve_path = inbox_approve_path(submission) %>
   <% if approve_path %>
     <% approve_label = button_source.respond_to?(:approve_button_text) ? button_source.approve_button_text : "Approve" %>
@@ -81,7 +81,7 @@
 <% end %>
 
 <!-- Deny -->
-<% if button_source.has_inbox_button?('deny') %>
+<% if button_source.inbox_button?('deny') %>
   <% deny_path = inbox_deny_path(submission) %>
   <% if deny_path %>
     <% deny_label = button_source.respond_to?(:deny_button_text) ? button_source.deny_button_text : "Deny" %>
@@ -96,7 +96,7 @@
 <% end %>
 
 <!-- Reassign -->
-<% if button_source.has_inbox_button?('reassign') %>
+<% if button_source.inbox_button?('reassign') %>
   <button type="button"
           class="btn reassign"
           data-action="click->reassign-modal#open"
@@ -108,7 +108,7 @@
 <% end %>
 
 <!-- Take Back -->
-<% if button_source.has_inbox_button?('take_back') %>
+<% if button_source.inbox_button?('take_back') %>
   <% if submission.respond_to?(:can_take_back?) && submission.can_take_back?(session.dig(:user, "employee_id")) %>
     <%= button_to "Take Back",
           take_back_task_reassignments_path,
@@ -124,7 +124,7 @@
 <% end %>
 
 <!-- Status History -->
-<% if button_source.has_inbox_button?('status_history') %>
+<% if button_source.inbox_button?('status_history') %>
   <button type="button"
           class="btn status-history"
           data-action="click->status-history-modal#open"

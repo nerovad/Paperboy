@@ -1,0 +1,21 @@
+<section class="coa-page">
+  <div class="coa-header">
+    <div>
+      <h1><%= resource_title %></h1>
+      <p class="coa-subtitle">Chart of account record details.</p>
+    </div>
+    <div class="coa-header-actions">
+      <%= link_to "Back", collection_path, class: "form-btn form-btn--secondary" %>
+      <%= link_to "Edit", edit_record_path(record), class: "form-btn" %>
+    </div>
+  </div>
+
+  <dl class="coa-detail-list">
+    <% display_columns.each do |column_name| %>
+      <div class="coa-detail-row">
+        <dt><%= column_name.humanize %></dt>
+        <dd><%= record.public_send(column_name) %></dd>
+      </div>
+    <% end %>
+  </dl>
+</section>

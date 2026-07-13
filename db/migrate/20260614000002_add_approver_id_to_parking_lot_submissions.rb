@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddApproverIdToParkingLotSubmissions < ActiveRecord::Migration[8.0]
   def change
     # Brings parking onto the form-builder's dynamic inbox path (which keys off

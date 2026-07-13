@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddConditionToFormTemplateRoutingSteps < ActiveRecord::Migration[8.0]
   def change
     add_column :form_template_routing_steps, :condition_field_id, :integer

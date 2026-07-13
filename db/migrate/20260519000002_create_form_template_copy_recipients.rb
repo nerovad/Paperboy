@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateFormTemplateCopyRecipients < ActiveRecord::Migration[8.0]
   def change
     create_table :form_template_copy_recipients do |t|

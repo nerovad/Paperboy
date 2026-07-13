@@ -1,25 +1,27 @@
+# frozen_string_literal: true
+
 # app/controllers/lookup_tables_controller.rb
 class LookupTablesController < ApplicationController
   TABLES = [
-    { key: "agencies",         name: "Agencies",         table: "agencies" },
-    { key: "divisions",        name: "Divisions",        table: "divisions" },
-    { key: "departments",      name: "Departments",      table: "departments" },
-    { key: "units",            name: "Units",            table: "units" },
-    { key: "sub_units",        name: "Sub Units",        table: "sub_units" },
-    { key: "activities",       name: "Activities",       table: "activities" },
-    { key: "functions",        name: "Functions",        table: "functions" },
-    { key: "funds",            name: "Funds",            table: "funds" },
-    { key: "department_funds", name: "Department Funds", table: "department_funds" },
-    { key: "major_programs",   name: "Major Programs",   table: "major_programs" },
-    { key: "programs",         name: "Programs",         table: "programs" },
-    { key: "phases",           name: "Phases",           table: "phases" },
-    { key: "tasks",            name: "Tasks",            table: "tasks" },
-    { key: "objects",          name: "Objects",          table: "objects" },
-    { key: "sub_objects",      name: "Sub Objects",      table: "sub_objects" },
-    { key: "revenue_sources",  name: "Revenue Sources",  table: "revenue_sources" }
+    { key: 'agencies',         name: 'Agencies',         table: 'agencies' },
+    { key: 'divisions',        name: 'Divisions',        table: 'divisions' },
+    { key: 'departments',      name: 'Departments',      table: 'departments' },
+    { key: 'units',            name: 'Units',            table: 'units' },
+    { key: 'sub_units',        name: 'Sub Units',        table: 'sub_units' },
+    { key: 'activities',       name: 'Activities',       table: 'activities' },
+    { key: 'functions',        name: 'Functions',        table: 'functions' },
+    { key: 'funds',            name: 'Funds',            table: 'funds' },
+    { key: 'department_funds', name: 'Department Funds', table: 'department_funds' },
+    { key: 'major_programs',   name: 'Major Programs',   table: 'major_programs' },
+    { key: 'programs',         name: 'Programs',         table: 'programs' },
+    { key: 'phases',           name: 'Phases',           table: 'phases' },
+    { key: 'tasks',            name: 'Tasks',            table: 'tasks' },
+    { key: 'objects',          name: 'Objects',          table: 'objects' },
+    { key: 'sub_objects',      name: 'Sub Objects',      table: 'sub_objects' },
+    { key: 'revenue_sources',  name: 'Revenue Sources',  table: 'revenue_sources' }
   ].freeze
 
-  before_action :set_table_config, only: [ :show, :new, :create ]
+  before_action :set_table_config, only: %i[show new create]
 
   def index
     @tables = TABLES
@@ -45,14 +47,14 @@ class LookupTablesController < ApplicationController
     end
 
     if values.values.all?(&:blank?)
-      redirect_to new_lookup_table_path(id: @table_config[:key]), alert: "All fields are blank."
+      redirect_to new_lookup_table_path(id: @table_config[:key]), alert: 'All fields are blank.'
       return
     end
 
     lookup_model(table_name).create!(values)
 
-    redirect_to lookup_table_path(id: @table_config[:key]), notice: "Record added successfully."
-  rescue => e
+    redirect_to lookup_table_path(id: @table_config[:key]), notice: 'Record added successfully.'
+  rescue StandardError => e
     redirect_to new_lookup_table_path(id: @table_config[:key]), alert: "Error: #{e.message}"
   end
 
@@ -60,7 +62,7 @@ class LookupTablesController < ApplicationController
 
   def set_table_config
     @table_config = TABLES.find { |t| t[:key] == params[:id] }
-    redirect_to lookup_tables_path, alert: "Table not found." unless @table_config
+    redirect_to lookup_tables_path, alert: 'Table not found.' unless @table_config
   end
 
   def column_info(table_name)

@@ -1,32 +1,35 @@
+# frozen_string_literal: true
+
 class SafetyReport < ApplicationRecord
   include TrackableStatus
 
-enum :status, {
-  in_progress: "in_progress",
-    step_1_pending: "step_1_pending",
-    approved: "approved",
-    denied: "denied",
-    cancelled: "cancelled"
-}, default: :in_progress
+  enum :status, {
+    in_progress: 'in_progress',
+    step_1_pending: 'step_1_pending',
+    step_2_pending: 'step_2_pending',
+    approved: 'approved',
+    denied: 'denied',
+    cancelled: 'cancelled'
+  }, default: :in_progress
 
   # Safety Report → OSHA Reporting field mapping
   OSHA_REPORT_FIELD_MAP = {
-    employee_id:                          :employee_id,
-    name:                                 :name,
-    phone:                                :phone,
-    email:                                :email,
-    agency:                               :agency,
-    division:                             :division,
-    department:                           :department,
-    unit:                                 :unit,
-    date_of_injury_or_illness:            :date_of_injury_or_illness,
-    how_the_injury_occurred:              :what_happened_tell_us_how_the_injury_occurred,
+    employee_id: :employee_id,
+    name: :name,
+    phone: :phone,
+    email: :email,
+    agency: :agency,
+    division: :division,
+    department: :department,
+    unit: :unit,
+    date_of_injury_or_illness: :date_of_injury_or_illness,
+    how_the_injury_occurred: :what_happened_tell_us_how_the_injury_occurred,
     specific_injury_and_body_part_affected: :what_was_the_injury_or_illness,
-    activity_at_time_of_incident:         :what_was_the_employee_doing_just_before_the_incident_occurred,
-    physician_name:                       :name_of_physician_or_other_health_care_professional,
-    hospitalized_overnight:               :was_the_employee_hospitalized_overnight_as_an_inpatient,
-    hospital_name:                        :facility_name,
-    hospital_address:                     :facility_street_address
+    activity_at_time_of_incident: :what_was_the_employee_doing_just_before_the_incident_occurred,
+    physician_name: :name_of_physician_or_other_health_care_professional,
+    hospitalized_overnight: :was_the_employee_hospitalized_overnight_as_an_inpatient,
+    hospital_name: :facility_name,
+    hospital_address: :facility_street_address
   }.freeze
 
   has_one :osha_report

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PcardInventory < ApplicationRecord
   belongs_to :pcard_request_form, optional: true
 
@@ -9,8 +11,8 @@ class PcardInventory < ApplicationRecord
 
   scope :active, -> { where(canceled_date: nil) }
   scope :canceled, -> { where.not(canceled_date: nil) }
-  scope :search, ->(query) {
-    where("last_name LIKE :q OR first_name LIKE :q OR card_last_four LIKE :q OR agency LIKE :q",
+  scope :search, lambda { |query|
+    where('last_name LIKE :q OR first_name LIKE :q OR card_last_four LIKE :q OR agency LIKE :q',
           q: "%#{query}%")
   }
 

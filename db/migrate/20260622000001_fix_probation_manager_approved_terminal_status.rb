@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # manager_approved is the approved END STATE of a Probation Transfer Request, but
 # its form_template_statuses row was configured as category "in_review" /
 # is_end=false. That made approved transfers (a) linger in the inbox under the new
@@ -6,11 +8,11 @@
 # key so it applies to whichever template row exists in each environment.
 class FixProbationManagerApprovedTerminalStatus < ActiveRecord::Migration[8.0]
   def up
-    set_status(category: "approved", is_end: 1)
+    set_status(category: 'approved', is_end: 1)
   end
 
   def down
-    set_status(category: "in_review", is_end: 0)
+    set_status(category: 'in_review', is_end: 0)
   end
 
   private

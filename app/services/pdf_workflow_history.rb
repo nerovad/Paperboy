@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Renders a "Workflow History" section (status transitions + timestamps + who
 # acted) into a Prawn document. Shared by every PDF generator so the approval/
 # denial lifecycle appears on the printable/emailable record. No-op for records
@@ -10,17 +12,17 @@ class PdfWorkflowHistory
     return if changes.empty?
 
     pdf.move_down 15
-    pdf.text "Workflow History", size: 14, style: :bold
+    pdf.text 'Workflow History', size: 14, style: :bold
     pdf.move_down 5
 
     changes.each do |change|
-      when_str = change.created_at&.strftime("%b %d, %Y %I:%M %p")
+      when_str = change.created_at&.strftime('%b %d, %Y %I:%M %p')
       transition = if change.from_status.present?
                      "#{change.from_status} -> #{change.to_status}"
-      else
+                   else
                      change.to_status.to_s
-      end
-      actor = change.changed_by_name.presence || "System"
+                   end
+      actor = change.changed_by_name.presence || 'System'
       pdf.text "#{when_str} - #{transition} (by #{actor})", size: 10
     end
   rescue StandardError => e

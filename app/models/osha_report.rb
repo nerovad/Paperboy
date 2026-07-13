@@ -1,12 +1,14 @@
+# frozen_string_literal: true
+
 class OshaReport < ApplicationRecord
   include TrackableStatus
 
-enum :status, {
-  in_progress: "in_progress",
-    step_1_pending: "step_1_pending",
-    approved: "approved",
-    denied: "denied"
-}, default: :in_progress
+  enum :status, {
+    in_progress: 'in_progress',
+    step_1_pending: 'step_1_pending',
+    approved: 'approved',
+    denied: 'denied'
+  }, default: :in_progress
 
   belongs_to :safety_report, optional: true
 

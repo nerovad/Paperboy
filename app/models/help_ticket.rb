@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 class HelpTicket < ApplicationRecord
-  enum :status, { open: "open", closed: "closed" }, default: :open
+  enum :status, { open: 'open', closed: 'closed' }, default: :open
 
   scope :for_employee, ->(eid) { where(employee_id: eid.to_s) }
 

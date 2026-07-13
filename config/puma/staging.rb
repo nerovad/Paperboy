@@ -1,16 +1,18 @@
-APP_DIR = "/home/matthew/gitea/Paperboy"
+# frozen_string_literal: true
 
-threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
+APP_DIR = '/home/matthew/gitea/Paperboy'
+
+threads_count = ENV.fetch('RAILS_MAX_THREADS', 3)
 threads threads_count, threads_count
 
-environment "staging"
+environment 'staging'
 
-bind "tcp://127.0.0.1:3001"
+bind 'tcp://127.0.0.1:3001'
 
 pidfile     "#{APP_DIR}/tmp/pids/puma.pid"
 state_path  "#{APP_DIR}/tmp/pids/puma.state"
 
-workers ENV.fetch("WEB_CONCURRENCY", 2)
+workers ENV.fetch('WEB_CONCURRENCY', 2)
 preload_app!
 
 stdout_redirect "#{APP_DIR}/log/puma.stdout.log",
@@ -18,4 +20,4 @@ stdout_redirect "#{APP_DIR}/log/puma.stdout.log",
                 true
 
 plugin :tmp_restart
-plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"]
+plugin :solid_queue if ENV['SOLID_QUEUE_IN_PUMA']

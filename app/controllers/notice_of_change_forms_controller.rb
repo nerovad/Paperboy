@@ -1,16 +1,16 @@
+# frozen_string_literal: true
+
 class NoticeOfChangeFormsController < ApplicationController
   # Generated controller for NoticeOfChangeForm form
-  before_action :set_notice_of_change_form, only: [ :show, :edit, :update, :pdf, :approve, :deny, :update_status ]
+  before_action :set_notice_of_change_form, only: %i[show edit update pdf approve deny update_status]
 
   def new
     @notice_of_change_form = NoticeOfChangeForm.new
 
-    employee_id = session.dig(:user, "employee_id").to_s
+    employee_id = session.dig(:user, 'employee_id').to_s
     @employee   = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
 
-    unless @employee
-      redirect_to login_path, alert: "Please sign in to start a submission." and return
-    end
+    redirect_to login_path, alert: 'Please sign in to start a submission.' and return unless @employee
 
     # Load user groups for field restrictions
     @current_user_groups = current_user_group_ids
@@ -24,60 +24,60 @@ class NoticeOfChangeFormsController < ApplicationController
     # --- Prefill values (everything prefilled exactly like you do now) ---
     @prefill_data = {
       employee_id: @employee.employee_id,
-      name:        [ @employee.first_name, @employee.last_name ].compact.join(" "),
-      phone:       @employee.work_phone,
-      email:       @employee.email,
-      agency:      agency&.agency_id,
-      division:    division&.division_id,
-      department:  department&.department_id,
-      unit:        unit&.unit_id
+      name: [@employee.first_name, @employee.last_name].compact.join(' '),
+      phone: @employee.work_phone,
+      email: @employee.email,
+      agency: agency&.agency_id,
+      division: division&.division_id,
+      department: department&.department_id,
+      unit: unit&.unit_id
     }
 
     # --- Select options (IDs/order match gsabss_selects_controller.js expectations) ---
     @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
 
     @division_options = if agency
-      Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id)
-    else
-      []
-    end
+                          Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id)
+                        else
+                          []
+                        end
 
     @department_options = if division
-      Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id)
-    else
-      []
-    end
+                            Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id)
+                          else
+                            []
+                          end
 
     # Unit label = "unit_id - long_name", value = unit_id (your current pattern)
     @unit_options = if department
-      Unit.where(department_id: department.department_id)
-          .order(:unit_id)
-          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
-    else
-      []
-    end
+                      Unit.where(department_id: department.department_id)
+                          .order(:unit_id)
+                          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                    else
+                      []
+                    end
   end
 
   def create
     employee      = session[:user]
-    employee_id   = employee&.dig("employee_id").to_s
+    employee_id   = employee&.dig('employee_id').to_s
 
     @notice_of_change_form = NoticeOfChangeForm.new(notice_of_change_form_params)
     @notice_of_change_form.employee_id = employee_id if @notice_of_change_form.respond_to?(:employee_id=)
 
     if @notice_of_change_form.save
-# Keep success behavior simple for the template; you can extend per form.
-# Multi-step approval routing (1 steps)
-# Step 1: employee #135272
-approver_id = "135272"
-@notice_of_change_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to employee #135272
-# Multi-step approval routing (1 steps)
-# Step 1: employee #123385
-approver_id = "123385"
-@notice_of_change_form.update(status: :step_1_pending, approver_id: approver_id)
-# TODO: Send notification to employee #123385
-redirect_to form_success_path, notice: "Form submitted and routed to employee #123385 for approval.", allow_other_host: false, status: :see_other
+      # Keep success behavior simple for the template; you can extend per form.
+      # Multi-step approval routing (1 steps)
+      # Step 1: employee #135272
+      approver_id = '135272'
+      @notice_of_change_form.update(status: :step_1_pending, approver_id: approver_id)
+      # TODO: Send notification to employee #135272
+      # Multi-step approval routing (1 steps)
+      # Step 1: employee #123385
+      approver_id = '123385'
+      @notice_of_change_form.update(status: :step_1_pending, approver_id: approver_id)
+      # TODO: Send notification to employee #123385
+      redirect_to form_success_path, notice: 'Form submitted and routed to employee #123385 for approval.', allow_other_host: false, status: :see_other
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
@@ -89,25 +89,25 @@ redirect_to form_success_path, notice: "Form submitted and routed to employee #1
 
       @prefill_data = {
         employee_id: emp&.employee_id,
-        name:        emp ? [ emp&.first_name, emp&.last_name ].compact.join(" ") : nil,
-        phone:       emp&.work_phone,
-        email:       emp&.email,
-        agency:      agency&.agency_id,
-        division:    division&.division_id,
-        department:  department&.department_id,
-        unit:        unit&.unit_id
+        name: emp ? [emp&.first_name, emp&.last_name].compact.join(' ') : nil,
+        phone: emp&.work_phone,
+        email: emp&.email,
+        agency: agency&.agency_id,
+        division: division&.division_id,
+        department: department&.department_id,
+        unit: unit&.unit_id
       }
 
       @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
       @division_options = agency ? Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
       @department_options = division ? Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
       @unit_options = if department
-        Unit.where(department_id: department.department_id)
-            .order(:unit_id)
-            .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
-      else
-        []
-      end
+                        Unit.where(department_id: department.department_id)
+                            .order(:unit_id)
+                            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                      else
+                        []
+                      end
 
       render :new, status: :unprocessable_entity
     end
@@ -124,7 +124,7 @@ redirect_to form_success_path, notice: "Form submitted and routed to employee #1
 
   def update
     if @notice_of_change_form.update(notice_of_change_form_params)
-      redirect_to @notice_of_change_form, notice: "Submission updated successfully."
+      redirect_to @notice_of_change_form, notice: 'Submission updated successfully.'
     else
       setup_form_options
       render :edit, status: :unprocessable_entity
@@ -136,17 +136,17 @@ redirect_to form_success_path, notice: "Form submitted and routed to employee #1
 
     send_data pdf_data,
               filename: "NoticeOfChangeForm_#{@notice_of_change_form.id}.pdf",
-              type: "application/pdf",
-              disposition: "inline"
+              type: 'application/pdf',
+              disposition: 'inline'
   end
 
   def approve
     if @notice_of_change_form.respond_to?(:advance_approval!)
       @notice_of_change_form.advance_approval!
-      notice = @notice_of_change_form.approved? ? "Submission approved." : "Approved and routed to the next step."
+      notice = @notice_of_change_form.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
       redirect_to inbox_queue_path, notice: notice
     else
-      redirect_to inbox_queue_path, alert: "Unable to approve this submission."
+      redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
     end
   end
 
@@ -155,18 +155,18 @@ redirect_to form_success_path, notice: "Form submitted and routed to employee #1
     if @notice_of_change_form.respond_to?(:denied!)
       @notice_of_change_form.denied!
       @notice_of_change_form.update(deny_reason: reason) if @notice_of_change_form.respond_to?(:deny_reason=) && reason.present?
-      redirect_to inbox_queue_path, notice: "Submission denied."
+      redirect_to inbox_queue_path, notice: 'Submission denied.'
     else
-      redirect_to inbox_queue_path, alert: "Unable to deny this submission."
+      redirect_to inbox_queue_path, alert: 'Unable to deny this submission.'
     end
   end
 
   def update_status
     new_status = params[:status]
     if update_trackable_status(@notice_of_change_form, new_status)
-      redirect_to inbox_queue_path, notice: "Status updated."
+      redirect_to inbox_queue_path, notice: 'Status updated.'
     else
-      redirect_to inbox_queue_path, alert: "Unable to update status."
+      redirect_to inbox_queue_path, alert: 'Unable to update status.'
     end
   end
 
@@ -187,25 +187,25 @@ redirect_to form_success_path, notice: "Form submitted and routed to employee #1
 
     @prefill_data = {
       employee_id: @notice_of_change_form&.employee_id,
-      name:        @notice_of_change_form&.name,
-      phone:       @notice_of_change_form&.phone,
-      email:       @notice_of_change_form&.email,
-      agency:      agency_id,
-      division:    division_id,
-      department:  department_id,
-      unit:        @notice_of_change_form&.unit
+      name: @notice_of_change_form&.name,
+      phone: @notice_of_change_form&.phone,
+      email: @notice_of_change_form&.email,
+      agency: agency_id,
+      division: division_id,
+      department: department_id,
+      unit: @notice_of_change_form&.unit
     }
 
     @agency_options     = Agency.order(:long_name).pluck(:long_name, :agency_id)
     @division_options   = agency_id ? Division.where(agency_id: agency_id).order(:long_name).pluck(:long_name, :division_id) : []
     @department_options = division_id ? Department.where(division_id: division_id).order(:long_name).pluck(:long_name, :department_id) : []
     @unit_options = if department_id
-      Unit.where(department_id: department_id)
-          .order(:unit_id)
-          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
-    else
-      []
-    end
+                      Unit.where(department_id: department_id)
+                          .order(:unit_id)
+                          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                    else
+                      []
+                    end
 
     # Load user groups for field restrictions
     @current_user_groups = current_user_group_ids

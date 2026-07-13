@@ -28,7 +28,7 @@ development:
 
 test:
   <<: *sqlserver
-  database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Dev") %>
+  database: <%= ENV.fetch("PAPERBOY_TEST_DATABASE", "Paperboy_Test") %>
 
 staging:
   <<: *sqlserver

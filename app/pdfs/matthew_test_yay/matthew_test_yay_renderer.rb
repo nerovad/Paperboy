@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/pdfs/matthew_test_yay/matthew_test_yay_renderer.rb
 #
 # Developer-editable Prawn renderer.
@@ -26,29 +28,29 @@ module MatthewTestYay
     def render
       if @data.empty?
         @pdf.start_new_page
-        @pdf.text "No data returned from stored procedure.", style: :bold
+        @pdf.text 'No data returned from stored procedure.', style: :bold
         return
       end
 
       @data.each do |row|
         @pdf.start_new_page
 
-        logo_path = Rails.root.join("app/assets/images/report_logo.png")
+        logo_path = Rails.root.join('app/assets/images/report_logo.png')
         if File.exist?(logo_path)
-          @pdf.image(logo_path.to_s, at: [ 38, 780 ], width: 600)
+          @pdf.image(logo_path.to_s, at: [38, 780], width: 600)
         else
-          @pdf.text_box("MISSING LOGO", at: [ 38, 780 ], width: 200, height: 20)
+          @pdf.text_box('MISSING LOGO', at: [38, 780], width: 200, height: 20)
         end
 
         @mapping.each do |field, coords|
-          value = row[field.to_s] || ""
+          value = row[field.to_s] || ''
 
-          x = coords["x"].to_i
-          y = coords["y"].to_i
+          x = coords['x'].to_i
+          y = coords['y'].to_i
 
           @pdf.text_box(
             "#{field.to_s.upcase}:",
-            at: [ x - 90, y ],
+            at: [x - 90, y],
             width: 90,
             height: 20,
             overflow: :truncate,
@@ -57,7 +59,7 @@ module MatthewTestYay
 
           @pdf.text_box(
             value.to_s,
-            at: [ x, y ],
+            at: [x, y],
             width: 200,
             height: 20,
             overflow: :truncate,
@@ -67,8 +69,8 @@ module MatthewTestYay
       end
 
       @pdf.number_pages(
-        "<page> of <total>",
-        at: [ 500, 20 ],
+        '<page> of <total>',
+        at: [500, 20],
         width: 100,
         align: :right
       )

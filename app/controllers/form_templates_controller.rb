@@ -1,8 +1,10 @@
-require "open3"
+# frozen_string_literal: true
+
+require 'open3'
 
 class FormTemplatesController < ApplicationController
   before_action :require_system_admin
-  before_action :set_form_template, only: [ :show, :edit, :update, :destroy, :archive, :unarchive ]
+  before_action :set_form_template, only: %i[show edit update destroy archive unarchive]
 
   def index
     @form_templates = FormTemplate.includes(:form_fields).order(:name)
@@ -17,7 +19,7 @@ class FormTemplatesController < ApplicationController
 
   def create
     @form_template = FormTemplate.new(form_template_params)
-    @form_template.created_by = session.dig(:user, "employee_id")
+    @form_template.created_by = session.dig(:user, 'employee_id')
 
     # Set pending routing steps to pass validation (they'll be saved after the form_template)
     @form_template.pending_routing_steps = params[:routing_steps] if params[:routing_steps].present?
@@ -48,14 +50,14 @@ class FormTemplatesController < ApplicationController
             field_type: field_data[:field_type],
             page_number: field_data[:page_number].to_i,
             position: index,
-            required: field_data[:required] == "1",
+            required: field_data[:required] == '1',
             options: build_field_options(field_data),
-            restricted_to_type: field_data[:restricted_to_type].presence || "none",
+            restricted_to_type: field_data[:restricted_to_type].presence || 'none',
             restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
             restricted_to_group_id: field_data[:restricted_to_group_id].presence,
-            restricted_to_org_filter_level: (field_data[:restricted_to_type] == "group" ? field_data[:restricted_to_org_filter_level].presence : nil),
-            visible_to_filler: field_data[:visible_to_filler] == "1",
-            read_only: field_data[:read_only].presence || "none"
+            restricted_to_org_filter_level: (field_data[:restricted_to_type] == 'group' ? field_data[:restricted_to_org_filter_level].presence : nil),
+            visible_to_filler: field_data[:visible_to_filler] == '1',
+            read_only: field_data[:read_only].presence || 'none'
           )
           created_fields << field
 
@@ -69,29 +71,29 @@ class FormTemplatesController < ApplicationController
           end
 
           # Store conditional answer reference if present
-          if field_data[:conditional_answer_field_id].present? && field_data[:conditional_answer_mappings].present?
-            mappings = field_data[:conditional_answer_mappings].to_unsafe_h.reject { |_, v| v.blank? }
-            if mappings.any?
-              conditional_answer_refs << {
-                field: field,
-                ref: field_data[:conditional_answer_field_id],
-                mappings: mappings
-              }
-            end
-          end
+          next unless field_data[:conditional_answer_field_id].present? && field_data[:conditional_answer_mappings].present?
+
+          mappings = field_data[:conditional_answer_mappings].to_unsafe_h.reject { |_, v| v.blank? }
+          next unless mappings.any?
+
+          conditional_answer_refs << {
+            field: field,
+            ref: field_data[:conditional_answer_field_id],
+            mappings: mappings
+          }
         end
 
         # Second pass: resolve conditional field references to actual IDs
         conditional_refs.each do |ref_data|
           if ref_data[:ref] =~ /^field_(\d+)$/
-            ref_index = $1.to_i
+            ref_index = ::Regexp.last_match(1).to_i
             if created_fields[ref_index]
               ref_data[:field].update!(
                 conditional_field_id: created_fields[ref_index].id,
                 conditional_values: ref_data[:values]
               )
             end
-          elsif ref_data[:ref].to_i > 0
+          elsif ref_data[:ref].to_i.positive?
             # Direct ID reference (for edit page)
             ref_data[:field].update!(
               conditional_field_id: ref_data[:ref].to_i,
@@ -103,14 +105,14 @@ class FormTemplatesController < ApplicationController
         # Resolve conditional answer field references to actual IDs
         conditional_answer_refs.each do |ref_data|
           if ref_data[:ref] =~ /^field_(\d+)$/
-            ref_index = $1.to_i
+            ref_index = ::Regexp.last_match(1).to_i
             if created_fields[ref_index]
               ref_data[:field].update!(
                 conditional_answer_field_id: created_fields[ref_index].id,
                 conditional_answer_mappings: ref_data[:mappings]
               )
             end
-          elsif ref_data[:ref].to_i > 0
+          elsif ref_data[:ref].to_i.positive?
             ref_data[:field].update!(
               conditional_answer_field_id: ref_data[:ref].to_i,
               conditional_answer_mappings: ref_data[:mappings]
@@ -123,10 +125,10 @@ class FormTemplatesController < ApplicationController
       class_name = @form_template.class_name
 
       # Execute the Rails generator
-      generator_output, generator_status = run_rails_command("generate", "paperboy_form", class_name)
+      generator_output, generator_status = run_rails_command('generate', 'paperboy_form', class_name)
 
       # Run db:migrate
-      migrate_output, migrate_status = run_rails_command("db:migrate")
+      migrate_output, migrate_status = run_rails_command('db:migrate')
 
       # Check if generation was successful
       if generator_status.success? && migrate_status.success?
@@ -147,7 +149,7 @@ class FormTemplatesController < ApplicationController
         fix_sidebar_placement(class_name)
 
         # Grant access: public forms go to everyone, restricted forms auto-grant to select-all scopes
-        if @form_template.visibility == "public"
+        if @form_template.visibility == 'public'
           grant_to_all_scopes(@form_template)
         else
           auto_grant_to_select_all_scopes(@form_template)
@@ -155,7 +157,7 @@ class FormTemplatesController < ApplicationController
 
         render json: {
           success: true,
-          message: "Form created and generated successfully! The form should now appear in your sidebar.",
+          message: 'Form created and generated successfully! The form should now appear in your sidebar.',
           warnings: routing_approver_warnings(@form_template),
           redirect: form_templates_path
         }
@@ -164,7 +166,7 @@ class FormTemplatesController < ApplicationController
         @form_template.destroy
         render json: {
           success: false,
-          errors: [ "Generator failed: #{generator_output.presence || migrate_output}" ]
+          errors: ["Generator failed: #{generator_output.presence || migrate_output}"]
         }, status: :unprocessable_entity
       end
     else
@@ -192,7 +194,7 @@ class FormTemplatesController < ApplicationController
     statuses_changed = statuses_fields_changed?
     copy_recipients_changed = copy_recipients_fields_changed?
     email_steps_changed = email_steps_fields_changed?
-    visibility_changed_to_public = @form_template.visibility != "public" && form_template_params[:visibility] == "public"
+    visibility_changed_to_public = @form_template.visibility != 'public' && form_template_params[:visibility] == 'public'
 
     # Set pending routing steps to pass validation (same as create)
     @form_template.pending_routing_steps = params[:routing_steps] if params[:routing_steps].present?
@@ -201,24 +203,16 @@ class FormTemplatesController < ApplicationController
       # If visibility just changed to public, grant to all orgs and groups
       grant_to_all_scopes(@form_template) if visibility_changed_to_public
       # Only rebuild routing steps when routing actually changed
-      if routing_changed
-        rebuild_routing_steps(@form_template)
-      end
+      rebuild_routing_steps(@form_template) if routing_changed
 
       # Only sync statuses when statuses or routing changed
-      if statuses_changed || routing_changed
-        sync_statuses(@form_template)
-      end
+      sync_statuses(@form_template) if statuses_changed || routing_changed
 
       # Rebuild copy recipients when they changed
-      if copy_recipients_changed
-        rebuild_copy_recipients(@form_template)
-      end
+      rebuild_copy_recipients(@form_template) if copy_recipients_changed
 
       # Rebuild workflow email steps when they changed
-      if email_steps_changed
-        rebuild_email_steps(@form_template)
-      end
+      rebuild_email_steps(@form_template) if email_steps_changed
 
       # Rebuild field records when fields changed (this is data, not code).
       rebuild_form_fields if fields_changed
@@ -235,9 +229,7 @@ class FormTemplatesController < ApplicationController
         end
 
         # Regenerate model when statuses, routing, or fields changed (enum + has_many_attached)
-        if statuses_changed || routing_changed || fields_changed
-          customize_generated_model(@form_template)
-        end
+        customize_generated_model(@form_template) if statuses_changed || routing_changed || fields_changed
 
         if routing_changed || fields_changed
           customize_generated_controller(@form_template, update_routing: routing_changed)
@@ -246,15 +238,17 @@ class FormTemplatesController < ApplicationController
         end
       end
 
-      message = routing_changed ?
-        "Form template updated successfully. Controller was regenerated." :
-        "Form template updated successfully."
+      message = if routing_changed
+                  'Form template updated successfully. Controller was regenerated.'
+                else
+                  'Form template updated successfully.'
+                end
 
       warnings = routing_approver_warnings(@form_template)
 
       respond_to do |format|
         format.json { render json: { success: true, message: message, warnings: warnings, redirect: form_template_path(@form_template) } }
-        format.html { redirect_to form_template_path(@form_template), notice: [ message, *warnings ].join(" ") }
+        format.html { redirect_to form_template_path(@form_template), notice: [message, *warnings].join(' ') }
       end
     else
       respond_to do |format|
@@ -263,7 +257,11 @@ class FormTemplatesController < ApplicationController
           @acl_groups = fetch_acl_groups
           @employees = fetch_employees
           @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
-          @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id) rescue []
+          @agency_options = begin
+            Agency.order(:long_name).pluck(:long_name, :agency_id)
+          rescue StandardError
+            []
+          end
           load_org_scope_chain
           render :edit, status: :unprocessable_entity
         end
@@ -277,7 +275,7 @@ class FormTemplatesController < ApplicationController
     path_name = "new_#{table_name.singularize}_path"
 
     # 1. Remove entry from sidebar
-    sidebar_file = Rails.root.join("app/views/shared/_sidebar.html.erb")
+    sidebar_file = Rails.root.join('app/views/shared/_sidebar.html.erb')
     if File.exist?(sidebar_file)
       sidebar_content = File.read(sidebar_file)
 
@@ -291,7 +289,7 @@ class FormTemplatesController < ApplicationController
 
     # 2. Generate a migration to drop the table
     migration_name = "Drop#{class_name}"
-    generate_output, = run_rails_command("generate", "migration", migration_name)
+    run_rails_command('generate', 'migration', migration_name)
 
     # 3. Find and update the generated migration file
     migration_file = Dir.glob(Rails.root.join("db/migrate/*_#{migration_name.underscore}.rb")).first
@@ -309,17 +307,17 @@ class FormTemplatesController < ApplicationController
       File.write(migration_file, migration_content)
 
       # 4. Run the migration to drop the table
-      migrate_output, = run_rails_command("db:migrate")
+      run_rails_command('db:migrate')
     end
 
     # 5. Run the destroy command to remove generated files
-    destroy_output, = run_rails_command("destroy", "paperboy_form", class_name)
+    run_rails_command('destroy', 'paperboy_form', class_name)
 
     # 6. Delete the template record
     if @form_template.destroy
-      redirect_to form_templates_path, notice: "Form template, generated files, database table, and sidebar entry deleted successfully."
+      redirect_to form_templates_path, notice: 'Form template, generated files, database table, and sidebar entry deleted successfully.'
     else
-      redirect_to form_templates_path, alert: "Failed to delete form template."
+      redirect_to form_templates_path, alert: 'Failed to delete form template.'
     end
   end
 
@@ -327,7 +325,7 @@ class FormTemplatesController < ApplicationController
     if @form_template.update(archived: true)
       redirect_to form_templates_path, notice: "#{@form_template.name} archived. It is now hidden from the sidebar."
     else
-      redirect_to form_templates_path, alert: "Failed to archive form template."
+      redirect_to form_templates_path, alert: 'Failed to archive form template.'
     end
   end
 
@@ -335,7 +333,7 @@ class FormTemplatesController < ApplicationController
     if @form_template.update(archived: false)
       redirect_to form_templates_path, notice: "#{@form_template.name} restored to the sidebar."
     else
-      redirect_to form_templates_path, alert: "Failed to unarchive form template."
+      redirect_to form_templates_path, alert: 'Failed to unarchive form template.'
     end
   end
 
@@ -346,11 +344,11 @@ class FormTemplatesController < ApplicationController
   end
 
   def run_rails_command(*arguments)
-    Open3.capture2e("bin/rails", *arguments, chdir: Rails.root.to_s)
+    Open3.capture2e('bin/rails', *arguments, chdir: Rails.root.to_s)
   end
 
   def fix_sidebar_placement(class_name)
-    sidebar = "app/views/shared/_sidebar.html.erb"
+    sidebar = 'app/views/shared/_sidebar.html.erb'
     return unless File.exist?(sidebar)
 
     form_template = FormTemplate.find_by(class_name: class_name)
@@ -365,9 +363,9 @@ class FormTemplatesController < ApplicationController
     sidebar_content = File.read(sidebar)
 
     incorrect_line = %(      ["#{label}", #{helper}],)
-    if sidebar_content.gsub!(/^\s*#{Regexp.escape(incorrect_line)}\s*\n/, "")
-      File.write(sidebar, sidebar_content)
-    end
+    return unless sidebar_content.gsub!(/^\s*#{Regexp.escape(incorrect_line)}\s*\n/, '')
+
+    File.write(sidebar, sidebar_content)
   end
 
   # When a new form is created, auto-grant it to any org scope or group
@@ -375,41 +373,41 @@ class FormTemplatesController < ApplicationController
   def auto_grant_to_select_all_scopes(new_template)
     # Build the set of all form permission keys that existed BEFORE this template
     legacy_keys = AclController::LEGACY_FORMS.map { |f| f[:key] }
-    template_names = FormTemplate.pluck(:name).map(&:downcase).to_set
+    template_names = FormTemplate.pluck(:name).to_set(&:downcase)
     legacy_keys.reject! { |k| template_names.include?(AclController::LEGACY_FORMS.find { |f| f[:key] == k }&.dig(:label)&.downcase) }
     existing_keys = legacy_keys + FormTemplate.where.not(id: new_template.id).pluck(:id).map(&:to_s)
     expected_count = existing_keys.size
     new_key = new_template.id.to_s
 
     # Org permissions: find scopes that had all forms selected
-    OrgPermission.where(permission_type: "form")
+    OrgPermission.where(permission_type: 'form')
                  .select(:agency_id, :division_id, :department_id, :unit_id)
                  .group(:agency_id, :division_id, :department_id, :unit_id)
-                 .having("COUNT(*) = ?", expected_count)
+                 .having('COUNT(*) = ?', expected_count)
                  .each do |scope|
       OrgPermission.find_or_create_by!(
         agency_id: scope.agency_id,
         division_id: scope.division_id,
         department_id: scope.department_id,
         unit_id: scope.unit_id,
-        permission_type: "form",
+        permission_type: 'form',
         permission_key: new_key
       )
     end
 
     # Group permissions: find groups that had all forms selected
-    GroupPermission.where(permission_type: "form")
+    GroupPermission.where(permission_type: 'form')
                    .select(:group_id)
                    .group(:group_id)
-                   .having("COUNT(*) = ?", expected_count)
+                   .having('COUNT(*) = ?', expected_count)
                    .each do |gp|
       GroupPermission.find_or_create_by!(
         group_id: gp.group_id,
-        permission_type: "form",
+        permission_type: 'form',
         permission_key: new_key
       )
     end
-  rescue => e
+  rescue StandardError => e
     Rails.logger.warn "Auto-grant failed for template #{new_template.id}: #{e.message}"
   end
 
@@ -418,14 +416,13 @@ class FormTemplatesController < ApplicationController
 
     # Grant to every distinct org scope that has any permissions
     existing_scopes = OrgPermission
-      .select(:agency_id, :division_id, :department_id, :unit_id)
-      .distinct
-      .map { |s| [ s.agency_id, s.division_id, s.department_id, s.unit_id ] }
-      .to_set
+                      .select(:agency_id, :division_id, :department_id, :unit_id)
+                      .distinct
+                      .to_set { |s| [s.agency_id, s.division_id, s.department_id, s.unit_id] }
 
     # Also ensure every agency has a grant (even if not yet in org_permissions)
     Agency.pluck(:agency_id).each do |aid|
-      existing_scopes << [ aid, nil, nil, nil ]
+      existing_scopes << [aid, nil, nil, nil]
     end
 
     existing_scopes.each do |agency_id, division_id, department_id, unit_id|
@@ -434,7 +431,7 @@ class FormTemplatesController < ApplicationController
         division_id: division_id,
         department_id: department_id,
         unit_id: unit_id,
-        permission_type: "form",
+        permission_type: 'form',
         permission_key: permission_key
       )
     end
@@ -443,11 +440,11 @@ class FormTemplatesController < ApplicationController
     Group.pluck(:GroupID).each do |gid|
       GroupPermission.find_or_create_by!(
         group_id: gid,
-        permission_type: "form",
+        permission_type: 'form',
         permission_key: permission_key
       )
     end
-  rescue => e
+  rescue StandardError => e
     Rails.logger.warn "Grant-to-all failed for template #{template.id}: #{e.message}"
   end
 
@@ -478,17 +475,18 @@ class FormTemplatesController < ApplicationController
     category_filters = cat_cols.each_with_index.filter_map do |col, i|
       col = col.to_s.strip
       next if col.blank?
-      { "column" => col, "value" => cat_vals[i].to_s }
+
+      { 'column' => col, 'value' => cat_vals[i].to_s }
     end
     {
-      "database"         => f[:custom_database],
-      "table"            => f[:custom_table],
-      "column"           => f[:custom_column],
-      "join_columns"     => Array(f[:custom_join_columns]).reject(&:blank?),
-      "join_separator"   => (join_sep.empty? ? " " : join_sep),
-      "category_filters" => category_filters,
-      "order_column"     => f[:custom_order_column].presence,
-      "order_direction"  => (f[:custom_order_direction] == "desc" ? "desc" : "asc")
+      'database' => f[:custom_database],
+      'table' => f[:custom_table],
+      'column' => f[:custom_column],
+      'join_columns' => Array(f[:custom_join_columns]).reject(&:blank?),
+      'join_separator' => (join_sep.empty? ? ' ' : join_sep),
+      'category_filters' => category_filters,
+      'order_column' => f[:custom_order_column].presence,
+      'order_direction' => (f[:custom_order_direction] == 'desc' ? 'desc' : 'asc')
     }
   end
 
@@ -496,22 +494,22 @@ class FormTemplatesController < ApplicationController
     options = {}
 
     case field_data[:field_type]
-    when "text_box"
-      options["rows"] = field_data[:rows].to_i if field_data[:rows].present?
-    when "dropdown", "choices_dropdown"
+    when 'text_box'
+      options['rows'] = field_data[:rows].to_i if field_data[:rows].present?
+    when 'dropdown', 'choices_dropdown'
       if field_data[:custom_table].present?
-        options["custom_lookup"] = build_custom_lookup(field_data)
+        options['custom_lookup'] = build_custom_lookup(field_data)
       elsif field_data[:data_source].present?
-        options["data_source"] = field_data[:data_source]
-        options["data_source_column"] = field_data[:data_source_column]
-        options["data_source_agency"] = field_data[:data_source_agency] if field_data[:data_source_agency].present?
-        options["data_source_category"] = field_data[:data_source_category] if field_data[:data_source_category].present?
+        options['data_source'] = field_data[:data_source]
+        options['data_source_column'] = field_data[:data_source_column]
+        options['data_source_agency'] = field_data[:data_source_agency] if field_data[:data_source_agency].present?
+        options['data_source_category'] = field_data[:data_source_category] if field_data[:data_source_category].present?
       elsif field_data[:dropdown_values].present?
-        options["values"] = field_data[:dropdown_values].split(",").map(&:strip)
+        options['values'] = field_data[:dropdown_values].split(',').map(&:strip)
       end
-    when "information"
-      options["information_text"] = field_data[:information_text].to_s
-      options["acknowledgeable"] = field_data[:acknowledgeable] == "1"
+    when 'information'
+      options['information_text'] = field_data[:information_text].to_s
+      options['acknowledgeable'] = field_data[:acknowledgeable] == '1'
     end
 
     options
@@ -519,14 +517,14 @@ class FormTemplatesController < ApplicationController
 
   def fetch_acl_groups
     Group.order(:group_name).pluck(:group_name, :GroupID)
-  rescue
+  rescue StandardError
     []
   end
 
   def fetch_employees
     Employee.order(:last_name, :first_name)
-            .map { |e| [ "#{e.first_name} #{e.last_name} (#{e.employee_id})", e.employee_id ] }
-  rescue
+            .map { |e| ["#{e.first_name} #{e.last_name} (#{e.employee_id})", e.employee_id] }
+  rescue StandardError
     []
   end
 
@@ -536,69 +534,67 @@ class FormTemplatesController < ApplicationController
 
     content = File.read(model_path)
 
-    if form_template.submission_type == "database" && form_template.statuses.empty?
+    if form_template.submission_type == 'database' && form_template.statuses.empty?
       # No statuses configured for database-only form — remove enum block
-      content.gsub!(/^\s*enum :status.*?\n\s*\}/m, "")
-      content.gsub!(/^\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, "")
-      content.gsub!(/^\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, "")
+      content.gsub!(/^\s*enum :status.*?\n\s*\}/m, '')
+      content.gsub!(/^\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, '')
+      content.gsub!(/^\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, '')
     else
       # Generate unified enum from all statuses (user + auto-generated)
       generate_unified_status_enum(form_template, content)
     end
 
     # Add has_many_attached declarations for media_attachment fields
-    media_fields = form_template.form_fields.where(field_type: "media_attachment")
+    media_fields = form_template.form_fields.where(field_type: 'media_attachment')
     if media_fields.any?
       # Add only missing declarations (idempotent on re-runs)
       media_fields.each do |f|
         # Add has_many_attached if not already present
         unless content.include?("has_many_attached :#{f.field_name}")
-          content.sub!(/include TrackableStatus\n/) do |match|
+          content.sub!("include TrackableStatus\n") do |match|
             "#{match}\n  has_many_attached :#{f.field_name}\n"
           end
         end
 
         # Add validate callback if not already present
-        unless content.include?("validate :acceptable_#{f.field_name}_files")
-          # Insert after validates :name line if it exists, otherwise after has_many_attached
-          if content =~ /validates :name.*\n/
-            content.sub!(/validates :name.*\n/) do |match|
-              "#{match}  validate :acceptable_#{f.field_name}_files\n"
-            end
+        # Insert after validates :name line if it exists, otherwise after has_many_attached
+        if !content.include?("validate :acceptable_#{f.field_name}_files") && (content =~ /validates :name.*\n/)
+          content.sub!(/validates :name.*\n/) do |match|
+            "#{match}  validate :acceptable_#{f.field_name}_files\n"
           end
         end
 
         # Add validation method if not already present
-        unless content.include?("def acceptable_#{f.field_name}_files")
-          validation_method = <<~RUBY
+        next if content.include?("def acceptable_#{f.field_name}_files")
 
-  def acceptable_#{f.field_name}_files
-    return unless #{f.field_name}.attached?
+        validation_method = <<~RUBY
 
-    if #{f.field_name}.count > 10
-      errors.add(:#{f.field_name}, "can have a maximum of 10 files")
-    end
+          def acceptable_#{f.field_name}_files
+            return unless #{f.field_name}.attached?
 
-    #{f.field_name}.each do |file|
-      unless file.content_type.in?(%w[image/jpeg image/png image/gif image/webp image/heic image/heif application/pdf])
-        errors.add(:#{f.field_name}, "must be a JPEG, PNG, GIF, WebP, HEIC, or PDF")
-      end
-
-      if file.byte_size > 10.megabytes
-        errors.add(:#{f.field_name}, "file size must be less than 10MB")
-      end
-    end
-  end
-          RUBY
-
-          if content.include?("private\n")
-            content.sub!(/^(\s*private\n)/) do |match|
-              "#{validation_method}\n#{match}"
+            if #{f.field_name}.count > 10
+              errors.add(:#{f.field_name}, "can have a maximum of 10 files")
             end
-          else
-            content.sub!(/^end\s*\z/) do |match|
-              "#{validation_method}\n#{match}"
+
+            #{f.field_name}.each do |file|
+              unless file.content_type.in?(%w[image/jpeg image/png image/gif image/webp image/heic image/heif application/pdf])
+                errors.add(:#{f.field_name}, "must be a JPEG, PNG, GIF, WebP, HEIC, or PDF")
+              end
+
+              if file.byte_size > 10.megabytes
+                errors.add(:#{f.field_name}, "file size must be less than 10MB")
+              end
             end
+          end
+        RUBY
+
+        if content.include?("private\n")
+          content.sub!(/^(\s*private\n)/) do |match|
+            "#{validation_method}\n#{match}"
+          end
+        else
+          content.sub!(/^end\s*\z/) do |match|
+            "#{validation_method}\n#{match}"
           end
         end
       end
@@ -606,7 +602,7 @@ class FormTemplatesController < ApplicationController
 
     # Drop any per-model status_label override (and its doc comment); TrackableStatus
     # provides it by reading the central form_template_statuses table.
-    content.gsub!(/(?:^[ \t]*#[^\n]*\n)*^[ \t]*def status_label\b.*?^[ \t]*end\b\n/m, "")
+    content.gsub!(/(?:^[ \t]*#[^\n]*\n)*^[ \t]*def status_label\b.*?^[ \t]*end\b\n/m, '')
     content.gsub!(/\n{3,}/, "\n\n")
 
     File.write(model_path, content)
@@ -635,20 +631,20 @@ class FormTemplatesController < ApplicationController
 
     # Remove existing blocks first, then insert the new unified block
     # Remove enum block
-    content.gsub!(/^\s*enum :status.*?\n\s*\}(,\s*default:\s*:\w+)?/m, "")
+    content.gsub!(/^\s*enum :status.*?\n\s*\}(,\s*default:\s*:\w+)?/m, '')
     # Remove existing STATUS_CATEGORIES
-    content.gsub!(/^\s*#[^\n]*status categories[^\n]*\n\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, "")
+    content.gsub!(/^\s*#[^\n]*status categories[^\n]*\n\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, '')
     # Remove existing STATUS_LABELS
-    content.gsub!(/^\s*#[^\n]*status labels[^\n]*\n\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, "")
+    content.gsub!(/^\s*#[^\n]*status labels[^\n]*\n\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, '')
     # Also remove standalone constants without comments
-    content.gsub!(/^\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, "")
-    content.gsub!(/^\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, "")
+    content.gsub!(/^\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, '')
+    content.gsub!(/^\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, '')
 
     # Clean up blank lines left behind
     content.gsub!(/\n{3,}/, "\n\n")
 
     # Insert after `include TrackableStatus`
-    content.sub!(/include TrackableStatus\n/) do |match|
+    content.sub!("include TrackableStatus\n") do |match|
       "#{match}\n#{new_block}\n"
     end
   end
@@ -662,7 +658,7 @@ class FormTemplatesController < ApplicationController
     # Safety net: never rewrite a controller the builder didn't generate. The
     # block-replacement below assumes the generated structure; on a hand-written
     # controller its regex can match greedily and destroy unrelated actions.
-    unless content.include?("# Generated controller for")
+    unless content.include?('# Generated controller for')
       Rails.logger.warn "Refusing to customize hand-written controller #{controller_path} (no generated marker)"
       return
     end
@@ -673,7 +669,7 @@ class FormTemplatesController < ApplicationController
       routing_logic = generate_approval_routing_logic(form_template)
 
       # Replace the entire routing block between markers (idempotent on re-runs)
-      if content.include?("# ROUTING_BLOCK_START")
+      if content.include?('# ROUTING_BLOCK_START')
         content.gsub!(
           /# ROUTING_BLOCK_START.*?# ROUTING_BLOCK_END/m,
           "# ROUTING_BLOCK_START\n      #{routing_logic}\n      # ROUTING_BLOCK_END"
@@ -696,9 +692,9 @@ class FormTemplatesController < ApplicationController
     end
 
     # Add media attachment fields to permitted params
-    media_fields = form_template.form_fields.where(field_type: "media_attachment")
+    media_fields = form_template.form_fields.where(field_type: 'media_attachment')
     if media_fields.any?
-      media_params = media_fields.map { |f| "#{f.field_name}: []" }.join(", ")
+      media_params = media_fields.map { |f| "#{f.field_name}: []" }.join(', ')
       # Only append media params if not already present
       unless content.include?(media_params)
         content.gsub!(
@@ -712,20 +708,18 @@ class FormTemplatesController < ApplicationController
         next if content.include?("def download_#{f.field_name}")
 
         download_action = <<~RUBY
-  def download_#{f.field_name}
-    attachment = @#{form_template.file_name}.#{f.field_name}.find(params[:attachment_id])
-    redirect_to rails_blob_path(attachment, disposition: "attachment")
-  end
+          def download_#{f.field_name}
+            attachment = @#{form_template.file_name}.#{f.field_name}.find(params[:attachment_id])
+            redirect_to rails_blob_path(attachment, disposition: "attachment")
+          end
 
         RUBY
 
         content.sub!(/^\s*private\n/) do |match|
           "#{download_action}#{match}"
         end
-      end
 
-      # Add download actions to before_action only if not already present
-      media_fields.each do |f|
+        # Add download actions to before_action only if not already present
         method_sym = ":download_#{f.field_name}"
         next if content.include?(method_sym)
 
@@ -740,10 +734,10 @@ class FormTemplatesController < ApplicationController
   end
 
   def add_media_download_routes(form_template)
-    media_fields = form_template.form_fields.where(field_type: "media_attachment")
+    media_fields = form_template.form_fields.where(field_type: 'media_attachment')
     return unless media_fields.any?
 
-    routes_path = Rails.root.join("config/routes.rb")
+    routes_path = Rails.root.join('config/routes.rb')
     content = File.read(routes_path)
 
     media_fields.each do |field|
@@ -785,8 +779,8 @@ class FormTemplatesController < ApplicationController
 
     new_steps = (params[:routing_steps] || []).map do |step|
       condition_field_name = step[:condition_field_name].presence
-      group_routed = step[:routing_type] == "group"
-      authorization_routed = step[:routing_type] == "authorization"
+      group_routed = step[:routing_type] == 'group'
+      authorization_routed = step[:routing_type] == 'authorization'
       {
         routing_type: step[:routing_type],
         employee_id: step[:employee_id]&.to_i.presence,
@@ -808,7 +802,8 @@ class FormTemplatesController < ApplicationController
     return false unless @form_template
 
     current_fields = @form_template.form_fields.ordered.map do |f|
-      { label: f.label, field_type: f.field_type, page_number: f.page_number, required: f.required, read_only: f.read_only || "none", has_custom_view: f.has_custom_view, options: f.options }
+      { label: f.label, field_type: f.field_type, page_number: f.page_number, required: f.required, read_only: f.read_only || 'none', has_custom_view: f.has_custom_view,
+        options: f.options }
     end
 
     new_fields = (params[:fields] || []).map do |f|
@@ -816,28 +811,28 @@ class FormTemplatesController < ApplicationController
         label: f[:label],
         field_type: f[:field_type],
         page_number: f[:page_number].to_i,
-        required: f[:required] == "1",
-        read_only: f[:read_only].presence || "none",
-        has_custom_view: f[:has_custom_view] == "1",
+        required: f[:required] == '1',
+        read_only: f[:read_only].presence || 'none',
+        has_custom_view: f[:has_custom_view] == '1',
         options: case f[:field_type]
-                 when "text_box" then { "rows" => f[:rows].to_i }
-                 when "dropdown", "choices_dropdown"
+                 when 'text_box' then { 'rows' => f[:rows].to_i }
+                 when 'dropdown', 'choices_dropdown'
                    if f[:custom_table].present?
-                     { "custom_lookup" => build_custom_lookup(f) }
+                     { 'custom_lookup' => build_custom_lookup(f) }
                    elsif f[:data_source].present?
-                     opts = { "data_source" => f[:data_source], "data_source_column" => f[:data_source_column] }
-                     opts["data_source_agency"] = f[:data_source_agency] if f[:data_source_agency].present?
-                     opts["data_source_category"] = f[:data_source_category] if f[:data_source_category].present?
+                     opts = { 'data_source' => f[:data_source], 'data_source_column' => f[:data_source_column] }
+                     opts['data_source_agency'] = f[:data_source_agency] if f[:data_source_agency].present?
+                     opts['data_source_category'] = f[:data_source_category] if f[:data_source_category].present?
                      opts
                    elsif f[:dropdown_values].present?
-                     { "values" => f[:dropdown_values].split(",").map(&:strip) }
+                     { 'values' => f[:dropdown_values].split(',').map(&:strip) }
                    else
                      {}
                    end
-                 when "information"
+                 when 'information'
                    {
-                     "information_text" => f[:information_text].to_s,
-                     "acknowledgeable" => f[:acknowledgeable] == "1"
+                     'information_text' => f[:information_text].to_s,
+                     'acknowledgeable' => f[:acknowledgeable] == '1'
                    }
                  else {}
                  end
@@ -856,12 +851,13 @@ class FormTemplatesController < ApplicationController
 
     new_statuses = (params[:statuses] || []).map do |s|
       next nil if s[:name].blank? || s[:category].blank?
+
       {
         name: s[:name],
         key: s[:key].presence || s[:name].parameterize.underscore,
         category: s[:category],
-        is_initial: s[:is_initial] == "1",
-        is_end: s[:is_end] == "1"
+        is_initial: s[:is_initial] == '1',
+        is_end: s[:is_end] == '1'
       }
     end.compact
 
@@ -875,8 +871,8 @@ class FormTemplatesController < ApplicationController
       next if step_data[:routing_type].blank?
 
       condition_field_name = step_data[:condition_field_name].presence
-      group_routed = step_data[:routing_type] == "group"
-      authorization_routed = step_data[:routing_type] == "authorization"
+      group_routed = step_data[:routing_type] == 'group'
+      authorization_routed = step_data[:routing_type] == 'authorization'
       form_template.routing_steps.create!(
         step_number: step_data[:step_number].to_i,
         routing_type: step_data[:routing_type],
@@ -902,17 +898,19 @@ class FormTemplatesController < ApplicationController
   def routing_approver_warnings(form_template)
     form_template.routing_steps.ordered.filter_map do |step|
       case step.routing_type
-      when "authorization"
+      when 'authorization'
         next if step.authorization_service_type.blank?
+
         if AuthorizedApprover.where(service_type: step.authorization_service_type).none?
           "Step #{step.step_number}: no employees currently hold the " \
-          "'#{step.authorization_service_type_label}' authorization, so it may route to no one."
+            "'#{step.authorization_service_type_label}' authorization, so it may route to no one."
         end
-      when "group"
+      when 'group'
         next if step.group_id.blank?
+
         if EmployeeGroup.where(GroupID: step.group_id).none?
           "Step #{step.step_number}: the group '#{step.group_name || "##{step.group_id}"}' " \
-          "has no members, so it may route to no one."
+            'has no members, so it may route to no one.'
         end
       end
     end
@@ -921,6 +919,7 @@ class FormTemplatesController < ApplicationController
   def extract_step_inbox_buttons(step_data)
     raw = step_data[:inbox_buttons]
     return [] if raw.blank?
+
     Array(raw).map(&:to_s).reject(&:blank?) & FormTemplate::INBOX_BUTTON_TYPES.keys
   end
 
@@ -932,9 +931,9 @@ class FormTemplatesController < ApplicationController
 
       form_template.copy_recipients.create!(
         recipient_type: row[:recipient_type],
-        employee_id: row[:recipient_type] == "employee" ? row[:employee_id].presence : nil,
-        group_id: row[:recipient_type] == "group" ? row[:group_id].presence : nil,
-        trigger_event: row[:trigger_event].presence || "approval",
+        employee_id: row[:recipient_type] == 'employee' ? row[:employee_id].presence : nil,
+        group_id: row[:recipient_type] == 'group' ? row[:group_id].presence : nil,
+        trigger_event: row[:trigger_event].presence || 'approval',
         position: index
       )
     end
@@ -960,9 +959,9 @@ class FormTemplatesController < ApplicationController
     incoming = (params[:copy_recipients] || []).map do |r|
       {
         recipient_type: r[:recipient_type],
-        employee_id: r[:recipient_type] == "employee" ? r[:employee_id]&.to_i.presence : nil,
-        group_id: r[:recipient_type] == "group" ? r[:group_id]&.to_i.presence : nil,
-        trigger_event: r[:trigger_event].presence || "approval"
+        employee_id: r[:recipient_type] == 'employee' ? r[:employee_id]&.to_i.presence : nil,
+        group_id: r[:recipient_type] == 'group' ? r[:group_id]&.to_i.presence : nil,
+        trigger_event: r[:trigger_event].presence || 'approval'
       }
     end.reject { |r| r[:recipient_type].blank? }
 
@@ -975,21 +974,21 @@ class FormTemplatesController < ApplicationController
     params[:email_steps].each_with_index do |row, index|
       next if row[:recipient_type].blank?
 
-      trigger = row[:trigger_event].presence || "submit"
+      trigger = row[:trigger_event].presence || 'submit'
       step_bound = %w[approved denied].include?(trigger) && row[:routing_step_number].present?
 
       form_template.email_steps.create!(
         trigger_event: trigger,
         routing_step_number: step_bound ? row[:routing_step_number].to_i : nil,
         recipient_type: row[:recipient_type],
-        employee_id: row[:recipient_type] == "employee" ? row[:employee_id].presence : nil,
-        group_id: row[:recipient_type] == "group" ? row[:group_id].presence : nil,
-        custom_email: row[:recipient_type] == "custom_email" ? row[:custom_email].presence : nil,
-        recipient_field_name: row[:recipient_type] == "form_field" ? row[:recipient_field_name].presence : nil,
+        employee_id: row[:recipient_type] == 'employee' ? row[:employee_id].presence : nil,
+        group_id: row[:recipient_type] == 'group' ? row[:group_id].presence : nil,
+        custom_email: row[:recipient_type] == 'custom_email' ? row[:custom_email].presence : nil,
+        recipient_field_name: row[:recipient_type] == 'form_field' ? row[:recipient_field_name].presence : nil,
         subject: row[:subject].presence,
         body: row[:body].presence,
-        attach_pdf: row[:attach_pdf] == "1",
-        attach_media: row[:attach_media] == "1",
+        attach_pdf: row[:attach_pdf] == '1',
+        attach_media: row[:attach_media] == '1',
         position: index
       )
     end
@@ -1020,20 +1019,20 @@ class FormTemplatesController < ApplicationController
     end
 
     incoming = (params[:email_steps] || []).map do |r|
-      trigger = r[:trigger_event].presence || "submit"
+      trigger = r[:trigger_event].presence || 'submit'
       step_bound = %w[approved denied].include?(trigger) && r[:routing_step_number].present?
       {
         trigger_event: trigger,
         routing_step_number: step_bound ? r[:routing_step_number].to_i : nil,
         recipient_type: r[:recipient_type],
-        employee_id: r[:recipient_type] == "employee" ? r[:employee_id]&.to_i.presence : nil,
-        group_id: r[:recipient_type] == "group" ? r[:group_id]&.to_i.presence : nil,
-        custom_email: r[:recipient_type] == "custom_email" ? r[:custom_email].presence : nil,
-        recipient_field_name: r[:recipient_type] == "form_field" ? r[:recipient_field_name].presence : nil,
+        employee_id: r[:recipient_type] == 'employee' ? r[:employee_id]&.to_i.presence : nil,
+        group_id: r[:recipient_type] == 'group' ? r[:group_id]&.to_i.presence : nil,
+        custom_email: r[:recipient_type] == 'custom_email' ? r[:custom_email].presence : nil,
+        recipient_field_name: r[:recipient_type] == 'form_field' ? r[:recipient_field_name].presence : nil,
         subject: r[:subject].presence,
         body: r[:body].presence,
-        attach_pdf: r[:attach_pdf] == "1",
-        attach_media: r[:attach_media] == "1"
+        attach_pdf: r[:attach_pdf] == '1',
+        attach_media: r[:attach_media] == '1'
       }
     end.reject { |r| r[:recipient_type].blank? }
 
@@ -1053,15 +1052,15 @@ class FormTemplatesController < ApplicationController
       initial_statuses = []
       terminal_statuses = []
 
-      params[:statuses].each_with_index do |status_data, index|
+      params[:statuses].each_with_index do |status_data, _index|
         next if status_data[:name].blank? || status_data[:category].blank?
 
         data = {
           name: status_data[:name],
           key: status_data[:key].presence || status_data[:name].parameterize.underscore,
           category: status_data[:category],
-          is_initial: status_data[:is_initial] == "1",
-          is_end: status_data[:is_end] == "1",
+          is_initial: status_data[:is_initial] == '1',
+          is_end: status_data[:is_end] == '1',
           auto_generated: false
         }
 
@@ -1089,7 +1088,7 @@ class FormTemplatesController < ApplicationController
           form_template.statuses.create!(
             name: step.pending_display_name,
             key: "step_#{step_num}_pending",
-            category: "in_review",
+            category: 'in_review',
             position: position,
             is_initial: false,
             is_end: false,
@@ -1110,7 +1109,7 @@ class FormTemplatesController < ApplicationController
 
       # Default initial status
       form_template.statuses.create!(
-        name: "In Progress", key: "in_progress", category: "pending",
+        name: 'In Progress', key: 'in_progress', category: 'pending',
         position: position, is_initial: true, is_end: false, auto_generated: false
       )
       position += 1
@@ -1122,7 +1121,7 @@ class FormTemplatesController < ApplicationController
         form_template.statuses.create!(
           name: step.pending_display_name,
           key: "step_#{step_num}_pending",
-          category: "in_review",
+          category: 'in_review',
           position: position,
           is_initial: false, is_end: false, auto_generated: true
         )
@@ -1131,12 +1130,12 @@ class FormTemplatesController < ApplicationController
 
       # Default terminal statuses
       form_template.statuses.create!(
-        name: "Approved", key: "approved", category: "approved",
+        name: 'Approved', key: 'approved', category: 'approved',
         position: position, is_initial: false, is_end: true, auto_generated: false
       )
       position += 1
       form_template.statuses.create!(
-        name: "Denied", key: "denied", category: "denied",
+        name: 'Denied', key: 'denied', category: 'denied',
         position: position, is_initial: false, is_end: true, auto_generated: false
       )
     end
@@ -1151,8 +1150,8 @@ class FormTemplatesController < ApplicationController
       next if step_data[:routing_type].blank?
 
       condition_field_name = step_data[:condition_field_name].presence
-      group_routed = step_data[:routing_type] == "group"
-      authorization_routed = step_data[:routing_type] == "authorization"
+      group_routed = step_data[:routing_type] == 'group'
+      authorization_routed = step_data[:routing_type] == 'authorization'
       form_template.routing_steps.create!(
         step_number: index + 1,
         routing_type: step_data[:routing_type],
@@ -1171,9 +1170,9 @@ class FormTemplatesController < ApplicationController
     end
 
     # Clear legacy routing fields when using routing steps
-    if form_template.routing_steps.any?
-      form_template.update_columns(approval_routing_to: nil, approval_employee_id: nil)
-    end
+    return unless form_template.routing_steps.any?
+
+    form_template.update_columns(approval_routing_to: nil, approval_employee_id: nil)
   end
 
   def rebuild_form_fields
@@ -1183,122 +1182,128 @@ class FormTemplatesController < ApplicationController
 
     @form_template.form_fields.destroy_all
 
-    if params[:fields].present?
-      # First pass: create all fields, store conditional references
-      created_fields = []
-      conditional_refs = []
-      conditional_answer_refs = []
+    return unless params[:fields].present?
 
-      params[:fields].each_with_index do |field_data, index|
-        field = @form_template.form_fields.create!(
-          label: field_data[:label],
-          field_name: existing_field_names[field_data[:label]],
-          field_type: field_data[:field_type],
-          page_number: field_data[:page_number].to_i,
-          position: index,
-          required: field_data[:required] == "1",
-          options: build_field_options(field_data),
-          restricted_to_type: field_data[:restricted_to_type].presence || "none",
-          restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
-          restricted_to_group_id: field_data[:restricted_to_group_id].presence,
-          restricted_to_org_filter_level: (field_data[:restricted_to_type] == "group" ? field_data[:restricted_to_org_filter_level].presence : nil),
-          visible_to_filler: field_data[:visible_to_filler] == "1",
-          read_only: field_data[:read_only].presence || "none",
-          has_custom_view: field_data[:has_custom_view] == "1"
-        )
-        created_fields << field
+    # First pass: create all fields, store conditional references
+    created_fields = []
+    conditional_refs = []
+    conditional_answer_refs = []
 
-        # Store conditional reference if present
-        if field_data[:conditional_field_id].present? && field_data[:conditional_values].present?
-          conditional_refs << {
-            field: field,
-            ref: field_data[:conditional_field_id],
-            values: Array(field_data[:conditional_values]).reject(&:blank?)
-          }
-        end
+    params[:fields].each_with_index do |field_data, index|
+      field = @form_template.form_fields.create!(
+        label: field_data[:label],
+        field_name: existing_field_names[field_data[:label]],
+        field_type: field_data[:field_type],
+        page_number: field_data[:page_number].to_i,
+        position: index,
+        required: field_data[:required] == '1',
+        options: build_field_options(field_data),
+        restricted_to_type: field_data[:restricted_to_type].presence || 'none',
+        restricted_to_employee_id: field_data[:restricted_to_employee_id].presence,
+        restricted_to_group_id: field_data[:restricted_to_group_id].presence,
+        restricted_to_org_filter_level: (field_data[:restricted_to_type] == 'group' ? field_data[:restricted_to_org_filter_level].presence : nil),
+        visible_to_filler: field_data[:visible_to_filler] == '1',
+        read_only: field_data[:read_only].presence || 'none',
+        has_custom_view: field_data[:has_custom_view] == '1'
+      )
+      created_fields << field
 
-        # Store conditional answer reference if present
-        if field_data[:conditional_answer_field_id].present? && field_data[:conditional_answer_mappings].present?
-          mappings = field_data[:conditional_answer_mappings].to_unsafe_h.reject { |_, v| v.blank? }
-          if mappings.any?
-            conditional_answer_refs << {
-              field: field,
-              ref: field_data[:conditional_answer_field_id],
-              mappings: mappings
-            }
-          end
-        end
+      # Store conditional reference if present
+      if field_data[:conditional_field_id].present? && field_data[:conditional_values].present?
+        conditional_refs << {
+          field: field,
+          ref: field_data[:conditional_field_id],
+          values: Array(field_data[:conditional_values]).reject(&:blank?)
+        }
       end
 
-      # Second pass: resolve conditional field references to actual IDs
-      conditional_refs.each do |ref_data|
-        if ref_data[:ref] =~ /^field_(\d+)$/
-          ref_index = $1.to_i
-          if created_fields[ref_index]
-            ref_data[:field].update!(
-              conditional_field_id: created_fields[ref_index].id,
-              conditional_values: ref_data[:values]
-            )
-          end
-        elsif ref_data[:ref].to_i > 0
-          # Direct ID reference (for edit page with existing fields)
+      # Store conditional answer reference if present
+      next unless field_data[:conditional_answer_field_id].present? && field_data[:conditional_answer_mappings].present?
+
+      mappings = field_data[:conditional_answer_mappings].to_unsafe_h.reject { |_, v| v.blank? }
+      next unless mappings.any?
+
+      conditional_answer_refs << {
+        field: field,
+        ref: field_data[:conditional_answer_field_id],
+        mappings: mappings
+      }
+    end
+
+    # Second pass: resolve conditional field references to actual IDs
+    conditional_refs.each do |ref_data|
+      if ref_data[:ref] =~ /^field_(\d+)$/
+        ref_index = ::Regexp.last_match(1).to_i
+        if created_fields[ref_index]
           ref_data[:field].update!(
-            conditional_field_id: ref_data[:ref].to_i,
+            conditional_field_id: created_fields[ref_index].id,
             conditional_values: ref_data[:values]
           )
         end
+      elsif ref_data[:ref].to_i.positive?
+        # Direct ID reference (for edit page with existing fields)
+        ref_data[:field].update!(
+          conditional_field_id: ref_data[:ref].to_i,
+          conditional_values: ref_data[:values]
+        )
       end
+    end
 
-      # Resolve conditional answer field references to actual IDs
-      conditional_answer_refs.each do |ref_data|
-        if ref_data[:ref] =~ /^field_(\d+)$/
-          ref_index = $1.to_i
-          if created_fields[ref_index]
-            ref_data[:field].update!(
-              conditional_answer_field_id: created_fields[ref_index].id,
-              conditional_answer_mappings: ref_data[:mappings]
-            )
-          end
-        elsif ref_data[:ref].to_i > 0
+    # Resolve conditional answer field references to actual IDs
+    conditional_answer_refs.each do |ref_data|
+      if ref_data[:ref] =~ /^field_(\d+)$/
+        ref_index = ::Regexp.last_match(1).to_i
+        if created_fields[ref_index]
           ref_data[:field].update!(
-            conditional_answer_field_id: ref_data[:ref].to_i,
+            conditional_answer_field_id: created_fields[ref_index].id,
             conditional_answer_mappings: ref_data[:mappings]
           )
         end
+      elsif ref_data[:ref].to_i.positive?
+        ref_data[:field].update!(
+          conditional_answer_field_id: ref_data[:ref].to_i,
+          conditional_answer_mappings: ref_data[:mappings]
+        )
       end
     end
   end
 
   def generate_approval_routing_logic(form_template)
     # Check if using multi-step routing
-    if form_template.routing_steps.any?
-      return generate_multi_step_routing_logic(form_template)
-    end
+    return generate_multi_step_routing_logic(form_template) if form_template.routing_steps.any?
 
     # Legacy single-step routing
     # Use the actual first status from the form's statuses
-    pending_status = form_template.statuses.find_by(category: "pending")&.key ||
+    pending_status = form_template.statuses.find_by(category: 'pending')&.key ||
                      form_template.statuses.ordered.first&.key ||
-                     "pending"
-    table_name = form_template.class_name.constantize.table_name rescue form_template.table_name
-    has_approver = ActiveRecord::Base.connection.column_exists?(table_name, :approver_id) rescue false
+                     'pending'
+    table_name = begin
+      form_template.class_name.constantize.table_name
+    rescue StandardError
+      form_template.table_name
+    end
+    has_approver = begin
+      ActiveRecord::Base.connection.column_exists?(table_name, :approver_id)
+    rescue StandardError
+      false
+    end
 
     case form_template.approval_routing_to
-    when "supervisor"
+    when 'supervisor'
       <<~RUBY.chomp
         # Route to supervisor for approval
         @#{form_template.file_name}.update(status: :#{pending_status})
         # TODO: Send notification to supervisor
         redirect_to form_success_path, notice: 'Form submitted and routed to your supervisor for approval.', allow_other_host: false, status: :see_other
       RUBY
-    when "department_head"
+    when 'department_head'
       <<~RUBY.chomp
         # Route to department head for approval
         @#{form_template.file_name}.update(status: :#{pending_status})
         # TODO: Send notification to department head
         redirect_to form_success_path, notice: 'Form submitted and routed to your department head for approval.', allow_other_host: false, status: :see_other
       RUBY
-    when "employee"
+    when 'employee'
       update_attrs = "status: :#{pending_status}"
       update_attrs += ", approver_id: #{form_template.approval_employee_id}" if has_approver
       <<~RUBY.chomp
@@ -1308,7 +1313,7 @@ class FormTemplatesController < ApplicationController
         redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
       RUBY
     else
-      "redirect_to form_success_path, allow_other_host: false, status: :see_other"
+      'redirect_to form_success_path, allow_other_host: false, status: :see_other'
     end
   end
 
@@ -1334,13 +1339,13 @@ class FormTemplatesController < ApplicationController
     existing_blocks = extract_existing_field_blocks(view_path)
 
     # Determine which Stimulus controllers to attach
-    controllers = [ "form-navigation" ]
-    controllers << "conditional-fields" if form_template.form_fields.conditional.any? || form_template.form_fields.any?(&:conditional_answer?)
-    controllers_attr = controllers.join(" ")
+    controllers = ['form-navigation']
+    controllers << 'conditional-fields' if form_template.form_fields.conditional.any? || form_template.form_fields.any?(&:conditional_answer?)
+    controllers_attr = controllers.join(' ')
 
-    page_visibility = (1..form_template.page_count).map { |n|
-      [ n, generate_page_visibility_check(form_template, n) ]
-    }.to_h
+    page_visibility = (1..form_template.page_count).to_h do |n|
+      [n, generate_page_visibility_check(form_template, n)]
+    end
 
     # Build the dynamic view content
     content = <<~HTML
@@ -1372,14 +1377,14 @@ class FormTemplatesController < ApplicationController
       page_header = form_template.page_header(page_num)
       fields_for_page = form_template.form_fields.for_page(page_num)
 
-      display_style = page_num == 1 ? "" : " style=\"display:none;\""
+      display_style = page_num == 1 ? '' : ' style="display:none;"'
 
       content += "        <% if _page_#{page_num}_visible %>\n" if page_visibility[page_num]
 
       content += <<~HTML
-            <!-- Page #{page_num}: #{page_header} -->
-            <div class="form-page"#{display_style}>
-              <h2>#{page_header}</h2>
+        <!-- Page #{page_num}: #{page_header} -->
+        <div class="form-page"#{display_style}>
+          <h2>#{page_header}</h2>
       HTML
 
       # Add standard fields for pages 1 and 2
@@ -1395,12 +1400,12 @@ class FormTemplatesController < ApplicationController
 
         fields_for_page.each do |field|
           content += "<!-- FIELD:#{field.field_name} START -->"
-          if field.has_custom_view && existing_blocks[field.field_name]
-            # Preserve the existing custom HTML for this field
-            content += existing_blocks[field.field_name]
-          else
-            content += generate_field_html(field, form_template)
-          end
+          content += if field.has_custom_view && existing_blocks[field.field_name]
+                       # Preserve the existing custom HTML for this field
+                       existing_blocks[field.field_name]
+                     else
+                       generate_field_html(field, form_template)
+                     end
           content += "<!-- FIELD:#{field.field_name} END -->\n"
         end
 
@@ -1454,13 +1459,13 @@ class FormTemplatesController < ApplicationController
     existing_blocks = extract_existing_field_blocks(view_path)
 
     # Determine which Stimulus controllers to attach
-    controllers = [ "form-navigation" ]
-    controllers << "conditional-fields" if form_template.form_fields.conditional.any? || form_template.form_fields.any?(&:conditional_answer?)
-    controllers_attr = controllers.join(" ")
+    controllers = ['form-navigation']
+    controllers << 'conditional-fields' if form_template.form_fields.conditional.any? || form_template.form_fields.any?(&:conditional_answer?)
+    controllers_attr = controllers.join(' ')
 
-    page_visibility = (1..form_template.page_count).map { |n|
-      [ n, generate_page_visibility_check(form_template, n) ]
-    }.to_h
+    page_visibility = (1..form_template.page_count).to_h do |n|
+      [n, generate_page_visibility_check(form_template, n)]
+    end
 
     # Build the dynamic edit view content
     content = <<~HTML
@@ -1492,14 +1497,14 @@ class FormTemplatesController < ApplicationController
       page_header = form_template.page_header(page_num)
       fields_for_page = form_template.form_fields.for_page(page_num)
 
-      display_style = page_num == 1 ? "" : " style=\"display:none;\""
+      display_style = page_num == 1 ? '' : ' style="display:none;"'
 
       content += "        <% if _page_#{page_num}_visible %>\n" if page_visibility[page_num]
 
       content += <<~HTML
-            <!-- Page #{page_num}: #{page_header} -->
-            <div class="form-page"#{display_style}>
-              <h2>#{page_header}</h2>
+        <!-- Page #{page_num}: #{page_header} -->
+        <div class="form-page"#{display_style}>
+          <h2>#{page_header}</h2>
       HTML
 
       # Add standard fields for pages 1 and 2
@@ -1515,12 +1520,12 @@ class FormTemplatesController < ApplicationController
 
         fields_for_page.each do |field|
           content += "<!-- FIELD:#{field.field_name} START -->"
-          if field.has_custom_view && existing_blocks[field.field_name]
-            # Preserve the existing custom HTML for this field
-            content += existing_blocks[field.field_name]
-          else
-            content += generate_field_html_for_edit(field, form_template)
-          end
+          content += if field.has_custom_view && existing_blocks[field.field_name]
+                       # Preserve the existing custom HTML for this field
+                       existing_blocks[field.field_name]
+                     else
+                       generate_field_html_for_edit(field, form_template)
+                     end
           content += "<!-- FIELD:#{field.field_name} END -->\n"
         end
 
@@ -1564,105 +1569,105 @@ class FormTemplatesController < ApplicationController
     File.write(view_path, content)
   end
 
-  def generate_employee_info_fields_for_edit(form_template)
+  def generate_employee_info_fields_for_edit(_form_template)
     <<~HTML
-          <div class="form-row d-flex flex-wrap">
-            <div class="form-group flex-fill">
-              <%= form.label :employee_id, "Employee ID" %>
-              <%= form.text_field :employee_id,
-                    class: "form-control",
-                    readonly: true %>
-            </div>
+      <div class="form-row d-flex flex-wrap">
+        <div class="form-group flex-fill">
+          <%= form.label :employee_id, "Employee ID" %>
+          <%= form.text_field :employee_id,
+                class: "form-control",
+                readonly: true %>
+        </div>
 
-            <div class="form-group flex-fill">
-              <%= form.label :name, "Name" %>
-              <%= form.text_field :name,
-                    class: "form-control",
-                    readonly: true %>
-            </div>
+        <div class="form-group flex-fill">
+          <%= form.label :name, "Name" %>
+          <%= form.text_field :name,
+                class: "form-control",
+                readonly: true %>
+        </div>
 
-            <div class="form-group flex-fill">
-              <%= form.label :phone, "Phone" %>
-              <%= form.text_field :phone,
-                    class: "form-control",
-                    required: true,
-                    placeholder: "e.g. 555-555-5555",
-                    title: "Enter a 10-digit phone number like 555-555-5555",
-                    data: {
-                      controller: "phone",
-                      phone_target: "input",
-                      action: "input->phone#format paste->phone#format blur->phone#validate"
-                    },
-                    "aria-describedby": "phoneHelp phoneError",
-                    pattern: "\\\\d{3}-\\\\d{3}-\\\\d{4}",
-                    inputmode: "numeric",
-                    autocomplete: "tel" %>
-              <small id="phoneHelp" class="help-text text-muted"></small>
-              <div id="phoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
-            </div>
+        <div class="form-group flex-fill">
+          <%= form.label :phone, "Phone" %>
+          <%= form.text_field :phone,
+                class: "form-control",
+                required: true,
+                placeholder: "e.g. 555-555-5555",
+                title: "Enter a 10-digit phone number like 555-555-5555",
+                data: {
+                  controller: "phone",
+                  phone_target: "input",
+                  action: "input->phone#format paste->phone#format blur->phone#validate"
+                },
+                "aria-describedby": "phoneHelp phoneError",
+                pattern: "\\\\d{3}-\\\\d{3}-\\\\d{4}",
+                inputmode: "numeric",
+                autocomplete: "tel" %>
+          <small id="phoneHelp" class="help-text text-muted"></small>
+          <div id="phoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
+        </div>
 
-            <div class="form-group flex-fill">
-              <%= form.label :email, "Email" %>
-              <%= form.text_field :email,
-                    class: "form-control",
-                    required: true %>
-            </div>
-          </div>
+        <div class="form-group flex-fill">
+          <%= form.label :email, "Email" %>
+          <%= form.text_field :email,
+                class: "form-control",
+                required: true %>
+        </div>
+      </div>
     HTML
   end
 
   def generate_agency_info_fields_for_edit(form_template)
     <<~HTML
-          <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
-            <div class="form-group">
-              <%= form.label :agency, "Agency" %>
-              <%= form.select :agency,
-                    options_for_select(@agency_options, @#{form_template.file_name}.agency),
-                    {},
-                    class: "form-control",
-                    id: "agency-select",
-                    data: {
-                      gsabss_selects_target: "agency",
-                      action: "change->gsabss-selects#loadDivisions"
-                    } %>
-            </div>
+      <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
+        <div class="form-group">
+          <%= form.label :agency, "Agency" %>
+          <%= form.select :agency,
+                options_for_select(@agency_options, @#{form_template.file_name}.agency),
+                {},
+                class: "form-control",
+                id: "agency-select",
+                data: {
+                  gsabss_selects_target: "agency",
+                  action: "change->gsabss-selects#loadDivisions"
+                } %>
+        </div>
 
-            <div class="form-group">
-              <%= form.label :division, "Division" %>
-              <%= form.select :division,
-                    options_for_select(@division_options, @#{form_template.file_name}.division),
-                    {},
-                    class: "form-control",
-                    id: "division-select",
-                    data: {
-                      gsabss_selects_target: "division",
-                      action: "change->gsabss-selects#loadDepartments"
-                    } %>
-            </div>
+        <div class="form-group">
+          <%= form.label :division, "Division" %>
+          <%= form.select :division,
+                options_for_select(@division_options, @#{form_template.file_name}.division),
+                {},
+                class: "form-control",
+                id: "division-select",
+                data: {
+                  gsabss_selects_target: "division",
+                  action: "change->gsabss-selects#loadDepartments"
+                } %>
+        </div>
 
-            <div class="form-group">
-              <%= form.label :department, "Department" %>
-              <%= form.select :department,
-                    options_for_select(@department_options, @#{form_template.file_name}.department),
-                    {},
-                    class: "form-control",
-                    id: "department-select",
-                    data: {
-                      gsabss_selects_target: "department",
-                      action: "change->gsabss-selects#loadUnits"
-                    } %>
-            </div>
+        <div class="form-group">
+          <%= form.label :department, "Department" %>
+          <%= form.select :department,
+                options_for_select(@department_options, @#{form_template.file_name}.department),
+                {},
+                class: "form-control",
+                id: "department-select",
+                data: {
+                  gsabss_selects_target: "department",
+                  action: "change->gsabss-selects#loadUnits"
+                } %>
+        </div>
 
-            <div class="form-group">
-              <%= form.label :unit, "Unit" %>
-              <%= form.select :unit,
-                    options_for_select(@unit_options, @#{form_template.file_name}.unit),
-                    {},
-                    class: "form-control",
-                    id: "unit-select",
-                    data: { gsabss_selects_target: "unit" } %>
-            </div>
-          </div>
+        <div class="form-group">
+          <%= form.label :unit, "Unit" %>
+          <%= form.select :unit,
+                options_for_select(@unit_options, @#{form_template.file_name}.unit),
+                {},
+                class: "form-control",
+                id: "unit-select",
+                data: { gsabss_selects_target: "unit" } %>
+        </div>
+      </div>
     HTML
   end
 
@@ -1670,139 +1675,135 @@ class FormTemplatesController < ApplicationController
     # Generate restriction check and attributes
     if field.restricted?
       editable_check = generate_editable_check(field, form_template)
-      required_logic = field.required ? "required: field_#{field.id}_editable && #{field.required}" : ""
+      required_logic = field.required ? "required: field_#{field.id}_editable && #{field.required}" : ''
       disabled_attr = "disabled: !field_#{field.id}_editable"
       restriction_label = field.restriction_label
     else
       editable_check = nil
-      required_logic = field.required ? "required: true" : ""
+      required_logic = field.required ? 'required: true' : ''
       disabled_attr = nil
       restriction_label = nil
     end
 
     # Generate conditional attributes with initial visibility based on model value
-    conditional_wrapper_start = ""
-    conditional_wrapper_end = ""
+    conditional_wrapper_start = ''
+    conditional_wrapper_end = ''
     if field.conditional?
       conditional_field = field.conditional_field
       if conditional_field
-        values_json = field.conditional_values.to_json.gsub('"', "&quot;")
+        values_json = field.conditional_values.to_json.gsub('"', '&quot;')
         # For edit view, show conditional fields based on current model values
         conditional_wrapper_start = "          <div class=\"conditional-field\" data-depends-on=\"#{conditional_field.field_name}\" data-show-values=\"#{values_json}\" style=\"<%= #{field.conditional_values.inspect}.include?(@#{form_template.file_name}.#{conditional_field.field_name}) ? '' : 'display: none;' %>\">\n"
         conditional_wrapper_end = "          </div>\n"
         # For conditional fields, don't require them initially (JS will handle validation)
-        required_logic = "" if field.required
+        required_logic = '' if field.required
       end
     end
 
     # Read-only handling: on edit view, only 'always' is readonly ('initial' becomes editable)
     is_read_only = field.read_only_always?
-    readonly_attr = is_read_only ? "readonly: true" : nil
+    readonly_attr = is_read_only ? 'readonly: true' : nil
 
     # Generate conditional answer data attributes for the form-group div
-    conditional_answer_attrs = ""
+    conditional_answer_attrs = ''
     if field.conditional_answer?
       answer_field = field.conditional_answer_field
       if answer_field
-        mappings_json = field.conditional_answer_mappings.to_json.gsub('"', "&quot;")
+        mappings_json = field.conditional_answer_mappings.to_json.gsub('"', '&quot;')
         conditional_answer_attrs = " data-answer-depends-on=\"#{answer_field.field_name}\" data-answer-mappings=\"#{mappings_json}\""
       end
     end
 
     # Build attributes hash string
-    attrs = [ "class: \"form-control#{ is_read_only ? ' field-readonly' : '' }\"" ]
+    attrs = ["class: \"form-control#{' field-readonly' if is_read_only}\""]
     attrs << required_logic if required_logic.present?
     attrs << disabled_attr if disabled_attr.present?
     attrs << readonly_attr if readonly_attr.present?
     # Add data attribute for dropdowns that have conditional dependencies
-    if (field.dropdown? || field.choices_dropdown?) && has_conditional_dependents?(field)
-      attrs << "data: { conditional_trigger: '#{field.field_name}' }"
-    end
-    attrs_str = attrs.join(", ")
+    attrs << "data: { conditional_trigger: '#{field.field_name}' }" if (field.dropdown? || field.choices_dropdown?) && conditional_dependents?(field)
+    attrs_str = attrs.join(', ')
 
     # For select/dropdown fields, use disabled instead of readonly (readonly doesn't work on selects)
-    select_attrs = attrs.reject { |a| a == "readonly: true" }
-    select_attrs << "disabled: true" if is_read_only && disabled_attr.nil?
-    select_attrs_str = select_attrs.join(", ")
+    select_attrs = attrs.reject { |a| a == 'readonly: true' }
+    select_attrs << 'disabled: true' if is_read_only && disabled_attr.nil?
+    select_attrs_str = select_attrs.join(', ')
 
     case field.field_type
-    when "text"
-      html = ""
+    when 'text'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.text_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "text_box"
-      html = ""
+    when 'text_box'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.text_area :#{field.field_name}, rows: #{field.rows}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "dropdown"
+    when 'dropdown'
       if field.custom_lookup?
         options_expr = "FormLookup.options(#{field.id})"
-        selected_expr = "@#{form_template.file_name}.#{field.field_name}"
       elsif field.data_source?
         options_expr = field.data_source_query_code
-        selected_expr = "@#{form_template.file_name}.#{field.field_name}"
       else
-        options = field.dropdown_values.map { |v| "'#{v}'" }.join(", ")
+        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
         options_expr = "[#{options}]"
-        selected_expr = "@#{form_template.file_name}.#{field.field_name}"
       end
-      html = ""
+      selected_expr = "@#{form_template.file_name}.#{field.field_name}"
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>"#{conditional_answer_attrs}>
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>"#{conditional_answer_attrs}>
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-        html += "            <%= form.select :#{field.field_name},\n"
+      html += "            <%= form.select :#{field.field_name},\n"
       html += "                  options_for_select(#{options_expr}, #{selected_expr}),\n"
       html += "                  { include_blank: \"Select...\" },\n"
       html += "                  { #{select_attrs_str} } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "choices_dropdown"
+    when 'choices_dropdown'
       if field.custom_lookup?
         options_expr = "FormLookup.options(#{field.id})"
       elsif field.data_source?
         options_expr = field.data_source_query_code
       else
-        options = field.dropdown_values.map { |v| "'#{v}'" }.join(", ")
+        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
         options_expr = "[#{options}]"
       end
       # Build merged data hash for choices_dropdown (avoid duplicate data: keys)
-      data_entries = [ "choices_target: \"select\"", "placeholder: \"Select options...\"" ]
-      data_entries << "conditional_trigger: '#{field.field_name}'" if has_conditional_dependents?(field)
+      data_entries = ['choices_target: "select"', 'placeholder: "Select options..."']
+      data_entries << "conditional_trigger: '#{field.field_name}'" if conditional_dependents?(field)
       # Use select_attrs without the standalone data: key (we merge it into one)
-      choices_attrs = select_attrs.reject { |a| a.start_with?("data:") }
-      choices_attrs_str = choices_attrs.join(", ")
-      html = ""
+      choices_attrs = select_attrs.reject { |a| a.start_with?('data:') }
+      choices_attrs_str = choices_attrs.join(', ')
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>"#{conditional_answer_attrs} data-controller="choices">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>"#{conditional_answer_attrs} data-controller="choices">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-        html += "            <%= form.select :#{field.field_name},\n"
+      html += "            <%= form.select :#{field.field_name},\n"
       # Pre-select the saved values on edit. Stored as a comma-joined string;
       # split on commas NOT followed by a space so values that contain a comma
       # (e.g. "Last, First" names) survive the round-trip.
@@ -1812,52 +1813,52 @@ class FormTemplatesController < ApplicationController
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "date"
-      html = ""
+    when 'date'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.date_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "date_time"
-      html = ""
+    when 'date_time'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.datetime_local_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "phone"
+    when 'phone'
       phone_id = field.field_name.camelize(:lower)
-      phone_attrs = [ "class: \"form-control#{ is_read_only ? ' field-readonly' : '' }\"" ]
+      phone_attrs = ["class: \"form-control#{' field-readonly' if is_read_only}\""]
       phone_attrs << required_logic if required_logic.present?
       phone_attrs << disabled_attr if disabled_attr.present?
       phone_attrs << readonly_attr if readonly_attr.present?
-      phone_attrs << "placeholder: \"e.g. 555-555-5555\""
-      phone_attrs << "title: \"Enter a 10-digit phone number like 555-555-5555\""
-      phone_attrs << "data: { controller: \"phone\", phone_target: \"input\", action: \"input->phone#format paste->phone#format blur->phone#validate\" }"
+      phone_attrs << 'placeholder: "e.g. 555-555-5555"'
+      phone_attrs << 'title: "Enter a 10-digit phone number like 555-555-5555"'
+      phone_attrs << 'data: { controller: "phone", phone_target: "input", action: "input->phone#format paste->phone#format blur->phone#validate" }'
       phone_attrs << "\"aria-describedby\": \"#{phone_id}Help #{phone_id}Error\""
-      phone_attrs << "pattern: \"\\\\d{3}-\\\\d{3}-\\\\d{4}\""
-      phone_attrs << "inputmode: \"numeric\""
-      phone_attrs << "autocomplete: \"tel\""
+      phone_attrs << 'pattern: "\\\\d{3}-\\\\d{3}-\\\\d{4}"'
+      phone_attrs << 'inputmode: "numeric"'
+      phone_attrs << 'autocomplete: "tel"'
       phone_attrs_str = phone_attrs.join(",\n                  ")
-      html = ""
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.text_field :#{field.field_name},\n"
@@ -1867,50 +1868,50 @@ class FormTemplatesController < ApplicationController
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "email"
-      email_attrs = [ "class: \"form-control#{ is_read_only ? ' field-readonly' : '' }\"" ]
+    when 'email'
+      email_attrs = ["class: \"form-control#{' field-readonly' if is_read_only}\""]
       email_attrs << required_logic if required_logic.present?
       email_attrs << disabled_attr if disabled_attr.present?
       email_attrs << readonly_attr if readonly_attr.present?
-      email_attrs << "placeholder: \"e.g. name@example.com\""
-      email_attrs << "autocomplete: \"email\""
-      email_attrs_str = email_attrs.join(", ")
-      html = ""
+      email_attrs << 'placeholder: "e.g. name@example.com"'
+      email_attrs << 'autocomplete: "email"'
+      email_attrs_str = email_attrs.join(', ')
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.email_field :#{field.field_name}, #{email_attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "number"
-      html = ""
+    when 'number'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.number_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "currency"
+    when 'currency'
       currency_attrs = attrs.dup
-      currency_attrs << "step: \"0.01\""
-      currency_attrs << "min: \"0\""
-      currency_attrs_str = currency_attrs.join(", ")
-      html = ""
+      currency_attrs << 'step: "0.01"'
+      currency_attrs << 'min: "0"'
+      currency_attrs_str = currency_attrs.join(', ')
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <div class=\"currency-input-wrapper\">\n"
@@ -1920,13 +1921,13 @@ class FormTemplatesController < ApplicationController
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "yes_no"
-      html = ""
+    when 'yes_no'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.select :#{field.field_name},\n"
@@ -1936,26 +1937,26 @@ class FormTemplatesController < ApplicationController
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "time"
-      html = ""
+    when 'time'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.time_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "media_attachment"
-      html = ""
+    when 'media_attachment'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>" data-controller="file-preview" data-file-preview-max-value="10">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>" data-controller="file-preview" data-file-preview-max-value="10">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       # Show existing attachments on edit
@@ -1977,15 +1978,15 @@ class FormTemplatesController < ApplicationController
       html += "              </div>\n"
       html += "            <% end %>\n"
       html += "            <%= form.file_field :#{field.field_name}, multiple: true, class: \"form-control\", direct_upload: true, accept: \"image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,application/pdf\""
-      html += ", disabled: true" if disabled_attr.present?
+      html += ', disabled: true' if disabled_attr.present?
       html += ", data: { file_preview_target: \"input\", action: \"change->file-preview#preview\" } %>\n"
       html += "            <small class=\"form-text text-muted\">You can select files multiple times — up to 10 total. <span data-file-preview-target=\"count\"></span></small>\n"
       html += "            <div data-file-preview-target=\"preview\" class=\"file-preview-grid\"></div>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "information"
-      html = ""
+    when 'information'
+      html = ''
       html += conditional_wrapper_start
       html += generate_information_field_html(field)
       html += conditional_wrapper_end
@@ -2009,107 +2010,107 @@ class FormTemplatesController < ApplicationController
 
   def generate_employee_info_fields
     <<~HTML
-          <div class="form-row d-flex flex-wrap">
-            <div class="form-group flex-fill">
-              <%= form.label :employee_id, "Employee ID" %>
-              <%= form.text_field :employee_id,
-                    value: @prefill_data[:employee_id],
-                    class: "form-control",
-                    readonly: true %>
-            </div>
+      <div class="form-row d-flex flex-wrap">
+        <div class="form-group flex-fill">
+          <%= form.label :employee_id, "Employee ID" %>
+          <%= form.text_field :employee_id,
+                value: @prefill_data[:employee_id],
+                class: "form-control",
+                readonly: true %>
+        </div>
 
-            <div class="form-group flex-fill">
-              <%= form.label :name, "Name" %>
-              <%= form.text_field :name,
-                    value: @prefill_data[:name],
-                    class: "form-control",
-                    readonly: true %>
-            </div>
+        <div class="form-group flex-fill">
+          <%= form.label :name, "Name" %>
+          <%= form.text_field :name,
+                value: @prefill_data[:name],
+                class: "form-control",
+                readonly: true %>
+        </div>
 
-            <div class="form-group flex-fill">
-              <%= form.label :phone, "Phone" %>
-              <%= form.text_field :phone,
-                    value: @prefill_data[:phone],
-                    class: "form-control",
-                    required: true,
-                    placeholder: "e.g. 555-555-5555",
-                    title: "Enter a 10-digit phone number like 555-555-5555",
-                    data: {
-                      controller: "phone",
-                      phone_target: "input",
-                      action: "input->phone#format paste->phone#format blur->phone#validate"
-                    },
-                    "aria-describedby": "phoneHelp phoneError",
-                    pattern: "\\\\d{3}-\\\\d{3}-\\\\d{4}",
-                    inputmode: "numeric",
-                    autocomplete: "tel" %>
-              <small id="phoneHelp" class="help-text text-muted"></small>
-              <div id="phoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
-            </div>
+        <div class="form-group flex-fill">
+          <%= form.label :phone, "Phone" %>
+          <%= form.text_field :phone,
+                value: @prefill_data[:phone],
+                class: "form-control",
+                required: true,
+                placeholder: "e.g. 555-555-5555",
+                title: "Enter a 10-digit phone number like 555-555-5555",
+                data: {
+                  controller: "phone",
+                  phone_target: "input",
+                  action: "input->phone#format paste->phone#format blur->phone#validate"
+                },
+                "aria-describedby": "phoneHelp phoneError",
+                pattern: "\\\\d{3}-\\\\d{3}-\\\\d{4}",
+                inputmode: "numeric",
+                autocomplete: "tel" %>
+          <small id="phoneHelp" class="help-text text-muted"></small>
+          <div id="phoneError" data-phone-target="error" class="field-error" aria-live="polite"></div>
+        </div>
 
-            <div class="form-group flex-fill">
-              <%= form.label :email, "Email" %>
-              <%= form.text_field :email,
-                    value: @prefill_data[:email],
-                    class: "form-control",
-                    required: true %>
-            </div>
-          </div>
+        <div class="form-group flex-fill">
+          <%= form.label :email, "Email" %>
+          <%= form.text_field :email,
+                value: @prefill_data[:email],
+                class: "form-control",
+                required: true %>
+        </div>
+      </div>
     HTML
   end
 
   def generate_agency_info_fields
     <<~HTML
-          <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
-            <div class="form-group">
-              <%= form.label :agency, "Agency" %>
-              <%= form.select :agency,
-                    options_for_select(@agency_options, @prefill_data[:agency]),
-                    {},
-                    class: "form-control",
-                    id: "agency-select",
-                    data: {
-                      gsabss_selects_target: "agency",
-                      action: "change->gsabss-selects#loadDivisions"
-                    } %>
-            </div>
+      <div data-controller="gsabss-selects" class="form-row d-flex flex-wrap">
+        <div class="form-group">
+          <%= form.label :agency, "Agency" %>
+          <%= form.select :agency,
+                options_for_select(@agency_options, @prefill_data[:agency]),
+                {},
+                class: "form-control",
+                id: "agency-select",
+                data: {
+                  gsabss_selects_target: "agency",
+                  action: "change->gsabss-selects#loadDivisions"
+                } %>
+        </div>
 
-            <div class="form-group">
-              <%= form.label :division, "Division" %>
-              <%= form.select :division,
-                    options_for_select(@division_options, @prefill_data[:division]),
-                    {},
-                    class: "form-control",
-                    id: "division-select",
-                    data: {
-                      gsabss_selects_target: "division",
-                      action: "change->gsabss-selects#loadDepartments"
-                    } %>
-            </div>
+        <div class="form-group">
+          <%= form.label :division, "Division" %>
+          <%= form.select :division,
+                options_for_select(@division_options, @prefill_data[:division]),
+                {},
+                class: "form-control",
+                id: "division-select",
+                data: {
+                  gsabss_selects_target: "division",
+                  action: "change->gsabss-selects#loadDepartments"
+                } %>
+        </div>
 
-            <div class="form-group">
-              <%= form.label :department, "Department" %>
-              <%= form.select :department,
-                    options_for_select(@department_options, @prefill_data[:department]),
-                    {},
-                    class: "form-control",
-                    id: "department-select",
-                    data: {
-                      gsabss_selects_target: "department",
-                      action: "change->gsabss-selects#loadUnits"
-                    } %>
-            </div>
+        <div class="form-group">
+          <%= form.label :department, "Department" %>
+          <%= form.select :department,
+                options_for_select(@department_options, @prefill_data[:department]),
+                {},
+                class: "form-control",
+                id: "department-select",
+                data: {
+                  gsabss_selects_target: "department",
+                  action: "change->gsabss-selects#loadUnits"
+                } %>
+        </div>
 
-            <div class="form-group">
-              <%= form.label :unit, "Unit" %>
-              <%= form.select :unit,
-                    options_for_select(@unit_options, @prefill_data[:unit]),
-                    {},
-                    class: "form-control",
-                    id: "unit-select",
-                    data: { gsabss_selects_target: "unit" } %>
-            </div>
-          </div>
+        <div class="form-group">
+          <%= form.label :unit, "Unit" %>
+          <%= form.select :unit,
+                options_for_select(@unit_options, @prefill_data[:unit]),
+                {},
+                class: "form-control",
+                id: "unit-select",
+                data: { gsabss_selects_target: "unit" } %>
+        </div>
+      </div>
     HTML
   end
 
@@ -2117,187 +2118,185 @@ class FormTemplatesController < ApplicationController
     # Generate restriction check and attributes
     if field.restricted?
       editable_check = generate_editable_check(field, form_template)
-      required_logic = field.required ? "required: field_#{field.id}_editable && #{field.required}" : ""
+      required_logic = field.required ? "required: field_#{field.id}_editable && #{field.required}" : ''
       disabled_attr = "disabled: !field_#{field.id}_editable"
       restriction_label = field.restriction_label
     else
       editable_check = nil
-      required_logic = field.required ? "required: true" : ""
+      required_logic = field.required ? 'required: true' : ''
       disabled_attr = nil
       restriction_label = nil
     end
 
     # Generate conditional attributes
-    conditional_wrapper_start = ""
-    conditional_wrapper_end = ""
+    conditional_wrapper_start = ''
+    conditional_wrapper_end = ''
     if field.conditional?
       conditional_field = field.conditional_field
       if conditional_field
-        values_json = field.conditional_values.to_json.gsub('"', "&quot;")
+        values_json = field.conditional_values.to_json.gsub('"', '&quot;')
         conditional_wrapper_start = "          <div class=\"conditional-field\" data-depends-on=\"#{conditional_field.field_name}\" data-show-values=\"#{values_json}\" style=\"display: none;\">\n"
         conditional_wrapper_end = "          </div>\n"
         # For conditional fields, don't require them initially (JS will handle validation)
-        required_logic = "" if field.required
+        required_logic = '' if field.required
       end
     end
 
     # Read-only handling: on the new view, both 'always' and 'initial' are readonly
     is_read_only = field.read_only_always? || field.read_only_initial?
-    readonly_attr = is_read_only ? "readonly: true" : nil
+    readonly_attr = is_read_only ? 'readonly: true' : nil
 
     # Generate conditional answer data attributes for the form-group div
-    conditional_answer_attrs = ""
+    conditional_answer_attrs = ''
     if field.conditional_answer?
       answer_field = field.conditional_answer_field
       if answer_field
-        mappings_json = field.conditional_answer_mappings.to_json.gsub('"', "&quot;")
+        mappings_json = field.conditional_answer_mappings.to_json.gsub('"', '&quot;')
         conditional_answer_attrs = " data-answer-depends-on=\"#{answer_field.field_name}\" data-answer-mappings=\"#{mappings_json}\""
       end
     end
 
     # Build attributes hash string
-    attrs = [ "class: \"form-control#{ is_read_only ? ' field-readonly' : '' }\"" ]
+    attrs = ["class: \"form-control#{' field-readonly' if is_read_only}\""]
     attrs << required_logic if required_logic.present?
     attrs << disabled_attr if disabled_attr.present?
     attrs << readonly_attr if readonly_attr.present?
     # Add data attribute for dropdowns that have conditional dependencies
-    if (field.dropdown? || field.choices_dropdown?) && has_conditional_dependents?(field)
-      attrs << "data: { conditional_trigger: '#{field.field_name}' }"
-    end
-    attrs_str = attrs.join(", ")
+    attrs << "data: { conditional_trigger: '#{field.field_name}' }" if (field.dropdown? || field.choices_dropdown?) && conditional_dependents?(field)
+    attrs_str = attrs.join(', ')
 
     # For select/dropdown fields, use disabled instead of readonly (readonly doesn't work on selects)
-    select_attrs = attrs.reject { |a| a == "readonly: true" }
-    select_attrs << "disabled: true" if is_read_only && disabled_attr.nil?
-    select_attrs_str = select_attrs.join(", ")
+    select_attrs = attrs.reject { |a| a == 'readonly: true' }
+    select_attrs << 'disabled: true' if is_read_only && disabled_attr.nil?
+    select_attrs_str = select_attrs.join(', ')
 
     case field.field_type
-    when "text"
-      html = ""
+    when 'text'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.text_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "text_box"
-      html = ""
+    when 'text_box'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.text_area :#{field.field_name}, rows: #{field.rows}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "dropdown"
+    when 'dropdown'
       if field.custom_lookup?
         options_expr = "FormLookup.options(#{field.id})"
       elsif field.data_source?
         options_expr = field.data_source_query_code
       else
-        options = field.dropdown_values.map { |v| "'#{v}'" }.join(", ")
+        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
         options_expr = "[#{options}]"
       end
-      html = ""
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>"#{conditional_answer_attrs}>
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>"#{conditional_answer_attrs}>
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-        html += "            <%= form.select :#{field.field_name},\n"
+      html += "            <%= form.select :#{field.field_name},\n"
       html += "                  options_for_select(#{options_expr}),\n"
       html += "                  { include_blank: \"Select...\" },\n"
       html += "                  { #{select_attrs_str} } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "choices_dropdown"
+    when 'choices_dropdown'
       if field.custom_lookup?
         options_expr = "FormLookup.options(#{field.id})"
       elsif field.data_source?
         options_expr = field.data_source_query_code
       else
-        options = field.dropdown_values.map { |v| "'#{v}'" }.join(", ")
+        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
         options_expr = "[#{options}]"
       end
       # Build merged data hash for choices_dropdown (avoid duplicate data: keys)
-      edit_data_entries = [ "choices_target: \"select\"", "placeholder: \"Select options...\"" ]
-      edit_data_entries << "conditional_trigger: '#{field.field_name}'" if has_conditional_dependents?(field)
-      edit_choices_attrs = select_attrs.reject { |a| a.start_with?("data:") }
-      edit_choices_attrs_str = edit_choices_attrs.join(", ")
-      html = ""
+      edit_data_entries = ['choices_target: "select"', 'placeholder: "Select options..."']
+      edit_data_entries << "conditional_trigger: '#{field.field_name}'" if conditional_dependents?(field)
+      edit_choices_attrs = select_attrs.reject { |a| a.start_with?('data:') }
+      edit_choices_attrs_str = edit_choices_attrs.join(', ')
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>" data-controller="choices">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>" data-controller="choices">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-        html += "            <%= form.select :#{field.field_name},\n"
+      html += "            <%= form.select :#{field.field_name},\n"
       html += "                  options_for_select(#{options_expr}),\n"
       html += "                  { include_blank: false },\n"
       html += "                  { #{edit_choices_attrs_str}, multiple: true, data: { #{edit_data_entries.join(', ')} } } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "date"
-      html = ""
+    when 'date'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.date_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "date_time"
-      html = ""
+    when 'date_time'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.datetime_local_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "phone"
+    when 'phone'
       phone_id = field.field_name.camelize(:lower)
       # Build phone attrs separately since we need data hash
-      phone_attrs = [ "class: \"form-control#{ is_read_only ? ' field-readonly' : '' }\"" ]
+      phone_attrs = ["class: \"form-control#{' field-readonly' if is_read_only}\""]
       phone_attrs << required_logic if required_logic.present?
       phone_attrs << disabled_attr if disabled_attr.present?
       phone_attrs << readonly_attr if readonly_attr.present?
-      phone_attrs << "placeholder: \"e.g. 555-555-5555\""
-      phone_attrs << "title: \"Enter a 10-digit phone number like 555-555-5555\""
-      phone_attrs << "data: { controller: \"phone\", phone_target: \"input\", action: \"input->phone#format paste->phone#format blur->phone#validate\" }"
+      phone_attrs << 'placeholder: "e.g. 555-555-5555"'
+      phone_attrs << 'title: "Enter a 10-digit phone number like 555-555-5555"'
+      phone_attrs << 'data: { controller: "phone", phone_target: "input", action: "input->phone#format paste->phone#format blur->phone#validate" }'
       phone_attrs << "\"aria-describedby\": \"#{phone_id}Help #{phone_id}Error\""
-      phone_attrs << "pattern: \"\\\\d{3}-\\\\d{3}-\\\\d{4}\""
-      phone_attrs << "inputmode: \"numeric\""
-      phone_attrs << "autocomplete: \"tel\""
+      phone_attrs << 'pattern: "\\\\d{3}-\\\\d{3}-\\\\d{4}"'
+      phone_attrs << 'inputmode: "numeric"'
+      phone_attrs << 'autocomplete: "tel"'
       phone_attrs_str = phone_attrs.join(",\n                  ")
-      html = ""
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.text_field :#{field.field_name},\n"
@@ -2307,50 +2306,50 @@ class FormTemplatesController < ApplicationController
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "email"
-      email_attrs = [ "class: \"form-control#{ is_read_only ? ' field-readonly' : '' }\"" ]
+    when 'email'
+      email_attrs = ["class: \"form-control#{' field-readonly' if is_read_only}\""]
       email_attrs << required_logic if required_logic.present?
       email_attrs << disabled_attr if disabled_attr.present?
       email_attrs << readonly_attr if readonly_attr.present?
-      email_attrs << "placeholder: \"e.g. name@example.com\""
-      email_attrs << "autocomplete: \"email\""
-      email_attrs_str = email_attrs.join(", ")
-      html = ""
+      email_attrs << 'placeholder: "e.g. name@example.com"'
+      email_attrs << 'autocomplete: "email"'
+      email_attrs_str = email_attrs.join(', ')
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.email_field :#{field.field_name}, #{email_attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "number"
-      html = ""
+    when 'number'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.number_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "currency"
+    when 'currency'
       currency_attrs = attrs.dup
-      currency_attrs << "step: \"0.01\""
-      currency_attrs << "min: \"0\""
-      currency_attrs_str = currency_attrs.join(", ")
-      html = ""
+      currency_attrs << 'step: "0.01"'
+      currency_attrs << 'min: "0"'
+      currency_attrs_str = currency_attrs.join(', ')
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <div class=\"currency-input-wrapper\">\n"
@@ -2360,13 +2359,13 @@ class FormTemplatesController < ApplicationController
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "yes_no"
-      html = ""
+    when 'yes_no'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.select :#{field.field_name},\n"
@@ -2376,38 +2375,38 @@ class FormTemplatesController < ApplicationController
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "time"
-      html = ""
+    when 'time'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.time_field :#{field.field_name}, #{attrs_str} %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "media_attachment"
-      html = ""
+    when 'media_attachment'
+      html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
       html += <<~HTML
-              <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>" data-controller="file-preview" data-file-preview-max-value="10">
-                <%= form.label :#{field.field_name}, "#{field.label}" %>
+        <div class="form-group flex-fill<%= #{editable_check ? "' field-restricted' unless field_#{field.id}_editable" : "''"} %>" data-controller="file-preview" data-file-preview-max-value="10">
+          <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
       html += "            <%= form.file_field :#{field.field_name}, multiple: true, class: \"form-control\", direct_upload: true, accept: \"image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,application/pdf\""
-      html += ", disabled: true" if disabled_attr.present?
+      html += ', disabled: true' if disabled_attr.present?
       html += ", data: { file_preview_target: \"input\", action: \"change->file-preview#preview\" } %>\n"
       html += "            <small class=\"form-text text-muted\">You can select files multiple times — up to 10 total. <span data-file-preview-target=\"count\"></span></small>\n"
       html += "            <div data-file-preview-target=\"preview\" class=\"file-preview-grid\"></div>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
-    when "information"
-      html = ""
+    when 'information'
+      html = ''
       html += conditional_wrapper_start
       html += generate_information_field_html(field)
       html += conditional_wrapper_end
@@ -2415,7 +2414,7 @@ class FormTemplatesController < ApplicationController
     end.then { |rendered| wrap_visibility(field, editable_check, rendered) }
   end
 
-  def has_conditional_dependents?(field)
+  def conditional_dependents?(field)
     field.form_template.form_fields.any? { |f| f.conditional_field_id == field.id }
   end
 
@@ -2424,27 +2423,27 @@ class FormTemplatesController < ApplicationController
   # must click "I Agree" before the form will allow submission. No DB column
   # is written; agreement is enforced entirely on the client.
   def generate_information_field_html(field)
-    text_escaped = ERB::Util.html_escape(field.information_text.to_s).gsub("\r\n", "\n").gsub("\n", "&#10;")
+    text_escaped = ERB::Util.html_escape(field.information_text.to_s).gsub("\r\n", "\n").gsub("\n", '&#10;')
     label_escaped = ERB::Util.html_escape(field.label.to_s)
-    ack_value = field.acknowledgeable? ? "true" : "false"
+    ack_value = field.acknowledgeable? ? 'true' : 'false'
 
     <<~HTML
-              <div class="form-group flex-fill information-field"
-                   data-controller="information-field"
-                   data-information-field-acknowledgeable-value="#{ack_value}"
-                   data-information-field-label-value="#{label_escaped}"
-                   data-information-field-text-value="#{text_escaped}">
-                <button type="button"
-                        class="btn information-trigger"
-                        data-action="click->information-field#open"
-                        data-information-field-target="trigger">
-                  #{label_escaped}#{' <span class="information-required-indicator">*</span>' if field.acknowledgeable?}
-                </button>
-                <span class="information-status" data-information-field-target="status"></span>
-                <input type="hidden"
-                       data-information-field-target="acknowledgedInput"
-                       data-required-acknowledgement="#{ack_value}">
-              </div>
+      <div class="form-group flex-fill information-field"
+           data-controller="information-field"
+           data-information-field-acknowledgeable-value="#{ack_value}"
+           data-information-field-label-value="#{label_escaped}"
+           data-information-field-text-value="#{text_escaped}">
+        <button type="button"
+                class="btn information-trigger"
+                data-action="click->information-field#open"
+                data-information-field-target="trigger">
+          #{label_escaped}#{' <span class="information-required-indicator">*</span>' if field.acknowledgeable?}
+        </button>
+        <span class="information-status" data-information-field-target="status"></span>
+        <input type="hidden"
+               data-information-field-target="acknowledgedInput"
+               data-required-acknowledgement="#{ack_value}">
+      </div>
     HTML
   end
 
@@ -2477,16 +2476,16 @@ class FormTemplatesController < ApplicationController
   # that matches the pages the current user can actually reach).
   def render_page_visibility_decls(page_visibility)
     lines = page_visibility.map { |n, expr| "        <% _page_#{n}_visible = #{expr || 'true'} %>\n" }
-    flags = page_visibility.keys.map { |n| "_page_#{n}_visible" }.join(", ")
+    flags = page_visibility.keys.map { |n| "_page_#{n}_visible" }.join(', ')
     lines << "        <% _visible_page_count = [#{flags}].count(true) %>\n"
-    lines.join + "\n"
+    "#{lines.join}\n"
   end
 
   def field_restriction_expression(field, form_template)
     case field.restricted_to_type
-    when "employee"
+    when 'employee'
       "(session.dig(:user, 'employee_id').to_s == '#{field.restricted_to_employee_id}')"
-    when "group"
+    when 'group'
       base = "@current_user_groups&.include?(#{field.restricted_to_group_id})"
       if field.org_filtered?
         level = field.restricted_to_org_filter_level

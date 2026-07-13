@@ -1,12 +1,14 @@
+# frozen_string_literal: true
+
 class PcardRequestForm < ApplicationRecord
   include TrackableStatus
 
-enum :status, {
-  in_progress: "in_progress",
-    step_1_pending: "step_1_pending",
-    approved: "approved",
-    denied: "denied"
-}, default: :in_progress
+  enum :status, {
+    in_progress: 'in_progress',
+    step_1_pending: 'step_1_pending',
+    approved: 'approved',
+    denied: 'denied'
+  }, default: :in_progress
 
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }

@@ -1,13 +1,15 @@
+# frozen_string_literal: true
+
 # lib/tasks/reports.rake
 # {{{ task: new
 
 namespace :reports do
   # {{{ task new definition
 
-  desc "Scaffold a new Prawn/YAML/Sidekiq-based report. Usage: rake reports:new[report_name]"
-  task :new, [ :name ] => :environment do |_t, args|
+  desc 'Scaffold a new Prawn/YAML/Sidekiq-based report. Usage: rake reports:new[report_name]'
+  task :new, [:name] => :environment do |_t, args|
     unless args[:name]
-      puts "Usage: rake reports:new[report_name]"
+      puts 'Usage: rake reports:new[report_name]'
       exit 1
     end
 
@@ -18,10 +20,9 @@ namespace :reports do
     # ---------------------------------------------------------------------- }}}
     # {{{ Create directories
 
-
     FileUtils.mkdir_p base_path
-    FileUtils.mkdir_p Rails.root.join("config/reports")
-    FileUtils.mkdir_p Rails.root.join("tmp/reports")
+    FileUtils.mkdir_p Rails.root.join('config/reports')
+    FileUtils.mkdir_p Rails.root.join('tmp/reports')
     FileUtils.mkdir_p Rails.root.join("app/pdfs/#{name}")
 
     # ---------------------------------------------------------------------- }}}
@@ -29,7 +30,7 @@ namespace :reports do
     #     TODO: placehoder for template overlay logic. :wall
     #
 
-    template_src = Rails.root.join("app/pdfs/templates/template.pdf")
+    template_src = Rails.root.join('app/pdfs/templates/template.pdf')
     template_dst = Rails.root.join("app/pdfs/#{name}/#{name}.pdf")
 
     if File.exist?(template_src)
@@ -43,7 +44,9 @@ namespace :reports do
     # {{{ Create Service
 
     service_file = base_path.join("#{name}_service.rb")
-    unless File.exist?(service_file)
+    if File.exist?(service_file)
+      puts "Service exists: #{service_file}"
+    else
       File.write(service_file, <<~RUBY)
         module #{class_name}
           class #{class_name}Service < Base::ReportService
@@ -62,15 +65,15 @@ namespace :reports do
       RUBY
 
       puts "Created service: #{service_file}"
-    else
-      puts "Service exists: #{service_file}"
     end
 
     # ---------------------------------------------------------------------- }}}
     # {{{ Create Sidekiq Worker
 
     worker_file = Rails.root.join("app/jobs/#{name}_job.rb")
-    unless File.exist?(worker_file)
+    if File.exist?(worker_file)
+      puts "Worker exists: #{worker_file}"
+    else
       File.write(worker_file, <<~RUBY)
         class #{class_name}Job
           include Sidekiq::Job
@@ -84,8 +87,6 @@ namespace :reports do
       RUBY
 
       puts "Created worker: #{worker_file}"
-    else
-      puts "Worker exists: #{worker_file}"
     end
 
     # ---------------------------------------------------------------------- }}}
@@ -93,62 +94,62 @@ namespace :reports do
     #
 
     yaml_file = Rails.root.join("config/reports/#{name}.yml")
-    unless File.exist?(yaml_file)
+    if File.exist?(yaml_file)
+      puts "YAML exists: #{yaml_file}"
+    else
       File.write(yaml_file, <<~YAML)
-      # TODO: Update fields and x,y coorrdinates to match the report-specific stored procedue.
-        fields:
-          cunit:
-            x: 135
-            y: 695
+        # TODO: Update fields and x,y coorrdinates to match the report-specific stored procedue.
+          fields:
+            cunit:
+              x: 135
+              y: 695
 
-          posting_ref:
-            x: 135
-            y: 675
+            posting_ref:
+              x: 135
+              y: 675
 
-          service:
-            x: 135
-            y: 655
+            service:
+              x: 135
+              y: 655
 
-          date:
-            x: 135
-            y: 635
+            date:
+              x: 135
+              y: 635
 
-          doc_nmbr:
-            x: 135
-            y: 615
+            doc_nmbr:
+              x: 135
+              y: 615
 
-          description:
-            x: 135
-            y: 595
+            description:
+              x: 135
+              y: 595
 
-          other1:
-            x: 135
-            y: 575
+            other1:
+              x: 135
+              y: 575
 
-          other3:
-            x: 135
-            y: 555
+            other3:
+              x: 135
+              y: 555
 
-          other2:
-            x: 135
-            y: 535
+            other2:
+              x: 135
+              y: 535
 
-          quantity:
-            x: 135
-            y: 515
+            quantity:
+              x: 135
+              y: 515
 
-          rate:
-            x: 135
-            y: 495
+            rate:
+              x: 135
+              y: 495
 
-          cost:
-            x: 135
-            y: 475
+            cost:
+              x: 135
+              y: 475
       YAML
 
       puts "Created YAML mapping: #{yaml_file}"
-    else
-      puts "YAML exists: #{yaml_file}"
     end
 
     # ---------------------------------------------------------------------- }}}
@@ -185,7 +186,7 @@ namespace :reports do
     view_dir = Rails.root.join("app/views/#{name}_reports")
     FileUtils.mkdir_p(view_dir)
 
-    view_file = view_dir.join("show.html.erb")
+    view_file = view_dir.join('show.html.erb')
 
     unless File.exist?(view_file)
       File.write(view_file, <<~ERB)
@@ -215,7 +216,9 @@ namespace :reports do
     renderer_path =
       Rails.root.join("app/pdfs/#{name}/#{name}_renderer.rb")
 
-    unless File.exist?(renderer_path)
+    if File.exist?(renderer_path)
+      puts "Renderer exists: #{renderer_path}"
+    else
       File.write(renderer_path, <<~RUBY)
         # app/pdfs/#{name}/#{name}_renderer.rb
         #
@@ -298,20 +301,17 @@ namespace :reports do
       RUBY
 
       puts "Created renderer: #{renderer_path}"
-    else
-      puts "Renderer exists: #{renderer_path}"
     end
-
 
     # ---------------------------------------------------------------------- }}}
     # {{{ Patch routes.rb
 
-    routes_file = Rails.root.join("config/routes.rb")
+    routes_file = Rails.root.join('config/routes.rb')
 
     route_block = <<~RUBY
-  # #{class_name} report
-  get  "/reports/#{name}",     to: "#{name}_reports#show", as: "#{name}_reports"
-  post "/reports/#{name}/run", to: "#{name}_reports#run",  as: "#{name}_reports_run"
+      # #{class_name} report
+      get  "/reports/#{name}",     to: "#{name}_reports#show", as: "#{name}_reports"
+      post "/reports/#{name}/run", to: "#{name}_reports#run",  as: "#{name}_reports_run"
     RUBY
 
     routes_content = File.read(routes_file)
@@ -331,42 +331,42 @@ end
 # {{{ task: destroy
 
 namespace :reports do
-  desc "Destroy a Prawn/YAML/Sidekiq-based report scaffold. Usage: rake reports:destroy[report_name]"
-  task :destroy, [ :name ] => :environment do |_t, args|
+  desc 'Destroy a Prawn/YAML/Sidekiq-based report scaffold. Usage: rake reports:destroy[report_name]'
+  task :destroy, [:name] => :environment do |_t, args|
     unless args[:name]
-      puts "Usage: rake reports:destroy[report_name]"
+      puts 'Usage: rake reports:destroy[report_name]'
       exit 1
     end
 
     name = args[:name].underscore
 
     paths = {
-      service_dir:  Rails.root.join("app/reports/#{name}"),
-      worker_file:  Rails.root.join("app/jobs/#{name}_job.rb"),
-      yaml_file:    Rails.root.join("config/reports/#{name}.yml"),
-      pdf_dir:      Rails.root.join("app/pdfs/#{name}"),
-      controller:   Rails.root.join("app/controllers/#{name}_reports_controller.rb"),
-      view_dir:     Rails.root.join("app/views/#{name}_reports")
+      service_dir: Rails.root.join("app/reports/#{name}"),
+      worker_file: Rails.root.join("app/jobs/#{name}_job.rb"),
+      yaml_file: Rails.root.join("config/reports/#{name}.yml"),
+      pdf_dir: Rails.root.join("app/pdfs/#{name}"),
+      controller: Rails.root.join("app/controllers/#{name}_reports_controller.rb"),
+      view_dir: Rails.root.join("app/views/#{name}_reports")
     }
 
     puts "\nThe following items will be removed:\n\n"
-    paths.each do |_key, path|
+    paths.each_value do |path|
       exists = File.exist?(path) || Dir.exist?(path)
       puts "  #{exists ? '✓' : '✗'} #{path}"
     end
 
     puts "\nThis operation is irreversible."
 
-    unless ENV["FORCE"]
+    unless ENV['FORCE']
       print "\nType 'yes' to continue: "
-      confirm = STDIN.gets.strip
-      unless confirm == "yes"
-        puts "✗ Aborted."
+      confirm = $stdin.gets.strip
+      unless confirm == 'yes'
+        puts '✗ Aborted.'
         exit 1
       end
     end
 
-    paths.each do |_key, path|
+    paths.each_value do |path|
       if File.file?(path)
         File.delete(path)
         puts "Deleted file: #{path}"
@@ -387,10 +387,10 @@ end
 # {{{ task: run
 
 namespace :reports do
-  desc "Run a report immediately (no Sidekiq). Usage: rake reports:run[name,sDate,eDate]"
-  task :run, [ :name, :sDate, :eDate ] => :environment do |_t, args|
+  desc 'Run a report immediately (no Sidekiq). Usage: rake reports:run[name,sDate,eDate]'
+  task :run, %i[name sDate eDate] => :environment do |_t, args|
     unless args[:name] && args[:sDate] && args[:eDate]
-      puts "Usage: rake reports:run[report_name,YYYY-MM-DD,YYYY-MM-DD]"
+      puts 'Usage: rake reports:run[report_name,YYYY-MM-DD,YYYY-MM-DD]'
       exit 1
     end
 
@@ -401,13 +401,13 @@ namespace :reports do
       Rails.root.join("app/reports/#{report_name}/#{report_name}_service.rb")
 
     unless File.exist?(service_path)
-      puts "ERROR: Service file not found:"
+      puts 'ERROR: Service file not found:'
       puts "  #{service_path}"
       exit 1
     end
 
-    base_dir = Rails.root.join("app/reports/base")
-    Dir[base_dir.join("*.rb")].sort.each do |file|
+    base_dir = Rails.root.join('app/reports/base')
+    Dir[base_dir.join('*.rb')].each do |file|
       require file
     end
     require service_path.to_s
@@ -416,7 +416,7 @@ namespace :reports do
       service_class =
         Object.const_get(class_name).const_get("#{class_name}Service")
     rescue NameError
-      puts "ERROR: Unable to resolve service class:"
+      puts 'ERROR: Unable to resolve service class:'
       puts "#{class_name}::#{class_name}Service"
       exit 1
     end
@@ -433,14 +433,14 @@ namespace :reports do
 
     begin
       output_path = service_class.new(params).call
-    rescue => e
-      puts "ERROR during report generation:"
+    rescue StandardError => e
+      puts 'ERROR during report generation:'
       puts e.message
       puts e.backtrace.join("\n")
       exit 1
     end
 
-    puts "Report generated successfully!"
+    puts 'Report generated successfully!'
     puts "Output PDF: #{output_path}\n\n"
   end
 end
@@ -449,11 +449,11 @@ end
 # {{{ task: doctor
 
 namespace :reports do
-  desc "Diagnose Zeitwerk/autoload problems for the Reports subsystem"
+  desc 'Diagnose Zeitwerk/autoload problems for the Reports subsystem'
   task doctor: :environment do
     puts "\n=== REPORTS DOCTOR ===\n\n"
 
-    puts "Autoload paths:"
+    puts 'Autoload paths:'
     ActiveSupport::Dependencies.autoload_paths.each do |path|
       puts "   - #{path}"
     end
@@ -463,52 +463,47 @@ namespace :reports do
       puts "   - #{path}"
     end
 
-    reports_path = Rails.root.join("app/reports").to_s
+    reports_path = Rails.root.join('app/reports').to_s
 
     puts "\nChecking if app/reports is autoloaded:"
-    puts ActiveSupport::Dependencies.autoload_paths.include?(reports_path) ?
-         "  app/reports IS in autoload paths" :
-         "  app/reports is NOT in autoload paths"
+    puts ActiveSupport::Dependencies.autoload_paths.include?(reports_path) ? '  app/reports IS in autoload paths' : '  app/reports is NOT in autoload paths'
 
     puts "\nChecking if app/reports is eager loaded:"
-    puts Rails.application.config.eager_load_paths.include?(reports_path) ?
-         "  app/reports IS in eager load paths" :
-         "  app/reports is NOT in eager load paths"
+    puts Rails.application.config.eager_load_paths.include?(reports_path) ? '  app/reports IS in eager load paths' : '  app/reports is NOT in eager load paths'
 
     puts "\nChecking namespace constants:\n"
 
     begin
-      Base
-      puts "   Base constant exists"
+      puts '   Base constant exists'
     rescue NameError
-      puts "   Base constant missing"
+      puts '   Base constant missing'
     end
 
-    base_dir = Rails.root.join("app/reports/base")
+    base_dir = Rails.root.join('app/reports/base')
     puts "\nTesting base class loadability:"
-    Dir[base_dir.join("*.rb")].each do |file|
+    Dir[base_dir.join('*.rb')].each do |file|
       print "   Loading #{File.basename(file)} ... "
       begin
         require file
-        puts "OK"
-      rescue => e
+        puts 'OK'
+      rescue StandardError => e
         puts "FAILED (#{e.class}: #{e.message})"
       end
     end
 
     puts "\nTesting base class constants:"
     {
-      ReportService:  "Base::ReportService",
-      PdfRenderer:    "Base::PdfRenderer",
-      SqlProvider:    "Base::SqlProvider",
-      TemplateLoader: "Base::TemplateLoader",
-      YamlLoader:     "Base::YamlLoader"
-    }.each do |_short, full|
+      ReportService: 'Base::ReportService',
+      PdfRenderer: 'Base::PdfRenderer',
+      SqlProvider: 'Base::SqlProvider',
+      TemplateLoader: 'Base::TemplateLoader',
+      YamlLoader: 'Base::YamlLoader'
+    }.each_value do |full|
       print "   #{full} ... "
       begin
         full.constantize
-        puts "OK"
-      rescue => e
+        puts 'OK'
+      rescue StandardError => e
         puts "FAILED (#{e.class})"
       end
     end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Tc60Export
   # Wrapper around dbo.Export_TC60_To_Billing_File
   #
@@ -18,7 +20,7 @@ class Tc60Export
 
     sanitized = ActiveRecord::Base.send(
       :sanitize_sql_array,
-      [ sql, sDate, eDate, type, digits.to_i, encumbered.to_i ]
+      [sql, sDate, eDate, type, digits.to_i, encumbered.to_i]
     )
 
     result = BillingBase.connection.exec_query(sanitized)

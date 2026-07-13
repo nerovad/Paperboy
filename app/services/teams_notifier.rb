@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class TeamsNotifier
   def self.send_cir_alert(cir)
     webhook_url = Rails.application.config.teams_webhook_url
@@ -5,52 +7,50 @@ class TeamsNotifier
 
     payload = build_adaptive_card(cir)
     post_to_teams(webhook_url, payload)
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("TeamsNotifier failed: #{e.message}")
   end
 
-  private
-
   def self.build_adaptive_card(cir)
     {
-      type: "message",
+      type: 'message',
       attachments: [
         {
-          contentType: "application/vnd.microsoft.card.adaptive",
+          contentType: 'application/vnd.microsoft.card.adaptive',
           contentUrl: nil,
           content: {
-            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-            type: "AdaptiveCard",
-            version: "1.4",
+            '$schema': 'http://adaptivecards.io/schemas/adaptive-card.json',
+            type: 'AdaptiveCard',
+            version: '1.4',
             body: [
               {
-                type: "TextBlock",
-                size: "Large",
-                weight: "Bolder",
-                text: "🚨 CIR Submitted",
-                style: "heading"
+                type: 'TextBlock',
+                size: 'Large',
+                weight: 'Bolder',
+                text: '🚨 CIR Submitted',
+                style: 'heading'
               },
               {
-                type: "FactSet",
+                type: 'FactSet',
                 facts: [
-                  { title: "Incident Type", value: cir.incident_type.to_s },
-                  { title: "Location", value: cir.location.to_s },
-                  { title: "Urgency", value: cir.urgency.to_s },
-                  { title: "Impact", value: cir.impact.to_s },
-                  { title: "Reporter", value: cir.name.to_s },
-                  { title: "Submitted", value: cir.created_at&.strftime("%b %d, %Y %I:%M %p").to_s }
+                  { title: 'Incident Type', value: cir.incident_type.to_s },
+                  { title: 'Location', value: cir.location.to_s },
+                  { title: 'Urgency', value: cir.urgency.to_s },
+                  { title: 'Impact', value: cir.impact.to_s },
+                  { title: 'Reporter', value: cir.name.to_s },
+                  { title: 'Submitted', value: cir.created_at&.strftime('%b %d, %Y %I:%M %p').to_s }
                 ]
               },
               {
-                type: "TextBlock",
+                type: 'TextBlock',
                 text: "**Details:** #{cir.incident_details.to_s.truncate(500)}",
                 wrap: true
               }
             ],
             actions: [
               {
-                type: "Action.OpenUrl",
-                title: "View in Paperboy",
+                type: 'Action.OpenUrl',
+                title: 'View in Paperboy',
                 url: "#{ENV.fetch('APP_HOST', 'https://gsa-forms')}/critical_information_reportings/#{cir.id}"
               }
             ]
@@ -61,9 +61,9 @@ class TeamsNotifier
   end
 
   def self.post_to_teams(webhook_url, payload)
-    require "net/http"
-    require "uri"
-    require "json"
+    require 'net/http'
+    require 'uri'
+    require 'json'
 
     uri = URI.parse(webhook_url)
 
@@ -73,13 +73,13 @@ class TeamsNotifier
     http.open_timeout = 5
 
     request = Net::HTTP::Post.new(uri.request_uri)
-    request["Content-Type"] = "application/json"
+    request['Content-Type'] = 'application/json'
     request.body = payload.to_json
 
     response = http.request(request)
 
-    unless response.is_a?(Net::HTTPSuccess)
-      Rails.logger.error("TeamsNotifier HTTP #{response.code}: #{response.body}")
-    end
+    return if response.is_a?(Net::HTTPSuccess)
+
+    Rails.logger.error("TeamsNotifier HTTP #{response.code}: #{response.body}")
   end
 end

@@ -1,20 +1,22 @@
+# frozen_string_literal: true
+
 namespace :paperboy do
-  desc "Reconstruct routing steps, statuses, fields, and page headers from generated files"
+  desc 'Reconstruct routing steps, statuses, fields, and page headers from generated files'
   # Usage:
   #   rails paperboy:rebuild_form_templates           # only populate empty records
   #   FORCE=1 rails paperboy:rebuild_form_templates   # destroy and re-populate all records
   task rebuild_form_templates: :environment do
-    force = ENV["FORCE"] == "1"
+    force = ENV['FORCE'] == '1'
     # Standard fields on pages 1-2 that should NOT be treated as custom fields
     standard_fields = %w[employee_id name phone email agency division department unit]
 
     # Fix double-encoded JSON from prior runs (update_columns + .to_json bug)
     # The model's page_headers/inbox_buttons accessors now auto-unwrap strings,
     # so we can read the corrected value and re-save it to fix the DB permanently.
-    puts "== Repairing double-encoded JSON fields =="
+    puts '== Repairing double-encoded JSON fields =='
     FormTemplate.find_each do |ft|
-      raw_headers = ft.read_attribute_before_type_cast("page_headers")
-      raw_buttons = ft.read_attribute_before_type_cast("inbox_buttons")
+      raw_headers = ft.read_attribute_before_type_cast('page_headers')
+      raw_buttons = ft.read_attribute_before_type_cast('inbox_buttons')
 
       needs_fix = false
 
@@ -22,19 +24,17 @@ namespace :paperboy do
       if raw_headers.present?
         begin
           decoded = JSON.parse(raw_headers)
-          if decoded.is_a?(String)
-            needs_fix = true
-          end
-        rescue; end
+          needs_fix = true if decoded.is_a?(String)
+        rescue StandardError
+        end
       end
 
       if raw_buttons.present?
         begin
           decoded = JSON.parse(raw_buttons)
-          if decoded.is_a?(String)
-            needs_fix = true
-          end
-        rescue; end
+          needs_fix = true if decoded.is_a?(String)
+        rescue StandardError
+        end
       end
 
       if needs_fix
@@ -49,7 +49,7 @@ namespace :paperboy do
         puts "  Fixed double-encoded JSON on #{ft.name}"
       end
     end
-    puts ""
+    puts ''
 
     FormTemplate.find_each do |ft|
       puts "\n== #{ft.name} (#{ft.class_name}) =="
@@ -59,7 +59,7 @@ namespace :paperboy do
       view_path = Rails.root.join("app/views/#{ft.plural_file_name}/new.html.erb")
 
       unless File.exist?(controller_path) && File.exist?(model_path)
-        puts "  SKIP - missing model or controller files"
+        puts '  SKIP - missing model or controller files'
         next
       end
 
@@ -69,9 +69,7 @@ namespace :paperboy do
       # Parse STATUS_LABELS from model (used for proper status names)
       status_labels = {}
       labels_match = model_content.match(/STATUS_LABELS\s*=\s*\{(.*?)\}\.freeze/m)
-      if labels_match
-        labels_match[1].scan(/(\w+):\s*"([^"]+)"/).each { |k, v| status_labels[k] = v }
-      end
+      labels_match[1].scan(/(\w+):\s*"([^"]+)"/).each { |k, v| status_labels[k] = v } if labels_match
 
       # =============================================
       # 1. Reconstruct routing steps from controller
@@ -79,7 +77,7 @@ namespace :paperboy do
       if force || ft.routing_steps.empty?
         ft.routing_steps.destroy_all if force && ft.routing_steps.any?
 
-        if controller_content.include?("Multi-step approval routing")
+        if controller_content.include?('Multi-step approval routing')
           step_count_match = controller_content.match(/Multi-step approval routing \((\d+) steps?\)/)
           if step_count_match
             puts "  Found #{step_count_match[1]}-step routing in controller"
@@ -90,25 +88,26 @@ namespace :paperboy do
               next if steps_parsed.any? { |s| s[:step_number] == step_num }
 
               desc = description.strip
-              if desc == "supervisor"
-                steps_parsed << { step_number: step_num, routing_type: "supervisor", employee_id: nil }
-              elsif desc == "department head"
-                steps_parsed << { step_number: step_num, routing_type: "department_head", employee_id: nil }
-              elsif desc =~ /employee #(\d+)/
-                steps_parsed << { step_number: step_num, routing_type: "employee", employee_id: $1.to_i }
+              case desc
+              when 'supervisor'
+                steps_parsed << { step_number: step_num, routing_type: 'supervisor', employee_id: nil }
+              when 'department head'
+                steps_parsed << { step_number: step_num, routing_type: 'department_head', employee_id: nil }
+              when /employee #(\d+)/
+                steps_parsed << { step_number: step_num, routing_type: 'employee', employee_id: Regexp.last_match(1).to_i }
               end
             end
 
             steps_parsed.each do |step_data|
               ft.routing_steps.create!(step_data)
-              puts "    Step #{step_data[:step_number]}: #{step_data[:routing_type]}#{step_data[:employee_id] ? " (employee #{step_data[:employee_id]})" : ''}"
+              puts "    Step #{step_data[:step_number]}: #{step_data[:routing_type]}#{" (employee #{step_data[:employee_id]})" if step_data[:employee_id]}"
             end
 
-            ft.update_columns(submission_type: "approval") unless ft.submission_type == "approval"
+            ft.update_columns(submission_type: 'approval') unless ft.submission_type == 'approval'
           end
         else
           # No routing comments found — set submission_type to database if not already set
-          ft.update_columns(submission_type: "database") if ft.submission_type.blank?
+          ft.update_columns(submission_type: 'database') if ft.submission_type.blank?
           puts "  No routing steps found — submission_type: #{ft.submission_type || 'database'}"
         end
       end
@@ -119,7 +118,7 @@ namespace :paperboy do
       if (force || ft.statuses.empty?) && model_content =~ /enum :status/
         ft.statuses.destroy_all if force && ft.statuses.any?
 
-        puts "  Reconstructing statuses from model enum..."
+        puts '  Reconstructing statuses from model enum...'
 
         enum_match = model_content.match(/enum :status,\s*\{(.*?)\}/m)
         if enum_match
@@ -127,21 +126,19 @@ namespace :paperboy do
 
           categories = {}
           cat_match = model_content.match(/STATUS_CATEGORIES\s*=\s*\{(.*?)\}\.freeze/m)
-          if cat_match
-            cat_match[1].scan(/(\w+):\s*:(\w+)/).each { |k, v| categories[k] = v }
-          end
+          cat_match[1].scan(/(\w+):\s*:(\w+)/).each { |k, v| categories[k] = v } if cat_match
 
           default_match = model_content.match(/default:\s*:(\w+)/)
           default_key = default_match ? default_match[1] : nil
 
           entries.each_with_index do |(key, _value), index|
             category = categories[key] || guess_category(key)
-            is_initial = (key == default_key) || (index == 0 && default_key.nil?)
+            is_initial = (key == default_key) || (index.zero? && default_key.nil?)
             is_end = %w[approved denied cancelled resolved].include?(key)
             is_auto = key.match?(/^step_\d+_(pending|approved)$/)
 
             # Use STATUS_LABELS for proper name, fall back to humanize
-            status_name = status_labels[key] || key.humanize.gsub(/\b\w/) { |m| m.upcase }
+            status_name = status_labels[key] || key.humanize.gsub(/\b\w/, &:upcase)
 
             ft.statuses.create!(
               name: status_name,
@@ -163,7 +160,7 @@ namespace :paperboy do
       if (force || ft.form_fields.empty?) && File.exist?(view_path)
         ft.form_fields.destroy_all if force && ft.form_fields.any?
 
-        puts "  Reconstructing fields from generated view..."
+        puts '  Reconstructing fields from generated view...'
 
         view_content = File.read(view_path)
 
@@ -174,102 +171,101 @@ namespace :paperboy do
 
         view_content.each_line do |line|
           # Track page number from comments like "<!-- Page 3: Services -->"
-          if line =~ /<!--\s*Page (\d+):/
-            current_page = $1.to_i
-          end
+          current_page = Regexp.last_match(1).to_i if line =~ /<!--\s*Page (\d+):/
 
           # Skip standard fields on pages 1-2
           next if current_page <= 2
 
           # Detect conditional wrapper
           if line =~ /class="conditional-field"\s+data-depends-on="(\w+)"\s+data-show-values="([^"]+)"/
-            trigger_field = $1
-            raw_values = $2.gsub("&quot;", '"')
+            trigger_field = Regexp.last_match(1)
+            raw_values = Regexp.last_match(2).gsub('&quot;', '"')
             begin
               current_conditional = { field: trigger_field, values: JSON.parse(raw_values) }
-            rescue
+            rescue StandardError
               current_conditional = nil
             end
           end
 
           # Detect field: form.label :field_name, "Label"
-          if line =~ /form\.label\s+:(\w+),\s*"([^"]+)"/
-            field_name = $1
-            label = $2
+          next unless line =~ /form\.label\s+:(\w+),\s*"([^"]+)"/
 
-            next if standard_fields.include?(field_name)
+          field_name = Regexp.last_match(1)
+          label = Regexp.last_match(2)
 
-            # Look ahead in surrounding lines for field type
-            field_context = view_content[view_content.index(line), 500] || ""
+          next if standard_fields.include?(field_name)
 
-            field_type = if field_context =~ /form\.text_area\s+:#{field_name}/
-                           "text_box"
-            elsif field_context =~ /form\.select\s+:#{field_name}/
-                           "dropdown"
-            elsif field_context =~ /form\.datetime_local_field\s+:#{field_name}|form\.date_field\s+:#{field_name}/
-                           "date"
-            elsif field_context =~ /form\.time_field\s+:#{field_name}/
-                           "time"
-            elsif field_context =~ /form\.number_field\s+:#{field_name}/
-                           "number"
-            elsif field_context =~ /form\.email_field\s+:#{field_name}/
-                           "email"
-            elsif field_context =~ /form\.telephone_field\s+:#{field_name}|form\.phone_field\s+:#{field_name}|data-controller="phone"/
-                           "phone"
-            elsif field_context =~ /options_for_select\(\[.*?'Yes'.*?'No'/m
-                           "yes_no"
+          # Look ahead in surrounding lines for field type
+          field_context = view_content[view_content.index(line), 500] || ''
+
+          field_type = case field_context
+                       when /form\.text_area\s+:#{field_name}/
+                         'text_box'
+                       when /form\.select\s+:#{field_name}/
+                         'dropdown'
+                       when /form\.datetime_local_field\s+:#{field_name}|form\.date_field\s+:#{field_name}/
+                         'date'
+                       when /form\.time_field\s+:#{field_name}/
+                         'time'
+                       when /form\.number_field\s+:#{field_name}/
+                         'number'
+                       when /form\.email_field\s+:#{field_name}/
+                         'email'
+                       when /form\.telephone_field\s+:#{field_name}|form\.phone_field\s+:#{field_name}|data-controller="phone"/
+                         'phone'
+                       when /options_for_select\(\[.*?'Yes'.*?'No'/m
+                         'yes_no'
+                       else
+                         'text'
+                       end
+
+          required = !(field_context =~ /required:\s*true/).nil?
+
+          options = {}
+
+          # Extract rows for text_box
+          if field_type == 'text_box'
+            rows_match = field_context.match(/rows:\s*(\d+)/)
+            options['rows'] = rows_match[1].to_i if rows_match
+          end
+
+          # Extract dropdown values (static options only)
+          if field_type == 'dropdown'
+            values_match = field_context.match(/options_for_select\(\[\s*(.*?)\s*\]\)/m)
+            if values_match
+              raw = values_match[1]
+              # Match both single-quoted and double-quoted strings
+              options['values'] = raw.scan(/['"]([^'"]+)['"]/).flatten
+            end
+          end
+
+          field = ft.form_fields.create!(
+            label: label,
+            field_type: field_type,
+            page_number: current_page,
+            position: position,
+            required: required,
+            options: options.presence || {},
+            restricted_to_type: 'none'
+          )
+          position += 1
+
+          # Apply conditional logic if we're inside a conditional wrapper
+          if current_conditional
+            # Find the trigger field by name
+            trigger = ft.form_fields.find_by('label LIKE ?', "%#{current_conditional[:field].humanize}%")
+            if trigger
+              field.update!(
+                conditional_field_id: trigger.id,
+                conditional_values: current_conditional[:values]
+              )
+              puts "    Field: #{label} (#{field_type}, page #{current_page}, conditional on #{current_conditional[:field]})"
             else
-                           "text"
+              puts "    Field: #{label} (#{field_type}, page #{current_page}, conditional ref unresolved: #{current_conditional[:field]})"
             end
-
-            required = !!(field_context =~ /required:\s*true/)
-
-            options = {}
-
-            # Extract rows for text_box
-            if field_type == "text_box"
-              rows_match = field_context.match(/rows:\s*(\d+)/)
-              options["rows"] = rows_match[1].to_i if rows_match
-            end
-
-            # Extract dropdown values (static options only)
-            if field_type == "dropdown"
-              values_match = field_context.match(/options_for_select\(\[\s*(.*?)\s*\]\)/m)
-              if values_match
-                raw = values_match[1]
-                # Match both single-quoted and double-quoted strings
-                options["values"] = raw.scan(/['"]([^'"]+)['"]/).flatten
-              end
-            end
-
-            field = ft.form_fields.create!(
-              label: label,
-              field_type: field_type,
-              page_number: current_page,
-              position: position,
-              required: required,
-              options: options.presence || {},
-              restricted_to_type: "none"
-            )
-            position += 1
-
-            # Apply conditional logic if we're inside a conditional wrapper
-            if current_conditional
-              # Find the trigger field by name
-              trigger = ft.form_fields.find_by("label LIKE ?", "%#{current_conditional[:field].humanize}%")
-              if trigger
-                field.update!(
-                  conditional_field_id: trigger.id,
-                  conditional_values: current_conditional[:values]
-                )
-                puts "    Field: #{label} (#{field_type}, page #{current_page}, conditional on #{current_conditional[:field]})"
-              else
-                puts "    Field: #{label} (#{field_type}, page #{current_page}, conditional ref unresolved: #{current_conditional[:field]})"
-              end
-              current_conditional = nil
-            else
-              puts "    Field: #{label} (#{field_type}, page #{current_page}#{required ? ', required' : ''})"
-            end
+            current_conditional = nil
+          else
+            puts "    Field: #{label} (#{field_type}, page #{current_page}#{', required' if required})"
           end
         end
       end
@@ -283,6 +279,7 @@ namespace :paperboy do
         view_content.scan(/<!--\s*Page (\d+): (.+?)\s*-->/).each do |num, header|
           page_num = num.to_i
           next if page_num <= 2 # Skip Employee Info and Agency Info
+
           headers << header.strip
         end
 
@@ -292,7 +289,7 @@ namespace :paperboy do
         elsif force
           # No page headers found in view — clear any corrupted data
           ft.update_columns(page_headers: nil) unless ft.page_headers.nil?
-          puts "  No page headers found in view — cleared"
+          puts '  No page headers found in view — cleared'
         end
       end
 
@@ -307,25 +304,25 @@ namespace :paperboy do
           ctrl = controller_content
 
           # view_pdf: controller has a pdf action
-          buttons << "view_pdf" if ctrl =~ /def pdf\b/
+          buttons << 'view_pdf' if ctrl =~ /def pdf\b/
 
           # edit: controller has an edit action
-          buttons << "edit" if ctrl =~ /def edit\b/
+          buttons << 'edit' if ctrl =~ /def edit\b/
 
           # approve: controller has an approve action
-          buttons << "approve" if ctrl =~ /def approve\b/
+          buttons << 'approve' if ctrl =~ /def approve\b/
 
           # deny: controller has a deny action
-          buttons << "deny" if ctrl =~ /def deny\b/
+          buttons << 'deny' if ctrl =~ /def deny\b/
 
           # status_dropdown: controller has an update_status action
-          buttons << "status_dropdown" if ctrl =~ /def update_status\b/
+          buttons << 'status_dropdown' if ctrl =~ /def update_status\b/
 
           # reassign: always available (handled by task_reassignments_controller)
-          buttons << "reassign"
+          buttons << 'reassign'
 
           # take_back: always available (handled by task_reassignments_controller)
-          buttons << "take_back"
+          buttons << 'take_back'
         end
 
         # Fallback for basic forms with no controller actions
@@ -345,16 +342,16 @@ end
 def guess_category(key)
   case key
   when /submitted|pending|in_progress/
-    "pending"
+    'pending'
   when /approved|resolved|completed/
-    "approved"
+    'approved'
   when /denied|rejected/
-    "denied"
+    'denied'
   when /cancelled/
-    "cancelled"
+    'cancelled'
   when /scheduled/
-    "scheduled"
+    'scheduled'
   else
-    "in_review"
+    'in_review'
   end
 end

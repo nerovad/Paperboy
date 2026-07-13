@@ -1,4 +1,6 @@
-require "csv"
+# frozen_string_literal: true
+
+require 'csv'
 
 class OshaLogsController < ApplicationController
   before_action :require_osha_log_access
@@ -16,7 +18,7 @@ class OshaLogsController < ApplicationController
       format.csv do
         send_data csv_for(@rows, @year),
                   filename: "osha_300_log_#{@year}.csv",
-                  type: "text/csv"
+                  type: 'text/csv'
       end
     end
   end
@@ -36,10 +38,10 @@ class OshaLogsController < ApplicationController
     range = Date.new(year, 1, 1)..Date.new(year, 12, 31)
 
     reports = OshaReport
-      .where(status: :approved)
-      .where(date_of_injury_or_illness: range)
-      .order(:date_of_injury_or_illness, :id)
-      .to_a
+              .where(status: :approved)
+              .where(date_of_injury_or_illness: range)
+              .order(:date_of_injury_or_illness, :id)
+              .to_a
 
     return [] if reports.empty?
 
@@ -54,15 +56,15 @@ class OshaLogsController < ApplicationController
       safety   = safety_by_id[r.safety_report_id]
 
       {
-        case_number:    r.case_number_from_the_log.presence || (idx + 1).to_s,
-        employee_name:  r.name,
-        job_title:      employee&.job_title,
+        case_number: r.case_number_from_the_log.presence || (idx + 1).to_s,
+        employee_name: r.name,
+        job_title: employee&.job_title,
         date_of_injury: r.date_of_injury_or_illness,
-        activity:       r.what_was_the_employee_doing_just_before_the_incident_occurred,
-        description:    r.what_was_the_injury_or_illness,
-        died:           r.did_employee_die.to_s.casecmp("yes").zero?,
-        days_away:      compute_days_away(safety),
-        report_id:      r.id
+        activity: r.what_was_the_employee_doing_just_before_the_incident_occurred,
+        description: r.what_was_the_injury_or_illness,
+        died: r.did_employee_die.to_s.casecmp('yes').zero?,
+        days_away: compute_days_away(safety),
+        report_id: r.id
       }
     end
   end
@@ -70,32 +72,33 @@ class OshaLogsController < ApplicationController
   # OSHA caps day counts at 180 per case
   def compute_days_away(safety_report)
     return nil unless safety_report
+
     last_worked = safety_report.date_last_worked
     return nil if last_worked.blank?
 
     end_date = safety_report.date_returned_to_work.presence || Date.current
     days = (end_date - last_worked).to_i
-    [ [ days, 0 ].max, 180 ].min
+    [[days, 0].max, 180].min
   end
 
   def csv_for(rows, year)
     CSV.generate do |csv|
-      csv << [ "OSHA Form 300 - Log of Work-Related Injuries and Illnesses (#{year})" ]
+      csv << ["OSHA Form 300 - Log of Work-Related Injuries and Illnesses (#{year})"]
       csv << []
       csv << [
-        "Case #", "Employee Name", "Job Title", "Date of Injury",
-        "Activity at Time of Incident", "Description of Injury/Illness",
-        "Death?", "Days Away from Work"
+        'Case #', 'Employee Name', 'Job Title', 'Date of Injury',
+        'Activity at Time of Incident', 'Description of Injury/Illness',
+        'Death?', 'Days Away from Work'
       ]
       rows.each do |row|
         csv << [
           row[:case_number],
           row[:employee_name],
           row[:job_title],
-          row[:date_of_injury]&.strftime("%Y-%m-%d"),
+          row[:date_of_injury]&.strftime('%Y-%m-%d'),
           row[:activity],
           row[:description],
-          row[:died] ? "Yes" : "No",
+          row[:died] ? 'Yes' : 'No',
           row[:days_away]
         ]
       end
@@ -103,8 +106,9 @@ class OshaLogsController < ApplicationController
   end
 
   def require_osha_log_access
-    return if current_user_group_names.include?("system_admins")
-    return if current_user_dropdown_permissions.include?("osha_log")
-    redirect_to root_path, alert: "Access denied."
+    return if current_user_group_names.include?('system_admins')
+    return if current_user_dropdown_permissions.include?('osha_log')
+
+    redirect_to root_path, alert: 'Access denied.'
   end
 end

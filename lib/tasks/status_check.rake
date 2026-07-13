@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :status do
   desc "Verify each TrackableStatus model's status enum matches its form_template_statuses keys"
   task check: :environment do
@@ -15,11 +17,11 @@ namespace :status do
       central = template.statuses.pluck(:key).map(&:to_s).sort
       next if central.empty? # database-type forms with no workflow statuses
 
-      enum_keys = (model.defined_enums["status"]&.keys || []).sort
-      column    = model.columns_hash["status"]
+      enum_keys = (model.defined_enums['status']&.keys || []).sort
+      column    = model.columns_hash['status']
 
       issues = []
-      issues << "status column is still INTEGER-backed (expected string keys)" if column&.type == :integer
+      issues << 'status column is still INTEGER-backed (expected string keys)' if column&.type == :integer
       if enum_keys.empty?
         issues << "model defines no status enum (central keys: #{central.join(', ')})"
       elsif enum_keys != central

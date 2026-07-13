@@ -1,16 +1,18 @@
+# frozen_string_literal: true
+
 class BikeLockerForm < ApplicationRecord
   include TrackableStatus
 
-enum :status, {
-  in_progress: "in_progress",
-    step_1_pending: "step_1_pending",
-    approved: "approved",
-    denied: "denied"
-}, default: :in_progress
+  enum :status, {
+    in_progress: 'in_progress',
+    step_1_pending: 'step_1_pending',
+    approved: 'approved',
+    denied: 'denied'
+  }, default: :in_progress
 
   # The physical locker being requested. Keyed on id, not number, because a
   # locker_number repeats across lots (E/R/ECCH/Saticoy all have a "1").
-  belongs_to :locker, class_name: "BikeLocker", optional: true
+  belongs_to :locker, class_name: 'BikeLocker', optional: true
 
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
@@ -45,9 +47,7 @@ enum :status, {
   # e.g. :30_day_spending_limit is invalid; use :spending_limit_30_day instead.
   def column_names_must_be_valid_identifiers
     self.class.column_names.each do |col|
-      unless col.match?(/\A[a-zA-Z_]/)
-        errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.")
-      end
+      errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.") unless col.match?(/\A[a-zA-Z_]/)
     end
   end
 
@@ -59,7 +59,8 @@ enum :status, {
   def locker_must_be_available
     return if locker.available?
     return if locker.assigned_employee_id == employee_id.to_s
-    errors.add(:locker_id, "is no longer available — please choose another locker")
+
+    errors.add(:locker_id, 'is no longer available — please choose another locker')
   end
 
   # For inbox queue filtering - returns the form type name

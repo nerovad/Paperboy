@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class NotifyProbationJob < ApplicationJob
   queue_as :default
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FinalizeSafetyReportingFormTemplate < ActiveRecord::Migration[8.0]
   def up
     template = ActiveRecord::Base.connection.select_one(
@@ -7,7 +9,7 @@ class FinalizeSafetyReportingFormTemplate < ActiveRecord::Migration[8.0]
 
     execute "UPDATE form_templates SET name = 'Safety Reporting' WHERE class_name = 'SafetyReport'"
 
-    template_id = template["id"].to_s
+    template_id = template['id'].to_s
 
     execute <<~SQL
       UPDATE Group_Permissions
@@ -15,13 +17,13 @@ class FinalizeSafetyReportingFormTemplate < ActiveRecord::Migration[8.0]
       WHERE Permission_Type = 'form' AND Permission_Key = 'safety_reporting'
     SQL
 
-    if ActiveRecord::Base.connection.table_exists?(:org_permissions)
-      execute <<~SQL
-        UPDATE org_permissions
-        SET permission_key = '#{template_id}'
-        WHERE permission_type = 'form' AND permission_key = 'safety_reporting'
-      SQL
-    end
+    return unless ActiveRecord::Base.connection.table_exists?(:org_permissions)
+
+    execute <<~SQL
+      UPDATE org_permissions
+      SET permission_key = '#{template_id}'
+      WHERE permission_type = 'form' AND permission_key = 'safety_reporting'
+    SQL
   end
 
   def down
@@ -30,7 +32,7 @@ class FinalizeSafetyReportingFormTemplate < ActiveRecord::Migration[8.0]
     )
     return unless template
 
-    template_id = template["id"].to_s
+    template_id = template['id'].to_s
 
     execute <<~SQL
       UPDATE Group_Permissions

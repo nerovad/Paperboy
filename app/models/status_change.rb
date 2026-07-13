@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/status_change.rb
 class StatusChange < ApplicationRecord
   belongs_to :trackable, polymorphic: true

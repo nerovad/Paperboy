@@ -120,13 +120,13 @@
             <div class="detail-row">
               <span class="label">Dashboard Enabled:</span>
               <span class="value">
-                <span class="badge <%= @form_template.has_dashboard? ? 'badge-success' : 'badge-secondary' %>">
-                  <%= @form_template.has_dashboard? ? 'Yes' : 'No' %>
+                <span class="badge <%= @form_template.dashboard? ? 'badge-success' : 'badge-secondary' %>">
+                  <%= @form_template.dashboard? ? 'Yes' : 'No' %>
                 </span>
               </span>
             </div>
 
-            <% if @form_template.has_dashboard? %>
+            <% if @form_template.dashboard? %>
               <div class="detail-row">
                 <span class="label">Metabase Dashboard ID:</span>
                 <span class="value"><code><%= @form_template.metabase_dashboard_id %></code></span>

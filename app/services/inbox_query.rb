@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Assembles the set of submissions that make up a user's inbox — the single
 # source of truth shared by InboxController#queue (which then text-filters,
 # sorts, and paginates) and the profile/tab badge counter (which just needs the
@@ -47,6 +49,7 @@ class InboxQuery
     @viewer_form_types.each do |class_name|
       model = class_name.safe_constantize
       next unless model.is_a?(Class) && model < ActiveRecord::Base
+
       items += granted_submissions(model).to_a
     rescue StandardError => e
       Rails.logger.warn "Inbox visibility grant query failed for #{class_name}: #{e.message}"
@@ -54,7 +57,7 @@ class InboxQuery
 
     # Deduplicate (a submission could match several rules). Key by class + id so
     # different form types that share a numeric id aren't collapsed.
-    items.uniq! { |s| [ s.class, s.id ] }
+    items.uniq! { |s| [s.class, s.id] }
 
     # The inbox is a work queue, not an archive: drop anything that has reached
     # an end state (per each form's is_end status flags). This also clears the
@@ -94,6 +97,7 @@ class InboxQuery
   # rule.
   def granted_submissions(model)
     return model.none unless @filter_form_type == model.name.demodulize.titleize
+
     apply_date_filters(model.all)
   end
 
@@ -105,45 +109,43 @@ class InboxQuery
     # viewing All (no restriction — every group-routed step is visible).
     scoped_group_ids = if @scoped_employee_ids.nil?
                          nil
-    else
+                       else
                          EmployeeGroup.where(EmployeeID: @scoped_employee_ids).distinct.pluck(:GroupID)
-    end
+                       end
 
     # Submitter-org values the scoped employees can stand in for. Used to narrow
     # org-filtered group routing steps. nil = no scope restriction.
     submitter_org_filter = @scoped_employee_ids ? compute_submitter_org_filter(@scoped_employee_ids) : nil
 
-    FormTemplate.where(submission_type: "approval").find_each do |template|
-      begin
-        model_class = template.class_name.constantize
-        next unless model_class.column_names.include?("approver_id")
+    FormTemplate.where(submission_type: 'approval').find_each do |template|
+      model_class = template.class_name.constantize
+      next unless model_class.column_names.include?('approver_id')
 
-        copy_ids = copy_submission_ids_for(model_class)
-        @copy_submission_ids[model_class.name] = copy_ids if copy_ids.any?
+      copy_ids = copy_submission_ids_for(model_class)
+      @copy_submission_ids[model_class.name] = copy_ids if copy_ids.any?
 
-        scope = if @scoped_employee_ids.nil?
-                  # System admin viewing All — every approval form.
-                  model_class.all
-        else
-                  parts = [ model_class.where(approver_id: @scoped_employee_ids) ]
-                  group_routing_scopes(template, model_class, scoped_group_ids, submitter_org_filter).each do |s|
-                    parts << s
-                  end
-                  authorization_routing_scopes(template, model_class, @scoped_employee_ids).each do |s|
-                    parts << s
-                  end
-                  parts << model_class.where(id: copy_ids) if copy_ids.any?
-                  parts.reduce(:or)
-        end
+      scope = if @scoped_employee_ids.nil?
+                # System admin viewing All — every approval form.
+                model_class.all
+              else
+                parts = [model_class.where(approver_id: @scoped_employee_ids)]
+                group_routing_scopes(template, model_class, scoped_group_ids, submitter_org_filter).each do |s|
+                  parts << s
+                end
+                authorization_routing_scopes(template, model_class, @scoped_employee_ids).each do |s|
+                  parts << s
+                end
+                parts << model_class.where(id: copy_ids) if copy_ids.any?
+                parts.reduce(:or)
+              end
 
-        scope = apply_date_filters(scope)
-        submissions += scope.to_a
-      rescue NameError
-        # Model class doesn't exist yet (form not generated), skip it.
-        Rails.logger.debug "Skipping inbox query for #{template.class_name} - model not found"
-      rescue => e
-        Rails.logger.warn "Error querying #{template.class_name} for inbox: #{e.message}"
-      end
+      scope = apply_date_filters(scope)
+      submissions += scope.to_a
+    rescue NameError
+      # Model class doesn't exist yet (form not generated), skip it.
+      Rails.logger.debug "Skipping inbox query for #{template.class_name} - model not found"
+    rescue StandardError => e
+      Rails.logger.warn "Error querying #{template.class_name} for inbox: #{e.message}"
     end
 
     submissions
@@ -153,6 +155,7 @@ class InboxQuery
   # for any scoped employee. Returns [] when scope is "all" (system admin).
   def copy_submission_ids_for(model_class)
     return [] if @scoped_employee_ids.nil?
+
     FormSubmissionCopy
       .active
       .where(submission_type: model_class.name, recipient_employee_id: @scoped_employee_ids)
@@ -161,8 +164,9 @@ class InboxQuery
 
   # AR scopes (one per qualifying group-routed step) to OR into the query.
   def group_routing_scopes(template, model_class, scoped_group_ids, submitter_org_filter)
-    template.routing_steps.where(routing_type: "group").filter_map do |step|
+    template.routing_steps.where(routing_type: 'group').filter_map do |step|
       next if scoped_group_ids && !scoped_group_ids.include?(step.group_id)
+
       status_key = "step_#{step.step_number}_pending"
 
       if step.org_filtered? && submitter_org_filter
@@ -170,6 +174,7 @@ class InboxQuery
         values = submitter_org_filter[level.to_sym]
         next if values.blank?
         next unless model_class.column_names.include?(level)
+
         model_class.where(status: status_key, level => values)
       else
         model_class.where(status: status_key)
@@ -182,15 +187,15 @@ class InboxQuery
   # budget unit is one they're authorized to approve for the step's service type.
   def authorization_routing_scopes(template, model_class, scoped_employee_ids)
     return [] if scoped_employee_ids.nil?
-    return [] unless model_class.column_names.include?("unit")
+    return [] unless model_class.column_names.include?('unit')
 
-    template.routing_steps.where(routing_type: "authorization").filter_map do |step|
+    template.routing_steps.where(routing_type: 'authorization').filter_map do |step|
       service_type = step.authorization_service_type
       next if service_type.blank?
 
-      authorized_units = scoped_employee_ids.flat_map { |eid|
+      authorized_units = scoped_employee_ids.flat_map do |eid|
         AuthorizedApprover.authorized_unit_ids_for(employee_id: eid, service_type: service_type)
-      }.uniq
+      end.uniq
       next if authorized_units.empty?
 
       model_class.where(status: "step_#{step.step_number}_pending", unit: authorized_units)
@@ -211,6 +216,7 @@ class InboxQuery
 
       unit = units[unit_value.to_s]
       next unless unit
+
       filter[:agency]     << unit.agency_id.to_s     if unit.agency_id.present?
       filter[:division]   << unit.division_id.to_s   if unit.division_id.present?
       filter[:department] << unit.department_id.to_s if unit.department_id.present?

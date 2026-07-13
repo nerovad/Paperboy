@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RenameRm75FormsToSafetyReports < ActiveRecord::Migration[8.0]
   def up
     rename_table :rm75_forms, :safety_reports
@@ -19,13 +21,13 @@ class RenameRm75FormsToSafetyReports < ActiveRecord::Migration[8.0]
     end
 
     # Update FormTemplate class_name reference if one exists
-    if ActiveRecord::Base.connection.table_exists?(:form_templates)
-      execute <<~SQL
-        UPDATE form_templates
-        SET class_name = 'SafetyReport'
-        WHERE class_name = 'Rm75Form'
-      SQL
-    end
+    return unless ActiveRecord::Base.connection.table_exists?(:form_templates)
+
+    execute <<~SQL
+      UPDATE form_templates
+      SET class_name = 'SafetyReport'
+      WHERE class_name = 'Rm75Form'
+    SQL
   end
 
   def down

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class HelpTicketMailer < ApplicationMailer
   def ticket_submitted(subject:, description:, user_name:, user_email:, employee_id:)
     @description = description
@@ -6,7 +8,7 @@ class HelpTicketMailer < ApplicationMailer
     @employee_id = employee_id
 
     mail(
-      to: ENV["HELPDESK_EMAIL"] || "matthew.davoren@ventura.org",
+      to: ENV['HELPDESK_EMAIL'] || 'matthew.davoren@ventura.org',
       reply_to: user_email,
       subject: subject
     )

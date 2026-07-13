@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/helpers/application_helper.rb
 module ApplicationHelper
   def current_user
@@ -5,36 +7,37 @@ module ApplicationHelper
   end
 
   def format_phone(digits)
-    d = digits.to_s.gsub(/\D/, "")
+    d = digits.to_s.gsub(/\D/, '')
     return digits if d.length != 10
+
     "#{d[0, 3]}-#{d[3, 3]}-#{d[6, 4]}"
   end
 
   def format_pst(time, format: :short)
     return nil unless time
-    l(time.in_time_zone("Pacific Time (US & Canada)"), format: format)
+
+    l(time.in_time_zone('Pacific Time (US & Canada)'), format: format)
   end
 
   def environment_badge(host: request.host, rails_env: Rails.env)
     env_name = rails_env.to_s
 
     if localhost_host?(host)
-      { label: "LOCALHOST", css_class: "is-localhost" }
-    elsif env_name == "development"
-      { label: "Development", css_class: "is-development" }
-    elsif env_name == "staging"
-      { label: "Stage", css_class: "is-staging" }
+      { label: 'LOCALHOST', css_class: 'is-localhost' }
+    elsif env_name == 'development'
+      { label: 'Development', css_class: 'is-development' }
+    elsif env_name == 'staging'
+      { label: 'Stage', css_class: 'is-staging' }
     end
   end
 
   def system_admin?
-    current_user_group_names.include?("system_admins")
+    current_user_group_names.include?('system_admins')
   end
-
 
   def fetch_acl_groups
     Group.order(:Group_Name).pluck(:Group_Name, :GroupID)
-  rescue
+  rescue StandardError
     []
   end
 
@@ -50,21 +53,23 @@ module ApplicationHelper
 
     FormTemplate.includes(:form_fields).order(:name).each do |template|
       klass = template.class_name.safe_constantize
-      next unless klass && klass.respond_to?(:column_names)
+      next unless klass.respond_to?(:column_names)
+
       columns = klass.column_names
 
       fields = template.form_fields
                        .reject { |f| non_display.include?(f.field_type) }
                        .select { |f| columns.include?(f.field_name.to_s) }
-                       .map { |f| { "name" => f.field_name, "label" => (f.label.presence || f.field_name.to_s.tr("_", " ").titleize) } }
-                       .uniq { |h| h["name"] }
+                       .map { |f| { 'name' => f.field_name, 'label' => f.label.presence || f.field_name.to_s.tr('_', ' ').titleize } }
+                       .uniq { |h| h['name'] }
 
       next if fields.empty?
-      catalog[template.name] = { "class_name" => template.class_name, "fields" => fields }
+
+      catalog[template.name] = { 'class_name' => template.class_name, 'fields' => fields }
     end
 
     catalog
-  rescue => e
+  rescue StandardError => e
     Rails.logger.warn("table_field_catalog failed: #{e.class}: #{e.message}")
     {}
   end
@@ -72,6 +77,6 @@ module ApplicationHelper
   private
 
   def localhost_host?(host)
-    [ "localhost", "127.0.0.1", "::1" ].include?(host.to_s)
+    ['localhost', '127.0.0.1', '::1'].include?(host.to_s)
   end
 end

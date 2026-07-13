@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
@@ -8,13 +10,13 @@ class ApplicationController < ActionController::Base
 
   def current_user
     user_data = session[:user]
-    return nil unless user_data&.dig("employee_id") && user_data&.dig("email")
+    return nil unless user_data&.dig('employee_id') && user_data['email']
 
     @current_user ||= SessionUser.new(
-      employee_id: user_data["employee_id"],
-      email: user_data["email"],
-      first_name: user_data["first_name"],
-      last_name: user_data["last_name"]
+      employee_id: user_data['employee_id'],
+      email: user_data['email'],
+      first_name: user_data['first_name'],
+      last_name: user_data['last_name']
     )
   end
 
@@ -27,8 +29,8 @@ class ApplicationController < ActionController::Base
 
     user = session[:user]
     @inbox_count =
-      if user && user["employee_id"].present?
-        InboxQuery.new(scoped_employee_ids: [ user["employee_id"].to_s ]).count
+      if user && user['employee_id'].present?
+        InboxQuery.new(scoped_employee_ids: [user['employee_id'].to_s]).count
       else
         0
       end
@@ -70,7 +72,7 @@ class ApplicationController < ActionController::Base
   def current_user_org_chain
     return @_current_user_org_chain if defined?(@_current_user_org_chain)
 
-    employee_id = session.dig(:user, "employee_id")
+    employee_id = session.dig(:user, 'employee_id')
     if employee_id.present?
       employee = Submitter.resolve(employee_id)
       unit     = Unit.resolve_for_employee(employee)
@@ -81,53 +83,55 @@ class ApplicationController < ActionController::Base
       # exists on Employees but not in Units), which previously zeroed out the
       # whole chain and skipped every org-level grant in load_user_permissions.
       @_current_user_org_chain = {
-        agency_id:     employee&.agency,
-        division_id:   unit&.division_id,
+        agency_id: employee&.agency,
+        division_id: unit&.division_id,
         department_id: unit&.department_id,
-        unit_id:       unit&.unit_id
+        unit_id: unit&.unit_id
       }
     else
       @_current_user_org_chain = {}
     end
-  rescue
+  rescue StandardError
     @_current_user_org_chain = {}
   end
 
   def auth_console_admin?
-    current_user_group_names.include?("system_admins") ||
-      current_user_group_names.include?("auth_console_admin")
+    current_user_group_names.include?('system_admins') ||
+      current_user_group_names.include?('auth_console_admin')
   end
 
   def auth_console_user?
     auth_console_admin? ||
-      current_user_group_names.include?("auth_console_approvers")
+      current_user_group_names.include?('auth_console_approvers')
   end
 
   def pcard_admin?
-    current_user_group_names.include?("system_admins") ||
-      current_user_group_names.include?("pcard_admin")
+    current_user_group_names.include?('system_admins') ||
+      current_user_group_names.include?('pcard_admin')
   end
 
   def current_user_dropdown_permissions
-    return @_current_user_dropdown_permissions if defined?(@_current_user_dropdown_permissions)
-    @_current_user_dropdown_permissions = load_user_permissions("dropdown")
+    return @current_user_dropdown_permissions if defined?(@current_user_dropdown_permissions)
+
+    @current_user_dropdown_permissions = load_user_permissions('dropdown')
   end
 
   def current_user_form_permission_keys
-    return @_current_user_form_permission_keys if defined?(@_current_user_form_permission_keys)
-    @_current_user_form_permission_keys = load_user_permissions("form")
+    return @current_user_form_permission_keys if defined?(@current_user_form_permission_keys)
+
+    @current_user_form_permission_keys = load_user_permissions('form')
   end
 
   def require_system_admin
-    unless current_user_group_names.include?("system_admins")
-      redirect_to root_path, alert: "Access denied. System administrators only."
-    end
+    return if current_user_group_names.include?('system_admins')
+
+    redirect_to root_path, alert: 'Access denied. System administrators only.'
   end
 
   def require_auth_console
-    unless auth_console_user?
-      redirect_to root_path, alert: "Access denied. Authorization Console access required."
-    end
+    return if auth_console_user?
+
+    redirect_to root_path, alert: 'Access denied. Authorization Console access required.'
   end
 
   private
@@ -147,12 +151,12 @@ class ApplicationController < ActionController::Base
   end
 
   def load_current_user_groups
-    employee_id = session.dig(:user, "employee_id")
+    employee_id = session.dig(:user, 'employee_id')
 
     if employee_id.present?
       rows = EmployeeGroup.joins(:group)
                           .where(EmployeeID: employee_id)
-                          .pluck("Groups.Group_Name", "Employee_Groups.GroupID")
+                          .pluck('Groups.Group_Name', 'Employee_Groups.GroupID')
 
       names = Set.new
       ids   = []
@@ -167,7 +171,7 @@ class ApplicationController < ActionController::Base
       @_current_user_group_names = Set.new
       @_current_user_group_ids   = []
     end
-  rescue
+  rescue StandardError
     @_current_user_group_names = Set.new
     @_current_user_group_ids   = []
   end
@@ -189,15 +193,9 @@ class ApplicationController < ActionController::Base
       conditions = [
         { agency_id: org[:agency_id], division_id: nil, department_id: nil, unit_id: nil }
       ]
-      if org[:division_id].present?
-        conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: nil, unit_id: nil }
-      end
-      if org[:department_id].present?
-        conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: org[:department_id], unit_id: nil }
-      end
-      if org[:unit_id].present?
-        conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: org[:department_id], unit_id: org[:unit_id] }
-      end
+      conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: nil, unit_id: nil } if org[:division_id].present?
+      conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: org[:department_id], unit_id: nil } if org[:department_id].present?
+      conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: org[:department_id], unit_id: org[:unit_id] } if org[:unit_id].present?
 
       query = conditions.map { |c| OrgPermission.where(c.merge(permission_type: permission_type)) }.reduce(:or)
       keys.merge(query.pluck(:permission_key))
@@ -213,7 +211,7 @@ class ApplicationController < ActionController::Base
     end
 
     keys
-  rescue
+  rescue StandardError
     Set.new
   end
 

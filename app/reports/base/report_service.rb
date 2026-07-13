@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/reports/base/report_service.rb
 module Base
   class ReportService
@@ -14,9 +16,9 @@ module Base
 
       PdfRenderer.new(
         template: template,
-        mapping:  mapping,
-        data:     data,
-        report:   report_name
+        mapping: mapping,
+        data: data,
+        report: report_name
       ).render
     end
 

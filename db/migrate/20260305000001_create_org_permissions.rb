@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateOrgPermissions < ActiveRecord::Migration[8.0]
   def change
     create_table :org_permissions do |t|
@@ -10,7 +12,7 @@ class CreateOrgPermissions < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :org_permissions, [ :agency_id, :division_id, :department_id, :unit_id, :permission_type, :permission_key ],
+    add_index :org_permissions, %i[agency_id division_id department_id unit_id permission_type permission_key],
               unique: true, name: 'idx_org_permissions_unique'
     add_index :org_permissions, :agency_id
     add_index :org_permissions, :division_id

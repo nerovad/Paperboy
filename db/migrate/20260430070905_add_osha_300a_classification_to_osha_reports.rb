@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddOsha300aClassificationToOshaReports < ActiveRecord::Migration[8.0]
   def up
     add_column :osha_reports, :case_classification, :string
@@ -8,10 +10,10 @@ class AddOsha300aClassificationToOshaReports < ActiveRecord::Migration[8.0]
     field = FormField.joins(:form_template)
                      .find_by(form_templates: { class_name: 'OshaReport' },
                               field_name: 'case_classification')
-    if field && field.options.is_a?(Hash) && field.options['values'].is_a?(Array)
-      values = field.options['values'].map { |v| v == 'DTJR' ? 'DJTR' : v }
-      field.update!(options: field.options.merge('values' => values))
-    end
+    return unless field && field.options.is_a?(Hash) && field.options['values'].is_a?(Array)
+
+    values = field.options['values'].map { |v| v == 'DTJR' ? 'DJTR' : v }
+    field.update!(options: field.options.merge('values' => values))
   end
 
   def down

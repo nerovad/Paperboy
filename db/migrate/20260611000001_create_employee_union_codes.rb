@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateEmployeeUnionCodes < ActiveRecord::Migration[8.0]
   # Union / bargaining-unit codes (e.g. "MB3") are Paperboy-owned data. They
   # cannot live on the GSABSS Employees table, which is read-only reference data

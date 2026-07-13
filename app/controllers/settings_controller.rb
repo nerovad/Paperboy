@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SettingsController < ApplicationController
   def show
     @settings = current_user_settings
@@ -6,7 +8,7 @@ class SettingsController < ApplicationController
   def update
     @settings = current_user_settings
     if @settings.update(settings_params)
-      redirect_to settings_path, notice: "Settings saved."
+      redirect_to settings_path, notice: 'Settings saved.'
     else
       render :show, status: :unprocessable_entity
     end
@@ -43,7 +45,7 @@ class SettingsController < ApplicationController
   end
 
   def current_user_settings
-    employee_id = session.dig(:user, "employee_id")
+    employee_id = session.dig(:user, 'employee_id')
     UserSetting.find_or_initialize_by(employee_id: employee_id)
   end
 

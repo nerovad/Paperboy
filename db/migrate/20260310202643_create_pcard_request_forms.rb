@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreatePcardRequestForms < ActiveRecord::Migration[7.1]
   def change
     create_table :pcard_request_forms do |t|

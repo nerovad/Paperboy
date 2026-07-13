@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Runtime resolver for the form builder's generic ("custom") dropdown data
 # source. Generated form views call FormLookup.options(field_id) with ONLY an
 # integer, so no user-supplied strings ever reach generated code on disk.
@@ -10,8 +12,8 @@ class FormLookup
   # "paperboy" auto-resolves to Paperboy_Dev/Stage/Prod by environment;
   # "gsabss" is the read-only reference DB (GsabssBase).
   CONNECTIONS = {
-    "paperboy" => ApplicationRecord,
-    "gsabss"   => GsabssBase
+    'paperboy' => ApplicationRecord,
+    'gsabss' => GsabssBase
   }.freeze
 
   # Connection for a logical database name, or nil if the name is unknown.
@@ -22,6 +24,7 @@ class FormLookup
   # True if `table` exists as a base table or view on the given connection.
   def self.table_exists_in?(conn, table)
     return false if table.blank?
+
     conn.tables.include?(table) ||
       (conn.respond_to?(:views) && conn.views.include?(table))
   end
@@ -34,24 +37,24 @@ class FormLookup
     return [] unless field&.custom_lookup?
 
     cfg  = field.custom_lookup_config
-    conn = connection_for(cfg["database"])
+    conn = connection_for(cfg['database'])
     return [] unless conn
-    return [] unless table_exists_in?(conn, cfg["table"])
+    return [] unless table_exists_in?(conn, cfg['table'])
 
-    table   = cfg["table"]
+    table   = cfg['table']
     columns = conn.columns(table).map(&:name)
-    col     = cfg["column"]
+    col     = cfg['column']
     return [] unless columns.include?(col)
 
     # The chosen column plus any "join" columns are concatenated into each
     # option's value/label, in order, so e.g. first_name + last_name display
     # together. Unknown columns are silently dropped; the primary column leads.
-    join_cols    = Array(cfg["join_columns"]).select { |c| c.present? && columns.include?(c) }
-    display_cols = ([ col ] + join_cols).uniq
-    sep          = cfg["join_separator"]
-    sep          = " " unless sep.is_a?(String) && !sep.empty?
+    join_cols    = Array(cfg['join_columns']).select { |c| c.present? && columns.include?(c) }
+    display_cols = ([col] + join_cols).uniq
+    sep          = cfg['join_separator']
+    sep          = ' ' unless sep.is_a?(String) && !sep.empty?
 
-    order_col = cfg["order_column"].presence
+    order_col = cfg['order_column'].presence
     order_col = nil unless order_col && columns.include?(order_col)
 
     qt = conn.quote_table_name(table)
@@ -67,10 +70,11 @@ class FormLookup
     # further requires that agency. Unknown columns and blank values are skipped;
     # values are bound via #quote.
     grouped = field.custom_lookup_category_filters.each_with_object({}) do |f, h|
-      fcol = f["column"]
-      fval = f["value"]
+      fcol = f['column']
+      fval = f['value']
       next unless columns.include?(fcol)
       next if fval.nil? || fval.to_s.empty?
+
       (h[fcol] ||= []) << fval
     end
     clauses = grouped.map do |fcol, vals|
@@ -79,24 +83,24 @@ class FormLookup
       if vals.size == 1
         "#{qcol} = #{conn.quote(vals.first)}"
       else
-        "#{qcol} IN (#{vals.map { |v| conn.quote(v) }.join(", ")})"
+        "#{qcol} IN (#{vals.map { |v| conn.quote(v) }.join(', ')})"
       end
     end
-    where_sql = clauses.any? ? " WHERE #{clauses.join(" AND ")}" : ""
+    where_sql = clauses.any? ? " WHERE #{clauses.join(' AND ')}" : ''
 
     # Direction is a fixed keyword (never interpolated raw). Ascending/descending
     # is the only knob needed — numeric vs alphabetical follows the column type.
-    dir = cfg["order_direction"].to_s.downcase == "desc" ? "DESC" : "ASC"
+    dir = cfg['order_direction'].to_s.downcase == 'desc' ? 'DESC' : 'ASC'
 
     # SQL Server requires every ORDER BY column to appear in a DISTINCT select
     # list. The display columns are always projected; carry the order column
     # along only when it isn't one of them.
     if order_col && !display_cols.include?(order_col)
       qo          = conn.quote_column_name(order_col)
-      select_list = (select_aliases + [ "#{qo} AS sort_val" ]).join(", ")
+      select_list = (select_aliases + ["#{qo} AS sort_val"]).join(', ')
       order_by    = "#{qo} #{dir}"
     else
-      select_list = select_aliases.join(", ")
+      select_list = select_aliases.join(', ')
       order_by    = "#{conn.quote_column_name(order_col || display_cols.first)} #{dir}"
     end
 
@@ -108,7 +112,7 @@ class FormLookup
                   .reject { |v| v.nil? || v.to_s.empty? }
                   .join(sep)
     end.reject(&:empty?).uniq
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("FormLookup.options(#{field_id}) failed: #{e.class}: #{e.message}")
     []
   end

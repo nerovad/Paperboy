@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddButtonLabelsToFormTemplateRoutingSteps < ActiveRecord::Migration[8.0]
   # Optional per-step overrides for the inbox Approve/Deny button text. The
   # action is unchanged (approve still advances the workflow, deny still

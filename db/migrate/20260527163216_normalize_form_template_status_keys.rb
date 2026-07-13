@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class NormalizeFormTemplateStatusKeys < ActiveRecord::Migration[8.0]
   # Phase 1 of the status-key consolidation: normalize the central
   # form_template_statuses *definition* rows into the canonical vocabulary.
@@ -6,7 +8,7 @@ class NormalizeFormTemplateStatusKeys < ActiveRecord::Migration[8.0]
   def up
     key_col = FormTemplateStatus.connection.quote_column_name(:key)
 
-    say_with_time "Normalizing form_template_statuses keys" do
+    say_with_time 'Normalizing form_template_statuses keys' do
       # 1. Drop the dead intermediate step_N_approved definitions.
       #    The engine advances step_N_pending -> step_(N+1)_pending directly and
       #    never rests in step_N_approved, so these are unused.
@@ -31,6 +33,6 @@ class NormalizeFormTemplateStatusKeys < ActiveRecord::Migration[8.0]
 
   def down
     raise ActiveRecord::IrreversibleMigration,
-          "Status-key consolidation cannot be reversed (original submitted/in_review values are not recoverable)."
+          'Status-key consolidation cannot be reversed (original submitted/in_review values are not recoverable).'
   end
 end

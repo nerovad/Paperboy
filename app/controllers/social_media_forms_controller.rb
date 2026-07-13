@@ -1,15 +1,15 @@
+# frozen_string_literal: true
+
 class SocialMediaFormsController < ApplicationController
   # Minimal controller for the two-page template (Employee Info + Agency Info)
 
   def new
     @social_media_form = SocialMediaForm.new
 
-    employee_id = session.dig(:user, "employee_id").to_s
+    employee_id = session.dig(:user, 'employee_id').to_s
     @employee   = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
 
-    unless @employee
-      redirect_to login_path, alert: "Please sign in to start a submission." and return
-    end
+    redirect_to login_path, alert: 'Please sign in to start a submission.' and return unless @employee
 
     # --- Organization chain (same pattern you use now) ---
     unit        = Unit.resolve_for_employee(@employee)
@@ -20,43 +20,43 @@ class SocialMediaFormsController < ApplicationController
     # --- Prefill values (everything prefilled exactly like you do now) ---
     @prefill_data = {
       employee_id: @employee.employee_id,
-      name:        [ @employee.first_name, @employee.last_name ].compact.join(" "),
-      phone:       @employee.work_phone,
-      email:       @employee.email,
-      agency:      agency&.agency_id,
-      division:    division&.division_id,
-      department:  department&.department_id,
-      unit:        unit&.unit_id
+      name: [@employee.first_name, @employee.last_name].compact.join(' '),
+      phone: @employee.work_phone,
+      email: @employee.email,
+      agency: agency&.agency_id,
+      division: division&.division_id,
+      department: department&.department_id,
+      unit: unit&.unit_id
     }
 
     # --- Select options (IDs/order match gsabss_selects_controller.js expectations) ---
     @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
 
     @division_options = if agency
-      Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id)
-    else
-      []
-    end
+                          Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id)
+                        else
+                          []
+                        end
 
     @department_options = if division
-      Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id)
-    else
-      []
-    end
+                            Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id)
+                          else
+                            []
+                          end
 
     # Unit label = "unit_id - long_name", value = unit_id (your current pattern)
     @unit_options = if department
-      Unit.where(department_id: department.department_id)
-          .order(:unit_id)
-          .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
-    else
-      []
-    end
+                      Unit.where(department_id: department.department_id)
+                          .order(:unit_id)
+                          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                    else
+                      []
+                    end
   end
 
   def create
     employee      = session[:user]
-    employee_id   = employee&.dig("employee_id").to_s
+    employee_id   = employee&.dig('employee_id').to_s
 
     @social_media_form = SocialMediaForm.new(social_media_form_params)
     @social_media_form.employee_id = employee_id if @social_media_form.respond_to?(:employee_id=)
@@ -75,25 +75,25 @@ class SocialMediaFormsController < ApplicationController
 
       @prefill_data = {
         employee_id: emp&.employee_id,
-        name:        emp ? [ emp&.first_name, emp&.last_name ].compact.join(" ") : nil,
-        phone:       emp&.work_phone,
-        email:       emp&.email,
-        agency:      agency&.agency_id,
-        division:    division&.division_id,
-        department:  department&.department_id,
-        unit:        unit&.unit_id
+        name: emp ? [emp&.first_name, emp&.last_name].compact.join(' ') : nil,
+        phone: emp&.work_phone,
+        email: emp&.email,
+        agency: agency&.agency_id,
+        division: division&.division_id,
+        department: department&.department_id,
+        unit: unit&.unit_id
       }
 
       @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
       @division_options = agency ? Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
       @department_options = division ? Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
       @unit_options = if department
-        Unit.where(department_id: department.department_id)
-            .order(:unit_id)
-            .map { |u| [ "#{u.unit_id} - #{u.long_name}", u.unit_id ] }
-      else
-        []
-      end
+                        Unit.where(department_id: department.department_id)
+                            .order(:unit_id)
+                            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                      else
+                        []
+                      end
 
       render :new, status: :unprocessable_entity
     end

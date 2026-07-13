@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateSupportTables < ActiveRecord::Migration[8.0]
   def change
     # Authorization Managers
@@ -6,7 +8,7 @@ class CreateSupportTables < ActiveRecord::Migration[8.0]
       t.string :department_id, null: false
       t.timestamps
     end
-    add_index :authorization_managers, [ :employee_id, :department_id ], unique: true
+    add_index :authorization_managers, %i[employee_id department_id], unique: true
 
     # Authorized Approvers
     create_table :authorized_approvers do |t|
@@ -21,7 +23,7 @@ class CreateSupportTables < ActiveRecord::Migration[8.0]
       t.timestamps
     end
     add_index :authorized_approvers, :employee_id
-    add_index :authorized_approvers, [ :department_id, :service_type ]
+    add_index :authorized_approvers, %i[department_id service_type]
 
     # Status Changes (polymorphic)
     create_table :status_changes do |t|
@@ -34,7 +36,7 @@ class CreateSupportTables < ActiveRecord::Migration[8.0]
       t.text :notes
       t.timestamps
     end
-    add_index :status_changes, [ :trackable_type, :trackable_id ]
+    add_index :status_changes, %i[trackable_type trackable_id]
     add_index :status_changes, :changed_by_id
 
     # Task Reassignments (polymorphic)
@@ -48,7 +50,7 @@ class CreateSupportTables < ActiveRecord::Migration[8.0]
       t.string :assignment_field
       t.timestamps
     end
-    add_index :task_reassignments, [ :task_type, :task_id ]
+    add_index :task_reassignments, %i[task_type task_id]
     add_index :task_reassignments, :from_employee_id
     add_index :task_reassignments, :to_employee_id
 
@@ -60,13 +62,13 @@ class CreateSupportTables < ActiveRecord::Migration[8.0]
       t.timestamps
     end
     add_index :saved_searches, :employee_id
-    add_index :saved_searches, [ :employee_id, :name ], unique: true
+    add_index :saved_searches, %i[employee_id name], unique: true
 
     # Scheduled Reports
     create_table :scheduled_reports do |t|
       t.string :employee_id, null: false
       t.string :form_type, null: false
-      t.string :format, default: "csv", null: false
+      t.string :format, default: 'csv', null: false
       t.string :status_filter
       t.string :frequency, null: false
       t.string :time_of_day, null: false

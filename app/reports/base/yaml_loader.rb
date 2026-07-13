@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/reports/base/yaml_loader.rb
 module Base
   class YamlLoader
@@ -6,9 +8,9 @@ module Base
     end
 
     def mapping
-      fail "#{@path} not found." unless File.exist?(@path)
+      raise "#{@path} not found." unless File.exist?(@path)
 
-      YAML.load_file(@path).fetch("fields")
+      YAML.load_file(@path).fetch('fields')
     end
   end
 end

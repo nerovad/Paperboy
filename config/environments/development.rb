@@ -1,4 +1,6 @@
-require "active_support/core_ext/integer/time"
+# frozen_string_literal: true
+
+require 'active_support/core_ext/integer/time'
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -17,10 +19,10 @@ Rails.application.configure do
 
   # Enable/disable Action Controller caching. By default Action Controller caching is disabled.
   # Run rails dev:cache to toggle Action Controller caching.
-  if Rails.root.join("tmp/caching-dev.txt").exist?
+  if Rails.root.join('tmp/caching-dev.txt').exist?
     config.action_controller.perform_caching = true
     config.action_controller.enable_fragment_cache_logging = true
-    config.public_file_server.headers = { "cache-control" => "public, max-age=#{2.days.to_i}" }
+    config.public_file_server.headers = { 'cache-control' => "public, max-age=#{2.days.to_i}" }
   else
     config.action_controller.perform_caching = false
   end
@@ -30,14 +32,14 @@ Rails.application.configure do
 
   # Enable when development runs behind nginx with HTTPS termination
   # (https://dev-gsa-forms). Leave disabled for direct http://localhost.
-  dev_https = ENV.fetch("PAPERBOY_ASSUME_SSL", "false") == "true"
+  dev_https = ENV.fetch('PAPERBOY_ASSUME_SSL', 'false') == 'true'
   config.assume_ssl = dev_https
   config.force_ssl  = dev_https
 
   # Allow the dev hostname through Rails 8's Host Authorization middleware
   # (defaults only allow localhost). Cert SANs cover these names.
-  config.hosts << "dev-gsa-forms"
-  config.hosts << "gsa-linux01"
+  config.hosts << 'dev-gsa-forms'
+  config.hosts << 'gsa-linux01'
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
@@ -47,7 +49,6 @@ Rails.application.configure do
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false
-
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
@@ -81,13 +82,13 @@ Rails.application.configure do
 
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
-  address:              "smtp4.co.ventura.ca.us",
-  port:                 25,
-  domain:               "co.ventura.ca.us",
-  enable_starttls_auto: false,
-  openssl_verify_mode: "none"  # optional if using TLS
-  # No user_name, password, or authentication!
-}
+    address: 'smtp4.co.ventura.ca.us',
+    port: 25,
+    domain: 'co.ventura.ca.us',
+    enable_starttls_auto: false,
+    openssl_verify_mode: 'none' # optional if using TLS
+    # No user_name, password, or authentication!
+  }
 
-  config.action_mailer.default_url_options = { host: "dev-gsa-forms" }
+  config.action_mailer.default_url_options = { host: 'dev-gsa-forms' }
 end

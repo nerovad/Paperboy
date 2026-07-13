@@ -1,23 +1,24 @@
+# frozen_string_literal: true
+
 class HelpTicketsController < ApplicationController
   helper_method :ticket_admin?
 
   def index
-    employee_id = session.dig(:user, "employee_id")
+    employee_id = session.dig(:user, 'employee_id')
     @my_tickets = HelpTicket.for_employee(employee_id).order(created_at: :desc)
     @all_tickets = HelpTicket.order(created_at: :desc) if ticket_admin?
   end
 
   def show
     @help_ticket = HelpTicket.find(params[:id])
-    employee_id = session.dig(:user, "employee_id").to_s
+    employee_id = session.dig(:user, 'employee_id').to_s
 
-    unless @help_ticket.employee_id == employee_id || ticket_admin?
-      redirect_to help_tickets_path, alert: "Access denied."
-    end
+    return if @help_ticket.employee_id == employee_id || ticket_admin?
+
+    redirect_to help_tickets_path, alert: 'Access denied.'
   end
 
-  def new
-  end
+  def new; end
 
   def create
     @help_ticket = HelpTicket.new(
@@ -47,17 +48,17 @@ class HelpTicketsController < ApplicationController
     @help_ticket = HelpTicket.find(params[:id])
 
     unless ticket_admin?
-      redirect_to help_tickets_path, alert: "Access denied."
+      redirect_to help_tickets_path, alert: 'Access denied.'
       return
     end
 
     @help_ticket.closed!
-    redirect_to help_ticket_path(@help_ticket), notice: "Ticket closed.", status: :see_other
+    redirect_to help_ticket_path(@help_ticket), notice: 'Ticket closed.', status: :see_other
   end
 
   private
 
   def ticket_admin?
-    current_user_group_names.include?("ticket_admin")
+    current_user_group_names.include?('ticket_admin')
   end
 end

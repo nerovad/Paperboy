@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/reports/base/template_loader.rb
 module Base
   class TemplateLoader
@@ -6,7 +8,8 @@ module Base
     end
 
     def path
-      fail "#{@path} missing." unless File.exist?(@path)
+      raise "#{@path} missing." unless File.exist?(@path)
+
       @path
     end
   end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class InvoiceQuery
   # Executes County stored procedure to fetch invoice data
   def self.fetch(fiscal_year:, agency:, account:)
@@ -10,7 +12,7 @@ class InvoiceQuery
 
     sanitized = ActiveRecord::Base.send(
       :sanitize_sql_array,
-      [ sql, fiscal_year, agency, account ]
+      [sql, fiscal_year, agency, account]
     )
 
     result = BillingBase.connection.exec_query(sanitized)

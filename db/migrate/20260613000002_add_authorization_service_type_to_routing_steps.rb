@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddAuthorizationServiceTypeToRoutingSteps < ActiveRecord::Migration[8.0]
   def change
     # Service type (P/E/V/C/K) for routing_type == 'authorization' steps, which

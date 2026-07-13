@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddReferencePrefixToFormTemplates < ActiveRecord::Migration[8.0]
   # Short, human-readable code that fronts a submission's reference number
   # (the "LOA" in "LOA-1042"). Combined with the record id it gives every
@@ -8,10 +10,10 @@ class AddReferencePrefixToFormTemplates < ActiveRecord::Migration[8.0]
 
     # Backfill existing templates with a unique prefix — a preferred seed value
     # when one is defined, otherwise the derived initials, deduped on collision.
-    say_with_time "Backfilling form_templates.reference_prefix" do
+    say_with_time 'Backfilling form_templates.reference_prefix' do
       used = Set.new
       FormTemplate.reset_column_information
-      FormTemplate.where(reference_prefix: [ nil, "" ]).order(:id).each do |template|
+      FormTemplate.where(reference_prefix: [nil, '']).order(:id).each do |template|
         seed = FormReference::PREFIX_SEEDS[template.class_name] ||
                FormReference.derive_prefix(template.class_name)
         prefix = unique_prefix(seed, used)
@@ -21,12 +23,12 @@ class AddReferencePrefixToFormTemplates < ActiveRecord::Migration[8.0]
     end
 
     add_index :form_templates, :reference_prefix, unique: true,
-              where: "reference_prefix IS NOT NULL",
-              name: "index_form_templates_on_reference_prefix"
+                                                  where: 'reference_prefix IS NOT NULL',
+                                                  name: 'index_form_templates_on_reference_prefix'
   end
 
   def down
-    remove_index :form_templates, name: "index_form_templates_on_reference_prefix"
+    remove_index :form_templates, name: 'index_form_templates_on_reference_prefix'
     remove_column :form_templates, :reference_prefix
   end
 

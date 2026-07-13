@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FormRequestForm < ApplicationRecord
   include TrackableStatus
 
@@ -15,10 +17,13 @@ class FormRequestForm < ApplicationRecord
   # e.g. :30_day_spending_limit is invalid; use :spending_limit_30_day instead.
   def column_names_must_be_valid_identifiers
     self.class.column_names.each do |col|
-      unless col.match?(/\A[a-zA-Z_]/)
-        errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.")
-      end
+      errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.") unless col.match?(/\A[a-zA-Z_]/)
     end
+  end
+
+  # For inbox queue display
+  def status_label
+    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || 'Unknown') : (status&.to_s&.humanize || 'Unknown')
   end
 
   # For inbox queue filtering - returns the form type name
@@ -36,22 +41,17 @@ class FormRequestForm < ApplicationRecord
     @form_template ||= FormTemplate.find_by(class_name: self.class.name)
   end
 
-def acceptable_attach_existing_pdf_form_files
-  return unless attach_existing_pdf_form.attached?
+  def acceptable_attach_existing_pdf_form_files
+    return unless attach_existing_pdf_form.attached?
 
-  if attach_existing_pdf_form.count > 10
-    errors.add(:attach_existing_pdf_form, "can have a maximum of 10 files")
-  end
+    errors.add(:attach_existing_pdf_form, 'can have a maximum of 10 files') if attach_existing_pdf_form.count > 10
 
-  attach_existing_pdf_form.each do |file|
-    unless file.content_type.in?(%w[image/jpeg image/png image/gif image/webp image/heic image/heif application/pdf])
-      errors.add(:attach_existing_pdf_form, "must be a JPEG, PNG, GIF, WebP, HEIC, or PDF")
-    end
+    attach_existing_pdf_form.each do |file|
+      unless file.content_type.in?(%w[image/jpeg image/png image/gif image/webp image/heic image/heif application/pdf])
+        errors.add(:attach_existing_pdf_form, 'must be a JPEG, PNG, GIF, WebP, HEIC, or PDF')
+      end
 
-    if file.byte_size > 10.megabytes
-      errors.add(:attach_existing_pdf_form, "file size must be less than 10MB")
+      errors.add(:attach_existing_pdf_form, 'file size must be less than 10MB') if file.byte_size > 10.megabytes
     end
   end
-end
-
 end

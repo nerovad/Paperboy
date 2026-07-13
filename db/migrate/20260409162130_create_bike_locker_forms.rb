@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateBikeLockerForms < ActiveRecord::Migration[7.1]
   def change
     create_table :bike_locker_forms do |t|

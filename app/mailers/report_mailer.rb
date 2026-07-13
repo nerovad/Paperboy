@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 # app/mailers/report_mailer.rb
 class ReportMailer < ApplicationMailer
-  default from: ENV["SMTP_FROM_ADDRESS"] || "noreply@ventura.org"
+  default from: ENV['SMTP_FROM_ADDRESS'] || 'noreply@ventura.org'
 
   def report_ready(employee, zip_filename, submission_count, form_type, start_date, end_date)
     @employee = employee

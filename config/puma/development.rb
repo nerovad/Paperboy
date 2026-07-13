@@ -1,11 +1,13 @@
-app_dir = ENV.fetch("APP_DIR", File.expand_path("../..", __dir__))
+# frozen_string_literal: true
 
-threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
+app_dir = ENV.fetch('APP_DIR', File.expand_path('../..', __dir__))
+
+threads_count = ENV.fetch('RAILS_MAX_THREADS', 3)
 threads threads_count, threads_count
 
-environment "development"
+environment 'development'
 
-bind "tcp://127.0.0.1:3001"
+bind 'tcp://127.0.0.1:3001'
 
 pidfile     "#{app_dir}/tmp/pids/puma.pid"
 state_path  "#{app_dir}/tmp/pids/puma.state"

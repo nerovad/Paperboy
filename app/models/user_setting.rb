@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class UserSetting < ApplicationRecord
   # Per-user, per-page table layouts for the Inbox and Submissions "My Work"
   # tables (see TableColumns). Mirrors SavedSearch#filters JSON storage.
@@ -13,6 +15,7 @@ class UserSetting < ApplicationRecord
   def layout_for(page)
     stored = (column_prefs || {})[page.to_s]
     return TableColumns.default_layout(page) unless stored.is_a?(Array) && stored.any?
+
     TableColumns.sanitize_layout(page, stored)
   end
 

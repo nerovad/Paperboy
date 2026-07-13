@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateContractors < ActiveRecord::Migration[8.0]
   # Contractors are non-Active-Directory users that a system admin provisions by
   # hand. They cannot live on the GSABSS Employees table (read-only reference

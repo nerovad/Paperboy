@@ -1,12 +1,14 @@
+# frozen_string_literal: true
+
 class FleetVehicleGaragingForm < ApplicationRecord
   include TrackableStatus
 
-enum :status, {
-  in_progress: "in_progress",
-    step_1_pending: "step_1_pending",
-    approved: "approved",
-    denied: "denied"
-}, default: :in_progress
+  enum :status, {
+    in_progress: 'in_progress',
+    step_1_pending: 'step_1_pending',
+    approved: 'approved',
+    denied: 'denied'
+  }, default: :in_progress
 
   # Vehicles (nested — each submission can garage multiple fleet vehicles)
   has_many :fleet_vehicles, dependent: :destroy
@@ -23,9 +25,7 @@ enum :status, {
   # e.g. :30_day_spending_limit is invalid; use :spending_limit_30_day instead.
   def column_names_must_be_valid_identifiers
     self.class.column_names.each do |col|
-      unless col.match?(/\A[a-zA-Z_]/)
-        errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.")
-      end
+      errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.") unless col.match?(/\A[a-zA-Z_]/)
     end
   end
 

@@ -191,7 +191,7 @@ ORGANIZATIONAL HIERARCHY (snake_case, read-only lookup tables):
   - revenue_sources (PK: revenue_id, smallint)
   - objects (PK: object_id, smallint)
   - sub_objects (Composite PK: agency_id, object_id, sub_object_id)
-  - sub_units (Composite PK: agency_id, unit_id, subunit_id)
+  - sub_units (Composite PK: agency_id, unit_id, sub_unit_id)
 
 FORM SYSTEM TABLES (snake_case, Rails-managed):
   - form_templates
@@ -615,7 +615,7 @@ Task:            PK: (agency_id, task_id) | long_name, short_name
 RevenueSource:   PK: revenue_id (smallint) | long_name, short_name
 Object:          PK: object_id (smallint) | long_name, short_name
 SubObject:       PK: (agency_id, object_id, sub_object_id)
-SubUnit:         PK: (agency_id, unit_id, subunit_id) | short_name
+SubUnit:         PK: (agency_id, unit_id, sub_unit_id) | short_name
 
 ================================================================================
 8. MODELS - FORM TEMPLATE SYSTEM (DYNAMIC FORM BUILDER)

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateFormVisibilityGrants < ActiveRecord::Migration[8.0]
   def change
     create_table :form_visibility_grants do |t|
@@ -10,6 +12,6 @@ class CreateFormVisibilityGrants < ActiveRecord::Migration[8.0]
     end
 
     add_index :form_visibility_grants, :form_type
-    add_index :form_visibility_grants, [ :grantee_type, :group_id ]
+    add_index :form_visibility_grants, %i[grantee_type group_id]
   end
 end

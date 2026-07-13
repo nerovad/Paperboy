@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 class Osha300aEntry < ApplicationRecord
-  self.table_name = "osha_300a_entries"
+  self.table_name = 'osha_300a_entries'
 
   attribute :submitted_payload,   :json
   attribute :submission_response, :json
@@ -12,7 +14,7 @@ class Osha300aEntry < ApplicationRecord
 
   validates :year, presence: true,
                    numericality: { only_integer: true, greater_than_or_equal_to: 1970 },
-                   format: { with: /\A\d{4}\z/, message: "must be a 4-digit year" }
+                   format: { with: /\A\d{4}\z/, message: 'must be a 4-digit year' }
   validates :year, uniqueness: { scope: :osha_establishment_id }
   validates :annual_average_employees,
             numericality: { only_integer: true, greater_than: 0, less_than: 25_000 }
@@ -23,6 +25,7 @@ class Osha300aEntry < ApplicationRecord
 
   def hours_per_employee
     return nil if annual_average_employees.to_i.zero?
+
     total_hours_worked.to_f / annual_average_employees
   end
 
@@ -30,10 +33,11 @@ class Osha300aEntry < ApplicationRecord
 
   def hours_per_employee_within_bounds
     return if annual_average_employees.to_i.zero?
+
     ratio = hours_per_employee
-    if ratio >= 8760
-      errors.add(:total_hours_worked,
-                 "÷ annual_average_employees must be < 8760 (got #{ratio.round(1)})")
-    end
+    return unless ratio >= 8760
+
+    errors.add(:total_hours_worked,
+               "÷ annual_average_employees must be < 8760 (got #{ratio.round(1)})")
   end
 end

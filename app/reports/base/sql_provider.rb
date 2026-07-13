@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/reports/base/sql_provider.rb
 module Base
   class SqlProvider
@@ -11,8 +13,8 @@ module Base
 
     def fetch
       stored_proc = validated_identifier(@stored_proc)
-      args = @params.keys.map { |key| "@#{validated_parameter(key)} = ?" }.join(", ")
-      sql = [ "EXEC", stored_proc, args.presence ].compact.join(" ")
+      args = @params.keys.map { |key| "@#{validated_parameter(key)} = ?" }.join(', ')
+      sql = ['EXEC', stored_proc, args.presence].compact.join(' ')
       binds = @params.map do |key, value|
         ActiveRecord::Relation::QueryAttribute.new(
           key.to_s,
@@ -21,7 +23,7 @@ module Base
         )
       end
 
-      result = ActiveRecord::Base.connection.exec_query(sql, "Report SQL", binds)
+      result = ActiveRecord::Base.connection.exec_query(sql, 'Report SQL', binds)
 
       result.to_a.map do |row|
         row.transform_keys { |k| k.to_s.downcase }
@@ -32,14 +34,14 @@ module Base
 
     def validated_identifier(value)
       identifier = value.to_s
-      raise ArgumentError, "Invalid stored procedure name" unless identifier.match?(SQL_IDENTIFIER)
+      raise ArgumentError, 'Invalid stored procedure name' unless identifier.match?(SQL_IDENTIFIER)
 
       identifier
     end
 
     def validated_parameter(value)
       parameter = value.to_s
-      raise ArgumentError, "Invalid stored procedure parameter" unless parameter.match?(SQL_PARAMETER)
+      raise ArgumentError, 'Invalid stored procedure parameter' unless parameter.match?(SQL_PARAMETER)
 
       parameter
     end

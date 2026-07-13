@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 class MatthewTestYayReportsController < ApplicationController
   def show
-    @report_name = "matthew_test_yay"
+    @report_name = 'matthew_test_yay'
   end
 
   def run
@@ -10,6 +12,6 @@ class MatthewTestYayReportsController < ApplicationController
     )
 
     redirect_to root_path,
-      notice: "MatthewTestYay report submitted for generation."
+                notice: 'MatthewTestYay report submitted for generation.'
   end
 end

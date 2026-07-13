@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateIdBadgeRequestForms < ActiveRecord::Migration[7.1]
   def change
     create_table :id_badge_request_forms do |t|

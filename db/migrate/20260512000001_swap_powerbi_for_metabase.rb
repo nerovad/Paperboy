@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SwapPowerbiForMetabase < ActiveRecord::Migration[8.0]
   def change
     add_column :form_templates, :metabase_dashboard_id, :integer unless column_exists?(:form_templates, :metabase_dashboard_id)
