@@ -97,11 +97,19 @@ class FormLookup
   # space). Mirrors the join_columns/join_separator option-source pattern. The
   # employees "full_name" synthetic key is still honored for back-compat.
   def self.combined_value(table, primary, join_cols, sep, row, columns, synthetic)
-    return synthesize(table, primary, row) if synthetic.include?(primary)
+    sep = " " unless sep.is_a?(String) && !sep.empty?
 
-    cols = ([ primary ] + Array(join_cols)).select { |c| columns.include?(c) }
-    sep  = " " unless sep.is_a?(String) && !sep.empty?
-    cols.map { |c| row[c] }.reject { |v| v.nil? || v.to_s.empty? }.join(sep)
+    # The primary value may be a synthetic column (e.g. employees "full_name");
+    # the "+ also" join columns are always real columns from the same row.
+    primary_value =
+      if synthetic.include?(primary)
+        synthesize(table, primary, row)
+      elsif columns.include?(primary)
+        row[primary]
+      end
+
+    join_values = Array(join_cols).select { |c| columns.include?(c) }.map { |c| row[c] }
+    ([ primary_value ] + join_values).reject { |v| v.nil? || v.to_s.empty? }.join(sep)
   end
 
   # Build a synthetic column's value from a fetched row.
