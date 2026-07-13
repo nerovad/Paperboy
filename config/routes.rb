@@ -350,6 +350,7 @@ Rails.application.routes.draw do
   get '/lookups/units', to: 'lookups#units'
   get '/lookups/supervisors', to: 'lookups#supervisors'
   get '/lookups/employees', to: 'lookups#employees'
+  get '/lookups/answer_fill', to: 'lookups#answer_fill'
   get '/lookups/categories', to: 'lookups#categories'
   get '/lookups/tables', to: 'lookups#tables'
   get '/lookups/columns', to: 'lookups#columns'

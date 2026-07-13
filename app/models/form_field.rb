@@ -106,6 +106,7 @@ class FormField < ApplicationRecord
             allow_blank: true
   validate :org_filter_only_for_group_restriction
   validate :custom_lookup_config_valid
+  validate :answer_lookup_config_valid
   validates :page_number, numericality: {
     greater_than_or_equal_to: 1,
     less_than_or_equal_to: ->(field) { field.form_template&.page_count || 30 }
@@ -431,7 +432,24 @@ class FormField < ApplicationRecord
 
   # Conditional answer logic - auto-select a value based on another dropdown's selection
   def conditional_answer?
+    return true if answer_lookup?
+
     conditional_answer_field_id.present? && conditional_answer_mappings.present? && conditional_answer_mappings.any?
+  end
+
+  # Table-lookup answer mode. Instead of a static value->value map, this field is
+  # auto-filled at fill time from a database column, keyed by the trigger field's
+  # selected value (matched against match_column). One trigger can fan out to
+  # many target fields, each pulling a different return_column from the row.
+  def answer_lookup_config
+    options&.dig('answer_lookup')
+  end
+
+  def answer_lookup?
+    cfg = answer_lookup_config
+    conditional_answer_field_id.present? && cfg.is_a?(Hash) &&
+      cfg['database'].present? && cfg['table'].present? &&
+      cfg['match_column'].present? && cfg['return_column'].present?
   end
 
   def conditional_answer_field
@@ -456,8 +474,13 @@ class FormField < ApplicationRecord
     field = conditional_answer_field
     return nil unless field
 
-    mappings = conditional_answer_mappings.map { |k, v| "#{k} → #{v}" }.join(', ')
-    "Auto-answers based on \"#{field.label}\": #{mappings}"
+    if answer_lookup?
+      cfg = answer_lookup_config
+      "Auto-fills from #{cfg['table']}.#{cfg['return_column']} based on \"#{field.label}\""
+    else
+      mappings = conditional_answer_mappings.map { |k, v| "#{k} → #{v}" }.join(', ')
+      "Auto-answers based on \"#{field.label}\": #{mappings}"
+    end
   end
 
   private
@@ -487,6 +510,32 @@ class FormField < ApplicationRecord
     errors.add(:base, "Custom lookup: column '#{cfg['order_column']}' not found") if cfg['order_column'].present? && !columns.include?(cfg['order_column'])
   rescue StandardError => e
     Rails.logger.warn("custom_lookup_config_valid skipped: #{e.class}: #{e.message}")
+  end
+
+  # Reject table-lookup answers whose table/columns don't exist at save time.
+  # Mirrors custom_lookup_config_valid; infrastructure errors are logged, not
+  # fatal (FormLookup.answer_fills re-validates and fails soft at fill time).
+  def answer_lookup_config_valid
+    return unless answer_lookup?
+
+    cfg  = answer_lookup_config
+    conn = FormLookup.connection_for(cfg['database'])
+    return errors.add(:base, "Answer lookup: unknown database '#{cfg['database']}'") unless conn
+    return errors.add(:base, "Answer lookup: table '#{cfg['table']}' not found") unless FormLookup.table_exists_in?(conn, cfg['table'])
+
+    columns   = conn.columns(cfg['table']).map(&:name)
+    synthetic = FormLookup.synthetic_columns(cfg['table'])
+    known = ->(col) { col.blank? || columns.include?(col) || synthetic.include?(col) }
+
+    %w[match_column return_column].each do |key|
+      col = cfg[key]
+      errors.add(:base, "Answer lookup: #{key.tr('_', ' ')} '#{col}' not found") unless known.call(col)
+    end
+    Array(cfg['return_join_columns']).each do |col|
+      errors.add(:base, "Answer lookup: join column '#{col}' not found") unless known.call(col)
+    end
+  rescue StandardError => e
+    Rails.logger.warn("answer_lookup_config_valid skipped: #{e.class}: #{e.message}")
   end
 
   def org_filter_only_for_group_restriction

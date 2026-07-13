@@ -70,6 +70,31 @@ export default class extends Controller {
 
     // Hydrate routing-step condition editors that were rendered server-side
     this.initializeRoutingStepConditions()
+
+    // Hydrate server-rendered answer-lookup panels so their table/column lists
+    // (including the "+ also" multi-select) are fully populated on the edit page.
+    this.initializeAnswerLookups()
+  }
+
+  // On the edit page, existing answer-lookup fields render each dropdown with
+  // only their single saved option, and the "+ also" multi-select with only its
+  // saved join columns (often none) — leaving nothing to pick. Load the full
+  // table/column lists for each panel already in lookup mode, preserving the
+  // saved selections (loadAnswerLookupColumns re-selects the current values).
+  initializeAnswerLookups() {
+    this.element.querySelectorAll('.answer-lookup-toggle').forEach(toggle => {
+      if (!toggle.checked) return
+      const fieldItem = toggle.closest('.field-item')
+      const panel = fieldItem && fieldItem.querySelector('.answer-lookup-panel')
+      if (!panel) return
+
+      const dbSelect = panel.querySelector('.answer-lookup-database')
+      const tableSelect = panel.querySelector('.answer-lookup-table')
+      if (dbSelect) this.loadAnswerLookupTables({ target: dbSelect })
+      if (tableSelect && tableSelect.value) {
+        this.loadAnswerLookupColumns({ target: tableSelect })
+      }
+    })
   }
 
   // Populate the field dropdown for each server-rendered routing step
@@ -1062,18 +1087,18 @@ export default class extends Controller {
       informationOptions.style.display = 'block'
     }
 
-    // Show/hide conditional answer options (only for dropdown types)
+    // Conditional answer options are available for every field type. Non-dropdown
+    // fields can't offer a static value->value mapping (they have no own values),
+    // so when the answer is enabled on a non-dropdown, default it to lookup mode.
     const conditionalAnswerOptions = fieldItem.querySelector('.conditional-answer-options')
     if (conditionalAnswerOptions) {
-      if (fieldType === 'dropdown' || fieldType === 'choices_dropdown') {
-        conditionalAnswerOptions.style.display = 'block'
-      } else {
-        conditionalAnswerOptions.style.display = 'none'
-        // Clear conditional answer config when switching away from dropdown
-        const conditionalAnswerToggle = fieldItem.querySelector('.conditional-answer-toggle')
-        if (conditionalAnswerToggle) conditionalAnswerToggle.checked = false
-        const conditionalAnswerConfig = fieldItem.querySelector('.conditional-answer-config')
-        if (conditionalAnswerConfig) conditionalAnswerConfig.style.display = 'none'
+      conditionalAnswerOptions.style.display = 'block'
+      const isDropdown = fieldType === 'dropdown' || fieldType === 'choices_dropdown'
+      const answerToggle = fieldItem.querySelector('.conditional-answer-toggle')
+      const lookupToggle = fieldItem.querySelector('.answer-lookup-toggle')
+      if (!isDropdown && answerToggle && answerToggle.checked && lookupToggle && !lookupToggle.checked) {
+        lookupToggle.checked = true
+        this.toggleAnswerMode({ target: lookupToggle })
       }
     }
 
@@ -1624,6 +1649,12 @@ export default class extends Controller {
         if (mappingsContainer) {
           mappingsContainer.innerHTML = '<span style="font-size: 0.8em; color: #6c757d; font-style: italic;">Select a trigger dropdown first</span>'
         }
+        // Also clear lookup mode so nothing autofill-related is submitted
+        const lookupToggle = fieldItem.querySelector('.answer-lookup-toggle')
+        if (lookupToggle && lookupToggle.checked) {
+          lookupToggle.checked = false
+          this.toggleAnswerMode({ target: lookupToggle })
+        }
       }
     }
   }
@@ -1749,6 +1780,95 @@ export default class extends Controller {
       row.appendChild(arrow)
       row.appendChild(select)
       mappingsContainer.appendChild(row)
+    })
+  }
+
+  // Toggle between a static value->value mapping and table-lookup autofill.
+  toggleAnswerMode(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const useLookup = event.target.checked
+    const mappings = fieldItem.querySelector('.conditional-answer-mappings-container')
+    const lookupPanel = fieldItem.querySelector('.answer-lookup-panel')
+
+    if (mappings) mappings.style.display = useLookup ? 'none' : 'flex'
+    if (!lookupPanel) return
+
+    lookupPanel.style.display = useLookup ? 'flex' : 'none'
+    if (!useLookup) return
+
+    // Populate the table/column lists when entering lookup mode, preserving any
+    // saved selections (fetches are cheap and the endpoints are cached-ish).
+    const dbSelect = lookupPanel.querySelector('.answer-lookup-database')
+    this.loadAnswerLookupTables({ target: dbSelect })
+    const tableSelect = lookupPanel.querySelector('.answer-lookup-table')
+    if (tableSelect && tableSelect.value) {
+      this.loadAnswerLookupColumns({ target: tableSelect })
+    }
+  }
+
+  // Fetch the table list for the chosen database into the table <select>.
+  async loadAnswerLookupTables(event) {
+    const panel = event.target.closest('.answer-lookup-panel')
+    if (!panel) return
+    const database = panel.querySelector('.answer-lookup-database').value
+    const tableSelect = panel.querySelector('.answer-lookup-table')
+    const current = tableSelect.value
+
+    try {
+      const res = await fetch(`/lookups/tables?database=${encodeURIComponent(database)}`)
+      const tables = await res.json()
+      tableSelect.innerHTML = '<option value="">Select table...</option>'
+      tables.forEach(t => {
+        const opt = document.createElement('option')
+        opt.value = t
+        opt.textContent = t
+        if (t === current) opt.selected = true
+        tableSelect.appendChild(opt)
+      })
+    } catch (e) {
+      console.error('Failed to load answer-lookup tables:', e)
+    }
+  }
+
+  // Fetch the column list for the chosen table into both column <select>s.
+  async loadAnswerLookupColumns(event) {
+    const panel = event.target.closest('.answer-lookup-panel')
+    if (!panel) return
+    const database = panel.querySelector('.answer-lookup-database').value
+    const table = panel.querySelector('.answer-lookup-table').value
+    const matchSelect = panel.querySelector('.answer-lookup-match-column')
+    const returnSelect = panel.querySelector('.answer-lookup-return-column')
+    const returnJoin = panel.querySelector('.answer-lookup-return-join')
+    const prevMatch = matchSelect.value
+    const prevReturn = returnSelect.value
+    const prevReturnJoin = returnJoin ? Array.from(returnJoin.selectedOptions).map(o => o.value) : []
+    if (!table) return
+
+    try {
+      const res = await fetch(`/lookups/columns?database=${encodeURIComponent(database)}&table=${encodeURIComponent(table)}`)
+      const columns = await res.json()
+      // The employees table exposes a synthetic "full_name" (Last, First) key,
+      // mirroring FormLookup.synthetic_columns. It's only offered as a primary
+      // match/return column, never as an extra "join" column.
+      const withSynthetic = table === 'employees' ? [ 'full_name', ...columns ] : columns
+      this.fillAnswerColumnSelect(matchSelect, withSynthetic, prevMatch)
+      this.fillAnswerColumnSelect(returnSelect, withSynthetic, prevReturn)
+      if (returnJoin) this.fillAnswerColumnSelect(returnJoin, columns, prevReturnJoin)
+    } catch (e) {
+      console.error('Failed to load answer-lookup columns:', e)
+    }
+  }
+
+  fillAnswerColumnSelect(select, columns, current) {
+    const selected = Array.isArray(current) ? current : (current ? [ current ] : [])
+    // Multi-selects (join columns) have no blank placeholder; single selects keep one.
+    select.innerHTML = select.multiple ? '' : '<option value="">column...</option>'
+    columns.forEach(c => {
+      const opt = document.createElement('option')
+      opt.value = c
+      opt.textContent = c
+      if (selected.includes(c)) opt.selected = true
+      select.appendChild(opt)
     })
   }
 
