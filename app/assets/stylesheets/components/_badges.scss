@@ -8,17 +8,17 @@
   font-size: 12px;
   line-height: 1;
   font-weight: 600;
-  border: 1px solid transparent;
+  border: 1px solid $alpha-clear;
   text-transform: capitalize;
 }
 
 /* Category-based status badges (normalized) */
-.badge.is-pending    { background: #f2f2f2; color: #333;    border-color: #e6e6e6; }
-.badge.is-in-review  { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-.badge.is-approved   { background: #e8f6ee; color: #1f7a3a; border-color: #cfeedd; }
-.badge.is-denied     { background: #fde8e8; color: #b42318; border-color: #f8d3d3; }
-.badge.is-cancelled  { background: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
-.badge.is-scheduled  { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
+.badge.is-pending    { background: $neutral-badge-bg; color: $text-color;    border-color: $neutral-border-subtle; }
+.badge.is-in-review  { background: $amber-review-bg; color: $amber-review-text; border-color: $amber-soft-border; }
+.badge.is-approved   { background: $green-approved-bg; color: $green-approved-text; border-color: $green-approved-border; }
+.badge.is-denied     { background: $red-denied-bg; color: $danger-dark; border-color: $red-denied-border; }
+.badge.is-cancelled  { background: $neutral-pill-bg; color: $neutral-500; border-color: $neutral-border-light; }
+.badge.is-scheduled  { background: $indigo-scheduled-bg; color: $indigo-scheduled-text; border-color: $indigo-scheduled-border; }
 
 /* Legacy class aliases for backwards compatibility */
 .badge.is-submitted        { @extend .badge.is-pending; }
@@ -44,19 +44,19 @@
 }
 
 .env-badge.is-localhost {
-  background: #fde68a;
-  color: #78350f;
-  border: 1px solid #f59e0b;
+  background: $amber-soft-border;
+  color: $amber-env-text;
+  border: 1px solid $amber-env-border;
 }
 
 .env-badge.is-development {
-  background: #bbf7d0;
-  color: #14532d;
-  border: 1px solid #22c55e;
+  background: $green-env-bg;
+  color: $green-env-text;
+  border: 1px solid $green-env-border;
 }
 
 .env-badge.is-staging {
-  background: #bfdbfe;
-  color: #1e3a8a;
-  border: 1px solid #3b82f6;
+  background: $blue-env-bg;
+  color: $blue-env-text;
+  border: 1px solid $blue-action;
 }

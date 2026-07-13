@@ -23,7 +23,7 @@
   .navbar-toggler-icon {
     width: 24px;
     height: 2px;
-    background: white;
+    background: $form-bg;
     display: block;
     position: relative;
     transition: all 0.3s ease;
@@ -33,7 +33,7 @@
       position: absolute;
       width: 24px;
       height: 2px;
-      background: white;
+      background: $form-bg;
       transition: all 0.3s ease;
     }
     
@@ -69,18 +69,18 @@
 /* Left sidebar */
 .sidebar {
   width: 280px;
-  background: linear-gradient(135deg, #2c3e50, $primary-color);
-  color: #fff;
+  background: linear-gradient(135deg, $sidebar-navy, $primary-color);
+  color: $surface-base;
   height: 100vh;
   padding: 20px;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: $primary-color #2c3e50;
+  scrollbar-color: $primary-color $sidebar-navy;
   
   &::-webkit-scrollbar { width: 8px; }
-  &::-webkit-scrollbar-track { background: #2c3e50; }
+  &::-webkit-scrollbar-track { background: $sidebar-navy; }
   &::-webkit-scrollbar-thumb {
     background: $primary-color;
     border-radius: 4px;
@@ -91,18 +91,37 @@
     font-size: 1.2em;
     text-align: center;
     margin-bottom: 20px;
-    color: #fff;
+    color: $surface-base;
     text-transform: uppercase;
     letter-spacing: 1px;
     padding-bottom: 10px;
     border-bottom: 2px solid $primary-color;
+
+    .sidebar-home-link {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      color: inherit;
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.2s;
+
+      &:hover { color: $primary-color; }
+
+      .sidebar-logo {
+        height: 3.6em;
+        width: auto;
+        flex: 0 0 auto;
+      }
+    }
   }
   
   .sidebar-p { text-align: center; }
   
   .nav-link {
     display: block;
-    color: #fff;
+    color: $surface-base;
     text-decoration: none;
     margin: 10px 0;
     padding: 12px 15px;
@@ -129,7 +148,7 @@
     font-size: 14px;
     box-sizing: border-box;
     background-color: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    color: $surface-base;
     transition: all 0.3s ease;
     
     &::placeholder {
@@ -234,7 +253,7 @@
     opacity: 0.9;
     margin-top: 4px;
     font-style: italic;
-    color: #a5d6a7;
+    color: $green-soft-border;
   }
   
   /* Mobile responsive behavior */

@@ -1,3 +1,5 @@
+@import "base/tokens";
+
 // Column customizer: the "+" trigger in the table header and the modal that
 // lets a user reorder / show / hide / add columns on the My Work tables.
 
@@ -7,20 +9,21 @@
 }
 
 .cc-trigger {
-  background: transparent;
+  background: $alpha-clear;
   border: 1px solid $border-color;
   border-radius: 6px;
   width: 26px;
   height: 26px;
   line-height: 1;
   font-size: 18px;
-  color: $brand-navy;
+  font-weight: 700;
+  color: $surface-base;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 
   &:hover {
-    background: rgba($brand-navy, 0.08);
-    border-color: $brand-navy;
+    background: rgba(255, 255, 255, 0.18);
+    border-color: $surface-base;
   }
 }
 
@@ -37,7 +40,7 @@
 }
 
 .cc-modal {
-  background: #fff;
+  background: $surface-base;
   border-radius: 12px;
   width: 720px;
   max-width: 94vw;
@@ -52,13 +55,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 18px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid $border-faint;
 
   h3 { margin: 0; font-size: 18px; }
 }
 
 .cc-modal__close {
-  background: transparent;
+  background: $alpha-clear;
   border: 0;
   font-size: 20px;
   cursor: pointer;
@@ -74,7 +77,7 @@
   gap: 10px;
   justify-content: flex-end;
   padding: 12px 18px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid $border-faint;
 }
 
 .cc-hint {
@@ -113,7 +116,7 @@
   min-height: 120px;
   border: 1px dashed $border-color;
   border-radius: 8px;
-  background: #fafafa;
+  background: $surface-muted;
 }
 
 .cc-chip {
@@ -123,7 +126,7 @@
   gap: 8px;
   padding: 7px 10px;
   margin-bottom: 6px;
-  background: #fff;
+  background: $surface-base;
   border: 1px solid $border-color;
   border-radius: 6px;
   font-size: 14px;
@@ -134,13 +137,13 @@
   &.is-locked {
     cursor: default;
     opacity: 0.7;
-    background: #f2f2f2;
+    background: $neutral-badge-bg;
   }
 
   &__label { flex: 1; }
 
   &__remove {
-    background: transparent;
+    background: $alpha-clear;
     border: 0;
     color: $muted;
     font-size: 14px;

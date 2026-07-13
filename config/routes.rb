@@ -34,6 +34,7 @@ Rails.application.routes.draw do
   end
   resources :form_request_forms do
     member do
+            get :download_attach_existing_pdf_form
       get :pdf
       patch :approve
       patch :deny

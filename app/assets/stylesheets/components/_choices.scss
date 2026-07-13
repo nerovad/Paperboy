@@ -13,7 +13,7 @@
 .form-group.overflow-visible { overflow: visible; }
 
 /* Placeholder option dim */
-.placeholder-option { color: #6c757d; }
+.placeholder-option { color: $muted; }
 
 /* Set width on the wrapper (match "Other" input patterns) */
 .form-group .choices,
@@ -56,14 +56,14 @@
 .choices__list--multiple .choices__item {
   background-color: $primary-color !important;
   border: none !important;
-  color: #fff !important;
+  color: $surface-base !important;
   border-radius: 8px;
   padding: 4px 8px;
   margin: 4px 6px 0 0;
 }
 .choices__list--dropdown .choices__item--selectable.is-highlighted {
   background-color: $primary-hover !important;
-  color: #fff !important;
+  color: $surface-base !important;
 }
 .choices__list--dropdown {
   border-radius: 10px;

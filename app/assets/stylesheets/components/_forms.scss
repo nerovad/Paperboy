@@ -5,7 +5,7 @@
   padding: 30px;
   max-width: 900px;
   margin: 0 auto 40px auto;
-  background: #fff;
+  background: $surface-base;
   border-radius: 12px;
   box-shadow: $shadow-soft;
   overflow: visible;
@@ -65,11 +65,11 @@
     border: 1px solid $border-color;
     border-radius: 5px;
     font-size: 1em;
-    background-color: #fff;
+    background-color: $surface-base;
   }
 
   select.form-control {
-    background-color: #fff;
+    background-color: $surface-base;
     padding: 10px;
     border: 1px solid $border-color;
     border-radius: 5px;
@@ -118,11 +118,11 @@
     border-radius: 6px;
     cursor: pointer;
     background: $primary-color;
-    color: #fff;
+    color: $surface-base;
     transition: background 0.3s ease, transform 0.15s ease;
 
     &:hover   { background: $primary-hover; }
-    &:disabled{ background: #ccc; cursor: not-allowed; }
+    &:disabled{ background: $neutral-disabled; cursor: not-allowed; }
   }
 }
 
@@ -137,7 +137,7 @@
   .dot {
     width: 14px;
     height: 14px;
-    background-color: #ccc;
+    background-color: $neutral-disabled;
     border-radius: 50%;
     transition: background-color 0.3s ease;
   }
@@ -166,21 +166,21 @@
   position: relative;
 
   .form-control:disabled {
-    background-color: #f5f5f5;
+    background-color: $surface-control;
     cursor: not-allowed;
   }
 }
 
 .restriction-notice {
   display: block;
-  color: #6c757d;
+  color: $muted;
   font-style: italic;
   margin-bottom: 5px;
   font-size: 0.85em;
 }
 
 .form-control.field-readonly {
-  background-color: #f5f5f5;
+  background-color: $surface-control;
   cursor: not-allowed;
 }
 
@@ -190,11 +190,11 @@
 .form-errors {
   margin-bottom: 1.25rem;
   padding: 0.85rem 1rem;
-  border: 1px solid #f0b4b4;
-  border-left: 4px solid #c0392b;
+  border: 1px solid $form-error-border;
+  border-left: 4px solid $red-form-border;
   border-radius: 4px;
-  background-color: #fdecea;
-  color: #8a1f1f;
+  background-color: $form-error-bg;
+  color: $form-error-text;
 
   strong {
     display: block;
@@ -213,7 +213,7 @@
   display: contents;
 
   .form-control {
-    border-color: #c0392b;
+    border-color: $red-form-border;
   }
 }
 

@@ -18,30 +18,30 @@
   cursor: pointer;
   transition: background 0.2s ease-in-out;
   white-space: nowrap;
-  color: #fff;
+  color: $surface-base;
 }
 
 /* Variants */
-.btn.approve { background-color: #4caf50; }
-.btn.approve:hover { background-color: #43a047; }
+.btn.approve { background-color: $primary-color; }
+.btn.approve:hover { background-color: $green-action-hover; }
 
-.btn.deny { background-color: #e53935; }
-.btn.deny:hover { background-color: #d32f2f; }
+.btn.deny { background-color: $danger; }
+.btn.deny:hover { background-color: $danger-700; }
 
-.btn.pdf { background-color: #004976; }
-.btn.pdf:hover { background-color: #0066a1; }
+.btn.pdf { background-color: $brand-navy; }
+.btn.pdf:hover { background-color: $brand-navy-hover; }
 
 .btn.secondary { background-color: $brand-navy; }
-.btn.secondary:hover { background-color: #0066a1; }
+.btn.secondary:hover { background-color: $brand-navy-hover; }
 
-.btn.reassign { background-color: #3b82f6; }
-.btn.reassign:hover { background-color: #2563eb; }
+.btn.reassign { background-color: $blue-action; }
+.btn.reassign:hover { background-color: $blue-action-hover; }
 
-.btn.take-back { background-color: #10b981; }
-.btn.take-back:hover { background-color: #059669; }
+.btn.take-back { background-color: $green-teal; }
+.btn.take-back:hover { background-color: $green-teal-hover; }
 
-.btn.status-history { background-color: #64748b; }
-.btn.status-history:hover { background-color: #475569; }
+.btn.status-history { background-color: $slate-action; }
+.btn.status-history:hover { background-color: $slate-action-hover; }
 
 /* Form-specific button class */
 .form-btn {
@@ -61,28 +61,28 @@
   letter-spacing: 0.2px;
 
   background: $primary-color;
-  color: #fff;
+  color: $surface-base;
 
   transition: background 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
 
   &:hover { background: $primary-hover; text-decoration: none; }
   &:active { transform: translateY(1px); }
-  &.disabled, &:disabled, &[aria-disabled="true"] { background: #cfcfcf; cursor: not-allowed; }
+  &.disabled, &:disabled, &[aria-disabled="true"] { background: $button-disabled-bg; cursor: not-allowed; }
 }
 
 /* Form button variants */
 .form-btn--secondary {
-  background: #f5f5f5;
+  background: $surface-control;
   color: $text-color;
   border: 1px solid $border-color;
 
-  &:hover { background: #e9e9e9; }
+  &:hover { background: $surface-control-hover; }
 }
-.form-btn--danger { background: #e53935; &:hover { background: #d32f2f; } }
+.form-btn--danger { background: $danger; &:hover { background: $danger-700; } }
 .form-btn--ghost  {
   background: rgba(0,0,0,0.03);
   color: $text-color;
   border: 1px solid rgba(0,0,0,0.08);
 
-  &:hover { background: $primary-color; color: #fff; border-color: $primary-color; }
+  &:hover { background: $primary-color; color: $surface-base; border-color: $primary-color; }
 }

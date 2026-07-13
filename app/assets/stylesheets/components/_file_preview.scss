@@ -1,3 +1,5 @@
+@import "base/tokens";
+
 // File Preview Grid (upload form) — shared across all forms with media attachments
 .file-preview-grid {
   display: flex;
@@ -11,8 +13,8 @@
   width: 120px;
   text-align: center;
   padding: 8px;
-  background: #f9f9f9;
-  border: 1px solid #e0e0e0;
+  background: $surface-subtle;
+  border: 1px solid $border-muted;
   border-radius: 6px;
 }
 
@@ -30,13 +32,13 @@
   align-items: center;
   justify-content: center;
   font-size: 2rem;
-  color: #c0392b;
+  color: $red-form-border;
 }
 
 .file-preview-name {
   display: block;
   font-size: 0.75em;
-  color: #555;
+  color: $label-color;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -50,8 +52,8 @@
   height: 22px;
   border-radius: 50%;
   border: none;
-  background: #e74c3c;
-  color: #fff;
+  background: $red-delete;
+  color: $surface-base;
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
@@ -61,14 +63,14 @@
   padding: 0;
 
   &:hover {
-    background: #c0392b;
+    background: $red-form-border;
   }
 }
 
 .existing-attachments {
   margin-bottom: 12px;
   padding: 8px;
-  background: #f8f9fa;
+  background: $surface-panel;
   border-radius: 6px;
-  border: 1px solid #e9ecef;
+  border: 1px solid $neutral-border-soft;
 }
