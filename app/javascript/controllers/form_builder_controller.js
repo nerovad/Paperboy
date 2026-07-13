@@ -70,6 +70,31 @@ export default class extends Controller {
 
     // Hydrate routing-step condition editors that were rendered server-side
     this.initializeRoutingStepConditions()
+
+    // Hydrate server-rendered answer-lookup panels so their table/column lists
+    // (including the "+ also" multi-select) are fully populated on the edit page.
+    this.initializeAnswerLookups()
+  }
+
+  // On the edit page, existing answer-lookup fields render each dropdown with
+  // only their single saved option, and the "+ also" multi-select with only its
+  // saved join columns (often none) — leaving nothing to pick. Load the full
+  // table/column lists for each panel already in lookup mode, preserving the
+  // saved selections (loadAnswerLookupColumns re-selects the current values).
+  initializeAnswerLookups() {
+    this.element.querySelectorAll('.answer-lookup-toggle').forEach(toggle => {
+      if (!toggle.checked) return
+      const fieldItem = toggle.closest('.field-item')
+      const panel = fieldItem && fieldItem.querySelector('.answer-lookup-panel')
+      if (!panel) return
+
+      const dbSelect = panel.querySelector('.answer-lookup-database')
+      const tableSelect = panel.querySelector('.answer-lookup-table')
+      if (dbSelect) this.loadAnswerLookupTables({ target: dbSelect })
+      if (tableSelect && tableSelect.value) {
+        this.loadAnswerLookupColumns({ target: tableSelect })
+      }
+    })
   }
 
   // Populate the field dropdown for each server-rendered routing step
