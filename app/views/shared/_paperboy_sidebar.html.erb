@@ -9,7 +9,11 @@
 <div class="sidebar" data-controller="sidebar-search">
   <h2>
     <%= link_to root_path, class: "sidebar-home-link", data: { turbo_frame: "main-content" } do %>
-      <%= image_tag "shouting_paperboy_icon.png", alt: "Paperboy", class: "sidebar-logo" %>
+      <%= image_tag "shouting_paperboy_icon.png",
+                    alt: "Paperboy",
+                    class: "sidebar-logo",
+                    width: 42,
+                    height: 42 %>
       <span>Paperboy</span>
     <% end %>
   </h2>

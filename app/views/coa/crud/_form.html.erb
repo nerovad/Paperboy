@@ -1,0 +1,45 @@
+<% if record.errors.any? %>
+  <div class="coa-errors">
+    <h2><%= pluralize(record.errors.count, "error") %> prevented this record from being saved</h2>
+    <ul>
+      <% record.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<%= form_with model: record,
+              scope: model_class.model_name.param_key,
+              url: record.persisted? ? member_path(record) : collection_path,
+              class: "form-container coa-form" do |form| %>
+  <% editable_columns.each do |column_name| %>
+    <% column = model_class.columns_hash.fetch(column_name) %>
+    <div class="form-field">
+      <%= form.label column_name %>
+      <% case column.type %>
+      <% when :integer %>
+        <%= form.number_field column_name %>
+      <% when :float, :decimal %>
+        <%= form.number_field column_name, step: "any" %>
+      <% when :date %>
+        <%= form.date_field column_name %>
+      <% when :datetime, :time %>
+        <%= form.datetime_field column_name %>
+      <% when :boolean %>
+        <%= form.check_box column_name %>
+      <% when :text %>
+        <%= form.text_area column_name %>
+      <% else %>
+        <%= form.text_field column_name %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="coa-form-actions">
+    <%= form.submit class: "form-btn" %>
+    <%= link_to "Cancel",
+                record.persisted? ? member_path(record) : collection_path,
+                class: "form-btn form-btn--secondary" %>
+  </div>
+<% end %>

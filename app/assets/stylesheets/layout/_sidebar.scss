@@ -78,6 +78,16 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: $primary-color $sidebar-navy;
+
+  .sidebar-logo {
+    display: block;
+    width: 42px;
+    height: 42px;
+    max-width: 42px;
+    max-height: 42px;
+    object-fit: contain;
+    flex: 0 0 42px;
+  }
   
   &::-webkit-scrollbar { width: 8px; }
   &::-webkit-scrollbar-track { background: $sidebar-navy; }
@@ -109,11 +119,7 @@
 
       &:hover { color: $primary-color; }
 
-      .sidebar-logo {
-        height: 3.6em;
-        width: auto;
-        flex: 0 0 auto;
-      }
+      .sidebar-logo { margin: 0; }
     }
   }
   
