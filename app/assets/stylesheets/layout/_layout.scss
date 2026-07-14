@@ -20,8 +20,9 @@
   overflow-y: auto;
 }
 
-/* Push content below the fixed logo / profile bar — except on the homepage */
-body:not(.page-forms-home):not(.controller-path-coa-list) #main-content {
+/* Push content below the fixed logo / profile bar — except on any full-bleed
+   hero/slideshow page (marked .has-hero-image) and the COA overview table. */
+body:not(.has-hero-image):not(.controller-path-coa-list) #main-content {
   padding-top: 80px;
 
   @media (max-width: 768px) {

@@ -4,6 +4,10 @@ module Coa
   class ListController < BaseController
     helper_method :coa_resources, :collection_path
 
+    # Slideshow landing (COA root). Functional navigation lives in the
+    # sidebar; the row-count overview is still available at #index.
+    def home; end
+
     def index; end
 
     private

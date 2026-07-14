@@ -1,15 +1,7 @@
 <% content_for :image do %>
-  <div class="forms-homepage-wrapper">
-    <div class="slideshow" data-controller="slideshow">
-      <div data-slideshow-target="slide" class="slide active">
-        <%= image_tag "VenturaPier.png", alt: "Slide 1" %>
-      </div>
-      <div data-slideshow-target="slide" class="slide">
-        <%= image_tag "VenturaCross.png", alt: "Slide 2" %>
-      </div>
-      <div data-slideshow-target="slide" class="slide">
-        <%= image_tag "VenturaCityHall.png", alt: "Slide 3" %>
-      </div>
-    </div>
-  </div>
+  <%= render "shared/slideshow", images: [
+        { src: "VenturaPier.png",     alt: "Ventura Pier" },
+        { src: "VenturaCross.png",    alt: "Ventura Cross" },
+        { src: "VenturaCityHall.png", alt: "Ventura City Hall" }
+      ] %>
 <% end %>

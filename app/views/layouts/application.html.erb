@@ -15,7 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
     <%= javascript_importmap_tags %>
   </head>
-  <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %> controller-path-<%= controller_path.tr("/", "-") %>">
+  <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %> controller-path-<%= controller_path.tr("/", "-") %><%= " has-hero-image" if content_for?(:image) %>">
 
     <% if (badge = environment_badge) %>
       <div class="env-badge <%= badge[:css_class] %>"><%= badge[:label] %></div>

@@ -1,0 +1,16 @@
+<%# app/views/shared/_slideshow.html.erb
+    Reusable full-viewport homepage slideshow. Pass `images:` as an array of
+    hashes so each app can show its own pictures:
+      render "shared/slideshow", images: [
+        { src: "VenturaPier.png", alt: "Ventura Pier" }, ...
+      ]
+    Cycling is handled by slideshow_controller.js. %>
+<div class="forms-homepage-wrapper">
+  <div class="slideshow" data-controller="slideshow">
+    <% Array(images).each_with_index do |image, index| %>
+      <div data-slideshow-target="slide" class="slide<%= ' active' if index.zero? %>">
+        <%= image_tag image[:src], alt: (image[:alt].presence || "Slide #{index + 1}") %>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -50,10 +50,12 @@
     <%= form_with url: data_runner_destroy_dsl_group_path(@selected_group), method: :delete, id: "delete-group-form" do %><% end %>
     <%= form_with url: data_runner_refresh_dsl_group_path(@selected_group), method: :post, id: "refresh-group-form" do %><% end %>
   <% else %>
-    <section class="empty-control-center">
-      <p class="eyebrow">No group selected</p>
-      <h2>Empty palette</h2>
-    </section>
+    <%# Landing view (logo / app-switcher drops you here with no group). Uses
+        the shared slideshow with Data Runner's own pictures. Setting the
+        :image content makes the layout render the full-viewport slideshow. %>
+    <% content_for :image do %>
+      <%= render "shared/slideshow", images: data_runner_home_images %>
+    <% end %>
   <% end %>
 <% else %>
   <section class="login-panel">

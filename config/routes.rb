@@ -321,7 +321,7 @@ Rails.application.routes.draw do
   resources :lookup_tables, only: %i[index show new create]
 
   namespace :coa do
-    root to: 'list#index'
+    root to: 'list#home'
     get 'list', to: 'list#index'
 
     resources :agencies
