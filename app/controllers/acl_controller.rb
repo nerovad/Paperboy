@@ -180,8 +180,9 @@ class AclController < ApplicationController
     @dropdown_items = DROPDOWN_ITEMS
     @all_forms = build_all_forms_list
     @current_permissions = @group.group_permissions.pluck(:permission_type, :permission_key)
-    @dropdown_keys = @current_permissions.slice('dropdown').to_set(&:last)
-    @form_keys = @current_permissions.slice('form').to_set(&:last)
+    by_type = @current_permissions.group_by(&:first)
+    @dropdown_keys = Array(by_type['dropdown']).to_set(&:last)
+    @form_keys = Array(by_type['form']).to_set(&:last)
 
     # If no permissions exist yet for this group, pre-check default public items
     return unless @current_permissions.empty?
@@ -237,8 +238,9 @@ class AclController < ApplicationController
     query = chain_conditions.map { |c| OrgPermission.where(c) }.reduce(:or)
     @current_org_permissions = query.pluck(:permission_type, :permission_key)
 
-    @org_dropdown_keys = @current_org_permissions.slice('dropdown').to_set(&:last)
-    @org_form_keys = @current_org_permissions.slice('form').to_set(&:last)
+    by_type = @current_org_permissions.group_by(&:first)
+    @org_dropdown_keys = Array(by_type['dropdown']).to_set(&:last)
+    @org_form_keys = Array(by_type['form']).to_set(&:last)
 
     # If no permissions exist yet for this scope, pre-check default public items
     return unless @current_org_permissions.empty?
