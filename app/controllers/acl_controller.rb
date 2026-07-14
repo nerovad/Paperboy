@@ -23,6 +23,15 @@ class AclController < ApplicationController
 
   DEFAULT_PUBLIC_DROPDOWN_KEYS = DROPDOWN_ITEMS.select { |i| i[:default_public] }.map { |i| i[:key] }.freeze
 
+  # Sub-applications reachable from the sidebar app switcher. Paperboy itself is
+  # the always-available base app, so only the secondary apps are grantable
+  # here; the keys mirror +ApplicationHelper#paperboy_apps+. There is no
+  # default-public list on purpose — application access is a strict allow-list.
+  APPLICATION_ITEMS = [
+    { key: 'data_runner', label: 'Data Runner' },
+    { key: 'coa',         label: 'Chart of Accounts' }
+  ].freeze
+
   LEGACY_FORMS = [
     { key: 'creative_job_request', label: 'Creative Job Request' },
     { key: 'safety_reporting',     label: 'Safety Reporting' },
@@ -178,11 +187,13 @@ class AclController < ApplicationController
 
   def permissions
     @dropdown_items = DROPDOWN_ITEMS
+    @application_items = APPLICATION_ITEMS
     @all_forms = build_all_forms_list
     @current_permissions = @group.group_permissions.pluck(:permission_type, :permission_key)
     by_type = @current_permissions.group_by(&:first)
     @dropdown_keys = Array(by_type['dropdown']).to_set(&:last)
     @form_keys = Array(by_type['form']).to_set(&:last)
+    @application_keys = Array(by_type['application']).to_set(&:last)
 
     # If no permissions exist yet for this group, pre-check default public items
     return unless @current_permissions.empty?
@@ -193,6 +204,7 @@ class AclController < ApplicationController
   def update_permissions
     dropdown_keys = Array(params[:dropdown_permissions])
     form_keys = Array(params[:form_permissions])
+    application_keys = Array(params[:application_permissions])
 
     ActiveRecord::Base.transaction do
       @group.group_permissions.destroy_all
@@ -204,6 +216,10 @@ class AclController < ApplicationController
       form_keys.each do |key|
         @group.group_permissions.create!(permission_type: 'form', permission_key: key)
       end
+
+      application_keys.each do |key|
+        @group.group_permissions.create!(permission_type: 'application', permission_key: key)
+      end
     end
 
     redirect_to permissions_acl_path(@group), notice: 'Permissions saved successfully.'
@@ -213,6 +229,7 @@ class AclController < ApplicationController
 
   def org_permissions
     @dropdown_items = DROPDOWN_ITEMS
+    @application_items = APPLICATION_ITEMS
     @all_forms = build_all_forms_list
 
     @agency_id = params[:agency_id]
@@ -241,6 +258,7 @@ class AclController < ApplicationController
     by_type = @current_org_permissions.group_by(&:first)
     @org_dropdown_keys = Array(by_type['dropdown']).to_set(&:last)
     @org_form_keys = Array(by_type['form']).to_set(&:last)
+    @org_application_keys = Array(by_type['application']).to_set(&:last)
 
     # If no permissions exist yet for this scope, pre-check default public items
     return unless @current_org_permissions.empty?
@@ -254,8 +272,12 @@ class AclController < ApplicationController
     department_id = params[:department_id].presence
     unit_id = params[:unit_id].presence
 
-    dropdown_keys = Array(params[:dropdown_permissions])
-    form_keys = Array(params[:form_permissions])
+    scope = { agency_id: agency_id, division_id: division_id, department_id: department_id, unit_id: unit_id }
+    keys_by_type = {
+      'dropdown' => Array(params[:dropdown_permissions]),
+      'form' => Array(params[:form_permissions]),
+      'application' => Array(params[:application_permissions])
+    }
 
     ActiveRecord::Base.transaction do
       # Delete permissions at every level in this exact org chain so
@@ -271,26 +293,10 @@ class AclController < ApplicationController
 
       chain_conditions.each { |c| OrgPermission.where(c).destroy_all }
 
-      dropdown_keys.each do |key|
-        OrgPermission.create!(
-          agency_id: agency_id,
-          division_id: division_id,
-          department_id: department_id,
-          unit_id: unit_id,
-          permission_type: 'dropdown',
-          permission_key: key
-        )
-      end
-
-      form_keys.each do |key|
-        OrgPermission.create!(
-          agency_id: agency_id,
-          division_id: division_id,
-          department_id: department_id,
-          unit_id: unit_id,
-          permission_type: 'form',
-          permission_key: key
-        )
+      keys_by_type.each do |type, keys|
+        keys.each do |key|
+          OrgPermission.create!(scope.merge(permission_type: type, permission_key: key))
+        end
       end
     end
 

@@ -44,15 +44,21 @@ module ApplicationHelper
 
   # The sub-applications reachable from the sidebar app switcher. Each entry
   # is { key:, label:, path: }; entries the current user may not see are
-  # filtered out (Chart of Accounts is admin-only, mirroring the old
-  # profile-dropdown gating).
+  # filtered out. Paperboy is the always-available base app; the secondary
+  # apps are gated by the ACL "Applications" section (system admins bypass),
+  # matching the profile-dropdown/form permission model.
   def paperboy_apps
-    apps = [
-      { key: 'paperboy', label: 'Paperboy', path: root_path },
-      { key: 'data_runner', label: 'Data Runner', path: data_runner_root_path }
-    ]
-    apps << { key: 'coa', label: 'Chart of Accounts', path: coa_root_path } if system_admin?
+    apps = [{ key: 'paperboy', label: 'Paperboy', path: root_path }]
+    apps << { key: 'data_runner', label: 'Data Runner', path: data_runner_root_path } if can_access_app?('data_runner')
+    apps << { key: 'coa', label: 'Chart of Accounts', path: coa_root_path } if can_access_app?('coa')
     apps
+  end
+
+  # Whether the current user may reach an app-switcher sub-application. System
+  # admins see everything; everyone else needs an ACL "application" grant for
+  # the given key (via group or org-level permission).
+  def can_access_app?(key)
+    system_admin? || current_user_application_permission_keys.include?(key)
   end
 
   # Homepage slideshow pictures for each sub-app. These are intentionally
