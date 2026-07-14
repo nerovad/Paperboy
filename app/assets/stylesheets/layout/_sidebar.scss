@@ -68,8 +68,17 @@
 
 /* Left sidebar */
 .sidebar {
+  /* Per-app theme knobs. Paperboy (default) is green; the Data Runner and
+     Chart of Accounts modifiers below override these to blue and orange.
+     Every accent below reads from these so only the colors change. */
+  --sidebar-accent: #{$primary-color};
+  --sidebar-accent-hover: #{$primary-hover};
+  --sidebar-accent-ring: #{rgba($primary-color, 0.2)};
+  --sidebar-accent-soft: #{rgba($primary-color, 0.08)};
+  --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$primary-color});
+
   width: 280px;
-  background: linear-gradient(135deg, $sidebar-navy, $primary-color);
+  background: var(--sidebar-gradient);
   color: $surface-base;
   height: 100vh;
   padding: 20px;
@@ -77,7 +86,7 @@
   box-sizing: border-box;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: $primary-color $sidebar-navy;
+  scrollbar-color: var(--sidebar-accent) $sidebar-navy;
 
   .sidebar-logo {
     display: block;
@@ -92,10 +101,10 @@
   &::-webkit-scrollbar { width: 8px; }
   &::-webkit-scrollbar-track { background: $sidebar-navy; }
   &::-webkit-scrollbar-thumb {
-    background: $primary-color;
+    background: var(--sidebar-accent);
     border-radius: 4px;
   }
-  &::-webkit-scrollbar-thumb:hover { background: $primary-hover; }
+  &::-webkit-scrollbar-thumb:hover { background: var(--sidebar-accent-hover); }
   
   h2 {
     font-size: 1.2em;
@@ -105,7 +114,7 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     padding-bottom: 10px;
-    border-bottom: 2px solid $primary-color;
+    border-bottom: 2px solid var(--sidebar-accent);
 
     .sidebar-home-link {
       display: flex;
@@ -117,7 +126,7 @@
       cursor: pointer;
       transition: color 0.2s;
 
-      &:hover { color: $primary-color; }
+      &:hover { color: var(--sidebar-accent); }
 
       .sidebar-logo { margin: 0; }
     }
@@ -137,7 +146,7 @@
     transition: background 0.3s, transform 0.2s;
     
     &:hover {
-      background-color: $primary-color;
+      background-color: var(--sidebar-accent);
       transform: scale(1.05);
       cursor: pointer;
     }
@@ -164,9 +173,9 @@
     
     &:focus {
       outline: none;
-      border-color: $primary-color;
+      border-color: var(--sidebar-accent);
       background-color: rgba(255, 255, 255, 0.15);
-      box-shadow: 0 0 0 3px rgba($primary-color, 0.2);
+      box-shadow: 0 0 0 3px var(--sidebar-accent-ring);
     }
     
     &:hover {
@@ -174,22 +183,144 @@
     }
   }
   
-  .nav-link.active { background-color: $primary-color; }
+  .nav-link.active { background-color: var(--sidebar-accent); }
 
-  &.data-runner-sidebar {
-    .brand {
-      display: block;
-      margin-bottom: 18px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid $primary-color;
-      color: #fff;
-      font-size: 1.2em;
-      font-weight: 700;
-      text-align: center;
+  /* Application switcher (sidebar header) */
+  .app-switcher {
+    position: relative;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--sidebar-accent);
+
+    .app-switcher-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .app-switcher-home {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1 1 auto;
+      min-width: 0;
+      color: $surface-base;
       text-decoration: none;
       text-transform: uppercase;
       letter-spacing: 1px;
+      font-size: 1.2em;
+      font-weight: 700;
+      transition: color 0.2s;
+
+      &:hover { color: var(--sidebar-accent); }
+
+      .sidebar-logo { margin: 0; }
     }
+
+    .app-switcher-name {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .app-switcher-toggle {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: none;
+      border-radius: 6px;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: $surface-base;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+
+      svg { transition: transform 0.2s ease; }
+
+      &:hover { background-color: var(--sidebar-accent); }
+
+      &[aria-expanded="true"] {
+        background-color: var(--sidebar-accent);
+        svg { transform: rotate(180deg); }
+      }
+    }
+
+    .app-switcher-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      z-index: 20;
+
+      padding: 6px;
+      border-radius: 10px;
+      background-color: $surface-base;
+      box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.28),
+        0 0 0 1px rgba(0, 0, 0, 0.04);
+
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px) scale(0.98);
+      transform-origin: top center;
+      pointer-events: none;
+      transition:
+        opacity 0.16s ease-out,
+        transform 0.16s ease-out,
+        visibility 0.16s ease-out;
+
+      &.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+      }
+    }
+
+    .app-switcher-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 0;
+      padding: 10px 12px;
+      border-radius: 6px;
+      color: $text-color;
+      text-decoration: none;
+      text-transform: none;
+      letter-spacing: normal;
+      font-size: 0.92rem;
+      font-weight: 600;
+      transition: background 0.16s ease-out, color 0.16s ease-out;
+
+      &:hover {
+        background-color: $nav-hover-bg;
+        color: $brand-navy;
+      }
+
+      &.is-current {
+        color: $brand-navy;
+        background-color: var(--sidebar-accent-soft);
+      }
+    }
+
+    .app-switcher-check { font-weight: 700; }
+  }
+
+  &.data-runner-sidebar {
+    /* Blue / navy theme (from $brand-navy in _tokens.scss). */
+    --sidebar-accent: #{$brand-navy};
+    --sidebar-accent-hover: #{$brand-navy-hover};
+    --sidebar-accent-ring: #{rgba($brand-navy, 0.2)};
+    --sidebar-accent-soft: #{rgba($brand-navy, 0.08)};
+    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$brand-navy});
 
     .nav-group {
       margin: 10px 0;
@@ -232,10 +363,19 @@
       pointer-events: none;
       border-radius: 999px;
       padding: 8px 12px;
-      background: #004976;
+      background: var(--sidebar-accent);
       color: #fff;
       box-shadow: $shadow-soft;
     }
+  }
+
+  &.coa-sidebar {
+    /* Orange theme (from $orange-action in _tokens.scss). */
+    --sidebar-accent: #{$orange-action};
+    --sidebar-accent-hover: #{$orange-status-text};
+    --sidebar-accent-ring: #{rgba($orange-action, 0.2)};
+    --sidebar-accent-soft: #{rgba($orange-action, 0.08)};
+    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$orange-action});
   }
 
   .nav-link mark {

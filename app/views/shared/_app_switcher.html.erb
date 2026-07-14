@@ -1,0 +1,55 @@
+<%# app/views/shared/_app_switcher.html.erb
+    Sidebar header + application switcher. The logo/name links to the
+    current app's home; the chevron opens a dropdown that switches between
+    Paperboy, Data Runner, and Chart of Accounts. Rendered inside every
+    app's sidebar so the switcher is available everywhere. %>
+<%
+  apps = paperboy_apps
+  current_key = current_app_key
+  current_app = apps.find { |app| app[:key] == current_key } || apps.first
+  # Same-app navigation to Paperboy uses the Turbo frame swap the rest of
+  # the Paperboy UI relies on; every cross-app jump is a full page load.
+  frame_data = ->(key) { key == 'paperboy' && current_key == 'paperboy' ? { turbo_frame: 'main-content' } : {} }
+%>
+<div class="app-switcher" data-controller="app-switcher">
+  <div class="app-switcher-bar">
+    <%= link_to current_app[:path], class: "app-switcher-home", data: frame_data.call(current_app[:key]) do %>
+      <%= image_tag "shouting_paperboy_icon.png",
+                    alt: current_app[:label],
+                    class: "sidebar-logo",
+                    width: 42,
+                    height: 42 %>
+      <span class="app-switcher-name"><%= current_app[:label] %></span>
+    <% end %>
+
+    <% if apps.size > 1 %>
+      <button type="button"
+              class="app-switcher-toggle"
+              data-action="click->app-switcher#toggle"
+              data-app-switcher-target="button"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-label="Switch application">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06L8.53 10.53a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06z"/>
+        </svg>
+      </button>
+    <% end %>
+  </div>
+
+  <% if apps.size > 1 %>
+    <div class="app-switcher-menu" data-app-switcher-target="menu" role="menu">
+      <% apps.each do |app| %>
+        <%= link_to app[:path],
+                    class: "app-switcher-item#{' is-current' if app[:key] == current_key}",
+                    role: "menuitem",
+                    data: frame_data.call(app[:key]) do %>
+          <span class="app-switcher-item-name"><%= app[:label] %></span>
+          <% if app[:key] == current_key %>
+            <span class="app-switcher-check" aria-hidden="true">&#10003;</span>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

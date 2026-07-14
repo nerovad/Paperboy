@@ -1,5 +1,5 @@
 <div class="sidebar data-runner-sidebar" data-controller="sidebar-search dsl-drag">
-  <%= link_to "DataRunner", data_runner_root_path, class: "brand" %>
+  <%= render "shared/app_switcher" %>
   <% if user_signed_in? %>
     <input class="sidebar-search-input" type="search" placeholder="Fuzzy search DSLs..."
            data-sidebar-search-target="input" data-action="input->sidebar-search#filter">

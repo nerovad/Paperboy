@@ -42,6 +42,50 @@ module ApplicationHelper
     current_user_group_names.include?('system_admins')
   end
 
+  # The sub-applications reachable from the sidebar app switcher. Each entry
+  # is { key:, label:, path: }; entries the current user may not see are
+  # filtered out (Chart of Accounts is admin-only, mirroring the old
+  # profile-dropdown gating).
+  def paperboy_apps
+    apps = [
+      { key: 'paperboy', label: 'Paperboy', path: root_path },
+      { key: 'data_runner', label: 'Data Runner', path: data_runner_root_path }
+    ]
+    apps << { key: 'coa', label: 'Chart of Accounts', path: coa_root_path } if system_admin?
+    apps
+  end
+
+  # Homepage slideshow pictures for each sub-app. These are intentionally
+  # kept separate so every app can show its own images: drop the files in
+  # app/assets/images and swap the filenames below. (Currently pointed at
+  # existing Ventura images as placeholders.)
+  def data_runner_home_images
+    [
+      { src: 'VenturaCityHall.png', alt: 'Data Runner' },
+      { src: 'VenturaPier.png', alt: 'Data Runner' }
+    ]
+  end
+
+  def coa_home_images
+    [
+      { src: 'VenturaCross.png', alt: 'Chart of Accounts' },
+      { src: 'VenturaCityHall.png', alt: 'Chart of Accounts' }
+    ]
+  end
+
+  # Which sub-application the current request belongs to, keyed to
+  # +paperboy_apps+. Defaults to Paperboy for everything outside the
+  # data_runner/ and coa/ controller namespaces.
+  def current_app_key
+    if controller_path.start_with?('data_runner/')
+      'data_runner'
+    elsif controller_path.start_with?('coa/')
+      'coa'
+    else
+      'paperboy'
+    end
+  end
+
   def fetch_acl_groups
     Group.order(:Group_Name).pluck(:Group_Name, :GroupID)
   rescue StandardError

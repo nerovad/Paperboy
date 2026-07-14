@@ -52,6 +52,7 @@ import DslDragController from "controllers/dsl_drag_controller"
 import DslGroupController from "controllers/dsl_group_controller"
 import OutputTableController from "controllers/output_table_controller"
 import SourceEditorController from "controllers/source_editor_controller"
+import AppSwitcherController from "controllers/app_switcher_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -105,3 +106,4 @@ application.register("dsl-drag", DslDragController)
 application.register("dsl-group", DslGroupController)
 application.register("output-table", OutputTableController)
 application.register("source-editor", SourceEditorController)
+application.register("app-switcher", AppSwitcherController)
