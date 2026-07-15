@@ -14,11 +14,6 @@
 <div class="app-switcher" data-controller="app-switcher">
   <div class="app-switcher-bar">
     <%= link_to current_app[:path], class: "app-switcher-home", data: frame_data.call(current_app[:key]) do %>
-      <%= image_tag "shouting_paperboy_icon.png",
-                    alt: current_app[:label],
-                    class: "sidebar-logo",
-                    width: 42,
-                    height: 42 %>
       <span class="app-switcher-name"><%= current_app[:label] %></span>
     <% end %>
 
