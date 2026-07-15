@@ -183,6 +183,81 @@ Delete all of them (since the last runs aborted):
 rm db/migrate/*_create_authorization_forms.rb
 
 
+##Sub-Application Workflow
+
+Paperboy is the base app, and the sidebar app switcher can hold others next to
+it (Data Runner, Chart of Accounts). Use the app rake task to add another one.
+
+1. Scaffold a new app
+bin/rails "app:new[hello_world]"
+
+The name is flexible: hello_world, hello-world, "Hello World" and HelloWorld all
+give the same app. Quote the whole thing so the shell keeps the brackets.
+
+Creates:
+
+app/controllers/hello_world/base_controller.rb   (the ACL gate)
+app/controllers/hello_world/dashboard_controller.rb
+app/views/hello_world/dashboard/index.html.erb
+app/views/hello_world/shared/_sidebar.html.erb   (one "Hello World" button)
+
+Registers it in:
+
+config/routes.rb                             namespace :hello_world, root dashboard#index
+app/helpers/application_helper.rb            app switcher entry + current-app highlight
+app/views/shared/_sidebar.html.erb           renders this app's sidebar
+app/controllers/acl_controller.rb            the ACL > Applications checkbox
+app/assets/stylesheets/layout/_sidebar.scss  sidebar accent theme
+
+A display name is derived from the key ("Hello World"). To set your own, pass it
+as a second argument — do NOT put quotes around it inside the brackets, rake
+takes those literally and they end up in the name:
+
+bin/rails "app:new[time_sheets,Timesheet Portal]"
+
+Options:
+LABEL="Timesheet Portal"  display name, same as the second argument above
+THEME=teal                sidebar accent: teal (default), blue, cyan, slate, green
+DRY_RUN=1                 print what it would do and write nothing
+
+Example:
+THEME=blue LABEL="Timesheet Portal" bin/rails "app:new[time_sheets]"
+
+2. Grant access (nobody sees it until you do)
+Applications are a strict allow-list with no default grants, so a new app is
+invisible to everyone except system admins until you grant it:
+ACL > pick a group > Permissions > Applications > check the app.
+
+This is enforced in the generated BaseController, not just hidden in the
+switcher, so the namespace is not reachable by typing the URL either.
+
+3. Restart and rebuild assets
+The sidebar theme is SCSS, so dev needs a rebuild to pick it up:
+bin/rails assets:clobber assets:precompile && sudo systemctl restart paperboy-dev
+
+4. Build the app
+Add controllers under app/controllers/hello_world/ inheriting from
+HelloWorld::BaseController, views under app/views/hello_world/, and more
+sidebar buttons in app/views/hello_world/shared/_sidebar.html.erb.
+
+5. List what is registered
+bin/rails app:list
+
+6. Destroy an app (undo files + registration + ACL grants)
+bin/rails "app:destroy[hello_world]"
+
+Deletes the app's namespaced directories, unregisters it from the five files
+above, and revokes its ACL grants — stale grants would otherwise silently
+re-grant access if the key is ever reused. It prompts for confirmation; pass
+FORCE=1 to skip the prompt (required when not run from a terminal), or
+DRY_RUN=1 to preview.
+
+Note: destroy takes the whole namespace, including routes you added inside it.
+Paperboy, Data Runner and Chart of Accounts are protected and will not be
+removed. Anything outside the app's own directories — say an
+app/assets/stylesheets/pages/_hello_world.scss you added by hand and imported
+in application.scss — is left alone; clean that up yourself.
+
 Seeding Test Data
 Master seeding:
 
