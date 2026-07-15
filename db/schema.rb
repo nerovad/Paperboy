@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 20_260_702_000_001) do
+ActiveRecord::Schema[8.0].define(version: 20_260_715_180_000) do
   create_table 'Employee_Groups', force: :cascade do |t|
     t.integer 'EmployeeID', null: false
     t.bigint 'GroupID', null: false
@@ -251,6 +251,8 @@ ActiveRecord::Schema[8.0].define(version: 20_260_702_000_001) do
     t.string 'garaging_location', limit: 200
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
+    t.string 'take_home', limit: 3
+    t.string 'secondary_garaging_location', limit: 200
     t.index ['fleet_vehicle_garaging_form_id'], name: 'index_fleet_vehicles_on_fleet_vehicle_garaging_form_id'
   end
 

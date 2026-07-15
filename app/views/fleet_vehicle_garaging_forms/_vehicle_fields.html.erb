@@ -61,3 +61,48 @@
         title: "Up to 7 letters or numbers",
         style: "text-transform: uppercase;" %>
 </div>
+<div class="form-group">
+  <%= vf.label :take_home, "Take Home Vehicle" %>
+  <%= vf.select :take_home,
+        options_for_select(['Yes', 'No'], vf.object.take_home),
+        { prompt: "Select" },
+        class: "form-control",
+        required: is_first %>
+</div>
+<div class="form-group flex-fill" data-controller="choices">
+  <%= vf.label :garaging_location, "Garaging Location" %>
+  <%= vf.select :garaging_location,
+        options_for_select(@building_options, vf.object.garaging_location),
+        { prompt: "Select Garaging Location" },
+        class: "form-control",
+        data: {
+          choices_target: "select",
+          placeholder: "Select Garaging Location"
+        } %>
+</div>
+<div class="form-group flex-fill" data-controller="secondary-location">
+  <button type="button"
+          class="add-secondary-location-btn"
+          data-secondary-location-target="addBtn"
+          data-action="secondary-location#show">+ Add secondary garaging location</button>
+
+  <div data-secondary-location-target="field" style="display: none;">
+    <div data-controller="choices">
+      <%= vf.label :secondary_garaging_location, "Secondary Garaging Location" %>
+<%# include_blank, not prompt: collapsing the field clears the selection back to
+    this blank option, and prompt: would omit it once a value is saved. %>
+      <%= vf.select :secondary_garaging_location,
+            options_for_select(@building_options, vf.object.secondary_garaging_location),
+            { include_blank: true },
+            class: "form-control",
+            data: {
+              choices_target: "select",
+              secondary_location_target: "select",
+              placeholder: "Select Secondary Garaging Location"
+            } %>
+    </div>
+    <button type="button"
+            class="remove-secondary-location-btn"
+            data-action="secondary-location#hide">− Remove secondary location</button>
+  </div>
+</div>

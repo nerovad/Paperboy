@@ -57,6 +57,8 @@ class FleetVehicleGaragingFormsController < ApplicationController
                     else
                       []
                     end
+
+    @building_options = building_options
   end
 
   def create
@@ -69,10 +71,11 @@ class FleetVehicleGaragingFormsController < ApplicationController
     if @fleet_vehicle_garaging_form.save
       # ROUTING_BLOCK_START
       # Multi-step approval routing (1 steps)
-# Delegates to TrackableStatus#start_approval!, which picks the first
-# step whose condition matches the submitted record.
-@fleet_vehicle_garaging_form.start_approval!
-redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
+      # Delegates to TrackableStatus#start_approval!, which picks the first
+      # step whose condition matches the submitted record.
+      @fleet_vehicle_garaging_form.start_approval!
+      redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false,
+                                     status: :see_other
       # ROUTING_BLOCK_END
     else
       # Rebuild options on failure (same as in new)
@@ -104,6 +107,8 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
                       else
                         []
                       end
+
+      @building_options = building_options
 
       render :new, status: :unprocessable_entity
     end
@@ -205,8 +210,21 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
                       []
                     end
 
+    @building_options = building_options
+
     # Load user groups for field restrictions
     @current_user_groups = current_user_group_ids
+  end
+
+  # Every building in GSABSS, labelled "occupant - address" (Building#location_label
+  # drops the occupant half when it's null, leaving a bare address). Label doubles as
+  # the stored value, matching the authorization console's location picker.
+  def building_options
+    Building.order(:occupant_description, :address)
+            .map(&:location_label)
+            .reject(&:blank?)
+            .uniq
+            .map { |label| [label, label] }
   end
 
   def fleet_vehicle_garaging_form_params
@@ -220,7 +238,9 @@ redirect_to form_success_path, notice: 'Form submitted and routed for approval.'
         model
         color
         license_plate
+        take_home
         garaging_location
+        secondary_garaging_location
         _destroy
       ]
     )
