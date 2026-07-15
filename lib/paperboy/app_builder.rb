@@ -34,7 +34,7 @@ module Paperboy
     # "HelloWorld" — all normalise to the key hello_world.
     def initialize(name, label: nil, theme: nil, root: Rails.root)
       @key = name.to_s.strip.underscore.parameterize(separator: '_')
-      @label = label.presence || @key.titleize
+      @label = normalize_label(label).presence || @key.titleize
       @theme = theme.presence || 'teal'
       @module_name = @key.camelize
       @root = Pathname(root)
@@ -86,9 +86,21 @@ module Paperboy
 
     private
 
+    # rake hands back the quotes you typed in app:new[key,"Two Words"], so
+    # strip a wrapping pair. Anything quote-ish left over is rejected in
+    # #validate! rather than escaped: the label is written into single-quoted
+    # Ruby in several files, and a stray quote would generate source that does
+    # not parse.
+    def normalize_label(raw)
+      label = raw.to_s.strip
+      wrapped = label.match(/\A(["'])(.*)\1\z/m)
+      wrapped ? wrapped[2].strip : label
+    end
+
     def validate!
       raise Error, "'#{key}' is not a usable app name: use letters, numbers and underscores, e.g. hello_world." unless key.match?(/\A[a-z][a-z0-9_]*\z/)
       raise Error, "'#{key}' is reserved. Pick another name." if RESERVED.include?(key)
+      raise Error, "Label #{label.inspect} cannot contain a quote or a backslash: it is written into generated Ruby." if label.match?(/['"\\]/)
       raise Error, "Unknown theme '#{theme}'. Available: #{THEMES.keys.join(', ')}." unless THEMES.key?(theme)
       raise Error, "App '#{key}' already exists at app/controllers/#{key}/." if @root.join("app/controllers/#{key}").exist?
       return unless @root.join('app/helpers/application_helper.rb').read.include?("can_access_app?('#{key}')")

@@ -2,6 +2,7 @@
 
 # lib/tasks/app.rake
 require_relative '../paperboy/app_builder'
+require_relative '../paperboy/app_destroyer'
 
 namespace :app do
   desc 'Scaffold a new sidebar app. Usage: rake app:new[hello_world] or rake app:new[hello_world,"Hello World"] ' \
@@ -47,6 +48,49 @@ namespace :app do
            app/views/#{app.key}/. Add sidebar buttons in
            app/views/#{app.key}/shared/_sidebar.html.erb.
     NEXT
+  end
+
+  desc 'Remove an app made by app:new: files, registration and ACL grants. ' \
+       'Usage: rake app:destroy[hello_world] (env: FORCE=1 to skip the prompt, DRY_RUN=1)'
+  task :destroy, [:name] => :environment do |_t, args|
+    name = args[:name] || ENV.fetch('NAME', nil)
+    if name.blank?
+      puts 'Usage: rake app:destroy[hello_world]'
+      puts '       DRY_RUN=1 rake app:destroy[hello_world]   # preview only'
+      exit 1
+    end
+
+    begin
+      app = Paperboy::AppDestroyer.new(name)
+      plan = app.plan
+    rescue Paperboy::AppDestroyer::Error, Paperboy::AppUnregistrar::Error => e
+      abort "[FAIL] #{e.message}"
+    end
+
+    dry_run = ENV.fetch('DRY_RUN', nil).present?
+    puts dry_run ? "Dry run — would remove '#{app.key}':" : "Removing '#{app.key}':"
+    plan[:directories].each { |dir| puts "  [DELETE] #{dir}/" }
+    plan[:patches].each_key { |path| puts "  [EDIT]   #{path}" }
+    plan[:grant_counts].each { |table, count| puts "  [REVOKE] #{count} ACL row(s) in #{table}" if count.positive? }
+
+    if dry_run
+      puts "\nRe-run without DRY_RUN=1 to apply."
+      next
+    end
+
+    if ENV.fetch('FORCE', nil).blank?
+      abort "\n[FAIL] Not a terminal, so nothing was removed. Re-run with FORCE=1, or DRY_RUN=1 to preview." unless $stdin.tty?
+      print "\nThis deletes the files above for good. Type '#{app.key}' to confirm: "
+      abort '[FAIL] Aborted, nothing was removed.' unless $stdin.gets&.strip == app.key
+    end
+
+    app.call
+    puts <<~DONE
+
+      Removed '#{app.key}'. Restart the server, then rebuild assets so the
+      sidebar theme goes away. In dev:
+        bin/rails assets:clobber assets:precompile && sudo systemctl restart paperboy-dev.service
+    DONE
   end
 
   desc 'List the apps registered in the sidebar app switcher'
