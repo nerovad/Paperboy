@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 20_260_715_180_000) do
+ActiveRecord::Schema[8.0].define(version: 20_260_715_190_000) do
   create_table 'Employee_Groups', force: :cascade do |t|
     t.integer 'EmployeeID', null: false
     t.bigint 'GroupID', null: false
@@ -231,7 +231,7 @@ ActiveRecord::Schema[8.0].define(version: 20_260_715_180_000) do
     t.string 'division'
     t.string 'department'
     t.string 'unit'
-    t.integer 'status', default: 0
+    t.string 'status', default: 'in_progress', null: false
     t.string 'approver_id'
     t.text 'deny_reason'
     t.datetime 'created_at', null: false

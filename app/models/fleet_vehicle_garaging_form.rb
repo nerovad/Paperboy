@@ -3,12 +3,12 @@
 class FleetVehicleGaragingForm < ApplicationRecord
   include TrackableStatus
 
-enum :status, {
-  in_progress: "in_progress",
-    step_1_pending: "step_1_pending",
-    approved: "approved",
-    denied: "denied"
-}, default: :in_progress
+  enum :status, {
+    in_progress: 'in_progress',
+    step_1_pending: 'step_1_pending',
+    approved: 'approved',
+    denied: 'denied'
+  }, default: :in_progress
 
   # Vehicles (nested — each submission can garage multiple fleet vehicles)
   has_many :fleet_vehicles, dependent: :destroy
