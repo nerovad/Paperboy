@@ -1,5 +1,5 @@
 <!-- app/views/admin/impersonations/new.html.erb -->
-<%= render "shared/admin_tabs", active: :emulate %>
+<%= render "shared/portal_tabs", tabs: admin_portal_tabs, active: :emulate, label: "Admin" %>
 
 <div class="form-wrapper impersonation-wrapper">
   <%= form_with url: admin_impersonations_path, method: :post do |f| %>
