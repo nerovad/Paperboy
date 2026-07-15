@@ -31,7 +31,7 @@ class AclController < ApplicationController
     { key: 'data_validation', label: 'Admin → Data Validation' },
     { key: 'lookup_tables', label: 'Admin → Lookup Tables' },
     { key: 'auth_console',  label: 'Auth Console' },
-    { key: 'osha_log',      label: 'OSHA 300 Log' }
+    { key: 'osha_log',      label: 'OSHA 300' }
   ].freeze
 
   DEFAULT_PUBLIC_DROPDOWN_KEYS = DROPDOWN_ITEMS.select { |i| i[:default_public] }.map { |i| i[:key] }.freeze

@@ -1,0 +1,15 @@
+<%# Tab bar shared by the Admin and OSHA 300 portals. `tabs` is a list of
+    { key:, label:, path: } already filtered to what the current user may see,
+    `active` is the showing tab's key as a symbol, and `label` names the bar for
+    screen readers. Callers build their list in ApplicationHelper, so tab order,
+    labels and visibility stay in one place per portal. %>
+<nav class="portal-tabs" aria-label="<%= label %>">
+  <% tabs.each do |tab| %>
+    <% current = tab[:key].to_sym == active %>
+    <%= link_to tab[:path],
+        class: "portal-tab portal-tab--#{tab[:key].dasherize} #{'is-active' if current}",
+        aria: { current: ("page" if current) } do %>
+      <%= tab[:label] %>
+    <% end %>
+  <% end %>
+</nav>

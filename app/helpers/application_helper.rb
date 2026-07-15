@@ -68,6 +68,23 @@ module ApplicationHelper
     admin_portal_tabs.first&.fetch(:path)
   end
 
+  # Tabs inside the OSHA 300 portal, in tab-bar order. Both screens are two
+  # views of the same annual OSHA filing and have always shared the single
+  # 'osha_log' grant — which is exactly what both controllers enforce — so
+  # they are shown together or not at all.
+  def osha_portal_tabs
+    return [] unless system_admin? || current_user_dropdown_permissions.include?('osha_log')
+
+    [
+      { key: 'osha_log',  label: 'OSHA 300 Log',      path: osha_log_path },
+      { key: 'osha_300a', label: 'OSHA 300A Summary', path: osha_300a_path }
+    ]
+  end
+
+  def osha_portal_path
+    osha_portal_tabs.first&.fetch(:path)
+  end
+
   # The sub-applications reachable from the sidebar app switcher. Each entry
   # is { key:, label:, path: }; entries the current user may not see are
   # filtered out. Paperboy is the always-available base app; the secondary
