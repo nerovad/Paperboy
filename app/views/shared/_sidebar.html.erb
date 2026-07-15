@@ -2,6 +2,8 @@
   <%= render "data_runner/shared/sidebar" %>
 <% elsif controller_path.start_with?("coa/") %>
   <%= render "coa/shared/sidebar" %>
+<% elsif controller_path.start_with?("digital_asset_management/") %>
+  <%= render "digital_asset_management/shared/sidebar" %>
 <% else %>
   <%= render "shared/paperboy_sidebar" %>
 <% end %>

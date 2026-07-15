@@ -1,0 +1,11 @@
+<%# app/views/digital_asset_management/shared/_sidebar.html.erb
+    Sidebar for the Digital Asset Management app. The app switcher header is shared with
+    every other app; everything below it is this app's own navigation. %>
+<div class="sidebar digital-asset-management-sidebar">
+  <%= render "shared/app_switcher" %>
+
+  <nav class="digital-asset-management-links">
+    <%= link_to "Hello World", digital_asset_management_root_path,
+                class: "nav-link#{' active' if current_page?(digital_asset_management_root_path)}" %>
+  </nav>
+</div>

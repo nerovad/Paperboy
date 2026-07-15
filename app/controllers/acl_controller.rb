@@ -29,7 +29,8 @@ class AclController < ApplicationController
   # default-public list on purpose — application access is a strict allow-list.
   APPLICATION_ITEMS = [
     { key: 'data_runner', label: 'Data Runner' },
-    { key: 'coa',         label: 'Chart of Accounts' }
+    { key: 'coa',         label: 'Chart of Accounts' },
+    { key: 'digital_asset_management', label: 'Digital Asset Management' }
   ].freeze
 
   LEGACY_FORMS = [

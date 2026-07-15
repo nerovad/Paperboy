@@ -3,6 +3,10 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  namespace :digital_asset_management do
+    root 'dashboard#index'
+  end
+
   namespace :data_runner do
     root 'dsls#index'
 

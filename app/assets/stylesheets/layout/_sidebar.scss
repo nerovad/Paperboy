@@ -327,6 +327,15 @@
     .app-switcher-check { font-weight: 700; }
   }
 
+  &.digital-asset-management-sidebar {
+    /* Teal theme (from $green-teal in _tokens.scss). */
+    --sidebar-accent: #{$green-teal};
+    --sidebar-accent-hover: #{$green-teal-hover};
+    --sidebar-accent-ring: #{rgba($green-teal, 0.2)};
+    --sidebar-accent-soft: #{rgba($green-teal, 0.08)};
+    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$green-teal});
+  }
+
   &.data-runner-sidebar {
     /* Blue / navy theme (from $brand-navy in _tokens.scss). */
     --sidebar-accent: #{$brand-navy};

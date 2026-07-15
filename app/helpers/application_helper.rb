@@ -51,6 +51,7 @@ module ApplicationHelper
     apps = [{ key: 'paperboy', label: 'Paperboy', path: root_path }]
     apps << { key: 'data_runner', label: 'Data Runner', path: data_runner_root_path } if can_access_app?('data_runner')
     apps << { key: 'coa', label: 'Chart of Accounts', path: coa_root_path } if can_access_app?('coa')
+    apps << { key: 'digital_asset_management', label: 'Digital Asset Management', path: digital_asset_management_root_path } if can_access_app?('digital_asset_management')
     apps
   end
 
@@ -87,6 +88,8 @@ module ApplicationHelper
       'data_runner'
     elsif controller_path.start_with?('coa/')
       'coa'
+    elsif controller_path.start_with?('digital_asset_management/')
+      'digital_asset_management'
     else
       'paperboy'
     end
