@@ -1,0 +1,9 @@
+  &.__DASH_KEY__-sidebar {
+    /* __THEME_LABEL__ theme (from __ACCENT__ in _tokens.scss). */
+    --sidebar-accent: #{__ACCENT__};
+    --sidebar-accent-hover: #{__ACCENT_HOVER__};
+    --sidebar-accent-ring: #{rgba(__ACCENT__, 0.2)};
+    --sidebar-accent-soft: #{rgba(__ACCENT__, 0.08)};
+    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{__ACCENT__});
+  }
+
