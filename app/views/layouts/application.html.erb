@@ -109,14 +109,11 @@
                 <% if system_admin? || current_user_dropdown_permissions.include?('dashboards') %>
                   <%= link_to "Dashboards", dashboards_path, class: "btn btn-primary" %>
                 <% end %>
-                <% if system_admin? || current_user_dropdown_permissions.include?('manage_forms') %>
-                  <%= link_to "Manage Forms", form_templates_path, class: "btn btn-info" %>
-                <% end %>
-                <% if system_admin? || current_user_dropdown_permissions.include?('emulate') %>
-                  <%= link_to "Emulate", new_admin_impersonation_path, class: "btn btn-warning" %>
-                <% end %>
-                <% if system_admin? || current_user_dropdown_permissions.include?('acl') %>
-                  <%= link_to "ACL", acl_index_path, class: "btn btn-info" %>
+                <%# ACL, Manage Forms, Emulate and Data Validation are now tabs
+                    of the Admin portal; this lands on the first tab the user is
+                    permitted to see. %>
+                <% if admin_portal_path %>
+                  <%= link_to "Admin", admin_portal_path, class: "btn btn-info" %>
                 <% end %>
                 <% if auth_console_user? || current_user_dropdown_permissions.include?('auth_console') %>
                   <%= link_to "Authorizations", authorization_console_index_path, class: "btn btn-info" %>
@@ -124,17 +121,10 @@
                 <% if pcard_admin? || current_user_dropdown_permissions.include?('pcard_inventory') %>
                   <%= link_to "P-Card Inventory", pcard_inventory_index_path, class: "btn btn-info" %>
                 <% end %>
-                <% if system_admin? || current_user_dropdown_permissions.include?('lookup_tables') %>
-                  <%= link_to "Lookup Tables", lookup_tables_path, class: "btn btn-info" %>
-                <% end %>
                 <% if system_admin? || current_user_dropdown_permissions.include?('osha_log') %>
                   <%= link_to "OSHA 300 Log", osha_log_path, class: "btn btn-info" %>
                   <%= link_to "OSHA 300A Summary", osha_300a_path, class: "btn btn-info" %>
                 <% end %>
-                <% if system_admin? %>
-                  <%= link_to "Data Validation", admin_data_validation_index_path, class: "btn btn-info" %>
-                <% end %>
-
                 <% if system_admin? || current_user_dropdown_permissions.include?('settings') %>
                   <%= link_to "Settings", settings_path, class: "btn btn-primary" %>
                 <% end %>

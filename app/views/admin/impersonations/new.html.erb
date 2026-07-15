@@ -1,7 +1,5 @@
 <!-- app/views/admin/impersonations/new.html.erb -->
-<div class="form-header">
-  <h1>🎭 Emulate User</h1>
-</div>
+<%= render "shared/admin_tabs", active: :emulate %>
 
 <div class="form-wrapper impersonation-wrapper">
   <%= form_with url: admin_impersonations_path, method: :post do |f| %>

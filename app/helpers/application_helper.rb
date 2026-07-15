@@ -42,6 +42,32 @@ module ApplicationHelper
     current_user_group_names.include?('system_admins')
   end
 
+  # Tabs inside the Admin portal, in tab-bar order. Each entry is
+  # { key:, label:, path: }; entries the current user may not see are filtered
+  # out. The keys are ordinary ACL "Profile Dropdown Items" grants, so a group
+  # can hold some admin tabs without holding all of them. System admins bypass.
+  def admin_portal_tabs
+    [
+      { key: 'acl',             label: 'ACL',             path: acl_index_path },
+      { key: 'manage_forms',    label: 'Manage Forms',    path: form_templates_path },
+      { key: 'emulate',         label: 'Emulate',         path: new_admin_impersonation_path },
+      { key: 'data_validation', label: 'Data Validation', path: admin_data_validation_index_path },
+      { key: 'lookup_tables',   label: 'Lookup Tables',   path: lookup_tables_path }
+    ].select { |tab| can_view_admin_tab?(tab[:key]) }
+  end
+
+  def can_view_admin_tab?(key)
+    system_admin? || current_user_dropdown_permissions.include?(key)
+  end
+
+  # Where the navbar's single "Admin" button lands: the first tab the user may
+  # see. Holding the 'admin' key alone grants no tabs, so there is nothing to
+  # land on and the button stays hidden — the key marks a group as admin-portal
+  # eligible, but each tab still needs its own grant.
+  def admin_portal_path
+    admin_portal_tabs.first&.fetch(:path)
+  end
+
   # The sub-applications reachable from the sidebar app switcher. Each entry
   # is { key:, label:, path: }; entries the current user may not see are
   # filtered out. Paperboy is the always-available base app; the secondary
