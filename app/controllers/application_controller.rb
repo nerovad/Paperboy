@@ -134,6 +134,17 @@ class ApplicationController < ActionController::Base
     redirect_to root_path, alert: 'Access denied. System administrators only.'
   end
 
+  # Gate an Admin-portal screen on its ACL grant. System admins get everything;
+  # everyone else needs the matching "dropdown" permission key. This is the same
+  # test ApplicationHelper#can_view_admin_tab? uses to decide whether to render
+  # the tab, so a tab a user can see is always a tab they can open.
+  def require_admin_tab(key)
+    return if current_user_group_names.include?('system_admins')
+    return if current_user_dropdown_permissions.include?(key)
+
+    redirect_to root_path, alert: 'Access denied.'
+  end
+
   def require_auth_console
     return if auth_console_user?
 

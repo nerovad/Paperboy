@@ -3,7 +3,7 @@
 require 'open3'
 
 class FormTemplatesController < ApplicationController
-  before_action :require_system_admin
+  before_action -> { require_admin_tab('manage_forms') }
   before_action :set_form_template, only: %i[show edit update destroy archive unarchive]
 
   def index

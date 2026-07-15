@@ -2,9 +2,20 @@
 
 # app/controllers/acl_controller.rb
 class AclController < ApplicationController
-  before_action :require_system_admin
+  # Membership of this group confers full system-admin rights everywhere, so an
+  # 'acl' grantee who could edit it — or rename any group into it — could
+  # promote themselves. Only existing system admins may touch it.
+  PRIVILEGED_GROUP_NAME = 'system_admins'
+
+  before_action -> { require_admin_tab('acl') }
   before_action :set_group, only: %i[show edit update destroy add_member remove_member permissions update_permissions
                                      add_contractor edit_contractor update_contractor toggle_contractor resend_contractor_welcome]
+  before_action :protect_privileged_group,
+                only: %i[show edit update destroy add_member remove_member permissions update_permissions
+                         add_contractor edit_contractor update_contractor toggle_contractor resend_contractor_welcome]
+  before_action :protect_privileged_group_name, only: %i[create update]
+
+  helper_method :manageable_group?
 
   DROPDOWN_ITEMS = [
     { key: 'inbox',         label: 'Inbox',          default_public: true },
@@ -312,6 +323,38 @@ class AclController < ApplicationController
   end
 
   private
+
+  def privileged_group_name?(name)
+    name.to_s.strip.casecmp?(PRIVILEGED_GROUP_NAME)
+  end
+
+  # Whether the current user may act on this group. Views use it to hide the
+  # controls +protect_privileged_group+ would reject, so the screen never offers
+  # a button that redirects straight back with "Access denied".
+  def manageable_group?(group)
+    current_user_group_names.include?(PRIVILEGED_GROUP_NAME) || !privileged_group_name?(group.group_name)
+  end
+
+  # Keep non-system-admins out of the system_admins group entirely: being able
+  # to add a member to it is equivalent to handing out root.
+  def protect_privileged_group
+    return if current_user_group_names.include?(PRIVILEGED_GROUP_NAME)
+    return unless privileged_group_name?(@group.group_name)
+
+    redirect_to acl_index_path,
+                alert: 'Access denied. Only system administrators can manage the system_admins group.'
+  end
+
+  # Creating a group named system_admins, or renaming an existing one into it,
+  # would grant its members system-admin rights on their next request — group
+  # membership is resolved by name.
+  def protect_privileged_group_name
+    return if current_user_group_names.include?(PRIVILEGED_GROUP_NAME)
+    return unless privileged_group_name?(group_params[:group_name])
+
+    redirect_to acl_index_path,
+                alert: 'Access denied. Only system administrators can manage the system_admins group.'
+  end
 
   def set_group
     @group = Group.find(params[:id])

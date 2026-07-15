@@ -2,7 +2,7 @@
 
 module Admin
   class DataValidationController < ApplicationController
-    before_action :require_system_admin
+    before_action -> { require_admin_tab('data_validation') }
 
     def index
       validator = EmployeeDataValidator.new
