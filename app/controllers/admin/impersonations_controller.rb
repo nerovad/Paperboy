@@ -3,7 +3,8 @@
 # app/controllers/admin/impersonations_controller.rb
 module Admin
   class ImpersonationsController < ApplicationController
-    before_action :require_super_admin
+    before_action -> { require_admin_tab('emulate') }, only: %i[new create]
+    before_action :require_active_impersonation, only: :destroy
 
     def new
       @employees = Employee.order(:last_name, :first_name)
@@ -56,10 +57,15 @@ module Admin
 
     private
 
-    def require_super_admin
-      return if session[:user_id].present?
+    # Ending an emulation must stay reachable while the *emulated* user's
+    # permissions are the ones in effect — gating it on the 'emulate' grant
+    # would strand an admin who is emulating someone without that grant. A
+    # real_admin_id in the session is proof this session began as a legitimate
+    # emulation, so that alone is the gate here.
+    def require_active_impersonation
+      return if session[:impersonating] && session[:real_admin_id].present?
 
-      redirect_to root_path, alert: 'Access denied'
+      redirect_to root_path, alert: 'Not currently emulating.'
     end
   end
 end

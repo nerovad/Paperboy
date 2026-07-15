@@ -5,7 +5,9 @@
 # inbox (when they filter to that form type). Keyed by model class name, so it
 # covers both dynamic form-builder forms and legacy hand-written forms.
 class FormVisibilityGrantsController < ApplicationController
-  before_action :require_system_admin
+  # Reached only from the Manage Forms screen, so it rides on that tab's grant
+  # rather than carrying an ACL key of its own.
+  before_action -> { require_admin_tab('manage_forms') }
 
   def index
     @form_types = form_type_catalog
