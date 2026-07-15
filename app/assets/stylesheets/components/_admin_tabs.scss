@@ -1,0 +1,49 @@
+/* ── Admin tabs (shared Admin portal header) ───────────────────────────────
+   The ACL, Manage Forms, Emulate and Data Validation screens share one tab
+   bar, mirroring the Inbox/Submissions "work tabs" pattern. Unlike work tabs
+   these are not themed per-tab: they are all facets of one admin portal, so a
+   single navy accent keeps the bar reading as one place. */
+$admin-accent: $brand-navy;
+
+/* The portal screens have no page header, so the tab bar is the first thing
+   under the fixed top bar and carries the horizontal inset .form-header used
+   to provide (#main-content itself has no side padding). The rule runs the
+   full width; only the tabs are inset. */
+.admin-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 0 60px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid $border-color;
+
+  @media (max-width: 768px) {
+    padding: 0 16px;
+    overflow-x: auto; /* keep all four tabs reachable on narrow screens */
+  }
+}
+
+.admin-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: $muted;
+  text-decoration: none;
+  border-bottom: 3px solid $alpha-clear;
+  margin-bottom: -1px; /* overlap the bar's border so the active underline aligns */
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    color: $text-color;
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  &.is-active {
+    font-weight: 700;
+    color: $admin-accent;
+    border-bottom-color: $admin-accent;
+  }
+}
