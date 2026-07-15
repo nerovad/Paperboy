@@ -1,0 +1,11 @@
+<%# app/views/__KEY__/shared/_sidebar.html.erb
+    Sidebar for the __LABEL__ app. The app switcher header is shared with
+    every other app; everything below it is this app's own navigation. %>
+<div class="sidebar __DASH_KEY__-sidebar">
+  <%= render "shared/app_switcher" %>
+
+  <nav class="__DASH_KEY__-links">
+    <%= link_to "Hello World", __KEY___root_path,
+                class: "nav-link#{' active' if current_page?(__KEY___root_path)}" %>
+  </nav>
+</div>

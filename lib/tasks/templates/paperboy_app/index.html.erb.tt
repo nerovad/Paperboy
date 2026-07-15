@@ -1,0 +1,13 @@
+<div class="form-header">
+  <h1>__LABEL__</h1>
+</div>
+
+<div class="form-wrapper">
+  <p>Hello World! This is the starting page for __LABEL__.</p>
+  <p>
+    Replace this view (<code>app/views/__KEY__/dashboard/index.html.erb</code>) with
+    the real thing, and add pages by creating controllers under
+    <code>app/controllers/__KEY__/</code> that inherit from
+    <code>__MODULE__::BaseController</code>.
+  </p>
+</div>
