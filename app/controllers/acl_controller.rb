@@ -13,11 +13,13 @@ class AclController < ApplicationController
     { key: 'help',          label: 'Help',           default_public: true },
     { key: 'reports',       label: 'Reports' },
     { key: 'dashboards',    label: 'Dashboards' },
-    { key: 'manage_forms',  label: 'Manage Forms' },
-    { key: 'emulate',       label: 'Emulate' },
-    { key: 'acl',           label: 'ACL' },
+    { key: 'admin',         label: 'Admin' },
+    { key: 'manage_forms',  label: 'Admin → Manage Forms' },
+    { key: 'emulate',       label: 'Admin → Emulate' },
+    { key: 'acl',           label: 'Admin → ACL' },
+    { key: 'data_validation', label: 'Admin → Data Validation' },
+    { key: 'lookup_tables', label: 'Admin → Lookup Tables' },
     { key: 'auth_console',  label: 'Auth Console' },
-    { key: 'lookup_tables', label: 'Lookup Tables' },
     { key: 'osha_log',      label: 'OSHA 300 Log' }
   ].freeze
 
