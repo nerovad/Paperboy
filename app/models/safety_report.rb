@@ -6,7 +6,6 @@ class SafetyReport < ApplicationRecord
   enum :status, {
     in_progress: 'in_progress',
     step_1_pending: 'step_1_pending',
-    step_2_pending: 'step_2_pending',
     approved: 'approved',
     denied: 'denied',
     cancelled: 'cancelled'
