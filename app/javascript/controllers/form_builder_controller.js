@@ -78,16 +78,16 @@ export default class extends Controller {
     // Hydrate routing-step condition editors that were rendered server-side
     this.initializeRoutingStepConditions()
 
-    // Hydrate server-rendered answer-lookup panels so their table/column lists
-    // (including the "+ also" multi-select) are fully populated on the edit page.
+      // Hydrate server-rendered answer-lookup panels so their table/column lists
+    // (including the "+ also" add-column dropdown) are fully populated on edit.
     this.initializeAnswerLookups()
   }
 
   // On the edit page, existing answer-lookup fields render each dropdown with
-  // only their single saved option, and the "+ also" multi-select with only its
-  // saved join columns (often none) — leaving nothing to pick. Load the full
-  // table/column lists for each panel already in lookup mode, preserving the
-  // saved selections (loadAnswerLookupColumns re-selects the current values).
+  // only their single saved option, and the "+ also" add-column dropdown empty.
+  // Load the full table/column lists for each panel already in lookup mode,
+  // preserving the saved selections (loadAnswerLookupColumns re-selects match
+  // and return, and excludes already-chipped columns from the add dropdown).
   initializeAnswerLookups() {
     this.element.querySelectorAll('.answer-lookup-toggle').forEach(toggle => {
       if (!toggle.checked) return
@@ -1937,10 +1937,8 @@ export default class extends Controller {
     const table = panel.querySelector('.answer-lookup-table').value
     const matchSelect = panel.querySelector('.answer-lookup-match-column')
     const returnSelect = panel.querySelector('.answer-lookup-return-column')
-    const returnJoin = panel.querySelector('.answer-lookup-return-join')
     const prevMatch = matchSelect.value
     const prevReturn = returnSelect.value
-    const prevReturnJoin = returnJoin ? Array.from(returnJoin.selectedOptions).map(o => o.value) : []
     if (!table) return
 
     try {
@@ -1952,16 +1950,18 @@ export default class extends Controller {
       const withSynthetic = table === 'employees' ? [ 'full_name', ...columns ] : columns
       this.fillAnswerColumnSelect(matchSelect, withSynthetic, prevMatch)
       this.fillAnswerColumnSelect(returnSelect, withSynthetic, prevReturn)
-      if (returnJoin) this.fillAnswerColumnSelect(returnJoin, columns, prevReturnJoin)
+      // The "+ also combine columns" picker is a real dropdown: it lists the
+      // columns not already chosen as chips. The chips (and their hidden inputs)
+      // persist across reloads, so we only refresh the add-dropdown's options.
+      this.fillAnswerJoinAddSelect(panel, columns)
     } catch (e) {
       console.error('Failed to load answer-lookup columns:', e)
     }
   }
 
   fillAnswerColumnSelect(select, columns, current) {
-    const selected = Array.isArray(current) ? current : (current ? [ current ] : [])
-    // Multi-selects (join columns) have no blank placeholder; single selects keep one.
-    select.innerHTML = select.multiple ? '' : '<option value="">column...</option>'
+    const selected = current ? [ current ] : []
+    select.innerHTML = '<option value="">column...</option>'
     columns.forEach(c => {
       const opt = document.createElement('option')
       opt.value = c
@@ -1969,6 +1969,79 @@ export default class extends Controller {
       if (selected.includes(c)) opt.selected = true
       select.appendChild(opt)
     })
+  }
+
+  // Rebuild the "+ add a column…" dropdown with every table column that isn't
+  // already chosen as a chip, leaving the placeholder first.
+  fillAnswerJoinAddSelect(panel, columns) {
+    const addSelect = panel.querySelector('.answer-lookup-return-join-add')
+    if (!addSelect) return
+    const chosen = Array.from(panel.querySelectorAll('.answer-lookup-join-chip'))
+      .map(chip => chip.dataset.column)
+    addSelect.innerHTML = '<option value="">+ add a column…</option>'
+    columns.forEach(c => {
+      if (chosen.includes(c)) return
+      const opt = document.createElement('option')
+      opt.value = c
+      opt.textContent = c
+      addSelect.appendChild(opt)
+    })
+  }
+
+  // Picking a column in the "+ add a column…" dropdown turns it into a chip
+  // (carrying the hidden return_join_columns[] input) and drops it from the list.
+  addAnswerJoinColumn(event) {
+    const addSelect = event.target
+    const col = addSelect.value
+    if (!col) return
+    const panel = addSelect.closest('.answer-lookup-panel')
+    const chips = panel && panel.querySelector('.answer-lookup-join-chips')
+    if (!chips) return
+    chips.appendChild(this.buildAnswerJoinChip(col))
+    const opt = Array.from(addSelect.options).find(o => o.value === col)
+    if (opt) opt.remove()
+    addSelect.value = ''
+  }
+
+  // Removing a chip deletes its hidden input and returns the column to the picker.
+  removeAnswerJoinColumn(event) {
+    const chip = event.target.closest('.answer-lookup-join-chip')
+    if (!chip) return
+    const panel = chip.closest('.answer-lookup-panel')
+    const col = chip.dataset.column
+    chip.remove()
+    const addSelect = panel && panel.querySelector('.answer-lookup-return-join-add')
+    if (addSelect && !Array.from(addSelect.options).some(o => o.value === col)) {
+      const opt = document.createElement('option')
+      opt.value = col
+      opt.textContent = col
+      addSelect.appendChild(opt)
+    }
+  }
+
+  buildAnswerJoinChip(col) {
+    const chip = document.createElement('span')
+    chip.className = 'answer-lookup-join-chip'
+    chip.dataset.column = col
+    chip.style.cssText = 'display: inline-flex; align-items: center; gap: 4px; background: #e9ecef; border: 1px solid #ced4da; border-radius: 12px; padding: 2px 8px; font-size: 0.78em; color: #333;'
+    chip.appendChild(document.createTextNode(col))
+
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.className = 'answer-lookup-join-remove'
+    btn.setAttribute('data-action', 'click->form-builder#removeAnswerJoinColumn')
+    btn.setAttribute('aria-label', `Remove ${col}`)
+    btn.style.cssText = 'border: none; background: none; cursor: pointer; color: #888; font-size: 1.05em; line-height: 1; padding: 0;'
+    btn.innerHTML = '&times;'
+
+    const input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = 'fields[][answer_lookup][return_join_columns][]'
+    input.value = col
+
+    chip.appendChild(btn)
+    chip.appendChild(input)
+    return chip
   }
 
   // Validate form before regular submission (legacy, kept for compatibility)
