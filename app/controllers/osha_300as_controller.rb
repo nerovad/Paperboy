@@ -1,11 +1,17 @@
 # frozen_string_literal: true
 
 class Osha300asController < ApplicationController
+  include OshaOrgFilterable
+
   before_action :require_osha_log_access
   before_action :set_year_and_records
+  before_action :load_osha_org_filter_options, only: :show
 
   def show
-    @totals = Osha300aTotals.for(@year)
+    # The computed totals honour the Agency → Unit filter so the summary can be
+    # reviewed by org slice. Submission (payload/submit) deliberately stays
+    # unfiltered: the official 300A filing always covers the whole establishment.
+    @totals = Osha300aTotals.for(@year, osha_org_filters)
   end
 
   def update

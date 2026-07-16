@@ -1,16 +1,29 @@
 <%= render "shared/portal_tabs", tabs: osha_portal_tabs, active: :osha_300a, label: "OSHA 300" %>
 
 <div class="form-wrapper">
-  <%# Year selector %>
+  <%# Year selector + org filter %>
   <div class="form-row d-flex flex-wrap" style="align-items: end; gap: 12px; margin-bottom: 20px;">
     <%= form_with url: osha_300a_path, method: :get, local: true, data: { turbo: false } do |f| %>
-      <div class="form-group" style="margin-right: 8px;">
-        <%= f.label :year, "Filing Year" %>
-        <%= f.number_field :year, value: @year, min: 1970, max: Date.current.year + 1, class: "form-control" %>
+      <div class="d-flex flex-wrap" style="gap: 12px; align-items: end;">
+        <div class="form-group">
+          <%= f.label :year, "Filing Year" %>
+          <%= f.number_field :year, value: @year, min: 1970, max: Date.current.year + 1, class: "form-control" %>
+        </div>
+
+        <%= render "shared/osha_org_filter", f: f %>
+
+        <div class="form-group">
+          <%= f.submit "View", class: "btn secondary" %>
+        </div>
       </div>
-      <%= f.submit "View", class: "btn secondary" %>
     <% end %>
-    <%= link_to "View 300 Log", osha_log_path(year: @year), class: "btn secondary", data: { turbo: false } %>
+
+    <div class="d-flex flex-wrap" style="gap: 12px; align-items: end;">
+      <% if osha_org_filters.any? %>
+        <%= link_to "Clear filters", osha_300a_path(year: @year), class: "btn", data: { turbo: false } %>
+      <% end %>
+      <%= link_to "View 300 Log", osha_log_path(osha_org_filters.merge(year: @year)), class: "btn secondary", data: { turbo: false } %>
+    </div>
   </div>
 
   <% if flash[:alert] %>
@@ -173,9 +186,18 @@
   <h2>Computed Totals (read-only)</h2>
   <p style="color: #555; margin-bottom: 12px;">
     Computed from <strong><%= @totals[:case_count] %></strong> approved
-    <%= "OshaReport".pluralize(@totals[:case_count]) %> for <strong><%= @year %></strong>.
-    <%= link_to "View 300 Log →", osha_log_path(year: @year), data: { turbo: false } %>
+    <%= "OshaReport".pluralize(@totals[:case_count]) %> for <strong><%= @year %></strong><%=
+      " (filtered)" if osha_org_filters.any? %>.
+    <%= link_to "View 300 Log →", osha_log_path(osha_org_filters.merge(year: @year)), data: { turbo: false } %>
   </p>
+
+  <% if osha_org_filters.any? %>
+    <p style="margin-bottom: 12px; padding: 10px 12px; background: #fff8e1; border-left: 4px solid #f0ad4e; color: #555;">
+      These totals reflect the current <strong>Agency / Division / Department / Unit</strong>
+      filter. The official 300A submission (JSON payload and “Mark as Submitted”)
+      always covers the <strong>whole establishment</strong>, regardless of this filter.
+    </p>
+  <% end %>
 
   <table class="data-table" style="max-width: 700px;">
     <tbody>

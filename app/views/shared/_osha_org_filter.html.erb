@@ -1,0 +1,54 @@
+<%# Cascading Agency → Division → Department → Unit filter for the OSHA 300
+    portal. Rendered inside a GET form_with; `f` is the form builder. Reuses
+    the gsabss-selects Stimulus controller + /lookups turbo-stream endpoints to
+    drill the child lists live. A blank value at any level means "all". %>
+<div data-controller="gsabss-selects" class="d-flex flex-wrap" style="gap: 12px; align-items: end;">
+  <div class="form-group">
+    <%= f.label :agency, "Agency" %>
+    <%= f.select :agency,
+          options_for_select(@agency_options, params[:agency]),
+          { include_blank: "All Agencies" },
+          class: "form-control",
+          id: "agency-select",
+          data: {
+            gsabss_selects_target: "agency",
+            action: "change->gsabss-selects#loadDivisions"
+          } %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :division, "Division" %>
+    <%= f.select :division,
+          options_for_select(@division_options, params[:division]),
+          { include_blank: "All Divisions" },
+          class: "form-control",
+          id: "division-select",
+          data: {
+            gsabss_selects_target: "division",
+            action: "change->gsabss-selects#loadDepartments"
+          } %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :department, "Department" %>
+    <%= f.select :department,
+          options_for_select(@department_options, params[:department]),
+          { include_blank: "All Departments" },
+          class: "form-control",
+          id: "department-select",
+          data: {
+            gsabss_selects_target: "department",
+            action: "change->gsabss-selects#loadUnits"
+          } %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :unit, "Unit" %>
+    <%= f.select :unit,
+          options_for_select(@unit_options, params[:unit]),
+          { include_blank: "All Units" },
+          class: "form-control",
+          id: "unit-select",
+          data: { gsabss_selects_target: "unit" } %>
+  </div>
+</div>
