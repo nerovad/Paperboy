@@ -507,6 +507,27 @@ class FormTemplatesController < ApplicationController
     end
   end
 
+  # A field with has_custom_view keeps its HTML verbatim across regenerations,
+  # but the conditional-answer attributes embed the field's DB id and trigger
+  # name, and the id is reassigned every time fields are rebuilt. Left as-is a
+  # preserved block points autofill at a since-deleted field id and silently
+  # fills nothing. Refresh (or strip, or inject) those attrs from the current
+  # field so preserved custom HTML keeps working.
+  def refresh_conditional_answer_attrs(html, field)
+    fresh = build_conditional_answer_attrs(field)
+    # Matches the answer-lookup / answer-mappings attrs already on the wrapper.
+    stale = /\s+data-answer-depends-on="[^"]*"(?:\s+data-answer-lookup-field-id="[^"]*"|\s+data-answer-mappings="[^"]*")/
+
+    if html.match?(stale)
+      html.sub(stale, fresh)
+    elsif fresh.present?
+      # Block predates the conditional-answer wiring — add it to the first tag.
+      html.sub(/<(?:div|input|select|textarea)\b[^>]*/) { |tag| tag + fresh }
+    else
+      html
+    end
+  end
+
   def build_field_options(field_data)
     options = {}
 
@@ -1515,8 +1536,9 @@ class FormTemplatesController < ApplicationController
         fields_for_page.each do |field|
           content += "<!-- FIELD:#{field.field_name} START -->"
           content += if field.has_custom_view && existing_blocks[field.field_name]
-                       # Preserve the existing custom HTML for this field
-                       existing_blocks[field.field_name]
+                       # Preserve the custom HTML, but refresh the autofill attrs
+                       # so a rebuilt field id can't leave a stale reference.
+                       refresh_conditional_answer_attrs(existing_blocks[field.field_name], field)
                      else
                        generate_field_html(field, form_template)
                      end
@@ -1635,8 +1657,9 @@ class FormTemplatesController < ApplicationController
         fields_for_page.each do |field|
           content += "<!-- FIELD:#{field.field_name} START -->"
           content += if field.has_custom_view && existing_blocks[field.field_name]
-                       # Preserve the existing custom HTML for this field
-                       existing_blocks[field.field_name]
+                       # Preserve the custom HTML, but refresh the autofill attrs
+                       # so a rebuilt field id can't leave a stale reference.
+                       refresh_conditional_answer_attrs(existing_blocks[field.field_name], field)
                      else
                        generate_field_html_for_edit(field, form_template)
                      end
