@@ -15,6 +15,20 @@ class OshaReport < ApplicationRecord
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
 
+  # Narrow to an Agency → Division → Department → Unit selection. Each level is
+  # optional; a blank value leaves that level unfiltered ("all"). The org
+  # columns store the GSABSS id values as strings. Powers the OSHA 300 portal
+  # filters (300 Log + 300A Summary).
+  scope :org_filtered, lambda { |filters|
+    filters = (filters || {}).symbolize_keys
+    rel = all
+    rel = rel.where(agency: filters[:agency]) if filters[:agency].present?
+    rel = rel.where(division: filters[:division]) if filters[:division].present?
+    rel = rel.where(department: filters[:department]) if filters[:department].present?
+    rel = rel.where(unit: filters[:unit]) if filters[:unit].present?
+    rel
+  }
+
   # Minimal baseline validations; adjust or remove as needed
   validates :name, :email, presence: true
 

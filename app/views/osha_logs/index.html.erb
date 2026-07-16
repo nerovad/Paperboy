@@ -3,25 +3,41 @@
 <div class="form-wrapper">
   <div class="form-row d-flex flex-wrap" style="align-items: end; gap: 12px; margin-bottom: 16px;">
     <%= form_with url: osha_log_path, method: :get, local: true, data: { turbo: false } do |f| %>
-      <div class="form-group" style="margin-right: 8px;">
-        <%= f.label :year, "Year" %>
-        <%= f.select :year,
-              options_for_select(@available_years.map { |y| [y, y] }, @year),
-              {},
-              class: "form-control" %>
+      <div class="d-flex flex-wrap" style="gap: 12px; align-items: end;">
+        <div class="form-group">
+          <%= f.label :year, "Year" %>
+          <%= f.select :year,
+                options_for_select(@available_years.map { |y| [y, y] }, @year),
+                {},
+                class: "form-control" %>
+        </div>
+
+        <%= render "shared/osha_org_filter", f: f %>
+
+        <div class="form-group">
+          <%= f.submit "Apply", class: "btn approve" %>
+        </div>
       </div>
-      <%= f.submit "Apply", class: "btn approve" %>
     <% end %>
 
-    <%= link_to "Export CSV",
-          osha_log_path(year: @year, format: :csv),
-          class: "btn pdf",
-          data: { turbo: false } %>
+    <div class="d-flex flex-wrap" style="gap: 12px; align-items: end;">
+      <%= link_to "Export CSV",
+            osha_log_path(osha_org_filters.merge(year: @year, format: :csv)),
+            class: "btn pdf",
+            data: { turbo: false } %>
+      <% if osha_org_filters.any? %>
+        <%= link_to "Clear filters",
+              osha_log_path(year: @year),
+              class: "btn",
+              data: { turbo: false } %>
+      <% end %>
+    </div>
   </div>
 
   <p style="margin-bottom: 12px; color: #555;">
     Showing <strong><%= @rows.size %></strong> approved
-    <%= "case".pluralize(@rows.size) %> for <strong><%= @year %></strong>.
+    <%= "case".pluralize(@rows.size) %> for <strong><%= @year %></strong><%=
+      " (filtered)" if osha_org_filters.any? %>.
   </p>
 
   <table class="data-table">

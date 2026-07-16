@@ -17,12 +17,13 @@ class Osha300aTotals
     'Other' => :total_other_cases
   }.freeze
 
-  def self.for(year)
-    new(year).compute
+  def self.for(year, filters = {})
+    new(year, filters).compute
   end
 
-  def initialize(year)
+  def initialize(year, filters = {})
     @year = year.to_i
+    @filters = filters || {}
   end
 
   def compute
@@ -30,6 +31,7 @@ class Osha300aTotals
     reports = OshaReport
               .where(status: :approved)
               .where(date_of_injury_or_illness: range)
+              .org_filtered(@filters)
               .to_a
 
     safety_ids   = reports.map(&:safety_report_id).compact.uniq

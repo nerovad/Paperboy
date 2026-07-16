@@ -3,6 +3,8 @@
 require 'csv'
 
 class OshaLogsController < ApplicationController
+  include OshaOrgFilterable
+
   before_action :require_osha_log_access
 
   def index
@@ -11,6 +13,7 @@ class OshaLogsController < ApplicationController
     @available_years << @year unless @available_years.include?(@year)
     @available_years.sort!.reverse!
 
+    load_osha_org_filter_options
     @rows = build_log_rows(@year)
 
     respond_to do |format|
@@ -40,6 +43,7 @@ class OshaLogsController < ApplicationController
     reports = OshaReport
               .where(status: :approved)
               .where(date_of_injury_or_illness: range)
+              .org_filtered(osha_org_filters)
               .order(:date_of_injury_or_illness, :id)
               .to_a
 
