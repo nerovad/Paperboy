@@ -1367,16 +1367,19 @@
                               <% if al['return_column'].present? %><option value="<%= al['return_column'] %>" selected><%= al['return_column'] %></option><% end %>
                             </select>
                             <div style="flex-basis: 100%; display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; margin-top: 4px;">
-                              <div style="display: flex; flex-direction: column; min-width: 160px;">
+                              <div style="display: flex; flex-direction: column; min-width: 200px;">
                                 <label style="font-size: 0.8em; color: #495057;">+ also combine columns (optional):</label>
-                                <select class="form-control form-control-sm answer-lookup-return-join" multiple size="4"
-                                        name="fields[][answer_lookup][return_join_columns][]"
-                                        style="min-width: 160px;">
+                                <div class="answer-lookup-join-chips" style="display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0;">
                                   <% Array(al['return_join_columns']).each do |jc| %>
-                                    <option value="<%= jc %>" selected><%= jc %></option>
+                                    <span class="answer-lookup-join-chip" data-column="<%= jc %>" style="display: inline-flex; align-items: center; gap: 4px; background: #e9ecef; border: 1px solid #ced4da; border-radius: 12px; padding: 2px 8px; font-size: 0.78em; color: #333;"><%= jc %><button type="button" class="answer-lookup-join-remove" data-action="click->form-builder#removeAnswerJoinColumn" aria-label="Remove <%= jc %>" style="border: none; background: none; cursor: pointer; color: #888; font-size: 1.05em; line-height: 1; padding: 0;">&times;</button><input type="hidden" name="fields[][answer_lookup][return_join_columns][]" value="<%= jc %>"></span>
                                   <% end %>
+                                </div>
+                                <select class="form-control form-control-sm answer-lookup-return-join-add"
+                                        data-action="change->form-builder#addAnswerJoinColumn"
+                                        style="width: auto; min-width: 180px;">
+                                  <option value="">+ add a column&hellip;</option>
                                 </select>
-                                <small style="display: block; color: #6c757d; font-size: 0.75em; margin-top: 2px;">Ctrl/&#8984;-click to add columns. Their values are appended to the fill column above (e.g. first + last name).</small>
+                                <small style="display: block; color: #6c757d; font-size: 0.75em; margin-top: 2px;">Pick columns to append to the fill column above (e.g. first + last name).</small>
                               </div>
                               <div style="display: flex; flex-direction: column; min-width: 90px;">
                                 <label style="font-size: 0.8em; color: #495057;">Join separator:</label>
@@ -1841,13 +1844,15 @@
               <option value="">column...</option>
             </select>
             <div style="flex-basis: 100%; display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; margin-top: 4px;">
-              <div style="display: flex; flex-direction: column; min-width: 160px;">
+              <div style="display: flex; flex-direction: column; min-width: 200px;">
                 <label style="font-size: 0.8em; color: #495057;">+ also combine columns (optional):</label>
-                <select class="form-control form-control-sm answer-lookup-return-join" multiple size="4"
-                        name="fields[][answer_lookup][return_join_columns][]"
-                        style="min-width: 160px;">
+                <div class="answer-lookup-join-chips" style="display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0;"></div>
+                <select class="form-control form-control-sm answer-lookup-return-join-add"
+                        data-action="change->form-builder#addAnswerJoinColumn"
+                        style="width: auto; min-width: 180px;">
+                  <option value="">+ add a column&hellip;</option>
                 </select>
-                <small style="display: block; color: #6c757d; font-size: 0.75em; margin-top: 2px;">Ctrl/&#8984;-click to add columns. Their values are appended to the fill column above (e.g. first + last name).</small>
+                <small style="display: block; color: #6c757d; font-size: 0.75em; margin-top: 2px;">Pick columns to append to the fill column above (e.g. first + last name).</small>
               </div>
               <div style="display: flex; flex-direction: column; min-width: 90px;">
                 <label style="font-size: 0.8em; color: #495057;">Join separator:</label>
