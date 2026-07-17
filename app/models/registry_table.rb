@@ -14,13 +14,18 @@ class RegistryTable
       MODEL_NAMES.map(&:constantize)
     end
 
+    # All Records tables: the code-declared model-backed tables plus the
+    # form-backed tables an admin has flagged (see FormBackedTable).
     def all
-      models.map { |model| new(model) }
+      models.map { |model| new(model) } + FormBackedTable.all
     end
 
-    # Look up a table by its slug (the "records:<slug>" page key).
+    # Look up a table by its slug (the "records:<slug>" page key). Form-backed
+    # slugs are "form-<id>"; everything else is a model-backed table.
     def find(slug)
       slug = slug.to_s
+      return FormBackedTable.find(slug) if slug.start_with?(FormBackedTable::SLUG_PREFIX)
+
       model = models.find { |m| m.registry_slug == slug }
       model && new(model)
     end

@@ -458,6 +458,7 @@ class FormTemplatesController < ApplicationController
       :approval_routing_to,
       :approval_employee_id,
       :has_dashboard,
+      :records_table,
       :metabase_dashboard_id,
       :status_transition_mode,
       :tags,

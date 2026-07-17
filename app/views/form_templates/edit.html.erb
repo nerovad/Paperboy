@@ -1414,6 +1414,17 @@
         <!-- ========== Page 6: Dashboard ========== -->
         <div class="wizard-page" data-form-builder-target="wizardPage" data-wizard-title="Dashboard" style="display: none;">
           <div class="form-group">
+            <%= f.label :records_table, "Show in Records?" %>
+            <%= f.select :records_table,
+                        options_for_select([['No', false], ['Yes', true]], @form_template.records_table),
+                        {},
+                        { class: "form-control" } %>
+            <small class="form-text" style="color: #6c757d;">
+              Surfaces this form's submissions as a customizable table in the Records area.
+            </small>
+          </div>
+
+          <div class="form-group">
             <%= f.label :has_dashboard, "Enable Dashboard?" %>
             <%= f.select :has_dashboard,
                         options_for_select([['No', false], ['Yes', true]], @form_template.has_dashboard),

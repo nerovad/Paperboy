@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 20_260_715_190_000) do
+ActiveRecord::Schema[8.0].define(version: 20_260_717_000_001) do
   create_table 'Employee_Groups', force: :cascade do |t|
     t.integer 'EmployeeID', null: false
     t.bigint 'GroupID', null: false
@@ -395,6 +395,7 @@ ActiveRecord::Schema[8.0].define(version: 20_260_715_190_000) do
     t.boolean 'archived', default: false, null: false
     t.boolean 'skip_code_generation', default: false, null: false
     t.string 'reference_prefix'
+    t.boolean 'records_table', default: false, null: false
     t.index ['archived'], name: 'index_form_templates_on_archived'
     t.index ['reference_prefix'], name: 'index_form_templates_on_reference_prefix', unique: true, where: '([reference_prefix] IS NOT NULL)'
   end
