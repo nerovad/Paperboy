@@ -1,15 +1,10 @@
-<div class="form-header">
-  <h1>P-Cards</h1>
-</div>
+<div class="records-screen">
+  <div class="records-head">
+    <h1 class="records-title">P-Cards</h1>
+  </div>
 
-<div class="form-wrapper pcard-inventory"
-     data-controller="column-customizer"
-     data-column-customizer-page-value="<%= @page %>"
-     data-column-customizer-save-url-value="<%= settings_table_layout_path %>"
-     data-column-customizer-catalog-value="{}"
-     data-column-customizer-min-col-px-value="150">
-  <div class="inventory-toolbar">
-    <div class="inventory-search">
+  <div class="records-toolbar">
+    <div class="records-toolbar__search">
       <%= form_with url: pcard_inventory_index_path, method: :get, data: { turbo: false } do %>
         <%= text_field_tag :search, params[:search], placeholder: "Search by name, card #, or agency...", class: "form-control" %>
         <%= hidden_field_tag :filter, params[:filter] %>
@@ -20,8 +15,8 @@
       <% end %>
     </div>
 
-    <div class="inventory-actions">
-      <div class="inventory-filters">
+    <div class="records-toolbar__actions">
+      <div class="records-toolbar__filters">
         <%= link_to "All", pcard_inventory_index_path(search: params[:search]),
               class: "btn #{params[:filter].blank? ? 'active' : ''}" %>
         <%= link_to "Active", pcard_inventory_index_path(filter: "active", search: params[:search]),
@@ -30,7 +25,7 @@
               class: "btn #{params[:filter] == 'canceled' ? 'active' : ''}" %>
       </div>
 
-      <div class="inventory-buttons">
+      <div class="records-toolbar__buttons">
         <%= link_to "+ Add Card", new_pcard_inventory_path, class: "btn approve" %>
         <%= link_to "Export CSV", export_pcard_inventory_index_path(filter: params[:filter], search: params[:search]),
               class: "btn pdf" %>
@@ -38,39 +33,6 @@
     </div>
   </div>
 
-  <% if @pcard_inventories.any? %>
-    <div class="inventory-table-wrapper" data-column-customizer-target="tableContainer">
-      <table class="inventory-table">
-        <thead>
-          <tr>
-            <% @columns.each do |column| %>
-              <th><%= sortable_column_header(column) %></th>
-            <% end %>
-            <th class="cc-actions-col">
-              <button type="button" class="cc-trigger" data-action="column-customizer#open" title="Customize columns" aria-label="Customize columns">+</button>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @pcard_inventories.each do |card| %>
-            <tr class="<%= 'canceled-row' if card.canceled_date.present? %>">
-              <% @columns.each do |column| %>
-                <td><%= table_cell_content(column, card) %></td>
-              <% end %>
-              <td class="cc-actions-col">
-                <%= link_to "Edit", edit_pcard_inventory_path(card), class: "btn btn-sm" %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  <% else %>
-    <div class="empty-state">
-      <p>No P-Card records found.</p>
-      <p class="empty-state-hint">Click "+ Add Card" to add a new record, or records will be auto-created when P-Card requests are approved.</p>
-    </div>
-  <% end %>
-
-  <%= render "shared/column_customizer", page: @page, columns: @columns, employee_column: true %>
+  <%= render 'records/grid', table: @records_table, page: @page, columns: @columns,
+             rows: @pcard_inventories, edit_path: ->(card) { edit_pcard_inventory_path(card) } %>
 </div>

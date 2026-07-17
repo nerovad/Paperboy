@@ -11,7 +11,8 @@ class PcardInventoryController < ApplicationController
 
     # Resolve the viewer's customized column layout for this Records table and
     # sort the rows through the shared Filterable helper (see Inbox/Submissions).
-    @page = RegistryTable.find('pcard').page_key
+    @records_table = RegistryTable.find('pcard')
+    @page = @records_table.page_key
     @layout = UserSetting.for_employee(current_employee_id).layout_for(@page)
     @columns = TableColumns.resolve(@page, @layout)
 

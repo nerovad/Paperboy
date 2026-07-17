@@ -1,9 +1,9 @@
-<div class="form-header">
-  <h1>Records</h1>
-  <p class="records-subtitle">Living tables you maintain — updated over time, not just submitted once.</p>
-</div>
+<div class="records-screen">
+  <div class="records-head">
+    <h1 class="records-title">Records</h1>
+    <p class="records-subtitle">Living tables you maintain — updated over time, not just submitted once.</p>
+  </div>
 
-<div class="form-wrapper records-wrapper">
   <div class="records-grid">
     <% @tables.each do |table| %>
       <% path = table.route.present? ? public_send(table.route) : records_table_path(table.slug) %>
