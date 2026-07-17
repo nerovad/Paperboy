@@ -557,3 +557,21 @@ $submissions-accent: $primary-color;
   60%  { transform: scale(1.12); opacity: 1; }
   100% { transform: scale(1); }
 }
+
+/* Wider Inbox & Submissions — use the full content area instead of the old
+   ~1000px (and Submissions' 900px .form-wrapper) centered box, so the filter
+   bar and the rows table get the room they need. Scoped to these two pages so
+   the shared .filter-wrapper / .table-wrapper classes on other pages (ACL, COA)
+   keep their narrower layout. Definite side margins (not the old `auto`) let the
+   flex items stretch to the content width minus gutters. */
+.inbox-page-wrapper,
+.submissions-page-wrapper {
+  .filter-wrapper,
+  .table-wrapper,
+  .action-panel,
+  .status-wrapper {
+    max-width: none;
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+}
