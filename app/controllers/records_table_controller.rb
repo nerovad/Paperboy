@@ -7,7 +7,7 @@
 class RecordsTableController < ApplicationController
   include Filterable
 
-  before_action :set_table
+  before_action :set_table, only: :show
 
   def show
     @page = @table.page_key
@@ -23,7 +23,48 @@ class RecordsTableController < ApplicationController
     @records = sort_collection(rows, sort_by, sort_direction, sort_configs, default_sort: @default_sort)
   end
 
+  # Finalize a batch of staged inline edits (from the review modal). Every
+  # change is validated against the editable-column whitelist, applied inside a
+  # single transaction (all-or-nothing), and the re-rendered cell HTML is
+  # returned keyed by "id::column" so the grid can format each cell consistently.
+  def bulk_update
+    table = RegistryTable.find(params[:slug])
+    return head :not_found unless table
+    return head :forbidden unless helpers.can_access_record_table?(table)
+
+    changes = Array(params.permit(changes: %i[id column value])[:changes])
+    return render(json: { ok: true, cells: {} }) if changes.empty?
+    unless changes.all? { |c| RecordsEditing.editable?(table, c[:column]) }
+      return render(json: { ok: false, errors: ['One or more columns are not editable.'] },
+                    status: :unprocessable_entity)
+    end
+
+    render json: { ok: true, cells: apply_changes(table, changes) }
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { ok: false, errors: e.record.errors.full_messages }, status: :unprocessable_entity
+  rescue ActiveRecord::RecordNotFound
+    head :not_found
+  end
+
   private
+
+  # Apply the changes atomically and return { "id::column" => cell_html }.
+  def apply_changes(table, changes)
+    cells = {}
+    resolved = {}
+    ActiveRecord::Base.transaction do
+      changes.group_by { |c| c[:id] }.each do |id, group|
+        record = table.model.find(id)
+        group.each { |c| record[c[:column]] = c[:value] }
+        record.save!
+        group.each do |c|
+          column = (resolved[c[:column]] ||= TableColumns.resolve(table.page_key, [c[:column]]).first)
+          cells["#{id}::#{c[:column]}"] = helpers.table_cell_content(column, record)
+        end
+      end
+    end
+    cells
+  end
 
   def set_table
     @table = RegistryTable.find(params[:slug])
