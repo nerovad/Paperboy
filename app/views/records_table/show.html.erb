@@ -1,4 +1,6 @@
 <div class="records-screen">
+  <%= render "shared/work_tabs", active: :records %>
+
   <div class="records-head">
     <%= link_to "← Records", records_path, class: "records-back" %>
     <h1 class="records-title"><%= @table.label %></h1>

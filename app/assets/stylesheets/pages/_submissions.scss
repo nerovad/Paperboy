@@ -431,6 +431,7 @@
    accent). */
 $inbox-accent: $brand-navy;
 $submissions-accent: $primary-color;
+$records-accent: $cyan-action;
 
 .work-tabs {
   display: flex;
@@ -475,6 +476,11 @@ $submissions-accent: $primary-color;
   &--submissions.is-active {
     color: $submissions-accent;
     border-bottom-color: $submissions-accent;
+  }
+
+  &--records.is-active {
+    color: $records-accent;
+    border-bottom-color: $records-accent;
   }
 }
 

@@ -1,6 +1,7 @@
-<%# Tab bar shared by the Inbox and Submissions pages. `active` is :inbox or
-    :submissions. Tab visibility mirrors the navbar dropdown permission checks so
-    a user only ever sees (and can switch to) tabs they're allowed to view. %>
+<%# Tab bar shared by the Inbox, Submissions and Records pages. `active` is
+    :inbox, :submissions or :records. Tab visibility mirrors the navbar dropdown
+    permission checks so a user only ever sees (and can switch to) tabs they're
+    allowed to view. %>
 <nav class="work-tabs work-tabs--<%= active %>" aria-label="My Work">
   <% if system_admin? || current_user_dropdown_permissions.include?('inbox') %>
     <%= link_to inbox_queue_path,
@@ -18,6 +19,14 @@
         class: "work-tab work-tab--submissions #{'is-active' if active == :submissions}",
         aria: { current: ("page" if active == :submissions) } do %>
       Submissions
+    <% end %>
+  <% end %>
+
+  <% if records_portal_path %>
+    <%= link_to records_path,
+        class: "work-tab work-tab--records #{'is-active' if active == :records}",
+        aria: { current: ("page" if active == :records) } do %>
+      Records
     <% end %>
   <% end %>
 </nav>
