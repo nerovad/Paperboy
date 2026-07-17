@@ -2,7 +2,7 @@
 
 require 'test_helper'
 require 'tmpdir'
-require Rails.root.join('script/constants/workflow')
+require Rails.root.join('script/ruby/data_runner/constants/workflow')
 
 class DslCreatorTest < ActiveSupport::TestCase
   test 'creates a loadable DSL with selected DataRunner commands' do

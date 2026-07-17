@@ -10,13 +10,14 @@ require_relative '../commands/dsl_map'
 require_relative '../helpers/etl_helpers'
 require_relative '../constants/workflow_paths'
 
-ROOT = Pathname.new(__dir__).parent.expand_path
+ROOT = Pathname.new(__dir__).join('../../../..').expand_path
+DATA_RUNNER_ROOT = Pathname.new(__dir__).parent.expand_path
 CFG = DSL_MAP.fetch('Oversized')
 SRC = EtlHelpers.source(CFG)
 XML_CFG = CFG.fetch(:xml, {})
 DOWNLOAD_DIR = Pathname.new(WorkflowPaths::DOWNLOAD_DIR)
 OUTPUT_PATH = DOWNLOAD_DIR.join(EtlHelpers.source_local(CFG).to_s)
-DEFAULT_BU_FILE = ROOT.join('download/oversized_business_units.csv').expand_path
+DEFAULT_BU_FILE = DATA_RUNNER_ROOT.join('download/oversized_business_units.csv').expand_path
 OUTPUT_HEADER = %w[Date ProfileType BU Length Width Type FilePath FileName].freeze
 XML_DIR = '/mnt/i/BUSINESS_SUPPORT/Scan\ Center/Oversized\ Scan\ Data/Monthly\ Exports/'
 XML_FILE_PATTERN = 'ovs-*.xml'

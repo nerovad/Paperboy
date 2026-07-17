@@ -4,7 +4,7 @@
 module MssqlHelpers
   module_function
 
-  def load_dotenv!(env_path = File.expand_path('../../.env', __dir__))
+  def load_dotenv!(env_path = File.expand_path('../../../../.env', __dir__))
     return unless File.exist?(env_path)
 
     File.read(env_path).each_line do |line|

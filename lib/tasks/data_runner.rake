@@ -2,23 +2,23 @@
 
 require 'English'
 require 'fileutils'
-require Rails.root.join('script/log/data_runner_logger').to_s
+require Rails.root.join('script/ruby/data_runner/log/data_runner_logger').to_s
 
 ETL_ROOT = Rails.root.to_s
 ALL_SELECTOR = 'ALL'
 COMMAND_SCRIPTS = {
-  'create_tables.rb' => 'script/comands/create_tables.rb',
-  'download.rb' => 'script/commands/download.rb',
-  'drop_tables.rb' => 'script/commands/drop_tables.rb',
-  'dsl_stub.rb' => 'script/commands/dsl_stub.rb',
-  'dump_sql.rb' => 'script/commands/dump_sql.rb',
-  'from_sql.rb' => 'script/commands/from_sql.rb',
-  'initial_dsl.rb' => 'script/commands/initial_dsl.rb',
-  'inject.rb' => 'script/commands/inject.rb',
-  'to_csv.rb' => 'script/commands/to_csv.rb',
-  'to_sql.rb' => 'script/commands/to_sql.rb',
-  'use_dsl.rb' => 'script/commands/use_dsl.rb',
-  'use_sql.rb' => 'script/commands/use_sql.rb'
+  'create_tables.rb' => 'script/ruby/data_runner/commands/create_tables.rb',
+  'download.rb' => 'script/ruby/data_runner/commands/download.rb',
+  'drop_tables.rb' => 'script/ruby/data_runner/commands/drop_tables.rb',
+  'dsl_stub.rb' => 'script/ruby/data_runner/commands/dsl_stub.rb',
+  'dump_sql.rb' => 'script/ruby/data_runner/commands/dump_sql.rb',
+  'from_sql.rb' => 'script/ruby/data_runner/commands/from_sql.rb',
+  'initial_dsl.rb' => 'script/ruby/data_runner/commands/initial_dsl.rb',
+  'inject.rb' => 'script/ruby/data_runner/commands/inject.rb',
+  'to_csv.rb' => 'script/ruby/data_runner/commands/to_csv.rb',
+  'to_sql.rb' => 'script/ruby/data_runner/commands/to_sql.rb',
+  'use_dsl.rb' => 'script/ruby/data_runner/commands/use_dsl.rb',
+  'use_sql.rb' => 'script/ruby/data_runner/commands/use_sql.rb'
 }.freeze
 
 def run_ruby_stage(script, *args, log_selectors: nil)
@@ -86,9 +86,9 @@ def dsl_stub_selector(value)
 end
 
 def oneshot_log_selectors(step, selector)
-  require Rails.root.join('script/commands/dsl_map').to_s
-  require Rails.root.join('script/helpers/etl_helpers').to_s
-  require Rails.root.join('script/constants/workflow').to_s
+  require Rails.root.join('script/ruby/data_runner/commands/dsl_map').to_s
+  require Rails.root.join('script/ruby/data_runner/helpers/etl_helpers').to_s
+  require Rails.root.join('script/ruby/data_runner/constants/workflow').to_s
 
   EtlHelpers.selected_dsl_entries(DSL_MAP, [selector]).filter_map do |name, cfg|
     name if Workflow.wants_step?(cfg, step)
@@ -211,9 +211,9 @@ namespace :DataRunner do
 
     selector = task_arg(args, allow_all: true)
     if selector
-      require Rails.root.join('script/commands/dsl_map').to_s
-      require Rails.root.join('script/helpers/etl_helpers').to_s
-      require Rails.root.join('script/constants/workflow_paths').to_s
+      require Rails.root.join('script/ruby/data_runner/commands/dsl_map').to_s
+      require Rails.root.join('script/ruby/data_runner/helpers/etl_helpers').to_s
+      require Rails.root.join('script/ruby/data_runner/constants/workflow_paths').to_s
 
       EtlHelpers.selected_dsl_entries(DSL_MAP, [selector]).each do |name, cfg|
         output = EtlHelpers.output_for(cfg)
@@ -237,7 +237,7 @@ namespace :DataRunner do
       next
     end
 
-    require Rails.root.join('script/constants/workflow_paths').to_s
+    require Rails.root.join('script/ruby/data_runner/constants/workflow_paths').to_s
 
     [
       WorkflowPaths::NORMALIZED_DIR_NAME,

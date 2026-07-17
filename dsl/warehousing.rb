@@ -20,7 +20,7 @@
       format: :csv,
       strategy: :script,
       script: {
-        path: 'script/download/warehousing.rb',
+        path: 'script/ruby/data_runner/download/warehousing.rb',
         args: ['ALL']
       }
     },

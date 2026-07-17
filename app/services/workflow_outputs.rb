@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require Rails.root.join('script/constants/workflow_paths')
+require Rails.root.join('script/ruby/data_runner/constants/workflow_paths')
 
 class WorkflowOutputs
   DIRECTORIES = [

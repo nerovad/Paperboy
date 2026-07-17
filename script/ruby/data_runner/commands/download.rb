@@ -12,7 +12,7 @@ require_relative '../helpers/etl_helpers'
 require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
 
-ROOT = File.expand_path('../..', __dir__)
+ROOT = File.expand_path('../../../..', __dir__)
 $LOAD_PATH.unshift(ROOT)
 
 ACWEB_ROOT = 'http://acweb'

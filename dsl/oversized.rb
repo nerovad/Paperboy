@@ -20,7 +20,7 @@
       format: :csv,
       strategy: :script,
       script: {
-        path: 'script/download/oversized.rb',
+        path: 'script/ruby/data_runner/download/oversized.rb',
         args: ['ALL']
       }
     },
@@ -50,7 +50,7 @@
         inject: {
           mode: :truncate_insert,
           post_script: {
-            path: 'script/inject/oversized_post_inject.rb'
+            path: 'script/ruby/data_runner/inject/oversized_post_inject.rb'
           }
         }
       }

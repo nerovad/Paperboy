@@ -30,12 +30,12 @@ If a file does not evaluate to `[String, Hash]`, loading will fail.
 
 ## Load Behavior
 
-`script/commands/dsl_map.rb` loads all `*.rb` files in this directory in sorted
+`script/ruby/data_runner/commands/dsl_map.rb` loads all `*.rb` files in this directory in sorted
 filename order and builds:
 
 - `DSL_MAP = entries.to_h.freeze`
 
-## Validation Performed by `script/commands/dsl_map.rb`
+## Validation Performed by `script/ruby/data_runner/commands/dsl_map.rb`
 
 - At least one DSL file must exist.
 - Every file must return `[String, Hash]`.
@@ -89,7 +89,7 @@ source: {
 inject: {
   mode: :truncate_insert,
   post_script: {
-    path: 'script/after_dataset_inject.rb',
+    path: 'script/ruby/data_runner/after_dataset_inject.rb',
     args: ['ALL']
   }
 }

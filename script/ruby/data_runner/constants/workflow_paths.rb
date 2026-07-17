@@ -10,7 +10,7 @@ require 'pathname'
 # {{{ Requrements and definitions
 
 module WorkflowPaths
-  ROOT = Pathname.new(__dir__).join('../..').expand_path
+  ROOT = Pathname.new(__dir__).join('../../../..').expand_path
 
   # Folder names (stable contract)
   DOWNLOAD_DIR_NAME        = '01_Download'

@@ -35,7 +35,7 @@ require_relative '../db/mssql_helpers'
 require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
 
-ROOT = File.expand_path('../..', __dir__)
+ROOT = File.expand_path('../../../..', __dir__)
 $LOAD_PATH.unshift(ROOT)
 
 APPLIED_DIR = WorkflowPaths::APPLIED_DIR

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require Rails.root.join('script/helpers/etl_header_helpers')
+require Rails.root.join('script/ruby/data_runner/helpers/etl_header_helpers')
 
 class EtlHeaderHelpersTest < ActiveSupport::TestCase
   test 'cleanup uses authoritative header when column counts match' do

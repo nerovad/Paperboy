@@ -11,7 +11,7 @@ require_relative '../commands/dsl_map'
 require_relative '../helpers/etl_helpers'
 require_relative '../constants/workflow_paths'
 
-ROOT = Pathname.new(__dir__).parent.parent.expand_path
+ROOT = Pathname.new(__dir__).join('../../../..').expand_path
 CFG = DSL_MAP.fetch('USPS')
 DOWNLOAD_DIR = Pathname.new(WorkflowPaths::DOWNLOAD_DIR)
 OUTPUT_PATH = DOWNLOAD_DIR.join(EtlHelpers.source_local(CFG).to_s)

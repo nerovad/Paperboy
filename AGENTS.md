@@ -10,3 +10,5 @@
   * Prose limited to 72 characters
   * Blank Line
   * Description lines limited to 80 characters
+- Git
+  * use git mv when moving files
