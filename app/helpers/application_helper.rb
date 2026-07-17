@@ -85,6 +85,25 @@ module ApplicationHelper
     osha_portal_tabs.first&.fetch(:path)
   end
 
+  # Records tables (see Registry) the current user may open, in declared order.
+  # Access mirrors the standalone P-Card gate: system admins see all; everyone
+  # else needs the table's group grant or its ACL dropdown key.
+  def records_portal_tables
+    RegistryTable.all.select { |table| can_access_record_table?(table) }
+  end
+
+  def can_access_record_table?(table)
+    return true if system_admin?
+    return true if table.permission.present? && current_user_group_names.include?(table.permission)
+
+    table.dropdown_key.present? && current_user_dropdown_permissions.include?(table.dropdown_key)
+  end
+
+  # Landing path for the Records pillar, or nil when the user may open no table.
+  def records_portal_path
+    records_portal_tables.any? ? records_path : nil
+  end
+
   # The sub-applications reachable from the sidebar app switcher. Each entry
   # is { key:, label:, path: }; entries the current user may not see are
   # filtered out. Paperboy is the always-available base app; the secondary

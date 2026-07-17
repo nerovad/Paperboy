@@ -1,0 +1,24 @@
+<div class="form-header">
+  <h1>Records</h1>
+  <p class="records-subtitle">Living tables you maintain — updated over time, not just submitted once.</p>
+</div>
+
+<div class="form-wrapper records-wrapper">
+  <div class="records-grid">
+    <% @tables.each do |table| %>
+      <% path = table.route.present? ? public_send(table.route) : records_table_path(table.slug) %>
+      <%= link_to path, class: "records-card" do %>
+        <div class="records-card__body">
+          <h2 class="records-card__title"><%= table.label %></h2>
+          <p class="records-card__count">
+            <span class="records-card__count-num"><%= table.count %></span>
+            <span class="records-card__count-label"><%= "record".pluralize(table.count) %></span>
+          </p>
+        </div>
+        <div class="records-card__footer">
+          <span class="records-card__open">Open<span class="records-card__arrow" aria-hidden="true">→</span></span>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>

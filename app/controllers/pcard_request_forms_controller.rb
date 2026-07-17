@@ -138,7 +138,7 @@ class PcardRequestFormsController < ApplicationController
     if @pcard_request_form.respond_to?(:advance_approval!)
       @pcard_request_form.advance_approval!
       if @pcard_request_form.approved?
-        create_pcard_inventory_record(@pcard_request_form)
+        RecordIngestion.ingest(@pcard_request_form)
         redirect_to inbox_queue_path, notice: 'Submission approved.'
       else
         redirect_to inbox_queue_path, notice: 'Approved and routed to the next step.'
@@ -214,29 +214,5 @@ class PcardRequestFormsController < ApplicationController
     params.require(:pcard_request_form).permit(
       :name, :phone, :email, :agency, :division, :department, :unit
     )
-  end
-
-  def create_pcard_inventory_record(form)
-    name_parts = form.name.to_s.split(' ', 2)
-    first_name = name_parts.first
-    last_name  = name_parts.last
-
-    # Resolve org names for display
-    agency_name   = Agency.find_by(agency_id: form.agency)&.long_name || form.agency
-    division_name = Division.find_by(division_id: form.division)&.long_name || form.division
-
-    PcardInventory.create(
-      pcard_request_form: form,
-      first_name: first_name,
-      last_name: last_name,
-      agency: agency_name,
-      division: division_name,
-      phone: form.phone,
-      approver_name: form.try(:approver_name),
-      single_purchase_limit: form.try(:single_purchase_limit),
-      monthly_limit: form.try(:spending_limit_30_day)
-    )
-  rescue StandardError => e
-    Rails.logger.error("Failed to create P-Card inventory record: #{e.message}")
   end
 end

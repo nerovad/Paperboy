@@ -1,0 +1,44 @@
+<div class="form-header">
+  <h1><%= @table.label %></h1>
+  <%= link_to "← Records", records_path, class: "records-back" %>
+</div>
+
+<div class="form-wrapper pcard-inventory"
+     data-controller="column-customizer"
+     data-column-customizer-page-value="<%= @page %>"
+     data-column-customizer-save-url-value="<%= settings_table_layout_path %>"
+     data-column-customizer-catalog-value="{}"
+     data-column-customizer-min-col-px-value="150">
+  <% if @records.any? %>
+    <div class="inventory-table-wrapper" data-column-customizer-target="tableContainer">
+      <table class="inventory-table">
+        <thead>
+          <tr>
+            <% @columns.each do |column| %>
+              <th><%= sortable_column_header(column) %></th>
+            <% end %>
+            <th class="cc-actions-col">
+              <button type="button" class="cc-trigger" data-action="column-customizer#open" title="Customize columns" aria-label="Customize columns">+</button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @records.each do |record| %>
+            <tr>
+              <% @columns.each do |column| %>
+                <td><%= table_cell_content(column, record) %></td>
+              <% end %>
+              <td class="cc-actions-col"></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>No <%= @table.label %> records found.</p>
+    </div>
+  <% end %>
+
+  <%= render "shared/column_customizer", page: @page, columns: @columns, employee_column: true %>
+</div>

@@ -34,18 +34,34 @@ module TableColumnsHelper
       ref = row.is_a?(Hash) ? row[:reference] : inbox_reference(row)
       content_tag(:span, ref, class: 'reference-badge')
     when :status
-      if row.is_a?(Hash)
-        content_tag(:span, row[:status].to_s.tr('_', ' '),
-                    class: "badge #{category_badge_class(row[:status_category])}")
-      else
-        content_tag(:span, row.status_label,
-                    class: "badge #{status_badge_class(row.status_label)}")
-      end
+      status_badge_cell(row)
     when :datetime
       format_pst(column.value&.call(row)) || '—'
+    when :date
+      value = column.value&.call(row)
+      value ? value.strftime('%m/%d/%Y') : '—'
+    when :currency
+      value = column.value&.call(row)
+      value.present? ? number_to_currency(value) : '—'
     else
       value = column.value&.call(row)
       value.present? ? value : '—'
+    end
+  end
+
+  # Status badge cell. Submissions rows are Hashes carrying an explicit
+  # category; AR rows either expose their own badge category (Records tables) or
+  # fall back to deriving one from the status label (Inbox).
+  def status_badge_cell(row)
+    if row.is_a?(Hash)
+      content_tag(:span, row[:status].to_s.tr('_', ' '),
+                  class: "badge #{category_badge_class(row[:status_category])}")
+    elsif row.respond_to?(:status_badge_category)
+      content_tag(:span, row.status_label,
+                  class: "badge #{category_badge_class(row.status_badge_category)}")
+    else
+      content_tag(:span, row.status_label,
+                  class: "badge #{status_badge_class(row.status_label)}")
     end
   end
 

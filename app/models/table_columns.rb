@@ -11,6 +11,11 @@
 class TableColumns
   PAGES = %i[inbox submissions].freeze
 
+  # Records tables are addressed as dynamic pages "records:<slug>"; their
+  # columns come from the model's Registry declaration rather than a static
+  # builtins method (see records_builtins).
+  RECORDS_PREFIX = 'records:'
+
   # A resolved column. `value` is the raw extractor used for filtering, sorting
   # and building filter-dropdown options; it returns comparable primitives, not
   # HTML. `kind` tells the view how to render the cell.
@@ -44,10 +49,44 @@ class TableColumns
   # Built-in column definitions per page. Order here is the normalized default.
   # value: raw extractor (row -> comparable). filter: nil or {param:, kind:}.
   def self.builtins(page)
+    page = page.to_s
+    return records_builtins(page) if page.start_with?(RECORDS_PREFIX)
+
     case page.to_sym
     when :inbox       then inbox_builtins
     when :submissions then submissions_builtins
     else {}
+    end
+  end
+
+  # Whether a page string is a page we know how to render — the two static
+  # pages or a live Records table. Gates the layout-save endpoint.
+  def self.valid_page?(page)
+    page = page.to_s
+    return true if PAGES.map(&:to_s).include?(page)
+
+    records_page?(page) && RegistryTable.find(page.delete_prefix(RECORDS_PREFIX)).present?
+  end
+
+  def self.records_page?(page)
+    page.to_s.start_with?(RECORDS_PREFIX)
+  end
+
+  # Derive builtins from a Records table's declared columns. Rows are the
+  # registry model's own AR instances, so every extractor is a plain attribute
+  # read — the same shape the inbox custom-column path already uses.
+  def self.records_builtins(page)
+    table = RegistryTable.find(page.to_s.delete_prefix(RECORDS_PREFIX))
+    return {} unless table
+
+    table.columns.to_h do |col|
+      [col.name, {
+        label: col.label,
+        sort: (col.sortable ? col.name : nil),
+        kind: col.kind,
+        filter: col.filter_kind && { param: :"filter_#{col.name}", kind: col.filter_kind },
+        value: ->(row) { row.public_send(col.name) }
+      }]
     end
   end
 
@@ -107,6 +146,8 @@ class TableColumns
   }.freeze
 
   def self.default_layout(page)
+    return builtins(page).keys if records_page?(page)
+
     DEFAULT_LAYOUTS.fetch(page.to_sym, builtins(page).keys)
   end
 

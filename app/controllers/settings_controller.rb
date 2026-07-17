@@ -18,8 +18,8 @@ class SettingsController < ApplicationController
   # :submissions). Called by the column-customizer Stimulus controller; the page
   # reloads afterwards so the server re-renders columns + filters.
   def table_layout
-    page = params[:page].to_s.to_sym
-    return head :bad_request unless TableColumns::PAGES.include?(page)
+    page = params[:page].to_s
+    return head :bad_request unless TableColumns.valid_page?(page)
 
     fields = table_layout_fields
     if current_user_settings.set_layout(page, fields)

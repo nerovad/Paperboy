@@ -175,6 +175,10 @@ Rails.application.routes.draw do
     resources :data_validation, only: [:index]
   end
 
+  # Records pillar landing page (lists the Registry grid tables) + generic grid.
+  get '/records', to: 'records#index', as: :records
+  get '/records/:slug', to: 'records_table#show', as: :records_table
+
   resources :pcard_inventory, only: %i[index new create edit update] do
     collection do
       get :export
