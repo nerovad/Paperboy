@@ -3,6 +3,14 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  resources :telework_log_forms do
+    member do
+      get :pdf
+      patch :approve
+      patch :deny
+      patch :update_status
+    end
+  end
   namespace :digital_asset_management do
     root 'dashboard#index'
   end
