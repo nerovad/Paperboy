@@ -14,7 +14,7 @@ class Create<%= plural_table_name.camelize %> < ActiveRecord::Migration[7.1]
       t.string :department
       t.string :unit
 
-      t.integer :status, default: 0
+      t.string :status, default: 'in_progress', null: false
 
       # Approval workflow fields
       t.string :approver_id       # Current approver's employee ID
