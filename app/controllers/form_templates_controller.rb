@@ -672,18 +672,16 @@ class FormTemplatesController < ApplicationController
     initial_status = all_statuses.find(&:is_initial) || all_statuses.first
     default_key = initial_status.key
 
-    # Build enum entries (string-backed: the column stores the key itself)
+    # Build enum entries (string-backed: the column stores the key itself).
+    # Indentation is baked in rather than using a squiggly heredoc, which would
+    # only indent the first interpolated entry and leave the rest flush left.
     enum_entries = all_statuses.map do |status|
-      "#{status.key}: #{status.key.inspect}"
+      "    #{status.key}: '#{status.key}'"
     end
 
     # Labels and categories are no longer copied into the model — they are read
     # at runtime from form_template_statuses (see TrackableStatus).
-    new_block = <<~RUBY.chomp
-      enum :status, {
-        #{enum_entries.join(",\n    ")}
-      }, default: :#{default_key}
-    RUBY
+    new_block = "  enum :status, {\n#{enum_entries.join(",\n")}\n  }, default: :#{default_key}"
 
     # Remove existing blocks first, then insert the new unified block
     # Remove enum block
