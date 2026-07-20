@@ -592,7 +592,7 @@ class FormTemplatesController < ApplicationController
 
     if form_template.submission_type == 'database' && form_template.statuses.empty?
       # No statuses configured for database-only form — remove enum block
-      content.gsub!(/^\s*enum :status.*?\n\s*\}/m, '')
+      content.gsub!(/^\s*enum :status.*?\n\s*\}(,\s*default:\s*:\w+)?/m, '')
       content.gsub!(/^\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, '')
       content.gsub!(/^\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, '')
     else
