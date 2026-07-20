@@ -1,0 +1,79 @@
+<%# Shared Records grid — Airtable-style table with customizable columns and
+    staged inline editing (edit → Review & Save → confirm modal → batch write).
+    locals: table, page, columns, rows, edit_path (optional lambda(row) -> path) %>
+<% edit_path = local_assigns.fetch(:edit_path, nil) %>
+<div class="records-page"
+     data-controller="column-customizer records-edit"
+     data-column-customizer-page-value="<%= page %>"
+     data-column-customizer-save-url-value="<%= settings_table_layout_path %>"
+     data-column-customizer-catalog-value="{}"
+     data-column-customizer-min-col-px-value="150"
+     data-records-edit-url-value="<%= records_table_path(table.slug) %>">
+  <% if rows.any? %>
+    <div class="records-table-wrapper" data-column-customizer-target="tableContainer">
+      <table class="records-table">
+        <thead>
+          <tr>
+            <% columns.each do |column| %>
+              <th><%= sortable_column_header(column) %></th>
+            <% end %>
+            <th class="records-actions-col">
+              <button type="button" class="cc-trigger" data-action="column-customizer#open" title="Customize columns" aria-label="Customize columns">+</button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows.each do |row| %>
+            <tr class="<%= 'is-inactive' if row.respond_to?(:canceled_date) && row.canceled_date.present? %>">
+              <% columns.each do |column| %>
+                <% if records_cell_editable?(table, column) %>
+                  <td class="records-cell is-editable"
+                      data-action="click->records-edit#start"
+                      data-id="<%= row.id %>"
+                      data-column="<%= column.id %>"
+                      data-label="<%= column.label %>"
+                      data-kind="<%= column.kind %>"
+                      data-raw="<%= records_edit_raw(column, row) %>"><%= table_cell_content(column, row) %></td>
+                <% else %>
+                  <td class="records-cell"><%= table_cell_content(column, row) %></td>
+                <% end %>
+              <% end %>
+              <td class="records-actions-col">
+                <% if edit_path %><%= link_to 'Edit', edit_path.call(row), class: 'btn btn-sm' %><% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>No <%= table.label %> records found.</p>
+    </div>
+  <% end %>
+
+  <%# Unsaved-changes bar — appears only while edits are staged %>
+  <div class="records-savebar" data-records-edit-target="savebar" hidden>
+    <span class="records-savebar__msg"><strong data-records-edit-target="count">0</strong> unsaved change(s)</span>
+    <div class="records-savebar__actions">
+      <button type="button" class="btn" data-action="records-edit#discardAll">Discard</button>
+      <button type="button" class="btn approve" data-action="records-edit#openModal">Review &amp; Save</button>
+    </div>
+  </div>
+
+  <%# Review modal — lists staged changes before they are written %>
+  <div class="records-modal-backdrop" data-records-edit-target="modal" hidden data-action="click->records-edit#backdropClick">
+    <div class="records-modal" role="dialog" aria-modal="true" aria-label="Review changes">
+      <div class="records-modal__header">
+        <h3>Review changes <span data-records-edit-target="confirmCount"></span></h3>
+      </div>
+      <ul class="records-modal__list" data-records-edit-target="modalList"></ul>
+      <div class="records-modal__actions">
+        <button type="button" class="btn" data-action="records-edit#closeModal">Cancel</button>
+        <button type="button" class="btn approve" data-action="records-edit#save">Save changes</button>
+      </div>
+    </div>
+  </div>
+
+  <%= render 'shared/column_customizer', page: page, columns: columns, employee_column: true %>
+</div>

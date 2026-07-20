@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
-class <%= class_name %> < ApplicationRecord
+class TeleworkLogForm < ApplicationRecord
   include TrackableStatus
 
   enum :status, {
     in_progress: 'in_progress',
+    step_1_pending: 'step_1_pending',
     approved: 'approved',
     denied: 'denied'
   }, default: :in_progress

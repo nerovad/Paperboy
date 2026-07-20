@@ -3,6 +3,14 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+  resources :telework_log_forms do
+    member do
+      get :pdf
+      patch :approve
+      patch :deny
+      patch :update_status
+    end
+  end
   namespace :digital_asset_management do
     root 'dashboard#index'
   end
@@ -174,6 +182,12 @@ Rails.application.routes.draw do
     resources :impersonations, only: %i[new create destroy]
     resources :data_validation, only: [:index]
   end
+
+  # Records pillar landing page (lists the Registry grid tables) + generic grid
+  # + inline cell-edit endpoint.
+  get '/records', to: 'records#index', as: :records
+  get '/records/:slug', to: 'records_table#show', as: :records_table
+  patch '/records/:slug', to: 'records_table#bulk_update'
 
   resources :pcard_inventory, only: %i[index new create edit update] do
     collection do

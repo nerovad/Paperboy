@@ -1,20 +1,28 @@
 # frozen_string_literal: true
 
 class PcardInventoryController < ApplicationController
+  include Filterable
+
   before_action :require_pcard_admin
   before_action :set_pcard_inventory, only: %i[edit update]
 
   def index
-    @pcard_inventories = PcardInventory.order(:last_name, :first_name)
+    records = filtered_scope.to_a
 
-    @pcard_inventories = @pcard_inventories.search(params[:search]) if params[:search].present?
+    # Resolve the viewer's customized column layout for this Records table and
+    # sort the rows through the shared Filterable helper (see Inbox/Submissions).
+    @records_table = RegistryTable.find('pcard')
+    @page = @records_table.page_key
+    @layout = UserSetting.for_employee(current_employee_id).layout_for(@page)
+    @columns = TableColumns.resolve(@page, @layout)
 
-    case params[:filter]
-    when 'active'
-      @pcard_inventories = @pcard_inventories.active
-    when 'canceled'
-      @pcard_inventories = @pcard_inventories.canceled
-    end
+    @default_sort = default_sort_key(@columns, prefer: %w[last_name])
+    sort_by = params[:sort_by].presence || @default_sort
+    sort_direction = params[:sort_direction] || 'asc'
+    sort_configs = @columns.select(&:sortable?).index_by(&:sort_key).transform_values(&:value)
+
+    @pcard_inventories = sort_collection(records, sort_by, sort_direction, sort_configs,
+                                         default_sort: @default_sort)
   end
 
   def new
@@ -45,19 +53,26 @@ class PcardInventoryController < ApplicationController
   end
 
   def export
-    @pcard_inventories = PcardInventory.order(:last_name, :first_name)
-
-    if params[:filter] == 'active'
-      @pcard_inventories = @pcard_inventories.active
-    elsif params[:filter] == 'canceled'
-      @pcard_inventories = @pcard_inventories.canceled
-    end
-
-    csv_data = generate_csv(@pcard_inventories)
+    csv_data = generate_csv(filtered_scope.order(:last_name, :first_name))
     send_data csv_data, filename: "pcard_inventory_#{Date.today}.csv", type: 'text/csv'
   end
 
   private
+
+  # Row set for the index/export: search + active/canceled status buttons.
+  def filtered_scope
+    scope = PcardInventory.all
+    scope = scope.search(params[:search]) if params[:search].present?
+    case params[:filter]
+    when 'active'   then scope.active
+    when 'canceled' then scope.canceled
+    else scope
+    end
+  end
+
+  def current_employee_id
+    session.dig(:user, 'employee_id')
+  end
 
   def require_pcard_admin
     return if pcard_admin?

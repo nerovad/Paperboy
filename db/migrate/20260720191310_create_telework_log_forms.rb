@@ -1,6 +1,8 @@
-class Create<%= plural_table_name.camelize %> < ActiveRecord::Migration[7.1]
+# frozen_string_literal: true
+
+class CreateTeleworkLogForms < ActiveRecord::Migration[7.1]
   def change
-    create_table :<%= plural_table_name %> do |t|
+    create_table :telework_log_forms do |t|
       # Baseline fields for your two-page template
       # NOTE: Column names MUST start with a letter or underscore (not a number).
       # e.g. use :spending_limit_30_day instead of :30_day_spending_limit
@@ -23,7 +25,7 @@ class Create<%= plural_table_name.camelize %> < ActiveRecord::Migration[7.1]
       t.timestamps
     end
 
-    add_index :<%= plural_table_name %>, :approver_id
-    add_index :<%= plural_table_name %>, :employee_id
+    add_index :telework_log_forms, :approver_id
+    add_index :telework_log_forms, :employee_id
   end
 end

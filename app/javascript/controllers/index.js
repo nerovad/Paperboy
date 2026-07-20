@@ -28,6 +28,7 @@ import FilePreviewController from "controllers/file_preview_controller"
 import TaskSelectionController from "controllers/task_selection_controller"
 import StatusFiltersController from "controllers/status_filters_controller"
 import ColumnCustomizerController from "controllers/column_customizer_controller"
+import RecordsEditController from "controllers/records_edit_controller"
 import TagChipsController from "controllers/tag_chips_controller"
 import UrgencyMapController from "controllers/urgency_map_controller"
 import NhtsaVehicleController from "controllers/nhtsa_vehicle_controller"
@@ -83,6 +84,7 @@ application.register("file-preview", FilePreviewController)
 application.register("task-selection", TaskSelectionController)
 application.register("status-filters", StatusFiltersController)
 application.register("column-customizer", ColumnCustomizerController)
+application.register("records-edit", RecordsEditController)
 application.register("tag-chips", TagChipsController)
 application.register("urgency-map", UrgencyMapController)
 application.register("nhtsa-vehicle", NhtsaVehicleController)

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-class PcardRequestFormsController < ApplicationController
-  # Generated controller for PcardRequestForm form
-  before_action :set_pcard_request_form, only: %i[show edit update pdf approve deny update_status]
+class TeleworkLogFormsController < ApplicationController
+  # Generated controller for TeleworkLogForm form
+  before_action :set_telework_log_form, only: %i[show edit update pdf approve deny update_status]
 
   def new
-    @pcard_request_form = PcardRequestForm.new
+    @telework_log_form = TeleworkLogForm.new
 
     employee_id = session.dig(:user, 'employee_id').to_s
     @employee   = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
@@ -16,7 +16,7 @@ class PcardRequestFormsController < ApplicationController
     @current_user_groups = current_user_group_ids
 
     # --- Organization chain (same pattern you use now) ---
-    unit        = Unit.resolve_for_employee(@employee)
+    unit        = Unit.find_by(unit_id: @employee['unit'])
     department  = unit ? Department.find_by(department_id: unit['department_id']) : nil
     division    = department ? Division.find_by(division_id: department['division_id']) : nil
     agency      = division ? Agency.find_by(agency_id: division['agency_id']) : nil
@@ -62,21 +62,22 @@ class PcardRequestFormsController < ApplicationController
     employee      = session[:user]
     employee_id   = employee&.dig('employee_id').to_s
 
-    @pcard_request_form = PcardRequestForm.new(pcard_request_form_params)
-    @pcard_request_form.employee_id = employee_id if @pcard_request_form.respond_to?(:employee_id=)
+    @telework_log_form = TeleworkLogForm.new(telework_log_form_params)
+    @telework_log_form.employee_id = employee_id if @telework_log_form.respond_to?(:employee_id=)
 
-    if @pcard_request_form.save
-      # Keep success behavior simple for the template; you can extend per form.
-      # Step 1: route to the submitter's supervisor
-      supervisor = Employee.find_by(employee_id: session.dig(:user, 'employee_id'))
-      @pcard_request_form.update(status: :step_1_pending, approver_id: supervisor&.supervisor_id&.to_s)
-      # TODO: notify the supervisor
-      redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
+    if @telework_log_form.save
+      # ROUTING_BLOCK_START
+      # Multi-step approval routing (1 steps)
+      # Delegates to TrackableStatus#start_approval!, which picks the first
+      # step whose condition matches the submitted record.
+      @telework_log_form.start_approval!
+      redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
+      # ROUTING_BLOCK_END
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
       emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
-      unit        = Unit.resolve_for_employee(emp)
+      unit        = emp ? Unit.find_by(unit_id: emp['unit']) : nil
       department  = unit ? Department.find_by(department_id: unit['department_id']) : nil
       division    = department ? Division.find_by(division_id: department['division_id']) : nil
       agency      = division ? Agency.find_by(agency_id: division['agency_id']) : nil
@@ -117,8 +118,8 @@ class PcardRequestFormsController < ApplicationController
   end
 
   def update
-    if @pcard_request_form.update(pcard_request_form_params)
-      redirect_to @pcard_request_form, notice: 'Submission updated successfully.'
+    if @telework_log_form.update(telework_log_form_params)
+      redirect_to @telework_log_form, notice: 'Submission updated successfully.'
     else
       setup_form_options
       render :edit, status: :unprocessable_entity
@@ -126,23 +127,19 @@ class PcardRequestFormsController < ApplicationController
   end
 
   def pdf
-    pdf_data = PcardRequestFormPdfGenerator.generate(@pcard_request_form)
+    pdf_data = TeleworkLogFormPdfGenerator.generate(@telework_log_form)
 
     send_data pdf_data,
-              filename: "PcardRequestForm_#{@pcard_request_form.id}.pdf",
+              filename: "TeleworkLogForm_#{@telework_log_form.id}.pdf",
               type: 'application/pdf',
               disposition: 'inline'
   end
 
   def approve
-    if @pcard_request_form.respond_to?(:advance_approval!)
-      @pcard_request_form.advance_approval!
-      if @pcard_request_form.approved?
-        RecordIngestion.ingest(@pcard_request_form)
-        redirect_to inbox_queue_path, notice: 'Submission approved.'
-      else
-        redirect_to inbox_queue_path, notice: 'Approved and routed to the next step.'
-      end
+    if @telework_log_form.respond_to?(:advance_approval!)
+      @telework_log_form.advance_approval!
+      notice = @telework_log_form.approved? ? 'Submission approved.' : 'Approved and routed to the next step.'
+      redirect_to inbox_queue_path, notice: notice
     else
       redirect_to inbox_queue_path, alert: 'Unable to approve this submission.'
     end
@@ -150,9 +147,11 @@ class PcardRequestFormsController < ApplicationController
 
   def deny
     reason = params[:deny_reason]
-    if @pcard_request_form.respond_to?(:denied!)
-      @pcard_request_form.denied!
-      @pcard_request_form.update(deny_reason: reason) if @pcard_request_form.respond_to?(:deny_reason=) && reason.present?
+    if @telework_log_form.respond_to?(:denied!)
+      # Set the reason in the same save as the status change so the denial email
+      # (fired by TrackableStatus on the status transition) can interpolate it.
+      @telework_log_form.deny_reason = reason if @telework_log_form.respond_to?(:deny_reason=) && reason.present?
+      @telework_log_form.denied!
       redirect_to inbox_queue_path, notice: 'Submission denied.'
     else
       redirect_to inbox_queue_path, alert: 'Unable to deny this submission.'
@@ -161,7 +160,7 @@ class PcardRequestFormsController < ApplicationController
 
   def update_status
     new_status = params[:status]
-    if update_trackable_status(@pcard_request_form, new_status)
+    if update_trackable_status(@telework_log_form, new_status)
       redirect_to inbox_queue_path, notice: 'Status updated.'
     else
       redirect_to inbox_queue_path, alert: 'Unable to update status.'
@@ -170,35 +169,34 @@ class PcardRequestFormsController < ApplicationController
 
   private
 
-  def set_pcard_request_form
-    @pcard_request_form = PcardRequestForm.find(params[:id])
+  def set_telework_log_form
+    @telework_log_form = TeleworkLogForm.find(params[:id])
   end
 
   def setup_form_options
-    # Build dropdown options around the SAVED form's org chain, not the
-    # current viewer's. Otherwise an approver in a different agency would
-    # see the saved division/department/unit drop out of the lists and a
-    # different value render as the visible default.
-    agency_id     = @pcard_request_form&.agency
-    division_id   = @pcard_request_form&.division
-    department_id = @pcard_request_form&.department
+    employee_id = session.dig(:user, 'employee_id').to_s
+    emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
+    unit        = emp ? Unit.find_by(unit_id: emp['unit']) : nil
+    department  = unit ? Department.find_by(department_id: unit['department_id']) : nil
+    division    = department ? Division.find_by(division_id: department['division_id']) : nil
+    agency      = division ? Agency.find_by(agency_id: division['agency_id']) : nil
 
     @prefill_data = {
-      employee_id: @pcard_request_form&.employee_id,
-      name: @pcard_request_form&.name,
-      phone: @pcard_request_form&.phone,
-      email: @pcard_request_form&.email,
-      agency: agency_id,
-      division: division_id,
-      department: department_id,
-      unit: @pcard_request_form&.unit
+      employee_id: emp&.[]('id'),
+      name: emp ? [emp['first_name'], emp['last_name']].compact.join(' ') : nil,
+      phone: emp&.[]('work_phone'),
+      email: emp&.[]('email'),
+      agency: agency&.agency_id,
+      division: division&.division_id,
+      department: department&.department_id,
+      unit: unit&.unit_id
     }
 
-    @agency_options     = Agency.order(:long_name).pluck(:long_name, :agency_id)
-    @division_options   = agency_id ? Division.where(agency_id: agency_id).order(:long_name).pluck(:long_name, :division_id) : []
-    @department_options = division_id ? Department.where(division_id: division_id).order(:long_name).pluck(:long_name, :department_id) : []
-    @unit_options = if department_id
-                      Unit.where(department_id: department_id)
+    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+    @division_options = agency ? Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
+    @department_options = division ? Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
+    @unit_options = if department
+                      Unit.where(department_id: department.department_id)
                           .order(:unit_id)
                           .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
                     else
@@ -209,9 +207,9 @@ class PcardRequestFormsController < ApplicationController
     @current_user_groups = current_user_group_ids
   end
 
-  def pcard_request_form_params
+  def telework_log_form_params
     # Only the baseline fields you asked for
-    params.require(:pcard_request_form).permit(
+    params.require(:telework_log_form).permit(
       :name, :phone, :email, :agency, :division, :department, :unit
     )
   end

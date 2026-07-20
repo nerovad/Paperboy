@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 20_260_715_190_000) do
+ActiveRecord::Schema[8.0].define(version: 20_260_720_191_310) do
   create_table 'Employee_Groups', force: :cascade do |t|
     t.integer 'EmployeeID', null: false
     t.bigint 'GroupID', null: false
@@ -395,6 +395,7 @@ ActiveRecord::Schema[8.0].define(version: 20_260_715_190_000) do
     t.boolean 'archived', default: false, null: false
     t.boolean 'skip_code_generation', default: false, null: false
     t.string 'reference_prefix'
+    t.boolean 'records_table', default: false, null: false
     t.index ['archived'], name: 'index_form_templates_on_archived'
     t.index ['reference_prefix'], name: 'index_form_templates_on_reference_prefix', unique: true, where: '([reference_prefix] IS NOT NULL)'
   end
@@ -834,6 +835,24 @@ ActiveRecord::Schema[8.0].define(version: 20_260_715_190_000) do
     t.string 'task_id', limit: 4, null: false
     t.string 'long_name', limit: 100, null: false
     t.string 'short_name', limit: 50, null: false
+  end
+
+  create_table 'telework_log_forms', force: :cascade do |t|
+    t.string 'employee_id'
+    t.string 'name'
+    t.string 'phone'
+    t.string 'email'
+    t.string 'agency'
+    t.string 'division'
+    t.string 'department'
+    t.string 'unit'
+    t.string 'status', default: 'in_progress', null: false
+    t.string 'approver_id'
+    t.text 'deny_reason'
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+    t.index ['approver_id'], name: 'index_telework_log_forms_on_approver_id'
+    t.index ['employee_id'], name: 'index_telework_log_forms_on_employee_id'
   end
 
   create_table 'user_settings', force: :cascade do |t|

@@ -458,6 +458,7 @@ class FormTemplatesController < ApplicationController
       :approval_routing_to,
       :approval_employee_id,
       :has_dashboard,
+      :records_table,
       :metabase_dashboard_id,
       :status_transition_mode,
       :tags,
@@ -591,7 +592,7 @@ class FormTemplatesController < ApplicationController
 
     if form_template.submission_type == 'database' && form_template.statuses.empty?
       # No statuses configured for database-only form — remove enum block
-      content.gsub!(/^\s*enum :status.*?\n\s*\}/m, '')
+      content.gsub!(/^\s*enum :status.*?\n\s*\}(,\s*default:\s*:\w+)?/m, '')
       content.gsub!(/^\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, '')
       content.gsub!(/^\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, '')
     else
@@ -671,18 +672,16 @@ class FormTemplatesController < ApplicationController
     initial_status = all_statuses.find(&:is_initial) || all_statuses.first
     default_key = initial_status.key
 
-    # Build enum entries (string-backed: the column stores the key itself)
+    # Build enum entries (string-backed: the column stores the key itself).
+    # Indentation is baked in rather than using a squiggly heredoc, which would
+    # only indent the first interpolated entry and leave the rest flush left.
     enum_entries = all_statuses.map do |status|
-      "#{status.key}: #{status.key.inspect}"
+      "    #{status.key}: '#{status.key}'"
     end
 
     # Labels and categories are no longer copied into the model — they are read
     # at runtime from form_template_statuses (see TrackableStatus).
-    new_block = <<~RUBY.chomp
-      enum :status, {
-        #{enum_entries.join(",\n    ")}
-      }, default: :#{default_key}
-    RUBY
+    new_block = "  enum :status, {\n#{enum_entries.join(",\n")}\n  }, default: :#{default_key}"
 
     # Remove existing blocks first, then insert the new unified block
     # Remove enum block
