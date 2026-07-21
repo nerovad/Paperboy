@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 20_260_721_090_000) do
+ActiveRecord::Schema[8.0].define(version: 20_260_721_120_000) do
   create_table 'Employee_Groups', force: :cascade do |t|
     t.integer 'EmployeeID', null: false
     t.bigint 'GroupID', null: false
@@ -707,6 +707,20 @@ ActiveRecord::Schema[8.0].define(version: 20_260_721_090_000) do
     t.bigint 'superseded_by_id'
     t.string 'approved_destination'
     t.string 'status', default: 'in_progress', null: false
+  end
+
+  create_table 'record_edits', force: :cascade do |t|
+    t.string 'record_type', null: false
+    t.bigint 'record_id', null: false
+    t.string 'table_slug', null: false
+    t.string 'column_name', null: false
+    t.text 'old_value'
+    t.text 'new_value'
+    t.string 'changed_by_id'
+    t.string 'changed_by_name'
+    t.datetime 'created_at', null: false
+    t.index ['created_at'], name: 'index_record_edits_on_created_at'
+    t.index %w[record_type record_id], name: 'index_record_edits_on_record_type_and_record_id'
   end
 
   create_table 'safety_reports', force: :cascade do |t|

@@ -85,22 +85,55 @@ class RecordsTableController < ApplicationController
     rows
   end
 
-  # Apply the changes atomically and return { "id::column" => cell_html }.
+  # Apply the changes atomically and return { "id::column" => cell_html }. The
+  # audit rows are written in the same transaction, so a saved batch and its
+  # trail either both land or neither does.
   def apply_changes(table, changes)
     cells = {}
     resolved = {}
+    actor = edit_actor
+
     ActiveRecord::Base.transaction do
       changes.group_by { |c| c[:id] }.each do |id, group|
-        record = table.model.find(id)
-        group.each { |c| record[c[:column]] = c[:value] }
-        record.save!
-        group.each do |c|
-          column = (resolved[c[:column]] ||= TableColumns.resolve(table.page_key, [c[:column]]).first)
-          cells["#{id}::#{c[:column]}"] = helpers.table_cell_content(column, record)
+        record = write_row(table, id, group, actor)
+
+        group.each do |change|
+          column = (resolved[change[:column]] ||= TableColumns.resolve(table.page_key, [change[:column]]).first)
+          cells["#{id}::#{change[:column]}"] = helpers.table_cell_content(column, record)
         end
       end
     end
+
     cells
+  end
+
+  # Write one row's changes and audit each column that actually moved. Previous
+  # values are read before assignment: once save! lands, the originals are gone
+  # and the audit row is the only place they survive.
+  def write_row(table, id, group, actor)
+    record = table.model.find(id)
+    previous = group.to_h { |change| [change[:column], record[change[:column]]] }
+
+    group.each { |change| record[change[:column]] = change[:value] }
+    record.save!
+
+    group.each do |change|
+      before = previous[change[:column]]
+      after = record[change[:column]]
+      next if before.to_s == after.to_s
+
+      RecordEdit.capture(row: record, table_slug: table.slug, column_name: change[:column],
+                         old_value: before, new_value: after, actor: actor)
+    end
+
+    record
+  end
+
+  # Who an edit is attributed to, taken from the session.
+  def edit_actor
+    user = session[:user] || {}
+    { id: user['employee_id'],
+      name: [user['first_name'], user['last_name']].compact_blank.join(' ').presence }
   end
 
   def set_table

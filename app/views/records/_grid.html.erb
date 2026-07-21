@@ -81,6 +81,11 @@
         <h3>Review changes <span data-records-edit-target="confirmCount"></span></h3>
       </div>
       <ul class="records-modal__list" data-records-edit-target="modalList"></ul>
+      <p class="records-modal__warning">
+        These rows will be changed permanently in the database. The previous
+        values are kept in the edit history, but the records themselves are
+        overwritten. Are you sure you want to proceed?
+      </p>
       <div class="records-modal__actions">
         <button type="button" class="btn" data-action="records-edit#closeModal">Cancel</button>
         <button type="button" class="btn approve" data-action="records-edit#save">Save changes</button>

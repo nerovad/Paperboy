@@ -334,6 +334,17 @@
   h3 { margin: 0; font-size: 1.1rem; }
 }
 
+/* Permanence warning, between the change list and the confirm buttons. */
+.records-modal__warning {
+  margin: 0;
+  padding: 12px 20px;
+  border-top: 1px solid $border-color;
+  background: $amber-review-bg;
+  color: $text-color;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
 .records-modal__list {
   margin: 0;
   padding: 8px 0;
