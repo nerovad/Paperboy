@@ -13,8 +13,23 @@ class OshaReport < ApplicationRecord
 
   belongs_to :safety_report, optional: true
 
+  # OSHA gives 8 hours to file the 301 on a reportable incident. Set on
+  # reportable reports only — see SafetyReport#create_osha_report!.
+  REPORTABLE_FILING_WINDOW = 8.hours
+
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
+
+  # Reportable 301s whose 8-hour window has run out while the report is still a
+  # draft, and which haven't already had their one breach notice sent. Drives
+  # OshaReportableDeadlineJob. A report that has advanced out of in_progress has
+  # been filed, so it can no longer breach.
+  scope :reportable_breached, lambda {
+    where(status: :in_progress)
+      .where.not(reportable_due_at: nil)
+      .where(reportable_due_at: ..Time.current)
+      .where(reportable_breach_notified_at: nil)
+  }
 
   # Narrow to an Agency → Division → Department → Unit selection. Each level is
   # optional; a blank value leaves that level unfiltered ("all"). The org
@@ -89,6 +104,13 @@ class OshaReport < ApplicationRecord
 
     end_date = safety_report.date_returned_to_work.presence || Date.current
     (end_date - last_worked).to_i.clamp(0, 180)
+  end
+
+  # True once the 8-hour filing window has lapsed on a still-unfiled reportable
+  # 301. Drives the overdue flag in the inbox, so it stays true after the breach
+  # email has gone out — the row should keep showing as late until it's filed.
+  def reportable_overdue?
+    reportable_due_at.present? && in_progress? && reportable_due_at <= Time.current
   end
 
   # For inbox reassignment - returns the current approver's ID

@@ -166,6 +166,18 @@
     background-color: rgba($primary-color, 0.05);
   }
 
+  /* Blew a filing deadline (e.g. the OSHA 301 8-hour reportable window).
+     Left rail rather than a full row tint so it reads as late without
+     fighting the selected state. */
+  &.row-overdue {
+    box-shadow: inset 3px 0 0 0 $danger;
+
+    td:first-child {
+      font-weight: 600;
+      color: $danger-dark;
+    }
+  }
+
   &.selected {
     background-color: rgba($primary-color, 0.12);
 

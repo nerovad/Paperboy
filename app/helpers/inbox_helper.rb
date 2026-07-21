@@ -41,6 +41,13 @@ module InboxHelper
     FormReference.reference_for(submission, @prefix_map)
   end
 
+  # Rows that have blown a filing deadline get flagged in the queue. Currently
+  # only OSHA 301s carry one (the 8-hour reportable window); any submission
+  # answering `reportable_overdue?` picks up the same treatment.
+  def inbox_overdue?(submission)
+    submission.respond_to?(:reportable_overdue?) && submission.reportable_overdue?
+  end
+
   # Check if a button should be shown for this submission
   def show_inbox_button?(submission, button_type)
     template = form_template_for(submission)

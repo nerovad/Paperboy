@@ -44,15 +44,31 @@ class SafetyReport < ApplicationRecord
     @form_template ||= FormTemplate.find_by(class_name: self.class.name)
   end
 
+  # An OSHA Report (Form 301) is owed when the safety officer marks the incident
+  # as recordable (goes on the 300 Log) or reportable (must also be called in to
+  # OSHA). Either answer spawns the same pre-filled 301.
+  def osha_report_required?
+    osha_recordable == 'Yes' || osha_reportable == 'Yes'
+  end
+
+  # Reportable cases carry an 8-hour deadline for the 301 to be filed.
+  def osha_reportable?
+    osha_reportable == 'Yes'
+  end
+
   # Create a pre-filled OSHA Report from this Safety Report's data.
-  # approver_id is the safety officer who flipped osha_reportable to Yes —
-  # they own the resulting OSHA Report.
+  # approver_id is the safety officer who flipped osha_recordable or
+  # osha_reportable to Yes — they own the resulting OSHA Report.
   def create_osha_report!(approver_id:)
     attrs = OSHA_REPORT_FIELD_MAP.each_with_object({}) do |(source_field, osha_field), hash|
       hash[osha_field] = send(source_field)
     end
     attrs[:approver_id] = approver_id
     attrs[:safety_report_id] = id
+    # Reportable cases owe OSHA a filed 301 within 8 hours. The clock starts now
+    # rather than at the injury date: this flip is the moment the system learns
+    # the case is reportable, so it's the only start the app can honestly act on.
+    attrs[:reportable_due_at] = Time.current + OshaReport::REPORTABLE_FILING_WINDOW if osha_reportable?
 
     create_osha_report(attrs).tap(&:save!)
   end

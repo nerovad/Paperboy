@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 20_260_720_191_310) do
+ActiveRecord::Schema[8.0].define(version: 20_260_721_090_000) do
   create_table 'Employee_Groups', force: :cascade do |t|
     t.integer 'EmployeeID', null: false
     t.bigint 'GroupID', null: false
@@ -590,6 +590,9 @@ ActiveRecord::Schema[8.0].define(version: 20_260_720_191_310) do
     t.string 'case_type'
     t.integer 'restricted_duty_days'
     t.string 'status', default: 'in_progress', null: false
+    t.datetime 'reportable_due_at'
+    t.datetime 'reportable_breach_notified_at'
+    t.index %w[reportable_due_at reportable_breach_notified_at], name: 'index_osha_reports_on_reportable_deadline'
   end
 
   create_table 'parking_lot_submissions', force: :cascade do |t|

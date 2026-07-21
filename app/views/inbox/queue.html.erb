@@ -200,7 +200,7 @@
       <tbody>
         <% if @submissions.present? %>
           <% @submissions.each do |submission| %>
-            <tr class="selectable-row"
+            <tr class="selectable-row<%= ' row-overdue' if inbox_overdue?(submission) %>"
                 data-task-selection-target="row"
                 data-task-type="<%= submission.class.name %>"
                 data-task-id="<%= submission.id %>"

@@ -1,0 +1,20 @@
+<p>
+  An <strong>OSHA reportable</strong> incident's 8-hour window for filing the
+  OSHA 301 has passed, and the report is still an unsubmitted draft.
+</p>
+
+<ul>
+  <li><strong>Employee:</strong> <%= @employee_name %></li>
+  <li><strong>OSHA Report ID:</strong> <%= @report.id %></li>
+  <li><strong>Date of injury/illness:</strong> <%= @report.date_of_injury_or_illness&.strftime('%b %-d, %Y') || 'Not recorded' %></li>
+  <li><strong>Filing deadline:</strong> <%= @due_at&.strftime('%b %-d, %Y at %-l:%M %p') %></li>
+</ul>
+
+<p>
+  The report is waiting in the assigned safety officer's inbox, flagged as
+  overdue. Please complete and submit it.
+</p>
+
+<p>
+  This is the only reminder that will be sent for this report.
+</p>

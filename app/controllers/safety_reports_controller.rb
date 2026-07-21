@@ -113,9 +113,10 @@ class SafetyReportsController < ApplicationController
 
   def update
     if @safety_report.update(safety_report_params)
-      # Auto-create OSHA Report when the safety officer marks as reportable.
-      # The editing user becomes the approver on the spawned OSHA Report.
-      @safety_report.create_osha_report!(approver_id: session.dig(:user, 'employee_id')) if @safety_report.osha_reportable == 'Yes' && @safety_report.osha_report.blank?
+      # Auto-create OSHA Report when the safety officer marks the incident as
+      # either OSHA recordable or OSHA reportable. The editing user becomes the
+      # approver on the spawned OSHA Report.
+      @safety_report.create_osha_report!(approver_id: session.dig(:user, 'employee_id')) if @safety_report.osha_report_required? && @safety_report.osha_report.blank?
 
       redirect_to form_success_path,
                   notice: 'Form updated successfully.',

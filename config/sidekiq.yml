@@ -6,3 +6,8 @@
     class: "ProbationRequestsExpiryJob"
     queue: default
     timezone: "America/Los_Angeles"
+  osha_reportable_deadline_job:
+    cron: "0 * * * *"
+    class: "OshaReportableDeadlineJob"
+    queue: default
+    timezone: "America/Los_Angeles"
