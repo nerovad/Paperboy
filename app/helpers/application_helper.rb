@@ -68,14 +68,13 @@ module ApplicationHelper
     admin_portal_tabs.first&.fetch(:path)
   end
 
-  # The OSHA 300 dropdown entry, which is now the 300A Summary alone — the 300
-  # Log moved to Records (see OshaReport's registry_table). Both still share the
+  # Whether to offer the 300A Summary. It is reached from the OSHA Reporting
+  # form itself rather than the profile dropdown, and the 300 Log moved to
+  # Records (see OshaReport's registry_table) — but all three still share the
   # single 'osha_log' grant, which the 300A controller and the Records table
-  # both enforce.
-  def osha_portal_path
-    return nil unless system_admin? || current_user_dropdown_permissions.include?('osha_log')
-
-    osha_300a_path
+  # each enforce on their own.
+  def osha_300a_visible?
+    system_admin? || current_user_dropdown_permissions.include?('osha_log')
   end
 
   # Display name for an org level as the given agency names it — HCA reverses

@@ -15,10 +15,35 @@
 .form-header {
   display: flex;
   justify-content: center;
+  align-items: center;
   margin-bottom: 20px;
   padding: 0 60px;
+  position: relative;
 
   img { height: 60px; }
+
+  /* Header-level link out of the form (e.g. OSHA Reporting -> 300A Summary).
+     Taken out of flow so the title stays optically centered no matter how
+     wide the action's label is. Carries its own green because base .btn sets
+     only the text colour — matches the Next/Previous buttons below. */
+  &__action {
+    position: absolute;
+    /* Flush with the right edge of the card below. .form-header and
+       .form-wrapper are siblings sharing a containing block, so the card's
+       edge sits half its max-width (900px / 2) out from centre. */
+    right: calc(50% - 450px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: $primary-color;
+
+    &:hover { background: $primary-hover; }
+
+    /* Below the card's max-width it spans the full container, so its edge is
+       the container's — and the centring offset above would go negative. */
+    @media (max-width: 900px) {
+      right: 0;
+    }
+  }
 
   h1 {
     font-size: 1.6rem;
@@ -26,6 +51,19 @@
 
     @media (max-width: 768px) {
       font-size: 1.1rem;
+    }
+  }
+
+  /* Too narrow to sit beside the title without overlapping it — drop the
+     action onto its own line instead. */
+  @media (max-width: 768px) {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0 20px;
+
+    &__action {
+      position: static;
+      transform: none;
     }
   }
 }
