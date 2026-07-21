@@ -27,8 +27,8 @@ class ParkingLotPdfGenerator
       pdf.text 'Agency Information', size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Agency: #{submission.agency_long_name}"
-      pdf.text "Division: #{submission.division_long_name}"
-      pdf.text "Department: #{submission.department_long_name}"
+      pdf.text "#{OrgLabels.label(:division, submission.agency)}: #{submission.division_long_name}"
+      pdf.text "#{OrgLabels.label(:department, submission.agency)}: #{submission.department_long_name}"
       pdf.text "Unit: #{submission.unit_display}" # => "1802 - Probation Services"
 
       pdf.move_down 15

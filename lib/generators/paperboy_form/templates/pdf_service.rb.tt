@@ -26,8 +26,8 @@ class <%= class_name %>PdfGenerator
       pdf.text "Agency Information", size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Agency: #{lookup_agency_name(submission.agency)}"
-      pdf.text "Division: #{lookup_division_name(submission.division)}"
-      pdf.text "Department: #{lookup_department_name(submission.department)}"
+      pdf.text "#{OrgLabels.label(:division, submission.agency)}: #{lookup_division_name(submission.division)}"
+      pdf.text "#{OrgLabels.label(:department, submission.agency)}: #{lookup_department_name(submission.department)}"
       pdf.text "Unit: #{lookup_unit_name(submission.unit)}"
 
       pdf.move_down 15

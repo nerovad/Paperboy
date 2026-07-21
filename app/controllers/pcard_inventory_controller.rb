@@ -14,7 +14,9 @@ class PcardInventoryController < ApplicationController
     @records_table = RegistryTable.find('pcard')
     @page = @records_table.page_key
     @layout = UserSetting.for_employee(current_employee_id).layout_for(@page)
-    @columns = TableColumns.resolve(@page, @layout)
+    # Narrowing the grid to one agency lets the org headers use that agency's
+    # own vocabulary; unfiltered, they stay canonical.
+    @columns = TableColumns.resolve(@page, @layout, context: { org_agency: params[:filter_agency] })
 
     @default_sort = default_sort_key(@columns, prefer: %w[last_name])
     sort_by = params[:sort_by].presence || @default_sort

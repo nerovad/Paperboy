@@ -78,6 +78,13 @@ module ApplicationHelper
     osha_300a_path
   end
 
+  # Display name for an org level as the given agency names it — HCA reverses
+  # "division" and "department" (see OrgLabels). Pass the agency the record or
+  # filter belongs to; a nil agency yields the canonical label.
+  def org_label(level, agency)
+    OrgLabels.label(level, agency)
+  end
+
   # Records tables (see Registry) the current user may open, in declared order.
   # Access mirrors the standalone P-Card gate: system admins see all; everyone
   # else needs the table's group grant or its ACL dropdown key.

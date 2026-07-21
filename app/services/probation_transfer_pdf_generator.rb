@@ -27,8 +27,8 @@ class ProbationTransferPdfGenerator
       pdf.text 'Agency Information', size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Agency: #{request.agency_long_name}"
-      pdf.text "Division: #{request.division_long_name}"
-      pdf.text "Department: #{request.department_long_name}"
+      pdf.text "#{OrgLabels.label(:division, request.agency)}: #{request.division_long_name}"
+      pdf.text "#{OrgLabels.label(:department, request.agency)}: #{request.department_long_name}"
       pdf.text "Unit: #{request.unit_display}"
 
       pdf.move_down 15

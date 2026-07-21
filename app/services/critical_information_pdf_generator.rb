@@ -28,8 +28,8 @@ class CriticalInformationPdfGenerator
       pdf.text 'Agency Information', size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Agency: #{cir.agency}"
-      pdf.text "Division: #{cir.division}"
-      pdf.text "Department: #{cir.department}"
+      pdf.text "#{OrgLabels.label(:division, cir.agency)}: #{cir.division}"
+      pdf.text "#{OrgLabels.label(:department, cir.agency)}: #{cir.department}"
       pdf.text "Unit: #{cir.unit}"
 
       pdf.move_down 15

@@ -7,11 +7,28 @@ function getTurbo() {
   return window.Turbo
 }
 
+// Agencies whose vocabulary reverses "division" and "department". Mirrors
+// OrgLabels::SWAPPED_AGENCY_IDS — keep the two in step.
+const SWAPPED_AGENCY_IDS = ["HCA", "HCAV"]
+const ORG_LABELS = {
+  canonical: { division: "Division", department: "Department" },
+  swapped:   { division: "Department", department: "Division" }
+}
+
 export default class extends Controller {
-  static targets = ["agency", "division", "department", "unit"]
+  static targets = ["agency", "division", "department", "unit",
+                    "divisionLabel", "departmentLabel"]
+
+  // The org labels depend on the selected agency, which the user can change
+  // mid-form, so the controller owns them rather than the server rendering
+  // them once.
+  connect() {
+    this._applyOrgLabels()
+  }
 
   // ===== public handlers =====
   loadDivisions = async () => {
+    this._applyOrgLabels()
     this._prep(this.divisionTarget, [this.departmentTarget, this.unitTarget])
     await this._fetchRenderOrFallback(
       `/lookups/divisions?agency=${encodeURIComponent(this.agencyTarget.value)}`,
@@ -39,6 +56,16 @@ export default class extends Controller {
   }
 
   // ===== internals =====
+  // Relabel the division/department fields for the selected agency. Only the
+  // label text changes — the fields keep their names and values.
+  _applyOrgLabels() {
+    const agency = (this.hasAgencyTarget ? this.agencyTarget.value : "").trim().toUpperCase()
+    const labels = SWAPPED_AGENCY_IDS.includes(agency) ? ORG_LABELS.swapped : ORG_LABELS.canonical
+
+    if (this.hasDivisionLabelTarget) this.divisionLabelTarget.textContent = labels.division
+    if (this.hasDepartmentLabelTarget) this.departmentLabelTarget.textContent = labels.department
+  }
+
   _prep(primary, downstream = []) {
     this._setOptions(primary, [["", "Loading…"]], true)
     downstream.forEach(sel => this._setOptions(sel, [["", "Select one"]], true))

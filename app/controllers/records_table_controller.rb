@@ -12,7 +12,9 @@ class RecordsTableController < ApplicationController
   def show
     @page = @table.page_key
     @layout = UserSetting.for_employee(current_employee_id).layout_for(@page)
-    @columns = TableColumns.resolve(@page, @layout)
+    # Narrowing the grid to one agency lets the org headers use that agency's
+    # own vocabulary; unfiltered, they stay canonical.
+    @columns = TableColumns.resolve(@page, @layout, context: { org_agency: params[:filter_agency] })
 
     rows = @table.scope.to_a
     @default_sort = default_sort_key(@columns)

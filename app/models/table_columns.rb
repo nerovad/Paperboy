@@ -48,9 +48,9 @@ class TableColumns
 
   # Built-in column definitions per page. Order here is the normalized default.
   # value: raw extractor (row -> comparable). filter: nil or {param:, kind:}.
-  def self.builtins(page)
+  def self.builtins(page, context = {})
     page = page.to_s
-    return records_builtins(page) if page.start_with?(RECORDS_PREFIX)
+    return records_builtins(page, context) if page.start_with?(RECORDS_PREFIX)
 
     case page.to_sym
     when :inbox       then inbox_builtins
@@ -75,19 +75,29 @@ class TableColumns
   # Derive builtins from a Records table's declared columns. Rows are the
   # registry model's own AR instances, so every extractor is a plain attribute
   # read — the same shape the inbox custom-column path already uses.
-  def self.records_builtins(page)
+  def self.records_builtins(page, context = {})
     table = RegistryTable.find(page.to_s.delete_prefix(RECORDS_PREFIX))
     return {} unless table
 
     table.columns.to_h do |col|
       [col.name, {
-        label: col.label,
+        label: org_aware_label(col, context[:org_agency]),
         sort: (col.sortable ? col.name : nil),
         kind: col.kind,
         filter: col.filter_kind && { param: :"filter_#{col.name}", kind: col.filter_kind },
         value: ->(row) { row.public_send(col.name) }
       }]
     end
+  end
+
+  # A grid shows rows from many agencies at once, so its headers stay canonical
+  # unless the view is narrowed to a single agency — only then can a header
+  # honestly use that agency's vocabulary (see OrgLabels).
+  def self.org_aware_label(col, agency)
+    return col.label if agency.blank?
+    return col.label unless %w[division department].include?(col.name)
+
+    OrgLabels.label(col.name, agency)
   end
 
   def self.inbox_builtins
@@ -195,7 +205,7 @@ class TableColumns
   # Resolve a layout into ordered Column objects. `context` gates permission
   # columns, e.g. resolve(:submissions, layout, context: { employee_column: true }).
   def self.resolve(page, layout, context: {})
-    defs = builtins(page)
+    defs = builtins(page, context)
     sanitize_layout(page, layout).filter_map do |entry|
       if entry.is_a?(String)
         cfg = defs[entry]

@@ -1769,7 +1769,7 @@ class FormTemplatesController < ApplicationController
         </div>
 
         <div class="form-group">
-          <%= form.label :division, "Division" %>
+          <%= form.label :division, "Division", data: { gsabss_selects_target: "divisionLabel" } %>
           <%= form.select :division,
                 options_for_select(@division_options, @#{form_template.file_name}.division),
                 {},
@@ -1782,7 +1782,7 @@ class FormTemplatesController < ApplicationController
         </div>
 
         <div class="form-group">
-          <%= form.label :department, "Department" %>
+          <%= form.label :department, "Department", data: { gsabss_selects_target: "departmentLabel" } %>
           <%= form.select :department,
                 options_for_select(@department_options, @#{form_template.file_name}.department),
                 {},
@@ -2205,7 +2205,7 @@ class FormTemplatesController < ApplicationController
         </div>
 
         <div class="form-group">
-          <%= form.label :division, "Division" %>
+          <%= form.label :division, "Division", data: { gsabss_selects_target: "divisionLabel" } %>
           <%= form.select :division,
                 options_for_select(@division_options, @prefill_data[:division]),
                 {},
@@ -2218,7 +2218,7 @@ class FormTemplatesController < ApplicationController
         </div>
 
         <div class="form-group">
-          <%= form.label :department, "Department" %>
+          <%= form.label :department, "Department", data: { gsabss_selects_target: "departmentLabel" } %>
           <%= form.select :department,
                 options_for_select(@department_options, @prefill_data[:department]),
                 {},
