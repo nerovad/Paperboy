@@ -5,6 +5,10 @@ import Sortable from "sortablejs";
 // tables. Lets a user reorder, show/hide, and add form-field columns, capped at
 // however many columns fit the table container. Saves the layout per-user and
 // reloads so the server re-renders columns + filters.
+//
+// Records grids opt out of the cap with `scrollable: true`: they scroll
+// horizontally (see .records-table-wrapper), so a table is allowed to be wider
+// than its container and every column of the record stays reachable.
 export default class extends Controller {
   static targets = [
     "backdrop", "shownList", "availableList",
@@ -16,6 +20,7 @@ export default class extends Controller {
     saveUrl: String,
     catalog: Object,
     minColPx: { type: Number, default: 150 },
+    scrollable: { type: Boolean, default: false },
   };
 
   connect() {
@@ -76,6 +81,9 @@ export default class extends Controller {
   // ----- Capacity / fit --------------------------------------------------
 
   maxCols() {
+    // A horizontally scrolling grid has no width limit to fit within.
+    if (this.scrollableValue) return Infinity;
+
     const width = this.hasTableContainerTarget
       ? this.tableContainerTarget.clientWidth
       : this.element.clientWidth;
@@ -96,9 +104,13 @@ export default class extends Controller {
     const count = this.shownCount();
     const max = this.maxCols();
     if (this.hasCapacityTarget) {
-      this.capacityTarget.textContent = full
-        ? `${count} of ${max} columns — no room for more`
-        : `${count} of ${max} columns`;
+      if (this.scrollableValue) {
+        this.capacityTarget.textContent = `${count} column${count === 1 ? "" : "s"} — the table scrolls sideways`;
+      } else {
+        this.capacityTarget.textContent = full
+          ? `${count} of ${max} columns — no room for more`
+          : `${count} of ${max} columns`;
+      }
       this.capacityTarget.classList.toggle("is-full", full);
     }
     this.setAddDisabled(full);

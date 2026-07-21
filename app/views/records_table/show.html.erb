@@ -6,5 +6,8 @@
     <h1 class="records-title"><%= @table.label %></h1>
   </div>
 
+  <%= render 'records/toolbar', path: records_table_path(@table.slug), page: @page,
+             columns: @columns, filter_options: @filter_options %>
+
   <%= render 'records/grid', table: @table, page: @page, columns: @columns, rows: @records %>
 </div>

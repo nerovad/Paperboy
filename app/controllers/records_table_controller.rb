@@ -16,7 +16,13 @@ class RecordsTableController < ApplicationController
     # own vocabulary; unfiltered, they stay canonical.
     @columns = TableColumns.resolve(@page, @layout, context: { org_agency: params[:filter_agency] })
 
-    rows = @table.scope.to_a
+    rows = RecordsSearch.apply(@table, @table.scope, params[:search]).to_a
+
+    # Dropdown values come from the searched set but before the column filters
+    # narrow it, so picking one value doesn't empty every other dropdown.
+    @filter_options = collect_filter_options(rows, select_filter_extractors(@columns))
+    rows = apply_column_filters(rows, @columns)
+
     @default_sort = default_sort_key(@columns)
     sort_by = params[:sort_by].presence || @default_sort
     sort_direction = params[:sort_direction] || 'asc'
@@ -49,6 +55,33 @@ class RecordsTableController < ApplicationController
   end
 
   private
+
+  # Extractors for the columns that filter as a dropdown, keyed by filter param.
+  def select_filter_extractors(columns)
+    columns.select { |column| column.filterable? && !column.search_filter? }
+           .to_h { |column| [column.filter_param.to_s, column.value] }
+  end
+
+  # `:select` columns match their dropdown value exactly; `:search` columns
+  # match as a contains, which is what a free-text box implies. Filterable's
+  # shared #apply_filters only matches exactly, so the contains pass lives here
+  # rather than changing behaviour the Inbox and Submissions rely on.
+  def apply_column_filters(rows, columns)
+    search_columns, select_columns = columns.select(&:filterable?).partition(&:search_filter?)
+
+    rows = apply_filters(rows, filter_configs: select_columns.map do |column|
+      { param: column.filter_param, extractor: column.value }
+    end)
+
+    search_columns.each do |column|
+      needle = params[column.filter_param].to_s.strip.downcase
+      next if needle.blank?
+
+      rows = rows.select { |row| column.value.call(row).to_s.downcase.include?(needle) }
+    end
+
+    rows
+  end
 
   # Apply the changes atomically and return { "id::column" => cell_html }.
   def apply_changes(table, changes)

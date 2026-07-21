@@ -158,7 +158,7 @@
   thead th {
     position: sticky;
     top: 0;
-    z-index: 1;
+    z-index: 2;
     background: $surface-subtle;
     font-weight: 600;
     color: $label-color;
@@ -177,6 +177,31 @@
     opacity: 0.55;
     text-decoration: line-through;
     text-decoration-color: rgba(0, 0, 0, 0.25);
+  }
+
+  /* Sticky leading column. Wide grids scroll sideways, so the first column
+     stays pinned and every row remains identifiable. Sticky cells need their
+     own opaque background — the row's would scroll out from under them — and
+     must outrank the ordinary cells sliding beneath. Stacking order: header
+     corner (3) > header row (2) > leading body cells (1). */
+  th:first-child,
+  td:first-child {
+    position: sticky;
+    left: 0;
+    background: $form-bg;
+  }
+
+  tbody td:first-child {
+    z-index: 1;
+  }
+
+  thead th:first-child {
+    z-index: 3;
+    background: $surface-subtle;
+  }
+
+  tbody tr:hover td:first-child {
+    background: $surface-muted;
   }
 }
 

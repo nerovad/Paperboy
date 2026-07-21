@@ -1,0 +1,27 @@
+<%# Search + column filters for a Records grid. The search box matches across
+    every text column on the table (see RecordsSearch); the per-column controls
+    come from the filter kinds each table declares (see Registry).
+    locals: path, columns, filter_options, page %>
+<div class="records-toolbar">
+  <form action="<%= path %>" method="get" class="filter-form" data-controller="auto-submit" data-turbo="false">
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label for="search">Search</label>
+        <%= text_field_tag :search, params[:search],
+              class: 'filter-select', placeholder: 'Search this table…', autocomplete: 'off',
+              data: { action: "change->auto-submit#submit" } %>
+      </div>
+
+      <%= render "shared/column_filters", columns: columns, filter_options: filter_options, page: page %>
+
+      <% active = request.query_parameters.keys.any? { |k| k == "search" || k.start_with?("filter_") } %>
+      <% if active %>
+        <%= link_to "Clear", path, class: "btn clear-filters", data: { turbo: false } %>
+      <% end %>
+    </div>
+
+    <%# Keep the current sort when the filter form round-trips. %>
+    <%= hidden_field_tag :sort_by, params[:sort_by] %>
+    <%= hidden_field_tag :sort_direction, params[:sort_direction] %>
+  </form>
+</div>
