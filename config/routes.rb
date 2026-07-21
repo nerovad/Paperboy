@@ -106,7 +106,6 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  get 'osha_log', to: 'osha_logs#index', as: :osha_log
   get   'osha_300a',         to: 'osha_300as#show', as: :osha_300a
   patch 'osha_300a',         to: 'osha_300as#update'
   get   'osha_300a/payload', to: 'osha_300as#payload', as: :osha_300a_payload

@@ -23,6 +23,7 @@ module Registry
     class_attribute :registry_dropdown_key, instance_accessor: false
     class_attribute :registry_route, instance_accessor: false
     class_attribute :registry_eager_load, instance_accessor: false
+    class_attribute :registry_default_scope, instance_accessor: false
     class_attribute :registry_columns, instance_accessor: false, default: []
     class_attribute :registry_source_config, instance_accessor: false
   end
@@ -36,13 +37,19 @@ module Registry
     #                to use the generic records grid at /records/<slug>.
     #   includes     association(s) to eager-load for the grid (avoids N+1 when
     #                columns read through a belongs_to).
-    def registry_table(slug:, label:, permission: nil, dropdown_key: nil, route: nil, includes: nil)
+    #   scope        lambda evaluated on the model, narrowing which rows the
+    #                table shows; omit to show every row. Use it when the table
+    #                is a view over a subset (e.g. the OSHA 300 Log is only the
+    #                approved reports).
+    def registry_table(slug:, label:, permission: nil, dropdown_key: nil, route: nil,
+                       includes: nil, scope: nil)
       self.registry_slug = slug.to_s
       self.registry_label = label
       self.registry_permission = permission
       self.registry_dropdown_key = dropdown_key
       self.registry_route = route
       self.registry_eager_load = includes
+      self.registry_default_scope = scope
     end
 
     # Declare one column. Call order determines the default column order.

@@ -68,21 +68,14 @@ module ApplicationHelper
     admin_portal_tabs.first&.fetch(:path)
   end
 
-  # Tabs inside the OSHA 300 portal, in tab-bar order. Both screens are two
-  # views of the same annual OSHA filing and have always shared the single
-  # 'osha_log' grant — which is exactly what both controllers enforce — so
-  # they are shown together or not at all.
-  def osha_portal_tabs
-    return [] unless system_admin? || current_user_dropdown_permissions.include?('osha_log')
-
-    [
-      { key: 'osha_log',  label: 'OSHA 300 Log',      path: osha_log_path },
-      { key: 'osha_300a', label: 'OSHA 300A Summary', path: osha_300a_path }
-    ]
-  end
-
+  # The OSHA 300 dropdown entry, which is now the 300A Summary alone — the 300
+  # Log moved to Records (see OshaReport's registry_table). Both still share the
+  # single 'osha_log' grant, which the 300A controller and the Records table
+  # both enforce.
   def osha_portal_path
-    osha_portal_tabs.first&.fetch(:path)
+    return nil unless system_admin? || current_user_dropdown_permissions.include?('osha_log')
+
+    osha_300a_path
   end
 
   # Records tables (see Registry) the current user may open, in declared order.

@@ -1,5 +1,3 @@
-<%= render "shared/portal_tabs", tabs: osha_portal_tabs, active: :osha_300a, label: "OSHA 300" %>
-
 <div class="form-wrapper">
   <%# Year selector + org filter %>
   <div class="form-row d-flex flex-wrap" style="align-items: end; gap: 12px; margin-bottom: 20px;">
@@ -22,7 +20,9 @@
       <% if osha_org_filters.any? %>
         <%= link_to "Clear filters", osha_300a_path(year: @year), class: "btn", data: { turbo: false } %>
       <% end %>
-      <%= link_to "View 300 Log", osha_log_path(osha_org_filters.merge(year: @year)), class: "btn secondary", data: { turbo: false } %>
+      <%# The 300 Log is a Records table now; it carries no year/org filters, so
+          this link can't hand its own filter state along. %>
+      <%= link_to "View 300 Log", records_table_path('osha-300-log'), class: "btn secondary" %>
     </div>
   </div>
 
@@ -188,7 +188,7 @@
     Computed from <strong><%= @totals[:case_count] %></strong> approved
     <%= "OshaReport".pluralize(@totals[:case_count]) %> for <strong><%= @year %></strong><%=
       " (filtered)" if osha_org_filters.any? %>.
-    <%= link_to "View 300 Log →", osha_log_path(osha_org_filters.merge(year: @year)), data: { turbo: false } %>
+    <%= link_to "View 300 Log →", records_table_path('osha-300-log') %>
   </p>
 
   <% if osha_org_filters.any? %>

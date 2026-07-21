@@ -118,11 +118,7 @@
                 <% if auth_console_user? || current_user_dropdown_permissions.include?('auth_console') %>
                   <%= link_to "Authorizations", authorization_console_index_path, class: "btn btn-info" %>
                 <% end %>
-                <%# Records pillar: living inventory tables (P-Cards, …). Shown
-                    when the user may open at least one table. %>
-                <% if records_portal_path %>
-                  <%= link_to "Records", records_portal_path, class: "btn btn-info" %>
-                <% end %>
+                <%# Records is a tab of My Work, not a dropdown entry of its own. %>
                 <%# The 300 Log and 300A Summary are tabs of one OSHA 300
                     portal; this lands on the first tab the user may see. %>
                 <% if osha_portal_path %>

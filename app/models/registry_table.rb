@@ -7,7 +7,7 @@
 # Instances wrap a registry model and expose its declared metadata to the
 # controllers, the column customizer (TableColumns) and ingestion.
 class RegistryTable
-  MODEL_NAMES = %w[PcardInventory FleetVehicle].freeze
+  MODEL_NAMES = %w[PcardInventory FleetVehicle OshaReport].freeze
 
   class << self
     def models
@@ -51,11 +51,15 @@ class RegistryTable
   def columns = model.registry_columns
   def page_key = "records:#{slug}"
 
-  def count = model.count
+  # Counts the rows the table actually shows, so a narrowed table's landing
+  # card doesn't advertise rows the grid then hides.
+  def count = scope.count
 
-  # Row set for a grid, with any declared associations eager-loaded.
+  # Row set for a grid: the declared subset (all rows unless the table narrows
+  # it), with any declared associations eager-loaded.
   def scope
-    model.registry_eager_load ? model.includes(model.registry_eager_load) : model.all
+    rel = model.registry_default_scope ? model.instance_exec(&model.registry_default_scope) : model.all
+    model.registry_eager_load ? rel.includes(model.registry_eager_load) : rel
   end
 
   def ingest(form)
