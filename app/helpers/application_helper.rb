@@ -98,6 +98,17 @@ module ApplicationHelper
     table.dropdown_key.present? && current_user_dropdown_permissions.include?(table.dropdown_key)
   end
 
+  # Whether the current user may edit a Records table's rows inline. Editing is
+  # a grant of its own — being able to open a grid never implies being able to
+  # rewrite it — so a viewer sees a read-only table until an admin ticks the
+  # table in the ACL "Records Editing" section. System admins bypass, matching
+  # every other permission gate.
+  def can_edit_record_table?(table)
+    return false unless can_access_record_table?(table)
+
+    system_admin? || current_user_record_edit_permission_keys.include?(table.slug)
+  end
+
   # Landing path for the Records pillar, or nil when the user may open no table.
   def records_portal_path
     records_portal_tables.any? ? records_path : nil

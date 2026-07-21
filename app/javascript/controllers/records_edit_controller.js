@@ -1,23 +1,43 @@
 import { Controller } from "@hotwired/stimulus";
 
-// Inline editing for the Records grid with an explicit save step. Editing a cell
-// STAGES the change locally (marked dirty) — nothing is written until the user
-// clicks "Review & Save", which opens a modal summarizing every change. Only on
-// confirming the modal are all changes sent in one batch (PATCH) and finalized.
+// Inline editing for the Records grid with an explicit save step. The grid opens
+// read-only; "Edit" puts it into edit mode. Editing a cell then STAGES the change
+// locally (marked dirty) — nothing is written until the user clicks "Review &
+// Save", which opens a modal summarizing every change. Only on confirming the
+// modal are all changes sent in one batch (PATCH) and finalized.
+//
+// Edit mode is a convenience, not a permission: cells are only rendered editable
+// when the viewer holds the table's record_edit grant, and the PATCH endpoint
+// re-checks that grant regardless of what the page offers.
 export default class extends Controller {
   static values = { url: String };
-  static targets = ["savebar", "count", "modal", "modalList", "confirmCount"];
+  static targets = ["savebar", "count", "modal", "modalList", "confirmCount", "modeButton"];
 
   connect() {
     this.pending = new Map(); // "id::column" -> { id, column, label, oldText, value, rowLabel }
+    this.editing = false;
   }
 
   key(id, column) {
     return `${id}::${column}`;
   }
 
+  // ---- edit mode -----------------------------------------------------------
+  // Staged changes survive leaving edit mode; the savebar stays up so they can
+  // still be reviewed, saved or discarded.
+  toggleMode() {
+    this.editing = !this.editing;
+    this.element.classList.toggle("is-edit-mode", this.editing);
+    if (this.hasModeButtonTarget) {
+      this.modeButtonTarget.textContent = this.editing ? "Done editing" : "Edit";
+      this.modeButtonTarget.classList.toggle("approve", this.editing);
+    }
+  }
+
   // ---- open an inline input ------------------------------------------------
   start(event) {
+    if (!this.editing) return;
+
     const cell = event.currentTarget;
     if (cell.classList.contains("is-editing")) return;
     cell.classList.add("is-editing");

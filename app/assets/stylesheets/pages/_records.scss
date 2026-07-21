@@ -205,18 +205,27 @@
   }
 }
 
-/* Editable cells: signal clickability, ring on hover, seamless input. */
-.records-cell.is-editable {
+/* The Edit / Done editing toggle, above the table. */
+.records-editbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+/* Editable cells: signal clickability, ring on hover, seamless input. The
+   affordances only appear in edit mode — outside it the grid reads as the
+   read-only table it behaves as. */
+.records-page.is-edit-mode .records-cell.is-editable {
   cursor: text;
 
   &:hover {
     box-shadow: inset 0 0 0 2px rgba($primary-color, 0.35);
   }
+}
 
-  &.is-editing {
-    box-shadow: inset 0 0 0 2px $primary-color;
-    padding: 0;
-  }
+.records-cell.is-editing {
+  box-shadow: inset 0 0 0 2px $primary-color;
+  padding: 0;
 }
 
 .records-edit-input {

@@ -38,7 +38,9 @@ class RecordsTableController < ApplicationController
   def bulk_update
     table = RegistryTable.find(params[:slug])
     return head :not_found unless table
-    return head :forbidden unless helpers.can_access_record_table?(table)
+    # Checked here and not only in the view: hiding the Edit button stops the UI
+    # offering edits, it does not stop a PATCH arriving without one.
+    return head :forbidden unless helpers.can_edit_record_table?(table)
 
     changes = Array(params.permit(changes: %i[id column value])[:changes])
     return render(json: { ok: true, cells: {} }) if changes.empty?

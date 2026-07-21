@@ -1,7 +1,11 @@
 <%# Shared Records grid — Airtable-style table with customizable columns and
-    staged inline editing (edit → Review & Save → confirm modal → batch write).
-    locals: table, page, columns, rows, edit_path (optional lambda(row) -> path) %>
+    staged inline editing (Edit → change cells → Review & Save → confirm modal →
+    batch write). The grid is read-only unless the viewer holds the table's
+    record_edit grant; see ApplicationHelper#can_edit_record_table?.
+    locals: table, page, columns, rows, edit_path (optional lambda(row) -> path),
+            editable (optional, defaults to the viewer's grant) %>
 <% edit_path = local_assigns.fetch(:edit_path, nil) %>
+<% editable = local_assigns.fetch(:editable) { can_edit_record_table?(table) } %>
 <div class="records-page"
      data-controller="column-customizer records-edit"
      data-column-customizer-page-value="<%= page %>"
@@ -10,6 +14,14 @@
      data-column-customizer-min-col-px-value="150"
      data-column-customizer-scrollable-value="true"
      data-records-edit-url-value="<%= records_table_path(table.slug) %>">
+  <% if editable && rows.any? %>
+    <div class="records-editbar">
+      <button type="button" class="btn"
+              data-records-edit-target="modeButton"
+              data-action="records-edit#toggleMode">Edit</button>
+    </div>
+  <% end %>
+
   <% if rows.any? %>
     <div class="records-table-wrapper" data-column-customizer-target="tableContainer">
       <table class="records-table">
@@ -27,7 +39,7 @@
           <% rows.each do |row| %>
             <tr class="<%= 'is-inactive' if row.respond_to?(:canceled_date) && row.canceled_date.present? %>">
               <% columns.each do |column| %>
-                <% if records_cell_editable?(table, column) %>
+                <% if editable && records_cell_editable?(table, column) %>
                   <td class="records-cell is-editable"
                       data-action="click->records-edit#start"
                       data-id="<%= row.id %>"

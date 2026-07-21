@@ -6,7 +6,8 @@ class ApplicationController < ActionController::Base
   before_action :set_current_user
   helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain,
                 :auth_console_admin?, :auth_console_user?, :pcard_admin?, :current_user_dropdown_permissions,
-                :current_user_form_permission_keys, :current_user_application_permission_keys
+                :current_user_form_permission_keys, :current_user_application_permission_keys,
+                :current_user_record_edit_permission_keys
 
   def current_user
     user_data = session[:user]
@@ -126,6 +127,15 @@ class ApplicationController < ActionController::Base
     return @current_user_application_permission_keys if defined?(@current_user_application_permission_keys)
 
     @current_user_application_permission_keys = load_user_permissions('application')
+  end
+
+  # Records tables this user may edit inline, keyed by registry slug. Viewing a
+  # grid and editing it are separate grants: a table's view permission says
+  # nothing about whether its rows may be rewritten.
+  def current_user_record_edit_permission_keys
+    return @current_user_record_edit_permission_keys if defined?(@current_user_record_edit_permission_keys)
+
+    @current_user_record_edit_permission_keys = load_user_permissions('record_edit')
   end
 
   def require_system_admin
