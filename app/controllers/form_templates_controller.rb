@@ -721,6 +721,10 @@ class FormTemplatesController < ApplicationController
     if update_routing && form_template.requires_approval?
       # Add routing logic to the create action
       routing_logic = generate_approval_routing_logic(form_template)
+      # generate_* builds the block with a squiggly heredoc that strips
+      # indentation; re-indent every line to 6 spaces so the block sits inside
+      # the create action and stays rubocop-clean after each regeneration.
+      routing_logic = routing_logic.gsub("\n", "\n      ")
 
       # Replace the entire routing block between markers (idempotent on re-runs)
       if content.include?('# ROUTING_BLOCK_START')

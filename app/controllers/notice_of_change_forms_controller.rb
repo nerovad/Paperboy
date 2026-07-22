@@ -66,18 +66,13 @@ class NoticeOfChangeFormsController < ApplicationController
     @notice_of_change_form.employee_id = employee_id if @notice_of_change_form.respond_to?(:employee_id=)
 
     if @notice_of_change_form.save
-      # Keep success behavior simple for the template; you can extend per form.
+      # ROUTING_BLOCK_START
       # Multi-step approval routing (1 steps)
-      # Step 1: employee #135272
-      approver_id = '135272'
-      @notice_of_change_form.update(status: :step_1_pending, approver_id: approver_id)
-      # TODO: Send notification to employee #135272
-      # Multi-step approval routing (1 steps)
-      # Step 1: employee #123385
-      approver_id = '123385'
-      @notice_of_change_form.update(status: :step_1_pending, approver_id: approver_id)
-      # TODO: Send notification to employee #123385
-      redirect_to form_success_path, notice: 'Form submitted and routed to employee #123385 for approval.', allow_other_host: false, status: :see_other
+      # Delegates to TrackableStatus#start_approval!, which picks the first
+      # step whose condition matches the submitted record.
+      @notice_of_change_form.start_approval!
+      redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
+      # ROUTING_BLOCK_END
     else
       # Rebuild options on failure (same as in new)
       # (We intentionally repeat the logic to keep this template self-contained.)
