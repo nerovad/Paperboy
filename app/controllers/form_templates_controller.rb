@@ -119,6 +119,9 @@ class FormTemplatesController < ApplicationController
             )
           end
         end
+
+        # Third pass: link repeating-section members to their section container
+        resolve_repeat_groups(created_fields, params[:fields])
       end
 
       # Run the generator command
@@ -132,6 +135,9 @@ class FormTemplatesController < ApplicationController
 
       # Check if generation was successful
       if generator_status.success? && migrate_status.success?
+        # Create child tables for any repeating sections before wiring the model
+        sync_repeating_section_tables(@form_template)
+
         # Customize generated model based on submission routing
         customize_generated_model(@form_template)
 
@@ -223,6 +229,8 @@ class FormTemplatesController < ApplicationController
       if @form_template.skip_code_generation?
         Rails.logger.info "Skipping code generation for #{@form_template.class_name} (skip_code_generation)"
       else
+        sync_repeating_section_tables(@form_template) if fields_changed
+
         if fields_changed
           generate_dynamic_view(@form_template.class_name)
           generate_dynamic_edit_view(@form_template.class_name)
@@ -529,6 +537,37 @@ class FormTemplatesController < ApplicationController
     end
   end
 
+  # Second-pass linker: tag each field that belongs to a repeating section with
+  # options['repeat_group'] = the section field's field_name. The submitted
+  # reference is either "field_N" (index into the just-created array, like
+  # conditionals) or a direct field_name/id when editing.
+  def resolve_repeat_groups(created_fields, fields_params)
+    fields_params.each_with_index do |field_data, index|
+      member = created_fields[index]
+      next if member.nil?
+
+      section = repeat_section_for_ref(field_data[:repeat_group], created_fields)
+      next unless section
+
+      member.update!(options: (member.options || {}).merge('repeat_group' => section.field_name))
+    end
+  end
+
+  def repeat_section_for_ref(ref, created_fields)
+    return nil if ref.blank?
+
+    section =
+      if ref =~ /^field_(\d+)$/
+        created_fields[::Regexp.last_match(1).to_i]
+      elsif ref.to_i.positive?
+        created_fields.find { |f| f.id == ref.to_i }
+      else
+        created_fields.find { |f| f.field_name == ref }
+      end
+
+    section if section&.repeating_section?
+  end
+
   def build_field_options(field_data)
     options = {}
 
@@ -549,6 +588,11 @@ class FormTemplatesController < ApplicationController
     when 'information'
       options['information_text'] = field_data[:information_text].to_s
       options['acknowledgeable'] = field_data[:acknowledgeable] == '1'
+    when 'repeating_section'
+      options['repeat_min'] = field_data[:repeat_min].to_i if field_data[:repeat_min].present?
+      options['repeat_max'] = field_data[:repeat_max].to_i if field_data[:repeat_max].present?
+      options['add_label'] = field_data[:add_label].to_s if field_data[:add_label].present?
+      options['item_label'] = field_data[:item_label].to_s if field_data[:item_label].present?
     end
 
     # Table-lookup answer mode is available on any field type, so it's folded in
@@ -656,12 +700,125 @@ class FormTemplatesController < ApplicationController
       end
     end
 
+    # Add has_many + nested attributes for each repeating section (idempotent).
+    form_template.repeating_sections.each do |section|
+      assoc = section.section_association_name
+      next if assoc.blank? || content.include?("has_many :#{assoc}")
+
+      nested = <<~RUBY.chomp
+        has_many :#{assoc}, dependent: :destroy
+          accepts_nested_attributes_for :#{assoc}, allow_destroy: true, reject_if: :all_blank
+      RUBY
+      content.sub!("include TrackableStatus\n") do |match|
+        "#{match}\n  #{nested}\n"
+      end
+    end
+
     # Drop any per-model status_label override (and its doc comment); TrackableStatus
     # provides it by reading the central form_template_statuses table.
     content.gsub!(/(?:^[ \t]*#[^\n]*\n)*^[ \t]*def status_label\b.*?^[ \t]*end\b\n/m, '')
     content.gsub!(/\n{3,}/, "\n\n")
 
     File.write(model_path, content)
+
+    generate_section_models(form_template)
+  end
+
+  # Write a child model file per repeating section (belongs_to the parent,
+  # serializing any choices_dropdown members as JSON arrays). Idempotent: an
+  # existing file is left untouched so hand edits survive.
+  def generate_section_models(form_template)
+    form_template.repeating_sections.each do |section|
+      class_name = section.section_class_name
+      assoc = section.section_association_name
+      next if class_name.blank? || assoc.blank?
+
+      model_path = Rails.root.join("app/models/#{assoc.singularize}.rb")
+      next if File.exist?(model_path)
+
+      serials = section.section_members.select(&:choices_dropdown?).map do |m|
+        "  serialize :#{m.field_name}, coder: JSON, type: Array"
+      end
+
+      body = ["  belongs_to :#{form_template.file_name}"]
+      body += serials if serials.any?
+
+      content = <<~RUBY
+        # frozen_string_literal: true
+
+        class #{class_name} < ApplicationRecord
+        #{body.join("\n")}
+        end
+      RUBY
+
+      File.write(model_path, content)
+    end
+  end
+
+  # Create/patch the child table for each repeating section, then migrate.
+  # New sections get a create_table; sections that gained members get add_column.
+  # Removed members are left in place (safe) rather than dropped.
+  def sync_repeating_section_tables(form_template)
+    sections = form_template.repeating_sections.to_a
+    return if sections.empty?
+
+    conn = ActiveRecord::Base.connection
+    statements = []
+
+    sections.each do |section|
+      table = section.section_association_name
+      members = section.section_members
+      next if table.blank? || members.empty?
+
+      if conn.data_source_exists?(table)
+        existing = conn.columns(table).map(&:name)
+        members.each do |m|
+          next if existing.include?(m.field_name)
+
+          statements << "add_column :#{table}, :#{m.field_name}, :#{m.child_column_type}"
+        end
+      else
+        statements << build_create_section_table(section, members)
+      end
+    end
+
+    return if statements.empty?
+
+    run_section_migration(form_template, statements)
+  end
+
+  def build_create_section_table(section, members)
+    fk = section.section_foreign_key
+    lines = ["    create_table :#{section.section_association_name} do |t|"]
+    lines << "      t.bigint :#{fk}, null: false"
+    members.each { |m| lines << "      t.#{m.child_column_type} :#{m.field_name}" }
+    lines << '      t.timestamps'
+    lines << '    end'
+    lines << "    add_index :#{section.section_association_name}, :#{fk}"
+    lines.join("\n")
+  end
+
+  def run_section_migration(form_template, statements)
+    stamp = Time.now.utc.strftime('%Y%m%d%H%M%S')
+    klass = "SyncSections#{form_template.class_name}#{stamp}"
+    body = statements.map { |s| s.start_with?('    ') ? s : "    #{s}" }.join("\n")
+
+    content = <<~RUBY
+      # frozen_string_literal: true
+
+      class #{klass} < ActiveRecord::Migration[7.1]
+        def change
+      #{body}
+        end
+      end
+    RUBY
+
+    path = Rails.root.join("db/migrate/#{stamp}_sync_sections_#{form_template.file_name}.rb")
+    File.write(path, content)
+
+    output, status = run_rails_command('db:migrate')
+    Rails.logger.warn("Repeating-section migration failed: #{output}") unless status.success?
+    nil
   end
 
   def generate_unified_status_enum(form_template, content)
@@ -788,7 +945,43 @@ class FormTemplatesController < ApplicationController
       end
     end
 
+    inject_section_params(content, form_template)
+
     File.write(controller_path, content)
+  end
+
+  # Whitelist nested-attributes params for each repeating section, e.g.
+  #   locations_attributes: [:id, :_destroy, :city, { tags: [] }]
+  # Injected into the generated *_params permit list. Robust to the media-param
+  # injection above having already edited the same permit call.
+  def inject_section_params(content, form_template)
+    lines = form_template.repeating_sections.filter_map do |section|
+      assoc = section.section_association_name
+      next if assoc.blank? || content.include?("#{assoc}_attributes:")
+
+      members = section.section_members
+      next if members.empty?
+
+      scalar = members.reject(&:choices_dropdown?).map { |m| ":#{m.field_name}" }
+      multi  = members.select(&:choices_dropdown?).map { |m| "#{m.field_name}: []" }
+      inner  = ([':id', ':_destroy'] + scalar).join(', ')
+      inner += ", { #{multi.join(', ')} }" if multi.any?
+      "#{assoc}_attributes: [#{inner}]"
+    end
+    return if lines.empty?
+
+    addition = lines.map { |l| "      #{l}" }.join(",\n")
+
+    content.sub!(
+      /(def #{Regexp.escape(form_template.file_name)}_params\b.*?\.permit\(\n)(.*?)(\n[ \t]*\)\n[ \t]*end)/m
+    ) do
+      # Capture every group before calling any regexp method below — String#sub
+      # would otherwise clobber Regexp.last_match and drop the trailing ")\n  end".
+      head = ::Regexp.last_match(1)
+      args = ::Regexp.last_match(2)
+      tail = ::Regexp.last_match(3)
+      "#{head}#{args.sub(/\s+\z/, '')},\n#{addition}#{tail}"
+    end
   end
 
   def add_media_download_routes(form_template)
@@ -1404,6 +1597,9 @@ class FormTemplatesController < ApplicationController
       target = created_fields.find { |c| c.label == snap[:answer_on_label] }
       field.update!(conditional_answer_field_id: target.id, conditional_answer_mappings: snap[:answer_mappings]) if target
     end
+
+    # Link repeating-section members to their section container.
+    resolve_repeat_groups(created_fields, params[:fields])
   end
 
   def generate_approval_routing_logic(form_template)
@@ -1537,11 +1733,16 @@ class FormTemplatesController < ApplicationController
         content += "        <div class=\"form-row d-flex flex-wrap\">\n"
 
         fields_for_page.each do |field|
+          # Section members render inside their section block, never standalone.
+          next if field.section_member?
+
           content += "<!-- FIELD:#{field.field_name} START -->"
           content += if field.has_custom_view && existing_blocks[field.field_name]
                        # Preserve the custom HTML, but refresh the autofill attrs
                        # so a rebuilt field id can't leave a stale reference.
                        refresh_conditional_answer_attrs(existing_blocks[field.field_name], field)
+                     elsif field.repeating_section?
+                       generate_repeating_section_html(field, form_template)
                      else
                        generate_field_html(field, form_template)
                      end
@@ -1658,11 +1859,16 @@ class FormTemplatesController < ApplicationController
         content += "        <div class=\"form-row d-flex flex-wrap\">\n"
 
         fields_for_page.each do |field|
+          # Section members render inside their section block, never standalone.
+          next if field.section_member?
+
           content += "<!-- FIELD:#{field.field_name} START -->"
           content += if field.has_custom_view && existing_blocks[field.field_name]
                        # Preserve the custom HTML, but refresh the autofill attrs
                        # so a rebuilt field id can't leave a stale reference.
                        refresh_conditional_answer_attrs(existing_blocks[field.field_name], field)
+                     elsif field.repeating_section?
+                       generate_repeating_section_html(field, form_template)
                      else
                        generate_field_html_for_edit(field, form_template)
                      end
@@ -2245,6 +2451,126 @@ class FormTemplatesController < ApplicationController
         </div>
       </div>
     HTML
+  end
+
+  # Emit the ERB for a repeating section: a repeatable-section controller wrapping
+  # the persisted child rows (form.fields_for), a hidden <template> blueprint with
+  # NEW_RECORD placeholders, and the Add button. Works unchanged for new and edit
+  # views since both drive off the same has_many association.
+  def generate_repeating_section_html(section, _form_template)
+    assoc = section.section_association_name
+    child_class = section.section_class_name
+    members = section.section_members
+    return '' if assoc.blank? || members.empty?
+
+    member_rows = members.map { |m| generate_section_member_html(m) }.join
+
+    lines = []
+    lines << '        <div class="form-group repeatable-section" style="flex: 0 0 100%;"'
+    lines << '             data-controller="repeatable-section"'
+    lines << %(             data-repeatable-section-min-value="#{section.repeat_min}")
+    lines << %(             data-repeatable-section-max-value="#{section.repeat_max}">)
+    lines << %(          <label class="repeatable-section-label">#{section.label}</label>)
+    lines << '          <div data-repeatable-section-target="wrapper">'
+    lines << "            <%= form.fields_for :#{assoc} do |vf| %>"
+    lines << section_block_html('<%= vf.index %>', member_rows)
+    lines << '            <% end %>'
+    lines << '          </div>'
+    lines << '          <template data-repeatable-section-target="template">'
+    lines << "            <%= form.fields_for :#{assoc}, #{child_class}.new, child_index: \"NEW_RECORD\" do |vf| %>"
+    lines << section_block_html('NEW_RECORD', member_rows)
+    lines << '            <% end %>'
+    lines << '          </template>'
+    lines << '          <button type="button" class="btn btn-secondary btn-sm add-repeatable-btn"'
+    lines << '                  data-repeatable-section-target="addButton"'
+    lines << %(                  data-action="repeatable-section#add">#{section.section_add_label}</button>)
+    lines << '        </div>'
+    "#{lines.join("\n")}\n"
+  end
+
+  # One child-row block, shared by the persisted-rows loop and the clone template.
+  def section_block_html(index_expr, member_rows)
+    <<~HTML.chomp
+                    <div class="repeatable-block" data-block-index="#{index_expr}">
+                <div class="form-row d-flex flex-wrap">
+      #{member_rows.chomp}
+                </div>
+                <div class="repeatable-row-actions">
+                  <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove">&minus; Remove</button>
+                </div>
+              </div>
+    HTML
+  end
+
+  # A single member field rendered against the nested `vf` form builder. Supports
+  # member-to-member conditional visibility; restrictions/read-only/answer-lookup
+  # are intentionally out of scope inside a repeating row for v1.
+  def generate_section_member_html(field)
+    classes = %w[form-group flex-fill]
+    attrs = []
+
+    if field.conditional? && field.conditional_field
+      classes << 'conditional-field'
+      values_json = field.conditional_values.to_json.gsub('"', '&quot;')
+      attrs << %(data-depends-on="#{field.conditional_field.field_name}")
+      attrs << %(data-show-values="#{values_json}")
+      attrs << 'style="display: none;"'
+    end
+    attrs << 'data-controller="choices"' if field.choices_dropdown?
+
+    attr_str = attrs.empty? ? '' : " #{attrs.join(' ')}"
+    lines = []
+    lines << %(                    <div class="#{classes.join(' ')}"#{attr_str}>)
+    lines << %(                      <%= vf.label :#{field.field_name}, "#{field.label}" %>)
+    lines << member_input_line(field)
+    lines << '                    </div>'
+    "#{lines.join("\n")}\n"
+  end
+
+  def member_input_line(field)
+    fname = field.field_name
+    trigger = conditional_dependents?(field) ? ", data: { conditional_trigger: '#{fname}' }" : ''
+
+    case field.field_type
+    when 'text_box'
+      %(                      <%= vf.text_area :#{fname}, rows: #{field.rows}, class: "form-control" %>)
+    when 'number'
+      %(                      <%= vf.number_field :#{fname}, class: "form-control" %>)
+    when 'currency'
+      %(                      <%= vf.number_field :#{fname}, step: 0.01, class: "form-control" %>)
+    when 'date'
+      %(                      <%= vf.date_field :#{fname}, class: "form-control" %>)
+    when 'date_time'
+      %(                      <%= vf.datetime_field :#{fname}, class: "form-control" %>)
+    when 'time'
+      %(                      <%= vf.time_field :#{fname}, class: "form-control" %>)
+    when 'phone'
+      %(                      <%= vf.telephone_field :#{fname}, class: "form-control" %>)
+    when 'email'
+      %(                      <%= vf.email_field :#{fname}, class: "form-control" %>)
+    when 'yes_no'
+      %(                      <%= vf.select :#{fname}, options_for_select(['Yes', 'No'], vf.object.#{fname}), { include_blank: "Select..." }, { class: "form-control"#{trigger} } %>)
+    when 'dropdown'
+      %(                      <%= vf.select :#{fname}, options_for_select(#{field_options_expr(field)}, vf.object.#{fname}), { include_blank: "Select..." }, { class: "form-control"#{trigger} } %>)
+    when 'choices_dropdown'
+      data = %(data: { choices_target: "select", placeholder: "Select options...")
+      data += ", conditional_trigger: '#{fname}'" if conditional_dependents?(field)
+      data += ' }'
+      %(                      <%= vf.select :#{fname}, options_for_select(#{field_options_expr(field)}, vf.object.#{fname}), { include_blank: false }, { class: "form-control", multiple: true, #{data} } %>)
+    else
+      %(                      <%= vf.text_field :#{fname}, class: "form-control" %>)
+    end
+  end
+
+  # Dropdown option-source expression, shared with generate_field_html.
+  def field_options_expr(field)
+    if field.custom_lookup?
+      "FormLookup.options(#{field.id})"
+    elsif field.data_source?
+      field.data_source_query_code
+    else
+      "[#{field.dropdown_values.map { |v| "'#{v}'" }.join(', ')}]"
+    end
   end
 
   def generate_field_html(field, form_template)

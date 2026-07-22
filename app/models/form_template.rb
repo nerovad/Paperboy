@@ -147,6 +147,15 @@ class FormTemplate < ApplicationRecord
     file_name.pluralize
   end
 
+  # Repeating-section container fields on this form (each backs a child table).
+  def repeating_sections
+    form_fields.where(field_type: 'repeating_section').order(:page_number, :position)
+  end
+
+  def repeating_sections?
+    repeating_sections.any?
+  end
+
   def page_header(page_num)
     return 'Employee Info' if page_num == 1
     return 'Agency Info' if page_num == 2
