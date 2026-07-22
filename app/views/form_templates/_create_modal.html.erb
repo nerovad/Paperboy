@@ -358,6 +358,7 @@
           <option value="time">Time</option>
           <option value="media_attachment">Media Attachment</option>
           <option value="information">Information</option>
+          <option value="repeating_section">Repeating Section</option>
         </select>
       </div>
 
@@ -609,6 +610,37 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Repeating Section Options -->
+    <div class="field-options repeating-section-options" style="margin-top: 8px; padding: 8px; background: #ede7f6; border-radius: 4px; border-left: 3px solid #6f42c1; display: none;">
+      <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+        <div>
+          <label style="font-size: 0.85em; color: #495057; display: block;">Min entries</label>
+          <input type="number" name="fields[][repeat_min]" class="form-control form-control-sm" min="0" value="1" style="width: 90px;">
+        </div>
+        <div>
+          <label style="font-size: 0.85em; color: #495057; display: block;">Max (0 = &infin;)</label>
+          <input type="number" name="fields[][repeat_max]" class="form-control form-control-sm" min="0" value="0" style="width: 90px;">
+        </div>
+        <div style="flex: 1; min-width: 180px;">
+          <label style="font-size: 0.85em; color: #495057; display: block;">Add button label</label>
+          <input type="text" name="fields[][add_label]" class="form-control form-control-sm" value="" placeholder="+ Add">
+        </div>
+      </div>
+      <small style="display: block; margin-top: 6px; color: #6c757d; font-size: 0.8em;">
+        Assign fields to this section using each field's &ldquo;Repeats in section&rdquo; selector. They repeat together as a group with a + button.
+      </small>
+    </div>
+
+    <!-- Repeat Group Assignment -->
+    <div class="field-options repeat-group-row" style="margin-top: 8px;">
+      <label style="font-size: 0.85em; color: #495057; margin-right: 6px;">Repeats in section:</label>
+      <select class="form-control form-control-sm repeat-group-select" name="fields[][repeat_group]"
+              data-action="change->form-builder#handleRepeatGroupChange"
+              style="width: auto; min-width: 180px; display: inline-block;">
+        <option value="">&mdash; Not in a section &mdash;</option>
+      </select>
     </div>
   </div>
 </template>

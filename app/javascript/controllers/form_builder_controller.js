@@ -57,6 +57,8 @@ export default class extends Controller {
     this.fieldUidSeq = 0
     this.fieldsContainerTarget?.querySelectorAll('.field-item').forEach(f => this.assignFieldUid(f))
     this.initializeConditionalUids()
+    // Populate/preserve each field's "Repeats in section" selector.
+    this.updateSectionDropdowns()
 
     // Add one field by default only if we're in the create modal (not edit page)
     if (!this.editModeValue) {
@@ -156,6 +158,7 @@ export default class extends Controller {
           // Field positions changed, so every field_N conditional ref must be
           // re-resolved to its target's new index.
           this.refreshConditionalDropdowns()
+          this.updateSectionDropdowns()
         }
       })
     }
@@ -1094,6 +1097,7 @@ export default class extends Controller {
     // A new trailing field doesn't shift existing indices, but refresh so other
     // fields can offer it as a conditional target.
     this.refreshConditionalDropdowns()
+    this.updateSectionDropdowns()
   }
 
   // Remove a field
@@ -1107,6 +1111,7 @@ export default class extends Controller {
       // Removing a field shifts the indices of everything after it, so re-resolve
       // all field_N conditional refs.
       this.refreshConditionalDropdowns()
+      this.updateSectionDropdowns()
     }
   }
 
@@ -1117,11 +1122,16 @@ export default class extends Controller {
     const textBoxOptions = fieldItem.querySelector('.text-box-options')
     const dropdownOptions = fieldItem.querySelector('.dropdown-options')
     const informationOptions = fieldItem.querySelector('.information-options')
+    const sectionOptions = fieldItem.querySelector('.repeating-section-options')
+    const repeatGroupRow = fieldItem.querySelector('.repeat-group-row')
 
     // Hide all options first
     textBoxOptions.style.display = 'none'
     dropdownOptions.style.display = 'none'
     if (informationOptions) informationOptions.style.display = 'none'
+    if (sectionOptions) sectionOptions.style.display = 'none'
+
+    const isSection = fieldType === 'repeating_section'
 
     // Show relevant options
     if (fieldType === 'text_box') {
@@ -1130,14 +1140,20 @@ export default class extends Controller {
       dropdownOptions.style.display = 'block'
     } else if (fieldType === 'information' && informationOptions) {
       informationOptions.style.display = 'block'
+    } else if (isSection && sectionOptions) {
+      sectionOptions.style.display = 'block'
     }
 
-    // Conditional answer options are available for every field type. Non-dropdown
-    // fields can't offer a static value->value mapping (they have no own values),
-    // so when the answer is enabled on a non-dropdown, default it to lookup mode.
+    // A section container can't itself belong to another section.
+    if (repeatGroupRow) repeatGroupRow.style.display = isSection ? 'none' : 'block'
+
+    // Conditional answer options are available for every field type except a
+    // repeating-section container (which holds no value of its own). Non-dropdown
+    // fields can't offer a static value->value mapping, so when the answer is
+    // enabled on a non-dropdown, default it to lookup mode.
     const conditionalAnswerOptions = fieldItem.querySelector('.conditional-answer-options')
     if (conditionalAnswerOptions) {
-      conditionalAnswerOptions.style.display = 'block'
+      conditionalAnswerOptions.style.display = isSection ? 'none' : 'block'
       const isDropdown = fieldType === 'dropdown' || fieldType === 'choices_dropdown'
       const answerToggle = fieldItem.querySelector('.conditional-answer-toggle')
       const lookupToggle = fieldItem.querySelector('.answer-lookup-toggle')
@@ -1149,6 +1165,70 @@ export default class extends Controller {
 
     // Refresh conditional dropdowns in other fields (they may now see this as a dropdown option)
     this.refreshConditionalDropdowns()
+    // Refresh section membership selectors (this field may have (un)become a section)
+    this.updateSectionDropdowns()
+  }
+
+  // Keep a repeat-group select's remembered section uid in sync on manual change.
+  handleRepeatGroupChange(event) {
+    const opt = event.target.selectedOptions[0]
+    event.target.dataset.selectedUid = opt?.dataset.fieldUid || ''
+  }
+
+  // Populate every field's "Repeats in section" selector with the current set of
+  // repeating-section fields. Selection is preserved by the section's fieldUid so
+  // it survives reordering; on first load it falls back to the server-rendered
+  // field_<index> value.
+  updateSectionDropdowns() {
+    const allFields = Array.from(this.fieldsContainerTarget.querySelectorAll('.field-item'))
+
+    const sections = allFields.map((field, index) => {
+      const type = field.querySelector('select[name="fields[][field_type]"]')?.value
+      if (type !== 'repeating_section') return null
+      this.assignFieldUid(field)
+      const label = field.querySelector('input[name="fields[][label]"]')?.value || `Section ${index + 1}`
+      return { index, uid: field.dataset.fieldUid, label }
+    }).filter(Boolean)
+
+    allFields.forEach((field, index) => {
+      const row = field.querySelector('.repeat-group-row')
+      const select = field.querySelector('.repeat-group-select')
+      if (!row || !select) return
+
+      const type = field.querySelector('select[name="fields[][field_type]"]')?.value
+      if (type === 'repeating_section' || sections.length === 0) {
+        row.style.display = 'none'
+        select.value = ''
+        select.dataset.selectedUid = ''
+        return
+      }
+
+      const prevUid = select.dataset.selectedUid || ''
+      const prevValue = select.value
+
+      select.innerHTML = '<option value="">— Not in a section —</option>'
+      sections.forEach(section => {
+        if (section.index === index) return
+        const opt = document.createElement('option')
+        opt.value = `field_${section.index}`
+        opt.dataset.fieldUid = section.uid
+        opt.textContent = section.label
+        select.appendChild(opt)
+      })
+
+      row.style.display = 'block'
+
+      // Restore prior selection: by uid across reorders, else by the initial
+      // server-rendered value on first populate.
+      if (prevUid) {
+        const match = Array.from(select.options).find(o => o.dataset.fieldUid === prevUid)
+        if (match) { select.value = match.value; select.dataset.selectedUid = prevUid }
+        else { select.dataset.selectedUid = '' }
+      } else if (prevValue) {
+        const match = Array.from(select.options).find(o => o.value === prevValue)
+        if (match) { select.value = prevValue; select.dataset.selectedUid = match.dataset.fieldUid || '' }
+      }
+    })
   }
 
   // Toggle between manual values, a curated database table, and a custom lookup
