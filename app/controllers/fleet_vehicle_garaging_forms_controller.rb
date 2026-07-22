@@ -241,7 +241,8 @@ class FleetVehicleGaragingFormsController < ApplicationController
         garaging_location
         secondary_garaging_location
         _destroy
-      ]
+      ],
+      fleet_vehicle_garaging_form_locations_attributes: %i[id _destroy location]
     )
   end
 end
