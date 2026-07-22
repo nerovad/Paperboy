@@ -147,13 +147,14 @@ class FormTemplate < ApplicationRecord
     file_name.pluralize
   end
 
-  # Repeating-section container fields on this form (each backs a child table).
+  # Anchor fields flagged repeatable (each backs a child table). Filtered in Ruby
+  # because the flag lives in the options JSON blob.
   def repeating_sections
-    form_fields.where(field_type: 'repeating_section').order(:page_number, :position)
+    form_fields.ordered.select(&:repeatable?)
   end
 
   def repeating_sections?
-    repeating_sections.any?
+    form_fields.any?(&:repeatable?)
   end
 
   def page_header(page_num)

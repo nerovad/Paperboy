@@ -8,10 +8,10 @@ class FormField < ApplicationRecord
 
   belongs_to :form_template
 
-  FIELD_TYPES = %w[text text_box dropdown choices_dropdown date date_time phone email number currency yes_no time media_attachment information repeating_section].freeze
+  FIELD_TYPES = %w[text text_box dropdown choices_dropdown date date_time phone email number currency yes_no time media_attachment information].freeze
 
   # Field types allowed inside a repeating section (the child row). Excludes
-  # container/attachment types that don't map to a plain child-table column.
+  # attachment/information types that don't map to a plain child-table column.
   SECTION_MEMBER_TYPES = %w[text text_box dropdown choices_dropdown date date_time phone email number currency yes_no time].freeze
   RESTRICTION_TYPES = %w[none employee group].freeze
   READ_ONLY_TYPES = %w[none always initial].freeze
@@ -186,30 +186,36 @@ class FormField < ApplicationRecord
   end
 
   # --- Repeating section (a group of fields the filler can add copies of) ---
+  #
+  # Any field can be flagged repeatable (options['repeatable']). That field is
+  # the section "anchor": it keeps its own type and renders as the first column
+  # of the repeating row, and other fields join it by tagging repeat_group with
+  # the anchor's field_name. Each row is saved to an auto-generated child table.
 
-  # True for the container field that marks a repeating group. Members are
-  # ordinary fields tagged with repeat_group == this section's field_name.
-  def repeating_section?
-    field_type == 'repeating_section'
+  # True for the anchor field that starts a repeating group.
+  def repeatable?
+    !!options&.dig('repeatable')
   end
 
-  # True for a field that belongs to a repeating section (a child-row column).
+  # True for a field that joins another field's repeating section (repeat_group
+  # points at the anchor's field_name). An anchor is not itself a "member" — it
+  # owns the section — even though it renders inside the repeating row.
   def section_member?
-    repeat_group.present?
+    repeat_group.present? && !repeatable?
   end
 
-  # field_name of the section this field belongs to (nil for non-members).
+  # field_name of the section this field joins (nil for anchors/standalone).
   def repeat_group
     options&.dig('repeat_group').presence
   end
 
   # has_many association / child-table name for this section, unique per form
-  # (e.g. form "TripReportForm" + section "locations" => trip_report_form_locations).
+  # (e.g. form "TripReportForm" + anchor "location" => trip_report_form_locations).
   def section_association_name
-    return nil unless repeating_section?
+    return nil unless repeatable?
     return nil unless form_template
 
-    "#{form_template.file_name}_#{field_name}"
+    "#{form_template.file_name}_#{field_name.pluralize}"
   end
 
   # Child model class name inferred by Rails from the association (e.g.
@@ -225,14 +231,13 @@ class FormField < ApplicationRecord
     "#{form_template.file_name}_id"
   end
 
-  # Ordered member fields belonging to this section.
+  # Ordered fields that make up this section's repeating row: the anchor itself
+  # plus every field that joined it, sorted by position.
   def section_members
-    return FormField.none unless repeating_section? && form_template
+    return [] unless repeatable? && form_template
 
-    form_template.form_fields
-                 .where.not(field_type: 'repeating_section')
-                 .select { |f| f.repeat_group == field_name }
-                 .sort_by(&:position)
+    joined = form_template.form_fields.select { |f| f.repeat_group == field_name && !f.repeatable? }
+    ([self] + joined).sort_by(&:position)
   end
 
   def repeat_min
@@ -651,9 +656,11 @@ class FormField < ApplicationRecord
     when 'information'
       options['information_text'] ||= ''
       options['acknowledgeable'] = false unless options.key?('acknowledgeable')
-    when 'repeating_section'
-      options['repeat_min'] ||= 1
-      options['repeat_max'] ||= 0
     end
+
+    return unless options['repeatable']
+
+    options['repeat_min'] ||= 1
+    options['repeat_max'] ||= 0
   end
 end

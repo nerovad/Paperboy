@@ -565,7 +565,7 @@ class FormTemplatesController < ApplicationController
         created_fields.find { |f| f.field_name == ref }
       end
 
-    section if section&.repeating_section?
+    section if section&.repeatable?
   end
 
   def build_field_options(field_data)
@@ -588,11 +588,15 @@ class FormTemplatesController < ApplicationController
     when 'information'
       options['information_text'] = field_data[:information_text].to_s
       options['acknowledgeable'] = field_data[:acknowledgeable] == '1'
-    when 'repeating_section'
+    end
+
+    # "Repeatable" is a flag available on any field type: the field becomes the
+    # anchor of a repeating section that other fields can join.
+    if field_data[:repeatable] == '1'
+      options['repeatable'] = true
       options['repeat_min'] = field_data[:repeat_min].to_i if field_data[:repeat_min].present?
       options['repeat_max'] = field_data[:repeat_max].to_i if field_data[:repeat_max].present?
       options['add_label'] = field_data[:add_label].to_s if field_data[:add_label].present?
-      options['item_label'] = field_data[:item_label].to_s if field_data[:item_label].present?
     end
 
     # Table-lookup answer mode is available on any field type, so it's folded in
@@ -1741,7 +1745,7 @@ class FormTemplatesController < ApplicationController
                        # Preserve the custom HTML, but refresh the autofill attrs
                        # so a rebuilt field id can't leave a stale reference.
                        refresh_conditional_answer_attrs(existing_blocks[field.field_name], field)
-                     elsif field.repeating_section?
+                     elsif field.repeatable?
                        generate_repeating_section_html(field, form_template)
                      else
                        generate_field_html(field, form_template)
@@ -1867,7 +1871,7 @@ class FormTemplatesController < ApplicationController
                        # Preserve the custom HTML, but refresh the autofill attrs
                        # so a rebuilt field id can't leave a stale reference.
                        refresh_conditional_answer_attrs(existing_blocks[field.field_name], field)
-                     elsif field.repeating_section?
+                     elsif field.repeatable?
                        generate_repeating_section_html(field, form_template)
                      else
                        generate_field_html_for_edit(field, form_template)
