@@ -6,6 +6,24 @@
 <div class="form-wrapper" data-controller="form-navigation">
   <%= form_with model: @carpool_form, local: true do |form| %>
 
+  <% if @carpool_form.errors.any? %>
+    <div class="form-errors" role="alert" data-form-navigation-target="errorSummary">
+      <strong><%= pluralize(@carpool_form.errors.count, "error") %> prevented this form from being submitted:</strong>
+      <ul>
+        <% @carpool_form.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+        <% _page_1_visible = true %>
+        <% _page_2_visible = true %>
+        <% _page_3_visible = true %>
+        <% _page_4_visible = true %>
+        <% _page_5_visible = true %>
+        <% _visible_page_count = [_page_1_visible, _page_2_visible, _page_3_visible, _page_4_visible, _page_5_visible].count(true) %>
+
 <!-- Page 1: Employee Info -->
 <div class="form-page">
   <h2>Employee Info</h2>
@@ -119,7 +137,7 @@
 <!-- FIELD:passengers START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :passengers, "Passengers" %>
             <%= form.select :passengers,
-                  options_for_select(Employee.order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }),
+                  options_for_select(FormLookup.options(4125)),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
@@ -272,7 +290,7 @@
         <div class="progress-bar" id="progressBar"></div>
       </div>
       <div class="progress-dots">
-        <% 5.times do |index| %>
+        <% _visible_page_count.times do |index| %>
           <div class="dot <%= 'active' if index == 0 %>"></div>
         <% end %>
       </div>

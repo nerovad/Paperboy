@@ -133,52 +133,45 @@
 <div class="form-page" style="display:none;">
   <h2>Vehicle Info</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:vehicles START -->
-        <div data-controller="vehicle-list" style="flex: 0 0 100%;">
-          <div id="vehicle-wrapper">
-            <% vehicles_count = @fleet_vehicle_garaging_form.fleet_vehicles.size %>
-            <%= form.fields_for :fleet_vehicles do |vf| %>
-              <% is_last = vf.index == vehicles_count - 1 %>
-              <div class="vehicle-block" data-vehicle-index="<%= vf.index %>">
-                <div class="vehicle-fields border p-3 rounded" data-controller="nhtsa-vehicle">
-                  <div class="form-row">
-                    <%= render partial: "vehicle_fields", locals: { vf: vf } %>
-                  </div>
-                </div>
-                <div class="vehicle-row-actions">
-                  <% if vf.index && vf.index.to_i > 0 %>
-                    <button type="button" class="remove-vehicle-btn">− Remove</button>
-                  <% end %>
-                  <% if is_last %>
-                    <button type="button" id="add-vehicle" class="add-vehicle-btn">+ Add Vehicle</button>
-                  <% end %>
-                </div>
-              </div>
-            <% end %>
+<!-- FIELD:vehicle_number START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :vehicle_number, "Vehicle Number" %>
+            <%= form.select :vehicle_number,
+                  options_for_select([]),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
-
-          <div id="vehicle-template" style="display: none;">
-            <%= form.fields_for :fleet_vehicles, FleetVehicle.new, child_index: "NEW_RECORD" do |vf| %>
-              <div class="vehicle-block" data-vehicle-index="NEW_RECORD">
-                <div class="vehicle-fields border p-3 rounded" data-controller="nhtsa-vehicle">
-                  <div class="form-row">
-                    <%= render partial: "vehicle_fields", locals: { vf: vf } %>
-                  </div>
-                </div>
-                <div class="vehicle-row-actions">
-                  <button type="button" class="remove-vehicle-btn">− Remove</button>
-                </div>
-              </div>
-            <% end %>
+<!-- FIELD:vehicle_number END -->
+<!-- FIELD:year START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :year, "Year" %>
+            <%= form.text_field :year, class: "form-control" %>
           </div>
-        </div>
-<!-- FIELD:vehicles END -->
+<!-- FIELD:year END -->
+<!-- FIELD:make START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :make, "Make" %>
+            <%= form.text_field :make, class: "form-control" %>
+          </div>
+<!-- FIELD:make END -->
+<!-- FIELD:model START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :model, "Model" %>
+            <%= form.text_field :model, class: "form-control" %>
+          </div>
+<!-- FIELD:model END -->
         </div>
       </div>
 
 <!-- Page 4: Garaging Location -->
 <div class="form-page" style="display:none;">
   <h2>Garaging Location</h2>
+        <div class="form-row d-flex flex-wrap">
+<!-- FIELD:location START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :location, "Location" %>
+            <%= form.select :location,
+                  options_for_select(FormLookup.options(4124)),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
+          </div>
+<!-- FIELD:location END -->
+        </div>
       </div>
 
     <!-- Navigation Buttons -->

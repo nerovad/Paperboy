@@ -21,11 +21,6 @@ class FormRequestForm < ApplicationRecord
     end
   end
 
-  # For inbox queue display
-  def status_label
-    self.class.const_defined?(:STATUS_LABELS) ? (self.class::STATUS_LABELS[status&.to_sym] || status&.to_s&.humanize || 'Unknown') : (status&.to_s&.humanize || 'Unknown')
-  end
-
   # For inbox queue filtering - returns the form type name
   def form_type
     self.class.name.demodulize.titleize

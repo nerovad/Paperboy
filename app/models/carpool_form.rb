@@ -6,8 +6,8 @@ class CarpoolForm < ApplicationRecord
   enum :status, {
     in_progress: 'in_progress',
     step_1_pending: 'step_1_pending',
-    approved: 'approved',
-    denied: 'denied'
+    denied: 'denied',
+    approved: 'approved'
   }, default: :in_progress
 
   # Minimal baseline validations; adjust or remove as needed
