@@ -8,7 +8,7 @@
 
 require_relative '../constants/workflow'
 
-DSL_DIR = File.join(__dir__, '../..', 'dsl')
+DSL_DIR = File.expand_path('../../../../dsl', __dir__)
 
 entry_files = Dir[File.join(DSL_DIR, '*.rb')]
 raise "no DSL files found in #{DSL_DIR}" if entry_files.empty?

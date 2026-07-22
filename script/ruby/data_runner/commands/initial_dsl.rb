@@ -10,7 +10,7 @@ require_relative '../db/mssql_helpers'
 require_relative '../constants/workflow_paths'
 
 DOWNLOAD_DIR = WorkflowPaths::DOWNLOAD_DIR
-DSL_DIR = File.join(__dir__, '../..', 'dsl')
+DSL_DIR = File.expand_path('../../../../dsl', __dir__)
 
 SCAN_LIMIT = 60
 

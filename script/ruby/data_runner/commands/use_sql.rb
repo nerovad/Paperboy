@@ -8,7 +8,7 @@ require_relative '../helpers/etl_helpers'
 require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
 
-DSL_ENTRY_DIR = File.join(__dir__, '../..', 'dsl')
+DSL_ENTRY_DIR = File.expand_path('../../../../dsl', __dir__)
 SQL_SCHEMA_DIR = WorkflowPaths::SQL_SCHEMA_DIR
 
 DslEntry = Struct.new(:key, :cfg, :path, keyword_init: true)

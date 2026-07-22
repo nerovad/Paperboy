@@ -3,7 +3,7 @@
 
 require 'fileutils'
 
-DSL_DIR = File.join(__dir__, '../..', 'dsl')
+DSL_DIR = File.expand_path('../../../../dsl', __dir__)
 StubTarget = Struct.new(:host, :database, :schema, :dsl_name, keyword_init: true)
 
 def usage!
