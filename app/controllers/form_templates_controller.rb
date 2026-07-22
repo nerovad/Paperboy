@@ -804,24 +804,34 @@ class FormTemplatesController < ApplicationController
 
   def run_section_migration(form_template, statements)
     stamp = Time.now.utc.strftime('%Y%m%d%H%M%S')
-    klass = "SyncSections#{form_template.class_name}#{stamp}"
+    # Rails derives the expected class name from the filename (minus the version
+    # prefix), so the descriptive slug and the class MUST agree — else the migrator
+    # can't load the class and db:migrate aborts. The stamp is embedded in the slug
+    # too so the class name stays unique across re-syncs of the same form.
+    slug = "sync_sections_#{form_template.file_name}_#{stamp}"
     body = statements.map { |s| s.start_with?('    ') ? s : "    #{s}" }.join("\n")
 
     content = <<~RUBY
       # frozen_string_literal: true
 
-      class #{klass} < ActiveRecord::Migration[7.1]
+      class #{slug.camelize} < ActiveRecord::Migration[7.1]
         def change
       #{body}
         end
       end
     RUBY
 
-    path = Rails.root.join("db/migrate/#{stamp}_sync_sections_#{form_template.file_name}.rb")
+    path = Rails.root.join("db/migrate/#{stamp}_#{slug}.rb")
     File.write(path, content)
 
     output, status = run_rails_command('db:migrate')
-    Rails.logger.warn("Repeating-section migration failed: #{output}") unless status.success?
+    return if status.success?
+
+    # A failed migrate would otherwise leave a pending migration that blocks every
+    # request (PendingMigrationError). Remove the file so the app stays up; the
+    # section just won't have its table until the cause is fixed and fields resaved.
+    FileUtils.rm_f(path)
+    Rails.logger.error("Repeating-section migration failed, reverted #{path.basename}: #{output}")
     nil
   end
 
@@ -966,11 +976,16 @@ class FormTemplatesController < ApplicationController
       members = section.section_members
       next if members.empty?
 
-      scalar = members.reject(&:choices_dropdown?).map { |m| ":#{m.field_name}" }
-      multi  = members.select(&:choices_dropdown?).map { |m| "#{m.field_name}: []" }
-      inner  = ([':id', ':_destroy'] + scalar).join(', ')
-      inner += ", { #{multi.join(', ')} }" if multi.any?
-      "#{assoc}_attributes: [#{inner}]"
+      syms  = %w[id _destroy] + members.reject(&:choices_dropdown?).map(&:field_name)
+      multi = members.select(&:choices_dropdown?).map { |m| "#{m.field_name}: []" }
+      if multi.any?
+        # Mixed array (symbols + a hash) — rubocop leaves this as bracket syntax.
+        inner = "#{syms.map { |s| ":#{s}" }.join(', ')}, { #{multi.join(', ')} }"
+        "#{assoc}_attributes: [#{inner}]"
+      else
+        # All-symbol array must use %i[...] to stay rubocop-clean.
+        "#{assoc}_attributes: %i[#{syms.join(' ')}]"
+      end
     end
     return if lines.empty?
 
