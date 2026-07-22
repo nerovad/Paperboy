@@ -1164,8 +1164,8 @@ export default class extends Controller {
       radio.checked = (radio === event.target)
     })
 
-    manualSection.style.display = source === 'manual' ? 'block' : 'none'
-    dataSourceSection.style.display = source === 'database' ? 'block' : 'none'
+    if (manualSection) manualSection.style.display = source === 'manual' ? 'block' : 'none'
+    if (dataSourceSection) dataSourceSection.style.display = source === 'database' ? 'block' : 'none'
     if (customSection) customSection.style.display = source === 'custom' ? 'block' : 'none'
 
     // Clear the curated data-source selects unless that's the active mode

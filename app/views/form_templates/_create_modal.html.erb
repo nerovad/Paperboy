@@ -297,6 +297,29 @@
   </div>
 </div>
 
+<!-- Custom lookup category-filter row (hidden, cloned by "+ Add category filter") -->
+<template id="custom-category-filter-template">
+  <div class="custom-category-filter-row" style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 6px;">
+    <div style="flex: 1; min-width: 130px;">
+      <select name="fields[][custom_category_columns][]"
+              class="form-control form-control-sm custom-category-column-select"
+              data-action="change->form-builder#handleCustomCategoryColumnChange">
+        <option value="">— select column —</option>
+      </select>
+    </div>
+    <div style="flex: 0 0 auto; padding-bottom: 6px; color: #6c757d;">=</div>
+    <div style="flex: 1; min-width: 130px;">
+      <select name="fields[][custom_category_values][]"
+              class="form-control form-control-sm custom-category-value-select">
+        <option value="">Select value...</option>
+      </select>
+    </div>
+    <button type="button" class="btn btn-sm" style="flex: 0 0 auto;"
+            data-action="click->form-builder#removeCustomCategoryFilter"
+            title="Remove filter">&times;</button>
+  </div>
+</template>
+
 <!-- Field Template (hidden, used for cloning) -->
 <template id="field-template">
   <div class="field-item" data-form-builder-target="fieldItem">
@@ -456,10 +479,10 @@
           Manual Values
         </label>
         <label style="margin: 0; font-size: 0.85em; cursor: pointer;">
-          <input type="radio" class="dropdown-source-radio" value="database"
+          <input type="radio" class="dropdown-source-radio" value="custom"
                  data-action="change->form-builder#handleDropdownSourceChange"
                  style="margin-right: 4px;">
-          Database Table
+          Custom (any table)
         </label>
       </div>
 
@@ -472,33 +495,74 @@
                data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
       </div>
 
-      <div class="dropdown-data-source" style="display: none;">
+      <div class="dropdown-custom-source" style="display: none;">
         <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
-          <div style="flex: 1; min-width: 150px;">
-            <label>Table:</label>
-            <select name="fields[][data_source]"
-                    class="form-control form-control-sm data-source-table-select"
-                    data-action="change->form-builder#handleDataSourceTableChange">
-              <option value="">Select table...</option>
-              <% FormField::DATA_SOURCES.each do |key, config| %>
-                <option value="<%= key %>" data-columns="<%= config[:columns].to_json %>"><%= config[:label] %></option>
-              <% end %>
+          <div style="flex: 1; min-width: 130px;">
+            <label style="font-size: 0.9em; color: #495057;">Database:</label>
+            <select name="fields[][custom_database]"
+                    class="form-control form-control-sm custom-database-select"
+                    data-action="change->form-builder#handleCustomDatabaseChange">
+              <option value="">Select database...</option>
+              <option value="paperboy">Paperboy</option>
+              <option value="gsabss">GSABSS</option>
             </select>
           </div>
-          <div style="flex: 1; min-width: 150px;">
-            <label>Column:</label>
-            <select name="fields[][data_source_column]"
-                    class="form-control form-control-sm data-source-column-select">
+          <div style="flex: 1; min-width: 130px;">
+            <label style="font-size: 0.9em; color: #495057;">Table:</label>
+            <select name="fields[][custom_table]"
+                    class="form-control form-control-sm custom-table-select"
+                    data-action="change->form-builder#handleCustomTableChange">
+              <option value="">Select table...</option>
+            </select>
+          </div>
+          <div style="flex: 1; min-width: 130px;">
+            <label style="font-size: 0.9em; color: #495057;">Column (values):</label>
+            <select name="fields[][custom_column]"
+                    class="form-control form-control-sm custom-column-select">
               <option value="">Select column...</option>
             </select>
           </div>
         </div>
-        <div class="data-source-agency-option" style="display: none; margin-top: 8px;">
-          <label style="font-size: 0.9em; color: #495057;">Filter by Agency:</label>
-          <select name="fields[][data_source_agency]"
-                  class="form-control form-control-sm data-source-agency-select">
-            <option value="">All agencies</option>
-          </select>
+        <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; margin-top: 8px;">
+          <div style="flex: 1; min-width: 130px;">
+            <label style="font-size: 0.9em; color: #495057;">Also join columns (optional):</label>
+            <select name="fields[][custom_join_columns][]" multiple size="4"
+                    class="form-control form-control-sm custom-join-columns-select">
+            </select>
+            <small style="display: block; color: #6c757d; font-size: 0.78em; margin-top: 2px;">Ctrl/⌘-click to add columns. Their values are appended to the column above (e.g. first + last name).</small>
+          </div>
+          <div style="flex: 1; min-width: 130px;">
+            <label style="font-size: 0.9em; color: #495057;">Join separator:</label>
+            <input type="text" name="fields[][custom_join_separator]"
+                   class="form-control form-control-sm custom-join-separator-input"
+                   value=" "
+                   placeholder="(space)">
+            <small style="display: block; color: #6c757d; font-size: 0.78em; margin-top: 2px;">Placed between joined values. Defaults to a space.</small>
+          </div>
+        </div>
+        <div class="custom-category-filters-section" style="margin-top: 8px;">
+          <label style="font-size: 0.9em; color: #495057;">Category Filters (optional):</label>
+          <div class="custom-category-filters"></div>
+          <button type="button" class="btn btn-sm"
+                  data-action="click->form-builder#addCustomCategoryFilter">+ Add category filter</button>
+          <small style="display: block; color: #6c757d; font-size: 0.78em; margin-top: 2px;">Limit the values shown. Multiple rows on the same column match any of those values (OR); different columns must all match (AND).</small>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 8px;">
+          <div style="flex: 1; min-width: 130px;">
+            <label style="font-size: 0.9em; color: #495057;">Order by (optional):</label>
+            <select name="fields[][custom_order_column]"
+                    class="form-control form-control-sm custom-order-column-select">
+              <option value="">— default (by value) —</option>
+            </select>
+          </div>
+          <div style="flex: 1; min-width: 130px;">
+            <label style="font-size: 0.9em; color: #495057;">Sort direction:</label>
+            <select name="fields[][custom_order_direction]"
+                    class="form-control form-control-sm custom-order-direction-select">
+              <option value="asc" selected>Ascending (A→Z, 1→9)</option>
+              <option value="desc">Descending (Z→A, 9→1)</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
