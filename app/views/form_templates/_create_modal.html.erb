@@ -358,7 +358,6 @@
           <option value="time">Time</option>
           <option value="media_attachment">Media Attachment</option>
           <option value="information">Information</option>
-          <option value="repeating_section">Repeating Section</option>
         </select>
       </div>
 
@@ -396,6 +395,16 @@
                name="fields[][has_custom_view]"
                value="1"
                title="When checked, this field's view HTML will be preserved during form updates">
+      </div>
+
+      <div class="field-input">
+        <label>Repeatable</label>
+        <input type="checkbox"
+               class="repeatable-toggle"
+               name="fields[][repeatable]"
+               value="1"
+               title="Let the filler add more copies of this field (and any fields assigned to it) with a + button"
+               data-action="change->form-builder#toggleRepeatable">
       </div>
 
       <button type="button"

@@ -1122,16 +1122,11 @@ export default class extends Controller {
     const textBoxOptions = fieldItem.querySelector('.text-box-options')
     const dropdownOptions = fieldItem.querySelector('.dropdown-options')
     const informationOptions = fieldItem.querySelector('.information-options')
-    const sectionOptions = fieldItem.querySelector('.repeating-section-options')
-    const repeatGroupRow = fieldItem.querySelector('.repeat-group-row')
 
     // Hide all options first
     textBoxOptions.style.display = 'none'
     dropdownOptions.style.display = 'none'
     if (informationOptions) informationOptions.style.display = 'none'
-    if (sectionOptions) sectionOptions.style.display = 'none'
-
-    const isSection = fieldType === 'repeating_section'
 
     // Show relevant options
     if (fieldType === 'text_box') {
@@ -1140,20 +1135,14 @@ export default class extends Controller {
       dropdownOptions.style.display = 'block'
     } else if (fieldType === 'information' && informationOptions) {
       informationOptions.style.display = 'block'
-    } else if (isSection && sectionOptions) {
-      sectionOptions.style.display = 'block'
     }
 
-    // A section container can't itself belong to another section.
-    if (repeatGroupRow) repeatGroupRow.style.display = isSection ? 'none' : 'block'
-
-    // Conditional answer options are available for every field type except a
-    // repeating-section container (which holds no value of its own). Non-dropdown
+    // Conditional answer options are available for every field type. Non-dropdown
     // fields can't offer a static value->value mapping, so when the answer is
     // enabled on a non-dropdown, default it to lookup mode.
     const conditionalAnswerOptions = fieldItem.querySelector('.conditional-answer-options')
     if (conditionalAnswerOptions) {
-      conditionalAnswerOptions.style.display = isSection ? 'none' : 'block'
+      conditionalAnswerOptions.style.display = 'block'
       const isDropdown = fieldType === 'dropdown' || fieldType === 'choices_dropdown'
       const answerToggle = fieldItem.querySelector('.conditional-answer-toggle')
       const lookupToggle = fieldItem.querySelector('.answer-lookup-toggle')
@@ -1165,7 +1154,22 @@ export default class extends Controller {
 
     // Refresh conditional dropdowns in other fields (they may now see this as a dropdown option)
     this.refreshConditionalDropdowns()
-    // Refresh section membership selectors (this field may have (un)become a section)
+    // A field's label may feed the section selectors; keep them current.
+    this.updateSectionDropdowns()
+  }
+
+  // "Repeatable" checkbox: show/hide this field's section-config panel and
+  // (since an anchor can't join another section) its "Repeats in section" row.
+  toggleRepeatable(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const sectionOptions = fieldItem.querySelector('.repeating-section-options')
+    const repeatGroupRow = fieldItem.querySelector('.repeat-group-row')
+    const isAnchor = event.target.checked
+
+    if (sectionOptions) sectionOptions.style.display = isAnchor ? 'block' : 'none'
+    if (repeatGroupRow) repeatGroupRow.style.display = isAnchor ? 'none' : 'block'
+
+    // This field just (un)became a section; refresh every field's selector.
     this.updateSectionDropdowns()
   }
 
@@ -1176,15 +1180,15 @@ export default class extends Controller {
   }
 
   // Populate every field's "Repeats in section" selector with the current set of
-  // repeating-section fields. Selection is preserved by the section's fieldUid so
-  // it survives reordering; on first load it falls back to the server-rendered
+  // repeatable (anchor) fields. Selection is preserved by the anchor's fieldUid
+  // so it survives reordering; on first load it falls back to the server-rendered
   // field_<index> value.
   updateSectionDropdowns() {
     const allFields = Array.from(this.fieldsContainerTarget.querySelectorAll('.field-item'))
 
     const sections = allFields.map((field, index) => {
-      const type = field.querySelector('select[name="fields[][field_type]"]')?.value
-      if (type !== 'repeating_section') return null
+      const repeatable = field.querySelector('.repeatable-toggle')?.checked
+      if (!repeatable) return null
       this.assignFieldUid(field)
       const label = field.querySelector('input[name="fields[][label]"]')?.value || `Section ${index + 1}`
       return { index, uid: field.dataset.fieldUid, label }
@@ -1195,8 +1199,8 @@ export default class extends Controller {
       const select = field.querySelector('.repeat-group-select')
       if (!row || !select) return
 
-      const type = field.querySelector('select[name="fields[][field_type]"]')?.value
-      if (type === 'repeating_section' || sections.length === 0) {
+      const isAnchor = field.querySelector('.repeatable-toggle')?.checked
+      if (isAnchor || sections.length === 0) {
         row.style.display = 'none'
         select.value = ''
         select.dataset.selectedUid = ''
