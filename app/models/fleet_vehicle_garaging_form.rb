@@ -3,6 +3,9 @@
 class FleetVehicleGaragingForm < ApplicationRecord
   include TrackableStatus
 
+  has_many :fleet_vehicle_garaging_form_locations, dependent: :destroy
+  accepts_nested_attributes_for :fleet_vehicle_garaging_form_locations, allow_destroy: true, reject_if: :all_blank
+
   enum :status, {
     in_progress: 'in_progress',
     step_1_pending: 'step_1_pending',

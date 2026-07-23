@@ -159,13 +159,45 @@
 <div class="form-page" style="display:none;">
   <h2>Garaging Location</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:location START --><div class="form-group flex-fill<%= '' %>">
-  <%= form.label :location, "Location" %>
-            <%= form.select :location,
-                  options_for_select(FormLookup.options(4124), @fleet_vehicle_garaging_form.location),
-                  { include_blank: "Select..." },
-                  { class: "form-control" } %>
+<!-- FIELD:location START -->        <div class="form-group repeatable-section" style="flex: 0 0 100%;"
+             data-controller="repeatable-section"
+             data-repeatable-section-min-value="1"
+             data-repeatable-section-max-value="2">
+          <label class="repeatable-section-label">Location</label>
+          <div data-repeatable-section-target="wrapper">
+            <%= form.fields_for :fleet_vehicle_garaging_form_locations do |vf| %>
+              <div class="repeatable-block" data-block-index="<%= vf.index %>">
+          <div class="form-row d-flex flex-wrap">
+                    <div class="form-group flex-fill">
+                      <%= vf.label :location, "Location" %>
+                      <%= vf.select :location, options_for_select(FormLookup.options(4238), vf.object.location), { include_blank: "Select..." }, { class: "form-control" } %>
+                    </div>
           </div>
+          <div class="repeatable-row-actions">
+            <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove">&minus; Remove</button>
+          </div>
+        </div>
+            <% end %>
+          </div>
+          <template data-repeatable-section-target="template">
+            <%= form.fields_for :fleet_vehicle_garaging_form_locations, FleetVehicleGaragingFormLocation.new, child_index: "NEW_RECORD" do |vf| %>
+              <div class="repeatable-block" data-block-index="NEW_RECORD">
+          <div class="form-row d-flex flex-wrap">
+                    <div class="form-group flex-fill">
+                      <%= vf.label :location, "Location" %>
+                      <%= vf.select :location, options_for_select(FormLookup.options(4238), vf.object.location), { include_blank: "Select..." }, { class: "form-control" } %>
+                    </div>
+          </div>
+          <div class="repeatable-row-actions">
+            <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove">&minus; Remove</button>
+          </div>
+        </div>
+            <% end %>
+          </template>
+          <button type="button" class="btn btn-secondary btn-sm add-repeatable-btn"
+                  data-repeatable-section-target="addButton"
+                  data-action="repeatable-section#add">+ Add Location</button>
+        </div>
 <!-- FIELD:location END -->
         </div>
       </div>
