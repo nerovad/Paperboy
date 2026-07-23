@@ -9,6 +9,10 @@ class FormField < ApplicationRecord
   belongs_to :form_template
 
   FIELD_TYPES = %w[text text_box dropdown choices_dropdown date date_time phone email number currency yes_no time media_attachment information].freeze
+
+  # Field types allowed inside a repeating section (the child row). Excludes
+  # attachment/information types that don't map to a plain child-table column.
+  SECTION_MEMBER_TYPES = %w[text text_box dropdown choices_dropdown date date_time phone email number currency yes_no time].freeze
   RESTRICTION_TYPES = %w[none employee group].freeze
   READ_ONLY_TYPES = %w[none always initial].freeze
 
@@ -179,6 +183,90 @@ class FormField < ApplicationRecord
 
   def information?
     field_type == 'information'
+  end
+
+  # --- Repeating section (a group of fields the filler can add copies of) ---
+  #
+  # Any field can be flagged repeatable (options['repeatable']). That field is
+  # the section "anchor": it keeps its own type and renders as the first column
+  # of the repeating row, and other fields join it by tagging repeat_group with
+  # the anchor's field_name. Each row is saved to an auto-generated child table.
+
+  # True for the anchor field that starts a repeating group.
+  def repeatable?
+    !!options&.dig('repeatable')
+  end
+
+  # True for a field that joins another field's repeating section (repeat_group
+  # points at the anchor's field_name). An anchor is not itself a "member" — it
+  # owns the section — even though it renders inside the repeating row.
+  def section_member?
+    repeat_group.present? && !repeatable?
+  end
+
+  # field_name of the section this field joins (nil for anchors/standalone).
+  def repeat_group
+    options&.dig('repeat_group').presence
+  end
+
+  # has_many association / child-table name for this section, unique per form
+  # (e.g. form "TripReportForm" + anchor "location" => trip_report_form_locations).
+  def section_association_name
+    return nil unless repeatable?
+    return nil unless form_template
+
+    "#{form_template.file_name}_#{field_name.pluralize}"
+  end
+
+  # Child model class name inferred by Rails from the association (e.g.
+  # trip_report_form_locations => TripReportFormLocation).
+  def section_class_name
+    section_association_name&.classify
+  end
+
+  # Foreign-key column on the child table pointing back at the parent submission.
+  def section_foreign_key
+    return nil unless form_template
+
+    "#{form_template.file_name}_id"
+  end
+
+  # Ordered fields that make up this section's repeating row: the anchor itself
+  # plus every field that joined it, sorted by position.
+  def section_members
+    return [] unless repeatable? && form_template
+
+    joined = form_template.form_fields.select { |f| f.repeat_group == field_name && !f.repeatable? }
+    ([self] + joined).sort_by(&:position)
+  end
+
+  def repeat_min
+    options&.dig('repeat_min').to_i
+  end
+
+  def repeat_max
+    options&.dig('repeat_max').to_i
+  end
+
+  def section_add_label
+    options&.dig('add_label').presence || "+ Add #{section_item_label}"
+  end
+
+  def section_item_label
+    options&.dig('item_label').presence || label
+  end
+
+  # Migration column type for this field when it lives in a child (section) table.
+  # choices_dropdown holds a serialized array, so it maps to :text.
+  def child_column_type
+    case field_type
+    when 'text_box', 'choices_dropdown' then :text
+    when 'number' then :integer
+    when 'currency' then :decimal
+    when 'date' then :date
+    when 'date_time' then :datetime
+    else :string
+    end
   end
 
   def information_text
@@ -569,5 +657,10 @@ class FormField < ApplicationRecord
       options['information_text'] ||= ''
       options['acknowledgeable'] = false unless options.key?('acknowledgeable')
     end
+
+    return unless options['repeatable']
+
+    options['repeat_min'] ||= 1
+    options['repeat_max'] ||= 0
   end
 end

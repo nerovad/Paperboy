@@ -163,7 +163,7 @@
 <!-- FIELD:staff_involved START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :staff_involved, "Staff Involved" %>
             <%= form.select :staff_involved,
-                  options_for_select(Employee.order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }),
+                  options_for_select(FormLookup.options(4139)),
                   { include_blank: false },
                   { class: "form-control", required: true, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>

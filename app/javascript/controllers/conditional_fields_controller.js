@@ -30,17 +30,28 @@ export default class extends Controller {
     })
   }
 
-  updateConditionalField(conditionalEl, dependsOn) {
-    if (conditionalEl.closest("#vehicle-template")) return
+  // True when the element is a clone-template blueprint, not a live row. The
+  // legacy vehicle-list template is a hidden <div id="vehicle-template">; the
+  // generic repeatable-section uses an inert <template> (whose contents never
+  // appear in querySelectorAll anyway, but guarded here for a div fallback).
+  inTemplate(el) {
+    return !!el.closest("#vehicle-template, .repeatable-template")
+  }
 
-    const scope = conditionalEl.closest(".vehicle-block") || this.element
+  updateConditionalField(conditionalEl, dependsOn) {
+    if (this.inTemplate(conditionalEl)) return
+
+    // Scope the trigger lookup to the enclosing repeated block (vehicle-list or
+    // the generic repeatable-section) so each row is evaluated independently;
+    // fall back to the whole form for non-repeated fields.
+    const scope = conditionalEl.closest(".vehicle-block, .repeatable-block") || this.element
     const triggerSelects = scope.querySelectorAll(
       `select[name$="[${dependsOn}]"], select[name$="[${dependsOn}][]"]`
     )
 
     const selectedValues = []
     triggerSelects.forEach(triggerSelect => {
-      if (triggerSelect.closest("#vehicle-template")) return
+      if (this.inTemplate(triggerSelect)) return
       if (triggerSelect.multiple) {
         Array.from(triggerSelect.selectedOptions).forEach(o => selectedValues.push(o.value))
       } else if (triggerSelect.value) {

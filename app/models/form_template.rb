@@ -147,6 +147,16 @@ class FormTemplate < ApplicationRecord
     file_name.pluralize
   end
 
+  # Anchor fields flagged repeatable (each backs a child table). Filtered in Ruby
+  # because the flag lives in the options JSON blob.
+  def repeating_sections
+    form_fields.ordered.select(&:repeatable?)
+  end
+
+  def repeating_sections?
+    form_fields.any?(&:repeatable?)
+  end
+
   def page_header(page_num)
     return 'Employee Info' if page_num == 1
     return 'Agency Info' if page_num == 2

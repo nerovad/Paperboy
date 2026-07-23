@@ -57,6 +57,8 @@ export default class extends Controller {
     this.fieldUidSeq = 0
     this.fieldsContainerTarget?.querySelectorAll('.field-item').forEach(f => this.assignFieldUid(f))
     this.initializeConditionalUids()
+    // Populate/preserve each field's "Repeats in section" selector.
+    this.updateSectionDropdowns()
 
     // Add one field by default only if we're in the create modal (not edit page)
     if (!this.editModeValue) {
@@ -156,6 +158,7 @@ export default class extends Controller {
           // Field positions changed, so every field_N conditional ref must be
           // re-resolved to its target's new index.
           this.refreshConditionalDropdowns()
+          this.updateSectionDropdowns()
         }
       })
     }
@@ -1094,6 +1097,7 @@ export default class extends Controller {
     // A new trailing field doesn't shift existing indices, but refresh so other
     // fields can offer it as a conditional target.
     this.refreshConditionalDropdowns()
+    this.updateSectionDropdowns()
   }
 
   // Remove a field
@@ -1107,6 +1111,7 @@ export default class extends Controller {
       // Removing a field shifts the indices of everything after it, so re-resolve
       // all field_N conditional refs.
       this.refreshConditionalDropdowns()
+      this.updateSectionDropdowns()
     }
   }
 
@@ -1133,8 +1138,8 @@ export default class extends Controller {
     }
 
     // Conditional answer options are available for every field type. Non-dropdown
-    // fields can't offer a static value->value mapping (they have no own values),
-    // so when the answer is enabled on a non-dropdown, default it to lookup mode.
+    // fields can't offer a static value->value mapping, so when the answer is
+    // enabled on a non-dropdown, default it to lookup mode.
     const conditionalAnswerOptions = fieldItem.querySelector('.conditional-answer-options')
     if (conditionalAnswerOptions) {
       conditionalAnswerOptions.style.display = 'block'
@@ -1149,6 +1154,85 @@ export default class extends Controller {
 
     // Refresh conditional dropdowns in other fields (they may now see this as a dropdown option)
     this.refreshConditionalDropdowns()
+    // A field's label may feed the section selectors; keep them current.
+    this.updateSectionDropdowns()
+  }
+
+  // "Repeatable" checkbox: show/hide this field's section-config panel and
+  // (since an anchor can't join another section) its "Repeats in section" row.
+  toggleRepeatable(event) {
+    const fieldItem = event.target.closest('.field-item')
+    const sectionOptions = fieldItem.querySelector('.repeating-section-options')
+    const repeatGroupRow = fieldItem.querySelector('.repeat-group-row')
+    const isAnchor = event.target.checked
+
+    if (sectionOptions) sectionOptions.style.display = isAnchor ? 'block' : 'none'
+    if (repeatGroupRow) repeatGroupRow.style.display = isAnchor ? 'none' : 'block'
+
+    // This field just (un)became a section; refresh every field's selector.
+    this.updateSectionDropdowns()
+  }
+
+  // Keep a repeat-group select's remembered section uid in sync on manual change.
+  handleRepeatGroupChange(event) {
+    const opt = event.target.selectedOptions[0]
+    event.target.dataset.selectedUid = opt?.dataset.fieldUid || ''
+  }
+
+  // Populate every field's "Repeats in section" selector with the current set of
+  // repeatable (anchor) fields. Selection is preserved by the anchor's fieldUid
+  // so it survives reordering; on first load it falls back to the server-rendered
+  // field_<index> value.
+  updateSectionDropdowns() {
+    const allFields = Array.from(this.fieldsContainerTarget.querySelectorAll('.field-item'))
+
+    const sections = allFields.map((field, index) => {
+      const repeatable = field.querySelector('.repeatable-toggle')?.checked
+      if (!repeatable) return null
+      this.assignFieldUid(field)
+      const label = field.querySelector('input[name="fields[][label]"]')?.value || `Section ${index + 1}`
+      return { index, uid: field.dataset.fieldUid, label }
+    }).filter(Boolean)
+
+    allFields.forEach((field, index) => {
+      const row = field.querySelector('.repeat-group-row')
+      const select = field.querySelector('.repeat-group-select')
+      if (!row || !select) return
+
+      const isAnchor = field.querySelector('.repeatable-toggle')?.checked
+      if (isAnchor || sections.length === 0) {
+        row.style.display = 'none'
+        select.value = ''
+        select.dataset.selectedUid = ''
+        return
+      }
+
+      const prevUid = select.dataset.selectedUid || ''
+      const prevValue = select.value
+
+      select.innerHTML = '<option value="">— Not in a section —</option>'
+      sections.forEach(section => {
+        if (section.index === index) return
+        const opt = document.createElement('option')
+        opt.value = `field_${section.index}`
+        opt.dataset.fieldUid = section.uid
+        opt.textContent = section.label
+        select.appendChild(opt)
+      })
+
+      row.style.display = 'block'
+
+      // Restore prior selection: by uid across reorders, else by the initial
+      // server-rendered value on first populate.
+      if (prevUid) {
+        const match = Array.from(select.options).find(o => o.dataset.fieldUid === prevUid)
+        if (match) { select.value = match.value; select.dataset.selectedUid = prevUid }
+        else { select.dataset.selectedUid = '' }
+      } else if (prevValue) {
+        const match = Array.from(select.options).find(o => o.value === prevValue)
+        if (match) { select.value = prevValue; select.dataset.selectedUid = match.dataset.fieldUid || '' }
+      }
+    })
   }
 
   // Toggle between manual values, a curated database table, and a custom lookup
@@ -1164,8 +1248,8 @@ export default class extends Controller {
       radio.checked = (radio === event.target)
     })
 
-    manualSection.style.display = source === 'manual' ? 'block' : 'none'
-    dataSourceSection.style.display = source === 'database' ? 'block' : 'none'
+    if (manualSection) manualSection.style.display = source === 'manual' ? 'block' : 'none'
+    if (dataSourceSection) dataSourceSection.style.display = source === 'database' ? 'block' : 'none'
     if (customSection) customSection.style.display = source === 'custom' ? 'block' : 'none'
 
     // Clear the curated data-source selects unless that's the active mode

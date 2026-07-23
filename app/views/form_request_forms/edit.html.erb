@@ -192,7 +192,7 @@
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :specific_employee, "Specific Employee" %>
             <%= form.select :specific_employee,
-                  options_for_select(Employee.order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }, @form_request_form.specific_employee.to_s.split(/,(?! )/)),
+                  options_for_select(FormLookup.options(4155), @form_request_form.specific_employee.to_s.split(/,(?! )/)),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
@@ -216,7 +216,7 @@
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :employees_in_group, "Employees in Group" %>
             <%= form.select :employees_in_group,
-                  options_for_select(Employee.order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }, @form_request_form.employees_in_group.to_s.split(/,(?! )/)),
+                  options_for_select(FormLookup.options(4158), @form_request_form.employees_in_group.to_s.split(/,(?! )/)),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
