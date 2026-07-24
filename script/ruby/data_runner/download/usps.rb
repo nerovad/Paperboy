@@ -17,15 +17,15 @@ DOWNLOAD_DIR = Pathname.new(WorkflowPaths::DOWNLOAD_DIR)
 OUTPUT_PATH = DOWNLOAD_DIR.join(EtlHelpers.source_local(CFG).to_s)
 
 REQUIRED_ENV = %w[
-  USPS_PASSWORD
-  USPS_USERNAME
-  USPS_SIGNON_URL
-  USPS_STEP_01
-  USPS_STEP_02
-  USPS_STEP_03
-  USPS_STEP_04
-  USPS_STEP_05
-  USPS_STEP_06
+  DATARUNNER_USPS_PASSWORD
+  DATARUNNER_USPS_USERNAME
+  DATARUNNER_USPS_SIGNON_URL
+  DATARUNNER_USPS_STEP_01
+  DATARUNNER_USPS_STEP_02
+  DATARUNNER_USPS_STEP_03
+  DATARUNNER_USPS_STEP_04
+  DATARUNNER_USPS_STEP_05
+  DATARUNNER_USPS_STEP_06
 ].freeze
 
 RequestSpec = Struct.new(:verb, :uri, :body, keyword_init: true)
@@ -76,8 +76,8 @@ end
 def substitutions
   start_date, end_date = previous_month_range
   {
-    'USPS_USERNAME' => ENV.fetch('USPS_USERNAME'),
-    'USPS_PASSWORD' => ENV.fetch('USPS_PASSWORD'),
+    'DATARUNNER_USPS_USERNAME' => ENV.fetch('DATARUNNER_USPS_USERNAME'),
+    'DATARUNNER_USPS_PASSWORD' => ENV.fetch('DATARUNNER_USPS_PASSWORD'),
     'START_DATE' => start_date.iso8601,
     'END_DATE' => end_date.iso8601
   }
@@ -160,15 +160,15 @@ end
 
 def request_specs
   signon_body = URI.encode_www_form(
-    username: ENV.fetch('USPS_USERNAME'),
-    password: ENV.fetch('USPS_PASSWORD')
+    username: ENV.fetch('DATARUNNER_USPS_USERNAME'),
+    password: ENV.fetch('DATARUNNER_USPS_PASSWORD')
   )
   signon = RequestSpec.new(
     verb: :post,
-    uri: request_spec(ENV.fetch('USPS_SIGNON_URL')).uri,
+    uri: request_spec(ENV.fetch('DATARUNNER_USPS_SIGNON_URL')).uri,
     body: signon_body
   )
-  steps = (1..6).map { |number| request_spec(ENV.fetch(format('USPS_STEP_%02d', number))) }
+  steps = (1..6).map { |number| request_spec(ENV.fetch(format('DATARUNNER_USPS_STEP_%02d', number))) }
 
   [signon, *steps]
 end
