@@ -7,7 +7,7 @@ class DslDestroyerTest < ActiveSupport::TestCase
   test 'deletes the DSL and exact workflow outputs but preserves scripts' do
     Dir.mktmpdir do |directory|
       root = Pathname(directory)
-      data_runner_dsl_path = write(root.join('dsl/sample.rb'), "['Sample', {}]\n")
+      data_runner_dsl_path = write(root.join('config/data_runner/dsl/sample.rb'), "['Sample', {}]\n")
       output = write(root.join('02_Normalized/sample.csv'), "id\n1\n")
       similarly_named = write(root.join('02_Normalized/sample_extra.csv'), "id\n2\n")
       script = write(root.join('scripts/sample.rb'), "puts 'keep me'\n")

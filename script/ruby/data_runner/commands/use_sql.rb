@@ -8,7 +8,7 @@ require_relative '../helpers/etl_helpers'
 require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
 
-DSL_ENTRY_DIR = File.expand_path('../../../../dsl', __dir__)
+DSL_ENTRY_DIR = File.expand_path('../../../../config/data_runner/dsl', __dir__)
 SQL_SCHEMA_DIR = WorkflowPaths::SQL_SCHEMA_DIR
 
 DslEntry = Struct.new(:key, :cfg, :path, keyword_init: true)
@@ -224,7 +224,8 @@ if __FILE__ == $PROGRAM_NAME
       columns = sql_columns(File.read(path))
       updated = replace_header_block(File.read(entry.path), header_block(columns))
       File.write(entry.path, updated)
-      puts "[OK] #{File.basename(path)} -> dsl/#{File.basename(entry.path)} (#{columns.length} column(s))"
+      puts "[OK] #{File.basename(path)} -> config/data_runner/dsl/#{File.basename(entry.path)} " \
+           "(#{columns.length} column(s))"
       stats.ok!
     rescue StandardError => e
       puts "[FAIL] #{File.basename(path)}: #{e}"

@@ -3,7 +3,7 @@
 
 require 'fileutils'
 
-DSL_DIR = File.expand_path('../../../../dsl', __dir__)
+DSL_DIR = File.expand_path('../../../../config/data_runner/dsl', __dir__)
 StubTarget = Struct.new(:host, :database, :schema, :dsl_name, keyword_init: true)
 
 def usage!
@@ -107,5 +107,5 @@ if __FILE__ == $PROGRAM_NAME
 
   FileUtils.mkdir_p(DSL_DIR)
   File.write(path, render_stub(target))
-  puts "[OK] Created dsl/#{File.basename(path)}"
+  puts "[OK] Created config/data_runner/dsl/#{File.basename(path)}"
 end

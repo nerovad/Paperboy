@@ -5,7 +5,7 @@ class DslCreator
 
   Target = Data.define(:host, :database, :schema, :dsl_name)
 
-  def initialize(name:, commands:, directory: Rails.root.join('dsl'))
+  def initialize(name:, commands:, directory: Rails.root.join('config/data_runner/dsl'))
     @raw_name = name.to_s.strip
     @commands = Array(commands).map(&:to_s)
     @directory = Pathname(directory)
@@ -16,7 +16,7 @@ class DslCreator
     @directory.mkpath
     path = @directory.join("#{@target.dsl_name}.rb")
     path.open('wx') { |file| file.write(source) }
-    DslCatalog.reload! if @directory == Rails.root.join('dsl')
+    DslCatalog.reload! if @directory == Rails.root.join('config/data_runner/dsl')
     @target.dsl_name
   rescue Errno::EEXIST
     raise InvalidDsl, "DSL #{@target.dsl_name} already exists."

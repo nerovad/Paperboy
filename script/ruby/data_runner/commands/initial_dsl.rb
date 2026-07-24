@@ -10,7 +10,7 @@ require_relative '../db/mssql_helpers'
 require_relative '../constants/workflow_paths'
 
 DOWNLOAD_DIR = WorkflowPaths::DOWNLOAD_DIR
-DSL_DIR = File.expand_path('../../../../dsl', __dir__)
+DSL_DIR = File.expand_path('../../../../config/data_runner/dsl', __dir__)
 
 SCAN_LIMIT = 60
 
@@ -246,7 +246,8 @@ targets.sort.each do |input_path|
     content = render_entry(key, file_name, format, header_row_idx, header_cols)
 
     File.write(out_path, content)
-    puts "[OK] #{file_name} -> dsl/#{File.basename(out_path)} (header_row=#{header_row_idx}, cols=#{header_cols.length})"
+    puts "[OK] #{file_name} -> config/data_runner/dsl/#{File.basename(out_path)} " \
+         "(header_row=#{header_row_idx}, cols=#{header_cols.length})"
     stats.ok!
   rescue StandardError => e
     puts "[FAIL] #{file_name}: #{e}"

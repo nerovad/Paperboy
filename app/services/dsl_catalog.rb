@@ -40,7 +40,7 @@ class DslCatalog
 
     def load_entries
       require Rails.root.join('script/ruby/data_runner/constants/workflow')
-      Rails.root.glob('dsl/*.rb').map do |path|
+      Rails.root.glob('config/data_runner/dsl/*.rb').map do |path|
         key, config = TOPLEVEL_BINDING.eval(path.read, path.to_s)
         Entry.new(key: key, slug: path.basename('.rb').to_s, path: path, config: config)
       end
