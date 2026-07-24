@@ -11,9 +11,10 @@
   <% end %>
 <% end %>
 <div class="page-heading output-heading">
-  <div><p class="eyebrow"><%= @output.kind.upcase %> output</p><h2><%= @output.path.relative_path_from(Rails.root) %></h2></div>
+  <% relative_path = @output.path.relative_path_from(WorkflowPaths::OUTPUT_ROOT) %>
+  <div><p class="eyebrow"><%= @output.kind.upcase %> output</p><h2><%= relative_path %></h2></div>
   <div class="inline-actions">
-    <%= link_to "Download file", output_data_runner_dsl_path(@dsl.slug, path: @output.path.relative_path_from(Rails.root), download: 1), class: "button" %>
+    <%= link_to "Download file", output_data_runner_dsl_path(@dsl.slug, path: relative_path, download: 1), class: "button" %>
     <% if @backup_output %><%= link_to "Close", backup_outputs_data_runner_dsl_path(@dsl.slug), class: "button" %><% end %>
   </div>
 </div>

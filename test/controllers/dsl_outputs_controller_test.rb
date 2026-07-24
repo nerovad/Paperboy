@@ -20,6 +20,37 @@ class DslOutputsControllerTest < ActionController::TestCase
     backup_path&.delete if backup_path&.file?
   end
 
+  test 'outputs list uses workflow stages in links' do
+    sign_in
+    created_files = []
+    paths = {
+      '01_Download' => 'bdmforcasts.xlsx',
+      '02_Normalized' => 'bdmforcasts.csv',
+      '03_SQL_MAP' => 'bdmforcasts.sql',
+      '05_DSL_Applied' => 'bdmforcasts.csv'
+    }
+    paths.each do |stage, basename|
+      path = WorkflowPaths::OUTPUT_ROOT.join(stage, basename)
+      next if path.file?
+
+      path.dirname.mkpath
+      path.write('output')
+      created_files << path
+    end
+
+    get :outputs, params: { name: 'bdmforcasts' }
+
+    assert_response :success
+    paths.each do |stage, basename|
+      assert_select 'td', text: stage
+      assert_select 'a[href=?]',
+                    output_data_runner_dsl_path('bdmforcasts', path: "#{stage}/#{basename}"),
+                    text: basename
+    end
+  ensure
+    created_files&.each { |path| path.delete if path.file? }
+  end
+
   test 'backup file preview has close action next to download' do
     sign_in
     backup_path = Rails.root.join('output/data_runner/06_Download_Backup', '2099-01-02-001-employees.csv')

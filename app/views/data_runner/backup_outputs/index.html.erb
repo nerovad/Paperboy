@@ -22,15 +22,16 @@
   <th>Actions</th>
 </tr></thead><tbody>
   <% @files.each do |file| %>
+    <% relative_path = file.relative_path_from(WorkflowPaths::OUTPUT_ROOT) %>
     <tr>
       <td><%= file.basename %></td>
       <td><%= number_to_human_size(file.size) %></td>
       <td><%= l(file.mtime, format: :short) %></td>
       <td>
         <div class="inline-actions">
-          <%= link_to "View", output_data_runner_dsl_path(@dsl.slug, path: file.relative_path_from(Rails.root)), class: "button" %>
+          <%= link_to "View", output_data_runner_dsl_path(@dsl.slug, path: relative_path), class: "button" %>
           <%= button_to "Delete",
-                        destroy_backup_output_data_runner_dsl_path(@dsl.slug, path: file.relative_path_from(Rails.root)),
+                        destroy_backup_output_data_runner_dsl_path(@dsl.slug, path: relative_path),
                         method: :delete,
                         class: "button danger",
                         form: { data: { turbo_confirm: "Delete #{file.basename}? This cannot be undone." } } %>
