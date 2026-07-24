@@ -1,19 +1,21 @@
 # Paperboy (Ventura County Forms App)
 
-**Ruby version:**  
+**Ruby version:**
 
 ```bash
 ruby 3.4.4 (2025-05-14 revision a38531fd3f) +PRISM [x86_64-linux]
 ```
 
-**Rails version:**  
+**Rails version:**
 
 ```bash
 Rails 8.0.2
 ```
 
-Paperboy is a Ruby on Rails 8.x application for managing internal forms (e.g., Parking Lot Submissions, Probation Transfer Requests, Safety Reporting, etc.) with a modernized workflow.  
-It integrates with Microsoft SQL Server and uses Sidekiq for background jobs.
+Paperboy is a Ruby on Rails 8.x application for managing internal forms (e.g.,
+Parking Lot Submissions, Probation Transfer Requests, Safety Reporting, etc.)
+with a modernized workflow.  It integrates with Microsoft SQL Server and uses
+Sidekiq for background jobs.
 
 For the product story / sales pitch, see [docs/PITCH.md](docs/PITCH.md).
 
@@ -22,13 +24,17 @@ For the product story / sales pitch, see [docs/PITCH.md](docs/PITCH.md).
 
 ```bash
 sudo systemctl restart paperboy-dev
+
 # Deploying with git pull, bundle install, pre-compile, puma restart, Sidekiq restart
 bin/deploy-dev
+
 # Check Logs
 sudo journalctl -u paperboy-dev -f
 sudo journalctl -u paperboy-dev-sidekiq -f
+
 # Stop temporarily (e.g. to run rails s manually)
 sudo systemctl stop paperboy-dev
+
 # When done:
 sudo systemctl start paperboy-dev
 ```
@@ -38,31 +44,32 @@ sudo systemctl start paperboy-dev
   Restart Puma (just Puma):
 
 ```bash
-  sudo systemctl restart paperboy-stage
+sudo systemctl restart paperboy-stage
 ```
 
   Restart both (Puma + Sidekiq):
 
 ```bash
-  sudo systemctl restart paperboy-stage paperboy-stage-sidekiq
+sudo systemctl restart paperboy-stage paperboy-stage-sidekiq
 ```
 
   Full deploy (git pull → bundle → assets:clobber → assets:precompile → restart both):
 
 ```bash
-  bin/deploy-stage              # deploys master
-  bin/deploy-stage some-branch  # deploys a different branch
+bin/deploy-stage              # deploys master
+bin/deploy-stage some-branch  # deploys a different branch
 ```
 
-  It mirrors bin/deploy-dev exactly, except it runs RAILS_ENV=staging, bundle install --without development test, and restarts
-  the paperboy-stage* units. The script prompts for your sudo password during
-  the two systemctl restart calls near the end.
+  It mirrors bin/deploy-dev exactly, except it runs RAILS_ENV=staging, bundle
+  install --without development test, and restarts the paperboy-stage* units.
+  The script prompts for your sudo password during the two systemctl restart
+  calls near the end.
 
   Tail logs while debugging:
 
 ```bash
-  journalctl -u paperboy-stage -f
-  journalctl -u paperboy-stage-sidekiq -f
+journalctl -u paperboy-stage -f
+journalctl -u paperboy-stage-sidekiq -f
 ```
 
 ## Pushing to Github
@@ -94,18 +101,19 @@ git push origin --tags
 ```
 
 ## Pulling Code to Production Server
-  On Dev — write code, commit, push to Gitea
-  On Prod — run bin/deploy and it handles everything:
-  1. git pull the latest code
-  2. bundle install for any new gems
-  3. assets:clobber + assets:precompile for a clean asset build
-  4. Restarts Puma and Sidekiq via systemd
+On Dev — write code, commit, push to Gitea
+On Prod — run bin/deploy and it handles everything:
+1. git pull the latest code
+2. bundle install for any new gems
+3. assets:clobber + assets:precompile for a clean asset build
+4. Restarts Puma and Sidekiq via systemd
 
-  Puma and Sidekiq are managed by systemd, which means:
-  - They auto-start on server boot
-  - They auto-restart if they crash
-  - You can check on them anytime with sudo systemctl status paperboy or sudo systemctl status paperboy-sidekiq
-  - Logs go to journald: sudo journalctl -u paperboy -f
+Puma and Sidekiq are managed by systemd, which means:
+- They auto-start on server boot
+- They auto-restart if they crash
+- You can check on them anytime with sudo systemctl status paperboy or sudo
+  systemctl status paperboy-sidekiq
+- Logs go to journald: sudo journalctl -u paperboy -f
 
 ## Rolling back on Production
 
@@ -263,7 +271,7 @@ rm db/migrate/*_create_authorization_forms.rb
 ```
 
 
-##Sub-Application Workflow
+## Sub-Application Workflow
 
 Paperboy is the base app, and the sidebar app switcher can hold others next to
 it (Data Runner, Chart of Accounts). Use the app rake task to add another one.
@@ -381,13 +389,13 @@ rails dev:seed:probation TRANSFERS=80
 Notes:
 Use REPLANT=1 with seeds to reset test data.
 
-##MSSQL gsasql16 Command for Linux Terminal viewing. With alias.
+## MSSQL gsasql16 Command for Linux Terminal viewing. With alias.
 
 ```bash
 prettysql "SELECT TOP 50 * FROM GSABSS.dbo.Employees"
 ```
 
-#Claude Code Git Reversion Best Practices
+# Claude Code Git Reversion Best Practices
 Best practices:
 
 Start each Claude Code session with a clean commit:
@@ -398,8 +406,8 @@ git commit -m "Pre-Claude: baseline before [task description]"
 claude
 ```
 
-Review Claude's changes before accepting them - you can use Plan Mode 
-(--permission-mode plan or Shift+Tab to cycle to it) to see what Claude 
+Review Claude's changes before accepting them - you can use Plan Mode
+(--permission-mode plan or Shift+Tab to cycle to it) to see what Claude
 wants to do before it makes changes
 
 If you mistakenly accept unwanted changes:
@@ -436,9 +444,11 @@ git commit -m "Baseline before Claude session"
 
 # Work with Claude, commit frequently
 claude
+
 # ... Claude makes changes ...
 git add .
 git commit -m "Claude: Initial ACL implementation"
+
 # ... more Claude work ...
 git commit -m "Claude: Fix Employee lookup"
 
