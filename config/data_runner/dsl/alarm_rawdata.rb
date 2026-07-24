@@ -15,7 +15,7 @@
       name: 'gsa_security'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/alarm_rawdata.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/alarm_rawdata.csv',
       local: 'alarm_rawdata.csv',
       format: :csv,
       strategy: :copy

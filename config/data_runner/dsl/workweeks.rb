@@ -15,7 +15,7 @@
       name: 'human_resources'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/workweeks.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/workweeks.csv',
       local: 'workweeks.csv',
       format: :csv,
       strategy: :copy

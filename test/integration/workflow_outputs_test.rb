@@ -16,7 +16,7 @@ class WorkflowOutputsTest < ActionDispatch::IntegrationTest
   test 'units only includes files whose stem is exactly units' do
     created_files = []
     [
-      Rails.root.join('output/data_runner/01_Download', 'units.xlsx'),
+      Rails.root.join('00_Inbox', 'units.xlsx'),
       Rails.root.join('output/data_runner/02_Normalized', 'units.csv'),
       Rails.root.join('output/data_runner/03_SQL_MAP', 'units.sql')
     ].each do |path|

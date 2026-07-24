@@ -15,7 +15,7 @@
       name: 'budget_rate_development'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/bdmrates.xlsx',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/bdmrates.xlsx',
       local: 'bdmratetypes.xlsx',
       format: :xlsx,
       strategy: :copy

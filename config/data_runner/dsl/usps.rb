@@ -15,7 +15,7 @@
       name: 'billing'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/usps.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/usps.csv',
       local: 'usps.csv',
       format: :csv,
       strategy: :copy

@@ -56,17 +56,17 @@ filename order and builds:
   example, `rake DataRunner:oneshot chart_of_accounts` processes all DSL
   entries in that group.
 - Use `source.location` for the file or path to stage and `source.local` for
-  the filename used inside `output/data_runner/01_Download` and downstream stages.
-- Use `source.strategy: :manual` when a human places the file in `output/data_runner/01_Download`;
+  the filename used inside `00_Inbox` and downstream stages.
+- Use `source.strategy: :manual` when a human places the file in `00_Inbox`;
   if `source.location` differs from `source.local`, the download stage copies
   the placed file to the local staged name.
 - Use `source.strategy: :copy` when the download stage should copy
-  `source.location` into `output/data_runner/01_Download/source.local`.
+  `source.location` into `00_Inbox/source.local`.
 - Use `source.strategy: :append` when a locally staged supplemental file should
   flow through the normal stages and append into another dataset's destination
   table via `inject.mode: :append`.
 - Use `source.strategy: :script` when the download stage should run a local Ruby
-  script that creates `output/data_runner/01_Download/source.local`:
+  script that creates `00_Inbox/source.local`:
 
 ```ruby
 source: {

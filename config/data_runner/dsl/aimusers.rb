@@ -15,7 +15,7 @@
       name: 'user_entitlements'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/aimusers.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/aimusers.csv',
       local: 'aimusers.csv',
       format: :csv,
       strategy: :copy

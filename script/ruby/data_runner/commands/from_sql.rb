@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Exports configured SQL Server tables into output/data_runner/01_Download CSV files.
+# Exports configured SQL Server tables into 00_Inbox CSV files.
 
 require 'csv'
 require 'fileutils'

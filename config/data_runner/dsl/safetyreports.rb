@@ -15,7 +15,7 @@
       name: 'paperboy'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/safetyreports.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/safetyreports.csv',
       local: 'safetyreports.csv',
       format: :csv,
       strategy: :copy

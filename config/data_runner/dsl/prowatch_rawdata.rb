@@ -15,7 +15,7 @@
       name: 'gsa_security'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/prowatch_rawdata.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/prowatch_rawdata.csv',
       local: 'prowatch_rawdata.csv',
       format: :csv,
       strategy: :copy

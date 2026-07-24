@@ -15,7 +15,7 @@
       name: 'mail_center_and_warehousing'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/pitney_bowes.xlsx',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/pitney_bowes.xlsx',
       local: 'pitney_bowes.xlsx',
       format: :xlsx,
       strategy: :copy

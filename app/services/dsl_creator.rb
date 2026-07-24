@@ -65,7 +65,7 @@ class DslCreator
             }
           },
           source: {
-            location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/#{@target.dsl_name}.csv',
+            location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/#{@target.dsl_name}.csv',
             local: '#{@target.dsl_name}.csv',
             format: :csv,
             strategy: :copy

@@ -15,7 +15,7 @@
       name: 'print_2_mail_billing_data'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/companions.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/companions.csv',
       local: 'companions.csv',
       format: :csv,
       strategy: :copy

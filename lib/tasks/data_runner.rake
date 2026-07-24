@@ -40,7 +40,7 @@ namespace :DataRunner do
     DataRunnerTaskHelpers.run_ruby_stage('dump_sql.rb', DataRunnerTaskHelpers.task_arg(args, allow_all: true))
   end
 
-  desc 'Export SQL Server tables into output/data_runner/01_Download CSV files'
+  desc 'Export SQL Server tables into 00_Inbox CSV files'
   task :from_sql, [:name] do |_task, args|
     DataRunnerTaskHelpers.run_ruby_stage('from_sql.rb', DataRunnerTaskHelpers.task_arg(args, allow_all: true))
   end

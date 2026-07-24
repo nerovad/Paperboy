@@ -15,7 +15,7 @@
       name: 'billing'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/oneil.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/oneil.csv',
       local: 'oneil.csv',
       format: :csv,
       strategy: :copy

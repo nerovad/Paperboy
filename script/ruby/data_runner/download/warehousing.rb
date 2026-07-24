@@ -13,7 +13,7 @@ require_relative '../constants/workflow_paths'
 # Technical overview
 #
 # This script assembles the warehousing TC60 workbook extracts into a single
-# `output/data_runner/01_Download/warehousing.csv` file for the DataRunner pipeline. It is meant
+# `00_Inbox/warehousing.csv` file for the DataRunner pipeline. It is meant
 # to run as a `source.strategy: :script` download step, with one argument:
 # `ALL` to scan every accounting period folder or `APNN` to scan one period.
 #

@@ -15,7 +15,7 @@
       name: 'human_resources'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/employees.xlsx',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/employees.xlsx',
       local: 'employees.xlsx',
       format: :xlsx,
       strategy: :copy

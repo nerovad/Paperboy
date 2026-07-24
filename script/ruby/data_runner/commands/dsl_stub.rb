@@ -54,7 +54,7 @@ def render_stub(target)
   key = dataset_key(name)
   quoted_name = single_quoted(name)
   quoted_csv = single_quoted("#{name}.csv")
-  quoted_location = single_quoted("/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/#{name}.csv")
+  quoted_location = single_quoted("/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/#{name}.csv")
 
   <<~RUBY
     # frozen_string_literal: true

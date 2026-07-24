@@ -15,7 +15,7 @@
       name: 'billing_configuration'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/tc60_types.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/tc60_types.csv',
       local: 'tc60_types.csv',
       format: :csv,
       strategy: :copy

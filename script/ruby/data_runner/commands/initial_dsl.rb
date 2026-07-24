@@ -178,7 +178,7 @@ def render_entry(dataset_key, local_name, format, header_row_idx, header_cols)
           }
         },
         source: {
-          location: #{ruby_literal(File.join('/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download', local_name))},
+          location: #{ruby_literal(File.join('/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox', local_name))},
           local: #{ruby_literal(local_name)},
           format: :#{format},
           strategy: :copy
