@@ -15,7 +15,7 @@
       name: 'human_resources'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/01_Download/holidays.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/holidays.csv',
       local: 'holidays.csv',
       format: :csv,
       strategy: :copy

@@ -5,7 +5,7 @@
 #     Writes SQL Server CREATE TABLE scaffolds from DSL_MAP header mappings.
 #
 #     Output:
-#       03_SQL_MAP/<base>.sql
+#       output/data_runner/03_SQL_MAP/<base>.sql
 #
 #     Rules:
 #     - Uses cfg[:database_connections] targets.

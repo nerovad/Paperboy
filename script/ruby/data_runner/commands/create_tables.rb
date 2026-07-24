@@ -3,9 +3,9 @@
 
 # create_tables.rb
 #
-# Executes SQL Server scripts in 03_SQL_MAP to create tables.
+# Executes SQL Server scripts in output/data_runner/03_SQL_MAP to create tables.
 # - Uses DSL_MAP entries where step :create_table is enabled.
-# - Resolves each SQL file as 03_SQL_MAP/<base>.sql.
+# - Resolves each SQL file as output/data_runner/03_SQL_MAP/<base>.sql.
 # - Splits scripts on SQL Server "GO" batch separators.
 # - Executes each batch via TinyTDS.
 

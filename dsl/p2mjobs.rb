@@ -15,7 +15,7 @@
       name: 'print_2_mail'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/01_Download/p2mjobs.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/p2mjobs.csv',
       local: 'p2mjobs.csv',
       format: :csv,
       strategy: :copy

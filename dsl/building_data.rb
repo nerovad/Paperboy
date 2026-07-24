@@ -15,7 +15,7 @@
       name: 'paperboy'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/01_Download/building_data.xlsx',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/building_data.xlsx',
       local: 'building_data.xlsx',
       format: :xlsx,
       strategy: :copy

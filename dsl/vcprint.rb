@@ -15,7 +15,7 @@
       name: 'billing'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/01_Download/vcprint.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/vcprint.csv',
       local: 'vcprint.csv',
       format: :csv,
       strategy: :copy

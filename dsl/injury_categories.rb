@@ -15,7 +15,7 @@
       name: 'paperboy'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/01_Download/injury_classifications.xlsx',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/injury_classifications.xlsx',
       local: 'injury_categories.xlsx',
       format: :xlsx,
       strategy: :copy

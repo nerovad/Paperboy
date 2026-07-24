@@ -15,7 +15,7 @@
       name: 'human_resources'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/01_Download/fiscalmonths.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/fiscalmonths.csv',
       local: 'fiscalmonths.csv',
       format: :csv,
       strategy: :copy

@@ -5,7 +5,7 @@
 
 # {{{ Requirements and definitions.
 #
-# Loads 05_DSL_Applied/*.csv into SQL Server using TinyTDS.
+# Loads output/data_runner/05_DSL_Applied/*.csv into SQL Server using TinyTDS.
 #
 # Modes:
 # - :truncate_insert : TRUNCATE + INSERT all rows

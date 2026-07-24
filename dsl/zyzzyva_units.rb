@@ -15,7 +15,7 @@
       name: 'chart_of_accounts'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/01_Download/zyzzyva_units.xlsx',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/zyzzyva_units.xlsx',
       local: 'zyzzyva_units.xlsx',
       format: :xlsx,
       strategy: :append

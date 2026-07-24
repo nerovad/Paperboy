@@ -15,7 +15,7 @@
       name: 'gsa_security'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/01_Download/camera_hardware.xlsx',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/camera_hardware.xlsx',
       local: 'camera_hardware.xlsx',
       format: :xlsx,
       strategy: :copy

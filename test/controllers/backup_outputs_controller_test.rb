@@ -7,7 +7,7 @@ class BackupOutputsControllerTest < ActionController::TestCase
 
   test 'backup outputs list has view delete delete all and close actions' do
     sign_in
-    backup_path = Rails.root.join('06_Download_Backup', '2099-01-01-001-employees.xlsx')
+    backup_path = Rails.root.join('output/data_runner/06_Download_Backup', '2099-01-01-001-employees.xlsx')
     backup_path.dirname.mkpath
     backup_path.write('backup')
 
@@ -32,7 +32,7 @@ class BackupOutputsControllerTest < ActionController::TestCase
 
   test 'backup outputs list sorts by file size and modified' do
     sign_in
-    backup_dir = Rails.root.join('06_Download_Backup')
+    backup_dir = Rails.root.join('output/data_runner/06_Download_Backup')
     small = backup_dir.join('2099-01-03-001-employees.csv')
     large = backup_dir.join('2099-01-04-001-employees.csv')
     backup_dir.mkpath
@@ -61,7 +61,7 @@ class BackupOutputsControllerTest < ActionController::TestCase
 
   test 'single backup file can be deleted' do
     sign_in
-    backup_path = Rails.root.join('06_Download_Backup', '2099-01-01-001-employees.xlsx')
+    backup_path = Rails.root.join('output/data_runner/06_Download_Backup', '2099-01-01-001-employees.xlsx')
     backup_path.dirname.mkpath
     backup_path.write('backup')
 
@@ -73,7 +73,7 @@ class BackupOutputsControllerTest < ActionController::TestCase
 
   test 'all backup files for dsl can be deleted' do
     sign_in
-    backup_dir = Rails.root.join('06_Download_Backup')
+    backup_dir = Rails.root.join('output/data_runner/06_Download_Backup')
     employee_backup = backup_dir.join('2099-01-01-001-employees.xlsx')
     other_backup = backup_dir.join('2099-01-01-001-units.xlsx')
     backup_dir.mkpath

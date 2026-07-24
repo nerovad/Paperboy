@@ -35,12 +35,12 @@ namespace :DataRunner do
     DataRunnerTaskHelpers.run_ruby_stage('to_sql.rb', DataRunnerTaskHelpers.task_arg(args, allow_all: true))
   end
 
-  desc 'Dump live SQL Server table definitions into 04_SQL_SCHEMA'
+  desc 'Dump live SQL Server table definitions into output/data_runner/04_SQL_SCHEMA'
   task :dump_sql, [:name] do |_task, args|
     DataRunnerTaskHelpers.run_ruby_stage('dump_sql.rb', DataRunnerTaskHelpers.task_arg(args, allow_all: true))
   end
 
-  desc 'Export SQL Server tables into 01_Download CSV files'
+  desc 'Export SQL Server tables into output/data_runner/01_Download CSV files'
   task :from_sql, [:name] do |_task, args|
     DataRunnerTaskHelpers.run_ruby_stage('from_sql.rb', DataRunnerTaskHelpers.task_arg(args, allow_all: true))
   end
@@ -60,7 +60,7 @@ namespace :DataRunner do
     DataRunnerTaskHelpers.run_ruby_stage('use_dsl.rb', DataRunnerTaskHelpers.task_arg(args, allow_all: true))
   end
 
-  desc 'Update DSL header mappings from reviewed SQL in 04_SQL_SCHEMA'
+  desc 'Update DSL header mappings from reviewed SQL in output/data_runner/04_SQL_SCHEMA'
   task :use_sql, [:name] do |_task, args|
     DataRunnerTaskHelpers.run_ruby_stage('use_sql.rb', DataRunnerTaskHelpers.task_arg(args, allow_all: true))
   end

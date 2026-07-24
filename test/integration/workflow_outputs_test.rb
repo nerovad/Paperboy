@@ -16,9 +16,9 @@ class WorkflowOutputsTest < ActionDispatch::IntegrationTest
   test 'units only includes files whose stem is exactly units' do
     created_files = []
     [
-      Rails.root.join('01_Download', 'units.xlsx'),
-      Rails.root.join('02_Normalized', 'units.csv'),
-      Rails.root.join('03_SQL_MAP', 'units.sql')
+      Rails.root.join('output/data_runner/01_Download', 'units.xlsx'),
+      Rails.root.join('output/data_runner/02_Normalized', 'units.csv'),
+      Rails.root.join('output/data_runner/03_SQL_MAP', 'units.sql')
     ].each do |path|
       next if path.file?
 
@@ -42,7 +42,7 @@ class WorkflowOutputsTest < ActionDispatch::IntegrationTest
 
   test 'backup files match timestamped exact DSL stems' do
     entry = DslCatalog.find!('units')
-    backup_dir = Rails.root.join('06_Download_Backup')
+    backup_dir = Rails.root.join('output/data_runner/06_Download_Backup')
     unit_backup = backup_dir.join('2026-06-25-001-units.xlsx')
     sub_unit_backup = backup_dir.join('2026-06-25-001-sub_units.xlsx')
     backup_dir.mkpath

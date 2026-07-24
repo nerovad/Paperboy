@@ -82,7 +82,7 @@ class DslsControllerTest < ActionController::TestCase
 
   test 'csv output uses datatables with per-column filters' do
     sign_in
-    output_path = Rails.root.join('05_DSL_Applied', 'employees.csv')
+    output_path = Rails.root.join('output/data_runner/05_DSL_Applied', 'employees.csv')
     output_path.dirname.mkpath
     output_path.write("id,name\n1,Ada\n2,Grace\n")
 
@@ -101,7 +101,7 @@ class DslsControllerTest < ActionController::TestCase
 
   test 'sql output is syntax highlighted with rouge' do
     sign_in
-    output_path = Rails.root.join('04_SQL_SCHEMA', 'employees.sql')
+    output_path = Rails.root.join('output/data_runner/04_SQL_SCHEMA', 'employees.sql')
     output_path.dirname.mkpath
     output_path.write("SELECT id FROM employees WHERE id = 1;\n")
 

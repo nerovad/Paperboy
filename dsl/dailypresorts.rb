@@ -15,7 +15,7 @@
       name: 'print_2_mail_billing_data'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/01_Download/dailypresort.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/dailypresort.csv',
       local: 'dailypresorts.csv',
       format: :csv,
       strategy: :copy

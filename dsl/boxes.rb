@@ -15,7 +15,7 @@
       name: 'scan_center'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/01_Download/boxes.csv',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/boxes.csv',
       local: 'boxes.csv',
       format: :csv,
       strategy: :copy

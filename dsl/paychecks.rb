@@ -15,7 +15,7 @@
       name: 'human_resources'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/01_Download/paychecks.xlsx',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/output/data_runner/01_Download/paychecks.xlsx',
       local: 'paychecks.xlsx',
       format: :xlsx,
       strategy: :copy

@@ -139,8 +139,8 @@ module DataRunnerTaskHelpers
     require_relative '../constants/workflow_paths'
 
     staged_dir_names.each do |dirname|
-      path = Rails.root.join(dirname)
-      display_path = File.join('ruby/etl', dirname)
+      path = WorkflowPaths::OUTPUT_ROOT.join(dirname)
+      display_path = File.join('output/data_runner', dirname)
 
       unless Dir.exist?(path)
         puts "[SKIP] Missing #{display_path}"

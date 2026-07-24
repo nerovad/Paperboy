@@ -14,7 +14,7 @@ class WorkflowOutputs
   OUTPUT_DIRECTORIES = DIRECTORIES - [WorkflowPaths::DOWNLOAD_BACKUP_DIR_NAME]
   EXTENSIONS = %w[.csv .sql .xlsx].freeze
 
-  def initialize(entry, root: Rails.root)
+  def initialize(entry, root: WorkflowPaths::OUTPUT_ROOT)
     @entry = entry
     @root = Pathname(root)
   end
