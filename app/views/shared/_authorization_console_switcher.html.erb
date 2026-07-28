@@ -1,0 +1,18 @@
+<%# Console switcher for the authorization console pages.
+    Renders nothing for users who only hold one console, so the GSA services
+    console looks exactly as it did before the picker existed. %>
+<% consoles = available_authorization_consoles %>
+<% if consoles.size > 1 %>
+  <div class="console-switcher">
+    <%= form_with url: select_authorization_console_index_path, method: :get,
+                  data: { turbo: false, controller: "auto-submit" } do %>
+      <div class="filter-group" data-controller="choices">
+        <label>Form</label>
+        <%= select_tag :console,
+              options_for_select(consoles.map { |c| [c.label, c.key] }, current_console_key),
+              class: "form-control",
+              data: { choices_target: "select", action: "change->auto-submit#submit" } %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

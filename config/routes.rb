@@ -196,12 +196,17 @@ Rails.application.routes.draw do
 
   resources :authorization_console, only: %i[index new create] do
     collection do
+      get    :select
       delete :destroy_all_for_employee
       get    :group_edit
       patch  :group_update
       delete :group_destroy
     end
   end
+
+  # Safety Reporting authorization console (HCA safety officers by org node).
+  resources :safety_authorizations, only: %i[index new create edit update destroy],
+                                    path: 'authorization_console/safety'
 
   resources :acl, only: %i[index show new create edit update destroy] do
     member do

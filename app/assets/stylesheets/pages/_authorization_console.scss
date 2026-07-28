@@ -10,6 +10,7 @@
   overflow: hidden;
   margin: 0 auto;
 
+  > .console-switcher,
   > .console-filters,
   > .department-header {
     flex-shrink: 0;
@@ -51,6 +52,27 @@
   .btn.approve {
     margin: 0;
   }
+}
+
+// Form switcher above the filter bar. Only rendered for users who hold more
+// than one console, so single-console screens are unchanged.
+.console-switcher {
+  margin-bottom: 16px;
+  max-width: 420px;
+
+  label {
+    display: block;
+    font-weight: 600;
+    color: $label-color;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+  }
+}
+
+// Standalone console picker (the console entry screen)
+.console-picker {
+  max-width: 480px;
+  margin-top: 8px;
 }
 
 // Filter bar at the top
@@ -155,6 +177,18 @@
       font-size: 1rem;
       color: $text-color;
       margin-bottom: 8px;
+
+      .employee-id {
+        color: $muted;
+        font-weight: 400;
+        font-size: 0.95rem;
+      }
+    }
+
+    // An org node with nobody assigned — the gap this console exists to show.
+    .unassigned {
+      color: $muted;
+      font-style: italic;
     }
 
     .detail-row {

@@ -109,8 +109,10 @@
                 <% if system_admin? || current_user_dropdown_permissions.include?('dashboards') %>
                   <%= link_to "Dashboards", dashboards_path, class: "btn btn-primary" %>
                 <% end %>
-                <% if auth_console_user? || current_user_dropdown_permissions.include?('auth_console') %>
-                  <%= link_to "Authorizations", authorization_console_index_path, class: "btn btn-info" %>
+                <%# Lands on the console picker, which forwards straight through
+                    for users who only hold one console. %>
+                <% if available_authorization_consoles.any? || current_user_dropdown_permissions.include?('auth_console') %>
+                  <%= link_to "Authorizations", select_authorization_console_index_path, class: "btn btn-info" %>
                 <% end %>
                 <%# Records is a tab of My Work, not a dropdown entry of its own.
                     The 300 Log lives there, and the 300A Summary is reached

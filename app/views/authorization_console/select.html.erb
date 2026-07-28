@@ -1,0 +1,28 @@
+<!-- app/views/authorization_console/select.html.erb -->
+<div class="form-header">
+  <h1>Authorization Console</h1>
+  <p>Choose which form's authorizations you want to manage.</p>
+</div>
+
+<div class="form-wrapper">
+  <% if @consoles.any? %>
+    <div class="console-picker">
+      <%= form_with url: select_authorization_console_index_path, method: :get,
+                    data: { turbo: false, controller: "auto-submit" } do %>
+        <div class="form-group" data-controller="choices">
+          <%= label_tag :console, "Form" %>
+          <%= select_tag :console,
+                options_for_select(@consoles.map { |c| [c.label, c.key] }),
+                include_blank: "Select a form…",
+                class: "form-control",
+                data: { choices_target: "select", action: "change->auto-submit#submit",
+                        placeholder: "Select a form…" } %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>You do not have access to any authorization consoles.</p>
+    </div>
+  <% end %>
+</div>

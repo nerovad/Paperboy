@@ -1,0 +1,11 @@
+<!-- app/views/safety_authorizations/edit.html.erb -->
+<div class="form-header">
+  <h1>Edit Safety Officer Authorization</h1>
+</div>
+
+<div class="form-wrapper authorization-console">
+  <%= render "form",
+        form_url: safety_authorization_path(@authorization),
+        form_method: :patch,
+        submit_label: "Update Authorization" %>
+</div>

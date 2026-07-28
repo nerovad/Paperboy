@@ -4,8 +4,20 @@
 require 'csv'
 
 class AuthorizationConsoleController < ApplicationController
-  before_action :require_auth_console
-  before_action :set_managed_departments
+  before_action :require_any_authorization_console, only: %i[select]
+  before_action :require_auth_console, except: %i[select]
+  before_action :set_managed_departments, except: %i[select]
+
+  # Entry screen for the console: pick which form's authorizations to manage.
+  # Users who only hold one console skip the picker entirely, so the GSA
+  # services console opens exactly as it always has.
+  def select
+    @consoles = available_authorization_consoles
+    chosen = @consoles.find { |console| console.key == params[:console].to_s }
+    chosen ||= @consoles.first if @consoles.one?
+
+    redirect_to public_send(chosen.route_name) if chosen
+  end
 
   def index
     managed_dept_ids = @managed_departments.map(&:department_id)

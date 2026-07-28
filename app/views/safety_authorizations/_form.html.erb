@@ -1,0 +1,41 @@
+<% dept_label = org_label(:division, SafetyReportAuthorization::AGENCY_ID) %>
+
+<%= form_with model: @authorization, url: form_url, method: form_method,
+              scope: :safety_report_authorization, data: { turbo: false } do |form| %>
+  <% if @authorization.errors.any? %>
+    <div class="alert alert-danger">
+      <p><strong>There was a problem:</strong></p>
+      <ul>
+        <% @authorization.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group" data-controller="choices">
+    <%= form.label :division_id, dept_label %>
+    <%= form.select :division_id,
+          options_for_select(@division_options, @authorization.division_id),
+          { prompt: "Select #{dept_label}" },
+          class: "form-control",
+          required: true,
+          data: { choices_target: "select", placeholder: "Search for a #{dept_label.downcase}..." } %>
+    <small class="help-text">Safety Reports submitted from this <%= dept_label.downcase %> route to the officer below</small>
+  </div>
+
+  <div class="form-group" data-controller="choices">
+    <%= form.label :employee_id, "Safety Officer" %>
+    <%= form.select :employee_id,
+          options_for_select(@employee_options, @authorization.employee_id),
+          { prompt: "Select Employee" },
+          class: "form-control",
+          required: true,
+          data: { choices_target: "select", placeholder: "Search for an employee..." } %>
+  </div>
+
+  <div class="form-actions">
+    <%= link_to "Cancel", safety_authorizations_path, class: "btn" %>
+    <%= form.submit submit_label, class: "btn approve" %>
+  </div>
+<% end %>

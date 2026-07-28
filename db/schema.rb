@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 20_260_722_213_122) do
+ActiveRecord::Schema[8.0].define(version: 20_260_728_120_000) do
   create_table 'Employee_Groups', force: :cascade do |t|
     t.integer 'EmployeeID', null: false
     t.bigint 'GroupID', null: false
@@ -729,6 +729,16 @@ ActiveRecord::Schema[8.0].define(version: 20_260_722_213_122) do
     t.datetime 'created_at', null: false
     t.index ['created_at'], name: 'index_record_edits_on_created_at'
     t.index %w[record_type record_id], name: 'index_record_edits_on_record_type_and_record_id'
+  end
+
+  create_table 'safety_report_authorizations', force: :cascade do |t|
+    t.string 'employee_id', null: false
+    t.string 'division_id', null: false
+    t.string 'authorized_by'
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+    t.index ['division_id'], name: 'index_safety_report_authorizations_on_division_id'
+    t.index %w[employee_id division_id], name: 'index_safety_report_authorizations_on_employee_and_division', unique: true
   end
 
   create_table 'safety_reports', force: :cascade do |t|

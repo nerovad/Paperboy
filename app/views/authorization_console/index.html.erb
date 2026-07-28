@@ -4,6 +4,9 @@
 </div>
 
 <div class="form-wrapper authorization-console" data-controller="confirm-modal">
+  <%= render "shared/authorization_console_switcher",
+        current_console_key: AuthorizationConsole::SERVICES.key %>
+
   <% if @managed_departments.any? %>
     <div class="console-filters">
       <%= form_with url: authorization_console_index_path, method: :get, data: { turbo: false, controller: "auto-submit" } do %>

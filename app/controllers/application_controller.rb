@@ -7,7 +7,8 @@ class ApplicationController < ActionController::Base
   helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain,
                 :auth_console_admin?, :auth_console_user?, :pcard_admin?, :current_user_dropdown_permissions,
                 :current_user_form_permission_keys, :current_user_application_permission_keys,
-                :current_user_record_edit_permission_keys
+                :current_user_record_edit_permission_keys, :safety_auth_console_user?,
+                :available_authorization_consoles, :authorization_console_accessible?
 
   def current_user
     user_data = session[:user]
@@ -111,6 +112,29 @@ class ApplicationController < ActionController::Base
       current_user_group_names.include?('pcard_admin')
   end
 
+  # Who may manage the Safety Reporting authorization console. Deliberately its
+  # own group rather than the GSA console's — holding a parking/badge
+  # authorization says nothing about who assigns HCA safety officers.
+  def safety_auth_console_user?
+    current_user_group_names.include?('system_admins') ||
+      current_user_group_names.include?('safety_auth_console')
+  end
+
+  # The authorization consoles this user may open, in registry order. Drives
+  # the form picker on the console entry screen and the switcher inside it.
+  def available_authorization_consoles
+    @available_authorization_consoles ||=
+      AuthorizationConsole::ALL.select { |console| authorization_console_accessible?(console) }
+  end
+
+  def authorization_console_accessible?(console)
+    case console.key
+    when AuthorizationConsole::SERVICES.key   then auth_console_user?
+    when AuthorizationConsole::HCA_SAFETY.key then safety_auth_console_user?
+    else false
+    end
+  end
+
   def current_user_dropdown_permissions
     return @current_user_dropdown_permissions if defined?(@current_user_dropdown_permissions)
 
@@ -157,6 +181,19 @@ class ApplicationController < ActionController::Base
 
   def require_auth_console
     return if auth_console_user?
+
+    redirect_to root_path, alert: 'Access denied. Authorization Console access required.'
+  end
+
+  def require_safety_auth_console
+    return if safety_auth_console_user?
+
+    redirect_to root_path, alert: 'Access denied. Authorization Console access required.'
+  end
+
+  # Gate for the console picker itself: any one console is enough to get in.
+  def require_any_authorization_console
+    return if available_authorization_consoles.any?
 
     redirect_to root_path, alert: 'Access denied. Authorization Console access required.'
   end

@@ -1,0 +1,106 @@
+<!-- app/views/safety_authorizations/index.html.erb -->
+<% dept_label = org_label(:division, SafetyReportAuthorization::AGENCY_ID) %>
+
+<div class="form-header">
+  <h1>HCA Safety Reporting Authorizations</h1>
+  <p>The safety officers a Safety Report is routed to, by the submitter's <%= dept_label.downcase %>.</p>
+</div>
+
+<div class="form-wrapper authorization-console" data-controller="confirm-modal">
+  <%= render "shared/authorization_console_switcher",
+        current_console_key: AuthorizationConsole::HCA_SAFETY.key %>
+
+  <div class="console-filters">
+    <%= form_with url: safety_authorizations_path, method: :get,
+                  data: { turbo: false, controller: "auto-submit" } do %>
+      <div class="filter-group" data-controller="choices">
+        <label><%= dept_label %></label>
+        <%= select_tag :division_id,
+              options_for_select(@division_filter_options, @division_filter),
+              multiple: true,
+              class: "form-control",
+              data: { choices_target: "select", action: "change->auto-submit#submit",
+                      placeholder: "All #{dept_label.pluralize}" } %>
+      </div>
+
+      <div class="filter-group" data-controller="choices">
+        <label>Safety Officer</label>
+        <%= select_tag :employee_id,
+              options_for_select(@employee_filter_options, @employee_filter),
+              multiple: true,
+              class: "form-control",
+              data: { choices_target: "select", action: "change->auto-submit#submit",
+                      placeholder: "All Safety Officers" } %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="department-header">
+    <%= link_to "+ Add Safety Officer",
+          new_safety_authorization_path(division_id: @division_filter.first),
+          class: "btn approve" %>
+  </div>
+
+  <div class="approvers-scroll">
+    <% if @authorizations_by_division.any? %>
+      <div class="approvers-list">
+        <% @authorizations_by_division.each do |card| %>
+          <div class="approver-card">
+            <div class="approver-header">
+              <h3><%= card[:label] %></h3>
+            </div>
+
+            <div class="approvals-list">
+              <% if card[:authorizations].any? %>
+                <% card[:authorizations].each do |authorization| %>
+                  <% officer = authorization.employee %>
+                  <div class="approval-item">
+                    <div class="approval-details">
+                      <strong>
+                        <%= officer ? "#{officer.first_name} #{officer.last_name}" : "Employee ##{authorization.employee_id}" %>
+                        <span class="employee-id">(<%= authorization.employee_id %>)</span>
+                      </strong>
+                      <% if officer&.email.present? %>
+                        <div class="detail-row">
+                          <span class="label">Email:</span>
+                          <span class="value"><%= officer.email %></span>
+                        </div>
+                      <% end %>
+                    </div>
+
+                    <div class="approval-actions">
+                      <%= link_to "Edit", edit_safety_authorization_path(authorization), class: "btn" %>
+                      <button type="button"
+                              class="btn deny"
+                              data-action="click->confirm-modal#open"
+                              data-delete-path="<%= safety_authorization_path(authorization) %>"
+                              data-confirm-title="Remove Authorization"
+                              data-confirm-message="Remove <%= officer ? "#{officer.first_name} #{officer.last_name}" : authorization.employee_id %> as a safety officer for <%= card[:label] %>?">
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                <% end %>
+              <% else %>
+                <div class="approval-item">
+                  <div class="approval-details">
+                    <span class="unassigned">No safety officer assigned</span>
+                  </div>
+                  <div class="approval-actions">
+                    <%= link_to "Assign", new_safety_authorization_path(division_id: card[:division_id]), class: "btn" %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <p>No <%= dept_label.downcase.pluralize %> match the current filters.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <%= render "shared/confirm_modal" %>
+</div>

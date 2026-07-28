@@ -1,0 +1,11 @@
+<!-- app/views/safety_authorizations/new.html.erb -->
+<div class="form-header">
+  <h1>Add Safety Officer</h1>
+</div>
+
+<div class="form-wrapper authorization-console">
+  <%= render "form",
+        form_url: safety_authorizations_path,
+        form_method: :post,
+        submit_label: "Add Authorization" %>
+</div>
