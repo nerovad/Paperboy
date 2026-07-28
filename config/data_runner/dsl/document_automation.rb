@@ -16,10 +16,11 @@
     },
     source: {
       location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/document_automation.csv',
-      local: 'document_automation.csv',
-      format: :csv,
+      local: 'document_automation.xlsx',
+      format: :xlsx,
       strategy: :copy
     },
+    output: 'document_automation',
     to_csv: {
       sheet: 0,
       header_row: 0,

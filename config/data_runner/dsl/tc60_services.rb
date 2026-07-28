@@ -29,14 +29,14 @@
 
       ['year',      'year',      'nvarchar(4)',  'NOT NULL', nil],
       ['type',      'type',      'nvarchar(3)',  'NOT NULL', nil],
-      ['service',   'service',   'nvarchar(15)', 'NOT NULL', nil],
       ['sunit',     'sunit',     'nvarchar(4)',  'NOT NULL', nil],
       ['sobject',   'sobject',   'int',          'NOT NULL', nil],
       ['sactivity', 'sactivity', 'nvarchar(4)',  'NOT NULL', nil],
       ['sfunction', 'sfunction', 'nvarchar(4)',  'NOT NULL', nil],
       ['sprogram',  'sprogram',  'nvarchar(10)', 'NOT NULL', nil],
       ['sphase',    'sphase',    'nvarchar(6)',  'NULL',     nil],
-      ['stask',     'stask',     'nvarchar(4)',  'NULL',     nil]
+      ['stask',     'stask',     'nvarchar(4)',  'NULL',     nil],
+      ['service',   'service',   'nvarchar(15)', 'NOT NULL', nil]
 
     ],
     database_connections: [
