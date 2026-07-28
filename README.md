@@ -3,7 +3,7 @@
 **Ruby version:**
 
 ```bash
-ruby 3.4.4 (2025-05-14 revision a38531fd3f) +PRISM [x86_64-linux]
+ruby 4.0.6
 ```
 
 **Rails version:**
@@ -20,6 +20,7 @@ Sidekiq for background jobs.
 For the product story / sales pitch, see [docs/PITCH.md](docs/PITCH.md).
 
 ---
+
 ## Dev deployment systemd - Only PUMA restart
 
 ```bash
@@ -101,14 +102,17 @@ git push origin --tags
 ```
 
 ## Pulling Code to Production Server
+
 On Dev — write code, commit, push to Gitea
 On Prod — run bin/deploy and it handles everything:
+
 1. git pull the latest code
 2. bundle install for any new gems
 3. assets:clobber + assets:precompile for a clean asset build
 4. Restarts Puma and Sidekiq via systemd
 
 Puma and Sidekiq are managed by systemd, which means:
+
 - They auto-start on server boot
 - They auto-restart if they crash
 - You can check on them anytime with sudo systemctl status paperboy or sudo
@@ -149,7 +153,7 @@ PAPERBOY_ASSUME_SSL=false
 ```
 
 When running development behind nginx with HTTPS termination
-(https://dev-gsa-forms), opt in to Rails SSL assumptions:
+(<https://dev-gsa-forms>), opt in to Rails SSL assumptions:
 
 ```bash
 APP_HOST=https://dev-gsa-forms
@@ -181,7 +185,7 @@ Production:
 bundle exec sidekiq -e production
 ```
 
-##Form Template Workflow
+## Form Template Workflow
 
 Paperboy includes a Rails generator for creating new form templates.
 
@@ -269,7 +273,6 @@ Delete all of them (since the last runs aborted):
 ```bash
 rm db/migrate/*_create_authorization_forms.rb
 ```
-
 
 ## Sub-Application Workflow
 
@@ -389,13 +392,14 @@ rails dev:seed:probation TRANSFERS=80
 Notes:
 Use REPLANT=1 with seeds to reset test data.
 
-## MSSQL gsasql16 Command for Linux Terminal viewing. With alias.
+## MSSQL gsasql16 Command for Linux Terminal viewing. With alias
 
 ```bash
 prettysql "SELECT TOP 50 * FROM GSABSS.dbo.Employees"
 ```
 
 # Claude Code Git Reversion Best Practices
+
 Best practices:
 
 Start each Claude Code session with a clean commit:
