@@ -1,0 +1,8 @@
+agency_id,division_id,department_id,unit_id,long_name,short_name,active
+AGR,2800,2830,UCCE,UC Agricultur and Natural Resources,UCA and N,true
+AMN,2860,2861,9998,Animal Services Foundation,Animal Services Foundation,true
+COM,5730,5730,MP06,CITY OF MOORPARK,CITY OF MOORPARK,true
+CRT,6200,6285,6297,Superior Courts: Sierra,Superior Courts: Sierra,true
+CRT,6200,6285,6298,Superior Courts: Sutter,Superior Courts: Sutter,true
+CRT,6200,6285,6299,Superior Courts: Nevada,Superior Courts: Nevada,true
+GSA,4600,4601,CGSA,Check to GSA,Check to GSA,true
