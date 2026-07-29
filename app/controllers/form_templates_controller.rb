@@ -1782,18 +1782,6 @@ class FormTemplatesController < ApplicationController
             </div>
           </div>
 
-          <!-- Progress (#{form_template.page_count} steps) -->
-          <div class="progress-wrapper">
-            <div class="progress-bar-container">
-              <div class="progress-bar" id="progressBar"></div>
-            </div>
-            <div class="progress-dots">
-              <% _visible_page_count.times do |index| %>
-                <div class="dot <%= 'active' if index == 0 %>"></div>
-              <% end %>
-            </div>
-          </div>
-
         <% end %>
       </div>
     HTML
@@ -1905,18 +1893,6 @@ class FormTemplatesController < ApplicationController
             <div>
               <button type="button" id="nextBtn" data-action="click->form-navigation#nextPage">Next</button>
               <%= form.submit "Update", data: { form_navigation_target: "submitButton" }, style: "display:none;" %>
-            </div>
-          </div>
-
-          <!-- Progress (#{form_template.page_count} steps) -->
-          <div class="progress-wrapper">
-            <div class="progress-bar-container">
-              <div class="progress-bar" id="progressBar"></div>
-            </div>
-            <div class="progress-dots">
-              <% _visible_page_count.times do |index| %>
-                <div class="dot <%= 'active' if index == 0 %>"></div>
-              <% end %>
             </div>
           </div>
 
@@ -2936,12 +2912,11 @@ class FormTemplatesController < ApplicationController
   end
 
   # Emits ERB locals at the top of the generated form that hold per-page
-  # visibility flags (used to wrap each page and to derive a progress-dot count
-  # that matches the pages the current user can actually reach).
+  # visibility flags, used to wrap each page so it renders only for users who
+  # can reach it. The chapter rail counts the pages actually in the DOM, so no
+  # separate page tally is needed.
   def render_page_visibility_decls(page_visibility)
     lines = page_visibility.map { |n, expr| "        <% _page_#{n}_visible = #{expr || 'true'} %>\n" }
-    flags = page_visibility.keys.map { |n| "_page_#{n}_visible" }.join(', ')
-    lines << "        <% _visible_page_count = [#{flags}].count(true) %>\n"
     "#{lines.join}\n"
   end
 

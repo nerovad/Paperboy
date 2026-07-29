@@ -104,7 +104,7 @@
   }
 
   /* Page holds a server-side validation error. Listed after is-current so it
-     outranks it at equal specificity, matching the progress dots. */
+     outranks it at equal specificity. */
   &__item.is-error .chapter-rail__link {
     .chapter-rail__name { color: $form-error-text; }
     .chapter-rail__num { color: $danger; }
@@ -122,10 +122,10 @@
   }
 }
 
-/* Not enough room in the margin beside the card — fall back to the progress
-   dots, which stay on every form regardless. The controller measures the actual
-   space available and toggles this, since the sidebar's width decides it as much
-   as the viewport's does. */
+/* Not enough room in the margin beside the card, so the rail is dropped and the
+   Previous/Next buttons carry navigation on their own. The controller measures
+   the space actually available and toggles this, since the sidebar's width
+   decides it as much as the viewport's does. */
 .chapter-rail.is-cramped {
   display: none;
 }
@@ -280,121 +280,6 @@
 
     &:hover   { background: $primary-hover; }
     &:disabled{ background: $neutral-disabled; cursor: not-allowed; }
-  }
-}
-
-/* Progress dots under forms */
-.progress-dots {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-  gap: 10px;
-  padding-bottom: 30px;
-
-  /* No `transform` on the dot itself — it scales the ::after tooltip along with
-     it and blurs the text. Emphasis is expressed with rings instead. */
-  .dot {
-    position: relative;
-    width: 14px;
-    height: 14px;
-    background-color: $neutral-disabled;
-    border-radius: 50%;
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  /* The form-navigation controller makes these real controls (role=button,
-     tabindex) so users can jump between pages. */
-  .dot[role="button"] {
-    cursor: pointer;
-
-    &:hover {
-      background-color: $brand-navy;
-      box-shadow: 0 0 0 4px rgba($brand-navy, 0.16);
-    }
-
-    &:focus-visible {
-      outline: 2px solid $brand-navy;
-      outline-offset: 3px;
-    }
-  }
-
-  /* Pages already stepped through, so the dots read as progress. */
-  .dot.visited {
-    background-color: $green-soft-border;
-  }
-
-  .dot.active {
-    background-color: $primary-color;
-    box-shadow: 0 0 0 4px rgba($primary-color, 0.22);
-  }
-
-  /* Page holds a server-side validation error — outranks visited/active so a
-     failed submit points straight at the page that needs fixing. */
-  .dot.has-error {
-    background-color: $danger;
-
-    &.active {
-      box-shadow: 0 0 0 4px rgba($danger, 0.22);
-    }
-
-    &[role="button"]:hover {
-      background-color: $danger-700;
-      box-shadow: 0 0 0 4px rgba($danger, 0.22);
-    }
-  }
-
-  /* Page-name tooltip. Replaces the native `title` attribute, which browsers
-     delay by about a second and paint in OS chrome. */
-  .dot[data-tooltip] {
-    &::after,
-    &::before {
-      position: absolute;
-      left: 50%;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s;
-      z-index: 5;
-    }
-
-    /* Bubble */
-    &::after {
-      content: attr(data-tooltip);
-      bottom: calc(100% + 11px);
-      transform: translate(-50%, 3px);
-      padding: 6px 10px;
-      max-width: 220px;
-      background: $brand-navy;
-      color: $surface-base;
-      font-family: $font-sans;
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 1.3;
-      letter-spacing: 0.01em;
-      white-space: nowrap;
-      border-radius: $radius-6;
-      box-shadow: 0 4px 12px rgba($neutral-black, 0.18);
-    }
-
-    /* Caret */
-    &::before {
-      content: "";
-      bottom: calc(100% + 5px);
-      transform: translate(-50%, 3px);
-      border: 6px solid $alpha-clear;
-      border-top-color: $brand-navy;
-      border-bottom-width: 0;
-    }
-
-    &:hover,
-    &:focus-visible {
-      &::after,
-      &::before {
-        opacity: 1;
-        visibility: visible;
-        transform: translate(-50%, 0);
-      }
-    }
   }
 }
 

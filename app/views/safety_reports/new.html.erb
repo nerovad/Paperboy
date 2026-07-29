@@ -28,7 +28,6 @@
         <% _page_9_visible = (@current_user_groups&.include?(19) || system_admin?) %>
         <% _page_10_visible = (@current_user_groups&.include?(19) || system_admin?) %>
         <% _page_11_visible = (@current_user_groups&.include?(19) || system_admin?) %>
-        <% _visible_page_count = [_page_1_visible, _page_2_visible, _page_3_visible, _page_4_visible, _page_5_visible, _page_6_visible, _page_7_visible, _page_8_visible, _page_9_visible, _page_10_visible, _page_11_visible].count(true) %>
 
 <!-- Page 1: Employee Info -->
 <div class="form-page">
@@ -702,18 +701,6 @@
       <div>
         <button type="button" id="nextBtn" data-action="click->form-navigation#nextPage">Next</button>
         <%= form.submit "Submit", data: { form_navigation_target: "submitButton" }, style: "display:none;" %>
-      </div>
-    </div>
-
-    <!-- Progress (11 steps) -->
-    <div class="progress-wrapper">
-      <div class="progress-bar-container">
-        <div class="progress-bar" id="progressBar"></div>
-      </div>
-      <div class="progress-dots">
-        <% _visible_page_count.times do |index| %>
-          <div class="dot <%= 'active' if index == 0 %>"></div>
-        <% end %>
       </div>
     </div>
 
