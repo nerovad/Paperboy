@@ -79,7 +79,7 @@ class SafetyAuthorizationsController < ApplicationController
 
   def load_form_options
     @division_options = division_options
-    @employee_options = employee_options
+    @employee_options = employee_options(@authorization&.employee_id)
   end
 
   # One card per org node, so the screen reads as "who covers this department".
@@ -116,11 +116,15 @@ class SafetyAuthorizationsController < ApplicationController
     ordered_divisions.map { |d| ["#{d.division_id} - #{d.long_name}", d.division_id.to_s] }
   end
 
-  # Candidate safety officers: HCA staff. Employees.agency carries the
-  # four-character variant ("HCAV") while the org tables use "HCA", so accept
-  # both spellings.
-  def employee_options
-    Employee.where(agency: OrgLabels::SWAPPED_AGENCY_IDS)
+  # Candidate safety officers: members of the HCA_Safety_Officers group, not
+  # every HCA employee. The officer already on the row is kept in the list so
+  # an existing authorization stays editable if they later leave the group.
+  def employee_options(selected_employee_id = nil)
+    ids = SafetyReportAuthorization.officer_candidate_ids
+    ids |= [selected_employee_id.to_s] if selected_employee_id.present?
+    return [] if ids.empty?
+
+    Employee.where(id: ids)
             .order(:last_name, :first_name)
             .map { |e| ["#{e.first_name} #{e.last_name} (#{e.employee_id})", e.employee_id.to_s] }
   end

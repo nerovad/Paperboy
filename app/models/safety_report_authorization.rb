@@ -13,12 +13,20 @@
 class SafetyReportAuthorization < ApplicationRecord
   AGENCY_ID = 'HCA'
 
+  # Only members of this group can be named a safety officer. The console used
+  # to offer every HCA employee, which made it easy to authorize someone who
+  # isn't on the safety team at all.
+  OFFICER_GROUP_NAME = 'HCA_Safety_Officers'
+
   validates :employee_id, presence: true
   validates :division_id, presence: true
   validates :employee_id, uniqueness: {
     scope: :division_id,
     message: 'is already an authorized safety officer for this department'
   }
+  # Only checked when the officer changes, so an existing row stays editable
+  # (and removable) if someone later leaves the group.
+  validate :employee_in_officer_group, if: :employee_id_changed?
 
   scope :for_division, ->(division_id) { where(division_id: division_id) }
 
@@ -49,6 +57,16 @@ class SafetyReportAuthorization < ApplicationRecord
     officer_ids_for_division(division_id).map(&:to_s)
   end
 
+  # Employee ids eligible to be named a safety officer. Groups and
+  # Employee_Groups live in the Paperboy DB while Employees lives in GSABSS, so
+  # this can't be a join — the ids come back first and are looked up separately.
+  def self.officer_candidate_ids
+    group_id = Group.find_by(Group_Name: OFFICER_GROUP_NAME)&.GroupID
+    return [] if group_id.blank?
+
+    EmployeeGroup.where(GroupID: group_id).pluck(:EmployeeID).map(&:to_s).uniq
+  end
+
   # The org node a submission sits under. Safety Reporting captures the
   # division on the submission itself via the org cascade; fall back to the
   # submitter's own chain for forms that don't carry one.
@@ -62,4 +80,16 @@ class SafetyReportAuthorization < ApplicationRecord
     Unit.resolve_for_employee(Submitter.resolve(employee_id))&.division_id
   end
   private_class_method :submission_division_id
+
+  private
+
+  def employee_in_officer_group
+    return if employee_id.blank?
+
+    candidates = self.class.officer_candidate_ids
+    return if candidates.empty? # group missing or empty — don't block the console
+    return if candidates.include?(employee_id.to_s)
+
+    errors.add(:employee_id, "is not a member of the #{OFFICER_GROUP_NAME} group")
+  end
 end
