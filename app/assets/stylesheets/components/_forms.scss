@@ -9,6 +9,125 @@
   border-radius: 12px;
   box-shadow: $shadow-soft;
   overflow: visible;
+  /* Containing block for .chapter-rail. Safe to add: every other absolutely
+     positioned descendant already has a nearer positioned ancestor. */
+  position: relative;
+}
+
+/* Chapter rail — the form's page headings listed vertically beside the card,
+   built by form_navigation_controller.js from each page's <h2>.
+
+   Positioned absolutely against the card rather than laid out beside it, so the
+   card keeps the exact width and centring it has always had and no existing
+   field moves. The inner element carries the sticky so the list stays in view
+   on a long page. */
+.chapter-rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: calc(100% + 28px);
+  width: 200px;
+
+  &__inner {
+    position: sticky;
+    top: 20px;
+  }
+
+  &__title {
+    margin: 0 0 12px;
+    padding-left: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: $radius-6;
+    background: $alpha-clear;
+    font: inherit;
+    font-size: 0.85rem;
+    line-height: 1.35;
+    text-align: left;
+    color: $label-color;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background: $blue-gray-panel-hover;
+      color: $brand-navy;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $brand-navy;
+      outline-offset: 2px;
+    }
+  }
+
+  &__num {
+    flex: 0 0 14px;
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+    color: $muted;
+  }
+
+  /* Pages already stepped through. */
+  &__item.is-done {
+    .chapter-rail__name { color: $muted; }
+    .chapter-rail__num { color: $primary-color; }
+  }
+
+  &__item.is-current .chapter-rail__link {
+    background: $brand-navy;
+
+    &:hover { background: $brand-navy-hover; }
+
+    .chapter-rail__name {
+      color: $surface-base;
+      font-weight: 700;
+    }
+
+    .chapter-rail__num { color: rgba($surface-base, 0.75); }
+  }
+
+  /* Page holds a server-side validation error. Listed after is-current so it
+     outranks it at equal specificity, matching the progress dots. */
+  &__item.is-error .chapter-rail__link {
+    .chapter-rail__name { color: $form-error-text; }
+    .chapter-rail__num { color: $danger; }
+  }
+
+  /* Sitting on the errored page. Needs its own rule because the error colours
+     above are dark red — unreadable on the navy current-item fill. */
+  &__item.is-error.is-current .chapter-rail__link {
+    background: $danger;
+
+    &:hover { background: $danger-700; }
+
+    .chapter-rail__name { color: $surface-base; }
+    .chapter-rail__num { color: rgba($surface-base, 0.8); }
+  }
+}
+
+/* Not enough room in the margin beside the card — fall back to the progress
+   dots, which stay on every form regardless. The controller measures the actual
+   space available and toggles this, since the sidebar's width decides it as much
+   as the viewport's does. */
+.chapter-rail.is-cramped {
+  display: none;
 }
 
 /* Header above forms */
