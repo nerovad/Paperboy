@@ -19,7 +19,10 @@ class Unit < GsabssBase
     direct = find_by(unit_id: emp.unit)
     return direct if direct
 
-    parent_id = SubUnit.where(sub_unit_id: emp.unit, agency_id: emp.agency).limit(1).pick(:unit_id)
+    # sub_units.agency_id is the three-character id; Employees.agency is the
+    # four-character variant, so normalize before matching.
+    agency_id = Agency.normalize_id(emp.agency)
+    parent_id = SubUnit.where(sub_unit_id: emp.unit, agency_id: agency_id).limit(1).pick(:unit_id)
     parent_id ? find_by(unit_id: parent_id) : nil
   end
 end
