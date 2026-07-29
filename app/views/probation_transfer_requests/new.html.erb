@@ -2,7 +2,7 @@
   <h1>Probation Transfer Request</h1>
 </div>
 
-  <div class="form-wrapper probation-transfer">
+  <div class="form-wrapper probation-transfer" data-controller="form-navigation">
   <%= form_with model: @probation_transfer_request, local: true do |form| %> 
     <% if @probation_transfer_request && @probation_transfer_request.errors.any? %>
       <div class="alert alert-danger">
@@ -242,11 +242,11 @@
       <!-- Navigation Buttons -->
       <div class="navigation-buttons d-flex justify-content-between">
         <div>
-          <button type="button" id="prevBtn" style="display: none;">Previous</button>
+          <button type="button" id="prevBtn" data-action="click->form-navigation#prevPage" style="display: none;">Previous</button>
         </div>
         <div>
-          <button type="button" id="nextBtn">Next</button>
-          <%= form.submit "Submit", id: "submitButton", style: "display: none;" %>
+          <button type="button" id="nextBtn" data-action="click->form-navigation#nextPage">Next</button>
+          <%= form.submit "Submit", id: "submitButton", data: { form_navigation_target: "submitButton" }, style: "display: none;" %>
         </div>
       </div>
 

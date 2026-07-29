@@ -177,12 +177,48 @@
     height: 14px;
     background-color: $neutral-disabled;
     border-radius: 50%;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.15s ease;
   }
+
+  /* The form-navigation controller makes these real controls (role=button,
+     tabindex) so users can jump between pages. */
+  .dot[role="button"] {
+    cursor: pointer;
+
+    &:hover {
+      background-color: $primary-hover;
+      transform: scale(1.25);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $brand-navy;
+      outline-offset: 3px;
+    }
+  }
+
+  /* Pages already stepped through, so the dots read as progress. */
+  .dot.visited {
+    background-color: $green-soft-border;
+  }
+
   .dot.active {
     background-color: $primary-color;
     box-shadow: 0 0 8px $primary-color;
     transform: scale(1.1);
+  }
+
+  /* Page holds a server-side validation error — outranks visited/active so a
+     failed submit points straight at the page that needs fixing. */
+  .dot.has-error {
+    background-color: $danger;
+
+    &.active {
+      box-shadow: 0 0 8px $danger;
+    }
+
+    &[role="button"]:hover {
+      background-color: $danger-700;
+    }
   }
 }
 
