@@ -48,6 +48,14 @@ class SafetyReportAuthorization < ApplicationRecord
     for_division(division_id).pluck(:employee_id).uniq
   end
 
+  # Column => values narrowing inbox rows to the org nodes these officers
+  # cover, or nil when they cover none. The inbox filters submissions in SQL,
+  # so it needs the scope rather than the officers.
+  def self.inbox_conditions_for(employee_ids)
+    divisions = where(employee_id: Array(employee_ids)).pluck(:division_id).compact.uniq
+    divisions.empty? ? nil : { division: divisions }
+  end
+
   # Safety officers eligible to act on a submission, for routing steps that
   # target this console.
   def self.officer_ids_for_submission(submission)

@@ -183,22 +183,22 @@ class InboxQuery
   end
 
   # AR scopes (one per authorization-routed step) to OR into the query. A
-  # submission at an authorization step is visible to a scoped employee when its
-  # budget unit is one they're authorized to approve for the step's service type.
+  # submission at an authorization step is visible to a scoped employee when it
+  # falls inside the org scope they're authorized over — the budget unit for
+  # AuthorizedApprover, the HCA org node for Safety Reporting. Each console in
+  # the registry supplies the column and values to match on.
   def authorization_routing_scopes(template, model_class, scoped_employee_ids)
     return [] if scoped_employee_ids.nil?
-    return [] unless model_class.column_names.include?('unit')
 
     template.routing_steps.where(routing_type: 'authorization').filter_map do |step|
-      service_type = step.authorization_service_type
-      next if service_type.blank?
+      routing_key = step.authorization_service_type
+      next if routing_key.blank?
 
-      authorized_units = scoped_employee_ids.flat_map do |eid|
-        AuthorizedApprover.authorized_unit_ids_for(employee_id: eid, service_type: service_type)
-      end.uniq
-      next if authorized_units.empty?
+      conditions = AuthorizationConsole.inbox_conditions_for(routing_key, scoped_employee_ids)
+      next if conditions.blank?
+      next unless conditions.keys.all? { |col| model_class.column_names.include?(col.to_s) }
 
-      model_class.where(status: "step_#{step.step_number}_pending", unit: authorized_units)
+      model_class.where(status: "step_#{step.step_number}_pending").where(conditions)
     end
   end
 

@@ -22,7 +22,7 @@
 class AuthorizationConsole
   Definition = Struct.new(:key, :label, :form_class_name, :route_name,
                           :routing_group_label, :routing_options,
-                          :approver_resolver, :holder_counter,
+                          :approver_resolver, :holder_counter, :inbox_filter,
                           keyword_init: true) do
     # The FormTemplate this console authorizes for. Used for the picker label
     # fallback and to tie a console to the form's ACL entry.
@@ -53,6 +53,14 @@ class AuthorizationConsole
     def holder_count(routing_key)
       holder_counter.call(routing_key)
     end
+
+    # Column => values narrowing submissions at this step to the ones the given
+    # employees are authorized over, or nil when they hold nothing. The inbox
+    # can't reuse approver_ids: it filters submissions in SQL rather than
+    # resolving approvers one submission at a time.
+    def inbox_conditions(routing_key, employee_ids)
+      inbox_filter.call(routing_key, employee_ids)
+    end
   end
 
   # Parking permits, employee/volunteer/vendor badges and facility keys. Backed
@@ -72,7 +80,10 @@ class AuthorizationConsole
         unit_id: submission.unit
       )
     },
-    holder_counter: ->(routing_key) { AuthorizedApprover.where(service_type: routing_key).count }
+    holder_counter: ->(routing_key) { AuthorizedApprover.where(service_type: routing_key).count },
+    inbox_filter: lambda { |routing_key, employee_ids|
+      AuthorizedApprover.inbox_conditions_for(service_type: routing_key, employee_ids: employee_ids)
+    }
   )
 
   # Safety Reporting. Backed by SafetyReportAuthorization — just the safety
@@ -85,7 +96,8 @@ class AuthorizationConsole
     routing_group_label: 'HCA Safety Reporting',
     routing_options: -> { [['HCA Safety Officer', 'hca_safety']] },
     approver_resolver: ->(_routing_key, submission) { SafetyReportAuthorization.officer_ids_for_submission(submission) },
-    holder_counter: ->(_routing_key) { SafetyReportAuthorization.count }
+    holder_counter: ->(_routing_key) { SafetyReportAuthorization.count },
+    inbox_filter: ->(_routing_key, employee_ids) { SafetyReportAuthorization.inbox_conditions_for(employee_ids) }
   )
 
   ALL = [SERVICES, HCA_SAFETY].freeze
@@ -130,6 +142,17 @@ class AuthorizationConsole
     Array(console.approver_ids(routing_key.to_s, submission)).map(&:to_s)
   rescue StandardError
     []
+  end
+
+  # Column => values the inbox can filter submissions by for this routing key,
+  # or nil when these employees hold nothing under it.
+  def self.inbox_conditions_for(routing_key, employee_ids)
+    console = console_for_routing_key(routing_key)
+    return nil if console.nil?
+
+    console.inbox_conditions(routing_key.to_s, Array(employee_ids))
+  rescue StandardError
+    nil
   end
 
   # False when nobody holds the authorization behind this routing key.

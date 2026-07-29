@@ -49,6 +49,16 @@ class AuthorizedApprover < ApplicationRecord
     KEY_TYPES[key_type] || key_type
   end
 
+  # Column => values narrowing inbox rows to the budget units these employees
+  # can approve for a service type, or nil when they cover none. The inbox
+  # filters submissions in SQL, so it needs the scope rather than the approvers.
+  def self.inbox_conditions_for(service_type:, employee_ids:)
+    units = Array(employee_ids).flat_map do |eid|
+      authorized_unit_ids_for(employee_id: eid, service_type: service_type)
+    end.uniq
+    units.empty? ? nil : { unit: units }
+  end
+
   # Find approvers for a given department and service type
   def self.approvers_for(department_id:, service_type:)
     where(department_id: department_id, service_type: service_type).pluck(:employee_id).uniq
