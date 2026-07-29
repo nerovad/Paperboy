@@ -53,11 +53,14 @@ export default class extends Controller {
       const page = this.pages[index]
       if (!page) return
 
-      const label = this.pageLabel(index)
+      const title = this.pageTitle(index)
       dot.setAttribute("role", "button")
       dot.setAttribute("tabindex", "0")
-      dot.setAttribute("title", label)
-      dot.setAttribute("aria-label", `Go to ${label}`)
+      // data-tooltip drives a CSS tooltip, not the native `title` attribute —
+      // browsers hard-code a ~1s delay on `title` and the OS paints it, so
+      // neither the timing nor the styling can be controlled.
+      dot.dataset.tooltip = title || `Page ${index + 1}`
+      dot.setAttribute("aria-label", `Go to page ${index + 1}${title ? `: ${title}` : ""}`)
 
       // Server-side validation errors on a page the user isn't looking at.
       if (page.querySelector(".field_with_errors")) dot.classList.add("has-error")
@@ -70,12 +73,12 @@ export default class extends Controller {
     })
   }
 
-  // Generated pages open with an <h2> naming the section — reuse it for the
-  // tooltip so hovering a dot says "Physician Information", not "page 4".
-  pageLabel(index) {
+  // Generated pages open with an <h2> naming the section — reuse it so hovering
+  // a dot says "Physician Information" rather than "Page 4". Null when a page
+  // has no heading.
+  pageTitle(index) {
     const heading = this.pages[index].querySelector("h2")
-    const title = heading?.textContent?.trim()
-    return title ? `page ${index + 1}: ${title}` : `page ${index + 1}`
+    return heading?.textContent?.trim() || null
   }
 
   // Arrow keys move between pages while a dot has focus; Enter/Space activate.
