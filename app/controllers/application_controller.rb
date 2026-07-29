@@ -79,13 +79,15 @@ class ApplicationController < ActionController::Base
       employee = Submitter.resolve(employee_id)
       unit     = Unit.resolve_for_employee(employee)
 
-      # agency_id comes straight off the Employee row (validated to match
-      # Agency.agency_id by EmployeeDataValidator). The Unit lookup is only used
-      # for the deeper FKs — and is often missing in GSABSS (e.g. unit "C480"
-      # exists on Employees but not in Units), which previously zeroed out the
-      # whole chain and skipped every org-level grant in load_user_permissions.
+      # agency_id comes straight off the Employee row, normalized to the
+      # three-character id the org tables and org_permissions use — Employees
+      # stores a four-character variant ("HCAV" for "HCA") that matches no ACL
+      # row on its own. The Unit lookup is only used for the deeper FKs — and is
+      # often missing in GSABSS (e.g. unit "C480" exists on Employees but not in
+      # Units), which previously zeroed out the whole chain and skipped every
+      # org-level grant in load_user_permissions.
       @_current_user_org_chain = {
-        agency_id: employee&.agency,
+        agency_id: Agency.normalize_id(employee&.agency),
         division_id: unit&.division_id,
         department_id: unit&.department_id,
         unit_id: unit&.unit_id
