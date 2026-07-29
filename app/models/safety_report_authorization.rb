@@ -39,4 +39,27 @@ class SafetyReportAuthorization < ApplicationRecord
   def self.officer_ids_for_division(division_id)
     for_division(division_id).pluck(:employee_id).uniq
   end
+
+  # Safety officers eligible to act on a submission, for routing steps that
+  # target this console.
+  def self.officer_ids_for_submission(submission)
+    division_id = submission_division_id(submission)
+    return [] if division_id.blank?
+
+    officer_ids_for_division(division_id).map(&:to_s)
+  end
+
+  # The org node a submission sits under. Safety Reporting captures the
+  # division on the submission itself via the org cascade; fall back to the
+  # submitter's own chain for forms that don't carry one.
+  def self.submission_division_id(submission)
+    direct = submission.division if submission.respond_to?(:division)
+    return direct if direct.present?
+
+    employee_id = submission.employee_id if submission.respond_to?(:employee_id)
+    return nil if employee_id.blank?
+
+    Unit.resolve_for_employee(Submitter.resolve(employee_id))&.division_id
+  end
+  private_class_method :submission_division_id
 end

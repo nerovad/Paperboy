@@ -20,7 +20,7 @@ class FormTemplateRoutingStep < ApplicationRecord
   validates :employee_id, presence: true, if: :routes_to_employee?
   validates :group_id, presence: true, if: :routes_to_group?
   validates :authorization_service_type, presence: true,
-                                         inclusion: { in: AuthorizedApprover::SERVICE_TYPES.keys },
+                                         inclusion: { in: ->(_step) { AuthorizationConsole.routing_keys } },
                                          if: :routes_to_authorization?
   validates :step_number, uniqueness: { scope: :form_template_id }
   validates :condition_operator, inclusion: { in: CONDITION_OPERATORS }, allow_blank: true
@@ -70,9 +70,10 @@ class FormTemplateRoutingStep < ApplicationRecord
     routing_type == 'authorization'
   end
 
-  # Human label for the chosen authorization service type (e.g. "Parking Permits").
+  # Human label for the chosen authorization option (e.g. "Parking Permits",
+  # "HCA Safety Officer"), resolved through the console registry.
   def authorization_service_type_label
-    AuthorizedApprover::SERVICE_TYPES[authorization_service_type] || authorization_service_type
+    AuthorizationConsole.routing_label(authorization_service_type)
   end
 
   def routing_label
@@ -246,15 +247,13 @@ class FormTemplateRoutingStep < ApplicationRecord
     end
   end
 
-  # Everyone holding this authorization for the submission's budget unit.
+  # Everyone holding this authorization over the submission. Each console in
+  # the registry scopes it its own way — AuthorizedApprover by budget unit,
+  # Safety Reporting by HCA org node.
   def authorization_eligible_ids(submission)
     return [] if authorization_service_type.blank?
-    return [] unless submission.respond_to?(:unit) && submission.unit.present?
 
-    AuthorizedApprover.approver_ids_covering_unit(
-      service_type: authorization_service_type,
-      unit_id: submission.unit
-    ).map(&:to_s)
+    AuthorizationConsole.approver_ids_for(authorization_service_type, submission)
   end
 
   def org_filter_only_for_group_routing

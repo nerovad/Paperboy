@@ -1206,7 +1206,7 @@ class FormTemplatesController < ApplicationController
       when 'authorization'
         next if step.authorization_service_type.blank?
 
-        if AuthorizedApprover.where(service_type: step.authorization_service_type).none?
+        unless AuthorizationConsole.holders?(step.authorization_service_type)
           "Step #{step.step_number}: no employees currently hold the " \
             "'#{step.authorization_service_type_label}' authorization, so it may route to no one."
         end
