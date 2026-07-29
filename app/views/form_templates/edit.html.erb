@@ -231,7 +231,6 @@
                                 required>
                           <option value="">Select...</option>
                           <option value="supervisor" <%= 'selected' if step.routing_type == 'supervisor' %>>Supervisor</option>
-                          <option value="department_head" <%= 'selected' if step.routing_type == 'department_head' %>>Department Head</option>
                           <option value="employee" <%= 'selected' if step.routing_type == 'employee' %>>Specific Employee</option>
                           <option value="group" <%= 'selected' if step.routing_type == 'group' %>>Group</option>
                           <option value="authorization" <%= 'selected' if step.routing_type == 'authorization' %>>Authorization Console</option>
@@ -392,7 +391,6 @@
                               required>
                         <option value="">Select...</option>
                         <option value="supervisor" <%= 'selected' if @form_template.approval_routing_to == 'supervisor' %>>Supervisor</option>
-                        <option value="department_head" <%= 'selected' if @form_template.approval_routing_to == 'department_head' %>>Department Head</option>
                         <option value="employee" <%= 'selected' if @form_template.approval_routing_to == 'employee' %>>Specific Employee</option>
                         <option value="group">Group</option>
                         <option value="authorization">Authorization Console</option>
@@ -2031,7 +2029,6 @@
                 required>
           <option value="">Select...</option>
           <option value="supervisor">Supervisor</option>
-          <option value="department_head">Department Head</option>
           <option value="employee">Specific Employee</option>
           <option value="group">Group</option>
           <option value="authorization">Authorization Console</option>

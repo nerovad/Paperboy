@@ -286,13 +286,6 @@ module TrackableStatus
     case step.routing_type
     when 'supervisor'
       submitter_employee&.supervisor_id&.to_s
-    when 'department_head'
-      emp = submitter_employee
-      return nil unless emp
-
-      unit = Unit.find_by(unit_id: emp.unit)
-      department = unit ? Department.find_by(department_id: unit.department_id) : nil
-      department&.department_head_id&.to_s
     when 'employee'
       step.employee_id.to_s
     when 'group', 'authorization'

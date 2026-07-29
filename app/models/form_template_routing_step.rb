@@ -5,7 +5,7 @@ class FormTemplateRoutingStep < ApplicationRecord
 
   belongs_to :form_template
 
-  ROUTING_TYPES = %w[supervisor department_head employee group authorization].freeze
+  ROUTING_TYPES = %w[supervisor employee group authorization].freeze
   CONDITION_OPERATORS = %w[equals not_equals].freeze
   ORG_FILTER_LEVELS = %w[agency division department unit].freeze
   ORG_FILTER_LABELS = {
@@ -80,8 +80,6 @@ class FormTemplateRoutingStep < ApplicationRecord
     case routing_type
     when 'supervisor'
       'Supervisor'
-    when 'department_head'
-      'Department Head'
     when 'employee'
       employee_name || "Employee ##{employee_id}"
     when 'group'
@@ -177,9 +175,6 @@ class FormTemplateRoutingStep < ApplicationRecord
     when 'supervisor'
       sup = step_submitter_employee(submission)&.supervisor_id
       sup.present? ? [sup.to_s] : []
-    when 'department_head'
-      head = step_submitter_department(submission)&.department_head_id
-      head.present? ? [head.to_s] : []
     when 'employee'
       employee_id.present? ? [employee_id.to_s] : []
     when 'group'
@@ -210,16 +205,6 @@ class FormTemplateRoutingStep < ApplicationRecord
     eid = submission.respond_to?(:employee_id) ? submission.employee_id : nil
     # Employee or Contractor — both expose supervisor_id/unit for routing.
     eid.present? ? Submitter.resolve(eid) : nil
-  end
-
-  # The submitter's department, derived from their unit — same chain the
-  # department_head/authorization resolution uses in TrackableStatus.
-  def step_submitter_department(submission)
-    emp = step_submitter_employee(submission)
-    return nil unless emp
-
-    unit = Unit.find_by(unit_id: emp.unit)
-    unit ? Department.find_by(department_id: unit.department_id) : nil
   end
 
   # Group members, narrowed to those sharing the submitter's value at the

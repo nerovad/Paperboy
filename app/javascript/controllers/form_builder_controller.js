@@ -576,9 +576,6 @@ export default class extends Controller {
       case 'supervisor':
         target = 'Supervisor'
         break
-      case 'department_head':
-        target = 'Department Head'
-        break
       case 'employee': {
         const select = stepItem.querySelector('.step-employee-dropdown')
         target = select?.selectedOptions[0]?.textContent?.trim() || 'Employee'

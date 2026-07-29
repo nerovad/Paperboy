@@ -1198,7 +1198,7 @@ class FormTemplatesController < ApplicationController
 
   # Non-blocking heads-up for routing steps that currently can't route to
   # anyone: an authorization step whose service type no employee holds, or a
-  # group step whose group has no members. (supervisor/department_head/employee
+  # group step whose group has no members. (supervisor/employee
   # depend on the runtime submitter, so they can't be pre-checked here.)
   def routing_approver_warnings(form_template)
     form_template.routing_steps.ordered.filter_map do |step|
@@ -1648,13 +1648,6 @@ class FormTemplatesController < ApplicationController
         @#{form_template.file_name}.update(status: :#{pending_status})
         # TODO: Send notification to supervisor
         redirect_to form_success_path, notice: 'Form submitted and routed to your supervisor for approval.', allow_other_host: false, status: :see_other
-      RUBY
-    when 'department_head'
-      <<~RUBY.chomp
-        # Route to department head for approval
-        @#{form_template.file_name}.update(status: :#{pending_status})
-        # TODO: Send notification to department head
-        redirect_to form_success_path, notice: 'Form submitted and routed to your department head for approval.', allow_other_host: false, status: :see_other
       RUBY
     when 'employee'
       update_attrs = "status: :#{pending_status}"
