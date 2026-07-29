@@ -222,6 +222,12 @@ class SafetyReportsController < ApplicationController
       how_the_injury_occurred physician_name physician_address
       physician_phone hospital_name hospital_address
       hospital_phone hospitalized_overnight
+      medical_record_number_for_the_employee impacted_employee
+      impacted_employees_email impacted_employees_phone
+      impacted_employees_supervisor location_description
+      is_the_source_blood_tested is_the_employees_blood_tested
+      source_patient_medical_number employee_medical_number
+      other_hospital other_hospital_address other_hospital_phone
     ]
 
     if current_user_group_names.include?('hca_safety_officers')

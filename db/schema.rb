@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 20_260_728_120_000) do
+ActiveRecord::Schema[8.0].define(version: 20_260_729_184_939) do
   create_table 'Employee_Groups', force: :cascade do |t|
     t.integer 'EmployeeID', null: false
     t.bigint 'GroupID', null: false
@@ -800,6 +800,19 @@ ActiveRecord::Schema[8.0].define(version: 20_260_728_120_000) do
     t.string 'osha_reportable'
     t.string 'reportable_injury_codes'
     t.string 'status', default: 'in_progress', null: false
+    t.string 'medical_record_number_for_the_employee'
+    t.text 'impacted_employee'
+    t.string 'impacted_employees_email'
+    t.string 'impacted_employees_phone'
+    t.string 'impacted_employees_supervisor'
+    t.text 'location_description'
+    t.string 'is_the_source_blood_tested'
+    t.string 'is_the_employees_blood_tested'
+    t.string 'source_patient_medical_number'
+    t.string 'employee_medical_number'
+    t.string 'other_hospital'
+    t.string 'other_hospital_address'
+    t.string 'other_hospital_phone'
   end
 
   create_table 'saved_searches', force: :cascade do |t|
