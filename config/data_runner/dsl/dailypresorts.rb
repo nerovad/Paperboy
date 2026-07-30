@@ -27,8 +27,8 @@
     },
     header: [
 
-      [nil,                    'id',              'bigint',        'IDENTITY(0,1) NOT NULL', nil],
-      ['omsnumber',            'oms_number',      'int',           'NULL',                   nil],
+      ['id',                   'id',              'bigint',        'IDENTITY(0,1) NOT NULL', nil],
+      ['oms_number',           'oms_number',      'int',           'NULL',                   nil],
       ['FldRecordID',          nil,               'int',           'NULL',                   nil],
       ['FldBusiness',          nil,               'nvarchar(200)', 'NULL',                   nil],
       ['FldFirstName',         nil,               'nvarchar(200)', 'NULL',                   nil],
@@ -69,7 +69,7 @@
       ['FldTrayNumber',        nil,               'int',           'NULL',                   nil],
       ['FldPalletNumber',      nil,               'int',           'NULL',                   nil],
       ['SourceFileName',       nil,               'nvarchar(max)', 'NULL',                   nil],
-      ['importdatetime',       'import_date_time', 'datetime2(0)', 'NULL', nil]
+      ['date_inserted',        'date_inserted',   'datetime2(0)',  'NULL',                   nil]
 
     ],
     database_connections: [

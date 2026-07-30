@@ -27,7 +27,7 @@
     },
     header: [
 
-      ['omsnumber',                      'oms_number',         'int',           'NULL',                   nil],
+      ['oms_number',                     'oms_number',         'int',           'NULL',                   nil],
       ['record_id',                      'record_id',          'int',           'NULL',                   nil],
       ['business',                       'business',           'nvarchar(100)', 'NULL',                   nil],
       ['first_name',                     'first_name',         'nvarchar(100)', 'NULL',                   nil],
@@ -63,8 +63,8 @@
       ['county_code',                    'county_code',        'int',           'NULL',                   nil],
       ['county_name',                    'county_name',        'nvarchar(100)', 'NULL',                   nil],
       ['SourceFileName',                 nil,                  'nvarchar(max)', 'NULL',                   nil],
-      ['importdatetime',                 'import_date_time',   'datetime2(0)',  'NULL',                   nil],
-      [nil,                              'id',                 'int',           'IDENTITY(0,1) NOT NULL', nil]
+      ['date_inserted',                  'date_inserted',      'datetime2(0)',  'NULL',                   nil],
+      ['id',                             'id',                 'int',           'IDENTITY(0,1) NOT NULL', nil]
 
     ],
     database_connections: [

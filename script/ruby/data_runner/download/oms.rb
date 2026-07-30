@@ -5,6 +5,7 @@ require 'csv'
 require 'fileutils'
 require 'pathname'
 require 'tempfile'
+require 'time'
 
 # Assemble the files exported by OMS into one consistently named set per
 # eight-digit OMS number.
@@ -13,10 +14,10 @@ require 'tempfile'
 #   ruby script/ruby/data_runner/download/oms.rb SOURCE_DIR [MAIL_DAT]
 #
 # Generated files are written to SOURCE_DIR/Output:
-#   NNNNNNNN_companion.csv
-#   NNNNNNNN_daily_presort.csv
-#   NNNNNNNN_moveresults.csv
-# With MAIL_DAT, NNNNNNNN_mail_dat.zip is also copied.
+#   companions.csv
+#   dailypresorts.csv
+#   moveresults.csv
+# With MAIL_DAT, mail_dat.zip is also copied.
 #
 # Companion inputs have names like NNNNNNNN-...-.csv. Their common header is
 # written once and their data rows are appended in filename order.
@@ -30,6 +31,7 @@ COMPANION_PATTERN = /\A(#{OMS_NUMBER_PATTERN})-.+\.csv\z/i
 MAIL_DATA_PATTERN = /\AMail\.dat(?:a)?_(#{OMS_NUMBER_PATTERN})\.zip\z/i
 MOVE_RESULTS_PATTERN = /\AMoveResults_(#{OMS_NUMBER_PATTERN})\.txt\z/i
 DAILY_PRESORT_PATTERN = /\APresort Fields Export_(#{OMS_NUMBER_PATTERN})\.txt\z/i
+METADATA_HEADER = %w[oms_number date_inserted id].freeze
 
 def source_dir
   valid_args = ARGV.length == 1 || (ARGV.length == 2 && ARGV[1].casecmp?('MAIL_DAT'))
@@ -89,8 +91,13 @@ def without_line_feeds(row)
   row.map { |value| value&.gsub(/\R+/, ' ') }
 end
 
-def write_companion(output_path, paths)
+def output_row(row, oms_number, date_inserted, id)
+  [oms_number, date_inserted, id, *without_line_feeds(row)]
+end
+
+def write_companion(output_path, paths, oms_number, date_inserted)
   expected_header = nil
+  id = 0
 
   atomic_write(output_path) do |temp|
     output = CSV.new(temp)
@@ -101,20 +108,28 @@ def write_companion(output_path, paths)
           expected_header ||= row
           raise "#{path.basename}: companion header does not match" unless row == expected_header
 
-          output << without_line_feeds(row) if output.lineno.zero?
+          output << [*METADATA_HEADER, *without_line_feeds(row)] if output.lineno.zero?
         else
-          output << without_line_feeds(row)
+          output << output_row(row, oms_number, date_inserted, id)
+          id += 1
         end
       end
     end
   end
 end
 
-def write_utf16_tsv(output_path, input_path)
+def write_utf16_tsv(output_path, input_path, oms_number, date_inserted)
   atomic_write(output_path) do |temp|
     output = CSV.new(temp)
     options = { col_sep: "\t", encoding: 'UTF-16LE:UTF-8' }
-    CSV.foreach(input_path, **options) { |row| output << without_line_feeds(row) }
+    CSV.foreach(input_path, **options).with_index do |row, index|
+      converted = if index.zero?
+                    [*METADATA_HEADER, *without_line_feeds(row)]
+                  else
+                    output_row(row, oms_number, date_inserted, index - 1)
+                  end
+      output << converted
+    end
   end
 end
 
@@ -127,32 +142,34 @@ end
 def build_outputs(dir, grouped_inputs, include_mail_dat: false)
   output_dir = dir.join(OUTPUT_DIR_NAME)
   written = []
+  raise 'multiple OMS numbers found; process one print job at a time' if grouped_inputs.length > 1
 
   grouped_inputs.sort.each do |oms_number, inputs|
     validate_single_inputs!(oms_number, inputs)
+    date_inserted = Time.now.utc.iso8601
 
     unless inputs[:companion].empty?
-      path = output_dir.join("#{oms_number}_companion.csv")
-      write_companion(path, inputs[:companion])
+      path = output_dir.join('companions.csv')
+      write_companion(path, inputs[:companion], oms_number, date_inserted)
       written << [path, inputs[:companion]]
     end
 
     unless inputs[:daily_presort].empty?
-      path = output_dir.join("#{oms_number}_daily_presort.csv")
-      write_utf16_tsv(path, inputs[:daily_presort].first)
+      path = output_dir.join('dailypresorts.csv')
+      write_utf16_tsv(path, inputs[:daily_presort].first, oms_number, date_inserted)
       written << [path, inputs[:daily_presort]]
     end
 
     if include_mail_dat && !inputs[:mail_data].empty?
-      path = output_dir.join("#{oms_number}_mail_dat.zip")
+      path = output_dir.join('mail_dat.zip')
       copy_mail_data(path, inputs[:mail_data].first)
       written << [path, inputs[:mail_data]]
     end
 
     next if inputs[:moveresults].empty?
 
-    path = output_dir.join("#{oms_number}_moveresults.csv")
-    write_utf16_tsv(path, inputs[:moveresults].first)
+    path = output_dir.join('moveresults.csv')
+    write_utf16_tsv(path, inputs[:moveresults].first, oms_number, date_inserted)
     written << [path, inputs[:moveresults]]
   end
 

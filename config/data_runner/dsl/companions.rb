@@ -86,10 +86,10 @@
       ['Total sheets',                            nil,              'bigint',        'NULL',                   nil],
       ['Volume used',                             nil,              'bigint',        'NULL',                   nil],
       ['Weight',                                  nil,              'float',         'NULL',                   nil],
-      ['omsnumber',                               'oms_number',     'int',           'NULL',                   nil],
+      ['oms_number',                              'oms_number',     'int',           'NULL',                   nil],
       ['SourceFileName',                          nil,              'nvarchar(max)', 'NULL',                   nil],
-      [nil,                                       'id',             'bigint',        'IDENTITY(0,1) NOT NULL', nil],
-      ['importdatetime',                          'import_date_time', 'datetime2(7)',  'NULL',                   nil]
+      ['id',                                      'id',             'bigint',        'IDENTITY(0,1) NOT NULL', nil],
+      ['date_inserted',                           'date_inserted',  'datetime2(7)',   'NULL',                   nil]
     ],
     database_connections: [
       {
