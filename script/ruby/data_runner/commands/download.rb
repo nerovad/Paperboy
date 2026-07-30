@@ -115,6 +115,11 @@ def script_config(src)
   [path.to_s.strip, Array(args).map(&:to_s)]
 end
 
+def script_verifies_target?(src)
+  config = src[:script] || src[:command]
+  !config.is_a?(Hash) || config.fetch(:verify_target, true)
+end
+
 # -------------------------------------------------------------------------- }}}
 # {{{ Run a configured Ruby source script.
 
@@ -139,19 +144,24 @@ def run_source_script?(name, target, src)
   end
 
   puts "[SCRIPT] #{name}: ruby #{script_path} #{args.join(' ')}"
-  backup_existing_download(name, target)
+  verify_target = script_verifies_target?(src)
+  backup_existing_download(name, target) if verify_target
   success = system(RbConfig.ruby, full_path, *args)
   unless success
     puts "[FAIL] #{name}: script failed #{script_path}"
     return false
   end
 
-  unless File.exist?(target)
+  if verify_target && !File.exist?(target)
     puts "[FAIL] #{name}: script completed but did not create #{target}"
     return false
   end
 
-  puts "[OK] #{name}: #{script_path} -> #{target}"
+  if verify_target
+    puts "[OK] #{name}: #{script_path} -> #{target}"
+  else
+    puts "[OK] #{name}: #{script_path}"
+  end
   true
 end
 

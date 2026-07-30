@@ -4,7 +4,7 @@
   'Document Automation',
   {
     steps: {
-      enabled: false,
+      enabled: true,
       manual_steps: Workflow::MANUAL_STEPS,
       scheduled: {
         frequency: :daily,
