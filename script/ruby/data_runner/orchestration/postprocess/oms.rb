@@ -21,16 +21,11 @@ def paths
   ARGV.map { |value| Pathname.new(value).expand_path }
 end
 
-def markers_and_oms_number(sent_dir)
-  markers = sent_dir.children.select(&:file?).filter_map do |path|
-    match = path.basename.to_s.match(MARKER_PATTERN)
-    [path, match[1]] if match
-  end
-  numbers = markers.map(&:last).uniq
-  raise "no Mail.dat OMS marker found in #{sent_dir}" if numbers.empty?
-  raise "multiple OMS markers found in #{sent_dir}: #{numbers.join(', ')}" if numbers.length > 1
+def marker_and_oms_number(sent_dir)
+  marker = sent_dir.children.select(&:file?).sort.find { |path| path.basename.to_s.match?(MARKER_PATTERN) }
+  raise "no Mail.dat OMS marker found in #{sent_dir}" unless marker
 
-  [markers.map(&:first), numbers.first]
+  [marker, marker.basename.to_s.match(MARKER_PATTERN)[1]]
 end
 
 def archive_file(source, archive_dir)
@@ -50,14 +45,14 @@ def remove_file(path)
 end
 
 root_dir, sent_dir, output_dir, processed_dir = paths
-markers, oms_number = markers_and_oms_number(sent_dir)
+marker, oms_number = marker_and_oms_number(sent_dir)
 archive_dir = processed_dir.join(oms_number)
 FileUtils.mkdir_p(archive_dir)
 
 sources = root_dir.children.select do |path|
   path.file? && path.basename.to_s.include?(oms_number)
 end
-(sources + markers).uniq.each { |path| archive_file(path, archive_dir) }
+(sources + [marker]).uniq.each { |path| archive_file(path, archive_dir) }
 
 OUTPUT_FILES.each { |name| remove_file(output_dir.join(name)) }
 

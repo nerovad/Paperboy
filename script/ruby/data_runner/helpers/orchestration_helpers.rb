@@ -70,7 +70,11 @@ module DataRunnerTaskHelpers
   end
 
   def run_orchestrated_refresh(selector)
-    run_orchestration_stages(selector, %i[download to_csv use_dsl inject])
+    name, cfg = orchestration_entry(selector)
+    orchestration = resolved_orchestration(name, cfg.fetch(:orchestration))
+    return run_orchestration_stages(selector, %i[download to_csv use_dsl inject]) unless orchestration[:queue]
+
+    drain_orchestration_queue(selector, orchestration)
   end
 
   def run_orchestrated_setup(selector)
@@ -109,6 +113,30 @@ module DataRunnerTaskHelpers
   end
   private_class_method :run_orchestration_stages
 
+  def drain_orchestration_queue(selector, orchestration)
+    processed = 0
+    while (entry = next_queue_entry(orchestration.fetch(:queue)))
+      puts "[QUEUE] Processing #{entry}"
+      run_orchestration_stages(selector, %i[download to_csv use_dsl inject])
+      processed += 1
+      next unless next_queue_entry(orchestration.fetch(:queue)) == entry
+
+      raise "orchestration queue item was not removed: #{entry}"
+    end
+    puts "[QUEUE] Processed #{processed} item(s)"
+  end
+  private_class_method :drain_orchestration_queue
+
+  def next_queue_entry(queue)
+    path = queue.fetch(:path)
+    raise "orchestration queue directory not found: #{path}" unless Dir.exist?(path)
+
+    Dir.children(path).sort.find do |entry|
+      File.file?(File.join(path, entry)) && queue.fetch(:pattern).match?(entry)
+    end
+  end
+  private_class_method :next_queue_entry
+
   def run_standard_stages(selector, stages)
     stages.each do |stage|
       script = stage == :download ? 'download.rb' : ORCHESTRATED_SCRIPTS.fetch(stage)
@@ -137,6 +165,7 @@ module DataRunnerTaskHelpers
     raw.merge(
       root_path: root_path,
       output_dir: context.fetch(:output_path),
+      queue: resolve_queue_config(raw[:queue], context),
       preprocessing: resolve_lifecycle_config(name, :preprocessing, raw[:preprocessing], context),
       postprocessing: resolve_lifecycle_config(name, :postprocessing, raw[:postprocessing], context)
     )
@@ -151,6 +180,15 @@ module DataRunnerTaskHelpers
     context
   end
   private_class_method :orchestration_context
+
+  def resolve_queue_config(config, context)
+    return nil unless config
+
+    pattern = config.fetch(:pattern)
+    pattern = Regexp.new(pattern.to_s) unless pattern.is_a?(Regexp)
+    config.merge(path: resolve_argument(config.fetch(:path), context), pattern: pattern)
+  end
+  private_class_method :resolve_queue_config
 
   def resolve_lifecycle_config(name, phase, config, context)
     return nil if config.nil? || config[:enabled] == false

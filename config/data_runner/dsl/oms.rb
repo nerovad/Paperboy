@@ -19,6 +19,10 @@
       sent_path: '00_SentToUSPS',
       output_path: '01_TemporaryOutput',
       processed_path: '02_Processed',
+      queue: {
+        path: :sent_path,
+        pattern: /\AMail\.dat_\d{8,9}\.zip\z/i
+      },
       children: %w[
         Companions
         Dailypresorts

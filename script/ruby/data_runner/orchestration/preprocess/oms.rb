@@ -38,14 +38,10 @@ def paths
 end
 
 def selected_oms_number(sent_dir)
-  numbers = sent_dir.children.select(&:file?).filter_map do |path|
-    match = path.basename.to_s.match(MARKER_PATTERN)
-    match[1] if match
-  end.uniq
-  raise "no Mail.dat OMS marker found in #{sent_dir}" if numbers.empty?
-  raise "multiple OMS markers found in #{sent_dir}: #{numbers.join(', ')}" if numbers.length > 1
+  marker = sent_dir.children.select(&:file?).sort.find { |path| path.basename.to_s.match?(MARKER_PATTERN) }
+  raise "no Mail.dat OMS marker found in #{sent_dir}" unless marker
 
-  numbers.first
+  marker.basename.to_s.match(MARKER_PATTERN)[1]
 end
 
 def classified_inputs(dir, selected_number)
