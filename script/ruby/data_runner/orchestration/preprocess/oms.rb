@@ -11,42 +11,33 @@ require 'time'
 # eight-digit OMS number.
 #
 # Usage:
-#   ruby script/ruby/data_runner/download/oms.rb SOURCE_DIR [MAIL_DAT]
+#   ruby script/ruby/data_runner/orchestration/preprocess/oms.rb SOURCE_DIR
 #
 # Generated files are written to SOURCE_DIR/Output:
 #   companions.csv
 #   dailypresorts.csv
 #   moveresults.csv
-# With MAIL_DAT, mail_dat.zip is also copied.
 #
 # Companion inputs have names like NNNNNNNN-...-.csv. Their common header is
 # written once and their data rows are appended in filename order.
 # MoveResults_NNNNNNNN.txt is treated as UTF-16LE tab-delimited text and
-# serialized as standards-compliant CSV. Mail.dat_NNNNNNNN.zip is copied
-# without modifying
-# its contents.
+# serialized as standards-compliant CSV.
 OUTPUT_DIR_NAME = 'Output'
 OMS_NUMBER_PATTERN = '\d{8}'
 COMPANION_PATTERN = /\A(#{OMS_NUMBER_PATTERN})-.+\.csv\z/i
-MAIL_DATA_PATTERN = /\AMail\.dat(?:a)?_(#{OMS_NUMBER_PATTERN})\.zip\z/i
 MOVE_RESULTS_PATTERN = /\AMoveResults_(#{OMS_NUMBER_PATTERN})\.txt\z/i
 DAILY_PRESORT_PATTERN = /\APresort Fields Export_(#{OMS_NUMBER_PATTERN})\.txt\z/i
 METADATA_HEADER = %w[oms_number date_inserted id].freeze
 
 def source_dir
-  valid_args = ARGV.length == 1 || (ARGV.length == 2 && ARGV[1].casecmp?('MAIL_DAT'))
-  raise "usage: #{$PROGRAM_NAME} SOURCE_DIR [MAIL_DAT]" unless valid_args
+  raise "usage: #{$PROGRAM_NAME} SOURCE_DIR" unless ARGV.length == 1
 
   Pathname.new(ARGV.fetch(0)).expand_path
 end
 
-def include_mail_dat?
-  ARGV.length == 2
-end
-
 def classified_inputs(dir)
   inputs = Hash.new do |hash, oms_number|
-    hash[oms_number] = { companion: [], daily_presort: [], mail_data: [], moveresults: [] }
+    hash[oms_number] = { companion: [], daily_presort: [], moveresults: [] }
   end
 
   dir.children.select(&:file?).sort.each do |path|
@@ -55,7 +46,6 @@ def classified_inputs(dir)
     {
       companion: COMPANION_PATTERN,
       daily_presort: DAILY_PRESORT_PATTERN,
-      mail_data: MAIL_DATA_PATTERN,
       moveresults: MOVE_RESULTS_PATTERN
     }.each do |type, pattern|
       match = name.match(pattern)
@@ -67,7 +57,7 @@ def classified_inputs(dir)
 end
 
 def validate_single_inputs!(oms_number, inputs)
-  %i[daily_presort mail_data moveresults].each do |type|
+  %i[daily_presort moveresults].each do |type|
     next unless inputs.fetch(type).length > 1
 
     names = inputs.fetch(type).map { |path| path.basename.to_s }.join(', ')
@@ -133,13 +123,7 @@ def write_utf16_tsv(output_path, input_path, oms_number, date_inserted)
   end
 end
 
-def copy_mail_data(output_path, input_path)
-  atomic_write(output_path) do |temp|
-    File.open(input_path, 'rb') { |input| IO.copy_stream(input, temp) }
-  end
-end
-
-def build_outputs(dir, grouped_inputs, include_mail_dat: false)
+def build_outputs(dir, grouped_inputs)
   output_dir = dir.join(OUTPUT_DIR_NAME)
   written = []
   raise 'multiple OMS numbers found; process one print job at a time' if grouped_inputs.length > 1
@@ -160,12 +144,6 @@ def build_outputs(dir, grouped_inputs, include_mail_dat: false)
       written << [path, inputs[:daily_presort]]
     end
 
-    if include_mail_dat && !inputs[:mail_data].empty?
-      path = output_dir.join('mail_dat.zip')
-      copy_mail_data(path, inputs[:mail_data].first)
-      written << [path, inputs[:mail_data]]
-    end
-
     next if inputs[:moveresults].empty?
 
     path = output_dir.join('moveresults.csv')
@@ -183,7 +161,7 @@ def main
   grouped_inputs = classified_inputs(dir)
   raise "no OMS input files found in #{dir}" if grouped_inputs.empty?
 
-  written = build_outputs(dir, grouped_inputs, include_mail_dat: include_mail_dat?)
+  written = build_outputs(dir, grouped_inputs)
   written.each do |output, inputs|
     names = inputs.map { |path| path.basename.to_s }.join(', ')
     puts "[OK] #{names} -> #{output}"

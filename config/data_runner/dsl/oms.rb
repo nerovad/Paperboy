@@ -14,33 +14,21 @@
     group: {
       name: 'print_2_mail_billing_data'
     },
-    source: {
-      location: 'oms.csv',
-      local: 'oms.csv',
-      format: :csv,
-      strategy: :script,
-      script: {
-        path: 'script/ruby/data_runner/download/oms.rb',
-        args: ['/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/OMS'],
-        verify_target: false
+    orchestration: {
+      root_path: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/OMS',
+      children: %w[
+        Companions
+        Dailypresorts
+        Moveresults
+      ],
+      preprocessing: {
+        enabled: true,
+        args: [:root_path]
+      },
+      postprocessing: {
+        enabled: true,
+        args: [:root_path]
       }
-    },
-    to_csv: {
-      sheet: 0,
-      header_row: 0,
-      data_row: 1
-    },
-    header: [],
-    database_connections: [
-      {
-        host: 'GSASQL16',
-        database: 'GSABSS',
-        schema: 'dbo',
-        table: 'oms',
-        inject: {
-          mode: :truncate_insert
-        }
-      }
-    ]
+    }
   }
 ]

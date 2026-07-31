@@ -190,5 +190,6 @@ EtlHelpers.selected_dsl_entries(DSL_MAP, ARGV).each { |name, cfg| process_datase
 
 puts "\nTo CSV: #{stats.summary}"
 puts 'To CSV completed.'
+exit 1 if stats.fail.positive?
 
 # -------------------------------------------------------------------------- }}}

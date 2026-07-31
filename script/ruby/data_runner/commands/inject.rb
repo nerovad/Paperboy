@@ -411,5 +411,6 @@ end
 
 puts "\n#{stats.summary}"
 puts 'Inject completed.'
+exit 1 if stats.fail.positive?
 
 # -------------------------------------------------------------------------- }}}

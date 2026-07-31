@@ -3,6 +3,7 @@
 require 'English'
 require 'fileutils'
 require_relative '../log/data_runner_logger'
+require_relative '../constants/workflow_paths'
 
 # Shared support for DataRunner Rake task arguments, stage execution, and cleanup.
 module DataRunnerTaskHelpers
@@ -163,3 +164,5 @@ module DataRunnerTaskHelpers
   end
   private_class_method :staged_dir_names
 end
+
+require_relative 'orchestration_helpers'

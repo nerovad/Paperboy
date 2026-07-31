@@ -102,3 +102,4 @@ end
 
 puts "\n#{stats.summary}"
 puts 'Create tables completed.'
+exit 1 if stats.fail.positive?

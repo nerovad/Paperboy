@@ -284,5 +284,6 @@ end
 
 puts "\n#{stats.summary}"
 puts 'Download completed.'
+exit 1 if stats.fail.positive?
 
 # -------------------------------------------------------------------------- }}}

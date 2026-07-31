@@ -148,6 +148,7 @@ if __FILE__ == $PROGRAM_NAME
 
   puts "\n#{stats.summary}"
   puts 'ApplyHeader completed.'
+  exit 1 if stats.fail.positive?
 end
 
 # -------------------------------------------------------------------------- }}}

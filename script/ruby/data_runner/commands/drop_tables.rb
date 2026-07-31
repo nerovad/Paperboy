@@ -59,3 +59,4 @@ end
 
 puts "\n#{stats.summary}"
 puts 'Drop tables completed.'
+exit 1 if stats.fail.positive?

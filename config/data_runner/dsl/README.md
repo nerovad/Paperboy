@@ -82,6 +82,34 @@ source: {
 
 - Use `database_connections: [...]` even when a dataset has only one destination.
   Each entry should include `host`, `database`, `schema`, `table`, and `inject`.
+- Use `orchestration` on a control-only DSL when one download produces the
+  canonical source files for several child DSLs. Each stage command expands
+  the orchestrator into its children. `DataRunner:refresh` runs those same
+  expanded stages in sequence and calls postprocessing only after every child
+  inject succeeds:
+
+```ruby
+orchestration: {
+  root_path: '/path/to/job',
+  children: %w[FirstDataset SecondDataset],
+  preprocessing: {
+    enabled: true,
+    args: [:root_path]
+  },
+  postprocessing: {
+    enabled: true,
+    args: [:root_path]
+  }
+}
+```
+
+  Lifecycle script paths are inferred from the DSL name. For example, `Oms`
+  uses `orchestration/preprocess/oms.rb` and
+  `orchestration/postprocess/oms.rb`. `download[orchestrator]` runs
+  preprocessing and verifies every child output.
+  `to_csv`, `use_dsl`, and `inject` expand to all children at the same stage.
+  Symbol arguments resolve from the orchestration context.
+
 - Use `inject.post_script` when a destination should run a local Ruby script
   after its inject transaction commits:
 
