@@ -27,7 +27,7 @@ OMS_NUMBER_PATTERN = '\d{8}'
 COMPANION_PATTERN = /\A(#{OMS_NUMBER_PATTERN})-.+\.csv\z/i
 MOVE_RESULTS_PATTERN = /\AMoveResults_(#{OMS_NUMBER_PATTERN})\.txt\z/i
 DAILY_PRESORT_PATTERN = /\APresort Fields Export_(#{OMS_NUMBER_PATTERN})\.txt\z/i
-METADATA_HEADER = %w[oms_number date_inserted id].freeze
+METADATA_HEADER = %w[omsnumber importdatetime].freeze
 
 def source_dir
   raise "usage: #{$PROGRAM_NAME} SOURCE_DIR" unless ARGV.length == 1
@@ -81,13 +81,12 @@ def without_line_feeds(row)
   row.map { |value| value&.gsub(/\R+/, ' ') }
 end
 
-def output_row(row, oms_number, date_inserted, id)
-  [oms_number, date_inserted, id, *without_line_feeds(row)]
+def output_row(row, oms_number, date_inserted)
+  [oms_number, date_inserted, *without_line_feeds(row)]
 end
 
 def write_companion(output_path, paths, oms_number, date_inserted)
   expected_header = nil
-  id = 0
 
   atomic_write(output_path) do |temp|
     output = CSV.new(temp)
@@ -100,8 +99,7 @@ def write_companion(output_path, paths, oms_number, date_inserted)
 
           output << [*METADATA_HEADER, *without_line_feeds(row)] if output.lineno.zero?
         else
-          output << output_row(row, oms_number, date_inserted, id)
-          id += 1
+          output << output_row(row, oms_number, date_inserted)
         end
       end
     end
@@ -116,7 +114,7 @@ def write_utf16_tsv(output_path, input_path, oms_number, date_inserted)
       converted = if index.zero?
                     [*METADATA_HEADER, *without_line_feeds(row)]
                   else
-                    output_row(row, oms_number, date_inserted, index - 1)
+                    output_row(row, oms_number, date_inserted)
                   end
       output << converted
     end

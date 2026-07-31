@@ -66,6 +66,8 @@ module EtlMappingHelpers
       next if output.empty?
 
       input = entry[:input].to_s.strip
+      next if input.empty? && identity_column?(entry)
+
       {
         input: input.empty? ? nil : input,
         output: output,

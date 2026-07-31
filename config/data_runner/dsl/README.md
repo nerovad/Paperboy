@@ -108,6 +108,9 @@ orchestration: {
   `orchestration/postprocess/oms.rb`. `download[orchestrator]` runs
   preprocessing and verifies every child output.
   `to_csv`, `use_dsl`, and `inject` expand to all children at the same stage.
+  `dump_sql[orchestrator]` dumps every child table definition.
+  `use_sql[orchestrator]` updates every child DSL from its reviewed SQL.
+  `reset[orchestrator]` runs postprocessing and resets every child DSL.
   Symbol arguments resolve from the orchestration context.
 
 - Use `inject.post_script` when a destination should run a local Ruby script

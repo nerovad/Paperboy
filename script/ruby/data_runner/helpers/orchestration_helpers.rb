@@ -10,6 +10,8 @@ module DataRunnerTaskHelpers
     to_sql: 'to_sql.rb',
     drop_table: 'drop_tables.rb',
     create_table: 'create_tables.rb',
+    dump_sql: 'dump_sql.rb',
+    use_sql: 'use_sql.rb',
     use_dsl: 'use_dsl.rb',
     inject: 'inject.rb'
   }.freeze
@@ -50,6 +52,11 @@ module DataRunnerTaskHelpers
     when :create_table
       verify_child_stage_files!(orchestration, WorkflowPaths::SQL_MAP_DIR, extension: '.sql')
       run_children(orchestration, :create_table)
+    when :dump_sql
+      run_children(orchestration, :dump_sql)
+    when :use_sql
+      verify_child_stage_files!(orchestration, WorkflowPaths::SQL_SCHEMA_DIR, extension: '.sql')
+      run_children(orchestration, :use_sql)
     when :use_dsl
       verify_child_stage_files!(orchestration, WorkflowPaths::NORMALIZED_DIR)
       run_children(orchestration, :use_dsl)
@@ -84,6 +91,17 @@ module DataRunnerTaskHelpers
     return run_orchestrated_oneshot(selector) if orchestrated?(selector)
 
     run_standard_stages(selector, %i[download to_csv to_sql use_dsl create_table inject])
+  end
+
+  def reset_stage_or_orchestration(selector)
+    return reset_staged_files(selector) unless orchestrated?(selector)
+
+    name, cfg = orchestration_entry(selector)
+    orchestration = resolved_orchestration(name, cfg.fetch(:orchestration))
+    run_postprocessing(orchestration)
+    orchestration_children(orchestration).map(&:first).each do |child_name|
+      reset_staged_files(child_name)
+    end
   end
 
   def run_orchestration_stages(selector, stages)

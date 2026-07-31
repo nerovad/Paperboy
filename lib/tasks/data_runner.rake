@@ -40,7 +40,8 @@ namespace :DataRunner do
 
   desc 'Dump live SQL Server table definitions into output/data_runner/04_SQL_SCHEMA'
   task :dump_sql, [:name] do |_task, args|
-    DataRunnerTaskHelpers.run_ruby_stage('dump_sql.rb', DataRunnerTaskHelpers.task_arg(args, allow_all: true))
+    selector = DataRunnerTaskHelpers.task_arg(args, allow_all: true)
+    DataRunnerTaskHelpers.run_stage_or_orchestration(selector, :dump_sql, 'dump_sql.rb')
   end
 
   desc 'Export SQL Server tables into 00_Inbox CSV files'
@@ -68,7 +69,8 @@ namespace :DataRunner do
 
   desc 'Update DSL header mappings from reviewed SQL in output/data_runner/04_SQL_SCHEMA'
   task :use_sql, [:name] do |_task, args|
-    DataRunnerTaskHelpers.run_ruby_stage('use_sql.rb', DataRunnerTaskHelpers.task_arg(args, allow_all: true))
+    selector = DataRunnerTaskHelpers.task_arg(args, allow_all: true)
+    DataRunnerTaskHelpers.run_stage_or_orchestration(selector, :use_sql, 'use_sql.rb')
   end
 
   desc 'Load DSL-applied CSV files into SQL Server'
@@ -119,6 +121,6 @@ namespace :DataRunner do
     puts 'Reset ETL staged files.'
 
     selector = DataRunnerTaskHelpers.task_arg(args, allow_all: true)
-    DataRunnerTaskHelpers.reset_staged_files(selector)
+    DataRunnerTaskHelpers.reset_stage_or_orchestration(selector)
   end
 end

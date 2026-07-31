@@ -267,3 +267,4 @@ end
 
 puts "\n#{stats.summary}"
 puts 'Live SQL dump completed.'
+exit 1 if stats.fail.positive?
