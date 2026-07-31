@@ -1,0 +1,11 @@
+<%# app/views/print_production/shared/_sidebar.html.erb
+    Sidebar for the Print Production app. The app switcher header is shared with
+    every other app; everything below it is this app's own navigation. %>
+<div class="sidebar print-production-sidebar">
+  <%= render "shared/app_switcher" %>
+
+  <nav class="print-production-links">
+    <%= link_to "Hello World", print_production_root_path,
+                class: "nav-link#{' active' if current_page?(print_production_root_path)}" %>
+  </nav>
+</div>

@@ -43,7 +43,10 @@ class AclController < ApplicationController
   APPLICATION_ITEMS = [
     { key: 'data_runner', label: 'Data Runner' },
     { key: 'coa',         label: 'Chart of Accounts' },
-    { key: 'digital_asset_management', label: 'Digital Asset Management' }
+    { key: 'digital_asset_management', label: 'Digital Asset Management' },
+    { key: 'aim', label: 'Automated Invoice Management' },
+    { key: 'print_production', label: 'Print Production' },
+    { key: 'billing', label: 'Billing' }
   ].freeze
 
   LEGACY_FORMS = [

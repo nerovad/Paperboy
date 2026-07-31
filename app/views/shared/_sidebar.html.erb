@@ -4,6 +4,12 @@
   <%= render "coa/shared/sidebar" %>
 <% elsif controller_path.start_with?("digital_asset_management/") %>
   <%= render "digital_asset_management/shared/sidebar" %>
+<% elsif controller_path.start_with?("aim/") %>
+  <%= render "aim/shared/sidebar" %>
+<% elsif controller_path.start_with?("print_production/") %>
+  <%= render "print_production/shared/sidebar" %>
+<% elsif controller_path.start_with?("billing/") %>
+  <%= render "billing/shared/sidebar" %>
 <% else %>
   <%= render "shared/paperboy_sidebar" %>
 <% end %>

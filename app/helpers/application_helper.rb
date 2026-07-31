@@ -124,6 +124,9 @@ module ApplicationHelper
     apps << { key: 'data_runner', label: 'Data Runner', path: data_runner_root_path } if can_access_app?('data_runner')
     apps << { key: 'coa', label: 'Chart of Accounts', path: coa_root_path } if can_access_app?('coa')
     apps << { key: 'digital_asset_management', label: 'Digital Asset Management', path: digital_asset_management_root_path } if can_access_app?('digital_asset_management')
+    apps << { key: 'aim', label: 'Automated Invoice Management', path: aim_root_path } if can_access_app?('aim')
+    apps << { key: 'print_production', label: 'Print Production', path: print_production_root_path } if can_access_app?('print_production')
+    apps << { key: 'billing', label: 'Billing', path: billing_root_path } if can_access_app?('billing')
     apps
   end
 
@@ -162,6 +165,12 @@ module ApplicationHelper
       'coa'
     elsif controller_path.start_with?('digital_asset_management/')
       'digital_asset_management'
+    elsif controller_path.start_with?('aim/')
+      'aim'
+    elsif controller_path.start_with?('print_production/')
+      'print_production'
+    elsif controller_path.start_with?('billing/')
+      'billing'
     else
       'paperboy'
     end

@@ -15,6 +15,18 @@ Rails.application.routes.draw do
     root 'dashboard#index'
   end
 
+  namespace :aim do
+    root 'dashboard#index'
+  end
+
+  namespace :print_production do
+    root 'dashboard#index'
+  end
+
+  namespace :billing do
+    root 'dashboard#index'
+  end
+
   namespace :data_runner do
     root 'dsls#index'
 
