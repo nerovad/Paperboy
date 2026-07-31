@@ -62,7 +62,7 @@
       ['lot_number',                     'lot_number',                     'nvarchar(100)', 'NULL',                   nil],
       ['county_code',                    'county_code',                    'int',           'NULL',                   nil],
       ['county_name',                    'county_name',                    'nvarchar(100)', 'NULL',                   nil],
-      ['sourcefilename',                 'sourcefilename',                 'nvarchar(max)', 'NULL',                   nil],
+      [nil,                              'sourcefilename',                 'nvarchar(max)', 'NULL',                   nil],
       ['importdatetime',                 'importdatetime',                 'datetime2(0)',  'NULL',                   nil],
       [nil,                              'id',                             'int',           'IDENTITY(0,1) NOT NULL', nil]
     ],
