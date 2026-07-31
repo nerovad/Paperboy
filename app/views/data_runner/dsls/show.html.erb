@@ -1,6 +1,5 @@
 <%= render "data_runner/shared/dsl_header" %>
 <%= render "data_runner/shared/hot_menu" %>
-<pre class="output highlighted-output"><%= syntax_highlight(@source, language: "ruby") %></pre>
 <% if @task_output %>
   <section class="task-result" aria-live="polite">
     <div class="task-result-banner <%= @task_status %>">
@@ -9,4 +8,6 @@
     </div>
     <pre class="task-output-box highlighted-output"><%= syntax_highlight(@task_output, language: "shell") %></pre>
   </section>
+<% else %>
+  <pre class="output highlighted-output"><%= syntax_highlight(@source, language: "ruby") %></pre>
 <% end %>
