@@ -11,11 +11,33 @@ OUTPUT_FILES = %w[
   dailypresorts.csv
   moveresults.csv
 ].freeze
+OMS_NUMBER_PATTERN = '\d{8,9}'
+MARKER_PATTERN = /\AMail\.dat_(#{OMS_NUMBER_PATTERN})\.zip\z/i
 
-def root_path
-  raise "usage: #{$PROGRAM_NAME} ROOT_PATH" unless ARGV.length == 1
+def paths
+  usage = "usage: #{$PROGRAM_NAME} ROOT_PATH SENT_PATH OUTPUT_PATH PROCESSED_PATH"
+  raise usage unless ARGV.length == 4
 
-  Pathname.new(ARGV.fetch(0)).expand_path
+  ARGV.map { |value| Pathname.new(value).expand_path }
+end
+
+def markers_and_oms_number(sent_dir)
+  markers = sent_dir.children.select(&:file?).filter_map do |path|
+    match = path.basename.to_s.match(MARKER_PATTERN)
+    [path, match[1]] if match
+  end
+  numbers = markers.map(&:last).uniq
+  raise "no Mail.dat OMS marker found in #{sent_dir}" if numbers.empty?
+  raise "multiple OMS markers found in #{sent_dir}: #{numbers.join(', ')}" if numbers.length > 1
+
+  [markers.map(&:first), numbers.first]
+end
+
+def archive_file(source, archive_dir)
+  target = archive_dir.join(source.basename)
+  FileUtils.rm_f(target)
+  FileUtils.mv(source, target)
+  puts "[OK] Archived #{source} -> #{target}"
 end
 
 def remove_file(path)
@@ -27,7 +49,16 @@ def remove_file(path)
   end
 end
 
-output_dir = root_path.join('Output')
+root_dir, sent_dir, output_dir, processed_dir = paths
+markers, oms_number = markers_and_oms_number(sent_dir)
+archive_dir = processed_dir.join(oms_number)
+FileUtils.mkdir_p(archive_dir)
+
+sources = root_dir.children.select do |path|
+  path.file? && path.basename.to_s.include?(oms_number)
+end
+(sources + markers).uniq.each { |path| archive_file(path, archive_dir) }
+
 OUTPUT_FILES.each { |name| remove_file(output_dir.join(name)) }
 
 download_dir = Pathname.new(WorkflowPaths::DOWNLOAD_DIR)

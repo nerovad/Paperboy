@@ -8,12 +8,13 @@ require 'tempfile'
 require 'time'
 
 # Assemble the files exported by OMS into one consistently named set per
-# eight-digit OMS number.
+# eight- or nine-digit OMS number selected by a Mail.dat marker.
 #
 # Usage:
-#   ruby script/ruby/data_runner/orchestration/preprocess/oms.rb SOURCE_DIR
+#   ruby script/ruby/data_runner/orchestration/preprocess/oms.rb \
+#     ROOT_PATH SENT_PATH OUTPUT_PATH
 #
-# Generated files are written to SOURCE_DIR/Output:
+# Generated files are written to OUTPUT_PATH:
 #   companions.csv
 #   dailypresorts.csv
 #   moveresults.csv
@@ -22,20 +23,32 @@ require 'time'
 # written once and their data rows are appended in filename order.
 # MoveResults_NNNNNNNN.txt is treated as UTF-16LE tab-delimited text and
 # serialized as standards-compliant CSV.
-OUTPUT_DIR_NAME = 'Output'
-OMS_NUMBER_PATTERN = '\d{8}'
+OMS_NUMBER_PATTERN = '\d{8,9}'
+MARKER_PATTERN = /\AMail\.dat_(#{OMS_NUMBER_PATTERN})\.zip\z/i
 COMPANION_PATTERN = /\A(#{OMS_NUMBER_PATTERN})-.+\.csv\z/i
 MOVE_RESULTS_PATTERN = /\AMoveResults_(#{OMS_NUMBER_PATTERN})\.txt\z/i
 DAILY_PRESORT_PATTERN = /\APresort Fields Export_(#{OMS_NUMBER_PATTERN})\.txt\z/i
 METADATA_HEADER = %w[omsnumber importdatetime].freeze
+OUTPUT_FILES = %w[companions.csv dailypresorts.csv moveresults.csv].freeze
 
-def source_dir
-  raise "usage: #{$PROGRAM_NAME} SOURCE_DIR" unless ARGV.length == 1
+def paths
+  raise "usage: #{$PROGRAM_NAME} ROOT_PATH SENT_PATH OUTPUT_PATH" unless ARGV.length == 3
 
-  Pathname.new(ARGV.fetch(0)).expand_path
+  ARGV.map { |value| Pathname.new(value).expand_path }
 end
 
-def classified_inputs(dir)
+def selected_oms_number(sent_dir)
+  numbers = sent_dir.children.select(&:file?).filter_map do |path|
+    match = path.basename.to_s.match(MARKER_PATTERN)
+    match[1] if match
+  end.uniq
+  raise "no Mail.dat OMS marker found in #{sent_dir}" if numbers.empty?
+  raise "multiple OMS markers found in #{sent_dir}: #{numbers.join(', ')}" if numbers.length > 1
+
+  numbers.first
+end
+
+def classified_inputs(dir, selected_number)
   inputs = Hash.new do |hash, oms_number|
     hash[oms_number] = { companion: [], daily_presort: [], moveresults: [] }
   end
@@ -49,7 +62,7 @@ def classified_inputs(dir)
       moveresults: MOVE_RESULTS_PATTERN
     }.each do |type, pattern|
       match = name.match(pattern)
-      inputs[match[1]][type] << path if match
+      inputs[match[1]][type] << path if match && match[1] == selected_number
     end
   end
 
@@ -121,8 +134,7 @@ def write_utf16_tsv(output_path, input_path, oms_number, date_inserted)
   end
 end
 
-def build_outputs(dir, grouped_inputs)
-  output_dir = dir.join(OUTPUT_DIR_NAME)
+def build_outputs(output_dir, grouped_inputs)
   written = []
   raise 'multiple OMS numbers found; process one print job at a time' if grouped_inputs.length > 1
 
@@ -153,13 +165,16 @@ def build_outputs(dir, grouped_inputs)
 end
 
 def main
-  dir = source_dir
-  raise "source directory not found: #{dir}" unless dir.directory?
+  root_dir, sent_dir, output_dir = paths
+  raise "root directory not found: #{root_dir}" unless root_dir.directory?
+  raise "sent directory not found: #{sent_dir}" unless sent_dir.directory?
 
-  grouped_inputs = classified_inputs(dir)
-  raise "no OMS input files found in #{dir}" if grouped_inputs.empty?
+  oms_number = selected_oms_number(sent_dir)
+  grouped_inputs = classified_inputs(root_dir, oms_number)
+  raise "no OMS input files found for #{oms_number} in #{root_dir}" if grouped_inputs.empty?
 
-  written = build_outputs(dir, grouped_inputs)
+  OUTPUT_FILES.each { |name| FileUtils.rm_f(output_dir.join(name)) }
+  written = build_outputs(output_dir, grouped_inputs)
   written.each do |output, inputs|
     names = inputs.map { |path| path.basename.to_s }.join(', ')
     puts "[OK] #{names} -> #{output}"

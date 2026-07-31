@@ -15,7 +15,10 @@
       name: 'print_2_mail_billing_data'
     },
     orchestration: {
-      root_path: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/OMS',
+      root_path: '/mnt/o/Outputs/DataRunner',
+      sent_path: '00_SentToUSPS',
+      output_path: '01_TemporaryOutput',
+      processed_path: '02_Processed',
       children: %w[
         Companions
         Dailypresorts
@@ -23,11 +26,11 @@
       ],
       preprocessing: {
         enabled: true,
-        args: [:root_path]
+        args: %i[root_path sent_path output_path]
       },
       postprocessing: {
         enabled: true,
-        args: [:root_path]
+        args: %i[root_path sent_path output_path processed_path]
       }
     }
   }

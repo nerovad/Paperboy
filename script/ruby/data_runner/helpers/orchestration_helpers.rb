@@ -132,16 +132,25 @@ module DataRunnerTaskHelpers
 
   def resolved_orchestration(name, raw)
     root_path = File.expand_path(raw.fetch(:root_path).to_s)
-    context = { root_path: root_path, output_dir: File.join(root_path, 'Output') }
+    context = orchestration_context(raw, root_path)
 
     raw.merge(
       root_path: root_path,
-      output_dir: context.fetch(:output_dir),
+      output_dir: context.fetch(:output_path),
       preprocessing: resolve_lifecycle_config(name, :preprocessing, raw[:preprocessing], context),
       postprocessing: resolve_lifecycle_config(name, :postprocessing, raw[:postprocessing], context)
     )
   end
   private_class_method :resolved_orchestration
+
+  def orchestration_context(raw, root_path)
+    context = { root_path: root_path }
+    %i[sent_path output_path processed_path].each do |key|
+      context[key] = File.absolute_path(raw.fetch(key).to_s, root_path)
+    end
+    context
+  end
+  private_class_method :orchestration_context
 
   def resolve_lifecycle_config(name, phase, config, context)
     return nil if config.nil? || config[:enabled] == false
