@@ -73,43 +73,9 @@ journalctl -u paperboy-stage -f
 journalctl -u paperboy-stage-sidekiq -f
 ```
 
-## Pushing to Github
+## Production Deployment
 
-Push code from dev server to github
-
-```bash
-git status
-git add .
-git commit -m ""
-git push
-```
-
-Rollback Strategy
-
-Before each deployment, tag the current production revision to simplify
-rollbacks.
-
-10.1. Tag the current prod version (from dev or any machine with the repo)
-
-```bash
-cd ~/gitea/Paperboy
-
-# Example: prod-20251112-2050
-TAG_NAME="prod-$(date +%Y%m%d-%H%M)"
-
-git tag -a "$TAG_NAME" -m "Deploy to prod at $TAG_NAME"
-git push origin --tags
-```
-
-## Pulling Code to Production Server
-
-On Dev — write code, commit, push to Gitea
-On Prod — run bin/deploy and it handles everything:
-
-1. git pull the latest code
-2. bundle install for any new gems
-3. assets:clobber + assets:precompile for a clean asset build
-4. Restarts Puma and Sidekiq via systemd
+On Prod Server: bin/deploy
 
 Puma and Sidekiq are managed by systemd, which means:
 
@@ -135,57 +101,9 @@ git reset --hard prod-20251112-2050  # example tag
 
 Rebuild assets + restart app
 
-## Running the App
-
-Frontend (Rails server):
-
-Dev:
-
-```bash
-bin/rails s -p 3001
-```
-
-Direct localhost development runs over HTTP:
-
-```bash
-APP_HOST=http://localhost:3001
-PAPERBOY_ASSUME_SSL=false
-```
-
-When running development behind nginx with HTTPS termination
-(<https://dev-gsa-forms>), opt in to Rails SSL assumptions:
-
-```bash
-APP_HOST=https://dev-gsa-forms
-PAPERBOY_ASSUME_SSL=true
-```
-
-Employee Login uses OmniAuth 2 and must submit with POST plus a Rails
-authenticity token. If login raises ActionController::InvalidAuthenticityToken
-on localhost, confirm the browser origin and APP_HOST are both HTTP and
-PAPERBOY_ASSUME_SSL is false.
-
-Production:
-
-```bash
-RAILS_ENV=production bin/rails s -b 127.0.0.1 -p 3001
-```
-
-Backend (background jobs):
-
-Dev:
-
-```bash
-bundle exec sidekiq
-```
-
-Production:
-
-```bash
-bundle exec sidekiq -e production
-```
-
 ## Form Template Workflow
+
+**This is only intended as a workaround if the UI is broken as this workflow is included in the UI under Admin --> Manage Forms
 
 Paperboy includes a Rails generator for creating new form templates.
 
@@ -391,79 +309,3 @@ rails dev:seed:probation TRANSFERS=80
 
 Notes:
 Use REPLANT=1 with seeds to reset test data.
-
-## MSSQL gsasql16 Command for Linux Terminal viewing. With alias
-
-```bash
-prettysql "SELECT TOP 50 * FROM GSABSS.dbo.Employees"
-```
-
-# Claude Code Git Reversion Best Practices
-
-Best practices:
-
-Start each Claude Code session with a clean commit:
-
-```bash
-git add .
-git commit -m "Pre-Claude: baseline before [task description]"
-claude
-```
-
-Review Claude's changes before accepting them - you can use Plan Mode
-(--permission-mode plan or Shift+Tab to cycle to it) to see what Claude
-wants to do before it makes changes
-
-If you mistakenly accept unwanted changes:
-
-```bash
-# See what changed
-git status
-git diff
-
-# Revert specific files
-git checkout -- path/to/file
-
-# Or revert everything to last commit
-git reset --hard HEAD
-
-# Or if you already committed, revert the commit
-git revert HEAD
-```
-
-Use branches for risky tasks:
-
-```bash
-git checkout -b claude-experiment
-claude
-# Review changes, then decide to merge or discard
-```
-
-Best Practice for Paperboy Development
-
-```bash
-# Start feature work
-git checkout -b feature/badge-request-acls
-git commit -m "Baseline before Claude session"
-
-# Work with Claude, commit frequently
-claude
-
-# ... Claude makes changes ...
-git add .
-git commit -m "Claude: Initial ACL implementation"
-
-# ... more Claude work ...
-git commit -m "Claude: Fix Employee lookup"
-
-# Review and clean up
-git log --oneline -5
-git rebase -i HEAD~4  # Squash Claude's commits into logical units
-
-# Test thoroughly
-bundle exec rspec
-rails s  # Manual testing
-
-# NOW push to remote for PR/review
-git push origin feature/badge-request-acls
-```
