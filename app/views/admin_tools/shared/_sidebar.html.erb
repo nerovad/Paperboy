@@ -1,11 +1,16 @@
 <%# app/views/admin_tools/shared/_sidebar.html.erb
     Sidebar for the Admin Tools app. The app switcher header is shared with
-    every other app; everything below it is this app's own navigation. %>
+    every other app; below it is one button per admin screen the current user
+    is permitted to open. The list and its ACL filtering live in
+    AdminToolsHelper#admin_tools_links, so order and labels stay in one place. %>
 <div class="sidebar admin-tools-sidebar">
   <%= render "shared/app_switcher" %>
 
+  <% active_key = current_admin_tool_key %>
   <nav class="admin-tools-links">
-    <%= link_to "Hello World", admin_tools_root_path,
-                class: "nav-link#{' active' if current_page?(admin_tools_root_path)}" %>
+    <% admin_tools_links.each do |tool| %>
+      <%= link_to tool[:label], tool[:path],
+                  class: "nav-link#{' active' if tool[:key] == active_key}" %>
+    <% end %>
   </nav>
 </div>

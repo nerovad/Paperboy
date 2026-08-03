@@ -2,12 +2,26 @@
   <h1>Admin Tools</h1>
 </div>
 
-<div class="form-wrapper">
-  <p>Hello World! This is the starting page for Admin Tools.</p>
-  <p>
-    Replace this view (<code>app/views/admin_tools/dashboard/index.html.erb</code>) with
-    the real thing, and add pages by creating controllers under
-    <code>app/controllers/admin_tools/</code> that inherit from
-    <code>AdminTools::BaseController</code>.
+<div class="form-wrapper admin-tools-home">
+  <p class="admin-tools-subtitle">
+    Administration screens for Paperboy. The same tools are always one click
+    away in the sidebar.
   </p>
+
+  <% tools = admin_tools_links %>
+  <% if tools.any? %>
+    <div class="admin-tools-grid">
+      <% tools.each do |tool| %>
+        <%= link_to tool[:path], class: "admin-tools-card" do %>
+          <h3><%= tool[:label] %></h3>
+          <p><%= tool[:blurb] %></p>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>You do not have access to any admin tools yet.</p>
+      <p class="empty-state-hint">Ask a system administrator to grant them under ACL.</p>
+    </div>
+  <% end %>
 </div>

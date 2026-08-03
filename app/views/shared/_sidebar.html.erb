@@ -1,4 +1,9 @@
-<% if controller_path.start_with?("data_runner/") %>
+<%# Every app but Admin Tools is identified by its controller namespace; the
+    Admin Tools screens kept their original top-level routes, so they are
+    matched by current_app_key instead. %>
+<% if current_app_key == "admin_tools" %>
+  <%= render "admin_tools/shared/sidebar" %>
+<% elsif controller_path.start_with?("data_runner/") %>
   <%= render "data_runner/shared/sidebar" %>
 <% elsif controller_path.start_with?("coa/") %>
   <%= render "coa/shared/sidebar" %>
@@ -10,8 +15,6 @@
   <%= render "print_production/shared/sidebar" %>
 <% elsif controller_path.start_with?("billing/") %>
   <%= render "billing/shared/sidebar" %>
-<% elsif controller_path.start_with?("admin_tools/") %>
-  <%= render "admin_tools/shared/sidebar" %>
 <% else %>
   <%= render "shared/paperboy_sidebar" %>
 <% end %>

@@ -24,12 +24,16 @@ class AclController < ApplicationController
     { key: 'help',          label: 'Help',           default_public: true },
     { key: 'reports',       label: 'Reports' },
     { key: 'dashboards',    label: 'Dashboards' },
-    { key: 'admin',         label: 'Admin' },
-    { key: 'manage_forms',  label: 'Admin → Manage Forms' },
-    { key: 'emulate',       label: 'Admin → Emulate' },
-    { key: 'acl',           label: 'Admin → ACL' },
-    { key: 'data_validation', label: 'Admin → Data Validation' },
-    { key: 'lookup_tables', label: 'Admin → Lookup Tables' },
+    # The five keys below now gate the Admin Tools app's sidebar buttons rather
+    # than a profile-dropdown menu; the keys themselves are unchanged, so
+    # existing grants carry over. 'admin' is the old menu's own key — it grants
+    # nothing on its own and is kept only so existing grants stay visible here.
+    { key: 'admin',         label: 'Admin (legacy — grants nothing)' },
+    { key: 'manage_forms',  label: 'Admin Tools → Manage Forms' },
+    { key: 'emulate',       label: 'Admin Tools → Emulate' },
+    { key: 'acl',           label: 'Admin Tools → ACL' },
+    { key: 'data_validation', label: 'Admin Tools → Data Validation' },
+    { key: 'lookup_tables', label: 'Admin Tools → Lookup Tables' },
     { key: 'auth_console',  label: 'Auth Console' },
     { key: 'osha_log',      label: 'OSHA 300' }
   ].freeze

@@ -42,31 +42,8 @@ module ApplicationHelper
     current_user_group_names.include?('system_admins')
   end
 
-  # Tabs inside the Admin portal, in tab-bar order. Each entry is
-  # { key:, label:, path: }; entries the current user may not see are filtered
-  # out. The keys are ordinary ACL "Profile Dropdown Items" grants, so a group
-  # can hold some admin tabs without holding all of them. System admins bypass.
-  def admin_portal_tabs
-    [
-      { key: 'acl',             label: 'ACL',             path: acl_index_path },
-      { key: 'manage_forms',    label: 'Manage Forms',    path: form_templates_path },
-      { key: 'emulate',         label: 'Emulate',         path: new_admin_impersonation_path },
-      { key: 'data_validation', label: 'Data Validation', path: admin_data_validation_index_path },
-      { key: 'lookup_tables',   label: 'Lookup Tables',   path: lookup_tables_path }
-    ].select { |tab| can_view_admin_tab?(tab[:key]) }
-  end
-
-  def can_view_admin_tab?(key)
-    system_admin? || current_user_dropdown_permissions.include?(key)
-  end
-
-  # Where the navbar's single "Admin" button lands: the first tab the user may
-  # see. Holding the 'admin' key alone grants no tabs, so there is nothing to
-  # land on and the button stays hidden — the key marks a group as admin-portal
-  # eligible, but each tab still needs its own grant.
-  def admin_portal_path
-    admin_portal_tabs.first&.fetch(:path)
-  end
+  # The Admin Tools app's screens — the list, its ACL filtering and the
+  # request-to-tool matching — live in AdminToolsHelper.
 
   # Whether to offer the 300A Summary. It is reached from the OSHA Reporting
   # form itself rather than the profile dropdown, and the 300 Log moved to
@@ -134,8 +111,17 @@ module ApplicationHelper
   # Whether the current user may reach an app-switcher sub-application. System
   # admins see everything; everyone else needs an ACL "application" grant for
   # the given key (via group or org-level permission).
+  #
+  # Admin Tools is the exception: it is a container for screens that already
+  # carry their own ACL grants, so holding any one of those is enough to get
+  # in. Without that, moving the screens under the app would have locked out
+  # every group that holds, say, only the 'acl' key. The 'admin_tools'
+  # application grant still works as a way in of its own.
   def can_access_app?(key)
-    system_admin? || current_user_application_permission_keys.include?(key)
+    return true if system_admin?
+    return true if key == 'admin_tools' && admin_tools_links.any?
+
+    current_user_application_permission_keys.include?(key)
   end
 
   # Homepage slideshow pictures for each sub-app. These are intentionally
@@ -159,8 +145,14 @@ module ApplicationHelper
   # Which sub-application the current request belongs to, keyed to
   # +paperboy_apps+. Defaults to Paperboy for everything outside the
   # data_runner/ and coa/ controller namespaces.
+  #
+  # The Admin Tools screens are the one app whose controllers are not in a
+  # matching namespace — they kept their original top-level routes — so they
+  # are matched by name instead (see +ADMIN_TOOLS+).
   def current_app_key
-    if controller_path.start_with?('data_runner/')
+    if controller_path.start_with?('admin_tools/') || current_admin_tool_key
+      'admin_tools'
+    elsif controller_path.start_with?('data_runner/')
       'data_runner'
     elsif controller_path.start_with?('coa/')
       'coa'
@@ -172,8 +164,6 @@ module ApplicationHelper
       'print_production'
     elsif controller_path.start_with?('billing/')
       'billing'
-    elsif controller_path.start_with?('admin_tools/')
-      'admin_tools'
     else
       'paperboy'
     end
