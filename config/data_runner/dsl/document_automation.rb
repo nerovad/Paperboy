@@ -20,7 +20,7 @@
       format: :xlsx,
       strategy: :copy
     },
-    output: 'document_automation',
+    output: 'document_automation.csv',
     to_csv: {
       sheet: 0,
       header_row: 0,
