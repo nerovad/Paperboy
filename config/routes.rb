@@ -27,6 +27,10 @@ Rails.application.routes.draw do
     root 'dashboard#index'
   end
 
+  namespace :admin_tools do
+    root 'dashboard#index'
+  end
+
   namespace :data_runner do
     root 'dsls#index'
 

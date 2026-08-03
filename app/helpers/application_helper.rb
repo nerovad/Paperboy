@@ -127,6 +127,7 @@ module ApplicationHelper
     apps << { key: 'aim', label: 'Automated Invoice Management', path: aim_root_path } if can_access_app?('aim')
     apps << { key: 'print_production', label: 'Print Production', path: print_production_root_path } if can_access_app?('print_production')
     apps << { key: 'billing', label: 'Billing', path: billing_root_path } if can_access_app?('billing')
+    apps << { key: 'admin_tools', label: 'Admin Tools', path: admin_tools_root_path } if can_access_app?('admin_tools')
     apps
   end
 
@@ -171,6 +172,8 @@ module ApplicationHelper
       'print_production'
     elsif controller_path.start_with?('billing/')
       'billing'
+    elsif controller_path.start_with?('admin_tools/')
+      'admin_tools'
     else
       'paperboy'
     end

@@ -10,6 +10,8 @@
   <%= render "print_production/shared/sidebar" %>
 <% elsif controller_path.start_with?("billing/") %>
   <%= render "billing/shared/sidebar" %>
+<% elsif controller_path.start_with?("admin_tools/") %>
+  <%= render "admin_tools/shared/sidebar" %>
 <% else %>
   <%= render "shared/paperboy_sidebar" %>
 <% end %>

@@ -46,7 +46,8 @@ class AclController < ApplicationController
     { key: 'digital_asset_management', label: 'Digital Asset Management' },
     { key: 'aim', label: 'Automated Invoice Management' },
     { key: 'print_production', label: 'Print Production' },
-    { key: 'billing', label: 'Billing' }
+    { key: 'billing', label: 'Billing' },
+    { key: 'admin_tools', label: 'Admin Tools' }
   ].freeze
 
   LEGACY_FORMS = [

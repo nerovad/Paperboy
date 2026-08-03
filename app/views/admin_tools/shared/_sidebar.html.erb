@@ -1,0 +1,11 @@
+<%# app/views/admin_tools/shared/_sidebar.html.erb
+    Sidebar for the Admin Tools app. The app switcher header is shared with
+    every other app; everything below it is this app's own navigation. %>
+<div class="sidebar admin-tools-sidebar">
+  <%= render "shared/app_switcher" %>
+
+  <nav class="admin-tools-links">
+    <%= link_to "Hello World", admin_tools_root_path,
+                class: "nav-link#{' active' if current_page?(admin_tools_root_path)}" %>
+  </nav>
+</div>
