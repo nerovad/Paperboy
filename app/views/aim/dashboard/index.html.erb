@@ -1,13 +1,25 @@
-<div class="form-header">
-  <h1>Automated Invoice Management</h1>
-</div>
+<div class="aim-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">AIM Invoice Processing Portal</h1>
+      <p class="aim-page-subtitle">Centralized review for AI-extracted invoice data and approvals.</p>
+    </div>
+  </header>
 
-<div class="form-wrapper">
-  <p>Hello World! This is the starting page for Automated Invoice Management.</p>
-  <p>
-    Replace this view (<code>app/views/aim/dashboard/index.html.erb</code>) with
-    the real thing, and add pages by creating controllers under
-    <code>app/controllers/aim/</code> that inherit from
-    <code>Aim::BaseController</code>.
-  </p>
+  <% if aim_admin? %>
+    <section class="aim-dashboard-grid">
+      <% @dashboard_queues.each do |queue, config| %>
+        <% status = @aim_queue_statuses[queue] || {} %>
+        <%= link_to aim_invoices_path(queue: queue), class: "aim-dashboard-card #{config[:css_class]}" do %>
+          <h2><%= config[:label] %></h2>
+          <div class="aim-dashboard-count"><%= @aim_queue_counts.fetch(queue, 0) %></div>
+          <p><%= status[:connected] ? config[:description] : 'Queue folder is not connected.' %></p>
+        <% end %>
+      <% end %>
+    </section>
+  <% else %>
+    <section class="aim-panel aim-empty-state">
+      <p>AIM approval work will appear in your Paperboy inbox when records are assigned to you.</p>
+    </section>
+  <% end %>
 </div>

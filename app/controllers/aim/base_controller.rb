@@ -5,6 +5,9 @@ module Aim
   # inherit from this so the ACL gate below is applied consistently.
   class BaseController < ApplicationController
     before_action :require_app_access
+    before_action :load_aim_sidebar_counts
+
+    helper_method :aim_admin?
 
     private
 
@@ -20,6 +23,46 @@ module Aim
       return if current_user.present? && helpers.can_access_app?('aim')
 
       redirect_to root_path, alert: 'You do not have access to Automated Invoice Management.'
+    end
+
+    def require_aim_admin
+      return if aim_admin?
+
+      redirect_to aim_root_path, alert: 'You do not have access to AIM processing queues.'
+    end
+
+    def aim_admin?
+      current_user_group_names.include?('system_admins') ||
+        current_user_group_names.include?('aim_admin') ||
+        current_user_group_names.include?('aim_staff')
+    end
+
+    def load_aim_sidebar_counts
+      @aim_queue_statuses = {}
+      @aim_queue_counts = {}
+
+      Aim::InvoiceDirectoryService::BACKEND_QUEUES.each_key do |queue|
+        path = Aim::InvoiceDirectoryService.instance.path_for(queue)
+        @aim_queue_statuses[queue] = aim_queue_directory_status(path)
+        @aim_queue_counts[queue] = aim_queue_directory_count(path)
+      end
+    rescue StandardError => e
+      Rails.logger.error "Failed to load AIM queue counts: #{e.message}"
+      @aim_queue_statuses = {}
+      @aim_queue_counts = {}
+    end
+
+    def aim_queue_directory_count(path)
+      return 0 if path.blank? || !Dir.exist?(path.to_s)
+
+      Dir.glob(File.join(path.to_s, '*')).count { |file_path| File.directory?(file_path) }
+    end
+
+    def aim_queue_directory_status(path)
+      return { connected: false, path: nil, message: 'Path is not configured.' } if path.blank?
+      return { connected: false, path: path.to_s, message: 'Queue folder is not reachable.' } unless Dir.exist?(path.to_s)
+
+      { connected: true, path: path.to_s, message: 'Connected.' }
     end
   end
 end

@@ -5,7 +5,20 @@
   <%= render "shared/app_switcher" %>
 
   <nav class="aim-links">
-    <%= link_to "Hello World", aim_root_path,
+    <%= link_to "Dashboard", aim_root_path,
                 class: "nav-link#{' active' if current_page?(aim_root_path)}" %>
+
+    <% if aim_admin? %>
+      <div class="sidebar-section-label">Processing Queues</div>
+      <% Aim::InvoiceDirectoryService::BACKEND_QUEUES.each do |queue, config| %>
+        <% queue_path = aim_invoices_path(queue: queue) %>
+        <%= link_to queue_path, class: "nav-link#{' active' if current_page?(queue_path)}" do %>
+          <span><%= config[:label] %></span>
+          <span class="sidebar-count <%= config[:css_class].delete_prefix('aim-card-') %>">
+            <%= @aim_queue_counts.fetch(queue, 0) %>
+          </span>
+        <% end %>
+      <% end %>
+    <% end %>
   </nav>
 </div>

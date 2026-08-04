@@ -1,0 +1,122 @@
+<div class="aim-page">
+  <header class="aim-page-header">
+    <div>
+      <%= link_to 'Back to Queue', aim_invoices_path(queue: @queue), class: 'aim-kicker' %>
+      <h1 class="aim-page-title"><%= @invoice_id %></h1>
+      <p class="aim-page-subtitle"><%= aim_queue_label(@queue) %> review</p>
+    </div>
+  </header>
+
+  <div class="aim-document-layout">
+    <section class="aim-panel aim-document-panel">
+      <div class="aim-panel-header">
+        <h2 class="aim-panel-title">Document Preview</h2>
+      </div>
+
+      <div class="aim-pdf-shell">
+        <iframe class="aim-pdf-frame"
+                src="<%= pdf_aim_invoice_path(@invoice_id, queue: @queue) %>"
+                title="Invoice PDF preview"></iframe>
+      </div>
+    </section>
+
+    <%= form_with url: aim_invoice_path(@invoice_id, queue: @queue),
+                  method: :patch,
+                  local: true,
+                  class: 'aim-panel aim-metadata-form' do |form| %>
+      <div class="aim-panel-header">
+        <h2 class="aim-panel-title">Metadata Extraction</h2>
+      </div>
+
+      <div class="aim-form-scroll">
+        <% if ['action_needed', 'low_confidence_review'].include?(@queue) && @ticket_content.present? %>
+          <section class="aim-ticket">
+            <h3>AI Failure Ticket</h3>
+            <pre><%= @ticket_content %></pre>
+          </section>
+        <% end %>
+
+        <div class="aim-fields">
+          <% fields = @metadata.keys.any? ? @metadata.keys : ['BU', 'Submitter', 'VendorName', 'InvoiceTotal', 'InvoiceNumber', 'InvoiceDate', 'Status'] %>
+
+          <% fields.each do |key| %>
+            <% next if ['BoundingBoxes', 'ConfidenceScores', 'OriginalText'].include?(key) %>
+
+            <div class="aim-field-row">
+              <div class="aim-field">
+                <%= form.label "metadata[#{key}]", aim_metadata_label(key) %>
+
+                <% if @metadata[key].is_a?(Array) && key == 'Invoices' %>
+                  <div class="aim-split-summary">
+                    <p>AI Suggested Splits</p>
+                    <ul>
+                      <% @metadata[key].each_with_index do |split, index| %>
+                        <li>
+                          <strong>Invoice <%= index + 1 %>:</strong>
+                          Pages <%= Array(split['pages']).join(', ') %>
+                          <br>
+                          <span>Vendor: <%= split['vendor_name'] || 'Unknown' %>, Invoice: <%= split['invoice_number'] || 'N/A' %></span>
+                        </li>
+                      <% end %>
+                    </ul>
+                    <div class="aim-review-note">Visual splitting will be added in the next AIM integration phase.</div>
+                  </div>
+                <% else %>
+                  <%= form.text_field "metadata[#{key}]",
+                                      value: (@metadata[key].is_a?(Hash) || @metadata[key].is_a?(Array) ? @metadata[key].to_json : @metadata[key]) %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <% if @queue == 'vendor_review' %>
+            <section class="aim-vendor-review">
+              <div class="aim-field">
+                <%= form.label 'metadata[NormalizedVendor]', 'Match to Official Vendor Name' %>
+                <%= form.text_field 'metadata[NormalizedVendor]', placeholder: 'Example: Red Wing Shoes' %>
+              </div>
+            </section>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="aim-form-actions">
+        <div class="aim-action-group">
+          <%= form.submit 'Unclaim', class: 'btn ghost' %>
+        </div>
+
+        <div class="aim-action-group">
+          <%= form.submit 'Save Changes', class: 'btn secondary' %>
+
+          <% if @queue == 'action_needed' %>
+            <%= form.submit 'Reject',
+                            data: { turbo_confirm: 'Reject this invoice and send it to the rejected folder?' },
+                            class: 'btn deny' %>
+            <%= form.submit 'Send to Approval',
+                            data: { turbo_confirm: 'Route this invoice to User Approval?' },
+                            class: 'btn approve' %>
+          <% elsif @queue == 'low_confidence_review' %>
+            <%= form.submit 'Reject',
+                            data: { turbo_confirm: 'Reject this invoice and send it to the rejected folder?' },
+                            class: 'btn deny' %>
+            <%= form.submit 'Send to SQL Queue',
+                            data: { turbo_confirm: 'Save these XML index fields and send this folder to the SQL queue?' },
+                            class: 'btn approve' %>
+          <% elsif @queue == 'vendor_review' %>
+            <%= form.submit 'Learn Alias',
+                            data: { turbo_confirm: 'Send this vendor alias to the learner queue?' },
+                            class: 'btn warning' %>
+          <% end %>
+
+          <%= link_to 'Retry AI Processing',
+                      retry_aim_invoice_path(@invoice_id, queue: @queue),
+                      data: {
+                        turbo_method: :post,
+                        turbo_confirm: 'Send this original document back to the Reprocess Queue?'
+                      },
+                      class: 'btn warning' %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,377 @@
+@import "base/tokens";
+
+.aim-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+  padding: 24px;
+}
+
+.aim-page-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.aim-page-title {
+  color: $text-strong;
+  font-size: 1.35rem;
+  font-weight: 650;
+  margin: 0;
+}
+
+.aim-page-subtitle {
+  color: $text-muted;
+  font-size: 0.9rem;
+  margin: 5px 0 0;
+}
+
+.aim-kicker {
+  color: $brand-navy;
+  display: inline-flex;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.aim-panel {
+  background: $surface-panel;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.aim-empty-state {
+  color: $text-muted;
+  padding: 42px;
+  text-align: center;
+}
+
+.aim-empty-state p {
+  margin: 6px 0;
+}
+
+.aim-queue-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.aim-queue-table {
+  font-size: 0.78rem;
+  min-width: 980px;
+}
+
+.aim-queue-table th {
+  font-size: 0.7rem;
+  padding: 9px 10px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.aim-queue-table td {
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  padding: 8px 10px;
+}
+
+.aim-queue-table .badge {
+  font-size: 0.68rem;
+}
+
+.aim-queue-table .btn.compact {
+  font-size: 0.76rem;
+  height: 30px;
+  padding: 0 10px;
+}
+
+.aim-page .btn.warning {
+  background-color: $warning-action;
+  color: $text-strong;
+}
+
+.aim-page .btn.warning:hover {
+  background-color: $orange-action;
+}
+
+.aim-page .btn.ghost {
+  background-color: $neutral-button-bg;
+  color: $text-color;
+}
+
+.aim-page .btn.ghost:hover {
+  background-color: $surface-control-hover;
+}
+
+.aim-dashboard-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.aim-dashboard-card {
+  background: $surface-panel;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  border-top: 4px solid $brand-navy;
+  color: inherit;
+  padding: 20px;
+  text-decoration: none;
+}
+
+.aim-dashboard-card h2 {
+  color: $text-strong;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.aim-dashboard-count {
+  color: $text-strong;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 10px 0;
+}
+
+.aim-dashboard-card p {
+  color: $text-muted;
+  margin: 0;
+}
+
+.aim-card-danger {
+  border-top-color: $danger;
+}
+
+.aim-card-warning {
+  border-top-color: $warning-action;
+}
+
+.aim-card-info {
+  border-top-color: $cyan-action;
+}
+
+.aim-card-neutral {
+  border-top-color: $slate-action;
+}
+
+.aim-count-pill {
+  align-items: center;
+  background: $surface-panel;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 999px;
+  color: $text-color;
+  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 650;
+  min-height: 34px;
+  padding: 0 14px;
+}
+
+.aim-sidebar .sidebar-section-label {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 20px 0 8px;
+  text-transform: uppercase;
+}
+
+.aim-sidebar .nav-link {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.aim-sidebar .sidebar-count {
+  background: $slate-action;
+  border-radius: 999px;
+  color: $surface-base;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 24px;
+  padding: 3px 7px;
+  text-align: center;
+}
+
+.aim-sidebar .sidebar-count.danger {
+  background: $danger;
+}
+
+.aim-sidebar .sidebar-count.warning {
+  background: $warning-action;
+  color: $text-strong;
+}
+
+.aim-sidebar .sidebar-count.info {
+  background: $cyan-action;
+}
+
+.aim-sidebar .sidebar-count.neutral {
+  background: $slate-action;
+}
+
+.aim-document-layout {
+  display: grid;
+  flex: 1;
+  gap: 20px;
+  grid-template-columns: minmax(0, 3fr) minmax(360px, 2fr);
+  min-height: 0;
+}
+
+.aim-document-panel,
+.aim-metadata-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.aim-panel-header {
+  background: $surface-base;
+  border-bottom: 1px solid $neutral-border-subtle;
+  flex: 0 0 auto;
+  padding: 8px 12px;
+}
+
+.aim-panel-title {
+  color: $text-color;
+  font-size: 0.88rem;
+  font-weight: 650;
+  margin: 0;
+}
+
+.aim-pdf-shell {
+  background: $surface-base;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.aim-pdf-frame {
+  border: 0;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.aim-fields {
+  display: grid;
+  gap: 14px;
+}
+
+.aim-field-row {
+  align-items: flex-end;
+  display: flex;
+  gap: 8px;
+}
+
+.aim-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.aim-field label {
+  color: $text-color;
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 650;
+  margin-bottom: 5px;
+}
+
+.aim-field input,
+.aim-field textarea {
+  background: $surface-base;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 6px;
+  color: $text-strong;
+  font: inherit;
+  padding: 10px;
+  width: 100%;
+}
+
+.aim-form-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px;
+}
+
+.aim-form-actions {
+  align-items: center;
+  background: $surface-base;
+  border-top: 1px solid $neutral-border-subtle;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 16px 18px;
+}
+
+.aim-action-group {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.aim-ticket {
+  background: $red-denied-bg;
+  border-left: 4px solid $danger;
+  border-radius: 6px;
+  color: $danger-dark;
+  margin-bottom: 18px;
+  padding: 14px;
+}
+
+.aim-ticket h3 {
+  font-size: 0.95rem;
+  margin: 0 0 8px;
+}
+
+.aim-ticket pre {
+  color: $text-color;
+  font-size: 0.82rem;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.aim-split-summary {
+  background: $surface-base;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 6px;
+  padding: 14px;
+}
+
+.aim-split-summary p {
+  color: $brand-navy;
+  font-weight: 650;
+  margin: 0 0 10px;
+}
+
+.aim-split-summary ul {
+  color: $text-muted;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.aim-review-note {
+  color: $amber-review-text;
+  font-size: 0.84rem;
+  margin-top: 10px;
+}
+
+.aim-vendor-review {
+  background: $amber-review-bg;
+  border: 1px solid $amber-soft-border;
+  border-radius: 6px;
+  padding: 14px;
+}
+
+@media (max-width: 1100px) {
+  .aim-document-layout {
+    grid-template-columns: 1fr;
+  }
+}

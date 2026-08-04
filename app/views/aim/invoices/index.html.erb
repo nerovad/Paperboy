@@ -1,0 +1,95 @@
+<div class="aim-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title"><%= aim_queue_label(@queue) %> Queue</h1>
+      <p class="aim-page-subtitle"><%= aim_queue_description(@queue) || 'Invoices routed here by the Scan Center pipeline.' %></p>
+    </div>
+
+    <span class="aim-count-pill"><%= pluralize(@invoices.length, 'invoice') %></span>
+  </header>
+
+  <% if !@queue_connected %>
+    <section class="aim-panel aim-empty-state">
+      <p><%= @queue_status[:message] %></p>
+      <% if @queue_status[:path].present? %>
+        <p><code><%= @queue_status[:path] %></code></p>
+      <% end %>
+    </section>
+  <% elsif @invoices.empty? %>
+    <section class="aim-panel aim-empty-state">
+      <p>This queue is connected and currently empty.</p>
+      <p>Invoices routed here by the AIM preprocessor will appear automatically.</p>
+    </section>
+  <% elsif @queue == 'ai_queue' %>
+    <section class="aim-panel aim-queue-panel">
+      <table class="submission-table aim-queue-table">
+        <thead>
+          <tr>
+            <th>Job Folder</th>
+            <th>PDF File</th>
+            <th>Business Unit</th>
+            <th>Submitter</th>
+            <th>Processing ID</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @invoices.each do |invoice| %>
+            <% badge_class, badge_text = aim_status_badge(invoice, nil) %>
+            <tr>
+              <td class="is-strong"><%= invoice[:name] %></td>
+              <td><%= invoice[:pdf_file].presence || 'Missing' %></td>
+              <td><%= aim_metadata_value(invoice[:metadata], 'bu_number') || 'Unknown' %></td>
+              <td><%= aim_metadata_value(invoice[:metadata], 'submitter_name') || 'Unknown' %></td>
+              <td><%= aim_metadata_value(invoice[:metadata], 'processing_id') || invoice[:name] %></td>
+              <td><span class="badge <%= badge_class %>"><%= badge_text %></span></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  <% else %>
+    <section class="aim-panel aim-queue-panel">
+      <table class="submission-table aim-queue-table">
+        <thead>
+          <tr>
+            <th>Invoice Folder</th>
+            <th>Business Unit</th>
+            <th>Submitter</th>
+            <th>Vendor</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% current_user_email = session.dig(:user, 'email') || session.dig('user', 'email') %>
+          <% @invoices.each do |invoice| %>
+            <% badge_class, badge_text = aim_status_badge(invoice, current_user_email) %>
+            <tr class="<%= 'is-locked' if invoice[:is_locked] %>">
+              <td class="is-strong"><%= invoice[:name] %></td>
+              <td><%= aim_metadata_value(invoice[:metadata], 'BU', 'BudgetUnit', 'Budget Unit Number') || 'N/A' %></td>
+              <td><%= aim_metadata_value(invoice[:metadata], 'Submitter', 'Submitted by') || 'N/A' %></td>
+              <td><%= aim_metadata_value(invoice[:metadata], 'VendorName', 'Vendor Name') || 'N/A' %></td>
+              <td><%= aim_metadata_value(invoice[:metadata], 'InvoiceTotal', 'Invoice Total') || 'N/A' %></td>
+              <td><span class="badge <%= badge_class %>"><%= badge_text %></span></td>
+              <td class="action-buttons">
+                <% if invoice[:is_locked] %>
+                  <%= link_to 'View Only',
+                              aim_invoice_path(invoice[:id], queue: @queue),
+                              data: { turbo: false },
+                              class: 'btn secondary compact' %>
+                <% else %>
+                  <%= link_to invoice[:claimed_by] ? 'Resume Review' : 'Review Invoice',
+                              aim_invoice_path(invoice[:id], queue: @queue),
+                              data: { turbo: false },
+                              class: 'btn approve compact' %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  <% end %>
+</div>

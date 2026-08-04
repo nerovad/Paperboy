@@ -17,6 +17,14 @@ Rails.application.routes.draw do
 
   namespace :aim do
     root 'dashboard#index'
+
+    resources :invoices, only: %i[index show update], constraints: { id: %r{[^/]+} } do
+      member do
+        get :pdf
+        post :retry
+        post :move_to_action_needed
+      end
+    end
   end
 
   namespace :print_production do
