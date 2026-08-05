@@ -53,11 +53,11 @@
     database_connections: [
       {
         host: 'GSASQL16',
-        database: 'GSABSS',
+        database: 'GSAP2M',
         schema: 'dbo',
         table: 'p2mjobs',
         inject: {
-          mode: :truncate_insert
+          mode: :append
         }
       }
     ]
