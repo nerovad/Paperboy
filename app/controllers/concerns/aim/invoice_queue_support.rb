@@ -81,6 +81,29 @@ module Aim
       { 'error' => 'Invalid metadata' }
     end
 
+    def load_vendor_review_context
+      @vendor_learn_data = read_vendor_learn_data(@folder_path)
+      @official_vendor_names = official_vendor_names
+      @metadata['VendorName'] ||= @vendor_learn_data['extracted_name']
+      @metadata['NormalizedVendor'] ||= @vendor_learn_data['suggested_normalized_name']
+    end
+
+    def read_vendor_learn_data(folder_path)
+      learn_file = Dir.children(folder_path).find { |file_name| file_name.end_with?('_LEARN.json') }
+      return {} if learn_file.blank?
+
+      JSON.parse(File.read(File.join(folder_path, learn_file)))
+    rescue JSON::ParserError
+      {}
+    end
+
+    def official_vendor_names
+      Aim::VendorAliasService.official_names
+    rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::StatementInvalid => e
+      Rails.logger.warn "Failed to load AIM vendor aliases: #{e.message}"
+      []
+    end
+
     def write_metadata(metadata_path, metadata_params)
       if metadata_path.downcase.end_with?('.xml')
         write_xml_metadata(metadata_path, metadata_params)

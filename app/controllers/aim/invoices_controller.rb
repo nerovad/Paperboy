@@ -32,6 +32,7 @@ module Aim
 
       @metadata_path = metadata_path_for(@folder_path)
       @metadata = read_metadata(@metadata_path)
+      load_vendor_review_context if @queue == 'vendor_review'
       @ticket_content = ticket_content_for(@folder_path)
     end
 

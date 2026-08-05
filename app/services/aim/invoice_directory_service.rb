@@ -7,46 +7,20 @@ module Aim
     include Singleton
 
     BACKEND_QUEUES = {
-      ai_queue: {
-        label: 'AI Queue',
-        description: 'Spooled invoices waiting for AI extraction.',
-        css_class: 'aim-card-neutral'
-      },
-      action_needed: {
-        label: 'Action Needed',
-        description: 'Invoices missing critical extraction data.',
-        css_class: 'aim-card-danger'
-      },
-      vendor_review: {
-        label: 'Vendor Review',
-        description: 'Unknown vendors requiring normalization.',
-        css_class: 'aim-card-warning'
-      },
-      batch_split: {
-        label: 'Batch Split',
-        description: 'PDFs containing multiple invoices to split.',
-        css_class: 'aim-card-info'
-      },
-      low_confidence_review: {
-        label: 'Low Confidence Review',
-        description: 'Invoices routed for manual confidence review.',
-        css_class: 'aim-card-warning'
-      },
-      sql_failed: {
-        label: 'SQL Failed',
-        description: 'Invoices that failed downstream SQL processing.',
-        css_class: 'aim-card-danger'
-      },
-      rejected: {
-        label: 'Rejected',
-        description: 'Rejected invoices awaiting archive or follow-up.',
-        css_class: 'aim-card-neutral'
-      }
+      ai_queue: { label: 'AI Queue', description: 'Spooled invoices waiting for AI extraction.', css_class: 'aim-card-neutral' },
+      action_needed: { label: 'Action Needed', description: 'Invoices missing critical extraction data.', css_class: 'aim-card-danger' },
+      vendor_review: { label: 'Vendor Review', description: 'Unknown vendors requiring normalization.', css_class: 'aim-card-warning' },
+      manual_processing: { label: 'Manual Processing', description: 'Invoices needing full manual entry.', css_class: 'aim-card-warning' },
+      batch_split: { label: 'Batch Split', description: 'PDFs containing multiple invoices to split.', css_class: 'aim-card-info' },
+      low_confidence_review: { label: 'Low Confidence Review', description: 'Invoices routed for manual review.', css_class: 'aim-card-warning' },
+      sql_failed: { label: 'SQL Failed', description: 'Invoices that failed downstream SQL processing.', css_class: 'aim-card-danger' },
+      rejected: { label: 'Rejected', description: 'Rejected invoices awaiting archive or follow-up.', css_class: 'aim-card-neutral' }
     }.freeze
 
     PATH_ENV = {
       action_needed: 'AIM_ACTION_NEEDED_DIR',
       vendor_review: 'AIM_VENDOR_REVIEW_DIR',
+      manual_processing: 'AIM_MANUAL_PROCESSING_DIR',
       batch_split: 'AIM_BATCH_SPLIT_DIR',
       low_confidence_review: 'AIM_LOW_CONFIDENCE_REVIEW_DIR',
       sql_queue: 'AIM_SQL_QUEUE_DIR',
@@ -63,6 +37,7 @@ module Aim
     def path_for(queue)
       queue = queue.to_s
       return ai_queue_dir if queue == 'ai_queue'
+      return manual_processing_dir if queue == 'manual_processing'
 
       env_name = PATH_ENV[queue.to_sym]
       return unless env_name
@@ -72,6 +47,7 @@ module Aim
 
     def action_needed_dir = path_for(:action_needed)
     def vendor_review_dir = path_for(:vendor_review)
+    def manual_processing_dir = translated_env('AIM_MANUAL_PROCESSING_DIR') || queue_base_child('_BACK_END', '_MANUAL_PROCESSING')
     def batch_split_dir = path_for(:batch_split)
     def low_confidence_review_dir = path_for(:low_confidence_review)
     def sql_queue_dir = path_for(:sql_queue)

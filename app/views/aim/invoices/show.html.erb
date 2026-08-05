@@ -38,9 +38,11 @@
 
         <div class="aim-fields">
           <% fields = @metadata.keys.any? ? @metadata.keys : ['BU', 'Submitter', 'VendorName', 'InvoiceTotal', 'InvoiceNumber', 'InvoiceDate', 'Status'] %>
+          <% excluded_fields = ['BoundingBoxes', 'ConfidenceScores', 'OriginalText'] %>
+          <% excluded_fields << 'NormalizedVendor' if @queue == 'vendor_review' %>
 
           <% fields.each do |key| %>
-            <% next if ['BoundingBoxes', 'ConfidenceScores', 'OriginalText'].include?(key) %>
+            <% next if excluded_fields.include?(key) %>
 
             <div class="aim-field-row">
               <div class="aim-field">
@@ -73,7 +75,21 @@
             <section class="aim-vendor-review">
               <div class="aim-field">
                 <%= form.label 'metadata[NormalizedVendor]', 'Match to Official Vendor Name' %>
-                <%= form.text_field 'metadata[NormalizedVendor]', placeholder: 'Example: Red Wing Shoes' %>
+                <%= form.text_field 'metadata[NormalizedVendor]',
+                                    value: @metadata['NormalizedVendor'],
+                                    list: 'aim-official-vendor-names',
+                                    autocomplete: 'off',
+                                    placeholder: 'Type or choose an official vendor' %>
+                <datalist id="aim-official-vendor-names">
+                  <% @official_vendor_names.each do |vendor_name| %>
+                    <option value="<%= vendor_name %>"></option>
+                  <% end %>
+                </datalist>
+                <div class="aim-vendor-alias-preview">
+                  <span><%= @metadata['VendorName'].presence || 'Unknown vendor' %></span>
+                  <span>maps to</span>
+                  <span>the official vendor entered above</span>
+                </div>
               </div>
             </section>
           <% end %>
