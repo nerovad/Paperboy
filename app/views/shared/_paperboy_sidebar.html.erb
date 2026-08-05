@@ -32,7 +32,9 @@
       ["Workplace Violence", new_workplace_violence_form_path],
       ["Notice of Change", new_notice_of_change_form_path],
     ]
-    legacy_forms.unshift(["Billing Tools", new_billing_tool_path]) if system_admin?
+    # Billing Tools used to be pinned to the top of this list for system
+    # admins. Its buttons are now in the Billing app's sidebar, reached from
+    # the app switcher above.
 
     # ACL whitelist: non-admins only see forms they have explicit permission for
     form_perm_keys = system_admin? ? nil : current_user_form_permission_keys

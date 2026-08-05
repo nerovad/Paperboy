@@ -3,11 +3,13 @@
 </div>
 
 <div class="form-wrapper">
-  <p>Hello World! This is the starting page for Billing.</p>
-  <p>
-    Replace this view (<code>app/views/billing/dashboard/index.html.erb</code>) with
-    the real thing, and add pages by creating controllers under
-    <code>app/controllers/billing/</code> that inherit from
-    <code>Billing::BaseController</code>.
-  </p>
+  <% if billing_tool_sections.any? %>
+    <p>
+      The billing tools are in the sidebar. Each button asks for confirmation —
+      and a start and end date where the process needs one — before it runs its
+      stored procedure against GSABSS.
+    </p>
+  <% else %>
+    <p>Welcome to Billing.</p>
+  <% end %>
 </div>

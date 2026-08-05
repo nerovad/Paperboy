@@ -1,11 +1,41 @@
 <%# app/views/billing/shared/_sidebar.html.erb
     Sidebar for the Billing app. The app switcher header is shared with
-    every other app; everything below it is this app's own navigation. %>
-<div class="sidebar billing-sidebar">
+    every other app; everything below it is this app's own navigation.
+
+    The tool buttons that used to make up the /billing_tools page live here
+    now. Each one is a small form posting to Billing::ToolsController, with
+    the click intercepted by the billing-modal controller so the confirm
+    modal (and, where needed, the date range) comes first. The list and its
+    permission check are in BillingHelper#billing_tool_sections. %>
+<% tool_sections = billing_tool_sections %>
+<div class="sidebar billing-sidebar" data-controller="billing-modal">
   <%= render "shared/app_switcher" %>
 
   <nav class="billing-links">
-    <%= link_to "Hello World", billing_root_path,
+    <%= link_to "Home", billing_root_path,
                 class: "nav-link#{' active' if current_page?(billing_root_path)}" %>
+
+    <% tool_sections.each do |section, tools| %>
+      <div class="billing-tool-section">
+        <h3 class="billing-tool-heading"><%= section %></h3>
+        <% tools.each do |tool| %>
+          <%= form_with url: tool[:path], method: :post, data: { turbo: false } do %>
+            <% if tool[:dates] %>
+              <%= hidden_field_tag :s_date, nil, id: nil %>
+              <%= hidden_field_tag :e_date, nil, id: nil %>
+            <% end %>
+            <button type="submit" class="nav-link billing-tool-btn"
+                    data-action="click->billing-modal#open"
+                    data-requires-dates="<%= tool[:dates] %>"
+                    data-confirm-title="<%= tool[:label] %>"
+                    data-confirm-message="<%= tool[:confirm] %>">
+              <%= tool[:label] %>
+            </button>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
   </nav>
+
+  <%= render "billing/shared/tools_modal" if tool_sections.any? %>
 </div>

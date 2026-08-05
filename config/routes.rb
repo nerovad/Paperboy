@@ -33,6 +33,19 @@ Rails.application.routes.draw do
 
   namespace :billing do
     root 'dashboard#index'
+
+    # The stored-procedure buttons in the Billing sidebar. They were top-level
+    # /billing_tools routes; the path helper names are unchanged
+    # (backup_staging_billing_tools_path and friends), only the URLs moved
+    # under /billing.
+    resources :tools, only: [] do
+      collection do
+        post :move_to_production
+        post :run_monthly_billing
+        post :backup_staging
+        post :backup_production
+      end
+    end
   end
 
   namespace :admin_tools do
@@ -247,15 +260,6 @@ Rails.application.routes.draw do
     collection do
       get :org_permissions
       patch :update_org_permissions
-    end
-  end
-
-  resources :billing_tools, only: %i[new create] do
-    collection do
-      post :move_to_production
-      post :run_monthly_billing
-      post :backup_staging
-      post :backup_production
     end
   end
 

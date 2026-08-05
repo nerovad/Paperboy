@@ -1,87 +1,54 @@
 @import "base/tokens";
 
-/* Scope everything to the Billing Tools page */
-.billing-tools {
-  /* Sections */
-  .billing-section {
-    padding: 1.25rem 1.5rem;
-    background: $surface-base;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  }
-  .billing-section + .billing-section { margin-top: 2rem; }
+/* Billing tools: the sidebar buttons and the confirm modal they open.
+   These were a standalone /billing_tools page; the page's section/grid
+   styling went with it, and what is left is the sidebar treatment plus the
+   modal, which is rendered from the sidebar but positioned against the
+   viewport. */
 
-  .billing-section h2 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin: 0 0 1rem 0;
-    color: $text-color;
+.billing-sidebar {
+  .billing-tool-section {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .billing-tool-heading {
+    margin: 0 0 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.65);
   }
 
-  /* Grid of action buttons */
-  .billing-button-grid {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
-    gap: 14px !important;
-    margin-top: 1rem;
-  }
-  .billing-button-grid form {
-    display: flex;
-    justify-content: center;
+  /* Each button is wrapped in its own small form, so the form must not add
+     spacing of its own — the .nav-link margins already do that. */
+  form {
+    margin: 0;
   }
 
-  /* Button look (page-limited) */
-  .billing-btn {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    height: 48px;
-    padding: 0 16px !important;
-    border-radius: 6px !important;
-
-    background-color: rgba(0,0,0,0.03) !important;
-    border: 1px solid rgba(0,0,0,0.08) !important;
-
-    font-size: 0.95rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.2px;
-    color: $text-color !important;
-    text-align: center;
-
-    transition: background 0.3s, transform 0.2s, border-color 0.2s, color 0.2s;
-    cursor: pointer;
+  /* A button element wearing the sidebar's .nav-link look. */
+  .billing-tool-btn {
+    width: 100%;
+    border: none;
+    font: inherit;
+    font-size: 0.95rem;
   }
-  .billing-btn:hover { transform: scale(1.05); }
-  .billing-btn:active { transform: scale(1); }
+}
 
-  /* Fill on hover (keeps other .btn variants intact elsewhere) */
-  .billing-btn:hover,
-  .billing-btn.billing:hover,
-  .billing-btn.reports:hover,
-  .billing-btn.email:hover,
-  .billing-btn.prod-back:hover {
-    background-color: $primary-color !important;
-    border-color: $primary-color !important;
-    color: $surface-base !important;
-  }
+/* Confirm modal. Fixed to the viewport, so it is unaffected by sitting
+   inside the scrolling sidebar. */
+.billing-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, 0.45);
+  align-items: center;
+  justify-content: center;
 
-  @media (max-width: 600px) {
-    .billing-btn { width: 100%; }
-  }
-
-  /* Confirm modal */
-  .billing-modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    background: rgba(0,0,0,0.45);
-    align-items: center;
-    justify-content: center;
-  }
-  .billing-modal.open { display: flex; }
+  &.open { display: flex; }
 
   .billing-modal-content {
     width: 92vw;
@@ -90,7 +57,7 @@
     color: $neutral-900;
     border-radius: 14px;
     padding: 18px 18px 20px;
-    box-shadow: 0 10px 36px rgba(0,0,0,.25);
+    box-shadow: 0 10px 36px rgba(0, 0, 0, .25);
     border: 1px solid $neutral-border-soft;
     position: relative;
   }
@@ -102,7 +69,7 @@
     margin-top: 14px;
   }
 
-  .billing-modal .close {
+  .close {
     position: absolute;
     right: .6rem;
     top: .5rem;
@@ -111,48 +78,47 @@
     cursor: pointer;
   }
 
-  /* Make the columns respect the container width */
-.date-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)); /* key change */
-  gap: 12px;
-  margin-top: 8px;
-  min-width: 0; /* let the grid shrink in the modal */
-}
+  /* Two date columns that respect the modal width instead of forcing
+     overflow: the intrinsic width of a date input is stubborn, hence the
+     min-width: 0 at every level and the border-box sizing. */
+  .date-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+    min-width: 0;
+  }
 
-/* Let children shrink instead of forcing overflow */
-.date-group {
-  min-width: 0; /* important with intrinsic-width inputs */
-}
+  .date-group {
+    min-width: 0;
+  }
 
-/* Keep input from expanding past the column */
-.date-group input[type="date"] {
-  box-sizing: border-box; /* ensure padding/border are included in width */
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid $neutral-border-light;
-  border-radius: 8px;
-  font-size: .95rem;
-  min-width: 0; /* override browser min-content stubbornness */
-}
+  .date-group label {
+    display: block;
+    font-size: .9rem;
+    color: $neutral-700;
+    margin-bottom: 4px;
+  }
 
-/* Optional: improve label-layout reliability (not required, but tidy) */
-.date-group label {
-  display: block;
-  font-size: .9rem;
-  color: $neutral-700;
-  margin-bottom: 4px;
-}
+  .date-group input[type="date"] {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid $neutral-border-light;
+    border-radius: 8px;
+    font-size: .95rem;
+    min-width: 0;
+  }
 
-/* If the modal is fairly narrow on desktop, switch to 1 column sooner */
-@media (max-width: 800px) {
-  .date-row { grid-template-columns: 1fr; }
-}
+  @media (max-width: 800px) {
+    .date-row { grid-template-columns: 1fr; }
+  }
 
-  /* Keep the "Cancel" button neutral only inside this modal */
-  .billing-modal .btn.deny {
+  /* Keep "Cancel" neutral only inside this modal. */
+  .btn.deny {
     background: $neutral-button-bg;
     color: $neutral-950;
   }
-  .billing-modal .btn.deny:hover { filter: brightness(.97); }
+
+  .btn.deny:hover { filter: brightness(.97); }
 }

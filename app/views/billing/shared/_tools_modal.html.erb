@@ -1,0 +1,29 @@
+<%# app/views/billing/shared/_tools_modal.html.erb
+    The one confirm modal shared by every Billing sidebar tool button. The
+    date row is shown only for the tools that declare dates: true, and the
+    dates themselves default to the current month, filled in by the Stimulus
+    controller rather than the server — the sidebar renders on every Billing
+    page, so there is no action to set them. %>
+<div class="billing-modal" data-billing-modal-target="backdrop">
+  <div class="billing-modal-content" role="dialog" aria-modal="true" aria-labelledby="billing-modal-title">
+    <span class="close" data-action="click->billing-modal#cancel" aria-label="Close">&times;</span>
+    <h3 id="billing-modal-title" data-billing-modal-target="title">Confirm</h3>
+    <p data-billing-modal-target="message">Are you sure you want to proceed?</p>
+
+    <div class="date-row" data-billing-modal-target="dateRow" style="display:none;">
+      <div class="date-group">
+        <label for="bm-s">Start Date</label>
+        <input id="bm-s" type="date" data-billing-modal-target="start">
+      </div>
+      <div class="date-group">
+        <label for="bm-e">End Date</label>
+        <input id="bm-e" type="date" data-billing-modal-target="end">
+      </div>
+    </div>
+
+    <div class="billing-modal-actions">
+      <button type="button" class="btn deny" data-action="click->billing-modal#cancel">Cancel</button>
+      <button type="button" class="btn approve" data-action="click->billing-modal#proceed">Proceed</button>
+    </div>
+  </div>
+</div>
