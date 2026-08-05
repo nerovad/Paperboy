@@ -1,0 +1,22 @@
+@echo off
+call "%~dp0_prepare_aim_environment.bat" || (
+    pause
+    exit /b 1
+)
+title AI - 00 INGESTION WATCHER
+color 0b
+
+echo ======================================================================
+echo             AI INVOICE PIPELINE: INGESTION WATCHER
+echo ======================================================================
+echo Starting 00_Ingestion_Watcher.py...
+echo.
+python 00_Ingestion_Watcher.py
+
+if %errorlevel% neq 0 (
+    echo.
+    echo ======================================================================
+    echo CRITICAL ERROR: The Python script crashed or failed to start.
+    echo ======================================================================
+    pause
+)

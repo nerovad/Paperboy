@@ -1,0 +1,7 @@
+{
+
+    "SAMPLE VENDOR": [
+        "You can add multiple rules for the same vendor by separating them with commas.",
+        "Always double check that the last rule does NOT have a comma after it."
+    ]
+}

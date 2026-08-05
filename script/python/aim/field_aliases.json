@@ -1,0 +1,21 @@
+{
+    "invoice_total": [
+        "Order Total",
+        "Amount Due",
+        "Please Pay",
+        "Total",
+        "Grand Total",
+		"Balance Due"
+        
+    ],
+    "customer_number": [
+        "Account Number",
+        "Acct#",
+        "Customer ID"
+    ],
+    "invoice_number": [
+        "Reference Number",
+        "Ticket Number",
+        "Inv#"
+    ]
+}

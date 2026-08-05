@@ -1,0 +1,14 @@
+{
+  "FileName": "FileName",
+  "Submitter": "Submitter",
+  "BU": "BU",
+  "VendorName": "VendorName",
+  "InvoiceNumber": "InvoiceNumber",
+  "InvoiceTotal": "InvoiceTotal",
+  "InvoiceDate": "InvoiceDate",
+  "ExtractedMetadata": "ExtractedMetadata",
+  "Status": "Status",
+  "ErrorMessage": "ErrorMessage",
+  "ProcessedTimestamp": "ProcessedTimestamp",
+  "InvoiceConcatID": "InvoiceConcatID"
+}
