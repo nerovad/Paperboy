@@ -63,14 +63,20 @@ module ApplicationHelper
 
   # Records tables (see Registry) the current user may open, in declared order.
   # Access mirrors the standalone P-Card gate: system admins see all; everyone
-  # else needs the table's group grant or its ACL dropdown key.
+  # else needs the table's group grant, its ACL dropdown key, or a per-table
+  # grant from the ACL "Records Access" section.
   def records_portal_tables
     RegistryTable.all.select { |table| can_access_record_table?(table) }
   end
 
+  # The record_view grant is keyed by slug and so covers every Records table,
+  # including the form-backed ones that declare neither a group permission nor
+  # a dropdown key — without it those tables are reachable by system admins
+  # alone, no matter what an admin ticks in the ACL.
   def can_access_record_table?(table)
     return true if system_admin?
     return true if table.permission.present? && current_user_group_names.include?(table.permission)
+    return true if current_user_record_view_permission_keys.include?(table.slug)
 
     table.dropdown_key.present? && current_user_dropdown_permissions.include?(table.dropdown_key)
   end

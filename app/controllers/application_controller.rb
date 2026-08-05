@@ -7,7 +7,8 @@ class ApplicationController < ActionController::Base
   helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain,
                 :auth_console_admin?, :auth_console_user?, :pcard_admin?, :current_user_dropdown_permissions,
                 :current_user_form_permission_keys, :current_user_application_permission_keys,
-                :current_user_record_edit_permission_keys, :safety_auth_console_user?,
+                :current_user_record_view_permission_keys, :current_user_record_edit_permission_keys,
+                :safety_auth_console_user?,
                 :available_authorization_consoles, :authorization_console_accessible?
 
   def current_user
@@ -153,6 +154,16 @@ class ApplicationController < ActionController::Base
     return @current_user_application_permission_keys if defined?(@current_user_application_permission_keys)
 
     @current_user_application_permission_keys = load_user_permissions('application')
+  end
+
+  # Records tables this user may open, keyed by registry slug. This is the only
+  # grant surface for form-backed tables, which declare neither a group
+  # permission nor a dropdown key; model-backed tables can also be reached
+  # through those older routes.
+  def current_user_record_view_permission_keys
+    return @current_user_record_view_permission_keys if defined?(@current_user_record_view_permission_keys)
+
+    @current_user_record_view_permission_keys = load_user_permissions('record_view')
   end
 
   # Records tables this user may edit inline, keyed by registry slug. Viewing a

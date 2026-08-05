@@ -40,6 +40,25 @@ class RecordsTableControllerTest < ActionController::TestCase
     assert_response :forbidden
   end
 
+  # The access grant is the only route to a form-backed table, which declares
+  # neither a group permission nor a dropdown key. Without it an edit grant on
+  # such a table is unreachable no matter what an admin ticks in the ACL.
+  test 'the access grant opens a table the user has no other route to' do
+    sign_in(groups: [], record_view: %w[pcard], record_edit: %w[pcard])
+
+    patch :bulk_update, params: { slug: 'pcard' }
+
+    assert_response :success
+  end
+
+  test 'the access grant alone still does not grant editing' do
+    sign_in(groups: [], record_view: %w[pcard], record_edit: [])
+
+    patch :bulk_update, params: { slug: 'pcard' }
+
+    assert_response :forbidden
+  end
+
   test 'an unknown table is not found' do
     sign_in(groups: %w[system_admins], record_edit: [])
 
@@ -50,22 +69,24 @@ class RecordsTableControllerTest < ActionController::TestCase
 
   private
 
-  def sign_in(groups:, record_edit:)
+  def sign_in(groups:, record_edit:, record_view: [])
     session[:user] = {
       'employee_id' => 1,
       'email' => 'employee@example.com',
       'first_name' => 'Test',
       'last_name' => 'User'
     }
-    stub_permissions(groups, record_edit)
+    stub_permissions(groups, record_view, record_edit)
   end
 
-  # Both readers are helper_methods, so stubbing them on the controller also
-  # covers the ApplicationHelper calls made through `helpers`.
-  def stub_permissions(groups, record_edit)
+  # All three readers are helper_methods, so stubbing them on the controller
+  # also covers the ApplicationHelper calls made through `helpers`.
+  def stub_permissions(groups, record_view, record_edit)
     group_names = groups.to_set
+    view_keys = record_view.to_set
     edit_keys = record_edit.to_set
     @controller.define_singleton_method(:current_user_group_names) { group_names }
+    @controller.define_singleton_method(:current_user_record_view_permission_keys) { view_keys }
     @controller.define_singleton_method(:current_user_record_edit_permission_keys) { edit_keys }
   end
 end

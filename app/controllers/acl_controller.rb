@@ -210,13 +210,14 @@ class AclController < ApplicationController
   def permissions
     @dropdown_items = DROPDOWN_ITEMS
     @application_items = APPLICATION_ITEMS
-    @record_edit_items = record_edit_items
+    @record_table_items = record_table_items
     @all_forms = build_all_forms_list
     @current_permissions = @group.group_permissions.pluck(:permission_type, :permission_key)
     by_type = @current_permissions.group_by(&:first)
     @dropdown_keys = Array(by_type['dropdown']).to_set(&:last)
     @form_keys = Array(by_type['form']).to_set(&:last)
     @application_keys = Array(by_type['application']).to_set(&:last)
+    @record_view_keys = Array(by_type['record_view']).to_set(&:last)
     @record_edit_keys = Array(by_type['record_edit']).to_set(&:last)
 
     # If no permissions exist yet for this group, pre-check default public items
@@ -229,6 +230,7 @@ class AclController < ApplicationController
     dropdown_keys = Array(params[:dropdown_permissions])
     form_keys = Array(params[:form_permissions])
     application_keys = Array(params[:application_permissions])
+    record_view_keys = Array(params[:record_view_permissions])
     record_edit_keys = Array(params[:record_edit_permissions])
 
     ActiveRecord::Base.transaction do
@@ -244,6 +246,10 @@ class AclController < ApplicationController
 
       application_keys.each do |key|
         @group.group_permissions.create!(permission_type: 'application', permission_key: key)
+      end
+
+      record_view_keys.each do |key|
+        @group.group_permissions.create!(permission_type: 'record_view', permission_key: key)
       end
 
       record_edit_keys.each do |key|
@@ -378,10 +384,11 @@ class AclController < ApplicationController
   # Build a single sorted list of all forms (legacy + templates, deduplicated).
   # Each entry is { key: String, label: String } where key is either a legacy
   # string key or a template ID string.
-  # Records tables offered as inline-edit grants, keyed by registry slug. Built
-  # from the live catalog rather than a constant so a table added in code — or a
-  # form an admin newly flags as a grid — shows up without touching this file.
-  def record_edit_items
+  # Records tables offered as access and inline-edit grants, keyed by registry
+  # slug. Built from the live catalog rather than a constant so a table added in
+  # code — or a form an admin newly flags as a grid — shows up without touching
+  # this file. Both ACL sections list the same tables.
+  def record_table_items
     RegistryTable.all.map { |table| { key: table.slug, label: table.label } }
   end
 

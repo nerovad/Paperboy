@@ -62,7 +62,9 @@ class FormBackedTable
   def label = template.name
   def page_key = "records:#{slug}"
 
-  # Admin-only for now (no group/dropdown grant); served by the generic grid.
+  # Nothing is declared in code, so there is no group name or dropdown key to
+  # grant against: access comes from the ACL "Records Access" section, which is
+  # keyed by slug. Served by the generic grid.
   def permission = nil
   def dropdown_key = nil
   def route = nil
