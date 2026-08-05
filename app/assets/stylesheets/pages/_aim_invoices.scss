@@ -258,6 +258,64 @@
   width: 100%;
 }
 
+.aim-pdf-canvas-viewer {
+  align-items: center;
+  background: $surface-panel;
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px;
+  position: relative;
+}
+
+.aim-pdf-canvas-viewer.is-active {
+  display: flex;
+}
+
+.aim-pdf-frame.is-hidden {
+  display: none;
+}
+
+.aim-ocr-status {
+  color: $text-muted;
+  font-size: 0.88rem;
+}
+
+.aim-pdf-page {
+  background: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+  position: relative;
+  user-select: none;
+}
+
+.aim-pdf-page canvas {
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.aim-pdf-canvas-viewer.ocr-mode .aim-pdf-page {
+  cursor: crosshair;
+}
+
+.aim-ocr-selection {
+  background: rgba(0, 51, 161, 0.14);
+  border: 2px dashed $brand-navy;
+  pointer-events: none;
+  position: absolute;
+  z-index: 10;
+}
+
+.btn-ocr.active-ocr {
+  background: $green-approved-text;
+  border-color: $green-approved-text;
+  color: $surface-base;
+}
+
 .aim-fields {
   display: grid;
   gap: 14px;
@@ -267,6 +325,13 @@
   align-items: flex-end;
   display: flex;
   gap: 8px;
+}
+
+.aim-field-row .btn.compact {
+  flex: 0 0 auto;
+  font-size: 0.76rem;
+  height: 42px;
+  padding: 0 12px;
 }
 
 .aim-field {
@@ -283,10 +348,12 @@
 }
 
 .aim-field input,
+.aim-field select,
 .aim-field textarea {
   background: $surface-base;
   border: 1px solid $neutral-border-subtle;
   border-radius: 6px;
+  box-sizing: border-box;
   color: $text-strong;
   font: inherit;
   padding: 10px;
@@ -369,6 +436,37 @@
   border: 1px solid $amber-soft-border;
   border-radius: 6px;
   padding: 14px;
+}
+
+.aim-vendor-review-fields {
+  display: grid;
+  gap: 14px;
+}
+
+.aim-vendor-review .choices {
+  margin-bottom: 0;
+}
+
+.aim-vendor-review .choices__inner {
+  background: $surface-base;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 6px;
+  color: $text-strong;
+  min-height: 42px;
+  padding: 5px 10px;
+}
+
+.aim-vendor-review .choices__input,
+.aim-vendor-review .choices__list--dropdown {
+  background: $surface-base;
+}
+
+.aim-vendor-review .choices__list--single {
+  padding: 4px 16px 4px 0;
+}
+
+.aim-vendor-review .choices__list--dropdown .choices__item {
+  font-size: 0.88rem;
 }
 
 .aim-vendor-alias-preview {

@@ -13,10 +13,14 @@
         <h2 class="aim-panel-title">Document Preview</h2>
       </div>
 
-      <div class="aim-pdf-shell">
+      <div class="aim-pdf-shell" data-pdf-url="<%= pdf_aim_invoice_path(@invoice_id, queue: @queue) %>">
         <iframe class="aim-pdf-frame"
                 src="<%= pdf_aim_invoice_path(@invoice_id, queue: @queue) %>"
                 title="Invoice PDF preview"></iframe>
+
+        <div id="aim-ocr-canvas-viewer" class="aim-pdf-canvas-viewer">
+          <div id="loading-indicator" class="aim-ocr-status">Loading OCR pages...</div>
+        </div>
       </div>
     </section>
 
@@ -68,27 +72,57 @@
                                       value: (@metadata[key].is_a?(Hash) || @metadata[key].is_a?(Array) ? @metadata[key].to_json : @metadata[key]) %>
                 <% end %>
               </div>
+
+              <% unless @metadata[key].is_a?(Array) && key == 'Invoices' %>
+                <button type="button"
+                        class="btn secondary compact btn-ocr"
+                        data-ocr-target-name="metadata[<%= key %>]">OCR</button>
+              <% end %>
             </div>
           <% end %>
 
           <% if @queue == 'vendor_review' %>
+            <% selected_vendor_name = @metadata['NormalizedVendor'].presence %>
+            <% official_vendor_options = @official_vendor_names.to_a.compact %>
+            <% if selected_vendor_name.present? && official_vendor_options.exclude?(selected_vendor_name) %>
+              <% official_vendor_options << selected_vendor_name %>
+            <% end %>
+            <% official_vendor_option_tags = [['Select official vendor', '']] %>
+            <% official_vendor_options.each do |vendor_name| %>
+              <% official_vendor_option_tags << [vendor_name, vendor_name] %>
+            <% end %>
+
             <section class="aim-vendor-review">
-              <div class="aim-field">
-                <%= form.label 'metadata[NormalizedVendor]', 'Match to Official Vendor Name' %>
-                <%= form.text_field 'metadata[NormalizedVendor]',
-                                    value: @metadata['NormalizedVendor'],
-                                    list: 'aim-official-vendor-names',
-                                    autocomplete: 'off',
-                                    placeholder: 'Type or choose an official vendor' %>
-                <datalist id="aim-official-vendor-names">
-                  <% @official_vendor_names.each do |vendor_name| %>
-                    <option value="<%= vendor_name %>"></option>
-                  <% end %>
-                </datalist>
+              <div class="aim-vendor-review-fields">
+                <div class="aim-field">
+                  <%= form.label 'metadata[NormalizedVendor]', 'Match to Official Vendor Name' %>
+                  <%= select_tag(
+                    'metadata[NormalizedVendor]',
+                    options_for_select(official_vendor_option_tags, selected_vendor_name),
+                    id: 'aim-official-vendor-select',
+                    class: 'aim-vendor-select',
+                    data: { aim_vendor_select: true }
+                  ) %>
+                </div>
+
+                <div class="aim-field-row">
+                  <div class="aim-field">
+                    <%= label_tag 'normalized_vendor_new', 'New Official Vendor Name' %>
+                    <%= text_field_tag 'normalized_vendor_new',
+                                       nil,
+                                       autocomplete: 'off',
+                                       placeholder: 'Type only when adding a new official vendor' %>
+                  </div>
+
+                  <button type="button"
+                          class="btn secondary compact btn-ocr"
+                          data-ocr-target-name="normalized_vendor_new">OCR</button>
+                </div>
+
                 <div class="aim-vendor-alias-preview">
                   <span><%= @metadata['VendorName'].presence || 'Unknown vendor' %></span>
                   <span>maps to</span>
-                  <span>the official vendor entered above</span>
+                  <span>the selected or new official vendor</span>
                 </div>
               </div>
             </section>
@@ -136,3 +170,204 @@
     <% end %>
   </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<script>
+  (function() {
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+
+    function initAimPdfReview() {
+      const shell = document.querySelector(".aim-pdf-shell");
+      if (!shell || shell.dataset.initialized === "true") return;
+      shell.dataset.initialized = "true";
+
+      const pdfUrl = shell.dataset.pdfUrl;
+      const frame = shell.querySelector(".aim-pdf-frame");
+      const canvasViewer = document.getElementById("aim-ocr-canvas-viewer");
+      const loadingIndicator = document.getElementById("loading-indicator");
+      let activeOcrTargetName = null;
+      let activeOcrButton = null;
+      let pdfDocument = null;
+      let isRendered = false;
+
+      function showNativeViewer() {
+        frame.classList.remove("is-hidden");
+        canvasViewer.classList.remove("is-active", "ocr-mode");
+      }
+
+      function showOcrViewer() {
+        frame.classList.add("is-hidden");
+        canvasViewer.classList.add("is-active");
+      }
+
+      async function ensurePdfRendered() {
+        showOcrViewer();
+        if (isRendered) return;
+
+        pdfDocument = await pdfjsLib.getDocument(pdfUrl).promise;
+        if (loadingIndicator) loadingIndicator.remove();
+        canvasViewer.querySelectorAll(".aim-pdf-page").forEach((element) => element.remove());
+
+        for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
+          const page = await pdfDocument.getPage(pageNumber);
+          const pageElement = document.createElement("div");
+          pageElement.className = "aim-pdf-page";
+
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          const viewport = page.getViewport({ scale: 1.25 });
+
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          pageElement.appendChild(canvas);
+          canvasViewer.appendChild(pageElement);
+
+          await page.render({ canvasContext: context, viewport: viewport }).promise;
+          setupOcrDrawing(pageElement, canvas);
+        }
+
+        isRendered = true;
+      }
+
+      function deactivateOcrMode() {
+        if (activeOcrButton) {
+          activeOcrButton.classList.remove("active-ocr");
+          activeOcrButton.innerText = "OCR";
+        }
+
+        activeOcrTargetName = null;
+        activeOcrButton = null;
+        canvasViewer.classList.remove("ocr-mode");
+        showNativeViewer();
+      }
+
+      async function activateOcrMode(targetName, button) {
+        if (activeOcrButton) {
+          activeOcrButton.classList.remove("active-ocr");
+          activeOcrButton.innerText = "OCR";
+        }
+
+        activeOcrTargetName = targetName;
+        activeOcrButton = button;
+        button.classList.add("active-ocr");
+        button.innerText = "Cancel";
+
+        await ensurePdfRendered();
+        canvasViewer.classList.add("ocr-mode");
+      }
+
+      function setupOcrDrawing(pageElement, canvas) {
+        let isDrawing = false;
+        let startX = 0;
+        let startY = 0;
+        let selectionBox = null;
+
+        pageElement.addEventListener("mousedown", (event) => {
+          if (!activeOcrTargetName) return;
+
+          isDrawing = true;
+          const rect = pageElement.getBoundingClientRect();
+          startX = event.clientX - rect.left;
+          startY = event.clientY - rect.top;
+
+          selectionBox = document.createElement("div");
+          selectionBox.className = "aim-ocr-selection";
+          selectionBox.style.left = startX + "px";
+          selectionBox.style.top = startY + "px";
+          pageElement.appendChild(selectionBox);
+        });
+
+        pageElement.addEventListener("mousemove", (event) => {
+          if (!isDrawing || !selectionBox) return;
+
+          const rect = pageElement.getBoundingClientRect();
+          const currentX = event.clientX - rect.left;
+          const currentY = event.clientY - rect.top;
+          const left = Math.min(startX, currentX);
+          const top = Math.min(startY, currentY);
+          const width = Math.abs(startX - currentX);
+          const height = Math.abs(startY - currentY);
+
+          selectionBox.style.left = left + "px";
+          selectionBox.style.top = top + "px";
+          selectionBox.style.width = width + "px";
+          selectionBox.style.height = height + "px";
+        });
+
+        pageElement.addEventListener("mouseup", (event) => {
+          if (!isDrawing) return;
+          isDrawing = false;
+
+          const rect = pageElement.getBoundingClientRect();
+          const endX = event.clientX - rect.left;
+          const endY = event.clientY - rect.top;
+          const x = Math.min(startX, endX);
+          const y = Math.min(startY, endY);
+          const width = Math.abs(startX - endX);
+          const height = Math.abs(startY - endY);
+
+          if (selectionBox) selectionBox.remove();
+          selectionBox = null;
+
+          if (width > 5 && height > 5) {
+            performOcrOnArea(canvas, pageElement, x, y, width, height);
+          }
+        });
+      }
+
+      async function performOcrOnArea(canvas, pageElement, x, y, width, height) {
+        const targetName = activeOcrTargetName;
+        const inputElement = document.getElementsByName(targetName)[0];
+
+        if (!inputElement) {
+          deactivateOcrMode();
+          return;
+        }
+
+        const scaleX = canvas.width / pageElement.clientWidth;
+        const scaleY = canvas.height / pageElement.clientHeight;
+        const tempCanvas = document.createElement("canvas");
+
+        tempCanvas.width = width * scaleX;
+        tempCanvas.height = height * scaleY;
+        tempCanvas
+          .getContext("2d")
+          .drawImage(canvas, x * scaleX, y * scaleY, tempCanvas.width, tempCanvas.height, 0, 0, tempCanvas.width, tempCanvas.height);
+
+        try {
+          const result = await Tesseract.recognize(tempCanvas.toDataURL("image/png"), "eng");
+          inputElement.value = result.data.text.trim();
+          inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+          inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+        } catch (error) {
+          console.error("Tesseract OCR failed:", error);
+        }
+
+        deactivateOcrMode();
+      }
+
+      document.querySelectorAll(".btn-ocr").forEach((button) => {
+        button.addEventListener("click", async (event) => {
+          event.preventDefault();
+          const targetName = button.getAttribute("data-ocr-target-name");
+
+          if (activeOcrTargetName === targetName) {
+            deactivateOcrMode();
+          } else {
+            await activateOcrMode(targetName, button);
+          }
+        });
+      });
+    }
+
+    document.addEventListener("turbo:load", initAimPdfReview);
+    if (document.readyState === "interactive" || document.readyState === "complete") {
+      initAimPdfReview();
+    }
+  })();
+</script>

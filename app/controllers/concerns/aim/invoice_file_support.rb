@@ -47,7 +47,9 @@ module Aim
     def send_to_alias_learning
       existing_learn_data = read_vendor_learn_data(@folder_path)
       extracted_name = metadata_param_value('VendorName', 'Vendor Name') || existing_learn_data['extracted_name']
-      normalized_name = metadata_param_value('NormalizedVendor') || existing_learn_data['suggested_normalized_name']
+      normalized_name = params[:normalized_vendor_new].presence ||
+                        metadata_param_value('NormalizedVendor') ||
+                        existing_learn_data['suggested_normalized_name']
 
       Aim::VendorAliasService.learn!(
         extracted_name: extracted_name,
@@ -64,9 +66,9 @@ module Aim
       move_invoice_to(Aim::InvoiceDirectoryService.instance.ready_to_learn_dir, 'Vendor Alias sent to Learner Queue.')
     rescue ArgumentError => e
       redirect_to aim_invoice_path(@invoice_id, queue: @queue), alert: e.message
-    rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::StatementInvalid => e
+    rescue Aim::VendorAliasService::AliasStoreError => e
       Rails.logger.error "Failed to save AIM vendor alias: #{e.message}"
-      redirect_to aim_invoice_path(@invoice_id, queue: @queue), alert: 'Vendor alias could not be saved to SQL.'
+      redirect_to aim_invoice_path(@invoice_id, queue: @queue), alert: 'Vendor alias could not be saved to the alias file.'
     end
 
     def move_invoice_to(destination_dir, notice)

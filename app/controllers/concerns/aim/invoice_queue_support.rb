@@ -99,7 +99,7 @@ module Aim
 
     def official_vendor_names
       Aim::VendorAliasService.official_names
-    rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::StatementInvalid => e
+    rescue Aim::VendorAliasService::AliasStoreError => e
       Rails.logger.warn "Failed to load AIM vendor aliases: #{e.message}"
       []
     end

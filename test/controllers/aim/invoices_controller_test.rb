@@ -6,12 +6,7 @@ require 'tmpdir'
 module Aim
   class InvoicesControllerTest < ActionController::TestCase
     tests Aim::InvoicesController
-    AIM_ENV = %w[
-      AIM_WINDOWS_QUEUE_BASE_PATH
-      AIM_LINUX_QUEUE_BASE_PATH
-      AIM_VENDOR_REVIEW_DIR
-      AIM_READY_TO_LEARN_DIR
-    ].freeze
+    AIM_ENV = %w[AIM_WINDOWS_QUEUE_BASE_PATH AIM_LINUX_QUEUE_BASE_PATH AIM_VENDOR_REVIEW_DIR AIM_READY_TO_LEARN_DIR].freeze
 
     setup do
       @tmpdir = Dir.mktmpdir
@@ -25,12 +20,7 @@ module Aim
       FileUtils.mkdir_p(vendor_review_dir)
       FileUtils.mkdir_p(ready_to_learn_dir)
 
-      session[:user] = {
-        'employee_id' => 1,
-        'email' => 'aim.staff@example.com',
-        'first_name' => 'AIM',
-        'last_name' => 'Staff'
-      }
+      session[:user] = { 'email' => 'aim.staff@example.com' }
       @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
     end
 
@@ -41,7 +31,7 @@ module Aim
       FileUtils.remove_entry(@tmpdir) if @tmpdir && Dir.exist?(@tmpdir)
     end
 
-    test 'vendor review renders official vendor choices from SQL' do
+    test 'vendor review renders official vendor choices and OCR controls' do
       create_vendor_review_invoice(
         'INV-1',
         metadata: { 'VendorName' => 'AIRGAS USA LLC' },
@@ -53,12 +43,15 @@ module Aim
       end
 
       assert_response :success
-      assert_select 'input[name=?][list=?]', 'metadata[NormalizedVendor]', 'aim-official-vendor-names'
+      assert_select 'select[name=?][data-aim-vendor-select=?]', 'metadata[NormalizedVendor]', 'true'
+      assert_select 'input[name=?]', 'normalized_vendor_new'
+      assert_select 'button.btn-ocr[data-ocr-target-name=?]', 'metadata[VendorName]'
+      assert_select 'button.btn-ocr[data-ocr-target-name=?]', 'normalized_vendor_new'
       assert_select 'option[value=?]', 'AIRGAS USA, LLC'
       assert_includes response.body, 'AIRGAS USA LLC'
     end
 
-    test 'learn alias writes to SQL and routes to ready to learn' do
+    test 'learn alias writes alias and routes to ready to learn' do
       create_vendor_review_invoice('INV-2', metadata: { 'VendorName' => 'AIR GAS' })
 
       learned_aliases = []
@@ -89,6 +82,27 @@ module Aim
       learn_data = JSON.parse(File.read(File.join(moved_folder, 'INV-2_LEARN.json')))
       assert_equal 'AIR GAS', learn_data['extracted_name']
       assert_equal 'AIRGAS USA, LLC', learn_data['suggested_normalized_name']
+    end
+
+    test 'learn alias prefers a new official vendor name when entered' do
+      create_vendor_review_invoice('INV-3', metadata: { 'VendorName' => 'TEAM PLAY' })
+
+      learned_aliases = []
+      Aim::VendorAliasService.stub(:learn!, ->(**kwargs) { learned_aliases << kwargs }) do
+        patch :update, params: {
+          id: 'INV-3',
+          queue: 'vendor_review',
+          commit: 'Learn Alias',
+          normalized_vendor_new: 'Team Play Events',
+          metadata: {
+            'VendorName' => 'TEAM PLAY',
+            'NormalizedVendor' => 'Wrong Existing Vendor'
+          }
+        }
+      end
+
+      assert_redirected_to aim_invoices_path(queue: 'vendor_review')
+      assert_equal 'Team Play Events', learned_aliases.first[:normalized_name]
     end
 
     private

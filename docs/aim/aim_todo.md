@@ -24,6 +24,11 @@ unless explicitly needed for migration or production support.
 - [ ] **Manual Lookup Trigger:** Add a staff action to run vendor/BU lookup after
   manual entry and show the lookup result or issue reason before routing onward.
 
+- [ ] **Duplicate Invoice Review Queue:** Check extracted invoices against SQL
+  before final routing using vendor, invoice number, BU, invoice date, and total.
+  Route likely duplicates to a Duplicate Review queue that shows the matching
+  SQL record details and allows staff to send anyway or reject.
+
 - [ ] **Manual Queue Routing Actions:** Add actions to send an invoice from
   Vendor Review, Action Needed, Low Confidence Review, or AI/error states into
   Manual Processing.
@@ -41,6 +46,23 @@ unless explicitly needed for migration or production support.
 - [ ] **Python Worker Migration:** Move active AIM Python workers into Paperboy.
   This is being handled in a separate Codex session; avoid touching those files
   here unless directed.
+
+- [ ] **Spool State Retention Policy:** Add automatic cleanup for old
+  `_SPOOL_STATE/*.spooled.json` and stale failed-spool marker files. The
+  current ingestion watcher uses these files to avoid re-spooling the same
+  source file, but it does not prune successful history automatically.
+
+- [ ] **Spool State Visibility:** Document what `_SPOOL_STATE` means and add an
+  admin-safe way to inspect or clear old spool markers when an invoice needs to
+  be intentionally re-imported.
+
+- [ ] **Error Queue Visibility:** Add `_ERROR_QUEUE` to the Paperboy AIM backend
+  dashboard/list so technical pipeline failures are visible outside the server
+  filesystem.
+
+- [ ] **Reprocess Failure Review:** Surface reprocess failures marked by
+  `.ai_reprocess_error.json` and their `_ERROR_QUEUE/REPROCESS_ERROR_*` tickets,
+  with instructions or actions for retrying, manual processing, or archiving.
 
 - [ ] **Queue Path Confirmation:** Confirm every queue path points to `E:\AIM` /
   `\\gsa-scan02\aim` and is configurable from Paperboy environment variables.
