@@ -28,12 +28,13 @@
     margin: 0;
   }
 
-  /* A button element wearing the sidebar's .nav-link look. */
+  /* A button element wearing the sidebar's .nav-link look. Everything
+     typographic is inherited so these render identically to the sidebar's
+     real .nav-link anchors — no font-size of their own. */
   .billing-tool-btn {
     width: 100%;
     border: none;
     font: inherit;
-    font-size: 0.95rem;
   }
 }
 
