@@ -7,10 +7,8 @@ module Billing
     test 'defines the procedures used by each operation' do
       run = MonthlyReport.new(operation: 'run')
       print = MonthlyReport.new(operation: 'print')
-      email = MonthlyReport.new(operation: 'email')
 
       assert_equal ['GSABSS.dbo.MonthlyBilling'], run.procedure_names
-      assert_equal print.procedure_names, email.procedure_names
       assert_equal 2, print.procedure_names.length
     end
 
@@ -24,7 +22,7 @@ module Billing
 
     test 'rejects a reversed date range' do
       report = MonthlyReport.new(
-        operation: 'email', start_date: '2026-08-31', end_date: '2026-08-01'
+        operation: 'print', start_date: '2026-08-31', end_date: '2026-08-01'
       )
 
       assert_not report.valid?

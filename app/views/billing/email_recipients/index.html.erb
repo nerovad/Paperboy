@@ -1,0 +1,41 @@
+<div class="form-header billing-form-header">
+  <h1>Email Recipient List</h1>
+</div>
+
+<div class="form-wrapper billing-form billing-email-recipients">
+  <div class="billing-period-grid">
+    <table class="submission-table">
+      <thead>
+        <tr>
+          <th>Email Address</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @recipients.each do |recipient| %>
+          <tr>
+            <td><%= recipient.email_address %></td>
+            <td>
+              <%= button_to "Remove", billing_email_recipient_path(recipient), method: :delete,
+                            class: "button reset small",
+                            form: { data: { turbo_confirm: "Remove #{recipient.email_address}?" } } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%= form_with model: Billing::EmailRecipient.new,
+                url: billing_email_recipients_path,
+                class: "billing-inline-form" do |form| %>
+    <div class="form-group">
+      <%= form.label :email_address, "Email Address" %>
+      <%= form.email_field :email_address, required: true, class: "form-control" %>
+    </div>
+    <div class="form-actions">
+      <%= form.submit "Add", class: "button primary" %>
+      <%= link_to "Cancel", billing_root_path, class: "button cancel" %>
+    </div>
+  <% end %>
+</div>

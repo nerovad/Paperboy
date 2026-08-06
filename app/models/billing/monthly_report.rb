@@ -13,11 +13,6 @@ module Billing
         title: 'Print Billing Reports', button: 'Print Billing Reports',
         procedures: %w[GSABSS.dbo.Export_TC60_Billing_Report_Names
                        GSABSS.dbo.Export_TC60_To_Billing_File]
-      },
-      'email' => {
-        title: 'Email Billing Reports', button: 'Email Billing Reports',
-        procedures: %w[GSABSS.dbo.Export_TC60_Billing_Report_Names
-                       GSABSS.dbo.Export_TC60_To_Billing_File]
       }
     }.freeze
 

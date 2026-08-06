@@ -54,7 +54,6 @@ module Billing
       case @report.operation
       when 'run' then run_monthly_billing
       when 'print' then print_billing_reports
-      when 'email' then email_billing_reports
       end
     end
 
@@ -68,23 +67,6 @@ module Billing
       ReportWriter.new(artifacts).call
       redirect_to billing_reports_path,
                   notice: 'Billing reports generated successfully.'
-    end
-
-    def email_billing_reports
-      recipients = ENV.fetch('BILLING_REPORT_RECIPIENTS', '').split(/[;,]/).map(&:strip).compact_blank
-      if recipients.empty?
-        @report.errors.add(:base, 'BILLING_REPORT_RECIPIENTS is not configured')
-        return render_invalid
-      end
-
-      Billing::ReportGenerationJob.perform_later(
-        operation: @report.operation,
-        start_date: @report.start_date,
-        end_date: @report.end_date,
-        recipients: recipients
-      )
-      redirect_to billing_reports_path,
-                  notice: 'Billing report generation and email delivery started.'
     end
   end
 end

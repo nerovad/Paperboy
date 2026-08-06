@@ -4,7 +4,7 @@ module Billing
   class ReportGenerationJob < ApplicationJob
     queue_as :default
 
-    def perform(operation:, start_date:, end_date:, recipients: [])
+    def perform(operation:, start_date:, end_date:)
       report = MonthlyReport.new(
         operation: operation,
         start_date: start_date,
@@ -14,8 +14,6 @@ module Billing
 
       artifacts = ReportGenerator.new(report).call
       ReportWriter.new(artifacts).call
-      email(artifacts, recipients) if operation == 'email'
-
       Rails.logger.info(
         "Billing #{operation} reports completed for #{start_date} through #{end_date}"
       )
@@ -25,16 +23,6 @@ module Billing
         "#{e.class}: #{e.message}"
       )
       raise
-    end
-
-    private
-
-    def email(artifacts, recipients)
-      artifacts.each do |artifact|
-        recipients.each do |recipient|
-          BillingReportMailer.monthly_report(recipient, artifact).deliver_now
-        end
-      end
     end
   end
 end
