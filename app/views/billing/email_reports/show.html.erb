@@ -85,7 +85,8 @@
   <% end %>
 
   <% if @preview_output.present? %>
-    <section class="billing-refresh-result" aria-labelledby="billing-email-preview-title">
+    <section class="billing-refresh-result billing-email-preview"
+             aria-labelledby="billing-email-preview-title">
       <h2 id="billing-email-preview-title">Email Preview</h2>
       <%= render "shared/captured_output", output: @preview_output %>
     </section>
