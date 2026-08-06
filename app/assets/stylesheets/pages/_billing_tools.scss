@@ -35,6 +35,8 @@
     align-items: center;
     gap: .75rem;
     flex-wrap: wrap;
+
+    form { margin: 0; }
   }
 
   /* Buttons use the shared .btn system; see components/buttons. */

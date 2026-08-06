@@ -5,7 +5,8 @@
 <div class="form-wrapper billing-form billing-email-subjects">
   <p>Available placeholders: <code>%{fiscal_year}</code>, <code>%{apmon}</code>, and <code>%{type}</code>.</p>
 
-  <%= form_with url: billing_email_subjects_path, method: :patch, data: { turbo: false } do %>
+  <%= form_with url: billing_email_subjects_path, method: :patch,
+                id: "billing-email-subject-form", data: { turbo: false } do %>
     <div class="billing-period-grid">
       <table class="submission-table">
         <colgroup>
@@ -36,10 +37,13 @@
       </table>
     </div>
 
-    <div class="form-actions">
-      <%= submit_tag "Save", class: "button primary" %>
-      <%= button_tag "Reset", type: :reset, class: "button reset" %>
-      <%= link_to "Cancel", billing_root_path, class: "button cancel" %>
-    </div>
   <% end %>
+
+  <div class="form-actions">
+    <%= button_tag "Save", type: :submit, form: "billing-email-subject-form",
+                           class: "btn approve" %>
+    <%= button_tag "Reset", type: :reset, form: "billing-email-subject-form",
+                            class: "btn deny" %>
+    <%= button_to "Cancel", billing_root_path, method: :get, class: "btn ghost" %>
+  </div>
 </div>
