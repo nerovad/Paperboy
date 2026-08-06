@@ -170,13 +170,14 @@
     </div>
 
     <%# Submit Button %>
-    <%= f.submit nil, 
+    <%= f.submit nil,
       class: "btn approve",
-      data: { 
+      data: {
         disable_with: "Saving...",
-        scheduled_report_form_target: "submitButton"
-      },
-      onclick: "return confirm('Continue?');"
+        scheduled_report_form_target: "submitButton",
+        confirm_title: "Schedule report",
+        turbo_confirm: "Generate this report with the settings above?"
+      }
     %>
 
   <% end %>

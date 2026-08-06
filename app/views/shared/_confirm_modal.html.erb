@@ -1,18 +1,18 @@
 <div id="confirm-modal"
-     class="deny-modal-backdrop"
+     class="pb-modal-backdrop"
      data-confirm-modal-target="backdrop"
      style="display:none;">
-  <div class="deny-modal" data-confirm-modal-target="modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
-    <div class="deny-modal__header">
+  <div class="pb-modal" data-confirm-modal-target="modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    <div class="pb-modal__header">
       <h3 id="confirm-modal-title" data-confirm-modal-target="title">Confirm</h3>
-      <button type="button" class="deny-modal__close" data-action="confirm-modal#close" aria-label="Close">✕</button>
+      <button type="button" class="pb-modal__close" data-action="confirm-modal#close" aria-label="Close">✕</button>
     </div>
-    <div class="deny-modal__body">
-      <p data-confirm-modal-target="message" style="margin-bottom: 24px; font-size: 1rem; color: #333;"></p>
-      
+    <div class="pb-modal__body">
+      <p class="pb-modal__message" data-confirm-modal-target="message"></p>
+
       <%= form_with url: "#", method: :delete, local: true,
                     html: { "data-confirm-modal-target": "form" } do %>
-        <div class="deny-modal__actions">
+        <div class="pb-modal__actions">
           <button type="button" class="btn" data-action="confirm-modal#close">Cancel</button>
           <button type="submit" class="btn deny">Remove</button>
         </div>

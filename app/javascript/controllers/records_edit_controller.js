@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
+import { pbAlert } from "pb_modal";
 
 // Inline editing for the Records grid with an explicit save step. The grid opens
 // read-only; "Edit" puts it into edit mode. Editing a cell then STAGES the change
@@ -178,10 +179,13 @@ export default class extends Controller {
         this.refreshBar();
         this.closeModal();
       } else {
-        alert((data.errors || ["Could not save your changes."]).join("\n"));
+        pbAlert({
+          title: "Changes not saved",
+          message: (data.errors || ["Could not save your changes."]).join("\n\n"),
+        });
       }
     } catch (e) {
-      alert("Could not save your changes.");
+      pbAlert({ title: "Changes not saved", message: "Could not save your changes." });
     }
   }
 

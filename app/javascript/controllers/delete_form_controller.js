@@ -1,14 +1,19 @@
 import { Controller } from "@hotwired/stimulus"
+import { pbConfirm } from "pb_modal"
 
 export default class extends Controller {
   static targets = ["button"]
 
-  confirm(event) {
+  async confirm(event) {
     event.preventDefault()
 
-    if (!window.confirm("Are you sure? This will delete the form template and all generated files.")) {
-      return
-    }
+    const proceed = await pbConfirm({
+      title: "Delete form template",
+      message: "This will delete the form template and all generated files. This cannot be undone.",
+      confirmLabel: "Delete",
+      confirmVariant: "deny"
+    })
+    if (!proceed) return
 
     // Show loading state on the button
     this.buttonTarget.disabled = true

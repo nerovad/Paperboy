@@ -230,15 +230,15 @@
 
   <!-- Approve Modal for Probation Transfers -->
   <div id="approve-modal-backdrop"
-       class="deny-modal-backdrop"
+       class="pb-modal-backdrop"
        data-approve-modal-target="backdrop"
        style="display:none;">
-    <div class="deny-modal" role="dialog" aria-modal="true" data-approve-modal-target="modal">
-      <div class="deny-modal__header">
+    <div class="pb-modal" role="dialog" aria-modal="true" data-approve-modal-target="modal">
+      <div class="pb-modal__header">
         <h3 id="approve-modal-title" data-approve-modal-target="title">Approve</h3>
-        <button type="button" class="deny-modal__close" data-action="approve-modal#close" aria-label="Close">✕</button>
+        <button type="button" class="pb-modal__close" data-action="approve-modal#close" aria-label="Close">✕</button>
       </div>
-      <div class="deny-modal__body">
+      <div class="pb-modal__body">
         <form data-approve-modal-target="form" method="post" action="#">
           <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
           <%= hidden_field_tag :_method, "patch" %>
@@ -251,7 +251,7 @@
                     data-approve-modal-target="select">
             </select>
           </div>
-          <div class="deny-modal__actions">
+          <div class="pb-modal__actions">
             <button type="button" class="btn" data-action="approve-modal#close">Cancel</button>
             <button type="submit" class="btn approve">Approve</button>
           </div>

@@ -1,0 +1,315 @@
+@import "base/tokens";
+
+/* ---------------------------------------------------------------------------
+   Modal system — single source of truth.
+
+   Every dialog in the app is built from these classes:
+
+     <div class="pb-modal-backdrop" hidden>
+       <div class="pb-modal" role="dialog" aria-modal="true">
+         <div class="pb-modal__header">
+           <h3>Title</h3>
+           <button class="pb-modal__close" aria-label="Close">✕</button>
+         </div>
+         <div class="pb-modal__body">…</div>
+         <div class="pb-modal__actions">
+           <button class="btn">Cancel</button>
+           <button class="btn approve">Confirm</button>
+         </div>
+       </div>
+     </div>
+
+   Do NOT build a new modal shell in a page stylesheet. Add a modifier here
+   instead. See AGENTS.md for the full rule.
+
+   Native browser dialogs (`alert`, `confirm`, `data-turbo-confirm`) must
+   never appear — use pbConfirm/pbAlert from app/javascript/pb_modal.js,
+   which renders this markup.
+   --------------------------------------------------------------------------- */
+
+.pb-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+
+  background: rgba(0, 0, 0, 0.45);
+
+  /* Support both hiding conventions already in use. */
+  &[hidden] { display: none; }
+}
+
+.pb-modal {
+  display: flex;
+  flex-direction: column;
+  width: 520px;
+  max-width: 92vw;
+  max-height: 85vh;
+
+  background: $surface-base;
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+/* Size modifiers — for dialogs that carry more than a message and a form. */
+.pb-modal--lg { width: 600px; }
+.pb-modal--xl {
+  width: 720px;
+  max-width: 94vw;
+  max-height: 90vh;
+}
+
+.pb-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 0 0 auto;
+
+  padding: 12px 20px;
+  border-bottom: 1px solid $border-faint;
+
+  h3 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+}
+
+.pb-modal__close {
+  background: $alpha-clear;
+  border: 0;
+  padding: 0 4px;
+  font-size: 20px;
+  line-height: 1;
+  color: $muted;
+  cursor: pointer;
+
+  &:hover { color: $text-color; }
+}
+
+.pb-modal__body {
+  flex: 1;
+  min-height: 0;
+  padding: 16px 20px;
+  overflow-y: auto;
+  line-height: 1.5;
+}
+
+/* The prompt text in a confirm-style dialog. */
+.pb-modal__message {
+  margin: 0;
+  font-size: 1rem;
+  color: $text-color;
+}
+
+.pb-modal__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid $border-faint;
+}
+
+/* A form modal has to keep its buttons inside the <form>, so the action row
+   lives in the body and scrolls with it. When it is a direct child of the
+   panel it is a real footer instead, pinned below the scrolling body — so it
+   supplies its own horizontal padding. */
+.pb-modal > .pb-modal__actions {
+  margin-top: 0;
+  padding: 14px 20px;
+}
+
+.pb-modal .form-control {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* --- Per-dialog variations ------------------------------------------------ */
+
+/* Status history: a scrollable timeline rather than a form. */
+.pb-modal--status-history {
+  .status-timeline .timeline-header {
+    display: none; /* the modal header already says "Status History" */
+  }
+}
+
+.status-history-modal__loading,
+.status-history-modal__error {
+  text-align: center;
+  color: $muted;
+  padding: 20px 0;
+}
+
+/* Records review: the staged-change list and its permanence warning sit
+   between the body and the actions, each edge-to-edge. */
+.pb-modal__list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 8px 0;
+  list-style: none;
+  overflow-y: auto;
+
+  .rsm-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 12px;
+    padding: 10px 20px;
+    border-bottom: 1px solid $border-color;
+    font-size: 0.9rem;
+  }
+
+  .rsm-row { font-weight: 600; }
+  .rsm-col { color: $text-muted; }
+  .rsm-change { grid-column: 1 / -1; }
+  .rsm-old { color: $text-muted; text-decoration: line-through; }
+  .rsm-new { color: $primary-color; font-weight: 600; }
+}
+
+.pb-modal__warning {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 12px 20px;
+  border-top: 1px solid $border-color;
+  background: $amber-review-bg;
+  color: $text-color;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+/* Billing tools: an optional start/end date row above the actions. */
+.pb-modal__date-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+  min-width: 0;
+
+  label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+    color: $label-color;
+  }
+
+  /* The intrinsic width of a date input is stubborn — min-width: 0 at every
+     level plus border-box sizing keeps it inside the column. */
+  > div { min-width: 0; }
+
+  input[type="date"] {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid $border-color;
+    border-radius: 6px;
+    font: inherit;
+  }
+
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Form builder modal (`.modal` / `.modal-content`) — its own shell, not part
+   of the system above. Left as-is deliberately; see AGENTS.md.
+   --------------------------------------------------------------------------- */
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0; top: 0;
+  width: 100vw; height: 100vh;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+  background-color: $surface-base;
+  margin: 10% auto;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  position: relative;
+}
+
+.modal-content .close {
+  position: absolute;
+  right: 1rem; top: 1rem;
+  font-size: 1.5rem;
+  color: $neutral-400;
+  cursor: pointer;
+}
+
+.modal-content form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.modal-content input[type="text"] {
+  padding: 0.75rem;
+  border: 1px solid $neutral-disabled;
+  border-radius: 6px;
+}
+.modal-content button[type="submit"] {
+  padding: 0.75rem;
+  background-color: $brand-navy;
+  color: $surface-base;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.modal-content button[type="submit"]:hover { background-color: $brand-navy-hover; }
+
+/* ---------------------------------------------------------------------------
+   Information field (form builder field type "information") — the trigger and
+   status text. Its dialog uses the shared .pb-modal markup, built in
+   information_field_controller.js.
+   --------------------------------------------------------------------------- */
+
+.information-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.information-trigger {
+  background: $teal-dark;
+  color: $surface-base;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.95rem;
+
+  &:hover { background: $teal-dark-hover; }
+
+  .information-required-indicator {
+    color: $amber-accent;
+    margin-left: 4px;
+  }
+}
+
+.information-status {
+  font-size: 0.85em;
+
+  &--pending { color: $warning-text; }
+  &--acknowledged { color: $success-text; font-weight: 600; }
+}

@@ -1,15 +1,15 @@
 <div id="reassign-modal-backdrop"
-     class="deny-modal-backdrop"
+     class="pb-modal-backdrop"
      data-reassign-modal-target="backdrop"
      style="display:none;">
-  <div class="deny-modal" data-reassign-modal-target="modal" role="dialog" aria-modal="true">
-    <div class="deny-modal__header">
+  <div class="pb-modal" data-reassign-modal-target="modal" role="dialog" aria-modal="true">
+    <div class="pb-modal__header">
       <h3 data-reassign-modal-target="title">Reassign Task</h3>
-      <button type="button" class="deny-modal__close"
-              data-action="reassign-modal#close">✕</button>
+      <button type="button" class="pb-modal__close"
+              data-action="reassign-modal#close" aria-label="Close">✕</button>
     </div>
 
-    <div class="deny-modal__body">
+    <div class="pb-modal__body">
       <%= form_with url: reassign_task_reassignments_path,
                     method: :post,
                     data: { reassign_modal_target: "form", turbo: false } do |f| %>
@@ -35,7 +35,7 @@
                           placeholder: "Why is this being reassigned?" %>
         </div>
 
-        <div class="deny-modal__actions">
+        <div class="pb-modal__actions">
           <button type="button" class="btn" data-action="reassign-modal#close">Cancel</button>
           <button type="submit" class="btn reassign">Reassign</button>
         </div>

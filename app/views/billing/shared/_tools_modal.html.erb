@@ -1,28 +1,34 @@
 <%# app/views/billing/shared/_tools_modal.html.erb
-    The one confirm modal shared by every Billing sidebar tool button. The
-    date row is shown only for the tools that declare dates: true, and the
-    dates themselves default to the current month, filled in by the Stimulus
-    controller rather than the server — the sidebar renders on every Billing
-    page, so there is no action to set them. %>
-<div class="billing-modal" data-billing-modal-target="backdrop">
-  <div class="billing-modal-content" role="dialog" aria-modal="true" aria-labelledby="billing-modal-title">
-    <span class="close" data-action="click->billing-modal#cancel" aria-label="Close">&times;</span>
-    <h3 id="billing-modal-title" data-billing-modal-target="title">Confirm</h3>
-    <p data-billing-modal-target="message">Are you sure you want to proceed?</p>
+    The one confirm modal shared by every Billing sidebar tool button. Built
+    from the shared .pb-modal markup so it matches every other dialog in the
+    app — see AGENTS.md. The date row is shown only for the tools that declare
+    dates: true, and the dates themselves default to the current month, filled
+    in by the Stimulus controller rather than the server — the sidebar renders
+    on every Billing page, so there is no action to set them. %>
+<div class="pb-modal-backdrop" data-billing-modal-target="backdrop" hidden>
+  <div class="pb-modal" role="dialog" aria-modal="true" aria-labelledby="billing-modal-title">
+    <div class="pb-modal__header">
+      <h3 id="billing-modal-title" data-billing-modal-target="title">Confirm</h3>
+      <button type="button" class="pb-modal__close" data-action="click->billing-modal#cancel" aria-label="Close">✕</button>
+    </div>
 
-    <div class="date-row" data-billing-modal-target="dateRow" style="display:none;">
-      <div class="date-group">
-        <label for="bm-s">Start Date</label>
-        <input id="bm-s" type="date" data-billing-modal-target="start">
-      </div>
-      <div class="date-group">
-        <label for="bm-e">End Date</label>
-        <input id="bm-e" type="date" data-billing-modal-target="end">
+    <div class="pb-modal__body">
+      <p class="pb-modal__message" data-billing-modal-target="message">Are you sure you want to proceed?</p>
+
+      <div class="pb-modal__date-row" data-billing-modal-target="dateRow" hidden>
+        <div>
+          <label for="bm-s">Start Date</label>
+          <input id="bm-s" type="date" data-billing-modal-target="start">
+        </div>
+        <div>
+          <label for="bm-e">End Date</label>
+          <input id="bm-e" type="date" data-billing-modal-target="end">
+        </div>
       </div>
     </div>
 
-    <div class="billing-modal-actions">
-      <button type="button" class="btn deny" data-action="click->billing-modal#cancel">Cancel</button>
+    <div class="pb-modal__actions">
+      <button type="button" class="btn" data-action="click->billing-modal#cancel">Cancel</button>
       <button type="button" class="btn approve" data-action="click->billing-modal#proceed">Proceed</button>
     </div>
   </div>

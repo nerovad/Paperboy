@@ -244,13 +244,13 @@
                 osha_300a_submit_path(year: @year),
                 method: :post,
                 class: "btn",
-                data: { confirm: "This year's 300A is already marked submitted on #{@entry.submitted_at.strftime('%b %d, %Y')}. Mark again with the current totals?" } %>
+                data: { turbo_confirm: "This year's 300A is already marked submitted on #{@entry.submitted_at.strftime('%b %d, %Y')}. Mark again with the current totals?" } %>
         <% else %>
           <%= button_to "Mark as Submitted to OSHA",
                 osha_300a_submit_path(year: @year),
                 method: :post,
                 class: "btn approve",
-                data: { confirm: "Lock the #{@year} 300A and record the current totals as submitted? Use this after you've actually filed via OSHA's ITA portal." } %>
+                data: { turbo_confirm: "Lock the #{@year} 300A and record the current totals as submitted? Use this after you've actually filed via OSHA's ITA portal." } %>
         <% end %>
       </div>
     <% else %>

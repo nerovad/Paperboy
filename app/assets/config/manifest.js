@@ -3,6 +3,7 @@
 //= link application.js
 //= link_tree ../../javascript/controllers .js
 //= link form_navigation.js
+//= link pb_modal.js
 //= link jquery3.js
 //= link datatables/jquery.dataTables.js
 //= link datatables/extensions/Buttons/dataTables.buttons.js

@@ -29,56 +29,8 @@
 
 .cc-td { width: 40px; }
 
-.cc-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.35);
-  z-index: 1000;
-}
-
-.cc-modal {
-  background: $surface-base;
-  border-radius: 12px;
-  width: 720px;
-  max-width: 94vw;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.cc-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 18px;
-  border-bottom: 1px solid $border-faint;
-
-  h3 { margin: 0; font-size: 18px; }
-}
-
-.cc-modal__close {
-  background: $alpha-clear;
-  border: 0;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.cc-modal__body {
-  padding: 16px 18px;
-  overflow-y: auto;
-}
-
-.cc-modal__footer {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  padding: 12px 18px;
-  border-top: 1px solid $border-faint;
-}
+// The modal shell itself is the shared .pb-modal system (components/modals).
+// Only the customizer's own contents are styled below.
 
 .cc-hint {
   margin: 0 0 14px;

@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus";
 import Sortable from "sortablejs";
+import { pbAlert } from "pb_modal";
 
 // Drives the "Customize columns & filters" modal on the Inbox and Submissions
 // tables. Lets a user reorder, show/hide, and add form-field columns, capped at
@@ -226,11 +227,11 @@ export default class extends Controller {
         window.location.reload();
       } else {
         this.saveButtonTarget.disabled = false;
-        alert("Could not save your columns. Please try again.");
+        pbAlert({ title: "Columns not saved", message: "Could not save your columns. Please try again." });
       }
     } catch (e) {
       this.saveButtonTarget.disabled = false;
-      alert("Could not save your columns. Please try again.");
+      pbAlert({ title: "Columns not saved", message: "Could not save your columns. Please try again." });
     }
   }
 }

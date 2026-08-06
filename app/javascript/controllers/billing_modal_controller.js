@@ -24,7 +24,7 @@ export default class extends Controller {
 
     // Toggle date row
     const needsDates = this.#needsDates(btn)
-    this.dateRowTarget.style.display = needsDates ? "" : "none"
+    this.dateRowTarget.hidden = !needsDates
 
     // Prefill date inputs (use server-provided value if present in value attributes,
     // otherwise fallback JS defaults)
@@ -32,11 +32,11 @@ export default class extends Controller {
     if (!this.endTarget.value)   this.endTarget.value   = this.defaultEnd
 
     // Show modal
-    this.backdropTarget.classList.add("open")
+    this.backdropTarget.hidden = false
   }
 
   cancel() {
-    this.backdropTarget.classList.remove("open")
+    this.backdropTarget.hidden = true
     this.pendingButton = null
   }
 

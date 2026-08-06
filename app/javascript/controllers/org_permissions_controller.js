@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { pbAlert } from "pb_modal"
 
 export default class extends Controller {
   static targets = ["agency", "division", "department", "unit"]
@@ -7,7 +8,7 @@ export default class extends Controller {
   navigate() {
     var agency = this.agencyTarget.value
     if (!agency) {
-      alert("Please select at least an Agency.")
+      pbAlert({ title: "Agency required", message: "Please select at least an Agency." })
       return
     }
 

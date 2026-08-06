@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { pbAlert } from "pb_modal"
 
 export default class extends Controller {
   static targets = ["modal", "loginBtn", "closeBtn", "form"]
@@ -29,7 +30,7 @@ export default class extends Controller {
       if (data.success) {
         location.reload();
       } else {
-        alert("Login failed.");
+        pbAlert({ title: "Login failed", message: "Those credentials were not accepted." });
       }
     });
   }

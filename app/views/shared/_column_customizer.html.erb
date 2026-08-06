@@ -2,14 +2,14 @@
     an ancestor (the page wrapper), which also carries the page/save-url/catalog
     values and the tableContainer target used for the width-fit check.
     locals: page, columns, employee_column %>
-<div class="cc-modal-backdrop" data-column-customizer-target="backdrop" style="display:none;" data-action="click->column-customizer#backdropClick">
-  <div class="cc-modal" role="dialog" aria-modal="true" aria-label="Customize columns">
-    <div class="cc-modal__header">
+<div class="pb-modal-backdrop" data-column-customizer-target="backdrop" style="display:none;" data-action="click->column-customizer#backdropClick">
+  <div class="pb-modal pb-modal--xl" role="dialog" aria-modal="true" aria-label="Customize columns">
+    <div class="pb-modal__header">
       <h3>Customize columns &amp; filters</h3>
-      <button type="button" class="cc-modal__close" data-action="column-customizer#close" aria-label="Close">✕</button>
+      <button type="button" class="pb-modal__close" data-action="column-customizer#close" aria-label="Close">✕</button>
     </div>
 
-    <div class="cc-modal__body">
+    <div class="pb-modal__body">
       <p class="cc-hint">
         Drag to reorder. Drag a field between <strong>Shown</strong> and <strong>Available</strong> to show or hide it.
         <span class="cc-capacity" data-column-customizer-target="capacity"></span>
@@ -60,7 +60,7 @@
       </div>
     </div>
 
-    <div class="cc-modal__footer">
+    <div class="pb-modal__actions">
       <button type="button" class="btn" data-action="column-customizer#close">Cancel</button>
       <button type="button" class="btn approve" data-action="column-customizer#save" data-column-customizer-target="saveButton">Save</button>
     </div>

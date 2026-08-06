@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { pbAlert } from "pb_modal"
 
 export default class extends Controller {
   static targets = ["trigger", "status", "acknowledgedInput"]
@@ -26,13 +27,11 @@ export default class extends Controller {
     if (event) event.preventDefault()
     this.buildModal()
     document.body.appendChild(this.modal)
-    requestAnimationFrame(() => this.modal.classList.add("show"))
   }
 
   close(event) {
     if (event) event.preventDefault()
     if (!this.modal) return
-    this.modal.classList.remove("show")
     this.modal.remove()
     this.modal = null
   }
@@ -53,7 +52,10 @@ export default class extends Controller {
       event.preventDefault()
       event.stopImmediatePropagation()
       const labels = unacknowledged.map((f) => f.dataset.informationFieldLabelValue || "Information").join(", ")
-      alert(`You must agree to the following before submitting: ${labels}`)
+      pbAlert({
+        title: "Acknowledgement required",
+        message: `You must agree to the following before submitting: ${labels}`
+      })
       unacknowledged[0].scrollIntoView({ behavior: "smooth", block: "center" })
     }
   }
@@ -74,23 +76,23 @@ export default class extends Controller {
 
   buildModal() {
     const modal = document.createElement("div")
-    modal.className = "information-modal-backdrop"
+    modal.className = "pb-modal-backdrop"
     modal.addEventListener("click", (e) => {
       if (e.target === modal) this.close()
     })
 
     const content = document.createElement("div")
-    content.className = "information-modal"
+    content.className = "pb-modal pb-modal--lg"
     content.setAttribute("role", "dialog")
     content.setAttribute("aria-modal", "true")
 
     const header = document.createElement("div")
-    header.className = "information-modal__header"
+    header.className = "pb-modal__header"
     const title = document.createElement("h3")
     title.textContent = this.labelValue || "Information"
     const close = document.createElement("button")
     close.type = "button"
-    close.className = "information-modal__close"
+    close.className = "pb-modal__close"
     close.setAttribute("aria-label", "Close")
     close.textContent = "✕"
     close.addEventListener("click", () => this.close())
@@ -98,7 +100,7 @@ export default class extends Controller {
     header.appendChild(close)
 
     const body = document.createElement("div")
-    body.className = "information-modal__body"
+    body.className = "pb-modal__body"
     const text = (this.textValue || "").toString()
     text.split(/\n{2,}/).forEach((para) => {
       if (!para.trim()) return
@@ -113,7 +115,7 @@ export default class extends Controller {
     }
 
     const actions = document.createElement("div")
-    actions.className = "information-modal__actions"
+    actions.className = "pb-modal__actions"
 
     if (this.acknowledgeableValue) {
       const cancel = document.createElement("button")

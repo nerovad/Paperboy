@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { pbAlert } from "pb_modal"
 
 // Handles file preview for image and PDF uploads (supports multiple files)
 // Accumulates files across selections and enforces a max file limit
@@ -18,7 +19,10 @@ export default class extends Controller {
     // Check if adding these files would exceed the max
     const totalAfterAdd = this.selectedFiles.files.length + newFiles.length
     if (totalAfterAdd > this.maxValue) {
-      alert(`You can upload a maximum of ${this.maxValue} files. You have ${this.selectedFiles.files.length} selected and tried to add ${newFiles.length} more.`)
+      pbAlert({
+        title: "Too many files",
+        message: `You can upload a maximum of ${this.maxValue} files. You have ${this.selectedFiles.files.length} selected and tried to add ${newFiles.length} more.`
+      })
       this.inputTarget.value = ""
       return
     }

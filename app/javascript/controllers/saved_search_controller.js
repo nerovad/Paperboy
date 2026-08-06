@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { pbConfirm } from "pb_modal"
 
 export default class extends Controller {
   static targets = ["dropdown", "nameInput", "saveForm", "deleteForm"]
@@ -76,14 +77,20 @@ export default class extends Controller {
     form.submit()
   }
 
-  confirmDelete() {
+  async confirmDelete() {
     const selected = this.dropdownTarget.selectedOptions[0]
     if (!selected || !selected.value) return
 
     const name = selected.textContent.trim()
-    if (confirm(`Delete saved search "${name}"?`)) {
-      this.deleteFormTarget.action = `/saved_searches/${selected.value}`
-      this.deleteFormTarget.submit()
-    }
+    const proceed = await pbConfirm({
+      title: "Delete saved search",
+      message: `Delete saved search "${name}"?`,
+      confirmLabel: "Delete",
+      confirmVariant: "deny"
+    })
+    if (!proceed) return
+
+    this.deleteFormTarget.action = `/saved_searches/${selected.value}`
+    this.deleteFormTarget.submit()
   }
 }
