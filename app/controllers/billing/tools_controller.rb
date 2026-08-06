@@ -12,16 +12,6 @@ module Billing
       redirect_to billing_root_path, notice: 'Moved to production successfully'
     end
 
-    def backup_staging
-      run_stored_proc('Backup_Staging')
-      redirect_to billing_root_path, notice: 'Staging backed up'
-    end
-
-    def backup_production
-      run_stored_proc('Backup_Production')
-      redirect_to billing_root_path, notice: 'Production backed up'
-    end
-
     private
 
     def date_params

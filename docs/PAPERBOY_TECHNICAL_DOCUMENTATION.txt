@@ -1745,17 +1745,13 @@ ACTIONS:
 STRONG PARAMS: sDate, eDate, type, digits, encumbered
 
 19.2 BILLING TOOLS CONTROLLER
--------------------------------
+-----------------------------
 
-File: app/controllers/billing_tools_controller.rb
+File: app/controllers/billing/tools_controller.rb
 Before action: require_system_admin
 
 ACTIONS:
-  new() -> Shows billing operations form
   move_to_production() -> Executes MSSQL stored procedure
-  run_monthly_billing() -> Executes MonthlyBilling stored procedure
-  backup_staging() -> Executes staging backup procedure
-  backup_production() -> Executes production backup procedure
 
 HELPER: run_stored_proc() -> Executes via BillingBase.connection
 
@@ -1841,9 +1837,13 @@ AUTHORIZATION CONSOLE:
   /authorization_console       -> CRUD + collection: destroy_all_for_employee
 
 BILLING:
-  /billing_tools               -> new, create + collection: move_to_production,
-                                  run_monthly_billing, backup_staging,
-                                  backup_production
+  GET  /billing                -> Billing dashboard
+  GET  /billing/reporting_period -> Select active reporting period
+  PATCH /billing/reporting_period -> Save active reporting period
+  GET  /billing/monthly_reports/:operation -> Run, print, or email form
+  POST /billing/monthly_reports/:operation -> Process monthly operation
+  GET  /billing/reports        -> Generated Billing reports
+  POST /billing/tools/move_to_production -> Move staging data to production
 
 INBOX & SUBMISSIONS:
   GET /inboxqueue              -> inbox#queue

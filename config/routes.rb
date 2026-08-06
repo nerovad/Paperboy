@@ -46,8 +46,6 @@ Rails.application.routes.draw do
     resources :tools, only: [] do
       collection do
         post :move_to_production
-        post :backup_staging
-        post :backup_production
       end
     end
   end
