@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'axlsx'
-
 module Billing
   class ReportGenerator
     NAMES_PROCEDURE = 'GSABSS.dbo.Export_TC60_Billing_Report_Names'
@@ -52,23 +50,7 @@ module Billing
     end
 
     def build_xlsx(definition, result)
-      package = Axlsx::Package.new
-      package.workbook.add_worksheet(name: 'Data') do |sheet|
-        header = sheet.styles.add_style(b: true, bg_color: '64748B', fg_color: 'FFFFFF')
-        sheet.add_row(result.columns, style: header)
-        result.rows.each { |row| sheet.add_row(row) }
-        if result.columns.any?
-          last_column = Axlsx.col_ref(result.columns.length - 1)
-          sheet.auto_filter = "A1:#{last_column}#{result.rows.length + 1}"
-        end
-      end
-      package.workbook.add_worksheet(name: 'Summary') do |sheet|
-        sheet.add_row ['Report', definition.fetch('name')]
-        sheet.add_row ['Start Date', report.start_date]
-        sheet.add_row ['End Date', report.end_date]
-        sheet.add_row ['Rows', result.rows.length]
-      end
-      package.to_stream.read
+      XlsxReportRenderer.new(report, definition, result).call
     end
 
     def build_pdf(definition, result)
