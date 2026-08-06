@@ -65,17 +65,6 @@
       margin: 0;
     }
 
-    .btn {
-      height: 38px;
-      padding: 0 16px;
-      font-size: 0.9em;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      white-space: nowrap;
-    }
-
     .status-dropdown {
       height: 38px;
       padding: 0 12px;
@@ -99,21 +88,9 @@
       }
     }
 
-    .btn.edit {
-      background-color: $warning-action;
-
-      &:hover {
-        background-color: darken($warning-action, 8%);
-      }
-    }
-
+    /* Colours come from components/buttons; only the layout is local. */
     .btn.close-panel {
-      background-color: $muted;
       margin-left: auto;
-
-      &:hover {
-        background-color: darken($muted, 10%);
-      }
     }
 
   }
@@ -245,22 +222,9 @@
   }
 }
 
+/* Colours come from components/buttons; only the layout is local. */
 .btn.clear-filters {
-  padding: 8px 16px;
-  background-color: $muted;
-  color: $form-bg;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  text-decoration: none;
-  font-size: 0.95em;
-  transition: background-color 0.2s ease;
-  white-space: nowrap;
   align-self: flex-end;
-
-  &:hover {
-    background-color: darken($muted, 10%);
-  }
 }
 
 /* Generic table wrapper */
@@ -340,19 +304,6 @@
     margin: 0;
   }
 
-  /* Ensure all buttons have consistent styling */
-  .button-container .btn {
-    margin: 0;
-    height: 38px;
-    padding: 0 16px;
-    font-size: 0.9em;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    white-space: nowrap;
-  }
-
   /* Status dropdown styled like other buttons */
   .button-container .status-dropdown {
     height: 38px;
@@ -377,15 +328,6 @@
       outline: none;
       border-color: $primary-color;
       box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
-    }
-  }
-
-  /* Edit button - use a distinct color */
-  .button-container .btn.edit {
-    background-color: $warning-action;
-
-    &:hover {
-      background-color: darken($warning-action, 8%);
     }
   }
 

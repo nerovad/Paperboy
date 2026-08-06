@@ -1,27 +1,68 @@
 @import "base/tokens";
 
-/* Generic button */
+/* ---------------------------------------------------------------------------
+   Button system — single source of truth.
+
+   Every action button in the app is `.btn` plus at most one colour variant and
+   at most one size modifier:
+
+     <%= link_to "View PDF", path, class: "btn pdf" %>
+     <button class="btn deny compact">Remove</button>
+
+   `.btn` on its own is a complete, visible button (neutral slate). Do NOT
+   define new `.btn` colours in page stylesheets — add the variant here so it
+   is available everywhere. See AGENTS.md for the full rule.
+
+   Not part of this system: `.form-btn` (in-form submit/next controls, below),
+   sidebar/nav links, and the profile dropdown links.
+   --------------------------------------------------------------------------- */
+
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+
   height: 38px;
   padding: 0 16px;
+  margin: 0;
   line-height: 1;
   box-sizing: border-box;
   vertical-align: middle;
+
+  border: 0;
   border-radius: 6px;
+  font-family: inherit;
   font-weight: 600;
   font-size: 0.95rem;
   text-decoration: none;
-  border: 0;
-  cursor: pointer;
-  transition: background 0.2s ease-in-out;
   white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+
+  /* Default variant — a neutral secondary action. A `.btn` with no variant is
+     still a real button, never white-on-transparent. */
+  background-color: $slate-action;
   color: $surface-base;
+
+  &:hover { background-color: $slate-action-hover; text-decoration: none; }
+
+  &:focus-visible {
+    outline: 2px solid $brand-navy;
+    outline-offset: 2px;
+  }
+
+  &.disabled,
+  &:disabled,
+  &[aria-disabled="true"] {
+    background-color: $button-disabled-bg;
+    color: $surface-base;
+    cursor: not-allowed;
+  }
 }
 
-/* Variants */
+/* --- Colour variants ------------------------------------------------------ */
+
 .btn.approve { background-color: $primary-color; }
 .btn.approve:hover { background-color: $green-action-hover; }
 
@@ -43,7 +84,78 @@
 .btn.status-history { background-color: $slate-action; }
 .btn.status-history:hover { background-color: $slate-action-hover; }
 
-/* Form-specific button class */
+/* Amber needs dark text to stay readable. */
+.btn.edit,
+.btn.warning {
+  background-color: $warning-action;
+  color: $text-strong;
+}
+.btn.edit:hover,
+.btn.warning:hover { background-color: $orange-action; }
+
+.btn.info { background-color: $cyan-action; }
+.btn.info:hover { background-color: $cyan-action-hover; }
+
+/* Quiet dismissals — closing a panel, clearing filters. */
+.btn.close-panel,
+.btn.clear-filters { background-color: $muted; }
+.btn.close-panel:hover,
+.btn.clear-filters:hover { background-color: darken($muted, 10%); }
+
+/* Lightest weight in the family: light fill, dark text, hairline border. */
+.btn.ghost {
+  background-color: $neutral-button-bg;
+  color: $text-color;
+  box-shadow: inset 0 0 0 1px $border-color;
+}
+.btn.ghost:hover { background-color: $surface-control-hover; }
+
+/* Selected state for filter/toggle button groups. Wins over `.ghost` because it
+   comes later, so it must restate the text colour. */
+.btn.active {
+  background-color: $primary-color;
+  color: $surface-base;
+  box-shadow: none;
+}
+.btn.active:hover { background-color: $green-action-hover; }
+
+/* --- Size modifiers ------------------------------------------------------- */
+
+.btn.compact,
+.btn.btn-sm {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 0.8rem;
+}
+
+/* --- Legacy Bootstrap-style aliases --------------------------------------- */
+/* Kept so older markup renders correctly. Prefer the semantic names above in
+   new code; these map onto the same palette so nothing looks out of place.
+   Page stylesheets that scope these names (e.g. the form builder) still win by
+   coming later in the import order. */
+
+.btn.btn-primary { background-color: $primary-color; color: $surface-base; }
+.btn.btn-primary:hover { background-color: $green-action-hover; }
+
+.btn.btn-danger { background-color: $danger; color: $surface-base; }
+.btn.btn-danger:hover { background-color: $danger-700; }
+
+.btn.btn-info { background-color: $cyan-action; color: $surface-base; }
+.btn.btn-info:hover { background-color: $cyan-action-hover; }
+
+.btn.btn-secondary {
+  background-color: $neutral-button-bg;
+  color: $text-color;
+  box-shadow: inset 0 0 0 1px $border-color;
+}
+.btn.btn-secondary:hover { background-color: $surface-control-hover; }
+
+/* ---------------------------------------------------------------------------
+   Form-page controls — the submit / next / back row inside a form body. These
+   share the button family's metrics so they read as one system, but they size
+   to their content rather than sitting in a fixed-height action row.
+   --------------------------------------------------------------------------- */
+
 .form-btn {
   display: inline-flex;
   align-items: center;

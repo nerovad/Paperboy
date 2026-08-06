@@ -83,30 +83,6 @@
   font-size: 0.68rem;
 }
 
-.aim-queue-table .btn.compact {
-  font-size: 0.76rem;
-  height: 30px;
-  padding: 0 10px;
-}
-
-.aim-page .btn.warning {
-  background-color: $warning-action;
-  color: $text-strong;
-}
-
-.aim-page .btn.warning:hover {
-  background-color: $orange-action;
-}
-
-.aim-page .btn.ghost {
-  background-color: $neutral-button-bg;
-  color: $text-color;
-}
-
-.aim-page .btn.ghost:hover {
-  background-color: $surface-control-hover;
-}
-
 .aim-dashboard-grid {
   display: grid;
   gap: 20px;
