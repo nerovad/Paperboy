@@ -1,8 +1,8 @@
-<div class="form-header">
+<div class="form-header billing-form-header">
   <h1>Billing Reports</h1>
 </div>
 
-<div class="form-wrapper billing-report-files">
+<div class="form-wrapper billing-form billing-report-files">
   <% if @report_files.any? %>
     <div class="billing-period-grid">
       <table class="submission-table">
@@ -28,7 +28,7 @@
               <td>
                 <%= link_to(report_file.pdf? ? "View" : "Download",
                             billing_report_path(report_file.filename),
-                            class: "button small", target: ("_blank" if report_file.pdf?)) %>
+                            class: "button report-action small", target: ("_blank" if report_file.pdf?)) %>
               </td>
             </tr>
           <% end %>
