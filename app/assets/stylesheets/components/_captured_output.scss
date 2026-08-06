@@ -1,0 +1,15 @@
+@import "base/tokens";
+
+.captured-output {
+  max-height: 36rem;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  border-radius: 8px;
+  background: $neutral-950;
+  color: $surface-base;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .85rem;
+  line-height: 1.5;
+  white-space: pre;
+}

@@ -41,7 +41,7 @@
   <% if @output.present? %>
     <section class="billing-refresh-result" aria-labelledby="billing-refresh-output-title">
       <h2 id="billing-refresh-output-title">Refresh Output</h2>
-      <pre><%= @output %></pre>
+      <%= render "shared/captured_output", output: @output %>
     </section>
   <% end %>
 </div>

@@ -6,7 +6,7 @@
       <div><span class="task-result-label">Task output</span><strong>DataRunner:<%= @task_name %></strong></div>
       <span class="task-result-state"><%= @task_status.humanize %></span>
     </div>
-    <pre class="task-output-box highlighted-output"><%= syntax_highlight(@task_output, language: "shell") %></pre>
+    <%= render "shared/captured_output", output: @task_output %>
   </section>
 <% else %>
   <pre class="output highlighted-output"><%= syntax_highlight(@source, language: "ruby") %></pre>

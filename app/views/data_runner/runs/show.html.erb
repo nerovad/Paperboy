@@ -1,1 +1,2 @@
-<h1>Task output</h1><pre class="output highlighted-output"><%= syntax_highlight(@output, language: "shell") %></pre>
+<h1>Task output</h1>
+<%= render "shared/captured_output", output: @output %>
