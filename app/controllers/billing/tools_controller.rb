@@ -17,26 +17,6 @@ module Billing
       redirect_to billing_root_path, notice: 'Moved to production successfully'
     end
 
-    def monthly_billing
-      load_fiscal_periods
-      select_current_period
-    end
-
-    def run_monthly_billing
-      @start_date = params[:s_date]
-      @end_date = params[:e_date]
-
-      unless valid_date_range?
-        load_fiscal_periods
-        flash.now[:alert] = 'Start date must be on or before end date.'
-        render :monthly_billing, status: :unprocessable_entity
-        return
-      end
-
-      run_stored_proc('MonthlyBilling', date_params)
-      redirect_to billing_root_path, notice: 'Monthly billing complete'
-    end
-
     def backup_staging
       run_stored_proc('Backup_Staging')
       redirect_to billing_root_path, notice: 'Staging backed up'
@@ -48,37 +28,6 @@ module Billing
     end
 
     private
-
-    def load_fiscal_periods
-      sql = <<~SQL.squish
-        DECLARE @fyear varchar(4) = GSABSS.dbo.fnGetFiscalYear(?);
-        SELECT [Year] AS FYEAR, ApMon, sDate, eDate
-        FROM GSABSS.dbo.GetFiscalData(@fyear, @fyear)
-        ORDER BY sDate
-      SQL
-      sanitized_sql = ActiveRecord::Base.send(
-        :sanitize_sql_array, [sql, Date.current.iso8601]
-      )
-      @fiscal_periods = BillingBase.connection.exec_query(sanitized_sql).map do |period|
-        period.transform_keys(&:downcase)
-      end
-    end
-
-    def select_current_period
-      current_period = @fiscal_periods.find do |period|
-        Date.current.between?(period['sdate'].to_date, period['edate'].to_date)
-      end
-      return unless current_period
-
-      @start_date = current_period['sdate'].to_date.iso8601
-      @end_date = current_period['edate'].to_date.iso8601
-    end
-
-    def valid_date_range?
-      Date.iso8601(@start_date) <= Date.iso8601(@end_date)
-    rescue Date::Error
-      false
-    end
 
     def date_params
       {

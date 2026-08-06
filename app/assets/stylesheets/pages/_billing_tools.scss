@@ -32,7 +32,8 @@
     gap: 1rem;
   }
 
-  input[readonly] {
+  input[readonly],
+  textarea[readonly] {
     background: $surface-control;
     color: $neutral-700;
   }

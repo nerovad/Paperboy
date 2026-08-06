@@ -49,6 +49,7 @@ gem 'jwt'
 gem 'prawn'
 gem 'prawn-table'
 gem 'prawn-templates'
+gem 'caxlsx'
 
 # CSV Generation
 gem 'csv'

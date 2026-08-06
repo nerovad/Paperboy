@@ -11,21 +11,15 @@ module BillingHelper
   # In sidebar order. +route+ is the destination path helper, +page+ identifies
   # a full-page tool, and +dates+ says whether a modal collects a date range.
   #
-  # Get Raw Data, Print Reports and Email Reports post to backup_staging: that
-  # is placeholder wiring carried over verbatim from the old page rather than
-  # silently repointed. They need their own actions once the procs exist.
+  # Monthly report operations share Billing::MonthlyReportsController; Get Raw
+  # Data retains its legacy action until its replacement workflow is designed.
   BILLING_TOOLS = [
     { key: 'raw_data', label: 'Get Raw Data',
       route: :backup_staging_billing_tools_path, dates: false,
       confirm: 'Run the raw data query?' },
-    { key: 'run_monthly_billing', label: 'Run Monthly Billing',
-      route: :monthly_billing_billing_tools_path, page: true },
-    { key: 'print_reports', label: 'Print Reports',
-      route: :backup_staging_billing_tools_path, dates: true,
-      confirm: 'Generate and print billing reports for this period?' },
-    { key: 'email_reports', label: 'Email Reports',
-      route: :backup_staging_billing_tools_path, dates: true,
-      confirm: 'Email billing reports for this period?' }
+    { key: 'run_monthly_billing', label: 'Run Monthly Billing', operation: 'run', page: true },
+    { key: 'print_reports', label: 'Print Billing Reports', operation: 'print', page: true },
+    { key: 'email_reports', label: 'Email Billing Reports', operation: 'email', page: true }
   ].freeze
 
   # The sidebar's tools with their resolved +path+. Empty for anyone but a
@@ -35,6 +29,9 @@ module BillingHelper
   def billing_tools
     return [] unless system_admin?
 
-    BILLING_TOOLS.map { |tool| tool.merge(path: public_send(tool[:route])) }
+    BILLING_TOOLS.map do |tool|
+      path = tool[:operation] ? billing_monthly_report_path(tool[:operation]) : public_send(tool[:route])
+      tool.merge(path: path)
+    end
   end
 end

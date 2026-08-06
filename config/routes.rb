@@ -34,6 +34,9 @@ Rails.application.routes.draw do
   namespace :billing do
     root 'dashboard#index'
 
+    get 'monthly_reports/:operation', to: 'monthly_reports#show', as: :monthly_report
+    post 'monthly_reports/:operation', to: 'monthly_reports#create', as: :process_monthly_report
+
     # The stored-procedure buttons in the Billing sidebar. They were top-level
     # /billing_tools routes; the path helper names are unchanged
     # (backup_staging_billing_tools_path and friends), only the URLs moved
@@ -41,8 +44,6 @@ Rails.application.routes.draw do
     resources :tools, only: [] do
       collection do
         post :move_to_production
-        get :monthly_billing
-        post :run_monthly_billing
         post :backup_staging
         post :backup_production
       end
