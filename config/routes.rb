@@ -34,6 +34,7 @@ Rails.application.routes.draw do
   namespace :billing do
     root 'dashboard#index'
 
+    resource :dashboard, only: :show, controller: :dashboards
     resource :reporting_period, only: %i[show update]
     resource :data_refresh, only: %i[show update]
     get 'enable', to: 'billing_types#index', as: :billing_types

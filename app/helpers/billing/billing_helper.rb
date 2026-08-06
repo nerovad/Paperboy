@@ -10,6 +10,7 @@ module Billing
       { key: 'data_refresh', label: 'Refresh Data', route: :billing_data_refresh_path, page: true },
       { key: 'enable_billing', label: 'Enable Billing', route: :billing_billing_types_path, page: true },
       { key: 'run_monthly_billing', label: 'Run Billing', operation: 'run', page: true },
+      { key: 'view_billing', label: 'View Billing', route: :billing_dashboard_path, page: true },
       { key: 'print_reports', label: 'Print Billing Reports', operation: 'print', page: true },
       { key: 'view_reports', label: 'View Billing Reports', route: :billing_reports_path, page: true },
       { key: 'email_reports', label: 'Email Billing Reports', operation: 'email', page: true }
