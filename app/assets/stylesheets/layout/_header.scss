@@ -214,6 +214,9 @@
 /* Links inside dropdown */
 .dropdown-content a {
   display: block;
+  /* width: 100% plus horizontal padding overflows the menu by 32px without
+     this — the hover background is what makes it visible. */
+  box-sizing: border-box;
   width: 100%;
   padding: 10px 16px;
 
