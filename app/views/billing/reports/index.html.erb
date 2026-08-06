@@ -8,10 +8,15 @@
       <table class="submission-table">
         <thead>
           <tr>
-            <th>File</th>
-            <th>Modified</th>
-            <th>Size</th>
-            <th>View</th>
+            <% { "File" => "file", "Modified" => "modified", "Size" => "size", "View" => "action" }.each do |label, column| %>
+              <th>
+                <%= link_to billing_reports_path(sort: column, direction: report_sort_direction(column)),
+                            class: "sortable-header", data: { turbo: false } do %>
+                  <%= label %>
+                  <span class="sort-indicator"><%= report_sort_indicator(column) %></span>
+                <% end %>
+              </th>
+            <% end %>
           </tr>
         </thead>
         <tbody>

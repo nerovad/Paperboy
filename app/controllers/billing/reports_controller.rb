@@ -2,10 +2,16 @@
 
 module Billing
   class ReportsController < BaseController
+    SORT_COLUMNS = %w[file modified size action].freeze
+    SORT_DIRECTIONS = %w[asc desc].freeze
+
     before_action :require_system_admin
+    helper_method :report_sort_direction, :report_sort_indicator
 
     def index
-      @report_files = ReportFile.all
+      @sort = SORT_COLUMNS.include?(params[:sort]) ? params[:sort] : 'modified'
+      @direction = SORT_DIRECTIONS.include?(params[:direction]) ? params[:direction] : 'desc'
+      @report_files = sort_report_files(ReportFile.all)
     end
 
     def show
@@ -14,6 +20,30 @@ module Billing
                 filename: report_file.filename,
                 type: report_file.content_type,
                 disposition: report_file.pdf? ? 'inline' : 'attachment'
+    end
+
+    private
+
+    def sort_report_files(report_files)
+      sorted = report_files.sort_by do |report_file|
+        case @sort
+        when 'size' then report_file.size
+        when 'modified' then report_file.modified_at
+        when 'action' then report_file.pdf? ? 'view' : 'download'
+        else report_file.filename.downcase
+        end
+      end
+      @direction == 'desc' ? sorted.reverse : sorted
+    end
+
+    def report_sort_direction(column)
+      @sort == column && @direction == 'asc' ? 'desc' : 'asc'
+    end
+
+    def report_sort_indicator(column)
+      return unless @sort == column
+
+      @direction == 'asc' ? '▲' : '▼'
     end
   end
 end
