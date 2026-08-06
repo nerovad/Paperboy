@@ -133,15 +133,23 @@
 
 .billing-email-subjects {
   width: calc(100% - 2rem);
-  max-width: 1400px;
+  max-width: 900px;
+  box-sizing: border-box;
 
   .submission-table { table-layout: fixed; }
 
-  .billing-subject-type-column { width: calc(3ch + 16px); }
+  .billing-subject-type-column { width: calc(5ch + 16px); }
   .billing-subject-name-column { width: calc(20ch + 16px); }
 
-  .submission-table th:nth-child(-n + 2),
-  .submission-table td:nth-child(-n + 2) {
+  .submission-table th:nth-child(1),
+  .submission-table td:nth-child(1) {
+    padding-right: 8px;
+    padding-left: 8px;
+    white-space: nowrap;
+  }
+
+  .submission-table th:nth-child(2),
+  .submission-table td:nth-child(2) {
     padding-right: 8px;
     padding-left: 8px;
     overflow-wrap: anywhere;
@@ -163,6 +171,21 @@
 .billing-recipient-actions {
   margin-top: -0.5rem;
   margin-bottom: 1.5rem;
+}
+
+.billing-recipient-entry {
+  display: flex;
+  align-items: stretch;
+  gap: .75rem;
+
+  .form-control {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.billing-recipient-cancel-form {
+  margin-top: 1rem;
 }
 
 .billing-email-preview .captured-output {

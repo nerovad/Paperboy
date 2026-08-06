@@ -17,7 +17,7 @@
             <td><%= recipient.email_address %></td>
             <td>
               <%= button_to "Remove", billing_email_recipient_path(recipient), method: :delete,
-                            class: "button reset small",
+                            class: "btn deny compact",
                             form: { data: { turbo_confirm: "Remove #{recipient.email_address}?" } } %>
             </td>
           </tr>
@@ -31,11 +31,13 @@
                 class: "billing-inline-form" do |form| %>
     <div class="form-group">
       <%= form.label :email_address, "Email Address" %>
-      <%= form.email_field :email_address, required: true, class: "form-control" %>
-    </div>
-    <div class="form-actions">
-      <%= form.submit "Add", class: "button primary" %>
-      <%= link_to "Cancel", billing_root_path, class: "button cancel" %>
+      <div class="billing-recipient-entry">
+        <%= form.email_field :email_address, required: true, class: "form-control" %>
+        <%= form.submit "Add", class: "btn approve" %>
+      </div>
     </div>
   <% end %>
+
+  <%= button_to "Cancel", billing_root_path, method: :get, class: "btn ghost",
+                          form: { class: "billing-recipient-cancel-form" } %>
 </div>
