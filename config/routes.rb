@@ -34,6 +34,8 @@ Rails.application.routes.draw do
   namespace :billing do
     root 'dashboard#index'
 
+    get 'enable', to: 'billing_types#index', as: :billing_types
+    patch 'enable', to: 'billing_types#update'
     get 'monthly_reports/:operation', to: 'monthly_reports#show', as: :monthly_report
     post 'monthly_reports/:operation', to: 'monthly_reports#create', as: :process_monthly_report
     resources :reports, only: %i[index show], param: :filename, format: false,

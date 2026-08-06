@@ -1,0 +1,41 @@
+<div class="form-header">
+  <h1>Enable Billing</h1>
+</div>
+
+<div class="form-wrapper billing-types">
+  <%= form_with url: billing_billing_types_path, method: :patch, data: { turbo: false } do %>
+    <div class="billing-period-grid">
+      <table class="submission-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Active</th>
+            <th>Name</th>
+            <th>Funding Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @billing_types.each do |billing_type| %>
+            <tr>
+              <td><%= billing_type.code %></td>
+              <td>
+                <%= select_tag "active[#{billing_type.code}]",
+                               options_for_select([["0 - false", "0"], ["1 - true", "1"]],
+                                                  billing_type.active? ? "1" : "0"),
+                               class: "form-control" %>
+              </td>
+              <td><%= billing_type.name %></td>
+              <td><%= billing_type.funding_type %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-actions">
+      <%= submit_tag "Save", class: "button primary" %>
+      <%= button_tag "Reset", type: :reset, class: "button" %>
+      <%= link_to "Cancel", billing_root_path, class: "button" %>
+    </div>
+  <% end %>
+</div>
