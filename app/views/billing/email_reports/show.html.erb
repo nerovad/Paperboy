@@ -6,7 +6,8 @@
   <%= render "billing/shared/active_billing_period",
              active_billing_period: @active_billing_period %>
 
-  <%= form_with url: billing_email_reports_path, method: :post, data: { turbo: false } do %>
+  <%= form_with url: billing_email_reports_path, method: :post,
+                id: "billing-email-report-form", data: { turbo: false } do %>
     <section>
       <h2>Email Recipients</h2>
       <div class="billing-period-grid">
@@ -76,13 +77,18 @@
       <p>No Billing reports have been generated.</p>
     <% end %>
 
-    <div class="form-actions">
-      <%= submit_tag "Preview", class: "button primary", disabled: @reports.empty? %>
-      <%= submit_tag "Send", class: "button primary", disabled: @reports.empty? %>
-      <%= link_to "Reset", billing_email_reports_path, class: "button reset" %>
-      <%= link_to "Cancel", billing_root_path, class: "button cancel" %>
-    </div>
   <% end %>
+
+  <div class="form-actions">
+    <%= button_tag "Preview", type: :submit, name: :commit, value: "Preview",
+                              form: "billing-email-report-form", class: "btn pdf",
+                              disabled: @reports.empty? %>
+    <%= button_tag "Send", type: :submit, name: :commit, value: "Send",
+                           form: "billing-email-report-form", class: "btn approve",
+                           disabled: @reports.empty? %>
+    <%= button_to "Reset", billing_email_reports_path, method: :get, class: "btn warning" %>
+    <%= button_to "Cancel", billing_root_path, method: :get, class: "btn ghost" %>
+  </div>
 
   <% if @preview_output.present? %>
     <section class="billing-refresh-result billing-email-preview"
