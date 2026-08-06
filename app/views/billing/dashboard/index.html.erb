@@ -1,15 +1,3 @@
-<div class="form-header">
-  <h1>Billing</h1>
-</div>
-
-<div class="form-wrapper">
-  <% if billing_tools.any? %>
-    <p>
-      The billing tools are in the sidebar. Run Monthly Billing opens a compute
-      form for its date range; immediate operations ask for confirmation before
-      running their stored procedure against GSABSS.
-    </p>
-  <% else %>
-    <p>Welcome to Billing.</p>
-  <% end %>
-</div>
+<% content_for :image do %>
+  <%= render "shared/slideshow", images: billing_home_images %>
+<% end %>

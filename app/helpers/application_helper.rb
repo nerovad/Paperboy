@@ -141,6 +141,14 @@ module ApplicationHelper
     ]
   end
 
+  def billing_home_images
+    [
+      { src: 'BillingReconciliation.png', alt: 'Monthly billing reconciliation' },
+      { src: 'BillingFiscalPeriods.png', alt: 'Fiscal period planning' },
+      { src: 'BillingReports.png', alt: 'Completed billing reports' }
+    ]
+  end
+
   def coa_home_images
     [
       { src: 'VenturaCross.png', alt: 'Chart of Accounts' },

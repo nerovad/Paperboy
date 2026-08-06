@@ -6,6 +6,7 @@
 
 .env
 *.png
+!app/assets/images/Billing*.png
 00_Inbox/
 output/data_runner/01_Download/
 output/data_runner/02_Normalized/
