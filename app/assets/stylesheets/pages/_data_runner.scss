@@ -52,22 +52,7 @@
     padding: 18px;
   }
 
-  .button {
-    @extend .form-btn;
-    min-height: 38px;
-    padding: 10px 14px;
-  }
-
-  .button.primary,
-  .button.success {
-    background: $primary-color;
-    color: #fff;
-  }
-
-  .button.danger {
-    background: $danger;
-    color: #fff;
-  }
+  /* Buttons use the shared .btn system; see components/buttons. */
 
   .field {
     display: grid;

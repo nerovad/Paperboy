@@ -61,6 +61,14 @@
   }
 }
 
+/* A <details> toggle styled as a button still renders a disclosure triangle
+   unless the marker is suppressed. */
+summary.btn {
+  list-style: none;
+
+  &::-webkit-details-marker { display: none; }
+}
+
 /* --- Colour variants ------------------------------------------------------ */
 
 .btn.approve { background-color: $primary-color; }

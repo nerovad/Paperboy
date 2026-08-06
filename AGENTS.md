@@ -62,6 +62,9 @@ Rules:
   height, padding, radius, or font.
 - `btn-primary` / `btn-secondary` / `btn-danger` / `btn-info` are legacy
   aliases kept so old markup renders. Do not use them in new code.
+- There is no `.button` class. Billing and Data Runner used to define
+  their own `.button` / `.button.primary` / `.button.danger` families;
+  both are gone. Use `.btn`.
 
 Not part of this system, and deliberately styled on their own — leave
 them alone:

@@ -8,10 +8,10 @@
       <%= button_to "Delete all",
                     destroy_backup_outputs_data_runner_dsl_path(@dsl.slug),
                     method: :delete,
-                    class: "button danger",
+                    class: "btn deny",
                     form: { data: { turbo_confirm: "Delete all backup files for #{@dsl.key}? This cannot be undone." } } %>
     <% end %>
-    <%= link_to "Close", outputs_data_runner_dsl_path(@dsl.slug), class: "button" %>
+    <%= link_to "Close", outputs_data_runner_dsl_path(@dsl.slug), class: "btn" %>
   </div>
 </div>
 
@@ -29,11 +29,11 @@
       <td><%= l(file.mtime, format: :short) %></td>
       <td>
         <div class="inline-actions">
-          <%= link_to "View", output_data_runner_dsl_path(@dsl.slug, path: relative_path), class: "button" %>
+          <%= link_to "View", output_data_runner_dsl_path(@dsl.slug, path: relative_path), class: "btn pdf" %>
           <%= button_to "Delete",
                         destroy_backup_output_data_runner_dsl_path(@dsl.slug, path: relative_path),
                         method: :delete,
-                        class: "button danger",
+                        class: "btn deny",
                         form: { data: { turbo_confirm: "Delete #{file.basename}? This cannot be undone." } } %>
         </div>
       </td>

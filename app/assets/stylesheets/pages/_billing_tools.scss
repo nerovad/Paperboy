@@ -37,40 +37,7 @@
     flex-wrap: wrap;
   }
 
-  .button {
-    @extend .form-btn;
-    min-height: 38px;
-    padding: 10px 16px;
-  }
-
-  .button.primary,
-  .button.report-action {
-    background: $slate-action;
-    color: $surface-base;
-
-    &:hover { background: $slate-action-hover; }
-  }
-
-  .button.reset {
-    background: $orange-action;
-    color: $surface-base;
-
-    &:hover { background: darken($orange-action, 8%); }
-  }
-
-  .button.cancel {
-    background: $neutral-button-bg;
-    color: $neutral-950;
-    border: 1px solid $neutral-border-light;
-
-    &:hover { background: $surface-control-hover; }
-  }
-
-  .button.small {
-    min-height: 32px;
-    padding: 7px 12px;
-    font-size: .85rem;
-  }
+  /* Buttons use the shared .btn system; see components/buttons. */
 }
 
 .billing-compute {

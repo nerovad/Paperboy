@@ -7,5 +7,5 @@
   <div class="field"><%= form.label :status %><%= form.select :status, DataRunner::Log::STATUSES %></div>
   <div class="field"><%= form.label :started_at %><%= form.datetime_local_field :started_at %></div>
   <div class="field"><%= form.label :completed_at %><%= form.datetime_local_field :completed_at %></div>
-  <div class="form-actions"><%= form.submit class: "button primary" %></div>
+  <div class="form-actions"><%= form.submit class: "btn approve" %></div>
 <% end %>

@@ -9,9 +9,9 @@ import { pbConfirm } from "pb_modal"
 // when the control that triggered it is destructive.
 Turbo.config.forms.confirm = (message, element, submitter) => {
   const source = submitter || element
-  // The three destructive button classes in use: .btn.deny (the standard),
-  // .btn.btn-danger (legacy alias) and .button.danger (Data Runner / Billing).
-  const destructive = ["deny", "btn-danger", "danger"]
+  // .btn.deny is the standard; .btn.btn-danger is the legacy alias still used
+  // by the form builder.
+  const destructive = ["deny", "btn-danger"]
     .some((name) => source?.classList?.contains(name))
 
   return pbConfirm({

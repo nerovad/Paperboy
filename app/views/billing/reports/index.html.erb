@@ -28,7 +28,7 @@
               <td>
                 <%= link_to(report_file.pdf? ? "View" : "Download",
                             billing_report_path(report_file.filename),
-                            class: "button report-action small", target: ("_blank" if report_file.pdf?)) %>
+                            class: "btn pdf compact", target: ("_blank" if report_file.pdf?)) %>
               </td>
             </tr>
           <% end %>

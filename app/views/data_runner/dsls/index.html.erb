@@ -7,7 +7,7 @@
       <div class="control-center-toolbar">
         <span data-dsl-group-target="count"><%= pluralize(@selected_entries.size, "DSL") %> in this group</span>
         <div class="control-center-actions">
-          <%= submit_tag "Save DSLs", class: "button primary" %>
+          <%= submit_tag "Save DSLs", class: "btn approve" %>
           <div class="field compact inline-field">
             <%= text_field_tag :new_group_name, nil,
                                required: true,
@@ -16,15 +16,15 @@
                                aria: { label: "Group name" },
                                data: { dsl_group_target: "renameInput", action: "input->dsl-group#syncRenameButton" } %>
           </div>
-          <%= button_tag "Update", type: "submit", class: "button",
+          <%= button_tag "Update", type: "submit", class: "btn",
                          form: "rename-group-form",
                          disabled: true,
                          data: { dsl_group_target: "renameButton",
                                  turbo_confirm: "Rename #{@selected_group.humanize}?" } %>
-          <%= button_tag "Delete", type: "submit", class: "button danger",
+          <%= button_tag "Delete", type: "submit", class: "btn deny",
                          form: "delete-group-form",
                          data: { turbo_confirm: "Delete #{@selected_group.humanize} and remove it from associated DSLs?" } %>
-          <%= button_tag "Refresh", type: "submit", class: "button success",
+          <%= button_tag "Refresh", type: "submit", class: "btn approve",
                          form: "refresh-group-form",
                          data: { turbo_confirm: "Run DataRunner:refresh for #{@selected_group.humanize}?" } %>
         </div>
@@ -61,6 +61,6 @@
   <section class="login-panel">
     <p class="eyebrow">County of Ventura GSA</p><h1>DataRunner</h1>
     <p>Sign in with your employee account to manage ETL workflows.</p>
-    <%= button_to "Employee sign in", auth_setup_path, method: :post, data: { turbo: false }, class: "button primary large" %>
+    <%= button_to "Employee sign in", auth_setup_path, method: :post, data: { turbo: false }, class: "btn approve" %>
   </section>
 <% end %>
