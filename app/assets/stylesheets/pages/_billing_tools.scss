@@ -131,6 +131,20 @@
   }
 }
 
+.billing-email-subjects {
+  max-width: 1200px;
+
+  .submission-table .form-control {
+    width: 100%;
+    min-width: 640px;
+  }
+}
+
+.billing-recipient-actions {
+  margin-top: -0.5rem;
+  margin-bottom: 1.5rem;
+}
+
 /* Billing sidebar action buttons and their confirmation modal. */
 
 .billing-sidebar {

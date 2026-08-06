@@ -7,6 +7,46 @@
              active_billing_period: @active_billing_period %>
 
   <%= form_with url: billing_email_reports_path, method: :post, data: { turbo: false } do %>
+    <section>
+      <h2>Email Recipients</h2>
+      <div class="billing-period-grid">
+        <table class="submission-table">
+          <thead>
+            <tr>
+              <th>Email Recipient</th>
+              <th>Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @recipients.each do |recipient| %>
+              <tr>
+                <td><%= recipient.email_address %></td>
+                <td>
+                  <%= render "billing/shared/boolean_toggle",
+                             name: "recipients[#{recipient.id}]",
+                             id_prefix: "recipient_#{recipient.id}",
+                             checked: @selected_recipient_ids.include?(recipient.id.to_s),
+                             aria_label: "Email #{recipient.email_address}" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <% if @recipients.empty? %>
+        <p>No email recipients have been configured.</p>
+      <% end %>
+
+      <div class="form-actions billing-recipient-actions">
+        <%= button_tag "Clear", type: :submit, name: :recipient_action, value: :clear,
+                                class: "button cancel" %>
+        <%= button_tag "Reset", type: :submit, name: :recipient_action, value: :reset,
+                                class: "button reset" %>
+      </div>
+    </section>
+
+    <h2>Billing Reports</h2>
     <div class="billing-period-grid">
       <table class="submission-table">
         <thead>
