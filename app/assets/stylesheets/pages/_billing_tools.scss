@@ -174,13 +174,19 @@
 }
 
 .billing-recipient-entry {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
   align-items: stretch;
   gap: .75rem;
+  width: 100%;
 
   .form-control {
-    flex: 1 1 auto;
+    width: 100%;
     min-width: 0;
+  }
+
+  .btn {
+    justify-self: start;
   }
 }
 
