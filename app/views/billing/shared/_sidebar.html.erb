@@ -11,9 +11,6 @@
   <%= render "shared/app_switcher" %>
 
   <nav class="billing-links">
-    <%= link_to "Home", billing_root_path,
-                class: "nav-link#{' active' if current_page?(billing_root_path)}" %>
-
     <div class="billing-tool-section">
       <% tools.each do |tool| %>
         <% if tool[:page] %>
