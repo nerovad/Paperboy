@@ -5,8 +5,8 @@
     The tools that used to make up the /billing_tools page live here now.
     Full-page tools render as links; immediate actions use small forms and a
     shared confirmation modal. The list and permission check are in
-    BillingHelper#billing_tool_sections. %>
-<% tool_sections = billing_tool_sections %>
+    BillingHelper#billing_tools. %>
+<% tools = billing_tools %>
 <div class="sidebar billing-sidebar" data-controller="billing-modal">
   <%= render "shared/app_switcher" %>
 
@@ -14,32 +14,29 @@
     <%= link_to "Home", billing_root_path,
                 class: "nav-link#{' active' if current_page?(billing_root_path)}" %>
 
-    <% tool_sections.each do |section, tools| %>
-      <div class="billing-tool-section">
-        <h3 class="billing-tool-heading"><%= section %></h3>
-        <% tools.each do |tool| %>
-          <% if tool[:page] %>
-            <%= link_to tool[:label], tool[:path],
-                        class: "nav-link#{' active' if current_page?(tool[:path])}" %>
-          <% else %>
-            <%= form_with url: tool[:path], method: :post, data: { turbo: false } do %>
-              <% if tool[:dates] %>
-                <%= hidden_field_tag :s_date, nil, id: nil %>
-                <%= hidden_field_tag :e_date, nil, id: nil %>
-              <% end %>
-              <button type="submit" class="nav-link billing-tool-btn"
-                      data-action="click->billing-modal#open"
-                      data-requires-dates="<%= tool[:dates] %>"
-                      data-confirm-title="<%= tool[:label] %>"
-                      data-confirm-message="<%= tool[:confirm] %>">
-                <%= tool[:label] %>
-              </button>
+    <div class="billing-tool-section">
+      <% tools.each do |tool| %>
+        <% if tool[:page] %>
+          <%= link_to tool[:label], tool[:path],
+                      class: "nav-link#{' active' if current_page?(tool[:path])}" %>
+        <% else %>
+          <%= form_with url: tool[:path], method: :post, data: { turbo: false } do %>
+            <% if tool[:dates] %>
+              <%= hidden_field_tag :s_date, nil, id: nil %>
+              <%= hidden_field_tag :e_date, nil, id: nil %>
             <% end %>
+            <button type="submit" class="nav-link billing-tool-btn"
+                    data-action="click->billing-modal#open"
+                    data-requires-dates="<%= tool[:dates] %>"
+                    data-confirm-title="<%= tool[:label] %>"
+                    data-confirm-message="<%= tool[:confirm] %>">
+              <%= tool[:label] %>
+            </button>
           <% end %>
         <% end %>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
   </nav>
 
-  <%= render "billing/shared/tools_modal" if tool_sections.any? %>
+  <%= render "billing/shared/tools_modal" if tools.any? %>
 </div>

@@ -55,15 +55,6 @@
     border-top: 1px solid rgba(255, 255, 255, 0.15);
   }
 
-  .billing-tool-heading {
-    margin: 0 0 6px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: rgba(255, 255, 255, 0.65);
-  }
-
   /* Each button is wrapped in its own small form, so the form must not add
      spacing of its own — the .nav-link margins already do that. */
   form {
