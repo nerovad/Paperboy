@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 require 'axlsx'
-require 'prawn'
-require 'prawn/table'
 
 module Billing
   class ReportGenerator
     NAMES_PROCEDURE = 'GSABSS.dbo.Export_TC60_Billing_Report_Names'
     DATA_PROCEDURE = 'GSABSS.dbo.Export_TC60_To_Billing_File'
     VERSION = '01'
-    PDF_ROWS_PER_PAGE = 29
 
     def initialize(report)
       @report = report
@@ -75,38 +72,7 @@ module Billing
     end
 
     def build_pdf(definition, result)
-      Prawn::Document.new(page_layout: :landscape, page_size: 'A3', margin: 24) do |pdf|
-        pdf_pages(pdf, definition, result)
-      end.render
-    end
-
-    def pdf_pages(pdf, definition, result)
-      batches = result.rows.each_slice(PDF_ROWS_PER_PAGE).to_a
-      batches = [[]] if batches.empty?
-
-      batches.each_with_index do |rows, index|
-        pdf.start_new_page unless index.zero?
-        pdf_header(pdf, definition)
-        pdf_table(pdf, result.columns, rows)
-      end
-    end
-
-    def pdf_header(pdf, definition)
-      pdf.text definition.fetch('name'), size: 14, style: :bold
-      pdf.text "#{report.start_date} through #{report.end_date}", size: 8
-      pdf.move_down 8
-    end
-
-    def pdf_table(pdf, columns, rows)
-      return if columns.empty?
-
-      widths = Array.new(columns.length, pdf.bounds.width / columns.length)
-      pdf.table([columns] + rows.map { |row| row.map(&:to_s) },
-                column_widths: widths, cell_style: { size: 4, padding: 2, overflow: :shrink_to_fit }) do
-        row(0).font_style = :bold
-        row(0).background_color = '64748B'
-        row(0).text_color = 'FFFFFF'
-      end
+      PdfReportRenderer.new(report, definition, result).call
     end
 
     def query(sql, *values)
