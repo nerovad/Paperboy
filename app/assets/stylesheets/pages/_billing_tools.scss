@@ -43,6 +43,11 @@
   }
 }
 
+.billing-report-files .submission-table thead th {
+  background: $slate-action;
+  color: $surface-base;
+}
+
 /* Billing tools: the sidebar buttons and the confirm modal they open.
    These were a standalone /billing_tools page; the page's section/grid
    styling went with it, and what is left is the sidebar treatment plus the

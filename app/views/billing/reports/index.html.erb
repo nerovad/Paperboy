@@ -1,0 +1,36 @@
+<div class="form-header">
+  <h1>Billing Reports</h1>
+</div>
+
+<div class="form-wrapper billing-report-files">
+  <% if @report_files.any? %>
+    <div class="billing-period-grid">
+      <table class="submission-table">
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Modified</th>
+            <th>Size</th>
+            <th>View</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @report_files.each do |report_file| %>
+            <tr>
+              <td><%= report_file.filename %></td>
+              <td><%= l(report_file.modified_at, format: :short) %></td>
+              <td><%= number_to_human_size(report_file.size) %></td>
+              <td>
+                <%= link_to(report_file.pdf? ? "View" : "Download",
+                            billing_report_path(report_file.filename),
+                            class: "button small", target: ("_blank" if report_file.pdf?)) %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p>No Billing reports have been generated.</p>
+  <% end %>
+</div>

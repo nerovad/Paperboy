@@ -14,6 +14,8 @@ output/data_runner/03_SQL_MAP/
 output/data_runner/04_SQL_SCHEMA/
 output/data_runner/05_DSL_Applied/
 output/data_runner/06_Download_Backup/
+/output/billing/*
+!/output/billing/.keep
 /config/master.key
 /config/credentials.yml.enc
 !/tmp/pids/

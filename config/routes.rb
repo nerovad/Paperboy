@@ -36,6 +36,7 @@ Rails.application.routes.draw do
 
     get 'monthly_reports/:operation', to: 'monthly_reports#show', as: :monthly_report
     post 'monthly_reports/:operation', to: 'monthly_reports#create', as: :process_monthly_report
+    resources :reports, only: %i[index show], param: :filename, format: false
 
     # The stored-procedure buttons in the Billing sidebar. They were top-level
     # /billing_tools routes; the path helper names are unchanged

@@ -6,7 +6,7 @@ module Billing
 
     OPERATIONS = {
       'run' => {
-        title: 'Run Monthly Billing', button: 'Run Monthly Billing',
+        title: 'Run Billing', button: 'Run Billing',
         procedures: ['GSABSS.dbo.MonthlyBilling']
       },
       'print' => {

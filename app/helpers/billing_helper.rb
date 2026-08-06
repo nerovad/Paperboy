@@ -17,8 +17,9 @@ module BillingHelper
     { key: 'raw_data', label: 'Get Raw Data',
       route: :backup_staging_billing_tools_path, dates: false,
       confirm: 'Run the raw data query?' },
-    { key: 'run_monthly_billing', label: 'Run Monthly Billing', operation: 'run', page: true },
+    { key: 'run_monthly_billing', label: 'Run Billing', operation: 'run', page: true },
     { key: 'print_reports', label: 'Print Billing Reports', operation: 'print', page: true },
+    { key: 'view_reports', label: 'View Billing Reports', route: :billing_reports_path, page: true },
     { key: 'email_reports', label: 'Email Billing Reports', operation: 'email', page: true }
   ].freeze
 
