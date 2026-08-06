@@ -32,13 +32,6 @@ module Billing
       end
     end
 
-    def display_text
-      <<~TEXT.chomp
-        Fiscal Year | APMON | Start Date | End Date
-        #{fiscal_year} | #{apmon} | #{start_date.iso8601} | #{end_date.iso8601}
-      TEXT
-    end
-
     private
 
     def ordered_dates

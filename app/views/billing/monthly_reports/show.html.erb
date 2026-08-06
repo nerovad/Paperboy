@@ -7,11 +7,8 @@
                 method: :post,
                 scope: :billing_monthly_report,
                 data: { turbo: false } do %>
-    <div class="form-group">
-      <%= label_tag :active_billing_period, "Active Billing Period" %>
-      <%= text_area_tag :active_billing_period, @active_billing_period.display_text,
-                       readonly: true, class: "form-control", rows: 2 %>
-    </div>
+    <%= render "billing/shared/active_billing_period",
+               active_billing_period: @active_billing_period %>
 
     <div class="form-group">
       <%= label_tag :procedure_names, "Stored Procedure".pluralize(@report.procedure_names.length) %>

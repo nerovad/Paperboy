@@ -71,6 +71,13 @@
 .billing-compute {
   max-width: 720px;
 
+  .billing-period-label {
+    display: block;
+    margin-bottom: .5rem;
+    font-weight: 600;
+    color: $label-color;
+  }
+
   .billing-period-grid {
     margin: 1.25rem 0;
     overflow-x: auto;
