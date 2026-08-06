@@ -4,16 +4,17 @@ module Billing
   class MonthlyReportsController < BaseController
     before_action :require_system_admin
     before_action :require_valid_operation
-    before_action :load_periods
+    before_action :load_active_billing_period
 
     def show
       @report = MonthlyReport.new(operation: params[:operation])
-      apply_current_period
+      apply_active_period
       render :show
     end
 
     def create
-      @report = MonthlyReport.new(report_params.merge(operation: params[:operation]))
+      @report = MonthlyReport.new(operation: params[:operation])
+      apply_active_period
       return render_invalid unless @report.valid?
 
       process_report
@@ -25,28 +26,23 @@ module Billing
 
     private
 
-    def report_params
-      params.expect(billing_monthly_report: %i[start_date end_date])
-    end
-
     def require_valid_operation
       return if MonthlyReport::OPERATIONS.key?(params[:operation])
 
       redirect_to billing_root_path, alert: 'Unknown monthly report operation.'
     end
 
-    def load_periods
-      @fiscal_periods = FiscalPeriods.for
+    def load_active_billing_period
+      @active_billing_period = ActiveBillingPeriod.current
+      return if @active_billing_period
+
+      redirect_to billing_reporting_period_path,
+                  alert: 'Select an active billing period before running Billing reports.'
     end
 
-    def apply_current_period
-      period = @fiscal_periods.find do |candidate|
-        Date.current.between?(candidate['sdate'].to_date, candidate['edate'].to_date)
-      end
-      return unless period
-
-      @report.start_date = period['sdate'].to_date.iso8601
-      @report.end_date = period['edate'].to_date.iso8601
+    def apply_active_period
+      @report.start_date = @active_billing_period.start_date.iso8601
+      @report.end_date = @active_billing_period.end_date.iso8601
     end
 
     def render_invalid

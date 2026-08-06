@@ -14,6 +14,7 @@ module BillingHelper
   # Monthly report operations share Billing::MonthlyReportsController; Get Raw
   # Data retains its legacy action until its replacement workflow is designed.
   BILLING_TOOLS = [
+    { key: 'reporting_period', label: 'Reporting Period', route: :billing_reporting_period_path, page: true },
     { key: 'raw_data', label: 'Get Raw Data',
       route: :backup_staging_billing_tools_path, dates: false,
       confirm: 'Run the raw data query?' },
