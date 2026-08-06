@@ -1,5 +1,47 @@
 @import "base/tokens";
 
+.billing-compute {
+  max-width: 720px;
+
+  .billing-period-grid {
+    margin: 1.25rem 0;
+    overflow-x: auto;
+  }
+
+  .billing-period-grid .submission-table thead th {
+    background: $slate-action;
+    color: $surface-base;
+  }
+
+  .billing-period-use {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .billing-period-yes { display: none; }
+
+  input:checked ~ .billing-period-no { display: none; }
+  input:checked ~ .billing-period-yes { display: inline; }
+
+  .billing-date-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  input[readonly] {
+    background: $surface-control;
+    color: $neutral-700;
+  }
+
+  @media (max-width: 800px) {
+    .billing-date-fields { grid-template-columns: 1fr; }
+  }
+}
+
 /* Billing tools: the sidebar buttons and the confirm modal they open.
    These were a standalone /billing_tools page; the page's section/grid
    styling went with it, and what is left is the sidebar treatment plus the

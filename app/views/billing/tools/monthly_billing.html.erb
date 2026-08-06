@@ -1,0 +1,74 @@
+<div class="form-header">
+  <h1>Run Monthly Billing</h1>
+</div>
+
+<div class="form-wrapper billing-compute">
+  <%= form_with url: run_monthly_billing_billing_tools_path,
+                method: :post,
+                data: { turbo: false, controller: "billing-tools",
+                        action: "submit->billing-tools#validate" } do %>
+    <div class="form-group">
+      <%= label_tag :procedure_name, "Stored Procedure" %>
+      <%= text_field_tag :procedure_name, "GSABSS.dbo.MonthlyBilling", readonly: true,
+                                                        class: "form-control" %>
+    </div>
+
+    <div class="billing-period-grid">
+      <table class="submission-table">
+        <thead>
+          <tr>
+            <th>Fiscal Year</th>
+            <th>APMon</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Use</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @fiscal_periods.each do |period| %>
+            <% start_date = period["sdate"].to_date.iso8601 %>
+            <% end_date = period["edate"].to_date.iso8601 %>
+            <tr>
+              <td><%= period["fyear"] %></td>
+              <td><%= period["apmon"] %></td>
+              <td><%= start_date %></td>
+              <td><%= end_date %></td>
+              <td>
+                <label class="billing-period-use">
+                  <%= radio_button_tag :fiscal_period, period["apmon"],
+                                       start_date == @start_date && end_date == @end_date,
+                                       data: { action: "click->billing-tools#selectPeriod change->billing-tools#selectPeriod",
+                                               billing_tools_target: "fiscalPeriod",
+                                               start_date: start_date, end_date: end_date } %>
+                  <span class="billing-period-no">No</span>
+                  <span class="billing-period-yes">Yes</span>
+                </label>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="billing-date-fields">
+      <div class="form-group">
+        <%= label_tag :s_date, "Start Date" %>
+        <%= date_field_tag :s_date, @start_date, required: true,
+                                              class: "form-control",
+                                              data: { billing_tools_target: "startDate" } %>
+      </div>
+
+      <div class="form-group">
+        <%= label_tag :e_date, "End Date" %>
+        <%= date_field_tag :e_date, @end_date, required: true,
+                                            class: "form-control",
+                                            data: { billing_tools_target: "endDate" } %>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <%= submit_tag "Compute", class: "button primary" %>
+      <%= link_to "Cancel", billing_root_path, class: "button" %>
+    </div>
+  <% end %>
+</div>

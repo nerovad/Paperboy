@@ -4,13 +4,12 @@
 #
 # The Billing app's sidebar tools. These were buttons on the standalone
 # /billing_tools page reached from the Paperboy sidebar; the page is gone and
-# each entry is now a button in the Billing sidebar that opens the shared
-# confirm modal and posts to Billing::ToolsController. Labels, confirm text and
-# order live here so the sidebar partial stays markup.
+# each entry is now available from the Billing sidebar. Monthly Billing opens
+# its compute form; the remaining tools confirm before posting to the tools
+# controller. Labels, confirm text and order live here.
 module BillingHelper
-  # In sidebar order. +route+ is the path helper the button posts to, +dates+
-  # says whether the confirm modal collects a start/end date first, and
-  # +section+ groups the buttons under a heading.
+  # In sidebar order. +route+ is the destination path helper, +page+ identifies
+  # a full-page tool, and +dates+ says whether a modal collects a date range.
   #
   # Get Raw Data, Print Reports and Email Reports post to backup_staging: that
   # is placeholder wiring carried over verbatim from the old page rather than
@@ -26,8 +25,7 @@ module BillingHelper
       route: :backup_production_billing_tools_path, dates: false,
       confirm: 'Back up the production database? This may take a while.' },
     { key: 'run_monthly_billing', label: 'Run Monthly Billing', section: 'Billing & Reports',
-      route: :run_monthly_billing_billing_tools_path, dates: true,
-      confirm: 'Kick off MonthlyBilling with these dates?' },
+      route: :monthly_billing_billing_tools_path, page: true },
     { key: 'print_reports', label: 'Print Reports', section: 'Billing & Reports',
       route: :backup_staging_billing_tools_path, dates: true,
       confirm: 'Generate and print billing reports for this period?' },

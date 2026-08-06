@@ -10,6 +10,7 @@ import ConfirmController from "controllers/confirm_controller"
 import DenyModalController from "controllers/deny_modal_controller"
 import PhoneController from "controllers/phone_controller"
 import BillingModalController from "controllers/billing_modal_controller"
+import BillingToolsController from "controllers/billing_tools_controller"
 import ApproveModalController from "controllers/approve_modal_controller"
 import ReassignModalController from "controllers/reassign_modal_controller"
 import ChoicesController from "controllers/choices_controller"
@@ -67,6 +68,7 @@ application.register("confirm", ConfirmController)
 application.register("deny-modal", DenyModalController)
 application.register("phone", PhoneController)
 application.register("billing-modal", BillingModalController)
+application.register("billing-tools", BillingToolsController)
 application.register("approve-modal", ApproveModalController)
 application.register("reassign-modal", ReassignModalController)
 application.register("choices", ChoicesController)
