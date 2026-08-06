@@ -2,32 +2,31 @@
     Sidebar for the Billing app. The app switcher header is shared with
     every other app; everything below it is this app's own navigation.
 
-    The tools that used to make up the /billing_tools page live here now.
-    Full-page tools render as links; immediate actions use small forms and a
-    shared confirmation modal. The list and permission check are in
-    BillingHelper#billing_tools. %>
-<% tools = billing_tools %>
+    Page entries are links. Action entries are POST forms confirmed through
+    the shared modal. Billing::BillingHelper supplies the ordered entries and
+    limits them to system administrators. %>
+<% items = billing_sidebar_items %>
 <div class="sidebar billing-sidebar" data-controller="billing-modal">
   <%= render "shared/app_switcher" %>
 
   <nav class="billing-links">
     <div class="billing-tool-section">
-      <% tools.each do |tool| %>
-        <% if tool[:page] %>
-          <%= link_to tool[:label], tool[:path],
-                      class: "nav-link#{' active' if current_page?(tool[:path])}" %>
+      <% items.each do |item| %>
+        <% if item[:page] %>
+          <%= link_to item[:label], item[:path],
+                      class: "nav-link#{' active' if current_page?(item[:path])}" %>
         <% else %>
-          <%= form_with url: tool[:path], method: :post, data: { turbo: false } do %>
-            <% if tool[:dates] %>
+          <%= form_with url: item[:path], method: :post, data: { turbo: false } do %>
+            <% if item[:dates] %>
               <%= hidden_field_tag :s_date, nil, id: nil %>
               <%= hidden_field_tag :e_date, nil, id: nil %>
             <% end %>
             <button type="submit" class="nav-link billing-tool-btn"
                     data-action="click->billing-modal#open"
-                    data-requires-dates="<%= tool[:dates] %>"
-                    data-confirm-title="<%= tool[:label] %>"
-                    data-confirm-message="<%= tool[:confirm] %>">
-              <%= tool[:label] %>
+                    data-requires-dates="<%= item[:dates] %>"
+                    data-confirm-title="<%= item[:label] %>"
+                    data-confirm-message="<%= item[:confirm] %>">
+              <%= item[:label] %>
             </button>
           <% end %>
         <% end %>
@@ -35,5 +34,5 @@
     </div>
   </nav>
 
-  <%= render "billing/shared/tools_modal" if tools.any? %>
+  <%= render "billing/shared/tools_modal" if items.any? %>
 </div>

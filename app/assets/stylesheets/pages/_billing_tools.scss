@@ -113,11 +113,7 @@
   }
 }
 
-/* Billing tools: the sidebar buttons and the confirm modal they open.
-   These were a standalone /billing_tools page; the page's section/grid
-   styling went with it, and what is left is the sidebar treatment plus the
-   modal, which is rendered from the sidebar but positioned against the
-   viewport. */
+/* Billing sidebar action buttons and their confirmation modal. */
 
 .billing-sidebar {
   .billing-tool-section {

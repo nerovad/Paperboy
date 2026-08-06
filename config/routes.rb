@@ -42,10 +42,7 @@ Rails.application.routes.draw do
     resources :reports, only: %i[index show], param: :filename, format: false,
                         constraints: { filename: %r{[^/]+} }
 
-    # The stored-procedure buttons in the Billing sidebar. They were top-level
-    # /billing_tools routes; the path helper names are unchanged
-    # (backup_staging_billing_tools_path and friends), only the URLs moved
-    # under /billing.
+    # POST-only endpoints for Billing database maintenance actions.
     resources :tools, only: [] do
       collection do
         post :move_to_production

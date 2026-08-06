@@ -1,14 +1,9 @@
 # frozen_string_literal: true
 
 module Billing
-  # The stored-procedure actions behind the Billing sidebar's tool buttons.
-  # These used to live on a top-level BillingToolsController with its own
-  # /billing_tools page; the page is gone and the buttons moved into the
-  # sidebar, but the actions and the procs they call are unchanged.
-  #
-  # Access is deliberately narrower than the rest of the Billing app: the app
-  # gate comes from BaseController, and require_system_admin keeps these
-  # destructive procs system-admin-only, exactly as they were before the move.
+  # Runs POST-only GSABSS maintenance actions. Billing application access is
+  # enforced by BaseController; these database-changing actions additionally
+  # require system-administrator access.
   class ToolsController < BaseController
     before_action :require_system_admin
 
