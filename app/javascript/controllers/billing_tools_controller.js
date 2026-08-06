@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus";
 
 // Connects to data-controller="billing-tools"
 export default class extends Controller {
-  static targets = ["startDate", "endDate", "fiscalPeriod", "form"]
+  static targets = ["startDate", "endDate", "fiscalPeriod", "form", "submit"]
 
   connect() {
     this.formTargets.forEach(form => {
@@ -25,7 +25,11 @@ export default class extends Controller {
       event.preventDefault()
       this.endDateTarget.setCustomValidity("End date must be on or after start date.")
       this.endDateTarget.reportValidity()
+      return
     }
+
+    this.submitTarget.disabled = true
+    this.submitTarget.value = "Starting…"
   }
 
   selectPeriod(event) {

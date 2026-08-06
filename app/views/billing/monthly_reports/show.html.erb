@@ -69,7 +69,8 @@
     </div>
 
     <div class="form-actions">
-      <%= submit_tag @report.button_label, class: "button primary" %>
+      <%= submit_tag @report.button_label, class: "button primary",
+                                           data: { billing_tools_target: "submit" } %>
       <%= link_to "Cancel", billing_root_path, class: "button" %>
     </div>
   <% end %>

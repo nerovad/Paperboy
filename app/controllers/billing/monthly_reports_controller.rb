@@ -68,10 +68,13 @@ module Billing
     end
 
     def print_billing_reports
-      artifacts = ReportGenerator.new(@report).call
-      ReportWriter.new(artifacts).call
-      filename = "billing-reports-#{@report.start_date}-#{@report.end_date}.zip"
-      send_data ReportBundle.new(artifacts).call, filename: filename, type: 'application/zip'
+      Billing::ReportGenerationJob.perform_later(
+        operation: @report.operation,
+        start_date: @report.start_date,
+        end_date: @report.end_date
+      )
+      redirect_to billing_reports_path,
+                  notice: 'Billing report generation started. Refresh to see completed files.'
     end
 
     def email_billing_reports
@@ -81,12 +84,14 @@ module Billing
         return render_invalid
       end
 
-      artifacts = ReportGenerator.new(@report).call
-      ReportWriter.new(artifacts).call
-      artifacts.each do |artifact|
-        recipients.each { |recipient| BillingReportMailer.monthly_report(recipient, artifact).deliver_now }
-      end
-      redirect_to billing_root_path, notice: 'Billing reports emailed successfully'
+      Billing::ReportGenerationJob.perform_later(
+        operation: @report.operation,
+        start_date: @report.start_date,
+        end_date: @report.end_date,
+        recipients: recipients
+      )
+      redirect_to billing_reports_path,
+                  notice: 'Billing report generation and email delivery started.'
     end
   end
 end
