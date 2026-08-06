@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require 'axlsx'
+require 'bigdecimal'
 
 module Billing
   class XlsxReportRenderer
     BILLING_LABEL_INDEX = 27
+    DECIMAL_COLUMN_INDEXES = [7, 23, 24, 25].freeze
+    COST_COLUMN_INDEX = 25
     HEADER_COLORS = {
       (0..6) => '95DCF7',
       (7..7) => 'D9F2D0',
@@ -34,8 +37,7 @@ module Billing
     def add_data_sheet(workbook)
       workbook.add_worksheet(name: 'Data') do |sheet|
         styles = build_styles(sheet)
-        header = sheet.add_row(header_values, style: header_styles(styles))
-        header.cells.last.escape_formulas = false
+        sheet.add_row(header_values, style: header_styles(styles))
         add_data_rows(sheet, styles)
         add_filter(sheet)
       end
@@ -50,12 +52,13 @@ module Billing
         headers: headers,
         label: sheet.styles.add_style(b: true),
         currency: sheet.styles.add_style(num_fmt: 4),
-        count: sheet.styles.add_style(num_fmt: 3)
+        count: sheet.styles.add_style(num_fmt: 3),
+        decimal: sheet.styles.add_style(num_fmt: 2)
       }
     end
 
     def header_values
-      pad_to_summary(result.columns) + ['Billing Amount', billing_amount_formula]
+      pad_to_summary(result.columns) + ['Billing Amount', billing_amount]
     end
 
     def header_styles(styles)
@@ -67,22 +70,29 @@ module Billing
       rows = result.rows.presence || [[]]
       rows.each_with_index do |row, index|
         values = row
-        row_styles = []
-        next sheet.add_row(values) unless index.zero?
+        row_styles = data_styles(styles)
+        next sheet.add_row(values, style: row_styles) unless index.zero?
 
-        values = pad_to_summary(values) + ['Number of Lines', '=COUNTA(A:A)-1']
+        values = pad_to_summary(values) + ['Number of Lines', result.rows.length]
         row_styles = pad_to_summary(row_styles) + [styles[:label], styles[:count]]
-        summary_row = sheet.add_row(values, style: row_styles)
-        summary_row.cells.last.escape_formulas = false
+        sheet.add_row(values, style: row_styles)
       end
     end
 
-    def billing_amount_formula
-      cost_index = result.columns.index { |column| column.to_s.casecmp('cost').zero? }
-      raise ArgumentError, 'Billing report is missing the COST column' unless cost_index
+    def data_styles(styles)
+      Array.new(result.columns.length).tap do |values|
+        DECIMAL_COLUMN_INDEXES.each do |index|
+          values[index] = styles[:decimal] if index < values.length
+        end
+      end
+    end
 
-      column = Axlsx.col_ref(cost_index)
-      "=SUM(#{column}:#{column})"
+    def billing_amount
+      result.rows.sum(BigDecimal('0')) do |row|
+        BigDecimal(row.fetch(COST_COLUMN_INDEX, 0).to_s)
+      rescue ArgumentError
+        BigDecimal('0')
+      end
     end
 
     def pad_to_summary(values)
