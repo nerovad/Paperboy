@@ -19,10 +19,19 @@
             <tr>
               <td><%= billing_type.code %></td>
               <td>
-                <%= select_tag "active[#{billing_type.code}]",
-                               options_for_select([["0 - false", "0"], ["1 - true", "1"]],
-                                                  billing_type.active? ? "1" : "0"),
-                               class: "form-control" %>
+                <div class="billing-active-toggle" role="radiogroup"
+                     aria-label="Active state for <%= billing_type.code %>">
+                  <%= radio_button_tag "active[#{billing_type.code}]", "1", billing_type.active?,
+                                       id: "active_#{billing_type.code}_true",
+                                       class: "billing-active-toggle__input billing-active-toggle__input--true" %>
+                  <%= label_tag "active_#{billing_type.code}_true", "True",
+                                class: "billing-active-toggle__option" %>
+                  <%= radio_button_tag "active[#{billing_type.code}]", "0", !billing_type.active?,
+                                       id: "active_#{billing_type.code}_false",
+                                       class: "billing-active-toggle__input billing-active-toggle__input--false" %>
+                  <%= label_tag "active_#{billing_type.code}_false", "False",
+                                class: "billing-active-toggle__option" %>
+                </div>
               </td>
               <td><%= billing_type.name %></td>
               <td><%= billing_type.funding_type %></td>

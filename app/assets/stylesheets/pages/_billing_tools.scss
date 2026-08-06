@@ -113,6 +113,48 @@
   }
 }
 
+.billing-active-toggle {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(64px, 1fr));
+  border: 1px solid $neutral-border-light;
+  border-radius: 6px;
+  overflow: hidden;
+
+  &__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &__option {
+    padding: 7px 12px;
+    margin: 0;
+    background: $neutral-button-bg;
+    color: $neutral-700;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+  }
+
+  &__input--false:checked + &__option {
+    background: $danger;
+    color: $surface-base;
+  }
+
+  &__input--true:checked + &__option {
+    background: $primary-color;
+    color: $surface-base;
+  }
+
+  &__input:focus-visible + &__option {
+    outline: 3px solid rgba($blue-action, .35);
+    outline-offset: -3px;
+  }
+}
+
 /* Billing sidebar action buttons and their confirmation modal. */
 
 .billing-sidebar {
