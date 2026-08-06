@@ -7,6 +7,7 @@ module Billing
     # submit a POST after the shared confirmation modal is accepted.
     SIDEBAR_ITEMS = [
       { key: 'reporting_period', label: 'Reporting Period', route: :billing_reporting_period_path, page: true },
+      { key: 'data_refresh', label: 'Refresh Data', route: :billing_data_refresh_path, page: true },
       { key: 'enable_billing', label: 'Enable Billing', route: :billing_billing_types_path, page: true },
       { key: 'run_monthly_billing', label: 'Run Billing', operation: 'run', page: true },
       { key: 'print_reports', label: 'Print Billing Reports', operation: 'print', page: true },

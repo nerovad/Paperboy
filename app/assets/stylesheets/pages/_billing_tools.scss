@@ -15,6 +15,11 @@
 }
 
 .billing-form {
+  .billing-period-grid {
+    margin: 1.25rem 0;
+    overflow-x: auto;
+  }
+
   .submission-table thead th {
     background: $slate-action;
     color: $surface-base;
@@ -76,11 +81,6 @@
     margin-bottom: .5rem;
     font-weight: 600;
     color: $label-color;
-  }
-
-  .billing-period-grid {
-    margin: 1.25rem 0;
-    overflow-x: auto;
   }
 
   .billing-period-use {
@@ -152,6 +152,29 @@
   &__input:focus-visible + &__option {
     outline: 3px solid rgba($blue-action, .35);
     outline-offset: -3px;
+  }
+}
+
+.billing-refresh-result {
+  margin-top: 1.5rem;
+
+  h2 {
+    margin-bottom: .75rem;
+    font-size: 1.1rem;
+  }
+
+  pre {
+    max-height: 36rem;
+    margin: 0;
+    padding: 16px;
+    overflow: auto;
+    border-radius: 8px;
+    background: $neutral-950;
+    color: $surface-base;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .85rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
   }
 }
 

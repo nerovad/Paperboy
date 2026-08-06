@@ -35,6 +35,7 @@ Rails.application.routes.draw do
     root 'dashboard#index'
 
     resource :reporting_period, only: %i[show update]
+    resource :data_refresh, only: %i[show update]
     get 'enable', to: 'billing_types#index', as: :billing_types
     patch 'enable', to: 'billing_types#update'
     get 'monthly_reports/:operation', to: 'monthly_reports#show', as: :monthly_report

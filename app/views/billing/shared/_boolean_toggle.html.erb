@@ -1,0 +1,8 @@
+<div class="billing-active-toggle" role="radiogroup" aria-label="<%= aria_label %>">
+  <%= radio_button_tag name, "1", checked, id: "#{id_prefix}_true",
+                                            class: "billing-active-toggle__input billing-active-toggle__input--true" %>
+  <%= label_tag "#{id_prefix}_true", "True", class: "billing-active-toggle__option" %>
+  <%= radio_button_tag name, "0", !checked, id: "#{id_prefix}_false",
+                                             class: "billing-active-toggle__input billing-active-toggle__input--false" %>
+  <%= label_tag "#{id_prefix}_false", "False", class: "billing-active-toggle__option" %>
+</div>
