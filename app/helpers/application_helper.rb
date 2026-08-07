@@ -151,19 +151,21 @@ module ApplicationHelper
   end
 
   def coa_home_images
-    [
-      { src: 'coa/slide_01.png', alt: 'Organized accounting ledger' },
-      { src: 'coa/slide_02.png', alt: 'Hierarchical account structure' },
-      { src: 'coa/slide_03.png', alt: 'Balanced account reconciliation' }
-    ]
+    [{ src: 'coa/slide_01.png', alt: 'Organized accounting ledger' },
+     { src: 'coa/slide_02.png', alt: 'Hierarchical account structure' },
+     { src: 'coa/slide_03.png', alt: 'Balanced account reconciliation' }]
   end
 
   def aim_home_images
-    [
-      { src: 'aim/slide_01.png', alt: 'Invoice reconciliation' },
-      { src: 'aim/slide_02.png', alt: 'Invoice review and approval' },
-      { src: 'aim/slide_03.png', alt: 'Approved invoice routing' }
-    ]
+    [{ src: 'aim/slide_01.png', alt: 'Invoice reconciliation' },
+     { src: 'aim/slide_02.png', alt: 'Invoice review and approval' },
+     { src: 'aim/slide_03.png', alt: 'Approved invoice routing' }]
+  end
+
+  def print_production_home_images
+    [{ src: 'print_production/slide_01.png', alt: 'Complex document printing' },
+     { src: 'print_production/slide_02.png', alt: 'Document folding and envelope insertion' },
+     { src: 'print_production/slide_03.png', alt: 'Finished mail distribution' }]
   end
 
   # Which sub-application the current request belongs to, keyed to

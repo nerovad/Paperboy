@@ -1,13 +1,3 @@
-<div class="form-header">
-  <h1>Print Production</h1>
-</div>
-
-<div class="form-wrapper">
-  <p>Hello World! This is the starting page for Print Production.</p>
-  <p>
-    Replace this view (<code>app/views/print_production/dashboard/index.html.erb</code>) with
-    the real thing, and add pages by creating controllers under
-    <code>app/controllers/print_production/</code> that inherit from
-    <code>PrintProduction::BaseController</code>.
-  </p>
-</div>
+<% content_for :image do %>
+  <%= render "shared/slideshow", images: print_production_home_images %>
+<% end %>
