@@ -276,11 +276,32 @@
 
 .billing-audit-detail-actions { margin-top: 1.5rem; }
 
-.billing-audit-rows { max-width: none; }
+.billing-audit-rows {
+  min-width: 0;
+  max-width: none;
+}
 
 .billing-audit-rows-table {
+  width: 100%;
   max-width: 100%;
-  overflow-x: auto;
+  min-width: 0;
+  height: clamp(18rem, 50vh, 36rem);
+  overflow: scroll;
+  scrollbar-gutter: stable;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  box-sizing: border-box;
+
+  table {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
 
   th,
   td { white-space: nowrap; }

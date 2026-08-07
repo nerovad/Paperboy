@@ -2,10 +2,12 @@
   <h1>TC60 Audit Rows: <%= @audit_check&.label || params[:key].to_s.upcase %></h1>
 </div>
 
-<div class="form-wrapper billing-form billing-audit billing-audit-rows">
+<div class="form-wrapper billing-form billing-compute">
   <%= render "billing/shared/active_billing_period",
              active_billing_period: @active_billing_period %>
+</div>
 
+<div class="form-wrapper billing-form billing-audit billing-audit-rows">
   <% if @audit_error %>
     <div class="dashboard-error" role="alert"><p><%= @audit_error %></p></div>
   <% elsif @active_billing_period.nil? %>
