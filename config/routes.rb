@@ -16,7 +16,8 @@ Rails.application.routes.draw do
   end
 
   namespace :aim do
-    root 'dashboard#index'
+    root 'dashboard#home'
+    get 'dashboard', to: 'dashboard#index', as: :dashboard
 
     resources :invoices, only: %i[index show update], constraints: { id: %r{[^/]+} } do
       member do

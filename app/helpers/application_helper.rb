@@ -158,6 +158,14 @@ module ApplicationHelper
     ]
   end
 
+  def aim_home_images
+    [
+      { src: 'aim/slide_01.png', alt: 'Invoice reconciliation' },
+      { src: 'aim/slide_02.png', alt: 'Invoice review and approval' },
+      { src: 'aim/slide_03.png', alt: 'Approved invoice routing' }
+    ]
+  end
+
   # Which sub-application the current request belongs to, keyed to
   # +paperboy_apps+. Defaults to Paperboy for everything outside the
   # data_runner/ and coa/ controller namespaces.

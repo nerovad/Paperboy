@@ -5,8 +5,8 @@
   <%= render "shared/app_switcher" %>
 
   <nav class="aim-links">
-    <%= link_to "Dashboard", aim_root_path,
-                class: "nav-link#{' active' if current_page?(aim_root_path)}" %>
+    <%= link_to "Dashboard", aim_dashboard_path,
+                class: "nav-link#{' active' if current_page?(aim_dashboard_path)}" %>
 
     <% if aim_admin? %>
       <div class="sidebar-section-label">Processing Queues</div>

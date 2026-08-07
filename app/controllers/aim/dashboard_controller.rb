@@ -2,6 +2,8 @@
 
 module Aim
   class DashboardController < BaseController
+    def home; end
+
     def index
       @dashboard_queues = Aim::InvoiceDirectoryService::BACKEND_QUEUES
     end
