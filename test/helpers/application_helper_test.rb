@@ -29,4 +29,13 @@ class ApplicationHelperTest < ActionView::TestCase
   test 'environment badge is hidden in production' do
     assert_nil environment_badge(host: 'gsa-forms', rails_env: 'production')
   end
+
+  test 'app switcher lists Paperboy first and secondary apps alphabetically' do
+    stub(:can_access_app?, true) do
+      labels = paperboy_apps.map { |app| app.fetch(:label) }
+
+      assert_equal 'Paperboy', labels.first
+      assert_equal labels.drop(1).sort_by(&:downcase), labels.drop(1)
+    end
+  end
 end

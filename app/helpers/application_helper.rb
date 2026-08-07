@@ -111,7 +111,7 @@ module ApplicationHelper
     apps << { key: 'print_production', label: 'Print Production', path: print_production_root_path } if can_access_app?('print_production')
     apps << { key: 'billing', label: 'Billing', path: billing_root_path } if can_access_app?('billing')
     apps << { key: 'admin_tools', label: 'Admin Tools', path: admin_tools_root_path } if can_access_app?('admin_tools')
-    apps
+    [apps.first, *apps.drop(1).sort_by { |app| app.fetch(:label).downcase }]
   end
 
   # Whether the current user may reach an app-switcher sub-application. System

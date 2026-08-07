@@ -6,7 +6,10 @@ module Billing
 
     def show
       @active_billing_period = ActiveBillingPeriod.current
-      @audit_groups = Audit.new(@active_billing_period).results if @active_billing_period
+      return unless @active_billing_period
+
+      @billing_type_audits = BillingTypeAudit.new(@active_billing_period).results
+      @audit_groups = Audit.new(@active_billing_period).results
     rescue ActiveRecord::ActiveRecordError => e
       Rails.logger.error("Billing audit failed: #{e.class}: #{e.message}")
       @audit_error = 'The Billing audit could not be loaded.'
