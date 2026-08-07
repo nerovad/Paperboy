@@ -130,44 +130,6 @@ module ApplicationHelper
     current_user_application_permission_keys.include?(key)
   end
 
-  # Homepage slideshow pictures for each sub-app. These are intentionally
-  # kept separate so every app can show its own images: drop the files in
-  # app/assets/images and swap the filenames below. (Currently pointed at
-  # existing Ventura images as placeholders.)
-  def data_runner_home_images
-    [
-      { src: 'data_runner/slide_01.png', alt: 'Data source ingestion' },
-      { src: 'data_runner/slide_02.png', alt: 'Data validation and transformation' },
-      { src: 'data_runner/slide_03.png', alt: 'Data delivery and synchronization' }
-    ]
-  end
-
-  def billing_home_images
-    [
-      { src: 'billing/slide_01.png', alt: 'Fiscal period planning' },
-      { src: 'billing/slide_02.png', alt: 'Monthly billing reconciliation' },
-      { src: 'billing/slide_03.png', alt: 'Completed billing reports' }
-    ]
-  end
-
-  def coa_home_images
-    [{ src: 'coa/slide_01.png', alt: 'Organized accounting ledger' },
-     { src: 'coa/slide_02.png', alt: 'Hierarchical account structure' },
-     { src: 'coa/slide_03.png', alt: 'Balanced account reconciliation' }]
-  end
-
-  def aim_home_images
-    [{ src: 'aim/slide_01.png', alt: 'Invoice reconciliation' },
-     { src: 'aim/slide_02.png', alt: 'Invoice review and approval' },
-     { src: 'aim/slide_03.png', alt: 'Approved invoice routing' }]
-  end
-
-  def print_production_home_images
-    [{ src: 'print_production/slide_01.png', alt: 'Complex document printing' },
-     { src: 'print_production/slide_02.png', alt: 'Document folding and envelope insertion' },
-     { src: 'print_production/slide_03.png', alt: 'Finished mail distribution' }]
-  end
-
   # Which sub-application the current request belongs to, keyed to
   # +paperboy_apps+. Defaults to Paperboy for everything outside the
   # data_runner/ and coa/ controller namespaces.
