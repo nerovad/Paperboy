@@ -2,6 +2,17 @@
 
 # Supplies the image sets rendered by sub-application landing pages.
 module SlideshowHelper
+  # Paperboy's own landing images. Also the default a generated app lands with
+  # (see lib/tasks/templates/paperboy_app/home.html.erb.tt), so a brand new app
+  # has a slideshow on day one, before anyone has drawn it any pictures.
+  def paperboy_home_images
+    [
+      { src: 'VenturaPier.png',     alt: 'Ventura Pier' },
+      { src: 'VenturaCross.png',    alt: 'Ventura Cross' },
+      { src: 'VenturaCityHall.png', alt: 'Ventura City Hall' }
+    ]
+  end
+
   def data_runner_home_images
     slideshow_images('data_runner', 'Data source ingestion',
                      'Data validation and transformation', 'Data delivery and synchronization')

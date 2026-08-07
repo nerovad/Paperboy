@@ -10,4 +10,9 @@
     <code>app/controllers/__KEY__/</code> that inherit from
     <code>__MODULE__::BaseController</code>.
   </p>
+  <p>
+    The app's root path is the slideshow landing page
+    (<code>app/views/__KEY__/dashboard/home.html.erb</code>); this dashboard is
+    one level in, matching how AIM and Digital Asset Management are laid out.
+  </p>
 </div>

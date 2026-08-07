@@ -65,6 +65,7 @@ module Paperboy
       {
         "app/controllers/#{key}/base_controller.rb" => render('base_controller.rb.tt'),
         "app/controllers/#{key}/dashboard_controller.rb" => render('dashboard_controller.rb.tt'),
+        "app/views/#{key}/dashboard/home.html.erb" => render('home.html.erb.tt'),
         "app/views/#{key}/dashboard/index.html.erb" => render('index.html.erb.tt'),
         "app/views/#{key}/shared/_sidebar.html.erb" => render('sidebar.html.erb.tt')
       }

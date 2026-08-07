@@ -32,9 +32,12 @@ module Paperboy
 
     attr_reader :app, :root
 
-    # A namespace at the top of the file, next to :data_runner.
+    # A namespace at the top of the file, next to :data_runner. The root is the
+    # slideshow landing page and the dashboard sits one level in, the shape AIM
+    # and Digital Asset Management use.
     def routes
-      block = "  namespace :#{app.key} do\n    root 'dashboard#index'\n  end\n\n"
+      block = "  namespace :#{app.key} do\n    root 'dashboard#home'\n    " \
+              "get 'dashboard', to: 'dashboard#index', as: :dashboard\n  end\n\n"
       insert_before(read('config/routes.rb'), anchor: '^  namespace :data_runner do$',
                                               text: block, label: 'config/routes.rb')
     end

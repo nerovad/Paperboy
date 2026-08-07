@@ -1,0 +1,13 @@
+<%# app/views/__KEY__/dashboard/home.html.erb
+    The app's front door — a slideshow, matching every other sub-app. The
+    layout swaps the page body for :image, so this view is the slideshow and
+    nothing else.
+
+    It starts on Paperboy's own pictures. To give __LABEL__ its own, drop three
+    images in app/assets/images/__KEY__/ named slide_01.png, slide_02.png and
+    slide_03.png, add a __KEY___home_images method to
+    app/helpers/slideshow_helper.rb alongside the others, and render that
+    instead of paperboy_home_images. %>
+<% content_for :image do %>
+  <%= render "shared/slideshow", images: paperboy_home_images %>
+<% end %>

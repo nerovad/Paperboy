@@ -47,6 +47,11 @@ namespace :app do
            inherit from #{app.module_name}::BaseController, and views under
            app/views/#{app.key}/. Add sidebar buttons in
            app/views/#{app.key}/shared/_sidebar.html.erb.
+        5. The landing page starts on Paperboy's own slideshow images. To give
+           #{app.label} its own, put slide_01.png, slide_02.png and slide_03.png in
+           app/assets/images/#{app.key}/, add a #{app.key}_home_images method to
+           app/helpers/slideshow_helper.rb, and render it from
+           app/views/#{app.key}/dashboard/home.html.erb.
     NEXT
   end
 
