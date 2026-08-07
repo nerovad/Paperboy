@@ -9,7 +9,9 @@ module SlideshowHelper
     [
       { src: 'VenturaPier.png',     alt: 'Ventura Pier' },
       { src: 'VenturaCross.png',    alt: 'Ventura Cross' },
-      { src: 'VenturaCityHall.png', alt: 'Ventura City Hall' }
+      { src: 'VenturaCityHall.png', alt: 'Ventura City Hall' },
+      { src: 'Sunny_Beach.png',     alt: 'Sunny beach promenade stroll' },
+      { src: 'Sunny_Coastal.png',   alt: 'Sunny coastal retreat with mountains' }
     ]
   end
 
@@ -43,14 +45,9 @@ module SlideshowHelper
                      'Digital asset cataloging', 'Digital asset delivery')
   end
 
-  # Photographs rather than the illustrated slide_0*.png sets the other apps
-  # use, so the paths are spelled out instead of going through slideshow_images.
   def admin_tools_home_images
-    [
-      { src: 'Sunny_Beach.png',    alt: 'Sunny beach promenade stroll' },
-      { src: 'Sunny_Coastal.png',  alt: 'Sunny coastal retreat with mountains' },
-      { src: 'Paperboy-2-FI.png',  alt: 'Paperboy' }
-    ]
+    slideshow_images('admin_tools', 'User and account administration',
+                     'Roles and access permissions', 'Application and system configuration')
   end
 
   private
