@@ -18,26 +18,7 @@
     <section class="billing-audit-group" aria-labelledby="billing-type-rows-title">
       <h2 id="billing-type-rows-title">Rows with Accounting Errors</h2>
       <% if @tc60_rows.any? %>
-        <div class="billing-audit-rows-table">
-          <table class="submission-table">
-            <thead>
-              <tr>
-                <% @tc60_rows.first.keys.each do |column| %>
-                  <th><%= column %></th>
-                <% end %>
-              </tr>
-            </thead>
-            <tbody>
-              <% @tc60_rows.each do |row| %>
-                <tr>
-                  <% row.each_value do |value| %>
-                    <td><%= value %></td>
-                  <% end %>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
+        <%= render "billing/audits/tc60_rows_table", rows: @tc60_rows %>
       <% else %>
         <p>No TC60 rows with accounting errors were found.</p>
       <% end %>

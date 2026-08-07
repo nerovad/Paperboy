@@ -337,6 +337,12 @@
 
   th,
   td { white-space: nowrap; }
+
+  td.billing-audit-invalid-cell {
+    background: $danger;
+    color: $surface-base;
+    font-weight: 700;
+  }
 }
 
 @media (max-width: 800px) {

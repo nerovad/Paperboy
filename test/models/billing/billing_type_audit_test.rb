@@ -42,7 +42,11 @@ module Billing
     end
 
     test 'loads TC60 error rows for an active type' do
-      rows = ActiveRecord::Result.new(%w[TYPE CUNIT], [%w[GPH BAD]])
+      columns = %w[TYPE CUNIT audit_error_cunit audit_error_cobject audit_error_cactivity
+                   audit_error_cfunction audit_error_cprogram audit_error_cphase audit_error_ctask
+                   audit_error_service audit_error_sactivity audit_error_sfunction]
+      values = %w[GPH BAD 1 0 0 0 0 0 0 0 0 0]
+      rows = ActiveRecord::Result.new(columns, [values])
       connection = Minitest::Mock.new
       connection.expect(:exec_query, rows) do |sql|
         assert_includes sql, 'SELECT T.*'
@@ -54,7 +58,10 @@ module Billing
 
       audit = BillingTypeAudit.new(period, types: [], connection: connection)
 
-      assert_equal [{ 'TYPE' => 'GPH', 'CUNIT' => 'BAD' }], audit.error_rows('GPH')
+      result = audit.error_rows('GPH').first
+
+      assert_equal({ 'TYPE' => 'GPH', 'CUNIT' => 'BAD' }, result.attributes)
+      assert result.cells.find { |cell| cell.column == 'CUNIT' }.invalid
       connection.verify
     end
 

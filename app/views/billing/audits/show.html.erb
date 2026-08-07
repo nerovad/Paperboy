@@ -57,7 +57,7 @@
             <% card = capture do %>
               <h3><%= result.label %></h3>
               <div class="billing-audit-count"><%= number_with_delimiter result.count %></div>
-              <p><%= 'failure'.pluralize(result.count) %></p>
+              <p><%= 'error'.pluralize(result.count) %></p>
             <% end %>
             <% if result.count.positive? %>
               <%= link_to billing_audit_detail_path(result.key), class: "#{card_classes} billing-audit-card--link" do %>

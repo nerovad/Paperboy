@@ -18,7 +18,8 @@ module Billing
 
       results = AuditRows.new(period, Audit.find_check(:cunit), 'BAD001', connection: connection).results
 
-      assert_equal [{ 'ID' => 12, 'CUNIT' => 'BAD001' }], results
+      assert_equal({ 'ID' => 12, 'CUNIT' => 'BAD001' }, results.first.attributes)
+      assert results.first.cells.find { |cell| cell.column == 'CUNIT' }.invalid
       connection.verify
     end
 

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+bundle exec rails assets:clobber
+bundle exec rails assets:precompile
+bundle exec rails server -p 3001

@@ -11,7 +11,9 @@ module Billing
     end
 
     def results
-      connection.exec_query(query).to_a
+      connection.exec_query(query).map do |row|
+        AuditRow.new(row, invalid_columns: [check.column])
+      end
     end
 
     private

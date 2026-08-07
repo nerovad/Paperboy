@@ -28,7 +28,7 @@ module Billing
     end
 
     def error_rows(code)
-      connection.exec_query(error_rows_query(code)).to_a
+      connection.exec_query(error_rows_query(code)).map { |row| build_audit_row(row) }
     end
 
     private
@@ -56,8 +56,11 @@ module Billing
     end
 
     def error_rows_query(code)
+      flags = Audit::GROUPS.flat_map(&:checks).map do |check|
+        "CASE WHEN #{error_condition(check)} THEN 1 ELSE 0 END AS audit_error_#{check.key}"
+      end
       sql = <<~SQL.squish
-        SELECT T.*
+        SELECT T.*, #{flags.join(', ')}
         FROM GSABSS.dbo.tc60 T
         WHERE T.[DATE] >= ? AND T.[DATE] < DATEADD(day, 1, ?)
           AND T.[TYPE] = ?
@@ -71,15 +74,25 @@ module Billing
     end
 
     def error_predicate
-      Audit::GROUPS.flat_map(&:checks).map do |check|
-        <<~SQL.squish
-          (NULLIF(LTRIM(RTRIM(T.#{check.column})), '') IS NOT NULL
-           AND NOT EXISTS (
-             SELECT 1 FROM GSABSS.dbo.#{check.lookup_table} Z
-             WHERE Z.#{check.lookup_column} = T.#{check.column}
-           ))
-        SQL
-      end.join(' OR ')
+      Audit::GROUPS.flat_map(&:checks).map { |check| error_condition(check) }.join(' OR ')
+    end
+
+    def error_condition(check)
+      <<~SQL.squish
+        (NULLIF(LTRIM(RTRIM(T.#{check.column})), '') IS NOT NULL
+         AND NOT EXISTS (
+           SELECT 1 FROM GSABSS.dbo.#{check.lookup_table} Z
+           WHERE Z.#{check.lookup_column} = T.#{check.column}
+         ))
+      SQL
+    end
+
+    def build_audit_row(row)
+      checks = Audit::GROUPS.flat_map(&:checks)
+      invalid_columns = checks.filter_map do |check|
+        check.column if row.delete("audit_error_#{check.key}").to_i == 1
+      end
+      AuditRow.new(row, invalid_columns: invalid_columns)
     end
   end
 end
