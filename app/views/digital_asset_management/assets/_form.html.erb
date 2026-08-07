@@ -1,0 +1,72 @@
+<%= form_with model: @asset, scope: :asset,
+              url: @asset.persisted? ? digital_asset_management_asset_path(@asset)
+                                     : digital_asset_management_assets_path,
+              class: "dam-form" do |f| %>
+  <% if @asset.errors.any? %>
+    <div class="dam-errors">
+      <ul>
+        <% @asset.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <% unless @asset.persisted? %>
+    <div class="form-group">
+      <%= f.label :file, "File" %>
+      <%= f.file_field :file, class: "form-control", required: true %>
+      <p class="dam-hint">
+        Media type and format are read from the file at ingest — you do not need to set them.
+      </p>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :title %>
+    <%= f.text_field :title, class: "form-control",
+                     placeholder: "Left blank, the filename is used" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description %>
+    <%= f.text_area :description, class: "form-control", rows: 4 %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :storage_location_id, "Storage" %>
+    <%= f.collection_select :storage_location_id, @dam_storage_locations, :id, :label,
+                            { include_blank: "Not set" }, class: "form-control" %>
+  </div>
+
+  <% if @dam_metadata_fields.any? %>
+    <fieldset class="dam-filter-set">
+      <legend>Custom metadata</legend>
+      <% existing = @asset.metadata_values.index_by(&:field_key) %>
+      <% @dam_metadata_fields.each do |field| %>
+        <div class="form-group">
+          <%= label_tag "metadata[#{field.key}]", field.label %>
+          <% if field.field_type == "select" && field.choices.any? %>
+            <%= select_tag "metadata[#{field.key}]",
+                           options_for_select(field.choices, existing[field.key]&.value),
+                           include_blank: "—", class: "form-control" %>
+          <% else %>
+            <%= text_field_tag "metadata[#{field.key}]", existing[field.key]&.value,
+                               type: { "number" => "number", "date" => "date" }.fetch(field.field_type, "text"),
+                               class: "form-control" %>
+          <% end %>
+          <% if field.description.present? %>
+            <p class="dam-hint"><%= field.description %></p>
+          <% end %>
+        </div>
+      <% end %>
+    </fieldset>
+  <% end %>
+
+  <div class="form-actions">
+    <%= link_to "Cancel", @asset.persisted? ? digital_asset_management_asset_path(@asset)
+                                            : digital_asset_management_assets_path,
+                class: "btn" %>
+    <%= f.submit @asset.persisted? ? "Save asset" : "Ingest asset", class: "btn approve" %>
+  </div>
+<% end %>

@@ -1,0 +1,69 @@
+<%# The workflow catalogue. Running one raises a job — see Jobs for the
+    outcome. %>
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1>Workflows</h1>
+      <p class="dam-page-subtitle">
+        Custom processing the DAM can run over assets, in Ruby, Python or C++.
+      </p>
+    </div>
+    <div class="dam-page-actions">
+      <%= link_to "New workflow", new_digital_asset_management_workflow_path, class: "btn approve" %>
+    </div>
+  </header>
+
+  <% if @workflows.any? %>
+    <table class="dam-table">
+      <thead>
+        <tr>
+          <th>Workflow</th>
+          <th>Runtime</th>
+          <th>Runs</th>
+          <th>Applies to</th>
+          <th>Last run</th>
+          <th>State</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @workflows.each do |workflow| %>
+          <tr>
+            <td>
+              <%= link_to workflow.name, digital_asset_management_workflow_path(workflow) %>
+              <% if workflow.description.present? %>
+                <p class="dam-muted"><%= truncate(workflow.description, length: 80) %></p>
+              <% end %>
+            </td>
+            <td><span class="dam-runtime"><%= workflow.runtime_label %></span></td>
+            <td><%= workflow.trigger_label %></td>
+            <td>
+              <%= workflow.media_type_list.any? ? workflow.media_type_list.map(&:titleize).join(", ") : "Any" %>
+            </td>
+            <td>
+              <% if (last = @last_jobs[workflow.id]) %>
+                <%= time_ago_in_words(last) %> ago
+              <% else %>
+                <span class="dam-muted">Never</span>
+              <% end %>
+            </td>
+            <td><%= dam_pill(workflow.enabled? ? "active" : "cancelled",
+                             workflow.enabled? ? "Enabled" : "Disabled") %></td>
+            <td class="dam-row-actions">
+              <%= button_to "Run", run_digital_asset_management_workflow_path(workflow), method: :post,
+                            class: "btn approve compact", disabled: !workflow.enabled? %>
+              <%= button_to workflow.enabled? ? "Disable" : "Enable",
+                            toggle_digital_asset_management_workflow_path(workflow), method: :patch,
+                            class: "btn compact" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="dam-empty">
+      No workflows registered.
+      <%= link_to "Add the first one", new_digital_asset_management_workflow_path %>.
+    </p>
+  <% end %>
+</div>

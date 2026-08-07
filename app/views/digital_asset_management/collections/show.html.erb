@@ -1,0 +1,53 @@
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <% if @collection.ancestors.any? %>
+        <p class="dam-breadcrumb">
+          <% @collection.ancestors.each do |ancestor| %>
+            <%= link_to ancestor.name, digital_asset_management_collection_path(ancestor) %> ›
+          <% end %>
+        </p>
+      <% end %>
+      <h1><%= @collection.name %></h1>
+      <p class="dam-page-subtitle">
+        <%= pluralize(@assets.size, "asset") %>
+        <% if @collection.created_by_name.present? %> · curated by <%= @collection.created_by_name %><% end %>
+      </p>
+      <% if @collection.description.present? %>
+        <p class="dam-page-subtitle"><%= @collection.description %></p>
+      <% end %>
+    </div>
+    <div class="dam-page-actions">
+      <%= dam_star_button(@collection, favorited: dam_favorite?(@collection), label: "Favorite") %>
+      <%= link_to "Edit", edit_digital_asset_management_collection_path(@collection), class: "btn edit" %>
+      <%= button_to "Delete", digital_asset_management_collection_path(@collection), method: :delete,
+                    class: "btn deny",
+                    form: { data: { turbo_confirm: "Delete #{@collection.name}? The assets inside stay in the library.",
+                                    confirm_title: "Delete collection", confirm_label: "Delete" } } %>
+    </div>
+  </header>
+
+  <% if @collection.children.any? %>
+    <section class="dam-shelf">
+      <div class="dam-shelf-header"><h2>Sub-collections</h2></div>
+      <div class="dam-grid">
+        <% @collection.children.each do |child| %>
+          <%= render "collection_card", collection: child, favorited: nil %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @assets.any? %>
+    <div class="dam-grid">
+      <% @assets.each do |asset| %>
+        <%= render "digital_asset_management/assets/asset_card",
+                   asset: asset, favorited: @favorite_ids.include?(asset.id) %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="dam-empty">
+      Nothing in this collection yet — open an asset and add it from the Collections panel.
+    </p>
+  <% end %>
+</div>

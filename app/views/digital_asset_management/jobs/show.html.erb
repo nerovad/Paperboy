@@ -1,0 +1,56 @@
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1>Job #<%= @job.id %> — <%= @job.workflow&.name || @job.type_label %></h1>
+      <p class="dam-page-subtitle">
+        <%= dam_pill(@job.status) %>
+        <% if @job.subject_label.present? %> · <%= @job.subject_label %><% end %>
+      </p>
+    </div>
+    <div class="dam-page-actions">
+      <% if @job.open? %>
+        <%= button_to "Cancel", cancel_digital_asset_management_job_path(@job), method: :post,
+                      class: "btn deny" %>
+      <% else %>
+        <%= button_to "Run again", retry_digital_asset_management_job_path(@job), method: :post,
+                      class: "btn approve" %>
+      <% end %>
+      <%= link_to "Back to jobs", digital_asset_management_jobs_path, class: "btn" %>
+    </div>
+  </header>
+
+  <section class="dam-panel">
+    <dl class="dam-facts">
+      <dt>Type</dt><dd><%= @job.type_label %></dd>
+      <% if @job.workflow %>
+        <dt>Workflow</dt>
+        <dd><%= link_to @job.workflow.name, digital_asset_management_workflow_path(@job.workflow) %></dd>
+      <% end %>
+      <dt>Progress</dt>
+      <dd><%= @job.processed_items %> of <%= @job.total_items %> (<%= @job.percent_complete %>%)</dd>
+      <dt>Queued</dt><dd><%= @job.queued_at&.strftime("%b %-d, %Y at %-l:%M:%S %p") || "—" %></dd>
+      <dt>Started</dt><dd><%= @job.started_at&.strftime("%b %-d, %Y at %-l:%M:%S %p") || "—" %></dd>
+      <dt>Finished</dt><dd><%= @job.finished_at&.strftime("%b %-d, %Y at %-l:%M:%S %p") || "—" %></dd>
+      <% if @job.duration %>
+        <dt>Duration</dt><dd><%= distance_of_time_in_words(@job.duration) %></dd>
+      <% end %>
+      <dt>Started by</dt><dd><%= @job.created_by_name.presence || "—" %></dd>
+    </dl>
+  </section>
+
+  <% if @job.error_message.present? %>
+    <section class="dam-panel dam-panel--error">
+      <h2>Error</h2>
+      <pre class="dam-log"><%= @job.error_message %></pre>
+    </section>
+  <% end %>
+
+  <section class="dam-panel">
+    <h2>Log</h2>
+    <% if @job.log.present? %>
+      <pre class="dam-log"><%= @job.log %></pre>
+    <% else %>
+      <p class="dam-muted">Nothing logged.</p>
+    <% end %>
+  </section>
+</div>

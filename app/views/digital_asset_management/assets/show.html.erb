@@ -1,0 +1,163 @@
+<div class="dam-page dam-asset-detail">
+  <header class="dam-page-header">
+    <div>
+      <h1><%= @asset.title %></h1>
+      <p class="dam-page-subtitle">
+        <%= @asset.media_type.titleize %>
+        <% if @asset.format.present? %> · <%= @asset.format %><% end %>
+        <% if @asset.display_size %> · <%= @asset.display_size %><% end %>
+        <%= dam_pill(@asset.status) if @asset.status != "active" %>
+      </p>
+    </div>
+    <div class="dam-page-actions">
+      <%= dam_star_button(@asset, favorited: dam_favorite?(@asset), label: "Favorite") %>
+      <% if @asset.file.attached? %>
+        <%= link_to "Download", url_for(@asset.file), class: "btn pdf", download: @asset.filename %>
+      <% end %>
+      <%= link_to "Edit", edit_digital_asset_management_asset_path(@asset), class: "btn edit" %>
+      <%= button_to "Archive", digital_asset_management_asset_path(@asset), method: :delete,
+                    class: "btn deny",
+                    form: { data: { turbo_confirm: "Archive #{@asset.title}? It stays in the database and in any collections, but drops out of the library.",
+                                    confirm_title: "Archive asset", confirm_label: "Archive" } } %>
+    </div>
+  </header>
+
+  <div class="dam-detail-layout">
+    <section class="dam-panel dam-preview">
+      <% if (thumbnail = dam_thumbnail_url(@asset)) %>
+        <%= image_tag thumbnail, alt: @asset.title, class: "dam-preview-image" %>
+      <% elsif @asset.media_type == "video" && @asset.file.attached? %>
+        <video controls class="dam-preview-image" preload="metadata">
+          <source src="<%= url_for(@asset.file) %>" type="<%= @asset.content_type %>">
+        </video>
+      <% elsif @asset.media_type == "audio" && @asset.file.attached? %>
+        <audio controls class="dam-preview-audio">
+          <source src="<%= url_for(@asset.file) %>" type="<%= @asset.content_type %>">
+        </audio>
+      <% else %>
+        <div class="dam-preview-placeholder">
+          <span aria-hidden="true"><%= dam_media_glyph(@asset.media_type) %></span>
+          <p>No inline preview for <%= @asset.format.presence || "this format" %>.</p>
+        </div>
+      <% end %>
+
+      <% if @asset.description.present? %>
+        <p class="dam-preview-description"><%= simple_format(@asset.description) %></p>
+      <% end %>
+    </section>
+
+    <aside class="dam-detail-side">
+      <section class="dam-panel">
+        <h2>Details</h2>
+        <dl class="dam-facts">
+          <dt>Filename</dt><dd><%= @asset.filename.presence || "—" %></dd>
+          <dt>Media type</dt><dd><%= @asset.media_type.titleize %></dd>
+          <dt>Format</dt><dd><%= @asset.format.presence || "—" %></dd>
+          <dt>Size</dt><dd><%= @asset.display_size || "—" %></dd>
+          <% if @asset.dimensions %><dt>Dimensions</dt><dd><%= @asset.dimensions %></dd><% end %>
+          <% if dam_duration(@asset.duration_seconds) %>
+            <dt>Duration</dt><dd><%= dam_duration(@asset.duration_seconds) %></dd>
+          <% end %>
+          <dt>Storage</dt><dd><%= @asset.storage_location&.label || "Not set" %></dd>
+          <dt>Created by</dt><dd><%= @asset.uploaded_by_name.presence || "—" %></dd>
+          <dt>Ingested</dt><dd><%= @asset.ingested_at&.strftime("%b %-d, %Y at %-l:%M %p") || "—" %></dd>
+        </dl>
+      </section>
+
+      <% if @asset.metadata_values.any? %>
+        <section class="dam-panel">
+          <h2>Metadata</h2>
+          <dl class="dam-facts">
+            <% @asset.metadata_values.each do |value| %>
+              <dt><%= value.label %></dt><dd><%= value.display_value || "—" %></dd>
+            <% end %>
+          </dl>
+        </section>
+      <% end %>
+
+      <section class="dam-panel">
+        <h2>Collections</h2>
+        <% if @asset.collections.any? %>
+          <ul class="dam-list">
+            <% @asset.collections.each do |collection| %>
+              <li>
+                <%= link_to collection.name, digital_asset_management_collection_path(collection) %>
+                <%= button_to "Remove", remove_asset_digital_asset_management_collection_path(collection, asset_id: @asset.id),
+                              method: :delete, class: "btn deny compact" %>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="dam-muted">Not in any collection.</p>
+        <% end %>
+
+        <% available = @collections - @asset.collections %>
+        <% if available.any? %>
+          <%= form_with url: add_asset_digital_asset_management_collections_path, method: :post,
+                        class: "dam-inline-form" do %>
+            <%= hidden_field_tag :asset_id, @asset.id %>
+            <%= select_tag :collection_id,
+                           options_for_select(available.map { |collection| [collection.name, collection.id] }),
+                           class: "form-control", "aria-label": "Collection to add to" %>
+            <%= submit_tag "Add", class: "btn approve compact" %>
+          <% end %>
+        <% end %>
+      </section>
+
+      <section class="dam-panel">
+        <h2>Share</h2>
+        <%= form_with url: share_digital_asset_management_asset_path(@asset), method: :post,
+                      class: "dam-share-form" do %>
+          <div class="form-group">
+            <%= label_tag :recipients, "Recipients" %>
+            <%= text_area_tag :recipients, nil, class: "form-control", rows: 2,
+                              placeholder: "one email per line" %>
+          </div>
+          <div class="form-group">
+            <%= label_tag :permission, "Permission" %>
+            <%= select_tag :permission,
+                           options_for_select(Dam::Share::PERMISSIONS.map { |key, label| [label, key] }),
+                           class: "form-control" %>
+          </div>
+          <div class="form-group">
+            <%= label_tag :expires_at, "Expires" %>
+            <%= date_field_tag :expires_at, nil, class: "form-control" %>
+          </div>
+          <div class="form-group">
+            <%= label_tag :message, "Message" %>
+            <%= text_area_tag :message, nil, class: "form-control", rows: 2 %>
+          </div>
+          <%= submit_tag "Create share", class: "btn approve" %>
+        <% end %>
+
+        <% if @shares.any? %>
+          <ul class="dam-list">
+            <% @shares.each do |share| %>
+              <li>
+                <%= link_to share.created_at.strftime("%b %-d, %Y"),
+                            digital_asset_management_share_path(share) %>
+                <%= dam_pill(share.state) %>
+                <span class="dam-muted"><%= share.recipient_list.size %> recipient(s)</span>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </section>
+
+      <% if @jobs.any? %>
+        <section class="dam-panel">
+          <h2>Job history</h2>
+          <ul class="dam-list">
+            <% @jobs.each do |job| %>
+              <li>
+                <%= link_to job.type_label, digital_asset_management_job_path(job) %>
+                <%= dam_pill(job.status) %>
+                <span class="dam-muted"><%= time_ago_in_words(job.created_at) %> ago</span>
+              </li>
+            <% end %>
+          </ul>
+        </section>
+      <% end %>
+    </aside>
+  </div>
+</div>

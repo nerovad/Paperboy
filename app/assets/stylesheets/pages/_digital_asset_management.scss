@@ -1,0 +1,515 @@
+@import "base/tokens";
+
+/* ---------------------------------------------------------------------------
+   Digital Asset Management
+
+   Layout only. Every button here is a shared .btn from components/_buttons.scss
+   and every dialog is the shared .pb-modal shell — this file adjusts spacing
+   and grid placement around them, never their colour or size.
+   --------------------------------------------------------------------------- */
+
+.dam-page {
+  padding: 24px 28px 48px;
+  max-width: 1400px;
+}
+
+.dam-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid $neutral-border-light;
+
+  h1 {
+    margin: 0 0 6px;
+    font-size: 1.6rem;
+    color: $text-strong;
+  }
+}
+
+.dam-page-subtitle {
+  margin: 0;
+  color: $text-muted;
+  font-size: 0.92rem;
+}
+
+.dam-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dam-breadcrumb {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  color: $text-muted;
+}
+
+.dam-muted { color: $text-muted; }
+
+.dam-hint {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: $text-muted;
+}
+
+.dam-empty {
+  padding: 32px;
+  border: 1px dashed $border-color;
+  border-radius: $radius-12;
+  background: $surface-subtle;
+  color: $text-muted;
+  text-align: center;
+}
+
+.dam-panel {
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  background: $surface-base;
+  border: 1px solid $neutral-border-light;
+  border-radius: $radius-12;
+  box-shadow: $shadow-soft;
+
+  h2 {
+    margin: 0 0 12px;
+    font-size: 1.05rem;
+    color: $text-strong;
+  }
+
+  &.dam-panel--error {
+    border-color: $error-border;
+    background: $red-row-bg;
+  }
+}
+
+/* --- Asset and collection grid ------------------------------------------- */
+
+.dam-shelf { margin-bottom: 28px; }
+
+.dam-shelf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: $text-strong;
+  }
+}
+
+.dam-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.dam-card {
+  display: flex;
+  flex-direction: column;
+  background: $surface-base;
+  border: 1px solid $neutral-border-light;
+  border-radius: $radius-12;
+  overflow: hidden;
+  transition: box-shadow 0.16s ease-out, transform 0.16s ease-out;
+
+  &:hover {
+    box-shadow: $shadow-soft;
+    transform: translateY(-2px);
+  }
+}
+
+.dam-card-thumb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  background: $surface-control;
+  text-decoration: none;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.dam-card-glyph { font-size: 2.6rem; }
+
+/* Format chip on the thumbnail. Deliberately not a .btn — it is a label, and
+   nothing happens when you click it. */
+.dam-card-format {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.62);
+  color: $surface-base;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.dam-card-body {
+  flex: 1;
+  padding: 10px 12px;
+}
+
+.dam-card-title {
+  display: block;
+  margin-bottom: 4px;
+  color: $text-strong;
+  font-weight: 600;
+  font-size: 0.94rem;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+
+  &:hover { color: $brand-navy; }
+}
+
+.dam-card-meta {
+  margin: 0 0 2px;
+  font-size: 0.78rem;
+  color: $text-muted;
+}
+
+.dam-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 10px 10px;
+}
+
+/* The star is a .btn; only its width and the filled state are layout. */
+.dam-star-form { display: inline; }
+
+.dam-star.is-starred { color: $amber-accent; }
+
+/* --- Asset detail --------------------------------------------------------- */
+
+.dam-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 20px;
+  align-items: start;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dam-preview-image {
+  display: block;
+  width: 100%;
+  max-height: 62vh;
+  object-fit: contain;
+  background: $neutral-950;
+  border-radius: $radius-6;
+}
+
+.dam-preview-audio { width: 100%; }
+
+.dam-preview-placeholder {
+  padding: 48px;
+  background: $surface-control;
+  border-radius: $radius-6;
+  text-align: center;
+  color: $text-muted;
+
+  span { font-size: 3rem; }
+}
+
+.dam-preview-description { margin-top: 14px; }
+
+.dam-facts {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) 1fr;
+  gap: 6px 14px;
+  margin: 0;
+
+  dt {
+    color: $label-color;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.88rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+.dam-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 6px 0;
+    border-bottom: 1px solid $border-faint;
+    font-size: 0.88rem;
+
+    &:last-child { border-bottom: none; }
+  }
+}
+
+.dam-inline-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+
+  .form-control { flex: 1; }
+}
+
+.dam-share-form .form-group { margin-bottom: 10px; }
+
+/* --- Tables --------------------------------------------------------------- */
+
+.dam-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: $surface-base;
+  border: 1px solid $neutral-border-light;
+  border-radius: $radius-12;
+  overflow: hidden;
+
+  th, td {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 0.88rem;
+    border-bottom: 1px solid $border-faint;
+    vertical-align: middle;
+  }
+
+  th {
+    background: $surface-panel;
+    color: $label-color;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  tbody tr:hover { background: $surface-subtle; }
+
+  p { margin: 2px 0 0; font-size: 0.78rem; }
+}
+
+.dam-row-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+
+  form { display: inline; }
+}
+
+.dam-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.dam-filter-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: $border-color;
+}
+
+.dam-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.dam-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: $blue-gray-panel;
+  color: $brand-navy;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* --- Status pills --------------------------------------------------------- */
+
+.dam-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.dam-pill--ok      { background: $green-status-bg;  color: $green-status-text; }
+.dam-pill--running { background: $blue-notice-bg;   color: $blue-notice-text; }
+.dam-pill--queued  { background: $amber-review-bg;  color: $amber-review-text; }
+.dam-pill--bad     { background: $red-status-bg;    color: $red-status-text; }
+.dam-pill--muted   { background: $neutral-pill-bg;  color: $text-muted; }
+
+.dam-progress {
+  width: 100%;
+  min-width: 80px;
+  height: 6px;
+  border-radius: 999px;
+  background: $neutral-pill-bg;
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    background: $green-teal;
+  }
+}
+
+.dam-log {
+  max-height: 380px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  background: $neutral-950;
+  border-radius: $radius-6;
+  color: $surface-base;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.dam-runtime {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: $indigo-selection-bg;
+  color: $indigo-scheduled-text;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+/* --- Forms ---------------------------------------------------------------- */
+
+.dam-form { max-width: 640px; }
+
+.dam-errors {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid $form-error-border;
+  border-radius: $radius-6;
+  background: $form-error-bg;
+  color: $form-error-text;
+
+  ul { margin: 0; padding-left: 18px; }
+}
+
+/* --- Sidebar search ------------------------------------------------------- */
+
+.digital-asset-management-sidebar {
+  .dam-quick-search { margin: 0; }
+
+  /* The trigger is a shared .btn; only its width and the "filters are on"
+     ring are set here. */
+  .dam-advanced-trigger {
+    width: 100%;
+    margin-bottom: 18px;
+
+    &.has-filters {
+      box-shadow: 0 0 0 2px var(--sidebar-accent-ring);
+    }
+  }
+}
+
+/* --- Advanced Search modal contents --------------------------------------
+   The shell is the shared .pb-modal; these rules style what sits inside it.
+   -------------------------------------------------------------------------- */
+
+.dam-advanced-form {
+  display: contents;
+}
+
+.dam-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dam-filter label {
+  display: block;
+  margin-bottom: 4px;
+  color: $label-color;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.dam-filter-set {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid $neutral-border-light;
+  border-radius: $radius-6;
+
+  legend {
+    padding: 0 6px;
+    color: $label-color;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.dam-checkbox-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.dam-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  cursor: pointer;
+
+  input { margin: 0; }
+}
+
+.dam-meta-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* field / operator / value / value-to / remove. The two value boxes share a
+   track so a `between` row lines up with a one-value row above it. */
+.dam-meta-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+
+  [hidden] { display: none; }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}

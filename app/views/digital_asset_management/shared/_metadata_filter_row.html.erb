@@ -1,0 +1,42 @@
+<%# One custom-metadata criterion in Advanced Search: field, operator, value.
+    `index` is a row number when re-rendering an active filter, or the literal
+    __INDEX__ placeholder inside the clone template.
+    `filter` is a Dam::MetadataFilter, or nil for a fresh row. %>
+<%
+  operators = filter ? filter.field.operators : (@dam_metadata_fields.first&.operators || [])
+  valueless = filter && Dam::MetadataFilter::VALUELESS.include?(filter.operator)
+%>
+<div class="dam-meta-row" data-dam-search-target="metaRow">
+  <%= select_tag "meta[#{index}][field]",
+                 options_for_select(@dam_metadata_fields.map { |field| [field.label, field.key] },
+                                    filter&.key),
+                 class: "form-control dam-meta-field",
+                 "aria-label": "Metadata field",
+                 data: { action: "change->dam-search#fieldChanged", "dam-search-target": "metaField" } %>
+
+  <%= select_tag "meta[#{index}][operator]",
+                 options_for_select(operators.map { |operator| [operator.tr("_", " ").capitalize, operator] },
+                                    filter&.operator),
+                 class: "form-control dam-meta-operator",
+                 "aria-label": "Comparison",
+                 data: { action: "change->dam-search#operatorChanged", "dam-search-target": "metaOperator" } %>
+
+  <%= text_field_tag "meta[#{index}][value]", filter&.value,
+                     class: "form-control dam-meta-value",
+                     placeholder: "Value",
+                     hidden: valueless,
+                     "aria-label": "Value",
+                     data: { "dam-search-target": "metaValue" } %>
+
+  <%# Only `between` uses the second box. Everything else leaves it hidden and
+      empty, which the search service ignores. %>
+  <%= text_field_tag "meta[#{index}][value_to]", filter&.value_to,
+                     class: "form-control dam-meta-value-to",
+                     placeholder: "and",
+                     hidden: filter.nil? || filter.operator != "between",
+                     "aria-label": "Upper bound",
+                     data: { "dam-search-target": "metaValueTo" } %>
+
+  <button type="button" class="btn deny compact" data-action="dam-search#removeFilter"
+          aria-label="Remove this filter">✕</button>
+</div>

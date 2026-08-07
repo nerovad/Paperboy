@@ -1,0 +1,70 @@
+<%# The single status feed for everything the DAM runs: ingests, exports,
+    shares and custom workflow runs. %>
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1>Jobs</h1>
+      <p class="dam-page-subtitle"><%= pluralize(@pagy.count, "job") %>.</p>
+    </div>
+  </header>
+
+  <div class="dam-filter-bar">
+    <%= link_to "All", digital_asset_management_jobs_path,
+                class: "btn compact#{' active' if params[:job_type].blank? && params[:status].blank?}" %>
+    <% Dam::Job::JOB_TYPES.each do |key, label| %>
+      <%= link_to label, digital_asset_management_jobs_path(job_type: key),
+                  class: "btn compact#{' active' if params[:job_type] == key}" %>
+    <% end %>
+    <span class="dam-filter-divider"></span>
+    <% Dam::Job::STATUSES.each do |status| %>
+      <%= link_to "#{status.titleize} (#{@counts.fetch(status, 0)})",
+                  digital_asset_management_jobs_path(status: status),
+                  class: "btn compact#{' active' if params[:status] == status}" %>
+    <% end %>
+  </div>
+
+  <% if @jobs.any? %>
+    <table class="dam-table">
+      <thead>
+        <tr>
+          <th>Job</th>
+          <th>Type</th>
+          <th>Subject</th>
+          <th>Status</th>
+          <th>Progress</th>
+          <th>Started by</th>
+          <th>When</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @jobs.each do |job| %>
+          <tr>
+            <td><%= link_to "##{job.id}", digital_asset_management_job_path(job) %></td>
+            <td><%= job.workflow&.name || job.type_label %></td>
+            <td><%= job.subject_label.presence || "—" %></td>
+            <td><%= dam_pill(job.status) %></td>
+            <td>
+              <div class="dam-progress" role="img"
+                   aria-label="<%= job.percent_complete %> percent complete">
+                <span style="width: <%= job.percent_complete %>%"></span>
+              </div>
+            </td>
+            <td><%= job.created_by_name.presence || "—" %></td>
+            <td><%= time_ago_in_words(job.created_at) %> ago</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% if @pagy.pages > 1 %>
+      <div class="pagination-wrapper">
+        <%== @pagy.series_nav %>
+        <p class="pagination-info">
+          Showing <%= @pagy.from %>–<%= @pagy.to %> of <%= @pagy.count %> jobs
+        </p>
+      </div>
+    <% end %>
+  <% else %>
+    <p class="dam-empty">No jobs have run yet.</p>
+  <% end %>
+</div>

@@ -1,0 +1,49 @@
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1>Share — <%= @share.subject_label.presence || "Removed item" %></h1>
+      <p class="dam-page-subtitle">
+        <%= dam_pill(@share.state) %>
+        · sent <%= @share.created_at.strftime("%b %-d, %Y at %-l:%M %p") %>
+      </p>
+    </div>
+    <div class="dam-page-actions">
+      <% unless @share.revoked? %>
+        <%= button_to "Revoke", revoke_digital_asset_management_share_path(@share), method: :post,
+                      class: "btn deny",
+                      form: { data: { turbo_confirm: "Revoke this share? The link stops working immediately.",
+                                      confirm_title: "Revoke share", confirm_label: "Revoke" } } %>
+      <% end %>
+      <%= link_to "Back to My Shares", digital_asset_management_shares_path, class: "btn" %>
+    </div>
+  </header>
+
+  <section class="dam-panel">
+    <dl class="dam-facts">
+      <dt>Permission</dt><dd><%= @share.permission_label %></dd>
+      <dt>Expires</dt><dd><%= @share.expires_at&.strftime("%b %-d, %Y") || "Never" %></dd>
+      <dt>Revoked</dt><dd><%= @share.revoked_at&.strftime("%b %-d, %Y") || "—" %></dd>
+      <dt>Times opened</dt><dd><%= @share.access_count %></dd>
+      <dt>Last opened</dt>
+      <dd><%= @share.last_accessed_at&.strftime("%b %-d, %Y at %-l:%M %p") || "Never" %></dd>
+    </dl>
+  </section>
+
+  <section class="dam-panel">
+    <h2>Recipients</h2>
+    <% if @share.recipient_list.any? %>
+      <ul class="dam-list">
+        <% @share.recipient_list.each do |recipient| %>
+          <li><%= recipient %></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="dam-muted">No recipients recorded.</p>
+    <% end %>
+
+    <% if @share.message.present? %>
+      <h2>Message</h2>
+      <%= simple_format(@share.message) %>
+    <% end %>
+  </section>
+</div>

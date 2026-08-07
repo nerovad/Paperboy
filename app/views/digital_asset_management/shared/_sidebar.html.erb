@@ -1,11 +1,44 @@
 <%# app/views/digital_asset_management/shared/_sidebar.html.erb
     Sidebar for the Digital Asset Management app. The app switcher header is shared with
-    every other app; everything below it is this app's own navigation. %>
-<div class="sidebar digital-asset-management-sidebar">
+    every other app; everything below it is this app's own navigation.
+
+    Search lives here rather than on a page because it is how you get anywhere
+    in a DAM — the quick box and the Advanced Search modal both submit to the
+    same asset index, so one is a shorthand for the other. %>
+<div class="sidebar digital-asset-management-sidebar" data-controller="dam-search"
+     data-dam-search-fields-value="<%= @dam_metadata_fields.to_a.map { |field|
+       { key: field.key, label: field.label, type: field.field_type,
+         operators: field.operators, choices: field.choices }
+     }.to_json %>">
   <%= render "shared/app_switcher" %>
 
+  <%= form_with url: digital_asset_management_assets_path, method: :get,
+                class: "dam-quick-search", data: { turbo: false } do %>
+    <%= search_field_tag :q, @dam_search.query, class: "sidebar-search-input",
+                         placeholder: "Search assets, metadata…",
+                         "aria-label": "Search assets" %>
+  <% end %>
+
+  <button type="button"
+          class="btn secondary compact dam-advanced-trigger<%= ' has-filters' if @dam_search.advanced? %>"
+          data-action="dam-search#open">
+    Advanced Search<%= " •" if @dam_search.advanced? %>
+  </button>
+
   <nav class="digital-asset-management-links">
-    <%= link_to "Hello World", digital_asset_management_root_path,
-                class: "nav-link#{' active' if current_page?(digital_asset_management_root_path)}" %>
+    <%# The root path is the slideshow landing page; the working dashboard is
+        one level in, matching how AIM splits home from dashboard. %>
+    <%= link_to "Dashboard", digital_asset_management_dashboard_path,
+                class: "nav-link#{' active' if current_page?(digital_asset_management_dashboard_path)}" %>
+    <%= link_to "Collections", digital_asset_management_collections_path,
+                class: "nav-link#{' active' if controller_name == 'collections'}" %>
+    <%= link_to "Jobs", digital_asset_management_jobs_path,
+                class: "nav-link#{' active' if controller_name == 'jobs'}" %>
+    <%= link_to "Workflows", digital_asset_management_workflows_path,
+                class: "nav-link#{' active' if controller_name == 'workflows'}" %>
+    <%= link_to "My Shares", digital_asset_management_shares_path,
+                class: "nav-link#{' active' if controller_name == 'shares'}" %>
   </nav>
+
+  <%= render "digital_asset_management/shared/advanced_search_modal" %>
 </div>

@@ -12,7 +12,51 @@ Rails.application.routes.draw do
     end
   end
   namespace :digital_asset_management do
-    root 'dashboard#index'
+    root 'dashboard#home'
+    get 'dashboard', to: 'dashboard#index', as: :dashboard
+
+    # The sidebar search box and the Advanced Search modal both GET here; the
+    # difference between them is only how many filter params they send.
+    resources :assets do
+      member do
+        post :share
+      end
+    end
+
+    resources :collections do
+      # Adding is a collection route so the picker on an asset page can choose
+      # which collection to drop it into from a select rather than a URL.
+      collection do
+        post :add_asset
+      end
+      member do
+        delete :remove_asset
+      end
+    end
+
+    resources :jobs, only: %i[index show] do
+      member do
+        post :retry
+        post :cancel
+      end
+    end
+
+    resources :workflows do
+      member do
+        post :run
+        patch :toggle
+      end
+    end
+
+    resources :shares, only: %i[index show destroy] do
+      member do
+        post :revoke
+      end
+    end
+
+    # One endpoint for both stars, since the button is a toggle and the subject
+    # may be an asset or a collection.
+    post 'favorites', to: 'favorites#toggle', as: :favorites
   end
 
   namespace :aim do

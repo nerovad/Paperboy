@@ -1,3 +1,88 @@
-<% content_for :image do %>
-  <%= render "shared/slideshow", images: digital_asset_management_home_images %>
-<% end %>
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1>Digital Asset Management</h1>
+      <p class="dam-page-subtitle">
+        <%= number_with_delimiter(@library_count) %> <%= "asset".pluralize(@library_count) %> in the library.
+      </p>
+    </div>
+    <div class="dam-page-actions">
+      <%= link_to "Browse library", digital_asset_management_assets_path, class: "btn secondary" %>
+      <%= link_to "Ingest asset", new_digital_asset_management_asset_path, class: "btn approve" %>
+    </div>
+  </header>
+
+  <% if @open_jobs.any? %>
+    <section class="dam-panel dam-running-strip">
+      <h2>Running now</h2>
+      <ul class="dam-running-list">
+        <% @open_jobs.each do |job| %>
+          <li>
+            <%= link_to job.subject_label.presence || job.type_label,
+                        digital_asset_management_job_path(job) %>
+            <%= dam_pill(job.status) %>
+            <span class="dam-muted"><%= job.type_label %></span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <section class="dam-shelf">
+    <div class="dam-shelf-header">
+      <h2>Favorite assets</h2>
+      <%= link_to "All assets", digital_asset_management_assets_path, class: "btn compact" %>
+    </div>
+    <% if @favorite_assets.any? %>
+      <div class="dam-grid">
+        <%= render partial: "digital_asset_management/assets/asset_card",
+                   collection: @favorite_assets, as: :asset, locals: { favorited: true } %>
+      </div>
+    <% else %>
+      <p class="dam-empty">Star an asset and it will appear here.</p>
+    <% end %>
+  </section>
+
+  <section class="dam-shelf">
+    <div class="dam-shelf-header">
+      <h2>Favorite collections</h2>
+      <%= link_to "All collections", digital_asset_management_collections_path, class: "btn compact" %>
+    </div>
+    <% if @favorite_collections.any? %>
+      <div class="dam-grid">
+        <%= render partial: "digital_asset_management/collections/collection_card",
+                   collection: @favorite_collections, as: :collection, locals: { favorited: true } %>
+      </div>
+    <% else %>
+      <p class="dam-empty">Star a collection and it will appear here.</p>
+    <% end %>
+  </section>
+
+  <section class="dam-shelf">
+    <div class="dam-shelf-header">
+      <h2>Recent assets</h2>
+    </div>
+    <% if @recent_assets.any? %>
+      <div class="dam-grid">
+        <%= render partial: "digital_asset_management/assets/asset_card",
+                   collection: @recent_assets, as: :asset, locals: { favorited: nil } %>
+      </div>
+    <% else %>
+      <p class="dam-empty">Assets you open will show up here.</p>
+    <% end %>
+  </section>
+
+  <section class="dam-shelf">
+    <div class="dam-shelf-header">
+      <h2>Recent collections</h2>
+    </div>
+    <% if @recent_collections.any? %>
+      <div class="dam-grid">
+        <%= render partial: "digital_asset_management/collections/collection_card",
+                   collection: @recent_collections, as: :collection, locals: { favorited: nil } %>
+      </div>
+    <% else %>
+      <p class="dam-empty">Collections you open will show up here.</p>
+    <% end %>
+  </section>
+</div>

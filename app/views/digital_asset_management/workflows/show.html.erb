@@ -1,0 +1,66 @@
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1><%= @workflow.name %></h1>
+      <p class="dam-page-subtitle">
+        <span class="dam-runtime"><%= @workflow.runtime_label %></span>
+        · <%= @workflow.trigger_label %>
+        <%= dam_pill(@workflow.enabled? ? "active" : "cancelled",
+                     @workflow.enabled? ? "Enabled" : "Disabled") %>
+      </p>
+    </div>
+    <div class="dam-page-actions">
+      <%= button_to "Run now", run_digital_asset_management_workflow_path(@workflow), method: :post,
+                    class: "btn approve", disabled: !@workflow.enabled? %>
+      <%= link_to "Edit", edit_digital_asset_management_workflow_path(@workflow), class: "btn edit" %>
+      <%= button_to "Delete", digital_asset_management_workflow_path(@workflow), method: :delete,
+                    class: "btn deny",
+                    form: { data: { turbo_confirm: "Delete #{@workflow.name}? Past runs stay in the Jobs feed.",
+                                    confirm_title: "Delete workflow", confirm_label: "Delete" } } %>
+    </div>
+  </header>
+
+  <section class="dam-panel">
+    <% if @workflow.description.present? %>
+      <%= simple_format(@workflow.description) %>
+    <% end %>
+    <dl class="dam-facts">
+      <dt>Slug</dt><dd><code><%= @workflow.slug %></code></dd>
+      <dt>Entry point</dt><dd><code><%= @workflow.entrypoint.presence || "not set" %></code></dd>
+      <dt>Default arguments</dt>
+      <dd><code><%= @workflow.default_arguments.presence || "none" %></code></dd>
+      <dt>Applies to</dt>
+      <dd><%= @workflow.media_type_list.any? ? @workflow.media_type_list.map(&:titleize).join(", ") : "Any media type" %></dd>
+      <% if @workflow.trigger == "scheduled" %>
+        <dt>Schedule</dt><dd><code><%= @workflow.schedule %></code></dd>
+      <% end %>
+      <dt>Created by</dt><dd><%= @workflow.created_by_name.presence || "—" %></dd>
+      <dt>Last run</dt>
+      <dd><%= @workflow.last_run_at ? "#{time_ago_in_words(@workflow.last_run_at)} ago" : "Never" %></dd>
+    </dl>
+  </section>
+
+  <section class="dam-panel">
+    <h2>Recent runs</h2>
+    <% if @jobs.any? %>
+      <table class="dam-table">
+        <thead>
+          <tr><th>Job</th><th>Subject</th><th>Status</th><th>Started by</th><th>When</th></tr>
+        </thead>
+        <tbody>
+          <% @jobs.each do |job| %>
+            <tr>
+              <td><%= link_to "##{job.id}", digital_asset_management_job_path(job) %></td>
+              <td><%= job.subject_label.presence || "Whole library" %></td>
+              <td><%= dam_pill(job.status) %></td>
+              <td><%= job.created_by_name.presence || "—" %></td>
+              <td><%= time_ago_in_words(job.created_at) %> ago</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="dam-muted">This workflow has not run yet.</p>
+    <% end %>
+  </section>
+</div>

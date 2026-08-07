@@ -1,0 +1,25 @@
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1>Collections</h1>
+      <p class="dam-page-subtitle"><%= pluralize(@collections.size, "collection") %>.</p>
+    </div>
+    <div class="dam-page-actions">
+      <%= link_to "New collection", new_digital_asset_management_collection_path, class: "btn approve" %>
+    </div>
+  </header>
+
+  <% if @collections.any? %>
+    <div class="dam-grid">
+      <% @collections.each do |collection| %>
+        <%= render "collection_card", collection: collection, counts: @counts,
+                   favorited: @favorite_ids.include?(collection.id) %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="dam-empty">
+      No collections yet.
+      <%= link_to "Create the first one", new_digital_asset_management_collection_path %>.
+    </p>
+  <% end %>
+</div>

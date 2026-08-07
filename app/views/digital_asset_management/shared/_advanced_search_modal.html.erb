@@ -1,0 +1,143 @@
+<%# Advanced Search — the DAM/MAM filter panel behind the sidebar button.
+
+    It is the same GET to the asset index the quick box performs, with more
+    fields filled in, so a search is always reproducible from its URL and can
+    be bookmarked or handed to somebody else.
+
+    The custom-metadata rows at the bottom are cloned from the template below
+    by dam_search_controller.js, which also swaps the operator list and the
+    value input to match the chosen field's type. %>
+<div class="pb-modal-backdrop" hidden
+     data-dam-search-target="modal"
+     data-action="click->dam-search#backdropClose keydown.esc->dam-search#close">
+  <div class="pb-modal pb-modal--xl" role="dialog" aria-modal="true"
+       aria-labelledby="dam-advanced-search-title">
+    <div class="pb-modal__header">
+      <h3 id="dam-advanced-search-title">Advanced Search</h3>
+      <button type="button" class="pb-modal__close" aria-label="Close"
+              data-action="dam-search#close">✕</button>
+    </div>
+
+    <%= form_with url: digital_asset_management_assets_path, method: :get,
+                  class: "dam-advanced-form", data: { turbo: false } do %>
+      <div class="pb-modal__body">
+        <div class="dam-filter-grid">
+          <div class="dam-filter">
+            <%= label_tag :q, "Contains" %>
+            <%= search_field_tag :q, @dam_search.query, class: "form-control",
+                                 placeholder: "Title, description, filename or metadata" %>
+          </div>
+
+          <div class="dam-filter">
+            <%= label_tag :uploaded_by, "Created by" %>
+            <%= select_tag :uploaded_by,
+                           options_for_select(@dam_uploaders.map { |id, name| [name.presence || id, id] },
+                                              @dam_search.uploaded_by),
+                           include_blank: "Anyone", class: "form-control" %>
+          </div>
+
+          <div class="dam-filter">
+            <%= label_tag :sort, "Sort by" %>
+            <%= select_tag :sort,
+                           options_for_select([["Newest first", "newest"], ["Oldest first", "oldest"],
+                                               ["Title A–Z", "title"], ["Largest first", "largest"]],
+                                              @dam_search.sort),
+                           class: "form-control" %>
+          </div>
+        </div>
+
+        <fieldset class="dam-filter-set">
+          <legend>Media type</legend>
+          <div class="dam-checkbox-row">
+            <% @dam_media_types.each do |media_type| %>
+              <label class="dam-checkbox">
+                <%= check_box_tag "media_type[]", media_type,
+                                  @dam_search.media_types.include?(media_type),
+                                  id: "dam-media-#{media_type}" %>
+                <span><%= media_type.titleize %></span>
+              </label>
+            <% end %>
+          </div>
+        </fieldset>
+
+        <fieldset class="dam-filter-set">
+          <legend>Format</legend>
+          <% if @dam_formats.any? %>
+            <div class="dam-checkbox-row">
+              <% @dam_formats.each do |format| %>
+                <label class="dam-checkbox">
+                  <%= check_box_tag "format[]", format, @dam_search.formats.include?(format),
+                                    id: "dam-format-#{format.parameterize}" %>
+                  <span><%= format %></span>
+                </label>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="dam-hint">Formats appear here once assets are ingested.</p>
+          <% end %>
+        </fieldset>
+
+        <fieldset class="dam-filter-set">
+          <legend>Storage</legend>
+          <% if @dam_storage_locations.any? %>
+            <div class="dam-checkbox-row">
+              <% @dam_storage_locations.each do |location| %>
+                <label class="dam-checkbox">
+                  <%= check_box_tag "storage_location_id[]", location.id,
+                                    @dam_search.storage_location_ids.map(&:to_s).include?(location.id.to_s),
+                                    id: "dam-storage-#{location.id}" %>
+                  <span><%= location.label %></span>
+                </label>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="dam-hint">No storage locations configured yet.</p>
+          <% end %>
+        </fieldset>
+
+        <div class="dam-filter-grid">
+          <div class="dam-filter">
+            <%= label_tag :created_from, "Ingested on or after" %>
+            <%= date_field_tag :created_from, @dam_search.created_from, class: "form-control" %>
+          </div>
+          <div class="dam-filter">
+            <%= label_tag :created_to, "Ingested on or before" %>
+            <%= date_field_tag :created_to, @dam_search.created_to, class: "form-control" %>
+          </div>
+        </div>
+
+        <fieldset class="dam-filter-set">
+          <legend>Custom metadata</legend>
+          <% if @dam_metadata_fields.any? %>
+            <div class="dam-meta-rows" data-dam-search-target="metaRows">
+              <% @dam_search.metadata_filters.each_with_index do |filter, index| %>
+                <%= render "digital_asset_management/shared/metadata_filter_row",
+                           index: index, filter: filter %>
+              <% end %>
+            </div>
+            <button type="button" class="btn compact" data-action="dam-search#addFilter">
+              + Add metadata filter
+            </button>
+          <% else %>
+            <p class="dam-hint">
+              No custom metadata fields are defined yet. Add them under Dam::MetadataField
+              and they will appear here as filterable criteria.
+            </p>
+          <% end %>
+        </fieldset>
+      </div>
+
+      <div class="pb-modal__actions">
+        <%= link_to "Clear filters", digital_asset_management_assets_path, class: "btn clear-filters" %>
+        <button type="button" class="btn" data-action="dam-search#close">Cancel</button>
+        <button type="submit" class="btn approve">Search</button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%# Cloned by the Stimulus controller for each new filter row. Kept out of the
+    form (in a <template>) so the blank row is never submitted. %>
+<template data-dam-search-target="rowTemplate">
+  <%= render "digital_asset_management/shared/metadata_filter_row", index: "__INDEX__", filter: nil %>
+</template>

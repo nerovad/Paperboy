@@ -1,0 +1,84 @@
+<%= form_with model: @workflow, scope: :workflow,
+              url: @workflow.persisted? ? digital_asset_management_workflow_path(@workflow)
+                                        : digital_asset_management_workflows_path,
+              class: "dam-form" do |f| %>
+  <% if @workflow.errors.any? %>
+    <div class="dam-errors">
+      <ul>
+        <% @workflow.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :name %>
+    <%= f.text_field :name, class: "form-control", required: true %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description, "What it does" %>
+    <%= f.text_area :description, class: "form-control", rows: 3 %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :runtime, "Written in" %>
+    <%= f.select :runtime, Dam::Workflow::RUNTIMES.map { |key, label| [label, key] },
+                 {}, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :entrypoint, "Entry point" %>
+    <%= f.text_field :entrypoint, class: "form-control",
+                     placeholder: "e.g. workflows/extract_metadata.py" %>
+    <p class="dam-hint">
+      Script or binary the runner invokes. Interpreted from the workflow root, not an absolute path.
+    </p>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :default_arguments, "Default arguments" %>
+    <%= f.text_area :default_arguments, class: "form-control", rows: 2,
+                    placeholder: "--profile proxy --bitrate 4000k" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :trigger, "Run" %>
+    <%= f.select :trigger, Dam::Workflow::TRIGGERS.map { |key, label| [label, key] },
+                 {}, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :schedule, "Schedule" %>
+    <%= f.text_field :schedule, class: "form-control", placeholder: "0 2 * * *" %>
+    <p class="dam-hint">Cron expression. Only used when the workflow runs on a schedule.</p>
+  </div>
+
+  <fieldset class="dam-filter-set">
+    <legend>Applies to</legend>
+    <div class="dam-checkbox-row">
+      <% Dam::Asset::MEDIA_TYPES.each do |media_type| %>
+        <label class="dam-checkbox">
+          <%= check_box_tag "workflow[media_type_list][]", media_type,
+                            @workflow.media_type_list.include?(media_type),
+                            id: "workflow-media-#{media_type}" %>
+          <span><%= media_type.titleize %></span>
+        </label>
+      <% end %>
+    </div>
+    <p class="dam-hint">Leave all unchecked to let the workflow run on anything.</p>
+  </fieldset>
+
+  <div class="form-group">
+    <label class="dam-checkbox">
+      <%= f.check_box :enabled %>
+      <span>Enabled</span>
+    </label>
+  </div>
+
+  <div class="form-actions">
+    <%= link_to "Cancel", digital_asset_management_workflows_path, class: "btn" %>
+    <%= f.submit @workflow.persisted? ? "Save workflow" : "Create workflow", class: "btn approve" %>
+  </div>
+<% end %>

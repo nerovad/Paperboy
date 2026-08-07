@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 20_260_729_184_939) do
+ActiveRecord::Schema[8.0].define(version: 20_260_807_120_008) do
   create_table 'Employee_Groups', force: :cascade do |t|
     t.integer 'EmployeeID', null: false
     t.bigint 'GroupID', null: false
@@ -212,6 +212,181 @@ ActiveRecord::Schema[8.0].define(version: 20_260_729_184_939) do
     t.string 'impacted_agency'
     t.string 'impacted_employee'
     t.string 'status', default: 'in_progress', null: false
+  end
+
+  create_table 'dam_assets', force: :cascade do |t|
+    t.string 'title', null: false
+    t.text 'description'
+    t.string 'filename'
+    t.string 'media_type', default: 'other', null: false
+    t.string 'format'
+    t.string 'content_type'
+    t.bigint 'byte_size'
+    t.string 'checksum'
+    t.bigint 'storage_location_id'
+    t.string 'storage_path'
+    t.integer 'width'
+    t.integer 'height'
+    t.integer 'duration_seconds'
+    t.string 'uploaded_by_id'
+    t.string 'uploaded_by_name'
+    t.string 'status', default: 'active', null: false
+    t.datetime 'ingested_at'
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+    t.index ['created_at'], name: 'index_dam_assets_on_created_at'
+    t.index ['format'], name: 'index_dam_assets_on_format'
+    t.index ['media_type'], name: 'index_dam_assets_on_media_type'
+    t.index ['status'], name: 'index_dam_assets_on_status'
+    t.index ['storage_location_id'], name: 'index_dam_assets_on_storage_location_id'
+    t.index ['uploaded_by_id'], name: 'index_dam_assets_on_uploaded_by_id'
+  end
+
+  create_table 'dam_collection_assets', force: :cascade do |t|
+    t.bigint 'collection_id', null: false
+    t.bigint 'asset_id', null: false
+    t.integer 'position', default: 0, null: false
+    t.string 'added_by_id'
+    t.datetime 'created_at', null: false
+    t.index ['asset_id'], name: 'index_dam_collection_assets_on_asset_id'
+    t.index %w[collection_id asset_id], name: 'index_dam_collection_assets_on_collection_id_and_asset_id', unique: true
+    t.index ['collection_id'], name: 'index_dam_collection_assets_on_collection_id'
+  end
+
+  create_table 'dam_collections', force: :cascade do |t|
+    t.string 'name', null: false
+    t.text 'description'
+    t.bigint 'parent_id'
+    t.string 'created_by_id'
+    t.string 'created_by_name'
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+    t.index ['name'], name: 'index_dam_collections_on_name'
+    t.index ['parent_id'], name: 'index_dam_collections_on_parent_id'
+  end
+
+  create_table 'dam_favorites', force: :cascade do |t|
+    t.string 'employee_id', null: false
+    t.string 'favoritable_type', null: false
+    t.bigint 'favoritable_id', null: false
+    t.datetime 'created_at', null: false
+    t.index %w[employee_id favoritable_type favoritable_id], name: 'index_dam_favorites_on_employee_and_subject', unique: true
+  end
+
+  create_table 'dam_jobs', force: :cascade do |t|
+    t.string 'job_type', null: false
+    t.bigint 'workflow_id'
+    t.string 'subject_type'
+    t.bigint 'subject_id'
+    t.string 'subject_label'
+    t.string 'status', default: 'queued', null: false
+    t.integer 'total_items', default: 0, null: false
+    t.integer 'processed_items', default: 0, null: false
+    t.datetime 'queued_at'
+    t.datetime 'started_at'
+    t.datetime 'finished_at'
+    t.text 'error_message'
+    t.text 'log'
+    t.string 'created_by_id'
+    t.string 'created_by_name'
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+    t.index ['created_at'], name: 'index_dam_jobs_on_created_at'
+    t.index ['job_type'], name: 'index_dam_jobs_on_job_type'
+    t.index ['status'], name: 'index_dam_jobs_on_status'
+    t.index %w[subject_type subject_id], name: 'index_dam_jobs_on_subject_type_and_subject_id'
+    t.index ['workflow_id'], name: 'index_dam_jobs_on_workflow_id'
+  end
+
+  create_table 'dam_metadata_fields', force: :cascade do |t|
+    t.string 'key', null: false
+    t.string 'label', null: false
+    t.string 'field_type', default: 'text', null: false
+    t.text 'options'
+    t.text 'description'
+    t.boolean 'active', default: true, null: false
+    t.integer 'position', default: 0, null: false
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+    t.index ['key'], name: 'index_dam_metadata_fields_on_key', unique: true
+  end
+
+  create_table 'dam_metadata_values', force: :cascade do |t|
+    t.bigint 'asset_id', null: false
+    t.string 'field_key', null: false
+    t.string 'value', limit: 450
+    t.decimal 'numeric_value', precision: 18, scale: 4
+    t.datetime 'date_value'
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+    t.index %w[asset_id field_key], name: 'index_dam_metadata_values_on_asset_id_and_field_key', unique: true
+    t.index ['asset_id'], name: 'index_dam_metadata_values_on_asset_id'
+    t.index %w[field_key value], name: 'index_dam_metadata_values_on_field_key_and_value'
+  end
+
+  create_table 'dam_recent_views', force: :cascade do |t|
+    t.string 'employee_id', null: false
+    t.string 'viewable_type', null: false
+    t.bigint 'viewable_id', null: false
+    t.datetime 'viewed_at', null: false
+    t.integer 'view_count', default: 1, null: false
+    t.index %w[employee_id viewable_type viewable_id], name: 'index_dam_recent_views_on_employee_and_subject', unique: true
+    t.index %w[employee_id viewed_at], name: 'index_dam_recent_views_on_employee_id_and_viewed_at'
+  end
+
+  create_table 'dam_shares', force: :cascade do |t|
+    t.string 'subject_type', null: false
+    t.bigint 'subject_id', null: false
+    t.string 'subject_label'
+    t.string 'token', null: false
+    t.string 'permission', default: 'view', null: false
+    t.string 'shared_by_id'
+    t.string 'shared_by_name'
+    t.text 'recipients'
+    t.text 'message'
+    t.datetime 'expires_at'
+    t.datetime 'revoked_at'
+    t.datetime 'last_accessed_at'
+    t.integer 'access_count', default: 0, null: false
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+    t.index ['created_at'], name: 'index_dam_shares_on_created_at'
+    t.index ['shared_by_id'], name: 'index_dam_shares_on_shared_by_id'
+    t.index %w[subject_type subject_id], name: 'index_dam_shares_on_subject_type_and_subject_id'
+    t.index ['token'], name: 'index_dam_shares_on_token', unique: true
+  end
+
+  create_table 'dam_storage_locations', force: :cascade do |t|
+    t.string 'key', null: false
+    t.string 'label', null: false
+    t.string 'kind', default: 'disk', null: false
+    t.string 'root'
+    t.text 'description'
+    t.boolean 'active', default: true, null: false
+    t.integer 'position', default: 0, null: false
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+    t.index ['key'], name: 'index_dam_storage_locations_on_key', unique: true
+  end
+
+  create_table 'dam_workflows', force: :cascade do |t|
+    t.string 'name', null: false
+    t.string 'slug', null: false
+    t.text 'description'
+    t.string 'runtime', default: 'ruby', null: false
+    t.string 'entrypoint'
+    t.text 'default_arguments'
+    t.string 'trigger', default: 'manual', null: false
+    t.string 'schedule'
+    t.string 'applies_to_media_types'
+    t.boolean 'enabled', default: true, null: false
+    t.string 'created_by_id'
+    t.string 'created_by_name'
+    t.datetime 'last_run_at'
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+    t.index ['enabled'], name: 'index_dam_workflows_on_enabled'
+    t.index ['slug'], name: 'index_dam_workflows_on_slug', unique: true
   end
 
   create_table 'employee_union_codes', force: :cascade do |t|
@@ -946,6 +1121,12 @@ ActiveRecord::Schema[8.0].define(version: 20_260_729_184_939) do
 
   add_foreign_key 'active_storage_attachments', 'active_storage_blobs', column: 'blob_id'
   add_foreign_key 'active_storage_variant_records', 'active_storage_blobs', column: 'blob_id'
+  add_foreign_key 'dam_assets', 'dam_storage_locations', column: 'storage_location_id'
+  add_foreign_key 'dam_collection_assets', 'dam_assets', column: 'asset_id'
+  add_foreign_key 'dam_collection_assets', 'dam_collections', column: 'collection_id'
+  add_foreign_key 'dam_collections', 'dam_collections', column: 'parent_id'
+  add_foreign_key 'dam_jobs', 'dam_workflows', column: 'workflow_id'
+  add_foreign_key 'dam_metadata_values', 'dam_assets', column: 'asset_id'
   add_foreign_key 'form_fields', 'form_templates'
   add_foreign_key 'form_template_copy_recipients', 'form_templates'
   add_foreign_key 'form_template_email_steps', 'form_templates'

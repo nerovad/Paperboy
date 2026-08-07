@@ -1,0 +1,35 @@
+<%# One collection tile. Counts are passed in from the index (grouped in one
+    query); elsewhere the collection counts its own. %>
+<%
+  starred = local_assigns.fetch(:favorited, nil)
+  starred = dam_favorite?(collection) if starred.nil?
+  counts = local_assigns[:counts]
+  count = counts ? counts.fetch(collection.id, 0) : collection.asset_count
+  cover = collection.cover_asset
+%>
+<article class="dam-card dam-card--collection">
+  <%= link_to digital_asset_management_collection_path(collection), class: "dam-card-thumb" do %>
+    <% if cover && (thumbnail = dam_thumbnail_url(cover)) %>
+      <%= image_tag thumbnail, alt: collection.name, loading: "lazy" %>
+    <% else %>
+      <span class="dam-card-glyph" aria-hidden="true">🗂️</span>
+    <% end %>
+    <span class="dam-card-format"><%= pluralize(count, "asset") %></span>
+  <% end %>
+
+  <div class="dam-card-body">
+    <%= link_to collection.name, digital_asset_management_collection_path(collection),
+                class: "dam-card-title" %>
+    <% if collection.description.present? %>
+      <p class="dam-card-meta"><%= truncate(collection.description, length: 90) %></p>
+    <% end %>
+    <p class="dam-card-meta dam-muted">
+      <%= collection.created_by_name.presence || "Unknown" %> ·
+      <%= collection.created_at&.strftime("%b %-d, %Y") %>
+    </p>
+  </div>
+
+  <div class="dam-card-actions">
+    <%= dam_star_button(collection, favorited: starred) %>
+  </div>
+</article>

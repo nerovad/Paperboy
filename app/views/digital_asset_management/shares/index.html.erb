@@ -1,0 +1,81 @@
+<%# My Shares — a personal history, scoped to the signed-in user. %>
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1>My Shares</h1>
+      <p class="dam-page-subtitle">Everything you have sent out of the library.</p>
+    </div>
+  </header>
+
+  <div class="dam-filter-bar">
+    <%= link_to "All", digital_asset_management_shares_path,
+                class: "btn compact#{' active' if @state_filter.blank? && params[:subject_type].blank?}" %>
+    <% %w[active expired revoked].each do |state| %>
+      <%= link_to state.titleize, digital_asset_management_shares_path(state: state),
+                  class: "btn compact#{' active' if @state_filter == state}" %>
+    <% end %>
+    <span class="dam-filter-divider"></span>
+    <%= link_to "Assets (#{@counts.fetch('Dam::Asset', 0)})",
+                digital_asset_management_shares_path(subject_type: "asset"),
+                class: "btn compact#{' active' if params[:subject_type] == 'asset'}" %>
+    <%= link_to "Collections (#{@counts.fetch('Dam::Collection', 0)})",
+                digital_asset_management_shares_path(subject_type: "collection"),
+                class: "btn compact#{' active' if params[:subject_type] == 'collection'}" %>
+  </div>
+
+  <% if @shares.any? %>
+    <table class="dam-table">
+      <thead>
+        <tr>
+          <th>Shared</th>
+          <th>What</th>
+          <th>Recipients</th>
+          <th>Permission</th>
+          <th>Expires</th>
+          <th>Opened</th>
+          <th>State</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @shares.each do |share| %>
+          <tr>
+            <td><%= link_to share.created_at.strftime("%b %-d, %Y"),
+                            digital_asset_management_share_path(share) %></td>
+            <td><%= share.subject_label.presence || "—" %></td>
+            <td><%= share.recipient_list.first(2).join(", ") %>
+              <% if share.recipient_list.size > 2 %>
+                <span class="dam-muted">+<%= share.recipient_list.size - 2 %> more</span>
+              <% end %>
+            </td>
+            <td><%= share.permission_label %></td>
+            <td><%= share.expires_at&.strftime("%b %-d, %Y") || "Never" %></td>
+            <td><%= share.access_count %></td>
+            <td><%= dam_pill(share.state) %></td>
+            <td class="dam-row-actions">
+              <% unless share.revoked? %>
+                <%= button_to "Revoke", revoke_digital_asset_management_share_path(share), method: :post,
+                              class: "btn deny compact",
+                              form: { data: { turbo_confirm: "Revoke this share? The link stops working immediately.",
+                                              confirm_title: "Revoke share", confirm_label: "Revoke" } } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% if @pagy.pages > 1 %>
+      <div class="pagination-wrapper">
+        <%== @pagy.series_nav %>
+        <p class="pagination-info">
+          Showing <%= @pagy.from %>–<%= @pagy.to %> of <%= @pagy.count %> shares
+        </p>
+      </div>
+    <% end %>
+  <% else %>
+    <p class="dam-empty">
+      You have not shared anything yet. Open an asset and use the Share panel.
+    </p>
+  <% end %>
+</div>

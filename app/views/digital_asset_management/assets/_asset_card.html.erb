@@ -1,0 +1,36 @@
+<%# One asset tile. `favorited` may be passed in when the caller already knows
+    the answer for a whole page of cards; nil means look it up for this one. %>
+<%
+  starred = local_assigns.fetch(:favorited, nil)
+  starred = dam_favorite?(asset) if starred.nil?
+  thumbnail = dam_thumbnail_url(asset)
+%>
+<article class="dam-card">
+  <%= link_to digital_asset_management_asset_path(asset), class: "dam-card-thumb" do %>
+    <% if thumbnail %>
+      <%= image_tag thumbnail, alt: asset.title, loading: "lazy" %>
+    <% else %>
+      <span class="dam-card-glyph" aria-hidden="true"><%= dam_media_glyph(asset.media_type) %></span>
+    <% end %>
+    <% if asset.format.present? %>
+      <span class="dam-card-format"><%= asset.format %></span>
+    <% end %>
+  <% end %>
+
+  <div class="dam-card-body">
+    <%= link_to asset.title, digital_asset_management_asset_path(asset), class: "dam-card-title" %>
+    <p class="dam-card-meta">
+      <%= asset.media_type.titleize %>
+      <% if asset.display_size %> · <%= asset.display_size %><% end %>
+      <% if asset.dimensions %> · <%= asset.dimensions %><% end %>
+    </p>
+    <p class="dam-card-meta dam-muted">
+      <%= asset.uploaded_by_name.presence || "Unknown uploader" %> ·
+      <%= asset.created_at&.strftime("%b %-d, %Y") %>
+    </p>
+  </div>
+
+  <div class="dam-card-actions">
+    <%= dam_star_button(asset, favorited: starred) %>
+  </div>
+</article>
