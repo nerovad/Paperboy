@@ -9,7 +9,7 @@ require_relative '../helpers/etl_header_helpers'
 require_relative '../db/mssql_helpers'
 require_relative '../constants/workflow_paths'
 
-DOWNLOAD_DIR = WorkflowPaths::DOWNLOAD_DIR
+INBOX_DIR = WorkflowPaths::INBOX_DIR
 DSL_DIR = File.expand_path('../../../../config/data_runner/dsl', __dir__)
 
 SCAN_LIMIT = 60
@@ -178,7 +178,7 @@ def render_entry(dataset_key, local_name, format, header_row_idx, header_cols)
           }
         },
         source: {
-          location: #{ruby_literal(File.join('/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox', local_name))},
+          location: #{ruby_literal(File.join(INBOX_DIR, local_name))},
           local: #{ruby_literal(local_name)},
           format: :#{format},
           strategy: :copy
@@ -207,10 +207,9 @@ end
 
 puts 'Initial DSL generation started.'
 
-FileUtils.mkdir_p(DOWNLOAD_DIR)
 FileUtils.mkdir_p(DSL_DIR)
 
-inputs = Dir[File.join(DOWNLOAD_DIR, '*')].select { |p| File.file?(p) }
+inputs = Dir[File.join(INBOX_DIR, '*')].select { |p| File.file?(p) }
 targets = inputs.select do |path|
   %w[.xlsx .csv .xml].include?(File.extname(path).downcase)
 end
@@ -226,7 +225,7 @@ end
 
 stats = EtlHelpers::RunStats.new
 
-puts "[SKIP] No .xlsx, .csv, or .xml files found in #{DOWNLOAD_DIR}" if targets.empty?
+puts "[SKIP] No .xlsx, .csv, or .xml files found in #{INBOX_DIR}" if targets.empty?
 
 targets.sort.each do |input_path|
   file_name = File.basename(input_path)

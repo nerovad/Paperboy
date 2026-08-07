@@ -12,6 +12,7 @@ require 'pathname'
 module WorkflowPaths
   ROOT = Pathname.new(__dir__).join('../../../..').expand_path
   OUTPUT_ROOT = ROOT.join('output/data_runner')
+  INBOX_DIR = '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox'
 
   # Folder names (stable contract)
   DOWNLOAD_DIR_NAME        = '01_Download'
