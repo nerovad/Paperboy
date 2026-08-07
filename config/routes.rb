@@ -81,6 +81,7 @@ Rails.application.routes.draw do
 
     resource :dashboard, only: :show, controller: :dashboards
     resource :audit, only: :show, controller: :audits
+    get 'audit/:key', to: 'audits#detail', as: :audit_detail
     resource :reporting_period, only: %i[show update]
     resource :data_refresh, only: %i[show update]
     resources :email_recipients, only: %i[index create destroy]

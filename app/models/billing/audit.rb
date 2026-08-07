@@ -6,6 +6,7 @@ module Billing
     Check = Data.define(:key, :label, :column, :lookup_table, :lookup_column)
     Group = Data.define(:key, :label, :checks)
     Result = Data.define(:key, :label, :count)
+    Detail = Data.define(:value, :count)
 
     GROUPS = [
       Group.new(
@@ -47,6 +48,8 @@ module Billing
       @connection = connection
     end
 
+    def self.find_check(key) = GROUPS.flat_map(&:checks).find { |check| check.key.to_s == key.to_s }
+
     def results
       counts = connection.exec_query(query).to_a.to_h do |row|
         [row.fetch('audit_key').to_sym, row.fetch('failure_count').to_i]
@@ -54,10 +57,18 @@ module Billing
 
       GROUPS.to_h do |group|
         results = group.checks.map do |check|
-          Result.new(key: check.key, label: check.label,
-                     count: counts.fetch(check.key, 0))
+          Result.new(key: check.key, label: check.label, count: counts.fetch(check.key, 0))
         end
         [group, results]
+      end
+    end
+
+    def details(key)
+      check = self.class.find_check(key)
+      raise KeyError, key unless check
+
+      connection.exec_query(detail_query(check)).map do |row|
+        Detail.new(value: row.fetch('invalid_value'), count: row.fetch('failure_count').to_i)
       end
     end
 
@@ -67,10 +78,8 @@ module Billing
 
     def query
       sql = GROUPS.flat_map(&:checks).map { |check| check_query(check) }.join("\nUNION ALL\n")
-      ActiveRecord::Base.send(
-        :sanitize_sql_array,
-        [sql, *GROUPS.flat_map(&:checks).flat_map { [period.start_date, period.end_date] }]
-      )
+      dates = GROUPS.flat_map(&:checks).flat_map { [period.start_date, period.end_date] }
+      sanitize(sql, *dates)
     end
 
     def check_query(check)
@@ -84,6 +93,27 @@ module Billing
             WHERE Z.#{check.lookup_column} = T.#{check.column}
           )
       SQL
+    end
+
+    def detail_query(check)
+      sql = <<~SQL.squish
+        SELECT LTRIM(RTRIM(T.#{check.column})) AS invalid_value,
+               COUNT_BIG(*) AS failure_count
+        FROM GSABSS.dbo.tc60 T
+        WHERE NULLIF(LTRIM(RTRIM(T.#{check.column})), '') IS NOT NULL
+          AND T.[DATE] >= ? AND T.[DATE] < DATEADD(day, 1, ?)
+          AND NOT EXISTS (
+            SELECT 1 FROM GSABSS.dbo.#{check.lookup_table} Z
+            WHERE Z.#{check.lookup_column} = T.#{check.column}
+          )
+        GROUP BY LTRIM(RTRIM(T.#{check.column}))
+        ORDER BY failure_count DESC, invalid_value
+      SQL
+      sanitize(sql, period.start_date, period.end_date)
+    end
+
+    def sanitize(sql, *values)
+      ActiveRecord::Base.send(:sanitize_sql_array, [sql, *values])
     end
   end
 end

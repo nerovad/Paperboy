@@ -18,11 +18,19 @@
         <h2 id="<%= group.key %>-title"><%= group.label %></h2>
         <div class="billing-audit-grid">
           <% results.each do |result| %>
-            <article class="billing-audit-card<%= ' billing-audit-card--failure' if result.count.positive? %>">
+            <% card_classes = "billing-audit-card#{' billing-audit-card--failure' if result.count.positive?}" %>
+            <% card = capture do %>
               <h3><%= result.label %></h3>
               <div class="billing-audit-count"><%= number_with_delimiter result.count %></div>
               <p><%= 'failure'.pluralize(result.count) %></p>
-            </article>
+            <% end %>
+            <% if result.count.positive? %>
+              <%= link_to billing_audit_detail_path(result.key), class: "#{card_classes} billing-audit-card--link" do %>
+                <%= card %>
+              <% end %>
+            <% else %>
+              <article class="<%= card_classes %>"><%= card %></article>
+            <% end %>
           <% end %>
         </div>
       </section>

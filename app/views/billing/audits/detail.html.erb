@@ -1,0 +1,39 @@
+<div class="form-header billing-form-header">
+  <h1>Billing Audit: <%= @audit_check&.label || params[:key].to_s.upcase %></h1>
+</div>
+
+<div class="form-wrapper billing-form billing-audit">
+  <%= render "billing/shared/active_billing_period",
+             active_billing_period: @active_billing_period %>
+
+  <% if @audit_error %>
+    <div class="dashboard-error" role="alert"><p><%= @audit_error %></p></div>
+  <% elsif @active_billing_period.nil? %>
+    <div class="dashboard-error" role="status">
+      <p>Select an active Billing period before running the audit.</p>
+    </div>
+  <% else %>
+    <section class="billing-audit-group" aria-labelledby="audit-detail-title">
+      <h2 id="audit-detail-title">Distinct Invalid <%= @audit_check.label %> Values</h2>
+      <table class="submission-table billing-audit-detail-table">
+        <thead>
+          <tr>
+            <th>Invalid Value</th>
+            <th>Failures</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @audit_details.each do |detail| %>
+            <tr>
+              <td><%= detail.value %></td>
+              <td><%= number_with_delimiter detail.count %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <div class="form-actions billing-audit-detail-actions">
+        <%= link_to "Back to Billing Audit", billing_audit_path, class: "btn" %>
+      </div>
+    </section>
+  <% end %>
+</div>

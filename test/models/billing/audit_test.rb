@@ -40,6 +40,25 @@ module Billing
       connection.verify
     end
 
+    test 'returns distinct invalid values for a known check' do
+      rows = ActiveRecord::Result.new(
+        %w[invalid_value failure_count],
+        [%w[BAD001 4], %w[BAD002 1]]
+      )
+      connection = Minitest::Mock.new
+      connection.expect(:exec_query, rows) do |sql|
+        assert_includes sql, 'GROUP BY LTRIM(RTRIM(T.CUNIT))'
+        assert_includes sql, "'2026-07-01'"
+        true
+      end
+
+      details = Audit.new(period, connection: connection).details(:cunit)
+
+      assert_equal %w[BAD001 BAD002], details.map(&:value)
+      assert_equal [4, 1], details.map(&:count)
+      connection.verify
+    end
+
     private
 
     def period
