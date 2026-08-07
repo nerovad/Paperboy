@@ -47,9 +47,9 @@ module SlideshowHelper
   # use, so the paths are spelled out instead of going through slideshow_images.
   def admin_tools_home_images
     [
-      { src: 'Beach_Walkway.jpg',  alt: 'Beach walkway' },
-      { src: 'Pier_Close_Up.jpeg', alt: 'Ventura Pier close up' },
-      { src: 'Sailboats.jpg',      alt: 'Sailboats in the harbor' }
+      { src: 'Sunny_Beach.png',    alt: 'Sunny beach promenade stroll' },
+      { src: 'Sunny_Coastal.png',  alt: 'Sunny coastal retreat with mountains' },
+      { src: 'Paperboy-2-FI.png',  alt: 'Paperboy' }
     ]
   end
 
