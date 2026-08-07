@@ -265,6 +265,27 @@
   font-weight: 700;
 }
 
+.billing-type-audit-card > p { margin-top: .5rem; }
+
+.billing-type-audit-counts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: .75rem;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .billing-audit-count { margin: 0; }
+
+  span:last-child {
+    color: $text-muted;
+    font-size: .85rem;
+  }
+}
+
 .billing-audit-detail-table th:nth-child(2),
 .billing-audit-detail-table td:nth-child(2) {
   width: 10rem;

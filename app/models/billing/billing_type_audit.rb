@@ -3,7 +3,7 @@
 module Billing
   # Counts active-period TC60 rows for types enabled on the Billing Types page.
   class BillingTypeAudit
-    Result = Data.define(:code, :name, :count)
+    Result = Data.define(:code, :name, :row_count, :error_count)
 
     def initialize(period, types: nil, connection: BillingBase.connection)
       @period = period
@@ -16,12 +16,19 @@ module Billing
       return [] if active_types.empty?
 
       counts = connection.exec_query(query(active_types.map(&:code))).to_a.to_h do |row|
-        [row.fetch('billing_type').to_s, row.fetch('row_count').to_i]
+        [row.fetch('billing_type').to_s,
+         [row.fetch('row_count').to_i, row.fetch('error_count').to_i]]
       end
 
       active_types.map do |type|
-        Result.new(code: type.code, name: type.name, count: counts.fetch(type.code, 0))
+        row_count, error_count = counts.fetch(type.code, [0, 0])
+        Result.new(code: type.code, name: type.name,
+                   row_count: row_count, error_count: error_count)
       end
+    end
+
+    def error_rows(code)
+      connection.exec_query(error_rows_query(code)).to_a
     end
 
     private
@@ -30,16 +37,49 @@ module Billing
 
     def query(codes)
       sql = <<~SQL.squish
-        SELECT T.[TYPE] AS billing_type, COUNT_BIG(*) AS row_count
-        FROM GSABSS.dbo.tc60 T
-        WHERE T.[DATE] >= ? AND T.[DATE] < DATEADD(day, 1, ?)
-          AND T.[TYPE] IN (?)
-        GROUP BY T.[TYPE]
+        SELECT Audited.billing_type,
+               COUNT_BIG(*) AS row_count,
+               SUM(Audited.is_error) AS error_count
+        FROM (
+          SELECT T.[TYPE] AS billing_type,
+                 CONVERT(bigint, CASE WHEN #{error_predicate} THEN 1 ELSE 0 END) AS is_error
+          FROM GSABSS.dbo.tc60 T
+          WHERE T.[DATE] >= ? AND T.[DATE] < DATEADD(day, 1, ?)
+            AND T.[TYPE] IN (?)
+        ) Audited
+        GROUP BY Audited.billing_type
       SQL
       ActiveRecord::Base.send(
         :sanitize_sql_array,
         [sql, period.start_date, period.end_date, codes]
       )
+    end
+
+    def error_rows_query(code)
+      sql = <<~SQL.squish
+        SELECT T.*
+        FROM GSABSS.dbo.tc60 T
+        WHERE T.[DATE] >= ? AND T.[DATE] < DATEADD(day, 1, ?)
+          AND T.[TYPE] = ?
+          AND (#{error_predicate})
+        ORDER BY T.[DATE]
+      SQL
+      ActiveRecord::Base.send(
+        :sanitize_sql_array,
+        [sql, period.start_date, period.end_date, code]
+      )
+    end
+
+    def error_predicate
+      Audit::GROUPS.flat_map(&:checks).map do |check|
+        <<~SQL.squish
+          (NULLIF(LTRIM(RTRIM(T.#{check.column})), '') IS NOT NULL
+           AND NOT EXISTS (
+             SELECT 1 FROM GSABSS.dbo.#{check.lookup_table} Z
+             WHERE Z.#{check.lookup_column} = T.#{check.column}
+           ))
+        SQL
+      end.join(' OR ')
     end
   end
 end

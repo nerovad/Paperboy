@@ -18,11 +18,29 @@
       <% if @billing_type_audits.any? %>
         <div class="billing-audit-grid">
           <% @billing_type_audits.each do |result| %>
-            <article class="billing-audit-card">
+            <% type_card_classes = "billing-audit-card billing-type-audit-card#{' billing-audit-card--failure' if result.error_count.positive?}" %>
+            <% type_card = capture do %>
               <h3><%= result.code %></h3>
-              <div class="billing-audit-count"><%= number_with_delimiter result.count %></div>
-              <p><%= result.name.presence || result.code %> &middot; TC60 rows</p>
-            </article>
+              <p><%= result.name.presence || result.code %></p>
+              <div class="billing-type-audit-counts">
+                <div>
+                  <span class="billing-audit-count"><%= number_with_delimiter result.row_count %></span>
+                  <span>Rows</span>
+                </div>
+                <div>
+                  <span class="billing-audit-count"><%= number_with_delimiter result.error_count %></span>
+                  <span>Errors</span>
+                </div>
+              </div>
+            <% end %>
+            <% if result.error_count.positive? %>
+              <%= link_to billing_type_audit_rows_path(result.code),
+                          class: "#{type_card_classes} billing-audit-card--link" do %>
+                <%= type_card %>
+              <% end %>
+            <% else %>
+              <article class="<%= type_card_classes %>"><%= type_card %></article>
+            <% end %>
           <% end %>
         </div>
       <% else %>

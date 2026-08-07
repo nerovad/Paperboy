@@ -41,5 +41,18 @@ module Billing
       Rails.logger.error("Billing audit rows failed: #{e.class}: #{e.message}")
       @audit_error = 'The TC60 audit rows could not be loaded.'
     end
+
+    def type_rows
+      @active_billing_period = ActiveBillingPeriod.current
+      @billing_type = BillingType.find_by(TYPE: params[:code], ACTIVE: true)
+      raise ActiveRecord::RecordNotFound unless @billing_type
+
+      @tc60_rows = BillingTypeAudit.new(@active_billing_period).error_rows(@billing_type.code) if @active_billing_period
+    rescue ActiveRecord::RecordNotFound
+      raise
+    rescue ActiveRecord::ActiveRecordError => e
+      Rails.logger.error("Billing type audit rows failed: #{e.class}: #{e.message}")
+      @audit_error = 'The Billing type error rows could not be loaded.'
+    end
   end
 end
