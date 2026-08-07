@@ -43,9 +43,14 @@ module SlideshowHelper
                      'Digital asset cataloging', 'Digital asset delivery')
   end
 
+  # Photographs rather than the illustrated slide_0*.png sets the other apps
+  # use, so the paths are spelled out instead of going through slideshow_images.
   def admin_tools_home_images
-    slideshow_images('admin_tools', 'User and account administration',
-                     'Roles and access permissions', 'Application and system configuration')
+    [
+      { src: 'Beach_Walkway.jpg',  alt: 'Beach walkway' },
+      { src: 'Pier_Close_Up.jpeg', alt: 'Ventura Pier close up' },
+      { src: 'Sailboats.jpg',      alt: 'Sailboats in the harbor' }
+    ]
   end
 
   private
