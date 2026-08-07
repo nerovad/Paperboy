@@ -20,6 +20,7 @@
           <tr>
             <th>Invalid Value</th>
             <th>Failures</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -27,6 +28,11 @@
             <tr>
               <td><%= detail.value %></td>
               <td><%= number_with_delimiter detail.count %></td>
+              <td>
+                <%= link_to "View Details",
+                            billing_audit_rows_path(key: @audit_check.key, value: detail.value),
+                            class: "btn pdf compact" %>
+              </td>
             </tr>
           <% end %>
         </tbody>

@@ -265,13 +265,26 @@
   font-weight: 700;
 }
 
-.billing-audit-detail-table th:last-child,
-.billing-audit-detail-table td:last-child {
+.billing-audit-detail-table th:nth-child(2),
+.billing-audit-detail-table td:nth-child(2) {
   width: 10rem;
   text-align: right;
 }
 
+.billing-audit-detail-table th:last-child,
+.billing-audit-detail-table td:last-child { width: 9rem; }
+
 .billing-audit-detail-actions { margin-top: 1.5rem; }
+
+.billing-audit-rows { max-width: none; }
+
+.billing-audit-rows-table {
+  max-width: 100%;
+  overflow-x: auto;
+
+  th,
+  td { white-space: nowrap; }
+}
 
 /* Billing sidebar action buttons and their confirmation modal. */
 
