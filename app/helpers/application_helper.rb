@@ -143,16 +143,17 @@ module ApplicationHelper
 
   def billing_home_images
     [
-      { src: 'BillingReconciliation.png', alt: 'Monthly billing reconciliation' },
-      { src: 'BillingFiscalPeriods.png', alt: 'Fiscal period planning' },
-      { src: 'BillingReports.png', alt: 'Completed billing reports' }
+      { src: 'billing/slide_01.png', alt: 'Fiscal period planning' },
+      { src: 'billing/slide_02.png', alt: 'Monthly billing reconciliation' },
+      { src: 'billing/slide_03.png', alt: 'Completed billing reports' }
     ]
   end
 
   def coa_home_images
     [
-      { src: 'VenturaCross.png', alt: 'Chart of Accounts' },
-      { src: 'VenturaCityHall.png', alt: 'Chart of Accounts' }
+      { src: 'coa/slide_01.png', alt: 'Organized accounting ledger' },
+      { src: 'coa/slide_02.png', alt: 'Hierarchical account structure' },
+      { src: 'coa/slide_03.png', alt: 'Balanced account reconciliation' }
     ]
   end
 
