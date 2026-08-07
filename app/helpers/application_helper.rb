@@ -136,8 +136,9 @@ module ApplicationHelper
   # existing Ventura images as placeholders.)
   def data_runner_home_images
     [
-      { src: 'VenturaCityHall.png', alt: 'Data Runner' },
-      { src: 'VenturaPier.png', alt: 'Data Runner' }
+      { src: 'data_runner/slide_01.png', alt: 'Data source ingestion' },
+      { src: 'data_runner/slide_02.png', alt: 'Data validation and transformation' },
+      { src: 'data_runner/slide_03.png', alt: 'Data delivery and synchronization' }
     ]
   end
 
