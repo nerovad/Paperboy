@@ -80,6 +80,7 @@ Rails.application.routes.draw do
     root 'dashboard#index'
 
     resource :dashboard, only: :show, controller: :dashboards
+    resource :audit, only: :show, controller: :audits
     resource :reporting_period, only: %i[show update]
     resource :data_refresh, only: %i[show update]
     resources :email_recipients, only: %i[index create destroy]
