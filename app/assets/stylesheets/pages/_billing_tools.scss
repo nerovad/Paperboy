@@ -277,8 +277,18 @@
 .billing-audit-detail-actions { margin-top: 1.5rem; }
 
 .billing-audit-rows {
+  width: calc(75vw - 2rem);
   min-width: 0;
-  max-width: none;
+  max-width: calc(100% - 2rem);
+  overflow: hidden;
+  box-sizing: border-box;
+
+  .billing-audit-group {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
 }
 
 .billing-audit-rows-table {
@@ -295,6 +305,7 @@
   table {
     width: max-content;
     min-width: 100%;
+    max-width: none;
   }
 
   thead th {
@@ -305,6 +316,10 @@
 
   th,
   td { white-space: nowrap; }
+}
+
+@media (max-width: 800px) {
+  .billing-audit-rows { width: calc(100vw - 2rem); }
 }
 
 /* Billing sidebar action buttons and their confirmation modal. */
