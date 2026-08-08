@@ -59,7 +59,7 @@ module Billing
 
     def run_monthly_billing
       MonthlyReportRunner.new(@report).call
-      redirect_to billing_dashboard_path, notice: 'Monthly billing complete'
+      redirect_to billing_audit_path, notice: 'Monthly billing complete'
     end
 
     def print_billing_reports
