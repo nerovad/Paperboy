@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
-bundle exec rails assets:clobber
-bundle exec rails assets:precompile
-bundle exec rails server -p 3001
+set -euo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
+bundle check || bundle install
+bundle exec bin/rails assets:clobber
+bundle exec bin/rails assets:precompile
+exec bundle exec bin/rails server -p 3001

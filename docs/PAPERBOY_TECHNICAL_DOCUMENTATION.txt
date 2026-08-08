@@ -80,12 +80,13 @@ BACKEND:
   - Ruby (system Ruby)
   - Puma web server (>= 5.0)
 
-DATABASE:
+DATABASE AND QUEUE STORAGE:
   - Microsoft SQL Server (GSABSS) via tiny_tds + activerecord-sqlserver-adapter
   - Primary connection: All application tables
   - Billing connection: Separate pool to same DB for stored procedures
   - PostgreSQL: Commented out, reserved for future migration
-  - Redis: For Sidekiq job queue (redis://localhost:6379/0)
+  - Valkey/Redis: Redis-compatible backend for Sidekiq
+    (redis://localhost:6379/0)
 
 FRONTEND:
   - Hotwire Turbo (turbo-rails) - SPA-like page acceleration
@@ -103,7 +104,7 @@ AUTHENTICATION:
 BACKGROUND JOBS:
   - Sidekiq (primary job processor)
   - sidekiq-cron (scheduled/recurring jobs)
-  - Redis as job queue backend
+  - Valkey or Redis as the Redis-compatible job queue backend
 
 PDF GENERATION:
   - Prawn (core PDF rendering)
@@ -2424,10 +2425,31 @@ MAIL CONFIGURATION:
 ================================================================================
 
 Queue Adapter: Sidekiq
-Redis: redis://localhost:6379/0
+Redis-compatible backend: Valkey or Redis at redis://localhost:6379/0
 Workers: 3 threads, configurable processes (default 1)
 
-28.1 SCHEDULED JOBS
+28.1 QUEUE SERVICE SETUP
+------------------------
+
+Arch/Omarchy uses Valkey as its supported Redis replacement. Install it,
+enable its system service, and verify connectivity before starting Sidekiq:
+
+  sudo pacman -S valkey
+  sudo systemctl enable --now valkey
+  valkey-cli ping
+
+The health check must return PONG. Valkey listens on 127.0.0.1:6379 by
+default and supports the redis:// URL configured by REDIS_URL.
+
+Start a development worker from the application directory with:
+
+  bundle exec sidekiq -C config/sidekiq.yml
+
+Managed deployments must start valkey.service before the Paperboy Sidekiq
+service. A connection-refused error for 127.0.0.1:6379 means the queue service
+is not running or REDIS_URL points to the wrong host or port.
+
+28.2 SCHEDULED JOBS
 ---------------------
 
 ProbationRequestsExpiryJob
@@ -2441,7 +2463,7 @@ ScheduledReportsRunnerJob
   Finds ScheduledReport.due, calls execute! on each
   Catches exceptions to continue processing
 
-28.2 TRIGGERED JOBS
+28.3 TRIGGERED JOBS
 ---------------------
 
 NotifySecurityJob
@@ -2463,7 +2485,7 @@ ReportGenerationJob
   Sends: ReportMailer (report_ready, no_submissions_found, or failed)
   Cleanup: Deletes temp files after email delivery
 
-28.3 DEV/TEST JOBS
+28.4 DEV/TEST JOBS
 --------------------
 
 MatthewTestReportJob -> Uses Sidekiq::Job, calls test service
@@ -2564,7 +2586,7 @@ PWA Support:
 
 Environment Variables Required:
   GSABSS_HOST, GSABSS_DATABASE, GSABSS_USERNAME, GSABSS_PASSWORD
-  REDIS_URL (default: redis://localhost:6379/0)
+  REDIS_URL (optional; default: redis://localhost:6379/0)
   RAILS_MAX_THREADS (default: 5)
   JOB_CONCURRENCY (default: 1)
   POWERBI_CLIENT_ID, POWERBI_CLIENT_SECRET, POWERBI_TENANT_ID
@@ -2572,6 +2594,13 @@ Environment Variables Required:
   APP_HOST (for Teams notification links)
   DEV_EMAIL (development mail interceptor)
   SMTP_FROM_ADDRESS (report mailer)
+
+Service Dependencies:
+  - valkey.service (or another Redis-compatible server) must be running before
+    Sidekiq starts.
+  - Verify the local service with: valkey-cli ping
+  - Start a development worker with:
+    bundle exec sidekiq -C config/sidekiq.yml
 
 ================================================================================
 33. KEY ARCHITECTURAL PATTERNS

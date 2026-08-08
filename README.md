@@ -21,6 +21,29 @@ For the product story / sales pitch, see [docs/PITCH.md](docs/PITCH.md).
 
 ---
 
+## Redis-compatible queue service
+
+Sidekiq requires a Redis-compatible server on `127.0.0.1:6379`. On
+Arch/Omarchy, install and start Valkey (the supported Redis replacement):
+
+```bash
+sudo pacman -S valkey
+sudo systemctl enable --now valkey
+valkey-cli ping
+```
+
+The health check must return `PONG`. The default application setting is
+`REDIS_URL=redis://localhost:6379/0`; Valkey supports this protocol and URL.
+
+To run Sidekiq directly during development:
+
+```bash
+bundle exec sidekiq -C config/sidekiq.yml
+```
+
+For managed deployments, ensure `valkey.service` is running before the
+`paperboy-*-sidekiq` service starts.
+
 ## Dev deployment systemd - Only PUMA restart
 
 ```bash
