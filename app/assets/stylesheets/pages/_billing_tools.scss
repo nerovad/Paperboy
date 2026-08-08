@@ -42,15 +42,70 @@
   /* Buttons use the shared .btn system; see components/buttons. */
 }
 
+.billing-period-card {
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  background: $surface-panel;
+
+  h2 {
+    margin: 0;
+    padding: .8rem 1.25rem;
+    background: $slate-action;
+    color: $surface-base;
+    font-size: 1rem;
+  }
+
+  &__details {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0;
+
+    > div {
+      min-width: 0;
+      padding: 1rem 1.25rem;
+      border-right: 1px solid $neutral-border-subtle;
+
+      &:last-child { border-right: 0; }
+    }
+
+    dt {
+      margin-bottom: .35rem;
+      color: $text-muted;
+      font-size: .8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    dd {
+      margin: 0;
+      color: $text-strong;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  &__empty {
+    margin: 0;
+    padding: 1rem 1.25rem;
+    color: $text-muted;
+  }
+
+  @media (max-width: 800px) {
+    &__details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    &__details > div {
+      border-bottom: 1px solid $neutral-border-subtle;
+
+      &:nth-child(2n) { border-right: 0; }
+      &:nth-last-child(-n + 2) { border-bottom: 0; }
+    }
+  }
+}
+
 .billing-compute {
   max-width: 720px;
-
-  .billing-period-label {
-    display: block;
-    margin-bottom: .5rem;
-    font-weight: 600;
-    color: $label-color;
-  }
 
   .billing-period-use {
     display: inline-flex;

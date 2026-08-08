@@ -1,29 +1,26 @@
-<div class="form-group">
-  <span class="billing-period-label">Active Billing Period</span>
-  <div class="billing-period-grid">
-    <table class="submission-table">
-      <thead>
-        <tr>
-          <th>Fiscal Year</th>
-          <th>APMon</th>
-          <th>Start Date</th>
-          <th>End Date</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if active_billing_period %>
-          <tr>
-            <td><%= active_billing_period.fiscal_year %></td>
-            <td><%= active_billing_period.apmon %></td>
-            <td><%= active_billing_period.start_date.iso8601 %></td>
-            <td><%= active_billing_period.end_date.iso8601 %></td>
-          </tr>
-        <% else %>
-          <tr>
-            <td colspan="4">No active billing period selected.</td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-</div>
+<section class="billing-period-card" aria-labelledby="active-billing-period-title">
+  <h2 id="active-billing-period-title">Active Billing Period</h2>
+
+  <% if active_billing_period %>
+    <dl class="billing-period-card__details">
+      <div>
+        <dt>Fiscal Year</dt>
+        <dd><%= active_billing_period.fiscal_year %></dd>
+      </div>
+      <div>
+        <dt>APMon</dt>
+        <dd><%= active_billing_period.apmon %></dd>
+      </div>
+      <div>
+        <dt>Start Date</dt>
+        <dd><%= active_billing_period.start_date.iso8601 %></dd>
+      </div>
+      <div>
+        <dt>End Date</dt>
+        <dd><%= active_billing_period.end_date.iso8601 %></dd>
+      </div>
+    </dl>
+  <% else %>
+    <p class="billing-period-card__empty">No active billing period selected.</p>
+  <% end %>
+</section>

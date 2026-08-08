@@ -3,6 +3,9 @@
 </div>
 
 <div class="form-wrapper billing-form billing-report-files">
+  <%= render "billing/shared/active_billing_period",
+             active_billing_period: @active_billing_period %>
+
   <% if @report_files.any? %>
     <div class="billing-period-grid">
       <table class="submission-table">

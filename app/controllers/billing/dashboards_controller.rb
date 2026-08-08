@@ -4,6 +4,7 @@ module Billing
   # Embeds the selected Billing dashboard from Metabase.
   class DashboardsController < BaseController
     before_action :require_system_admin
+    before_action :set_active_billing_period
 
     def show
       @dashboards = Dashboard.all

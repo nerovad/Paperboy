@@ -3,6 +3,7 @@
 module Billing
   class DataRefreshesController < BaseController
     before_action :require_system_admin
+    before_action :set_active_billing_period
     before_action :load_groups
 
     def show

@@ -8,6 +8,10 @@ module Billing
 
     private
 
+    def set_active_billing_period
+      @active_billing_period = ActiveBillingPeriod.current
+    end
+
     # The sidebar app switcher only *hides* apps the user cannot reach, so
     # this is the real gate: without it Billing would stay reachable by
     # typing the URL. Access is granted per group or org level under
