@@ -2,7 +2,7 @@
 
 module Billing
   class ReportsController < BaseController
-    SORT_COLUMNS = %w[file modified size action].freeze
+    SORT_COLUMNS = %w[file modified size].freeze
     SORT_DIRECTIONS = %w[asc desc].freeze
 
     before_action :require_system_admin
@@ -10,8 +10,8 @@ module Billing
     helper_method :report_sort_direction, :report_sort_indicator
 
     def index
-      @sort = SORT_COLUMNS.include?(params[:sort]) ? params[:sort] : 'modified'
-      @direction = SORT_DIRECTIONS.include?(params[:direction]) ? params[:direction] : 'desc'
+      @sort = SORT_COLUMNS.include?(params[:sort]) ? params[:sort] : 'file'
+      @direction = SORT_DIRECTIONS.include?(params[:direction]) ? params[:direction] : 'asc'
       @report_files = sort_report_files(ReportFile.all)
     end
 
@@ -38,7 +38,6 @@ module Billing
         case @sort
         when 'size' then report_file.size
         when 'modified' then report_file.modified_at
-        when 'action' then report_file.pdf? ? 'view' : 'download'
         else report_file.filename.downcase
         end
       end
