@@ -1,0 +1,30 @@
+<% if preview.rows.any? %>
+  <div class="billing-audit-rows-table billing-report-preview-table">
+    <table class="submission-table">
+      <thead>
+        <tr>
+          <% preview.headers.each do |header| %>
+            <th><%= header %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% preview.rows.each do |row| %>
+          <tr>
+            <% row.each do |value| %>
+              <td><%= value %></td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p>No report rows were found.</p>
+<% end %>
+
+<% if preview.truncated? %>
+  <p class="billing-report-preview-limit">
+    Preview limited to the first <%= WorkflowOutputPresenter::MAX_ROWS %> rows.
+  </p>
+<% end %>

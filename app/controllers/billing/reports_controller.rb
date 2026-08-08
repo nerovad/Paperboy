@@ -17,6 +17,8 @@ module Billing
 
     def show
       report_file = ReportFile.find(params[:filename])
+      return render_xlsx_preview(report_file) if params[:preview] == 'true' && !report_file.pdf?
+
       send_data report_file.path.binread,
                 filename: report_file.filename,
                 type: report_file.content_type,
@@ -24,6 +26,12 @@ module Billing
     end
 
     private
+
+    def render_xlsx_preview(report_file)
+      preview = WorkflowOutputPresenter.new(report_file.path)
+      render partial: 'billing/reports/xlsx_preview',
+             locals: { preview: preview }
+    end
 
     def sort_report_files(report_files)
       sorted = report_files.sort_by do |report_file|

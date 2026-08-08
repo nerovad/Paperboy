@@ -1,0 +1,21 @@
+<div class="pb-modal-backdrop"
+     data-billing-report-preview-target="backdrop"
+     data-action="click->billing-report-preview#backdropClose"
+     hidden>
+  <div class="pb-modal pb-modal--report-preview" role="dialog" aria-modal="true"
+       aria-labelledby="billing-report-preview-title">
+    <div class="pb-modal__header">
+      <h3 id="billing-report-preview-title" data-billing-report-preview-target="title">
+        Billing Report
+      </h3>
+      <button type="button" class="pb-modal__close"
+              data-action="click->billing-report-preview#close" aria-label="Close">✕</button>
+    </div>
+    <div class="pb-modal__body billing-report-preview"
+         data-billing-report-preview-target="body"></div>
+    <div class="pb-modal__actions">
+      <button type="button" class="btn"
+              data-action="click->billing-report-preview#close">Close</button>
+    </div>
+  </div>
+</div>
