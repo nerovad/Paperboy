@@ -49,7 +49,7 @@
   border-radius: 8px;
   background: $surface-panel;
 
-  h2 {
+  &__heading {
     margin: 0;
     padding: .8rem 1.25rem;
     background: $slate-action;

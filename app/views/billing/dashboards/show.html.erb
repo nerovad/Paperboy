@@ -1,15 +1,9 @@
-<div class="form-header billing-form-header">
-  <h1>View Billing</h1>
-</div>
-
 <div class="form-wrapper billing-form dashboards-wrapper" data-controller="dashboards">
-  <%= render "billing/shared/active_billing_period",
-             active_billing_period: @active_billing_period %>
+  <h1>Select Dashboard</h1>
 
   <%= form_with url: billing_dashboard_path, method: :get, local: true,
                 class: "dashboard-form-selector" do |form| %>
     <div class="form-group">
-      <%= form.label :dashboard, "Select Dashboard", class: "form-label" %>
       <%= form.select :dashboard,
                       options_for_select(
                         @dashboards.map { |dashboard| [dashboard.name, dashboard.key] },
@@ -17,6 +11,7 @@
                       ),
                       {},
                       class: "form-control",
+                      aria: { label: "Select Dashboard" },
                       data: {
                         action: "change->dashboards#loadDashboard",
                         dashboards_target: "formSelect"
