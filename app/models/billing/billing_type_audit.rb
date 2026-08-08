@@ -65,7 +65,7 @@ module Billing
         WHERE T.[DATE] >= ? AND T.[DATE] < DATEADD(day, 1, ?)
           AND T.[TYPE] = ?
           AND (#{error_predicate})
-        ORDER BY T.[DATE]
+        ORDER BY T.[CUNIT], T.[DATE]
       SQL
       ActiveRecord::Base.send(
         :sanitize_sql_array,

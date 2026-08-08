@@ -53,6 +53,7 @@ module Billing
         assert_includes sql, "T.[TYPE] = N'GPH'"
         assert_includes sql, 'GSABSS.dbo.units'
         assert_includes sql, 'GSABSS.dbo.tc60_services'
+        assert_includes sql, 'ORDER BY T.[CUNIT], T.[DATE]'
         true
       end
 
