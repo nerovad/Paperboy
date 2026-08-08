@@ -50,7 +50,7 @@
         inject: {
           mode: :truncate_insert,
           post_script: {
-            path: 'script/ruby/data_runner/inject/oversized_post_inject.rb'
+            path: 'script/ruby/data_runner/inject/oversized.rb'
           }
         }
       }
