@@ -6,6 +6,16 @@
   <%= render "billing/shared/active_billing_period",
              active_billing_period: @active_billing_period %>
 
+  <% if @reports.empty? %>
+    <div class="empty-state">
+      <p>No Billing reports have been generated on this server.</p>
+      <p class="empty-state-hint">
+        <%= link_to "Print Billing Reports", billing_monthly_report_path("print") %>
+        to generate them. Preview and Send stay disabled until reports exist.
+      </p>
+    </div>
+  <% end %>
+
   <%= form_with url: billing_email_reports_path, method: :post,
                 id: "billing-email-report-form", data: { turbo: false } do %>
     <section>
@@ -70,10 +80,6 @@
         </tbody>
       </table>
     </div>
-
-    <% if @reports.empty? %>
-      <p>No Billing reports have been generated.</p>
-    <% end %>
 
   <% end %>
 
