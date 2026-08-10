@@ -4,6 +4,12 @@
 class ParkingLotSubmissionsController < ApplicationController
   before_action :set_parking_lot_submission, only: %i[show pdf approve deny]
 
+  # Permit types offered on each vehicle row. 'R Lot' is restricted to MB3
+  # union members and is filtered out of the dropdown for everyone else.
+  PERMIT_TYPES = ['Carpool', 'Courier', 'Grand Jury Parking', 'Loading Docks',
+                  'Maintenance', 'R Lot', 'Traffic Circle', 'Other'].freeze
+  MB3_ONLY_PERMIT_TYPES = ['R Lot'].freeze
+
   def new
     @parking_lot_submission = ParkingLotSubmission.new
     @parking_lot_submission.parking_lot_vehicles.build
@@ -44,9 +50,8 @@ class ParkingLotSubmissionsController < ApplicationController
       unit: unit&.unit_id
     }
 
-    # Parking lots
-    base_lots             = ['A Lot', 'B Lot', 'C Lot', 'D Lot', 'Employee Lot', 'Visitor Lot']
-    @allowed_parking_lots = @is_mb3 ? (base_lots + ['R Lot']) : base_lots
+    # Permit types (R Lot is MB3-only)
+    @permit_type_options = permit_type_options(@is_mb3)
 
     # Dropdowns
     @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
@@ -89,6 +94,13 @@ class ParkingLotSubmissionsController < ApplicationController
     @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
     @parking_lot_submission.employee_id = employee_id
     submitted_unit = @parking_lot_submission.unit
+
+    # R Lot is limited to MB3 union members and is not offered to anyone else,
+    # so a non-MB3 request carrying it did not come from the rendered form.
+    if !is_mb3 && mb3_only_permit_types_requested?
+      @parking_lot_submission.errors.add(:base, 'R Lot permits are limited to MB3 union members.')
+      render_new_with_options(emp_record, is_mb3) and return
+    end
 
     # Non-MB3 submitters route through the Authorization step (step 1): block here
     # if no one holds the Parking Permits authorization for their budget unit, so
@@ -191,11 +203,23 @@ class ParkingLotSubmissionsController < ApplicationController
     @parking_lot_submission = ParkingLotSubmission.find(params[:id])
   end
 
+  # Non-MB3 submitters never see the MB3-only options in the dropdown.
+  def permit_type_options(is_mb3)
+    is_mb3 ? PERMIT_TYPES : PERMIT_TYPES - MB3_ONLY_PERMIT_TYPES
+  end
+
+  # The dropdown is filtered client-side, so re-check the submitted values
+  # server-side before saving.
+  def mb3_only_permit_types_requested?
+    @parking_lot_submission.parking_lot_vehicles.any? do |vehicle|
+      Array(vehicle.permit_type).intersect?(MB3_ONLY_PERMIT_TYPES)
+    end
+  end
+
   # Rebuild the option ivars and re-render the new form on a failed create.
   def render_new_with_options(emp_record, is_mb3)
     @is_mb3 = is_mb3
-    base_lots = ['A Lot', 'B Lot', 'C Lot', 'D Lot', 'Employee Lot', 'Visitor Lot']
-    @allowed_parking_lots = is_mb3 ? (base_lots + ['R Lot']) : base_lots
+    @permit_type_options = permit_type_options(is_mb3)
     reload_form_options(emp_record)
     render :new, status: :unprocessable_entity
   end
