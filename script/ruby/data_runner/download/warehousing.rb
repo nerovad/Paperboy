@@ -18,7 +18,7 @@ require_relative '../constants/workflow_paths'
 # `ALL` to scan every accounting period folder or `APNN` to scan one period.
 #
 # Workflow:
-# - Resolve the configured AP folders under SEARCH_DIR.
+# - Resolve the configured AP folders under each fiscal-year search directory.
 # - Find Excel workbooks whose names start with a known service category.
 # - Exclude temporary, copied, and database workbooks.
 # - Require a trailing `-vNN.xlsx` version and select the highest version per
@@ -35,8 +35,8 @@ require_relative '../constants/workflow_paths'
 #   OUTPUTS and MMYY is the accounting period encoded in the workbook name.
 #
 # Assumptions:
-# - Source workbooks live in the fixed FY25-26 billing share and use the AP
-#   directory names listed in AP_DIRS.
+# - Source workbooks live in the configured fiscal-year billing shares and use
+#   the AP directory names listed in AP_DIRS.
 # - Workbook filenames encode the service category, MMYY period, and trailing
 #   version, for example `MTP0526-v2.xlsx`.
 # - The data sheet has exactly the HEADER columns, in order, before the data
@@ -44,7 +44,8 @@ require_relative '../constants/workflow_paths'
 # - Excel date serials use the common 1899-12-30 base. Blank DATE cells may be
 #   derived from POSTING_REF when it contains a category prefix plus MMYY.
 ROOT = Pathname.pwd.expand_path
-SEARCH_DIR = Pathname.new('/mnt/i/BUSINESS_SUPPORT/Billing/FY26-27').expand_path
+SEARCH_ROOT = Pathname.new('/mnt/i/BUSINESS_SUPPORT/Billing').expand_path
+SEARCH_DIRS = %w[FY26-27 FY25-26].map { |year| SEARCH_ROOT.join(year) }.freeze
 OUTPUT_DIR = ROOT.join(WorkflowPaths::DOWNLOAD_DIR)
 
 AP_DIRS = {
@@ -92,13 +93,14 @@ EXCLUDE_WORDS = %w[copy database].freeze
 INVALID_ZIP_DATE_WARNING = 'WARNING: invalid date/time in zip entry.'
 
 def relative(path)
-  Pathname.new(path).relative_path_from(SEARCH_DIR).to_s
+  Pathname.new(path).relative_path_from(SEARCH_ROOT).to_s
 end
 
-def assert_search_dir!
-  return if SEARCH_DIR.directory?
+def assert_search_dirs!
+  missing = SEARCH_DIRS.reject(&:directory?)
+  return if missing.empty?
 
-  raise "search directory not found: #{SEARCH_DIR}"
+  raise "search directories not found: #{missing.join(', ')}"
 end
 
 def selected_period
@@ -110,18 +112,21 @@ end
 
 def search_dirs(period)
   if period == 'ALL'
-    dirs = AP_DIRS.values.filter_map do |dir_name|
-      dir = SEARCH_DIR.join(dir_name)
+    dirs = SEARCH_DIRS.product(AP_DIRS.values).filter_map do |search_dir, dir_name|
+      dir = search_dir.join(dir_name)
       dir if dir.directory?
     end
-    raise "AP folders not found under #{SEARCH_DIR}" if dirs.empty?
+    raise "AP folders not found under #{SEARCH_DIRS.join(', ')}" if dirs.empty?
 
     dirs
   else
-    dir = SEARCH_DIR.join(AP_DIRS.fetch(period))
-    return [dir] if dir.directory?
+    dirs = SEARCH_DIRS.filter_map do |search_dir|
+      dir = search_dir.join(AP_DIRS.fetch(period))
+      dir if dir.directory?
+    end
+    return dirs if dirs.any?
 
-    raise "#{period} folder not found under #{SEARCH_DIR}"
+    raise "#{period} folder not found under #{SEARCH_DIRS.join(', ')}"
   end
 end
 
@@ -457,7 +462,7 @@ def print_selected_inputs(period, chosen, row_counts, sheet_names)
 end
 
 def main
-  assert_search_dir!
+  assert_search_dirs!
 
   period = selected_period
   chosen, skipped, duplicate_ties = selected_inputs(period)
