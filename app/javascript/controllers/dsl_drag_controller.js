@@ -45,7 +45,7 @@ export default class extends Controller {
     this.dragging = true
     this.suppressClickUntil = Date.now() + 700
     this.showGhost(event)
-    window.DataRunnerDslGroup?.add(this.drag)
+    window.DataRunnerDslGroup?.move(this.drag, event.clientX, event.clientY)
   }
 
   mouseup(event) {

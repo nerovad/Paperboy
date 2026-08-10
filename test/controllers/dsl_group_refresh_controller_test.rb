@@ -5,7 +5,7 @@ require 'test_helper'
 class DslGroupRefreshControllerTest < ActionController::TestCase
   tests DataRunner::DslsController
 
-  test 'group editor colors enabled DSL pills only' do
+  test 'group editor colors enabled DSL buttons only' do
     sign_in
 
     get :index, params: { group: 'paperboy' }

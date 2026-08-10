@@ -21,9 +21,11 @@ class DslsControllerTest < ActionController::TestCase
 
     assert_response :success
     assert_select 'form[action=?]', data_runner_dsl_group_path('chart_of_accounts')
+    assert_select '.data-runner-sidebar a.btn.approve[href=?]', data_runner_new_dsl_group_path, text: 'New DSL group'
     assert_select '.dsl-pill.btn.compact', minimum: 1
     assert_select '.dsl-pill a', false
-    assert_select '.nav-link[onmousedown*=?]', 'DataRunnerStartDslDrag', minimum: 1
+    assert_select '.data-runner-sidebar [data-nav-ungrouped] .nav-link[data-action*=?]',
+                  'mousedown->dsl-drag#mousedown', minimum: 1
     assert_select '.control-center-actions input[value=?]', 'Save DSLs'
     assert_select '.control-center-actions label[for=?]', 'new_group_name', false
     assert_select '.control-center-actions input[name=?][placeholder=?]', 'new_group_name', 'Rename dslGroup name'

@@ -78,12 +78,7 @@ export default class extends Controller {
   }
 
   externalMove(data, x, y) {
-    if (this.pointAcceptsAdd(x, y)) {
-      this.addDraggedDsl(data)
-      this.setDropHighlight(true)
-    } else {
-      this.setDropHighlight(false)
-    }
+    this.setDropHighlight(this.pointAcceptsAdd(x, y))
   }
 
   externalDrop(data, x, y) {
@@ -107,6 +102,7 @@ export default class extends Controller {
     if (this.findItem(data.slug)) return
 
     this.listTarget.appendChild(this.itemElement(data))
+    this.moveSidebarDsl(data.slug, this.selectedNavGroup())
   }
 
   addDraggedDsl(data) {
@@ -121,9 +117,28 @@ export default class extends Controller {
 
   removeDraggedDsl(slug) {
     this.removeItem(slug)
+    this.moveSidebarDsl(slug, this.ungroupedNavGroup())
     this.sortItems()
     this.syncEmpty()
     this.setDropHighlight(false)
+  }
+
+  moveSidebarDsl(slug, destination) {
+    const item = document.querySelector(`.data-runner-sidebar .nav-link[data-dsl-slug="${CSS.escape(slug)}"]`)
+    if (!item || !destination) return
+
+    destination.appendChild(item)
+    destination.open = true
+  }
+
+  selectedNavGroup() {
+    if (!this.hasSelectedGroupValue) return null
+
+    return document.querySelector(`[data-nav-group="${CSS.escape(this.selectedGroupValue)}"]`)
+  }
+
+  ungroupedNavGroup() {
+    return document.querySelector(".data-runner-sidebar [data-nav-ungrouped]")
   }
 
   pointInDropzone(x, y) {
@@ -183,7 +198,11 @@ export default class extends Controller {
   }
 
   findItem(slug) {
-    return this.itemTargets.find(item => item.dataset.dslSlug === slug)
+    return this.groupItems().find(item => item.dataset.dslSlug === slug)
+  }
+
+  groupItems() {
+    return Array.from(this.listTarget.querySelectorAll('[data-dsl-group-target="item"]'))
   }
 
   itemElement({ slug, key, enabled }) {
@@ -203,9 +222,10 @@ export default class extends Controller {
   }
 
   syncEmpty() {
-    this.emptyTarget.hidden = this.itemTargets.length > 0
+    const total = this.groupItems().length
+    this.emptyTarget.hidden = total > 0
     if (this.hasCountTarget) {
-      this.countTarget.textContent = `${this.itemTargets.length} ${this.itemTargets.length === 1 ? "DSL" : "DSLs"} in this group`
+      this.countTarget.textContent = `${total} ${total === 1 ? "DSL" : "DSLs"} in this group`
     }
   }
 
@@ -218,7 +238,7 @@ export default class extends Controller {
   }
 
   sortItems() {
-    this.itemTargets
+    this.groupItems()
       .sort((left, right) => left.dataset.dslKey.localeCompare(right.dataset.dslKey, undefined, { sensitivity: "base" }))
       .forEach(item => this.listTarget.appendChild(item))
   }

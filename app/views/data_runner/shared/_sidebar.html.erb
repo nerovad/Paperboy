@@ -3,6 +3,7 @@
   <% if user_signed_in? %>
     <input class="sidebar-search-input" type="search" placeholder="Fuzzy search DSLs..."
            data-sidebar-search-target="input" data-action="input->sidebar-search#filter">
+    <%= link_to "New DSL group", data_runner_new_dsl_group_path, class: "btn approve" %>
     <nav>
       <% DslCatalog.grouped.each do |group, entries| %>
         <details class="nav-group" data-nav-group="<%= group %>"
@@ -10,7 +11,6 @@
           <summary><%= link_to group.humanize, data_runner_root_path(group: group), class: "nav-group-link" %></summary>
           <% entries.each do |entry| %>
             <div class="nav-link <%= 'active' if @dsl&.slug == entry.slug %>" role="link" tabindex="0"
-                 onmousedown="window.DataRunnerStartDslDrag && window.DataRunnerStartDslDrag(event, this, 'nav')"
                  data-action="click->dsl-drag#open keydown->dsl-drag#open mousedown->dsl-drag#mousedown"
                  data-sidebar-search-target="item" data-search="<%= "#{entry.key} #{group} #{entry.slug}" %>"
                  data-dsl-slug="<%= entry.slug %>" data-dsl-key="<%= entry.key %>" data-dsl-enabled="<%= entry.enabled? %>"
@@ -18,11 +18,10 @@
           <% end %>
         </details>
       <% end %>
-      <details class="nav-group">
+      <details class="nav-group" data-nav-ungrouped>
         <summary><span class="nav-group-label">Other DSLs</span></summary>
         <% DslCatalog.ungrouped.each do |entry| %>
           <div class="nav-link <%= 'active' if @dsl&.slug == entry.slug %>" role="link" tabindex="0"
-               onmousedown="window.DataRunnerStartDslDrag && window.DataRunnerStartDslDrag(event, this, 'nav')"
                data-action="click->dsl-drag#open keydown->dsl-drag#open mousedown->dsl-drag#mousedown"
                data-sidebar-search-target="item" data-search="<%= "#{entry.key} #{entry.slug}" %>"
                data-dsl-slug="<%= entry.slug %>" data-dsl-key="<%= entry.key %>" data-dsl-enabled="<%= entry.enabled? %>"

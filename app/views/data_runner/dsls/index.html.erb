@@ -36,14 +36,13 @@
                  data-dsl-group-target="item" data-dsl-slug="<%= entry.slug %>" data-dsl-key="<%= entry.key %>"
                  data-dsl-enabled="<%= entry.enabled? %>"
                  role="link" tabindex="0" data-href="<%= data_runner_dsl_path(entry.slug) %>"
-                 onmousedown="window.DataRunnerStartDslDrag && window.DataRunnerStartDslDrag(event, this, 'group')"
                  data-action="click->dsl-group#open keydown->dsl-group#open mousedown->dsl-group#mousedown">
               <span><%= entry.key %></span>
               <%= hidden_field_tag "dsl_slugs[]", entry.slug %>
             </div>
           <% end %>
         </div>
-        <p class="empty-palette" data-dsl-group-target="empty" <%= "hidden" if @selected_entries.any? %>>Drop DSLs here.</p>
+        <p class="empty-palette" data-dsl-group-target="empty" <%= "hidden" if @selected_entries.any? %>>Drag DSLs from the sidebar and drop them here.</p>
       </div>
     <% end %>
     <%= form_with url: data_runner_rename_dsl_group_path(@selected_group), method: :patch, id: "rename-group-form" do %><% end %>
