@@ -25,6 +25,13 @@ class CoaBillingLookupsControllerTest < ActionController::TestCase
 
     assert_response :success
     assert_select '#billing_agency option[value=?]', 'GSA', text: 'General Services Agency'
+    assert_select '[data-controller=?]', 'coa-billing-lookup'
+    assert_select '.coa-billing-field select', count: 4
+    assert_select '.coa-billing-result[data-coa-billing-lookup-target=?][hidden]', 'result', count: 1
+    assert_select '.coa-account-tree [data-coa-billing-lookup-target]', count: 8
+    assert_select '.coa-lookup-card__heading', count: 3
+    assert_select '#billing-account-string-title + .coa-lookup-card__body .coa-billing-string-grid', count: 1
+    assert_select '.coa-billing-string-grid__heading', count: 4
     assert_select '.coa-sidebar a[href=?]', coa_billing_lookup_path, text: 'Billing Lookup'
     assert_select '.coa-sidebar a', text: 'Overview', count: 0
   end

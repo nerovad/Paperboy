@@ -1,8 +1,23 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["agency", "division", "department", "unit", "result", "accountString", "summary"]
+  static targets = ["agency", "division", "department", "unit", "result",
+                    "agencyId", "divisionId", "departmentId", "unitId",
+                    "agencyName", "divisionName", "departmentName", "unitName",
+                    "billingAgencyId", "billingDivisionId", "billingDepartmentId", "billingUnitId"]
   static values = { divisionsUrl: String, departmentsUrl: String, unitsUrl: String }
+
+  connect() {
+    this.choiceInstances = new Map()
+    this.enhance(this.agencyTarget, "Search agencies…")
+    this.enhance(this.divisionTarget, "Select an agency first", true)
+    this.enhance(this.departmentTarget, "Select a division first", true)
+    this.enhance(this.unitTarget, "Select a department first", true)
+  }
+
+  disconnect() {
+    this.choiceInstances.forEach(choices => choices.destroy())
+  }
 
   agencyChanged() {
     this.reset(this.divisionTarget, this.departmentTarget, this.unitTarget)
@@ -39,13 +54,24 @@ export default class extends Controller {
     }
 
     const selects = [this.agencyTarget, this.divisionTarget, this.departmentTarget, this.unitTarget]
-    this.accountStringTarget.textContent = selects.map(select => select.value).join("")
-    this.summaryTarget.textContent = selects.map(select => select.selectedOptions[0].textContent).join(" → ")
+    const idTargets = [this.agencyIdTarget, this.divisionIdTarget,
+                       this.departmentIdTarget, this.unitIdTarget]
+    const billingIdTargets = [this.billingAgencyIdTarget, this.billingDivisionIdTarget,
+                              this.billingDepartmentIdTarget, this.billingUnitIdTarget]
+    const nameTargets = [this.agencyNameTarget, this.divisionNameTarget,
+                         this.departmentNameTarget, this.unitNameTarget]
+    selects.forEach((select, index) => {
+      idTargets[index].textContent = select.value
+      billingIdTargets[index].textContent = select.value
+      nameTargets[index].textContent = select.selectedOptions[0].textContent
+    })
     this.resultTarget.hidden = false
   }
 
   async copy() {
-    await navigator.clipboard.writeText(this.accountStringTarget.textContent)
+    const accountString = [this.agencyTarget, this.divisionTarget,
+                           this.departmentTarget, this.unitTarget].map(select => select.value).join("")
+    await navigator.clipboard.writeText(accountString)
   }
 
   async load(select, url, params) {
@@ -58,33 +84,53 @@ export default class extends Controller {
     }
 
     const options = await response.json()
-    select.innerHTML = this.optionMarkup(options)
-    select.disabled = false
+    this.setChoices(select, options, "Select one")
   }
 
   reset(...selects) {
     selects.forEach(select => {
-      select.innerHTML = '<option value="">Select one</option>'
-      select.disabled = true
+      this.setChoices(select, [], "Select one", true)
     })
     this.resultTarget.hidden = true
   }
 
   setLoading(select) {
-    select.innerHTML = '<option value="">Loading…</option>'
-    select.disabled = true
+    this.setChoices(select, [], "Loading…", true)
   }
 
-  optionMarkup(options) {
-    const prompt = '<option value="">Select one</option>'
-    return prompt + options.map(option => (
-      `<option value="${this.escape(option.value)}">${this.escape(option.label)}</option>`
-    )).join("")
+  enhance(select, placeholder, disabled = false) {
+    if (!window.Choices) return
+
+    select.disabled = false
+    const choices = new window.Choices(select, {
+      allowHTML: false,
+      itemSelectText: "",
+      placeholder: true,
+      placeholderValue: placeholder,
+      removeItemButton: false,
+      searchEnabled: true,
+      searchPlaceholderValue: "Type to search…",
+      shouldSort: false
+    })
+    this.choiceInstances.set(select, choices)
+    if (disabled) choices.disable()
   }
 
-  escape(value) {
-    const element = document.createElement("span")
-    element.textContent = value
-    return element.innerHTML
+  setChoices(select, options, placeholder, disabled = false) {
+    const choices = this.choiceInstances.get(select)
+    if (!choices) {
+      select.replaceChildren(new Option(placeholder, ""), ...options.map(option => new Option(option.label, option.value)))
+      select.disabled = disabled
+      return
+    }
+
+    choices.clearStore()
+    choices.setChoices(
+      [{ value: "", label: placeholder, placeholder: true, selected: true }, ...options],
+      "value",
+      "label",
+      true
+    )
+    disabled ? choices.disable() : choices.enable()
   }
 }

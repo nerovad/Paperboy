@@ -105,29 +105,147 @@
   gap: 16px;
 }
 
+.coa-lookup-card {
+  position: relative;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  background: $surface-panel;
+}
+
+.coa-billing-lookup > .coa-lookup-card {
+  z-index: 2;
+}
+
+.coa-lookup-card__heading {
+  margin: 0;
+  padding: .8rem 1.25rem;
+  border-radius: 7px 7px 0 0;
+  background: $orange-action;
+  color: $surface-base;
+  font-size: 1rem;
+}
+
+.coa-lookup-card__body {
+  padding: 1rem 1.25rem;
+}
+
+.coa-billing-fields,
 .coa-billing-result {
-  padding: 16px;
-  border: 1px solid $border-muted;
-  border-radius: $radius-6;
-  background: $surface-base;
+  display: grid;
+  gap: 16px;
 }
 
-.coa-billing-result__label {
-  margin: 0 0 8px;
-  color: $text-muted;
-  font-weight: 700;
+.coa-billing-result {
+  position: relative;
+  z-index: 1;
 }
 
-.coa-billing-result__account {
-  display: flex;
+.coa-billing-result[hidden] {
+  display: none;
+}
+
+.coa-billing-field {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.coa-billing-result__account code {
-  font-size: 1.25rem;
+.coa-billing-field label {
+  margin: 0;
   font-weight: 700;
+  text-align: right;
+}
+
+.coa-billing-field .choices {
+  width: 100%;
+  margin: 0;
+}
+
+.coa-billing-string-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid $border-muted;
+  border-left: 1px solid $border-muted;
+}
+
+.coa-billing-string-grid > * {
+  padding: 10px 12px;
+  border-right: 1px solid $border-muted;
+  border-bottom: 1px solid $border-muted;
+  text-align: center;
+}
+
+.coa-billing-string-grid__heading {
+  background: $surface-control;
+  color: $label-color;
+  font-weight: 700;
+}
+
+.coa-billing-string-grid > code {
+  font-size: 1.1rem;
+}
+
+.coa-billing-copy {
+  margin-top: 12px;
+}
+
+.coa-account-tree,
+.coa-account-tree ul {
+  margin: 14px 0 0;
+  padding-left: 24px;
+  list-style: none;
+}
+
+.coa-account-tree {
+  padding-left: 0;
+}
+
+.coa-account-tree ul {
+  position: relative;
+  margin-top: 8px;
+}
+
+.coa-account-tree ul::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 12px;
+  left: 8px;
+  border-left: 2px solid $border-muted;
+}
+
+.coa-account-tree li {
+  position: relative;
+  padding: 4px 0;
+}
+
+.coa-account-tree ul > li::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: -16px;
+  width: 16px;
+  border-top: 2px solid $border-muted;
+}
+
+.coa-account-tree li > span {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: $radius-6;
+  background: $surface-muted;
+  color: $text-color;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.coa-account-tree code,
+.coa-account-tree strong {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 .coa-errors {
@@ -157,6 +275,19 @@
 
   .coa-header-actions {
     margin-top: 12px;
+  }
+
+  .coa-billing-field {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .coa-billing-field label {
+    text-align: left;
+  }
+
+  .coa-billing-string-grid {
+    overflow-x: auto;
   }
 
   .coa-detail-row dt {

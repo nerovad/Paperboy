@@ -11,42 +11,82 @@
        data-coa-billing-lookup-divisions-url-value="<%= divisions_coa_billing_lookup_path %>"
        data-coa-billing-lookup-departments-url-value="<%= departments_coa_billing_lookup_path %>"
        data-coa-billing-lookup-units-url-value="<%= units_coa_billing_lookup_path %>">
-    <div class="field">
-      <%= label_tag :billing_agency, "Agency" %>
-      <%= select_tag :billing_agency,
-                     options_for_select([["Select one", ""]] + @agency_options.map { |option| [option[:label], option[:value]] }),
-                     data: { coa_billing_lookup_target: "agency",
-                             action: "change->coa-billing-lookup#agencyChanged" } %>
-    </div>
+    <section class="coa-lookup-card" aria-labelledby="organization-selection-title">
+      <h2 id="organization-selection-title" class="coa-lookup-card__heading">Organization Selection</h2>
+      <div class="coa-lookup-card__body coa-billing-fields">
+        <div class="field coa-billing-field">
+          <%= label_tag :billing_agency, "Agency" %>
+          <%= select_tag :billing_agency,
+                         options_for_select([["Select one", ""]] + @agency_options.map { |option| [option[:label], option[:value]] }),
+                         data: { coa_billing_lookup_target: "agency",
+                                 action: "change->coa-billing-lookup#agencyChanged" } %>
+        </div>
 
-    <div class="field">
-      <%= label_tag :billing_division, "Division" %>
-      <%= select_tag :billing_division, options_for_select([["Select one", ""]]), disabled: true,
-                     data: { coa_billing_lookup_target: "division",
-                             action: "change->coa-billing-lookup#divisionChanged" } %>
-    </div>
+        <div class="field coa-billing-field">
+          <%= label_tag :billing_division, "Division" %>
+          <%= select_tag :billing_division, options_for_select([["Select one", ""]]), disabled: true,
+                         data: { coa_billing_lookup_target: "division",
+                                 action: "change->coa-billing-lookup#divisionChanged" } %>
+        </div>
 
-    <div class="field">
-      <%= label_tag :billing_department, "Department" %>
-      <%= select_tag :billing_department, options_for_select([["Select one", ""]]), disabled: true,
-                     data: { coa_billing_lookup_target: "department",
-                             action: "change->coa-billing-lookup#departmentChanged" } %>
-    </div>
+        <div class="field coa-billing-field">
+          <%= label_tag :billing_department, "Department" %>
+          <%= select_tag :billing_department, options_for_select([["Select one", ""]]), disabled: true,
+                         data: { coa_billing_lookup_target: "department",
+                                 action: "change->coa-billing-lookup#departmentChanged" } %>
+        </div>
 
-    <div class="field">
-      <%= label_tag :billing_unit, "Unit" %>
-      <%= select_tag :billing_unit, options_for_select([["Select one", ""]]), disabled: true,
-                     data: { coa_billing_lookup_target: "unit",
-                             action: "change->coa-billing-lookup#unitChanged" } %>
-    </div>
-
-    <section class="coa-billing-result" data-coa-billing-lookup-target="result" hidden>
-      <p class="coa-billing-result__label">Billing account string</p>
-      <div class="coa-billing-result__account">
-        <code data-coa-billing-lookup-target="accountString"></code>
-        <button type="button" class="btn approve compact" data-action="coa-billing-lookup#copy">Copy</button>
+        <div class="field coa-billing-field">
+          <%= label_tag :billing_unit, "Unit" %>
+          <%= select_tag :billing_unit, options_for_select([["Select one", ""]]), disabled: true,
+                         data: { coa_billing_lookup_target: "unit",
+                                 action: "change->coa-billing-lookup#unitChanged" } %>
+        </div>
       </div>
-      <p data-coa-billing-lookup-target="summary"></p>
     </section>
+
+    <div class="coa-billing-result" data-coa-billing-lookup-target="result" hidden>
+      <section class="coa-lookup-card" aria-labelledby="account-hierarchy-title">
+        <h2 id="account-hierarchy-title" class="coa-lookup-card__heading">Account Hierarchy</h2>
+        <div class="coa-lookup-card__body">
+          <ul class="coa-account-tree">
+            <li>
+              <span>Agency - <code data-coa-billing-lookup-target="agencyId"></code> - <strong data-coa-billing-lookup-target="agencyName"></strong></span>
+              <ul>
+                <li>
+                  <span>Division - <code data-coa-billing-lookup-target="divisionId"></code> - <strong data-coa-billing-lookup-target="divisionName"></strong></span>
+                  <ul>
+                    <li>
+                      <span>Department - <code data-coa-billing-lookup-target="departmentId"></code> - <strong data-coa-billing-lookup-target="departmentName"></strong></span>
+                      <ul>
+                        <li><span>Unit - <code data-coa-billing-lookup-target="unitId"></code> - <strong data-coa-billing-lookup-target="unitName"></strong></span></li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="coa-lookup-card" aria-labelledby="billing-account-string-title">
+        <h2 id="billing-account-string-title" class="coa-lookup-card__heading">Billing Account String</h2>
+        <div class="coa-lookup-card__body">
+          <div class="coa-billing-string-grid">
+            <div class="coa-billing-string-grid__heading">Agency</div>
+            <div class="coa-billing-string-grid__heading">Division</div>
+            <div class="coa-billing-string-grid__heading">Department</div>
+            <div class="coa-billing-string-grid__heading">Unit</div>
+            <code data-coa-billing-lookup-target="billingAgencyId"></code>
+            <code data-coa-billing-lookup-target="billingDivisionId"></code>
+            <code data-coa-billing-lookup-target="billingDepartmentId"></code>
+            <code data-coa-billing-lookup-target="billingUnitId"></code>
+          </div>
+          <button type="button" class="btn approve compact coa-billing-copy"
+                  data-action="coa-billing-lookup#copy">Copy</button>
+        </div>
+      </section>
+    </div>
   </div>
 </section>
