@@ -54,6 +54,18 @@ Rails.application.routes.draw do
       end
     end
 
+    # Personal, not administrative — one per signed-in user, so a singular
+    # resource with no id. The Storage screen is where it is set.
+    resource :upload_destination, only: %i[update]
+
+    resources :storage_locations do
+      member do
+        post :make_default
+        post :move_assets
+        patch :toggle
+      end
+    end
+
     # One endpoint for both stars, since the button is a toggle and the subject
     # may be an asset or a collection.
     post 'favorites', to: 'favorites#toggle', as: :favorites

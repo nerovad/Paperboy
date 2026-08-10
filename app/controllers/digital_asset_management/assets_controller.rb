@@ -10,6 +10,7 @@ module DigitalAssetManagement
     include Pagy::Method
 
     before_action :set_asset, only: %i[show edit update destroy share]
+    before_action :load_upload_targets, only: %i[new create edit update]
 
     def index
       @pagy, @assets = pagy(:offset, @dam_search.results)
@@ -25,11 +26,15 @@ module DigitalAssetManagement
     end
 
     def new
-      @asset = Dam::Asset.new
+      @asset = Dam::Asset.new(storage_location_id: dam_upload_target&.id)
     end
 
     def create
       @asset = Dam::Asset.new(asset_params.except(:file))
+      # An ingest that names no location still has to land somewhere: the
+      # uploader's own destination, or the library default. See the Storage
+      # screen, where both are set.
+      @asset.storage_location_id ||= dam_upload_target&.id
       upload = asset_params[:file]
 
       if upload.blank?
@@ -45,7 +50,9 @@ module DigitalAssetManagement
       if @asset.save
         # Ingest is a job even though this one runs inline, so the Jobs feed is
         # a complete record of how everything got into the library.
-        log_ingest(@asset)
+        Dam::Job.record!(job_type: 'ingest', actor: current_user, subject: @asset,
+                         log: "Ingested #{@asset.filename} (#{@asset.display_size}) " \
+                              "into #{@asset.storage_location&.label || 'no location'}")
         redirect_to digital_asset_management_asset_path(@asset), notice: 'Asset ingested.'
       else
         render :new, status: :unprocessable_entity
@@ -102,6 +109,10 @@ module DigitalAssetManagement
       params.require(:asset).permit(:title, :description, :storage_location_id, :file)
     end
 
+    def load_upload_targets
+      @dam_upload_targets = Dam::StorageLocation.upload_options_for(@asset&.storage_location)
+    end
+
     def stamp_uploader(asset)
       asset.uploaded_by_id = dam_employee_id
       asset.uploaded_by_name = dam_actor_name
@@ -124,13 +135,6 @@ module DigitalAssetManagement
           asset.metadata_values.build(field_key: key, value: value.to_s.strip)
         end
       end
-    end
-
-    def log_ingest(asset)
-      job = Dam::Job.enqueue!(job_type: 'ingest', actor: current_user, subject: asset, total_items: 1)
-      job.append_log("Ingested #{asset.filename} (#{asset.display_size})")
-      job.update(status: 'succeeded', processed_items: 1, started_at: Time.current, finished_at: Time.current,
-                 log: job.log)
     end
   end
 end

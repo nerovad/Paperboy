@@ -1,0 +1,155 @@
+<%# Storage: where the library's bytes live and where new ones land.
+
+    The panel at the top is personal — it only changes where *your* uploads
+    go. The table below is the library's, and only system admins can change
+    it. %>
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1>Storage</h1>
+      <p class="dam-page-subtitle">
+        Where the library keeps its bytes, and where new uploads land.
+      </p>
+    </div>
+    <% if system_admin? %>
+      <div class="dam-page-actions">
+        <%= link_to "Add location", new_digital_asset_management_storage_location_path,
+                    class: "btn approve" %>
+      </div>
+    <% end %>
+  </header>
+
+  <section class="dam-panel">
+    <h2>Your upload destination</h2>
+
+    <% if @upload_targets.any? %>
+      <%= form_with url: digital_asset_management_upload_destination_path,
+                    method: :patch, class: "dam-upload-target-form" do %>
+        <div class="form-group">
+          <%= label_tag :storage_location_id, "New assets you ingest go to" %>
+          <%= select_tag :storage_location_id,
+                         options_from_collection_for_select(@upload_targets, :id, :label, @my_choice_id),
+                         include_blank: @library_default ? "Library default (#{@library_default.label})"
+                                                         : "Library default",
+                         class: "form-control" %>
+        </div>
+        <%= submit_tag "Save", class: "btn approve" %>
+      <% end %>
+
+      <p class="dam-hint">
+        Yours alone — it preselects the Storage field on the ingest form, and you can still
+        pick somewhere else for a single upload.
+        <% if @my_target %>
+          Right now your uploads go to <strong><%= @my_target.label %></strong>.
+        <% end %>
+      </p>
+    <% else %>
+      <p class="dam-muted">
+        Nothing is accepting uploads at the moment, so ingested assets are filed with no
+        location until one is enabled.
+      </p>
+    <% end %>
+  </section>
+
+  <div class="dam-storage-stats">
+    <div class="dam-stat">
+      <strong><%= number_with_delimiter(@asset_counts.values.sum) %></strong>
+      <span>Assets stored</span>
+    </div>
+    <div class="dam-stat">
+      <strong><%= number_to_human_size(@used_bytes.values.compact.sum) %></strong>
+      <span>Bytes under management</span>
+    </div>
+    <div class="dam-stat">
+      <strong><%= @upload_targets.size %> of <%= @locations.size %></strong>
+      <span>Taking uploads</span>
+    </div>
+    <div class="dam-stat">
+      <strong>
+        <% if @unplaced_count.positive? %>
+          <%= link_to number_with_delimiter(@unplaced_count),
+                      digital_asset_management_assets_path(storage_location_id: Dam::AssetSearch::UNPLACED) %>
+        <% else %>
+          0
+        <% end %>
+      </strong>
+      <span>With no location</span>
+    </div>
+  </div>
+
+  <% if @locations.any? %>
+    <table class="dam-table">
+      <thead>
+        <tr>
+          <th>Location</th>
+          <th>Kind</th>
+          <th>Assets</th>
+          <th>Stored</th>
+          <th>State</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @locations.each do |location| %>
+          <% used = @used_bytes[location.id].to_i %>
+          <% count = @asset_counts[location.id].to_i %>
+          <tr>
+            <td>
+              <%= link_to location.label,
+                          digital_asset_management_storage_location_path(location) %>
+              <p class="dam-muted">
+                <%= location.key %><% if location.root.present? %> · <%= location.root %><% end %>
+              </p>
+            </td>
+            <td><%= location.kind_label %></td>
+            <td><%= number_with_delimiter(count) %></td>
+            <td class="dam-meter-cell">
+              <%= number_to_human_size(used) %>
+              <% if (percent = location.usage_percent(used)) %>
+                <%= dam_usage_meter(percent) %>
+                <p class="dam-muted">
+                  <%= percent %>% of <%= number_to_human_size(location.quota_bytes) %>
+                </p>
+              <% end %>
+            </td>
+            <td>
+              <div class="dam-state-stack">
+                <%= dam_storage_state_pill(location, used) %>
+                <% if location.default_for_uploads? %>
+                  <%= dam_pill("running", "Library default") %>
+                <% end %>
+              </div>
+            </td>
+            <td class="dam-row-actions">
+              <%= link_to "Assets",
+                          digital_asset_management_assets_path(storage_location_id: location.id),
+                          class: "btn compact" %>
+              <% if system_admin? %>
+                <% if location.accepts_uploads?(used) && !location.default_for_uploads? %>
+                  <%= button_to "Make default",
+                                make_default_digital_asset_management_storage_location_path(location),
+                                method: :post, class: "btn approve compact" %>
+                <% end %>
+                <%= button_to location.active? ? "Disable" : "Enable",
+                              toggle_digital_asset_management_storage_location_path(location),
+                              method: :patch, class: "btn compact" %>
+                <%= link_to "Edit",
+                            edit_digital_asset_management_storage_location_path(location),
+                            class: "btn edit compact" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="dam-empty">
+      No storage locations yet.
+      <% if system_admin? %>
+        <%= link_to "Add the first one", new_digital_asset_management_storage_location_path %>.
+      <% else %>
+        Ask a system administrator to add one.
+      <% end %>
+    </p>
+  <% end %>
+</div>

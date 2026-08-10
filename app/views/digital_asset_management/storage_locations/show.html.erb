@@ -1,0 +1,159 @@
+<%# One storage location: what is in it, how full it is, and — for admins —
+    how to drain it before retiring it. %>
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <p class="dam-breadcrumb">
+        <%= link_to "Storage", digital_asset_management_storage_locations_path %>
+      </p>
+      <h1><%= @location.label %></h1>
+      <p class="dam-page-subtitle">
+        <%= @location.kind_label %> · <%= @location.key %>
+        <%= dam_storage_state_pill(@location, @used_bytes) %>
+        <%= dam_pill("running", "Library default") if @location.default_for_uploads? %>
+      </p>
+    </div>
+    <div class="dam-page-actions">
+      <%= link_to "Assets", digital_asset_management_assets_path(storage_location_id: @location.id),
+                  class: "btn secondary" %>
+      <% if system_admin? %>
+        <% if @location.accepts_uploads?(@used_bytes) && !@location.default_for_uploads? %>
+          <%= button_to "Make default",
+                        make_default_digital_asset_management_storage_location_path(@location),
+                        method: :post, class: "btn approve" %>
+        <% end %>
+        <%= link_to "Edit", edit_digital_asset_management_storage_location_path(@location),
+                    class: "btn edit" %>
+        <%= button_to "Remove", digital_asset_management_storage_location_path(@location),
+                      method: :delete, class: "btn deny",
+                      form: { data: { turbo_confirm: "Remove #{@location.label}? It has to be empty first — its assets are not deleted with it.",
+                                      confirm_title: "Remove location", confirm_label: "Remove" } } %>
+      <% end %>
+    </div>
+  </header>
+
+  <div class="dam-detail-layout">
+    <div>
+      <section class="dam-panel">
+        <h2>Usage</h2>
+        <dl class="dam-facts">
+          <dt>Assets</dt>
+          <dd><%= number_with_delimiter(@asset_count) %></dd>
+          <dt>Stored</dt>
+          <dd><%= number_to_human_size(@used_bytes) %></dd>
+          <dt>Capacity</dt>
+          <dd>
+            <% if (percent = @location.usage_percent(@used_bytes)) %>
+              <%= percent %>% of <%= number_to_human_size(@location.quota_bytes) %>
+              <%= dam_usage_meter(percent) %>
+            <% else %>
+              <span class="dam-muted">Not measured</span>
+            <% end %>
+          </dd>
+        </dl>
+
+        <% if @by_media_type.any? %>
+          <ul class="dam-list">
+            <% @by_media_type.sort_by { |_type, count| -count }.each do |media_type, count| %>
+              <li>
+                <span aria-hidden="true"><%= dam_media_glyph(media_type) %></span>
+                <%= link_to media_type.titleize,
+                            digital_asset_management_assets_path(storage_location_id: @location.id,
+                                                                 media_type: media_type) %>
+                <span class="dam-muted"><%= number_with_delimiter(count) %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="dam-muted">Nothing is filed here yet.</p>
+        <% end %>
+      </section>
+
+      <% if system_admin? %>
+        <section class="dam-panel">
+          <h2>Move everything out</h2>
+          <% if @asset_count.zero? %>
+            <p class="dam-muted">Nothing to move — this location is empty and can be removed.</p>
+          <% elsif @move_targets.any? %>
+            <%= form_with url: move_assets_digital_asset_management_storage_location_path(@location),
+                          method: :post, class: "dam-inline-form" do %>
+              <%= select_tag :target_id,
+                             options_from_collection_for_select(@move_targets, :id, :label),
+                             class: "form-control",
+                             "aria-label": "Location to move these assets to" %>
+              <%= submit_tag "Move #{pluralize(@asset_count, 'asset')}", class: "btn warning",
+                             data: { turbo_confirm: "Move all #{@asset_count} assets out of #{@location.label}?",
+                                     confirm_title: "Move assets", confirm_label: "Move" } %>
+            <% end %>
+            <p class="dam-hint">
+              Re-files the assets against the new location and logs a move job. The files
+              themselves stay where they are until the storage runner acts on that job —
+              this records where they are meant to be, which is what a retirement needs.
+            </p>
+          <% else %>
+            <p class="dam-muted">There is nowhere else active to move these assets to.</p>
+          <% end %>
+        </section>
+      <% end %>
+
+      <section class="dam-panel">
+        <h2>Newest here</h2>
+        <% if @recent_assets.any? %>
+          <ul class="dam-list">
+            <% @recent_assets.each do |asset| %>
+              <li>
+                <span aria-hidden="true"><%= dam_media_glyph(asset.media_type) %></span>
+                <%= link_to asset.title, digital_asset_management_asset_path(asset) %>
+                <span class="dam-muted">
+                  <%= asset.display_size || "—" %> · <%= time_ago_in_words(asset.created_at) %> ago
+                </span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="dam-muted">No assets here yet.</p>
+        <% end %>
+      </section>
+    </div>
+
+    <aside class="dam-detail-side">
+      <section class="dam-panel">
+        <h2>Details</h2>
+        <dl class="dam-facts">
+          <dt>Kind</dt><dd><%= @location.kind_label %></dd>
+          <dt>Key</dt><dd><%= @location.key %></dd>
+          <dt>Root</dt><dd><%= @location.root.presence || "—" %></dd>
+          <dt>Uploads</dt>
+          <dd>
+            <% if @location.accepts_uploads?(@used_bytes) %>
+              Accepted
+            <% else %>
+              Closed — <%= @location.refusal_reason(@used_bytes) %>
+            <% end %>
+          </dd>
+          <dt>Order</dt><dd><%= @location.position %></dd>
+          <dt>Added</dt><dd><%= @location.created_at.strftime("%b %-d, %Y") %></dd>
+        </dl>
+
+        <% if @location.description.present? %>
+          <p class="dam-hint"><%= @location.description %></p>
+        <% end %>
+      </section>
+
+      <% if @jobs.any? %>
+        <section class="dam-panel">
+          <h2>Move history</h2>
+          <ul class="dam-list">
+            <% @jobs.each do |job| %>
+              <li>
+                <%= link_to job.type_label, digital_asset_management_job_path(job) %>
+                <%= dam_pill(job.status) %>
+                <span class="dam-muted"><%= time_ago_in_words(job.created_at) %> ago</span>
+              </li>
+            <% end %>
+          </ul>
+        </section>
+      <% end %>
+    </aside>
+  </div>
+</div>

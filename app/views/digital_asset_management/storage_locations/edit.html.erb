@@ -1,0 +1,12 @@
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <p class="dam-breadcrumb">
+        <%= link_to "Storage", digital_asset_management_storage_locations_path %> ·
+        <%= link_to @location.label, digital_asset_management_storage_location_path(@location) %>
+      </p>
+      <h1>Edit <%= @location.label %></h1>
+    </div>
+  </header>
+  <section class="dam-panel"><%= render "form" %></section>
+</div>

@@ -38,6 +38,8 @@
                 class: "nav-link#{' active' if controller_name == 'workflows'}" %>
     <%= link_to "My Shares", digital_asset_management_shares_path,
                 class: "nav-link#{' active' if controller_name == 'shares'}" %>
+    <%= link_to "Storage", digital_asset_management_storage_locations_path,
+                class: "nav-link#{' active' if controller_name == 'storage_locations'}" %>
   </nav>
 
   <%= render "digital_asset_management/shared/advanced_search_modal" %>

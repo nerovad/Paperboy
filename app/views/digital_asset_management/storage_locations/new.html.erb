@@ -1,0 +1,15 @@
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <p class="dam-breadcrumb">
+        <%= link_to "Storage", digital_asset_management_storage_locations_path %>
+      </p>
+      <h1>Add a storage location</h1>
+      <p class="dam-page-subtitle">
+        Somewhere the library keeps bytes. Adding it here makes it a search facet and,
+        unless it is read-only, somewhere uploads can be sent.
+      </p>
+    </div>
+  </header>
+  <section class="dam-panel"><%= render "form" %></section>
+</div>

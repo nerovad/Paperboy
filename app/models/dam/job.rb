@@ -11,6 +11,7 @@ module Dam
       'ingest' => 'Ingest',
       'export' => 'Export',
       'share' => 'Share',
+      'move' => 'Move',
       'workflow' => 'Workflow'
     }.freeze
 
@@ -56,15 +57,27 @@ module Dam
         job_type: job_type,
         workflow: workflow,
         subject: subject,
-        # Asset carries a title, Collection a name. Never #to_s — on an
-        # unadorned model that is the inspect string.
-        subject_label: subject.try(:title) || subject.try(:name),
+        # Asset carries a title, Collection a name, StorageLocation a label.
+        # Never #to_s — on an unadorned model that is the inspect string.
+        subject_label: subject.try(:title) || subject.try(:name) || subject.try(:label),
         status: 'queued',
         total_items: total_items,
         queued_at: Time.current,
         created_by_id: actor&.employee_id&.to_s,
         created_by_name: actor && "#{actor.first_name} #{actor.last_name}".strip
       )
+    end
+
+    # Record something that has already happened. An ingest and a storage move
+    # both finish inside the request, so they never pass through the runner —
+    # the row lands complete, and the Jobs feed stays the one place every piece
+    # of DAM work shows up whether or not it was ever queued.
+    def self.record!(job_type:, actor:, subject:, count: 1, log: nil)
+      job = enqueue!(job_type: job_type, actor: actor, subject: subject, total_items: count)
+      Array(log).each { |line| job.append_log(line) }
+      job.update!(status: 'succeeded', processed_items: count, started_at: Time.current,
+                  finished_at: Time.current, log: job.log)
+      job
     end
 
     # Append one line to the run log. Kept as text rather than rows because

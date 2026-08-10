@@ -381,6 +381,11 @@
     height: 100%;
     background: $green-teal;
   }
+
+  /* Storage capacity bars: the same meter, warning as it fills. */
+  &.dam-progress--warn span { background: $warning-border-strong; }
+
+  &.dam-progress--full span { background: $danger; }
 }
 
 .dam-log {
@@ -403,6 +408,60 @@
   color: $indigo-scheduled-text;
   font-size: 0.76rem;
   font-weight: 700;
+}
+
+/* --- Storage -------------------------------------------------------------- */
+
+/* The personal "my uploads go here" row: a select and its submit on one line,
+   dropping to two on a narrow screen. */
+.dam-upload-target-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  .form-group {
+    flex: 1 1 320px;
+    margin: 0;
+  }
+}
+
+.dam-storage-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.dam-stat {
+  padding: 14px 16px;
+  background: $surface-base;
+  border: 1px solid $neutral-border-light;
+  border-radius: $radius-12;
+
+  strong {
+    display: block;
+    margin-bottom: 2px;
+    color: $text-strong;
+    font-size: 1.35rem;
+  }
+
+  span {
+    color: $text-muted;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+/* Wide enough that a capacity bar under the size reads as a bar. */
+.dam-meter-cell { min-width: 160px; }
+
+.dam-state-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 /* --- Forms ---------------------------------------------------------------- */

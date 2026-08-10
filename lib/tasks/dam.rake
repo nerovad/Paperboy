@@ -13,9 +13,13 @@ namespace :dam do
   task seed_reference_data: :environment do
     storage = [
       { key: 'local_disk', label: 'Local disk', kind: 'disk', root: Rails.root.join('storage').to_s,
-        description: 'Active Storage service backing ingested files.', position: 1 },
+        description: 'Active Storage service backing ingested files.', position: 1,
+        default_for_uploads: true },
+      # Read-only from the start: an archive is where things are moved to, not
+      # somewhere an ingest form should offer to drop a new upload.
       { key: 'archive', label: 'Cold archive', kind: 'archive',
-        description: 'Long-term retention. Restores are not instant.', position: 2 }
+        description: 'Long-term retention. Restores are not instant.', position: 2,
+        read_only: true }
     ]
 
     fields = [
@@ -53,5 +57,6 @@ namespace :dam do
     puts "Storage locations: #{created[:storage]} added, #{Dam::StorageLocation.count} total."
     puts "Metadata fields:   #{created[:fields]} added, #{Dam::MetadataField.count} total."
     puts 'Both now appear as facets in the DAM Advanced Search modal.'
+    puts "Uploads default to: #{Dam::StorageLocation.library_default&.label || 'nowhere — no location is accepting uploads'}."
   end
 end

@@ -35,8 +35,25 @@
 
   <div class="form-group">
     <%= f.label :storage_location_id, "Storage" %>
-    <%= f.collection_select :storage_location_id, @dam_storage_locations, :id, :label,
-                            { include_blank: "Not set" }, class: "form-control" %>
+    <% if @dam_upload_targets.any? %>
+      <%# No blank option on ingest: an upload always lands somewhere, and the
+          field arrives already set to where. Editing keeps one, so an asset
+          can be taken off a location that is going away. %>
+      <%= f.collection_select :storage_location_id, @dam_upload_targets, :id, :label,
+                              { include_blank: @asset.persisted? && "Not set" },
+                              class: "form-control" %>
+      <p class="dam-hint">
+        Starts on your upload destination. Change that on
+        <%= link_to "Storage", digital_asset_management_storage_locations_path %>
+        and every ingest begins there instead.
+      </p>
+    <% else %>
+      <p class="dam-hint">
+        No location is accepting uploads, so this asset is filed without one. It can be
+        placed later from
+        <%= link_to "Storage", digital_asset_management_storage_locations_path %>.
+      </p>
+    <% end %>
   </div>
 
   <% if @dam_metadata_fields.any? %>

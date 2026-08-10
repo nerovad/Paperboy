@@ -1,0 +1,100 @@
+<%= form_with model: @location, scope: :storage_location,
+              url: @location.persisted? ? digital_asset_management_storage_location_path(@location)
+                                        : digital_asset_management_storage_locations_path,
+              class: "dam-form" do |f| %>
+  <% if @location.errors.any? %>
+    <div class="dam-errors">
+      <ul>
+        <% @location.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :label, "Name" %>
+    <%= f.text_field :label, class: "form-control", required: true,
+                     placeholder: "Photo archive" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :key %>
+    <%= f.text_field :key, class: "form-control", placeholder: "Left blank, made from the name" %>
+    <p class="dam-hint">
+      The stable name this location is referred to by. Changing it later does not move anything,
+      but anything outside the app that looks the location up by key will stop finding it.
+    </p>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :kind %>
+    <%= f.select :kind, Dam::StorageLocation::KINDS.map { |key, label| [label, key] },
+                 {}, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :root, "Root" %>
+    <%= f.text_field :root, class: "form-control",
+                     placeholder: "Filesystem path, bucket name or UNC share" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description %>
+    <%= f.text_area :description, class: "form-control", rows: 3 %>
+    <p class="dam-hint">What belongs here, and anything people should know before filing into it.</p>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :quota_gb, "Capacity (GB)" %>
+    <%= f.number_field :quota_gb, class: "form-control", step: "any", min: 0,
+                       placeholder: "Leave blank if not measured" %>
+    <p class="dam-hint">
+      Draws the fullness bar on the Storage screen. At capacity the location stops taking
+      new uploads — nothing already filed here is touched.
+    </p>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :position, "Order" %>
+    <%= f.number_field :position, class: "form-control", min: 0 %>
+    <p class="dam-hint">Where it sits in the Storage table and in every location picker.</p>
+  </div>
+
+  <fieldset class="dam-filter-set">
+    <legend>Availability</legend>
+
+    <div class="form-group">
+      <label class="dam-checkbox">
+        <%= f.check_box :active %>
+        <span>Active — readable, searchable, and offered for upload</span>
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label class="dam-checkbox">
+        <%= f.check_box :read_only %>
+        <span>Read-only — keep serving what is here, but take nothing new</span>
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label class="dam-checkbox">
+        <%= f.check_box :default_for_uploads %>
+        <span>Library default — where uploads go when nobody has chosen</span>
+      </label>
+      <p class="dam-hint">
+        Only one location is the default; ticking this moves it here. People who picked their
+        own destination on the Storage screen keep it.
+      </p>
+    </div>
+  </fieldset>
+
+  <div class="form-actions">
+    <%= link_to "Cancel",
+                @location.persisted? ? digital_asset_management_storage_location_path(@location)
+                                     : digital_asset_management_storage_locations_path,
+                class: "btn" %>
+    <%= f.submit @location.persisted? ? "Save location" : "Add location", class: "btn approve" %>
+  </div>
+<% end %>

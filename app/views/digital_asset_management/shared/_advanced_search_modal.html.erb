@@ -89,6 +89,14 @@
                   <span><%= location.label %></span>
                 </label>
               <% end %>
+              <%# Assets ingested before any location existed, or left behind
+                  when one was removed, are still findable. %>
+              <label class="dam-checkbox">
+                <%= check_box_tag "storage_location_id[]", Dam::AssetSearch::UNPLACED,
+                                  @dam_search.storage_location_ids.include?(Dam::AssetSearch::UNPLACED),
+                                  id: "dam-storage-none" %>
+                <span>No location</span>
+              </label>
             </div>
           <% else %>
             <p class="dam-hint">No storage locations configured yet.</p>

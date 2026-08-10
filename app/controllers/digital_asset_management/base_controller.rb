@@ -43,6 +43,13 @@ module DigitalAssetManagement
       current_user&.employee_id.to_s
     end
 
+    # Where this person's uploads go — their own choice from the Storage
+    # screen, or the library default. Alongside the other current-user facts
+    # because the answer is about who is asking, not about what is on screen.
+    def dam_upload_target
+      @dam_upload_target ||= Dam::StorageLocation.for_upload_by(dam_employee_id)
+    end
+
     # Actor names are snapshotted onto DAM rows rather than joined at render
     # time, so an asset stays attributable after the uploader leaves.
     def dam_actor_name

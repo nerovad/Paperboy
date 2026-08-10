@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 20_260_807_120_008) do
+ActiveRecord::Schema[8.0].define(version: 20_260_807_130_001) do
   create_table 'Employee_Groups', force: :cascade do |t|
     t.integer 'EmployeeID', null: false
     t.bigint 'GroupID', null: false
@@ -366,6 +366,9 @@ ActiveRecord::Schema[8.0].define(version: 20_260_807_120_008) do
     t.integer 'position', default: 0, null: false
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
+    t.boolean 'default_for_uploads', default: false, null: false
+    t.boolean 'read_only', default: false, null: false
+    t.bigint 'quota_bytes'
     t.index ['key'], name: 'index_dam_storage_locations_on_key', unique: true
   end
 
@@ -1084,6 +1087,7 @@ ActiveRecord::Schema[8.0].define(version: 20_260_807_120_008) do
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
     t.text 'column_prefs'
+    t.integer 'dam_storage_location_id'
     t.index ['employee_id'], name: 'index_user_settings_on_employee_id', unique: true
   end
 

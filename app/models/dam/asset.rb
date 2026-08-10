@@ -38,6 +38,7 @@ module Dam
     validates :title, presence: true
     validates :media_type, inclusion: { in: MEDIA_TYPES }
     validates :status, inclusion: { in: STATUSES }
+    validate :storage_target_accepts_uploads, on: :create
 
     scope :newest_first, -> { order(created_at: :desc) }
     scope :visible, -> { where(status: %w[active processing]) }
@@ -103,6 +104,21 @@ module Dam
     # Custom metadata as a plain hash, for detail views and workflow payloads.
     def metadata_hash
       metadata_values.to_h { |value| [value.field_key, value.display_value] }
+    end
+
+    private
+
+    # Checked at the door rather than only hidden from the picker: a sealed
+    # archive or a full share can be reached by a stale form or a re-post, and
+    # the point of closing one is that nothing new arrives in it. Create only —
+    # editing an asset that already lives somewhere closed must still work.
+    def storage_target_accepts_uploads
+      return if storage_location.blank?
+
+      reason = storage_location.refusal_reason
+      return if reason.nil?
+
+      errors.add(:storage_location, "#{storage_location.label} is #{reason} and cannot take new uploads")
     end
   end
 end

@@ -55,6 +55,34 @@ module DigitalAssetManagementHelper
     end
   end
 
+  # Whether a storage location is taking uploads, and if not, why. Reads the
+  # reason off the model so the pill cannot drift from what the ingest form
+  # offers or what the asset validation allows.
+  def dam_storage_state_pill(location, used_bytes = nil)
+    case location.refusal_reason(used_bytes || location.used_bytes)
+    when nil then dam_pill('active', 'Accepting uploads')
+    when 'disabled' then dam_pill('cancelled', 'Disabled')
+    when 'read-only' then dam_pill('archived', 'Read-only')
+    else dam_pill('failed', 'At capacity')
+    end
+  end
+
+  # Capacity bar for a location that has a quota. Nil percent means no quota
+  # is set, and a location with no quota draws no bar rather than an empty one
+  # — "not measured" and "empty" are different facts.
+  def dam_usage_meter(percent)
+    return nil if percent.nil?
+
+    variant = if percent >= 100 then ' dam-progress--full'
+              elsif percent >= 80 then ' dam-progress--warn'
+              else ''
+              end
+
+    tag.div(tag.span(style: "width: #{percent}%"),
+            class: "dam-progress#{variant}", role: 'img',
+            aria: { label: "#{percent} percent of capacity used" })
+  end
+
   def dam_duration(seconds)
     return nil if seconds.blank? || seconds.to_i.zero?
 

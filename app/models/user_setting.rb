@@ -31,4 +31,13 @@ class UserSetting < ApplicationRecord
   def self.for_employee(employee_id)
     find_or_initialize_by(employee_id: employee_id.to_s)
   end
+
+  # Which DAM storage location this person's uploads default to, or nil for
+  # "follow the library default". Read straight off the column rather than
+  # through a row, because the DAM asks on every ingest and most people never
+  # set one. Resolution — including what happens when the chosen location is
+  # later disabled — belongs to Dam::StorageLocation.for_upload_by.
+  def self.dam_storage_location_id_for(employee_id)
+    where(employee_id: employee_id.to_s).pick(:dam_storage_location_id)
+  end
 end

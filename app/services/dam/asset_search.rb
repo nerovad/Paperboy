@@ -21,6 +21,9 @@ module Dam
     # metadata value (see #apply_text).
     TEXT_COLUMNS = %w[title description filename].freeze
 
+    # Asks for assets filed against no storage location at all.
+    UNPLACED = 'none'
+
     SORTS = {
       'newest' => { created_at: :desc },
       'oldest' => { created_at: :asc },
@@ -105,9 +108,19 @@ module Dam
     def apply_facets(scope)
       scope = scope.where(media_type: media_types) if media_types.any?
       scope = scope.where(format: formats) if formats.any?
-      scope = scope.where(storage_location_id: storage_location_ids) if storage_location_ids.any?
+      scope = apply_storage(scope)
       scope = scope.where(uploaded_by_id: uploaded_by) if uploaded_by.present?
       scope
+    end
+
+    # "Nowhere" is a real answer to where an asset is kept — ingested before
+    # any location existed, or left behind when one was removed — so the
+    # sentinel `none` filters for it rather than being dropped as blank.
+    def apply_storage(scope)
+      return scope if storage_location_ids.empty?
+
+      ids = storage_location_ids.map { |id| id == UNPLACED ? nil : id }
+      scope.where(storage_location_id: ids)
     end
 
     def apply_dates(scope)
@@ -138,7 +151,9 @@ module Dam
     end
 
     def storage_labels
-      Dam::StorageLocation.where(id: storage_location_ids).order(:label).pluck(:label)
+      labels = Dam::StorageLocation.where(id: storage_location_ids).order(:label).pluck(:label)
+      labels.unshift('No location') if storage_location_ids.include?(UNPLACED)
+      labels
     end
 
     def parse_time(raw)
