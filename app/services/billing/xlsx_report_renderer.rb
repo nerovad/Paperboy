@@ -7,6 +7,7 @@ module Billing
   class XlsxReportRenderer
     BILLING_LABEL_INDEX = 27
     DECIMAL_COLUMN_INDEXES = [7, 23, 24, 25].freeze
+    TEXT_COLUMNS = %w[DOC_NMBR DOC_NUBR DOC_NUMBR].freeze
     COST_COLUMN_INDEX = 25
     HEADER_COLORS = {
       (0..6) => '95DCF7',
@@ -71,11 +72,17 @@ module Billing
       rows.each_with_index do |row, index|
         values = row
         row_styles = data_styles(styles)
-        next sheet.add_row(values, style: row_styles) unless index.zero?
+        next sheet.add_row(values, style: row_styles, types: data_types) unless index.zero?
 
         values = pad_to_summary(values) + ['Number of Lines', result.rows.length]
         row_styles = pad_to_summary(row_styles) + [styles[:label], styles[:count]]
-        sheet.add_row(values, style: row_styles)
+        sheet.add_row(values, style: row_styles, types: pad_to_summary(data_types))
+      end
+    end
+
+    def data_types
+      result.columns.map do |column|
+        :string if TEXT_COLUMNS.include?(column.to_s.upcase)
       end
     end
 

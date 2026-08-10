@@ -18,6 +18,7 @@ module Billing
       left left left left left left left right left left left left left
       left left center center center center left left left left right right right
     ].freeze
+    DOCUMENT_NUMBER_COLUMNS = %w[DOC_NMBR DOC_NUBR DOC_NUMBR].freeze
 
     def initialize(report, definition, result)
       @report = report
@@ -79,7 +80,7 @@ module Billing
       draw_row(pdf, ['Line#'] + result.columns, widths, alignments)
       pdf.font('Helvetica', style: :normal, size: 5)
       rows.each_with_index do |row, index|
-        draw_row(pdf, [offset + index + 1] + row, widths, alignments)
+        draw_row(pdf, [offset + index + 1] + printable_row(row), widths, alignments)
       end
       draw_grid_lines(pdf, widths, top, rows.length + 1)
     end
@@ -111,6 +112,16 @@ module Billing
       text_x = aligned_x(x, width, text_width, alignment)
       encoded_text = pdf.font.normalize_encoding(text)
       pdf.send(:draw_text!, encoded_text, at: [text_x, y - ROW_HEIGHT + 7], kerning: false)
+    end
+
+    def printable_row(row)
+      row.each_with_index.map do |value, index|
+        doc_number_column?(index) ? value.to_s : value
+      end
+    end
+
+    def doc_number_column?(index)
+      DOCUMENT_NUMBER_COLUMNS.include?(result.columns[index].to_s.upcase)
     end
 
     def truncate(text, width)

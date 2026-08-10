@@ -35,6 +35,20 @@ module Billing
       end
     end
 
+    test 'writes document numbers as text' do
+      report = MonthlyReport.new(
+        operation: 'print', start_date: '2026-07-01', end_date: '2026-07-31'
+      )
+      result = ActiveRecord::Result.new(['DOC_NMBR'], [[874_940_000_000.0]])
+
+      data = XlsxReportRenderer.new(report, { 'name' => 'Billing' }, result).call
+      files = xlsx_files(data)
+      cell = worksheet(files).at_xpath("//c[@r='A2']")
+
+      assert_equal 'inlineStr', cell['t']
+      assert_equal '874940000000.0', cell.at_xpath('./is/t').text
+    end
+
     private
 
     def worksheet(files)
