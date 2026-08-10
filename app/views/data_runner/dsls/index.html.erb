@@ -1,6 +1,21 @@
 <% if user_signed_in? %>
   <div class="page-heading"><div><p class="eyebrow">ETL control center</p><h1><%= @selected_group ? @selected_group.humanize : "DataRunner DSLs" %></h1></div></div>
-  <% if @selected_group %>
+  <% if @selected_group && !can_use_app_feature?("data_runner", "manage_groups") %>
+    <%# Without the "Create and manage DSL groups" grant the group is still
+        browsable — the editing toolbar, the drop zone and the rename/delete/
+        refresh forms are what the grant buys. %>
+    <div class="control-center">
+      <div class="control-center-toolbar">
+        <span><%= pluralize(@selected_entries.size, "DSL") %> in this group</span>
+      </div>
+      <div class="dsl-list">
+        <% @selected_entries.each do |entry| %>
+          <%= link_to entry.key, data_runner_dsl_path(entry.slug),
+                      class: "dsl-pill btn compact#{' approve' if entry.enabled?}" %>
+        <% end %>
+      </div>
+    </div>
+  <% elsif @selected_group %>
     <%= form_with url: data_runner_dsl_group_path(@selected_group), method: :patch, class: "control-center",
                   data: { controller: "dsl-group", dsl_group_selected_group_value: @selected_group,
                           dsl_group_catalog_value: DslCatalog.entries.to_h { |entry| [entry.slug, { slug: entry.slug, key: entry.key, enabled: entry.enabled? }] }.to_json } do %>

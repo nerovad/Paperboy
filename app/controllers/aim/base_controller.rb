@@ -7,7 +7,7 @@ module Aim
     before_action :require_app_access
     before_action :load_aim_sidebar_counts
 
-    helper_method :aim_admin?
+    helper_method :aim_admin?, :aim_queue_access?
 
     private
 
@@ -26,7 +26,7 @@ module Aim
     end
 
     def require_aim_admin
-      return if aim_admin?
+      return if aim_queue_access?
 
       redirect_to aim_root_path, alert: 'You do not have access to AIM processing queues.'
     end
@@ -35,6 +35,14 @@ module Aim
       current_user_group_names.include?('system_admins') ||
         current_user_group_names.include?('aim_admin') ||
         current_user_group_names.include?('aim_staff')
+    end
+
+    # Who sees the Processing Queues section of the sidebar, and the screens
+    # behind it. The aim_admin/aim_staff groups predate the ACL section and
+    # keep working; the grant under ACL > Application Features is the way to
+    # hand out queue access without adding someone to those groups.
+    def aim_queue_access?
+      aim_admin? || helpers.can_use_app_feature?('aim', 'processing_queues')
     end
 
     def load_aim_sidebar_counts

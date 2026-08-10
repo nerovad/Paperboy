@@ -24,16 +24,17 @@ class AclController < ApplicationController
     { key: 'help',          label: 'Help',           default_public: true },
     { key: 'reports',       label: 'Reports' },
     { key: 'dashboards',    label: 'Dashboards' },
-    # The five keys below now gate the Admin Tools app's sidebar buttons rather
-    # than a profile-dropdown menu; the keys themselves are unchanged, so
-    # existing grants carry over. 'admin' is the old menu's own key — it grants
-    # nothing on its own and is kept only so existing grants stay visible here.
+    # The six keys below are superseded. The Admin Tools buttons are now
+    # granted under "Application Features" like every other app's sidebar, but
+    # these older keys still grant the same access, so they stay listed —
+    # unticking one here is how an existing grant is taken away. 'admin' is the
+    # old menu's own key and grants nothing on its own.
     { key: 'admin',         label: 'Admin (legacy — grants nothing)' },
-    { key: 'manage_forms',  label: 'Admin Tools → Manage Forms' },
-    { key: 'emulate',       label: 'Admin Tools → Emulate' },
-    { key: 'acl',           label: 'Admin Tools → ACL' },
-    { key: 'data_validation', label: 'Admin Tools → Data Validation' },
-    { key: 'lookup_tables', label: 'Admin Tools → Lookup Tables' },
+    { key: 'manage_forms',  label: 'Admin Tools → Manage Forms (legacy)' },
+    { key: 'emulate',       label: 'Admin Tools → Emulate (legacy)' },
+    { key: 'acl',           label: 'Admin Tools → ACL (legacy)' },
+    { key: 'data_validation', label: 'Admin Tools → Data Validation (legacy)' },
+    { key: 'lookup_tables', label: 'Admin Tools → Lookup Tables (legacy)' },
     { key: 'auth_console',  label: 'Auth Console' },
     { key: 'osha_log',      label: 'OSHA 300' }
   ].freeze
@@ -210,6 +211,7 @@ class AclController < ApplicationController
   def permissions
     @dropdown_items = DROPDOWN_ITEMS
     @application_items = APPLICATION_ITEMS
+    @feature_apps = feature_apps
     @record_table_items = record_table_items
     @all_forms = build_all_forms_list
     @current_permissions = @group.group_permissions.pluck(:permission_type, :permission_key)
@@ -217,6 +219,7 @@ class AclController < ApplicationController
     @dropdown_keys = Array(by_type['dropdown']).to_set(&:last)
     @form_keys = Array(by_type['form']).to_set(&:last)
     @application_keys = Array(by_type['application']).to_set(&:last)
+    @feature_keys = Array(by_type['feature']).to_set(&:last)
     @record_view_keys = Array(by_type['record_view']).to_set(&:last)
     @record_edit_keys = Array(by_type['record_edit']).to_set(&:last)
 
@@ -227,33 +230,22 @@ class AclController < ApplicationController
   end
 
   def update_permissions
-    dropdown_keys = Array(params[:dropdown_permissions])
-    form_keys = Array(params[:form_permissions])
-    application_keys = Array(params[:application_permissions])
-    record_view_keys = Array(params[:record_view_permissions])
-    record_edit_keys = Array(params[:record_edit_permissions])
+    keys_by_type = {
+      'dropdown' => Array(params[:dropdown_permissions]),
+      'form' => Array(params[:form_permissions]),
+      'application' => Array(params[:application_permissions]),
+      'feature' => permitted_feature_keys,
+      'record_view' => Array(params[:record_view_permissions]),
+      'record_edit' => Array(params[:record_edit_permissions])
+    }
 
     ActiveRecord::Base.transaction do
       @group.group_permissions.destroy_all
 
-      dropdown_keys.each do |key|
-        @group.group_permissions.create!(permission_type: 'dropdown', permission_key: key)
-      end
-
-      form_keys.each do |key|
-        @group.group_permissions.create!(permission_type: 'form', permission_key: key)
-      end
-
-      application_keys.each do |key|
-        @group.group_permissions.create!(permission_type: 'application', permission_key: key)
-      end
-
-      record_view_keys.each do |key|
-        @group.group_permissions.create!(permission_type: 'record_view', permission_key: key)
-      end
-
-      record_edit_keys.each do |key|
-        @group.group_permissions.create!(permission_type: 'record_edit', permission_key: key)
+      keys_by_type.each do |type, keys|
+        keys.each do |key|
+          @group.group_permissions.create!(permission_type: type, permission_key: key)
+        end
       end
     end
 
@@ -265,6 +257,7 @@ class AclController < ApplicationController
   def org_permissions
     @dropdown_items = DROPDOWN_ITEMS
     @application_items = APPLICATION_ITEMS
+    @feature_apps = feature_apps
     @all_forms = build_all_forms_list
 
     @agency_id = params[:agency_id]
@@ -294,6 +287,7 @@ class AclController < ApplicationController
     @org_dropdown_keys = Array(by_type['dropdown']).to_set(&:last)
     @org_form_keys = Array(by_type['form']).to_set(&:last)
     @org_application_keys = Array(by_type['application']).to_set(&:last)
+    @org_feature_keys = Array(by_type['feature']).to_set(&:last)
 
     # If no permissions exist yet for this scope, pre-check default public items
     return unless @current_org_permissions.empty?
@@ -311,7 +305,8 @@ class AclController < ApplicationController
     keys_by_type = {
       'dropdown' => Array(params[:dropdown_permissions]),
       'form' => Array(params[:form_permissions]),
-      'application' => Array(params[:application_permissions])
+      'application' => Array(params[:application_permissions]),
+      'feature' => permitted_feature_keys
     }
 
     ActiveRecord::Base.transaction do
@@ -390,6 +385,30 @@ class AclController < ApplicationController
   # this file. Both ACL sections list the same tables.
   def record_table_items
     RegistryTable.all.map { |table| { key: table.slug, label: table.label } }
+  end
+
+  # The "Application Features" section: the sub-applications that split their
+  # sidebar into individually grantable buttons, each with its features. Driven
+  # off APPLICATION_ITEMS so the order and labels match the Applications
+  # section directly above it; apps that declare no features (Print Production)
+  # drop out rather than rendering an empty box.
+  def feature_apps
+    APPLICATION_ITEMS.filter_map do |app|
+      features = AppFeature.for(app[:key])
+      next if features.empty?
+
+      { key: app[:key], label: app[:label],
+        features: features.map { |f| f.merge(permission_key: AppFeature.permission_key(app[:key], f[:key])) } }
+    end
+  end
+
+  # Feature checkboxes post their full "<app>:<feature>" permission key. Only
+  # keys the registry actually declares are written: the form is a checkbox
+  # list, so anything else was hand-crafted, and an unrecognised key would sit
+  # in the table granting nothing while looking like a grant.
+  def permitted_feature_keys
+    known = AppFeature::FEATURES.keys.flat_map { |app_key| AppFeature.permission_keys_for(app_key) }.to_set
+    Array(params[:feature_permissions]).select { |key| known.include?(key) }
   end
 
   def build_all_forms_list

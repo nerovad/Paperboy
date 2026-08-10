@@ -2,6 +2,7 @@
 
 module Coa
   class CrudController < BaseController
+    before_action :require_resource_feature
     before_action :set_record, only: %i[show edit update destroy]
 
     class_attribute :coa_model_class, instance_accessor: false
@@ -62,6 +63,13 @@ module Coa
     end
 
     private
+
+    # Each Chart of Accounts table is granted on its own under ACL >
+    # Application Features. Hiding the sidebar button is not enough — the
+    # collection and member routes are guessable from the table name.
+    def require_resource_feature
+      require_app_feature('coa', coa_feature_key(model_class), fallback: coa_root_path)
+    end
 
     def model_class
       self.class.coa_model_class

@@ -4,7 +4,8 @@
 
     Page entries are links. Action entries are POST forms confirmed through
     the shared modal. Billing::BillingHelper supplies the ordered entries and
-    limits them to system administrators. %>
+    limits them to the buttons this user is granted under ACL > Application
+    Features. %>
 <% items = billing_sidebar_items %>
 <div class="sidebar billing-sidebar" data-controller="billing-modal">
   <%= render "shared/app_switcher" %>

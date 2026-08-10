@@ -2,7 +2,7 @@
 
 module Billing
   class EmailRecipientsController < BaseController
-    before_action :require_system_admin
+    before_action -> { require_app_feature('billing', 'email_recipients', fallback: billing_root_path) }
 
     def index
       @recipients = EmailRecipient.order(:email_address)

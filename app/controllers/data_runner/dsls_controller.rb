@@ -3,7 +3,7 @@
 module DataRunner
   class DslsController < ApplicationController
     before_action :require_login, except: :index
-    before_action :set_dsl, except: %i[index new create new_group create_group update_group rename_group destroy_group refresh_group]
+    before_action :set_dsl, except: %i[index new create] + DataRunner::ApplicationController::GROUP_ACTIONS
 
     def index
       @groups = DslCatalog.grouped if user_signed_in?

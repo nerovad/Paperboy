@@ -130,6 +130,21 @@ module ApplicationHelper
     current_user_application_permission_keys.include?(key)
   end
 
+  # Whether the current user may use one control inside a sub-application — a
+  # Billing sidebar button, a Chart of Accounts table, an Admin Tools screen.
+  # System admins bypass, as everywhere else.
+  #
+  # The Admin Tools buttons predate this section and were granted as "dropdown"
+  # items; AppFeature records that older key so those grants keep working
+  # alongside (and independently of) the newer feature grant.
+  def can_use_app_feature?(app_key, feature_key)
+    return true if system_admin?
+    return true if current_user_feature_permission_keys.include?(AppFeature.permission_key(app_key, feature_key))
+
+    legacy_key = AppFeature.legacy_key(app_key, feature_key)
+    legacy_key.present? && current_user_dropdown_permissions.include?(legacy_key)
+  end
+
   # Which sub-application the current request belongs to, keyed to
   # +paperboy_apps+. Defaults to Paperboy for everything outside the
   # data_runner/ and coa/ controller namespaces.

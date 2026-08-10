@@ -9,6 +9,10 @@ module DigitalAssetManagement
   class AssetsController < BaseController
     include Pagy::Method
 
+    # Only the results page is the "Search" grant. An individual asset is
+    # reached from a collection or a share too, so gating #show on search
+    # would break those for anyone who holds them without it.
+    before_action -> { require_app_feature('digital_asset_management', 'search', fallback: digital_asset_management_root_path) }, only: :index
     before_action :set_asset, only: %i[show edit update destroy share]
     before_action :load_upload_targets, only: %i[new create edit update]
 

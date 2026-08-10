@@ -1,0 +1,43 @@
+<%# app/views/acl/_feature_permissions.html.erb
+    The "Application Features" section, shared by the group and org-level
+    permission screens.
+
+    Locals:
+      apps          — AclController#feature_apps
+      selected_keys — Set of "<app>:<feature>" keys already granted
+
+    One Select All per app rather than one for the whole section: these are
+    unrelated applications that happen to share a heading, and "everything in
+    Billing" is a thing an admin means, while "everything everywhere" is not. %>
+<div class="acl-permissions-section acl-feature-section">
+  <h3>Application Features</h3>
+  <p class="acl-subtitle">
+    Select which buttons inside each application are granted here. Access to
+    the application itself is granted above, and a user needs both: the
+    application to get in, and the button to use it. Applications with nothing
+    to split up are not listed.
+  </p>
+
+  <% apps.each do |app| %>
+    <div class="acl-feature-app" data-controller="select-all">
+      <h4><%= app[:label] %></h4>
+      <div class="permissions-grid">
+        <label class="permission-checkbox select-all-checkbox">
+          <%= check_box_tag "select_all_features_#{app[:key]}", "1",
+              app[:features].all? { |feature| selected_keys.include?(feature[:permission_key]) },
+              data: { select_all_target: "selectAll", action: "change->select-all#toggle" } %>
+          <span><strong>Select All</strong></span>
+        </label>
+        <% app[:features].each do |feature| %>
+          <label class="permission-checkbox">
+            <%= check_box_tag "feature_permissions[]", feature[:permission_key],
+                selected_keys.include?(feature[:permission_key]),
+                id: "feature_permissions_#{app[:key]}_#{feature[:key]}",
+                data: { select_all_target: "checkbox", action: "change->select-all#update" } %>
+            <span><%= feature[:label] %></span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

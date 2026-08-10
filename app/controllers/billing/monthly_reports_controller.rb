@@ -2,8 +2,11 @@
 
 module Billing
   class MonthlyReportsController < BaseController
-    before_action :require_system_admin
+    # One controller serves two sidebar buttons, so the grant it demands
+    # depends on which operation was asked for. Operation first: an unknown one
+    # has no grant to check.
     before_action :require_valid_operation
+    before_action :require_operation_feature
     before_action :load_active_billing_period
 
     def show
@@ -30,6 +33,13 @@ module Billing
       return if MonthlyReport::OPERATIONS.key?(params[:operation])
 
       redirect_to billing_root_path, alert: 'Unknown monthly report operation.'
+    end
+
+    # Running billing and printing its reports are separate grants — the first
+    # rewrites the billing tables, the second only reads them.
+    def require_operation_feature
+      feature = params[:operation] == 'print' ? 'print_reports' : 'run_monthly_billing'
+      require_app_feature('billing', feature, fallback: billing_root_path)
     end
 
     def load_active_billing_period

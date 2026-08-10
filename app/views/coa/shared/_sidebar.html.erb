@@ -2,7 +2,12 @@
   <%= render "shared/app_switcher" %>
 
   <div class="coa-table-links">
-    <%= link_to "Billing Lookup", coa_billing_lookup_path, class: "nav-link" %>
+    <%# Each entry is an ACL > Application Features grant under Chart of
+        Accounts; coa_sidebar_resources is already filtered to what this user
+        holds. %>
+    <% if can_use_app_feature?("coa", "billing_lookup") %>
+      <%= link_to "Billing Lookup", coa_billing_lookup_path, class: "nav-link" %>
+    <% end %>
     <% coa_sidebar_resources.each do |model_class| %>
       <%= link_to model_class.model_name.human(count: 2),
                   coa_sidebar_collection_path(model_class),

@@ -2,7 +2,7 @@
 
 module Billing
   class EmailSubjectsController < BaseController
-    before_action :require_system_admin
+    before_action -> { require_app_feature('billing', 'email_subjects', fallback: billing_root_path) }
     before_action :load_subjects
 
     def show; end

@@ -8,6 +8,7 @@ module DigitalAssetManagement
   # these workflows are Ruby, Python and C++, and that dispatch belongs in a
   # worker, not in a controller action holding a request open.
   class WorkflowsController < BaseController
+    before_action -> { require_app_feature('digital_asset_management', 'workflows', fallback: digital_asset_management_root_path) }
     before_action :set_workflow, only: %i[show edit update destroy run toggle]
 
     def index

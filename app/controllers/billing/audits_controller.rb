@@ -2,7 +2,7 @@
 
 module Billing
   class AuditsController < BaseController
-    before_action :require_system_admin
+    before_action -> { require_app_feature('billing', 'billing_audit', fallback: billing_root_path) }
 
     def show
       @active_billing_period = ActiveBillingPeriod.current
