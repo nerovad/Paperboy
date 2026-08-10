@@ -442,6 +442,12 @@ Rails.application.routes.draw do
     root to: 'list#home'
     get 'list', to: 'list#index'
 
+    resource :billing_lookup, only: :show do
+      get :divisions
+      get :departments
+      get :units
+    end
+
     resources :agencies
     resources :activities
     resources :departments

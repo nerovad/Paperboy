@@ -100,6 +100,36 @@
   max-width: 760px;
 }
 
+.coa-billing-lookup {
+  display: grid;
+  gap: 16px;
+}
+
+.coa-billing-result {
+  padding: 16px;
+  border: 1px solid $border-muted;
+  border-radius: $radius-6;
+  background: $surface-base;
+}
+
+.coa-billing-result__label {
+  margin: 0 0 8px;
+  color: $text-muted;
+  font-weight: 700;
+}
+
+.coa-billing-result__account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.coa-billing-result__account code {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
 .coa-errors {
   max-width: 760px;
   margin-bottom: 16px;
