@@ -189,7 +189,7 @@ export default class extends Controller {
   itemElement({ slug, key, enabled }) {
     const itemEnabled = enabled ?? this.catalogValue[slug]?.enabled
     const item = document.createElement("div")
-    item.className = `dsl-pill${itemEnabled ? " enabled" : ""}`
+    item.className = `dsl-pill btn compact${itemEnabled ? " approve" : ""}`
     item.role = "link"
     item.tabIndex = 0
     item.dataset.dslGroupTarget = "item"

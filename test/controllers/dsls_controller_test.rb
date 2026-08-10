@@ -21,7 +21,7 @@ class DslsControllerTest < ActionController::TestCase
 
     assert_response :success
     assert_select 'form[action=?]', data_runner_dsl_group_path('chart_of_accounts')
-    assert_select '.dsl-pill', minimum: 1
+    assert_select '.dsl-pill.btn.compact', minimum: 1
     assert_select '.dsl-pill a', false
     assert_select '.nav-link[onmousedown*=?]', 'DataRunnerStartDslDrag', minimum: 1
     assert_select '.control-center-actions input[value=?]', 'Save DSLs'

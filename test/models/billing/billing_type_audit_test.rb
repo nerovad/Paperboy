@@ -22,6 +22,7 @@ module Billing
         assert_includes sql, "N'GPH'"
         refute_includes sql, 'OFF'
         assert_includes sql, "'2026-07-01'"
+        assert_includes sql, 'fnTC60PostingRef(T.[TYPE]'
         true
       end
 
@@ -53,6 +54,7 @@ module Billing
         assert_includes sql, "T.[TYPE] = N'GPH'"
         assert_includes sql, 'GSABSS.dbo.units'
         assert_includes sql, 'GSABSS.dbo.tc60_services'
+        assert_includes sql, 'fnTC60PostingRef(T.[TYPE]'
         assert_includes sql, 'ORDER BY T.[CUNIT], T.[DATE]'
         true
       end

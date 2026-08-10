@@ -24,7 +24,7 @@ module Billing
       sql = <<~SQL.squish
         SELECT T.*
         FROM GSABSS.dbo.tc60 T
-        WHERE T.[DATE] >= ? AND T.[DATE] < DATEADD(day, 1, ?)
+        WHERE #{Tc60PeriodScope::PREDICATE}
           AND LTRIM(RTRIM(T.#{check.column})) = ?
           AND NOT EXISTS (
             SELECT 1 FROM GSABSS.dbo.#{check.lookup_table} Z
@@ -34,7 +34,7 @@ module Billing
       SQL
       ActiveRecord::Base.send(
         :sanitize_sql_array,
-        [sql, period.start_date, period.end_date, value]
+        [sql, *Tc60PeriodScope.values(period), value]
       )
     end
   end

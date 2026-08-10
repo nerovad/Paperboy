@@ -44,14 +44,14 @@ module Billing
           SELECT T.[TYPE] AS billing_type,
                  CONVERT(bigint, CASE WHEN #{error_predicate} THEN 1 ELSE 0 END) AS is_error
           FROM GSABSS.dbo.tc60 T
-          WHERE T.[DATE] >= ? AND T.[DATE] < DATEADD(day, 1, ?)
+          WHERE #{Tc60PeriodScope::PREDICATE}
             AND T.[TYPE] IN (?)
         ) Audited
         GROUP BY Audited.billing_type
       SQL
       ActiveRecord::Base.send(
         :sanitize_sql_array,
-        [sql, period.start_date, period.end_date, codes]
+        [sql, *Tc60PeriodScope.values(period), codes]
       )
     end
 
@@ -62,14 +62,14 @@ module Billing
       sql = <<~SQL.squish
         SELECT T.*, #{flags.join(', ')}
         FROM GSABSS.dbo.tc60 T
-        WHERE T.[DATE] >= ? AND T.[DATE] < DATEADD(day, 1, ?)
+        WHERE #{Tc60PeriodScope::PREDICATE}
           AND T.[TYPE] = ?
           AND (#{error_predicate})
         ORDER BY T.[CUNIT], T.[DATE]
       SQL
       ActiveRecord::Base.send(
         :sanitize_sql_array,
-        [sql, period.start_date, period.end_date, code]
+        [sql, *Tc60PeriodScope.values(period), code]
       )
     end
 

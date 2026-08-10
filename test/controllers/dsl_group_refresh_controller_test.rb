@@ -11,9 +11,9 @@ class DslGroupRefreshControllerTest < ActionController::TestCase
     get :index, params: { group: 'paperboy' }
 
     assert_response :success
-    assert_select '.dsl-pill.enabled[data-dsl-enabled=?]', 'true', minimum: 1
-    assert_select '.dsl-pill.enabled[data-dsl-slug=?]', 'parking_lots', false
-    assert_select '.dsl-pill[data-dsl-slug=?][data-dsl-enabled=?]', 'parking_lots', 'false'
+    assert_select '.dsl-pill.btn.approve[data-dsl-enabled=?]', 'true', minimum: 1
+    assert_select '.dsl-pill.approve[data-dsl-slug=?]', 'parking_lots', false
+    assert_select '.dsl-pill.btn:not(.approve)[data-dsl-slug=?][data-dsl-enabled=?]', 'parking_lots', 'false'
   end
 
   test 'refresh group run selection excludes disabled DSLs' do

@@ -32,6 +32,7 @@ module Billing
         assert_includes sql, "'2026-07-01'"
         assert_includes sql, "'2026-07-31'"
         assert_includes sql, 'GSABSS.dbo.tc60_services'
+        assert_equal 10, sql.scan('fnTC60PostingRef(T.[TYPE]').length
         true
       end
 
@@ -49,6 +50,7 @@ module Billing
       connection.expect(:exec_query, rows) do |sql|
         assert_includes sql, 'GROUP BY LTRIM(RTRIM(T.CUNIT))'
         assert_includes sql, "'2026-07-01'"
+        assert_includes sql, 'fnTC60PostingRef(T.[TYPE]'
         true
       end
 

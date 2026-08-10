@@ -78,7 +78,7 @@ module Billing
 
     def query
       sql = GROUPS.flat_map(&:checks).map { |check| check_query(check) }.join("\nUNION ALL\n")
-      dates = GROUPS.flat_map(&:checks).flat_map { [period.start_date, period.end_date] }
+      dates = GROUPS.flat_map(&:checks).flat_map { Tc60PeriodScope.values(period) }
       sanitize(sql, *dates)
     end
 
@@ -87,7 +87,7 @@ module Billing
         SELECT '#{check.key}' AS audit_key, COUNT_BIG(*) AS failure_count
         FROM GSABSS.dbo.tc60 T
         WHERE NULLIF(LTRIM(RTRIM(T.#{check.column})), '') IS NOT NULL
-          AND T.[DATE] >= ? AND T.[DATE] < DATEADD(day, 1, ?)
+          AND #{Tc60PeriodScope::PREDICATE}
           AND NOT EXISTS (
             SELECT 1 FROM GSABSS.dbo.#{check.lookup_table} Z
             WHERE Z.#{check.lookup_column} = T.#{check.column}
@@ -101,7 +101,7 @@ module Billing
                COUNT_BIG(*) AS failure_count
         FROM GSABSS.dbo.tc60 T
         WHERE NULLIF(LTRIM(RTRIM(T.#{check.column})), '') IS NOT NULL
-          AND T.[DATE] >= ? AND T.[DATE] < DATEADD(day, 1, ?)
+          AND #{Tc60PeriodScope::PREDICATE}
           AND NOT EXISTS (
             SELECT 1 FROM GSABSS.dbo.#{check.lookup_table} Z
             WHERE Z.#{check.lookup_column} = T.#{check.column}
@@ -109,7 +109,7 @@ module Billing
         GROUP BY LTRIM(RTRIM(T.#{check.column}))
         ORDER BY failure_count DESC, invalid_value
       SQL
-      sanitize(sql, period.start_date, period.end_date)
+      sanitize(sql, *Tc60PeriodScope.values(period))
     end
 
     def sanitize(sql, *values)

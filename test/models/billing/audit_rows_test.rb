@@ -13,6 +13,7 @@ module Billing
         assert_includes sql, 'SELECT T.*'
         assert_includes sql, 'LTRIM(RTRIM(T.CUNIT)) = N\'BAD001\''
         assert_includes sql, "'2026-07-01'"
+        assert_includes sql, 'fnTC60PostingRef(T.[TYPE]'
         true
       end
 

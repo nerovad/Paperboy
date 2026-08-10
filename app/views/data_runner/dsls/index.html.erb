@@ -32,7 +32,7 @@
       <div class="dsl-dropzone" data-dsl-group-target="dropzone">
         <div class="dsl-list" data-dsl-group-target="list">
           <% @selected_entries.each do |entry| %>
-            <div class="dsl-pill <%= 'enabled' if entry.enabled? %>"
+            <div class="dsl-pill btn compact <%= 'approve' if entry.enabled? %>"
                  data-dsl-group-target="item" data-dsl-slug="<%= entry.slug %>" data-dsl-key="<%= entry.key %>"
                  data-dsl-enabled="<%= entry.enabled? %>"
                  role="link" tabindex="0" data-href="<%= data_runner_dsl_path(entry.slug) %>"

@@ -138,19 +138,6 @@
     flex-wrap: wrap;
   }
 
-  .dsl-pill {
-    cursor: pointer;
-    border: 1px solid $border-color;
-    border-radius: 999px;
-    padding: 8px 12px;
-    background: #fff;
-  }
-
-  .dsl-pill.enabled {
-    border-color: $primary-color;
-    color: darken($primary-color, 20%);
-  }
-
   .drag-ghost {
     position: fixed;
     z-index: 1000;
