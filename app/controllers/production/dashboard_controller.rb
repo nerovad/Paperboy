@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module PrintProduction
+module Production
   class DashboardController < BaseController
     def index; end
   end

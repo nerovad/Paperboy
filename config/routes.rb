@@ -84,7 +84,7 @@ Rails.application.routes.draw do
     end
   end
 
-  namespace :print_production do
+  namespace :production do
     root 'dashboard#index'
   end
 

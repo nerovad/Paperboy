@@ -35,7 +35,7 @@ module SlideshowHelper
                      'Invoice review and approval', 'Approved invoice routing')
   end
 
-  def print_production_home_images
+  def production_home_images
     slideshow_images('print_production', 'Complex document printing',
                      'Document folding and envelope insertion', 'Finished mail distribution')
   end

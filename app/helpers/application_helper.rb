@@ -108,7 +108,7 @@ module ApplicationHelper
     apps << { key: 'coa', label: 'Chart of Accounts', path: coa_root_path } if can_access_app?('coa')
     apps << { key: 'digital_asset_management', label: 'Digital Asset Management', path: digital_asset_management_root_path } if can_access_app?('digital_asset_management')
     apps << { key: 'aim', label: 'Automated Invoice Management', path: aim_root_path } if can_access_app?('aim')
-    apps << { key: 'print_production', label: 'Print Production', path: print_production_root_path } if can_access_app?('print_production')
+    apps << { key: 'print_production', label: 'Production', path: production_root_path } if can_access_app?('print_production')
     apps << { key: 'billing', label: 'Billing', path: billing_root_path } if can_access_app?('billing')
     apps << { key: 'admin_tools', label: 'Admin Tools', path: admin_tools_root_path } if can_access_app?('admin_tools')
     [apps.first, *apps.drop(1).sort_by { |app| app.fetch(:label).downcase }]
@@ -163,7 +163,7 @@ module ApplicationHelper
       'digital_asset_management'
     elsif controller_path.start_with?('aim/')
       'aim'
-    elsif controller_path.start_with?('print_production/')
+    elsif controller_path.start_with?('production/')
       'print_production'
     elsif controller_path.start_with?('billing/')
       'billing'

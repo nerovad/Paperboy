@@ -1,10 +1,10 @@
-<%# app/views/print_production/shared/_sidebar.html.erb
-    Sidebar for the Print Production app. The app switcher header is shared with
+<%# app/views/production/shared/_sidebar.html.erb
+    Sidebar for the Production app. The app switcher header is shared with
     every other app; everything below it is this app's own navigation. %>
-<div class="sidebar print-production-sidebar">
+<div class="sidebar production-sidebar">
   <%= render "shared/app_switcher" %>
 
-  <nav class="print-production-links">
+  <nav class="production-links">
     <%= link_to "VCPrint", "https://vcprint/public/login",
                 class: "nav-link",
                 target: "_blank",
