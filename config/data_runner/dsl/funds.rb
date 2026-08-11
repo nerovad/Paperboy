@@ -32,7 +32,7 @@
     header: [
 
       ['fiscal_year',   nil,             'nvarchar(4)',   'NOT NULL', nil],
-      ['fund_code',     'fund_id',       'nvarchar(3)',   'NOT NULL', nil],
+      ['fund_code',     'fund_id',       'nvarchar(4)',   'NOT NULL', nil],
       ['long_name',     'long_name',     'nvarchar(100)', 'NOT NULL', nil],
       ['short_name',    'short_name',    'nvarchar(50)',  'NOT NULL', nil],
       ['fund_class',    'fund_class',    'nvarchar(50)',  'NOT NULL', nil],
