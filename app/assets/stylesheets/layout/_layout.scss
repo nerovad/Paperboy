@@ -13,8 +13,14 @@
   min-height: 100vh;
 }
 
+/* This is the app's scroll container, not the body — base/_globals.scss sets
+   `overflow: hidden` on html/body. border-box is load-bearing: without it the
+   80px padding-top below is added *on top of* the 100vh height, so the bottom
+   80px of the scrollport renders below the fold where the body clips it and
+   no amount of scrolling can reach it. */
 #main-content {
   height: 100vh;
+  box-sizing: border-box;
   padding: 0;
   position: relative;
   overflow-y: auto;
