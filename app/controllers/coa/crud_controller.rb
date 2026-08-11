@@ -23,6 +23,7 @@ module Coa
 
     def index
       @records = model_class.order(primary_key_columns.index_with(:asc))
+      @records = @records.includes(:object) if model_class == Coa::ObjectInference
       render 'coa/crud/index'
     end
 

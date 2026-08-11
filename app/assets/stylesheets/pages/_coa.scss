@@ -67,6 +67,40 @@
   vertical-align: middle;
 }
 
+.coa-table thead th {
+  background: $orange-action;
+  color: $surface-base;
+}
+
+.coa-grid-search {
+  display: grid;
+  gap: 6px;
+  max-width: 520px;
+  margin: 0 auto 16px;
+  padding: 0 30px;
+}
+
+.coa-grid-search label {
+  font-weight: 700;
+  color: $label-color;
+}
+
+.coa-grid-search__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  background: $surface-base;
+  color: $text-color;
+  font: inherit;
+}
+
+.coa-grid-search__input:focus {
+  outline: none;
+  border-color: $orange-action;
+  box-shadow: 0 0 0 3px rgba($orange-action, 0.2);
+}
+
 .coa-detail-list {
   margin: 0;
   border: 1px solid $border-muted;
