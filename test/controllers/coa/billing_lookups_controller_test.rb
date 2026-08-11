@@ -74,6 +74,42 @@ class CoaBillingLookupsControllerTest < ActionController::TestCase
     ], response.parsed_body
   end
 
+  test 'COBJECT includes county-wide objects' do
+    objects = option_relation([['Professional Services', 2100]])
+
+    Coa::Object.stub(:all, objects) do
+      get :objects
+    end
+
+    assert_response :success
+    assert_equal [
+      { 'label' => '2100 - Professional Services', 'value' => 2100 }
+    ], response.parsed_body
+  end
+
+  test 'agency-backed accounting fields are restricted to the selected agency' do
+    fields = [
+      [Coa::Activity, :activities, 'Information Technology', 'IT'],
+      [Coa::Program, :programs, 'Information Technology Services', 'ITS'],
+      [Coa::Phase, :phases, 'Implementation Phase', 'IMP'],
+      [Coa::Task, :tasks, 'Application Support', 'APP']
+    ]
+
+    fields.each do |model, action, name, value|
+      finder = lambda do |conditions|
+        assert_equal({ agency_id: 'GSA' }, conditions)
+        option_relation([[name, value]])
+      end
+
+      model.stub(:where, finder) do
+        get action, params: { agency_id: 'GSA' }
+      end
+
+      assert_response :success
+      assert_equal [{ 'label' => "#{value} - #{name}", 'value' => value }], response.parsed_body
+    end
+  end
+
   private
 
   def option_relation(rows)
