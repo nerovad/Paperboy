@@ -6,9 +6,13 @@ groups:
   - type: dropdown
     key: auth_console
   - type: dropdown
+    key: dashboards
+  - type: dropdown
     key: help
   - type: dropdown
     key: inbox
+  - type: dropdown
+    key: reports
   - type: dropdown
     key: settings
   - type: dropdown
@@ -16,6 +20,15 @@ groups:
   - type: form
     key: '29'
     label: Carpool
+  - type: form
+    key: '40'
+    label: Bike Locker
+  - type: form
+    key: '41'
+    label: ID Badge Request
+  - type: form
+    key: '42'
+    label: Form Request
 - name: Auth_Console_Approvers
   description: Approvers, limited by department, for the Auth Console.
   permissions:
@@ -30,6 +43,54 @@ groups:
   - type: form
     key: '29'
     label: Carpool
+  - type: form
+    key: '40'
+    label: Bike Locker
+  - type: form
+    key: '41'
+    label: ID Badge Request
+  - type: form
+    key: '42'
+    label: Form Request
+- name: Billing_Users
+  description: Employees that have access to the billing sub-application
+  permissions:
+  - type: application
+    key: billing
+  - type: application
+    key: coa
+  - type: application
+    key: print_production
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: feature
+    key: billing:billing_audit
+  - type: feature
+    key: billing:data_refresh
+  - type: feature
+    key: billing:email_recipients
+  - type: feature
+    key: billing:email_reports
+  - type: feature
+    key: billing:email_subjects
+  - type: feature
+    key: billing:enable_billing
+  - type: feature
+    key: billing:print_reports
+  - type: feature
+    key: billing:reporting_period
+  - type: feature
+    key: billing:run_monthly_billing
+  - type: feature
+    key: billing:view_billing
+  - type: feature
+    key: billing:view_reports
 - name: Critical_Incident_Managers
   description: Can manage critical incident reports
   permissions:
@@ -44,6 +105,127 @@ groups:
   - type: form
     key: '29'
     label: Carpool
+- name: Critical_Info_Admins
+  description: Admins for the Critical Information Report that can see all CIR forms
+    in their inbox no matter who fills it out.
+  permissions:
+  - type: dropdown
+    key: dashboards
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: reports
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '17'
+    label: Critical Information Reporting
+- name: Critical_Info_Users
+  description: Users of the CIR form but not admins
+  permissions:
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '17'
+    label: Critical Information Reporting
+- name: GSA_Security
+  description: Security for the General Services Agency
+  permissions:
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+- name: HCA_HR
+  description: HR Dept. for the Health Care Agency
+  permissions:
+  - type: dropdown
+    key: dashboards
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: osha_log
+  - type: dropdown
+    key: reports
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '33'
+    label: Safety Reporting
+  - type: form
+    key: '34'
+    label: Leave of Absence
+  - type: form
+    key: '35'
+    label: OSHA Reporting
+  - type: form
+    key: '36'
+    label: Workplace Violence
+- name: HCA_Safety_Officers
+  description: Safety Officers for the Health Care Agency.
+  permissions:
+  - type: dropdown
+    key: dashboards
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: osha_log
+  - type: dropdown
+    key: reports
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '33'
+    label: Safety Reporting
+  - type: form
+    key: '34'
+    label: Leave of Absence
+  - type: form
+    key: '35'
+    label: OSHA Reporting
+  - type: form
+    key: '36'
+    label: Workplace Violence
+  - type: record_edit
+    key: form-33
+  - type: record_edit
+    key: osha-300-log
+  - type: record_view
+    key: form-33
+  - type: record_view
+    key: osha-300-log
+- name: HCA_Test
+  description: Test group for HCA forms
+  permissions:
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
 - name: IT_Support
   description: IT staff for system support
   permissions:
@@ -70,6 +252,15 @@ groups:
   - type: form
     key: '35'
     label: OSHA Reporting
+  - type: form
+    key: '40'
+    label: Bike Locker
+  - type: form
+    key: '41'
+    label: ID Badge Request
+  - type: form
+    key: '42'
+    label: Form Request
 - name: Security_Desk
   description: GSA Security desk personnel
   permissions:
@@ -98,17 +289,13 @@ groups:
   - type: form
     key: '29'
     label: Carpool
-- name: System_Admins
-  description: Full system administrators - can access all features
+- name: Super_User
+  description: 'Super Users can manage the system without breaking too much. '
   permissions:
-  - type: dropdown
-    key: acl
   - type: dropdown
     key: auth_console
   - type: dropdown
     key: dashboards
-  - type: dropdown
-    key: emulate
   - type: dropdown
     key: help
   - type: dropdown
@@ -123,10 +310,6 @@ groups:
     key: settings
   - type: dropdown
     key: submissions
-  - type: feature
-    key: admin_tools:acl
-  - type: feature
-    key: admin_tools:emulate
   - type: feature
     key: admin_tools:lookup_tables
   - type: feature
@@ -171,6 +354,117 @@ groups:
     key: '39'
     label: P-Card Request
   - type: form
+    key: '40'
+    label: Bike Locker
+  - type: form
+    key: '41'
+    label: ID Badge Request
+  - type: form
+    key: '42'
+    label: Form Request
+  - type: form
+    key: '45'
+    label: Fleet Vehicle Garaging
+  - type: form
+    key: '51'
+    label: Telework Log
+  - type: form
+    key: creative_job_request
+    label:
+- name: System_Admins
+  description: Full system administrators - can access all features
+  permissions:
+  - type: application
+    key: coa
+  - type: application
+    key: data_runner
+  - type: dropdown
+    key: acl
+  - type: dropdown
+    key: auth_console
+  - type: dropdown
+    key: dashboards
+  - type: dropdown
+    key: emulate
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: lookup_tables
+  - type: dropdown
+    key: manage_forms
+  - type: dropdown
+    key: reports
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: feature
+    key: admin_tools:acl
+  - type: feature
+    key: admin_tools:emulate
+  - type: feature
+    key: admin_tools:lookup_tables
+  - type: feature
+    key: admin_tools:manage_forms
+  - type: feature
+    key: data_runner:manage_groups
+  - type: form
+    key: '15'
+    label: Parking Permit Application
+  - type: form
+    key: '16'
+    label: Probation Transfer Request
+  - type: form
+    key: '17'
+    label: Critical Information Reporting
+  - type: form
+    key: '29'
+    label: Carpool
+  - type: form
+    key: '30'
+    label: Gym Locker
+  - type: form
+    key: '31'
+    label: Social Media
+  - type: form
+    key: '32'
+    label: Work Schedule or Location Update
+  - type: form
+    key: '33'
+    label: Safety Reporting
+  - type: form
+    key: '34'
+    label: Leave of Absence
+  - type: form
+    key: '35'
+    label: OSHA Reporting
+  - type: form
+    key: '36'
+    label: Workplace Violence
+  - type: form
+    key: '37'
+    label: Notice of Change
+  - type: form
+    key: '39'
+    label: P-Card Request
+  - type: form
+    key: '40'
+    label: Bike Locker
+  - type: form
+    key: '41'
+    label: ID Badge Request
+  - type: form
+    key: '42'
+    label: Form Request
+  - type: form
+    key: '45'
+    label: Fleet Vehicle Garaging
+  - type: form
+    key: '51'
+    label: Telework Log
+  - type: form
     key: creative_job_request
     label:
 - name: Ticket_Admin
@@ -187,6 +481,15 @@ groups:
   - type: form
     key: '29'
     label: Carpool
+- name: aim_admin
+  description: AIM backend administrators
+  permissions:
+  - type: application
+    key: aim
+  - type: feature
+    key: aim:dashboard
+  - type: feature
+    key: aim:processing_queues
 org_permissions:
 - agency_id: AAA
   division_id:

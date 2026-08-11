@@ -56,6 +56,38 @@ module AclSeed
     YAML.safe_load_file(PATH) || {}
   end
 
+  # Union the current environment's groups and grants into what db/acl.yml
+  # already holds, so the file can describe every environment at once. Group
+  # names are matched case-insensitively (MSSQL collation is too).
+  #
+  # org_permissions are deliberately carried over from the file untouched:
+  # they grant by agency/division/department/unit, so merging one environment's
+  # into another widens access far more broadly than a group grant does. Use
+  # acl:org_delta to see what a merge would have added.
+  def merge(file_data, snapshot)
+    groups = {}
+    (Array(file_data['groups']) + Array(snapshot['groups'])).each do |row|
+      key = row['name'].to_s.downcase
+      groups[key] = groups[key] ? merge_group(groups[key], row) : row
+    end
+    { 'groups' => groups.values.sort_by { |group| group['name'].to_s },
+      'org_permissions' => Array(file_data['org_permissions']) }
+  end
+
+  def merge_group(base, other)
+    permissions = (Array(base['permissions']) + Array(other['permissions']))
+                  .uniq { |perm| [perm['type'], perm['key']] }
+                  .sort_by { |perm| [perm['type'].to_s, perm['key'].to_s] }
+    { 'name' => base['name'], 'description' => base['description'].presence || other['description'],
+      'permissions' => permissions }
+  end
+
+  # org_permissions present in this environment but absent from db/acl.yml.
+  def org_delta
+    have = Array(load_file['org_permissions']).to_set { |row| org_key(row['agency_id'], row['division_id'], row['department_id'], row['unit_id'], row['type'], row['key']) }
+    org_rows.reject { |row| have.include?(org_key(row['agency_id'], row['division_id'], row['department_id'], row['unit_id'], row['type'], row['key'])) }
+  end
+
   # Returns a list of human-readable change lines. Nothing is written when dry.
   def sync!(dry:, prune:)
     data = load_file
@@ -158,13 +190,26 @@ module AclSeed
 end
 
 namespace :acl do
-  desc 'Dump this environment ACL definitions (groups, grants, org grants) to db/acl.yml'
+  desc 'Dump this environment ACL definitions to db/acl.yml. MERGE=1 unions into the existing file instead of overwriting'
   task dump: :environment do
     snapshot = AclSeed.snapshot
+    merging = ENV['MERGE'].present? && AclSeed::PATH.exist?
+    if merging
+      skipped = AclSeed.org_delta.size
+      snapshot = AclSeed.merge(AclSeed.load_file, snapshot)
+      puts "  note: #{skipped} org grants here are not in db/acl.yml and were NOT merged (see acl:org_delta)" if skipped.positive?
+    end
     AclSeed::PATH.write(snapshot.to_yaml)
     grants = snapshot['groups'].sum { |group| group['permissions'].size }
-    puts "Wrote #{AclSeed::PATH} from #{ActiveRecord::Base.connection.current_database}"
+    puts "#{merging ? 'Merged' : 'Wrote'} #{AclSeed::PATH} from #{ActiveRecord::Base.connection.current_database}"
     puts "  #{snapshot['groups'].size} groups, #{grants} grants, #{snapshot['org_permissions'].size} org grants"
+  end
+
+  desc 'List org_permissions present in this environment but missing from db/acl.yml'
+  task org_delta: :environment do
+    rows = AclSeed.org_delta
+    puts "#{rows.size} org grants in #{ActiveRecord::Base.connection.current_database} are not in db/acl.yml"
+    rows.each { |row| puts "  #{[row['agency_id'], row['division_id'], row['department_id'], row['unit_id']].compact.join('/')} → #{row['type']}/#{row['key']}" }
   end
 
   desc 'Apply db/acl.yml to this environment (additive). DRY_RUN=1 previews; PRUNE=1 also removes grants missing from the file'
