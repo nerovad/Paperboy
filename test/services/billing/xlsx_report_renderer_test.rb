@@ -49,6 +49,23 @@ module Billing
       assert_equal '874940000000.0', cell.at_xpath('./is/t').text
     end
 
+    test 'writes accounting codes as text to preserve leading zeroes' do
+      report = MonthlyReport.new(
+        operation: 'print', start_date: '2026-07-01', end_date: '2026-07-31'
+      )
+      columns = %w[CUNIT COBJECT CACTIVTY CFUNCTION CPROGRAM CPHASE SPHASE STASK]
+      result = ActiveRecord::Result.new(columns, [Array.new(columns.length, '001')])
+
+      data = XlsxReportRenderer.new(report, { 'name' => 'Billing' }, result).call
+      sheet = worksheet(xlsx_files(data))
+
+      ('A'..'H').each do |column|
+        cell = sheet.at_xpath("//c[@r='#{column}2']")
+        assert_equal 'inlineStr', cell['t']
+        assert_equal '001', cell.at_xpath('./is/t').text
+      end
+    end
+
     private
 
     def worksheet(files)

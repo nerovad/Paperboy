@@ -36,5 +36,20 @@ module Billing
       assert_includes text, '874940000000.0'
       refute_includes text, '874940000000.00'
     end
+
+    test 'renders accounting codes as text to preserve their formatting' do
+      report = MonthlyReport.new(
+        operation: 'print', start_date: '2026-07-01', end_date: '2026-07-31'
+      )
+      columns = %w[CUNIT COBJECT CACTIVTY CFUNCTION CPROGRAM CPHASE SPHASE STASK]
+      result = ActiveRecord::Result.new(columns, [%w[001 002 003 004 005 006 007 008]])
+
+      data = PdfReportRenderer.new(report, { 'pdffile' => 'report.pdf' }, result).call
+      text = PDF::Reader.new(StringIO.new(data)).pages.first.text
+
+      %w[001 002 003 004 005 006 007 008].each do |code|
+        assert_includes text, code
+      end
+    end
   end
 end

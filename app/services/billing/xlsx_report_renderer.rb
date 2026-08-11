@@ -7,7 +7,8 @@ module Billing
   class XlsxReportRenderer
     BILLING_LABEL_INDEX = 27
     DECIMAL_COLUMN_INDEXES = [7, 23, 24, 25].freeze
-    TEXT_COLUMNS = %w[DOC_NMBR DOC_NUBR DOC_NUMBR].freeze
+    TEXT_COLUMNS = %w[DOC_NMBR DOC_NUBR DOC_NUMBR CUNIT COBJECT CACTIVTY
+                      CFUNCTION CPROGRAM CPHASE SPHASE STASK].freeze
     COST_COLUMN_INDEX = 25
     HEADER_COLORS = {
       (0..6) => '95DCF7',

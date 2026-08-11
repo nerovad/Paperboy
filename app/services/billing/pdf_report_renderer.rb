@@ -18,7 +18,8 @@ module Billing
       left left left left left left left right left left left left left
       left left center center center center left left left left right right right
     ].freeze
-    DOCUMENT_NUMBER_COLUMNS = %w[DOC_NMBR DOC_NUBR DOC_NUMBR].freeze
+    TEXT_COLUMNS = %w[DOC_NMBR DOC_NUBR DOC_NUMBR CUNIT COBJECT CACTIVTY
+                      CFUNCTION CPROGRAM CPHASE SPHASE STASK].freeze
 
     def initialize(report, definition, result)
       @report = report
@@ -116,12 +117,12 @@ module Billing
 
     def printable_row(row)
       row.each_with_index.map do |value, index|
-        doc_number_column?(index) ? value.to_s : value
+        text_column?(index) ? value.to_s : value
       end
     end
 
-    def doc_number_column?(index)
-      DOCUMENT_NUMBER_COLUMNS.include?(result.columns[index].to_s.upcase)
+    def text_column?(index)
+      TEXT_COLUMNS.include?(result.columns[index].to_s.upcase)
     end
 
     def truncate(text, width)
