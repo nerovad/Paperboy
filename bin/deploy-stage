@@ -19,6 +19,12 @@ echo "==> Running migrations..."
 set -a; source "$APP_DIR/.env"; set +a
 RAILS_ENV=staging bundle exec rails db:migrate
 
+# Additive: creates groups and grants from db/acl.yml that are missing here,
+# never removes anything and never touches memberships. Note this environment's
+# .env points PAPERBOY_DATABASE at Paperboy_Dev, so this covers dev too.
+echo "==> Syncing ACL definitions..."
+RAILS_ENV=staging bundle exec rails acl:sync
+
 echo "==> Clobbering old assets..."
 RAILS_ENV=staging bundle exec rails assets:clobber
 

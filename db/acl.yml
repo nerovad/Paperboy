@@ -1,0 +1,3826 @@
+---
+groups:
+- name: Auth_Console_Admin
+  description: Admins for the Authorization Console.
+  permissions:
+  - type: dropdown
+    key: auth_console
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '29'
+    label: Carpool
+- name: Auth_Console_Approvers
+  description: Approvers, limited by department, for the Auth Console.
+  permissions:
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '29'
+    label: Carpool
+- name: Critical_Incident_Managers
+  description: Can manage critical incident reports
+  permissions:
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '29'
+    label: Carpool
+- name: IT_Support
+  description: IT staff for system support
+  permissions:
+  - type: dropdown
+    key: auth_console
+  - type: dropdown
+    key: dashboards
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: reports
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '29'
+    label: Carpool
+  - type: form
+    key: '33'
+    label: Safety Reporting
+  - type: form
+    key: '35'
+    label: OSHA Reporting
+- name: Security_Desk
+  description: GSA Security desk personnel
+  permissions:
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '29'
+    label: Carpool
+- name: Status Managers
+  description: Members can view all employee form submissions in the status page
+  permissions:
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '29'
+    label: Carpool
+- name: System_Admins
+  description: Full system administrators - can access all features
+  permissions:
+  - type: dropdown
+    key: acl
+  - type: dropdown
+    key: auth_console
+  - type: dropdown
+    key: dashboards
+  - type: dropdown
+    key: emulate
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: lookup_tables
+  - type: dropdown
+    key: manage_forms
+  - type: dropdown
+    key: reports
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: feature
+    key: admin_tools:acl
+  - type: feature
+    key: admin_tools:emulate
+  - type: feature
+    key: admin_tools:lookup_tables
+  - type: feature
+    key: admin_tools:manage_forms
+  - type: form
+    key: '15'
+    label: Parking Permit Application
+  - type: form
+    key: '16'
+    label: Probation Transfer Request
+  - type: form
+    key: '17'
+    label: Critical Information Reporting
+  - type: form
+    key: '29'
+    label: Carpool
+  - type: form
+    key: '30'
+    label: Gym Locker
+  - type: form
+    key: '31'
+    label: Social Media
+  - type: form
+    key: '32'
+    label: Work Schedule or Location Update
+  - type: form
+    key: '33'
+    label: Safety Reporting
+  - type: form
+    key: '34'
+    label: Leave of Absence
+  - type: form
+    key: '35'
+    label: OSHA Reporting
+  - type: form
+    key: '36'
+    label: Workplace Violence
+  - type: form
+    key: '37'
+    label: Notice of Change
+  - type: form
+    key: '39'
+    label: P-Card Request
+  - type: form
+    key: creative_job_request
+    label:
+- name: Ticket_Admin
+  description: Admins of the help/ticketing system
+  permissions:
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '29'
+    label: Carpool
+org_permissions:
+- agency_id: AAA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: AAA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: AAA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: AAA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: AAA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: ACO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: ACO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: ACO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: ACO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: ACO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: AGR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: AGR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: AGR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: AGR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: AGR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: AIR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: AIR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: AIR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: AIR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: AIR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: ALL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: ALL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: ALL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: ALL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: ALL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: ANM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: ANM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: ANM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: ANM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: ANM
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: APC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: APC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: APC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: APC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: APC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: ASR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: ASR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: ASR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: ASR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: ASR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: ATL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: ATL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: ATL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: ATL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: ATL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: AUD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: AUD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: AUD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: AUD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: AUD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: AVR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: AVR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: AVR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: AVR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: AVR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: BCE
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: BCE
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: BCE
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: BCE
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: BCE
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: BEA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: BEA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: BEA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: BEA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: BEA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: BEL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: BEL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: BEL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: BEL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: BEL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: BNY
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: BNY
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: BNY
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: BNY
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: BNY
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: BOS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: BOS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: BOS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: BOS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: BOS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: BPL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: BPL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: BPL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: BPL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: BPL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CAL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CAL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CAL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CAL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CAL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CAM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CAM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CAM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CAM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CAM
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CAS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CAS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CAS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CAS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CAS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CBW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CBW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CBW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CBW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CBW
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CCD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CCD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CCD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CCD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CCD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CCR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CCR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CCR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CCR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CCR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CDA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CDA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CDA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CDA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CDA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CED
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CED
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CED
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CED
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CED
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CEO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CEO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CEO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CEO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CEO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CFF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CFF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CFF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CFF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CFF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CGS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CGS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CGS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CGS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CGS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CHC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CHC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CHC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CHC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CHC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CIB
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CIB
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CIB
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CIB
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CIB
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CLW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CLW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CLW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CLW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CLW
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CMF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CMF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CMF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CMF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CMF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: COC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: COC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: COC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: COC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: COC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: COF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: COF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: COF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: COF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: COF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: COM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: COM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: COM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: COM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: COM
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: COO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: COO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: COO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: COO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: COO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: COV
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: COV
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: COV
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: COV
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: COV
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: COX
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: COX
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: COX
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: COX
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: COX
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CPH
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CPH
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CPH
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CPH
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CPH
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CRP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CRP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CRP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CRP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CRP
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CRT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CRT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CRT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CRT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CRT
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CSC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CSC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CSC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CSC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CSC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CSD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CSD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CSD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CSD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CSD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CSL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CSL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CSL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CSL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CSL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CSP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CSP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CSP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CSP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CSP
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CSS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CSS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CSS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CSS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CSS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CSU
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CSU
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CSU
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CSU
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CSU
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CSV
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CSV
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CSV
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CSV
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CSV
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: CTO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: CTO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: CTO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: CTO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: CTO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: DAO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: DAO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: DAO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: DAO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: DAO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: FIL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: FIL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: FIL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: FIL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: FIL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: FOX
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: FOX
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: FOX
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: FOX
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: FOX
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: FPD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: FPD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: FPD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: FPD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: FPD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: FRM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: FRM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: FRM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: FRM
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: FRM
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: GCH
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: GCH
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: GCH
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: GCH
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: GCH
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: GCT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: GCT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: GCT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: GCT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: GCT
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: GRJ
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: GRJ
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: GRJ
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: GRJ
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: GRJ
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: GSA
+  division_id: '4600'
+  department_id: '4601'
+  unit_id: '4601'
+  type: dropdown
+  key: help
+- agency_id: GSA
+  division_id: '4600'
+  department_id: '4601'
+  unit_id: '4601'
+  type: dropdown
+  key: inbox
+- agency_id: GSA
+  division_id: '4600'
+  department_id: '4601'
+  unit_id: '4601'
+  type: dropdown
+  key: reports
+- agency_id: GSA
+  division_id: '4600'
+  department_id: '4601'
+  unit_id: '4601'
+  type: dropdown
+  key: settings
+- agency_id: GSA
+  division_id: '4600'
+  department_id: '4601'
+  unit_id: '4601'
+  type: dropdown
+  key: submissions
+- agency_id: GSA
+  division_id: '4600'
+  department_id: '4601'
+  unit_id: '4601'
+  type: form
+  key: '29'
+- agency_id: GSA
+  division_id: '4600'
+  department_id: '4601'
+  unit_id: '4601'
+  type: form
+  key: '37'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '15'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '16'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '17'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '30'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '31'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '32'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '33'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '34'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '35'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '36'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '37'
+- agency_id: GSA
+  division_id: '4640'
+  department_id:
+  unit_id:
+  type: form
+  key: '39'
+- agency_id: GSA
+  division_id: '4700'
+  department_id: '4703'
+  unit_id: '4703'
+  type: dropdown
+  key: help
+- agency_id: GSA
+  division_id: '4700'
+  department_id: '4703'
+  unit_id: '4703'
+  type: dropdown
+  key: inbox
+- agency_id: GSA
+  division_id: '4700'
+  department_id: '4703'
+  unit_id: '4703'
+  type: dropdown
+  key: settings
+- agency_id: GSA
+  division_id: '4700'
+  department_id: '4703'
+  unit_id: '4703'
+  type: dropdown
+  key: submissions
+- agency_id: GSA
+  division_id: '4700'
+  department_id: '4703'
+  unit_id: '4703'
+  type: form
+  key: '17'
+- agency_id: GSA
+  division_id: '4700'
+  department_id: '4703'
+  unit_id: '4703'
+  type: form
+  key: '29'
+- agency_id: GSA
+  division_id: '4700'
+  department_id: '4703'
+  unit_id: '4703'
+  type: form
+  key: '37'
+- agency_id: GSF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: GSF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: GSF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: GSF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: GSF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: HAR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: HAR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: HAR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: HAR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: HAR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: HCA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: HCA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: HCA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: HCA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: HCA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: HMW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: HMW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: HMW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: HMW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: HMW
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: HRP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: HRP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: HRP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: HRP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: HRP
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: HSA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: HSA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: HSA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: HSA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: HSA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: IND
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: IND
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: IND
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: IND
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: IND
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: ITS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: ITS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: ITS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: ITS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: ITS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: LAF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: LAF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: LAF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: LAF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: LAF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: LTF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: LTF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: LTF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: LTF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: LTF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: LWL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: LWL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: LWL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: LWL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: LWL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: MBG
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: MBG
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: MBG
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: MBG
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: MBG
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: MBS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: MBS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: MBS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: MBS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: MBS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: MEO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: MEO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: MEO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: MEO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: MEO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: MET
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: MET
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: MET
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: MET
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: MET
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: MMI
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: MMI
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: MMI
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: MMI
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: MMI
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: MOW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: MOW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: MOW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: MOW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: MOW
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: MRC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: MRC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: MRC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: MRC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: MRC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: OHD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: OHD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: OHD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: OHD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: OHD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: OVS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: OVS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: OVS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: OVS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: OVS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: OWC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: OWC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: OWC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: OWC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: OWC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: OX2
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: OX2
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: OX2
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: OX2
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: OX2
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: OX3
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: OX3
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: OX3
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: OX3
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: OX3
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: OXD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: OXD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: OXD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: OXD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: OXD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: PCE
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: PCE
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: PCE
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: PCE
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: PCE
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: PDO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: PDO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: PDO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: PDO
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: PDO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: PFA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: PFA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: PFA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: PFA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: PFA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: PTS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: PTS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: PTS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: PTS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: PTS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: PVC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: PVC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: PVC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: PVC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: PVC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: PVR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: PVR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: PVR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: PVR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: PVR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: PWA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: PWA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: PWA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: PWA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: PWA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: RET
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: RET
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: RET
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: RET
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: RET
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: RMA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: RMA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: RMA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: RMA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: RMA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: ROF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: ROF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: ROF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: ROF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: ROF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: RSR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: RSR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: RSR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: RSR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: RSR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: SAT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: SAT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: SAT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: SAT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: SAT
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: SHF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: SHF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: SHF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: SHF
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: SHF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: SHR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: SHR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: SHR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: SHR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: SHR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: SMR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: SMR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: SMR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: SMR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: SMR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: SRP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: SRP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: SRP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: SRP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: SRP
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: SVD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: SVD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: SVD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: SVD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: SVD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: TFS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: TFS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: TFS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: TFS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: TFS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: TRJ
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: TRJ
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: TRJ
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: TRJ
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: TRJ
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: TSA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: TSA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: TSA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: TSA
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: TSA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: TTC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: TTC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: TTC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: TTC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: TTC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: TTT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: TTT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: TTT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: TTT
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: TTT
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: UVR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: UVR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: UVR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: UVR
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: UVR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: UWC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: UWC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: UWC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: UWC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: UWC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: VCJ
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: VCJ
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: VCJ
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: VCJ
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: VCJ
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: VCL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: VCL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: VCL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: VCL
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: VCL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: VCP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: VCP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: VCP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: VCP
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: VCP
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: VOE
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: VOE
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: VOE
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: VOE
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: VOE
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: VPD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: VPD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: VPD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: VPD
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: VPD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: VRC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: VRC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: VRC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: VRC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: VRC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: VRS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: VRS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: VRS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: VRS
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: VRS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: VRW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: VRW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: VRW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: VRW
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: VRW
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: VTC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: VTC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: VTC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: VTC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: VTC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'
+- agency_id: WRC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: WRC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: WRC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: WRC
+  division_id:
+  department_id:
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: WRC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '29'

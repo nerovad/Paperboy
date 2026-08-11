@@ -16,6 +16,12 @@ bundle install --without development test
 echo "==> Running database migrations..."
 RAILS_ENV=production bundle exec rails db:migrate
 
+# Additive: creates groups and grants from db/acl.yml that are missing here,
+# never removes anything and never touches memberships. Run PRUNE=1 by hand if
+# you actually want grants dropped. See lib/tasks/acl.rake.
+echo "==> Syncing ACL definitions..."
+RAILS_ENV=production bundle exec rails acl:sync
+
 echo "==> Clobbering old assets..."
 RAILS_ENV=production bundle exec rails assets:clobber
 

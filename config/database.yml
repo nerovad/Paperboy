@@ -38,8 +38,11 @@ production:
   <<: *sqlserver
   database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Prod") %>
 
-# Shared GSABSS tables (Employees, Groups, Employee_Groups, Group_Permissions)
-# Read-only reference data owned by the org, not Paperboy
+# Shared GSABSS tables (Employees + the org reference tables)
+# Read-only reference data owned by the org, not Paperboy.
+# NOTE: Groups, Employee_Groups and Group_Permissions are NOT here — they live
+# in each Paperboy_* database above, so ACLs are per-environment. `rake acl:sync`
+# mirrors the definitions between them; see lib/tasks/acl.rake.
 gsabss:
   <<: *sqlserver
   database: <%= ENV.fetch("GSABSS_DATABASE", "GSABSS") %>
