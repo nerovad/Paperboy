@@ -59,7 +59,9 @@
 }
 
 .coa-table-wrapper {
+  max-height: 75vh;
   overflow-x: auto;
+  overflow-y: auto;
 }
 
 .coa-table td,
