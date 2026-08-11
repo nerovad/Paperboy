@@ -208,8 +208,8 @@
 
 .coa-billing-string-grid {
   display: grid;
-  grid-template-columns: repeat(10, minmax(90px, 1fr));
-  min-width: 980px;
+  grid-template-columns: repeat(10, minmax(120px, 1fr));
+  min-width: 1200px;
   margin: 0;
   border-top: 1px solid $border-muted;
   border-left: 1px solid $border-muted;
@@ -332,7 +332,7 @@
   }
 
   .coa-billing-string-grid {
-    min-width: 980px;
+    min-width: 1200px;
   }
 
   .coa-detail-row dt {
