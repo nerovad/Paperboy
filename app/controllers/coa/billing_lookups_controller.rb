@@ -38,9 +38,7 @@ module Coa
     end
 
     def cfunctions
-      funds = options(Coa::Fund.all, :fund_id, suffix: 'Fund')
-      functions = options(agency_scope(Coa::Function), :function_id, suffix: 'Function')
-      render json: (funds + functions).uniq.sort_by { |option| [option[:label], option[:value].to_s] }
+      render_agency_options(Coa::Function, :function_id)
     end
 
     def programs
@@ -69,10 +67,9 @@ module Coa
       model.where(agency_id: params[:agency_id])
     end
 
-    def options(scope, key, suffix: nil)
+    def options(scope, key)
       scope.order(:long_name).pluck(:long_name, key).map do |long_name, value|
         label = "#{value} - #{long_name}"
-        label = "#{label} (#{suffix})" if suffix
         { label: label, value: value }
       end
     end

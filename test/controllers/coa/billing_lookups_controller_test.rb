@@ -53,24 +53,20 @@ class CoaBillingLookupsControllerTest < ActionController::TestCase
     assert_equal [{ 'label' => '1450 - Business Support Services', 'value' => '1450' }], response.parsed_body
   end
 
-  test 'CFUNCTION combines county funds with agency functions' do
-    funds = option_relation([['General Fund', '001']])
+  test 'CFUNCTION only includes functions for the selected agency' do
     functions = option_relation([['General Services Function', 'GFUN']])
     finder = lambda do |conditions|
       assert_equal({ agency_id: 'GSA' }, conditions)
       functions
     end
 
-    Coa::Fund.stub(:all, funds) do
-      Coa::Function.stub(:where, finder) do
-        get :cfunctions, params: { agency_id: 'GSA' }
-      end
+    Coa::Function.stub(:where, finder) do
+      get :cfunctions, params: { agency_id: 'GSA' }
     end
 
     assert_response :success
     assert_equal [
-      { 'label' => '001 - General Fund (Fund)', 'value' => '001' },
-      { 'label' => 'GFUN - General Services Function (Function)', 'value' => 'GFUN' }
+      { 'label' => 'GFUN - General Services Function', 'value' => 'GFUN' }
     ], response.parsed_body
   end
 
