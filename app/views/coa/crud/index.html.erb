@@ -54,15 +54,18 @@
      }[model_class.name] %>
   <div class="coa-grid" data-controller="<%= "sidebar-search" if search_config %>">
     <% if search_config %>
-      <div class="coa-grid-search">
-        <%= label_tag search_config[:id], search_config[:label] %>
-        <%= search_field_tag search_config[:id], nil,
-                             class: "coa-grid-search__input",
-                             placeholder: search_config[:placeholder],
-                             autocomplete: "off",
-                             data: { sidebar_search_target: "input",
-                                     action: "input->sidebar-search#filter" } %>
-      </div>
+      <section class="coa-lookup-card coa-grid-search">
+        <%= label_tag search_config[:id], search_config[:label],
+                      class: "coa-lookup-card__heading" %>
+        <div class="coa-lookup-card__body">
+          <%= search_field_tag search_config[:id], nil,
+                               class: "coa-grid-search__input",
+                               placeholder: search_config[:placeholder],
+                               autocomplete: "off",
+                               data: { sidebar_search_target: "input",
+                                       action: "input->sidebar-search#filter" } %>
+        </div>
+      </section>
     <% end %>
 
     <div class="table-wrapper coa-table-wrapper">

@@ -74,17 +74,16 @@
   color: $surface-base;
 }
 
-.coa-grid-search {
+.coa-grid {
   display: grid;
-  gap: 6px;
-  max-width: 520px;
-  margin: 0 auto 16px;
-  padding: 0 30px;
+  gap: 16px;
 }
 
-.coa-grid-search label {
-  font-weight: 700;
-  color: $label-color;
+.coa-grid-search {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
 }
 
 .coa-grid-search__input {
@@ -157,6 +156,7 @@
 }
 
 .coa-lookup-card__heading {
+  display: block;
   margin: 0;
   padding: .8rem 1.25rem;
   border-radius: 7px 7px 0 0;
