@@ -1,11 +1,18 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["agency", "division", "department", "unit", "result",
+  static targets = ["agency", "division", "department", "unit", "accountFields", "result",
+                    "cobject", "cactivity", "cfunction", "cprogram", "cphase", "ctask",
                     "agencyId", "divisionId", "departmentId", "unitId",
                     "agencyName", "divisionName", "departmentName", "unitName",
-                    "billingAgencyId", "billingDivisionId", "billingDepartmentId", "billingUnitId"]
-  static values = { divisionsUrl: String, departmentsUrl: String, unitsUrl: String }
+                    "billingAgencyId", "billingDivisionId", "billingDepartmentId", "billingUnitId",
+                    "billingCobject", "billingCactivity", "billingCfunction",
+                    "billingCprogram", "billingCphase", "billingCtask"]
+  static values = {
+    divisionsUrl: String, departmentsUrl: String, unitsUrl: String,
+    objectsUrl: String, activitiesUrl: String, cfunctionsUrl: String,
+    programsUrl: String, phasesUrl: String, tasksUrl: String
+  }
 
   connect() {
     this.choiceInstances = new Map()
@@ -13,6 +20,7 @@ export default class extends Controller {
     this.enhance(this.divisionTarget, "Select an agency first", true)
     this.enhance(this.departmentTarget, "Select a division first", true)
     this.enhance(this.unitTarget, "Select a department first", true)
+    this.accountSelects().forEach(select => this.enhance(select, "Select an agency first", true))
   }
 
   disconnect() {
@@ -21,9 +29,11 @@ export default class extends Controller {
 
   agencyChanged() {
     this.reset(this.divisionTarget, this.departmentTarget, this.unitTarget)
+    this.reset(...this.accountSelects())
     if (!this.agencyTarget.value) return
 
     this.load(this.divisionTarget, this.divisionsUrlValue, { agency_id: this.agencyTarget.value })
+    this.loadAccountFields()
   }
 
   divisionChanged() {
@@ -49,6 +59,7 @@ export default class extends Controller {
 
   unitChanged() {
     if (!this.unitTarget.value) {
+      this.accountFieldsTarget.hidden = true
       this.resultTarget.hidden = true
       return
     }
@@ -63,15 +74,51 @@ export default class extends Controller {
     selects.forEach((select, index) => {
       idTargets[index].textContent = select.value
       billingIdTargets[index].textContent = select.value
-      nameTargets[index].textContent = select.selectedOptions[0].textContent
+      nameTargets[index].textContent = this.longName(select)
     })
+    this.syncAccountingFields()
+    this.accountFieldsTarget.hidden = false
     this.resultTarget.hidden = false
   }
 
+  accountFieldChanged() {
+    this.syncAccountingFields()
+  }
+
   async copy() {
-    const accountString = [this.agencyTarget, this.divisionTarget,
-                           this.departmentTarget, this.unitTarget].map(select => select.value).join("")
+    const accountString = [this.agencyTarget, this.divisionTarget, this.departmentTarget,
+                           this.unitTarget, ...this.accountSelects()].map(select => select.value).join("")
     await navigator.clipboard.writeText(accountString)
+  }
+
+  loadAccountFields() {
+    const agencyParams = { agency_id: this.agencyTarget.value }
+    this.load(this.cobjectTarget, this.objectsUrlValue, agencyParams)
+    this.load(this.cactivityTarget, this.activitiesUrlValue, agencyParams)
+    this.load(this.cfunctionTarget, this.cfunctionsUrlValue, agencyParams)
+    this.load(this.cprogramTarget, this.programsUrlValue, agencyParams)
+    this.load(this.cphaseTarget, this.phasesUrlValue, agencyParams)
+    this.load(this.ctaskTarget, this.tasksUrlValue, agencyParams)
+  }
+
+  syncAccountingFields() {
+    const outputTargets = [this.billingCobjectTarget, this.billingCactivityTarget,
+                           this.billingCfunctionTarget, this.billingCprogramTarget,
+                           this.billingCphaseTarget, this.billingCtaskTarget]
+    this.accountSelects().forEach((select, index) => {
+      outputTargets[index].textContent = select.value
+    })
+  }
+
+  accountSelects() {
+    return [this.cobjectTarget, this.cactivityTarget, this.cfunctionTarget,
+            this.cprogramTarget, this.cphaseTarget, this.ctaskTarget]
+  }
+
+  longName(select) {
+    const label = select.selectedOptions[0].textContent
+    const prefix = `${select.value} - `
+    return label.startsWith(prefix) ? label.slice(prefix.length) : label
   }
 
   async load(select, url, params) {
@@ -91,6 +138,7 @@ export default class extends Controller {
     selects.forEach(select => {
       this.setChoices(select, [], "Select one", true)
     })
+    this.accountFieldsTarget.hidden = true
     this.resultTarget.hidden = true
   }
 

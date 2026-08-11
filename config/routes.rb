@@ -446,6 +446,12 @@ Rails.application.routes.draw do
       get :divisions
       get :departments
       get :units
+      get :objects
+      get :activities
+      get :cfunctions
+      get :programs
+      get :phases
+      get :tasks
     end
 
     resources :agencies

@@ -112,6 +112,10 @@
   background: $surface-panel;
 }
 
+.coa-lookup-card[hidden] {
+  display: none;
+}
+
 .coa-billing-lookup > .coa-lookup-card {
   z-index: 2;
 }
@@ -162,9 +166,14 @@
   margin: 0;
 }
 
+.coa-billing-string-grid-wrap {
+  overflow-x: auto;
+}
+
 .coa-billing-string-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(10, minmax(90px, 1fr));
+  min-width: 980px;
   margin: 0;
   border-top: 1px solid $border-muted;
   border-left: 1px solid $border-muted;
@@ -287,7 +296,7 @@
   }
 
   .coa-billing-string-grid {
-    overflow-x: auto;
+    min-width: 980px;
   }
 
   .coa-detail-row dt {

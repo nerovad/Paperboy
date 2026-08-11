@@ -10,7 +10,13 @@
        data-controller="coa-billing-lookup"
        data-coa-billing-lookup-divisions-url-value="<%= divisions_coa_billing_lookup_path %>"
        data-coa-billing-lookup-departments-url-value="<%= departments_coa_billing_lookup_path %>"
-       data-coa-billing-lookup-units-url-value="<%= units_coa_billing_lookup_path %>">
+       data-coa-billing-lookup-units-url-value="<%= units_coa_billing_lookup_path %>"
+       data-coa-billing-lookup-objects-url-value="<%= objects_coa_billing_lookup_path %>"
+       data-coa-billing-lookup-activities-url-value="<%= activities_coa_billing_lookup_path %>"
+       data-coa-billing-lookup-cfunctions-url-value="<%= cfunctions_coa_billing_lookup_path %>"
+       data-coa-billing-lookup-programs-url-value="<%= programs_coa_billing_lookup_path %>"
+       data-coa-billing-lookup-phases-url-value="<%= phases_coa_billing_lookup_path %>"
+       data-coa-billing-lookup-tasks-url-value="<%= tasks_coa_billing_lookup_path %>">
     <section class="coa-lookup-card" aria-labelledby="organization-selection-title">
       <h2 id="organization-selection-title" class="coa-lookup-card__heading">Organization Selection</h2>
       <div class="coa-lookup-card__body coa-billing-fields">
@@ -45,6 +51,29 @@
       </div>
     </section>
 
+    <section class="coa-lookup-card" aria-labelledby="tc60-fields-title"
+             data-coa-billing-lookup-target="accountFields" hidden>
+      <h2 id="tc60-fields-title" class="coa-lookup-card__heading">TC60 Customer Accounting Fields</h2>
+      <div class="coa-lookup-card__body coa-billing-fields">
+        <% [
+          ["COBJECT", "cobject"],
+          ["CACTIVITY", "cactivity"],
+          ["CFUNCTION (Fund or Function)", "cfunction"],
+          ["CPROGRAM", "cprogram"],
+          ["CPHASE", "cphase"],
+          ["CTASK", "ctask"]
+        ].each do |label, target| %>
+          <div class="field coa-billing-field">
+            <%= label_tag "billing_#{target}", label %>
+            <%= select_tag "billing_#{target}", options_for_select([["Select an agency first", ""]]),
+                           disabled: true,
+                           data: { coa_billing_lookup_target: target,
+                                   action: "change->coa-billing-lookup#accountFieldChanged" } %>
+          </div>
+        <% end %>
+      </div>
+    </section>
+
     <div class="coa-billing-result" data-coa-billing-lookup-target="result" hidden>
       <section class="coa-lookup-card" aria-labelledby="account-hierarchy-title">
         <h2 id="account-hierarchy-title" class="coa-lookup-card__heading">Account Hierarchy</h2>
@@ -73,15 +102,29 @@
       <section class="coa-lookup-card" aria-labelledby="billing-account-string-title">
         <h2 id="billing-account-string-title" class="coa-lookup-card__heading">Billing Account String</h2>
         <div class="coa-lookup-card__body">
-          <div class="coa-billing-string-grid">
+          <div class="coa-billing-string-grid-wrap">
+            <div class="coa-billing-string-grid">
             <div class="coa-billing-string-grid__heading">Agency</div>
             <div class="coa-billing-string-grid__heading">Division</div>
             <div class="coa-billing-string-grid__heading">Department</div>
             <div class="coa-billing-string-grid__heading">Unit</div>
+            <div class="coa-billing-string-grid__heading">COBJECT</div>
+            <div class="coa-billing-string-grid__heading">CACTIVITY</div>
+            <div class="coa-billing-string-grid__heading">CFUNCTION</div>
+            <div class="coa-billing-string-grid__heading">CPROGRAM</div>
+            <div class="coa-billing-string-grid__heading">CPHASE</div>
+            <div class="coa-billing-string-grid__heading">CTASK</div>
             <code data-coa-billing-lookup-target="billingAgencyId"></code>
             <code data-coa-billing-lookup-target="billingDivisionId"></code>
             <code data-coa-billing-lookup-target="billingDepartmentId"></code>
             <code data-coa-billing-lookup-target="billingUnitId"></code>
+            <code data-coa-billing-lookup-target="billingCobject"></code>
+            <code data-coa-billing-lookup-target="billingCactivity"></code>
+            <code data-coa-billing-lookup-target="billingCfunction"></code>
+            <code data-coa-billing-lookup-target="billingCprogram"></code>
+            <code data-coa-billing-lookup-target="billingCphase"></code>
+            <code data-coa-billing-lookup-target="billingCtask"></code>
+            </div>
           </div>
           <button type="button" class="btn approve compact coa-billing-copy"
                   data-action="coa-billing-lookup#copy">Copy</button>

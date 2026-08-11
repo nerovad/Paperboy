@@ -29,15 +29,51 @@ module Coa
       render_options(scope, :unit_id)
     end
 
+    def objects
+      render_options(Coa::Object.all, :object_id)
+    end
+
+    def activities
+      render_agency_options(Coa::Activity, :activity_id)
+    end
+
+    def cfunctions
+      funds = options(Coa::Fund.all, :fund_id, suffix: 'Fund')
+      functions = options(agency_scope(Coa::Function), :function_id, suffix: 'Function')
+      render json: (funds + functions).uniq.sort_by { |option| [option[:label], option[:value].to_s] }
+    end
+
+    def programs
+      render_agency_options(Coa::Program, :program_id)
+    end
+
+    def phases
+      render_agency_options(Coa::Phase, :phase_id)
+    end
+
+    def tasks
+      render_agency_options(Coa::Task, :task_id)
+    end
+
     private
 
     def render_options(scope, key)
       render json: options(scope, key)
     end
 
-    def options(scope, key)
+    def render_agency_options(model, key)
+      render_options(agency_scope(model), key)
+    end
+
+    def agency_scope(model)
+      model.where(agency_id: params[:agency_id])
+    end
+
+    def options(scope, key, suffix: nil)
       scope.order(:long_name).pluck(:long_name, key).map do |long_name, value|
-        { label: long_name, value: value }
+        label = "#{value} - #{long_name}"
+        label = "#{label} (#{suffix})" if suffix
+        { label: label, value: value }
       end
     end
   end
