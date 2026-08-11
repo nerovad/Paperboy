@@ -59,7 +59,7 @@
 
   &__details {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     margin: 0;
 
     > div {
@@ -92,16 +92,6 @@
     color: $text-muted;
   }
 
-  @media (max-width: 800px) {
-    &__details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-
-    &__details > div {
-      border-bottom: 1px solid $neutral-border-subtle;
-
-      &:nth-child(2n) { border-right: 0; }
-      &:nth-last-child(-n + 2) { border-bottom: 0; }
-    }
-  }
 }
 
 .billing-compute {

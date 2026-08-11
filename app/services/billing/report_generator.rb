@@ -4,8 +4,6 @@ module Billing
   class ReportGenerator
     NAMES_PROCEDURE = 'GSABSS.dbo.Export_TC60_Billing_Report_Names'
     DATA_PROCEDURE = 'GSABSS.dbo.Export_TC60_To_Billing_File'
-    VERSION = '01'
-
     def initialize(report)
       @report = report
     end
@@ -22,7 +20,7 @@ module Billing
       sql = <<~SQL.squish
         EXEC #{NAMES_PROCEDURE} @sDate = ?, @eDate = ?, @version = ?
       SQL
-      query(sql, report.start_date, report.end_date, VERSION).map do |row|
+      query(sql, report.start_date, report.end_date, formatted_version).map do |row|
         row.transform_keys(&:downcase)
       end
     end
@@ -60,6 +58,10 @@ module Billing
     def query(sql, *values)
       sanitized = ActiveRecord::Base.send(:sanitize_sql_array, [sql, *values])
       BillingBase.connection.exec_query(sanitized)
+    end
+
+    def formatted_version
+      format('%02d', report.version)
     end
   end
 end

@@ -4,11 +4,12 @@ module Billing
   class ReportGenerationJob < ApplicationJob
     queue_as :default
 
-    def perform(operation:, start_date:, end_date:)
+    def perform(operation:, start_date:, end_date:, version:)
       report = MonthlyReport.new(
         operation: operation,
         start_date: start_date,
-        end_date: end_date
+        end_date: end_date,
+        version: version
       )
       raise ArgumentError, report.errors.full_messages.to_sentence unless report.valid?
 

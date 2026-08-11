@@ -16,7 +16,7 @@ module Billing
       }
     }.freeze
 
-    attr_accessor :operation, :start_date, :end_date
+    attr_accessor :operation, :start_date, :end_date, :version
 
     validates :operation, inclusion: { in: OPERATIONS.keys }
     validates :start_date, :end_date, presence: true

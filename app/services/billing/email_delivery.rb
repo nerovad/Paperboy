@@ -26,6 +26,7 @@ module Billing
       messages.each do |message|
         BillingReportMailer.billing_report(recipients, message).deliver_now
       end
+      active_period.increment_version!
     end
 
     private

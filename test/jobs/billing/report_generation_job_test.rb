@@ -14,7 +14,7 @@ module Billing
       ReportGenerator.stub(:new, generator) do
         ReportWriter.stub(:new, writer) do
           ReportGenerationJob.perform_now(
-            operation: 'print', start_date: '2026-07-01', end_date: '2026-07-31'
+            operation: 'print', start_date: '2026-07-01', end_date: '2026-07-31', version: 1
           )
         end
       end

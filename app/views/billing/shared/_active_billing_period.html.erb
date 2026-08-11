@@ -19,6 +19,10 @@
         <dt>End Date</dt>
         <dd><%= active_billing_period.end_date.iso8601 %></dd>
       </div>
+      <div>
+        <dt>Version</dt>
+        <dd><%= active_billing_period.version %></dd>
+      </div>
     </dl>
   <% else %>
     <p class="billing-period-card__empty">No active billing period selected.</p>

@@ -4,9 +4,15 @@ require 'test_helper'
 
 module Billing
   class ActiveBillingPeriodTest < ActiveSupport::TestCase
+    test 'defaults new periods to version one' do
+      period = ActiveBillingPeriod.new
+
+      assert_equal 1, period.version
+    end
+
     test 'rejects a reversed date range' do
       period = ActiveBillingPeriod.new(
-        singleton_id: 1,
+        version: 1,
         fiscal_year: 'FY27',
         apmon: 'AP01',
         start_date: Date.new(2026, 7, 31),

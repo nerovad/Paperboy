@@ -53,6 +53,7 @@ module Billing
     def apply_active_period
       @report.start_date = @active_billing_period.start_date.iso8601
       @report.end_date = @active_billing_period.end_date.iso8601
+      @report.version = @active_billing_period.version
     end
 
     def render_invalid
