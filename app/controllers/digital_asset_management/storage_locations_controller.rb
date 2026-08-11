@@ -9,6 +9,7 @@ module DigitalAssetManagement
   # retiring or draining a location changes the library, so it is gated on
   # system admin rather than merely hidden from the page.
   class StorageLocationsController < BaseController
+    before_action -> { require_app_feature('digital_asset_management', 'storage', fallback: digital_asset_management_root_path) }
     before_action :set_location, only: %i[show edit update destroy make_default toggle move_assets]
     before_action :require_storage_admin, except: %i[index show]
 

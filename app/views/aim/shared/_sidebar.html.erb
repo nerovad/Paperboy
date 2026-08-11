@@ -5,10 +5,12 @@
   <%= render "shared/app_switcher" %>
 
   <nav class="aim-links">
-    <%= link_to "Dashboard", aim_dashboard_path,
-                class: "nav-link#{' active' if current_page?(aim_dashboard_path)}" %>
+    <% if can_use_app_feature?("aim", "dashboard") %>
+      <%= link_to "Dashboard", aim_dashboard_path,
+                  class: "nav-link#{' active' if current_page?(aim_dashboard_path)}" %>
+    <% end %>
 
-    <% if aim_admin? %>
+    <% if aim_queue_access? %>
       <div class="sidebar-section-label">Processing Queues</div>
       <% Aim::InvoiceDirectoryService::BACKEND_QUEUES.each do |queue, config| %>
         <% queue_path = aim_invoices_path(queue: queue) %>

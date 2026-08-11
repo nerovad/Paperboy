@@ -2,7 +2,13 @@
 
 module DataRunner
   class ApplicationController < ::ApplicationController
+    # Reorganizing the DSL catalog is a grant of its own, separate from
+    # browsing and running what is in it. Listed here rather than on
+    # DslsController so the gate sits beside the app's other one.
+    GROUP_ACTIONS = %i[new_group create_group update_group rename_group destroy_group refresh_group].freeze
+
     before_action :require_app_access
+    before_action :require_group_management
 
     helper_method :user_signed_in?
 
@@ -29,6 +35,15 @@ module DataRunner
       return if user_signed_in? && helpers.can_access_app?('data_runner')
 
       redirect_to root_path, alert: 'You do not have access to Data Runner.'
+    end
+
+    # Which individual DSLs a user sees is not an ACL question today — only
+    # whether they may create groups and move DSLs between them. See ACL >
+    # Application Features under Data Runner.
+    def require_group_management
+      return unless GROUP_ACTIONS.include?(action_name.to_sym)
+
+      require_app_feature('data_runner', 'manage_groups', fallback: data_runner_root_path)
     end
   end
 end

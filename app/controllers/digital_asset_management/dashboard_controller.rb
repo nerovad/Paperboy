@@ -6,6 +6,12 @@ module DigitalAssetManagement
   class DashboardController < BaseController
     SHELF_SIZE = 8
 
+    # #home is the app's front door and must stay open to anyone who holds the
+    # app itself; only the working dashboard behind it is a grant of its own.
+    before_action only: :index do
+      require_app_feature('digital_asset_management', 'dashboard', fallback: digital_asset_management_root_path)
+    end
+
     # The app's front door — a slideshow, matching every other sub-app.
     def home; end
 

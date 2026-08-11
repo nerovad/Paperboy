@@ -2,7 +2,7 @@
 
 module Billing
   class ReportingPeriodsController < BaseController
-    before_action :require_system_admin
+    before_action -> { require_app_feature('billing', 'reporting_period', fallback: billing_root_path) }
     before_action :load_periods
 
     def show

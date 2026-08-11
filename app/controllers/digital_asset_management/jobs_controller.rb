@@ -4,6 +4,7 @@ module DigitalAssetManagement
   # Status feed for everything the DAM runs in the background — ingests,
   # exports, shares and custom workflow runs.
   class JobsController < BaseController
+    before_action -> { require_app_feature('digital_asset_management', 'jobs', fallback: digital_asset_management_root_path) }
     include Pagy::Method
 
     before_action :set_job, only: %i[show retry cancel]

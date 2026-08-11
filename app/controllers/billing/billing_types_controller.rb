@@ -4,7 +4,7 @@ module Billing
   class BillingTypesController < BaseController
     ACTIVE_VALUES = %w[0 1].freeze
 
-    before_action :require_system_admin
+    before_action -> { require_app_feature('billing', 'enable_billing', fallback: billing_root_path) }
     before_action :set_active_billing_period
     before_action :load_billing_types
 

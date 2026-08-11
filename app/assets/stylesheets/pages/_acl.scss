@@ -104,6 +104,23 @@
   }
 }
 
+/* Application Features: one grid per application inside the shared section,
+   so each app's buttons — and its Select All — read as their own group. */
+.acl-feature-app {
+  & + & {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid $border-color;
+  }
+
+  h4 {
+    margin: 0 0 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $text-color;
+  }
+}
+
 .permissions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

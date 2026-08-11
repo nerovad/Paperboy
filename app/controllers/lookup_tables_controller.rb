@@ -21,6 +21,10 @@ class LookupTablesController < ApplicationController
     { key: 'revenue_sources',  name: 'Revenue Sources',  table: 'revenue_sources' }
   ].freeze
 
+  # The sidebar button is hidden without the grant, but the route is a plain
+  # top-level one — without this it stayed reachable by typing the URL, unlike
+  # every other Admin Tools screen.
+  before_action -> { require_admin_tab('lookup_tables') }
   before_action :set_table_config, only: %i[show new create]
 
   def index

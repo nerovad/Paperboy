@@ -3,6 +3,7 @@
 module DigitalAssetManagement
   # Named, ordered groupings of assets.
   class CollectionsController < BaseController
+    before_action -> { require_app_feature('digital_asset_management', 'collections', fallback: digital_asset_management_root_path) }
     before_action :set_collection, only: %i[show edit update destroy remove_asset]
 
     def index

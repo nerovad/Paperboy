@@ -62,10 +62,18 @@ module Paperboy
       DIRECTORIES.map { |dir| format(dir, key) }.select { |dir| @root.join(dir).directory? }
     end
 
+    # Both the grant to open the app and the per-button grants inside it, which
+    # are keyed "<app>:<feature>" (see AppFeature).
     def grants
+      feature_prefix = "#{GroupPermission.sanitize_sql_like(key)}:%"
+
       {
-        'Group_Permissions' => GroupPermission.where(permission_type: 'application', permission_key: key),
+        'Group_Permissions' => GroupPermission.where(permission_type: 'application', permission_key: key)
+                                              .or(GroupPermission.where(permission_type: 'feature')
+                                                                 .where('Permission_Key LIKE ?', feature_prefix)),
         'org_permissions' => OrgPermission.where(permission_type: 'application', permission_key: key)
+                                          .or(OrgPermission.where(permission_type: 'feature')
+                                                           .where('permission_key LIKE ?', feature_prefix))
       }
     end
 

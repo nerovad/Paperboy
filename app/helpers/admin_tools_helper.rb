@@ -31,16 +31,19 @@ module AdminToolsHelper
   ].freeze
 
   # Sidebar buttons, as { key:, label:, blurb:, path: }. Entries the current
-  # user may not see are filtered out. The keys are ordinary ACL "Profile
-  # Dropdown Items" grants, so a group can hold some tools without holding all
-  # of them. System admins bypass.
+  # user may not see are filtered out, so a group can hold some tools without
+  # holding all of them. System admins bypass.
   def admin_tools_links
     ADMIN_TOOLS.select { |tool| can_view_admin_tool?(tool[:key]) }
                .map { |tool| tool.slice(:key, :label, :blurb).merge(path: public_send(tool[:route])) }
   end
 
+  # Admin Tools is now one of several apps whose sidebar buttons are granted
+  # individually (see AppFeature). These five predate that section and were
+  # issued as ACL "Profile Dropdown Items"; can_use_app_feature? honours both
+  # the old key and the new one, so existing grants needed no migration.
   def can_view_admin_tool?(key)
-    system_admin? || current_user_dropdown_permissions.include?(key)
+    can_use_app_feature?('admin_tools', key)
   end
 
   # Which Admin Tools screen the current request belongs to, or nil when it is

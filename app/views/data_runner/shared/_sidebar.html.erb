@@ -3,7 +3,9 @@
   <% if user_signed_in? %>
     <input class="sidebar-search-input" type="search" placeholder="Fuzzy search DSLs..."
            data-sidebar-search-target="input" data-action="input->sidebar-search#filter">
-    <%= link_to "New DSL group", data_runner_new_dsl_group_path, class: "btn approve" %>
+    <% if can_use_app_feature?("data_runner", "manage_groups") %>
+      <%= link_to "New DSL group", data_runner_new_dsl_group_path, class: "btn approve" %>
+    <% end %>
     <nav>
       <% DslCatalog.grouped.each do |group, entries| %>
         <details class="nav-group" data-nav-group="<%= group %>"

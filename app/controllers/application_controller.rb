@@ -7,6 +7,7 @@ class ApplicationController < ActionController::Base
   helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain,
                 :auth_console_admin?, :auth_console_user?, :pcard_admin?, :current_user_dropdown_permissions,
                 :current_user_form_permission_keys, :current_user_application_permission_keys,
+                :current_user_feature_permission_keys,
                 :current_user_record_view_permission_keys, :current_user_record_edit_permission_keys,
                 :safety_auth_console_user?,
                 :available_authorization_consoles, :authorization_console_accessible?
@@ -156,6 +157,16 @@ class ApplicationController < ActionController::Base
     @current_user_application_permission_keys = load_user_permissions('application')
   end
 
+  # Individual controls inside a sub-application — Billing's "Run Billing"
+  # button, a Chart of Accounts table, an Admin Tools screen — keyed
+  # "<app_key>:<feature_key>". See AppFeature for the catalog. The application
+  # grant gets you into the app; these decide what you can do once inside.
+  def current_user_feature_permission_keys
+    return @current_user_feature_permission_keys if defined?(@current_user_feature_permission_keys)
+
+    @current_user_feature_permission_keys = load_user_permissions('feature')
+  end
+
   # Records tables this user may open, keyed by registry slug. This is the only
   # grant surface for form-backed tables, which declare neither a group
   # permission nor a dropdown key; model-backed tables can also be reached
@@ -181,15 +192,25 @@ class ApplicationController < ActionController::Base
     redirect_to root_path, alert: 'Access denied. System administrators only.'
   end
 
-  # Gate an Admin Tools screen on its ACL grant. System admins get everything;
-  # everyone else needs the matching "dropdown" permission key. This is the same
-  # test ApplicationHelper#can_view_admin_tool? uses to decide whether to render
-  # the sidebar button, so a tool a user can see is always a tool they can open.
-  def require_admin_tab(key)
-    return if current_user_group_names.include?('system_admins')
-    return if current_user_dropdown_permissions.include?(key)
+  # Gate one control inside a sub-application on its ACL grant. This is the
+  # same test the sidebar uses to decide whether to render the button, so a
+  # button a user can see is always one they can open — and a URL typed by
+  # hand is refused just the same.
+  #
+  # +fallback+ is where a refused request lands; pass the app's own root so a
+  # user who holds the app but not this screen is not thrown all the way back
+  # to Paperboy.
+  def require_app_feature(app_key, feature_key, fallback: root_path)
+    return if helpers.can_use_app_feature?(app_key, feature_key)
 
-    redirect_to root_path, alert: 'Access denied.'
+    redirect_to fallback, alert: 'Access denied.'
+  end
+
+  # Gate an Admin Tools screen. Kept as its own name because five controllers
+  # call it; it is now just the Admin Tools spelling of +require_app_feature+,
+  # which still honours the legacy "dropdown" grants these screens shipped with.
+  def require_admin_tab(key)
+    require_app_feature('admin_tools', key)
   end
 
   def require_auth_console

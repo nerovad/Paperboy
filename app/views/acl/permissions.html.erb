@@ -31,6 +31,8 @@
       </div>
     </div>
 
+    <%= render "acl/feature_permissions", apps: @feature_apps, selected_keys: @feature_keys %>
+
     <div class="acl-permissions-section" data-controller="select-all">
       <h3>Records Access</h3>
       <p class="acl-subtitle">Select which Records tables members of this group can open. Some tables are also reachable through a profile dropdown item below; a tick here grants the table on its own.</p>

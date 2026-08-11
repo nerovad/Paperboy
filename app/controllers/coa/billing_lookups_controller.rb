@@ -2,6 +2,8 @@
 
 module Coa
   class BillingLookupsController < BaseController
+    before_action -> { require_app_feature('coa', 'billing_lookup', fallback: coa_root_path) }
+
     def show
       @agency_options = options(Coa::Agency.all, :agency_id)
     end

@@ -6,6 +6,7 @@ module DigitalAssetManagement
   # Scoped to shared_by_id rather than showing everything: this is a personal
   # history screen, not an audit console.
   class SharesController < BaseController
+    before_action -> { require_app_feature('digital_asset_management', 'shares', fallback: digital_asset_management_root_path) }
     include Pagy::Method
 
     before_action :set_share, only: %i[show revoke destroy]

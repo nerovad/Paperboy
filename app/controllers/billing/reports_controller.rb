@@ -5,7 +5,7 @@ module Billing
     SORT_COLUMNS = %w[file modified size].freeze
     SORT_DIRECTIONS = %w[asc desc].freeze
 
-    before_action :require_system_admin
+    before_action -> { require_app_feature('billing', 'view_reports', fallback: billing_root_path) }
     before_action :set_active_billing_period, only: :index
     helper_method :report_sort_direction, :report_sort_indicator
 

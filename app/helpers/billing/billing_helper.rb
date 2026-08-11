@@ -19,10 +19,14 @@ module Billing
       { key: 'email_reports', label: 'Email Billing Reports', route: :billing_email_reports_path, page: true }
     ].freeze
 
+    # Entries the current user may not use are filtered out. Each key is an
+    # ACL > Application Features grant under Billing (see AppFeature), so a
+    # group can hold, say, "View Billing Reports" without also being able to
+    # run billing. System admins bypass. This used to be all-or-nothing on
+    # system_admin?, which is why every screen below it also required one.
     def billing_sidebar_items
-      return [] unless system_admin?
-
-      SIDEBAR_ITEMS.map do |item|
+      SIDEBAR_ITEMS.select { |item| can_use_app_feature?('billing', item[:key]) }
+                   .map do |item|
         path = item[:operation] ? billing_monthly_report_path(item[:operation]) : public_send(item[:route])
         item.merge(path: path)
       end
