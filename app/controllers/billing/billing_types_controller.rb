@@ -3,6 +3,7 @@
 module Billing
   class BillingTypesController < BaseController
     ACTIVE_VALUES = %w[0 1].freeze
+    BULK_ACTION_VALUES = { 'enable_all' => '1', 'disable_all' => '0' }.freeze
 
     before_action -> { require_app_feature('billing', 'enable_billing', fallback: billing_root_path) }
     before_action :set_active_billing_period
@@ -11,7 +12,7 @@ module Billing
     def index; end
 
     def update
-      values = active_params.to_h
+      values = update_values
       validate_values!(values)
 
       BillingType.transaction do
@@ -33,6 +34,13 @@ module Billing
 
     def active_params
       params.require(:active).permit(*@billing_types.map(&:code))
+    end
+
+    def update_values
+      bulk_value = BULK_ACTION_VALUES[params[:bulk_action]]
+      return @billing_types.to_h { |billing_type| [billing_type.code, bulk_value] } if bulk_value
+
+      active_params.to_h
     end
 
     def validate_values!(values)

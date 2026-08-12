@@ -38,6 +38,13 @@
 
     <div class="form-actions">
       <%= submit_tag "Save", class: "btn approve" %>
+      <%= button_tag "Enable All", type: :submit, name: :bulk_action,
+                                   value: :enable_all, class: "btn approve" %>
+      <%= button_tag "Disable All", type: :submit, name: :bulk_action,
+                                    value: :disable_all, class: "btn deny",
+                                    data: { turbo_confirm: "Disable every Billing type?",
+                                            confirm_title: "Disable all Billing types",
+                                            confirm_label: "Disable All" } %>
       <%= button_tag "Reset", type: :reset, class: "btn warning" %>
       <%= link_to "Cancel", billing_root_path, class: "btn" %>
     </div>
