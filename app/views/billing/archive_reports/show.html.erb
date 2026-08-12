@@ -18,15 +18,18 @@
 
   <%= form_with url: billing_archive_reports_path, method: :post,
                 id: "billing-archive-report-form", data: { turbo: false } do %>
-    <div class="form-group">
-      <%= label_tag :archive_location, "Archive Location" %>
-      <%= select_tag :archive_location,
-                     options_from_collection_for_select(
-                       @locations, :relative_path, :label, @selected_location
-                     ),
-                     class: "form-control", required: true,
-                     disabled: @locations.empty? %>
-    </div>
+    <section class="billing-input-card" aria-labelledby="archive-location-title">
+      <h2 id="archive-location-title" class="billing-input-card__heading">Archive Location</h2>
+      <div class="billing-input-card__body">
+        <%= select_tag :archive_location,
+                       options_from_collection_for_select(
+                         @locations, :relative_path, :label, @selected_location
+                       ),
+                       class: "form-control", required: true,
+                       disabled: @locations.empty?,
+                       aria: { label: "Archive location" } %>
+      </div>
+    </section>
 
     <div class="billing-period-grid">
       <table class="submission-table">
