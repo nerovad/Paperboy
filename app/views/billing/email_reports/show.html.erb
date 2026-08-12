@@ -50,10 +50,12 @@
       <% end %>
 
       <div class="form-actions billing-recipient-actions">
-        <%= button_tag "Clear", type: :submit, name: :recipient_action, value: :clear,
-                                class: "btn deny" %>
-        <%= button_tag "Reset", type: :submit, name: :recipient_action, value: :reset,
-                                class: "btn warning" %>
+        <%= button_tag "Enable All", type: :button, class: "btn approve",
+                                     data: { action: "billing-email-selection#enableAllRecipients" } %>
+        <%= button_tag "Disable All", type: :button, class: "btn deny",
+                                      data: { action: "billing-email-selection#disableAllRecipients" } %>
+        <%= button_tag "Reset", type: :button, class: "btn warning",
+                                data: { action: "billing-email-selection#resetRecipients" } %>
       </div>
     </section>
 
