@@ -75,9 +75,13 @@ module Billing
 
     def print_billing_reports
       artifacts = ReportGenerator.new(@report).call
-      ReportWriter.new(artifacts).call
+      ReportWriter.new(artifacts, replace_types: active_billing_types).call
       redirect_to billing_reports_path,
                   notice: 'Billing reports generated successfully.'
+    end
+
+    def active_billing_types
+      BillingType.where(ACTIVE: true).pluck(:TYPE)
     end
   end
 end

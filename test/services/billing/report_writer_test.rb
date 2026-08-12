@@ -18,5 +18,26 @@ module Billing
         assert_equal 'XLSX', root.join('test.xlsx').read
       end
     end
+
+    test 'replaces reports for enabled billing types only' do
+      Dir.mktmpdir do |directory|
+        root = Pathname(directory)
+        root.join('GDS0726-TC60-Old-v01.pdf').write('old PDF')
+        root.join('GDS0726-TC60-Old-v01.xlsx').write('old XLSX')
+        root.join('MTP0726-TC60-Keep-v01.pdf').write('keep PDF')
+        artifact = ReportArtifact.new(
+          name: 'GDS report', pdf_name: 'GDS0726-TC60-New-v02.pdf', pdf_data: 'new PDF',
+          xlsx_name: 'GDS0726-TC60-New-v02.xlsx', xlsx_data: 'new XLSX'
+        )
+
+        ReportWriter.new([artifact], root: root, replace_types: ['GDS']).call
+
+        assert_not root.join('GDS0726-TC60-Old-v01.pdf').exist?
+        assert_not root.join('GDS0726-TC60-Old-v01.xlsx').exist?
+        assert root.join('MTP0726-TC60-Keep-v01.pdf').exist?
+        assert_equal 'new PDF', root.join('GDS0726-TC60-New-v02.pdf').read
+        assert_equal 'new XLSX', root.join('GDS0726-TC60-New-v02.xlsx').read
+      end
+    end
   end
 end

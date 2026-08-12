@@ -14,7 +14,8 @@ module Billing
       raise ArgumentError, report.errors.full_messages.to_sentence unless report.valid?
 
       artifacts = ReportGenerator.new(report).call
-      ReportWriter.new(artifacts).call
+      active_types = BillingType.where(ACTIVE: true).pluck(:TYPE)
+      ReportWriter.new(artifacts, replace_types: active_types).call
       Rails.logger.info(
         "Billing #{operation} reports completed for #{start_date} through #{end_date}"
       )
