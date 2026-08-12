@@ -25,6 +25,12 @@
     color: $surface-base;
   }
 
+  .submission-table th,
+  .submission-table td {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
   .submission-table a.sortable-header:hover {
     color: $surface-base;
     opacity: .85;
@@ -143,7 +149,7 @@
   }
 
   &__option {
-    padding: 7px 12px;
+    padding: 4px 12px;
     margin: 0;
     background: $neutral-button-bg;
     color: $neutral-700;
