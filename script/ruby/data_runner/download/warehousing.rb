@@ -73,6 +73,12 @@ HEADER = %w[
 
 OUTPUT_HEADER = ['TYPE', *HEADER].freeze
 
+TEXT_ACCOUNTING_COLUMNS = %w[
+  CUNIT CACTIVITY CFUNCTION CPROGRAM CPHASE CTASK
+  SUNIT SACTIVITY SFUNCTION SPROGRAM SPHASE STASK
+].freeze
+TEXT_ACCOUNTING_COLUMN_INDEXES = TEXT_ACCOUNTING_COLUMNS.map { |column| HEADER.index(column) }.freeze
+
 OUTPUTS = {
   'BM' => 'BM-TC60.csv',   # Brown Mail
   'CSB' => 'CSB-TC60.csv', # Stores Billing
@@ -262,6 +268,15 @@ def shared_strings(zip)
   strings
 end
 
+def number_formats(zip)
+  styles = xml_doc(zip.read('xl/styles.xml')).remove_namespaces!
+  custom_formats = styles.xpath('//numFmts/numFmt').to_h do |format|
+    [format['numFmtId'], format['formatCode']]
+  end
+
+  styles.xpath('//cellXfs/xf').map { |style| custom_formats[style['numFmtId']] }
+end
+
 def sheet_paths(zip)
   workbook = xml_doc(zip.read('xl/workbook.xml'))
   rels_doc = xml_doc(zip.read('xl/_rels/workbook.xml.rels'))
@@ -320,23 +335,44 @@ def normalize_date(row, source:, sheet_name:, row_number:)
   puts "Filled blank DATE at #{source}, sheet #{sheet_name.inspect}, row #{row_number}: POSTING_REF #{row[15].inspect} -> #{derived_date}"
 end
 
-def cell_value(type, value, strings)
+def zero_padded_value(value, number_format)
+  format_section = number_format.to_s.split(';').first
+  return value unless format_section&.match?(/\A0+\z/)
+
+  number = Float(value)
+  return value unless number.finite? && number.to_i == number
+
+  format("%0#{format_section.length}d", number.to_i)
+rescue ArgumentError, TypeError
+  value
+end
+
+def cell_value(type, value, strings, column_index, number_format)
   case type
   when 's'
     value.empty? ? '' : strings.fetch(value.to_i)
   when 'b'
     value == '1' ? 'TRUE' : 'FALSE'
   else
-    clean_number(value)
+    return clean_number(value) unless TEXT_ACCOUNTING_COLUMN_INDEXES.include?(column_index)
+
+    zero_padded_value(value, number_format)
   end
 end
 
-def sheet_rows(sheet_xml, strings)
+def assign_cell(row, cell_index, cell_type, cell_text, strings, number_format)
+  return unless row && cell_index&.between?(0, HEADER.length - 1)
+
+  row[cell_index] = cell_value(cell_type, cell_text, strings, cell_index, number_format)
+end
+
+def sheet_rows(sheet_xml, strings, formats)
   Enumerator.new do |yielder|
     row = nil
     row_number = nil
     cell_index = nil
     cell_type = nil
+    cell_style = nil
     cell_text = +''
     capture_text = false
 
@@ -350,6 +386,7 @@ def sheet_rows(sheet_xml, strings)
         when 'c'
           cell_index = column_index(node.attribute('r'))
           cell_type = node.attribute('t')
+          cell_style = node.attribute('s')
           cell_text = +''
         when 'v', 't'
           capture_text = !cell_index.nil?
@@ -361,9 +398,10 @@ def sheet_rows(sheet_xml, strings)
         when 'v', 't'
           capture_text = false
         when 'c'
-          row[cell_index] = cell_value(cell_type, cell_text, strings) if row && cell_index&.between?(0, HEADER.length - 1)
+          assign_cell(row, cell_index, cell_type, cell_text, strings, formats[cell_style.to_i])
           cell_index = nil
           cell_type = nil
+          cell_style = nil
           cell_text = +''
         when 'row'
           yielder << [row, row_number] if row
@@ -381,12 +419,13 @@ def read_rows(path)
 
     Zip::File.open(path.to_s) do |zip|
       strings = shared_strings(zip)
+      formats = number_formats(zip)
 
       sheet_paths(zip).each do |sheet_name, sheet_path|
         header_seen = false
         rows = []
 
-        sheet_rows(zip.read(sheet_path), strings).each do |row, row_number|
+        sheet_rows(zip.read(sheet_path), strings, formats).each do |row, row_number|
           unless header_seen
             header_seen = true if row == HEADER
             next
