@@ -6,7 +6,8 @@
   <%= render "billing/shared/active_billing_period",
              active_billing_period: @active_billing_period %>
 
-  <%= form_with url: billing_billing_types_path, method: :patch, data: { turbo: false } do %>
+  <%= form_with url: billing_billing_types_path, method: :patch,
+                data: { turbo: false, controller: "billing-types" } do %>
     <div class="billing-period-grid">
       <table class="submission-table">
         <thead>
@@ -38,13 +39,10 @@
 
     <div class="form-actions">
       <%= submit_tag "Save", class: "btn approve" %>
-      <%= button_tag "Enable All", type: :submit, name: :bulk_action,
-                                   value: :enable_all, class: "btn approve" %>
-      <%= button_tag "Disable All", type: :submit, name: :bulk_action,
-                                    value: :disable_all, class: "btn deny",
-                                    data: { turbo_confirm: "Disable every Billing type?",
-                                            confirm_title: "Disable all Billing types",
-                                            confirm_label: "Disable All" } %>
+      <%= button_tag "Enable All", type: :button, class: "btn approve",
+                                   data: { action: "billing-types#enableAll" } %>
+      <%= button_tag "Disable All", type: :button, class: "btn deny",
+                                    data: { action: "billing-types#disableAll" } %>
       <%= button_tag "Reset", type: :reset, class: "btn warning" %>
       <%= link_to "Cancel", billing_root_path, class: "btn" %>
     </div>
