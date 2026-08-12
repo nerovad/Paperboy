@@ -100,6 +100,29 @@
 
 }
 
+.billing-input-card {
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  background: $surface-panel;
+
+  &__heading {
+    margin: 0;
+    padding: .8rem 1.25rem;
+    background: $slate-action;
+    color: $surface-base;
+    font-size: 1rem;
+  }
+
+  &__body { padding: 1rem 1.25rem; }
+
+  .form-control {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
 .billing-compute {
   max-width: 720px;
 

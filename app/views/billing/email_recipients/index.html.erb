@@ -28,11 +28,12 @@
 
   <%= form_with model: Billing::EmailRecipient.new,
                 url: billing_email_recipients_path,
-                class: "billing-inline-form" do |form| %>
-    <div class="form-group">
-      <%= form.label :email_address, "Email Address" %>
+                class: "billing-inline-form billing-input-card" do |form| %>
+    <h2 class="billing-input-card__heading">New Email Address</h2>
+    <div class="billing-input-card__body">
       <div class="billing-recipient-entry">
-        <%= form.email_field :email_address, required: true, class: "form-control" %>
+        <%= form.email_field :email_address, required: true, class: "form-control",
+                                             aria: { label: "New email address" } %>
         <%= form.submit "Add", class: "btn approve" %>
       </div>
     </div>

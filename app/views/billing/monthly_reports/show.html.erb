@@ -10,12 +10,17 @@
     <%= render "billing/shared/active_billing_period",
                active_billing_period: @active_billing_period %>
 
-    <div class="form-group">
-      <%= label_tag :procedure_names, "Stored Procedure".pluralize(@report.procedure_names.length) %>
-      <%= text_area_tag :procedure_names, @report.procedure_text, readonly: true,
-                                                               class: "form-control",
-                                                               rows: @report.procedure_names.length %>
-    </div>
+    <section class="billing-input-card" aria-labelledby="stored-procedure-title">
+      <h2 id="stored-procedure-title" class="billing-input-card__heading">
+        <%= "Stored Procedure".pluralize(@report.procedure_names.length) %>
+      </h2>
+      <div class="billing-input-card__body">
+        <%= text_area_tag :procedure_names, @report.procedure_text, readonly: true,
+                                                                 class: "form-control",
+                                                                 rows: @report.procedure_names.length,
+                                                                 aria: { label: "Stored procedure names" } %>
+      </div>
+    </section>
 
     <div class="form-actions">
       <%= submit_tag @report.button_label, class: "btn approve" %>
