@@ -12,6 +12,7 @@ import PhoneController from "controllers/phone_controller"
 import BillingModalController from "controllers/billing_modal_controller"
 import BillingToolsController from "controllers/billing_tools_controller"
 import BillingTypesController from "controllers/billing_types_controller"
+import BillingEmailSelectionController from "controllers/billing_email_selection_controller"
 import BillingReportPreviewController from "controllers/billing_report_preview_controller"
 import ApproveModalController from "controllers/approve_modal_controller"
 import ReassignModalController from "controllers/reassign_modal_controller"
@@ -74,6 +75,7 @@ application.register("phone", PhoneController)
 application.register("billing-modal", BillingModalController)
 application.register("billing-tools", BillingToolsController)
 application.register("billing-types", BillingTypesController)
+application.register("billing-email-selection", BillingEmailSelectionController)
 application.register("billing-report-preview", BillingReportPreviewController)
 application.register("approve-modal", ApproveModalController)
 application.register("reassign-modal", ReassignModalController)

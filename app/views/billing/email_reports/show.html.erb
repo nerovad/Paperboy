@@ -2,7 +2,8 @@
   <h1>Email Billing Reports</h1>
 </div>
 
-<div class="form-wrapper billing-form billing-email-reports">
+<div class="form-wrapper billing-form billing-email-reports"
+     data-controller="billing-email-selection">
   <%= render "billing/shared/active_billing_period",
              active_billing_period: @active_billing_period %>
 
@@ -50,9 +51,9 @@
 
       <div class="form-actions billing-recipient-actions">
         <%= button_tag "Clear", type: :submit, name: :recipient_action, value: :clear,
-                                class: "button cancel" %>
+                                class: "btn deny" %>
         <%= button_tag "Reset", type: :submit, name: :recipient_action, value: :reset,
-                                class: "button reset" %>
+                                class: "btn warning" %>
       </div>
     </section>
 
@@ -84,13 +85,20 @@
   <% end %>
 
   <div class="form-actions">
+    <%= button_tag "Enable All", type: :button, form: "billing-email-report-form",
+                                 class: "btn approve", disabled: @reports.empty?,
+                                 data: { action: "billing-email-selection#enableAll" } %>
+    <%= button_tag "Disable All", type: :button, form: "billing-email-report-form",
+                                  class: "btn deny", disabled: @reports.empty?,
+                                  data: { action: "billing-email-selection#disableAll" } %>
     <%= button_tag "Preview", type: :submit, name: :commit, value: "Preview",
                               form: "billing-email-report-form", class: "btn pdf",
                               disabled: @reports.empty? %>
     <%= button_tag "Send", type: :submit, name: :commit, value: "Send",
                            form: "billing-email-report-form", class: "btn approve",
                            disabled: @reports.empty? %>
-    <%= button_to "Reset", billing_email_reports_path, method: :get, class: "btn warning" %>
+    <%= button_tag "Reset", type: :reset, form: "billing-email-report-form",
+                            class: "btn warning" %>
     <%= button_to "Cancel", billing_root_path, method: :get, class: "btn ghost" %>
   </div>
 
