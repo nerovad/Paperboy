@@ -101,6 +101,7 @@ Rails.application.routes.draw do
     resources :email_recipients, only: %i[index create destroy]
     resource :email_subjects, only: %i[show update]
     resource :email_reports, only: %i[show create]
+    resource :archive_reports, only: %i[show create]
     get 'enable', to: 'billing_types#index', as: :billing_types
     patch 'enable', to: 'billing_types#update'
     get 'monthly_reports/:operation', to: 'monthly_reports#show', as: :monthly_report

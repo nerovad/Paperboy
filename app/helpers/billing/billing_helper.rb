@@ -16,7 +16,8 @@ module Billing
       { key: 'view_reports', label: 'View Billing Reports', route: :billing_reports_path, page: true },
       { key: 'email_recipients', label: 'Email Recipient List', route: :billing_email_recipients_path, page: true },
       { key: 'email_subjects', label: 'Email Subject List', route: :billing_email_subjects_path, page: true },
-      { key: 'email_reports', label: 'Email Billing Reports', route: :billing_email_reports_path, page: true }
+      { key: 'email_reports', label: 'Email Billing Reports', route: :billing_email_reports_path, page: true },
+      { key: 'archive_reports', label: 'Archive Billing Reports', route: :billing_archive_reports_path, page: true }
     ].freeze
 
     # Entries the current user may not use are filtered out. Each key is an

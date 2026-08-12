@@ -38,7 +38,8 @@ class AppFeature
       { key: 'view_reports',        label: 'View Billing Reports' },
       { key: 'email_recipients',    label: 'Email Recipient List' },
       { key: 'email_subjects',      label: 'Email Subject List' },
-      { key: 'email_reports',       label: 'Email Billing Reports' }
+      { key: 'email_reports',       label: 'Email Billing Reports' },
+      { key: 'archive_reports',     label: 'Archive Billing Reports' }
     ],
     # Keys match Coa::BaseController#coa_route_collection_name, which is also
     # how a request is mapped back to its grant.
