@@ -10,11 +10,28 @@
   padding: 24px;
 }
 
+.aim-review-page {
+  gap: 8px;
+  padding: 10px 24px 12px;
+}
+
 .aim-page-header {
   align-items: flex-start;
   display: flex;
   gap: 16px;
   justify-content: space-between;
+}
+
+.aim-review-page .aim-page-header {
+  min-height: 0;
+}
+
+.aim-review-heading {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  min-width: 0;
 }
 
 .aim-page-title {
@@ -24,10 +41,23 @@
   margin: 0;
 }
 
+.aim-review-page .aim-page-title {
+  font-size: 1rem;
+  max-width: 72vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .aim-page-subtitle {
   color: $text-muted;
   font-size: 0.9rem;
   margin: 5px 0 0;
+}
+
+.aim-review-page .aim-page-subtitle {
+  font-size: 0.78rem;
+  margin: 0;
 }
 
 .aim-kicker {
@@ -36,6 +66,11 @@
   font-size: 0.88rem;
   font-weight: 600;
   margin-bottom: 6px;
+}
+
+.aim-review-page .aim-kicker {
+  font-size: 0.78rem;
+  margin-bottom: 0;
 }
 
 .aim-panel {
@@ -360,6 +395,11 @@
   width: 100%;
 }
 
+.aim-field .aim-readonly-field {
+  background: $neutral-button-bg;
+  color: $text-muted;
+}
+
 .aim-form-scroll {
   flex: 1;
   min-height: 0;
@@ -378,11 +418,41 @@
   padding: 16px 18px;
 }
 
+.aim-review-page .aim-form-actions {
+  padding: 10px 18px;
+}
+
 .aim-action-group {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.aim-review-action-strip {
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.aim-review-action-strip .btn {
+  font-size: 0.78rem;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.aim-review-action-strip .aim-placeholder-action {
+  font-size: 0.7rem;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 8px;
+}
+
+.aim-page .aim-placeholder-action:disabled {
+  background: $button-disabled-bg;
+  color: $text-muted;
+  opacity: 0.78;
 }
 
 .aim-ticket {

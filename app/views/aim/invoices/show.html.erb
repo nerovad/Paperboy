@@ -1,9 +1,11 @@
-<div class="aim-page">
+<div class="aim-page aim-review-page"
+     data-controller="aim-ocr"
+     data-aim-ocr-pdf-url-value="<%= pdf_aim_invoice_path(@invoice_id, queue: @queue) %>">
   <header class="aim-page-header">
-    <div>
+    <div class="aim-review-heading">
       <%= link_to 'Back to Queue', aim_invoices_path(queue: @queue), class: 'aim-kicker' %>
       <h1 class="aim-page-title"><%= @invoice_id %></h1>
-      <p class="aim-page-subtitle"><%= aim_queue_label(@queue) %> review</p>
+      <span class="aim-page-subtitle"><%= aim_queue_label(@queue) %> review</span>
     </div>
   </header>
 
@@ -15,7 +17,7 @@
 
       <div class="aim-pdf-shell" data-pdf-url="<%= pdf_aim_invoice_path(@invoice_id, queue: @queue) %>">
         <iframe class="aim-pdf-frame"
-                src="<%= pdf_aim_invoice_path(@invoice_id, queue: @queue) %>"
+                src="<%= "#{pdf_aim_invoice_path(@invoice_id, queue: @queue)}#zoom=page-fit" %>"
                 title="Invoice PDF preview"></iframe>
 
         <div id="aim-ocr-canvas-viewer" class="aim-pdf-canvas-viewer">
@@ -43,7 +45,19 @@
         <div class="aim-fields">
           <% fields = @metadata.keys.any? ? @metadata.keys : ['BU', 'Submitter', 'VendorName', 'InvoiceTotal', 'InvoiceNumber', 'InvoiceDate', 'Status'] %>
           <% excluded_fields = ['BoundingBoxes', 'ConfidenceScores', 'OriginalText'] %>
-          <% excluded_fields << 'NormalizedVendor' if @queue == 'vendor_review' %>
+          <% if @queue == 'vendor_review' %>
+            <% excluded_fields += aim_vendor_review_hidden_fields %>
+
+            <div class="aim-field-row">
+              <div class="aim-field">
+                <%= label_tag 'aim_extracted_vendor_name', 'AI-Extracted Vendor Name' %>
+                <%= text_field_tag 'aim_extracted_vendor_name',
+                                   @extracted_vendor_name.presence || 'Unknown vendor',
+                                   readonly: true,
+                                   class: 'aim-readonly-field' %>
+              </div>
+            </div>
+          <% end %>
 
           <% fields.each do |key| %>
             <% next if excluded_fields.include?(key) %>
@@ -120,7 +134,7 @@
                 </div>
 
                 <div class="aim-vendor-alias-preview">
-                  <span><%= @metadata['VendorName'].presence || 'Unknown vendor' %></span>
+                  <span><%= @extracted_vendor_name.presence || 'Unknown vendor' %></span>
                   <span>maps to</span>
                   <span>the selected or new official vendor</span>
                 </div>
@@ -135,7 +149,7 @@
           <%= form.submit 'Unclaim', class: 'btn ghost' %>
         </div>
 
-        <div class="aim-action-group">
+        <div class="aim-action-group aim-review-action-strip">
           <%= form.submit 'Save Changes', class: 'btn secondary' %>
 
           <% if @queue == 'action_needed' %>
@@ -153,9 +167,31 @@
                             data: { turbo_confirm: 'Save these XML index fields and send this folder to the SQL queue?' },
                             class: 'btn approve' %>
           <% elsif @queue == 'vendor_review' %>
-            <%= form.submit 'Learn Alias',
-                            data: { turbo_confirm: 'Send this vendor alias to the learner queue?' },
+            <%= form.submit 'Learn & Continue',
+                            data: {
+                              turbo_confirm: 'Save this alias and continue without rerunning AI vision?'
+                            },
+                            class: 'btn approve' %>
+            <%= form.submit 'Learn & Retry AI',
+                            data: {
+                              turbo_confirm: 'Save this alias and send the document back through AI vision?'
+                            },
                             class: 'btn warning' %>
+            <%= button_tag 'Check Duplicates *',
+                           type: 'button',
+                           disabled: true,
+                           title: 'Future AIM workflow step; not active yet.',
+                           class: 'btn ghost aim-placeholder-action' %>
+            <%= button_tag 'Run Vendor/BU Lookup *',
+                           type: 'button',
+                           disabled: true,
+                           title: 'Future AIM workflow step; not active yet.',
+                           class: 'btn ghost aim-placeholder-action' %>
+            <%= button_tag 'Send to Manual Processing *',
+                           type: 'button',
+                           disabled: true,
+                           title: 'Future AIM workflow step; not active yet.',
+                           class: 'btn ghost aim-placeholder-action' %>
           <% end %>
 
           <%= link_to 'Retry AI Processing',
@@ -170,204 +206,3 @@
     <% end %>
   </div>
 </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
-<script>
-  (function() {
-    if (window.pdfjsLib) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-    }
-
-    function initAimPdfReview() {
-      const shell = document.querySelector(".aim-pdf-shell");
-      if (!shell || shell.dataset.initialized === "true") return;
-      shell.dataset.initialized = "true";
-
-      const pdfUrl = shell.dataset.pdfUrl;
-      const frame = shell.querySelector(".aim-pdf-frame");
-      const canvasViewer = document.getElementById("aim-ocr-canvas-viewer");
-      const loadingIndicator = document.getElementById("loading-indicator");
-      let activeOcrTargetName = null;
-      let activeOcrButton = null;
-      let pdfDocument = null;
-      let isRendered = false;
-
-      function showNativeViewer() {
-        frame.classList.remove("is-hidden");
-        canvasViewer.classList.remove("is-active", "ocr-mode");
-      }
-
-      function showOcrViewer() {
-        frame.classList.add("is-hidden");
-        canvasViewer.classList.add("is-active");
-      }
-
-      async function ensurePdfRendered() {
-        showOcrViewer();
-        if (isRendered) return;
-
-        pdfDocument = await pdfjsLib.getDocument(pdfUrl).promise;
-        if (loadingIndicator) loadingIndicator.remove();
-        canvasViewer.querySelectorAll(".aim-pdf-page").forEach((element) => element.remove());
-
-        for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
-          const page = await pdfDocument.getPage(pageNumber);
-          const pageElement = document.createElement("div");
-          pageElement.className = "aim-pdf-page";
-
-          const canvas = document.createElement("canvas");
-          const context = canvas.getContext("2d");
-          const viewport = page.getViewport({ scale: 1.25 });
-
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-
-          pageElement.appendChild(canvas);
-          canvasViewer.appendChild(pageElement);
-
-          await page.render({ canvasContext: context, viewport: viewport }).promise;
-          setupOcrDrawing(pageElement, canvas);
-        }
-
-        isRendered = true;
-      }
-
-      function deactivateOcrMode() {
-        if (activeOcrButton) {
-          activeOcrButton.classList.remove("active-ocr");
-          activeOcrButton.innerText = "OCR";
-        }
-
-        activeOcrTargetName = null;
-        activeOcrButton = null;
-        canvasViewer.classList.remove("ocr-mode");
-        showNativeViewer();
-      }
-
-      async function activateOcrMode(targetName, button) {
-        if (activeOcrButton) {
-          activeOcrButton.classList.remove("active-ocr");
-          activeOcrButton.innerText = "OCR";
-        }
-
-        activeOcrTargetName = targetName;
-        activeOcrButton = button;
-        button.classList.add("active-ocr");
-        button.innerText = "Cancel";
-
-        await ensurePdfRendered();
-        canvasViewer.classList.add("ocr-mode");
-      }
-
-      function setupOcrDrawing(pageElement, canvas) {
-        let isDrawing = false;
-        let startX = 0;
-        let startY = 0;
-        let selectionBox = null;
-
-        pageElement.addEventListener("mousedown", (event) => {
-          if (!activeOcrTargetName) return;
-
-          isDrawing = true;
-          const rect = pageElement.getBoundingClientRect();
-          startX = event.clientX - rect.left;
-          startY = event.clientY - rect.top;
-
-          selectionBox = document.createElement("div");
-          selectionBox.className = "aim-ocr-selection";
-          selectionBox.style.left = startX + "px";
-          selectionBox.style.top = startY + "px";
-          pageElement.appendChild(selectionBox);
-        });
-
-        pageElement.addEventListener("mousemove", (event) => {
-          if (!isDrawing || !selectionBox) return;
-
-          const rect = pageElement.getBoundingClientRect();
-          const currentX = event.clientX - rect.left;
-          const currentY = event.clientY - rect.top;
-          const left = Math.min(startX, currentX);
-          const top = Math.min(startY, currentY);
-          const width = Math.abs(startX - currentX);
-          const height = Math.abs(startY - currentY);
-
-          selectionBox.style.left = left + "px";
-          selectionBox.style.top = top + "px";
-          selectionBox.style.width = width + "px";
-          selectionBox.style.height = height + "px";
-        });
-
-        pageElement.addEventListener("mouseup", (event) => {
-          if (!isDrawing) return;
-          isDrawing = false;
-
-          const rect = pageElement.getBoundingClientRect();
-          const endX = event.clientX - rect.left;
-          const endY = event.clientY - rect.top;
-          const x = Math.min(startX, endX);
-          const y = Math.min(startY, endY);
-          const width = Math.abs(startX - endX);
-          const height = Math.abs(startY - endY);
-
-          if (selectionBox) selectionBox.remove();
-          selectionBox = null;
-
-          if (width > 5 && height > 5) {
-            performOcrOnArea(canvas, pageElement, x, y, width, height);
-          }
-        });
-      }
-
-      async function performOcrOnArea(canvas, pageElement, x, y, width, height) {
-        const targetName = activeOcrTargetName;
-        const inputElement = document.getElementsByName(targetName)[0];
-
-        if (!inputElement) {
-          deactivateOcrMode();
-          return;
-        }
-
-        const scaleX = canvas.width / pageElement.clientWidth;
-        const scaleY = canvas.height / pageElement.clientHeight;
-        const tempCanvas = document.createElement("canvas");
-
-        tempCanvas.width = width * scaleX;
-        tempCanvas.height = height * scaleY;
-        tempCanvas
-          .getContext("2d")
-          .drawImage(canvas, x * scaleX, y * scaleY, tempCanvas.width, tempCanvas.height, 0, 0, tempCanvas.width, tempCanvas.height);
-
-        try {
-          const result = await Tesseract.recognize(tempCanvas.toDataURL("image/png"), "eng");
-          inputElement.value = result.data.text.trim();
-          inputElement.dispatchEvent(new Event("input", { bubbles: true }));
-          inputElement.dispatchEvent(new Event("change", { bubbles: true }));
-        } catch (error) {
-          console.error("Tesseract OCR failed:", error);
-        }
-
-        deactivateOcrMode();
-      }
-
-      document.querySelectorAll(".btn-ocr").forEach((button) => {
-        button.addEventListener("click", async (event) => {
-          event.preventDefault();
-          const targetName = button.getAttribute("data-ocr-target-name");
-
-          if (activeOcrTargetName === targetName) {
-            deactivateOcrMode();
-          } else {
-            await activateOcrMode(targetName, button);
-          }
-        });
-      });
-    }
-
-    document.addEventListener("turbo:load", initAimPdfReview);
-    if (document.readyState === "interactive" || document.readyState === "complete") {
-      initAimPdfReview();
-    }
-  })();
-</script>

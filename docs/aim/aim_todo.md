@@ -4,6 +4,61 @@ This list tracks Automated Invoice Management work now that AIM is being
 integrated into Paperboy. Standalone AIM should not receive new feature work
 unless explicitly needed for migration or production support.
 
+## Planned Branch Sequence
+
+- [ ] **`AIM_VendorReview`:** Finish the current Vendor Review workflow. Staff
+  should be able to match an extracted vendor to an existing official SQL vendor
+  name, type a new official vendor name, handle bad AI vendor matches, and see a
+  clear error if the alias cannot be saved.
+
+- [ ] **`AIM_QueueLabels`:** Improve queue clarity before adding more queues.
+  Action Needed, Low Confidence Review, Vendor Review, Batch Split, and backend
+  queues should show useful reasons such as missing fields, AI rejection,
+  multiple lookup matches, or ready for SQL review instead of generic `Ready`.
+
+- [ ] **`AIM_ManualProcessing`:** Add a controlled fallback path for invoices
+  the AI cannot reliably process. This branch should add the Manual Processing
+  queue, manual metadata entry form, lookup trigger, and actions that route
+  invoices from other review queues into manual processing.
+
+- [ ] **`AIM_DuplicateReview`:** Add duplicate invoice handling before final SQL
+  submission. The system should check vendor, invoice number, BU, invoice date,
+  and total against SQL, then route likely duplicates to a review queue where
+  staff can compare the matching SQL record and either send anyway or reject.
+
+- [ ] **`AIM_WorkerObservability`:** Make the pipeline workers record what they
+  did, what failed, and why work was skipped. Today only
+  `01_AI_Extraction_Worker.py` calls `write_log`; the ingestion watcher, SQL
+  worker, batch splitter, and alias learner log nothing, and all worker output
+  is `print()` to a console window that the `.bat` files never redirect to a
+  file. This branch should land before `AIM_ErrorQueues`, because exposing
+  `_ERROR_QUEUE` in Paperboy is actively misleading while most failures never
+  become a ticket in the first place.
+
+- [ ] **`AIM_ErrorQueues`:** Make technical pipeline failures visible in
+  Paperboy. This should expose `_ERROR_QUEUE`, show reprocess failure tickets and
+  marker files, and provide clear retry, manual processing, or archive paths.
+
+- [ ] **`AIM_PipelineMaintenance`:** Clean up operational worker gaps. This
+  branch should cover spool-state retention, spool-state visibility, queue path
+  confirmation, processed-date output, and other small backend worker
+  reliability fixes.
+
+- [ ] **`AIM_SqlOutputMapping`:** Make final SQL output less hard-coded. This
+  branch should design and implement configurable mapping for extracted invoice
+  data, lookup data, duplicate/rejection decisions, approval data, and
+  timestamps.
+
+- [ ] **`AIM_Approvals`:** Build the user-facing invoice approval workflow in
+  Paperboy. This is separate from staff backend queues: invoices ready for
+  business approval should appear in Paperboy's inbox for assigned users or
+  groups, with approval/rejection status saved in database-backed AIM records.
+
+- [ ] **`AIM_VendorAdmin`:** Add longer-term vendor maintenance tools. This
+  branch should support deleting bad aliases, renaming official vendors, and
+  deciding whether the current alias table should become full official vendor
+  records.
+
 ## Active In Paperboy
 
 - [ ] **Vendor Review SQL Picker:** Finish the Paperboy vendor review flow so
@@ -29,6 +84,19 @@ unless explicitly needed for migration or production support.
   Route likely duplicates to a Duplicate Review queue that shows the matching
   SQL record details and allows staff to send anyway or reject.
 
+- [ ] **Post-Vendor Processing Step:** Replace the temporary Vendor Review
+  `continue_processing` handoff with the real post-vision pipeline:
+  duplicate check, vendor/BU lookup, type-aware validation, and final SQL queue.
+
+- [ ] **Vendor/BU Lookup Review Queue:** Add a SQL-backed lookup step after
+  vendor normalization. One lookup match should enrich automatically; no matches
+  or multiple matches should route to review with enough detail for staff to
+  choose or manually enter the needed values.
+
+- [ ] **Non-Invoice Document Types:** Plan credit, credit memo, coupon, and
+  other applicable document-type handling with Fiscal before hard-coding invoice
+  assumptions into validation or SQL output.
+
 - [ ] **Manual Queue Routing Actions:** Add actions to send an invoice from
   Vendor Review, Action Needed, Low Confidence Review, or AI/error states into
   Manual Processing.
@@ -47,18 +115,51 @@ unless explicitly needed for migration or production support.
   This is being handled in a separate Codex session; avoid touching those files
   here unless directed.
 
-- [ ] **Spool State Retention Policy:** Add automatic cleanup for old
-  `_SPOOL_STATE/*.spooled.json` and stale failed-spool marker files. The
-  current ingestion watcher uses these files to avoid re-spooling the same
-  source file, but it does not prune successful history automatically.
+- [ ] **Spool State Retention Policy:** Fix the spool marker lifecycle. The
+  signature is `sha256(relative_path|size)`, written on every spool and never
+  expired, so one successful run permanently blacklists that filename at that
+  size in that folder. Confirmed 2026-08-05: all 23 files then sitting in
+  `Invoices\` were silently skipped against 2026-08-04 markers. On a clean spool
+  the file is moved out of the watch tree, so its absence is already the dedupe
+  and the marker should be deleted immediately; retain a marker only when
+  `source_delete_error` is set and the original is stranded, and add a TTL to
+  those. Note that adding mtime to the signature does not solve re-import,
+  because an Explorer drag-copy preserves the source mtime.
 
 - [ ] **Spool State Visibility:** Document what `_SPOOL_STATE` means and add an
   admin-safe way to inspect or clear old spool markers when an invoice needs to
   be intentionally re-imported.
 
+- [ ] **Watcher Silent Skip Logging:** Log every ingestion watcher skip. The
+  already-spooled check, the failed-spool backoff, the file-stability gate, and
+  the root-level-file skip all `continue` with no output at all, so a file being
+  ignored looks identical to a watcher with nothing to do.
+
+- [ ] **Image Conversion Failure Marker:** A `convert_image_to_pdf` failure
+  prints, removes the destination folder, and continues without writing a
+  failed-spool marker or an error ticket, so a corrupt image is retried every
+  60 seconds indefinitely.
+
+- [ ] **Worker Log Coverage:** Extend `write_log` or an equivalent helper to the
+  ingestion watcher, SQL worker, batch splitter, and alias learner. Only
+  `01_AI_Extraction_Worker.py` writes to `_Logs` today, so the CSV describes
+  extraction only and says nothing about ingestion or routing.
+
+- [ ] **Worker Console Capture:** Redirect each `*_Run_*.bat` launcher to a
+  timestamped file under `_Logs`. Worker output is console-only today and is
+  lost when the window scrolls or closes, and the crash handler only `pause`s.
+
+- [ ] **Ingestion Source Delete Permission:** Grant the watcher service account
+  NTFS delete rights on the BU subfolders under `Invoices\`. Spool markers from
+  2026-08-04 record `[WinError 5] Access is denied`, so the watcher copies the
+  PDF to `_AI_QUEUE`, cannot remove the original, and leaves it in the watch
+  tree looking like an unprocessed invoice.
+
 - [ ] **Error Queue Visibility:** Add `_ERROR_QUEUE` to the Paperboy AIM backend
   dashboard/list so technical pipeline failures are visible outside the server
-  filesystem.
+  filesystem. This needs both a `BACKEND_QUEUES` entry and a `PATH_ENV` entry in
+  `Aim::InvoiceDirectoryService`; neither exists today, so `path_for` returns
+  `nil` and the folder cannot be reached from the UI at all.
 
 - [ ] **Reprocess Failure Review:** Surface reprocess failures marked by
   `.ai_reprocess_error.json` and their `_ERROR_QUEUE/REPROCESS_ERROR_*` tickets,

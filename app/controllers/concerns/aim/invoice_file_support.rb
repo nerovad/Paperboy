@@ -44,9 +44,10 @@ module Aim
       redirect_to aim_invoices_path(queue: @queue), notice: "Invoice rejected and moved to #{submitter}_#{budget_unit} folder."
     end
 
-    def send_to_alias_learning
+    def send_to_alias_learning(next_action:, metadata_path:)
       existing_learn_data = read_vendor_learn_data(@folder_path)
-      extracted_name = metadata_param_value('VendorName', 'Vendor Name') || existing_learn_data['extracted_name']
+      current_metadata = read_metadata(metadata_path)
+      extracted_name = vendor_review_extracted_name(current_metadata, existing_learn_data)
       normalized_name = params[:normalized_vendor_new].presence ||
                         metadata_param_value('NormalizedVendor') ||
                         existing_learn_data['suggested_normalized_name']
@@ -59,9 +60,15 @@ module Aim
 
       learn_data = {
         'extracted_name' => extracted_name,
-        'suggested_normalized_name' => normalized_name
+        'suggested_normalized_name' => normalized_name,
+        'next_action' => next_action
       }
       File.write(File.join(@folder_path, "#{@invoice_id}_LEARN.json"), JSON.pretty_generate(learn_data))
+      if next_action == 'continue_processing'
+        write_vendor_review_ready_payload(metadata_path, current_metadata, extracted_name, normalized_name)
+      elsif next_action == 'retry_ai'
+        write_vendor_review_reprocess_sidecar(metadata_path, current_metadata)
+      end
 
       move_invoice_to(Aim::InvoiceDirectoryService.instance.ready_to_learn_dir, 'Vendor Alias sent to Learner Queue.')
     rescue ArgumentError => e
@@ -69,6 +76,44 @@ module Aim
     rescue Aim::VendorAliasService::AliasStoreError => e
       Rails.logger.error "Failed to save AIM vendor alias: #{e.message}"
       redirect_to aim_invoice_path(@invoice_id, queue: @queue), alert: 'Vendor alias could not be saved to the alias file.'
+    end
+
+    def writable_metadata_params
+      return {} if params[:metadata].blank?
+
+      params[:metadata].to_unsafe_h.tap do |metadata|
+        next unless @queue == 'vendor_review'
+
+        Aim::InvoicesHelper::VENDOR_REVIEW_PROTECTED_FIELDS.each { |field| metadata.delete(field) }
+      end
+    end
+
+    def vendor_review_extracted_name(metadata, learn_data)
+      learn_data['extracted_name'].presence ||
+        metadata['ExtractedVendorName'].presence ||
+        metadata['extracted_vendor_name'].presence ||
+        metadata['VendorName'].presence ||
+        metadata['Vendor Name'].presence
+    end
+
+    def write_vendor_review_ready_payload(metadata_path, metadata, extracted_name, normalized_name)
+      payload = Aim::VendorReviewPayloadService.sql_ready_payload(
+        invoice_id: @invoice_id,
+        pdf_file: pdf_files_for(@folder_path).first,
+        metadata: metadata,
+        extracted_name: extracted_name,
+        normalized_name: normalized_name
+      )
+      ready_path = File.join(@folder_path, "#{@invoice_id}_READY_FOR_SQL.json")
+
+      File.write(ready_path, JSON.pretty_generate(payload))
+      FileUtils.rm_f(metadata_path) if metadata_path.present? && File.expand_path(metadata_path) != File.expand_path(ready_path)
+    end
+
+    def write_vendor_review_reprocess_sidecar(metadata_path, metadata)
+      metadata['bu'] ||= metadata['BU']
+      metadata['submitter'] ||= metadata['Submitter']
+      File.write(metadata_path, JSON.pretty_generate(metadata))
     end
 
     def move_invoice_to(destination_dir, notice)

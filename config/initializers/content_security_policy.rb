@@ -21,7 +21,12 @@ Rails.application.configure do
     metabase_url = ENV.fetch('METABASE_SITE_URL', 'http://localhost:3000')
     policy.frame_src   :self, metabase_url
 
-    policy.connect_src :self
+    policy.connect_src :self,
+                       'https://cdn.jsdelivr.net',
+                       'https://cdnjs.cloudflare.com'
+    policy.worker_src  :self, :blob,
+                       'https://cdn.jsdelivr.net',
+                       'https://cdnjs.cloudflare.com'
   end
 
   # Generate session nonces for permitted importmap and inline scripts only

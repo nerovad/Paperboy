@@ -47,13 +47,16 @@ module Aim
         return redirect_to aim_invoices_path(queue: @queue), notice: 'Invoice successfully unclaimed.'
       end
 
-      write_metadata(metadata_path, params[:metadata]) if params[:metadata].present?
+      metadata_params = writable_metadata_params
+      write_metadata(metadata_path, metadata_params) if metadata_params.present?
 
       case params[:commit]
       when 'Reject'
         reject_invoice
-      when 'Save & Learn Alias', 'Learn Alias'
-        send_to_alias_learning
+      when 'Save & Learn Alias', 'Learn Alias', 'Learn & Retry AI'
+        send_to_alias_learning(next_action: 'retry_ai', metadata_path: metadata_path)
+      when 'Learn & Continue'
+        send_to_alias_learning(next_action: 'continue_processing', metadata_path: metadata_path)
       when 'Save & Send to Approval', 'Send to Approval'
         move_invoice_to(Aim::InvoiceDirectoryService.instance.user_approval_dir, 'Invoice successfully fixed and routed to User Approval!')
       when 'Send to SQL Queue'

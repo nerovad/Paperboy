@@ -84,7 +84,11 @@ module Aim
     def load_vendor_review_context
       @vendor_learn_data = read_vendor_learn_data(@folder_path)
       @official_vendor_names = official_vendor_names
-      @metadata['VendorName'] ||= @vendor_learn_data['extracted_name']
+      @extracted_vendor_name = @vendor_learn_data['extracted_name'].presence ||
+                               @metadata['ExtractedVendorName'].presence ||
+                               @metadata['extracted_vendor_name'].presence ||
+                               @metadata['VendorName'].presence
+      @metadata['VendorName'] ||= @extracted_vendor_name
       @metadata['NormalizedVendor'] ||= @vendor_learn_data['suggested_normalized_name']
     end
 

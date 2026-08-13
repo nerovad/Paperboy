@@ -428,9 +428,31 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
         dest_folder = os.path.join(VENDOR_REVIEW_DIR, processing_id)
         os.makedirs(dest_folder, exist_ok=True)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
-        
+
+        review_payload = {
+            "FileName": filename,
+            "Submitter": submitter_name,
+            "BU": bu_number,
+            "submitter": submitter_name,
+            "bu": bu_number,
+            "ExtractedVendorName": master_data.extracted_vendor_name,
+            "VendorName": master_data.extracted_vendor_name,
+            "NormalizedVendor": "",
+            "InvoiceNumber": master_data.invoice_number,
+            "InvoiceTotal": master_data.invoice_total,
+            "InvoiceDate": master_data.invoice_date,
+            "OrderNumber": master_data.order_number,
+            "CustomerNumber": master_data.customer_number,
+            "DocumentType": master_data.document_type,
+            "ExtractedMetadata": master_data.model_dump_json(),
+            "Status": "Vendor Review",
+            "ErrorMessage": f"Unknown vendor: {master_data.extracted_vendor_name}",
+            "InvoiceConcatID": processing_id
+        }
         with open(os.path.join(dest_folder, f"{processing_id}.json"), "w", encoding="utf-8") as sf:
-            json.dump({"bu": bu_number, "submitter": submitter_name}, sf)
+            json.dump(review_payload, sf, indent=4)
+
+        generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         
         review_data = {
             "extracted_name": master_data.extracted_vendor_name,
