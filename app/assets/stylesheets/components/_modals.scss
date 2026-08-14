@@ -51,6 +51,10 @@
   max-height: 85vh;
 
   background: $surface-base;
+  /* Stated rather than inherited: a dialog rendered inside a coloured
+     container — the sidebar sets white text — would otherwise draw its
+     unstyled contents white on the panel's white. */
+  color: $text-color;
   border-radius: 12px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
   overflow: hidden;
