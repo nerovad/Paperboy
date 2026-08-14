@@ -125,6 +125,11 @@ Rails.application.routes.draw do
     root 'dsls#index'
 
     resources :logs
+    resource :inbox_dsls, only: :create
+    resource :database_dsls, only: %i[new create] do
+      get :databases
+      get :tables
+    end
     resources :dsls, only: %i[index show new create edit update destroy], param: :name do
       member do
         post :run

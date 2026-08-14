@@ -1,6 +1,7 @@
 @import "base/tokens";
 
 .controller-dsls,
+.controller-database_dsls,
 .controller-logs,
 .controller-runs,
 .controller-backup_outputs {
@@ -9,8 +10,9 @@
   .hot-menu,
   .control-center,
   .empty-control-center,
-  .login-panel,
-  .record-form,
+    .login-panel,
+    .new-dsl-form,
+    .record-form,
   .table-wrap,
   .output,
     .task-result,

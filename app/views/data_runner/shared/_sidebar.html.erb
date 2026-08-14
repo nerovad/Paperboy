@@ -5,6 +5,9 @@
            data-sidebar-search-target="input" data-action="input->sidebar-search#filter">
     <% if can_use_app_feature?("data_runner", "manage_groups") %>
       <%= link_to "New DSL group", data_runner_new_dsl_group_path, class: "btn approve" %>
+      <%= button_to "Discover Inbox Files", data_runner_inbox_dsls_path, class: "btn secondary",
+                    data: { turbo_confirm: "Scan the DataRunner inbox and create DSLs for new files?" } %>
+      <%= link_to "Import Database Table", new_data_runner_database_dsls_path, class: "btn secondary" %>
     <% end %>
     <nav>
       <% DslCatalog.grouped.each do |group, entries| %>
