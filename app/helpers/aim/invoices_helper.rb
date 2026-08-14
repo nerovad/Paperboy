@@ -16,6 +16,28 @@ module Aim
       'processing_id' => 'Processing ID'
     }.freeze
 
+    # Vendor Review owns the vendor name itself: the AI-extracted value is shown
+    # read-only and the official name comes from its own select. These keys are
+    # pipeline plumbing or AI output that staff should never retype, so they are
+    # never rendered as editable inputs and never accepted back from the form.
+    VENDOR_REVIEW_PROTECTED_FIELDS = %w[
+      VendorName
+      ExtractedVendorName
+      extracted_vendor_name
+      ExtractedMetadata
+      Status
+      ErrorMessage
+      InvoiceConcatID
+    ].freeze
+
+    # NormalizedVendor stays writable, but it is rendered by its own select
+    # rather than by the generic metadata grid.
+    VENDOR_REVIEW_HIDDEN_FIELDS = (VENDOR_REVIEW_PROTECTED_FIELDS + %w[NormalizedVendor]).freeze
+
+    def aim_vendor_review_hidden_fields
+      VENDOR_REVIEW_HIDDEN_FIELDS
+    end
+
     def aim_queue_label(queue)
       Aim::InvoiceDirectoryService::BACKEND_QUEUES.dig(queue.to_s.to_sym, :label) ||
         queue.to_s.tr('_', ' ').titleize

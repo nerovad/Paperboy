@@ -1,9 +1,11 @@
-<div class="aim-page">
+<div class="aim-page aim-review-page"
+     data-controller="aim-ocr"
+     data-aim-ocr-pdf-url-value="<%= pdf_aim_invoice_path(@invoice_id, queue: @queue) %>">
   <header class="aim-page-header">
-    <div>
+    <div class="aim-review-heading">
       <%= link_to 'Back to Queue', aim_invoices_path(queue: @queue), class: 'aim-kicker' %>
       <h1 class="aim-page-title"><%= @invoice_id %></h1>
-      <p class="aim-page-subtitle"><%= aim_queue_label(@queue) %> review</p>
+      <span class="aim-page-subtitle"><%= aim_queue_label(@queue) %> review</span>
     </div>
   </header>
 
@@ -13,10 +15,14 @@
         <h2 class="aim-panel-title">Document Preview</h2>
       </div>
 
-      <div class="aim-pdf-shell">
+      <div class="aim-pdf-shell" data-pdf-url="<%= pdf_aim_invoice_path(@invoice_id, queue: @queue) %>">
         <iframe class="aim-pdf-frame"
-                src="<%= pdf_aim_invoice_path(@invoice_id, queue: @queue) %>"
+                src="<%= "#{pdf_aim_invoice_path(@invoice_id, queue: @queue)}#zoom=page-fit" %>"
                 title="Invoice PDF preview"></iframe>
+
+        <div id="aim-ocr-canvas-viewer" class="aim-pdf-canvas-viewer">
+          <div id="loading-indicator" class="aim-ocr-status">Loading OCR pages...</div>
+        </div>
       </div>
     </section>
 
@@ -38,9 +44,23 @@
 
         <div class="aim-fields">
           <% fields = @metadata.keys.any? ? @metadata.keys : ['BU', 'Submitter', 'VendorName', 'InvoiceTotal', 'InvoiceNumber', 'InvoiceDate', 'Status'] %>
+          <% excluded_fields = ['BoundingBoxes', 'ConfidenceScores', 'OriginalText'] %>
+          <% if @queue == 'vendor_review' %>
+            <% excluded_fields += aim_vendor_review_hidden_fields %>
+
+            <div class="aim-field-row">
+              <div class="aim-field">
+                <%= label_tag 'aim_extracted_vendor_name', 'AI-Extracted Vendor Name' %>
+                <%= text_field_tag 'aim_extracted_vendor_name',
+                                   @extracted_vendor_name.presence || 'Unknown vendor',
+                                   readonly: true,
+                                   class: 'aim-readonly-field' %>
+              </div>
+            </div>
+          <% end %>
 
           <% fields.each do |key| %>
-            <% next if ['BoundingBoxes', 'ConfidenceScores', 'OriginalText'].include?(key) %>
+            <% next if excluded_fields.include?(key) %>
 
             <div class="aim-field-row">
               <div class="aim-field">
@@ -66,14 +86,58 @@
                                       value: (@metadata[key].is_a?(Hash) || @metadata[key].is_a?(Array) ? @metadata[key].to_json : @metadata[key]) %>
                 <% end %>
               </div>
+
+              <% unless @metadata[key].is_a?(Array) && key == 'Invoices' %>
+                <button type="button"
+                        class="btn secondary compact btn-ocr"
+                        data-ocr-target-name="metadata[<%= key %>]">OCR</button>
+              <% end %>
             </div>
           <% end %>
 
           <% if @queue == 'vendor_review' %>
+            <% selected_vendor_name = @metadata['NormalizedVendor'].presence %>
+            <% official_vendor_options = @official_vendor_names.to_a.compact %>
+            <% if selected_vendor_name.present? && official_vendor_options.exclude?(selected_vendor_name) %>
+              <% official_vendor_options << selected_vendor_name %>
+            <% end %>
+            <% official_vendor_option_tags = [['Select official vendor', '']] %>
+            <% official_vendor_options.each do |vendor_name| %>
+              <% official_vendor_option_tags << [vendor_name, vendor_name] %>
+            <% end %>
+
             <section class="aim-vendor-review">
-              <div class="aim-field">
-                <%= form.label 'metadata[NormalizedVendor]', 'Match to Official Vendor Name' %>
-                <%= form.text_field 'metadata[NormalizedVendor]', placeholder: 'Example: Red Wing Shoes' %>
+              <div class="aim-vendor-review-fields">
+                <div class="aim-field">
+                  <%= form.label 'metadata[NormalizedVendor]', 'Match to Official Vendor Name' %>
+                  <%= select_tag(
+                    'metadata[NormalizedVendor]',
+                    options_for_select(official_vendor_option_tags, selected_vendor_name),
+                    id: 'aim-official-vendor-select',
+                    class: 'aim-vendor-select',
+                    data: { aim_vendor_select: true }
+                  ) %>
+                </div>
+
+                <div class="aim-field-row">
+                  <div class="aim-field">
+                    <%= label_tag 'normalized_vendor_new', 'New Official Vendor Name' %>
+                    <%= text_field_tag 'normalized_vendor_new',
+                                       nil,
+                                       autocomplete: 'off',
+                                       placeholder: 'Type only when adding a new official vendor' %>
+                  </div>
+
+                  <button type="button"
+                          class="btn secondary compact btn-ocr"
+                          data-ocr-target-name="normalized_vendor_new">OCR</button>
+                </div>
+
+                <div class="aim-vendor-alias-preview">
+                  <span><%= @extracted_vendor_name.presence || 'Unknown vendor' %></span>
+                  <span>maps to</span>
+                  <span>the selected or new official vendor</span>
+                </div>
               </div>
             </section>
           <% end %>
@@ -85,7 +149,7 @@
           <%= form.submit 'Unclaim', class: 'btn ghost' %>
         </div>
 
-        <div class="aim-action-group">
+        <div class="aim-action-group aim-review-action-strip">
           <%= form.submit 'Save Changes', class: 'btn secondary' %>
 
           <% if @queue == 'action_needed' %>
@@ -103,9 +167,31 @@
                             data: { turbo_confirm: 'Save these XML index fields and send this folder to the SQL queue?' },
                             class: 'btn approve' %>
           <% elsif @queue == 'vendor_review' %>
-            <%= form.submit 'Learn Alias',
-                            data: { turbo_confirm: 'Send this vendor alias to the learner queue?' },
+            <%= form.submit 'Learn & Continue',
+                            data: {
+                              turbo_confirm: 'Save this alias and continue without rerunning AI vision?'
+                            },
+                            class: 'btn approve' %>
+            <%= form.submit 'Learn & Retry AI',
+                            data: {
+                              turbo_confirm: 'Save this alias and send the document back through AI vision?'
+                            },
                             class: 'btn warning' %>
+            <%= button_tag 'Check Duplicates *',
+                           type: 'button',
+                           disabled: true,
+                           title: 'Future AIM workflow step; not active yet.',
+                           class: 'btn ghost aim-placeholder-action' %>
+            <%= button_tag 'Run Vendor/BU Lookup *',
+                           type: 'button',
+                           disabled: true,
+                           title: 'Future AIM workflow step; not active yet.',
+                           class: 'btn ghost aim-placeholder-action' %>
+            <%= button_tag 'Send to Manual Processing *',
+                           type: 'button',
+                           disabled: true,
+                           title: 'Future AIM workflow step; not active yet.',
+                           class: 'btn ghost aim-placeholder-action' %>
           <% end %>
 
           <%= link_to 'Retry AI Processing',

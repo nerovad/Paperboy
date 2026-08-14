@@ -1,0 +1,14 @@
+{
+  "BU": "[Budget Unit #]",
+  "InvoiceDate": "[Invoice Date]",
+  "VendorName": "[Vendor Name]",
+  "InvoiceNumber": "[Invoice Number]",
+  "InvoiceTotal": "Invoice_Amt",
+  "SalesTax": "Sales_Tax",
+  "OrderNumber": "Order_number",
+  "CustomerNumber": "Customer",
+  "Submitter": "[User Name]",
+  "Subtotal": "Subtotal",
+  "ProcessedTimestamp": "ProcessedTimestamp",
+  "Status": "[Invoice Status]"
+}
