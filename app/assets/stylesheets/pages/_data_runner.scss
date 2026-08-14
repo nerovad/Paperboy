@@ -10,13 +10,14 @@
   .hot-menu,
   .control-center,
   .empty-control-center,
-    .login-panel,
-    .new-dsl-form,
-    .record-form,
+  .login-panel,
+  .new-dsl-form,
+  .database-dsl-confirmation,
+  .record-form,
   .table-wrap,
   .output,
-    .task-result,
-    .output-limit {
+  .task-result,
+  .output-limit {
     max-width: 1120px;
     margin-left: auto;
     margin-right: auto;
@@ -92,6 +93,19 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 12px;
+  }
+
+  .database-dsl-confirmation {
+    h2 { margin-top: 0; }
+
+    dt {
+      color: $muted;
+      font-size: .78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    dd { margin: 4px 0 0; }
   }
 
   .hot-menu,

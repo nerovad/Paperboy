@@ -3,7 +3,8 @@
 </div>
 
 <%= form_with url: data_runner_database_dsls_path, class: "card new-dsl-form",
-              data: { controller: "database-dsl",
+              data: { turbo: false,
+                      controller: "database-dsl",
                       database_dsl_databases_url_value: databases_data_runner_database_dsls_path,
                       database_dsl_tables_url_value: tables_data_runner_database_dsls_path,
                       database_dsl_selected_database_value: @database,
@@ -26,7 +27,7 @@
   </div>
   <p class="form-help" data-database-dsl-target="status" aria-live="polite"></p>
   <div class="form-actions">
-    <%= form.submit "Import Table", class: "btn approve" %>
+    <%= form.submit "Review Import", class: "btn approve" %>
     <%= link_to "Cancel", data_runner_root_path, class: "btn" %>
   </div>
 <% end %>

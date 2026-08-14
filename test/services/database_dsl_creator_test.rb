@@ -8,24 +8,46 @@ class DatabaseDslCreatorTest < ActiveSupport::TestCase
     catalog.define_singleton_method(:databases) { |_server| ['GSABSS'] }
     catalog.define_singleton_method(:tables) { |_server, _database| ['dbo.SampleTable'] }
     status = Struct.new(:success?).new(true)
-    command = nil
+    commands = []
     runner = lambda do |*arguments, **options|
-      command = [arguments, options]
+      commands << [arguments, options]
       ['Imported', status]
     end
+    entry = Struct.new(:config).new({ header: [['id', 'id', 'int', 'NOT NULL', nil]] })
 
     Open3.stub(:capture2e, runner) do
       DslCatalog.stub(:reload!, nil) do
-        slug = DatabaseDslCreator.new(
-          server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable', catalog: catalog
-        ).create!
+        DslCatalog.stub(:find!, entry) do
+          slug = DatabaseDslCreator.new(
+            server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable', catalog: catalog
+          ).create!
 
-        assert_equal 'SampleTable', slug
+          assert_equal 'SampleTable', slug
+        end
       end
     end
 
-    assert_equal ['DataRunner:sync_dsl', 'GSASQL16.GSABSS.dbo.SampleTable'], command.first.last(2)
-    assert_equal Rails.root.to_s, command.last.fetch(:chdir)
+    expected_commands = [
+      ['DataRunner:dsl_stub', 'GSASQL16.GSABSS.dbo.SampleTable'],
+      ['DataRunner:dump_sql', 'SampleTable'],
+      ['DataRunner:use_sql', 'SampleTable'],
+      ['DataRunner:from_sql', 'SampleTable']
+    ]
+    actual_commands = commands.map { |command, _options| command.last(2) }
+    assert_equal expected_commands, actual_commands
+    assert(commands.all? { |_command, options| options.fetch(:chdir) == Rails.root.to_s })
+  end
+
+  test 'previews the validated target without creating a DSL' do
+    catalog = Object.new
+    catalog.define_singleton_method(:databases) { |_server| ['GSABSS'] }
+    catalog.define_singleton_method(:tables) { |_server, _database| ['dbo.SampleTable'] }
+
+    preview = DatabaseDslCreator.new(
+      server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable', catalog: catalog
+    ).preview!
+
+    assert_equal %w[GSASQL16 GSABSS dbo SampleTable], preview.to_a
   end
 
   test 'rejects database and table values not returned by the server' do

@@ -10,7 +10,10 @@ module DataRunner
     end
 
     def create
-      slug = DatabaseDslCreator.new(**database_dsl_params.to_h.symbolize_keys).create!
+      creator = DatabaseDslCreator.new(**database_dsl_params.to_h.symbolize_keys)
+      return render_confirmation(creator) unless params[:confirmed] == '1'
+
+      slug = creator.create!
       redirect_to data_runner_dsl_path(slug), notice: "#{slug} DSL imported."
     rescue DatabaseDslCreator::ImportFailed => e
       @server = params[:server]
@@ -33,6 +36,11 @@ module DataRunner
     end
 
     private
+
+    def render_confirmation(creator)
+      @preview = creator.preview!
+      render :confirm
+    end
 
     def database_dsl_params
       params.permit(:server, :database, :table)
