@@ -94,6 +94,16 @@
   </form>
 </div>
 
+<%# What the Advanced Search panel asked for, so a narrowed list explains
+    itself once the panel is closed. %>
+<% if @form_search.advanced? %>
+  <div class="pb-search-chips">
+    <% @form_search.summary.each do |chip| %>
+      <span class="pb-search-chip"><%= chip %></span>
+    <% end %>
+  </div>
+<% end %>
+
 <div class="submissions-table-scroll" data-column-customizer-target="tableContainer">
 <div class="form-wrapper status-wrapper">
 <table class="status-table">

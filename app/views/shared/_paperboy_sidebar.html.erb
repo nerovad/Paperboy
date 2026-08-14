@@ -6,7 +6,8 @@
 <!-- Overlay -->
 <div class="sidebar-overlay" data-controller="sidebar" data-action="click->sidebar#close"></div>
 
-<div class="sidebar" data-controller="sidebar-search">
+<div class="sidebar" data-controller="sidebar-search advanced-search"
+     data-advanced-search-org-labels-value="<%= OrgLabels.js_config.to_json %>">
   <%= render "shared/app_switcher" %>
   <% if current_user %>
     <input
@@ -16,6 +17,14 @@
       data-action="input->sidebar-search#filter"
       class="sidebar-search-input"
     />
+
+    <%# The box above narrows the list of forms you can fill out; this searches
+        forms already submitted, and lands on the Submissions list. %>
+    <button type="button"
+            class="btn secondary compact pb-advanced-trigger<%= ' has-filters' if form_search.advanced? %>"
+            data-action="advanced-search#open">
+      Advanced Search<%= " •" if form_search.advanced? %>
+    </button>
     <%
     # Map legacy form names to ACL keys
     legacy_form_key_map = {
@@ -87,6 +96,7 @@
       <% end %>
     </div>
 
+    <%= render "shared/advanced_search_modal" %>
   <% else %>
     <p class="sidebar-p">Please log in to access forms.</p>
   <% end %>

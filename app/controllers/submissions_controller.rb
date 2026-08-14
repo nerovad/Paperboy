@@ -26,6 +26,11 @@ class SubmissionsController < ApplicationController
     @status_items = []
     @prefix_map = FormReference.prefix_map
 
+    # Advanced Search (the sidebar modal): org narrowing plus form type, status
+    # and category. Shares this page's filter params, so the modal and the
+    # filter bar are two ways of writing the same URL.
+    @form_search = FormSearch.new(params)
+
     # System admins can filter across every employee; otherwise the dropdown
     # is gated on having subordinates in the supervisor chain.
     @is_system_admin = current_user_group_names.include?('system_admins')
@@ -35,6 +40,8 @@ class SubmissionsController < ApplicationController
 
     # Determine which employee IDs to load submissions for based on filter.
     # nil means "no employee_id restriction" (system admin viewing All).
+    # Advanced Search sends `all` so a search spans everything the viewer may
+    # see rather than only their own submissions — see the panel's comment.
     @scoped_employee_ids = if @show_employee_filter && params[:filter_employee].present?
                              if params[:filter_employee] == 'all'
                                @is_system_admin ? nil : [employee_id] + @subordinate_ids
@@ -211,7 +218,7 @@ class SubmissionsController < ApplicationController
   def load_legacy_forms(_employee_id)
     LEGACY_FORMS.each do |form_config|
       # Skip tables that don't match the type filter (avoids querying unnecessary tables)
-      next if params[:filter_type].present? && params[:filter_type] != form_config[:type]
+      next unless @form_search.include_form_type?(form_config[:type])
 
       model_class = form_config[:model].constantize
       next unless model_class.table_exists?
@@ -225,8 +232,9 @@ class SubmissionsController < ApplicationController
       # a visibility grant on this form type widens it to every submission.
       scope = submission_scope_for(model_class)
 
-      # Apply SQL-level date filters
+      # Apply SQL-level date and Advanced Search org filters
       scope = apply_scope_date_filters(scope, submission_scope_date_filters)
+      scope = @form_search.apply_org(model_class, scope)
 
       # Apply eager loading
       scope = scope.includes(includes_list) if includes_list.any?
@@ -248,7 +256,7 @@ class SubmissionsController < ApplicationController
     # Find all form templates that have statuses configured
     FormTemplate.joins(:statuses).distinct.each do |template|
       # Skip templates that don't match the type filter
-      next if params[:filter_type].present? && params[:filter_type] != template.name
+      next unless @form_search.include_form_type?(template.name)
 
       # Skip models already handled by LEGACY_FORMS
       next if LEGACY_MODEL_NAMES.include?(template.class_name)
@@ -263,8 +271,9 @@ class SubmissionsController < ApplicationController
       # a visibility grant on this form type widens it to every submission.
       scope = submission_scope_for(model_class)
 
-      # Apply SQL-level date filters
+      # Apply SQL-level date and Advanced Search org filters
       scope = apply_scope_date_filters(scope, submission_scope_date_filters)
+      scope = @form_search.apply_org(model_class, scope)
 
       scope.each do |submission|
         # Generate path dynamically based on the model's route

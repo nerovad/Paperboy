@@ -1,0 +1,98 @@
+/* Advanced Search — the sidebar trigger, the panel's contents and the chips
+   that report an active search above the results.
+
+   The shell is the shared .pb-modal; these rules style only what sits inside
+   it, and the trigger is a shared .btn given a sidebar-width and a "filters
+   are on" ring. Mirrors the DAM's panel so the two read as one feature. */
+
+.sidebar {
+  .pb-advanced-trigger {
+    width: 100%;
+    margin-bottom: 18px;
+
+    &.has-filters {
+      box-shadow: 0 0 0 2px var(--sidebar-accent-ring);
+    }
+  }
+}
+
+.pb-advanced-form {
+  display: contents;
+}
+
+.pb-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* `.form-control` is only dressed inside a `.form-group`, which these are not,
+   so the selects state their own box here rather than arriving unstyled. */
+.pb-filter .form-control {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid $border-color;
+  border-radius: 5px;
+  background-color: $surface-base;
+  font-size: 1em;
+}
+
+.pb-filter label {
+  display: block;
+  margin-bottom: 4px;
+  color: $label-color;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.pb-filter-set {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid $neutral-border-light;
+  border-radius: $radius-6;
+
+  legend {
+    padding: 0 6px;
+    color: $label-color;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.pb-checkbox-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.pb-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  cursor: pointer;
+
+  input { margin: 0; }
+}
+
+/* Reported above the results, so a list narrowed by a panel the user has
+   since closed still says why it is short. */
+.pb-search-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.pb-search-chip {
+  padding: 3px 10px;
+  border: 1px solid $neutral-border-light;
+  border-radius: 999px;
+  background: $surface-subtle;
+  color: $label-color;
+  font-size: 0.8rem;
+}
