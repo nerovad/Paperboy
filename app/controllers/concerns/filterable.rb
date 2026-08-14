@@ -26,15 +26,16 @@ module Filterable
   def apply_filters(collection, filter_configs: [], date_filters: [])
     filtered = collection
 
-    # Apply standard filters
+    # Apply standard filters. A param may arrive as a single value (the filter
+    # bar's dropdowns) or as several (the Advanced Search modal's checkbox
+    # sets), so both are treated as a set the row has to be a member of.
     filter_configs.each do |config|
-      param_value = params[config[:param]]
-      next unless param_value.present?
+      wanted = Array(params[config[:param]]).map(&:to_s).compact_blank
+      next if wanted.empty?
 
       filtered = filtered.select do |item|
         extractor = config[:extractor]
-        item_value = extractor.call(item)
-        item_value.to_s == param_value.to_s
+        wanted.include?(extractor.call(item).to_s)
       end
     end
 

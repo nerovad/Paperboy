@@ -62,6 +62,7 @@ import OutputTableController from "controllers/output_table_controller"
 import SourceEditorController from "controllers/source_editor_controller"
 import AppSwitcherController from "controllers/app_switcher_controller"
 import DamSearchController from "controllers/dam_search_controller"
+import AdvancedSearchController from "controllers/advanced_search_controller"
 import CoaBillingLookupController from "controllers/coa_billing_lookup_controller"
 import AimOcrController from "controllers/aim_ocr_controller"
 
@@ -127,5 +128,6 @@ application.register("output-table", OutputTableController)
 application.register("source-editor", SourceEditorController)
 application.register("app-switcher", AppSwitcherController)
 application.register("dam-search", DamSearchController)
+application.register("advanced-search", AdvancedSearchController)
 application.register("coa-billing-lookup", CoaBillingLookupController)
 application.register("aim-ocr", AimOcrController)
