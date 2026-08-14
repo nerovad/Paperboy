@@ -111,6 +111,12 @@
   line-height: 1.5;
 }
 
+.dsl-sop {
+  ol { padding-left: 1.5rem; }
+
+  li + li { margin-top: .6rem; }
+}
+
 /* The prompt text in a confirm-style dialog. */
 .pb-modal__message {
   margin: 0;

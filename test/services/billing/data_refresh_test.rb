@@ -42,12 +42,15 @@ module Billing
     end
 
     test 'lists enabled DSL file dates and marks files after the period current' do
-      entry = Struct.new(:key, :config) do
+      entry = Struct.new(:key, :slug, :config, :sop) do
         def enabled? = true
-      end.new('ONeil', { source: { location: '/data/oneil.csv' } })
-      disabled = Struct.new(:key, :config) do
+      end.new(
+        'ONeil', 'oneil', { source: { location: '/data/oneil.csv' } },
+        { title: 'How to Download', instructions: ['Export the report.'] }
+      )
+      disabled = Struct.new(:key, :slug, :config, :sop) do
         def enabled? = false
-      end.new('Disabled', { source: { location: '/data/disabled.csv' } })
+      end.new('Disabled', 'disabled', { source: { location: '/data/disabled.csv' } }, nil)
       catalog = {
         'billing' => [entry, disabled],
         'mail_center_and_warehousing' => []
@@ -60,8 +63,10 @@ module Billing
 
           assert_equal 1, group.enabled_dsl_count
           assert_equal ['ONeil'], group.enabled_dsls.map(&:name)
+          assert_equal 'oneil', group.enabled_dsls.first.slug
           assert_equal '/data/oneil.csv', group.enabled_dsls.first.location
           assert_equal modified_at, group.enabled_dsls.first.file_date
+          assert_equal 'How to Download', group.enabled_dsls.first.sop.fetch(:title)
           assert_predicate group.enabled_dsls.first, :current
           assert_not group.enabled_dsls.first.script
         end
@@ -69,9 +74,9 @@ module Billing
     end
 
     test 'marks unavailable source files stale' do
-      entry = Struct.new(:key, :config) do
+      entry = Struct.new(:key, :slug, :config, :sop) do
         def enabled? = true
-      end.new('ONeil', { source: { location: '/missing/oneil.csv' } })
+      end.new('ONeil', 'oneil', { source: { location: '/missing/oneil.csv' } }, nil)
       catalog = { 'billing' => [entry], 'mail_center_and_warehousing' => [] }
 
       DslCatalog.stub(:grouped, catalog) do
@@ -85,11 +90,11 @@ module Billing
     end
 
     test 'lists script DSLs with the script name and current date' do
-      entry = Struct.new(:key, :config) do
+      entry = Struct.new(:key, :slug, :config, :sop) do
         def enabled? = true
       end.new(
-        'Warehousing',
-        { source: { strategy: :script, script: { path: 'script/download/warehousing.rb' } } }
+        'Warehousing', 'warehousing',
+        { source: { strategy: :script, script: { path: 'script/download/warehousing.rb' } } }, nil
       )
       catalog = { 'billing' => [entry], 'mail_center_and_warehousing' => [] }
       today = Date.new(2026, 8, 13)

@@ -259,55 +259,56 @@
   }
 }
 
-.billing-refresh-dsl-table {
-  width: 100%;
-  table-layout: fixed;
+.billing-refresh-dsl-cards {
+  display: grid;
+  gap: .75rem;
+}
+
+.billing-refresh-dsl-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
   border: 1px solid $neutral-border-subtle;
-  border-collapse: collapse;
+  background: $surface-base;
 
-  .billing-refresh-dsl-name-column { width: 22%; }
-  .billing-refresh-dsl-location-column { width: 60%; }
-  .billing-refresh-dsl-date-column { width: 18%; }
+  h3 { margin: 0 0 .5rem; }
 
-  th,
-  td {
-    padding: .5rem .75rem;
-    border: 1px solid $neutral-border-subtle;
-    text-align: left;
-  }
-
-  th {
-    background: $surface-subtle;
-    color: $label-color;
-    font-size: .8rem;
-    text-transform: uppercase;
-  }
-
-  td:first-child { font-weight: 600; }
-
-  td:nth-child(1),
-  td:nth-child(2) {
+  p {
+    margin: .25rem 0;
     overflow-wrap: anywhere;
   }
 
-  td:nth-child(3),
-  th:nth-child(3) {
-    white-space: nowrap;
+  p span {
+    display: inline-block;
+    min-width: 9rem;
+    color: $label-color;
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
   }
 
-  .is-script > td {
+  &.is-script {
     background: $blue-notice-bg;
     color: $blue-action;
   }
 
-  .is-current > td {
+  &.is-current {
     background: $green-status-bg;
     color: $green-status-text;
   }
 
-  .is-stale > td {
+  &.is-stale {
     background: $red-status-bg;
     color: $red-status-text;
+  }
+}
+
+@media (max-width: 700px) {
+  .billing-refresh-dsl-card {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

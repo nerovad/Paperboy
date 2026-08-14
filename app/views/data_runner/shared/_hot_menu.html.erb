@@ -1,5 +1,9 @@
-<nav class="hot-menu" aria-label="DSL actions">
+<div data-controller="sop-modal">
+  <nav class="hot-menu" aria-label="DSL actions">
   <%= link_to "Overview", data_runner_dsl_path(@dsl.slug), class: "btn" %>
+  <% if @dsl.sop %>
+    <button type="button" class="btn info" data-action="sop-modal#open">How to Download</button>
+  <% end %>
   <%= link_to "Edit", edit_data_runner_dsl_path(@dsl.slug), class: "btn edit" %>
   <% if action_name == "edit" %>
     <%= submit_tag "Save", class: "btn approve", form: "dsl-source-form" %>
@@ -19,4 +23,6 @@
       </div>
     </details>
   <% end %>
-</nav>
+  </nav>
+  <%= render "data_runner/shared/sop", dsl: @dsl if @dsl.sop %>
+</div>

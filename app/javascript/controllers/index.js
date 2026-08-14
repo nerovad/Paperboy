@@ -60,6 +60,7 @@ import DslDragController from "controllers/dsl_drag_controller"
 import DslGroupController from "controllers/dsl_group_controller"
 import OutputTableController from "controllers/output_table_controller"
 import SourceEditorController from "controllers/source_editor_controller"
+import SopModalController from "controllers/sop_modal_controller"
 import AppSwitcherController from "controllers/app_switcher_controller"
 import DamSearchController from "controllers/dam_search_controller"
 import AdvancedSearchController from "controllers/advanced_search_controller"
@@ -126,6 +127,7 @@ application.register("dsl-drag", DslDragController)
 application.register("dsl-group", DslGroupController)
 application.register("output-table", OutputTableController)
 application.register("source-editor", SourceEditorController)
+application.register("sop-modal", SopModalController)
 application.register("app-switcher", AppSwitcherController)
 application.register("dam-search", DamSearchController)
 application.register("advanced-search", AdvancedSearchController)

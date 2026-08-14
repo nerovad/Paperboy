@@ -20,4 +20,15 @@ class DslCatalogTest < ActiveSupport::TestCase
     assert_predicate DslCatalog.find!('revenue_sources'), :enabled?
     assert_not_predicate DslCatalog.find!('parking_lots'), :enabled?
   end
+
+  test 'exposes SOPs only for supported groups' do
+    assert_equal 'VCPrint', DslCatalog.find!('vcprint').sop.fetch(:source_system)
+
+    entry = DslCatalog::Entry.new(
+      key: 'Unsupported', slug: 'unsupported', path: nil,
+      config: { group: { name: 'other' }, sop: { instructions: ['Do something.'] } }
+    )
+
+    assert_nil entry.sop
+  end
 end

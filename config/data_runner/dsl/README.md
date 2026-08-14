@@ -55,6 +55,23 @@ filename order and builds:
   group. Stage selectors may be omitted, a DSL name, or a group name; for
   example, `rake DataRunner:oneshot chart_of_accounts` processes all DSL
   entries in that group.
+- Use a top-level `sop` to provide download instructions for DSLs in the
+  `billing` or `mail_center_and_warehousing` groups:
+
+```ruby
+sop: {
+  title: 'How to Download',
+  source_system: 'External system',
+  reference_url: 'https://example.test/reports',
+  instructions: [
+    'Sign in and open the report.',
+    'Export the required period as CSV.',
+    'Save the file in the DataRunner inbox.'
+  ]
+}
+```
+
+  `reference_url` is optional. Do not store credentials or secrets in an SOP.
 - Use `source.location` for the file or path to stage and `source.local` for
   the filename used inside `00_Inbox` and downstream stages.
 - Use `source.strategy: :manual` when a human places the file in `00_Inbox`;
