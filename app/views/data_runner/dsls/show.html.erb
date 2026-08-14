@@ -9,5 +9,5 @@
     <%= render "shared/captured_output", output: @task_output %>
   </section>
 <% else %>
-  <pre class="output highlighted-output"><%= syntax_highlight(@source, language: "ruby") %></pre>
+  <pre class="output highlighted-output dsl-overview"><%= syntax_highlight(@source, language: "ruby") %></pre>
 <% end %>

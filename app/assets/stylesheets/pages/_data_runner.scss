@@ -176,18 +176,24 @@
     min-height: 70vh;
     box-sizing: border-box;
     white-space: pre;
+    margin: 0;
+    border: 0;
+    tab-size: 2;
   }
 
   .code-editor-highlight {
+    overflow: hidden;
     pointer-events: none;
     z-index: 0;
   }
 
   .code-editor-input {
     color: transparent;
+    -webkit-text-fill-color: transparent;
     caret-color: #fff;
     background: transparent;
     position: relative;
+    overflow: auto;
     resize: vertical;
     z-index: 1;
   }
@@ -238,5 +244,57 @@
   .status.failed,
   .task-result-banner.failed {
     color: #991b1b;
+  }
+
+  &.page-dsls-show,
+  &.page-dsls-edit {
+    .dsl-header {
+      margin-bottom: 10px;
+
+      .detail-grid { gap: 8px; }
+
+      .card {
+        padding: 10px 12px;
+
+        h2 {
+          margin: 0 0 6px;
+          font-size: 1rem;
+        }
+
+        dl,
+        p { margin: 4px 0; }
+      }
+    }
+  }
+
+  &.page-dsls-show {
+    .dsl-overview {
+      max-height: 50vh;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+  }
+
+  &.page-dsls-edit {
+    .dsl-source-form {
+      width: 100%;
+      max-width: 1120px;
+      margin-right: auto;
+      margin-left: auto;
+    }
+
+    .code-editor-wrap {
+      height: calc(50vh - 4rem);
+      min-height: 0;
+    }
+
+    .code-editor-highlight,
+    .code-editor-input {
+      height: 100%;
+      min-height: 0;
+      max-height: 100%;
+    }
+
+    .code-editor-input { resize: none; }
   }
 }
