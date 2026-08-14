@@ -15,7 +15,7 @@
       name: 'billing'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/Billing/FY25-26/AP12-Jun/TC60-adjustments-all-year.xlsm',
+      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/tc60_adjustments.xlsm',
       local: 'tc60_adjustments.xlsx',
       format: :xlsx,
       strategy: :copy
