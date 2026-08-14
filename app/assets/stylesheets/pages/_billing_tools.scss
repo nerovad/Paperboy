@@ -207,6 +207,110 @@
   }
 }
 
+.billing-refresh-table {
+  table-layout: fixed;
+  border: 1px solid $neutral-border-subtle;
+
+  .billing-refresh-group-column { width: 70%; }
+  .billing-refresh-count-column { width: 14%; }
+  .billing-refresh-toggle-column { width: 16%; }
+
+  > thead > tr > th,
+  > tbody > tr > td {
+    border: 1px solid $neutral-border-subtle;
+  }
+
+  > thead > tr > th:nth-child(n+2),
+  > tbody > .billing-refresh-group-row > td:nth-child(n+2) {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .billing-refresh-group-trigger {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: $blue-action;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover { text-decoration: underline; }
+
+    &:focus-visible {
+      outline: 2px solid $blue-action;
+      outline-offset: 3px;
+    }
+  }
+
+  .billing-refresh-group-chevron {
+    display: inline-block;
+    margin-right: .3rem;
+    transition: transform .15s ease;
+  }
+
+  .billing-refresh-group-trigger[aria-expanded="true"] .billing-refresh-group-chevron {
+    transform: rotate(90deg);
+  }
+
+  .billing-refresh-detail-row > td {
+    padding: .75rem 1.25rem;
+    background: $surface-panel;
+  }
+}
+
+.billing-refresh-dsl-table {
+  width: 100%;
+  table-layout: fixed;
+  border: 1px solid $neutral-border-subtle;
+  border-collapse: collapse;
+
+  .billing-refresh-dsl-name-column { width: 22%; }
+  .billing-refresh-dsl-location-column { width: 60%; }
+  .billing-refresh-dsl-date-column { width: 18%; }
+
+  th,
+  td {
+    padding: .5rem .75rem;
+    border: 1px solid $neutral-border-subtle;
+    text-align: left;
+  }
+
+  th {
+    background: $surface-subtle;
+    color: $label-color;
+    font-size: .8rem;
+    text-transform: uppercase;
+  }
+
+  td:first-child { font-weight: 600; }
+
+  td:nth-child(1),
+  td:nth-child(2) {
+    overflow-wrap: anywhere;
+  }
+
+  td:nth-child(3),
+  th:nth-child(3) {
+    white-space: nowrap;
+  }
+
+  .is-script > td {
+    background: $blue-notice-bg;
+    color: $blue-action;
+  }
+
+  .is-current > td {
+    background: $green-status-bg;
+    color: $green-status-text;
+  }
+
+  .is-stale > td {
+    background: $red-status-bg;
+    color: $red-status-text;
+  }
+}
+
 .billing-email-subjects {
   width: calc(100% - 2rem);
   max-width: 900px;

@@ -25,7 +25,7 @@ module Billing
     private
 
     def load_groups
-      @groups = DataRefresh.groups
+      @groups = DataRefresh.groups(end_date: @active_billing_period&.end_date)
     end
 
     def group_values
