@@ -1024,7 +1024,7 @@
                           <select name="fields[][data_source_agency]"
                                   class="form-control form-control-sm data-source-agency-select">
                             <option value="">All agencies</option>
-                            <% Agency.order(:long_name).each do |agency| %>
+                            <% Coa::Agency.order(:long_name).each do |agency| %>
                               <option value="<%= agency.agency_id %>" <%= 'selected' if field.options&.dig('data_source_agency') == agency.agency_id.to_s %>><%= agency.long_name %></option>
                             <% end %>
                           </select>

@@ -44,10 +44,10 @@ class ApplicationController < ActionController::Base
     employee = Submitter.resolve(employee_id)
     return {} unless employee
 
-    unit = Unit.resolve_for_employee(employee)
-    department = Department.find_by(department_id: unit&.department_id)
-    division   = Division.find_by(division_id: department&.division_id)
-    agency     = Agency.find_by(agency_id: division&.agency_id)
+    unit = Coa::Unit.resolve_for_employee(employee)
+    department = Coa::Department.find_by(department_id: unit&.department_id)
+    division   = Coa::Division.find_by(division_id: department&.division_id)
+    agency     = Coa::Agency.find_by(agency_id: division&.agency_id)
 
     {
       employee_id: employee.employee_id,
@@ -79,7 +79,7 @@ class ApplicationController < ActionController::Base
     employee_id = session.dig(:user, 'employee_id')
     if employee_id.present?
       employee = Submitter.resolve(employee_id)
-      unit     = Unit.resolve_for_employee(employee)
+      unit     = Coa::Unit.resolve_for_employee(employee)
 
       # agency_id comes straight off the Employee row, normalized to the
       # three-character id the org tables and org_permissions use — Employees
@@ -89,7 +89,7 @@ class ApplicationController < ActionController::Base
       # Units), which previously zeroed out the whole chain and skipped every
       # org-level grant in load_user_permissions.
       @_current_user_org_chain = {
-        agency_id: Agency.normalize_id(employee&.agency),
+        agency_id: Coa::Agency.normalize_id(employee&.agency),
         division_id: unit&.division_id,
         department_id: unit&.department_id,
         unit_id: unit&.unit_id

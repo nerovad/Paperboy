@@ -110,7 +110,7 @@ class CoaCustomerLookupsControllerTest < ActionController::TestCase
     department = record(long_name: 'Department Name')
 
     Employee.stub(:select, employee_scope) do
-      ::Agency.stub(:normalize_id, normalized_agency) do
+      Coa::Agency.stub(:normalize_id, normalized_agency) do
         Coa::SubUnit.stub(:find_by, sub_unit) do
           Coa::Unit.stub(:find_by, unit) do
             Coa::Agency.stub(:find_by, agency) do

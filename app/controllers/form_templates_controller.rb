@@ -266,7 +266,7 @@ class FormTemplatesController < ApplicationController
           @employees = fetch_employees
           @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
           @agency_options = begin
-            Agency.order(:long_name).pluck(:long_name, :agency_id)
+            Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
           rescue StandardError
             []
           end
@@ -429,7 +429,7 @@ class FormTemplatesController < ApplicationController
                       .to_set { |s| [s.agency_id, s.division_id, s.department_id, s.unit_id] }
 
     # Also ensure every agency has a grant (even if not yet in org_permissions)
-    Agency.pluck(:agency_id).each do |aid|
+    Coa::Agency.pluck(:agency_id).each do |aid|
       existing_scopes << [aid, nil, nil, nil]
     end
 

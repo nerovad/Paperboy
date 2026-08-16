@@ -98,25 +98,25 @@ class FormSearch
   # sidebar and so renders on every page, whichever controller drew it.
 
   def self.agency_options
-    Agency.order(:long_name).pluck(:long_name, :agency_id)
+    Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
   end
 
   def self.division_options(agency)
     return [] if agency.blank?
 
-    Division.where(agency_id: agency).order(:long_name).pluck(:long_name, :division_id)
+    Coa::Division.where(agency_id: agency).order(:long_name).pluck(:long_name, :division_id)
   end
 
   def self.department_options(division)
     return [] if division.blank?
 
-    Department.where(division_id: division).order(:long_name).pluck(:long_name, :department_id)
+    Coa::Department.where(division_id: division).order(:long_name).pluck(:long_name, :department_id)
   end
 
   def self.unit_options(department)
     return [] if department.blank?
 
-    Unit.where(department_id: department).order(:unit_id).map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+    Coa::Unit.where(department_id: department).order(:unit_id).map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
   end
 
   # Every form that can appear in the Submissions list: the hardcoded ones and
@@ -159,10 +159,10 @@ class FormSearch
 
   def org_label(level, value)
     case level
-    when :agency then Agency.where(agency_id: value).pick(:long_name) || value
-    when :division then Division.where(division_id: value).pick(:long_name) || value
-    when :department then Department.where(department_id: value).pick(:long_name) || value
-    else Unit.where(unit_id: value).pick(:long_name)&.then { |name| "#{value} - #{name}" } || value
+    when :agency then Coa::Agency.where(agency_id: value).pick(:long_name) || value
+    when :division then Coa::Division.where(division_id: value).pick(:long_name) || value
+    when :department then Coa::Department.where(department_id: value).pick(:long_name) || value
+    else Coa::Unit.where(unit_id: value).pick(:long_name)&.then { |name| "#{value} - #{name}" } || value
     end
   end
 end

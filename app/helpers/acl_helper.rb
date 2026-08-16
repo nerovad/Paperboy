@@ -7,7 +7,7 @@ module AclHelper
   def contractor_unit_options(contractor)
     return [] if contractor.unit.blank?
 
-    unit = Unit.find_by(unit_id: contractor.unit)
+    unit = Coa::Unit.find_by(unit_id: contractor.unit)
     label = unit ? "#{unit.unit_id} - #{unit.long_name}" : contractor.unit
     [[label, contractor.unit]]
   end

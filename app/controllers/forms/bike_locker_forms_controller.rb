@@ -17,10 +17,10 @@ module Forms
       @current_user_groups = current_user_group_ids
 
       # --- Organization chain (same pattern you use now) ---
-      unit        = Unit.resolve_for_employee(@employee)
-      department  = unit ? Department.find_by(department_id: unit['department_id']) : nil
-      division    = department ? Division.find_by(division_id: department['division_id']) : nil
-      agency      = division ? Agency.find_by(agency_id: division['agency_id']) : nil
+      unit        = Coa::Unit.resolve_for_employee(@employee)
+      department  = unit ? Coa::Department.find_by(department_id: unit['department_id']) : nil
+      division    = department ? Coa::Division.find_by(division_id: department['division_id']) : nil
+      agency      = division ? Coa::Agency.find_by(agency_id: division['agency_id']) : nil
 
       # --- Prefill values (everything prefilled exactly like you do now) ---
       @prefill_data = {
@@ -35,25 +35,25 @@ module Forms
       }
 
       # --- Select options (IDs/order match gsabss_selects_controller.js expectations) ---
-      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+      @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
       @division_options = if agency
-                            Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id)
+                            Coa::Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id)
                           else
                             []
                           end
 
       @department_options = if division
-                              Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id)
+                              Coa::Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id)
                             else
                               []
                             end
 
       # Unit label = "unit_id - long_name", value = unit_id (your current pattern)
       @unit_options = if department
-                        Unit.where(department_id: department.department_id)
-                            .order(:unit_id)
-                            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                        Coa::Unit.where(department_id: department.department_id)
+                                 .order(:unit_id)
+                                 .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
                       else
                         []
                       end
@@ -95,10 +95,10 @@ module Forms
         # Rebuild options on failure (same as in new)
         # (We intentionally repeat the logic to keep this template self-contained.)
         emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
-        unit        = Unit.resolve_for_employee(emp)
-        department  = unit ? Department.find_by(department_id: unit['department_id']) : nil
-        division    = department ? Division.find_by(division_id: department['division_id']) : nil
-        agency      = division ? Agency.find_by(agency_id: division['agency_id']) : nil
+        unit        = Coa::Unit.resolve_for_employee(emp)
+        department  = unit ? Coa::Department.find_by(department_id: unit['department_id']) : nil
+        division    = department ? Coa::Division.find_by(division_id: department['division_id']) : nil
+        agency      = division ? Coa::Agency.find_by(agency_id: division['agency_id']) : nil
 
         @prefill_data = {
           employee_id: emp&.[]('id'),
@@ -111,13 +111,13 @@ module Forms
           unit: unit&.unit_id
         }
 
-        @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
-        @division_options = agency ? Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
-        @department_options = division ? Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
+        @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
+        @division_options = agency ? Coa::Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
+        @department_options = division ? Coa::Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
         @unit_options = if department
-                          Unit.where(department_id: department.department_id)
-                              .order(:unit_id)
-                              .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                          Coa::Unit.where(department_id: department.department_id)
+                                   .order(:unit_id)
+                                   .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
                         else
                           []
                         end
@@ -214,13 +214,13 @@ module Forms
         unit: @bike_locker_form&.unit
       }
 
-      @agency_options     = Agency.order(:long_name).pluck(:long_name, :agency_id)
-      @division_options   = agency_id ? Division.where(agency_id: agency_id).order(:long_name).pluck(:long_name, :division_id) : []
-      @department_options = division_id ? Department.where(division_id: division_id).order(:long_name).pluck(:long_name, :department_id) : []
+      @agency_options     = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
+      @division_options   = agency_id ? Coa::Division.where(agency_id: agency_id).order(:long_name).pluck(:long_name, :division_id) : []
+      @department_options = division_id ? Coa::Department.where(division_id: division_id).order(:long_name).pluck(:long_name, :department_id) : []
       @unit_options = if department_id
-                        Unit.where(department_id: department_id)
-                            .order(:unit_id)
-                            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                        Coa::Unit.where(department_id: department_id)
+                                 .order(:unit_id)
+                                 .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
                       else
                         []
                       end

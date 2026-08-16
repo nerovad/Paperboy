@@ -223,7 +223,7 @@ class FormTemplateRoutingStep < ApplicationRecord
       members.select { |e| e.unit.to_s == submitter_value.to_s }.map { |e| e.id.to_s }
     else
       unit_ids = members.map(&:unit).compact.uniq
-      units = unit_ids.any? ? Unit.where(unit_id: unit_ids).index_by { |u| u.unit_id.to_s } : {}
+      units = unit_ids.any? ? Coa::Unit.where(unit_id: unit_ids).index_by { |u| u.unit_id.to_s } : {}
       col = "#{org_filter_level}_id"
       members.select do |e|
         u = units[e.unit.to_s]

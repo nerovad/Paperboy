@@ -16,5 +16,17 @@ module Coa
     has_many :sub_units, foreign_key: :agency_id, inverse_of: :agency
     has_many :tasks, foreign_key: :agency_id, inverse_of: :agency
     has_many :units, foreign_key: :agency_id, inverse_of: :agency
+
+    # Employee records sometimes carry a four-character personnel-system
+    # variant (for example, HCAV) while the organization and account tables
+    # use the three-character agency id (HCA).
+    def self.normalize_id(code)
+      key = code.to_s.strip.upcase
+      return nil if key.blank?
+      return key if exists?(agency_id: key)
+
+      trimmed = key.sub(/V\z/, '')
+      trimmed != key && exists?(agency_id: trimmed) ? trimmed : key
+    end
   end
 end

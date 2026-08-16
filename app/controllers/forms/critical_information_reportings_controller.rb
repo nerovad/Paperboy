@@ -13,10 +13,10 @@ module Forms
       redirect_to login_path, alert: 'Please sign in to start a submission.' and return unless @employee
 
       # --- Organization chain (same pattern you use now) ---
-      unit        = Unit.resolve_for_employee(@employee)
-      department  = unit ? Department.find_by(department_id: unit.department_id) : nil
-      division    = department ? Division.find_by(division_id: department.division_id) : nil
-      agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
+      unit        = Coa::Unit.resolve_for_employee(@employee)
+      department  = unit ? Coa::Department.find_by(department_id: unit.department_id) : nil
+      division    = department ? Coa::Division.find_by(division_id: department.division_id) : nil
+      agency      = division ? Coa::Agency.find_by(agency_id: division.agency_id) : nil
 
       # --- Prefill values (everything prefilled exactly like you do now) ---
       @prefill_data = {
@@ -31,38 +31,38 @@ module Forms
       }
 
       # --- Select options (IDs/order match gsabss_selects_controller.js expectations) ---
-      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+      @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
       @division_options = if agency
-                            Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id)
+                            Coa::Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id)
                           else
                             []
                           end
 
       @department_options = if division
-                              Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id)
+                              Coa::Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id)
                             else
                               []
                             end
 
       # Unit label = "unit_id - long_name", value = unit_id (your current pattern)
       @unit_options = if department
-                        Unit.where(department_id: department.department_id)
-                            .order(:unit_id)
-                            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                        Coa::Unit.where(department_id: department.department_id)
+                                 .order(:unit_id)
+                                 .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
                       else
                         []
                       end
 
       # Employee dropdown options (for Pages 4+) — scoped to General Services Agency
-      gsa = Agency.find_by(long_name: 'General Services Agency')
+      gsa = Coa::Agency.find_by(long_name: 'General Services Agency')
       @employee_options = Employee.where(agency: gsa&.agency_id)
                                   .select(:employee_id, :first_name, :last_name)
                                   .order(:last_name, :first_name)
                                   .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
 
       # Agency options for Impacted Customers multi-select
-      @impacted_customer_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+      @impacted_customer_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
       # Load location options
       @location_options = load_location_options
@@ -106,30 +106,30 @@ module Forms
       redirect_to login_path, alert: 'Please sign in.' and return unless @employee
 
       # Load organization options (same as new action)
-      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+      @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
-      agency = Agency.find_by(agency_id: @critical_information_reporting.agency)
-      @division_options = agency ? Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
+      agency = Coa::Agency.find_by(agency_id: @critical_information_reporting.agency)
+      @division_options = agency ? Coa::Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
 
-      division = Division.find_by(division_id: @critical_information_reporting.division)
-      @department_options = division ? Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
+      division = Coa::Division.find_by(division_id: @critical_information_reporting.division)
+      @department_options = division ? Coa::Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
 
-      department = Department.find_by(department_id: @critical_information_reporting.department)
+      department = Coa::Department.find_by(department_id: @critical_information_reporting.department)
       @unit_options = if department
-                        Unit.where(department_id: department.department_id)
-                            .order(:unit_id)
-                            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                        Coa::Unit.where(department_id: department.department_id)
+                                 .order(:unit_id)
+                                 .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
                       else
                         []
                       end
 
-      gsa = Agency.find_by(long_name: 'General Services Agency')
+      gsa = Coa::Agency.find_by(long_name: 'General Services Agency')
       @employee_options = Employee.where(agency: gsa&.agency_id)
                                   .select(:employee_id, :first_name, :last_name)
                                   .order(:last_name, :first_name)
                                   .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
 
-      @impacted_customer_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+      @impacted_customer_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
       @location_options = load_location_options
     end
@@ -141,30 +141,30 @@ module Forms
         redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
       else
         # Reload options on failure
-        @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+        @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
-        agency = Agency.find_by(agency_id: @critical_information_reporting.agency)
-        @division_options = agency ? Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
+        agency = Coa::Agency.find_by(agency_id: @critical_information_reporting.agency)
+        @division_options = agency ? Coa::Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
 
-        division = Division.find_by(division_id: @critical_information_reporting.division)
-        @department_options = division ? Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
+        division = Coa::Division.find_by(division_id: @critical_information_reporting.division)
+        @department_options = division ? Coa::Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
 
-        department = Department.find_by(department_id: @critical_information_reporting.department)
+        department = Coa::Department.find_by(department_id: @critical_information_reporting.department)
         @unit_options = if department
-                          Unit.where(department_id: department.department_id)
-                              .order(:unit_id)
-                              .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                          Coa::Unit.where(department_id: department.department_id)
+                                   .order(:unit_id)
+                                   .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
                         else
                           []
                         end
 
-        gsa = Agency.find_by(long_name: 'General Services Agency')
+        gsa = Coa::Agency.find_by(long_name: 'General Services Agency')
         @employee_options = Employee.where(agency: gsa&.agency_id)
                                     .select(:employee_id, :first_name, :last_name)
                                     .order(:last_name, :first_name)
                                     .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
 
-        @impacted_customer_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+        @impacted_customer_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
         @location_options = load_location_options
 
@@ -248,10 +248,10 @@ module Forms
         # Rebuild options on failure (same as in new)
         # (We intentionally repeat the logic to keep this template self-contained.)
         emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
-        unit        = Unit.resolve_for_employee(emp)
-        department  = unit ? Department.find_by(department_id: unit.department_id) : nil
-        division    = department ? Division.find_by(division_id: department.division_id) : nil
-        agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
+        unit        = Coa::Unit.resolve_for_employee(emp)
+        department  = unit ? Coa::Department.find_by(department_id: unit.department_id) : nil
+        division    = department ? Coa::Division.find_by(division_id: department.division_id) : nil
+        agency      = division ? Coa::Agency.find_by(agency_id: division.agency_id) : nil
 
         @prefill_data = {
           employee_id: emp&.employee_id,
@@ -264,25 +264,25 @@ module Forms
           unit: unit&.unit_id
         }
 
-        @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
-        @division_options = agency ? Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
-        @department_options = division ? Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
+        @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
+        @division_options = agency ? Coa::Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
+        @department_options = division ? Coa::Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id) : []
         @unit_options = if department
-                          Unit.where(department_id: department.department_id)
-                              .order(:unit_id)
-                              .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                          Coa::Unit.where(department_id: department.department_id)
+                                   .order(:unit_id)
+                                   .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
                         else
                           []
                         end
 
         # CRITICAL: Reload employee and location options for Pages 4+ when validation fails
-        gsa = Agency.find_by(long_name: 'General Services Agency')
+        gsa = Coa::Agency.find_by(long_name: 'General Services Agency')
         @employee_options = Employee.where(agency: gsa&.agency_id)
                                     .select(:employee_id, :first_name, :last_name)
                                     .order(:last_name, :first_name)
                                     .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
 
-        @impacted_customer_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+        @impacted_customer_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
         @location_options = load_location_options
 

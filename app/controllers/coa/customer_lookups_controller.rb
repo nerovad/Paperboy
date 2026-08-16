@@ -39,7 +39,7 @@ module Coa
     end
 
     def hierarchy_for(employee)
-      agency_id = ::Agency.normalize_id(employee.agency)
+      agency_id = Coa::Agency.normalize_id(employee.agency)
       sub_unit = hca_sub_unit(employee, agency_id)
       unit_id = sub_unit&.unit_id || employee.unit
       unit = Coa::Unit.find_by(agency_id: agency_id, unit_id: unit_id)

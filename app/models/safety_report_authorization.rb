@@ -35,7 +35,7 @@ class SafetyReportAuthorization < ApplicationRecord
   end
 
   def division
-    Division.find_by(agency_id: AGENCY_ID, division_id: division_id)
+    Coa::Division.find_by(agency_id: AGENCY_ID, division_id: division_id)
   end
 
   # Label for the org node this authorization covers, in HCA's vocabulary.
@@ -85,7 +85,7 @@ class SafetyReportAuthorization < ApplicationRecord
     employee_id = submission.employee_id if submission.respond_to?(:employee_id)
     return nil if employee_id.blank?
 
-    Unit.resolve_for_employee(Submitter.resolve(employee_id))&.division_id
+    Coa::Unit.resolve_for_employee(Submitter.resolve(employee_id))&.division_id
   end
   private_class_method :submission_division_id
 

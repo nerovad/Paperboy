@@ -22,7 +22,7 @@ module Forms
       unless @employee
         redirect_to login_path, alert: 'Please sign in to start a submission.' and return
 
-        @agency_options     = Agency.order(:long_name).pluck(:long_name, :agency_id)
+        @agency_options     = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
         @division_options   = []
         @department_options = []
         @unit_options       = []
@@ -34,10 +34,10 @@ module Forms
       @is_mb3 = EmployeeUnionCode.code_for(@employee.employee_id) == 'MB3'
 
       # Org lookups (guard each step)
-      unit        = Unit.resolve_for_employee(@employee)
-      department  = unit ? Department.find_by(department_id: unit.department_id) : nil
-      division    = department ? Division.find_by(division_id: department.division_id) : nil
-      agency      = division ? Agency.find_by(agency_id: division.agency_id) : nil
+      unit        = Coa::Unit.resolve_for_employee(@employee)
+      department  = unit ? Coa::Department.find_by(department_id: unit.department_id) : nil
+      division    = department ? Coa::Division.find_by(division_id: department.division_id) : nil
+      agency      = division ? Coa::Agency.find_by(agency_id: division.agency_id) : nil
 
       # Prefill with IDs (unit = ID only)
       @prefill_data = {
@@ -55,24 +55,24 @@ module Forms
       @permit_type_options = permit_type_options(@is_mb3)
 
       # Dropdowns
-      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+      @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
       @division_options = if agency
-                            Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id)
+                            Coa::Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id)
                           else
                             []
                           end
 
       @department_options = if division
-                              Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id)
+                              Coa::Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id)
                             else
                               []
                             end
 
       @unit_options = if department
-                        Unit.where(department_id: department.department_id)
-                            .order(:unit_id)
-                            .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                        Coa::Unit.where(department_id: department.department_id)
+                                 .order(:unit_id)
+                                 .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
                       else
                         []
                       end
@@ -88,8 +88,8 @@ module Forms
       is_mb3 = (EmployeeUnionCode.code_for(employee_id) == 'MB3')
 
       # Get employee's department for authorized approver lookup
-      unit = Unit.resolve_for_employee(emp_record)
-      department = unit ? Department.find_by(department_id: unit.department_id) : nil
+      unit = Coa::Unit.resolve_for_employee(emp_record)
+      department = unit ? Coa::Department.find_by(department_id: unit.department_id) : nil
 
       # Build the submission early so we can access the submitted unit
       @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
@@ -226,15 +226,15 @@ module Forms
     end
 
     def reload_form_options(emp_record)
-      unit       = Unit.resolve_for_employee(emp_record)
-      department = unit ? Department.find_by(department_id: unit.department_id) : nil
-      division   = department ? Division.find_by(division_id: department.division_id) : nil
-      agency     = division ? Agency.find_by(agency_id: division.agency_id) : nil
+      unit       = Coa::Unit.resolve_for_employee(emp_record)
+      department = unit ? Coa::Department.find_by(department_id: unit.department_id) : nil
+      division   = department ? Coa::Division.find_by(division_id: department.division_id) : nil
+      agency     = division ? Coa::Agency.find_by(agency_id: division.agency_id) : nil
 
-      @agency_options     = Agency.order(:long_name).pluck(:long_name, :agency_id)
-      @division_options   = division ? Division.where(agency_id: agency&.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
-      @department_options = department ? Department.where(division_id: division&.division_id).order(:long_name).pluck(:long_name, :department_id) : []
-      @unit_options       = department ? Unit.where(department_id: department.department_id).order(:unit_id).map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] } : []
+      @agency_options     = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
+      @division_options   = division ? Coa::Division.where(agency_id: agency&.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
+      @department_options = department ? Coa::Department.where(division_id: division&.division_id).order(:long_name).pluck(:long_name, :department_id) : []
+      @unit_options       = department ? Coa::Unit.where(department_id: department.department_id).order(:unit_id).map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] } : []
     end
 
     def parking_lot_submission_params

@@ -207,7 +207,7 @@ class InboxQuery
   def compute_submitter_org_filter(employee_ids)
     employees = Employee.where(employee_id: employee_ids).to_a
     unit_ids = employees.map(&:unit).compact.uniq
-    units = unit_ids.any? ? Unit.where(unit_id: unit_ids).index_by { |u| u.unit_id.to_s } : {}
+    units = unit_ids.any? ? Coa::Unit.where(unit_id: unit_ids).index_by { |u| u.unit_id.to_s } : {}
 
     filter = { agency: [], division: [], department: [], unit: [] }
     employees.each do |emp|

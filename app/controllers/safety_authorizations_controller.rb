@@ -106,10 +106,10 @@ class SafetyAuthorizationsController < ApplicationController
 
   # GSABSS has duplicate org rows; collapse by id the way the GSA console does.
   def ordered_divisions
-    @ordered_divisions ||= Division.where(agency_id: SafetyReportAuthorization::AGENCY_ID)
-                                   .order(:long_name)
-                                   .to_a
-                                   .uniq(&:division_id)
+    @ordered_divisions ||= Coa::Division.where(agency_id: SafetyReportAuthorization::AGENCY_ID)
+                                        .order(:long_name)
+                                        .to_a
+                                        .uniq(&:division_id)
   end
 
   def division_options

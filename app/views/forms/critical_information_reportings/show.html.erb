@@ -93,9 +93,9 @@
           <% end %>
         </div>
         <div class="org-details">
-          <p class="primary"><%= Agency.find_by(agency_id: @critical_information_reporting.agency)&.long_name || @critical_information_reporting.agency %></p>
+          <p class="primary"><%= Coa::Agency.find_by(agency_id: @critical_information_reporting.agency)&.long_name || @critical_information_reporting.agency %></p>
           <p class="secondary">
-            <%= Division.find_by(division_id: @critical_information_reporting.division)&.long_name || @critical_information_reporting.division %>
+            <%= Coa::Division.find_by(division_id: @critical_information_reporting.division)&.long_name || @critical_information_reporting.division %>
           </p>
         </div>
       </div>

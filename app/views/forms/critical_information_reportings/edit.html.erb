@@ -221,7 +221,7 @@
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :impacted_agency, "Agency" %>
             <%= form.select :impacted_agency,
-                  options_for_select(Agency.order(:long_name).pluck(:long_name).uniq, @critical_information_reporting.impacted_agency.to_s.split(",")),
+                  options_for_select(Coa::Agency.order(:long_name).pluck(:long_name).uniq, @critical_information_reporting.impacted_agency.to_s.split(",")),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
