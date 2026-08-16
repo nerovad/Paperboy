@@ -33,7 +33,7 @@ class FormRequestForm < ApplicationRecord
 
   # Get the form template for this model (for button configuration)
   def form_template
-    @form_template ||= FormTemplate.find_by(class_name: self.class.name)
+    @form_template ||= Forms::Template.find_by(class_name: self.class.name)
   end
 
   def acceptable_attach_existing_pdf_form_files

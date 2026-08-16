@@ -412,10 +412,10 @@ class AclController < ApplicationController
   end
 
   def build_all_forms_list
-    template_names = FormTemplate.pluck(:name).to_set(&:downcase)
+    template_names = Forms::Template.pluck(:name).to_set(&:downcase)
     forms = []
 
-    # Add legacy forms that don't exist as a FormTemplate
+    # Add legacy forms that don't exist as a Forms::Template
     LEGACY_FORMS.each do |form|
       next if template_names.include?(form[:label].downcase)
 
@@ -423,7 +423,7 @@ class AclController < ApplicationController
     end
 
     # Add all FormTemplates
-    FormTemplate.order(:name).each do |template|
+    Forms::Template.order(:name).each do |template|
       forms << { key: template.id.to_s, label: template.name }
     end
 

@@ -7,18 +7,18 @@ class FormTemplatesController < ApplicationController
   before_action :set_form_template, only: %i[show edit update destroy archive unarchive]
 
   def index
-    @form_templates = FormTemplate.includes(:form_fields).order(:name)
+    @form_templates = Forms::Template.includes(:form_fields).order(:name)
     @acl_groups = fetch_acl_groups
     @employees = fetch_employees
-    @existing_tags = FormTemplate.all_tags
+    @existing_tags = Forms::Template.all_tags
   end
 
   def new
-    @form_template = FormTemplate.new
+    @form_template = Forms::Template.new
   end
 
   def create
-    @form_template = FormTemplate.new(form_template_params)
+    @form_template = Forms::Template.new(form_template_params)
     @form_template.created_by = session.dig(:user, 'employee_id')
 
     # Set pending routing steps to pass validation (they'll be saved after the form_template)
@@ -191,7 +191,7 @@ class FormTemplatesController < ApplicationController
     @acl_groups = fetch_acl_groups
     @employees = fetch_employees
     @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
-    @existing_tags = FormTemplate.all_tags
+    @existing_tags = Forms::Template.all_tags
   end
 
   def update
@@ -348,7 +348,7 @@ class FormTemplatesController < ApplicationController
   private
 
   def set_form_template
-    @form_template = FormTemplate.find(params[:id])
+    @form_template = Forms::Template.find(params[:id])
   end
 
   def run_rails_command(*arguments)
@@ -359,7 +359,7 @@ class FormTemplatesController < ApplicationController
     sidebar = 'app/views/shared/_sidebar.html.erb'
     return unless File.exist?(sidebar)
 
-    form_template = FormTemplate.find_by(class_name: class_name)
+    form_template = Forms::Template.find_by(class_name: class_name)
     return unless form_template
 
     label = form_template.name
@@ -381,9 +381,9 @@ class FormTemplatesController < ApplicationController
   def auto_grant_to_select_all_scopes(new_template)
     # Build the set of all form permission keys that existed BEFORE this template
     legacy_keys = AclController::LEGACY_FORMS.map { |f| f[:key] }
-    template_names = FormTemplate.pluck(:name).to_set(&:downcase)
+    template_names = Forms::Template.pluck(:name).to_set(&:downcase)
     legacy_keys.reject! { |k| template_names.include?(AclController::LEGACY_FORMS.find { |f| f[:key] == k }&.dig(:label)&.downcase) }
-    existing_keys = legacy_keys + FormTemplate.where.not(id: new_template.id).pluck(:id).map(&:to_s)
+    existing_keys = legacy_keys + Forms::Template.where.not(id: new_template.id).pluck(:id).map(&:to_s)
     expected_count = existing_keys.size
     new_key = new_template.id.to_s
 
@@ -1225,7 +1225,7 @@ class FormTemplatesController < ApplicationController
     raw = step_data[:inbox_buttons]
     return [] if raw.blank?
 
-    Array(raw).map(&:to_s).reject(&:blank?) & FormTemplate::INBOX_BUTTON_TYPES.keys
+    Array(raw).map(&:to_s).reject(&:blank?) & Forms::Template::INBOX_BUTTON_TYPES.keys
   end
 
   def save_copy_recipients(form_template)
@@ -1676,7 +1676,7 @@ class FormTemplatesController < ApplicationController
   end
 
   def generate_dynamic_view(class_name)
-    form_template = FormTemplate.find_by(class_name: class_name)
+    form_template = Forms::Template.find_by(class_name: class_name)
     return unless form_template
 
     view_path = Rails.root.join("app/views/forms/#{form_template.plural_file_name}/new.html.erb")
@@ -1790,7 +1790,7 @@ class FormTemplatesController < ApplicationController
   end
 
   def generate_dynamic_edit_view(class_name)
-    form_template = FormTemplate.find_by(class_name: class_name)
+    form_template = Forms::Template.find_by(class_name: class_name)
     return unless form_template
 
     view_path = Rails.root.join("app/views/forms/#{form_template.plural_file_name}/edit.html.erb")

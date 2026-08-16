@@ -5,7 +5,7 @@ class SubmissionsController < ApplicationController
   include Filterable
   include Pagy::Method
 
-  # Legacy forms that are hardcoded (not created via FormTemplate)
+  # Legacy forms that are hardcoded (not created via Forms::Template)
   LEGACY_FORMS = [
     { model: 'ParkingLotSubmission', type: 'Parking Lot', path_helper: :parking_lot_submission_path },
     { model: 'ProbationTransferRequest', type: 'Probation Transfer', path_helper: :probation_transfer_request_path },
@@ -24,7 +24,7 @@ class SubmissionsController < ApplicationController
     @saved_searches = SavedSearch.for_employee(employee_id).order(:name)
 
     @status_items = []
-    @prefix_map = FormReference.prefix_map
+    @prefix_map = Forms::Reference.prefix_map
 
     # Advanced Search (the sidebar modal): org narrowing plus form type, status
     # and category. Shares this page's filter params, so the modal and the
@@ -53,10 +53,10 @@ class SubmissionsController < ApplicationController
                            end
 
     # Form types the viewer holds a visibility grant for (direct or via a
-    # group) — see FormVisibilityGrant. These widen the list to every
+    # group) — see Forms::VisibilityGrant. These widen the list to every
     # submission of that type regardless of submitter, the same grant that
     # widens the inbox.
-    @viewer_form_types = FormVisibilityGrant.form_types_for(employee_id, current_user_group_ids)
+    @viewer_form_types = Forms::VisibilityGrant.form_types_for(employee_id, current_user_group_ids)
 
     # Show the owner column whenever the viewer can see submissions that aren't
     # their own — as a supervisor/admin, or via a visibility grant.
@@ -104,7 +104,7 @@ class SubmissionsController < ApplicationController
     # Reference-number (ID) search, e.g. "PLS-845", "pls-845" or "845".
     if params[:filter_reference].present?
       query = params[:filter_reference]
-      @status_items = @status_items.select { |item| FormReference.matches?(item[:reference], query) }
+      @status_items = @status_items.select { |item| Forms::Reference.matches?(item[:reference], query) }
     end
 
     # Apply sorting. Default falls back gracefully if the user hid Last Updated.
@@ -149,7 +149,7 @@ class SubmissionsController < ApplicationController
     end
 
     # Dynamic forms from FormTemplates
-    FormTemplate.joins(:statuses).distinct.each do |template|
+    Forms::Template.joins(:statuses).distinct.each do |template|
       model_class = application_record_class_named(template.class_name)
       next unless model_class
 
@@ -170,7 +170,7 @@ class SubmissionsController < ApplicationController
     end
 
     # Check dynamic forms
-    template = FormTemplate.find_by(name: form_type)
+    template = Forms::Template.find_by(name: form_type)
     if template
       model_class = application_record_class_named(template.class_name)
       return [] unless model_class
@@ -205,7 +205,7 @@ class SubmissionsController < ApplicationController
       next
     end
 
-    FormTemplate.joins(:statuses).distinct.each do |template|
+    Forms::Template.joins(:statuses).distinct.each do |template|
       model_class = application_record_class_named(template.class_name)
       next unless model_class
 
@@ -254,7 +254,7 @@ class SubmissionsController < ApplicationController
 
   def load_form_template_submissions(_employee_id)
     # Find all form templates that have statuses configured
-    FormTemplate.joins(:statuses).distinct.each do |template|
+    Forms::Template.joins(:statuses).distinct.each do |template|
       # Skip templates that don't match the type filter
       next unless @form_search.include_form_type?(template.name)
 
@@ -287,7 +287,7 @@ class SubmissionsController < ApplicationController
   end
 
   # Records of model_class to load for the Submissions list. A visibility grant
-  # (FormVisibilityGrant) lets the viewer see every submission of a granted form
+  # (Forms::VisibilityGrant) lets the viewer see every submission of a granted form
   # type regardless of who submitted it — the same grant that widens the inbox.
   # Otherwise the list is scoped to the viewer's own/subordinate ids (nil = no
   # restriction, i.e. system admin viewing All).
@@ -344,7 +344,7 @@ class SubmissionsController < ApplicationController
 
     item = {
       id: submission.id,
-      reference: FormReference.reference_for(submission, @prefix_map),
+      reference: Forms::Reference.reference_for(submission, @prefix_map),
       type: type,
       title: title,
       status: submission.status_label,

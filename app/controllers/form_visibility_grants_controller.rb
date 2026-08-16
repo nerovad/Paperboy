@@ -11,9 +11,9 @@ class FormVisibilityGrantsController < ApplicationController
 
   def index
     @form_types = form_type_catalog
-    @grants_by_type = FormVisibilityGrant.for_group(Group.pluck(:GroupID))
-                                         .includes(:group)
-                                         .group_by(&:form_type)
+    @grants_by_type = Forms::VisibilityGrant.for_group(Group.pluck(:GroupID))
+                                            .includes(:group)
+                                            .group_by(&:form_type)
     @groups = Group.order(:group_name)
   end
 
@@ -23,7 +23,7 @@ class FormVisibilityGrantsController < ApplicationController
 
     redirect_to form_visibility_grants_path, alert: 'Pick a form and a group.' and return if form_type.blank? || group_id.blank?
 
-    grant = FormVisibilityGrant.new(form_type: form_type, grantee_type: 'group', group_id: group_id)
+    grant = Forms::VisibilityGrant.new(form_type: form_type, grantee_type: 'group', group_id: group_id)
     if grant.save
       redirect_to form_visibility_grants_path, notice: 'Visibility grant added.'
     else
@@ -32,7 +32,7 @@ class FormVisibilityGrantsController < ApplicationController
   end
 
   def destroy
-    grant = FormVisibilityGrant.find(params[:id])
+    grant = Forms::VisibilityGrant.find(params[:id])
     grant.destroy
     redirect_to form_visibility_grants_path, notice: 'Visibility grant removed.'
   end
@@ -42,7 +42,7 @@ class FormVisibilityGrantsController < ApplicationController
   # Every form type a grant can target: active dynamic templates plus the
   # legacy hand-written forms (kept in sync with InboxHelper::HARDCODED_FORM_TYPES).
   def form_type_catalog
-    dynamic = FormTemplate.where(archived: false).order(:name).map do |t|
+    dynamic = Forms::Template.where(archived: false).order(:name).map do |t|
       { class_name: t.class_name, label: t.name }
     end
     legacy = InboxHelper::HARDCODED_FORM_TYPES.map do |class_name|

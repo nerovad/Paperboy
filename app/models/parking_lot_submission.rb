@@ -18,7 +18,7 @@ class ParkingLotSubmission < ApplicationRecord
   # Links this hand-written model to its form-builder template so TrackableStatus
   # can run the UI-defined routing steps (Authorization -> Sean Payne -> GSA_Security).
   def form_template
-    @form_template ||= FormTemplate.find_by(class_name: self.class.name)
+    @form_template ||= Forms::Template.find_by(class_name: self.class.name)
   end
 
   # Stored columns on this model for org hierarchy are *codes/IDs*:

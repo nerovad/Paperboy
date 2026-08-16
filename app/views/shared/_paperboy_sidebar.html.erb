@@ -34,7 +34,7 @@
       "Notice of Change"    => "notice_of_change",
     }
 
-    # Legacy forms not managed via FormTemplate
+    # Legacy forms not managed via Forms::Template
     legacy_forms = [
       ["Creative Job Request", new_creative_job_request_path],
       ["Leave of Absence", new_leave_of_absence_form_path],
@@ -58,12 +58,12 @@
     # Cache form templates with their field labels and tags for search
     form_field_labels = {}
     form_tags = {}
-    FormTemplate.active.includes(:form_fields).each do |template|
+    Forms::Template.active.includes(:form_fields).each do |template|
       form_field_labels[template.name] = template.form_fields.pluck(:label).join(", ")
       form_tags[template.name] = template.tags_array.join(", ")
     end
 
-    # Resolve the route path for a FormTemplate.
+    # Resolve the route path for a Forms::Template.
     # Tries the standard _form convention first, then falls back
     # to the base name for legacy forms (e.g. critical_information_reportings).
     resolve_path = ->(template) {
@@ -76,7 +76,7 @@
 
     # Add form templates — non-admins only see those granted by ACL
     # Archived templates are excluded from the sidebar but remain in Manage Form Templates.
-    FormTemplate.active.each do |template|
+    Forms::Template.active.each do |template|
       path = resolve_path.call(template)
       next unless path
       next if available_forms.any? { |f| f[0] == template.name }

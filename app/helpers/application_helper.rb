@@ -198,7 +198,7 @@ module ApplicationHelper
     non_display = %w[media_attachment information]
     catalog = {}
 
-    FormTemplate.includes(:form_fields).order(:name).each do |template|
+    Forms::Template.includes(:form_fields).order(:name).each do |template|
       klass = template.class_name.safe_constantize
       next unless klass.respond_to?(:column_names)
 

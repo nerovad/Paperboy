@@ -125,23 +125,23 @@ class FormSearch
   # skip the template for exactly the same reason.
   def self.form_type_options
     legacy = SubmissionsController::LEGACY_FORMS
-    templates = FormTemplate.joins(:statuses)
-                            .where.not(class_name: legacy.map { |form| form[:model] })
-                            .distinct.pluck(:name)
+    templates = Forms::Template.joins(:statuses)
+                               .where.not(class_name: legacy.map { |form| form[:model] })
+                               .distinct.pluck(:name)
     (legacy.map { |form| form[:type] } + templates).uniq.sort_by(&:downcase)
   end
 
   # Status names as the list renders them, so a checked box matches a row.
   # Both the configured statuses and the predefined set are offered — the
-  # hardcoded forms use the latter without owning FormTemplateStatus rows.
+  # hardcoded forms use the latter without owning Forms::TemplateStatus rows.
   def self.status_options
-    configured = FormTemplateStatus.distinct.pluck(:name)
-    predefined = FormTemplateStatus::PREDEFINED_STATUSES.map { |status| status[:name] }
+    configured = Forms::TemplateStatus.distinct.pluck(:name)
+    predefined = Forms::TemplateStatus::PREDEFINED_STATUSES.map { |status| status[:name] }
     (configured + predefined).map { |name| name.to_s.tr('_', ' ').titleize }.uniq.sort_by(&:downcase)
   end
 
   def self.category_options
-    FormTemplateStatus::VALID_CATEGORIES.map { |category| category.tr('_', ' ').titleize }
+    Forms::TemplateStatus::VALID_CATEGORIES.map { |category| category.tr('_', ' ').titleize }
   end
 
   private

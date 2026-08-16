@@ -99,9 +99,9 @@ class LookupsController < ApplicationController
   # Distinct categories for a categorized data source (e.g. injury_classifications).
   # Returns [label, id] pairs to match the agencies endpoint shape.
   def categories
-    return render json: [], status: :not_found unless FormField.categorized_source?(params[:source])
+    return render json: [], status: :not_found unless Forms::Field.categorized_source?(params[:source])
 
-    render json: FormField.category_options_for(params[:source])
+    render json: Forms::Field.category_options_for(params[:source])
   end
 
   # Answer-lookup autofill: given the target field IDs (which carry the saved

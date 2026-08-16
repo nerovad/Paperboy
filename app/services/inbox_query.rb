@@ -22,7 +22,7 @@ class InboxQuery
     @copy_submission_ids = {}
   end
 
-  # FormSubmissionCopy ids surfaced per model class — consumed by the inbox
+  # Forms::SubmissionCopy ids surfaced per model class — consumed by the inbox
   # view's dynamic-button partial. Populated as a side effect of #submissions.
   attr_reader :copy_submission_ids
 
@@ -117,7 +117,7 @@ class InboxQuery
     # org-filtered group routing steps. nil = no scope restriction.
     submitter_org_filter = @scoped_employee_ids ? compute_submitter_org_filter(@scoped_employee_ids) : nil
 
-    FormTemplate.where(submission_type: 'approval').find_each do |template|
+    Forms::Template.where(submission_type: 'approval').find_each do |template|
       model_class = template.class_name.constantize
       next unless model_class.column_names.include?('approver_id')
 
@@ -156,7 +156,7 @@ class InboxQuery
   def copy_submission_ids_for(model_class)
     return [] if @scoped_employee_ids.nil?
 
-    FormSubmissionCopy
+    Forms::SubmissionCopy
       .active
       .where(submission_type: model_class.name, recipient_employee_id: @scoped_employee_ids)
       .pluck(:submission_id)

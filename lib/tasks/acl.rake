@@ -33,14 +33,14 @@ module AclSeed
                    .map { |perm| grant_row(perm.permission_type, perm.permission_key) }
   end
 
-  # A 'form' grant is keyed by FormTemplate id, and those ids are per-database
+  # A 'form' grant is keyed by Forms::Template id, and those ids are per-database
   # too. Record the form name alongside so sync can verify the id still means
   # the same form in the target environment.
   def grant_row(type, key)
     row = { 'type' => type, 'key' => key }
     return row unless type == 'form'
 
-    row.merge('label' => FormTemplate.find_by(id: key)&.name)
+    row.merge('label' => Forms::Template.find_by(id: key)&.name)
   end
 
   def org_rows
@@ -149,7 +149,7 @@ module AclSeed
     type, key = pair
     return nil unless type == 'form' && label.present?
 
-    local = FormTemplate.find_by(id: key)&.name
+    local = Forms::Template.find_by(id: key)&.name
     return nil if local == label
 
     "skipped form/#{key} — #{label.inspect} in db/acl.yml but #{(local || 'nothing').inspect} here"

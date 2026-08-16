@@ -33,7 +33,7 @@ class FormLookup
   # real columns. Only the employees "full_name" (Last, First) key today, which
   # mirrors how employee dropdowns render their option labels.
   def self.synthetic_columns(table)
-    table.to_s == "employees" ? %w[full_name] : []
+    table.to_s == 'employees' ? %w[full_name] : []
   end
 
   # Answer-lookup autofill. Given target field IDs that share one trigger field
@@ -45,11 +45,11 @@ class FormLookup
   def self.answer_fills(field_ids, value)
     return {} if value.to_s.strip.empty?
 
-    fields = FormField.where(id: field_ids).select(&:answer_lookup?)
+    fields = Forms::Field.where(id: field_ids).select(&:answer_lookup?)
     return {} if fields.empty?
 
     result = {}
-    fields.group_by { |f| f.answer_lookup_config.values_at("database", "table", "match_column") }
+    fields.group_by { |f| f.answer_lookup_config.values_at('database', 'table', 'match_column') }
           .each do |(database, table, match_column), group|
       conn = connection_for(database)
       next unless conn && table_exists_in?(conn, table)
@@ -62,14 +62,14 @@ class FormLookup
       group.each do |field|
         cfg = field.answer_lookup_config
         filled = combined_value(
-          table, cfg["return_column"], cfg["return_join_columns"],
-          cfg["return_join_separator"], row, columns, synthetic
+          table, cfg['return_column'], cfg['return_join_columns'],
+          cfg['return_join_separator'], row, columns, synthetic
         )
         result[field.id] = filled unless filled.nil? || filled.to_s.empty?
       end
     end
     result
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("FormLookup.answer_fills failed: #{e.class}: #{e.message}")
     {}
   end
@@ -81,12 +81,13 @@ class FormLookup
     qt = conn.quote_table_name(table)
 
     where_sql =
-      if synthetic.include?(match_column) && table == "employees" && match_column == "full_name"
-        last, first = value.to_s.split(", ", 2)
+      if synthetic.include?(match_column) && table == 'employees' && match_column == 'full_name'
+        last, first = value.to_s.split(', ', 2)
         return nil if last.to_s.empty?
-        clauses = [ "#{conn.quote_column_name('last_name')} = #{conn.quote(last)}" ]
+
+        clauses = ["#{conn.quote_column_name('last_name')} = #{conn.quote(last)}"]
         clauses << "#{conn.quote_column_name('first_name')} = #{conn.quote(first)}" if first.present?
-        clauses.join(" AND ")
+        clauses.join(' AND ')
       elsif columns.include?(match_column)
         "#{conn.quote_column_name(match_column)} = #{conn.quote(value)}"
       end
@@ -100,7 +101,7 @@ class FormLookup
   # space). Mirrors the join_columns/join_separator option-source pattern. The
   # employees "full_name" synthetic key is still honored for back-compat.
   def self.combined_value(table, primary, join_cols, sep, row, columns, synthetic)
-    sep = " " unless sep.is_a?(String) && !sep.empty?
+    sep = ' ' unless sep.is_a?(String) && !sep.empty?
 
     # The primary value may be a synthetic column (e.g. employees "full_name");
     # the "+ also" join columns are always real columns from the same row.
@@ -112,12 +113,13 @@ class FormLookup
       end
 
     join_values = Array(join_cols).select { |c| columns.include?(c) }.map { |c| row[c] }
-    ([ primary_value ] + join_values).reject { |v| v.nil? || v.to_s.empty? }.join(sep)
+    ([primary_value] + join_values).reject { |v| v.nil? || v.to_s.empty? }.join(sep)
   end
 
   # Build a synthetic column's value from a fetched row.
   def self.synthesize(table, column, row)
-    return nil unless table == "employees" && column == "full_name"
+    return nil unless table == 'employees' && column == 'full_name'
+
     "#{row['last_name']}, #{row['first_name']}"
   end
   private_class_method :matched_row, :combined_value, :synthesize
@@ -126,7 +128,7 @@ class FormLookup
   # Returns [] for non-custom fields or any invalid/failed config so a bad
   # setting can never 500 a live form.
   def self.options(field_id)
-    field = FormField.find_by(id: field_id)
+    field = Forms::Field.find_by(id: field_id)
     return [] unless field&.custom_lookup?
 
     cfg  = field.custom_lookup_config

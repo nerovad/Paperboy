@@ -6,7 +6,7 @@
 # without a reference, and never raises (a PDF must still render).
 class PdfReference
   def self.render(pdf, submission)
-    reference = FormReference.reference_for(submission)
+    reference = Forms::Reference.reference_for(submission)
     return if reference.blank?
 
     pdf.text "Reference: #{reference}", size: 11, style: :bold, align: :right

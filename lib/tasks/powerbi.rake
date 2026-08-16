@@ -95,7 +95,7 @@ namespace :powerbi do
 
       puts
       puts 'To update your Critical Information Reporting form template, run:'
-      puts "bin/rails runner \"FormTemplate.find(17).update(powerbi_workspace_id: 'YOUR_WORKSPACE_ID', powerbi_report_id: 'ea1b274a-5804-4b14-9c77-eb4c814df320')\""
+      puts "bin/rails runner \"Forms::Template.find(17).update(powerbi_workspace_id: 'YOUR_WORKSPACE_ID', powerbi_report_id: 'ea1b274a-5804-4b14-9c77-eb4c814df320')\""
     rescue StandardError => e
       puts "ERROR: #{e.message}"
       puts e.backtrace.first(5)
@@ -105,7 +105,7 @@ namespace :powerbi do
 
   desc 'Test Power BI embed token generation'
   task test_embed_token: :environment do
-    form = FormTemplate.find_by(name: 'Critical Information Reporting')
+    form = Forms::Template.find_by(name: 'Critical Information Reporting')
 
     if form.blank?
       puts 'ERROR: Critical Information Reporting form not found'

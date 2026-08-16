@@ -41,7 +41,7 @@ module TrackableStatus
       end
     end
 
-    # key => FormTemplateStatus for this model's template, cached per class.
+    # key => Forms::TemplateStatus for this model's template, cached per class.
     # Empty for models with no template (legacy/custom forms), which then fall
     # back to their own STATUS_LABELS / STATUS_CATEGORIES / STATUS_MAP constants.
     def central_status_definitions
@@ -49,7 +49,7 @@ module TrackableStatus
 
       @central_status_definitions =
         begin
-          template = FormTemplate.find_by(class_name: name)
+          template = Forms::Template.find_by(class_name: name)
           template ? template.statuses.index_by { |s| s.key.to_s } : {}
         rescue StandardError
           {}
@@ -261,7 +261,7 @@ module TrackableStatus
     actor_id = Current.user&.dig('employee_id')&.to_s.presence
     return unless actor_id
 
-    FormSubmissionCopy.find_or_create_by!(
+    Forms::SubmissionCopy.find_or_create_by!(
       submission_type: self.class.name,
       submission_id: id,
       recipient_employee_id: actor_id.to_i
@@ -342,7 +342,7 @@ module TrackableStatus
       recipient.resolve_recipient_ids(self).uniq.each do |emp_id|
         next if emp_id.blank?
 
-        FormSubmissionCopy.find_or_create_by!(
+        Forms::SubmissionCopy.find_or_create_by!(
           submission_type: self.class.name,
           submission_id: id,
           recipient_employee_id: emp_id.to_i
@@ -371,7 +371,7 @@ module TrackableStatus
     Rails.logger.warn("no-eligible-approver guard failed: #{e.message}")
   end
 
-  # --- Configurable workflow emails (FormTemplateEmailStep) ---
+  # --- Configurable workflow emails (Forms::TemplateEmailStep) ---
 
   # Fire any "On submission" email rules right after the record is created.
   def deliver_email_steps_on_submit
