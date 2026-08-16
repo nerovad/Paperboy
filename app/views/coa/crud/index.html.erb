@@ -52,7 +52,8 @@
                         placeholder: "Fuzzy search by task ID or name…",
                         columns: %w[task_id long_name] }
      }[model_class.name] %>
-  <div class="coa-grid" data-controller="<%= "sidebar-search" if search_config %>">
+  <div class="coa-grid" data-controller="<%= "sidebar-search" if search_config %>"
+       <%= "data-sidebar-search-debounce-value=250" if search_config %>>
     <% if search_config %>
       <section class="coa-lookup-card coa-grid-search">
         <%= label_tag search_config[:id], search_config[:label],
