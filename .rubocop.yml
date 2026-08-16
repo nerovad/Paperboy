@@ -34,6 +34,7 @@ Metrics/ClassLength:
     - 'app/models/forms/field.rb'
     - 'app/models/forms/template.rb'
     - 'app/models/forms/template_routing_step.rb'
+    - 'app/services/forms/inbox_query.rb'
     - 'app/services/form_lookup.rb'
 
 Metrics/MethodLength:

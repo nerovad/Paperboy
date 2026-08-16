@@ -34,7 +34,7 @@ class ApplicationController < ActionController::Base
     user = session[:user]
     @inbox_count =
       if user && user['employee_id'].present?
-        InboxQuery.new(scoped_employee_ids: [user['employee_id'].to_s]).count
+        Forms::InboxQuery.new(scoped_employee_ids: [user['employee_id'].to_s]).count
       else
         0
       end

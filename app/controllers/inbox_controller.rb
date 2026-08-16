@@ -41,7 +41,7 @@ class InboxController < ApplicationController
     # Parking permits flow entirely through the dynamic-form path: their print/
     # pickup steps are non-terminal and stay actionable, while a picked-up
     # (approved) permit drops out with the rest of the terminal items.
-    inbox = InboxQuery.new(
+    inbox = Forms::InboxQuery.new(
       scoped_employee_ids: @scoped_employee_ids,
       viewer_form_types: @viewer_form_types,
       filter_form_type: params[:filter_form_type],
