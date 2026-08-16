@@ -1,4 +1,7 @@
 inherit_from: .rubocop_todo.yml
+inherit_mode:
+  merge:
+    - Exclude
 
 AllCops:
   NewCops: enable
@@ -14,15 +17,25 @@ Layout/ExtraSpacing:
 
 Metrics/AbcSize:
   Max: 67
+  Exclude:
+    - 'app/controllers/forms/**/*_controller.rb'
 
 Metrics/BlockLength:
   Max: 107
 
 Metrics/CyclomaticComplexity:
   Max: 16
+  Exclude:
+    - 'app/controllers/forms/**/*_controller.rb'
+
+Metrics/ClassLength:
+  Exclude:
+    - 'app/controllers/forms/**/*_controller.rb'
 
 Metrics/MethodLength:
   Max: 44
+  Exclude:
+    - 'app/controllers/forms/**/*_controller.rb'
 
 Metrics/ModuleLength:
   Max: 146
@@ -32,6 +45,8 @@ Metrics/ParameterLists:
 
 Metrics/PerceivedComplexity:
   Max: 14
+  Exclude:
+    - 'app/controllers/forms/**/*_controller.rb'
 
 Naming/MethodParameterName:
   MinNameLength: 1

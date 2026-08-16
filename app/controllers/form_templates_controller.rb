@@ -875,7 +875,7 @@ class FormTemplatesController < ApplicationController
   end
 
   def customize_generated_controller(form_template, update_routing: true)
-    controller_path = Rails.root.join("app/controllers/#{form_template.plural_file_name}_controller.rb")
+    controller_path = Rails.root.join("app/controllers/forms/#{form_template.plural_file_name}_controller.rb")
     return unless File.exist?(controller_path)
 
     content = File.read(controller_path)
@@ -1017,7 +1017,7 @@ class FormTemplatesController < ApplicationController
 
       # Insert into the member block for this resource
       content.sub!(
-        /(resources :#{form_template.plural_file_name} do\s*\n\s*member do\n)/,
+        /(resources :#{form_template.plural_file_name}[^\n]* do\s*\n\s*member do\n)/,
         "\\1            #{route_line}\n"
       )
     end
@@ -1679,7 +1679,7 @@ class FormTemplatesController < ApplicationController
     form_template = FormTemplate.find_by(class_name: class_name)
     return unless form_template
 
-    view_path = Rails.root.join("app/views/#{form_template.plural_file_name}/new.html.erb")
+    view_path = Rails.root.join("app/views/forms/#{form_template.plural_file_name}/new.html.erb")
 
     # Extract existing custom field blocks before regenerating
     existing_blocks = extract_existing_field_blocks(view_path)
@@ -1793,7 +1793,7 @@ class FormTemplatesController < ApplicationController
     form_template = FormTemplate.find_by(class_name: class_name)
     return unless form_template
 
-    view_path = Rails.root.join("app/views/#{form_template.plural_file_name}/edit.html.erb")
+    view_path = Rails.root.join("app/views/forms/#{form_template.plural_file_name}/edit.html.erb")
 
     # Extract existing custom field blocks before regenerating
     existing_blocks = extract_existing_field_blocks(view_path)

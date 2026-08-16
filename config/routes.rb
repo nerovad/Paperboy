@@ -3,7 +3,7 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
-  resources :telework_log_forms do
+  resources :telework_log_forms, controller: 'forms/telework_log_forms' do
     member do
       get :pdf
       patch :approve
@@ -149,7 +149,7 @@ Rails.application.routes.draw do
     get '/runs/:id', to: 'runs#show', as: :run
   end
 
-  resources :fleet_vehicle_garaging_forms do
+  resources :fleet_vehicle_garaging_forms, controller: 'forms/fleet_vehicle_garaging_forms' do
     member do
       get :pdf
       patch :approve
@@ -157,7 +157,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :form_request_forms do
+  resources :form_request_forms, controller: 'forms/form_request_forms' do
     member do
       get :download_attach_existing_pdf_form
       get :pdf
@@ -166,7 +166,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :id_badge_request_forms do
+  resources :id_badge_request_forms, controller: 'forms/id_badge_request_forms' do
     member do
       get :pdf
       patch :approve
@@ -174,7 +174,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :bike_locker_forms do
+  resources :bike_locker_forms, controller: 'forms/bike_locker_forms' do
     collection do
       get :available_lockers
     end
@@ -185,7 +185,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :pcard_request_forms do
+  resources :pcard_request_forms, controller: 'forms/pcard_request_forms' do
     member do
       get :pdf
       patch :approve
@@ -193,7 +193,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :notice_of_change_forms do
+  resources :notice_of_change_forms, controller: 'forms/notice_of_change_forms' do
     member do
       get :pdf
       patch :approve
@@ -201,7 +201,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :workplace_violence_forms do
+  resources :workplace_violence_forms, controller: 'forms/workplace_violence_forms' do
     member do
       get :pdf
       patch :approve
@@ -209,7 +209,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :osha_reports do
+  resources :osha_reports, controller: 'forms/osha_reports' do
     member do
       get :pdf
       patch :approve
@@ -221,7 +221,7 @@ Rails.application.routes.draw do
   patch 'osha_300a',         to: 'osha_300as#update'
   get   'osha_300a/payload', to: 'osha_300as#payload', as: :osha_300a_payload
   post  'osha_300a/submit',  to: 'osha_300as#submit',  as: :osha_300a_submit
-  resources :leave_of_absence_forms do
+  resources :leave_of_absence_forms, controller: 'forms/leave_of_absence_forms' do
     member do
       get :download_doctors_note_attachment
       get :pdf
@@ -230,7 +230,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :safety_reports do
+  resources :safety_reports, controller: 'forms/safety_reports' do
     member do
       get :pdf
       patch :approve
@@ -244,7 +244,8 @@ Rails.application.routes.draw do
   get 'manifest' => 'rails/pwa#manifest', as: :pwa_manifest
   get 'service-worker' => 'rails/pwa#service_worker', as: :pwa_service_worker
 
-  resources :work_schedule_or_location_update_forms do
+  resources :work_schedule_or_location_update_forms,
+            controller: 'forms/work_schedule_or_location_update_forms' do
     member do
       get :pdf
       patch :approve
@@ -252,9 +253,9 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :social_media_forms
-  resources :gym_locker_forms
-  resources :carpool_forms
+  resources :social_media_forms, controller: 'forms/social_media_forms'
+  resources :gym_locker_forms, controller: 'forms/gym_locker_forms'
+  resources :carpool_forms, controller: 'forms/carpool_forms'
   # ============================================================================
   # Root & Home
   # ============================================================================
@@ -399,7 +400,8 @@ Rails.application.routes.draw do
   # ============================================================================
   # Workflow Forms (with approval/denial workflows)
   # ============================================================================
-  resources :parking_lot_submissions, only: %i[new create index show] do
+  resources :parking_lot_submissions, only: %i[new create index show],
+                                      controller: 'forms/parking_lot_submissions' do
     member do
       get :pdf
       patch :approve
@@ -407,7 +409,8 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :probation_transfer_requests, only: %i[new create index show] do
+  resources :probation_transfer_requests, only: %i[new create index show],
+                                          controller: 'forms/probation_transfer_requests' do
     member do
       get :pdf
       patch :approve
@@ -416,7 +419,8 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :critical_information_reportings, only: %i[new create show edit update] do
+  resources :critical_information_reportings, only: %i[new create show edit update],
+                                              controller: 'forms/critical_information_reportings' do
     member do
       get :pdf
       get 'download_media/:attachment_id', action: :download_media, as: :download_media
@@ -430,7 +434,7 @@ Rails.application.routes.draw do
   # ============================================================================
   # Standard Forms (alphabetical)
   # ============================================================================
-  resources :creative_job_requests, only: %i[new create]
+  resources :creative_job_requests, only: %i[new create], controller: 'forms/creative_job_requests'
   get 'help', to: 'help#index', as: :help
   resource :settings, only: %i[show update]
   resources :help_tickets, only: %i[new create index show] do
