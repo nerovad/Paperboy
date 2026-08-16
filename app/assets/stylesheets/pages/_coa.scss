@@ -235,6 +235,63 @@
   margin-top: 12px;
 }
 
+.coa-customer-search {
+  position: relative;
+}
+
+.coa-customer-search input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.coa-customer-results {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid $border-muted;
+  border-radius: $radius-6;
+  background: $surface-base;
+  box-shadow: 0 4px 12px rgba($text-color, 0.14);
+}
+
+.coa-customer-result {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid $border-faint;
+  background: transparent;
+  color: $text-color;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.coa-customer-result:hover,
+.coa-customer-result:focus {
+  outline: 0;
+  background: $surface-control;
+}
+
+.coa-customer-results__empty,
+.coa-customer-name,
+.coa-customer-empty {
+  margin: 0;
+}
+
+.coa-customer-results__empty {
+  padding: 10px 12px;
+  color: $text-muted;
+}
+
+.coa-customer-name {
+  font-weight: 700;
+}
+
 .coa-account-tree,
 .coa-account-tree ul {
   margin: 14px 0 0;

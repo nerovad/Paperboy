@@ -460,6 +460,11 @@ Rails.application.routes.draw do
       get :tasks
     end
 
+    resource :customer_lookup, only: :show do
+      get :employees
+      get :hierarchy
+    end
+
     resources :agencies
     resources :activities
     resources :departments

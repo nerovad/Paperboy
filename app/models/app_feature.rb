@@ -45,6 +45,7 @@ class AppFeature
     # how a request is mapped back to its grant.
     'coa' => [
       { key: 'billing_lookup',    label: 'Billing Lookup' },
+      { key: 'customer_lookup',   label: 'Customer Lookup' },
       { key: 'agencies',          label: 'Agencies' },
       { key: 'divisions',         label: 'Divisions' },
       { key: 'departments',       label: 'Departments' },

@@ -31,7 +31,8 @@ class AppFeatureTest < ActiveSupport::TestCase
     tables = controller.send(:coa_all_resources).map { |model| controller.send(:coa_feature_key, model) }
 
     assert_equal tables.sort,
-                 AppFeature.for('coa').map { |feature| feature[:key] }.reject { |key| key == 'billing_lookup' }.sort
+                 AppFeature.for('coa').map { |feature| feature[:key] }
+                                      .reject { |key| %w[billing_lookup customer_lookup].include?(key) }.sort
   end
 
   test 'only Admin Tools carries legacy dropdown keys' do

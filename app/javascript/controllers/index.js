@@ -66,6 +66,7 @@ import AppSwitcherController from "controllers/app_switcher_controller"
 import DamSearchController from "controllers/dam_search_controller"
 import AdvancedSearchController from "controllers/advanced_search_controller"
 import CoaBillingLookupController from "controllers/coa_billing_lookup_controller"
+import CoaCustomerLookupController from "controllers/coa_customer_lookup_controller"
 import AimOcrController from "controllers/aim_ocr_controller"
 
 // Register controllers with their data-controller names
@@ -91,6 +92,7 @@ application.register("conditional-fields", ConditionalFieldsController)
 application.register("gsabss-selects", GsabssSelectsController)
 application.register("bike-locker-selects", BikeLockerSelectsController)
 application.register("sidebar-search", SidebarSearchController)
+application.register("coa-customer-lookup", CoaCustomerLookupController)
 application.register("form-builder", FormBuilderController)
 application.register("reports", ReportsController)
 application.register("scheduled-report-form", ScheduledReportController)
