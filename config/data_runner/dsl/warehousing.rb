@@ -17,7 +17,7 @@
     sop: {
       title: 'How to Download Mail Center and Warhousing Data',
       source_system: 'Mail Center and Warehousing',
-      reference_path: '/mnt/i/BUSINESS_SUPPORT/Billing/FY26-27',
+      reference_path: '/mnt/i/BUSINESS_SUPPORT/Billing/FY26-27/..',
       instructions: [
         'Open the Monthly Billing Folder.',
         'Confirm monthly billing files was exported from macro.',

@@ -25,7 +25,7 @@ class DslReferenceControllerTest < ActionController::TestCase
     sign_in
     listing = Object.new
     listing.define_singleton_method(:call) do
-      raise DirectoryListing::Unavailable, 'The folder is currently unavailable.'
+      raise DirectoryListing::Unavailable, 'The reference is currently unavailable.'
     end
 
     DirectoryListing.stub(:new, listing) do
@@ -33,7 +33,7 @@ class DslReferenceControllerTest < ActionController::TestCase
     end
 
     assert_response :service_unavailable
-    assert_select 'p', text: 'The folder is currently unavailable.'
+    assert_select 'p', text: 'The reference is currently unavailable.'
   end
 
   private

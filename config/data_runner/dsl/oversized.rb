@@ -17,6 +17,7 @@
     sop: {
       title: 'How to Download Oversized Scan Data',
       source_system: 'Oversized Scanners',
+      reference_title: 'Scanner Export Folder',
       reference_path: '/mnt/i/BUSINESS_SUPPORT/Scan Center/Oversized Scan Data/Monthly Exports',
       instructions: [
         'Open the Monthly Exports folder.',

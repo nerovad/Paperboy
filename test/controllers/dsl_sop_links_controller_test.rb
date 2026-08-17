@@ -38,6 +38,16 @@ class DslSopLinksControllerTest < ActionController::TestCase
     assert_select '.pb-modal__actions button.btn.pdf[data-action=?][data-url=?]',
                   'sop-modal#openReference', reference_data_runner_dsl_path('oversized'), text: 'Open'
     assert_select '.pb-modal.pb-modal--xl[role=?][aria-modal=?]', 'dialog', 'true'
+    assert_select '.pb-modal.pb-modal--xl h3', text: 'Scanner Export Folder'
+  end
+
+  test 'SOP with a reference file uses its configured dialog title' do
+    sign_in
+
+    get :show, params: { name: 'document_automation' }
+
+    assert_response :success
+    assert_select '.pb-modal.pb-modal--xl h3', text: 'Document Automation File'
   end
 
   private

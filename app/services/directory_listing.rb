@@ -9,13 +9,14 @@ class DirectoryListing
   end
 
   def call
-    raise Unavailable, 'The folder is currently unavailable.' unless @path.directory?
+    return [entry_for(@path)] if @path.file?
+    raise Unavailable, 'The reference is currently unavailable.' unless @path.directory?
 
     @path.children
          .filter_map { |child| entry_for(child) }
          .sort_by { |entry| [entry.directory ? 0 : 1, entry.name.downcase] }
   rescue SystemCallError
-    raise Unavailable, 'The folder is currently unavailable.'
+    raise Unavailable, 'The reference is currently unavailable.'
   end
 
   private
