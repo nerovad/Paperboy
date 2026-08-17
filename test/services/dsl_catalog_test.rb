@@ -65,6 +65,8 @@ class DslCatalogTest < ActiveSupport::TestCase
       assert_equal :chart_of_accounts, entry.config.dig(:sop, :shared)
       assert_equal DslSharedSop.fetch!(:chart_of_accounts).fetch(:instructions), entry.sop.fetch(:instructions)
       assert_equal 'chart_of_accounts', entry.sop_reference_group
+      assert_equal WorkflowPaths::OUTPUT_ROOT.join(WorkflowPaths::DOWNLOAD_DIR_NAME, entry.output_name),
+                   entry.sop_reference_path
     end
   end
 end

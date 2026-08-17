@@ -83,7 +83,9 @@ sop: {
   Use `sop: { shared: :chart_of_accounts }` to import the shared Chart of
   Accounts refresh instructions and **View Group** link. Additional keys in
   that SOP object override or extend the shared definition in
-  `dsl/shared/chart_of_accounts.rb`.
+  `dsl/shared/chart_of_accounts.rb`. The shared SOP also uses
+  `reference_path: :downloaded_file`, so every group DSL can display its own
+  `01_Download/source.local` file.
 - Use `source.location` for the file or path to stage and `source.local` for
   the filename used inside `00_Inbox` and downstream stages.
 - Use `source.strategy: :manual` when a human places the file in `00_Inbox`;

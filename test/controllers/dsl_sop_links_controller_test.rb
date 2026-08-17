@@ -88,6 +88,17 @@ class DslSopLinksControllerTest < ActionController::TestCase
     assert_select '.pb-modal.pb-modal--xl h3', text: 'Downloaded Agencies File'
   end
 
+  test 'shared Chart of Accounts SOP displays each DSL downloaded file' do
+    sign_in
+
+    get :show, params: { name: 'activities' }
+
+    assert_response :success
+    assert_select '.pb-modal__actions button.btn.pdf[data-action=?][data-url=?]',
+                  'sop-modal#openReference', reference_data_runner_dsl_path('activities'), text: 'View File'
+    assert_select '.pb-modal.pb-modal--xl h3', text: 'Downloaded Chart of Accounts File'
+  end
+
   private
 
   def sign_in
