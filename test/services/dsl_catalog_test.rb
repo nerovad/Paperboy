@@ -49,4 +49,11 @@ class DslCatalogTest < ActiveSupport::TestCase
 
     assert_equal entry.config.dig(:source, :location), entry.sop_reference_path
   end
+
+  test 'resolves an SOP reference from its downloaded file' do
+    entry = DslCatalog.find!('agencies')
+
+    assert_equal WorkflowPaths::OUTPUT_ROOT.join(WorkflowPaths::DOWNLOAD_DIR_NAME, 'agencies.xlsx'),
+                 entry.sop_reference_path
+  end
 end

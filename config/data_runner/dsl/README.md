@@ -78,7 +78,8 @@ sop: {
   dialog heading. Set `reference_path: :source_location` when the SOP should
   reference `source.location` without repeating the path. `reference_url`
   renders an **Open** link in a new tab, while `reference_path` renders a
-  **View File** dialog; an SOP may use either or both.
+  **View File** dialog; an SOP may use either or both. For HTTP downloads, set
+  `reference_path: :downloaded_file` to view `01_Download/source.local`.
 - Use `source.location` for the file or path to stage and `source.local` for
   the filename used inside `00_Inbox` and downstream stages.
 - Use `source.strategy: :manual` when a human places the file in `00_Inbox`;

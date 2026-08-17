@@ -73,6 +73,19 @@ class DslSopLinksControllerTest < ActionController::TestCase
     assert_select '.pb-modal__actions button.btn.pdf', text: 'View File', count: 0
   end
 
+  test 'HTTP download SOP opens its source site and downloaded file' do
+    sign_in
+
+    get :show, params: { name: 'agencies' }
+
+    assert_response :success
+    assert_select '.pb-modal__actions a.btn.pdf[href=?][target=?]',
+                  'http://acweb/cutoff', '_blank', text: 'Open'
+    assert_select '.pb-modal__actions button.btn.pdf[data-action=?][data-url=?]',
+                  'sop-modal#openReference', reference_data_runner_dsl_path('agencies'), text: 'View File'
+    assert_select '.pb-modal.pb-modal--xl h3', text: 'Downloaded Agencies File'
+  end
+
   private
 
   def sign_in

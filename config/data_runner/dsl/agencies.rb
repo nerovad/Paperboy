@@ -14,6 +14,18 @@
     group: {
       name: 'chart_of_accounts'
     },
+    sop: {
+      title: 'How to Download Chart of Accounts Agencies',
+      source_system: 'ACO',
+      reference_url: 'http://acweb/cutoff',
+      reference_title: 'Downloaded Agencies File',
+      reference_path: :downloaded_file,
+      instructions: [
+        'View the Chart of Accounts publication date from the Auditor-Controller Office.',
+        'DataRunner orchestrates reloading the Chart of Accounts.',
+        'Verify the downloaded agencies.xlsx file is current.'
+      ]
+    },
     source: {
       url: 'http://acweb/cutoff/WP Department on AUD Web Page.xlsx',
       location: 'agencies.xlsx',
