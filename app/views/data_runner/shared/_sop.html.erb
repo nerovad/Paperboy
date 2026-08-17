@@ -19,7 +19,10 @@
     </div>
     <div class="pb-modal__actions">
       <button type="button" class="btn" data-action="sop-modal#close">Close</button>
-      <% if dsl.sop[:reference_url].present? %>
+      <% if dsl.sop[:reference_path].present? %>
+        <%= link_to "Open", reference_data_runner_dsl_path(dsl.slug), class: "btn pdf",
+                    target: "_blank", rel: "noopener" %>
+      <% elsif dsl.sop[:reference_url].present? %>
         <%= link_to "Open", dsl.sop[:reference_url], class: "btn pdf",
                     target: "_blank", rel: "noopener" %>
       <% end %>

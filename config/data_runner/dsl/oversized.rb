@@ -17,7 +17,7 @@
     sop: {
       title: 'How to Download Oversized Scan Data',
       source_system: 'Oversized Scanners',
-      reference_url: 'file:///mnt/i/BUSINESS_SUPPORT/Scan%20Center/Oversized%20Scan%20Data/Monthly%20Exports',
+      reference_path: '/mnt/i/BUSINESS_SUPPORT/Scan Center/Oversized Scan Data/Monthly Exports',
       instructions: [
         'Open the Monthly Exports folder.',
         'Confirm ovs-1.xml was exported from Context IQ Quattro.',

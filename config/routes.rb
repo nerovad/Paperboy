@@ -133,6 +133,7 @@ Rails.application.routes.draw do
     resources :dsls, only: %i[index show new create edit update destroy], param: :name do
       member do
         post :run
+        get 'reference', to: 'dsl_references#show', as: :reference
         get :outputs
         get 'outputs/backup', to: 'backup_outputs#index', as: :backup_outputs
         delete 'outputs/backup', to: 'backup_outputs#destroy_all', as: :destroy_backup_outputs

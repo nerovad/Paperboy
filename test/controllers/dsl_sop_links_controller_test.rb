@@ -29,6 +29,16 @@ class DslSopLinksControllerTest < ActionController::TestCase
     assert_select '.pb-modal', count: 0
   end
 
+  test 'SOP with a reference folder links to its directory listing' do
+    sign_in
+
+    get :show, params: { name: 'oversized' }
+
+    assert_response :success
+    assert_select '.pb-modal__actions a.btn.pdf[href=?]',
+                  reference_data_runner_dsl_path('oversized'), text: 'Open'
+  end
+
   private
 
   def sign_in
