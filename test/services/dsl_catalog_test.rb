@@ -62,7 +62,8 @@ class DslCatalogTest < ActiveSupport::TestCase
 
     assert_not_empty entries
     entries.each do |entry|
-      assert_equal Workflow::CHART_OF_ACCOUNTS_SOP.fetch(:instructions), entry.sop.fetch(:instructions)
+      assert_equal :chart_of_accounts, entry.config.dig(:sop, :shared)
+      assert_equal DslSharedSop.fetch!(:chart_of_accounts).fetch(:instructions), entry.sop.fetch(:instructions)
       assert_equal 'chart_of_accounts', entry.sop_reference_group
     end
   end

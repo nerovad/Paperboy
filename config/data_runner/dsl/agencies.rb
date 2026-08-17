@@ -15,6 +15,7 @@
       name: 'chart_of_accounts'
     },
     sop: {
+      shared: :chart_of_accounts,
       source_system: 'ACO',
       reference_url: 'http://acweb/cutoff',
       reference_title: 'Downloaded Agencies File',

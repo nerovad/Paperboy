@@ -14,9 +14,14 @@ class DslCatalog
 
     def sop
       return unless SOP_GROUPS.include?(group)
-      return Workflow::CHART_OF_ACCOUNTS_SOP.merge(config.fetch(:sop, {})) if group == 'chart_of_accounts'
 
-      config[:sop]
+      configured = config[:sop]
+      return if configured.nil?
+
+      shared = configured[:shared]
+      return configured if shared.nil?
+
+      DslSharedSop.fetch!(shared).merge(configured.except(:shared))
     end
 
     def sop_reference_path

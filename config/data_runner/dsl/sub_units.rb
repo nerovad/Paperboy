@@ -14,6 +14,9 @@
     group: {
       name: 'chart_of_accounts'
     },
+    sop: {
+      shared: :chart_of_accounts
+    },
     source: {
       url: 'http://acweb/cutoff/WP Sub Unit on AUD Web Page.xlsx',
       location: 'sub_units.xlsx',
