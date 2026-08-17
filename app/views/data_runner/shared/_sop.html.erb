@@ -1,5 +1,6 @@
 <% title_id = "#{dsl.slug}-sop-title" %>
 <% reference_path = dsl.sop_reference_path %>
+<% reference_group = dsl.sop_reference_group %>
 <div class="pb-modal-backdrop" data-sop-modal-target="backdrop"
      data-action="click->sop-modal#backdropClose" hidden>
   <div class="pb-modal" role="dialog" aria-modal="true"
@@ -27,6 +28,10 @@
       <% if reference_path.present? %>
         <button type="button" class="btn pdf" data-action="sop-modal#openReference"
                 data-url="<%= reference_data_runner_dsl_path(dsl.slug) %>">View File</button>
+      <% end %>
+      <% if reference_group.present? %>
+        <%= link_to "View Group", data_runner_root_path(group: reference_group, anchor: "refresh-group"),
+                    class: "btn pdf" %>
       <% end %>
     </div>
   </div>

@@ -40,6 +40,7 @@
                          form: "delete-group-form",
                          data: { turbo_confirm: "Delete #{@selected_group.humanize} and remove it from associated DSLs?" } %>
           <%= button_tag "Refresh", type: "submit", class: "btn approve",
+                         id: "refresh-group",
                          form: "refresh-group-form",
                          data: { turbo_confirm: "Run DataRunner:refresh for #{@selected_group.humanize}?" } %>
         </div>

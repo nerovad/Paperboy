@@ -7,6 +7,10 @@ module Billing
         path = sop&.fetch(:reference_path, nil)
         path == :source_location ? location : path
       end
+
+      def sop_reference_group
+        sop&.fetch(:reference_group, nil)
+      end
     end
     Group = Data.define(:key, :label, :default, :enabled_dsls) do
       def enabled_dsl_count = enabled_dsls.size

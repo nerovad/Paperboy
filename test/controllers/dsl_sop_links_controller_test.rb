@@ -83,6 +83,8 @@ class DslSopLinksControllerTest < ActionController::TestCase
                   'http://acweb/cutoff', '_blank', text: 'Open'
     assert_select '.pb-modal__actions button.btn.pdf[data-action=?][data-url=?]',
                   'sop-modal#openReference', reference_data_runner_dsl_path('agencies'), text: 'View File'
+    assert_select '.pb-modal__actions a.btn.pdf[href=?]',
+                  data_runner_root_path(group: 'chart_of_accounts', anchor: 'refresh-group'), text: 'View Group'
     assert_select '.pb-modal.pb-modal--xl h3', text: 'Downloaded Agencies File'
   end
 

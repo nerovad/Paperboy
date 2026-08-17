@@ -13,7 +13,10 @@ class DslCatalog
     end
 
     def sop
-      config[:sop] if SOP_GROUPS.include?(group)
+      return unless SOP_GROUPS.include?(group)
+      return Workflow::CHART_OF_ACCOUNTS_SOP.merge(config.fetch(:sop, {})) if group == 'chart_of_accounts'
+
+      config[:sop]
     end
 
     def sop_reference_path
@@ -22,6 +25,11 @@ class DslCatalog
       return WorkflowPaths::OUTPUT_ROOT.join(WorkflowPaths::DOWNLOAD_DIR_NAME, output_name) if path == :downloaded_file
 
       path
+    end
+
+    def sop_reference_group
+      reference = sop&.fetch(:reference_group, nil)
+      reference == :source_group ? group : reference
     end
 
     def enabled?

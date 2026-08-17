@@ -56,4 +56,14 @@ class DslCatalogTest < ActiveSupport::TestCase
     assert_equal WorkflowPaths::OUTPUT_ROOT.join(WorkflowPaths::DOWNLOAD_DIR_NAME, 'agencies.xlsx'),
                  entry.sop_reference_path
   end
+
+  test 'shares group refresh instructions across Chart of Accounts DSLs' do
+    entries = DslCatalog.grouped.fetch('chart_of_accounts')
+
+    assert_not_empty entries
+    entries.each do |entry|
+      assert_equal Workflow::CHART_OF_ACCOUNTS_SOP.fetch(:instructions), entry.sop.fetch(:instructions)
+      assert_equal 'chart_of_accounts', entry.sop_reference_group
+    end
+  end
 end

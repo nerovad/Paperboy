@@ -80,6 +80,9 @@ sop: {
   renders an **Open** link in a new tab, while `reference_path` renders a
   **View File** dialog; an SOP may use either or both. For HTTP downloads, set
   `reference_path: :downloaded_file` to view `01_Download/source.local`.
+  Every DSL in `chart_of_accounts` inherits the shared Chart of Accounts SOP,
+  including a **View Group** link to its Refresh control. A DSL may add or
+  override source-specific SOP keys without copying the shared instructions.
 - Use `source.location` for the file or path to stage and `source.local` for
   the filename used inside `00_Inbox` and downstream stages.
 - Use `source.strategy: :manual` when a human places the file in `00_Inbox`;
