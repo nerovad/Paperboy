@@ -35,8 +35,9 @@ class DslSopLinksControllerTest < ActionController::TestCase
     get :show, params: { name: 'oversized' }
 
     assert_response :success
-    assert_select '.pb-modal__actions a.btn.pdf[href=?]',
-                  reference_data_runner_dsl_path('oversized'), text: 'Open'
+    assert_select '.pb-modal__actions button.btn.pdf[data-action=?][data-url=?]',
+                  'sop-modal#openReference', reference_data_runner_dsl_path('oversized'), text: 'Open'
+    assert_select '.pb-modal.pb-modal--xl[role=?][aria-modal=?]', 'dialog', 'true'
   end
 
   private

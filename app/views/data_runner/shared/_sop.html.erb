@@ -20,8 +20,8 @@
     <div class="pb-modal__actions">
       <button type="button" class="btn" data-action="sop-modal#close">Close</button>
       <% if dsl.sop[:reference_path].present? %>
-        <%= link_to "Open", reference_data_runner_dsl_path(dsl.slug), class: "btn pdf",
-                    target: "_blank", rel: "noopener" %>
+        <button type="button" class="btn pdf" data-action="sop-modal#openReference"
+                data-url="<%= reference_data_runner_dsl_path(dsl.slug) %>">Open</button>
       <% elsif dsl.sop[:reference_url].present? %>
         <%= link_to "Open", dsl.sop[:reference_url], class: "btn pdf",
                     target: "_blank", rel: "noopener" %>
@@ -29,3 +29,23 @@
     </div>
   </div>
 </div>
+<% if dsl.sop[:reference_path].present? %>
+  <% reference_title_id = "#{dsl.slug}-reference-title" %>
+  <div class="pb-modal-backdrop" data-sop-reference
+       data-action="click->sop-modal#backdropClose" hidden>
+    <div class="pb-modal pb-modal--xl" role="dialog" aria-modal="true"
+         aria-labelledby="<%= reference_title_id %>">
+      <div class="pb-modal__header">
+        <h3 id="<%= reference_title_id %>">Scanner Export Folder</h3>
+        <button type="button" class="pb-modal__close" data-action="sop-modal#close"
+                aria-label="Close">✕</button>
+      </div>
+      <div class="pb-modal__body dsl-reference-list" data-sop-reference-body>
+        Loading folder contents…
+      </div>
+      <div class="pb-modal__actions">
+        <button type="button" class="btn" data-action="sop-modal#close">Close</button>
+      </div>
+    </div>
+  </div>
+<% end %>

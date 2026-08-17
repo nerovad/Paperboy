@@ -17,7 +17,6 @@ class DslReferenceControllerTest < ActionController::TestCase
     end
 
     assert_response :success
-    assert_select 'h2', text: 'Monthly Exports'
     assert_select 'td', text: 'ovs-1.xml'
     assert_select 'td', text: '12 Bytes'
   end

@@ -1,19 +1,7 @@
-<%= render "data_runner/shared/dsl_header" %>
-<%= render "data_runner/shared/hot_menu" %>
-
-<div class="page-heading">
-  <div>
-    <p class="eyebrow">Reference folder</p>
-    <h2>Monthly Exports</h2>
-  </div>
-</div>
-
 <% if @reference_error %>
-  <section class="card">
-    <p><%= @reference_error %></p>
-  </section>
+  <p class="dsl-reference-list__message"><%= @reference_error %></p>
 <% else %>
-  <section class="card table-wrap">
+  <div class="table-wrap">
     <table>
       <thead>
         <tr><th>Name</th><th>Type</th><th>Size</th><th>Modified</th></tr>
@@ -32,5 +20,5 @@
         <% end %>
       </tbody>
     </table>
-  </section>
+  </div>
 <% end %>

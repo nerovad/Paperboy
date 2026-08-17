@@ -10,9 +10,10 @@ module DataRunner
       raise ActiveRecord::RecordNotFound if @reference_path.blank?
 
       @reference_entries = DirectoryListing.new(@reference_path).call
+      render :show, layout: false
     rescue DirectoryListing::Unavailable => e
       @reference_error = e.message
-      render :show, status: :service_unavailable
+      render :show, layout: false, status: :service_unavailable
     end
   end
 end
