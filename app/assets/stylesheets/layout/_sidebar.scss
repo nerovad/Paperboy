@@ -352,6 +352,20 @@
     --sidebar-accent-ring: #{rgba($green-teal, 0.2)};
     --sidebar-accent-soft: #{rgba($green-teal, 0.08)};
     --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$green-teal});
+
+    .production-links__label {
+      color: $surface-base;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .production-links__divider {
+      height: 1px;
+      margin: 14px 0;
+      background: var(--sidebar-accent);
+    }
   }
 
   &.billing-sidebar {
