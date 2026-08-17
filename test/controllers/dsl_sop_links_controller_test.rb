@@ -50,6 +50,17 @@ class DslSopLinksControllerTest < ActionController::TestCase
     assert_select '.pb-modal.pb-modal--xl h3', text: 'Document Automation File'
   end
 
+  test 'ONeil SOP opens its source location details' do
+    sign_in
+
+    get :show, params: { name: 'oneil' }
+
+    assert_response :success
+    assert_select '.pb-modal__actions button.btn.pdf[data-action=?][data-url=?]',
+                  'sop-modal#openReference', reference_data_runner_dsl_path('oneil'), text: 'Open'
+    assert_select '.pb-modal.pb-modal--xl h3', text: 'ONeil Record Storage'
+  end
+
   private
 
   def sign_in

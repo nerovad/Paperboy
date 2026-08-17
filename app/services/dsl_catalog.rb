@@ -16,6 +16,11 @@ class DslCatalog
       config[:sop] if SOP_GROUPS.include?(group)
     end
 
+    def sop_reference_path
+      path = sop&.fetch(:reference_path, nil)
+      path == :source_location ? config.dig(:source, :location) : path
+    end
+
     def enabled?
       Workflow.steps_enabled?(config)
     end

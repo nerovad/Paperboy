@@ -43,4 +43,10 @@ class DslCatalogTest < ActiveSupport::TestCase
 
     assert_nil entry.sop
   end
+
+  test 'resolves an SOP reference from its source location' do
+    entry = DslCatalog.find!('document_automation')
+
+    assert_equal entry.config.dig(:source, :location), entry.sop_reference_path
+  end
 end

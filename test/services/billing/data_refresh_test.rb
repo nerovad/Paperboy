@@ -41,6 +41,15 @@ module Billing
       assert_equal false, defaults.fetch('mail_center_and_warehousing')
     end
 
+    test 'resolves an SOP reference from the displayed source location' do
+      dsl = DataRefresh::Dsl.new(
+        name: 'ONeil', slug: 'oneil', location: '/data/oneil.csv', file_date: nil,
+        current: false, script: false, sop: { reference_path: :source_location }
+      )
+
+      assert_equal '/data/oneil.csv', dsl.sop_reference_path
+    end
+
     test 'lists enabled DSL file dates and marks files after the period current' do
       entry = Struct.new(:key, :slug, :config, :sop) do
         def enabled? = true

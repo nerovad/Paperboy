@@ -18,7 +18,7 @@
       title: 'How to Download Document Automation',
       source_system: 'Document Automation',
       reference_title: 'Document Automation File',
-      reference_path: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/document_automation.xlsx',
+      reference_path: :source_location,
       instructions: [
         'Open the Document Automation file details.',
         'Verify document_automation.xlsx is current.',

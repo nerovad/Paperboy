@@ -1,4 +1,5 @@
 <% title_id = "#{dsl.slug}-sop-title" %>
+<% reference_path = dsl.sop_reference_path %>
 <div class="pb-modal-backdrop" data-sop-modal-target="backdrop"
      data-action="click->sop-modal#backdropClose" hidden>
   <div class="pb-modal" role="dialog" aria-modal="true"
@@ -19,7 +20,7 @@
     </div>
     <div class="pb-modal__actions">
       <button type="button" class="btn" data-action="sop-modal#close">Close</button>
-      <% if dsl.sop[:reference_path].present? %>
+      <% if reference_path.present? %>
         <button type="button" class="btn pdf" data-action="sop-modal#openReference"
                 data-url="<%= reference_data_runner_dsl_path(dsl.slug) %>">Open</button>
       <% elsif dsl.sop[:reference_url].present? %>
@@ -29,7 +30,7 @@
     </div>
   </div>
 </div>
-<% if dsl.sop[:reference_path].present? %>
+<% if reference_path.present? %>
   <% reference_title_id = "#{dsl.slug}-reference-title" %>
   <div class="pb-modal-backdrop" data-sop-reference
        data-action="click->sop-modal#backdropClose" hidden>

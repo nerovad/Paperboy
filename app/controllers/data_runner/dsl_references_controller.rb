@@ -6,7 +6,7 @@ module DataRunner
 
     def show
       @dsl = DslCatalog.find!(params[:name])
-      @reference_path = @dsl.sop&.fetch(:reference_path, nil)
+      @reference_path = @dsl.sop_reference_path
       raise ActiveRecord::RecordNotFound if @reference_path.blank?
 
       @reference_entries = DirectoryListing.new(@reference_path).call

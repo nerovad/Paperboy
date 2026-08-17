@@ -2,7 +2,12 @@
 
 module Billing
   class DataRefresh
-    Dsl = Data.define(:name, :slug, :location, :file_date, :current, :script, :sop)
+    Dsl = Data.define(:name, :slug, :location, :file_date, :current, :script, :sop) do
+      def sop_reference_path
+        path = sop&.fetch(:reference_path, nil)
+        path == :source_location ? location : path
+      end
+    end
     Group = Data.define(:key, :label, :default, :enabled_dsls) do
       def enabled_dsl_count = enabled_dsls.size
     end
