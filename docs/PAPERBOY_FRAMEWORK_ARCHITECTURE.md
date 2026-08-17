@@ -50,6 +50,53 @@ These descriptions state current ownership. They do not make application code
 part of PFA merely because multiple applications happen to use similar screens
 or operations.
 
+## Filesystem and environment namespace conventions
+
+Application ownership must remain visible outside Ruby constants and Rails
+routes. Use the application's canonical key for repository paths and its
+uppercase form for environment variables. For example, Billing uses `billing`
+in paths and `BILLING` in environment variable names.
+
+| Location | Convention | Example |
+| --- | --- | --- |
+| `config/` | Put application-owned configuration below `config/<app_key>/`. | `config/billing/report_formats.yml` |
+| `output/` | Put generated or runtime artifacts below `output/<app_key>/`. | `output/billing/monthly_reports/` |
+| `script/` | Group scripts first by runtime, when applicable, and then by application key. | `script/ruby/data_runner/`, `script/python/aim/` |
+| `.env` | Prefix application-owned variables with `<APP_KEY>_`. | `BILLING_ARCHIVE_ROOT`, `AIM_LINUX_QUEUE_BASE_PATH` |
+
+Application keys use lowercase snake case in paths, such as `data_runner`.
+Environment prefixes use uppercase snake case without removing word
+boundaries, such as `DATA_RUNNER_`, unless a documented compatibility prefix
+already exists. Data Runner currently uses `DATARUNNER_`; preserve that prefix
+until a coordinated migration is made rather than introducing both spellings
+for new settings.
+
+The namespace identifies the component that owns and interprets a setting, not
+merely the external system mentioned in its value. An AIM worker setting for a
+Billing database therefore remains under `AIM_`, for example
+`AIM_SQL_BILLING_DATABASE`. A setting read and owned by Billing begins with
+`BILLING_`.
+
+New application-specific files must not be placed directly in `config/`,
+`output/`, or a runtime directory under `script/`. New application-specific
+environment variables must not use an unqualified name. Existing files and
+variables may keep compatibility names until their callers, deployment files,
+and secrets are migrated together; document the replacement and avoid creating
+a second source of truth during that transition.
+
+Host-wide settings use the `PAPERBOY_` prefix when Paperboy defines them.
+Framework settings use `PFA_` only when PFA, rather than an application or the
+host, owns the contract. Standard variables defined by Rails, Bundler, Puma, or
+another external runtime retain their established names, including
+`RAILS_ENV`, `BUNDLE_GEMFILE`, `WEB_CONCURRENCY`, and `PORT`. Shared
+infrastructure variables may retain the provider or service namespace, such as
+`REDIS_URL`, when they configure one deployment-wide integration.
+
+Do not commit `.env` or application output. Commit a placeholder such as
+`.keep` only when an otherwise empty namespaced output directory is required.
+If example environment files are added, they must contain names and safe
+placeholders only, never credentials or production values.
+
 ## PFA capabilities
 
 ### Access control
