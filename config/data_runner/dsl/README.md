@@ -90,6 +90,7 @@ sop: {
 
 ```ruby
 source: {
+  location: nil,
   local: 'warehousing.csv',
   format: :csv,
   strategy: :script,
@@ -99,6 +100,9 @@ source: {
   }
 }
 ```
+
+  Scripted sources must set `location: nil`; the script creates the file named
+  by `source.local` in the DataRunner inbox.
 
 - Use `database_connections: [...]` even when a dataset has only one destination.
   Each entry should include `host`, `database`, `schema`, `table`, and `inject`.

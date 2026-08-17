@@ -15,7 +15,7 @@
       name: 'mail_center_and_warehousing'
     },
     source: {
-      location: 'warehousing.csv',
+      location: nil,
       local: 'warehousing.csv',
       format: :csv,
       strategy: :script,

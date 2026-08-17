@@ -21,6 +21,18 @@ class DslCatalogTest < ActiveSupport::TestCase
     assert_not_predicate DslCatalog.find!('parking_lots'), :enabled?
   end
 
+  test 'scripted sources have no external location' do
+    scripted = DslCatalog.entries.select do |entry|
+      entry.config.dig(:source, :strategy) == :script
+    end
+
+    assert_not_empty scripted
+    scripted.each do |entry|
+      assert_nil entry.config.fetch(:source).fetch(:location),
+                 "#{entry.slug} scripted source must set location to nil"
+    end
+  end
+
   test 'exposes SOPs only for supported groups' do
     assert_equal 'VCPrint', DslCatalog.find!('vcprint').sop.fetch(:source_system)
 

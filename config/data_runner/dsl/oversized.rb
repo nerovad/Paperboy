@@ -26,7 +26,7 @@
       ]
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/oversized.csv',
+      location: nil,
       local: 'oversized.csv',
       format: :csv,
       strategy: :script,
