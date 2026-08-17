@@ -20,7 +20,7 @@
       reference_title: 'ONeil Record Storage',
       reference_path: :source_location,
       instructions: [
-        'Open ONeil application',
+        'Open ONeil Administration Desktop Application',
         'Run the monthly billing report',
         'Save oneil.csv to DataRunner Inbox',
         'Open the ONeil file details.',

@@ -14,6 +14,16 @@
     group: {
       name: 'billing'
     },
+    sop: {
+      title: 'How to Download TC60 Adjustments',
+      source_system: 'Billing',
+      reference_title: 'Billing Adjustments',
+      reference_path: :source_location,
+      instructions: [
+        'The Microsoft Excel document is updated monthly to process manual charges such as HCA Forms Committee.',
+        'Verify tc60_adjustments.xlsx is current.'
+      ]
+    },
     source: {
       location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/tc60_adjustments.xlsm',
       local: 'tc60_adjustments.xlsx',

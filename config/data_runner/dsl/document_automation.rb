@@ -20,9 +20,8 @@
       reference_title: 'Document Automation File',
       reference_path: :source_location,
       instructions: [
-        'Open the Document Automation file details.',
-        'Verify document_automation.xlsx is current.',
-        'The Microsoft Excel document is updated annually or when pricing changes.'
+        'The Microsoft Excel document is updated annually or when pricing changes.',
+        'Verify document_automation.xlsx is current.'
       ]
     },
     source: {

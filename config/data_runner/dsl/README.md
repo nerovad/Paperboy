@@ -76,7 +76,9 @@ sop: {
   or folder. Paperboy renders read-only details because browsers block local
   file links opened from web pages. Use `reference_title` to customize the
   dialog heading. Set `reference_path: :source_location` when the SOP should
-  reference `source.location` without repeating the path.
+  reference `source.location` without repeating the path. `reference_url`
+  renders an **Open** link in a new tab, while `reference_path` renders a
+  **View File** dialog; an SOP may use either or both.
 - Use `source.location` for the file or path to stage and `source.local` for
   the filename used inside `00_Inbox` and downstream stages.
 - Use `source.strategy: :manual` when a human places the file in `00_Inbox`;
