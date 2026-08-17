@@ -14,6 +14,11 @@ The primary namespaces are:
 - `Coa`: Chart of Accounts data and account-hierarchy behavior.
 - Application namespaces such as `Aim`, `Billing`, `Dam`, and `DataRunner`.
 
+The deployed product also includes `AdminTools`, `DigitalAssetManagement`,
+and `Production` controller boundaries. `DigitalAssetManagement` controllers
+use `Dam::*` domain models; this difference should be treated as a documented
+compatibility name, not as permission to mix the two domains.
+
 The intended dependency direction is:
 
 ```text
@@ -25,6 +30,25 @@ Pfa          ──> Rails and shared infrastructure
 PFA must not contain form-specific or AIM-specific workflow rules. Applications
 publish capabilities through PFA contracts and retain ownership of their data,
 authorization, state transitions, and business actions.
+
+## Application portfolio
+
+Paperboy is the host product and composition root for a portfolio of internal
+applications. The host owns boot, routing, authentication, the application
+switcher, framework registration, and deployment. Each application owns its
+business vocabulary, records, policies, workflows, and page content.
+
+| Application | Namespace and entry point | Responsibility | Current maturity |
+| --- | --- | --- | --- |
+| Admin Tools | `AdminTools`, `/admin_tools` | Administration launchpad for ACL, form management, impersonation, data validation, and lookup-table tools. Each tool retains its own feature grant. | Container around existing administration screens; several controllers remain top-level. |
+| Billing | `Billing`, `/billing` | Fiscal-period setup, source refresh, billing enablement, monthly runs, reconciliation/audit, report generation, delivery, and archival. | Namespaced controllers, models, services, jobs, mailer, and views; uses the separate `BillingBase` connection. |
+| Data Runner | `DataRunner`, `/data_runner` | Defines, imports, groups, executes, and inspects file/database transformation DSLs and their output artifacts. | Namespaced web layer and runtime services; configuration and executable workflow scripts remain filesystem-backed. |
+| Digital Asset Management | `DigitalAssetManagement` controllers with `Dam` domain objects, `/digital_asset_management` | Ingests and searches assets; manages metadata, collections, favorites, jobs, workflows, shares, storage locations, and upload destinations. | Full application slice with feature-level access; controller/domain namespace naming is inconsistent. |
+| Production | `Production`, `/production` | Entry point for print-production operations and future production work queues. | ACL-protected shell and dashboard only; production domain services and records are not yet implemented. |
+
+These descriptions state current ownership. They do not make application code
+part of PFA merely because multiple applications happen to use similar screens
+or operations.
 
 ## PFA capabilities
 
@@ -194,6 +218,139 @@ items claimed by another reviewer.
 The filesystem remains the source of invoice PDFs and processing metadata.
 Directory scanning and `.claim.json` are transitional workflow mechanisms, not
 the final shared assignment store.
+
+## Application boundaries
+
+### Admin Tools
+
+Admin Tools is an application-level navigation and authorization boundary, not
+a framework administration namespace. It owns the catalog and presentation of
+administrative capabilities. ACL aggregation, authentication, and generic
+feature checks belong in PFA or the host; the rules for editing groups, forms,
+lookup data, and impersonation remain with their respective domains.
+
+Existing top-level admin controllers should migrate behind `AdminTools::*` or
+another explicit owning namespace over time. Routes may remain stable during
+that migration. `AdminTools::BaseController` should remain the mandatory app
+gate, with each tool continuing to enforce its feature permission.
+
+### Billing
+
+Billing owns all fiscal calendars, billing types, stored-procedure adapters,
+monthly-run orchestration, audit rules, report formats, recipient lists, email
+subjects, delivery decisions, and archive locations. `BillingBase` is an
+infrastructure adapter used by Billing; it is not a general-purpose framework
+database API.
+
+Generic artifact storage, job execution, email transport, and tabular export
+interfaces may be extracted only after Billing supplies an adapter and a
+second application demonstrates the same contract. Billing report names,
+period rules, TC60 concepts, and database schemas must not move into PFA.
+
+### Data Runner
+
+Data Runner owns the DSL schema, catalog, group management, task catalog,
+execution pipeline, run output, backup-output browsing, and safe filesystem
+rules. Dataset definitions under `config/data_runner` and scripts under
+`script/ruby/data_runner` are application configuration and implementation.
+
+A reusable execution framework may eventually expose contracts such as
+`Definition`, `Run`, `Artifact`, and `Runner`. It must not know Data Runner DSL
+keys, directory stages, rake task names, or billing datasets. Durable run and
+artifact records are recommended before another application depends on its
+execution state.
+
+### Digital Asset Management
+
+DAM owns asset identity and metadata, ingestion, search facets, collections,
+favorites, recent views, workflows, jobs, shares, storage locations, and upload
+selection. Binary storage access can sit behind a framework storage contract,
+but DAM retains lifecycle rules, metadata schemas, visibility, and sharing
+policy.
+
+Standardize new domain code on `Dam::*`. Keep
+`DigitalAssetManagement::*Controller` as the web namespace until a deliberate
+route and constant migration is justified; document this mapping in tests and
+avoid introducing a third abbreviation.
+
+### Production
+
+Production currently owns only an ACL-protected application shell. Future
+production models should live in `Production::*` and publish work through
+`Pfa::Work::Provider` rather than placing print-job rules in PFA. Likely domain
+concepts include jobs, batches, devices, schedules, materials, exceptions, and
+completion events, but these should be introduced only with implemented use
+cases. Billing datasets and Data Runner scripts are integrations, not the
+Production domain model.
+
+## Framework and application separation recommendations
+
+Use the following dependency rule for every extraction:
+
+```text
+Paperboy host (composition and routes)
+        │
+        ├──> Pfa contracts and shared infrastructure
+        │
+        └──> Applications ──> Pfa contracts
+
+Pfa ──X──> AdminTools, Aim, Billing, Dam, DataRunner, Forms, Production
+Application A ──X──> Application B domain internals
+```
+
+Recommended actions, in priority order:
+
+1. Move application registration out of `Pfa::Work::Registry.default` and into
+   a Rails initializer or host-level registry. PFA should define the provider
+   interface but never instantiate application providers.
+2. Introduce one host application catalog for keys, labels, routes, feature
+   catalogs, and namespace metadata. Replace duplicated lists in
+   `ApplicationHelper`, `AclController`, and related navigation code.
+3. Give every application a base controller that performs the app-access gate,
+   and require feature gates at the action boundary. Keep authorization policy
+   out of helpers used only to render navigation.
+4. Prevent cross-application model access through adapters or published
+   services. Shared database tables alone do not establish a framework API.
+5. Extract a capability only when it is application-neutral, has an explicit
+   input/output contract, and has at least two consumers. Prefer duplication
+   over a shared abstraction containing billing, forms, DAM, or production
+   conditionals.
+6. Add architecture tests that reject application constants under `app/pfa`,
+   direct PFA references to application namespaces, and unregistered app keys.
+7. Keep compatibility aliases and legacy routes at the host edge. New domain
+   code must use the owning namespace even while persisted names are migrated.
+
+## User interface architecture
+
+The shared UI is a framework capability only at the component and shell level.
+PFA or the host owns design tokens, global layout, the application switcher,
+responsive navigation behavior, accessibility conventions, and reusable
+components. Applications own page composition, domain labels, specialized
+visualizations, and content-specific layout.
+
+Current shared standards are:
+
+- Use the application layout and `shared/app_switcher`; application sidebars
+  may add domain navigation but must preserve the common shell behavior.
+- Use tokens from `base/_tokens.scss`. Do not introduce page-local copies of
+  brand colors, spacing, typography, borders, or shadows.
+- Use `.btn` with no more than one semantic color variant and one size modifier.
+  Button colors and metrics belong only in `components/_buttons.scss`.
+- Use the `pb-modal*` shell and `pbConfirm`/`pbAlert`. Never use native browser
+  dialogs or define modal shells in page stylesheets.
+- Prefer shared table, badge, form, toast, slideshow, and advanced-search
+  components before creating application variants. Page SCSS may arrange
+  components and style domain content, but must not redefine their appearance.
+- Every interactive control must support keyboard use, visible focus, an
+  accessible name, and appropriate ARIA state. Mobile behavior is part of the
+  component contract, not a page-level enhancement.
+
+To make these rules enforceable, create a component catalog with canonical ERB
+examples and accessibility states, add view/component tests for shared markup,
+and add a stylesheet lint or CI search that rejects page-level `.btn` colors,
+modal-shell declarations, and raw design values where tokens exist. Migrate the
+remaining inline-styled controls and legacy `.button` markup to the shared
+system as application pages are touched.
 
 ## Compatibility policy
 
