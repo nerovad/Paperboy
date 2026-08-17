@@ -60,10 +60,66 @@ module Aim
       nil
     end
 
+    # Invoices reach these queues because extraction went sideways, so an
+    # invoice number is often missing. Report that honestly — the folder's
+    # "…-[3SZK]" code is not an invoice number and must never stand in for one.
+    def aim_invoice_reference(invoice)
+      aim_metadata_value(invoice[:metadata], 'InvoiceNumber', 'invoice_number', 'Invoice Number')
+    end
+
+    # Totals and dates arrive as free-form metadata strings. Format the ones
+    # that really are numbers or dates and pass anything else through untouched
+    # so partial extractions still render whatever the AI produced.
+    def aim_currency(value)
+      return value if value.blank?
+
+      numeric = value.to_s.delete('$,').strip
+      return value unless numeric.match?(/\A-?\d+(\.\d+)?\z/)
+
+      number_to_currency(numeric.to_d)
+    end
+
+    # Vendors print dates however they like. Numeric ones are read month-first
+    # because these are US invoices — Date.parse would take 8/12/2026 as the
+    # eighth of December. Anything unparseable renders as extracted.
+    US_NUMERIC_DATE_PATTERN = %r{\A(\d{1,2})[/-](\d{1,2})[/-](\d{2}|\d{4})\z}
+
+    def aim_invoice_date(value)
+      return value if value.blank?
+
+      parsed = aim_parsed_invoice_date(value.to_s.strip)
+      parsed ? parsed.strftime('%m/%d/%y') : value
+    end
+
+    def aim_parsed_invoice_date(value)
+      match = US_NUMERIC_DATE_PATTERN.match(value)
+      return Date.new(aim_expanded_year(match[3]), match[1].to_i, match[2].to_i) if match
+
+      Date.parse(value)
+    rescue Date::Error, TypeError
+      nil
+    end
+
+    def aim_expanded_year(year)
+      year.length == 2 ? year.to_i + 2000 : year.to_i
+    end
+
+    # A claim records the claimant's email as its identity key and their
+    # display name alongside it. Claims written before the name was recorded
+    # fall back to a readable mailbox rather than showing an address.
+    def aim_claimant_label(invoice)
+      return invoice[:claimed_by_name] if invoice[:claimed_by_name].present?
+
+      mailbox = invoice[:claimed_by].to_s.split('@').first
+      return 'Someone' if mailbox.blank?
+
+      mailbox.tr('._-', ' ').squish.titleize
+    end
+
     def aim_status_badge(invoice, current_user)
       return [invoice[:status_badge], invoice[:status_text]] if invoice[:status_badge].present?
       return ['is-in-review', 'Claimed by You'] if invoice[:claimed_by] == current_user
-      return ['is-in-review', "Claimed by #{invoice[:claimed_by]}"] if invoice[:claimed_by].present?
+      return ['is-in-review', "Claimed by #{aim_claimant_label(invoice)}"] if invoice[:claimed_by].present?
 
       ['is-approved', invoice[:metadata]['Status'].presence || 'Ready']
     end

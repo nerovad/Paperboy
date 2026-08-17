@@ -4,31 +4,53 @@ module Aim
   module InvoiceFileSupport
     extend ActiveSupport::Concern
 
+    # The queue lives on a mounted share that can come back read-only, vanish
+    # or fill up. Those failures are expected operating conditions, not bugs,
+    # so callers handle them rather than letting a stack trace reach staff.
+    WRITE_FAILURES = [Errno::EACCES, Errno::EPERM, Errno::EROFS, Errno::ENOSPC].freeze
+
     private
 
+    # Returns false when the claim could not be recorded, which leaves the
+    # invoice unreserved — the review page goes read-only rather than offering
+    # actions whose writes would fail too.
     def claim_invoice
       claim_path = File.join(@folder_path, '.claim.json')
-      return if File.exist?(claim_path)
+      return true if File.exist?(claim_path)
 
-      File.write(claim_path, { user: current_user_email, timestamp: Time.zone.now.to_i }.to_json)
+      claim = { user: current_user_email, name: current_user_name, timestamp: Time.zone.now.to_i }
+      File.write(claim_path, claim.to_json)
+      true
+    rescue *WRITE_FAILURES => e
+      Rails.logger.error "AIM could not claim #{@invoice_id.inspect} in #{@queue}: #{e.class}: #{e.message}"
+      false
     end
 
     def unclaim_invoice(folder_path)
       FileUtils.rm_f(File.join(folder_path, '.claim.json'))
     end
 
-    def claimed_by_for(folder_path)
+    # The email is the claim's identity key — locking compares it against the
+    # signed-in user — and the display name rides alongside it so queues never
+    # have to show an address. Claims written before the name was recorded
+    # return no name and are labelled from the mailbox instead.
+    def claim_details_for(folder_path)
       claim_path = File.join(folder_path, '.claim.json')
-      return unless File.exist?(claim_path)
+      return [nil, nil] unless File.exist?(claim_path)
 
       claim_data = JSON.parse(File.read(claim_path))
-      claim_data['user'] || claim_data['employee_id'] || 'Someone'
+      [claim_data['user'] || claim_data['employee_id'] || 'Someone', claim_data['name'].presence]
     rescue JSON::ParserError
-      'Unknown'
+      ['Unknown', nil]
     end
 
     def current_user_email
       session.dig(:user, 'email') || session.dig('user', 'email') || 'Unknown User'
+    end
+
+    def current_user_name
+      user = session[:user] || session['user'] || {}
+      [user['first_name'], user['last_name']].compact_blank.join(' ').presence
     end
 
     def reject_invoice

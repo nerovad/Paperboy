@@ -28,7 +28,7 @@ module Aim
       metadata_path = metadata_path_for(folder_path)
       metadata = read_metadata(metadata_path)
       pdf_files = pdf_files_for(folder_path)
-      claimed_by = claimed_by_for(folder_path)
+      claimed_by, claimed_by_name = claim_details_for(folder_path)
 
       {
         id: invoice_name,
@@ -40,6 +40,7 @@ module Aim
         status_badge: queue_item_status_badge(metadata_path, metadata, pdf_files),
         reviewable: @queue != 'ai_queue',
         claimed_by: claimed_by,
+        claimed_by_name: claimed_by_name,
         is_locked: claimed_by.present? && claimed_by != current_user_email
       }
     end

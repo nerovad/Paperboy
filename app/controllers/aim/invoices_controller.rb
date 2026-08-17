@@ -11,6 +11,12 @@ module Aim
     before_action :require_aim_admin
     before_action :set_queue
 
+    # Every action below writes to the queue share. When it is read-only or
+    # unreachable, send staff back to the queue with an explanation instead of
+    # a stack trace. #show handles its own failure so the invoice stays
+    # readable.
+    rescue_from(*Aim::InvoiceFileSupport::WRITE_FAILURES, with: :queue_not_writable)
+
     def index
       dir_svc = Aim::InvoiceDirectoryService.instance
 
@@ -28,7 +34,9 @@ module Aim
       set_invoice_context
       return redirect_to aim_invoices_path(queue: @queue), alert: 'Document not found.' unless @folder_path&.then { Dir.exist?(_1) }
 
-      claim_invoice
+      # A claim that could not be written, or an already-claimed invoice whose
+      # share has since gone read-only, both mean nothing here can be saved.
+      @read_only = !claim_invoice || !File.writable?(@folder_path)
 
       @metadata_path = metadata_path_for(@folder_path)
       @metadata = read_metadata(@metadata_path)
@@ -103,6 +111,18 @@ module Aim
       return redirect_to aim_invoices_path(queue: @queue), alert: 'Document not found.' unless @folder_path&.then { Dir.exist?(_1) }
 
       move_invoice_to(Aim::InvoiceDirectoryService.instance.action_needed_dir, 'Moved document to Action Needed Queue.')
+    end
+
+    private
+
+    # A move or a metadata write can fail partway through, so this promises
+    # nothing about what did or did not happen on disk.
+    def queue_not_writable(error)
+      Rails.logger.error "AIM write failed for #{@invoice_id.inspect} in #{@queue}: #{error.class}: #{error.message}"
+
+      redirect_to aim_invoices_path(queue: @queue),
+                  alert: 'The queue folder could not be written to, so that action did not complete. ' \
+                         'Check the queue share and try again.'
     end
   end
 end

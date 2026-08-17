@@ -1,18 +1,26 @@
 @import "base/tokens";
 
+/* #main-content is the app's scroll container: 100vh, border-box, with an
+   80px top padding for the fixed profile bar (60px under 768px). Sizing to
+   100% resolves against that content box, so the page fills the shell exactly
+   at every breakpoint and the shell never scrolls. Do not restore a
+   calc(100dvh - Npx) here — any fixed N is wrong at one breakpoint or the
+   other. */
 .aim-page {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  height: calc(100dvh - 60px);
+  height: 100%;
   overflow: hidden;
   padding: 24px;
 }
 
+/* The bottom padding clears the fixed "Powered by GSA" badge, which sits
+   bottom-right at z-index 900 and would otherwise cover the action row. */
 .aim-review-page {
   gap: 8px;
-  padding: 10px 24px 12px;
+  padding: 10px 24px 38px;
 }
 
 .aim-page-header {
@@ -80,6 +88,46 @@
   overflow: hidden;
 }
 
+/* Shown when the queue share is not writable. It has to be impossible to miss:
+   the invoice is unclaimed, so a second person can open the same one. */
+.aim-readonly-banner {
+  align-items: flex-start;
+  background: $error-bg;
+  border: 1px solid $error-border;
+  border-left: 5px solid $red-alert-border;
+  border-radius: 8px;
+  color: $error-text;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px 18px;
+}
+
+.aim-readonly-banner__mark {
+  align-items: center;
+  background: $red-alert-border;
+  border-radius: 50%;
+  color: $surface-base;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-weight: 700;
+  height: 22px;
+  justify-content: center;
+  width: 22px;
+}
+
+.aim-readonly-banner strong {
+  color: $danger-deep;
+  display: block;
+  font-size: 1rem;
+  letter-spacing: 0.2px;
+}
+
+.aim-readonly-banner p {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+}
+
 .aim-empty-state {
   color: $text-muted;
   padding: 42px;
@@ -111,12 +159,54 @@
 
 .aim-queue-table td {
   line-height: 1.3;
-  overflow-wrap: anywhere;
   padding: 8px 10px;
+}
+
+/* The AI queue leads with a long job-folder name and has nowhere to scroll, so
+   it keeps the aggressive wrap. Never apply this to the review table:
+   `overflow-wrap: anywhere` also collapses a cell's min-content width, which
+   lets the browser squeeze columns instead of letting the panel scroll — that
+   is what split totals mid-number and broke badges mid-word. */
+.aim-queue-table:not(.aim-queue-table--review) td {
+  overflow-wrap: anywhere;
 }
 
 .aim-queue-table .badge {
   font-size: 0.68rem;
+}
+
+.aim-queue-table--review {
+  min-width: 900px;
+  /* .submission-table sets overflow: hidden, which would make the table its
+     own scrollport and stop the pinned action column from tracking the panel's
+     horizontal scroll. */
+  overflow: visible;
+}
+
+.aim-queue-table--review .badge {
+  white-space: nowrap;
+}
+
+.aim-queue-table--review .aim-total {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Action stays pinned to the left edge so the button is reachable at any
+   horizontal scroll position. */
+.aim-queue-table--review th:first-child,
+.aim-queue-table--review td:first-child {
+  background: $surface-base;
+  left: 0;
+  position: sticky;
+  width: 140px;
+  z-index: 2;
+}
+
+.aim-queue-table--review th:first-child {
+  background: $surface-subtle;
+  z-index: 11;
 }
 
 .aim-dashboard-grid {
@@ -327,22 +417,24 @@
   color: $surface-base;
 }
 
+/* Density pass: the review screen is read top-to-bottom against the PDF, so
+   fitting more fields on screen at once matters more than roomy controls. */
 .aim-fields {
   display: grid;
-  gap: 14px;
+  gap: 9px;
 }
 
 .aim-field-row {
   align-items: flex-end;
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .aim-field-row .btn.compact {
   flex: 0 0 auto;
-  font-size: 0.76rem;
-  height: 42px;
-  padding: 0 12px;
+  font-size: 0.72rem;
+  height: 32px;
+  padding: 0 10px;
 }
 
 .aim-field {
@@ -353,9 +445,9 @@
 .aim-field label {
   color: $text-color;
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.76rem;
   font-weight: 650;
-  margin-bottom: 5px;
+  margin-bottom: 2px;
 }
 
 .aim-field input,
@@ -367,7 +459,8 @@
   box-sizing: border-box;
   color: $text-strong;
   font: inherit;
-  padding: 10px;
+  font-size: 0.82rem;
+  padding: 6px 8px;
   width: 100%;
 }
 
@@ -380,7 +473,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 18px;
+  padding: 12px 14px;
 }
 
 .aim-form-actions {
@@ -394,7 +487,9 @@
   padding: 16px 18px;
 }
 
+/* One action group now, so it hugs the right edge instead of being spread. */
 .aim-review-page .aim-form-actions {
+  justify-content: flex-end;
   padding: 10px 18px;
 }
 
@@ -405,9 +500,16 @@
   gap: 10px;
 }
 
+/* Wrapping is expected at narrow widths: rows stay right-aligned and each
+   button keeps its own width rather than stretching to fill the row. */
 .aim-review-action-strip {
-  gap: 6px;
+  column-gap: 6px;
   justify-content: flex-end;
+  row-gap: 8px;
+}
+
+.aim-review-action-strip .btn {
+  flex: 0 0 auto;
 }
 
 .aim-review-action-strip .btn {
@@ -529,8 +631,17 @@
   font-weight: 650;
 }
 
+/* Stacked, the two panels cannot both fit a fixed-height page. Scroll the
+   layout rather than the window, so the panels stay usable instead of being
+   clipped by the page's overflow: hidden. */
 @media (max-width: 1100px) {
   .aim-document-layout {
     grid-template-columns: 1fr;
+    overflow: auto;
+  }
+
+  .aim-document-panel,
+  .aim-metadata-form {
+    min-height: 70vh;
   }
 }

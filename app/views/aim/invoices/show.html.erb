@@ -9,6 +9,20 @@
     </div>
   </header>
 
+  <% if @read_only %>
+    <div class="aim-readonly-banner" role="alert">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
+      <div>
+        <strong>Read only — changes to this invoice cannot be saved.</strong>
+        <p>
+          The queue folder could not be written to. Unless this invoice was already claimed, no one
+          has it reserved and someone else may open it at the same time. Review actions are hidden
+          until the queue share is writable again.
+        </p>
+      </div>
+    </div>
+  <% end %>
+
   <div class="aim-document-layout">
     <section class="aim-panel aim-document-panel">
       <div class="aim-panel-header">
@@ -145,63 +159,67 @@
       </div>
 
       <div class="aim-form-actions">
-        <div class="aim-action-group">
-          <%= form.submit 'Unclaim', class: 'btn ghost' %>
-        </div>
+        <% if @read_only %>
+          <%# Nothing here can be saved, so offer the only action that works. %>
+          <div class="aim-action-group">
+            <%= link_to 'Return to Queue', aim_invoices_path(queue: @queue), class: 'btn' %>
+          </div>
+        <% else %>
+          <div class="aim-action-group aim-review-action-strip">
+            <%= form.submit 'Unclaim', class: 'btn ghost' %>
+            <%= form.submit 'Save Changes', class: 'btn secondary' %>
 
-        <div class="aim-action-group aim-review-action-strip">
-          <%= form.submit 'Save Changes', class: 'btn secondary' %>
+            <% if @queue == 'action_needed' %>
+              <%= form.submit 'Reject',
+                              data: { turbo_confirm: 'Reject this invoice and send it to the rejected folder?' },
+                              class: 'btn deny' %>
+              <%= form.submit 'Send to Approval',
+                              data: { turbo_confirm: 'Route this invoice to User Approval?' },
+                              class: 'btn approve' %>
+            <% elsif @queue == 'low_confidence_review' %>
+              <%= form.submit 'Reject',
+                              data: { turbo_confirm: 'Reject this invoice and send it to the rejected folder?' },
+                              class: 'btn deny' %>
+              <%= form.submit 'Send to SQL Queue',
+                              data: { turbo_confirm: 'Save these XML index fields and send this folder to the SQL queue?' },
+                              class: 'btn approve' %>
+            <% elsif @queue == 'vendor_review' %>
+              <%= form.submit 'Learn & Continue',
+                              data: {
+                                turbo_confirm: 'Save this alias and continue without rerunning AI vision?'
+                              },
+                              class: 'btn approve' %>
+              <%= form.submit 'Learn & Retry AI',
+                              data: {
+                                turbo_confirm: 'Save this alias and send the document back through AI vision?'
+                              },
+                              class: 'btn warning' %>
+              <%= button_tag 'Check Duplicates *',
+                             type: 'button',
+                             disabled: true,
+                             title: 'Future AIM workflow step; not active yet.',
+                             class: 'btn ghost aim-placeholder-action' %>
+              <%= button_tag 'Run Vendor/BU Lookup *',
+                             type: 'button',
+                             disabled: true,
+                             title: 'Future AIM workflow step; not active yet.',
+                             class: 'btn ghost aim-placeholder-action' %>
+              <%= button_tag 'Send to Manual Processing *',
+                             type: 'button',
+                             disabled: true,
+                             title: 'Future AIM workflow step; not active yet.',
+                             class: 'btn ghost aim-placeholder-action' %>
+            <% end %>
 
-          <% if @queue == 'action_needed' %>
-            <%= form.submit 'Reject',
-                            data: { turbo_confirm: 'Reject this invoice and send it to the rejected folder?' },
-                            class: 'btn deny' %>
-            <%= form.submit 'Send to Approval',
-                            data: { turbo_confirm: 'Route this invoice to User Approval?' },
-                            class: 'btn approve' %>
-          <% elsif @queue == 'low_confidence_review' %>
-            <%= form.submit 'Reject',
-                            data: { turbo_confirm: 'Reject this invoice and send it to the rejected folder?' },
-                            class: 'btn deny' %>
-            <%= form.submit 'Send to SQL Queue',
-                            data: { turbo_confirm: 'Save these XML index fields and send this folder to the SQL queue?' },
-                            class: 'btn approve' %>
-          <% elsif @queue == 'vendor_review' %>
-            <%= form.submit 'Learn & Continue',
-                            data: {
-                              turbo_confirm: 'Save this alias and continue without rerunning AI vision?'
-                            },
-                            class: 'btn approve' %>
-            <%= form.submit 'Learn & Retry AI',
-                            data: {
-                              turbo_confirm: 'Save this alias and send the document back through AI vision?'
-                            },
-                            class: 'btn warning' %>
-            <%= button_tag 'Check Duplicates *',
-                           type: 'button',
-                           disabled: true,
-                           title: 'Future AIM workflow step; not active yet.',
-                           class: 'btn ghost aim-placeholder-action' %>
-            <%= button_tag 'Run Vendor/BU Lookup *',
-                           type: 'button',
-                           disabled: true,
-                           title: 'Future AIM workflow step; not active yet.',
-                           class: 'btn ghost aim-placeholder-action' %>
-            <%= button_tag 'Send to Manual Processing *',
-                           type: 'button',
-                           disabled: true,
-                           title: 'Future AIM workflow step; not active yet.',
-                           class: 'btn ghost aim-placeholder-action' %>
-          <% end %>
-
-          <%= link_to 'Retry AI Processing',
-                      retry_aim_invoice_path(@invoice_id, queue: @queue),
-                      data: {
-                        turbo_method: :post,
-                        turbo_confirm: 'Send this original document back to the Reprocess Queue?'
-                      },
-                      class: 'btn warning' %>
-        </div>
+            <%= link_to 'Retry AI Processing',
+                        retry_aim_invoice_path(@invoice_id, queue: @queue),
+                        data: {
+                          turbo_method: :post,
+                          turbo_confirm: 'Send this original document back to the Reprocess Queue?'
+                        },
+                        class: 'btn warning' %>
+          </div>
+        <% end %>
       </div>
     <% end %>
   </div>

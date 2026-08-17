@@ -24,3 +24,12 @@ output/data_runner/06_Download_Backup/
 
 # Per-environment bundler config (set BUNDLE_WITHOUT via deploy env, do not commit)
 /.bundle/
+
+# Per-developer AI assistant working files. The shared instructions live in
+# tracked AGENTS.md and CLAUDE.md at the repo root; everything below is local
+# scratch, session state and personal settings that no one else should inherit.
+/.claude/
+/.codex/
+/.gemini/
+/.antigravity/
+CLAUDE.local.md
