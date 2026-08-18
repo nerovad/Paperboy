@@ -5,33 +5,33 @@ require 'test_helper'
 module Billing
   class DataRefreshTest < ActiveSupport::TestCase
     test 'refreshes only groups selected with one' do
-      result = TaskRunner::Result.new(id: '00000000-0000-0000-0000-000000000000', success: true)
+      result = DataRunner::GroupRun.new(group_name: DataRefresh::GROUP_RUN_NAME, total_count: 1)
       calls = []
-      runner = lambda do |task:, selector:|
-        calls << [task, selector]
+      runner = lambda do |**arguments|
+        calls << arguments
         result
       end
-      enabled = Struct.new(:slug) do
+      enabled = Struct.new(:slug, :key) do
         def enabled? = true
       end
-      disabled = Struct.new(:slug) do
+      disabled = Struct.new(:slug, :key) do
         def enabled? = false
       end
       catalog = {
-        'billing' => [enabled.new('oneil'), disabled.new('digital_services')],
-        'mail_center_and_warehousing' => [enabled.new('usps')]
+        'billing' => [enabled.new('oneil', 'ONeil'), disabled.new('digital_services', 'DigitalServices')],
+        'mail_center_and_warehousing' => [enabled.new('usps', 'USPS')]
       }
 
       DslCatalog.stub(:grouped, catalog) do
-        TaskRunner.stub(:run!, runner) do
-          returned = DataRefresh.run!(
-            'billing' => '1', 'mail_center_and_warehousing' => '0'
+        DataRunner::GroupRefresh.stub(:start!, runner) do
+          DataRefresh.run!(
+            { 'billing' => '1', 'mail_center_and_warehousing' => '0' }, requested_by: 'employee@example.com'
           )
-
-          assert_equal result, returned
         end
       end
-      assert_equal [['refresh', ['oneil']]], calls
+      assert_equal DataRefresh::GROUP_RUN_NAME, calls.first.fetch(:group)
+      assert_equal ['oneil'], calls.first.fetch(:entries).map(&:slug)
+      assert_equal 'employee@example.com', calls.first.fetch(:requested_by)
     end
 
     test 'defaults billing on and mail center and warehousing off' do

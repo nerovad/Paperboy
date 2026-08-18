@@ -97,7 +97,9 @@ Rails.application.routes.draw do
     get 'audit/:key/rows', to: 'audits#rows', as: :audit_rows
     get 'audit/:key', to: 'audits#detail', as: :audit_detail
     resource :reporting_period, only: %i[show update]
-    resource :data_refresh, only: %i[show update]
+    resource :data_refresh, only: %i[show update] do
+      post :restart
+    end
     resources :email_recipients, only: %i[index create destroy]
     resource :email_subjects, only: %i[show update]
     resource :email_reports, only: %i[show create]

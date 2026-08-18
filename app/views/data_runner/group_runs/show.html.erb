@@ -1,9 +1,13 @@
 <div class="page-heading">
   <div>
-    <p class="eyebrow">Group refresh</p>
-    <h1><%= @run.group_name.humanize %></h1>
+    <p class="eyebrow"><%= @run.group_name == Billing::DataRefresh::GROUP_RUN_NAME ? "Billing" : "Group refresh" %></p>
+    <h1><%= @run.group_name == Billing::DataRefresh::GROUP_RUN_NAME ? "Data refresh" : @run.group_name.humanize %></h1>
   </div>
-  <%= link_to "Back to group", data_runner_root_path(group: @run.group_name), class: "btn" %>
+  <% if @run.group_name == Billing::DataRefresh::GROUP_RUN_NAME %>
+    <%= link_to "Back to Billing", billing_data_refresh_path, class: "btn" %>
+  <% else %>
+    <%= link_to "Back to group", data_runner_root_path(group: @run.group_name), class: "btn" %>
+  <% end %>
 </div>
 
 <section class="group-run" data-controller="group-run"

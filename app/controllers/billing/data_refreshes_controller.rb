@@ -6,20 +6,31 @@ module Billing
     before_action :set_active_billing_period
     before_action :load_groups
 
-    def show
-      @output = TaskRunner.output!(params[:run_id]) if params[:run_id].present?
-    end
+    def show; end
 
     def update
-      result = DataRefresh.run!(group_values)
-      return redirect_to billing_data_refresh_path, notice: 'No Data Runner groups were selected.' unless result
+      run = DataRefresh.run!(group_values, requested_by: current_user.email)
+      return redirect_to billing_data_refresh_path, notice: 'No Data Runner groups were selected.' unless run
 
-      message = "Data refresh #{result.success ? 'completed successfully' : 'failed'}."
-      destination = billing_data_refresh_path(run_id: result.id)
-      redirect_to destination, result.success ? { notice: message } : { alert: message }
+      redirect_to data_runner_group_run_path(run), notice: "Data refresh started for #{run.total_count} DSLs."
+    rescue DataRunner::GroupRefresh::ActiveRun
+      run = DataRunner::GroupRun.active.find_by!(group_name: DataRefresh::GROUP_RUN_NAME)
+      redirect_to data_runner_group_run_path(run), alert: 'A Billing data refresh is already running.'
     rescue ActionController::ParameterMissing, ArgumentError, KeyError => e
       Rails.logger.error("Billing data refresh failed: #{e.class}: #{e.message}")
       redirect_to billing_data_refresh_path, alert: 'The data refresh could not be started.'
+    end
+
+    def restart
+      previous_run = DataRunner::GroupRun.find_by!(id: params.require(:run_id),
+                                                   group_name: DataRefresh::GROUP_RUN_NAME)
+      entries = previous_run.items.order(:position).map { |item| DslCatalog.find!(item.dsl_slug) }
+      run = DataRunner::GroupRefresh.restart!(group: DataRefresh::GROUP_RUN_NAME, entries: entries,
+                                              requested_by: current_user.email)
+      redirect_to data_runner_group_run_path(run), notice: "Data refresh restarted for #{run.total_count} DSLs."
+    rescue ActiveRecord::RecordNotFound, ActionController::ParameterMissing, KeyError => e
+      Rails.logger.error("Billing data refresh restart failed: #{e.class}: #{e.message}")
+      redirect_to billing_data_refresh_path, alert: 'The data refresh could not be restarted.'
     end
 
     private

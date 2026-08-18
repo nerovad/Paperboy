@@ -21,6 +21,7 @@ module Billing
       'mail_center_and_warehousing' => { label: 'Mail Center and Warehousing', default: false }
     }.freeze
     VALUES = %w[0 1].freeze
+    GROUP_RUN_NAME = 'billing_data_refresh'
 
     def self.groups(end_date: nil)
       catalog = DslCatalog.grouped
@@ -61,21 +62,21 @@ module Billing
     end
     private_class_method :script_status
 
-    def self.run!(values)
+    def self.run!(values, requested_by:)
       validate!(values)
       selected_groups = GROUPS.keys.select { |key| values.fetch(key) == '1' }
       return if selected_groups.empty?
 
-      TaskRunner.run!(task: 'refresh', selector: enabled_slugs(selected_groups))
+      DataRunner::GroupRefresh.start!(group: GROUP_RUN_NAME, entries: enabled_entries(selected_groups), requested_by: requested_by)
     end
 
-    def self.enabled_slugs(group_keys)
+    def self.enabled_entries(group_keys)
       catalog = DslCatalog.grouped
       group_keys.flat_map do |key|
-        catalog.fetch(key).select(&:enabled?).map(&:slug)
+        catalog.fetch(key).select(&:enabled?)
       end
     end
-    private_class_method :enabled_slugs
+    private_class_method :enabled_entries
 
     def self.validate!(values)
       raise ArgumentError unless values.keys.sort == GROUPS.keys.sort

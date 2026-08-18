@@ -34,22 +34,38 @@
 
   <% if run.active? %>
     <div class="group-run-progress__actions">
-      <%= button_to "Restart interrupted refresh",
-                    data_runner_refresh_dsl_group_path(run.group_name, restart: 1),
-                    method: :post, class: "btn warning",
-                    data: { turbo_confirm: "Restart this refresh? Only continue if processing was interrupted. The current run will be marked failed." } %>
+      <% if run.group_name == Billing::DataRefresh::GROUP_RUN_NAME %>
+        <%= button_to "Restart interrupted refresh", restart_billing_data_refresh_path,
+                      params: { run_id: run.id }, method: :post, class: "btn warning",
+                      data: { turbo_confirm: "Restart this refresh? Only continue if processing was interrupted. The current run will be marked failed." } %>
+      <% else %>
+        <%= button_to "Restart interrupted refresh",
+                      data_runner_refresh_dsl_group_path(run.group_name, restart: 1),
+                      method: :post, class: "btn warning",
+                      data: { turbo_confirm: "Restart this refresh? Only continue if processing was interrupted. The current run will be marked failed." } %>
+      <% end %>
     </div>
   <% end %>
 
   <% if run.finished? %>
     <div class="group-run-progress__actions">
       <% if run.status == "failed" %>
-        <%= button_to "Restart refresh", data_runner_refresh_dsl_group_path(run.group_name),
-                      method: :post, class: "btn approve",
-                      data: { turbo_confirm: "Restart the #{run.group_name.humanize} refresh?" } %>
+        <% if run.group_name == Billing::DataRefresh::GROUP_RUN_NAME %>
+          <%= button_to "Restart refresh", restart_billing_data_refresh_path,
+                        params: { run_id: run.id }, method: :post, class: "btn approve",
+                        data: { turbo_confirm: "Restart the Billing data refresh?" } %>
+        <% else %>
+          <%= button_to "Restart refresh", data_runner_refresh_dsl_group_path(run.group_name),
+                        method: :post, class: "btn approve",
+                        data: { turbo_confirm: "Restart the #{run.group_name.humanize} refresh?" } %>
+        <% end %>
       <% end %>
       <%= link_to "View log", data_runner_run_path(run.run_id), class: "btn pdf" %>
-      <%= link_to "Return to group", data_runner_root_path(group: run.group_name), class: "btn" %>
+      <% if run.group_name == Billing::DataRefresh::GROUP_RUN_NAME %>
+        <%= link_to "Return to Billing", billing_data_refresh_path, class: "btn" %>
+      <% else %>
+        <%= link_to "Return to group", data_runner_root_path(group: run.group_name), class: "btn" %>
+      <% end %>
     </div>
   <% end %>
 </div>

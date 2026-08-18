@@ -48,6 +48,23 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
     end
   end
 
+  test 'uses Billing actions for a Billing data refresh' do
+    sign_in
+    run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid,
+                                       group_name: Billing::DataRefresh::GROUP_RUN_NAME,
+                                       status: 'failed', total_count: 1, completed_count: 1, failed_count: 1)
+
+    get :show, params: { id: run.id }
+
+    assert_response :success
+    assert_select 'h1', text: 'Data refresh'
+    assert_select 'form[action=?]', restart_billing_data_refresh_path do
+      assert_select 'input[name=?][value=?]', 'run_id', run.id.to_s
+      assert_select 'button.btn.approve', text: 'Restart refresh'
+    end
+    assert_select 'a[href=?]', billing_data_refresh_path, text: 'Return to Billing'
+  end
+
   private
 
   def create_run
