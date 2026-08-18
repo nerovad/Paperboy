@@ -29,7 +29,6 @@ class DslSourcePreviewControllerTest < ActionController::TestCase
     assert_select '.task-result', text: /Download completed\./
     assert_select 'pre.output', false
     assert_select 'pre.task-output-box', count: 1
-    assert_select '.task-result-actions a.btn.compact[href=?]', data_runner_dsl_path('employees'), text: 'Close'
   ensure
     output_path&.delete if output_path&.file?
   end

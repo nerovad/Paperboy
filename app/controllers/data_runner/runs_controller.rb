@@ -6,6 +6,7 @@ module DataRunner
 
     def show
       @output = TaskRunner.output!(params[:id])
+      @group_run = GroupRun.find_by(run_id: params[:id])
     end
   end
 end

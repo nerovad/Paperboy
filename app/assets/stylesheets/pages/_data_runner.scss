@@ -358,30 +358,6 @@
   }
 
   &.page-dsls-show {
-    .task-result {
-      width: 100%;
-      max-width: 900px;
-      box-sizing: border-box;
-    }
-
-    .task-result-banner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .task-result-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .task-output-box {
-      max-height: 50vh;
-    }
-
     .dsl-overview {
       max-height: 50vh;
       overflow-y: auto;
@@ -410,5 +386,16 @@
     }
 
     .code-editor-input { resize: none; }
+  }
+
+  &.page-runs-show {
+    .run-output {
+      width: 100%;
+      max-width: 900px;
+      max-height: 50vh;
+      box-sizing: border-box;
+      margin-right: auto;
+      margin-left: auto;
+    }
   }
 }

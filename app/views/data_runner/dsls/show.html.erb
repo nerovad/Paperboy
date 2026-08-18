@@ -4,12 +4,9 @@
   <section class="task-result" aria-live="polite">
     <div class="task-result-banner <%= @task_status %>">
       <div><span class="task-result-label">Task output</span><strong>DataRunner:<%= @task_name %></strong></div>
-      <div class="task-result-actions">
-        <span class="task-result-state"><%= @task_status.humanize %></span>
-        <%= link_to "Close", data_runner_dsl_path(@dsl.slug), class: "btn compact" %>
-      </div>
+      <span class="task-result-state"><%= @task_status.humanize %></span>
     </div>
-    <%= render "shared/captured_output", output: @task_output, class: "task-output-box" %>
+    <%= render "shared/captured_output", output: @task_output %>
   </section>
 <% else %>
   <pre class="output highlighted-output dsl-overview"><%= syntax_highlight(@source, language: "ruby") %></pre>
