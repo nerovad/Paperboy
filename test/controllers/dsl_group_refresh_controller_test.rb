@@ -3,7 +3,7 @@
 require 'test_helper'
 
 class DslGroupRefreshControllerTest < ActionController::TestCase
-  tests DataRunner::DslsController
+  tests DataRunner::GroupRefreshesController
 
   test 'group editor colors enabled DSL buttons only' do
     sign_in
@@ -18,15 +18,18 @@ class DslGroupRefreshControllerTest < ActionController::TestCase
 
   test 'refresh group run selection excludes disabled DSLs' do
     sign_in
-    result = TaskRunner::Result.new(id: '00000000-0000-0000-0000-000000000000', success: true)
+    run = Struct.new(:id) do
+      def to_param = id.to_s
+    end.new(42)
 
-    with_task_runner_stub(result) do |calls|
-      post :refresh_group, params: { group: 'paperboy' }
+    with_group_refresh_stub(run) do |calls|
+      post :create, params: { group: 'paperboy' }
 
-      assert_redirected_to data_runner_run_path(result.id)
-      assert_equal 'refresh', calls.first.first
-      assert_includes calls.first.second, 'building_data'
-      assert_not_includes calls.first.second, 'parking_lots'
+      assert_redirected_to data_runner_group_run_path(run)
+      assert_equal 'paperboy', calls.first.fetch(:group)
+      assert_includes calls.first.fetch(:entries).map(&:slug), 'building_data'
+      assert_not_includes calls.first.fetch(:entries).map(&:slug), 'parking_lots'
+      assert_equal 'employee@example.com', calls.first.fetch(:requested_by)
     end
   end
 
@@ -41,16 +44,16 @@ class DslGroupRefreshControllerTest < ActionController::TestCase
     }
   end
 
-  def with_task_runner_stub(result)
-    original = TaskRunner.method(:run!)
+  def with_group_refresh_stub(run)
+    original = DataRunner::GroupRefresh.method(:start!)
     calls = []
-    TaskRunner.define_singleton_method(:run!) do |task:, selector:|
-      calls << [task, selector]
-      result
+    DataRunner::GroupRefresh.define_singleton_method(:start!) do |**arguments|
+      calls << arguments
+      run
     end
 
     yield calls
   ensure
-    TaskRunner.define_singleton_method(:run!, original)
+    DataRunner::GroupRefresh.define_singleton_method(:start!, original)
   end
 end

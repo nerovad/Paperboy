@@ -10,6 +10,7 @@ module DataRunner
       @ungrouped = DslCatalog.ungrouped if user_signed_in?
       @selected_group = params[:group].presence
       @selected_entries = @groups&.fetch(@selected_group, []) || []
+      @active_group_run = GroupRun.active.find_by(group_name: @selected_group) if @selected_group
     end
 
     def show
@@ -77,13 +78,6 @@ module DataRunner
       group = params.require(:group).to_s.parameterize(separator: '_')
       DslGroupUpdater.new(group: group, slugs: []).delete!
       redirect_to data_runner_root_path, notice: "#{group.humanize} group deleted.", status: :see_other
-    end
-
-    def refresh_group
-      group = params.require(:group).to_s.parameterize(separator: '_')
-      enabled_slugs = DslCatalog.grouped.fetch(group, []).select(&:enabled?).map(&:slug)
-      result = TaskRunner.run!(task: 'refresh', selector: enabled_slugs)
-      redirect_to data_runner_run_path(result.id), notice: "#{group.humanize} refresh #{result.success ? 'completed' : 'failed'}."
     end
 
     def destroy

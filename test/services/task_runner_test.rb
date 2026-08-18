@@ -22,4 +22,10 @@ class TaskRunnerTest < ActiveSupport::TestCase
   test 'resolves multiple dsl selectors' do
     assert_equal %w[Employees ParkingLots], TaskRunner.selector_names!(%w[employees parking_lots])
   end
+
+  test 'exposes a stable path for streamed run output' do
+    id = '00000000-0000-0000-0000-000000000000'
+
+    assert_equal Rails.root.join('tmp/web_runs', "#{id}.log"), TaskRunner.output_path(id)
+  end
 end

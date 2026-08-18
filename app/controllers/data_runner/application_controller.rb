@@ -5,7 +5,7 @@ module DataRunner
     # Reorganizing the DSL catalog is a grant of its own, separate from
     # browsing and running what is in it. Listed here rather than on
     # DslsController so the gate sits beside the app's other one.
-    GROUP_ACTIONS = %i[new_group create_group update_group rename_group destroy_group refresh_group].freeze
+    GROUP_ACTIONS = %i[new_group create_group update_group rename_group destroy_group].freeze
 
     before_action :require_app_access
     before_action :require_group_management

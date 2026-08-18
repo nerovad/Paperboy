@@ -23,34 +23,57 @@ class TaskRunner
   Result = Data.define(:id, :success)
 
   def self.run!(task:, selector:)
-    task_name = TASK_COMMANDS.fetch(task) { raise ArgumentError, 'Task is not allowed' }
-
+    TASK_COMMANDS.fetch(task) { raise ArgumentError, 'Task is not allowed' }
     selector_names = selector_names!(selector)
     id = SecureRandom.uuid
-    path = Rails.root.join('tmp', 'web_runs', "#{id}.log")
+    path = output_path(id)
     path.dirname.mkpath
-    runs = selector_names.map do |selector_name|
-      command = [Gem.ruby, Rails.root.join('bin/rake').to_s, task_name, selector_name]
-      output, status = Open3.capture2e(*command, chdir: Rails.root.to_s)
-      ["$ #{command.join(' ')}\n\n#{output}", status.success?]
+    successes = []
+    File.open(path, 'w') do |output|
+      if selector_names.empty?
+        output.puts 'No enabled DSLs matched this request.'
+      else
+        selector_names.each do |selector_name|
+          status = run_selector!(task: task, selector: selector_name, output: output)
+          successes << status.success?
+        end
+      end
     end
 
-    if runs.empty?
-      path.write("No enabled DSLs matched this request.\n")
-      return Result.new(id: id, success: true)
-    end
+    Result.new(id: id, success: successes.all?)
+  end
 
-    path.write(runs.map(&:first).join("\n"))
-    Result.new(id: id, success: runs.all?(&:second))
+  def self.run_selector!(task:, selector:, output:)
+    task_name = TASK_COMMANDS.fetch(task) { raise ArgumentError, 'Task is not allowed' }
+    selector_name = selector_name!(selector)
+    command = [Gem.ruby, Rails.root.join('bin/rake').to_s, task_name, selector_name]
+    output.puts "$ #{command.join(' ')}", ''
+    output.flush
+
+    status = nil
+    Open3.popen2e(*command, chdir: Rails.root.to_s) do |stdin, stream, wait_thread|
+      stdin.close
+      stream.each do |line|
+        output.write(line)
+        output.flush
+      end
+      status = wait_thread.value
+    end
+    output.puts
+    status
   end
 
   def self.output!(id)
     raise ActiveRecord::RecordNotFound unless id.match?(/\A[0-9a-f-]{36}\z/)
 
-    path = Rails.root.join('tmp', 'web_runs', "#{id}.log")
+    path = output_path(id)
     raise ActiveRecord::RecordNotFound unless path.file?
 
     path.read
+  end
+
+  def self.output_path(id)
+    Rails.root.join('tmp', 'web_runs', "#{id}.log")
   end
 
   def self.selector_name!(selector)

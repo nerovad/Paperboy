@@ -1,19 +1,15 @@
 # frozen_string_literal: true
 
+require Rails.root.join('config/data_runner/dsl/shared/chart_of_accounts')
+
 class DslSharedSop
-  ROOT = Rails.root.join('config/data_runner/dsl/shared')
-  NAME_PATTERN = /\A[a-z0-9_]+\z/
+  REGISTRY = {
+    chart_of_accounts: DslSharedSops::CHART_OF_ACCOUNTS
+  }.freeze
 
   def self.fetch!(name)
-    key = name.to_s
-    raise KeyError, "Unknown shared SOP: #{key}" unless NAME_PATTERN.match?(key)
-
-    path = ROOT.join("#{key}.rb")
-    raise KeyError, "Unknown shared SOP: #{key}" unless path.file?
-
-    value = TOPLEVEL_BINDING.eval(path.read, path.to_s)
-    raise TypeError, "Shared SOP #{key} must return a Hash" unless value.is_a?(Hash)
-
-    value
+    REGISTRY.fetch(name)
+  rescue KeyError
+    raise KeyError, "Unknown shared SOP: #{name}"
   end
 end
