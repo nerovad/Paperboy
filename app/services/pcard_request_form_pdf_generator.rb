@@ -44,7 +44,7 @@ class PcardRequestFormPdfGenerator
   def self.lookup_agency_name(agency_id)
     return agency_id if agency_id.blank?
 
-    agency = Agency.find_by(agency_id: agency_id)
+    agency = Coa::Agency.find_by(agency_id: agency_id)
     agency ? agency.long_name : agency_id
   rescue StandardError
     agency_id
@@ -53,7 +53,7 @@ class PcardRequestFormPdfGenerator
   def self.lookup_division_name(division_id)
     return division_id if division_id.blank?
 
-    division = Division.find_by(division_id: division_id)
+    division = Coa::Division.find_by(division_id: division_id)
     division ? division.long_name : division_id
   rescue StandardError
     division_id
@@ -62,7 +62,7 @@ class PcardRequestFormPdfGenerator
   def self.lookup_department_name(department_id)
     return department_id if department_id.blank?
 
-    department = Department.find_by(department_id: department_id)
+    department = Coa::Department.find_by(department_id: department_id)
     department ? department.long_name : department_id
   rescue StandardError
     department_id
@@ -71,7 +71,7 @@ class PcardRequestFormPdfGenerator
   def self.lookup_unit_name(unit_id)
     return unit_id if unit_id.blank?
 
-    unit = Unit.find_by(unit_id: unit_id)
+    unit = Coa::Unit.find_by(unit_id: unit_id)
     unit ? "#{unit.unit_id} - #{unit.long_name}" : unit_id
   rescue StandardError
     unit_id

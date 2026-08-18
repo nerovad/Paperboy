@@ -14,6 +14,19 @@
     group: {
       name: 'billing'
     },
+    sop: {
+      title: 'How to Download ONeil Data',
+      source_system: 'ONeil',
+      reference_title: 'ONeil Record Storage',
+      reference_path: :source_location,
+      instructions: [
+        'Open ONeil Administration Desktop Application',
+        'Run the monthly billing report',
+        'Save oneil.csv to DataRunner Inbox',
+        'Open the ONeil file details.',
+        'Verify oneil.csv is current.'
+      ]
+    },
     source: {
       location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/oneil.csv',
       local: 'oneil.csv',

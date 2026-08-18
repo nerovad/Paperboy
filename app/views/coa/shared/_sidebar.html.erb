@@ -8,6 +8,9 @@
     <% if can_use_app_feature?("coa", "billing_lookup") %>
       <%= link_to "Billing Lookup", coa_billing_lookup_path, class: "nav-link" %>
     <% end %>
+    <% if can_use_app_feature?("coa", "customer_lookup") %>
+      <%= link_to "Customer Lookup", coa_customer_lookup_path, class: "nav-link" %>
+    <% end %>
     <% coa_sidebar_resources.each do |model_class| %>
       <%= link_to model_class.model_name.human(count: 2),
                   coa_sidebar_collection_path(model_class),

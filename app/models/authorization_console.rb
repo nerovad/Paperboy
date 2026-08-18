@@ -24,10 +24,10 @@ class AuthorizationConsole
                           :routing_group_label, :routing_options,
                           :approver_resolver, :holder_counter, :inbox_filter,
                           keyword_init: true) do
-    # The FormTemplate this console authorizes for. Used for the picker label
+    # The Forms::Template this console authorizes for. Used for the picker label
     # fallback and to tie a console to the form's ACL entry.
     def form_template
-      FormTemplate.find_by(class_name: form_class_name)
+      Forms::Template.find_by(class_name: form_class_name)
     end
 
     def form_template_id

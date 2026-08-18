@@ -43,14 +43,14 @@ class LookupsController < ApplicationController
   def units
     # Department-scoped (the agency→division→department→unit cascade) or, for the
     # contractor admin's shorter agency→unit cascade, agency-scoped directly off
-    # Unit.agency_id (populated for every unit).
+    # Coa::Unit.agency_id (populated for every unit).
     scope =
       if params[:department].present?
-        Unit.where(department_id: params[:department])
+        Coa::Unit.where(department_id: params[:department])
       elsif params[:agency].present?
-        Unit.where(agency_id: params[:agency])
+        Coa::Unit.where(agency_id: params[:agency])
       else
-        Unit.none
+        Coa::Unit.none
       end
 
     @unit_options = scope.order(:unit_id).map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
@@ -99,9 +99,9 @@ class LookupsController < ApplicationController
   # Distinct categories for a categorized data source (e.g. injury_classifications).
   # Returns [label, id] pairs to match the agencies endpoint shape.
   def categories
-    return render json: [], status: :not_found unless FormField.categorized_source?(params[:source])
+    return render json: [], status: :not_found unless Forms::Field.categorized_source?(params[:source])
 
-    render json: FormField.category_options_for(params[:source])
+    render json: Forms::Field.category_options_for(params[:source])
   end
 
   # Answer-lookup autofill: given the target field IDs (which carry the saved

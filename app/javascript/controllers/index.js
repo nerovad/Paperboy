@@ -58,12 +58,16 @@ import DashboardsController from "controllers/dashboards_controller"
 import AccountMenuController from "controllers/account_menu_controller"
 import DslDragController from "controllers/dsl_drag_controller"
 import DslGroupController from "controllers/dsl_group_controller"
+import ProgressTrackerController from "controllers/progress_tracker_controller"
 import OutputTableController from "controllers/output_table_controller"
 import SourceEditorController from "controllers/source_editor_controller"
+import SopModalController from "controllers/sop_modal_controller"
+import DatabaseDslController from "controllers/database_dsl_controller"
 import AppSwitcherController from "controllers/app_switcher_controller"
 import DamSearchController from "controllers/dam_search_controller"
 import AdvancedSearchController from "controllers/advanced_search_controller"
 import CoaBillingLookupController from "controllers/coa_billing_lookup_controller"
+import CoaCustomerLookupController from "controllers/coa_customer_lookup_controller"
 import AimOcrController from "controllers/aim_ocr_controller"
 
 // Register controllers with their data-controller names
@@ -89,6 +93,7 @@ application.register("conditional-fields", ConditionalFieldsController)
 application.register("gsabss-selects", GsabssSelectsController)
 application.register("bike-locker-selects", BikeLockerSelectsController)
 application.register("sidebar-search", SidebarSearchController)
+application.register("coa-customer-lookup", CoaCustomerLookupController)
 application.register("form-builder", FormBuilderController)
 application.register("reports", ReportsController)
 application.register("scheduled-report-form", ScheduledReportController)
@@ -124,8 +129,11 @@ application.register("dashboards", DashboardsController)
 application.register("account-menu", AccountMenuController)
 application.register("dsl-drag", DslDragController)
 application.register("dsl-group", DslGroupController)
+application.register("progress-tracker", ProgressTrackerController)
 application.register("output-table", OutputTableController)
 application.register("source-editor", SourceEditorController)
+application.register("sop-modal", SopModalController)
+application.register("database-dsl", DatabaseDslController)
 application.register("app-switcher", AppSwitcherController)
 application.register("dam-search", DamSearchController)
 application.register("advanced-search", AdvancedSearchController)

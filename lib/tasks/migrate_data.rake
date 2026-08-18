@@ -137,7 +137,7 @@ namespace :db do
     # 8. Remap restricted_to_group_id in form_fields
     # ---------------------------------------------------------------
     puts 'Remapping form_fields.restricted_to_group_id...'
-    FormField.where(restricted_to_type: 'group').where.not(restricted_to_group_id: nil).find_each do |ff|
+    Forms::Field.where(restricted_to_type: 'group').where.not(restricted_to_group_id: nil).find_each do |ff|
       new_id = group_id_map[ff.restricted_to_group_id]
       ff.update_column(:restricted_to_group_id, new_id) if new_id
     end

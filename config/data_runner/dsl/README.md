@@ -55,6 +55,37 @@ filename order and builds:
   group. Stage selectors may be omitted, a DSL name, or a group name; for
   example, `rake DataRunner:oneshot chart_of_accounts` processes all DSL
   entries in that group.
+- Use a top-level `sop` to provide download instructions for DSLs in the
+  `billing` or `mail_center_and_warehousing` groups:
+
+```ruby
+sop: {
+  title: 'How to Download',
+  source_system: 'External system',
+  reference_url: 'https://example.test/reports',
+  instructions: [
+    'Sign in and open the report.',
+    'Export the required period as CSV.',
+    'Save the file in the DataRunner inbox.'
+  ]
+}
+```
+
+  `reference_url` is optional. Do not store credentials or secrets in an SOP.
+  Use `reference_path` instead when users need to examine a server-mounted file
+  or folder. Paperboy renders read-only details because browsers block local
+  file links opened from web pages. Use `reference_title` to customize the
+  dialog heading. Set `reference_path: :source_location` when the SOP should
+  reference `source.location` without repeating the path. `reference_url`
+  renders an **Open** link in a new tab, while `reference_path` renders a
+  **View File** dialog; an SOP may use either or both. For HTTP downloads, set
+  `reference_path: :downloaded_file` to view `01_Download/source.local`.
+  Use `sop: { shared: :chart_of_accounts }` to import the shared Chart of
+  Accounts refresh instructions and **View Group** link. Additional keys in
+  that SOP object override or extend the shared definition in
+  `dsl/shared/chart_of_accounts.rb`. The shared SOP also uses
+  `reference_path: :downloaded_file`, so every group DSL can display its own
+  `01_Download/source.local` file.
 - Use `source.location` for the file or path to stage and `source.local` for
   the filename used inside `00_Inbox` and downstream stages.
 - Use `source.strategy: :manual` when a human places the file in `00_Inbox`;
@@ -65,11 +96,18 @@ filename order and builds:
 - Use `source.strategy: :append` when a locally staged supplemental file should
   flow through the normal stages and append into another dataset's destination
   table via `inject.mode: :append`.
+- Use top-level `dependency: 'Units'` when this DSL's injection must wait for
+  another DSL's injection to succeed. During a parallel group refresh, the
+  dependency must be included in the same run. DataRunner uses the shared run
+  ID in `DataRunner_Log`, so an older successful injection cannot satisfy the
+  dependency. A failed dependency fails the dependent DSL; a missing dependency
+  or an hour-long wait raises an explicit error.
 - Use `source.strategy: :script` when the download stage should run a local Ruby
   script that creates `00_Inbox/source.local`:
 
 ```ruby
 source: {
+  location: nil,
   local: 'warehousing.csv',
   format: :csv,
   strategy: :script,
@@ -79,6 +117,9 @@ source: {
   }
 }
 ```
+
+  Scripted sources must set `location: nil`; the script creates the file named
+  by `source.local` in the DataRunner inbox.
 
 - Use `database_connections: [...]` even when a dataset has only one destination.
   Each entry should include `host`, `database`, `schema`, `table`, and `inject`.

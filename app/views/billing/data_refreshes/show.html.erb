@@ -8,7 +8,8 @@
 
   <%= form_with url: billing_data_refresh_path, method: :patch, data: { turbo: false } do %>
     <div class="billing-period-grid">
-      <table class="submission-table billing-refresh-table" data-controller="billing-refresh-groups">
+      <table class="submission-table billing-refresh-table"
+             data-controller="billing-refresh-groups sop-modal">
         <colgroup>
           <col class="billing-refresh-group-column">
           <col class="billing-refresh-count-column">
@@ -53,33 +54,26 @@
             </tr>
             <tr id="<%= detail_id %>" class="billing-refresh-detail-row" hidden>
               <td colspan="3">
-                <table class="billing-refresh-dsl-table">
-                  <colgroup>
-                    <col class="billing-refresh-dsl-name-column">
-                    <col class="billing-refresh-dsl-location-column">
-                    <col class="billing-refresh-dsl-date-column">
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th>DSL Name</th>
-                      <th>Location / Script</th>
-                      <th>Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% group.enabled_dsls.each do |dsl| %>
-                      <% row_status = dsl.script ? "is-script" : (dsl.current ? "is-current" : "is-stale") %>
-                      <tr class="<%= row_status %>">
-                        <td><%= dsl.name %></td>
-                        <td><%= dsl.location.presence || "Unavailable" %></td>
-                        <td>
+                <div class="billing-refresh-dsl-cards">
+                  <% group.enabled_dsls.each do |dsl| %>
+                    <% card_status = dsl.script ? "is-script" : (dsl.current ? "is-current" : "is-stale") %>
+                    <article class="billing-refresh-dsl-card <%= card_status %>">
+                      <div>
+                        <h3><%= dsl.name %></h3>
+                        <p><span>Location / Script</span><%= dsl.location.presence || "Unavailable" %></p>
+                        <p><span>Date</span>
                           <%= tag.time(dsl.file_date ? dsl.file_date.to_date.iso8601 : "Unavailable",
                                        datetime: dsl.file_date&.iso8601) %>
-                        </td>
-                      </tr>
-                    <% end %>
-                  </tbody>
-                </table>
+                        </p>
+                      </div>
+                      <% if dsl.sop %>
+                        <button type="button" class="btn info compact"
+                                data-action="sop-modal#open">How to Download</button>
+                        <%= render "data_runner/shared/sop", dsl: dsl %>
+                      <% end %>
+                    </article>
+                  <% end %>
+                </div>
               </td>
             </tr>
           <% end %>
@@ -92,12 +86,5 @@
       <%= button_tag "Reset", type: :reset, class: "btn warning" %>
       <%= link_to "Cancel", billing_root_path, class: "btn" %>
     </div>
-  <% end %>
-
-  <% if @output.present? %>
-    <section class="billing-refresh-result" aria-labelledby="billing-refresh-output-title">
-      <h2 id="billing-refresh-output-title">Refresh Output</h2>
-      <%= render "shared/captured_output", output: @output %>
-    </section>
   <% end %>
 </div>

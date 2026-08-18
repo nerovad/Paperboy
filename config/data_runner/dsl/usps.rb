@@ -14,6 +14,19 @@
     group: {
       name: 'billing'
     },
+    sop: {
+      title: 'How to Download USPS Data',
+      source_system: 'USPS',
+      reference_url: 'https://gateway.usps.com/eAdmin/view/signin',
+      reference_path: :source_location,
+      instructions: [
+        'Sign in to the USPS reporting system.',
+        'Open the transaction report and select the required reporting period.',
+        'Export the report as a CSV file.',
+        'Save the downloaded file as usps.csv in the DataRunner inbox.',
+        'Verify usps.csv is current.'
+      ]
+    },
     source: {
       location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/usps.csv',
       local: 'usps.csv',

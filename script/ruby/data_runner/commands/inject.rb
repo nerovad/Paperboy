@@ -31,6 +31,7 @@ require 'time'
 require_relative 'dsl_map'
 require_relative '../helpers/etl_helpers'
 require_relative '../helpers/etl_mapping_helpers'
+require_relative '../helpers/dependency_helpers'
 require_relative '../db/mssql_helpers'
 require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
@@ -312,6 +313,8 @@ begin
       stats.skip!
       next
     end
+
+    DataRunnerDependencyHelpers.wait!(name, cfg)
 
     csv_name = EtlHelpers.output_for(cfg)
     input    = File.join(APPLIED_DIR, csv_name)

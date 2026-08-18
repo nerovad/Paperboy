@@ -32,7 +32,7 @@ class DslsControllerTest < ActionController::TestCase
     assert_select '.control-center-actions input[value=?]', 'Update', false
     assert_select '.control-center-actions button[data-dsl-group-target=?][disabled=?]', 'renameButton', 'disabled', text: 'Update'
     assert_select '.control-center-actions .button.danger', text: 'Delete'
-    assert_select '.control-center-actions .button.success', text: 'Refresh'
+    assert_select '.control-center-actions #refresh-group.btn.approve', text: 'Refresh'
     assert_select 'form[action=?]', data_runner_rename_dsl_group_path('chart_of_accounts')
     assert_select 'form[action=?]', data_runner_destroy_dsl_group_path('chart_of_accounts')
     assert_select 'form[action=?]', data_runner_refresh_dsl_group_path('chart_of_accounts')

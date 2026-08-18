@@ -34,13 +34,13 @@ module OshaOrgFilterable
     division_id   = params[:division].presence
     department_id = params[:department].presence
 
-    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
-    @division_options = agency_id ? Division.where(agency_id: agency_id).order(:long_name).pluck(:long_name, :division_id) : []
-    @department_options = division_id ? Department.where(division_id: division_id).order(:long_name).pluck(:long_name, :department_id) : []
+    @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
+    @division_options = agency_id ? Coa::Division.where(agency_id: agency_id).order(:long_name).pluck(:long_name, :division_id) : []
+    @department_options = division_id ? Coa::Department.where(division_id: division_id).order(:long_name).pluck(:long_name, :department_id) : []
     @unit_options = if department_id
-                      Unit.where(department_id: department_id)
-                          .order(:unit_id)
-                          .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                      Coa::Unit.where(department_id: department_id)
+                               .order(:unit_id)
+                               .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
                     else
                       []
                     end

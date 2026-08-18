@@ -1,0 +1,179 @@
+<div class="form-header">
+  <h1>Critical Information Report <%= Forms::Reference.reference_for(@critical_information_reporting) %></h1>
+</div>
+
+<div class="form-wrapper">
+  <div class="form-inner">
+
+    <!-- Current Status Banner -->
+    <div class="status-banner <%= "status-#{@critical_information_reporting.status_category}" %>">
+      <strong>Status:</strong> <%= @critical_information_reporting.status_label %>
+      <span class="status-date">| Submitted <%= l(@critical_information_reporting.created_at, format: :short) %></span>
+    </div>
+
+    <!-- Incident Summary -->
+    <section class="incident-hero">
+      <div class="incident-type-banner">
+        <%= @critical_information_reporting.incident_type %>
+      </div>
+
+      <div class="incident-meta">
+        <div class="meta-item">
+          <span class="meta-label">Location</span>
+          <span class="meta-value"><%= @critical_information_reporting.location %></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Urgency</span>
+          <span class="meta-value urgency"><%= @critical_information_reporting.urgency %></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Impact</span>
+          <span class="impact-badge impact-<%= @critical_information_reporting.impact&.downcase %>">
+            <%= @critical_information_reporting.impact %>
+          </span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Impact Started</span>
+          <span class="meta-value"><%= @critical_information_reporting.impact_started.present? ? l(@critical_information_reporting.impact_started, format: :short) : "Not specified" %></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Impacted Customers</span>
+          <p class="primary"><%= @critical_information_reporting.impacted_customers %></p>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Staff Involved</span>
+          <% staff_ids = @critical_information_reporting.staff_involved.to_s.split(",").map(&:strip).reject(&:blank?) %>
+          <div class="staff-chips">
+            <% staff_ids.each do |staff_id| %>
+              <% employee = Employee.find_by(employee_id: staff_id) %>
+              <span class="staff-chip">
+                <% if employee %>
+                  <%= employee.first_name %> <%= employee.last_name %>
+                <% else %>
+                  ID: <%= staff_id %>
+                <% end %>
+              </span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <section class="incident-hero">
+      <div class="incident-description">
+        <strong>What Happened:</strong>
+        <p><%= @critical_information_reporting.incident_details %></p>
+      </div>
+
+      <div class="incident-cause">
+        <strong>Cause:</strong>
+        <p><%= @critical_information_reporting.cause %></p>
+      </div>
+
+      <% if @critical_information_reporting.next_steps.present? %>
+        <div class="incident-next-steps">
+          <strong>Next Steps:</strong>
+          <p><%= @critical_information_reporting.next_steps %></p>
+        </div>
+      <% end %>
+
+    </section>
+
+    <!-- Quick Info Grid -->
+    <section class="info-grid">
+      <div class="info-card">
+        <h3>Reported By</h3>
+        <p class="primary"><%= @critical_information_reporting.name %></p>
+        <div class="contact-details">
+          <% if @critical_information_reporting.phone.present? %>
+            <span><%= link_to @critical_information_reporting.phone, "tel:#{@critical_information_reporting.phone}" %></span>
+          <% end %>
+          <% if @critical_information_reporting.email.present? %>
+            <span><%= link_to @critical_information_reporting.email, "mailto:#{@critical_information_reporting.email}" %></span>
+          <% end %>
+        </div>
+        <div class="org-details">
+          <p class="primary"><%= Coa::Agency.find_by(agency_id: @critical_information_reporting.agency)&.long_name || @critical_information_reporting.agency %></p>
+          <p class="secondary">
+            <%= Coa::Division.find_by(division_id: @critical_information_reporting.division)&.long_name || @critical_information_reporting.division %>
+          </p>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h3>Assigned To</h3>
+        <p class="primary"><%= @critical_information_reporting.assigned_manager_name %></p>
+      </div>
+    </section>
+
+    <!-- Media Attachments -->
+    <% if @critical_information_reporting.media_photo_pdf_etc.attached? %>
+      <section class="media-section">
+        <h3>Attached Media (<%= @critical_information_reporting.media_photo_pdf_etc.count %>)</h3>
+        <% @critical_information_reporting.media_photo_pdf_etc.each do |attachment| %>
+          <div class="media-attachment">
+            <% if attachment.content_type.start_with?("image/") %>
+              <%= image_tag rails_blob_path(attachment), class: "attached-image", alt: attachment.filename %>
+            <% end %>
+            <p><%= attachment.filename %> (<%= number_to_human_size(attachment.byte_size) %>)</p>
+            <%= link_to "Download", download_media_critical_information_reporting_path(@critical_information_reporting, attachment_id: attachment.id), class: "btn-link" %>
+          </div>
+        <% end %>
+      </section>
+    <% end %>
+
+    <!-- Status History (Collapsible) -->
+    <details class="audit-section">
+      <summary><h3>Status History & Audit Trail</h3></summary>
+      <% if @status_changes.any? %>
+        <table class="audit-table">
+          <thead>
+            <tr>
+              <th>Date & Time</th>
+              <th>Status</th>
+              <th>Changed By</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @status_changes.each do |change| %>
+              <tr>
+                <td><%= l(change.created_at, format: :long) %></td>
+                <td>
+                  <% if change.from_status.present? %>
+                    <span class="from-status"><%= change.from_status.humanize %></span> &rarr;
+                  <% end %>
+                  <strong><%= change.to_status.humanize %></strong>
+                </td>
+                <td><%= change.changed_by_name.presence || "System" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="no-history">No status history available.</p>
+      <% end %>
+    </details>
+
+    <!-- Reopen (only for closed reports, shown to the assigned manager / admins) -->
+    <% if @can_reopen %>
+      <div class="reopen-panel">
+        <p class="reopen-note">This report is closed. Reopening returns it to the assigned manager's inbox.</p>
+        <%= form_with url: reopen_critical_information_reporting_path(@critical_information_reporting),
+                      method: :patch, data: { turbo: false }, class: "reopen-form" do |f| %>
+          <%= f.select :status,
+                options_for_select([["In Progress", "in_progress"], ["Scheduled", "scheduled"]], "in_progress"),
+                {}, class: "status-dropdown" %>
+          <%= f.submit "Reopen Report", class: "form-btn" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <%= link_to "Back to Submissions", submissions_path, class: "form-btn" %>
+      <%= link_to "Download PDF", pdf_critical_information_reporting_path(@critical_information_reporting), target: "_blank", class: "form-btn" %>
+      <%= link_to "Edit Report", edit_critical_information_reporting_path(@critical_information_reporting), class: "form-btn" %>
+    </div>
+
+  </div>
+</div>

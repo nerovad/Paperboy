@@ -27,8 +27,8 @@
      data-form-builder-form-fields-value="<%= form_fields_for_conditions.to_json %>"
      data-form-builder-routing-step-choices-value="<%= routing_step_choices.to_json %>"
      data-form-builder-email-field-choices-value="<%= email_field_choices.to_json %>"
-     data-form-builder-predefined-statuses-value="<%= FormTemplateStatus::PREDEFINED_STATUSES.to_json %>"
-     data-form-builder-valid-categories-value="<%= FormTemplateStatus::VALID_CATEGORIES.to_json %>"
+     data-form-builder-predefined-statuses-value="<%= Forms::TemplateStatus::PREDEFINED_STATUSES.to_json %>"
+     data-form-builder-valid-categories-value="<%= Forms::TemplateStatus::VALID_CATEGORIES.to_json %>"
      data-form-builder-edit-mode-value="true">
   <div class="form-builder-modal-content">
     <% if @form_template.errors.any? %>
@@ -275,8 +275,8 @@
                                 data-action="change->form-builder#updateStepDisplayName"
                                 title="Restrict group members to those matching the submitter at this org level">
                           <option value="">Filter by submitter's…</option>
-                          <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
-                            <option value="<%= lvl %>" <%= 'selected' if step.org_filter_level == lvl %>>Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+                          <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+                            <option value="<%= lvl %>" <%= 'selected' if step.org_filter_level == lvl %>>Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
                           <% end %>
                         </select>
                       </div>
@@ -337,7 +337,7 @@
                     <div class="step-inbox-buttons-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #007bff;">
                       <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Inbox queue buttons at this step</div>
                       <div class="step-inbox-buttons-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+                        <% Forms::Template::INBOX_BUTTON_TYPES.each do |key, config| %>
                           <label style="flex: 0 0 calc(50% - 8px); display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 0.85em; cursor: pointer;">
                             <input type="checkbox"
                                    name="routing_steps[][inbox_buttons][]"
@@ -431,8 +431,8 @@
                               class="form-control form-control-sm step-org-filter-dropdown"
                               title="Restrict group members to those matching the submitter at this org level">
                         <option value="">Filter by submitter's…</option>
-                        <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
-                          <option value="<%= lvl %>">Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+                        <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+                          <option value="<%= lvl %>">Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
                         <% end %>
                       </select>
                     </div>
@@ -450,7 +450,7 @@
                   <div class="step-inbox-buttons-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #007bff;">
                     <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Inbox queue buttons at this step</div>
                     <div class="step-inbox-buttons-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                      <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+                      <% Forms::Template::INBOX_BUTTON_TYPES.each do |key, config| %>
                         <label style="flex: 0 0 calc(50% - 8px); display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 0.85em; cursor: pointer;">
                           <input type="checkbox"
                                  name="routing_steps[][inbox_buttons][]"
@@ -986,7 +986,7 @@
                                     class="form-control form-control-sm data-source-table-select"
                                     data-action="change->form-builder#handleDataSourceTableChange">
                               <option value="">Select table...</option>
-                              <% FormField::DATA_SOURCES.each do |key, config| %>
+                              <% Forms::Field::DATA_SOURCES.each do |key, config| %>
                                 <option value="<%= key %>"
                                         data-columns="<%= (config[:columns] || {}).to_json %>"
                                         data-categorized="<%= config[:kind] == :categorized %>"
@@ -999,8 +999,8 @@
                             <select name="fields[][data_source_column]"
                                     class="form-control form-control-sm data-source-column-select">
                               <option value="">Select column...</option>
-                              <% if field.data_source? && FormField::DATA_SOURCES[field.data_source_table] %>
-                                <% (FormField::DATA_SOURCES[field.data_source_table][:columns] || {}).each do |col_key, col_label| %>
+                              <% if field.data_source? && Forms::Field::DATA_SOURCES[field.data_source_table] %>
+                                <% (Forms::Field::DATA_SOURCES[field.data_source_table][:columns] || {}).each do |col_key, col_label| %>
                                   <option value="<%= col_key %>" <%= 'selected' if field.data_source_column == col_key %>><%= col_label %></option>
                                 <% end %>
                               <% end %>
@@ -1012,7 +1012,7 @@
                                     class="form-control form-control-sm data-source-category-select">
                               <option value="">Select category...</option>
                               <% if categorized %>
-                                <% FormField.category_options_for(field.data_source_table).each do |cat_label, cat_id| %>
+                                <% Forms::Field.category_options_for(field.data_source_table).each do |cat_label, cat_id| %>
                                   <option value="<%= cat_id %>" <%= 'selected' if field.data_source_category.to_s == cat_id.to_s %>><%= cat_label %></option>
                                 <% end %>
                               <% end %>
@@ -1024,7 +1024,7 @@
                           <select name="fields[][data_source_agency]"
                                   class="form-control form-control-sm data-source-agency-select">
                             <option value="">All agencies</option>
-                            <% Agency.order(:long_name).each do |agency| %>
+                            <% Coa::Agency.order(:long_name).each do |agency| %>
                               <option value="<%= agency.agency_id %>" <%= 'selected' if field.options&.dig('data_source_agency') == agency.agency_id.to_s %>><%= agency.long_name %></option>
                             <% end %>
                           </select>
@@ -1197,8 +1197,8 @@
                                   style="min-width: 200px;"
                                   title="Restrict group members to those matching the submitter at this org level">
                             <option value="">Filter by submitter's…</option>
-                            <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
-                              <option value="<%= lvl %>" <%= 'selected' if field.restricted_to_org_filter_level == lvl %>>Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+                            <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+                              <option value="<%= lvl %>" <%= 'selected' if field.restricted_to_org_filter_level == lvl %>>Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
                             <% end %>
                           </select>
                         </div>
@@ -1839,8 +1839,8 @@
                   style="min-width: 200px;"
                   title="Restrict group members to those matching the submitter at this org level">
             <option value="">Filter by submitter's…</option>
-            <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
-              <option value="<%= lvl %>">Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+            <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+              <option value="<%= lvl %>">Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
             <% end %>
           </select>
         </div>
@@ -2067,8 +2067,8 @@
                 data-action="change->form-builder#updateStepDisplayName"
                 title="Restrict group members to those matching the submitter at this org level">
           <option value="">Filter by submitter's…</option>
-          <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
-            <option value="<%= lvl %>">Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+          <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+            <option value="<%= lvl %>">Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
           <% end %>
         </select>
       </div>
@@ -2124,7 +2124,7 @@
     <div class="step-inbox-buttons-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #007bff;">
       <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Inbox queue buttons at this step</div>
       <div class="step-inbox-buttons-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
-        <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+        <% Forms::Template::INBOX_BUTTON_TYPES.each do |key, config| %>
           <label style="flex: 0 0 calc(50% - 8px); display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 0.85em; cursor: pointer;">
             <input type="checkbox"
                    name="routing_steps[][inbox_buttons][]"

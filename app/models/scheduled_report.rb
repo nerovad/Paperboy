@@ -44,7 +44,7 @@ class ScheduledReport < ApplicationRecord
   end
 
   def form_template
-    FormTemplate.all.find { |t| t.class_name.tableize == form_type }
+    Forms::Template.all.find { |t| t.class_name.tableize == form_type }
   end
 
   def form_name

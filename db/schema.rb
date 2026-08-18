@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_10_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_17_000002) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -388,6 +388,39 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_000001) do
     t.datetime "updated_at", null: false
     t.index ["enabled"], name: "index_dam_workflows_on_enabled"
     t.index ["slug"], name: "index_dam_workflows_on_slug", unique: true
+  end
+
+  create_table "data_runner_group_run_items", force: :cascade do |t|
+    t.bigint "group_run_id", null: false
+    t.string "dsl_name", null: false
+    t.string "dsl_slug", null: false
+    t.string "status", default: "pending", null: false
+    t.integer "position", null: false
+    t.text "error_message"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "duration_ms"
+    t.index ["group_run_id", "position"], name: "idx_group_run_items_position", unique: true
+    t.index ["group_run_id"], name: "index_data_runner_group_run_items_on_group_run_id"
+  end
+
+  create_table "data_runner_group_runs", force: :cascade do |t|
+    t.string "run_id", null: false
+    t.string "group_name", null: false
+    t.string "status", default: "queued", null: false
+    t.integer "total_count", default: 0, null: false
+    t.integer "completed_count", default: 0, null: false
+    t.integer "failed_count", default: 0, null: false
+    t.string "current_dsl"
+    t.string "requested_by"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["group_name", "status"], name: "index_data_runner_group_runs_on_group_name_and_status"
+    t.index ["run_id"], name: "index_data_runner_group_runs_on_run_id", unique: true
   end
 
   create_table "employee_union_codes", force: :cascade do |t|
@@ -1130,6 +1163,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_000001) do
   add_foreign_key "dam_collections", "dam_collections", column: "parent_id"
   add_foreign_key "dam_jobs", "dam_workflows", column: "workflow_id"
   add_foreign_key "dam_metadata_values", "dam_assets", column: "asset_id"
+  add_foreign_key "data_runner_group_run_items", "data_runner_group_runs", column: "group_run_id"
   add_foreign_key "form_fields", "form_templates"
   add_foreign_key "form_template_copy_recipients", "form_templates"
   add_foreign_key "form_template_email_steps", "form_templates"

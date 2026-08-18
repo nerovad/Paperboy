@@ -14,6 +14,16 @@
     group: {
       name: 'billing'
     },
+    sop: {
+      title: 'How to Download Document Automation',
+      source_system: 'Document Automation',
+      reference_title: 'Document Automation File',
+      reference_path: :source_location,
+      instructions: [
+        'The Microsoft Excel document is updated annually or when pricing changes.',
+        'Verify document_automation.xlsx is current.'
+      ]
+    },
     source: {
       location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/document_automation.xlsx',
       local: 'document_automation.xlsx',

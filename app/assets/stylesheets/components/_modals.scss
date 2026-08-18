@@ -111,6 +111,23 @@
   line-height: 1.5;
 }
 
+.dsl-sop {
+  ol { padding-left: 1.5rem; }
+
+  li + li { margin-top: .6rem; }
+}
+
+.dsl-reference-list {
+  .table-wrap { margin: 0; }
+
+  table { width: 100%; }
+}
+
+.dsl-reference-list__message {
+  margin: 0;
+  color: $muted;
+}
+
 /* The prompt text in a confirm-style dialog. */
 .pb-modal__message {
   margin: 0;

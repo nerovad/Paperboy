@@ -1,5 +1,9 @@
-<nav class="hot-menu" aria-label="DSL actions">
+<div data-controller="sop-modal">
+  <nav class="hot-menu" aria-label="DSL actions">
   <%= link_to "Overview", data_runner_dsl_path(@dsl.slug), class: "btn" %>
+  <% if @dsl.sop %>
+    <button type="button" class="btn info" data-action="sop-modal#open">How to Download</button>
+  <% end %>
   <%= link_to "Edit", edit_data_runner_dsl_path(@dsl.slug), class: "btn edit" %>
   <% if action_name == "edit" %>
     <%= submit_tag "Save", class: "btn approve", form: "dsl-source-form" %>
@@ -8,15 +12,24 @@
     <%= button_to "Delete", data_runner_dsl_path(@dsl.slug), method: :delete, class: "btn deny",
                   data: { turbo_confirm: "Delete #{@dsl.key} and its workflow files? This cannot be undone." } %>
     <%= link_to "Outputs", outputs_data_runner_dsl_path(@dsl.slug), class: "btn" %>
-    <details>
-      <summary class="btn approve">Run Task</summary>
-      <div class="task-menu">
-        <% (Array(@dsl.config[:commands]).map(&:to_s).presence || TaskRunner::TASKS).each do |task| %>
-          <%= button_to task.humanize, run_data_runner_dsl_path(@dsl.slug), params: { task_name: task },
-                        class: "btn",
-                        data: { turbo_confirm: "Run DataRunner:#{task} for #{@dsl.key}?" } %>
-        <% end %>
-      </div>
-    </details>
+    <% if @active_group_run %>
+      <button type="button" class="btn approve" disabled
+              title="Run Task is unavailable while the <%= @dsl.group.humanize %> group refresh is in progress">
+        Run Task
+      </button>
+    <% else %>
+      <details>
+        <summary class="btn approve">Run Task</summary>
+        <div class="task-menu">
+          <% (Array(@dsl.config[:commands]).map(&:to_s).presence || TaskRunner::TASKS).each do |task| %>
+            <%= button_to task.humanize, run_data_runner_dsl_path(@dsl.slug), params: { task_name: task },
+                          class: "btn",
+                          data: { turbo_confirm: "Run DataRunner:#{task} for #{@dsl.key}?" } %>
+          <% end %>
+        </div>
+      </details>
+    <% end %>
   <% end %>
-</nav>
+  </nav>
+  <%= render "data_runner/shared/sop", dsl: @dsl if @dsl.sop %>
+</div>

@@ -1,0 +1,14 @@
+<div class="form-header billing-form-header">
+  <h1>Refresh Data</h1>
+</div>
+
+<div class="form-wrapper billing-form billing-data-refresh">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Billing</p>
+      <h2>Refresh log</h2>
+    </div>
+    <%= link_to "Close", billing_data_refresh_run_path(@run), class: "btn compact" %>
+  </div>
+  <pre class="captured-output run-output"><%= @output %></pre>
+</div>

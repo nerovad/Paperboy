@@ -10,6 +10,7 @@ module DataRunner
       @ungrouped = DslCatalog.ungrouped if user_signed_in?
       @selected_group = params[:group].presence
       @selected_entries = @groups&.fetch(@selected_group, []) || []
+      @active_group_run = GroupRun.active.find_by(group_name: @selected_group) if @selected_group
     end
 
     def show
@@ -79,13 +80,6 @@ module DataRunner
       redirect_to data_runner_root_path, notice: "#{group.humanize} group deleted.", status: :see_other
     end
 
-    def refresh_group
-      group = params.require(:group).to_s.parameterize(separator: '_')
-      enabled_slugs = DslCatalog.grouped.fetch(group, []).select(&:enabled?).map(&:slug)
-      result = TaskRunner.run!(task: 'refresh', selector: enabled_slugs)
-      redirect_to data_runner_run_path(result.id), notice: "#{group.humanize} refresh #{result.success ? 'completed' : 'failed'}."
-    end
-
     def destroy
       deleted_files = DslDestroyer.new(@dsl).destroy!
       redirect_to data_runner_root_path,
@@ -94,6 +88,11 @@ module DataRunner
     end
 
     def run
+      if @active_group_run
+        return redirect_to data_runner_dsl_path(@dsl.slug),
+                           alert: "#{@dsl.group.humanize} refresh is in progress. Run Task is disabled."
+      end
+
       task_name = params.require(:task_name)
       result = TaskRunner.run!(task: task_name, selector: @dsl.slug)
       task_status = result.success ? 'succeeded' : 'failed'
@@ -122,6 +121,7 @@ module DataRunner
 
     def set_dsl
       @dsl = DslCatalog.find!(params[:name])
+      @active_group_run = GroupRun.active.find_by(group_name: @dsl.group) if @dsl.group
     end
   end
 end

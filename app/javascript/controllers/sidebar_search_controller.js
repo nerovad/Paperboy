@@ -3,8 +3,10 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["input", "formLink", "formsList", "item"]
+  static values = { debounce: { type: Number, default: 0 } }
 
   connect() {
+    this.filterTimer = null
     // Store original form names before any modifications
     // If data-original-name is already set (e.g. on complex cards), keep it
     this.formLinkTargets.forEach(link => {
@@ -14,7 +16,21 @@ export default class extends Controller {
     })
   }
 
+  disconnect() {
+    clearTimeout(this.filterTimer)
+  }
+
   filter() {
+    clearTimeout(this.filterTimer)
+    if (this.debounceValue > 0) {
+      this.filterTimer = setTimeout(() => this.performFilter(), this.debounceValue)
+      return
+    }
+
+    this.performFilter()
+  }
+
+  performFilter() {
     if (this.hasItemTarget) {
       this.filterItems()
       return

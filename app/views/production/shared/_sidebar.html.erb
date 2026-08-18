@@ -5,6 +5,23 @@
   <%= render "shared/app_switcher" %>
 
   <nav class="production-links">
+    <div class="production-links__label">Paperboy</div>
+    <%= link_to "Production", "https://gsa-forms",
+                class: "nav-link",
+                title: "Paperboy Production Server",
+                target: "_blank",
+                rel: "noopener" %>
+    <%= link_to "Staging", "https://stage-gsa-forms",
+                class: "nav-link",
+                title: "Paperboy Staging Server",
+                target: "_blank",
+                rel: "noopener" %>
+    <%= link_to "Development", "https://dev-gsa-forms",
+                class: "nav-link",
+                title: "Paperboy Development Server",
+                target: "_blank",
+                rel: "noopener" %>
+    <div class="production-links__divider" role="separator"></div>
     <%= link_to "ACO", "http://acweb/index.php/vcfms",
                 class: "nav-link",
                 title: "Audit-Controller's Office",

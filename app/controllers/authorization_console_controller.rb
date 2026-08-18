@@ -32,7 +32,7 @@ class AuthorizationConsoleController < ApplicationController
     # department's units. all_budget_units rows (and incomplete rows with no
     # units recorded) match via their department instead.
     if @department_ids.any?
-      sel_unit_ids = Unit.where(department_id: @department_ids).pluck(:unit_id).to_set(&:to_s)
+      sel_unit_ids = Coa::Unit.where(department_id: @department_ids).pluck(:unit_id).to_set(&:to_s)
       scoped = scoped.select do |a|
         if !a.all_budget_units? && a.budget_units.present?
           (a.budget_units.split(',').to_set(&:strip) & sel_unit_ids).any?
@@ -239,7 +239,7 @@ class AuthorizationConsoleController < ApplicationController
 
   def authorized_approvers_csv(approvers)
     emps  = Employee.where(id: approvers.map(&:employee_id).uniq).index_by { |e| e.id.to_s }
-    depts = Department.where(department_id: approvers.map(&:department_id).uniq).index_by(&:department_id)
+    depts = Coa::Department.where(department_id: approvers.map(&:department_id).uniq).index_by(&:department_id)
 
     # Collapse the per-service-type rows back into one line per real
     # authorization (same employee/dept/budget/locations).
@@ -269,10 +269,10 @@ class AuthorizationConsoleController < ApplicationController
   def set_managed_departments
     if auth_console_admin?
       # GSABSS departments table has duplicate rows; collapse by department_id.
-      @managed_departments = Department.order(:department_id).to_a.uniq(&:department_id)
+      @managed_departments = Coa::Department.order(:department_id).to_a.uniq(&:department_id)
     else
       dept_id = current_user_org_chain[:department_id]
-      dept = dept_id ? Department.find_by(department_id: dept_id) : nil
+      dept = dept_id ? Coa::Department.find_by(department_id: dept_id) : nil
       @managed_departments = [dept].compact
     end
   end
@@ -281,7 +281,7 @@ class AuthorizationConsoleController < ApplicationController
     dept_ids = @managed_departments.map(&:department_id)
     return [] if dept_ids.empty?
 
-    unit_ids = Unit.where(department_id: dept_ids).pluck(:unit_id)
+    unit_ids = Coa::Unit.where(department_id: dept_ids).pluck(:unit_id)
     employees = Employee.where(unit: unit_ids).order(:last_name, :first_name)
 
     employees.map do |e|
@@ -308,7 +308,7 @@ class AuthorizationConsoleController < ApplicationController
 
     dept_names = @managed_departments.index_by(&:department_id)
     # GSABSS units table has duplicate rows; collapse options by unit_id.
-    Unit.where(department_id: dept_ids).order(:unit_id).map do |u|
+    Coa::Unit.where(department_id: dept_ids).order(:unit_id).map do |u|
       label = "#{u.unit_id} - #{dept_names[u.department_id]&.long_name}"
       [label, u.unit_id.to_s]
     end.uniq { |_label, id| id }
@@ -322,7 +322,7 @@ class AuthorizationConsoleController < ApplicationController
     first_unit_id = approver.budget_units.split(',').first&.strip
     return if first_unit_id.blank?
 
-    unit = Unit.find_by(unit_id: first_unit_id)
+    unit = Coa::Unit.find_by(unit_id: first_unit_id)
     approver.department_id = unit.department_id if unit&.department_id.present?
   end
 

@@ -69,13 +69,13 @@ class EmployeeDataValidator
 
   def preload_lookup_data
     # Build unit composite key set: "agency_id|unit_id"
-    Unit.pluck(:agency_id, :division_id, :department_id, :unit_id).each do |aid, did, dept_id, uid|
+    Coa::Unit.pluck(:agency_id, :division_id, :department_id, :unit_id).each do |aid, did, dept_id, uid|
       key = uid.strip
       @valid_unit_keys << key
       @unit_lookup[key] = { agency_id: aid&.strip, division_id: did&.strip, department_id: dept_id&.strip }
     end
 
-    @valid_agency_ids = Set.new(Agency.pluck(:agency_id).map(&:strip))
+    @valid_agency_ids = Set.new(Coa::Agency.pluck(:agency_id).map(&:strip))
     @valid_employee_ids = Set.new(Employee.pluck(:id))
     @employees_with_groups = Set.new(EmployeeGroup.distinct.pluck(:EmployeeID))
   end

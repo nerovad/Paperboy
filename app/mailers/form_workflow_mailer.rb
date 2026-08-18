@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-# Delivers a single configurable workflow email defined by a FormTemplateEmailStep.
+# Delivers a single configurable workflow email defined by a Forms::TemplateEmailStep.
 # Invoked (via deliver_later) from TrackableStatus when a form is submitted or a
 # routing step is approved/denied. Loads everything by id so async delivery sees
 # committed data.
 class FormWorkflowMailer < ApplicationMailer
   def notify(email_step_id, submission_class, submission_id)
-    email_step = FormTemplateEmailStep.find_by(id: email_step_id)
+    email_step = Forms::TemplateEmailStep.find_by(id: email_step_id)
     return if email_step.nil?
 
     submission = resolve_submission(submission_class, submission_id)

@@ -67,7 +67,7 @@ class AclController < ApplicationController
   def index
     @groups = Group.all.order(:group_name)
     @group_member_counts = EmployeeGroup.group(:group_id).count
-    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+    @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
   end
 
   def show
@@ -77,7 +77,7 @@ class AclController < ApplicationController
     @members = @group.employees.order(:last_name, :first_name)
     member_ids = @group.employee_groups.pluck(:employee_id)
     @contractor_members = Contractor.where(id: member_ids).order(:last_name, :first_name)
-    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+    @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
     return unless params[:search].present?
 
@@ -172,7 +172,7 @@ class AclController < ApplicationController
 
   def edit_contractor
     @contractor = Contractor.find(params[:contractor_id])
-    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+    @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
   end
 
   def update_contractor
@@ -181,7 +181,7 @@ class AclController < ApplicationController
 
     sup = @contractor.supervisor_id
     if sup.present? && !Employee.exists?(employee_id: sup)
-      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+      @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
       flash.now[:alert] = "Supervisor ID #{sup} does not match any employee."
       return render :edit_contractor, status: :unprocessable_entity
     end
@@ -189,7 +189,7 @@ class AclController < ApplicationController
     if @contractor.save
       redirect_to acl_path(@group), notice: "Contractor #{@contractor.full_name} updated."
     else
-      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+      @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
       flash.now[:alert] = @contractor.errors.full_messages.to_sentence
       render :edit_contractor, status: :unprocessable_entity
     end
@@ -412,10 +412,10 @@ class AclController < ApplicationController
   end
 
   def build_all_forms_list
-    template_names = FormTemplate.pluck(:name).to_set(&:downcase)
+    template_names = Forms::Template.pluck(:name).to_set(&:downcase)
     forms = []
 
-    # Add legacy forms that don't exist as a FormTemplate
+    # Add legacy forms that don't exist as a Forms::Template
     LEGACY_FORMS.each do |form|
       next if template_names.include?(form[:label].downcase)
 
@@ -423,7 +423,7 @@ class AclController < ApplicationController
     end
 
     # Add all FormTemplates
-    FormTemplate.order(:name).each do |template|
+    Forms::Template.order(:name).each do |template|
       forms << { key: template.id.to_s, label: template.name }
     end
 
@@ -444,19 +444,19 @@ class AclController < ApplicationController
   def build_org_label
     parts = []
     if @agency_id.present?
-      agency = Agency.find_by(agency_id: @agency_id)
+      agency = Coa::Agency.find_by(agency_id: @agency_id)
       parts << "Agency: #{agency&.long_name || @agency_id}"
     end
     if @division_id.present?
-      division = Division.find_by(division_id: @division_id)
+      division = Coa::Division.find_by(division_id: @division_id)
       parts << "Division: #{division&.long_name || @division_id}"
     end
     if @department_id.present?
-      department = Department.find_by(department_id: @department_id)
+      department = Coa::Department.find_by(department_id: @department_id)
       parts << "Department: #{department&.long_name || @department_id}"
     end
     if @unit_id.present?
-      unit = Unit.find_by(unit_id: @unit_id)
+      unit = Coa::Unit.find_by(unit_id: @unit_id)
       parts << "Unit: #{unit&.unit_id} - #{unit&.long_name || @unit_id}"
     end
     parts.any? ? parts.join(' > ') : 'Global (All Users)'

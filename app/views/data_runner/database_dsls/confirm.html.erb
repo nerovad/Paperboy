@@ -1,0 +1,24 @@
+<div class="page-heading">
+  <div><p class="eyebrow">Confirm configuration</p><h1>Import Database Table</h1></div>
+</div>
+
+<section class="card database-dsl-confirmation" aria-labelledby="database-dsl-confirmation-title">
+  <h2 id="database-dsl-confirmation-title">Confirm DSL import</h2>
+  <p>DataRunner will create a DSL and populate its header mappings from the live database columns.</p>
+  <dl class="detail-grid">
+    <div><dt>Server</dt><dd><code><%= @preview.server %></code></dd></div>
+    <div><dt>Database</dt><dd><code><%= @preview.database %></code></dd></div>
+    <div><dt>Table</dt><dd><code><%= [@preview.schema, @preview.table].join(".") %></code></dd></div>
+  </dl>
+
+  <%= form_with url: data_runner_database_dsls_path, data: { turbo: false } do |form| %>
+    <%= form.hidden_field :server, value: @preview.server %>
+    <%= form.hidden_field :database, value: @preview.database %>
+    <%= form.hidden_field :table, value: [@preview.schema, @preview.table].join(".") %>
+    <%= hidden_field_tag :confirmed, "1" %>
+    <div class="form-actions">
+      <%= form.submit "Create DSL", class: "btn approve" %>
+      <%= link_to "Cancel", new_data_runner_database_dsls_path, class: "btn" %>
+    </div>
+  <% end %>
+</section>

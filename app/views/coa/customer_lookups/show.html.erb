@@ -1,0 +1,43 @@
+<section class="coa-page">
+  <div class="coa-header">
+    <div>
+      <h1>Customer Lookup</h1>
+      <p class="coa-subtitle">Find a customer's account hierarchy by employee name.</p>
+    </div>
+  </div>
+
+  <div class="coa-form coa-billing-lookup"
+       data-controller="coa-customer-lookup"
+       data-coa-customer-lookup-employees-url-value="<%= employees_coa_customer_lookup_path %>"
+       data-coa-customer-lookup-hierarchy-url-value="<%= hierarchy_coa_customer_lookup_path %>">
+    <section class="coa-lookup-card" aria-labelledby="customer-selection-title">
+      <h2 id="customer-selection-title" class="coa-lookup-card__heading">Customer Selection</h2>
+      <div class="coa-lookup-card__body">
+        <div class="field coa-billing-field">
+          <%= label_tag :customer_search, "Employee" %>
+          <div class="coa-customer-search">
+            <%= search_field_tag :customer_search, nil,
+                                 placeholder: "Search first or last name…",
+                                 autocomplete: "off",
+                                 data: { coa_customer_lookup_target: "input",
+                                         action: "input->coa-customer-lookup#search keydown->coa-customer-lookup#keydown" } %>
+            <div class="coa-customer-results" role="listbox"
+                 data-coa-customer-lookup-target="results" hidden></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="coa-lookup-card" aria-labelledby="customer-account-hierarchy-title"
+             data-coa-customer-lookup-target="hierarchy" hidden>
+      <h2 id="customer-account-hierarchy-title" class="coa-lookup-card__heading">Account Hierarchy</h2>
+      <div class="coa-lookup-card__body">
+        <p class="coa-customer-name" data-coa-customer-lookup-target="customerName"></p>
+        <div data-coa-customer-lookup-target="tree"></div>
+        <p class="coa-customer-empty" data-coa-customer-lookup-target="empty" hidden>
+          No account hierarchy was found for this employee's unit.
+        </p>
+      </div>
+    </section>
+  </div>
+</section>

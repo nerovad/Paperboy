@@ -3,8 +3,8 @@
      data-controller="form-builder"
      data-form-builder-acl-groups-value="<%= acl_groups.to_json %>"
      data-form-builder-employees-value="<%= employees.to_json %>"
-     data-form-builder-predefined-statuses-value="<%= FormTemplateStatus::PREDEFINED_STATUSES.to_json %>"
-     data-form-builder-valid-categories-value="<%= FormTemplateStatus::VALID_CATEGORIES.to_json %>"
+     data-form-builder-predefined-statuses-value="<%= Forms::TemplateStatus::PREDEFINED_STATUSES.to_json %>"
+     data-form-builder-valid-categories-value="<%= Forms::TemplateStatus::VALID_CATEGORIES.to_json %>"
      style="display: none;">
   
   <div class="form-builder-modal-content">
@@ -18,7 +18,7 @@
               data-action="click->form-builder#closeModal">&times;</button>
     </div>
     
-  <%= form_with model: FormTemplate.new, 
+  <%= form_with model: Forms::Template.new,
                 url: form_templates_path, 
                 method: :post,
                   data: { 
@@ -45,7 +45,7 @@
             <small class="form-text" style="display: block; margin-bottom: 8px; color: #6c757d;">
               Add tags to help users find this form. Press Enter or comma to add a tag.
             </small>
-            <div class="tag-chips-container" data-controller="tag-chips" data-tag-chips-existing-tags-value="<%= (@existing_tags || FormTemplate.all_tags).to_json %>">
+            <div class="tag-chips-container" data-controller="tag-chips" data-tag-chips-existing-tags-value="<%= (@existing_tags || Forms::Template.all_tags).to_json %>">
               <div class="tag-chips-input-wrapper">
                 <div class="tag-chips" data-tag-chips-target="chips"></div>
                 <input type="text"
@@ -150,7 +150,7 @@
               Select which action buttons should appear in the inbox queue for this form type.
             </small>
             <div class="inbox-buttons-container" style="display: flex; flex-wrap: wrap; gap: 15px;">
-              <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+              <% Forms::Template::INBOX_BUTTON_TYPES.each do |key, config| %>
                 <div class="inbox-button-option" style="flex: 0 0 calc(50% - 10px); display: flex; align-items: flex-start; gap: 8px;">
                   <input type="checkbox"
                          name="form_template[inbox_buttons][]"
@@ -449,8 +449,8 @@
                   style="min-width: 200px;"
                   title="Restrict group members to those matching the submitter at this org level">
             <option value="">Filter by submitter's…</option>
-            <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
-              <option value="<%= lvl %>">Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+            <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+              <option value="<%= lvl %>">Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
             <% end %>
           </select>
         </div>
@@ -691,8 +691,8 @@
                 class="form-control form-control-sm step-org-filter-dropdown"
                 title="Restrict group members to those matching the submitter at this org level">
           <option value="">Filter by submitter's…</option>
-          <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
-            <option value="<%= lvl %>">Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+          <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+            <option value="<%= lvl %>">Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
           <% end %>
         </select>
       </div>
@@ -807,4 +807,3 @@
     </div>
   </div>
 </template>
-

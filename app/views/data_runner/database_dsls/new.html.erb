@@ -1,0 +1,33 @@
+<div class="page-heading">
+  <div><p class="eyebrow">Create configuration</p><h1>Import Database Table</h1></div>
+</div>
+
+<%= form_with url: data_runner_database_dsls_path, class: "card new-dsl-form",
+              data: { turbo: false,
+                      controller: "database-dsl",
+                      database_dsl_databases_url_value: databases_data_runner_database_dsls_path,
+                      database_dsl_tables_url_value: tables_data_runner_database_dsls_path,
+                      database_dsl_selected_database_value: @database,
+                      database_dsl_selected_table_value: @table } do |form| %>
+  <div class="field">
+    <%= form.label :server, "Database server" %>
+    <%= form.text_field :server, value: @server, required: true, autofocus: true,
+                        data: { database_dsl_target: "server", action: "change->database-dsl#loadDatabases" } %>
+  </div>
+  <div class="field">
+    <%= form.label :database, "Database name" %>
+    <%= form.select :database, [], { prompt: "Select a database" },
+                    required: true,
+                    data: { database_dsl_target: "database", action: "change->database-dsl#loadTables" } %>
+  </div>
+  <div class="field">
+    <%= form.label :table, "Table name" %>
+    <%= form.select :table, [], { prompt: "Select a table" }, required: true,
+                    data: { database_dsl_target: "table" } %>
+  </div>
+  <p class="form-help" data-database-dsl-target="status" aria-live="polite"></p>
+  <div class="form-actions">
+    <%= form.submit "Review Import", class: "btn approve" %>
+    <%= link_to "Cancel", data_runner_root_path, class: "btn" %>
+  </div>
+<% end %>

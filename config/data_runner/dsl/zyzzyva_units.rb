@@ -14,6 +14,10 @@
     group: {
       name: 'chart_of_accounts'
     },
+    dependency: 'Units',
+    sop: {
+      shared: :chart_of_accounts
+    },
     source: {
       location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/zyzzyva_units.xlsx',
       local: 'zyzzyva_units.xlsx',

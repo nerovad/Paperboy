@@ -7,7 +7,7 @@ class StuckSubmissionMailer < ApplicationMailer
     @submission = resolve_submission(submission_class, submission_id)
     return if @submission.nil?
 
-    @step = FormTemplateRoutingStep.find_by(id: step_id)
+    @step = Forms::TemplateRoutingStep.find_by(id: step_id)
     return if @step.nil?
 
     @template = @step.form_template

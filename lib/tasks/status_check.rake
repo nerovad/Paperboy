@@ -11,7 +11,7 @@ namespace :status do
     end
 
     models.sort_by(&:name).each do |model|
-      template = FormTemplate.find_by(class_name: model.name)
+      template = Forms::Template.find_by(class_name: model.name)
       next unless template
 
       central = template.statuses.pluck(:key).map(&:to_s).sort

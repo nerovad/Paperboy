@@ -20,4 +20,53 @@ class DslCatalogTest < ActiveSupport::TestCase
     assert_predicate DslCatalog.find!('revenue_sources'), :enabled?
     assert_not_predicate DslCatalog.find!('parking_lots'), :enabled?
   end
+
+  test 'scripted sources have no external location' do
+    scripted = DslCatalog.entries.select do |entry|
+      entry.config.dig(:source, :strategy) == :script
+    end
+
+    assert_not_empty scripted
+    scripted.each do |entry|
+      assert_nil entry.config.fetch(:source).fetch(:location),
+                 "#{entry.slug} scripted source must set location to nil"
+    end
+  end
+
+  test 'exposes SOPs only for supported groups' do
+    assert_equal 'VCPrint', DslCatalog.find!('vcprint').sop.fetch(:source_system)
+
+    entry = DslCatalog::Entry.new(
+      key: 'Unsupported', slug: 'unsupported', path: nil,
+      config: { group: { name: 'other' }, sop: { instructions: ['Do something.'] } }
+    )
+
+    assert_nil entry.sop
+  end
+
+  test 'resolves an SOP reference from its source location' do
+    entry = DslCatalog.find!('document_automation')
+
+    assert_equal entry.config.dig(:source, :location), entry.sop_reference_path
+  end
+
+  test 'resolves an SOP reference from its downloaded file' do
+    entry = DslCatalog.find!('agencies')
+
+    assert_equal WorkflowPaths::OUTPUT_ROOT.join(WorkflowPaths::DOWNLOAD_DIR_NAME, 'agencies.xlsx'),
+                 entry.sop_reference_path
+  end
+
+  test 'shares group refresh instructions across Chart of Accounts DSLs' do
+    entries = DslCatalog.grouped.fetch('chart_of_accounts')
+
+    assert_not_empty entries
+    entries.each do |entry|
+      assert_equal :chart_of_accounts, entry.config.dig(:sop, :shared)
+      assert_equal DslSharedSop.fetch!(:chart_of_accounts).fetch(:instructions), entry.sop.fetch(:instructions)
+      assert_equal 'chart_of_accounts', entry.sop_reference_group
+      assert_equal WorkflowPaths::OUTPUT_ROOT.join(WorkflowPaths::DOWNLOAD_DIR_NAME, entry.output_name),
+                   entry.sop_reference_path
+    end
+  end
 end

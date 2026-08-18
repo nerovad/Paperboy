@@ -1,0 +1,53 @@
+<% percent = run.total_count.zero? ? 100 : (run.completed_count * 100.0 / run.total_count).round %>
+<div class="progress-tracker__panel" data-progress-status="<%= run.status %>">
+  <div class="progress-tracker__summary">
+    <div>
+      <h2><%= run.status == "queued" ? "Preparing refresh" : "#{run.completed_count} of #{run.total_count} DSLs completed" %></h2>
+      <% running_dsls = run.items.select { |item| item.status == "running" }.sort_by(&:position).map(&:dsl_name) %>
+      <% if running_dsls.any? %><p>Running: <strong><%= running_dsls.to_sentence %></strong></p><% end %>
+      <% if run.active? %><p>You may leave this page. Processing will continue.</p><% end %>
+    </div>
+    <span class="progress-tracker__percent"><%= percent %>%</span>
+  </div>
+  <progress max="<%= run.total_count %>" value="<%= run.completed_count %>"><%= percent %>%</progress>
+
+  <% if run.finished? %>
+    <p class="progress-tracker__result <%= run.status %>">
+      <%= run.status == "succeeded" ? "Refresh completed successfully." : "Refresh completed with #{run.failed_count} failed DSLs." %>
+    </p>
+  <% end %>
+
+  <ol class="progress-tracker__items">
+    <% run.items.sort_by(&:position).each do |item| %>
+      <li class="progress-tracker__item <%= item.status %>">
+        <span class="progress-tracker__item-state" aria-hidden="true"><%= { "pending" => "○", "running" => "→", "succeeded" => "✓", "failed" => "✕" }.fetch(item.status) %></span>
+        <span><%= item.dsl_name %></span>
+        <span class="progress-tracker__item-label">
+          <%= item.status.humanize %>
+          <% if item.duration_ms %>
+            · <%= number_with_precision(item.duration_ms / 1000.0, precision: 1, strip_insignificant_zeros: true) %>s
+          <% end %>
+        </span>
+      </li>
+    <% end %>
+  </ol>
+
+  <% if run.active? %>
+    <div class="progress-tracker__actions">
+      <%= button_to "Restart interrupted refresh", interrupted_restart_path,
+                    method: :post, class: "btn warning",
+                    data: { turbo_confirm: "Restart this refresh? Only continue if processing was interrupted. The current run will be marked failed." } %>
+    </div>
+  <% end %>
+
+  <% if run.finished? %>
+    <div class="progress-tracker__actions">
+      <% if run.status == "failed" %>
+        <%= button_to "Restart refresh", restart_path, method: :post, class: "btn approve",
+                      data: { turbo_confirm: restart_confirmation } %>
+      <% end %>
+      <%= link_to "View log", log_path, class: "btn pdf" %>
+      <%= link_to return_label, return_path, class: "btn" %>
+    </div>
+  <% end %>
+</div>

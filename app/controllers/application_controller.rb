@@ -34,7 +34,7 @@ class ApplicationController < ActionController::Base
     user = session[:user]
     @inbox_count =
       if user && user['employee_id'].present?
-        InboxQuery.new(scoped_employee_ids: [user['employee_id'].to_s]).count
+        Forms::InboxQuery.new(scoped_employee_ids: [user['employee_id'].to_s]).count
       else
         0
       end
@@ -44,10 +44,10 @@ class ApplicationController < ActionController::Base
     employee = Submitter.resolve(employee_id)
     return {} unless employee
 
-    unit = Unit.resolve_for_employee(employee)
-    department = Department.find_by(department_id: unit&.department_id)
-    division   = Division.find_by(division_id: department&.division_id)
-    agency     = Agency.find_by(agency_id: division&.agency_id)
+    unit = Coa::Unit.resolve_for_employee(employee)
+    department = Coa::Department.find_by(department_id: unit&.department_id)
+    division   = Coa::Division.find_by(division_id: department&.division_id)
+    agency     = Coa::Agency.find_by(agency_id: division&.agency_id)
 
     {
       employee_id: employee.employee_id,
@@ -79,7 +79,7 @@ class ApplicationController < ActionController::Base
     employee_id = session.dig(:user, 'employee_id')
     if employee_id.present?
       employee = Submitter.resolve(employee_id)
-      unit     = Unit.resolve_for_employee(employee)
+      unit     = Coa::Unit.resolve_for_employee(employee)
 
       # agency_id comes straight off the Employee row, normalized to the
       # three-character id the org tables and org_permissions use — Employees
@@ -89,7 +89,7 @@ class ApplicationController < ActionController::Base
       # Units), which previously zeroed out the whole chain and skipped every
       # org-level grant in load_user_permissions.
       @_current_user_org_chain = {
-        agency_id: Agency.normalize_id(employee&.agency),
+        agency_id: Coa::Agency.normalize_id(employee&.agency),
         division_id: unit&.division_id,
         department_id: unit&.department_id,
         unit_id: unit&.unit_id
@@ -275,42 +275,10 @@ class ApplicationController < ActionController::Base
   end
 
   def load_user_permissions(permission_type)
-    keys = Set.new
-
-    # 1. Global permissions (all org fields nil — apply to everyone)
-    keys.merge(
-      OrgPermission.where(
-        agency_id: nil, division_id: nil, department_id: nil, unit_id: nil,
-        permission_type: permission_type
-      ).pluck(:permission_key)
-    )
-
-    # 2. Org-level permissions (cascading: agency → division → department → unit)
-    org = current_user_org_chain
-    if org[:agency_id].present?
-      conditions = [
-        { agency_id: org[:agency_id], division_id: nil, department_id: nil, unit_id: nil }
-      ]
-      conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: nil, unit_id: nil } if org[:division_id].present?
-      conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: org[:department_id], unit_id: nil } if org[:department_id].present?
-      conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: org[:department_id], unit_id: org[:unit_id] } if org[:unit_id].present?
-
-      query = conditions.map { |c| OrgPermission.where(c.merge(permission_type: permission_type)) }.reduce(:or)
-      keys.merge(query.pluck(:permission_key))
-    end
-
-    # 3. Group-level permissions (additive on top of org)
-    group_ids = current_user_group_ids
-    if group_ids.any?
-      keys.merge(
-        GroupPermission.where(group_id: group_ids, permission_type: permission_type)
-                       .pluck(:permission_key)
-      )
-    end
-
-    keys
-  rescue StandardError
-    Set.new
+    Pfa::Access::PermissionSet.new(
+      org_chain: current_user_org_chain,
+      group_ids: current_user_group_ids
+    ).keys(permission_type)
   end
 
   def set_current_user
