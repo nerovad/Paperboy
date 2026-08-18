@@ -1,7 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["input", "results", "hierarchy", "customerName", "tree", "empty"]
+  static targets = [
+    "input", "results", "hierarchy", "customerName", "tree", "empty",
+    "contact", "email", "phone"
+  ]
   static values = { employeesUrl: String, hierarchyUrl: String }
 
   connect() {
@@ -19,6 +22,7 @@ export default class extends Controller {
     this.searchRequest?.abort()
     this.hideResults()
     this.hierarchyTarget.hidden = true
+    this.contactTarget.hidden = true
 
     const query = this.inputTarget.value.trim()
     if (!query) return
@@ -89,6 +93,26 @@ export default class extends Controller {
       this.treeTarget.append(this.buildBranch(payload.nodes, 0))
     }
     this.hierarchyTarget.hidden = false
+    this.renderContact(payload.contact)
+  }
+
+  renderContact(contact) {
+    this.renderContactValue(this.emailTarget, contact.email, "mailto:")
+    this.renderContactValue(this.phoneTarget, contact.phone, "tel:")
+    this.contactTarget.hidden = false
+  }
+
+  renderContactValue(target, value, protocol) {
+    target.replaceChildren()
+    if (!value) {
+      target.textContent = "Not available"
+      return
+    }
+
+    const link = document.createElement("a")
+    link.href = `${protocol}${value}`
+    link.textContent = value
+    target.append(link)
   }
 
   buildBranch(nodes, index) {
