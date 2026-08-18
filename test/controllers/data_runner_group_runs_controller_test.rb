@@ -15,6 +15,10 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
     assert_select '[data-controller=?]', 'group-run'
     assert_select '[data-group-run-status=?]', 'running'
     assert_select 'li.group-run-item', count: 2
+    assert_select '.group-run-item__label', text: /Succeeded · 1.3s/
+    assert_select 'form[action=?]', data_runner_refresh_dsl_group_path(run.group_name, restart: 1) do
+      assert_select 'button.btn.warning', text: 'Restart interrupted refresh'
+    end
     assert_select 'p', text: /Processing will continue/
   end
 
@@ -29,13 +33,29 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
     assert_select 'progress[max=?][value=?]', '2', '0'
   end
 
+  test 'offers to restart a failed refresh' do
+    sign_in
+    run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid, group_name: 'chart_of_accounts',
+                                       status: 'failed', total_count: 2, completed_count: 2,
+                                       failed_count: 1, completed_at: Time.current)
+
+    get :show, params: { id: run.id }
+
+    assert_response :success
+    assert_select 'form[action=?][method=?]', data_runner_refresh_dsl_group_path(run.group_name), 'post' do
+      assert_select 'button.btn.approve[data-turbo-confirm=?]', 'Restart the Chart of accounts refresh?',
+                    text: 'Restart refresh'
+    end
+  end
+
   private
 
   def create_run
     run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid, group_name: 'chart_of_accounts',
                                        status: 'running', total_count: 2)
     run.items.create!(dsl_name: 'Activities', dsl_slug: 'activities', position: 0)
-    run.items.create!(dsl_name: 'Agencies', dsl_slug: 'agencies', position: 1)
+    run.items.create!(dsl_name: 'Agencies', dsl_slug: 'agencies', position: 1,
+                      status: 'succeeded', duration_ms: 1250)
     run
   end
 

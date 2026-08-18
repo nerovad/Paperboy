@@ -3,7 +3,8 @@
   <div class="group-run-progress__summary">
     <div>
       <h2><%= run.status == "queued" ? "Preparing refresh" : "#{run.completed_count} of #{run.total_count} DSLs completed" %></h2>
-      <% if run.current_dsl.present? %><p>Running: <strong><%= run.current_dsl %></strong></p><% end %>
+      <% running_dsls = run.items.select { |item| item.status == "running" }.sort_by(&:position).map(&:dsl_name) %>
+      <% if running_dsls.any? %><p>Running: <strong><%= running_dsls.to_sentence %></strong></p><% end %>
       <% if run.active? %><p>You may leave this page. Processing will continue.</p><% end %>
     </div>
     <span class="group-run-progress__percent"><%= percent %>%</span>
@@ -21,13 +22,32 @@
       <li class="group-run-item <%= item.status %>">
         <span class="group-run-item__state" aria-hidden="true"><%= { "pending" => "○", "running" => "→", "succeeded" => "✓", "failed" => "✕" }.fetch(item.status) %></span>
         <span><%= item.dsl_name %></span>
-        <span class="group-run-item__label"><%= item.status.humanize %></span>
+        <span class="group-run-item__label">
+          <%= item.status.humanize %>
+          <% if item.duration_ms %>
+            · <%= number_with_precision(item.duration_ms / 1000.0, precision: 1, strip_insignificant_zeros: true) %>s
+          <% end %>
+        </span>
       </li>
     <% end %>
   </ol>
 
+  <% if run.active? %>
+    <div class="group-run-progress__actions">
+      <%= button_to "Restart interrupted refresh",
+                    data_runner_refresh_dsl_group_path(run.group_name, restart: 1),
+                    method: :post, class: "btn warning",
+                    data: { turbo_confirm: "Restart this refresh? Only continue if processing was interrupted. The current run will be marked failed." } %>
+    </div>
+  <% end %>
+
   <% if run.finished? %>
     <div class="group-run-progress__actions">
+      <% if run.status == "failed" %>
+        <%= button_to "Restart refresh", data_runner_refresh_dsl_group_path(run.group_name),
+                      method: :post, class: "btn approve",
+                      data: { turbo_confirm: "Restart the #{run.group_name.humanize} refresh?" } %>
+      <% end %>
       <%= link_to "View log", data_runner_run_path(run.run_id), class: "btn pdf" %>
       <%= link_to "Return to group", data_runner_root_path(group: run.group_name), class: "btn" %>
     </div>

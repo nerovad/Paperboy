@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_17_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_17_000002) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -401,6 +401,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_17_000001) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "duration_ms"
     t.index ["group_run_id", "position"], name: "idx_group_run_items_position", unique: true
     t.index ["group_run_id"], name: "index_data_runner_group_run_items_on_group_run_id"
   end

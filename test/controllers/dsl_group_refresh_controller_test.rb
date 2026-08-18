@@ -33,6 +33,27 @@ class DslGroupRefreshControllerTest < ActionController::TestCase
     end
   end
 
+  test 'restart replaces an interrupted group run' do
+    sign_in
+    run = Struct.new(:id) do
+      def to_param = id.to_s
+    end.new(43)
+    original = DataRunner::GroupRefresh.method(:restart!)
+    calls = []
+    DataRunner::GroupRefresh.define_singleton_method(:restart!) do |**arguments|
+      calls << arguments
+      run
+    end
+
+    post :create, params: { group: 'paperboy', restart: '1' }
+
+    assert_redirected_to data_runner_group_run_path(run)
+    assert_equal 'paperboy', calls.first.fetch(:group)
+    assert_match(/Paperboy refresh restarted for \d+ DSLs\./, flash[:notice])
+  ensure
+    DataRunner::GroupRefresh.define_singleton_method(:restart!, original) if original
+  end
+
   private
 
   def sign_in
