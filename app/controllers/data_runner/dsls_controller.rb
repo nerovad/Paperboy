@@ -88,6 +88,11 @@ module DataRunner
     end
 
     def run
+      if @active_group_run
+        return redirect_to data_runner_dsl_path(@dsl.slug),
+                           alert: "#{@dsl.group.humanize} refresh is in progress. Run Task is disabled."
+      end
+
       task_name = params.require(:task_name)
       result = TaskRunner.run!(task: task_name, selector: @dsl.slug)
       task_status = result.success ? 'succeeded' : 'failed'
@@ -116,6 +121,7 @@ module DataRunner
 
     def set_dsl
       @dsl = DslCatalog.find!(params[:name])
+      @active_group_run = GroupRun.active.find_by(group_name: @dsl.group) if @dsl.group
     end
   end
 end
