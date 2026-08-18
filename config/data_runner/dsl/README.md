@@ -96,6 +96,12 @@ sop: {
 - Use `source.strategy: :append` when a locally staged supplemental file should
   flow through the normal stages and append into another dataset's destination
   table via `inject.mode: :append`.
+- Use top-level `dependency: 'Units'` when this DSL's injection must wait for
+  another DSL's injection to succeed. During a parallel group refresh, the
+  dependency must be included in the same run. DataRunner uses the shared run
+  ID in `DataRunner_Log`, so an older successful injection cannot satisfy the
+  dependency. A failed dependency fails the dependent DSL; a missing dependency
+  or an hour-long wait raises an explicit error.
 - Use `source.strategy: :script` when the download stage should run a local Ruby
   script that creates `00_Inbox/source.local`:
 

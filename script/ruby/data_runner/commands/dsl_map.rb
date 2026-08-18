@@ -25,4 +25,13 @@ keys = entries.map(&:first)
 duplicates = keys.group_by(&:itself).select { |_k, v| v.size > 1 }.keys
 raise "duplicate DSL keys: #{duplicates.join(', ')}" unless duplicates.empty?
 
+entries.each do |name, config|
+  dependency = config[:dependency]
+  next if dependency.nil?
+
+  raise "invalid dependency for #{name}: expected a DSL name" unless dependency.is_a?(String) && !dependency.empty?
+  raise "invalid dependency for #{name}: cannot depend on itself" if dependency == name
+  raise "unknown dependency for #{name}: #{dependency}" unless keys.include?(dependency)
+end
+
 DSL_MAP = entries.to_h.freeze

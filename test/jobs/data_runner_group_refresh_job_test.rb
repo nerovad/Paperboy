@@ -9,7 +9,9 @@ class DataRunnerGroupRefreshJobTest < ActiveJob::TestCase
     run.items.create!(dsl_name: 'Agencies', dsl_slug: 'agencies', position: 1)
     success = Struct.new(:success?).new(true)
     failure = Struct.new(:success?).new(false)
-    runner = lambda do |selector:, output:, **|
+    environments = []
+    runner = lambda do |selector:, output:, environment:, **|
+      environments << environment
       output.puts "Processed #{selector}"
       selector == 'activities' ? success : failure
     end
@@ -24,6 +26,8 @@ class DataRunnerGroupRefreshJobTest < ActiveJob::TestCase
     assert_equal 1, run.failed_count
     assert_equal %w[succeeded failed], run.items.order(:position).pluck(:status)
     assert(run.items.all? { |item| item.duration_ms.is_a?(Integer) })
+    assert(environments.all? { |environment| environment['DATARUNNER_RUN_ID'] == run.run_id })
+    assert(environments.all? { |environment| environment['DATARUNNER_RUN_DSLS'] == 'Activities,Agencies' })
     assert_includes TaskRunner.output!(run.run_id), 'Processed agencies'
   ensure
     TaskRunner.output_path(run.run_id).delete if run&.run_id && TaskRunner.output_path(run.run_id).file?

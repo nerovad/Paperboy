@@ -14,6 +14,7 @@
     group: {
       name: 'chart_of_accounts'
     },
+    dependency: 'Units',
     sop: {
       shared: :chart_of_accounts
     },

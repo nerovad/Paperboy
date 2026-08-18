@@ -64,7 +64,8 @@ module DataRunner
       started_clock = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       item.update!(status: 'running', started_at: started_at)
       status = with_log(run) do |log|
-        TaskRunner.run_selector!(task: 'refresh', selector: item.dsl_slug, output: log)
+        TaskRunner.run_selector!(task: 'refresh', selector: item.dsl_slug, output: log,
+                                 environment: dependency_environment(run))
       end
       item_status = status.success? ? 'succeeded' : 'failed'
       complete_item(run, item, status: item_status, started_clock: started_clock)
@@ -78,6 +79,13 @@ module DataRunner
       item.update!(status: status, error_message: error_message, duration_ms: duration_ms, completed_at: Time.current)
       GroupRun.increment_counter(:completed_count, run.id)
       GroupRun.increment_counter(:failed_count, run.id) if status == 'failed'
+    end
+
+    def dependency_environment(run)
+      {
+        'DATARUNNER_RUN_ID' => run.run_id,
+        'DATARUNNER_RUN_DSLS' => run.items.order(:position).pluck(:dsl_name).join(',')
+      }
     end
 
     def finish(run)
