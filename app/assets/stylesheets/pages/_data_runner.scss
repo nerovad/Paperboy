@@ -358,6 +358,29 @@
   }
 
   &.page-dsls-show {
+    .task-result {
+      width: min(100%, 900px);
+      box-sizing: border-box;
+    }
+
+    .task-result-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .task-result-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .task-output-box {
+      max-height: 50vh;
+    }
+
     .dsl-overview {
       max-height: 50vh;
       overflow-y: auto;
