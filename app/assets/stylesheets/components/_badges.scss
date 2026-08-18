@@ -13,18 +13,16 @@
 }
 
 /* Category-based status badges (normalized) */
-.badge.is-pending    { background: $neutral-badge-bg; color: $text-color;    border-color: $neutral-border-subtle; }
-.badge.is-in-review  { background: $amber-review-bg; color: $amber-review-text; border-color: $amber-soft-border; }
-.badge.is-approved   { background: $green-approved-bg; color: $green-approved-text; border-color: $green-approved-border; }
+.badge.is-pending,
+.badge.is-submitted { background: $neutral-badge-bg; color: $text-color; border-color: $neutral-border-subtle; }
+.badge.is-in-review,
+.badge.is-sent { background: $amber-review-bg; color: $amber-review-text; border-color: $amber-soft-border; }
+.badge.is-approved,
+.badge.is-manager-approved { background: $green-approved-bg; color: $green-approved-text; border-color: $green-approved-border; }
 .badge.is-denied     { background: $red-denied-bg; color: $danger-dark; border-color: $red-denied-border; }
-.badge.is-cancelled  { background: $neutral-pill-bg; color: $neutral-500; border-color: $neutral-border-light; }
+.badge.is-cancelled,
+.badge.is-canceled { background: $neutral-pill-bg; color: $neutral-500; border-color: $neutral-border-light; }
 .badge.is-scheduled  { background: $indigo-scheduled-bg; color: $indigo-scheduled-text; border-color: $indigo-scheduled-border; }
-
-/* Legacy class aliases for backwards compatibility */
-.badge.is-submitted        { @extend .badge.is-pending; }
-.badge.is-manager-approved { @extend .badge.is-approved; }
-.badge.is-sent             { @extend .badge.is-in-review; }
-.badge.is-canceled         { @extend .badge.is-cancelled; }
 
 /* Environment indicator — visible in dev/stage so it's obvious which server you're on */
 .env-badge {

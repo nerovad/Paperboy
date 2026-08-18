@@ -359,7 +359,8 @@
 
   &.page-dsls-show {
     .task-result {
-      width: min(100%, 900px);
+      width: 100%;
+      max-width: 900px;
       box-sizing: border-box;
     }
 
