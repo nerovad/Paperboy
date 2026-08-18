@@ -12,10 +12,10 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
     get :show, params: { id: run.id }
 
     assert_response :success
-    assert_select '[data-controller=?]', 'group-run'
-    assert_select '[data-group-run-status=?]', 'running'
-    assert_select 'li.group-run-item', count: 2
-    assert_select '.group-run-item__label', text: /Succeeded · 1.3s/
+    assert_select '[data-controller=?]', 'progress-tracker'
+    assert_select '[data-progress-status=?]', 'running'
+    assert_select 'li.progress-tracker__item', count: 2
+    assert_select '.progress-tracker__item-label', text: /Succeeded · 1.3s/
     assert_select 'form[action=?]', data_runner_refresh_dsl_group_path(run.group_name, restart: 1) do
       assert_select 'button.btn.warning', text: 'Restart interrupted refresh'
     end
@@ -29,7 +29,7 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
     get :status, params: { id: run.id }
 
     assert_response :success
-    assert_select '[data-group-run-status=?]', 'running'
+    assert_select '[data-progress-status=?]', 'running'
     assert_select 'progress[max=?][value=?]', '2', '0'
   end
 
@@ -48,7 +48,7 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
     end
   end
 
-  test 'uses Billing actions for a Billing data refresh' do
+  test 'keeps Billing data refresh progress in Billing' do
     sign_in
     run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid,
                                        group_name: Billing::DataRefresh::GROUP_RUN_NAME,
@@ -56,13 +56,7 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
 
     get :show, params: { id: run.id }
 
-    assert_response :success
-    assert_select 'h1', text: 'Data refresh'
-    assert_select 'form[action=?]', restart_billing_data_refresh_path do
-      assert_select 'input[name=?][value=?]', 'run_id', run.id.to_s
-      assert_select 'button.btn.approve', text: 'Restart refresh'
-    end
-    assert_select 'a[href=?]', billing_data_refresh_path, text: 'Return to Billing'
+    assert_redirected_to billing_data_refresh_run_path(run)
   end
 
   private

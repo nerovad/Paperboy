@@ -13,7 +13,7 @@ export default class extends Controller {
   }
 
   async poll() {
-    const status = this.contentTarget.querySelector("[data-group-run-status]")?.dataset.groupRunStatus
+    const status = this.contentTarget.querySelector("[data-progress-status]")?.dataset.progressStatus
     if (["succeeded", "failed"].includes(status)) return
 
     try {

@@ -58,7 +58,7 @@ import DashboardsController from "controllers/dashboards_controller"
 import AccountMenuController from "controllers/account_menu_controller"
 import DslDragController from "controllers/dsl_drag_controller"
 import DslGroupController from "controllers/dsl_group_controller"
-import GroupRunController from "controllers/group_run_controller"
+import ProgressTrackerController from "controllers/progress_tracker_controller"
 import OutputTableController from "controllers/output_table_controller"
 import SourceEditorController from "controllers/source_editor_controller"
 import SopModalController from "controllers/sop_modal_controller"
@@ -129,7 +129,7 @@ application.register("dashboards", DashboardsController)
 application.register("account-menu", AccountMenuController)
 application.register("dsl-drag", DslDragController)
 application.register("dsl-group", DslGroupController)
-application.register("group-run", GroupRunController)
+application.register("progress-tracker", ProgressTrackerController)
 application.register("output-table", OutputTableController)
 application.register("source-editor", SourceEditorController)
 application.register("sop-modal", SopModalController)

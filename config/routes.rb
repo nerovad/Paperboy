@@ -100,6 +100,9 @@ Rails.application.routes.draw do
     resource :data_refresh, only: %i[show update] do
       post :restart
     end
+    get 'data_refresh/runs/:run_id', to: 'data_refreshes#progress', as: :data_refresh_run
+    get 'data_refresh/runs/:run_id/status', to: 'data_refreshes#status', as: :data_refresh_run_status
+    get 'data_refresh/runs/:run_id/log', to: 'data_refreshes#log', as: :data_refresh_run_log
     resources :email_recipients, only: %i[index create destroy]
     resource :email_subjects, only: %i[show update]
     resource :email_reports, only: %i[show create]
