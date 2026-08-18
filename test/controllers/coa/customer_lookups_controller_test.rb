@@ -16,13 +16,10 @@ class CoaCustomerLookupsControllerTest < ActionController::TestCase
     get :show
 
     assert_response :success
-    assert_select '[data-controller=?]', 'coa-customer-lookup'
     assert_select '#customer-selection-title', text: 'Customer Selection'
-    assert_select '[data-coa-customer-lookup-target=?][hidden]', 'hierarchy'
-    assert_select '.coa-sidebar .coa-table-links' do
-      assert_select 'a:nth-of-type(1)', text: 'Billing Lookup'
-      assert_select 'a:nth-of-type(2)', text: 'Customer Lookup'
-    end
+    assert_select '.coa-lookup-card__heading', count: 3
+    assert_select '.coa-sidebar .coa-table-links a:nth-of-type(1)', text: 'Billing Lookup'
+    assert_select '.coa-sidebar .coa-table-links a:nth-of-type(2)', text: 'Customer Lookup'
   end
 
   test 'employees fuzzy finds first or last name and limits results' do
@@ -54,7 +51,8 @@ class CoaCustomerLookupsControllerTest < ActionController::TestCase
   end
 
   test 'hierarchy resolves a standard employee unit into four nodes' do
-    employee = record(id: 7, first_name: 'Avery', last_name: 'Smith', agency: 'GSA', unit: '1450')
+    employee = record(id: 7, first_name: 'Avery', last_name: 'Smith', agency: 'GSA', unit: '1450',
+                      email: 'avery.smith@example.com', work_phone: '805-555-0100')
     unit = record(agency_id: 'GSA', division_id: 'GSA1', department_id: '1400',
                   unit_id: '1450', long_name: 'Business Support')
 
@@ -65,10 +63,12 @@ class CoaCustomerLookupsControllerTest < ActionController::TestCase
     assert_response :success
     assert_equal %w[Agency Division Department Unit], response.parsed_body['nodes'].pluck('level')
     assert_equal %w[GSA GSA1 1400 1450], response.parsed_body['nodes'].pluck('id')
+    assert_equal({ 'email' => 'avery.smith@example.com', 'phone' => '805-555-0100' }, response.parsed_body['contact'])
   end
 
   test 'HCA hierarchy matches employee unit to a fifth sub-unit node' do
-    employee = record(id: 8, first_name: 'Jordan', last_name: 'Lee', agency: 'HCAV', unit: '4321')
+    employee = record(id: 8, first_name: 'Jordan', last_name: 'Lee', agency: 'HCAV', unit: '4321',
+                      email: nil, work_phone: nil)
     sub_unit = record(agency_id: 'HCA', unit_id: '1200', sub_unit_id: '4321',
                       sub_unit_name: 'Clinical Services')
     unit = record(agency_id: 'HCA', division_id: 'HCA1', department_id: '1100',

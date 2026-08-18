@@ -22,7 +22,8 @@ module Coa
     end
 
     def hierarchy
-      employee = Employee.select(:id, :first_name, :last_name, :agency, :unit).find(params[:employee_id])
+      employee = Employee.select(:id, :first_name, :last_name, :agency, :unit, :email, :work_phone)
+                         .find(params[:employee_id])
       render json: hierarchy_for(employee)
     rescue ActiveRecord::RecordNotFound
       render json: { error: 'Employee not found.' }, status: :not_found
@@ -46,6 +47,7 @@ module Coa
 
       {
         employee: employee_option(employee.id, employee.first_name, employee.last_name, employee.unit),
+        contact: { email: employee.email, phone: employee.work_phone },
         nodes: hierarchy_nodes(unit, sub_unit)
       }
     end
