@@ -21,6 +21,114 @@ For the product story / sales pitch, see [docs/PITCH.md](docs/PITCH.md).
 
 ---
 
+## Local development
+
+Running Paperboy on your own workstation. This is **not** a deployment —
+do not use `bin/deploy-dev` here. That script checks out `master`,
+precompiles assets and restarts systemd units that only exist on the dev
+server; on a workstation it resets your branch, leaves precompiled assets
+shadowing your live edits, and then fails at the `systemctl` calls.
+
+### First-time setup
+
+Ruby is pinned in `mise.toml`. Install it and hook mise into your shell —
+the `echo` line is run once, `.bashrc` sources it on every shell after
+that:
+
+```bash
+mise install
+echo 'eval "$(mise activate bash)"' >> ~/.bashrc
+exec bash
+ruby -v            # expect 4.0.6
+```
+
+Do not `apt install ruby-bundler` or `snap install ruby`. Both put a
+second Ruby on `PATH` ahead of mise's and the pin stops meaning anything.
+
+System packages (Ubuntu; see [Redis-compatible queue
+service](#redis-compatible-queue-service) below for the Arch/Valkey
+equivalent):
+
+```bash
+sudo apt install build-essential libyaml-dev libffi-dev \
+                 freetds-dev freetds-bin redis-server
+sudo systemctl enable --now redis-server
+redis-cli ping     # expect PONG
+```
+
+`freetds-dev` backs the `tiny_tds` gem. Then:
+
+```bash
+bundle install
+```
+
+### The .env file
+
+`.env` is gitignored, so it does not arrive with a fresh clone — copy it
+from another machine. `config/database.yml` uses `ENV.fetch` with no
+defaults, so Rails will not boot without it. At minimum:
+
+```bash
+GSABSS_HOST=  GSABSS_PORT=  GSABSS_USERNAME=  GSABSS_PASSWORD=
+GSABSS_DATABASE=GSABSS
+PAPERBOY_DATABASE=Paperboy_Dev
+ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=
+ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=
+ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=
+REDIS_URL=redis://localhost:6379/0
+```
+
+The three encryption keys must match the values used elsewhere or
+existing encrypted columns will not decrypt. Add `ENTRA_*`, `METABASE_*`,
+`POWERBI_*`, `TEAMS_WEBHOOK_URL`, `AIM_*` and `BILLING_ARCHIVE_ROOT` as
+the area you are working on needs them.
+
+### Running it
+
+```bash
+bin/dev-local            # Puma on :3001 + Sidekiq, one terminal
+bin/dev-local 3005       # different port
+bin/dev-local --cron     # also run the scheduled jobs
+bin/dev-local --no-jobs  # Puma only
+```
+
+It preflights `.env`, the port and Redis, prefixes Sidekiq output with
+`[sidekiq]`, and shuts both processes down together on Ctrl-C. If one
+dies the other is torn down with it.
+
+`bin/dev` still works if you only want Puma with no preflight.
+
+### Two things to know
+
+**There is no local database.** `development` points at `Paperboy_Dev` on
+the shared SQL Server, so this machine needs network access to it, and
+anything you write is visible to everyone else on dev. Avoid `bin/setup`
+— it runs `db:prepare`, which would migrate the shared database.
+
+**Scheduled jobs are off by default.** `bin/dev-local` sets
+`PAPERBOY_DISABLE_CRON=true`, because the cron schedule loads at Sidekiq
+boot whether or not `-C` is passed. Left on, a workstation runs
+`OshaReportableDeadlineJob` hourly against `Paperboy_Dev`, and that job
+writes `reportable_breach_notified_at` as its dedupe stamp — so it would
+race the dev server and consume notices the server should have sent. Pass
+`--cron` only when you are deliberately testing a scheduled job. Servers
+never set the variable and keep their schedule.
+
+### Logging in
+
+Entra's callback is `/auth/callback`, which is not registered for
+`localhost:3001` in the app registration, so OAuth will not complete
+locally. Use the impersonation route instead: `POST /login`
+(`sessions#create_legacy`) takes an employee id.
+
+### Assets
+
+Development compiles assets on demand through sprockets. Leave
+`public/assets` empty — if you ever run `assets:precompile` locally those
+files shadow your SCSS and JS edits until you run `assets:clobber`.
+
+---
+
 ## Redis-compatible queue service
 
 Sidekiq requires a Redis-compatible server on `127.0.0.1:6379`. On
