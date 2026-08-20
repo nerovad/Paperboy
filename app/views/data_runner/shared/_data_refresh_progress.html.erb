@@ -1,0 +1,20 @@
+<div class="form-header data-refresh-form-header <%= data_refresh_css_class %>-data-refresh-theme">
+  <h1>Refresh Data</h1>
+</div>
+
+<div class="form-wrapper data-refresh-form <%= data_refresh_css_class %>-data-refresh-theme">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow"><%= data_refresh_app_label %></p>
+      <h2>Data refresh progress</h2>
+    </div>
+    <%= link_to "Back to #{data_refresh_app_label}", data_refresh_form_path, class: "btn" %>
+  </div>
+
+  <section class="progress-tracker" data-controller="progress-tracker"
+           data-progress-tracker-url-value="<%= data_refresh_status_path(@run) %>">
+    <div data-progress-tracker-target="content">
+      <%= render "shared/progress_tracker", **data_refresh_progress_tracker_locals(@run) %>
+    </div>
+  </section>
+</div>

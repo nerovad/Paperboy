@@ -41,6 +41,9 @@ class AppFeature
       { key: 'email_reports',       label: 'Email Billing Reports' },
       { key: 'archive_reports',     label: 'Archive Billing Reports' }
     ],
+    'p2m' => [
+      { key: 'data_refresh', label: 'Refresh Data' }
+    ],
     # Keys match Coa::BaseController#coa_route_collection_name, which is also
     # how a request is mapped back to its grant.
     'coa' => [

@@ -59,6 +59,17 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
     assert_redirected_to billing_data_refresh_run_path(run)
   end
 
+  test 'keeps Print 2 Mail data refresh progress in Print 2 Mail' do
+    sign_in
+    run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid,
+                                       group_name: P2m::DataRefresh::GROUP_RUN_NAME,
+                                       status: 'failed', total_count: 1, completed_count: 1, failed_count: 1)
+
+    get :show, params: { id: run.id }
+
+    assert_redirected_to p2m_data_refresh_run_path(run)
+  end
+
   private
 
   def create_run
