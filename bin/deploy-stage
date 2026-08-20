@@ -35,6 +35,13 @@ RAILS_ENV=staging bundle exec rails assets:clobber
 echo "==> Precompiling assets..."
 RAILS_ENV=staging bundle exec rails assets:precompile
 
+# The units carry PAPERBOY_DATABASE=Paperboy_Stage, so a stale copy in
+# /etc/systemd/system leaves the app on dev's database while this script
+# migrates stage. bin/deploy does the same for the prod units.
+echo "==> Syncing systemd units..."
+sudo cp config/systemd/paperboy-stage.service config/systemd/paperboy-stage-sidekiq.service /etc/systemd/system/
+sudo systemctl daemon-reload
+
 echo "==> Restarting Puma..."
 sudo systemctl restart paperboy-stage
 
