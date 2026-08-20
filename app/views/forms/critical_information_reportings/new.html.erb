@@ -136,7 +136,7 @@
 <!-- FIELD:incident_type START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :incident_type, "Incident Type" %>
             <%= form.select :incident_type,
-                  options_for_select(['Approved Event Permit', 'CEO Interest', 'Elevator Outage (Entrapment)', 'Elevator Outage (No Entrapment)', 'Generator of Alarm Testing', 'HVAC', 'Natural Disaster', 'Planned Outage', 'Unplanned Outage', 'Safety Incident', 'Tree Removal']),
+                  options_for_select(["Approved Event Permit", "CEO Interest", "Elevator Outage (Entrapment)", "Elevator Outage (No Entrapment)", "Generator of Alarm Testing", "HVAC", "Natural Disaster", "Planned Outage", "Unplanned Outage", "Safety Incident", "Tree Removal"]),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
@@ -162,11 +162,18 @@
 <!-- FIELD:staff_involved START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :staff_involved, "Staff Involved" %>
             <%= form.select :staff_involved,
-                  options_for_select(FormLookup.options(4759)),
+                  options_for_select(FormLookup.options(4790)),
                   { include_blank: false },
-                  { class: "form-control", required: true, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                  { class: "form-control", required: true, multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'staff_involved' } } %>
           </div>
 <!-- FIELD:staff_involved END -->
+<!-- FIELD:other_staff_involved START -->          <div class="conditional-field" data-depends-on="staff_involved" data-show-values="[&quot;Other&quot;]" style="display: none;">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :other_staff_involved, "Other Staff Involved" %>
+            <%= form.text_field :other_staff_involved, class: "form-control" %>
+          </div>
+          </div>
+<!-- FIELD:other_staff_involved END -->
 <!-- FIELD:incident_details START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :incident_details, "Incident Details" %>
             <%= form.text_area :incident_details, rows: 5, class: "form-control", required: true %>
@@ -187,7 +194,7 @@
 <!-- FIELD:impact START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :impact, "Impact" %>
             <%= form.select :impact,
-                  options_for_select(['Low', 'Medium', 'High']),
+                  options_for_select(["Low", "Medium", "High"]),
                   { include_blank: "Select..." },
                   { class: "form-control", required: true } %>
           </div>
@@ -200,7 +207,7 @@
 <!-- FIELD:impacted_customers START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :impacted_customers, "Impacted Customers" %>
             <%= form.select :impacted_customers,
-                  options_for_select(['Building', 'Agency', 'Employee']),
+                  options_for_select(["Building", "Agency", "Employee"]),
                   { include_blank: false },
                   { class: "form-control", required: true, multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'impacted_customers' } } %>
           </div>
@@ -209,7 +216,7 @@
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :building, "Building" %>
             <%= form.select :building,
-                  options_for_select(['HOA', 'JJC', 'Service Building', 'Other']),
+                  options_for_select(["HOA", "JJC", "Service Building", "Other"]),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options...", conditional_trigger: 'building' } } %>
           </div>
