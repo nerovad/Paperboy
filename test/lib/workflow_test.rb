@@ -30,4 +30,17 @@ class WorkflowTest < ActiveSupport::TestCase
   ensure
     ENV[Workflow::ORCHESTRATION_ENV] = previous
   end
+
+  test 'normalizes legacy workflow settings' do
+    legacy = {
+      steps: {
+        enabled: false,
+        manual_steps: Workflow::MANUAL_STEPS,
+        scheduled: { frequency: :daily, steps: Workflow::SCHEDULED_STEPS }
+      }
+    }
+
+    assert_not Workflow.wants_step?(legacy, :inject)
+    assert_not Workflow.wants_scheduled_step?(legacy, :inject, :daily)
+  end
 end

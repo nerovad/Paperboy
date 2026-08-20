@@ -34,14 +34,27 @@ module Workflow
 
   def self.step_config(cfg)
     configured = cfg[:steps]
-    return configured if configured.is_a?(Hash)
+    return configured if configured.is_a?(Hash) && configured.key?(:manual)
+
+    if configured.is_a?(Hash)
+      enabled = configured.fetch(:enabled, true)
+      scheduled = configured[:scheduled]
+
+      return {
+        manual: {
+          enabled: enabled,
+          steps: configured[:manual_steps] || MANUAL_STEPS
+        },
+        scheduled: scheduled&.merge(enabled: scheduled.fetch(:enabled, enabled))
+      }
+    end
 
     {
       manual: {
         enabled: true,
         steps: configured || MANUAL_STEPS
       },
-      scheduled: nil
+      scheduled: cfg[:scheduled]
     }
   end
 
