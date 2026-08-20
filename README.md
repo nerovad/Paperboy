@@ -218,7 +218,9 @@ bin/deploy-stage some-branch  # deploys a different branch
   - `export PAPERBOY_DATABASE=Paperboy_Stage` in bin/deploy-stage — this covers
     db:migrate, acl:sync and the asset tasks the script runs.
 
-  After pulling a change to either unit file, reinstall them on the stage host:
+  bin/deploy-stage reinstalls both unit files and runs daemon-reload before it
+  restarts, the same way bin/deploy does for prod, so a normal deploy picks up
+  a change to either one. To do it by hand:
 
 ```bash
 sudo cp config/systemd/paperboy-stage*.service /etc/systemd/system/
