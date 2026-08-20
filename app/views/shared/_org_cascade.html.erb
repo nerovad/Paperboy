@@ -1,0 +1,72 @@
+<%# Cascading Agency → Division → Department → Unit selects — the one org
+    picker, wherever a screen needs to narrow to part of the county.
+
+    Everything below the level the user changes is refetched from /lookups by
+    org_cascade_controller.js, and the two middle labels are relabelled for
+    agencies whose vocabulary reverses them (OrgLabels).
+
+    Locals (all optional):
+      scope     Stimulus identifier that owns the targets. Defaults to
+                "org-cascade"; a screen whose own controller subclasses it
+                (the sidebar's Advanced Search) passes its own identifier.
+      standalone  Render the data-controller wrapper. False when an ancestor
+                already declares the controller.
+      prefix    Param-name prefix: "filter" posts filter_agency … ; the default
+                posts agency, division, department, unit.
+      selected  { agency:, division:, department:, unit: } current values.
+      labels    Blank-option wording per level.
+      agency_label  Wording for the agency label itself. %>
+<%
+  scope      = local_assigns.fetch(:scope, "org-cascade")
+  standalone = local_assigns.fetch(:standalone, true)
+  prefix     = local_assigns.fetch(:prefix, nil).presence
+  selected   = local_assigns.fetch(:selected, {}).symbolize_keys
+  labels     = { agency: "All Agencies", division: "All", department: "All", unit: "All Units" }
+               .merge(local_assigns.fetch(:labels, {}).symbolize_keys)
+
+  field   = ->(level) { prefix ? :"#{prefix}_#{level}" : level }
+  chosen  = ->(level) { selected[level].to_s }
+  search  = FormSearch.new(filter_agency: chosen.call(:agency))
+%>
+<div class="pb-filter-grid"
+     <%= tag.attributes(data: { controller: scope, "#{scope}-org-labels-value": OrgLabels.js_config.to_json }) if standalone %>>
+  <div class="pb-filter">
+    <%= label_tag field.call(:agency), local_assigns.fetch(:agency_label, "Agency") %>
+    <%= select_tag field.call(:agency),
+                   options_for_select(FormSearch.agency_options, chosen.call(:agency)),
+                   include_blank: labels[:agency], class: "form-control",
+                   data: { "#{scope}-target": "agency", action: "change->#{scope}#loadDivisions" } %>
+  </div>
+
+  <div class="pb-filter">
+    <%# Label text is owned by the controller: the viewer can change agency
+        without leaving the form, and HCA calls a division a department. %>
+    <label for="<%= field.call(:division) %>" data-<%= scope %>-target="divisionLabel">
+      <%= search.level_label(:division) %>
+    </label>
+    <%= select_tag field.call(:division),
+                   options_for_select(FormSearch.division_options(chosen.call(:agency)), chosen.call(:division)),
+                   include_blank: labels[:division], class: "form-control",
+                   data: { "#{scope}-target": "division", "blank-label": labels[:division],
+                           action: "change->#{scope}#loadDepartments" } %>
+  </div>
+
+  <div class="pb-filter">
+    <label for="<%= field.call(:department) %>" data-<%= scope %>-target="departmentLabel">
+      <%= search.level_label(:department) %>
+    </label>
+    <%= select_tag field.call(:department),
+                   options_for_select(FormSearch.department_options(chosen.call(:division)), chosen.call(:department)),
+                   include_blank: labels[:department], class: "form-control",
+                   data: { "#{scope}-target": "department", "blank-label": labels[:department],
+                           action: "change->#{scope}#loadUnits" } %>
+  </div>
+
+  <div class="pb-filter">
+    <%= label_tag field.call(:unit), "Unit" %>
+    <%= select_tag field.call(:unit),
+                   options_for_select(FormSearch.unit_options(chosen.call(:department)), chosen.call(:unit)),
+                   include_blank: labels[:unit], class: "form-control",
+                   data: { "#{scope}-target": "unit", "blank-label": labels[:unit] } %>
+  </div>
+</div>

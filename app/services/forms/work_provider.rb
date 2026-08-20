@@ -32,7 +32,7 @@ module Forms
     def query(filters, viewer)
       @query_class.new(
         scoped_employee_ids: filters.fetch(:scoped_employee_ids) { [viewer.fetch(:employee_id).to_s] },
-        viewer_form_types: filters.fetch(:viewer_form_types, []),
+        viewer_grants: filters.fetch(:viewer_grants, []),
         filter_form_type: filters[:form_type],
         date_from: filters[:date_from],
         date_to: filters[:date_to]
@@ -79,11 +79,14 @@ module Forms
     def records_for(model, viewer, filters)
       scope = model.all
       scoped_ids = filters.fetch(:scoped_employee_ids) { [viewer.fetch(:employee_id).to_s] }
-      viewer_types = filters.fetch(:viewer_form_types, [])
-      scope_by_owner = scoped_ids && model.column_names.include?('employee_id') &&
-                       !viewer_types.include?(model.name)
+      grants = filters.fetch(:viewer_grants, [])
 
-      scope = scope.where(employee_id: scoped_ids) if scope_by_owner
+      # Own submissions, widened by any visibility grant covering this form —
+      # through the same helper the Submissions page uses, so a grant narrowed
+      # to one unit narrows here too.
+      scope = scope.where(employee_id: scoped_ids) if scoped_ids && model.column_names.include?('employee_id')
+      scope = Forms::VisibilityGrant.widen(scope, grants, model)
+
       scope = scope.where(created_at: Date.parse(filters[:date_from]).beginning_of_day..) if filters[:date_from].present?
       scope = scope.where(created_at: ..Date.parse(filters[:date_to]).end_of_day) if filters[:date_to].present?
       scope

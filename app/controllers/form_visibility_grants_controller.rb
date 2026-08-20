@@ -1,33 +1,34 @@
 # frozen_string_literal: true
 
-# Admin screen for "full inbox visibility" grants: gives every member of a
-# group the ability to see all submissions of a chosen form type in their
-# inbox (when they filter to that form type). Keyed by model class name, so it
-# covers both dynamic form-builder forms and legacy hand-written forms.
+# Admin screen for submission visibility grants: lets every member of a group
+# see submissions of a chosen form that aren't their own — in the Inbox, on the
+# Submissions page, or both, and optionally only within one agency, division,
+# department or unit. Keyed by model class name, so it covers both dynamic
+# form-builder forms and legacy hand-written ones.
 class FormVisibilityGrantsController < ApplicationController
   # Reached only from the Manage Forms screen, so it rides on that tab's grant
   # rather than carrying an ACL key of its own.
   before_action -> { require_admin_tab('manage_forms') }
 
   def index
-    @form_types = form_type_catalog
-    @grants_by_type = Forms::VisibilityGrant.for_group(Group.pluck(:GroupID))
-                                            .includes(:group)
-                                            .group_by(&:form_type)
+    @form_types = Forms::VisibilityGrant.form_type_catalog
+    @form_labels = @form_types.to_h { |ft| [ft[:class_name], ft[:label]] }
+    @grants = Forms::VisibilityGrant.for_group(Group.pluck(:GroupID))
+                                    .includes(:group)
+                                    .sort_by { |g| [g.form_label(@form_labels).to_s.downcase, g.group&.group_name.to_s.downcase] }
     @groups = Group.order(:group_name)
   end
 
   def create
-    form_type = params[:form_type].to_s
-    group_id  = params[:group_id].presence
+    grant = Forms::VisibilityGrant.new(grant_attributes)
 
-    redirect_to form_visibility_grants_path, alert: 'Pick a form and a group.' and return if form_type.blank? || group_id.blank?
-
-    grant = Forms::VisibilityGrant.new(form_type: form_type, grantee_type: 'group', group_id: group_id)
-    if grant.save
+    if grant.form_type.blank? || grant.group_id.blank?
+      redirect_to form_visibility_grants_path, alert: 'Pick a form and a group.'
+    elsif grant.save
       redirect_to form_visibility_grants_path, notice: 'Visibility grant added.'
     else
-      redirect_to form_visibility_grants_path, alert: grant.errors.full_messages.to_sentence.presence || 'Could not add grant.'
+      redirect_to form_visibility_grants_path,
+                  alert: grant.errors.full_messages.to_sentence.presence || 'Could not add grant.'
     end
   end
 
@@ -39,15 +40,17 @@ class FormVisibilityGrantsController < ApplicationController
 
   private
 
-  # Every form type a grant can target: active dynamic templates plus the
-  # legacy hand-written forms (kept in sync with InboxHelper::HARDCODED_FORM_TYPES).
-  def form_type_catalog
-    dynamic = Forms::Template.where(archived: false).order(:name).map do |t|
-      { class_name: t.class_name, label: t.name }
-    end
-    legacy = InboxHelper::HARDCODED_FORM_TYPES.map do |class_name|
-      { class_name: class_name, label: class_name.demodulize.titleize }
-    end
-    (dynamic + legacy).uniq { |f| f[:class_name] }.sort_by { |f| f[:label].to_s.downcase }
+  # The org selects post under the same names the shared cascade partial uses
+  # everywhere else (agency, division, …); the columns carry the _id suffix.
+  def grant_attributes
+    permitted = params.permit(:form_type, :group_id, :applies_to, :agency, :division, :department, :unit)
+
+    {
+      form_type: permitted[:form_type].to_s,
+      grantee_type: 'group',
+      group_id: permitted[:group_id].presence,
+      applies_to: permitted[:applies_to].presence || 'both'
+    }.merge(Forms::VisibilityGrant::ORG_LEVELS.index_with { |level| permitted[level] }
+                                              .transform_keys { |level| :"#{level}_id" })
   end
 end

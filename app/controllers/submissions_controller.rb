@@ -52,15 +52,15 @@ class SubmissionsController < ApplicationController
                              [employee_id]
                            end
 
-    # Form types the viewer holds a visibility grant for (direct or via a
-    # group) — see Forms::VisibilityGrant. These widen the list to every
-    # submission of that type regardless of submitter, the same grant that
-    # widens the inbox.
-    @viewer_form_types = Forms::VisibilityGrant.form_types_for(employee_id, current_user_group_ids)
+    # Visibility grants the viewer holds (direct or via a group) that widen this
+    # page — see Forms::VisibilityGrant. Each adds submissions of one form type
+    # regardless of submitter, either every one of them or only those filed
+    # inside the grant's slice of the organization.
+    @viewer_grants = Forms::VisibilityGrant.for_viewer(employee_id, current_user_group_ids).for_submissions.to_a
 
     # Show the owner column whenever the viewer can see submissions that aren't
     # their own — as a supervisor/admin, or via a visibility grant.
-    @show_employee_column = @show_employee_filter || @viewer_form_types.any?
+    @show_employee_column = @show_employee_filter || @viewer_grants.any?
 
     # Resolve the viewer's customized column/filter layout. Done before loading
     # items so build_status_item can populate custom form-field values. The
@@ -229,7 +229,7 @@ class SubmissionsController < ApplicationController
       includes_list << :parking_lot_vehicles if model_class.reflect_on_association(:parking_lot_vehicles)
 
       # Scope to the determined employee IDs (own, specific subordinate, or all);
-      # a visibility grant on this form type widens it to every submission.
+      # a visibility grant on this form type widens it.
       scope = submission_scope_for(model_class)
 
       # Apply SQL-level date and Advanced Search org filters
@@ -268,7 +268,7 @@ class SubmissionsController < ApplicationController
       next unless model_class.new.respond_to?(:status_category)
 
       # Scope to the determined employee IDs (own, specific subordinate, or all);
-      # a visibility grant on this form type widens it to every submission.
+      # a visibility grant on this form type widens it.
       scope = submission_scope_for(model_class)
 
       # Apply SQL-level date and Advanced Search org filters
@@ -286,15 +286,15 @@ class SubmissionsController < ApplicationController
     end
   end
 
-  # Records of model_class to load for the Submissions list. A visibility grant
-  # (Forms::VisibilityGrant) lets the viewer see every submission of a granted form
-  # type regardless of who submitted it — the same grant that widens the inbox.
-  # Otherwise the list is scoped to the viewer's own/subordinate ids (nil = no
-  # restriction, i.e. system admin viewing All).
+  # Records of model_class to load for the Submissions list: the viewer's own /
+  # subordinates' submissions (nil ids = no restriction, i.e. system admin
+  # viewing All), widened by whatever their visibility grants open up — every
+  # submission of the granted form type, or only the ones filed inside the
+  # grant's org window.
   def submission_scope_for(model_class)
-    return model_class.all if @viewer_form_types.include?(model_class.name)
+    own = @scoped_employee_ids ? model_class.where(employee_id: @scoped_employee_ids) : model_class.all
 
-    @scoped_employee_ids ? model_class.where(employee_id: @scoped_employee_ids) : model_class.all
+    Forms::VisibilityGrant.widen(own, @viewer_grants, model_class)
   end
 
   # SQL-level date filter config (applied per-table before combining)
