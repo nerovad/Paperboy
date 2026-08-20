@@ -51,6 +51,6 @@ class AppFeatureTest < ActiveSupport::TestCase
 
   test 'permission keys for an app are fully qualified' do
     assert_equal %w[data_runner:manage_groups], AppFeature.permission_keys_for('data_runner')
-    assert_equal %w[p2m:data_refresh], AppFeature.permission_keys_for('p2m')
+    assert_equal %w[p2m:stage_data p2m:data_refresh], AppFeature.permission_keys_for('p2m')
   end
 end

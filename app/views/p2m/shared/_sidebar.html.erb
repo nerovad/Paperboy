@@ -5,12 +5,10 @@
   <%= render "shared/app_switcher" %>
 
   <nav class="p2m-links">
-    <%# The root path is the slideshow landing page; the working dashboard is
-        one level in, matching how AIM splits home from dashboard. %>
-    <%= link_to "Home", p2m_root_path,
-                class: "nav-link#{' active' if current_page?(p2m_root_path)}" %>
-    <%= link_to "Hello World", p2m_dashboard_path,
-                class: "nav-link#{' active' if current_page?(p2m_dashboard_path)}" %>
+    <% if can_use_app_feature?('p2m', 'stage_data') %>
+      <%= link_to "Stage Data", p2m_stage_data_path,
+                  class: "nav-link#{' active' if current_page?(p2m_stage_data_path)}" %>
+    <% end %>
     <% if can_use_app_feature?('p2m', 'data_refresh') %>
       <%= link_to "Refresh Data", p2m_data_refresh_path,
                   class: "nav-link#{' active' if current_page?(p2m_data_refresh_path)}" %>

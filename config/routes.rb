@@ -129,6 +129,7 @@ Rails.application.routes.draw do
   namespace :p2m do
     root 'dashboard#home'
     get 'dashboard', to: 'dashboard#index', as: :dashboard
+    resource :stage_data, only: %i[show create]
     resource :data_refresh, only: %i[show update] do
       post :restart
     end
