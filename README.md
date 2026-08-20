@@ -78,6 +78,13 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=
 REDIS_URL=redis://localhost:6379/0
 ```
 
+`PAPERBOY_DATABASE` is read in every environment, not just development —
+`config/database.yml` uses it as the database name for development, staging
+and production alike. The stage host overrides it back to `Paperboy_Stage`
+in its systemd units and in `bin/deploy-stage`; see "Stage has its own
+database" below. Copying a dev `.env` onto a server without that override
+points that server at dev's data.
+
 The three encryption keys must match the values used elsewhere or
 existing encrypted columns will not decrypt. Add `ENTRA_*`, `METABASE_*`,
 `POWERBI_*`, `TEAMS_WEBHOOK_URL`, `AIM_*` and `BILLING_ARCHIVE_ROOT` as
@@ -197,6 +204,35 @@ bin/deploy-stage some-branch  # deploys a different branch
   The script prompts for your sudo password during the two systemctl restart
   calls near the end.
 
+### Stage has its own database
+
+  Stage runs against Paperboy_Stage, not Paperboy_Dev. That distinction is
+  easy to lose: .env is shared with the dev host and sets
+  PAPERBOY_DATABASE=Paperboy_Dev, and config/database.yml reads that value in
+  every environment, so without an override a staging deploy quietly writes to
+  dev. The override is set twice, and both are needed:
+
+  - `Environment=PAPERBOY_DATABASE=Paperboy_Stage` in
+    config/systemd/paperboy-stage.service and paperboy-stage-sidekiq.service,
+    after the EnvironmentFile line so it wins — this covers Puma and Sidekiq.
+  - `export PAPERBOY_DATABASE=Paperboy_Stage` in bin/deploy-stage — this covers
+    db:migrate, acl:sync and the asset tasks the script runs.
+
+  After pulling a change to either unit file, reinstall them on the stage host:
+
+```bash
+sudo cp config/systemd/paperboy-stage*.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl restart paperboy-stage paperboy-stage-sidekiq
+```
+
+  To confirm which database stage is actually on:
+
+```bash
+PAPERBOY_DATABASE=Paperboy_Stage RAILS_ENV=staging bundle exec rails runner \
+  'puts ActiveRecord::Base.connection.current_database'
+```
+
   Tail logs while debugging:
 
 ```bash
@@ -231,6 +267,43 @@ git reset --hard prod-20251112-2050  # example tag
 ```
 
 Rebuild assets + restart app
+
+## Promoting ACLs (dev → stage → prod)
+
+Groups, their permission grants and the org-level grants live in each
+Paperboy_* database, not in shared GSABSS, so they have to be carried across
+by hand. `db/acl.yml` is that carrier: it is committed, and it describes every
+environment at once.
+
+```bash
+# On dev, after setting groups and permissions up in ACL > Groups
+bin/rails acl:dump MERGE=1        # union dev's ACL into db/acl.yml
+git add db/acl.yml && git commit  # read the diff first — org grants are broad
+
+# On stage, then prod, after deploying
+bin/rails acl:sync DRY_RUN=1      # print the plan, write nothing
+bin/rails acl:sync                # apply it
+bin/rails acl:sync PRUNE=1        # also remove grants the file does not list
+```
+
+`acl:sync` is additive and safe to re-run: it creates what is missing and
+leaves everything else alone. Nothing is matched on an id the local database
+owns — groups go by name, forms by class name, org scopes by the shared GSABSS
+agency/division/department/unit ids.
+
+A form grant is only applied where the form itself exists, because
+`form_templates.id` is allocated per database. Grants for a form the target
+does not have are listed as `!` lines and held back rather than pointed at
+whatever form happens to hold that id there:
+
+```
+! HCA_HR: form/34 — LeaveOfAbsenceForm does not exist in this database; create the form here first
+```
+
+So promote the form template first, then re-run `acl:sync` and the held-back
+grants land. Two things are deliberately left out of the file: Employee_Groups,
+because memberships are meant to differ per environment, and contractors,
+because that table carries password digests.
 
 ## Form Template Workflow
 
