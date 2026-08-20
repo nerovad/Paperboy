@@ -44,13 +44,16 @@ filename order and builds:
 ## Editing Notes
 
 - Keep changes scoped to the affected dataset file whenever possible.
-- Use `steps: { enabled: true, manual_steps: Workflow::MANUAL_STEPS, ... }` for
-  the full human workflow.
-- Set `steps: { enabled: false, ... }` to skip all manual and scheduled steps
-  for a dataset.
-- Use `steps: { scheduled: { frequency: :daily, steps: Workflow::SCHEDULED_STEPS } }`
-  for normal scheduled runs. Valid frequencies are `:daily`, `:weekly`, and
-  `:monthly`.
+- Configure manual and scheduled execution independently under `steps`.
+  Each mode has its own `enabled` flag and step list.
+- Use `manual: { enabled: true, steps: Workflow::MANUAL_STEPS }` for the full
+  human workflow. Set `manual[:enabled]` to `false` when a DSL must not be run
+  directly by a person.
+- Use `scheduled: { enabled: true, frequency: :daily,
+  steps: Workflow::SCHEDULED_STEPS }` for normal scheduled runs. Valid
+  frequencies are `:daily`, `:weekly`, and `:monthly`.
+- Set both mode-specific `enabled` flags to `false` to skip all manual and
+  scheduled steps for a dataset.
 - Use `group: { name: 'chart_of_accounts' }` to make a dataset selectable by
   group. Stage selectors may be omitted, a DSL name, or a group name; for
   example, `rake DataRunner:oneshot chart_of_accounts` processes all DSL

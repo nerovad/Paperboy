@@ -25,12 +25,12 @@ module DataRunnerTaskHelpers
     'use_sql.rb' => 'script/ruby/data_runner/commands/use_sql.rb'
   }.freeze
 
-  def run_ruby_stage(script, *args, log_selectors: nil)
+  def run_ruby_stage(script, *args, log_selectors: nil, environment: {})
     compact_args = args.compact
     script_path = COMMAND_SCRIPTS.fetch(script, script)
     started_at = Time.now
     process_start = Process.times
-    result = execute_stage(script_path, compact_args)
+    result = execute_stage(script_path, compact_args, environment)
 
     log_stage(script_path, compact_args, started_at, result, log_selectors)
     print_elapsed_time(process_start)
@@ -73,8 +73,8 @@ module DataRunnerTaskHelpers
     selector ? reset_selected_files(selector) : reset_all_files
   end
 
-  def execute_stage(script_path, args)
-    success = system('ruby', Rails.root.join(script_path).to_s, *args)
+  def execute_stage(script_path, args, environment)
+    success = system(environment, 'ruby', Rails.root.join(script_path).to_s, *args)
     { success: success, exit_status: $CHILD_STATUS&.exitstatus }
   end
   private_class_method :execute_stage

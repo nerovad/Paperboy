@@ -4,9 +4,12 @@
   'Workweeks',
   {
     steps: {
-      enabled: true,
-      manual_steps: Workflow::MANUAL_STEPS,
+      manual: {
+        enabled: true,
+        steps: Workflow::MANUAL_STEPS
+      },
       scheduled: {
+        enabled: true,
         frequency: :daily,
         steps: Workflow::SCHEDULED_STEPS
       }

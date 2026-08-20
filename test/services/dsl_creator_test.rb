@@ -15,10 +15,12 @@ class DslCreatorTest < ActiveSupport::TestCase
       assert_equal 'sample_data', slug
       assert_equal 'Sample Data', key
       assert_nil config[:commands]
-      assert_includes source, 'manual_steps: Workflow::MANUAL_STEPS'
+      assert_includes source, 'manual: {'
       assert_includes source, 'steps: Workflow::SCHEDULED_STEPS'
       assert_match(/\{\n    steps: \{/, source)
-      assert_equal Workflow::MANUAL_STEPS, config.dig(:steps, :manual_steps)
+      assert config.dig(:steps, :manual, :enabled)
+      assert_equal Workflow::MANUAL_STEPS, config.dig(:steps, :manual, :steps)
+      assert config.dig(:steps, :scheduled, :enabled)
       assert_equal Workflow::SCHEDULED_STEPS, config.dig(:steps, :scheduled, :steps)
     end
   end

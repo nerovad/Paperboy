@@ -5,6 +5,8 @@
 module DataRunnerTaskHelpers
   module_function
 
+  ORCHESTRATION_CONCURRENCY = 4
+
   ORCHESTRATED_SCRIPTS = {
     to_csv: 'to_csv.rb',
     to_sql: 'to_sql.rb',
@@ -280,10 +282,39 @@ module DataRunnerTaskHelpers
 
   def run_children(orchestration, stage)
     script = ORCHESTRATED_SCRIPTS.fetch(stage)
-    orchestration_children(orchestration).map(&:first).each do |child_name|
-      run_ruby_stage(script, child_name, log_selectors: [child_name])
-    end
+    children = orchestration_children(orchestration).map(&:first)
+    queue = Queue.new
+    children.each { |child_name| queue << child_name }
+    failures = Queue.new
+
+    [children.length, ORCHESTRATION_CONCURRENCY].min.times.map do
+      Thread.new do
+        loop do
+          child_name = queue.pop(true)
+          begin
+            run_orchestrated_child(script, child_name)
+          rescue SystemExit, StandardError => e
+            failures << [child_name, e]
+          end
+        rescue ThreadError
+          break
+        end
+      end
+    end.each(&:join)
+
+    return if failures.empty?
+
+    messages = []
+    messages << failures.pop until failures.empty?
+    details = messages.sort_by(&:first).map { |child_name, error| "#{child_name}: #{error.message}" }
+    raise "orchestration #{stage} failures:\n  #{details.join("\n  ")}"
   end
+
+  def run_orchestrated_child(script, child_name)
+    environment = { Workflow::ORCHESTRATION_ENV => '1' }
+    run_ruby_stage(script, child_name, log_selectors: [child_name], environment: environment)
+  end
+  private_class_method :run_orchestrated_child
   private_class_method :run_children
 
   def run_postprocessing(orchestration)
