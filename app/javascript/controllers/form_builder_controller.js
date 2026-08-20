@@ -1232,11 +1232,12 @@ export default class extends Controller {
     })
   }
 
-  // Toggle between manual values, a curated database table, and a custom lookup
+  // Toggle between manual values, a curated database table, and a custom lookup.
+  // Manual values stay available in every mode: on their own they are the whole
+  // option list, alongside a table they are extras pinned to one end of it.
   handleDropdownSourceChange(event) {
     const fieldItem = event.target.closest('.field-item')
     const source = event.target.value
-    const manualSection = fieldItem.querySelector('.dropdown-manual-values')
     const dataSourceSection = fieldItem.querySelector('.dropdown-data-source')
     const customSection = fieldItem.querySelector('.dropdown-custom-source')
 
@@ -1245,7 +1246,7 @@ export default class extends Controller {
       radio.checked = (radio === event.target)
     })
 
-    if (manualSection) manualSection.style.display = source === 'manual' ? 'block' : 'none'
+    this.updateManualValuesMode(fieldItem, source !== 'manual')
     if (dataSourceSection) dataSourceSection.style.display = source === 'database' ? 'block' : 'none'
     if (customSection) customSection.style.display = source === 'custom' ? 'block' : 'none'
 
@@ -1263,6 +1264,28 @@ export default class extends Controller {
     if (source !== 'custom') {
       this.resetCustomLookup(fieldItem)
     }
+  }
+
+  // Relabel the manual values box for the active source, showing the position
+  // picker only when those values ride along with a table-backed list.
+  updateManualValuesMode(fieldItem, lookupBacked) {
+    const manualSection = fieldItem.querySelector('.dropdown-manual-values')
+    if (!manualSection) return
+
+    manualSection.style.display = 'block'
+
+    const label = manualSection.querySelector('.dropdown-values-label')
+    if (label) {
+      label.textContent = lookupBacked
+        ? 'Extra manual values (comma-separated):'
+        : 'Values (comma-separated):'
+    }
+
+    const position = manualSection.querySelector('.dropdown-values-position')
+    if (position) position.style.display = lookupBacked ? 'block' : 'none'
+
+    const hint = manualSection.querySelector('.dropdown-values-hint')
+    if (hint) hint.style.display = lookupBacked ? 'block' : 'none'
   }
 
   resetCustomLookup(fieldItem) {

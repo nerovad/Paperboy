@@ -497,12 +497,27 @@
       </div>
 
       <div class="dropdown-manual-values">
-        <label>Values (comma-separated):</label>
-        <input type="text"
-               name="fields[][dropdown_values]"
-               class="form-control form-control-sm"
-               placeholder="Option 1, Option 2, Option 3"
-               data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
+        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 180px;">
+            <label class="dropdown-values-label">Values (comma-separated):</label>
+            <input type="text"
+                   name="fields[][dropdown_values]"
+                   class="form-control form-control-sm"
+                   placeholder="Option 1, Option 2, Option 3"
+                   data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
+          </div>
+          <div class="dropdown-values-position" style="flex: 0 0 auto; min-width: 150px; display: none;">
+            <label>Position:</label>
+            <select name="fields[][dropdown_values_position]"
+                    class="form-control form-control-sm dropdown-values-position-select">
+              <option value="end" selected>End of list</option>
+              <option value="start">Beginning of list</option>
+            </select>
+          </div>
+        </div>
+        <small class="dropdown-values-hint" style="color: #6c757d; font-size: 0.78em; margin-top: 2px; display: none;">
+          Added to the values fetched from the table — e.g. an "Other" entry.
+        </small>
       </div>
 
       <div class="dropdown-custom-source" style="display: none;">
