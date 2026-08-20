@@ -5,6 +5,20 @@ APP_DIR="/home/matthew/gitea/Paperboy"
 BRANCH="${1:-master}"
 cd "$APP_DIR"
 
+# Installs a unit file unless /etc/systemd/system already symlinks straight at
+# the repo copy, where git pull has updated it already and cp would fail with
+# "are the same file" — aborting the deploy under set -e, after the migrations
+# have run but before anything restarts.
+sync_unit() {
+  local src="$APP_DIR/config/systemd/$1"
+  local dst="/etc/systemd/system/$1"
+  if [ "$(readlink -f "$src")" = "$(readlink -f "$dst")" ]; then
+    echo "    $1 already links to the repo copy"
+  else
+    sudo cp "$src" "$dst"
+  fi
+}
+
 echo "==> Fetching and checking out branch: $BRANCH ..."
 git fetch origin
 git checkout "$BRANCH"
@@ -29,7 +43,8 @@ echo "==> Precompiling assets..."
 RAILS_ENV=production bundle exec rails assets:precompile
 
 echo "==> Syncing systemd units..."
-sudo cp config/systemd/paperboy.service config/systemd/paperboy-sidekiq.service /etc/systemd/system/
+sync_unit paperboy.service
+sync_unit paperboy-sidekiq.service
 sudo systemctl daemon-reload
 
 echo "==> Restarting Puma..."
