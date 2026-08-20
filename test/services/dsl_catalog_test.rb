@@ -21,6 +21,15 @@ class DslCatalogTest < ActiveSupport::TestCase
     assert_not_predicate DslCatalog.find!('parking_lots'), :enabled?
   end
 
+  test 'orchestrated children are disabled for direct manual execution' do
+    %w[companions dailypresorts moveresults].each do |slug|
+      config = DslCatalog.find!(slug).config
+
+      assert_not Workflow.wants_step?(config, :inject)
+      assert Workflow.wants_scheduled_step?(config, :inject, :daily)
+    end
+  end
+
   test 'scripted sources have no external location' do
     scripted = DslCatalog.entries.select do |entry|
       entry.config.dig(:source, :strategy) == :script

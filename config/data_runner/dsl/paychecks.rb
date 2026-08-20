@@ -4,9 +4,12 @@
   'Paychecks',
   {
     steps: {
-      enabled: false,
-      manual_steps: Workflow::MANUAL_STEPS,
+      manual: {
+        enabled: false,
+        steps: Workflow::MANUAL_STEPS
+      },
       scheduled: {
+        enabled: false,
         frequency: :daily,
         steps: Workflow::SCHEDULED_STEPS
       }

@@ -170,9 +170,12 @@ def render_entry(dataset_key, local_name, format, header_row_idx, header_cols)
       #{ruby_literal(dataset_key)},
       {
         steps: {
-          enabled: true,
-          manual_steps: Workflow::MANUAL_STEPS,
+          manual: {
+            enabled: true,
+            steps: Workflow::MANUAL_STEPS
+          },
           scheduled: {
+            enabled: true,
             frequency: :daily,
             steps: Workflow::SCHEDULED_STEPS
           }
