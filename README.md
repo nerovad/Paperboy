@@ -220,7 +220,10 @@ bin/deploy-stage some-branch  # deploys a different branch
 
   bin/deploy-stage reinstalls both unit files and runs daemon-reload before it
   restarts, the same way bin/deploy does for prod, so a normal deploy picks up
-  a change to either one. To do it by hand:
+  a change to either one. Where /etc/systemd/system/paperboy-stage*.service are
+  symlinks into this repo, git pull has already updated them and the copy is
+  skipped — the daemon-reload is still what makes systemd re-read them. To do
+  it by hand:
 
 ```bash
 sudo cp config/systemd/paperboy-stage*.service /etc/systemd/system/

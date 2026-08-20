@@ -5,6 +5,20 @@ APP_DIR="/home/matthew/gitea/Paperboy"
 BRANCH="${1:-master}"
 cd "$APP_DIR"
 
+# Installs a unit file unless /etc/systemd/system already symlinks straight at
+# the repo copy, where git pull has updated it already and cp would fail with
+# "are the same file" — aborting the deploy under set -e, after the migrations
+# have run but before anything restarts.
+sync_unit() {
+  local src="$APP_DIR/config/systemd/$1"
+  local dst="/etc/systemd/system/$1"
+  if [ "$(readlink -f "$src")" = "$(readlink -f "$dst")" ]; then
+    echo "    $1 already links to the repo copy"
+  else
+    sudo cp "$src" "$dst"
+  fi
+}
+
 echo "==> Fetching and checking out branch: $BRANCH ..."
 git fetch origin
 git checkout "$BRANCH"
@@ -39,7 +53,8 @@ RAILS_ENV=staging bundle exec rails assets:precompile
 # /etc/systemd/system leaves the app on dev's database while this script
 # migrates stage. bin/deploy does the same for the prod units.
 echo "==> Syncing systemd units..."
-sudo cp config/systemd/paperboy-stage.service config/systemd/paperboy-stage-sidekiq.service /etc/systemd/system/
+sync_unit paperboy-stage.service
+sync_unit paperboy-stage-sidekiq.service
 sudo systemctl daemon-reload
 
 echo "==> Restarting Puma..."
