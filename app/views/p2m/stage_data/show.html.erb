@@ -31,4 +31,50 @@
       </div>
     <% end %>
   </section>
+
+  <% if @report.present? %>
+    <section class="p2m-stage-card" aria-labelledby="p2m-oms-results-title">
+      <h2 id="p2m-oms-results-title">OMS Jobs</h2>
+      <p>
+        Inclusive range: <%= @report.fetch("start_date") %> through
+        <%= @report.fetch("end_date") %>
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>OMS Number</th>
+              <th>Mail.dat Date</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @report.fetch("rows", []).each do |row| %>
+              <% status_class = {
+                   "ready" => "is-good",
+                   "staged" => "is-good",
+                   "already processed" => "is-good",
+                   "staging conflict" => "is-conflict",
+                   "duplicate marker" => "is-conflict",
+                   "duplicate input" => "is-conflict",
+                   "incomplete" => "is-missing",
+                   "staging failed" => "is-missing"
+                 }.fetch(row.fetch("status"), "is-missing") %>
+              <tr>
+                <td><%= row.fetch("oms_number") %></td>
+                <td><%= row.fetch("mail_date") %></td>
+                <td>
+                  <span class="p2m-oms-status <%= status_class %>">
+                    <%= row.fetch("status").humanize %>
+                  </span>
+                </td>
+                <td><%= row.fetch("detail") %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% end %>
 </div>
