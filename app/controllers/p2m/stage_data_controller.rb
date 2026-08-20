@@ -10,7 +10,7 @@ module P2m
     def create
       validate_date_range!
       redirect_to p2m_stage_data_path,
-                  notice: 'Stage Data is a placeholder. No data was staged.'
+                  notice: 'Print and Inserting Complete is a placeholder. No data was processed.'
     rescue ArgumentError
       flash.now[:alert] = 'Start date must be on or before end date.'
       render :show, status: :unprocessable_content
