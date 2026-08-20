@@ -52,7 +52,8 @@ class AclController < ApplicationController
     { key: 'aim', label: 'Automated Invoice Management' },
     { key: 'print_production', label: 'Print Production' },
     { key: 'billing', label: 'Billing' },
-    { key: 'admin_tools', label: 'Admin Tools' }
+    { key: 'admin_tools', label: 'Admin Tools' },
+    { key: 'p2m', label: 'Print 2 Mail' }
   ].freeze
 
   LEGACY_FORMS = [

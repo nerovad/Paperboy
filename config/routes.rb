@@ -126,6 +126,11 @@ Rails.application.routes.draw do
     root 'dashboard#index'
   end
 
+  namespace :p2m do
+    root 'dashboard#home'
+    get 'dashboard', to: 'dashboard#index', as: :dashboard
+  end
+
   namespace :data_runner do
     root 'dsls#index'
 

@@ -121,6 +121,7 @@ module ApplicationHelper
     apps << { key: 'print_production', label: 'Production', path: production_root_path } if can_access_app?('print_production')
     apps << { key: 'billing', label: 'Billing', path: billing_root_path } if can_access_app?('billing')
     apps << { key: 'admin_tools', label: 'Admin Tools', path: admin_tools_root_path } if can_access_app?('admin_tools')
+    apps << { key: 'p2m', label: 'Print 2 Mail', path: p2m_root_path } if can_access_app?('p2m')
     [apps.first, *apps.drop(1).sort_by { |app| app.fetch(:label).downcase }]
   end
 
@@ -177,6 +178,8 @@ module ApplicationHelper
       'print_production'
     elsif controller_path.start_with?('billing/')
       'billing'
+    elsif controller_path.start_with?('p2m/')
+      'p2m'
     else
       'paperboy'
     end
