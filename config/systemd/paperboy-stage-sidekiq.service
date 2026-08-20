@@ -10,6 +10,10 @@ WorkingDirectory=/home/matthew/gitea/Paperboy
 
 EnvironmentFile=/home/matthew/gitea/Paperboy/.env
 Environment=RAILS_ENV=staging
+# .env sets PAPERBOY_DATABASE=Paperboy_Dev and is shared with the dev host, so
+# stage names its own database here instead. systemd applies these in order,
+# so this wins over the value the EnvironmentFile just set.
+Environment=PAPERBOY_DATABASE=Paperboy_Stage
 
 ExecStart=/bin/bash -lc 'bundle exec sidekiq -C config/sidekiq.yml'
 Restart=always
