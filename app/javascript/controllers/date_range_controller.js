@@ -9,7 +9,7 @@ export default class extends Controller {
 
   validate(event) {
     this.validateRange()
-    return unless this.startDateTarget.value > this.endDateTarget.value
+    if (this.startDateTarget.value <= this.endDateTarget.value) return
 
     event.preventDefault()
     this.endDateTarget.reportValidity()
