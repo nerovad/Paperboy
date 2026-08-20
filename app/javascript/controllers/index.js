@@ -69,9 +69,11 @@ import AdvancedSearchController from "controllers/advanced_search_controller"
 import CoaBillingLookupController from "controllers/coa_billing_lookup_controller"
 import CoaCustomerLookupController from "controllers/coa_customer_lookup_controller"
 import AimOcrController from "controllers/aim_ocr_controller"
+import DateRangeController from "controllers/date_range_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
+application.register("date-range", DateRangeController)
 application.register("probation-transfer-request", ProbationTransferRequestController)
 application.register("form-navigation", FormNavigationController)
 application.register("login-modal", LoginModalController)

@@ -42,6 +42,7 @@ class AppFeature
       { key: 'archive_reports',     label: 'Archive Billing Reports' }
     ],
     'p2m' => [
+      { key: 'stage_data', label: 'Stage Data' },
       { key: 'data_refresh', label: 'Refresh Data' }
     ],
     # Keys match Coa::BaseController#coa_route_collection_name, which is also
