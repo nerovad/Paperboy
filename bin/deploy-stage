@@ -17,11 +17,15 @@ echo "==> Running migrations..."
 # staging isn't in the dotenv-rails group, so load the same env file systemd
 # hands to Puma (EnvironmentFile=.env) before running any rails command.
 set -a; source "$APP_DIR/.env"; set +a
+# .env is shared with the dev host and names Paperboy_Dev. Stage has its own
+# database, so override it here exactly as paperboy-stage.service does — this
+# is the line that keeps a stage deploy off dev's data.
+export PAPERBOY_DATABASE=Paperboy_Stage
 RAILS_ENV=staging bundle exec rails db:migrate
 
 # Additive: creates groups and grants from db/acl.yml that are missing here,
-# never removes anything and never touches memberships. Note this environment's
-# .env points PAPERBOY_DATABASE at Paperboy_Dev, so this covers dev too.
+# never removes anything and never touches memberships. Grants for a form that
+# stage does not have yet are held back and reported, not applied.
 echo "==> Syncing ACL definitions..."
 RAILS_ENV=staging bundle exec rails acl:sync
 
