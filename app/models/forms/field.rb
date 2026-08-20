@@ -289,6 +289,31 @@ module Forms
       options&.dig('values') || []
     end
 
+    # --- Manual values alongside a table-backed option list ---
+    #
+    # A dropdown can pull its options from a table AND carry a few hand-typed
+    # entries (an "Other" choice, say). The manual entries live in the same
+    # options['values'] a manual-only dropdown uses; options['values_position']
+    # decides whether they sit above or below the fetched rows.
+
+    # True when manual values ride along with a table-backed option list.
+    def extra_values?
+      (data_source? || custom_lookup?) && dropdown_values.any?
+    end
+
+    # Where the manual extras sit relative to the fetched rows: 'start' or 'end'.
+    def extra_values_position
+      options&.dig('values_position').to_s == 'start' ? 'start' : 'end'
+    end
+
+    # Fetched options with the manual extras pinned in place, de-duplicated.
+    def merge_extra_values(list)
+      return list unless extra_values?
+
+      extras = dropdown_values.map(&:to_s)
+      (extra_values_position == 'start' ? extras + list : list + extras).uniq
+    end
+
     # Data source helpers
     def data_source?
       options&.dig('data_source').present?

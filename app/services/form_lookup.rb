@@ -124,13 +124,19 @@ class FormLookup
   end
   private_class_method :matched_row, :combined_value, :synthesize
 
-  # Distinct option values (value == label) for a custom-lookup field, ordered.
-  # Returns [] for non-custom fields or any invalid/failed config so a bad
-  # setting can never 500 a live form.
+  # Distinct option values (value == label) for a custom-lookup field, ordered,
+  # with any manual extras ("Other", …) pinned to the start or end. Returns []
+  # for non-custom fields so a bad setting can never 500 a live form; the extras
+  # still show even when the lookup itself fails.
   def self.options(field_id)
     field = Forms::Field.find_by(id: field_id)
     return [] unless field&.custom_lookup?
 
+    field.merge_extra_values(lookup_rows(field))
+  end
+
+  # The rows the configured lookup returns. [] on any invalid/failed config.
+  def self.lookup_rows(field)
     cfg  = field.custom_lookup_config
     conn = connection_for(cfg['database'])
     return [] unless conn
@@ -208,7 +214,8 @@ class FormLookup
                   .join(sep)
     end.reject(&:empty?).uniq
   rescue StandardError => e
-    Rails.logger.error("FormLookup.options(#{field_id}) failed: #{e.class}: #{e.message}")
+    Rails.logger.error("FormLookup.lookup_rows(#{field.id}) failed: #{e.class}: #{e.message}")
     []
   end
+  private_class_method :lookup_rows
 end

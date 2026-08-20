@@ -499,6 +499,32 @@ class FormTemplatesController < ApplicationController
     }
   end
 
+  # Option hash for a dropdown/choices field from submitted params. Manual values
+  # either stand alone as the whole option list, or ride along with a lookup
+  # source as extra entries pinned to the start or end of the fetched rows.
+  def dropdown_options_from_params(f)
+    lookup =
+      if f[:custom_table].present?
+        { 'custom_lookup' => build_custom_lookup(f) }
+      elsif f[:data_source].present?
+        opts = { 'data_source' => f[:data_source], 'data_source_column' => f[:data_source_column] }
+        opts['data_source_agency'] = f[:data_source_agency] if f[:data_source_agency].present?
+        opts['data_source_category'] = f[:data_source_category] if f[:data_source_category].present?
+        opts
+      else
+        {}
+      end
+
+    values = f[:dropdown_values].to_s.split(',').map(&:strip).reject(&:blank?)
+    return lookup if values.empty?
+
+    options = lookup.merge('values' => values)
+    # Position only means something next to a fetched list; on their own the
+    # manual values already are the list, in the order they were typed.
+    options['values_position'] = f[:dropdown_values_position] == 'start' ? 'start' : 'end' if lookup.any?
+    options
+  end
+
   # Data attributes wiring a field's conditional answer to its trigger on the
   # generated form. Lookup mode carries the field id (server resolves the DB
   # lookup at fill time); static mode inlines the value->value mapping JSON.
@@ -575,16 +601,7 @@ class FormTemplatesController < ApplicationController
     when 'text_box'
       options['rows'] = field_data[:rows].to_i if field_data[:rows].present?
     when 'dropdown', 'choices_dropdown'
-      if field_data[:custom_table].present?
-        options['custom_lookup'] = build_custom_lookup(field_data)
-      elsif field_data[:data_source].present?
-        options['data_source'] = field_data[:data_source]
-        options['data_source_column'] = field_data[:data_source_column]
-        options['data_source_agency'] = field_data[:data_source_agency] if field_data[:data_source_agency].present?
-        options['data_source_category'] = field_data[:data_source_category] if field_data[:data_source_category].present?
-      elsif field_data[:dropdown_values].present?
-        options['values'] = field_data[:dropdown_values].split(',').map(&:strip)
-      end
+      options.merge!(dropdown_options_from_params(field_data))
     when 'information'
       options['information_text'] = field_data[:information_text].to_s
       options['acknowledgeable'] = field_data[:acknowledgeable] == '1'
@@ -1112,19 +1129,7 @@ class FormTemplatesController < ApplicationController
         conditional_answer_mappings: normalize_conditional_mappings(f[:conditional_answer_mappings]),
         options: case f[:field_type]
                  when 'text_box' then { 'rows' => f[:rows].to_i }
-                 when 'dropdown', 'choices_dropdown'
-                   if f[:custom_table].present?
-                     { 'custom_lookup' => build_custom_lookup(f) }
-                   elsif f[:data_source].present?
-                     opts = { 'data_source' => f[:data_source], 'data_source_column' => f[:data_source_column] }
-                     opts['data_source_agency'] = f[:data_source_agency] if f[:data_source_agency].present?
-                     opts['data_source_category'] = f[:data_source_category] if f[:data_source_category].present?
-                     opts
-                   elsif f[:dropdown_values].present?
-                     { 'values' => f[:dropdown_values].split(',').map(&:strip) }
-                   else
-                     {}
-                   end
+                 when 'dropdown', 'choices_dropdown' then dropdown_options_from_params(f)
                  when 'information'
                    {
                      'information_text' => f[:information_text].to_s,
@@ -2083,14 +2088,7 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'dropdown'
-      if field.custom_lookup?
-        options_expr = "FormLookup.options(#{field.id})"
-      elsif field.data_source?
-        options_expr = field.data_source_query_code
-      else
-        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-        options_expr = "[#{options}]"
-      end
+      options_expr = field_options_expr(field)
       selected_expr = "@#{form_template.file_name}.#{field.field_name}"
       html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
@@ -2108,14 +2106,7 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'choices_dropdown'
-      if field.custom_lookup?
-        options_expr = "FormLookup.options(#{field.id})"
-      elsif field.data_source?
-        options_expr = field.data_source_query_code
-      else
-        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-        options_expr = "[#{options}]"
-      end
+      options_expr = field_options_expr(field)
       # Build merged data hash for choices_dropdown (avoid duplicate data: keys)
       data_entries = ['choices_target: "select"', 'placeholder: "Select options..."']
       data_entries << "conditional_trigger: '#{field.field_name}'" if conditional_dependents?(field)
@@ -2550,15 +2541,32 @@ class FormTemplatesController < ApplicationController
     end
   end
 
-  # Dropdown option-source expression, shared with generate_field_html.
+  # Dropdown option-source expression, shared by every generated view.
+  # Custom lookups merge their manual extras inside FormLookup.options; the
+  # curated tables get theirs pinned on here.
   def field_options_expr(field)
     if field.custom_lookup?
       "FormLookup.options(#{field.id})"
     elsif field.data_source?
-      field.data_source_query_code
+      pin_extra_values_expr(field, field.data_source_query_code)
     else
-      "[#{field.dropdown_values.map { |v| "'#{v}'" }.join(', ')}]"
+      values_literal_expr(field.dropdown_values)
     end
+  end
+
+  # Pin a table-backed field's manual extras onto its query expression, in the
+  # position the builder chose.
+  def pin_extra_values_expr(field, expr)
+    return expr unless field.extra_values?
+
+    literal = values_literal_expr(field.dropdown_values)
+    field.extra_values_position == 'start' ? "(#{literal} + #{expr}).uniq" : "(#{expr} + #{literal}).uniq"
+  end
+
+  # Ruby array literal for a list of option values, safe to embed in generated
+  # code (values like "Don't know" carry quotes of their own).
+  def values_literal_expr(values)
+    "[#{values.map { |v| v.to_s.dump }.join(', ')}]"
   end
 
   def generate_field_html(field, form_template)
@@ -2638,14 +2646,7 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'dropdown'
-      if field.custom_lookup?
-        options_expr = "FormLookup.options(#{field.id})"
-      elsif field.data_source?
-        options_expr = field.data_source_query_code
-      else
-        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-        options_expr = "[#{options}]"
-      end
+      options_expr = field_options_expr(field)
       html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
@@ -2662,14 +2663,7 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'choices_dropdown'
-      if field.custom_lookup?
-        options_expr = "FormLookup.options(#{field.id})"
-      elsif field.data_source?
-        options_expr = field.data_source_query_code
-      else
-        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-        options_expr = "[#{options}]"
-      end
+      options_expr = field_options_expr(field)
       # Build merged data hash for choices_dropdown (avoid duplicate data: keys)
       edit_data_entries = ['choices_target: "select"', 'placeholder: "Select options..."']
       edit_data_entries << "conditional_trigger: '#{field.field_name}'" if conditional_dependents?(field)
