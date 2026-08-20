@@ -129,6 +129,12 @@ Rails.application.routes.draw do
   namespace :p2m do
     root 'dashboard#home'
     get 'dashboard', to: 'dashboard#index', as: :dashboard
+    resource :data_refresh, only: %i[show update] do
+      post :restart
+    end
+    get 'data_refresh/runs/:run_id', to: 'data_refreshes#progress', as: :data_refresh_run
+    get 'data_refresh/runs/:run_id/status', to: 'data_refreshes#status', as: :data_refresh_run_status
+    get 'data_refresh/runs/:run_id/log', to: 'data_refreshes#log', as: :data_refresh_run_log
   end
 
   namespace :data_runner do

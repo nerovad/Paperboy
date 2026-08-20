@@ -14,7 +14,7 @@ export default class extends Controller {
   open(event) {
     event.preventDefault()
     this.previouslyFocused = event.currentTarget
-    const card = event.currentTarget.closest(".billing-refresh-dsl-card")
+    const card = event.currentTarget.closest(".data-refresh-dsl-card")
     this.activeBackdrop = card?.querySelector("[data-sop-modal-target='backdrop']") || this.backdropTarget
     this.activeBackdrop.hidden = false
     document.addEventListener("keydown", this.keydown)

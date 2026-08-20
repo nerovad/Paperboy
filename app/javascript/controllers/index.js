@@ -14,7 +14,7 @@ import BillingToolsController from "controllers/billing_tools_controller"
 import BillingTypesController from "controllers/billing_types_controller"
 import BillingEmailSelectionController from "controllers/billing_email_selection_controller"
 import BillingReportPreviewController from "controllers/billing_report_preview_controller"
-import BillingRefreshGroupsController from "controllers/billing_refresh_groups_controller"
+import DataRefreshGroupsController from "controllers/data_refresh_groups_controller"
 import ApproveModalController from "controllers/approve_modal_controller"
 import ReassignModalController from "controllers/reassign_modal_controller"
 import ChoicesController from "controllers/choices_controller"
@@ -84,7 +84,7 @@ application.register("billing-tools", BillingToolsController)
 application.register("billing-types", BillingTypesController)
 application.register("billing-email-selection", BillingEmailSelectionController)
 application.register("billing-report-preview", BillingReportPreviewController)
-application.register("billing-refresh-groups", BillingRefreshGroupsController)
+application.register("data-refresh-groups", DataRefreshGroupsController)
 application.register("approve-modal", ApproveModalController)
 application.register("reassign-modal", ReassignModalController)
 application.register("choices", ChoicesController)

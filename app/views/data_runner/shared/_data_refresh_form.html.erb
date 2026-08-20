@@ -1,0 +1,92 @@
+<div class="form-header data-refresh-form-header <%= data_refresh_css_class %>-data-refresh-theme">
+  <h1>Refresh Data</h1>
+</div>
+
+<div class="form-wrapper data-refresh-form <%= data_refresh_css_class %>-data-refresh-theme">
+  <% if defined?(@active_billing_period) %>
+    <%= render "billing/shared/active_billing_period",
+               active_billing_period: @active_billing_period %>
+  <% end %>
+
+  <%= form_with url: data_refresh_form_path, method: :patch, data: { turbo: false } do %>
+    <div class="data-refresh-grid">
+      <table class="submission-table data-refresh-table"
+             data-controller="data-refresh-groups sop-modal">
+        <colgroup>
+          <col class="data-refresh-group-column">
+          <col class="data-refresh-count-column">
+          <col class="data-refresh-toggle-column">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Data Runner DSL Group</th>
+            <th>Enabled DSLs</th>
+            <th>Refresh</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @groups.each do |group| %>
+            <% detail_id = "data-refresh-#{group.key}-dsls" %>
+            <tr class="data-refresh-group-row">
+              <td>
+                <button type="button" class="data-refresh-group-trigger"
+                        aria-expanded="false" aria-controls="<%= detail_id %>"
+                        data-action="data-refresh-groups#toggle"
+                        data-detail-id="<%= detail_id %>">
+                  <span aria-hidden="true" class="data-refresh-group-chevron">▸</span>
+                  <%= group.label %>
+                </button>
+              </td>
+              <td>
+                <button type="button" class="data-refresh-group-trigger"
+                        aria-label="<%= group.enabled_dsl_count %> enabled DSLs in <%= group.label %>"
+                        aria-expanded="false" aria-controls="<%= detail_id %>"
+                        data-action="data-refresh-groups#toggle"
+                        data-detail-id="<%= detail_id %>">
+                  <%= group.enabled_dsl_count %>
+                </button>
+              </td>
+              <td>
+                <%= render "data_runner/shared/boolean_toggle",
+                           name: "groups[#{group.key}]",
+                           id_prefix: "group_#{group.key}",
+                           checked: group.default,
+                           aria_label: "Refresh #{group.label}" %>
+              </td>
+            </tr>
+            <tr id="<%= detail_id %>" class="data-refresh-detail-row" hidden>
+              <td colspan="3">
+                <div class="data-refresh-dsl-cards">
+                  <% group.enabled_dsls.each do |dsl| %>
+                    <% card_status = dsl.script ? "is-script" : (dsl.current ? "is-current" : "is-stale") %>
+                    <article class="data-refresh-dsl-card <%= card_status %>">
+                      <div>
+                        <h3><%= dsl.name %></h3>
+                        <p><span>Location / Script</span><%= dsl.location.presence || "Unavailable" %></p>
+                        <p><span>Date</span>
+                          <%= tag.time(dsl.file_date ? dsl.file_date.to_date.iso8601 : "Unavailable",
+                                       datetime: dsl.file_date&.iso8601) %>
+                        </p>
+                      </div>
+                      <% if dsl.sop %>
+                        <button type="button" class="btn info compact"
+                                data-action="sop-modal#open">How to Download</button>
+                        <%= render "data_runner/shared/sop", dsl: dsl %>
+                      <% end %>
+                    </article>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-actions">
+      <%= submit_tag "Refresh", class: "btn approve" %>
+      <%= button_tag "Reset", type: :reset, class: "btn warning" %>
+      <%= link_to "Cancel", data_refresh_cancel_path, class: "btn" %>
+    </div>
+  <% end %>
+</div>
