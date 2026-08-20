@@ -24,10 +24,61 @@ class P2mPrintAndInsertingDoneTest < Minitest::Test
       ).call
 
       statuses = rows.map { |row| row.fetch('status') }
-      assert_equal ['staged', 'incomplete', 'already processed'], statuses
+      assert_equal ['staged', 'incomplete', 'duplicate OMS number'], statuses
       assert runner.join('50000001-companion.csv').file?
       assert runner.join('00_SentToUSPS/Mail.dat_50000001.zip').file?
       assert report.file?
+    end
+  end
+
+  def test_classifies_conflicts_and_duplicates_by_oms_number
+    Dir.mktmpdir do |directory|
+      source = Pathname.new(directory).join('Outputs')
+      runner = source.join('DataRunner')
+      %w[50000001 50000002 50000003].each do |number|
+        create_job(source.join(number), number)
+      end
+      FileUtils.mkdir_p(runner.join('00_SentToUSPS'))
+      runner.join('00_SentToUSPS/Mail.dat_50000001.zip').write('fixture')
+      FileUtils.mkdir_p(runner.join('02_Processed/50000002'))
+      runner.join('unrelated-staged-input.csv').write('fixture')
+
+      rows = described_class.new(
+        source_root: source,
+        data_runner_root: runner,
+        start_date: '2026-07-01',
+        end_date: '2026-07-31',
+        report_path: runner.join('report.json')
+      ).call
+
+      statuses = rows.map { |row| row.fetch('status') }
+      assert_equal ['staging conflict', 'duplicate OMS number', 'ready'], statuses
+      refute runner.join('50000003-companion.csv').exist?
+    end
+  end
+
+  def test_existing_matching_inputs_do_not_create_a_staging_conflict
+    Dir.mktmpdir do |directory|
+      source = Pathname.new(directory).join('Outputs')
+      runner = source.join('DataRunner')
+      job = source.join('job')
+      create_job(job, '50000001')
+      FileUtils.mkdir_p(runner)
+      job.children.reject { |path| path.basename.to_s.start_with?('Mail.dat_') }.each do |path|
+        FileUtils.cp(path, runner.join(path.basename))
+      end
+
+      rows = described_class.new(
+        source_root: source,
+        data_runner_root: runner,
+        start_date: '2026-07-01',
+        end_date: '2026-07-31',
+        report_path: runner.join('report.json')
+      ).call
+
+      statuses = rows.map { |row| row.fetch('status') }
+      assert_equal ['staged'], statuses
+      assert runner.join('00_SentToUSPS/Mail.dat_50000001.zip').file?
     end
   end
 

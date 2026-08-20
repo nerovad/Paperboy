@@ -6,7 +6,7 @@
 
   <nav class="p2m-links">
     <% if can_use_app_feature?('p2m', 'stage_data') %>
-      <%= link_to "Print and Inserting Complete", p2m_stage_data_path,
+      <%= link_to "Mail.Dat uploaded to USPS", p2m_stage_data_path,
                   class: "nav-link#{' active' if current_page?(p2m_stage_data_path)}" %>
     <% end %>
     <% if can_use_app_feature?('p2m', 'data_refresh') %>
