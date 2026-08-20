@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_17_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_20_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -607,7 +607,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_17_000002) do
     t.text "inbox_buttons"
     t.string "status_transition_mode", default: "automatic"
     t.text "tags"
-    t.string "visibility", default: "restricted", null: false
     t.integer "metabase_dashboard_id"
     t.boolean "archived", default: false, null: false
     t.boolean "skip_code_generation", default: false, null: false
