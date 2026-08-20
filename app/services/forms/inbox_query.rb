@@ -9,14 +9,15 @@ module Forms
   class InboxQuery
     # scoped_employee_ids: employee ids whose inbox to assemble, or nil for "no
     #                      assignee restriction" (system admin viewing All).
-    # viewer_form_types:   class names the viewer holds a visibility grant for;
+    # viewer_grants:       Forms::VisibilityGrant records the viewer holds that
+    #                      widen the inbox, each carrying its own org window;
     #                      only surfaced when filter_form_type names that type.
     # filter_form_type:    the form-type filter currently applied (titleized,
     #                      demodulized class name), or nil.
     # date_from / date_to: optional ISO date strings bounding created_at.
-    def initialize(scoped_employee_ids:, viewer_form_types: [], filter_form_type: nil, date_from: nil, date_to: nil)
+    def initialize(scoped_employee_ids:, viewer_grants: [], filter_form_type: nil, date_from: nil, date_to: nil)
       @scoped_employee_ids = scoped_employee_ids
-      @viewer_form_types = viewer_form_types || []
+      @viewer_grants = Array(viewer_grants)
       @filter_form_type = filter_form_type.presence
       @date_from = date_from.presence
       @date_to = date_to.presence
@@ -45,9 +46,9 @@ module Forms
       # Dynamically generated approval forms (approver / group / authorization / copies).
       items += dynamic_form_submissions
 
-      # Visibility-granted form types — every submission, but only when the viewer
-      # has filtered the inbox to that exact form type.
-      @viewer_form_types.each do |class_name|
+      # Visibility-granted form types — the submissions each grant opens up, but
+      # only when the viewer has filtered the inbox to that exact form type.
+      Forms::VisibilityGrant.covered_form_types(@viewer_grants).each do |class_name|
         model = class_name.safe_constantize
         next unless model.is_a?(Class) && model < ActiveRecord::Base
 
@@ -92,14 +93,18 @@ module Forms
       @scoped_employee_ids ? model_class.where(column => @scoped_employee_ids) : model_class.all
     end
 
-    # Every submission of a granted form type — but only when the viewer has
+    # The submissions a granted form type opens up — every one of them, or only
+    # those filed inside the grant's org window — but only when the viewer has
     # filtered to that exact type. Membership (whether they hold the grant) is
-    # already enforced by @viewer_form_types; this guards the "only when filtered"
+    # already enforced by @viewer_grants; this guards the "only when filtered"
     # rule.
     def granted_submissions(model)
       return model.none unless @filter_form_type == model.name.demodulize.titleize
 
-      apply_date_filters(model.all)
+      scope = Forms::VisibilityGrant.granted_scope(@viewer_grants, model)
+      return model.none if scope.nil?
+
+      apply_date_filters(scope)
     end
 
     # Submissions from dynamically generated forms that need approval.

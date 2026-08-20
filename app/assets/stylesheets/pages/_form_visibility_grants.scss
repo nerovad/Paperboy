@@ -1,0 +1,111 @@
+/* Pages: Inbox and Submissions Visibility (submission visibility grants).
+
+   The add-a-grant form is built from the shared .pb-filter kit — the same
+   fields the Advanced Search panel uses — so only the page's own layout and
+   the grants table are declared here. */
+@import "base/tokens";
+
+.visibility-grants {
+  .form-help {
+    margin: 0 0 16px;
+    color: $muted;
+    line-height: 1.5;
+  }
+
+  .visibility-grant-form {
+    margin-bottom: 24px;
+    padding: 18px;
+
+    h3 {
+      margin: 0 0 14px;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .pb-filter-grid {
+      margin-bottom: 16px;
+    }
+  }
+
+  .visibility-grant-org {
+    .form-help {
+      margin: 8px 0 12px;
+      font-size: 0.85rem;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .visibility-grants-heading {
+    margin: 0 0 12px;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+}
+
+.visibility-grants-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: $surface-base;
+  border: 1px solid $neutral-border-light;
+  border-radius: $radius-6;
+  overflow: hidden;
+
+  th,
+  td {
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid $border-faint;
+  }
+
+  th {
+    background: $surface-panel;
+    color: $label-color;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .actions-column {
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  /* The class name is what the grant is actually keyed on, so it stays visible
+     next to the friendly label rather than only in the database. */
+  .grant-class-name {
+    display: block;
+    color: $muted;
+    font-size: 0.8rem;
+  }
+
+  .grant-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: $neutral-pill-bg;
+    color: $label-color;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .grant-muted {
+    color: $muted;
+    font-size: 0.85rem;
+  }
+
+  .pb-search-chip {
+    display: inline-block;
+    margin: 0 4px 4px 0;
+  }
+}

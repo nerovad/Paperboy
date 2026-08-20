@@ -6,10 +6,8 @@
     value per filter; this panel sends several, which FormSearch and
     Filterable#apply_filters both understand.
 
-    The org selects cascade Agency → Division → Department → Unit. The server
-    renders whatever levels the current search already chose; everything below
-    the level the user changes is refetched by advanced_search_controller.js
-    from /lookups. %>
+    The org selects are the shared cascade partial — Agency → Division →
+    Department → Unit, refilled from /lookups as the user narrows. %>
 <div class="pb-modal-backdrop" hidden
      data-advanced-search-target="modal"
      data-action="click->advanced-search#backdropClose">
@@ -36,49 +34,10 @@
       <div class="pb-modal__body">
         <fieldset class="pb-filter-set">
           <legend>Organization</legend>
-          <div class="pb-filter-grid">
-            <div class="pb-filter">
-              <%= label_tag :filter_agency, "Agency" %>
-              <%= select_tag :filter_agency,
-                             options_for_select(FormSearch.agency_options, form_search.agency),
-                             include_blank: "All Agencies", class: "form-control",
-                             data: { advanced_search_target: "agency",
-                                     action: "change->advanced-search#loadDivisions" } %>
-            </div>
-
-            <div class="pb-filter">
-              <%# Label text is set by the controller: HCA calls a division a
-                  department and vice versa, and the viewer can change agency
-                  without leaving the panel. %>
-              <label for="filter_division" data-advanced-search-target="divisionLabel">
-                <%= form_search.level_label(:division) %>
-              </label>
-              <%= select_tag :filter_division,
-                             options_for_select(FormSearch.division_options(form_search.agency), form_search.division),
-                             include_blank: "All", class: "form-control",
-                             data: { advanced_search_target: "division",
-                                     action: "change->advanced-search#loadDepartments" } %>
-            </div>
-
-            <div class="pb-filter">
-              <label for="filter_department" data-advanced-search-target="departmentLabel">
-                <%= form_search.level_label(:department) %>
-              </label>
-              <%= select_tag :filter_department,
-                             options_for_select(FormSearch.department_options(form_search.division), form_search.department),
-                             include_blank: "All", class: "form-control",
-                             data: { advanced_search_target: "department",
-                                     action: "change->advanced-search#loadUnits" } %>
-            </div>
-
-            <div class="pb-filter">
-              <%= label_tag :filter_unit, "Unit" %>
-              <%= select_tag :filter_unit,
-                             options_for_select(FormSearch.unit_options(form_search.department), form_search.unit),
-                             include_blank: "All Units", class: "form-control",
-                             data: { advanced_search_target: "unit" } %>
-            </div>
-          </div>
+          <%= render "shared/org_cascade",
+                     scope: "advanced-search", standalone: false, prefix: "filter",
+                     selected: { agency: form_search.agency, division: form_search.division,
+                                 department: form_search.department, unit: form_search.unit } %>
         </fieldset>
 
         <fieldset class="pb-filter-set">

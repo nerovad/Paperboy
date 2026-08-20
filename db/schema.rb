@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_20_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_20_000002) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -623,6 +623,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_20_000001) do
     t.integer "employee_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "applies_to", default: "both", null: false
+    t.string "agency_id"
+    t.string "division_id"
+    t.string "department_id"
+    t.string "unit_id"
     t.index ["form_type"], name: "index_form_visibility_grants_on_form_type"
     t.index ["grantee_type", "group_id"], name: "index_form_visibility_grants_on_grantee_type_and_group_id"
   end

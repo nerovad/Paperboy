@@ -65,6 +65,7 @@ import SopModalController from "controllers/sop_modal_controller"
 import DatabaseDslController from "controllers/database_dsl_controller"
 import AppSwitcherController from "controllers/app_switcher_controller"
 import DamSearchController from "controllers/dam_search_controller"
+import OrgCascadeController from "controllers/org_cascade_controller"
 import AdvancedSearchController from "controllers/advanced_search_controller"
 import CoaBillingLookupController from "controllers/coa_billing_lookup_controller"
 import CoaCustomerLookupController from "controllers/coa_customer_lookup_controller"
@@ -138,6 +139,7 @@ application.register("sop-modal", SopModalController)
 application.register("database-dsl", DatabaseDslController)
 application.register("app-switcher", AppSwitcherController)
 application.register("dam-search", DamSearchController)
+application.register("org-cascade", OrgCascadeController)
 application.register("advanced-search", AdvancedSearchController)
 application.register("coa-billing-lookup", CoaBillingLookupController)
 application.register("aim-ocr", AimOcrController)
