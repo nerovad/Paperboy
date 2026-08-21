@@ -58,16 +58,31 @@
             <%= yield %>
           <% end %>
           
-          <!-- Login Buttons (over image) -->
+          <!-- Login (over image) -->
           <% unless session[:user_id] %>
-            <div class="login-buttons-over-image">
-              <%= form_with url: auth_setup_path, method: :post, local: true,
-                            authenticity_token: true,
-                            data: { turbo: false } do |f| %>
-                <%= f.submit "Employee Login", class: "login-button-over-image" %>
-              <% end %>
-              <%= link_to "Contractor Login", contractor_login_path,
-                          class: "login-button-over-image", data: { turbo: false } %>
+            <%# One "Login" button that opens the identity picker. Employee is a
+                POST to the Entra handshake, Contractor a plain GET, so the menu
+                holds a form and a link side by side. Reuses the profile
+                dropdown's shell and Stimulus controller. %>
+            <div class="login-dropdown" data-controller="profile-dropdown">
+              <button type="button"
+                      class="login-toggle"
+                      data-action="click->profile-dropdown#toggle"
+                      aria-haspopup="true"
+                      aria-expanded="false">
+                Login
+              </button>
+
+              <div class="dropdown-content"
+                   data-profile-dropdown-target="dropdown">
+                <%= form_with url: auth_setup_path, method: :post, local: true,
+                              authenticity_token: true,
+                              data: { turbo: false } do |f| %>
+                  <%= f.submit "Employee", class: "login-dropdown__item" %>
+                <% end %>
+                <%= link_to "Contractor", contractor_login_path,
+                            class: "login-dropdown__item", data: { turbo: false } %>
+              </div>
             </div>
           <% else %>
             <div class="profile-dropdown" data-controller="profile-dropdown">
