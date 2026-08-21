@@ -1,0 +1,15 @@
+<strong>Associated files</strong>
+<ul>
+  <% @associated_files.each do |name| %>
+    <li><%= name %></li>
+  <% end %>
+</ul>
+<div class="p2m-maildat-actions">
+  <% [["Preview", "pdf"], ["Send", "approve"],
+      ["Completed", "approve"], ["Cancel", nil]].each do |label, variant| %>
+    <button type="button" class="btn <%= variant %> compact"
+            data-action="data-refresh-groups#feedback"
+            data-feedback-action="<%= label %>"
+            data-feedback-oms="<%= @oms_number %>"><%= label %></button>
+  <% end %>
+</div>
