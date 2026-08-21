@@ -8,8 +8,8 @@
     pasted in — the href carries them to Submissions, where every submission
     lives regardless of its status.
 
-    Usage: <%= render "shared/back_button" %>
-%>
+    Render it with: render "shared/back_button"
+-%>
 <%= link_to "← Back", submissions_path,
       class: "btn ghost compact form-header__back",
       data: { controller: "back-link", action: "back-link#navigate" } %>
