@@ -28,6 +28,8 @@ class P2mPrintAndInsertingDoneScanTest < Minitest::Test
       assert_equal 1, contents.fetch('found_count')
       names = contents.fetch('files').map { |file| file.fetch('name') }
       assert_equal ['Mail.dat_50000001.zip'], names
+      assert_equal 'job', contents.fetch('files').first.fetch('directory')
+      assert_equal '2026-07-15 12:00:00', contents.fetch('files').first.fetch('modified_at')
       assert_operator contents.fetch('search_seconds'), :>=, 0
     end
   end
