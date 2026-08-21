@@ -12,15 +12,14 @@
   &:hover { background: $primary-hover; }
 }
 
-.login-buttons-over-image {
+/* Signed-out "Login" dropdown (over image).
+   Sits where the profile button sits once signed in, and borrows that
+   button's look and the shared .dropdown-content menu shell below. */
+.login-dropdown {
   position: fixed;
   z-index: 9999;
   top: 20px;
   right: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 10px;
 
   /* Mobile adjustments */
   @media (max-width: 768px) {
@@ -29,22 +28,105 @@
   }
 }
 
-.login-button-over-image {
-  background: $brand-navy;
-  color: $surface-base;
+.login-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 10px 18px;
+  border-radius: 9px;
   border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  text-decoration: none;
-  text-align: center;
   cursor: pointer;
 
-  &:hover { background-color: $primary-hover; }
+  background: $brand-navy;
+  color: $surface-base;
+  font-size: 0.95rem;
+  font-weight: 500;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+  transition:
+    background 0.18s ease-out,
+    box-shadow 0.18s ease-out,
+    transform 0.12s ease-out;
+
+  /* Matches .profile-icon's chevron so both states read as the same control */
+  &::after {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-right: 2px solid $surface-base;
+    border-bottom: 2px solid $surface-base;
+    transform: rotate(45deg) translateY(-1px);
+    transition: transform 0.16s ease-out;
+    opacity: 0.9;
+  }
+
+  &[aria-expanded="true"]::after {
+    transform: rotate(-135deg) translateY(1px);
+  }
+
+  &:hover {
+    background: $brand-navy-hover;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+    transform: translateY(-1px);
+  }
 
   /* Mobile adjustments */
   @media (max-width: 768px) {
-    padding: 8px 12px;
+    padding: 9px 14px;
     font-size: 0.9rem;
+  }
+}
+
+/* Menu items. The Employee entry is a form submit and the Contractor entry an
+   anchor, so both are styled together to land on one identical row. Scoped
+   under .login-dropdown to outrank the generic `.dropdown-content a` rule. */
+.login-dropdown .dropdown-content {
+  min-width: 180px;
+
+  form {
+    margin: 0;
+    display: block;
+  }
+
+  a.login-dropdown__item,
+  input[type="submit"].login-dropdown__item {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+
+    text-align: left;
+    text-decoration: none;
+    color: $text-color;
+
+    border: none;
+    border-radius: 0;
+    background: $alpha-clear;
+
+    font-family: inherit;
+    font-size: 0.92rem;
+    cursor: pointer;
+
+    transition:
+      background 0.16s ease-out,
+      color 0.16s ease-out,
+      padding-left 0.16s ease-out;
+
+    &:hover {
+      background-color: $nav-hover-bg;
+      color: $brand-navy;
+      padding-left: 20px;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+      font-size: 0.88rem;
+      padding: 9px 14px;
+
+      &:hover { padding-left: 18px; }
+    }
   }
 }
 

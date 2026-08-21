@@ -13,6 +13,12 @@ export default class extends Controller {
     document.removeEventListener("click", this.boundOutsideClick)
   }
 
+  // The trigger is #profile-toggle when signed in and .login-toggle when
+  // signed out; both carry aria-expanded, so match on that rather than on id.
+  get toggleButton() {
+    return this.element.querySelector("[aria-expanded]")
+  }
+
   toggle(event) {
     event.stopPropagation()
 
@@ -21,8 +27,7 @@ export default class extends Controller {
 
     // Optional: rotate chevron
     const isOpen = this.dropdownTarget.classList.contains("show")
-    this.element.querySelector("#profile-toggle")
-      ?.setAttribute("aria-expanded", isOpen ? "true" : "false")
+    this.toggleButton?.setAttribute("aria-expanded", isOpen ? "true" : "false")
   }
 
   outsideClick(event) {
@@ -33,7 +38,6 @@ export default class extends Controller {
     this.dropdownTarget.classList.remove("show")
 
     // Reset chevron
-    this.element.querySelector("#profile-toggle")
-      ?.setAttribute("aria-expanded", "false")
+    this.toggleButton?.setAttribute("aria-expanded", "false")
   }
 }
