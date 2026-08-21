@@ -44,7 +44,9 @@
 <% end %>
 
 <!-- Edit -->
-<% if button_source.inbox_button?('edit') %>
+<%# Gated on the same policy Forms::BaseController enforces, so a step that
+    enables the Edit button never shows it to someone the endpoint refuses. %>
+<% if button_source.inbox_button?('edit') && can_edit_submission?(submission) %>
   <% edit_path = inbox_edit_path(submission) %>
   <% if edit_path %>
     <%= link_to "Edit", edit_path, class: "btn edit", data: { turbo: false } %>

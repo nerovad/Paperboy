@@ -113,8 +113,21 @@
       </div>
     </div>
 
+    <%= render "acl/submission_action_permissions",
+               forms: @submission_forms,
+               selected_keys: @submission_action_keys,
+               scope_label: "members of this group" %>
+
     <div class="form-actions">
       <%= submit_tag "Save Permissions", class: "btn approve" %>
     </div>
   <% end %>
+
+  <%# Outside the form above: a grant is its own row, added and removed one at
+      a time, and HTML has no nested forms. %>
+  <%= render "acl/submission_visibility",
+             group: @group,
+             grants: @visibility_grants,
+             form_types: @submission_forms,
+             form_labels: @submission_form_labels %>
 </div>
