@@ -134,7 +134,59 @@ class SubmissionsController < ApplicationController
     end
   end
 
+  # Changes a submission's status from its own page. Forms that carry a status
+  # dropdown in the inbox keep that control here after they reach an end state
+  # and drop out of the queue — the only place they still live is Submissions,
+  # so this is where the status has to be changeable, and this is where the user
+  # is sent back to afterwards rather than to the inbox.
+  def update_status
+    record = status_change_record
+    return if performed?
+
+    unless Forms::StatusChange.permitted?(record,
+                                          employee_id: session.dig(:user, 'employee_id'),
+                                          group_names: current_user_group_names)
+      redirect_to submission_path_for(record), alert: "You don't have permission to change this submission's status."
+      return
+    end
+
+    if update_trackable_status(record, params[:status])
+      redirect_to submission_path_for(record), notice: "Status changed to #{record.status_label}."
+    else
+      redirect_to submission_path_for(record), alert: 'That status is not valid for this form.'
+    end
+  end
+
   private
+
+  # Resolves :type/:id into a submission this endpoint is willing to act on:
+  # one that tracks status and whose form is configured with a status dropdown.
+  # Redirects (leaving the action to bail on `performed?`) when it isn't.
+  def status_change_record
+    klass = application_record_class_named(params[:type])
+
+    unless klass.is_a?(Class) && klass < ApplicationRecord && klass.include?(TrackableStatus)
+      redirect_to submissions_path, alert: 'Unknown submission type.'
+      return nil
+    end
+
+    record = klass.find(params[:id])
+    return record if Forms::StatusChange.available_for?(record)
+
+    redirect_to submissions_path, alert: 'This form does not support changing its status.'
+    nil
+  rescue ActiveRecord::RecordNotFound
+    redirect_to submissions_path, alert: 'Submission not found.'
+    nil
+  end
+
+  # The submission's own page, so a status change lands back where it started.
+  # Falls back to the Submissions list for anything without a show route.
+  def submission_path_for(record)
+    polymorphic_path(record)
+  rescue StandardError
+    submissions_path
+  end
 
   def build_status_options_by_type
     options = {}

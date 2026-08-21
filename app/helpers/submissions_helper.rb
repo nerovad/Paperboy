@@ -47,6 +47,16 @@ module SubmissionsHelper
     }[category.to_sym] || 'Unknown'
   end
 
+  # True when the viewer may change this submission's status from its detail
+  # page — the form carries a status dropdown and they're allowed to use it.
+  # See Forms::StatusChange, which SubmissionsController#update_status enforces.
+  def can_change_submission_status?(record)
+    Forms::StatusChange.available_for?(record) &&
+      Forms::StatusChange.permitted?(record,
+                                     employee_id: session.dig(:user, 'employee_id'),
+                                     group_names: current_user_group_names)
+  end
+
   private
 
   # Maps legacy status strings to categories for backwards compatibility
