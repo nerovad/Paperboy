@@ -49,17 +49,21 @@ export default class extends Controller {
     const header = headers.find(item => Number(item.dataset.columnIndex) === columnIndex)
     const multiplier = direction === "ascending" ? 1 : -1
     const body = this.element.tBodies[0]
-    const rows = Array.from(body.rows)
+    const rows = Array.from(body.querySelectorAll("tr[data-sort-row]"))
 
     rows.sort((left, right) => {
-      const leftValue = left.cells[columnIndex].textContent.trim()
-      const rightValue = right.cells[columnIndex].textContent.trim()
+      const leftValue = left.cells[columnIndex].dataset.sortValue || left.cells[columnIndex].textContent.trim()
+      const rightValue = right.cells[columnIndex].dataset.sortValue || right.cells[columnIndex].textContent.trim()
       const comparison = header.dataset.sortType === "number"
         ? Number(leftValue) - Number(rightValue)
         : leftValue.localeCompare(rightValue, undefined, { numeric: true, sensitivity: "base" })
       return multiplier * comparison
     })
-    rows.forEach(row => body.appendChild(row))
+    rows.forEach((row, index) => {
+      row.classList.toggle("is-alternate", index % 2 === 1)
+      body.appendChild(row)
+      body.appendChild(document.getElementById(row.dataset.detailId))
+    })
 
     headers.forEach(item => item.setAttribute("aria-sort", "none"))
     header.setAttribute("aria-sort", direction)
