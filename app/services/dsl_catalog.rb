@@ -23,10 +23,20 @@ class DslCatalog
     def sop_reference_path
       path = sop&.fetch(:reference_path, nil)
       return config.dig(:source, :location) if path == :source_location
-      return WorkflowPaths::OUTPUT_ROOT.join(WorkflowPaths::DOWNLOAD_DIR_NAME, output_name) if path == :downloaded_file
+      return downloaded_reference_path if path == :downloaded_file
 
       path
     end
+
+    def downloaded_reference_path
+      return WorkflowPaths::OUTPUT_ROOT.join(WorkflowPaths::DOWNLOAD_DIR_NAME, output_name) if output_name.present?
+
+      orchestration = config.fetch(:orchestration)
+      queue_path = orchestration.dig(:queue, :path)
+      queue_path = orchestration.fetch(queue_path) if queue_path.is_a?(Symbol)
+      Pathname.new(orchestration.fetch(:root_path)).join(queue_path)
+    end
+    private :downloaded_reference_path
 
     def sop_reference_group
       reference = sop&.fetch(:reference_group, nil)

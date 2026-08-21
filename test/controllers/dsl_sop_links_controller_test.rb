@@ -5,6 +5,17 @@ require 'test_helper'
 class DslSopLinksControllerTest < ActionController::TestCase
   tests DataRunner::DslsController
 
+  test 'DSL group shows configured download instructions' do
+    sign_in
+
+    get :index, params: { group: 'print_2_mail_billing_data' }
+
+    assert_response :success
+    assert_select '.dsl-sop-scope button.btn.info[data-action=?]', 'sop-modal#open',
+                  text: 'How to Download'
+    assert_select '.dsl-sop-scope .pb-modal[role=?][aria-modal=?]', 'dialog', 'true'
+  end
+
   test 'DSL with an SOP renders a download instructions modal' do
     sign_in
 
