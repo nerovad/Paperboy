@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_20_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_21_000001) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -612,7 +612,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_20_000002) do
     t.boolean "skip_code_generation", default: false, null: false
     t.string "reference_prefix"
     t.boolean "records_table", default: false, null: false
+    t.string "description", limit: 500
+    t.string "form_number", limit: 30
+    t.string "form_type", limit: 50
+    t.string "agency_id", limit: 10
+    t.string "division_id", limit: 20
+    t.string "department_id", limit: 20
+    t.string "unit_id", limit: 20
+    t.index ["agency_id"], name: "index_form_templates_on_agency_id"
     t.index ["archived"], name: "index_form_templates_on_archived"
+    t.index ["form_type"], name: "index_form_templates_on_form_type"
     t.index ["reference_prefix"], name: "index_form_templates_on_reference_prefix", unique: true, where: "([reference_prefix] IS NOT NULL)"
   end
 

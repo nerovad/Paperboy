@@ -426,6 +426,13 @@ class FormTemplatesController < ApplicationController
       :metabase_dashboard_id,
       :status_transition_mode,
       :tags,
+      :description,
+      :form_number,
+      :form_type,
+      :agency_id,
+      :division_id,
+      :department_id,
+      :unit_id,
       :skip_code_generation,
       page_headers: [],
       inbox_buttons: []
