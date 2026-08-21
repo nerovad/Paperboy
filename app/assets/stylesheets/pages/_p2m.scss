@@ -88,3 +88,37 @@
     color: $success-text;
   }
 }
+
+.p2m-maildat-grid {
+  max-height: calc(2.75rem + 62.5rem);
+  overflow: auto;
+  border: 1px solid $neutral-border-light;
+  scrollbar-width: thin;
+  scrollbar-color: $neutral-400 $surface-control;
+}
+
+.p2m-maildat-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    height: 2.5rem;
+    padding: .5rem 1.5rem;
+    text-align: left;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 2.75rem;
+    background: linear-gradient(135deg, $sidebar-navy, $green-teal);
+    color: $surface-base;
+  }
+
+  tbody tr:nth-child(odd) { background: $surface-base; }
+  tbody tr:nth-child(even) { background: $surface-control; }
+}

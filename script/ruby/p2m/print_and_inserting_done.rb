@@ -194,6 +194,7 @@ module P2m
     def write_report(rows, elapsed_seconds:, review_pending:)
       FileUtils.mkdir_p(report_path.dirname)
       report = {
+        'source_root' => source_root.to_s,
         'start_date' => start_date.iso8601,
         'end_date' => end_date.iso8601,
         'generated_at' => Time.now.utc.iso8601,

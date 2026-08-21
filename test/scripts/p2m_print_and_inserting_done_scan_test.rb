@@ -24,6 +24,7 @@ class P2mPrintAndInsertingDoneScanTest < Minitest::Test
       refute runner.join('50000001-companion.csv').exist?
       contents = JSON.parse(report.read)
       assert contents.fetch('review_pending')
+      assert_equal source.to_s, contents.fetch('source_root')
       assert_equal 1, contents.fetch('found_count')
       names = contents.fetch('files').map { |file| file.fetch('name') }
       assert_equal ['Mail.dat_50000001.zip'], names
