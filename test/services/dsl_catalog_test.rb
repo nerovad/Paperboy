@@ -78,4 +78,13 @@ class DslCatalogTest < ActiveSupport::TestCase
                    entry.sop_reference_path
     end
   end
+
+  test 'uses the shared Print 2 Mail billing SOP' do
+    entry = DslCatalog.find!('oms')
+
+    assert_equal :p2m_billing, entry.config.dig(:sop, :shared)
+    assert_equal DslSharedSop.fetch!(:p2m_billing).fetch(:instructions), entry.sop.fetch(:instructions)
+    assert_equal 'Mail.dat sent to USPS', entry.sop.fetch(:reference_title)
+    assert_equal :downloaded_file, entry.sop.fetch(:reference_path)
+  end
 end

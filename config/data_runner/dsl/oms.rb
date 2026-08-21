@@ -17,6 +17,11 @@
     group: {
       name: 'print_2_mail_billing_data'
     },
+    sop: {
+      shared: :p2m_billing,
+      reference_title: 'Mail.dat sent to USPS',
+      reference_path: :downloaded_file
+    },
     orchestration: {
       root_path: '/mnt/o/Outputs/DataRunner',
       sent_path: '00_SentToUSPS',
