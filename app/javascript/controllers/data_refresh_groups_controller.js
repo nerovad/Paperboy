@@ -42,8 +42,8 @@ export default class extends Controller {
     const button = event.currentTarget
     const destructive = button.dataset.stagingMethod === "DELETE"
     if (destructive && !await pbConfirm({
-      title: "Remove From Staging",
-      message: `Remove staged files for OMS ${button.dataset.omsNumber}?`,
+      title: button.dataset.stagingAction,
+      message: button.dataset.confirmMessage,
       confirmLabel: "Remove",
       confirmVariant: "deny"
     })) return
