@@ -223,6 +223,9 @@ class AclController < ApplicationController
     @feature_keys = Array(by_type['feature']).to_set(&:last)
     @record_view_keys = Array(by_type['record_view']).to_set(&:last)
     @record_edit_keys = Array(by_type['record_edit']).to_set(&:last)
+    @submission_action_keys = Array(by_type[Forms::SubmissionPolicy::PERMISSION_TYPE]).to_set(&:last)
+    load_submission_form_catalog
+    @visibility_grants = visibility_grants_for(@group)
 
     # If no permissions exist yet for this group, pre-check default public items
     return unless @current_permissions.empty?
@@ -237,7 +240,8 @@ class AclController < ApplicationController
       'application' => Array(params[:application_permissions]),
       'feature' => permitted_feature_keys,
       'record_view' => Array(params[:record_view_permissions]),
-      'record_edit' => Array(params[:record_edit_permissions])
+      'record_edit' => Array(params[:record_edit_permissions]),
+      Forms::SubmissionPolicy::PERMISSION_TYPE => permitted_submission_action_keys
     }
 
     ActiveRecord::Base.transaction do
@@ -289,6 +293,8 @@ class AclController < ApplicationController
     @org_form_keys = Array(by_type['form']).to_set(&:last)
     @org_application_keys = Array(by_type['application']).to_set(&:last)
     @org_feature_keys = Array(by_type['feature']).to_set(&:last)
+    @org_submission_action_keys = Array(by_type[Forms::SubmissionPolicy::PERMISSION_TYPE]).to_set(&:last)
+    load_submission_form_catalog
 
     # If no permissions exist yet for this scope, pre-check default public items
     return unless @current_org_permissions.empty?
@@ -307,7 +313,8 @@ class AclController < ApplicationController
       'dropdown' => Array(params[:dropdown_permissions]),
       'form' => Array(params[:form_permissions]),
       'application' => Array(params[:application_permissions]),
-      'feature' => permitted_feature_keys
+      'feature' => permitted_feature_keys,
+      Forms::SubmissionPolicy::PERMISSION_TYPE => permitted_submission_action_keys
     }
 
     ActiveRecord::Base.transaction do
@@ -410,6 +417,32 @@ class AclController < ApplicationController
   def permitted_feature_keys
     known = AppFeature::FEATURES.keys.flat_map { |app_key| AppFeature.permission_keys_for(app_key) }.to_set
     Array(params[:feature_permissions]).select { |key| known.include?(key) }
+  end
+
+  # Form catalog shared by the Submission Actions and Submission Visibility
+  # sections: every form a grant can name, dynamic templates and legacy forms
+  # alike. Same catalog the visibility grants have always used, so the two
+  # sections can't drift apart.
+  def load_submission_form_catalog
+    @submission_forms = Forms::VisibilityGrant.form_type_catalog
+    @submission_form_labels = @submission_forms.to_h { |form| [form[:class_name], form[:label]] }
+  end
+
+  def visibility_grants_for(group)
+    Forms::VisibilityGrant.for_group(group.GroupID)
+                          .sort_by { |grant| [grant.form_label(@submission_form_labels).to_s.downcase, grant.applies_to.to_s] }
+  end
+
+  # Only keys this screen actually offers, so a hand-posted form can't invent a
+  # grant on something that isn't a form.
+  def permitted_submission_action_keys
+    valid = Forms::VisibilityGrant.form_type_catalog.map { |form| form[:class_name] } +
+            [Forms::SubmissionPolicy::ALL_FORMS]
+
+    Array(params[:submission_action_permissions]).select do |key|
+      action, form_type = key.to_s.split(':', 2)
+      Forms::SubmissionPolicy::ACTIONS.include?(action) && valid.include?(form_type)
+    end
   end
 
   def build_all_forms_list

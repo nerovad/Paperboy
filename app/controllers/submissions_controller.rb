@@ -143,9 +143,7 @@ class SubmissionsController < ApplicationController
     record = status_change_record
     return if performed?
 
-    unless Forms::StatusChange.permitted?(record,
-                                          employee_id: session.dig(:user, 'employee_id'),
-                                          group_names: current_user_group_names)
+    unless helpers.can_change_submission_status?(record)
       redirect_to submission_path_for(record), alert: "You don't have permission to change this submission's status."
       return
     end
@@ -171,7 +169,7 @@ class SubmissionsController < ApplicationController
     end
 
     record = klass.find(params[:id])
-    return record if Forms::StatusChange.available_for?(record)
+    return record if Forms::SubmissionPolicy.status_dropdown?(record)
 
     redirect_to submissions_path, alert: 'This form does not support changing its status.'
     nil

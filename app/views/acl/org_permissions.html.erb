@@ -80,6 +80,11 @@
       </div>
     </div>
 
+    <%= render "acl/submission_action_permissions",
+               forms: @submission_forms,
+               selected_keys: @org_submission_action_keys,
+               scope_label: "users at this organization level" %>
+
     <div class="form-actions">
       <%= submit_tag "Save Permissions", class: "btn approve" %>
     </div>

@@ -9,6 +9,7 @@ class ApplicationController < ActionController::Base
                 :current_user_form_permission_keys, :current_user_application_permission_keys,
                 :current_user_feature_permission_keys,
                 :current_user_record_view_permission_keys, :current_user_record_edit_permission_keys,
+                :current_user_submission_action_permission_keys,
                 :safety_auth_console_user?,
                 :available_authorization_consoles, :authorization_console_accessible?
 
@@ -184,6 +185,17 @@ class ApplicationController < ActionController::Base
     return @current_user_record_edit_permission_keys if defined?(@current_user_record_edit_permission_keys)
 
     @current_user_record_edit_permission_keys = load_user_permissions('record_edit')
+  end
+
+  # Actions a viewer may take on a submission that isn't theirs to begin with,
+  # keyed "<action>:<FormClass>" — see Forms::SubmissionPolicy. Granted per
+  # group (ACL > group > permissions) or to everyone in an org node (ACL >
+  # Organization Permissions); both flow through the same cascade below.
+  def current_user_submission_action_permission_keys
+    return @current_user_submission_action_permission_keys if defined?(@current_user_submission_action_permission_keys)
+
+    @current_user_submission_action_permission_keys =
+      load_user_permissions(Forms::SubmissionPolicy::PERMISSION_TYPE)
   end
 
   def require_system_admin
