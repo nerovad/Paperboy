@@ -44,7 +44,8 @@
         <%= format("%.4f", @report.fetch("search_seconds", 0)) %> seconds
       </p>
       <div class="table-wrap p2m-maildat-grid">
-        <table class="p2m-maildat-table" data-controller="output-table" data-simple-sort="true">
+        <table class="p2m-maildat-table" data-controller="output-table data-refresh-groups"
+               data-simple-sort="true">
           <thead>
             <tr>
               <th aria-sort="descending" data-column-index="0" data-sort-type="number">
@@ -62,11 +63,40 @@
             </tr>
           </thead>
           <tbody>
-            <% @report.fetch("files", []).each do |file| %>
-              <tr>
-                <td><%= file.fetch("oms_number") %></td>
+            <% @report.fetch("files", []).each_with_index do |file, index| %>
+              <% detail_id = "p2m-maildat-#{index}-details" %>
+              <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>"
+                  data-sort-row data-detail-id="<%= detail_id %>">
+                <td data-sort-value="<%= file.fetch("oms_number") %>">
+                  <button type="button" class="p2m-row-trigger"
+                          aria-expanded="false" aria-controls="<%= detail_id %>"
+                          aria-label="Show files for OMS <%= file.fetch("oms_number") %>"
+                          data-action="data-refresh-groups#toggle" data-detail-id="<%= detail_id %>">
+                    <span aria-hidden="true">▸</span>
+                  </button>
+                  <%= file.fetch("oms_number") %>
+                </td>
                 <td><%= file.fetch("directory") %></td>
                 <td><%= file.fetch("modified_at") %></td>
+              </tr>
+              <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden>
+                <td colspan="3">
+                  <strong>Associated files</strong>
+                  <ul>
+                    <% file.fetch("associated_files", []).each do |name| %>
+                      <li><%= name %></li>
+                    <% end %>
+                  </ul>
+                  <div class="p2m-maildat-actions">
+                    <% [["Preview", "pdf"], ["Send", "approve"],
+                        ["Completed", "approve"], ["Cancel", nil]].each do |label, variant| %>
+                      <button type="button" class="btn <%= variant %> compact"
+                              data-action="data-refresh-groups#feedback"
+                              data-feedback-action="<%= label %>"
+                              data-feedback-oms="<%= file.fetch("oms_number") %>"><%= label %></button>
+                    <% end %>
+                  </div>
+                </td>
               </tr>
             <% end %>
           </tbody>
