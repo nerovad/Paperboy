@@ -10,12 +10,21 @@ module P2m
     SCRIPT_PATH = Rails.root.join('script/ruby/p2m/print_and_inserting_done.rb')
 
     def self.call(start_date:, end_date:)
+      run(start_date: start_date, end_date: end_date)
+    end
+
+    def self.scan(start_date:, end_date:)
+      run(start_date: start_date, end_date: end_date, scan_only: true)
+    end
+
+    def self.run(start_date:, end_date:, scan_only: false)
       command = [
         RbConfig.ruby, SCRIPT_PATH.to_s,
         '--start-date', start_date.iso8601,
         '--end-date', end_date.iso8601,
         '--report', REPORT_PATH.to_s
       ]
+      command << '--scan-only' if scan_only
       output, status = Open3.capture2e(*command, chdir: Rails.root.to_s)
       raise output.strip unless status.success?
 

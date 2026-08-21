@@ -6,30 +6,32 @@ module P2m
     before_action :set_dates
 
     def show
-      @report = PrintAndInsertingDone.report
-      @staging_running = StageData.active_run.present?
+      @report = nil
     end
 
     def create
       validate_date_range!
-      StageData.enqueue!(start_date: @start_date, end_date: @end_date, requested_by: current_user.email)
-      redirect_to p2m_stage_data_path,
-                  notice: 'OMS staging started.'
-    rescue StageData::ActiveRun
-      redirect_to p2m_stage_data_path, alert: 'OMS staging is already running.'
+      @report = PrintAndInsertingDone.scan(start_date: @start_date, end_date: @end_date)
+      render :show
     rescue ArgumentError
-      flash.now[:alert] = 'Start date must be on or before end date.'
-      @report = PrintAndInsertingDone.report
-      @staging_running = StageData.active_run.present?
-      render :show, status: :unprocessable_content
+      render_invalid_date_range
     rescue StandardError => e
-      flash.now[:alert] = "OMS staging failed: #{e.message}"
-      @report = PrintAndInsertingDone.report
-      @staging_running = StageData.active_run.present?
-      render :show, status: :unprocessable_content
+      render_search_error(e)
     end
 
     private
+
+    def render_invalid_date_range
+      flash.now[:alert] = 'Start date must be on or before end date.'
+      @report = nil
+      render :show, status: :unprocessable_content
+    end
+
+    def render_search_error(error)
+      flash.now[:alert] = "Mail.dat search failed: #{error.message}"
+      @report = nil
+      render :show, status: :unprocessable_content
+    end
 
     def set_dates
       values = params.fetch(:stage_data, {}).permit(:start_date, :end_date)

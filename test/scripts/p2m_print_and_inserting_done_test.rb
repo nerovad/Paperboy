@@ -65,7 +65,7 @@ class P2mPrintAndInsertingDoneTest < Minitest::Test
       create_job(job, '50000001')
       FileUtils.mkdir_p(runner)
       job.children.reject { |path| path.basename.to_s.start_with?('Mail.dat_') }.each do |path|
-        FileUtils.cp(path, runner.join(path.basename))
+        FileUtils.cp(path, runner.join(path.basename), preserve: true)
       end
 
       rows = described_class.new(
