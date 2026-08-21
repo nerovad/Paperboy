@@ -24,9 +24,9 @@ class P2mPrintAndInsertingDoneTest < Minitest::Test
       ).call
 
       statuses = rows.map { |row| row.fetch('status') }
-      assert_equal ['staged', 'incomplete', 'duplicate OMS number'], statuses
+      assert_equal ['ready', 'incomplete', 'duplicate OMS number'], statuses
       assert runner.join('50000001-companion.csv').file?
-      assert runner.join('00_SentToUSPS/Mail.dat_50000001.zip').file?
+      refute runner.join('00_SentToUSPS/Mail.dat_50000001.zip').exist?
       assert report.file?
     end
   end
@@ -77,8 +77,8 @@ class P2mPrintAndInsertingDoneTest < Minitest::Test
       ).call
 
       statuses = rows.map { |row| row.fetch('status') }
-      assert_equal ['staged'], statuses
-      assert runner.join('00_SentToUSPS/Mail.dat_50000001.zip').file?
+      assert_equal ['ready'], statuses
+      refute runner.join('00_SentToUSPS/Mail.dat_50000001.zip').exist?
     end
   end
 

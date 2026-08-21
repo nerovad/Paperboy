@@ -143,10 +143,6 @@ module P2m
       return unless row
 
       input_paths(row).each { |source| copy_without_overwrite(source, data_runner_root.join(source.basename)) }
-      marker = Pathname.new(row.fetch('marker'))
-      copy_without_overwrite(marker, sent_path.join(marker.basename))
-      row['status'] = 'staged'
-      row['detail'] = 'Inputs copied; Mail.dat marker published last.'
     rescue StandardError => e
       row['status'] = 'staging failed'
       row['detail'] = e.message
