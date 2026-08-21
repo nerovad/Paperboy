@@ -10,7 +10,9 @@ module P2m
       /\AMail\.dat_(#{OMS_NUMBER})\.zip\z/i,
       /\A(#{OMS_NUMBER})-.+\.csv\z/i,
       /\APresort Fields Export_(#{OMS_NUMBER})\.txt\z/i,
-      /\AMoveResults_(#{OMS_NUMBER})\.txt\z/i
+      /\AMoveResults_(#{OMS_NUMBER})\.txt\z/i,
+      /\A(#{OMS_NUMBER})[-_].+\.pdf\z/i,
+      /\A.+_(#{OMS_NUMBER})\.pdf\z/i
     ].freeze
     EXCLUDED_DIRECTORIES = %w[DataRunner FinalOutput].freeze
 
