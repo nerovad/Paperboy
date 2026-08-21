@@ -95,6 +95,7 @@ module P2m
     def fd_command
       [
         'fd', '--no-ignore', '--type', 'f', '--extension', 'zip', '--print0',
+        '--exclude', 'FinalOutput',
         '--changed-within', start_date.iso8601,
         '--changed-before', (end_date + 1).iso8601,
         "^Mail\\.dat_#{OMS_NUMBER}\\.zip$", source_root.to_s
