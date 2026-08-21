@@ -121,4 +121,17 @@
 
   tbody tr:nth-child(odd) { background: $surface-base; }
   tbody tr:nth-child(even) { background: $surface-control; }
+
+  th[aria-sort="ascending"] .p2m-sort-header::after { content: " ▲"; }
+  th[aria-sort="descending"] .p2m-sort-header::after { content: " ▼"; }
+}
+
+.p2m-sort-header {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }

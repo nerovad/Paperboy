@@ -71,7 +71,7 @@ module P2m
     end
 
     def record_files(marker_paths)
-      @files = marker_paths.sort.map do |path|
+      @files = marker_paths.sort_by { |path| oms_number(path) }.reverse.map do |path|
         {
           'name' => path.basename.to_s,
           'oms_number' => oms_number(path),
