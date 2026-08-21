@@ -381,6 +381,9 @@ Rails.application.routes.draw do
   get '/inbox/status_history/:type/:id', to: 'inbox#status_history', as: 'inbox_status_history'
   get '/submissions', to: 'submissions#index', as: :submissions
   get '/submissions/status_options', to: 'submissions#status_options', as: :submissions_status_options
+  # Status change from a submission's own page, for forms that carry a status
+  # dropdown in the inbox but have reached an end state and dropped out of it.
+  patch '/submissions/:type/:id/status', to: 'submissions#update_status', as: :submission_status
   resources :saved_searches, only: %i[create destroy]
 
   # Per-user column/filter layout for the Inbox & Submissions tables
@@ -448,7 +451,6 @@ Rails.application.routes.draw do
       patch :approve
       patch :deny
       patch :update_status
-      patch :reopen
     end
   end
 

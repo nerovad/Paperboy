@@ -1,4 +1,5 @@
 <div class="form-header">
+  <%%= render "shared/back_button" %>
   <h1><%= class_name.titleize %></h1>
 </div>
 
@@ -34,8 +35,8 @@
   <%% end %>
 
   <div class="form-actions" style="margin-top: 16px;">
-    <%%= link_to "Back to Inbox", inbox_queue_path, class: "form-btn" %>
     <%%= link_to "Download PDF", pdf_<%= file_name %>_path(@<%= file_name %>), target: "_blank", class: "form-btn" %>
+    <%%= render "shared/change_status", record: @<%= file_name %> %>
   </div>
   </div>
 </div>

@@ -17,9 +17,10 @@ class CriticalInformationReporting < ApplicationRecord
   # End states that pull this report out of the active inbox queue. CIR has no
   # form_template_statuses catalog, so TrackableStatus falls back to this
   # constant (see TrackableStatus.terminal_status?). "resolved" and "cancelled"
-  # are terminal; "in_progress"/"scheduled" keep it active. Reopening a report
-  # (CriticalInformationReportingsController#reopen) moves it back to a
-  # non-terminal status, which re-surfaces it in the assigned manager's inbox.
+  # are terminal; "in_progress"/"scheduled" keep it active. A closed report is
+  # reopened from its own page via the Change Status control
+  # (SubmissionsController#update_status), which moves it back to a non-terminal
+  # status and so re-surfaces it in the assigned manager's inbox.
   TERMINAL_STATUS_KEYS = %w[resolved cancelled].freeze
 
   has_many_attached :media_photo_pdf_etc
