@@ -1,4 +1,5 @@
 <div class="form-header">
+  <%= render "shared/back_button" %>
   <h1>Fleet Vehicle Garaging Form</h1>
 </div>
 
@@ -34,8 +35,8 @@
   <% end %>
 
   <div class="form-actions" style="margin-top: 16px;">
-    <%= link_to "Back to Inbox", inbox_queue_path, class: "form-btn" %>
     <%= link_to "Download PDF", pdf_fleet_vehicle_garaging_form_path(@fleet_vehicle_garaging_form), target: "_blank", class: "form-btn" %>
+    <%= render "shared/change_status", record: @fleet_vehicle_garaging_form %>
   </div>
   </div>
 </div>

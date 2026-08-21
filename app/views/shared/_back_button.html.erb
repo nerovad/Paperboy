@@ -1,0 +1,15 @@
+<%# Back control for a submission's detail page. Belongs inside the page's
+    .form-header, where it pins to the top left and mirrors .form-header__action
+    on the right — see components/_forms.scss.
+
+    It steps back through browser history, so it returns the viewer to whichever
+    list they arrived from (the inbox, Submissions, a search result) rather than
+    guessing. With no history to step back to — a link opened in a fresh tab or
+    pasted in — the href carries them to Submissions, where every submission
+    lives regardless of its status.
+
+    Usage: <%= render "shared/back_button" %>
+%>
+<%= link_to "← Back", submissions_path,
+      class: "btn ghost compact form-header__back",
+      data: { controller: "back-link", action: "back-link#navigate" } %>
