@@ -10,6 +10,7 @@ class P2mPrintAndInsertingDoneScanTest < Minitest::Test
       source = Pathname.new(directory).join('Outputs')
       runner = source.join('DataRunner')
       create_job(source.join('job'), '50000001')
+      create_job(source.join('FinalOutput'), '50000002')
       report = runner.join('report.json')
 
       rows = P2m::OmsBackfileStager.new(
