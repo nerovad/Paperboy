@@ -11,10 +11,13 @@ class P2mOmsAssociatedFilesTest < Minitest::Test
       directory.mkpath
       expected = %w[
         50000001-companion.csv
+        50000001-mail-piece.pdf
         Mail.dat_50000001.zip
         MoveResults_50000001.txt
+        Tray_Labels_50000001.pdf
       ]
-      (expected + ['50000002-companion.csv']).each { |name| directory.join(name).write('fixture') }
+      excluded = ['50000002-companion.csv', 'Tray_Labels_50000002.pdf', 'unrelated.pdf']
+      (expected + excluded).each { |name| directory.join(name).write('fixture') }
 
       files = P2m::OmsAssociatedFiles.new(root: root).call(directory: 'job', oms_number: '50000001')
 
