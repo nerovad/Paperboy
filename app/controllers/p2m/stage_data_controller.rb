@@ -29,7 +29,25 @@ module P2m
       render plain: e.message, status: :unprocessable_content
     end
 
+    def move_to_staging
+      count = OmsStaging.new.stage(**staging_parameters)
+      render json: { message: "#{count} files copied to 00_SentToUSPS." }
+    rescue ArgumentError, RuntimeError => e
+      render json: { message: e.message }, status: :unprocessable_content
+    end
+
+    def remove_from_staging
+      count = OmsStaging.new.remove(**staging_parameters)
+      render json: { message: "#{count} files removed from 00_SentToUSPS." }
+    rescue ArgumentError, RuntimeError => e
+      render json: { message: e.message }, status: :unprocessable_content
+    end
+
     private
+
+    def staging_parameters
+      params.permit(:directory, :oms_number).to_h.symbolize_keys
+    end
 
     def render_invalid_date_range
       flash.now[:alert] = 'Start date must be on or before end date.'

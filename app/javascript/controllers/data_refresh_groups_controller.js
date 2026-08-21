@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { pbAlert } from "pb_modal"
+import { pbAlert, pbConfirm } from "pb_modal"
 
 export default class extends Controller {
   async toggle(event) {
@@ -35,6 +35,36 @@ export default class extends Controller {
     await pbAlert({
       title: `${action} pressed`,
       message: `${action} was pressed for OMS ${omsNumber}.`
+    })
+  }
+
+  async staging(event) {
+    const button = event.currentTarget
+    const destructive = button.dataset.stagingMethod === "DELETE"
+    if (destructive && !await pbConfirm({
+      title: "Remove From Staging",
+      message: `Remove staged files for OMS ${button.dataset.omsNumber}?`,
+      confirmLabel: "Remove",
+      confirmVariant: "deny"
+    })) return
+
+    const parameters = new URLSearchParams({
+      directory: button.dataset.directory,
+      oms_number: button.dataset.omsNumber
+    })
+    const response = await fetch(button.dataset.stagingUrl, {
+      method: button.dataset.stagingMethod,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
+      },
+      body: parameters.toString()
+    })
+    const result = await response.json()
+    await pbAlert({
+      title: response.ok ? button.dataset.stagingAction : "Staging failed",
+      message: result.message
     })
   }
 }
