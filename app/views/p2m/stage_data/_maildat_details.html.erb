@@ -5,11 +5,28 @@
   <% end %>
 </ul>
 <div class="p2m-maildat-actions">
-  <% [["Preview", "pdf"], ["Send", "approve"],
-      ["Completed", "approve"], ["Cancel", nil]].each do |label, variant| %>
+  <% [["Print Tray Labels", "pdf"], ["Move To USPS Workstation", "reassign"]].each do |label, variant| %>
     <button type="button" class="btn <%= variant %> compact"
             data-action="data-refresh-groups#feedback"
             data-feedback-action="<%= label %>"
             data-feedback-oms="<%= @oms_number %>"><%= label %></button>
   <% end %>
+  <%= link_to "Upload to USPS", "https://gateway.usps.com/eAdmin/view/signin",
+              class: "btn approve compact", target: "_blank", rel: "noopener" %>
+  <button type="button" class="btn approve compact"
+          data-action="data-refresh-groups#staging"
+          data-staging-url="<%= move_to_staging_p2m_stage_data_path %>"
+          data-staging-method="POST" data-staging-action="Move to Staging"
+          data-directory="<%= params[:directory] %>" data-oms-number="<%= @oms_number %>">
+    Move to Staging
+  </button>
+  <button type="button" class="btn deny compact"
+          data-action="data-refresh-groups#staging"
+          data-staging-url="<%= remove_from_staging_p2m_stage_data_path %>"
+          data-staging-method="DELETE" data-staging-action="Remove From Staging"
+          data-directory="<%= params[:directory] %>" data-oms-number="<%= @oms_number %>">
+    Remove From Staging
+  </button>
+  <button type="button" class="btn compact" data-action="data-refresh-groups#feedback"
+          data-feedback-action="Cancel" data-feedback-oms="<%= @oms_number %>">Cancel</button>
 </div>
