@@ -2,7 +2,7 @@
 
     Renders nothing unless the form carries a status dropdown and the viewer is
     allowed to use it (Forms::SubmissionPolicy). Drop it in next to the other
-    actions — the dialog is fixed-position, so where it sits in the row makes no
+    actions. The dialog is fixed-position, so where it sits in the row makes no
     difference to how it appears.
 
     Render it with: render "shared/change_status", record: @some_submission
@@ -23,8 +23,8 @@
         <div class="pb-modal__body">
           <p class="pb-modal__message">
             <%= Forms::Reference.reference_for(record) %> is currently
-            <strong><%= record.status_label %></strong>. Pick its new status — the
-            submission stays here in Submissions either way.
+            <strong><%= record.status_label %></strong>. Pick its new status.
+            The submission stays here in Submissions either way.
           </p>
 
           <%= form_with url: submission_status_path(type: record.class.name, id: record.id),

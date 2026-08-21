@@ -9,7 +9,7 @@
     <%= link_to "Back to Group", acl_path(@group), class: "btn" %>
   </div>
 
-  <%= form_tag update_permissions_acl_path(@group), method: :patch, data: { turbo: false } do %>
+  <%= form_tag update_permissions_acl_path(@group), method: :patch, id: "acl-permissions-form", data: { turbo: false } do %>
 
     <div class="acl-permissions-section" data-controller="select-all">
       <h3>Applications</h3>
@@ -55,7 +55,7 @@
 
     <div class="acl-permissions-section" data-controller="select-all">
       <h3>Records Editing</h3>
-      <p class="acl-subtitle">Select which Records tables members of this group can edit inline. Being able to open a table does not grant editing — without a tick here the grid stays read-only.</p>
+      <p class="acl-subtitle">Select which Records tables members of this group can edit inline. Being able to open a table does not grant editing. Without a tick here the grid stays read-only.</p>
       <div class="permissions-grid">
         <label class="permission-checkbox select-all-checkbox">
           <%= check_box_tag "select_all_record_edit", "1",
@@ -118,16 +118,20 @@
                selected_keys: @submission_action_keys,
                scope_label: "members of this group" %>
 
-    <div class="form-actions">
-      <%= submit_tag "Save Permissions", class: "btn approve" %>
-    </div>
   <% end %>
 
   <%# Outside the form above: a grant is its own row, added and removed one at
       a time, and HTML has no nested forms. %>
   <%= render "acl/submission_visibility",
              group: @group,
+             groups: @groups,
              grants: @visibility_grants,
              form_types: @submission_forms,
              form_labels: @submission_form_labels %>
+
+  <%# Last thing on the page, so nothing sits below Save. The form attribute
+      ties it back to the permissions form it submits. %>
+  <div class="form-actions acl-save-row">
+    <%= submit_tag "Save Permissions", class: "btn approve", form: "acl-permissions-form" %>
+  </div>
 </div>

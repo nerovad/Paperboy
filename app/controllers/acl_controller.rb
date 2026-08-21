@@ -29,12 +29,12 @@ class AclController < ApplicationController
     # these older keys still grant the same access, so they stay listed —
     # unticking one here is how an existing grant is taken away. 'admin' is the
     # old menu's own key and grants nothing on its own.
-    { key: 'admin',         label: 'Admin (legacy — grants nothing)' },
-    { key: 'manage_forms',  label: 'Admin Tools → Manage Forms (legacy)' },
-    { key: 'emulate',       label: 'Admin Tools → Emulate (legacy)' },
-    { key: 'acl',           label: 'Admin Tools → ACL (legacy)' },
-    { key: 'data_validation', label: 'Admin Tools → Data Validation (legacy)' },
-    { key: 'lookup_tables', label: 'Admin Tools → Lookup Tables (legacy)' },
+    { key: 'admin',         label: 'Admin (legacy, grants nothing)' },
+    { key: 'manage_forms',  label: 'Admin Tools: Manage Forms (legacy)' },
+    { key: 'emulate',       label: 'Admin Tools: Emulate (legacy)' },
+    { key: 'acl',           label: 'Admin Tools: ACL (legacy)' },
+    { key: 'data_validation', label: 'Admin Tools: Data Validation (legacy)' },
+    { key: 'lookup_tables', label: 'Admin Tools: Lookup Tables (legacy)' },
     { key: 'auth_console',  label: 'Auth Console' },
     { key: 'osha_log',      label: 'OSHA 300' }
   ].freeze
@@ -225,7 +225,8 @@ class AclController < ApplicationController
     @record_edit_keys = Array(by_type['record_edit']).to_set(&:last)
     @submission_action_keys = Array(by_type[Forms::SubmissionPolicy::PERMISSION_TYPE]).to_set(&:last)
     load_submission_form_catalog
-    @visibility_grants = visibility_grants_for(@group)
+    @groups = Group.order(:group_name)
+    @visibility_grants = all_visibility_grants
 
     # If no permissions exist yet for this group, pre-check default public items
     return unless @current_permissions.empty?
@@ -428,9 +429,14 @@ class AclController < ApplicationController
     @submission_form_labels = @submission_forms.to_h { |form| [form[:class_name], form[:label]] }
   end
 
-  def visibility_grants_for(group)
-    Forms::VisibilityGrant.for_group(group.GroupID)
-                          .sort_by { |grant| [grant.form_label(@submission_form_labels).to_s.downcase, grant.applies_to.to_s] }
+  # Every group grant, listed the way the standalone screen listed them: the
+  # picker above can name any group, so the table has to show any group too.
+  def all_visibility_grants
+    Forms::VisibilityGrant.for_group(Group.pluck(:GroupID))
+                          .includes(:group)
+                          .sort_by do |grant|
+      [grant.form_label(@submission_form_labels).to_s.downcase, grant.group&.group_name.to_s.downcase]
+    end
   end
 
   # Only keys this screen actually offers, so a hand-posted form can't invent a
