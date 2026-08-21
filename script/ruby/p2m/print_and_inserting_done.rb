@@ -74,6 +74,7 @@ module P2m
       @files = marker_paths.sort.map do |path|
         {
           'name' => path.basename.to_s,
+          'oms_number' => oms_number(path),
           'modified_at' => path.mtime.strftime('%Y-%m-%d %H:%M:%S'),
           'directory' => path.dirname.relative_path_from(source_root).to_s
         }
