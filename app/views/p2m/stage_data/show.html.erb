@@ -47,16 +47,16 @@
         <table class="p2m-maildat-table">
           <thead>
             <tr>
-              <th>Location</th>
               <th>OMS Number</th>
+              <th>Location</th>
               <th>Modified</th>
             </tr>
           </thead>
           <tbody>
             <% @report.fetch("files", []).each do |file| %>
               <tr>
-                <td><%= file.fetch("directory") %></td>
                 <td><%= file.fetch("oms_number") %></td>
+                <td><%= file.fetch("directory") %></td>
                 <td><%= file.fetch("modified_at") %></td>
               </tr>
             <% end %>
