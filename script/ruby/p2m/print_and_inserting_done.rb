@@ -74,8 +74,8 @@ module P2m
       @files = marker_paths.sort.map do |path|
         {
           'name' => path.basename.to_s,
-          'modified_at' => path.mtime.iso8601,
-          'directory' => path.dirname.to_s
+          'modified_at' => path.mtime.strftime('%Y-%m-%d %H:%M:%S'),
+          'directory' => path.dirname.relative_path_from(source_root).to_s
         }
       end
       @found_count = @files.length
