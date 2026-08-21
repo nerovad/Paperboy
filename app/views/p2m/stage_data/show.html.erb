@@ -1,5 +1,5 @@
 <div class="form-header p2m-form-header">
-  <h1>Mail.Dat uploaded to USPS</h1>
+  <h1>Mail.dat uploaded to USPS</h1>
 </div>
 
 <div class="form-wrapper p2m-stage-data">
@@ -25,7 +25,7 @@
       </div>
 
       <div class="form-actions">
-        <%= submit_tag "Complete", class: "btn approve" %>
+        <%= submit_tag "Confirm", class: "btn approve", disabled: @staging_running %>
         <%= button_tag "Reset", type: :reset, class: "btn warning" %>
         <%= link_to "Cancel", p2m_root_path, class: "btn" %>
       </div>
