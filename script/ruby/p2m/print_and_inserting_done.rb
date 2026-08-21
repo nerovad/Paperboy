@@ -76,28 +76,10 @@ module P2m
           'name' => path.basename.to_s,
           'oms_number' => oms_number(path),
           'modified_at' => path.mtime.strftime('%Y-%m-%d %H:%M:%S'),
-          'directory' => path.dirname.relative_path_from(source_root).to_s,
-          'associated_files' => associated_files(path)
+          'directory' => path.dirname.relative_path_from(source_root).to_s
         }
       end
       @found_count = @files.length
-    end
-
-    def associated_files(marker)
-      number = oms_number(marker)
-      directory_files(marker.dirname).filter_map do |path|
-        match = path.basename.to_s.match(MARKER_PATTERN) || matching_input(path.basename.to_s)
-        path.basename.to_s if match && match[1] == number
-      end.sort
-    end
-
-    def directory_files(directory)
-      @directory_files ||= {}
-      @directory_files[directory.to_s] ||= directory.children.select(&:file?)
-    end
-
-    def matching_input(name)
-      INPUT_PATTERNS.values.filter_map { |pattern| name.match(pattern) }.first
     end
 
     def markers

@@ -19,6 +19,16 @@ module P2m
       render_search_error(e)
     end
 
+    def details
+      @oms_number = params.require(:oms_number)
+      @associated_files = OmsAssociatedFiles.new.call(
+        directory: params.require(:directory), oms_number: @oms_number
+      )
+      render partial: 'maildat_details'
+    rescue ArgumentError, ActionController::ParameterMissing => e
+      render plain: e.message, status: :unprocessable_content
+    end
+
     private
 
     def render_invalid_date_range
