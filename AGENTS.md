@@ -10,6 +10,7 @@
   * Prose limited to 72 characters
   * Blank Line
   * Description lines limited to 80 characters
+  * Do not indent proposed commit
 - Git
   * use git mv when moving files
 
