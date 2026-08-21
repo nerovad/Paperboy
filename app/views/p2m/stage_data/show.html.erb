@@ -44,12 +44,21 @@
         <%= format("%.4f", @report.fetch("search_seconds", 0)) %> seconds
       </p>
       <div class="table-wrap p2m-maildat-grid">
-        <table class="p2m-maildat-table">
+        <table class="p2m-maildat-table" data-controller="output-table" data-simple-sort="true">
           <thead>
             <tr>
-              <th>OMS Number</th>
-              <th>Location</th>
-              <th>Modified</th>
+              <th aria-sort="descending" data-column-index="0" data-sort-type="number">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">OMS Number</button>
+              </th>
+              <th aria-sort="none" data-column-index="1" data-sort-type="text">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">Location</button>
+              </th>
+              <th aria-sort="none" data-column-index="2" data-sort-type="text">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">Modified</button>
+              </th>
             </tr>
           </thead>
           <tbody>
