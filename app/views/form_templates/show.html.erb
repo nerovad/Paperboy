@@ -43,6 +43,36 @@
               <span class="label">Created:</span>
               <span class="value"><%= @form_template.created_at.strftime("%m/%d/%Y at %I:%M %p") %></span>
             </div>
+
+            <%# The metadata the sidebar's Advanced Search narrows on. Unset
+                fields read as "Not set" here rather than being left out — this
+                is the page an admin checks to see what still needs filling in. %>
+            <div class="detail-row">
+              <span class="label">Form Number:</span>
+              <span class="value"><%= @form_template.form_number.presence || "Not set" %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Form Type:</span>
+              <span class="value"><%= @form_template.form_type.presence || "Not set" %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Organization:</span>
+              <span class="value">
+                <%= FormFinder.new([@form_template]).org_path(@form_template).presence || "Not set" %>
+              </span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Tags:</span>
+              <span class="value"><%= @form_template.tags_array.join(", ").presence || "None" %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Description:</span>
+              <span class="value"><%= @form_template.description.presence || "Not set" %></span>
+            </div>
           </div>
         </div>
       </div>

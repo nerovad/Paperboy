@@ -13,19 +13,41 @@
                 already declares the controller.
       prefix    Param-name prefix: "filter" posts filter_agency … ; the default
                 posts agency, division, department, unit.
+      param_scope  Model name to nest the params under, for a picker inside a
+                model form: "form_template" posts form_template[agency_id] … .
+                Takes precedence over prefix.
       selected  { agency:, division:, department:, unit: } current values.
       labels    Blank-option wording per level.
+      options   { agency: [[label, code], …], … } to offer instead of the whole
+                county. Only the levels given are overridden.
       agency_label  Wording for the agency label itself. %>
 <%
-  scope      = local_assigns.fetch(:scope, "org-cascade")
-  standalone = local_assigns.fetch(:standalone, true)
-  prefix     = local_assigns.fetch(:prefix, nil).presence
-  selected   = local_assigns.fetch(:selected, {}).symbolize_keys
-  labels     = { agency: "All Agencies", division: "All", department: "All", unit: "All Units" }
-               .merge(local_assigns.fetch(:labels, {}).symbolize_keys)
+  scope       = local_assigns.fetch(:scope, "org-cascade")
+  standalone  = local_assigns.fetch(:standalone, true)
+  prefix      = local_assigns.fetch(:prefix, nil).presence
+  param_scope = local_assigns.fetch(:param_scope, nil).presence
+  selected    = local_assigns.fetch(:selected, {}).symbolize_keys
+  labels      = { agency: "All Agencies", division: "All", department: "All", unit: "All Units" }
+                .merge(local_assigns.fetch(:labels, {}).symbolize_keys)
+  supplied    = local_assigns.fetch(:options, {}).symbolize_keys
 
-  field   = ->(level) { prefix ? :"#{prefix}_#{level}" : level }
-  chosen  = ->(level) { selected[level].to_s }
+  field = lambda do |level|
+    next :"#{param_scope}[#{level}_id]" if param_scope
+
+    prefix ? :"#{prefix}_#{level}" : level
+  end
+  chosen = ->(level) { selected[level].to_s }
+
+  # The id a select ends up with, for the two labels written by hand rather
+  # than by label_tag — Rails flattens form_template[unit_id] to
+  # form_template_unit_id, and a `for` that skipped that step points at nothing.
+  field_id = ->(level) { field.call(level).to_s.delete(']').tr('^-a-zA-Z0-9:.', '_') }
+
+  # Levels default to the whole county, with the deeper ones refetched from
+  # /lookups as the user narrows. A caller with a smaller world to offer — the
+  # sidebar's form facets list only the orgs that actually own a form — passes
+  # its own lists in, and its controller fills the deeper levels itself.
+  choices = ->(level, whole_county) { supplied.fetch(level) { whole_county.call } }
   search  = FormSearch.new(filter_agency: chosen.call(:agency))
 %>
 <div class="pb-filter-grid"
@@ -33,7 +55,7 @@
   <div class="pb-filter">
     <%= label_tag field.call(:agency), local_assigns.fetch(:agency_label, "Agency") %>
     <%= select_tag field.call(:agency),
-                   options_for_select(FormSearch.agency_options, chosen.call(:agency)),
+                   options_for_select(choices.call(:agency, -> { FormSearch.agency_options }), chosen.call(:agency)),
                    include_blank: labels[:agency], class: "form-control",
                    data: { "#{scope}-target": "agency", action: "change->#{scope}#loadDivisions" } %>
   </div>
@@ -41,22 +63,24 @@
   <div class="pb-filter">
     <%# Label text is owned by the controller: the viewer can change agency
         without leaving the form, and HCA calls a division a department. %>
-    <label for="<%= field.call(:division) %>" data-<%= scope %>-target="divisionLabel">
+    <label for="<%= field_id.call(:division) %>" data-<%= scope %>-target="divisionLabel">
       <%= search.level_label(:division) %>
     </label>
     <%= select_tag field.call(:division),
-                   options_for_select(FormSearch.division_options(chosen.call(:agency)), chosen.call(:division)),
+                   options_for_select(choices.call(:division, -> { FormSearch.division_options(chosen.call(:agency)) }),
+                                      chosen.call(:division)),
                    include_blank: labels[:division], class: "form-control",
                    data: { "#{scope}-target": "division", "blank-label": labels[:division],
                            action: "change->#{scope}#loadDepartments" } %>
   </div>
 
   <div class="pb-filter">
-    <label for="<%= field.call(:department) %>" data-<%= scope %>-target="departmentLabel">
+    <label for="<%= field_id.call(:department) %>" data-<%= scope %>-target="departmentLabel">
       <%= search.level_label(:department) %>
     </label>
     <%= select_tag field.call(:department),
-                   options_for_select(FormSearch.department_options(chosen.call(:division)), chosen.call(:department)),
+                   options_for_select(choices.call(:department, -> { FormSearch.department_options(chosen.call(:division)) }),
+                                      chosen.call(:department)),
                    include_blank: labels[:department], class: "form-control",
                    data: { "#{scope}-target": "department", "blank-label": labels[:department],
                            action: "change->#{scope}#loadUnits" } %>
@@ -65,7 +89,8 @@
   <div class="pb-filter">
     <%= label_tag field.call(:unit), "Unit" %>
     <%= select_tag field.call(:unit),
-                   options_for_select(FormSearch.unit_options(chosen.call(:department)), chosen.call(:unit)),
+                   options_for_select(choices.call(:unit, -> { FormSearch.unit_options(chosen.call(:department)) }),
+                                      chosen.call(:unit)),
                    include_blank: labels[:unit], class: "form-control",
                    data: { "#{scope}-target": "unit", "blank-label": labels[:unit] } %>
   </div>

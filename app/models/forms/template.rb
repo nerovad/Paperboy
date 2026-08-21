@@ -33,6 +33,37 @@ module Forms
     # Virtual attribute to track routing steps being submitted (before they're saved)
     attr_accessor :pending_routing_steps
 
+    # --- Metadata -------------------------------------------------------------
+    # What the sidebar's Advanced Search facets on: who owns the form, what kind
+    # of form it is, its official number, and a line saying what it is for.
+    # Every one of these is descriptive. None of them gate access — who may see
+    # a form is the ACL's business alone (see Forms::VisibilityGrant).
+
+    # The kinds of form the county issues. A fixed vocabulary rather than free
+    # text so the facet stays a short list of real choices; add to it here and
+    # it is offered everywhere at once.
+    FORM_TYPES = %w[
+      Application Request Report Authorization Registration
+      Notification Log Acknowledgment Agreement Checklist
+    ].freeze
+
+    # Agency → Division → Department → Unit, outermost first. Each column holds
+    # the GSABSS code the org cascade picks ("HCA", not "Health Care Agency").
+    ORG_LEVELS = %i[agency division department unit].freeze
+
+    # The org codes actually set, outermost first. A level left blank means the
+    # form is not tied to that part of the county.
+    def org_codes
+      ORG_LEVELS.index_with { |level| self[:"#{level}_id"].to_s.strip }
+                .select { |_, code| code.present? }
+    end
+
+    # Whether an admin has filled in anything the facets can narrow on. The
+    # sidebar panel uses this to explain itself when nothing has been tagged.
+    def searchable_metadata?
+      org_codes.any? || form_type.present? || form_number.present? || tags_array.any?
+    end
+
     # Tags for metadata search
     def tags_array
       (tags || '').split(',').map(&:strip).reject(&:blank?)
@@ -86,6 +117,7 @@ module Forms
     validates :approval_employee_id, presence: true, if: :routes_to_specific_employee?
     validates :metabase_dashboard_id, presence: true, if: :dashboard?
     validates :status_transition_mode, inclusion: { in: TRANSITION_MODES }, allow_nil: true
+    validates :form_type, inclusion: { in: FORM_TYPES }, allow_blank: true
     validates :reference_prefix,
               uniqueness: { case_sensitive: false },
               format: { with: /\A[A-Z0-9]+\z/, message: 'must be letters and numbers only' },

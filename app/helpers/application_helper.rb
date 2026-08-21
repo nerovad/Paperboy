@@ -13,16 +13,6 @@ module ApplicationHelper
     session[:user]
   end
 
-  # The Advanced Search panel lives in the sidebar, so it renders on every page
-  # and has to read its own state from the URL. On the Submissions list the
-  # controller has already built this object and the panel opens showing the
-  # search you are looking at; anywhere else it opens blank — the inbox uses
-  # some of the same `filter_` params for its own bar, and those are a
-  # different question about a different list.
-  def form_search
-    @form_search ||= FormSearch.new(params[:controller] == 'submissions' ? params : {})
-  end
-
   def format_phone(digits)
     d = digits.to_s.gsub(/\D/, '')
     return digits if d.length != 10

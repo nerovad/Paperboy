@@ -133,6 +133,14 @@
   }
   
   .sidebar-p { text-align: center; }
+
+  /* Shown only when the search box and Advanced Search between them leave
+     no forms, so an empty list says why. */
+  .sidebar-empty {
+    font-size: 0.85em;
+    font-style: italic;
+    opacity: 0.75;
+  }
   
   .nav-link {
     display: block;

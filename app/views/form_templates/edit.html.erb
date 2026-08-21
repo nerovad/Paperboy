@@ -97,6 +97,8 @@
             </div>
           </div>
 
+          <%= render "form_templates/metadata_fields", f: f, template: @form_template %>
+
           <div class="form-group">
             <label for="form_reference_prefix">Reference Prefix</label>
             <%= f.text_field :reference_prefix,

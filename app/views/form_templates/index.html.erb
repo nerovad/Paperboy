@@ -15,13 +15,16 @@
 
   <input
     type="text"
-    placeholder="Search templates, fields, tags..."
+    placeholder="Search templates, numbers, fields, tags..."
     data-sidebar-search-target="input"
     data-action="input->sidebar-search#filter"
     class="template-search-input"
   />
 
   <% if @form_templates.any? %>
+    <%# Named once for every template on the page rather than per card, so the
+        org tables are asked about a level once however long the list runs. %>
+    <% form_finder = FormFinder.new(@form_templates) %>
     <div class="approvers-list" data-sidebar-search-target="formsList">
       <% @form_templates.each do |template| %>
         <div class="approver-card <%= 'archived' if template.archived %>"
@@ -29,7 +32,9 @@
              data-search-card
              data-original-name="<%= template.name %>"
              data-fields="<%= template.form_fields.map(&:label).join(', ') %>"
-             data-tags="<%= template.tags_array.join(', ') %>">
+             data-tags="<%= template.tags_array.join(', ') %>"
+             data-number="<%= template.form_number %>"
+             data-description="<%= template.description %>">
           <div class="approver-header">
             <h3>
               <%= template.name %>
@@ -63,6 +68,45 @@
                   <span class="label">Created:</span>
                   <span class="value"><%= template.created_at.strftime("%m/%d/%Y at %I:%M %p") %></span>
                 </div>
+
+                <%# The metadata the sidebar's Advanced Search narrows on. Only
+                    what has been set is listed — a row reading "not set" for
+                    every form would bury the ones that are. %>
+                <% if template.form_number.present? %>
+                  <div class="detail-row">
+                    <span class="label">Form Number:</span>
+                    <span class="value"><%= template.form_number %></span>
+                  </div>
+                <% end %>
+
+                <% if template.form_type.present? %>
+                  <div class="detail-row">
+                    <span class="label">Form Type:</span>
+                    <span class="value"><%= template.form_type %></span>
+                  </div>
+                <% end %>
+
+                <% org_path = form_finder.org_path(template) %>
+                <% if org_path.present? %>
+                  <div class="detail-row">
+                    <span class="label">Organization:</span>
+                    <span class="value"><%= org_path %></span>
+                  </div>
+                <% end %>
+
+                <% if template.tags_array.any? %>
+                  <div class="detail-row">
+                    <span class="label">Tags:</span>
+                    <span class="value"><%= template.tags_array.join(", ") %></span>
+                  </div>
+                <% end %>
+
+                <% if template.description.present? %>
+                  <div class="detail-row">
+                    <span class="label">Description:</span>
+                    <span class="value"><%= template.description %></span>
+                  </div>
+                <% end %>
               </div>
 
               <div class="approval-actions">

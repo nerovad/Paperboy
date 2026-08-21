@@ -6,26 +6,15 @@
 <!-- Overlay -->
 <div class="sidebar-overlay" data-controller="sidebar" data-action="click->sidebar#close"></div>
 
-<div class="sidebar" data-controller="sidebar-search advanced-search"
-     data-advanced-search-org-labels-value="<%= OrgLabels.js_config.to_json %>">
-  <%= render "shared/app_switcher" %>
-  <% if current_user %>
-    <input
-      type="text"
-      placeholder="Search forms, fields, tags..."
-      data-sidebar-search-target="input"
-      data-action="input->sidebar-search#filter"
-      class="sidebar-search-input"
-    />
+<%
+  # Worked out before the sidebar element itself, because Advanced Search reads
+  # its org tree from an attribute on it. Nothing here runs for a signed-out
+  # visitor: the ACL lookups below need somebody to ask about.
+  available_forms = []
+  templates_by_name = {}
+  form_finder = nil
 
-    <%# The box above narrows the list of forms you can fill out; this searches
-        forms already submitted, and lands on the Submissions list. %>
-    <button type="button"
-            class="btn secondary compact pb-advanced-trigger<%= ' has-filters' if form_search.advanced? %>"
-            data-action="advanced-search#open">
-      Advanced Search<%= " •" if form_search.advanced? %>
-    </button>
-    <%
+  if current_user
     # Map legacy form names to ACL keys
     legacy_form_key_map = {
       "Creative Job Request" => "creative_job_request",
@@ -55,13 +44,10 @@
 
     available_forms = legacy_forms.dup
 
-    # Cache form templates with their field labels and tags for search
-    form_field_labels = {}
-    form_tags = {}
-    Forms::Template.active.includes(:form_fields).each do |template|
-      form_field_labels[template.name] = template.form_fields.pluck(:label).join(", ")
-      form_tags[template.name] = template.tags_array.join(", ")
-    end
+    # Every template that could back a link, keyed by the name the link carries.
+    # A legacy form above may also have a template row — it is the same form, so
+    # it searches on that row's metadata rather than as an untagged one.
+    templates_by_name = Forms::Template.active.includes(:form_fields).index_by(&:name)
 
     # Resolve the route path for a Forms::Template.
     # Tries the standard _form convention first, then falls back
@@ -76,27 +62,70 @@
 
     # Add form templates — non-admins only see those granted by ACL
     # Archived templates are excluded from the sidebar but remain in Manage Form Templates.
-    Forms::Template.active.each do |template|
+    templates_by_name.each_value do |template|
       path = resolve_path.call(template)
       next unless path
       next if available_forms.any? { |f| f[0] == template.name }
       next if !system_admin? && !form_perm_keys&.include?(template.id.to_s)
       available_forms << [template.name, path]
     end
-    %>
+
+    # Facets are built from the templates behind the links actually rendered, so
+    # the panel can only ever offer a choice that has something to find.
+    form_finder = FormFinder.new(available_forms.filter_map { |name, _| templates_by_name[name] })
+  end
+%>
+<div class="sidebar"
+     <%= tag.attributes(data: { controller: "sidebar-search advanced-search",
+                                "advanced-search-org-labels-value": OrgLabels.js_config.to_json,
+                                "advanced-search-org-tree-value": form_finder.org_tree.to_json }) if form_finder %>>
+  <%= render "shared/app_switcher" %>
+  <% if current_user %>
+    <input
+      type="text"
+      placeholder="Search forms, numbers, fields, tags..."
+      data-sidebar-search-target="input"
+      data-action="input->sidebar-search#filter"
+      class="sidebar-search-input"
+    />
+
+    <%# Both controls narrow the same list of forms you can fill out: the box
+        above matches text, this one filters on the metadata an admin set in
+        the form builder. They compose — a search inside a narrowed list. %>
+    <button type="button"
+            class="btn secondary compact pb-advanced-trigger"
+            data-advanced-search-target="trigger"
+            data-action="advanced-search#open">
+      Advanced Search
+    </button>
+
     <div data-sidebar-search-target="formsList">
       <% available_forms.sort_by { |f| f[0] }.each do |label, path| %>
+        <% template = templates_by_name[label] %>
         <%= link_to label, path, class: "nav-link",
             data: {
               turbo_frame: "main-content",
               sidebar_search_target: "formLink",
-              fields: form_field_labels[label] || "",
-              tags: form_tags[label] || ""
+              advanced_search_target: "formLink",
+              fields: template ? template.form_fields.map(&:label).join(", ") : "",
+              tags: template&.tags_array&.join(", ") || "",
+              number: template&.form_number.to_s,
+              description: template&.description.to_s,
+              form_type: template&.form_type.to_s,
+              agency: template&.agency_id.to_s,
+              division: template&.division_id.to_s,
+              department: template&.department_id.to_s,
+              unit: template&.unit_id.to_s
             } %>
       <% end %>
+      <%# Shown only when the search box and Advanced Search between them leave
+          nothing, so a list that has gone empty says why. %>
+      <p class="sidebar-p sidebar-empty" data-sidebar-search-target="emptyState" hidden>
+        No forms match.
+      </p>
     </div>
 
-    <%= render "shared/advanced_search_modal" %>
+    <%= render "shared/advanced_search_modal", form_finder: form_finder %>
   <% else %>
     <p class="sidebar-p">Please log in to access forms.</p>
   <% end %>

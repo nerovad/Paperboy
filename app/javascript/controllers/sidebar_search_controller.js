@@ -1,8 +1,22 @@
 // app/javascript/controllers/sidebar_search_controller.js
 import { Controller } from "@hotwired/stimulus"
 
+// The metadata a form link carries, in the order a match is preferred: the
+// form's own name first, then its official number, its tags, its field labels
+// and finally its description. `bonus` keeps that order even when a weaker
+// source happens to score the tighter match, and `hint` is the label shown
+// beside the form name to explain why a form is in the list at all when the
+// match was not on its name.
+const MATCH_SOURCES = [
+  { key: "originalName", bonus: 50, multi: false, hint: null, hintClass: null },
+  { key: "number", bonus: 40, multi: false, hint: "No.", hintClass: "matched-tag" },
+  { key: "tags", bonus: 30, multi: true, hint: "Tag", hintClass: "matched-tag" },
+  { key: "fields", bonus: 0, multi: true, hint: "Field", hintClass: "matched-field" },
+  { key: "description", bonus: 0, multi: false, hint: null, hintClass: null }
+]
+
 export default class extends Controller {
-  static targets = ["input", "formLink", "formsList", "item"]
+  static targets = ["input", "formLink", "formsList", "item", "emptyState"]
   static values = { debounce: { type: Number, default: 0 } }
 
   connect() {
@@ -39,64 +53,51 @@ export default class extends Controller {
     const searchTerm = this.inputTarget.value.toLowerCase().trim()
 
     if (searchTerm === "") {
-      // Show all links, remove highlighting, and restore alphabetical order
+      // Show every link the facets still allow, remove highlighting, and
+      // restore alphabetical order.
       const links = [...this.formLinkTargets]
       links.sort((a, b) => a.dataset.originalName.localeCompare(b.dataset.originalName))
       links.forEach(link => {
-        link.style.display = ""
+        link.style.display = this.facetHidden(link) ? "none" : ""
         if (!link.hasAttribute("data-search-card")) {
           link.innerHTML = link.dataset.originalName
         }
         this.formsListTarget.appendChild(link)
       })
+      this.updateEmptyState()
       return
     }
 
-    // Score and filter links (search form name, field labels, and tags)
+    // Score every link against each of its metadata sources and keep its best
+    // match. MATCH_SOURCES is in priority order, so a tie goes to the stronger
+    // source and a name match still wins a field match of equal tightness.
     const scored = this.formLinkTargets.map(link => {
-      const formName = link.dataset.originalName
-      const fields = link.dataset.fields || ""
-      const tags = link.dataset.tags || ""
+      let best = { score: 0, matches: [], hint: null, hintClass: null, matchedValue: null, isName: false }
 
-      // Match against form name
-      const nameResult = this.fuzzyMatch(searchTerm, formName)
+      MATCH_SOURCES.forEach(source => {
+        const raw = link.dataset[source.key] || ""
+        if (!raw) return
 
-      // Match against field labels (search each field separately)
-      let bestFieldMatch = { matches: [], score: 0, fieldName: null }
-      if (fields) {
-        const fieldList = fields.split(", ")
-        for (const field of fieldList) {
-          const fieldResult = this.fuzzyMatch(searchTerm, field)
-          if (fieldResult.score > bestFieldMatch.score) {
-            bestFieldMatch = { ...fieldResult, fieldName: field }
+        const candidates = source.multi ? raw.split(", ") : [raw]
+        candidates.forEach(candidate => {
+          const result = this.fuzzyMatch(searchTerm, candidate)
+          if (result.score === 0) return
+
+          const score = result.score + source.bonus
+          if (score <= best.score) return
+
+          best = {
+            score,
+            matches: result.matches,
+            hint: source.hint,
+            hintClass: source.hintClass,
+            matchedValue: candidate,
+            isName: source.key === "originalName"
           }
-        }
-      }
+        })
+      })
 
-      // Match against tags (search each tag separately)
-      let bestTagMatch = { matches: [], score: 0, tagName: null }
-      if (tags) {
-        const tagList = tags.split(", ")
-        for (const tag of tagList) {
-          const tagResult = this.fuzzyMatch(searchTerm, tag)
-          if (tagResult.score > bestTagMatch.score) {
-            bestTagMatch = { ...tagResult, tagName: tag }
-          }
-        }
-      }
-
-      // Use the better match (name match gets priority bonus, then tags, then fields)
-      const nameScore = nameResult.score > 0 ? nameResult.score + 50 : 0
-      const tagScore = bestTagMatch.score > 0 ? bestTagMatch.score + 30 : 0
-      const fieldScore = bestFieldMatch.score
-
-      if (nameScore >= tagScore && nameScore >= fieldScore) {
-        return { link, formName, ...nameResult, matchedField: null, matchedTag: null }
-      } else if (tagScore >= fieldScore) {
-        return { link, formName, matches: [], score: tagScore, matchedField: null, matchedTag: bestTagMatch.tagName }
-      } else {
-        return { link, formName, matches: [], score: fieldScore, matchedField: bestFieldMatch.fieldName, matchedTag: null }
-      }
+      return { link, formName: link.dataset.originalName, ...best }
     })
 
     // Sort by score (higher is better), then alphabetically
@@ -106,19 +107,22 @@ export default class extends Controller {
     })
 
     // Reorder and display links
-    scored.forEach(({ link, formName, matches, score, matchedField, matchedTag }) => {
+    scored.forEach(({ link, formName, matches, score, hint, hintClass, matchedValue, isName }) => {
       const isCard = link.hasAttribute("data-search-card")
 
-      if (score > 0) {
+      // A form the facets have excluded stays out however well its text
+      // matches — Advanced Search is the narrower question, and a search
+      // inside it should never reach back past it.
+      if (score > 0 && !this.facetHidden(link)) {
         link.style.display = ""
         // Only modify innerHTML for simple link targets (sidebar), not complex cards
         if (!isCard) {
-          if (matchedTag) {
-            link.innerHTML = `${this.escapeHtml(formName)}<span class="matched-tag">Tag: ${this.escapeHtml(matchedTag)}</span>`
-          } else if (matchedField) {
-            link.innerHTML = `${this.escapeHtml(formName)}<span class="matched-field">Field: ${this.escapeHtml(matchedField)}</span>`
-          } else {
+          if (isName) {
             link.innerHTML = this.highlightMatches(formName, matches)
+          } else if (hint) {
+            link.innerHTML = `${this.escapeHtml(formName)}<span class="${hintClass}">${hint}: ${this.escapeHtml(matchedValue)}</span>`
+          } else {
+            link.innerHTML = this.escapeHtml(formName)
           }
         }
       } else {
@@ -130,6 +134,23 @@ export default class extends Controller {
       // Reorder in DOM
       this.formsListTarget.appendChild(link)
     })
+
+    this.updateEmptyState()
+  }
+
+  // Whether Advanced Search has ruled this form out. Set by
+  // advanced_search_controller.js; absent everywhere else, which reads as
+  // "nothing has been ruled out".
+  facetHidden(link) {
+    return link.dataset.facetHidden === "true"
+  }
+
+  // Says so when the filters between them leave nothing, rather than leaving a
+  // blank space that reads as a list that failed to load.
+  updateEmptyState() {
+    if (!this.hasEmptyStateTarget) return
+
+    this.emptyStateTarget.hidden = this.formLinkTargets.some(link => link.style.display !== "none")
   }
 
   filterItems() {

@@ -1,14 +1,15 @@
 # frozen_string_literal: true
 
-# Advanced Search over submitted forms — what the sidebar's Advanced Search
-# modal sends and what the Submissions list applies.
+# Search over submitted forms — what the Submissions list applies, and the org
+# window a visibility grant opens onto it.
 #
-# The modal is a GET to the Submissions index using the same parameter names
-# its filter bar already uses, so a search is always reproducible from its URL,
-# can be bookmarked or saved, and the two controls can never disagree about
-# what a filter means. The bar's dropdowns are single-value; the modal sends
-# arrays for the same params, which every consumer handles (see
-# Filterable#apply_filters).
+# Every filter is read straight from the request's `filter_` params, so a
+# search is always reproducible from its URL and can be bookmarked or saved.
+# The list's own dropdowns are single-value; a caller may send arrays for the
+# same params, which every consumer handles (see Filterable#apply_filters).
+#
+# The sidebar's Advanced Search is a different question entirely — it narrows
+# the list of blank forms you can fill out, and belongs to FormFinder.
 #
 #   search = FormSearch.new(params)
 #   scope  = search.apply_org(LeaveOfAbsenceForm, scope)   # SQL narrowing
@@ -70,8 +71,8 @@ class FormSearch
     scope
   end
 
-  # True when anything beyond the plain list is set. The sidebar uses this to
-  # mark the Advanced Search button as carrying filters.
+  # True when anything beyond the plain list is set. The Submissions list uses
+  # this to decide whether to report the search above its results.
   def advanced?
     org_filters.any? || form_types.any? || statuses.any? || categories.any?
   end
@@ -93,9 +94,9 @@ class FormSearch
     OrgLabels.label(level, agency)
   end
 
-  # --- Option lists for the modal -------------------------------------------
-  # Built here rather than in a controller because the modal lives in the
-  # sidebar and so renders on every page, whichever controller drew it.
+  # --- Option lists for the org cascade --------------------------------------
+  # Class methods because the cascade partial renders wherever a screen needs
+  # to narrow to part of the county, under whichever controller drew it.
 
   def self.agency_options
     Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
@@ -117,31 +118,6 @@ class FormSearch
     return [] if department.blank?
 
     Coa::Unit.where(department_id: department).order(:unit_id).map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
-  end
-
-  # Every form that can appear in the Submissions list: the hardcoded ones and
-  # every template with statuses configured. A hardcoded form that also has a
-  # template row is listed once, under the name its rows carry — the loaders
-  # skip the template for exactly the same reason.
-  def self.form_type_options
-    legacy = SubmissionsController::LEGACY_FORMS
-    templates = Forms::Template.joins(:statuses)
-                               .where.not(class_name: legacy.map { |form| form[:model] })
-                               .distinct.pluck(:name)
-    (legacy.map { |form| form[:type] } + templates).uniq.sort_by(&:downcase)
-  end
-
-  # Status names as the list renders them, so a checked box matches a row.
-  # Both the configured statuses and the predefined set are offered — the
-  # hardcoded forms use the latter without owning Forms::TemplateStatus rows.
-  def self.status_options
-    configured = Forms::TemplateStatus.distinct.pluck(:name)
-    predefined = Forms::TemplateStatus::PREDEFINED_STATUSES.map { |status| status[:name] }
-    (configured + predefined).map { |name| name.to_s.tr('_', ' ').titleize }.uniq.sort_by(&:downcase)
-  end
-
-  def self.category_options
-    Forms::TemplateStatus::VALID_CATEGORIES.map { |category| category.tr('_', ' ').titleize }
   end
 
   private
