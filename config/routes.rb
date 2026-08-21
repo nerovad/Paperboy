@@ -133,6 +133,8 @@ Rails.application.routes.draw do
       get :details
       post :move_to_staging
       delete :remove_from_staging
+      post :move_to_shipping_station
+      delete :remove_from_shipping_station
     end
     resource :data_refresh, only: %i[show update] do
       post :restart

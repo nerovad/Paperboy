@@ -43,6 +43,20 @@ module P2m
       render json: { message: e.message }, status: :unprocessable_content
     end
 
+    def move_to_shipping_station
+      count = OmsShippingStation.new.copy(**staging_parameters)
+      render json: { message: "#{count} Mail.dat file copied to 00_ShippingStation." }
+    rescue ArgumentError, RuntimeError => e
+      render json: { message: e.message }, status: :unprocessable_content
+    end
+
+    def remove_from_shipping_station
+      count = OmsShippingStation.new.remove(**staging_parameters)
+      render json: { message: "#{count} Mail.dat file removed from 00_ShippingStation." }
+    rescue ArgumentError, RuntimeError => e
+      render json: { message: e.message }, status: :unprocessable_content
+    end
+
     private
 
     def staging_parameters
