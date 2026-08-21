@@ -58,8 +58,7 @@ filename order and builds:
   group. Stage selectors may be omitted, a DSL name, or a group name; for
   example, `rake DataRunner:oneshot chart_of_accounts` processes all DSL
   entries in that group.
-- Use a top-level `sop` to provide download instructions for DSLs in the
-  `billing` or `mail_center_and_warehousing` groups:
+- Use a top-level `sop` to provide download instructions for any DSL:
 
 ```ruby
 sop: {
