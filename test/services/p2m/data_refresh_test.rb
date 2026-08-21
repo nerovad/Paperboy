@@ -6,9 +6,12 @@ module P2m
   class DataRefreshTest < ActiveSupport::TestCase
     test 'configures the requested Data Runner groups' do
       labels = DataRefresh::GROUPS.transform_values { |configuration| configuration.fetch(:label) }
+      defaults = DataRefresh::GROUPS.transform_values { |configuration| configuration.fetch(:default) }
 
       assert_equal 'Print 2 Mail', labels.fetch('print_2_mail')
       assert_equal 'Print 2 Mail Billing Data', labels.fetch('print_2_mail_billing_data')
+      refute defaults.fetch('print_2_mail')
+      assert defaults.fetch('print_2_mail_billing_data')
     end
 
     test 'refreshes enabled DSLs from selected groups' do
