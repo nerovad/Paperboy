@@ -1,49 +1,6 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
-cd "$(dirname "${BASH_SOURCE[0]}")"
-
-app_root=$PWD
-
-find_processes() {
-  local process_dir process_cwd command
-
-  for process_dir in /proc/[0-9]*; do
-    process_cwd=$(readlink "$process_dir/cwd" 2>/dev/null) || continue
-    [[ $process_cwd == "$app_root" ]] || continue
-
-    command=$(tr '\0' ' ' < "$process_dir/cmdline" 2>/dev/null) || continue
-    if [[ $command == *"bin/rails server"* || $command == puma\ * ||
-          $command == *"/sidekiq "* || $command == sidekiq\ * ]]; then
-      printf '%s\n' "${process_dir##*/}"
-    fi
-  done
-}
-
-stop_servers() {
-  local -a pids=()
-  local all_stopped
-  local pid
-
-  mapfile -t pids < <(find_processes)
-  ((${#pids[@]} == 0)) && return
-
-  kill -TERM "${pids[@]}" 2>/dev/null || true
-  for _ in {1..50}; do
-    all_stopped=true
-    for pid in "${pids[@]}"; do
-      if kill -0 "$pid" 2>/dev/null; then
-        all_stopped=false
-        break
-      fi
-    done
-    $all_stopped && return
-    sleep 0.1
-  done
-
-  kill -KILL "${pids[@]}" 2>/dev/null || true
-}
-
+source stopservers
 stop_servers
 {
   bundle check || bundle install

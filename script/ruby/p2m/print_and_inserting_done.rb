@@ -3,8 +3,8 @@
 
 require 'date'
 require 'fileutils'
-require 'find'
 require 'json'
+require 'open3'
 require 'optparse'
 require 'pathname'
 require 'set'
@@ -32,12 +32,16 @@ module P2m
       @report_path = Pathname.new(report_path).expand_path
     end
 
-    def call
+    def call(stage: true)
       validate!
-      rows = findings
-      mark_staging_conflicts(rows)
-      stage_first_ready(rows) unless queued_oms_numbers.any?
-      write_report(rows)
+      started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      rows = stage ? findings : scan_files
+      elapsed_seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at
+      if stage
+        mark_staging_conflicts(rows)
+        stage_first_ready(rows) if queued_oms_numbers.empty?
+      end
+      write_report(rows, elapsed_seconds: elapsed_seconds, review_pending: !stage)
       rows
     end
 
@@ -54,22 +58,46 @@ module P2m
     end
 
     def findings
-      markers.group_by { |marker| oms_number(marker) }.sort.map do |number, matches|
+      marker_paths = markers
+      record_files(marker_paths)
+      marker_paths.group_by { |marker| oms_number(marker) }.sort.map do |number, matches|
         build_row(number, matches)
       end
     end
 
-    def markers
-      matches = []
-      Find.find(source_root.to_s) do |name|
-        path = Pathname.new(name)
-        if path.directory? && inside_data_runner?(path)
-          Find.prune
-        elsif path.file? && path.basename.to_s.match?(MARKER_PATTERN) && within_range?(path)
-          matches << path
-        end
+    def scan_files
+      record_files(markers)
+      []
+    end
+
+    def record_files(marker_paths)
+      @files = marker_paths.sort.map do |path|
+        {
+          'name' => path.basename.to_s,
+          'modified_at' => path.mtime.iso8601,
+          'directory' => path.dirname.to_s
+        }
       end
-      matches
+      @found_count = @files.length
+    end
+
+    def markers
+      output, error, status = Open3.capture3(*fd_command)
+      raise "Mail.dat search failed: #{error.strip}" unless status.success?
+
+      output.split("\0").filter_map do |name|
+        path = Pathname.new(name)
+        path if !inside_data_runner?(path) && path.basename.to_s.match?(MARKER_PATTERN) && within_range?(path)
+      end
+    end
+
+    def fd_command
+      [
+        'fd', '--no-ignore', '--type', 'f', '--extension', 'zip', '--print0',
+        '--changed-within', start_date.iso8601,
+        '--changed-before', (end_date + 1).iso8601,
+        "^Mail\\.dat_#{OMS_NUMBER}\\.zip$", source_root.to_s
+      ]
     end
 
     def within_range?(path) = path.mtime.to_date.between?(start_date, end_date)
@@ -153,18 +181,26 @@ module P2m
     end
 
     def copy_without_overwrite(source, destination)
-      return if destination.file? && FileUtils.compare_file(source, destination)
+      return if matching_file_metadata?(source, destination)
       raise "destination already exists with different contents: #{destination}" if destination.exist?
 
       FileUtils.cp(source, destination, preserve: true)
     end
 
-    def write_report(rows)
+    def matching_file_metadata?(source, destination)
+      destination.file? && source.size == destination.size && source.mtime == destination.mtime
+    end
+
+    def write_report(rows, elapsed_seconds:, review_pending:)
       FileUtils.mkdir_p(report_path.dirname)
       report = {
         'start_date' => start_date.iso8601,
         'end_date' => end_date.iso8601,
         'generated_at' => Time.now.utc.iso8601,
+        'found_count' => @found_count,
+        'files' => @files,
+        'search_seconds' => elapsed_seconds.round(3),
+        'review_pending' => review_pending,
         'rows' => rows
       }
       Tempfile.create(['p2m-oms-report', '.json'], report_path.dirname) do |temp|
@@ -191,6 +227,7 @@ def options
     parser.on('--start-date DATE') { |value| values[:start_date] = value }
     parser.on('--end-date DATE') { |value| values[:end_date] = value }
     parser.on('--report PATH') { |value| values[:report_path] = value }
+    parser.on('--scan-only') { values[:scan_only] = true }
   end.parse!
   values[:report_path] ||= File.join(values[:data_runner_root], 'p2m_oms_backfill_report.json')
   values
@@ -198,6 +235,7 @@ end
 
 if $PROGRAM_NAME == __FILE__
   arguments = options
-  rows = P2m::OmsBackfileStager.new(**arguments).call
+  scan_only = arguments.delete(:scan_only)
+  rows = P2m::OmsBackfileStager.new(**arguments).call(stage: !scan_only)
   puts JSON.generate('count' => rows.length, 'report' => arguments[:report_path])
 end
