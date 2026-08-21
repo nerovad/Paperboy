@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class DslCatalog
-  SOP_GROUPS = %w[billing chart_of_accounts mail_center_and_warehousing].freeze
-
   Entry = Data.define(:key, :slug, :path, :config) do
     def group
       config.dig(:group, :name).presence
@@ -13,8 +11,6 @@ class DslCatalog
     end
 
     def sop
-      return unless SOP_GROUPS.include?(group)
-
       configured = config[:sop]
       return if configured.nil?
 

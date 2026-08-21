@@ -63,6 +63,8 @@ module P2m
         assert_equal '/mnt/o/Outputs/DataRunner/00_SentToUSPS', dsl.location
         assert dsl.script
         assert dsl.current
+        assert_equal 'Mail.dat sent to USPS', dsl.sop.fetch(:reference_title)
+        assert_equal :downloaded_file, dsl.sop.fetch(:reference_path)
       end
     end
   end
