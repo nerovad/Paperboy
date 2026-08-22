@@ -29,6 +29,17 @@ module P2m
       end.sort
     end
 
+    def tray_labels(directory:, oms_number:)
+      path = resolve_directory(directory)
+      filename = call(directory: directory, oms_number: oms_number).find do |name|
+        normalized_name = name.downcase
+        normalized_name.end_with?('.pdf') && normalized_name.gsub(/[^a-z0-9]+/, ' ').include?('tray labels')
+      end
+      raise ArgumentError, 'Tray Labels PDF not found' unless filename
+
+      path.join(filename)
+    end
+
     private
 
     attr_reader :root

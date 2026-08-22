@@ -24,4 +24,35 @@ class P2mOmsAssociatedFilesTest < Minitest::Test
       assert_equal expected, files
     end
   end
+
+  def test_finds_the_tray_labels_pdf
+    Dir.mktmpdir do |root|
+      directory = Pathname.new(root).join('job')
+      directory.mkpath
+      directory.join('50000001-mail-piece.pdf').write('mail piece')
+      tray_labels = directory.join('Tray_Labels_50000001.pdf')
+      tray_labels.write('tray labels')
+
+      file = P2m::OmsAssociatedFiles.new(root: root).tray_labels(
+        directory: 'job', oms_number: '50000001'
+      )
+
+      assert_equal tray_labels, file
+    end
+  end
+
+  def test_raises_when_tray_labels_pdf_is_missing
+    Dir.mktmpdir do |root|
+      directory = Pathname.new(root).join('job')
+      directory.mkpath
+
+      error = assert_raises(ArgumentError) do
+        P2m::OmsAssociatedFiles.new(root: root).tray_labels(
+          directory: 'job', oms_number: '50000001'
+        )
+      end
+
+      assert_equal 'Tray Labels PDF not found', error.message
+    end
+  end
 end

@@ -131,6 +131,7 @@ Rails.application.routes.draw do
     get 'dashboard', to: 'dashboard#index', as: :dashboard
     resource :stage_data, only: %i[show create] do
       get :details
+      get :print_tray_labels
       post :move_to_staging
       delete :remove_from_staging
       post :move_to_shipping_station

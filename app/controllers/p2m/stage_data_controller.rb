@@ -29,6 +29,13 @@ module P2m
       render plain: e.message, status: :unprocessable_content
     end
 
+    def print_tray_labels
+      file = OmsAssociatedFiles.new.tray_labels(**staging_parameters)
+      send_file file, filename: file.basename.to_s, type: 'application/pdf', disposition: 'inline'
+    rescue ArgumentError, ActionController::ParameterMissing => e
+      render plain: e.message, status: :unprocessable_content
+    end
+
     def move_to_staging
       count = OmsStaging.new.stage(**staging_parameters)
       render json: { message: "#{count} files copied to 00_SentToUSPS." }
