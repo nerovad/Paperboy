@@ -5,9 +5,10 @@
   <% end %>
 </ul>
 <div class="p2m-maildat-actions">
-  <button type="button" class="btn pdf compact" data-action="data-refresh-groups#feedback"
-          data-feedback-action="Print Tray Labels"
-          data-feedback-oms="<%= @oms_number %>">Print Tray Labels</button>
+  <%= link_to "Print Tray Labels",
+              print_tray_labels_p2m_stage_data_path(directory: params[:directory],
+                                                    oms_number: @oms_number),
+              class: "btn pdf compact", target: "_blank", rel: "noopener" %>
   <button type="button" class="btn reassign compact"
           data-action="data-refresh-groups#staging"
           data-staging-url="<%= move_to_shipping_station_p2m_stage_data_path %>"

@@ -13,5 +13,6 @@ class DataRefreshesControllerTest < ActiveSupport::TestCase
   test 'exposes Print 2 Mail stage data actions' do
     assert_includes P2m::StageDataController.action_methods, 'show'
     assert_includes P2m::StageDataController.action_methods, 'create'
+    assert_includes P2m::StageDataController.action_methods, 'print_tray_labels'
   end
 end
