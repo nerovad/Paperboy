@@ -3,7 +3,7 @@
 </div>
 
 <div class="form-wrapper p2m-stage-data">
-  <section class="p2m-stage-card" aria-labelledby="p2m-date-range-title">
+  <section class="p2m-stage-card p2m-stage-card--compact" aria-labelledby="p2m-date-range-title">
     <h2 id="p2m-date-range-title">Date Range</h2>
 
     <%= form_with url: p2m_stage_data_path, method: :post,
@@ -25,9 +25,9 @@
       </div>
 
       <div class="form-actions">
-        <%= submit_tag "Confirm", class: "btn approve" %>
-        <%= button_tag "Reset", type: :reset, class: "btn warning" %>
-        <%= link_to "Cancel", p2m_root_path, class: "btn" %>
+        <%= submit_tag "Confirm", class: "btn approve compact" %>
+        <%= button_tag "Reset", type: :reset, class: "btn warning compact" %>
+        <%= link_to "Cancel", p2m_root_path, class: "btn compact" %>
       </div>
     <% end %>
   </section>
