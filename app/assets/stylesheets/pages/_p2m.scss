@@ -101,14 +101,14 @@
 }
 
 .p2m-maildat-grid {
-  max-height: min(34rem, calc(100vh - 32rem));
+  max-height: unquote("min(30.6rem, calc(100vh - 32rem))");
   overflow: auto;
   border: 1px solid $neutral-border-light;
   scrollbar-width: thin;
   scrollbar-color: $neutral-400 $surface-control;
 
   @media (max-height: 800px) {
-    max-height: 22rem;
+    max-height: 19.8rem;
   }
 }
 
