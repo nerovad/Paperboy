@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module P2m
-  class OmsUploadFinding < ApplicationRecord
+  class OmsUploadFinding < GsabssBase
     self.table_name = 'p2m_oms_upload_findings'
 
     belongs_to :oms_upload, class_name: 'P2m::OmsUpload', inverse_of: :findings
