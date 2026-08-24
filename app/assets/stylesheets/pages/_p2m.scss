@@ -160,12 +160,17 @@
 }
 
 .p2m-row-trigger {
-  margin-right: .5rem;
   padding: 0;
   border: 0;
   background: transparent;
   color: $brand-navy;
   cursor: pointer;
+}
+
+.p2m-maildat-table .p2m-expand-column {
+  width: 2.5rem;
+  padding-right: .5rem;
+  padding-left: .75rem;
 }
 
 .p2m-row-trigger[aria-expanded="true"] span { display: inline-block; transform: rotate(90deg); }

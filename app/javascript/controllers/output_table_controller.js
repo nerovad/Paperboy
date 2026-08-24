@@ -3,7 +3,9 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   connect() {
     if (this.element.dataset.simpleSort === "true") {
-      this.sortColumn(0, "descending")
+      const initialHeader = this.element.querySelector('thead th[data-column-index][aria-sort="descending"]') ||
+        this.element.querySelector("thead th[data-column-index]")
+      if (initialHeader) this.sortColumn(Number(initialHeader.dataset.columnIndex), "descending")
       return
     }
 
