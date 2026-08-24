@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .p2m-form-header {
   max-width: 900px;

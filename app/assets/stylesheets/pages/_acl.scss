@@ -1,5 +1,5 @@
 /* Pages: ACL Group Management */
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .acl-management {
   max-width: 1100px;

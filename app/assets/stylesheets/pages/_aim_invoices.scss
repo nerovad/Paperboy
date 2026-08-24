@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 /* #main-content is the app's scroll container: 100vh, border-box, with an
    80px top padding for the fixed profile bar (60px under 768px). Sizing to

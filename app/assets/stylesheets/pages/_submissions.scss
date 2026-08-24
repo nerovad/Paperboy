@@ -1,5 +1,5 @@
 @use "sass:color";
-@import "base/tokens";
+@use "base/tokens" as *;
 
 /* Submissions page wrapper — flex column so filters stay fixed and only the table scrolls */
 .submissions-page-wrapper {

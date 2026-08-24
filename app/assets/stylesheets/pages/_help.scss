@@ -1,5 +1,5 @@
 @use "sass:color";
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .help-tabs {
   display: flex;

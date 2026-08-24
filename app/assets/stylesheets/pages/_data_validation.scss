@@ -1,5 +1,5 @@
 /* Pages: Data Validation */
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .data-validation-wrapper {
   max-width: 1400px;

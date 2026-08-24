@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 /* Fixed "Powered by GSA" signature, bottom-right of every page */
 .powered-by-gsa {

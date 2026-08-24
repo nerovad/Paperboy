@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 // File Preview Grid (upload form) — shared across all forms with media attachments
 .file-preview-grid {
