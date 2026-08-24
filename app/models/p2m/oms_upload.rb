@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module P2m
-  class OmsUpload < ApplicationRecord
+  class OmsUpload < GsabssBase
     self.table_name = 'p2m_oms_uploads'
 
     REMOVABLE_STATUSES = %w[staging staged validating ready needs_attention failed removed].freeze
