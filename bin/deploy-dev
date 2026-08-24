@@ -13,13 +13,16 @@ git pull origin "$BRANCH"
 echo "==> Installing gems (including development/test)..."
 bundle install
 
-# development.rb sets config.assets.debug = true, so Sprockets resolves assets
-# live from source and never reads a precompiled manifest. Precompiling here
-# would be dead weight -- and the stale manifest it leaves behind is what used
-# to force an assets:clobber before CSS edits became visible. Dart Sass output
-# is gitignored, so it does still need to be built once after a checkout.
-echo "==> Building CSS with Dart Sass..."
-RAILS_ENV=development bundle exec rails dartsass:build
+# nginx serves /assets/ straight from disk on this box (see
+# config/nginx/dev-gsa-forms) and never falls back to Rails, so the digested
+# files have to exist in public/assets or every stylesheet and script 404s.
+# assets:precompile runs dartsass:build first, and assets:clobber runs
+# dartsass:clobber, so the Dart Sass output is covered by both.
+echo "==> Clobbering old assets..."
+RAILS_ENV=development bundle exec rails assets:clobber
+
+echo "==> Precompiling assets..."
+RAILS_ENV=development bundle exec rails assets:precompile
 
 echo "==> Restarting Puma..."
 sudo systemctl restart paperboy-dev
