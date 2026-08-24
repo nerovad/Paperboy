@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_24_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_24_000003) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -730,6 +730,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_24_000002) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "status", default: "in_progress", null: false
+    t.string "change_or_service_requested"
+    t.string "old_location_or_address"
+    t.string "new_location_or_address"
+    t.text "description_of_new_service"
+    t.string "object"
+    t.string "activity"
+    t.string "function"
+    t.string "program"
+    t.string "phase"
+    t.string "task"
+    t.string "monthly_cost"
+    t.string "annual_cost"
   end
 
   create_table "org_permissions", force: :cascade do |t|
