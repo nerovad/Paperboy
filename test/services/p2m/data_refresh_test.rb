@@ -8,9 +8,7 @@ module P2m
       labels = DataRefresh::GROUPS.transform_values { |configuration| configuration.fetch(:label) }
       defaults = DataRefresh::GROUPS.transform_values { |configuration| configuration.fetch(:default) }
 
-      assert_equal 'Print 2 Mail', labels.fetch('print_2_mail')
       assert_equal 'Print 2 Mail Billing Data', labels.fetch('print_2_mail_billing_data')
-      refute defaults.fetch('print_2_mail')
       assert defaults.fetch('print_2_mail_billing_data')
     end
 
@@ -25,21 +23,20 @@ module P2m
         def enabled? = true
       end
       catalog = {
-        'print_2_mail' => [entry.new('p2mjobs', 'P2mjobs')],
         'print_2_mail_billing_data' => [entry.new('oms', 'Oms')]
       }
 
       DslCatalog.stub(:grouped, catalog) do
         DataRunner::GroupRefresh.stub(:start!, runner) do
           DataRefresh.run!(
-            { 'print_2_mail' => '1', 'print_2_mail_billing_data' => '1' },
+            { 'print_2_mail_billing_data' => '1' },
             requested_by: 'employee@example.com'
           )
         end
       end
 
       assert_equal DataRefresh::GROUP_RUN_NAME, calls.first.fetch(:group)
-      assert_equal %w[p2mjobs oms], calls.first.fetch(:entries).map(&:slug)
+      assert_equal %w[oms], calls.first.fetch(:entries).map(&:slug)
     end
 
     test 'describes an orchestrated DSL by its queue path' do
@@ -55,7 +52,7 @@ module P2m
         },
         nil
       )
-      catalog = { 'print_2_mail' => [], 'print_2_mail_billing_data' => [entry] }
+      catalog = { 'print_2_mail_billing_data' => [entry] }
 
       DslCatalog.stub(:grouped, catalog) do
         dsl = DataRefresh.groups.last.enabled_dsls.first
@@ -87,7 +84,7 @@ module P2m
 
         DslCatalog.stub(:grouped, { 'print_2_mail_billing_data' => [entry] }) do
           DataRunner::GroupRefresh.stub(:start!, runner) do
-            DataRefresh.run!({ 'print_2_mail' => '0', 'print_2_mail_billing_data' => '1' },
+            DataRefresh.run!({ 'print_2_mail_billing_data' => '1' },
                              requested_by: 'employee@example.com')
           end
         end
