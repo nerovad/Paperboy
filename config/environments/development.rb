@@ -11,16 +11,15 @@ Rails.application.configure do
   # Do not eager load code on boot.
   config.eager_load = false
 
-  # Resolve assets live instead of through a precompiled manifest.
-  # sprockets-rails builds resolve_with as [:manifest, :environment] and checks
-  # :manifest FIRST, so any leftover public/assets manifest silently shadows
-  # edited stylesheets until assets:clobber runs. debug = true drops :manifest.
-  # Pair this with `bin/rails dartsass:watch` (bin/dev starts both).
-  config.assets.debug = true
-
-  # dartsass-rails defaults to compressed, no-source-map output. That is right
-  # for deploys but unreadable in devtools, so build expanded CSS here instead.
-  config.dartsass.build_options = ['--style=expanded', '--embed-source-map', '--embed-sources']
+  # Readable CSS in devtools. Deploys keep dartsass-rails' compressed default.
+  #
+  # Do NOT set config.assets.debug here. The dev server (gsa-linux01) runs this
+  # environment behind nginx, and config/nginx/dev-gsa-forms serves /assets/
+  # from disk with `try_files $uri =404` -- it never proxies to Rails. debug
+  # mode emits /assets/application.debug-<digest>.css, a name assets:precompile
+  # never writes, so every stylesheet would 404 and the app would render
+  # unstyled.
+  config.dartsass.build_options = ['--style=expanded', '--no-source-map']
 
   # Show full error reports.
   config.consider_all_requests_local = true

@@ -62,11 +62,24 @@ regression fails `bundle exec rake test` rather than a deploy.
 Run `bin/dev` — it starts `dartsass:watch` alongside the server, so a
 saved `.scss` rebuilds in about 100ms and a browser refresh shows it.
 
-Do **not** run `assets:precompile` in development. `development.rb` sets
-`config.assets.debug = true` so Sprockets resolves assets live; a
-precompiled `public/assets` manifest takes priority over live resolution
-and silently freezes your CSS until `assets:clobber` runs. That is what
-used to make every CSS change require a clobber-and-recompile cycle.
+Keep `public/assets` empty on your workstation. sprockets-rails resolves
+`[:manifest, :environment]` -- manifest first -- so a precompiled manifest
+takes priority over live compilation and freezes your CSS until
+`assets:clobber` runs. With nothing precompiled, resolution falls through
+to live compilation and the watcher's output is served immediately. If you
+ever precompile locally, `bin/rails assets:clobber` undoes it.
+
+The deploy scripts are a different story: `bin/deploy-dev`,
+`bin/deploy-stage` and `bin/deploy` all clobber and precompile, and must.
+nginx on those boxes serves `/assets/` straight from disk
+(`try_files $uri =404`, see `config/nginx/`) and never falls back to
+Rails, so the digested files have to exist or every asset 404s and the app
+renders as unstyled HTML.
+
+For the same reason, never set `config.assets.debug = true` in
+`development.rb` -- the dev server runs that environment behind nginx, and
+debug mode emits `/assets/application.debug-<digest>.css`, a filename
+`assets:precompile` never writes.
 
 ## Buttons
 
