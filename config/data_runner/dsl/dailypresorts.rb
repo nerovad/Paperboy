@@ -80,7 +80,7 @@
         host: 'GSASQL16',
         database: 'GSABSS',
         schema: 'dbo',
-        table: 'daily_pesorts',
+        table: 'daily_presorts',
         inject: {
           mode: :append,
           reject_existing: %w[omsnumber]
