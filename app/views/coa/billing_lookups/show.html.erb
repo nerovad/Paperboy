@@ -51,6 +51,31 @@
       </div>
     </section>
 
+    <section class="coa-lookup-card" aria-labelledby="account-hierarchy-title"
+             data-coa-billing-lookup-target="hierarchy" hidden>
+      <h2 id="account-hierarchy-title" class="coa-lookup-card__heading">Account Hierarchy</h2>
+      <div class="coa-lookup-card__body">
+        <ul class="coa-account-tree">
+          <li>
+            <span>Agency - <code data-coa-billing-lookup-target="agencyId"></code> - <strong data-coa-billing-lookup-target="agencyName"></strong></span>
+            <ul>
+              <li>
+                <span>Division - <code data-coa-billing-lookup-target="divisionId"></code> - <strong data-coa-billing-lookup-target="divisionName"></strong></span>
+                <ul>
+                  <li>
+                    <span>Department - <code data-coa-billing-lookup-target="departmentId"></code> - <strong data-coa-billing-lookup-target="departmentName"></strong></span>
+                    <ul>
+                      <li><span>Unit - <code data-coa-billing-lookup-target="unitId"></code> - <strong data-coa-billing-lookup-target="unitName"></strong></span></li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </section>
+
     <section class="coa-lookup-card" aria-labelledby="tc60-fields-title"
              data-coa-billing-lookup-target="accountFields" hidden>
       <h2 id="tc60-fields-title" class="coa-lookup-card__heading">TC60 Customer Accounting Fields</h2>
@@ -75,30 +100,6 @@
     </section>
 
     <div class="coa-billing-result" data-coa-billing-lookup-target="result" hidden>
-      <section class="coa-lookup-card" aria-labelledby="account-hierarchy-title">
-        <h2 id="account-hierarchy-title" class="coa-lookup-card__heading">Account Hierarchy</h2>
-        <div class="coa-lookup-card__body">
-          <ul class="coa-account-tree">
-            <li>
-              <span>Agency - <code data-coa-billing-lookup-target="agencyId"></code> - <strong data-coa-billing-lookup-target="agencyName"></strong></span>
-              <ul>
-                <li>
-                  <span>Division - <code data-coa-billing-lookup-target="divisionId"></code> - <strong data-coa-billing-lookup-target="divisionName"></strong></span>
-                  <ul>
-                    <li>
-                      <span>Department - <code data-coa-billing-lookup-target="departmentId"></code> - <strong data-coa-billing-lookup-target="departmentName"></strong></span>
-                      <ul>
-                        <li><span>Unit - <code data-coa-billing-lookup-target="unitId"></code> - <strong data-coa-billing-lookup-target="unitName"></strong></span></li>
-                      </ul>
-                    </li>
-                  </ul>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </section>
-
       <section class="coa-lookup-card" aria-labelledby="billing-account-string-title">
         <h2 id="billing-account-string-title" class="coa-lookup-card__heading">Billing Account String</h2>
         <div class="coa-lookup-card__body">
