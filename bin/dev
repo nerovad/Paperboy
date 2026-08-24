@@ -1,4 +1,22 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-exec './bin/rails', 'server', *ARGV
+# Dart Sass compiles app/assets/stylesheets/application.scss into
+# app/assets/builds/application.css. That build is what Sprockets serves, so the
+# watcher has to run alongside the server or SCSS edits will not show up.
+watcher = spawn('./bin/rails', 'dartsass:watch')
+
+stop_watcher = lambda do
+  Process.kill('TERM', watcher)
+  Process.wait(watcher)
+rescue Errno::ESRCH, Errno::ECHILD
+  nil
+end
+
+Signal.trap('INT') { stop_watcher.call }
+
+begin
+  system('./bin/rails', 'server', *ARGV)
+ensure
+  stop_watcher.call
+end

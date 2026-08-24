@@ -33,3 +33,7 @@ output/data_runner/06_Download_Backup/
 /.gemini/
 /.antigravity/
 CLAUDE.local.md
+
+# Dart Sass build output (compiled from app/assets/stylesheets)
+/app/assets/builds/*
+!/app/assets/builds/.keep
