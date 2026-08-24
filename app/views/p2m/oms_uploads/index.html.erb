@@ -39,37 +39,60 @@
     <p>One row per OMS number and mailer date. Mailed counts indicate records with postage.</p>
 
     <div class="table-wrap p2m-maildat-grid">
-      <table class="submission-table p2m-maildat-table" data-controller="data-refresh-groups">
+      <table class="submission-table p2m-maildat-table"
+             data-controller="output-table data-refresh-groups" data-simple-sort="true">
         <thead>
           <tr>
-            <th>OMS Number</th>
-            <th>Mailer Date</th>
-            <th>Budget Job</th>
-            <th>Input</th>
-            <th>Mailed</th>
-            <th>Non-Mailed</th>
-            <th>Stage Progress</th>
+            <th class="p2m-expand-column" aria-label="Expand"></th>
+            <th aria-sort="descending" data-column-index="1" data-sort-type="number">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">OMS Number</button>
+            </th>
+            <th aria-sort="none" data-column-index="2" data-sort-type="text">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">Date</button>
+            </th>
+            <th aria-sort="none" data-column-index="3" data-sort-type="text">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">JOB NUMBER</button>
+            </th>
+            <th aria-sort="none" data-column-index="4" data-sort-type="number">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">Printed</button>
+            </th>
+            <th aria-sort="none" data-column-index="5" data-sort-type="number">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">Mailed</button>
+            </th>
+            <th aria-sort="none" data-column-index="6" data-sort-type="number">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">UAE</button>
+            </th>
+            <th>Progress</th>
             <th>Findings</th>
           </tr>
         </thead>
         <tbody>
           <% @uploads.each_with_index do |upload, index| %>
             <% detail_id = "p2m-oms-upload-#{upload.id}-details" %>
-            <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>" data-detail-id="<%= detail_id %>">
-              <td>
+            <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>"
+                data-sort-row data-detail-id="<%= detail_id %>">
+              <td class="p2m-expand-column">
                 <button type="button" class="p2m-row-trigger"
                         aria-expanded="false" aria-controls="<%= detail_id %>"
                         aria-label="Show details for OMS <%= upload.oms_number %>"
                         data-action="data-refresh-groups#toggle" data-detail-id="<%= detail_id %>">
                   <span aria-hidden="true">▸</span>
                 </button>
-                <%= upload.oms_number %>
               </td>
-              <td><%= upload.mailer_date.iso8601 %></td>
-              <td><%= upload.budget_job_id.presence || "—" %></td>
-              <td><%= upload.input_record_count || "—" %></td>
-              <td><%= upload.mailed_record_count || "—" %></td>
-              <td><%= upload.non_mailed_record_count || "—" %></td>
+              <td data-sort-value="<%= upload.oms_number %>"><%= upload.oms_number %></td>
+              <td data-sort-value="<%= upload.mailer_date.iso8601 %>"><%= upload.mailer_date.iso8601 %></td>
+              <td data-sort-value="<%= upload.budget_job_id %>"><%= upload.budget_job_id.presence || "—" %></td>
+              <td data-sort-value="<%= upload.input_record_count || -1 %>"><%= upload.input_record_count || "—" %></td>
+              <td data-sort-value="<%= upload.mailed_record_count || -1 %>"><%= upload.mailed_record_count || "—" %></td>
+              <td data-sort-value="<%= upload.non_mailed_record_count || -1 %>">
+                <%= upload.non_mailed_record_count || "—" %>
+              </td>
               <td>
                 <dl class="p2m-upload-stages">
                   <div><dt>Overall</dt><dd><%= upload.status.humanize %></dd></div>
@@ -84,7 +107,7 @@
               </td>
             </tr>
             <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden>
-              <td colspan="8">
+              <td colspan="9">
                 <div class="p2m-upload-details">
                   <section>
                     <h3>Mailing Job</h3>
@@ -126,7 +149,7 @@
             </tr>
           <% end %>
           <% if @uploads.empty? %>
-            <tr><td colspan="8">No OMS uploads have been recorded.</td></tr>
+            <tr><td colspan="9">No OMS uploads have been recorded.</td></tr>
           <% end %>
         </tbody>
       </table>
