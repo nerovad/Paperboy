@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["agency", "division", "department", "unit", "accountFields", "hierarchy", "result",
+  static targets = ["agency", "division", "department", "unit", "accountFields", "result",
                     "cobject", "cactivity", "cfunction", "cprogram", "cphase", "ctask",
                     "agencyId", "divisionId", "departmentId", "unitId",
                     "agencyName", "divisionName", "departmentName", "unitName",
@@ -60,7 +60,6 @@ export default class extends Controller {
   unitChanged() {
     if (!this.unitTarget.value) {
       this.accountFieldsTarget.hidden = true
-      this.hierarchyTarget.hidden = true
       this.resultTarget.hidden = true
       return
     }
@@ -79,7 +78,6 @@ export default class extends Controller {
     })
     this.syncAccountingFields()
     this.accountFieldsTarget.hidden = false
-    this.hierarchyTarget.hidden = false
     this.resultTarget.hidden = false
   }
 
@@ -141,7 +139,6 @@ export default class extends Controller {
       this.setChoices(select, [], "Select one", true)
     })
     this.accountFieldsTarget.hidden = true
-    this.hierarchyTarget.hidden = true
     this.resultTarget.hidden = true
   }
 

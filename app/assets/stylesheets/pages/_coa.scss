@@ -150,7 +150,8 @@
   display: none;
 }
 
-.coa-billing-lookup > .coa-lookup-card {
+.coa-billing-lookup > .coa-lookup-card,
+.coa-billing-sections > .coa-lookup-card {
   z-index: 2;
 }
 
@@ -169,9 +170,14 @@
 }
 
 .coa-billing-fields,
+.coa-billing-sections,
 .coa-billing-result {
   display: grid;
   gap: 16px;
+}
+
+.coa-billing-sections[hidden] {
+  display: none;
 }
 
 .coa-billing-result {

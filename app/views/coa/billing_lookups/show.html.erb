@@ -51,8 +51,8 @@
       </div>
     </section>
 
-    <section class="coa-lookup-card" aria-labelledby="account-hierarchy-title"
-             data-coa-billing-lookup-target="hierarchy" hidden>
+    <div class="coa-billing-sections" data-coa-billing-lookup-target="accountFields" hidden>
+    <section class="coa-lookup-card" aria-labelledby="account-hierarchy-title">
       <h2 id="account-hierarchy-title" class="coa-lookup-card__heading">Account Hierarchy</h2>
       <div class="coa-lookup-card__body">
         <ul class="coa-account-tree">
@@ -76,8 +76,7 @@
       </div>
     </section>
 
-    <section class="coa-lookup-card" aria-labelledby="tc60-fields-title"
-             data-coa-billing-lookup-target="accountFields" hidden>
+    <section class="coa-lookup-card" aria-labelledby="tc60-fields-title">
       <h2 id="tc60-fields-title" class="coa-lookup-card__heading">TC60 Customer Accounting Fields</h2>
       <div class="coa-lookup-card__body coa-billing-fields">
         <% [
@@ -98,6 +97,7 @@
         <% end %>
       </div>
     </section>
+    </div>
 
     <div class="coa-billing-result" data-coa-billing-lookup-target="result" hidden>
       <section class="coa-lookup-card" aria-labelledby="billing-account-string-title">
