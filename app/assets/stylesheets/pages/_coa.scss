@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .coa-home {
   height: 100vh;

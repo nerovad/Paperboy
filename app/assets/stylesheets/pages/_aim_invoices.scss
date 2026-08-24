@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .aim-page {
   box-sizing: border-box;

@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 /* Prevent a flash of the native <select> before Choices.js enhances it.
    Pre-init the select is a direct child of its [data-controller~="choices"]

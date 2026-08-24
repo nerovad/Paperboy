@@ -1,5 +1,5 @@
 /* Pages: Reports */
-@import '../base/tokens';
+@use "base/tokens" as *;
 
 /* Reports wrapper */
 .reports-wrapper {

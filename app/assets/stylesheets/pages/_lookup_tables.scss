@@ -1,5 +1,5 @@
 /* Pages: Lookup Tables Management */
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .lookup-tables-management {
   max-width: 1100px;

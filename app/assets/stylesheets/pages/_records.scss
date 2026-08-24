@@ -1,5 +1,5 @@
 /* Pages: Records pillar landing */
-@import '../base/tokens';
+@use "base/tokens" as *;
 
 .records-wrapper {
   padding: 20px;

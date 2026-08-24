@@ -50,12 +50,24 @@ Rules:
   border-color: color.adjust($border-color, $lightness: -10%);
   ```
 
-- New stylesheets are partials `@import`ed by `application.scss`. A second
+- **Never use `@import`.** It is deprecated and is removed in Dart Sass
+  3.0. Load what a partial needs with the module system:
+
+  ```scss
+  @use "base/tokens" as *;   // design tokens, unnamespaced
+  ```
+
+  Every partial that references a `$token` must `@use` it itself --
+  `@use` is file-scoped, so nothing leaks in from `application.scss` the
+  way `@import` used to.
+- New stylesheets are partials `@use`d by `application.scss`. A second
   top-level entrypoint needs a `config.dartsass.builds` entry or it is
   never compiled.
 
 `test/lib/stylesheet_conventions_test.rb` enforces all of the above, so a
-regression fails `bundle exec rake test` rather than a deploy.
+regression fails `bundle exec rake test` rather than a deploy. A clean
+build prints no deprecation warnings at all -- if you see one, something
+in the list above came back.
 
 ### Working on CSS locally
 

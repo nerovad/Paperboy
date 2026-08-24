@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 /* Form wrapper/card */
 .form-wrapper {

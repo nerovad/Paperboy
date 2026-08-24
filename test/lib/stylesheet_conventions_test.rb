@@ -69,6 +69,14 @@ class StylesheetConventionsTest < ActiveSupport::TestCase
                  "workaround is no longer needed:\n#{offences.join("\n")}"
   end
 
+  test 'stylesheets load dependencies with @use rather than @import' do
+    offences = offences_for(/@import\s/)
+
+    assert_empty offences,
+                 '@import is deprecated and is removed in Dart Sass 3.0. Load the ' \
+                 "partial with `@use \"base/tokens\" as *;` instead:\n#{offences.join("\n")}"
+  end
+
   test 'application.scss is the only stylesheet entrypoint' do
     entrypoints = Dir.glob(STYLESHEET_ROOT.join('*.scss')).map { |f| File.basename(f) }
 

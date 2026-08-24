@@ -1,6 +1,6 @@
 @use "sass:color";
 /* Pages: Authorization Console */
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .authorization-console {
   // Fixed-height flex column: filters + buttons stay pinned, list scrolls

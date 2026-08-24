@@ -3,7 +3,7 @@
    The add-a-grant form is built from the shared .pb-filter kit — the same
    fields the Advanced Search panel uses — so only the page's own layout and
    the grants table are declared here. */
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .visibility-grants {
   .form-help {

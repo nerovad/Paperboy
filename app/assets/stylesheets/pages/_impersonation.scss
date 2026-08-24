@@ -1,6 +1,6 @@
 @use "sass:color";
 /* Pages: Admin Impersonation */
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .impersonation-wrapper {
   max-width: 600px;

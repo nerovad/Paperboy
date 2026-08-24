@@ -1,6 +1,6 @@
 @use "sass:color";
 /* Pages: Form Templates - Form Builder UI */
-@import '../base/tokens';
+@use "base/tokens" as *;
 
 /* Container matching your form style */
 .page-form_templates-index,

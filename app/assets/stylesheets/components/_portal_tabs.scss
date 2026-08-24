@@ -1,3 +1,4 @@
+@use "base/tokens" as *;
 /* ── Portal tabs (shared Admin / OSHA 300 portal header) ───────────────────
    Screens that are facets of one portal share a tab bar, mirroring the
    Inbox/Submissions "work tabs" pattern. Unlike work tabs these are not themed

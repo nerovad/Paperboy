@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 /* ---------------------------------------------------------------------------
    Modal system — single source of truth.

@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 /* Hamburger menu button (mobile only) */
 .hamburger-btn {

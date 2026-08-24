@@ -1,5 +1,5 @@
 @use "sass:color";
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .settings-notice {
   background: color.adjust($primary-color, $lightness: 40%);
