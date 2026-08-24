@@ -105,7 +105,7 @@
 .p2m-maildat-grid {
   width: 100%;
   min-width: 0;
-  max-height: unquote("min(30.6rem, calc(100vh - 32rem))");
+  max-height: min(30.6rem, calc(100vh - 32rem));
   overflow: auto;
   border: 1px solid $neutral-border-light;
   scrollbar-width: thin;

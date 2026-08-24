@@ -1,9 +1,10 @@
+@use "sass:color";
 @import "base/tokens";
 
 .settings-notice {
-  background: lighten($primary-color, 40%);
-  color: darken($primary-color, 20%);
-  border: 1px solid lighten($primary-color, 25%);
+  background: color.adjust($primary-color, $lightness: 40%);
+  color: color.adjust($primary-color, $lightness: -20%);
+  border: 1px solid color.adjust($primary-color, $lightness: 25%);
   border-radius: $radius-6;
   padding: 10px 16px;
   margin-bottom: 20px;
