@@ -60,4 +60,38 @@ class DataRunnerGroupRefreshJobTest < ActiveJob::TestCase
   ensure
     TaskRunner.output_path(run.run_id).delete if run&.run_id && TaskRunner.output_path(run.run_id).file?
   end
+
+  test 'refreshes Print 2 Mail uploads sequentially with their OMS number' do
+    run = DataRunner::GroupRun.create!(
+      run_id: SecureRandom.uuid, group_name: P2m::DataRefresh::GROUP_RUN_NAME, total_count: 2
+    )
+    run.items.create!(dsl_name: 'OMS 51671902', dsl_slug: 'oms', position: 0)
+    run.items.create!(dsl_name: 'OMS 51786524', dsl_slug: 'oms', position: 1)
+    success = Struct.new(:success?).new(true)
+    environments = []
+    active = 0
+    maximum_active = 0
+    lock = Mutex.new
+    runner = lambda do |environment:, **|
+      lock.synchronize do
+        active += 1
+        maximum_active = [maximum_active, active].max
+        environments << environment
+      end
+      sleep 0.02
+      success
+    ensure
+      lock.synchronize { active -= 1 }
+    end
+
+    TaskRunner.stub(:run_selector!, runner) do
+      DataRunner::GroupRefreshJob.perform_now(run.id)
+    end
+
+    assert_equal 1, maximum_active
+    oms_numbers = environments.map { |value| value.fetch('DATARUNNER_QUEUE_OMS') }
+    assert_equal %w[51671902 51786524], oms_numbers
+  ensure
+    TaskRunner.output_path(run.run_id).delete if run&.run_id && TaskRunner.output_path(run.run_id).file?
+  end
 end

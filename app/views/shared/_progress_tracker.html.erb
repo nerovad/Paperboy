@@ -2,7 +2,7 @@
 <div class="progress-tracker__panel" data-progress-status="<%= run.status %>">
   <div class="progress-tracker__summary">
     <div>
-      <h2><%= run.status == "queued" ? "Preparing refresh" : "#{run.completed_count} of #{run.total_count} DSLs completed" %></h2>
+      <h2><%= run.status == "queued" ? "Preparing refresh" : "#{run.completed_count} of #{pluralize(run.total_count, local_assigns.fetch(:unit_name, 'DSL'))} completed" %></h2>
       <% running_dsls = run.items.select { |item| item.status == "running" }.sort_by(&:position).map(&:dsl_name) %>
       <% if running_dsls.any? %><p>Running: <strong><%= running_dsls.to_sentence %></strong></p><% end %>
       <% if run.active? %><p>You may leave this page. Processing will continue.</p><% end %>

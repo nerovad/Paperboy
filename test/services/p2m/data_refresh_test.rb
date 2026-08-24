@@ -67,5 +67,34 @@ module P2m
         assert_equal :downloaded_file, dsl.sop.fetch(:reference_path)
       end
     end
+
+    test 'creates one refresh item for each queued OMS number' do
+      Dir.mktmpdir do |directory|
+        queue = Pathname.new(directory).join('sent').tap(&:mkpath)
+        queue.join('Mail.dat_51786524.zip').write('marker')
+        queue.join('Mail.dat_51671902.zip').write('marker')
+        entry = Struct.new(:slug, :key, :config) do
+          def enabled? = true
+        end.new(
+          'oms', 'Oms',
+          { orchestration: { root_path: directory, sent_path: 'sent', queue: { path: :sent_path } } }
+        )
+        calls = []
+        runner = lambda do |**arguments|
+          calls << arguments
+          DataRunner::GroupRun.new
+        end
+
+        DslCatalog.stub(:grouped, { 'print_2_mail_billing_data' => [entry] }) do
+          DataRunner::GroupRefresh.stub(:start!, runner) do
+            DataRefresh.run!({ 'print_2_mail' => '0', 'print_2_mail_billing_data' => '1' },
+                             requested_by: 'employee@example.com')
+          end
+        end
+
+        assert_equal ['OMS 51671902', 'OMS 51786524'], calls.first.fetch(:entries).map(&:key)
+        assert_equal %w[oms oms], calls.first.fetch(:entries).map(&:slug)
+      end
+    end
   end
 end
