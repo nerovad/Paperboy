@@ -1,0 +1,10 @@
+<% %i[object activity function program phase task].each do |field| %>
+  <div class="form-group flex-fill">
+    <%= form.label field, field.to_s.humanize %>
+    <%= form.select field, options_for_select([], form.object.public_send(field)),
+                    { include_blank: "Select..." },
+                    class: "form-control", required: true, disabled: true,
+                    data: { coa_account_fields_target: field,
+                            selected_value: form.object.public_send(field) } %>
+  </div>
+<% end %>

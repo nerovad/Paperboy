@@ -30,27 +30,27 @@ module Coa
     end
 
     def objects
-      render_options(Coa::Object.all, :object_id)
+      render json: billing_options.options_for(:object)
     end
 
     def activities
-      render_agency_options(Coa::Activity, :activity_id)
+      render_agency_options(:activity)
     end
 
     def cfunctions
-      render_agency_options(Coa::Function, :function_id)
+      render_agency_options(:function)
     end
 
     def programs
-      render_agency_options(Coa::Program, :program_id)
+      render_agency_options(:program)
     end
 
     def phases
-      render_agency_options(Coa::Phase, :phase_id)
+      render_agency_options(:phase)
     end
 
     def tasks
-      render_agency_options(Coa::Task, :task_id)
+      render_agency_options(:task)
     end
 
     private
@@ -59,12 +59,8 @@ module Coa
       render json: options(scope, key)
     end
 
-    def render_agency_options(model, key)
-      render_options(agency_scope(model), key)
-    end
-
-    def agency_scope(model)
-      model.where(agency_id: params[:agency_id])
+    def render_agency_options(field)
+      render json: billing_options.options_for(field)
     end
 
     def options(scope, key)
@@ -72,6 +68,10 @@ module Coa
         label = "#{value} - #{long_name}"
         { label: label, value: value }
       end
+    end
+
+    def billing_options
+      @billing_options ||= BillingOptions.new(agency_id: params[:agency_id])
     end
   end
 end

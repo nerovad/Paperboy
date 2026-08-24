@@ -113,6 +113,10 @@ module Forms
       # Display the submission details
     end
 
+    def accounting_options
+      render json: Coa::BillingOptions.new(agency_id: params[:agency_id], restrict_to_agency: true).all
+    end
+
     def edit
       # Edit form - rebuild options same as new
       setup_form_options
@@ -210,7 +214,10 @@ module Forms
     def notice_of_change_form_params
       # Only the baseline fields you asked for
       params.require(:notice_of_change_form).permit(
-        :name, :phone, :email, :agency, :division, :department, :unit
+        :name, :phone, :email, :agency, :division, :department, :unit,
+        :change_or_service_requested, :old_location_or_address, :new_location_or_address,
+        :description_of_new_service, :object, :activity, :function, :program, :phase, :task,
+        :monthly_cost, :annual_cost
       )
     end
   end

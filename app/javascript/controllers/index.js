@@ -15,6 +15,7 @@ import BillingTypesController from "controllers/billing_types_controller"
 import BillingEmailSelectionController from "controllers/billing_email_selection_controller"
 import BillingReportPreviewController from "controllers/billing_report_preview_controller"
 import DataRefreshGroupsController from "controllers/data_refresh_groups_controller"
+import CoaAccountFieldsController from "controllers/coa_account_fields_controller"
 import ApproveModalController from "controllers/approve_modal_controller"
 import ReassignModalController from "controllers/reassign_modal_controller"
 import ChoicesController from "controllers/choices_controller"
@@ -90,6 +91,7 @@ application.register("billing-types", BillingTypesController)
 application.register("billing-email-selection", BillingEmailSelectionController)
 application.register("billing-report-preview", BillingReportPreviewController)
 application.register("data-refresh-groups", DataRefreshGroupsController)
+application.register("coa-account-fields", CoaAccountFieldsController)
 application.register("approve-modal", ApproveModalController)
 application.register("reassign-modal", ReassignModalController)
 application.register("choices", ChoicesController)
