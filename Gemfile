@@ -17,7 +17,7 @@ gem 'sass-rails', '>= 6'
 # gem "pg"  # Uncomment to switch back to PostgreSQL
 # MSSQL (primary database + billing stored procedures)
 gem 'activerecord-sqlserver-adapter'
-gem 'tiny_tds'
+gem 'tiny_tds', force_ruby_platform: true
 
 # Use the Puma web server [https://github.com/puma/puma]
 gem 'puma', '>= 5.0'
