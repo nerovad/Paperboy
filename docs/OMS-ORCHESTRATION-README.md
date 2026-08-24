@@ -195,11 +195,11 @@ SENT_PATH OUTPUT_PATH PROCESSED_PATH
 After all child injections succeed, it creates this archive directory:
 
 ```text
-/mnt/o/Outputs/DataRunner/02_Processed/<OMS number>/<mailer date>/
+/mnt/o/Outputs/DataRunner/02_Processed/<OMS number>/
 ```
 
 It moves every original staged file for the selected OMS number into that
-directory without rewriting its contents. An existing OMS/date archive is a
+directory without rewriting its contents. An existing OMS archive is a
 hard failure. It then removes the three temporary CSV outputs.
 
 Moving the marker out of `00_SentToUSPS` acknowledges the queue entry. The
@@ -232,8 +232,9 @@ for investigation.
 - Ensure all companion files for an OMS number have identical headers.
 - Do not manually remove a marker to acknowledge a job before successful
   injection and postprocessing.
-- Before historical backfill, check whether the OMS number and mailer date
-  already exist in `02_Processed` or the billing tables.
+- Before historical backfill, check whether the OMS number already exists in
+  `02_Processed` and whether the OMS number and mailer date exist in the
+  billing tables.
 
 ## Important implementation characteristics
 

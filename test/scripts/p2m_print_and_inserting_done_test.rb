@@ -13,7 +13,7 @@ class P2mPrintAndInsertingDoneTest < Minitest::Test
       create_job(source.join('complete'), '50000001')
       create_job(source.join('incomplete'), '50000002', companion: false)
       create_job(source.join('processed-source'), '50000003')
-      FileUtils.mkdir_p(runner.join('02_Processed/50000003/2026-07-15'))
+      FileUtils.mkdir_p(runner.join('02_Processed/50000003'))
 
       rows = described_class.new(
         source_root: source,
@@ -24,7 +24,7 @@ class P2mPrintAndInsertingDoneTest < Minitest::Test
       ).call
 
       statuses = rows.map { |row| row.fetch('status') }
-      assert_equal ['ready', 'incomplete', 'duplicate OMS number and date'], statuses
+      assert_equal ['ready', 'incomplete', 'duplicate OMS number'], statuses
       assert runner.join('50000001-companion.csv').file?
       refute runner.join('00_SentToUSPS/Mail.dat_50000001.zip').exist?
       assert report.file?
@@ -40,7 +40,7 @@ class P2mPrintAndInsertingDoneTest < Minitest::Test
       end
       FileUtils.mkdir_p(runner.join('00_SentToUSPS'))
       runner.join('00_SentToUSPS/Mail.dat_50000001.zip').write('fixture')
-      FileUtils.mkdir_p(runner.join('02_Processed/50000002/2026-07-15'))
+      FileUtils.mkdir_p(runner.join('02_Processed/50000002'))
       runner.join('unrelated-staged-input.csv').write('fixture')
 
       rows = described_class.new(
@@ -52,7 +52,7 @@ class P2mPrintAndInsertingDoneTest < Minitest::Test
       ).call
 
       statuses = rows.map { |row| row.fetch('status') }
-      assert_equal ['staging conflict', 'duplicate OMS number and date', 'ready'], statuses
+      assert_equal ['staging conflict', 'duplicate OMS number', 'ready'], statuses
       refute runner.join('50000003-companion.csv').exist?
     end
   end

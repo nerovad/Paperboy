@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require 'fileutils'
-require 'date'
 require 'pathname'
 
 OUTPUT_FILES = %w[
@@ -44,9 +43,8 @@ def remove_file(path)
 end
 
 sent_dir, output_dir, processed_dir = paths
-marker, oms_number = marker_and_oms_number(sent_dir)
-mail_date = marker.mtime.to_date.iso8601
-archive_dir = processed_dir.join(oms_number, mail_date)
+_marker, oms_number = marker_and_oms_number(sent_dir)
+archive_dir = processed_dir.join(oms_number)
 raise "archive already exists: #{archive_dir}" if archive_dir.exist?
 
 sources = sent_dir.children.select { |path| path.file? && path.basename.to_s.include?(oms_number) }
