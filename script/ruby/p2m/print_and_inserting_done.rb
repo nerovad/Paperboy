@@ -141,7 +141,8 @@ module P2m
     end
 
     def status_for(number, markers, missing, duplicates)
-      return ['duplicate OMS number', 'OMS number exists in 02_Processed.'] if processed_path.join(number).directory?
+      processed_job = processed_path.join(number, markers.first.mtime.to_date.iso8601)
+      return ['duplicate OMS number and date', 'OMS number and mailer date exist in 02_Processed.'] if processed_job.directory?
       return ['duplicate marker', "Found #{markers.length} source markers."] if markers.length > 1
       return ['incomplete', "Missing: #{missing.map { |type| label(type) }.join(', ')}."] if missing.any?
       return ['duplicate input', "Multiple: #{duplicates.map { |type| label(type) }.join(', ')}."] if duplicates.any?

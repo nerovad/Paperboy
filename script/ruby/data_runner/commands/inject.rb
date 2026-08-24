@@ -218,6 +218,47 @@ def delete_where(cfg, database_connection = nil)
   w.to_s.strip
 end
 
+def reject_existing_columns(cfg, database_connection = nil)
+  Array(inject_cfg(cfg, database_connection)[:reject_existing]).map(&:to_s)
+end
+
+def ensure_columns!(client, target, cfg, database_connection = nil)
+  columns = inject_cfg(cfg, database_connection)[:ensure_columns] || {}
+  columns.each do |column, definition|
+    qualified_name = "#{target.schema}.#{target.table}".gsub("'", "''")
+    column_name = column.to_s.gsub("'", "''")
+    sql = [
+      "IF COL_LENGTH(N'#{qualified_name}', N'#{column_name}') IS NULL",
+      "ALTER TABLE #{MssqlHelpers.sql_qualified(target.schema, target.table)}",
+      "ADD #{MssqlHelpers.quote_ident(column)} #{definition}"
+    ].join(' ')
+    client.execute(sql).do
+  end
+end
+
+def existing_row_sql(client, schema, table, columns, row, column_types)
+  predicates = columns.map do |column|
+    value = row[column]
+    literal = sql_value_literal(client, value, column_types[column])
+    "#{MssqlHelpers.quote_ident(column)} = #{literal}"
+  end
+  "SELECT TOP 1 1 FROM #{MssqlHelpers.sql_qualified(schema, table)} WHERE #{predicates.join(' AND ')}"
+end
+
+def reject_existing!(client, target, columns, row, column_types)
+  return if columns.empty?
+
+  missing = columns - row.headers.map(&:to_s)
+  raise "duplicate key columns missing from CSV: #{missing.join(', ')}" if missing.any?
+
+  sql = existing_row_sql(client, target.schema, target.table, columns, row, column_types)
+  exists = client.execute(sql).each.any?
+  return unless exists
+
+  identity = columns.map { |column| "#{column}=#{row[column]}" }.join(', ')
+  raise "job already imported: #{identity}"
+end
+
 # -------------------------------------------------------------------------- }}}
 # {{{ Helper: inject_cfg
 
@@ -306,8 +347,19 @@ MssqlHelpers.load_dotenv!
 stats = EtlHelpers::RunStats.new
 
 clients = {}
+atomic_inject = MssqlHelpers.env_bool('DATARUNNER_ATOMIC_INJECT')
+atomic_target = nil
+atomic_client = nil
+atomic_committed = false
+selected_entries = if atomic_inject
+                     ARGV.to_h do |name|
+                       [name, DSL_MAP.fetch(name) { raise "unknown DSL: #{name}" }]
+                     end
+                   else
+                     EtlHelpers.selected_dsl_entries(DSL_MAP, ARGV)
+                   end
 begin
-  EtlHelpers.selected_dsl_entries(DSL_MAP, ARGV).each do |name, cfg|
+  selected_entries.each do |name, cfg|
     unless Workflow.wants_step?(cfg, :inject)
       puts "[SKIP] #{name}: step disabled (:inject)"
       stats.skip!
@@ -339,9 +391,22 @@ begin
 
       client.execute("USE #{MssqlHelpers.quote_ident(target.database)}").do
 
-      where_sql = delete_where(cfg, target.connection)
+      if atomic_inject
+        current_target = [target.host, target.database]
+        atomic_target ||= current_target
+        raise 'atomic inject requires one SQL host and database' unless atomic_target == current_target
 
-      client.execute('BEGIN TRAN').do
+        unless atomic_client
+          client.execute('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE').do
+          client.execute('BEGIN TRAN').do
+          atomic_client = client
+        end
+      else
+        client.execute('BEGIN TRAN').do
+      end
+
+      where_sql = delete_where(cfg, target.connection)
+      ensure_columns!(client, target, cfg, target.connection)
 
       case mode
       when :truncate_insert
@@ -367,6 +432,7 @@ begin
       CSV.foreach(input, headers: true, encoding: 'bom|utf-8').with_index(2) do |row, line_number|
         if columns.nil?
           columns = row.headers.map(&:to_s)
+          reject_existing!(client, target, reject_existing_columns(cfg, target.connection), row, column_types)
           if needs_identity_insert?(cfg, columns)
             client.execute(identity_insert_sql(target.schema, target.table, true)).do
             identity_insert_enabled = true
@@ -385,7 +451,7 @@ begin
       end
 
       client.execute(identity_insert_sql(target.schema, target.table, false)).do if identity_insert_enabled
-      client.execute('COMMIT TRAN').do
+      client.execute('COMMIT TRAN').do unless atomic_inject
       run_post_inject_script(name, target, mode, input, inserted, inject)
       puts "[OK] #{name}: #{csv_name} -> #{target.label} (#{mode}, #{inserted} rows)"
       stats.ok!
@@ -403,9 +469,21 @@ begin
       puts "[FAIL] #{name}: #{MssqlHelpers.target_label(target&.host, target&.database, target&.schema,
                                                         target&.table)}: #{e}"
       stats.fail!
+      raise if atomic_inject
     end
   end
+  if atomic_client
+    atomic_client.execute('COMMIT TRAN').do
+    atomic_committed = true
+  end
 ensure
+  if atomic_client && !atomic_committed
+    begin
+      atomic_client.execute('IF @@TRANCOUNT > 0 ROLLBACK TRAN').do
+    rescue StandardError
+      # ignore rollback failure
+    end
+  end
   clients.each_value(&:close)
 end
 

@@ -38,12 +38,13 @@
       ],
       preprocessing: {
         enabled: true,
-        args: %i[root_path sent_path output_path]
+        args: %i[sent_path output_path]
       },
       postprocessing: {
         enabled: true,
-        args: %i[root_path sent_path output_path processed_path]
-      }
+        args: %i[sent_path output_path processed_path]
+      },
+      atomic_inject: true
     }
   }
 ]

@@ -43,4 +43,22 @@ class DataRunnerOrchestrationHelpersTest < ActiveSupport::TestCase
     assert_match 'One: One failed', error.message
     assert_match 'Three: Three failed', error.message
   end
+
+  test 'runs atomic injection for all children in one process' do
+    calls = []
+    runner = lambda do |script, *children, **options|
+      calls << [script, children, options]
+    end
+
+    DataRunnerTaskHelpers.stub(:orchestration_children, CHILDREN) do
+      DataRunnerTaskHelpers.stub(:run_ruby_stage, runner) do
+        DataRunnerTaskHelpers.send(:run_atomic_inject, {})
+      end
+    end
+
+    script, children, options = calls.fetch(0)
+    assert_equal 'inject.rb', script
+    assert_equal CHILDREN.map(&:first), children
+    assert_equal '1', options.fetch(:environment).fetch('DATARUNNER_ATOMIC_INJECT')
+  end
 end

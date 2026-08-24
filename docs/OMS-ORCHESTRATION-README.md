@@ -19,8 +19,8 @@ The DSL establishes the following directory contract:
 
 | Configuration key | Resolved path | Purpose |
 | --- | --- | --- |
-| `root_path` | `/mnt/o/Outputs/DataRunner` | Flat staging area for OMS source files |
-| `sent_path` | `/mnt/o/Outputs/DataRunner/00_SentToUSPS` | Marker-file queue |
+| `root_path` | `/mnt/o/Outputs/DataRunner` | Parent for orchestration directories |
+| `sent_path` | `/mnt/o/Outputs/DataRunner/00_SentToUSPS` | Complete-job queue |
 | `output_path` | `/mnt/o/Outputs/DataRunner/01_TemporaryOutput` | Preprocessed CSV output |
 | `processed_path` | `/mnt/o/Outputs/DataRunner/02_Processed` | Per-OMS archive after injection |
 
@@ -53,12 +53,12 @@ only one OMS number is active during a queue iteration.
 
 The marker is a control file. The preprocessor does not extract or read the
 ZIP archive. It obtains the selected OMS number from the marker's filename
-and finds corresponding source files in the DataRunner root.
+and finds corresponding source files in the same queued-job directory.
 
 ## Recognized source files
 
 For the selected OMS number, preprocessing recognizes these basenames in
-the root staging directory:
+`00_SentToUSPS`:
 
 | Dataset | Input pattern | Multiplicity |
 | --- | --- | --- |
@@ -67,16 +67,15 @@ the root staging directory:
 | Moveresults | `MoveResults_<OMS number>.txt` | Zero or one |
 
 Matching is anchored and case-insensitive. Only regular files directly
-inside `root_path` are considered; preprocessing is not recursive.
+inside `sent_path` are considered; preprocessing is not recursive.
 
 Multiple companion files are valid. They are read in filename order and
 combined into one CSV. Every companion file must have the same header.
 Multiple daily-presort or move-results files for one OMS number are rejected.
 
-Although each input category is optional to the preprocessor, the
-orchestrator verifies that all three child output files exist. In normal
-orchestrated operation, a job is therefore incomplete and fails unless it
-provides inputs for all three datasets.
+All three input categories are required. Preprocessing also requires equal
+row counts, matching Presort and MoveResults record-ID sets, unique nonblank
+AIMS mail-piece IDs, and a nonblank Budget 1 job ID for every companion row.
 
 ## Preprocessing
 
@@ -89,15 +88,15 @@ script/ruby/data_runner/orchestration/preprocess/oms.rb
 with these resolved arguments:
 
 ```text
-ROOT_PATH SENT_PATH OUTPUT_PATH
+SENT_PATH OUTPUT_PATH
 ```
 
 The script performs the following work:
 
 1. Selects the lexicographically first marker in `SENT_PATH`.
 2. Extracts its OMS number.
-3. Classifies matching files directly inside `ROOT_PATH`.
-4. Validates input multiplicity and companion headers.
+3. Classifies matching files directly inside `SENT_PATH`.
+4. Validates completeness, row identity, and companion headers.
 5. Removes prior `companions.csv`, `dailypresorts.csv`, and
    `moveresults.csv` files from `OUTPUT_PATH`.
 6. Writes the available outputs atomically.
@@ -110,7 +109,8 @@ The generated files are:
 01_TemporaryOutput/moveresults.csv
 ```
 
-Each output receives `omsnumber` and `importdatetime` metadata columns.
+Each output receives `omsnumber`, `maildate`, and `importdatetime` metadata columns.
+`maildate` is the preserved Mail.dat marker date used for duplicate detection.
 `importdatetime` is the UTC time at which that OMS number is preprocessed.
 Embedded line endings in field values are replaced with spaces.
 
@@ -166,7 +166,7 @@ Find next marker
   -> verify normalized child files
   -> run use_dsl for each child
   -> verify DSL-applied child files
-  -> append each child dataset to SQL Server
+  -> append all three child datasets in one SQL Server transaction
   -> postprocess and archive the OMS job
   -> confirm that the queue marker was removed
   -> repeat
@@ -189,24 +189,18 @@ script/ruby/data_runner/orchestration/postprocess/oms.rb
 with these resolved arguments:
 
 ```text
-ROOT_PATH SENT_PATH OUTPUT_PATH PROCESSED_PATH
+SENT_PATH OUTPUT_PATH PROCESSED_PATH
 ```
 
 After all child injections succeed, it creates this archive directory:
 
 ```text
-/mnt/o/Outputs/DataRunner/02_Processed/<OMS number>/
+/mnt/o/Outputs/DataRunner/02_Processed/<OMS number>/<mailer date>/
 ```
 
-It moves into that directory:
-
-- Every regular file directly in `root_path` whose basename contains the
-  selected OMS number.
-- The selected `Mail.dat` marker from `sent_path`.
-
-If an archive target with the same basename already exists, postprocessing
-removes that target before moving the current file. It then removes the three
-temporary CSV outputs and their copies in Data Runner's `01_Download` stage.
+It moves every original staged file for the selected OMS number into that
+directory without rewriting its contents. An existing OMS/date archive is a
+hard failure. It then removes the three temporary CSV outputs.
 
 Moving the marker out of `00_SentToUSPS` acknowledges the queue entry. The
 queue-drain helper verifies this by checking that the same entry is no longer
@@ -219,23 +213,17 @@ refresh selects the job again. Source and diagnostic files also remain
 available for investigation. Temporary outputs may exist, but preprocessing
 removes the three known output names before rebuilding them on the next run.
 
-The queue provides at-least-once retry behavior, not transactional exactly-once
-database insertion. Each child injects separately in append mode. If one or
-more child injections succeed and a later child fails, the marker remains
-queued. Retrying the job can append the already successful child data again.
-Likewise, a failure after database insertion but before marker archival can
-cause all three datasets to be appended again.
-
-The existence of `02_Processed/<OMS number>` is useful operational evidence
-that postprocessing completed, but the current queue code does not consult
-that directory before processing a marker. Producers or backfill tools must
-avoid publishing a marker for an already processed OMS number, or an explicit
-idempotency check must be added.
+All three child inserts share one transaction. Any child failure rolls back
+the unit and leaves the complete queued job unchanged. Each table rejects an
+existing `omsnumber` and `maildate` pair inside that transaction. A failure
+after commit but before archival is therefore safe to retry: the duplicate
+check prevents a second insertion and the staged originals remain available
+for investigation.
 
 ## Operational requirements
 
-- Stage all source files before publishing the marker into
-  `00_SentToUSPS`; publish the marker last.
+- Stage the complete job in `00_SentToUSPS`, including all companion files,
+  Presort and MoveResults exports, postal reports, and the Mail.dat marker.
 - Do not mix source files for different active jobs unless each basename
   contains the correct OMS number and each marker has a complete input set.
 - Provide all three input categories for normal orchestrated refreshes.
@@ -244,19 +232,20 @@ idempotency check must be added.
 - Ensure all companion files for an OMS number have identical headers.
 - Do not manually remove a marker to acknowledge a job before successful
   injection and postprocessing.
-- Before historical backfill, check whether the OMS number already exists in
-  `02_Processed` and whether it has already been inserted into the database.
+- Before historical backfill, check whether the OMS number and mailer date
+  already exist in `02_Processed` or the billing tables.
 
 ## Important implementation characteristics
 
 - Queue and source discovery are non-recursive.
 - Queue ordering is lexical by full marker path basename, which effectively
   orders equal-width OMS numbers numerically rather than by file date.
-- The `Mail.dat` ZIP contents are not inspected.
+- The `Mail.dat` ZIP contents are not inspected. Its preserved modification
+  date supplies the mailer date stored with each imported row.
 - File matching is case-insensitive, but the selected OMS digits must match
   exactly across marker and source basenames.
 - Companion output concatenation is deterministic because inputs are sorted.
-- Database loading is append-only and has no orchestrator-level transaction
+- Database loading is append-only within one orchestrator-level transaction
   spanning all three child tables.
 - Successful postprocessing is what removes the queue entry and permits the
   queue-drain loop to advance.
@@ -272,12 +261,3 @@ idempotency check must be added.
 - `script/ruby/data_runner/orchestration/postprocess/oms.rb`
 - `script/ruby/data_runner/constants/workflow.rb`
 - `script/ruby/data_runner/constants/workflow_paths.rb`
-
-## Proposed commit message
-
-```text
-Document OMS Data Runner orchestration
-
-Describe queue processing, child pipelines, archival, and retry behavior.
-Record operational requirements and duplicate-insertion risks.
-```

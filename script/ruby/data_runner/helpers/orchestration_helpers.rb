@@ -64,7 +64,11 @@ module DataRunnerTaskHelpers
       run_children(orchestration, :use_dsl)
     when :inject
       verify_child_stage_files!(orchestration, WorkflowPaths::APPLIED_DIR)
-      run_children(orchestration, :inject)
+      if orchestration[:atomic_inject]
+        run_atomic_inject(orchestration)
+      else
+        run_children(orchestration, :inject)
+      end
       run_postprocessing(orchestration)
     else
       raise "unsupported orchestration stage: #{stage}"
@@ -316,6 +320,16 @@ module DataRunnerTaskHelpers
   end
   private_class_method :run_orchestrated_child
   private_class_method :run_children
+
+  def run_atomic_inject(orchestration)
+    children = orchestration_children(orchestration).map(&:first)
+    environment = {
+      Workflow::ORCHESTRATION_ENV => '1',
+      'DATARUNNER_ATOMIC_INJECT' => '1'
+    }
+    run_ruby_stage('inject.rb', *children, log_selectors: children, environment: environment)
+  end
+  private_class_method :run_atomic_inject
 
   def run_postprocessing(orchestration)
     config = orchestration[:postprocessing]
