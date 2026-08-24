@@ -7,9 +7,6 @@
     <div class="control-center">
       <div class="control-center-toolbar">
         <span><%= pluralize(@selected_entries.size, "DSL") %> in this group</span>
-        <div class="control-center-actions">
-          <%= render "data_runner/shared/group_sop_links", entries: @selected_entries %>
-        </div>
       </div>
       <div class="dsl-list">
         <% @selected_entries.each do |entry| %>
@@ -25,7 +22,6 @@
       <div class="control-center-toolbar">
         <span data-dsl-group-target="count"><%= pluralize(@selected_entries.size, "DSL") %> in this group</span>
         <div class="control-center-actions">
-          <%= render "data_runner/shared/group_sop_links", entries: @selected_entries %>
           <%= submit_tag "Save DSLs", class: "btn approve" %>
           <div class="field compact inline-field">
             <%= text_field_tag :new_group_name, nil,
