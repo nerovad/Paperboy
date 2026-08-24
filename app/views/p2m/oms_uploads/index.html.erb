@@ -1,0 +1,57 @@
+<div class="form-header p2m-form-header">
+  <h1>OMS Uploads</h1>
+</div>
+
+<div class="form-wrapper p2m-stage-data">
+  <section class="p2m-stage-card" aria-labelledby="p2m-oms-uploads-title">
+    <h2 id="p2m-oms-uploads-title">Staged Mailing Jobs</h2>
+    <p>One row per OMS number and mailer date. Mailed counts indicate records with postage.</p>
+
+    <div class="table-wrap">
+      <table class="submission-table" data-controller="output-table" data-simple-sort="true">
+        <thead>
+          <tr>
+            <th>OMS Number</th>
+            <th>Mailer Date</th>
+            <th>Budget Job</th>
+            <th>Document Profile</th>
+            <th>Input</th>
+            <th>Mailed</th>
+            <th>Non-Mailed</th>
+            <th>Files</th>
+            <th>Validation</th>
+            <th>Import</th>
+            <th>Archive</th>
+            <th>Findings</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @uploads.each do |upload| %>
+            <tr data-sort-row>
+              <td><%= upload.oms_number %></td>
+              <td><%= upload.mailer_date.iso8601 %></td>
+              <td><%= upload.budget_job_id.presence || "—" %></td>
+              <td><%= upload.document_profile.presence || "—" %></td>
+              <td><%= upload.input_record_count || "—" %></td>
+              <td><%= upload.mailed_record_count || "—" %></td>
+              <td><%= upload.non_mailed_record_count || "—" %></td>
+              <td><%= upload.files.size %></td>
+              <td><%= upload.validation_status.humanize %></td>
+              <td><%= upload.import_status.humanize %></td>
+              <td><%= upload.archive_status.humanize %></td>
+              <td title="<%= upload.findings.map(&:message).compact.join(' ') %>">
+                <%= upload.findings.count { |finding| finding.status == "failed" } %> errors,
+                <%= upload.findings.count { |finding| finding.severity == "info" } %> info
+              </td>
+              <td><%= upload.status.humanize %></td>
+            </tr>
+          <% end %>
+          <% if @uploads.empty? %>
+            <tr><td colspan="13">No OMS uploads have been recorded.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

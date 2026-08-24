@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 # Stage-by-stage orchestration support for control-only DataRunner DSL entries.
+require 'date'
+require 'pathname'
+
 # rubocop:disable Metrics/ModuleLength
 module DataRunnerTaskHelpers
   module_function
@@ -40,8 +43,7 @@ module DataRunnerTaskHelpers
 
     case stage.to_sym
     when :download
-      run_preprocessing(name, orchestration)
-      verify_orchestration_outputs!(orchestration)
+      run_tracked_validation(name, orchestration)
     when :to_csv
       verify_orchestration_outputs!(orchestration)
       stage_orchestration_inputs(orchestration)
@@ -64,12 +66,7 @@ module DataRunnerTaskHelpers
       run_children(orchestration, :use_dsl)
     when :inject
       verify_child_stage_files!(orchestration, WorkflowPaths::APPLIED_DIR)
-      if orchestration[:atomic_inject]
-        run_atomic_inject(orchestration)
-      else
-        run_children(orchestration, :inject)
-      end
-      run_postprocessing(orchestration)
+      run_tracked_injection(orchestration)
     else
       raise "unsupported orchestration stage: #{stage}"
     end
@@ -320,6 +317,63 @@ module DataRunnerTaskHelpers
   end
   private_class_method :run_orchestrated_child
   private_class_method :run_children
+
+  def run_tracked_validation(name, orchestration)
+    upload = orchestration_upload(orchestration)
+    upload&.update!(status: 'validating', validation_status: 'running',
+                    validation_started_at: Time.current, failure_message: nil)
+    run_preprocessing(name, orchestration)
+    verify_orchestration_outputs!(orchestration)
+    upload&.update!(status: 'ready', validation_status: 'passed', validated_at: Time.current)
+  rescue StandardError, SystemExit => e
+    upload&.update!(status: 'needs_attention', validation_status: 'failed',
+                    failed_at: Time.current, failure_message: e.message)
+    raise
+  end
+  private_class_method :run_tracked_validation
+
+  def run_tracked_injection(orchestration)
+    upload = orchestration_upload(orchestration)
+    upload&.begin_import!
+    orchestration[:atomic_inject] ? run_atomic_inject(orchestration) : run_children(orchestration, :inject)
+    upload&.update!(status: 'archiving', import_status: 'imported', imported_at: Time.current,
+                    archive_status: 'archiving')
+    run_postprocessing(orchestration)
+    mark_files_archived(upload, orchestration)
+    upload&.update!(status: 'completed', archive_status: 'archived', archived_at: Time.current)
+  rescue StandardError, SystemExit => e
+    failure = { status: 'failed', failed_at: Time.current, failure_message: e.message }
+    failure[:import_status] = 'failed' unless upload&.import_status == 'imported'
+    failure[:archive_status] = 'failed' if upload&.import_status == 'imported'
+    upload&.update!(failure)
+    raise
+  end
+  private_class_method :run_tracked_injection
+
+  def orchestration_upload(orchestration)
+    return unless defined?(P2m::OmsUpload)
+
+    queue = orchestration[:queue]
+    entry = queue && next_queue_entry(queue)
+    match = entry&.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
+    return unless match
+
+    marker = Pathname.new(queue.fetch(:path)).join(entry)
+    P2m::OmsUpload.find_by(oms_number: match[1], mailer_date: marker.mtime.to_date)
+  end
+  private_class_method :orchestration_upload
+
+  def mark_files_archived(upload, orchestration)
+    return unless upload
+
+    processed = File.absolute_path(orchestration.fetch(:processed_path).to_s,
+                                   orchestration.fetch(:root_path))
+    archived_at = Time.current
+    upload.files.each do |file|
+      file.update!(archived_path: File.join(processed, upload.oms_number, file.original_filename), archived_at: archived_at)
+    end
+  end
+  private_class_method :mark_files_archived
 
   def run_atomic_inject(orchestration)
     children = orchestration_children(orchestration).map(&:first)

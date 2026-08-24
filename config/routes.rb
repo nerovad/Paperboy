@@ -137,6 +137,7 @@ Rails.application.routes.draw do
       post :move_to_shipping_station
       delete :remove_from_shipping_station
     end
+    resources :oms_uploads, only: :index
     resource :data_refresh, only: %i[show update] do
       post :restart
     end

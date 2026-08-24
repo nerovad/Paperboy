@@ -38,15 +38,19 @@ module P2m
 
     def move_to_staging
       count = OmsStaging.new.stage(**staging_parameters)
+      OmsUploadLedger.new.staged!(oms_number: staging_parameters.fetch(:oms_number), actor: current_user.email)
       render json: { message: "#{count} files copied to 00_SentToUSPS." }
-    rescue ArgumentError, RuntimeError => e
+    rescue ActiveRecord::RecordInvalid, ArgumentError, RuntimeError => e
       render json: { message: e.message }, status: :unprocessable_content
     end
 
     def remove_from_staging
-      count = OmsStaging.new.remove(**staging_parameters)
+      count = nil
+      OmsUploadLedger.new.remove!(oms_number: staging_parameters.fetch(:oms_number), actor: current_user.email) do
+        count = OmsStaging.new.remove(**staging_parameters)
+      end
       render json: { message: "#{count} files removed from 00_SentToUSPS." }
-    rescue ArgumentError, RuntimeError => e
+    rescue ActiveRecord::RecordNotFound, ArgumentError, RuntimeError => e
       render json: { message: e.message }, status: :unprocessable_content
     end
 
