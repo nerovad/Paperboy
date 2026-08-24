@@ -39,10 +39,12 @@ module P2m
     def move_to_staging
       ledger = OmsUploadLedger.new
       ledger.ensure_stageable!(oms_number: staging_parameters.fetch(:oms_number))
+      validate_staging_source!
       count = OmsStaging.new.stage(**staging_parameters)
       ledger.staged!(oms_number: staging_parameters.fetch(:oms_number), actor: current_user.email)
       render json: { message: "#{count} files copied to 00_SentToUSPS." }
     rescue P2m::OmsUploadLedger::ChangedFiles,
+           P2m::OmsUploadLedger::InvalidDataset,
            ActiveRecord::RecordInvalid, ArgumentError, RuntimeError => e
       render json: { message: e.message }, status: :unprocessable_content
     end
@@ -76,6 +78,13 @@ module P2m
 
     def staging_parameters
       params.permit(:directory, :oms_number).to_h.symbolize_keys
+    end
+
+    def validate_staging_source!
+      parameters = staging_parameters
+      OmsAssociatedFiles.new.call(**parameters)
+      source = OmsAssociatedFiles::ROOT.join(parameters.fetch(:directory))
+      OmsUploadLedger.new(staging_path: source).validate!(oms_number: parameters.fetch(:oms_number))
     end
 
     def render_invalid_date_range

@@ -17,6 +17,7 @@ module P2m
 
     class ImportStarted < StandardError; end
     class ChangedFiles < StandardError; end
+    class InvalidDataset < StandardError; end
 
     PROCESSED_PATH = Pathname.new('/mnt/o/Outputs/DataRunner/02_Processed')
 
@@ -31,6 +32,16 @@ module P2m
 
       imported = OmsUpload.where(oms_number: oms_number).where.not(import_status: 'not_started').exists?
       raise ChangedFiles, "OMS #{oms_number} has already begun import" if imported
+    end
+
+    def validate!(oms_number:)
+      analysis = analyze(staged_paths(oms_number))
+      return if analysis.fetch(:valid)
+
+      messages = analysis.fetch(:findings).filter_map do |finding|
+        finding.fetch(:message) if finding.fetch(:severity) == 'error' && finding.fetch(:status) == 'failed'
+      end
+      raise InvalidDataset, "OMS #{oms_number} cannot be staged: #{messages.join(' ')}"
     end
 
     def reconcile_imported!
@@ -136,11 +147,20 @@ module P2m
       mailed = presort_rows.count { |row| row['FLD_PIECE_POSTAGE'].present? }
       counts = [companion_rows.length, presort_rows.length, move_rows.length]
       ids_match = matching_ids?(presort, move, presort_rows, move_rows)
-      valid = companions.any? && presort.present? && move.present? && counts.uniq.one? && ids_match
+      mail_piece_ids = companion_rows.map { |row| row['AIMS mail piece ID'].to_s.strip }
+      budget_ids = companion_rows.map { |row| row['Budget 1 - Job ID'].to_s.strip }
+      valid = companions.any? && presort.present? && move.present? && counts.uniq.one? && ids_match &&
+              identifiers_valid?(mail_piece_ids, budget_ids)
 
       attributes = summary_attributes(paths, companions, companion_rows, presort, presort_rows, mailed)
-      findings = build_findings(companions, presort, move, counts, ids_match, presort_rows.length - mailed)
+      findings = build_findings(companions, presort, move, counts, ids_match, mail_piece_ids, budget_ids,
+                                presort_rows.length - mailed)
       { attributes: attributes, findings: findings, valid: valid }
+    end
+
+    def identifiers_valid?(mail_piece_ids, budget_ids)
+      mail_piece_ids.none?(&:empty?) && mail_piece_ids.uniq.length == mail_piece_ids.length &&
+        budget_ids.none?(&:empty?)
     end
 
     def summary_attributes(paths, companions, rows, presort, presort_rows, mailed)
@@ -198,7 +218,7 @@ module P2m
       findings.each { |attributes| upload.findings.create!(attributes) }
     end
 
-    def build_findings(companions, presort, move, counts, ids_match, non_mailed)
+    def build_findings(companions, presort, move, counts, ids_match, mail_piece_ids, budget_ids, non_mailed)
       [
         finding('required_files', companions.any? && presort && move, counts.join('/'), 'all three datasets',
                 'Companion, Presort, and MoveResults files are required.'),
@@ -206,6 +226,13 @@ module P2m
                 'Companion, Presort, and MoveResults row counts must agree.'),
         finding('record_ids', ids_match, ids_match ? 'matching' : 'different', 'matching',
                 'Presort and MoveResults record IDs must agree.'),
+        finding('aims_mail_piece_ids_present', mail_piece_ids.none?(&:empty?),
+                mail_piece_ids.count(&:empty?).to_s, '0', 'AIMS mail piece IDs cannot be blank.'),
+        finding('aims_mail_piece_ids_unique', mail_piece_ids.uniq.length == mail_piece_ids.length,
+                (mail_piece_ids.length - mail_piece_ids.uniq.length).to_s, '0',
+                'AIMS mail piece IDs must be unique.'),
+        finding('budget_job_ids_present', budget_ids.none?(&:empty?), budget_ids.count(&:empty?).to_s, '0',
+                'Budget 1 job IDs cannot be blank.'),
         { rule: 'non_mailed', severity: 'info', status: 'observed', observed_value: non_mailed.to_s,
           message: 'Records without postage are retained; no status is inferred.' }
       ]
