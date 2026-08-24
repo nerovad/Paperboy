@@ -32,7 +32,7 @@ class OmsOrchestrationTest < Minitest::Test
 
       run_script(POSTPROCESS, sent, output, processed)
 
-      archive = processed.join('51780767/2026-08-21')
+      archive = processed.join('51780767')
       assert_equal originals.keys.sort, archive.children.map { |path| path.basename.to_s }.sort
       originals.each { |name, content| assert_equal content, archive.join(name).binread }
       assert_empty sent.children
@@ -50,8 +50,8 @@ class OmsOrchestrationTest < Minitest::Test
       marker = sent.join('Mail.dat_51780767.zip').tap { |path| path.binwrite('marker') }
       FileUtils.touch(marker, mtime: Time.new(2026, 8, 21, 12, 0, 0))
       write_companion(sent.join('51780767-000001-job.csv'))
-      write_tsv(sent.join('Presort Fields Export_51780767.txt'), %w[FLD_RECORD_ID], %w[1 2])
-      write_tsv(sent.join('MoveResults_51780767.txt'), %w[RECORD_ID], %w[1 2])
+      write_tsv(sent.join('Presort Fields Export_51780767.txt'), 'FLD_RECORD_ID')
+      write_tsv(sent.join('MoveResults_51780767.txt'), 'RECORD_ID')
       sent.join('Postage Summary_51780767.pdf').binwrite('postal report')
       %w[companions.csv dailypresorts.csv moveresults.csv].each { |name| output.join(name).write('temporary') }
       yield sent, output, processed
@@ -66,11 +66,8 @@ class OmsOrchestrationTest < Minitest::Test
     end
   end
 
-  def write_tsv(path, header, values)
-    content = CSV.generate(col_sep: "\t") do |csv|
-      csv << header
-      values.each { |value| csv << [value] }
-    end
+  def write_tsv(path, id_header)
+    content = "#{id_header}\tNOTE\n1\tbare \"quote\n2\tok\n"
     path.binwrite(content.encode('UTF-16LE'))
   end
 

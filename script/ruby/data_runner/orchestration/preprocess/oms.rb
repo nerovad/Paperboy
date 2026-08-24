@@ -31,6 +31,7 @@ MOVE_RESULTS_PATTERN = /\AMoveResults_(#{OMS_NUMBER_PATTERN})\.txt\z/i
 DAILY_PRESORT_PATTERN = /\APresort Fields Export_(#{OMS_NUMBER_PATTERN})\.txt\z/i
 METADATA_HEADER = %w[omsnumber maildate importdatetime].freeze
 OUTPUT_FILES = %w[companions.csv dailypresorts.csv moveresults.csv].freeze
+TSV_OPTIONS = { col_sep: "\t", encoding: 'UTF-16LE:UTF-8', liberal_parsing: true }.freeze
 
 def paths
   raise "usage: #{$PROGRAM_NAME} SENT_PATH OUTPUT_PATH" unless ARGV.length == 2
@@ -99,8 +100,8 @@ def validate_dataset!(oms_number, inputs)
   companions = inputs.fetch(:companion).flat_map do |path|
     data_rows(path, encoding: 'bom|utf-8').map(&:itself)
   end
-  presorts = data_rows(inputs.fetch(:daily_presort).first, col_sep: "\t", encoding: 'UTF-16LE:UTF-8')
-  moves = data_rows(inputs.fetch(:moveresults).first, col_sep: "\t", encoding: 'UTF-16LE:UTF-8')
+  presorts = data_rows(inputs.fetch(:daily_presort).first, **TSV_OPTIONS)
+  moves = data_rows(inputs.fetch(:moveresults).first, **TSV_OPTIONS)
   counts = [companions.length, presorts.length, moves.length]
   raise "#{oms_number} row counts differ: #{counts.join(', ')}" unless counts.uniq.one?
 
@@ -144,8 +145,7 @@ end
 def write_utf16_tsv(output_path, input_path, oms_number, mail_date, date_inserted)
   atomic_write(output_path) do |temp|
     output = CSV.new(temp)
-    options = { col_sep: "\t", encoding: 'UTF-16LE:UTF-8' }
-    CSV.foreach(input_path, **options).with_index do |row, index|
+    CSV.foreach(input_path, **TSV_OPTIONS).with_index do |row, index|
       converted = if index.zero?
                     [*METADATA_HEADER, *without_line_feeds(row)]
                   else
