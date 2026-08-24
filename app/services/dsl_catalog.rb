@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class DslCatalog
-  CONTROL_CENTER_EXCLUDED_GROUPS = %w[print_2_mail print_2_mail_billing_data].freeze
-
   Entry = Data.define(:key, :slug, :path, :config) do
     def group
       config.dig(:group, :name).presence
@@ -61,10 +59,6 @@ class DslCatalog
 
     def grouped
       entries.select(&:group).group_by(&:group).sort.to_h
-    end
-
-    def control_center_grouped
-      grouped.except(*CONTROL_CENTER_EXCLUDED_GROUPS)
     end
 
     def ungrouped

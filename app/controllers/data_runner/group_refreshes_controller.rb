@@ -7,7 +7,7 @@ module DataRunner
 
     def create
       group = params.require(:group).to_s.parameterize(separator: '_')
-      entries = DslCatalog.control_center_grouped.fetch(group, []).select(&:enabled?)
+      entries = DslCatalog.grouped.fetch(group, []).select(&:enabled?)
       operation = params[:restart] == '1' ? :restart! : :start!
       run = GroupRefresh.public_send(operation, group: group, entries: entries, requested_by: current_user.email)
       redirect_to data_runner_group_run_path(run),

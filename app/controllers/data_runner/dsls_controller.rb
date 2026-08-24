@@ -6,7 +6,7 @@ module DataRunner
     before_action :set_dsl, except: %i[index new create] + DataRunner::ApplicationController::GROUP_ACTIONS
 
     def index
-      @groups = DslCatalog.control_center_grouped if user_signed_in?
+      @groups = DslCatalog.grouped if user_signed_in?
       @ungrouped = DslCatalog.ungrouped if user_signed_in?
       @selected_group = params[:group].presence_in(@groups&.keys || [])
       @selected_entries = @groups&.fetch(@selected_group, []) || []
