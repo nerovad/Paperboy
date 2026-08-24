@@ -118,6 +118,7 @@ module DataRunnerTaskHelpers
 
   def drain_orchestration_queue(selector, orchestration)
     processed = 0
+    target_oms = ENV.fetch('DATARUNNER_QUEUE_OMS', nil)
     while (entry = next_queue_entry(orchestration.fetch(:queue)))
       ensure_queue_entry_not_processed!(orchestration, entry)
       puts "[QUEUE] Processing #{entry}"
@@ -127,6 +128,8 @@ module DataRunnerTaskHelpers
 
       raise "orchestration queue item was not removed: #{entry}"
     end
+    raise "OMS #{target_oms} is not present in the orchestration queue" if target_oms && processed.zero?
+
     puts "[QUEUE] Processed #{processed} item(s)"
   end
   private_class_method :drain_orchestration_queue
@@ -146,8 +149,10 @@ module DataRunnerTaskHelpers
     path = queue.fetch(:path)
     raise "orchestration queue directory not found: #{path}" unless Dir.exist?(path)
 
+    target_oms = ENV.fetch('DATARUNNER_QUEUE_OMS', nil)
     Dir.children(path).sort.find do |entry|
-      File.file?(File.join(path, entry)) && queue.fetch(:pattern).match?(entry)
+      matches_target = target_oms.nil? || entry.match?(/\AMail\.dat_#{Regexp.escape(target_oms)}\.zip\z/i)
+      File.file?(File.join(path, entry)) && queue.fetch(:pattern).match?(entry) && matches_target
     end
   end
   private_class_method :next_queue_entry

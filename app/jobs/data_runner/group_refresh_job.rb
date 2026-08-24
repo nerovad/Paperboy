@@ -43,10 +43,14 @@ module DataRunner
     def process_items(run)
       item_ids = Queue.new
       run.items.order(:position).ids.each { |id| item_ids << id }
-      workers = [DOWNLOAD_CONCURRENCY, item_ids.size].min.times.map do
+      workers = [worker_count(run), item_ids.size].min.times.map do
         Thread.new { work_items(run.id, item_ids) }
       end
       workers.each(&:value)
+    end
+
+    def worker_count(run)
+      run.group_name == P2m::DataRefresh::GROUP_RUN_NAME ? 1 : DOWNLOAD_CONCURRENCY
     end
 
     def work_items(run_id, item_ids)
@@ -65,7 +69,7 @@ module DataRunner
       item.update!(status: 'running', started_at: started_at)
       status = with_log(run) do |log|
         TaskRunner.run_selector!(task: 'refresh', selector: item.dsl_slug, output: log,
-                                 environment: dependency_environment(run))
+                                 environment: dependency_environment(run, item))
       end
       item_status = status.success? ? 'succeeded' : 'failed'
       complete_item(run, item, status: item_status, started_clock: started_clock)
@@ -81,11 +85,14 @@ module DataRunner
       GroupRun.increment_counter(:failed_count, run.id) if status == 'failed'
     end
 
-    def dependency_environment(run)
-      {
+    def dependency_environment(run, item)
+      environment = {
         'DATARUNNER_RUN_ID' => run.run_id,
         'DATARUNNER_RUN_DSLS' => run.items.order(:position).pluck(:dsl_name).join(',')
       }
+      oms_number = item.dsl_name.match(/\AOMS (\d{8,9})\z/)&.[](1)
+      environment['DATARUNNER_QUEUE_OMS'] = oms_number if oms_number
+      environment
     end
 
     def finish(run)

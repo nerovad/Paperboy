@@ -40,7 +40,11 @@ def paths
 end
 
 def selected_oms_number(sent_dir)
-  marker = sent_dir.children.select(&:file?).sort.find { |path| path.basename.to_s.match?(MARKER_PATTERN) }
+  target = ENV.fetch('DATARUNNER_QUEUE_OMS', nil)
+  marker = sent_dir.children.select(&:file?).sort.find do |path|
+    match = path.basename.to_s.match(MARKER_PATTERN)
+    match && (target.nil? || match[1] == target)
+  end
   raise "no Mail.dat OMS marker found in #{sent_dir}" unless marker
 
   marker.basename.to_s.match(MARKER_PATTERN)[1]

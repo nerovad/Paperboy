@@ -11,7 +11,8 @@ module DataRunner
       helper_method :data_refresh_form_path, :data_refresh_progress_path,
                     :data_refresh_status_path, :data_refresh_log_path,
                     :data_refresh_progress_tracker_locals, :data_refresh_app_label,
-                    :data_refresh_cancel_path, :data_refresh_css_class
+                    :data_refresh_cancel_path, :data_refresh_css_class,
+                    :data_refresh_unit_name
     end
 
     def show; end
@@ -20,7 +21,8 @@ module DataRunner
       run = data_refresh_service.run!(data_refresh_group_values, requested_by: current_user.email)
       return redirect_to data_refresh_form_path, notice: 'No Data Runner groups were selected.' unless run
 
-      redirect_to data_refresh_progress_path(run), notice: "Data refresh started for #{run.total_count} DSLs."
+      redirect_to data_refresh_progress_path(run),
+                  notice: "Data refresh started for #{helpers.pluralize(run.total_count, data_refresh_unit_name)}."
     rescue GroupRefresh::ActiveRun
       run = GroupRun.active.find_by!(group_name: data_refresh_service.group_run_name)
       redirect_to data_refresh_progress_path(run), alert: "#{data_refresh_app_label} data refresh is already running."
@@ -78,8 +80,11 @@ module DataRunner
         restart_confirmation: "Restart the #{data_refresh_app_label} data refresh?",
         log_path: data_refresh_log_path(run),
         return_path: data_refresh_form_path,
-        return_label: "Return to #{data_refresh_app_label}"
+        return_label: "Return to #{data_refresh_app_label}",
+        unit_name: data_refresh_unit_name
       }
     end
+
+    def data_refresh_unit_name = 'DSL'
   end
 end

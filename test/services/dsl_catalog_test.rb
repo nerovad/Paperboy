@@ -11,6 +11,11 @@ class DslCatalogTest < ActiveSupport::TestCase
     assert_includes DslCatalog.grouped.keys, 'chart_of_accounts'
   end
 
+  test 'keeps Print 2 Mail groups out of the Data Runner control center' do
+    assert_empty DslCatalog.control_center_grouped.keys & DslCatalog::CONTROL_CENTER_EXCLUDED_GROUPS
+    assert_includes DslCatalog.grouped.keys, 'print_2_mail_billing_data'
+  end
+
   test 'only resolves known slugs' do
     assert_equal 'employees', DslCatalog.find!('employees').slug
     assert_raises(ActiveRecord::RecordNotFound) { DslCatalog.find!('../Gemfile') }
