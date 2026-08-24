@@ -89,7 +89,8 @@ module P2m
     def imported_dataset_at(oms_number)
       connection = OmsUpload.connection
       oms = connection.quote(oms_number.to_s)
-      tables = %w[companions daily_pesorts move_results]
+      tables = %w[companions daily_presorts move_results]
+      return unless tables.all? { |table| connection.data_source_exists?(table) }
       return unless tables.all? { |table| imported_table_has_oms?(connection, table, oms) }
 
       selects = tables.map do |table|
