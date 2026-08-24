@@ -52,19 +52,27 @@ export default class extends Controller {
       directory: button.dataset.directory,
       oms_number: button.dataset.omsNumber
     })
-    const response = await fetch(button.dataset.stagingUrl, {
-      method: button.dataset.stagingMethod,
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
-      },
-      body: parameters.toString()
-    })
-    const result = await response.json()
-    await pbAlert({
-      title: response.ok ? button.dataset.stagingAction : "Staging failed",
-      message: result.message
-    })
+    try {
+      const response = await fetch(button.dataset.stagingUrl, {
+        method: button.dataset.stagingMethod,
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
+        },
+        body: parameters.toString()
+      })
+      const contentType = response.headers.get("content-type") || ""
+      const result = contentType.includes("application/json") ? await response.json() : {}
+      await pbAlert({
+        title: response.ok ? button.dataset.stagingAction : "Staging failed",
+        message: result.message || `The staging request failed (${response.status}).`
+      })
+    } catch (_error) {
+      await pbAlert({
+        title: "Staging failed",
+        message: "The staging request could not be completed."
+      })
+    }
   }
 }

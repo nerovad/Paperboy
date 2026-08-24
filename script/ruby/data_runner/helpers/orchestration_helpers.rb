@@ -363,8 +363,6 @@ module DataRunnerTaskHelpers
   private_class_method :run_tracked_injection
 
   def orchestration_upload(orchestration)
-    return unless defined?(P2m::OmsUpload)
-
     queue = orchestration[:queue]
     entry = queue && next_queue_entry(queue)
     match = entry&.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)

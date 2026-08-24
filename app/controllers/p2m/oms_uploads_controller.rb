@@ -9,6 +9,7 @@ module P2m
 
     def index
       validate_date_range!
+      OmsUploadLedger.new.reconcile_imported!
       scope = OmsUpload.includes(:files, :findings)
                        .where(mailer_date: @start_date..@end_date)
                        .newest_first
