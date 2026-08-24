@@ -3,7 +3,8 @@
   <h1>Edit Notice of Change</h1>
 </div>
 
-<div class="form-wrapper" data-controller="form-navigation conditional-fields">
+<div class="form-wrapper" data-controller="form-navigation conditional-fields coa-account-fields"
+     data-coa-account-fields-url-value="<%= accounting_options_notice_of_change_forms_path %>">
   <%= form_with model: @notice_of_change_form, local: true do |form| %>
 
 <!-- Page 1: Employee Info -->
@@ -66,7 +67,8 @@
           id: "agency-select",
           data: {
             gsabss_selects_target: "agency",
-            action: "change->gsabss-selects#loadDivisions"
+            coa_account_fields_target: "agency",
+            action: "change->gsabss-selects#loadDivisions change->coa-account-fields#load"
           } %>
   </div>
 
@@ -142,30 +144,7 @@
 <div class="form-page" style="display:none;">
   <h2>Billing Information</h2>
         <div class="form-row d-flex flex-wrap">
-<div class="form-group flex-fill<%= '' %>">
-  <%= form.label :object, "Object" %>
-            <%= form.text_field :object, class: "form-control", required: true %>
-          </div>
-<div class="form-group flex-fill<%= '' %>">
-  <%= form.label :activity, "Activity" %>
-            <%= form.text_field :activity, class: "form-control", required: true %>
-          </div>
-<div class="form-group flex-fill<%= '' %>">
-  <%= form.label :function, "Function" %>
-            <%= form.text_field :function, class: "form-control", required: true %>
-          </div>
-<div class="form-group flex-fill<%= '' %>">
-  <%= form.label :program, "Program" %>
-            <%= form.text_field :program, class: "form-control", required: true %>
-          </div>
-<div class="form-group flex-fill<%= '' %>">
-  <%= form.label :phase, "Phase" %>
-            <%= form.text_field :phase, class: "form-control", required: true %>
-          </div>
-<div class="form-group flex-fill<%= '' %>">
-  <%= form.label :task, "Task" %>
-            <%= form.text_field :task, class: "form-control", required: true %>
-          </div>
+          <%= render "billing_fields", form: form %>
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :monthly_cost, "Monthly Cost" %>
             <%= form.text_field :monthly_cost, class: "form-control", required: true %>

@@ -223,6 +223,9 @@ Rails.application.routes.draw do
     end
   end
   resources :notice_of_change_forms, controller: 'forms/notice_of_change_forms' do
+    collection do
+      get :accounting_options
+    end
     member do
       get :pdf
       patch :approve
