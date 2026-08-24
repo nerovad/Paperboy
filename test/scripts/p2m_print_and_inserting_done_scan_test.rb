@@ -5,12 +5,17 @@ require 'tmpdir'
 require_relative '../../script/ruby/p2m/print_and_inserting_done'
 
 class P2mPrintAndInsertingDoneScanTest < Minitest::Test
-  def test_scan_only_reports_files_without_staging_inputs
+  def test_scan_only_reports_only_oms_numbers_not_staged_or_uploaded
     Dir.mktmpdir do |directory|
       source = Pathname.new(directory).join('Outputs')
       runner = source.join('DataRunner')
       create_job(source.join('job'), '50000001')
       create_job(source.join('FinalOutput'), '50000002')
+      create_job(source.join('staged'), '50000003')
+      create_job(source.join('uploaded'), '50000004')
+      FileUtils.mkdir_p(runner.join('00_SentToUSPS'))
+      runner.join('00_SentToUSPS/Mail.dat_50000003.zip').write('fixture')
+      FileUtils.mkdir_p(runner.join('02_Processed/50000004'))
       report = runner.join('report.json')
 
       rows = P2m::OmsBackfileStager.new(

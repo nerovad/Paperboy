@@ -66,7 +66,8 @@ module P2m
     end
 
     def scan_files
-      record_files(markers)
+      available_markers = markers.reject { |marker| unavailable_oms_numbers.include?(oms_number(marker)) }
+      record_files(available_markers)
       []
     end
 
@@ -165,6 +166,16 @@ module P2m
       @queued_oms_numbers ||= sent_path.children.filter_map do |path|
         match = path.file? && path.basename.to_s.match(MARKER_PATTERN)
         match[1] if match
+      end.to_set
+    end
+
+    def unavailable_oms_numbers
+      @unavailable_oms_numbers ||= queued_oms_numbers | processed_oms_numbers
+    end
+
+    def processed_oms_numbers
+      processed_path.children.filter_map do |path|
+        path.basename.to_s if path.directory? && path.basename.to_s.match?(/\A#{OMS_NUMBER}\z/)
       end.to_set
     end
 
