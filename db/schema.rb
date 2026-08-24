@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_24_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_24_000002) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -825,76 +825,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_24_000001) do
     t.index ["reportable_due_at", "reportable_breach_notified_at"], name: "index_osha_reports_on_reportable_deadline"
   end
 
-  create_table "p2m_oms_upload_files", force: :cascade do |t|
-    t.bigint "oms_upload_id", null: false
-    t.string "original_filename", null: false
-    t.string "category", null: false
-    t.bigint "byte_size", null: false
-    t.string "checksum_algorithm", default: "SHA256", null: false
-    t.string "checksum", limit: 64, null: false
-    t.datetime "source_modified_at"
-    t.string "archived_path"
-    t.datetime "archived_at"
-    t.string "retention_class"
-    t.date "retention_starts_on"
-    t.date "retain_until"
-    t.string "disposition_status", default: "retained", null: false
-    t.datetime "disposed_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["oms_upload_id", "original_filename"], name: "idx_p2m_files_name", unique: true
-    t.index ["oms_upload_id"], name: "index_p2m_oms_upload_files_on_oms_upload_id"
-  end
-
-  create_table "p2m_oms_upload_findings", force: :cascade do |t|
-    t.bigint "oms_upload_id", null: false
-    t.string "rule", null: false
-    t.string "severity", null: false
-    t.string "status", null: false
-    t.string "observed_value"
-    t.string "expected_value"
-    t.text "message"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["oms_upload_id", "rule"], name: "idx_p2m_findings_rule", unique: true
-    t.index ["oms_upload_id"], name: "index_p2m_oms_upload_findings_on_oms_upload_id"
-  end
-
-  create_table "p2m_oms_uploads", force: :cascade do |t|
-    t.string "oms_number", limit: 9, null: false
-    t.date "mailer_date", null: false
-    t.string "status", default: "staged", null: false
-    t.string "validation_status", default: "pending", null: false
-    t.string "import_status", default: "not_started", null: false
-    t.string "archive_status", default: "queued", null: false
-    t.string "budget_job_id"
-    t.string "aims_job_id"
-    t.string "document_profile"
-    t.string "production_workflow"
-    t.integer "companion_file_count", default: 0, null: false
-    t.integer "postal_report_count", default: 0, null: false
-    t.integer "input_record_count"
-    t.integer "mailed_record_count"
-    t.integer "non_mailed_record_count"
-    t.string "staged_by"
-    t.datetime "staged_at"
-    t.datetime "last_seen_at"
-    t.datetime "validation_started_at"
-    t.datetime "validated_at"
-    t.datetime "import_started_at"
-    t.datetime "imported_at"
-    t.datetime "archived_at"
-    t.datetime "failed_at"
-    t.string "removed_by"
-    t.datetime "removed_at"
-    t.text "removal_reason"
-    t.text "failure_message"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["oms_number", "mailer_date"], name: "idx_p2m_uploads_identity", unique: true
-    t.index ["status", "mailer_date"], name: "index_p2m_oms_uploads_on_status_and_mailer_date"
-  end
-
   create_table "parking_lot_submissions", force: :cascade do |t|
     t.string "name", limit: 200
     t.string "phone", limit: 25
@@ -1254,8 +1184,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_24_000001) do
   add_foreign_key "form_template_routing_steps", "form_templates"
   add_foreign_key "form_template_statuses", "form_templates"
   add_foreign_key "osha_300a_entries", "osha_establishments"
-  add_foreign_key "p2m_oms_upload_files", "p2m_oms_uploads", column: "oms_upload_id"
-  add_foreign_key "p2m_oms_upload_findings", "p2m_oms_uploads", column: "oms_upload_id"
   add_foreign_key "parking_lot_vehicles", "parking_lot_submissions"
   add_foreign_key "pcard_inventories", "pcard_request_forms"
 end
