@@ -1,3 +1,4 @@
+@use "sass:color";
 @import "base/tokens";
 
 /* ---------------------------------------------------------------------------
@@ -108,7 +109,7 @@ summary.btn {
 .btn.close-panel,
 .btn.clear-filters { background-color: $muted; }
 .btn.close-panel:hover,
-.btn.clear-filters:hover { background-color: darken($muted, 10%); }
+.btn.clear-filters:hover { background-color: color.adjust($muted, $lightness: -10%); }
 
 /* Lightest weight in the family: light fill, dark text, hairline border. */
 .btn.ghost {

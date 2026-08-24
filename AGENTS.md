@@ -14,6 +14,60 @@
 - Git
   * use git mv when moving files
 
+## Stylesheets
+
+SCSS is compiled by **Dart Sass** (`dartsass-rails` + `sass-embedded`).
+Sprockets only serves and digests the result. Source lives in
+`app/assets/stylesheets/`, entrypoint `application.scss`; the compiled
+output lands in `app/assets/builds/application.css`, which is generated
+and gitignored — never edit or commit it.
+
+Modern CSS is fully supported. Write it directly:
+
+```scss
+max-height: min(30.6rem, calc(100vh - 32rem));
+height: clamp(18rem, 50vh, 36rem);
+width: max(20rem, 50%);
+inset: 0;
+gap: 1rem;
+```
+
+Rules:
+
+- **Never reintroduce `sass-rails`, `sassc-rails` or `sassc`.** They pull
+  in libsass, which has been end-of-life since 2020. libsass parses
+  `min()` and `max()` as Sass numeric functions, so
+  `min(30.6rem, calc(100vh - 32rem))` fails to compile. That took staging
+  down on 2026-08-24.
+- **Never wrap CSS in `unquote()`** to sneak it past the compiler. That
+  was a libsass workaround. Dart Sass emits modern CSS verbatim.
+- **Never use global built-in Sass functions** — `darken()`, `lighten()`,
+  `saturate()`, `transparentize()`, `unquote()` and friends are removed
+  in Dart Sass 3.0. Load the module instead:
+
+  ```scss
+  @use "sass:color";
+  border-color: color.adjust($border-color, $lightness: -10%);
+  ```
+
+- New stylesheets are partials `@import`ed by `application.scss`. A second
+  top-level entrypoint needs a `config.dartsass.builds` entry or it is
+  never compiled.
+
+`test/lib/stylesheet_conventions_test.rb` enforces all of the above, so a
+regression fails `bundle exec rake test` rather than a deploy.
+
+### Working on CSS locally
+
+Run `bin/dev` — it starts `dartsass:watch` alongside the server, so a
+saved `.scss` rebuilds in about 100ms and a browser refresh shows it.
+
+Do **not** run `assets:precompile` in development. `development.rb` sets
+`config.assets.debug = true` so Sprockets resolves assets live; a
+precompiled `public/assets` manifest takes priority over live resolution
+and silently freezes your CSS until `assets:clobber` runs. That is what
+used to make every CSS change require a clobber-and-recompile cycle.
+
 ## Buttons
 
 All action buttons use one shared system, defined in

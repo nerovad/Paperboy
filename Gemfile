@@ -8,9 +8,11 @@ ruby '~> 4.0'
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem 'rails', '~> 8.0.2'
 
-# The modern asset pipeline for Rails [https://github.com/rails/propshaft]
-# gem "propshaft"
-gem 'sass-rails', '>= 6'
+# Asset pipeline: Sprockets serves and digests; dartsass-rails compiles SCSS
+# with Dart Sass (sass-embedded). Do not reintroduce sass-rails/sassc-rails --
+# those pull in libsass, which is EOL and cannot parse modern CSS. See AGENTS.md.
+gem 'dartsass-rails', '~> 0.5'
+gem 'sprockets-rails'
 
 # Use sqlite3 as the database for Active Record
 # gem "sqlite3", ">= 2.1"
