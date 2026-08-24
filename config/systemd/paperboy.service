@@ -10,8 +10,9 @@ WorkingDirectory=/home/matthew/gitea/Paperboy
 
 EnvironmentFile=/home/matthew/gitea/Paperboy/.env
 Environment=RAILS_ENV=production
+Environment=PATH=/home/matthew/.rbenv/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
 
-ExecStart=/bin/bash -lc 'bundle exec puma -C config/puma/production.rb'
+ExecStart=/home/matthew/.rbenv/shims/bundle exec puma -C config/puma/production.rb
 ExecReload=/bin/kill -USR1 $MAINPID
 Restart=always
 RestartSec=5
