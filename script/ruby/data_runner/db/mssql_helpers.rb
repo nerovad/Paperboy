@@ -73,10 +73,18 @@ module MssqlHelpers
     opts = {
       host: host.to_s.strip.empty? ? env_any!('MSSQL_HOST', 'GSABSS_HOST') : host,
       port: (env_any('MSSQL_PORT', 'GSABSS_PORT') || '1433').to_i,
-      tds_version: ENV['MSSQL_TDSVER'] || '7.4',
-      username: env_any!('MSSQL_USERNAME', 'GSABSS_USERNAME'),
-      password: env_any!('MSSQL_PASSWORD', 'GSABSS_PASSWORD')
+      tds_version: ENV['MSSQL_TDSVER'] || '7.4'
     }
+
+    # Auth mode mirrors config/database.yml: a username present means SQL/NTLM
+    # auth (used by CI, which has no AD); absent means Kerberos (GSSAPI) using
+    # the ticket in KRB5CCNAME. Kerberos needs tiny_tds built against the system
+    # FreeTDS - the precompiled gem ships without GSSAPI support.
+    username = env_any('MSSQL_USERNAME', 'GSABSS_USERNAME')
+    unless username.to_s.strip.empty?
+      opts[:username] = username
+      opts[:password] = env_any!('MSSQL_PASSWORD', 'GSABSS_PASSWORD')
+    end
 
     opts[:timeout] = timeout_i if timeout_i&.positive?
     opts[:encrypt] = env_bool('MSSQL_ENCRYPT', default: false) if ENV.key?('MSSQL_ENCRYPT')
