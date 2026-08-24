@@ -136,11 +136,11 @@ The child configurations map the generated CSV files to SQL Server:
 | Child DSL | Local input | Destination |
 | --- | --- | --- |
 | `Companions` | `companions.csv` | `GSASQL16.GSABSS.dbo.companions` |
-| `Dailypresorts` | `dailypresorts.csv` | `GSASQL16.GSABSS.dbo.daily_pesorts` |
+| `Dailypresorts` | `dailypresorts.csv` | `GSASQL16.GSABSS.dbo.daily_presorts` |
 | `Moveresults` | `moveresults.csv` | `GSASQL16.GSABSS.dbo.move_results` |
 
 All three database connections use append injection. The database table name
-`daily_pesorts` is reproduced exactly from the current child DSL.
+`daily_presorts` is reproduced exactly from the current child DSL.
 
 The source locations declared by the child DSLs are not used to fetch the
 OMS files during orchestration. Instead, the orchestrator copies each
