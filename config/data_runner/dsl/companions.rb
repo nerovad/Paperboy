@@ -102,7 +102,8 @@
         schema: 'dbo',
         table: 'companions',
         inject: {
-          mode: :append
+          mode: :append,
+          reject_existing: %w[omsnumber]
         }
       }
     ]

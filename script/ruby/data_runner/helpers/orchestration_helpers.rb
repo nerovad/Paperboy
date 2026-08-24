@@ -119,6 +119,7 @@ module DataRunnerTaskHelpers
   def drain_orchestration_queue(selector, orchestration)
     processed = 0
     while (entry = next_queue_entry(orchestration.fetch(:queue)))
+      ensure_queue_entry_not_processed!(orchestration, entry)
       puts "[QUEUE] Processing #{entry}"
       run_orchestration_stages(selector, %i[download to_csv use_dsl inject])
       processed += 1
@@ -129,6 +130,17 @@ module DataRunnerTaskHelpers
     puts "[QUEUE] Processed #{processed} item(s)"
   end
   private_class_method :drain_orchestration_queue
+
+  def ensure_queue_entry_not_processed!(orchestration, entry)
+    match = entry.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
+    return unless match
+
+    processed = File.absolute_path(orchestration.fetch(:processed_path).to_s,
+                                   orchestration.fetch(:root_path))
+    archive = File.join(processed, match[1])
+    raise "duplicate OMS number: archive already exists: #{archive}" if Dir.exist?(archive)
+  end
+  private_class_method :ensure_queue_entry_not_processed!
 
   def next_queue_entry(queue)
     path = queue.fetch(:path)

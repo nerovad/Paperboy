@@ -159,6 +159,7 @@ For every queued marker, refresh runs this lifecycle:
 
 ```text
 Find next marker
+  -> reject the OMS number when 02_Processed/<OMS number> already exists
   -> preprocess selected OMS inputs
   -> verify all three temporary CSV files
   -> copy CSV files into output/data_runner/01_Download
@@ -219,6 +220,11 @@ existing `omsnumber` and `maildate` pair inside that transaction. A failure
 after commit but before archival is therefore safe to retry: the duplicate
 check prevents a second insertion and the staged originals remain available
 for investigation.
+
+Duplicate detection uses the OMS number as its boundary. Staging rejects an
+OMS number already represented by an archive or an upload whose import has
+begun. Refresh repeats the archive check before preprocessing, and each child
+table rejects an existing `omsnumber` inside the shared SQL transaction.
 
 ## Operational requirements
 

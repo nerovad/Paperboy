@@ -14,5 +14,6 @@ class DataRefreshesControllerTest < ActiveSupport::TestCase
     assert_includes P2m::StageDataController.action_methods, 'show'
     assert_includes P2m::StageDataController.action_methods, 'create'
     assert_includes P2m::StageDataController.action_methods, 'print_tray_labels'
+    assert_includes P2m::OmsUploadsController.action_methods, 'index'
   end
 end
