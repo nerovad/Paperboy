@@ -39,6 +39,18 @@ module P2m
       end
     end
 
+    test 'rejects staging an archived OMS number' do
+      Dir.mktmpdir do |directory|
+        processed = Pathname.new(directory)
+        processed.join('51780767').mkpath
+        ledger = OmsUploadLedger.new(staging_path: processed.join('staging'), processed_path: processed)
+
+        assert_raises(OmsUploadLedger::ChangedFiles) do
+          ledger.ensure_stageable!(oms_number: '51780767')
+        end
+      end
+    end
+
     private
 
     def with_staged_job

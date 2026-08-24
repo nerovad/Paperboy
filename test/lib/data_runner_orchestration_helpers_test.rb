@@ -2,6 +2,7 @@
 
 require 'test_helper'
 require Rails.root.join('script/ruby/data_runner/helpers/task_helpers')
+require 'tmpdir'
 
 class DataRunnerOrchestrationHelpersTest < ActiveSupport::TestCase
   CHILDREN = %w[One Two Three].map { |name| [name, {}] }.freeze
@@ -60,5 +61,20 @@ class DataRunnerOrchestrationHelpersTest < ActiveSupport::TestCase
     assert_equal 'inject.rb', script
     assert_equal CHILDREN.map(&:first), children
     assert_equal '1', options.fetch(:environment).fetch('DATARUNNER_ATOMIC_INJECT')
+  end
+
+  test 'rejects a queued OMS number that already has an archive' do
+    Dir.mktmpdir do |directory|
+      FileUtils.mkdir_p(File.join(directory, '02_Processed/50506986'))
+      orchestration = { root_path: directory, processed_path: '02_Processed' }
+
+      error = assert_raises(RuntimeError) do
+        DataRunnerTaskHelpers.send(
+          :ensure_queue_entry_not_processed!, orchestration, 'Mail.dat_50506986.zip'
+        )
+      end
+
+      assert_match 'duplicate OMS number', error.message
+    end
   end
 end

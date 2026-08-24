@@ -3,12 +3,43 @@
 </div>
 
 <div class="form-wrapper p2m-stage-data">
+  <section class="p2m-stage-card p2m-stage-card--compact" aria-labelledby="p2m-upload-date-range-title">
+    <h2 id="p2m-upload-date-range-title">Date Range</h2>
+
+    <%= form_with(url: p2m_oms_uploads_path, method: :get,
+                  data: { turbo: false, controller: "date-range",
+                          action: "submit->date-range#validate reset->date-range#reset" }) do %>
+      <div class="p2m-stage-date-fields">
+        <div class="form-group">
+          <%= label_tag "oms_uploads_start_date", "Start Date" %>
+          <%= date_field_tag "oms_uploads[start_date]", @start_date,
+                             id: "oms_uploads_start_date", class: "form-control", required: true,
+                             data: { date_range_target: "startDate",
+                                     action: "input->date-range#validateRange" } %>
+        </div>
+        <div class="form-group">
+          <%= label_tag "oms_uploads_end_date", "End Date" %>
+          <%= date_field_tag "oms_uploads[end_date]", @end_date,
+                             id: "oms_uploads_end_date", class: "form-control", required: true,
+                             data: { date_range_target: "endDate",
+                                     action: "input->date-range#validateRange" } %>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <%= submit_tag "Confirm", class: "btn approve compact" %>
+        <%= button_tag "Reset", type: :reset, class: "btn warning compact" %>
+        <%= link_to "Cancel", p2m_root_path, class: "btn compact" %>
+      </div>
+    <% end %>
+  </section>
+
   <section class="p2m-stage-card" aria-labelledby="p2m-oms-uploads-title">
     <h2 id="p2m-oms-uploads-title">Staged Mailing Jobs</h2>
     <p>One row per OMS number and mailer date. Mailed counts indicate records with postage.</p>
 
-    <div class="table-wrap">
-      <table class="submission-table" data-controller="output-table" data-simple-sort="true">
+    <div class="table-wrap p2m-maildat-grid">
+      <table class="submission-table p2m-maildat-table" data-controller="data-refresh-groups">
         <thead>
           <tr>
             <th>OMS Number</th>
@@ -27,9 +58,18 @@
           </tr>
         </thead>
         <tbody>
-          <% @uploads.each do |upload| %>
-            <tr data-sort-row>
-              <td><%= upload.oms_number %></td>
+          <% @uploads.each_with_index do |upload, index| %>
+            <% detail_id = "p2m-oms-upload-#{upload.id}-details" %>
+            <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>" data-detail-id="<%= detail_id %>">
+              <td>
+                <button type="button" class="p2m-row-trigger"
+                        aria-expanded="false" aria-controls="<%= detail_id %>"
+                        aria-label="Show details for OMS <%= upload.oms_number %>"
+                        data-action="data-refresh-groups#toggle" data-detail-id="<%= detail_id %>">
+                  <span aria-hidden="true">▸</span>
+                </button>
+                <%= upload.oms_number %>
+              </td>
               <td><%= upload.mailer_date.iso8601 %></td>
               <td><%= upload.budget_job_id.presence || "—" %></td>
               <td><%= upload.document_profile.presence || "—" %></td>
@@ -46,6 +86,38 @@
               </td>
               <td><%= upload.status.humanize %></td>
             </tr>
+            <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden>
+              <td colspan="13">
+                <div class="p2m-upload-details">
+                  <section>
+                    <h3>Findings</h3>
+                    <ul>
+                      <% upload.findings.each do |finding| %>
+                        <li>
+                          <strong><%= finding.rule.humanize %>:</strong>
+                          <%= finding.status.humanize %>
+                          <% if finding.observed_value.present? %>
+                            — observed <%= finding.observed_value %>
+                          <% end %>
+                          <% if finding.message.present? %> — <%= finding.message %><% end %>
+                        </li>
+                      <% end %>
+                    </ul>
+                  </section>
+                  <section>
+                    <h3>Original Files</h3>
+                    <ul>
+                      <% upload.files.sort_by(&:original_filename).each do |file| %>
+                        <li>
+                          <%= file.original_filename %> — <%= file.category.humanize %>,
+                          <%= number_to_human_size(file.byte_size) %>
+                        </li>
+                      <% end %>
+                    </ul>
+                  </section>
+                </div>
+              </td>
+            </tr>
           <% end %>
           <% if @uploads.empty? %>
             <tr><td colspan="13">No OMS uploads have been recorded.</td></tr>
@@ -53,5 +125,14 @@
         </tbody>
       </table>
     </div>
+
+    <% if @pagy&.pages.to_i > 1 %>
+      <div class="pagination-wrapper">
+        <%== @pagy.series_nav %>
+        <p class="pagination-info">
+          Showing <%= @pagy.from %>–<%= @pagy.to %> of <%= @pagy.count %> OMS uploads
+        </p>
+      </div>
+    <% end %>
   </section>
 </div>

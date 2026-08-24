@@ -82,7 +82,8 @@
         schema: 'dbo',
         table: 'daily_pesorts',
         inject: {
-          mode: :append
+          mode: :append,
+          reject_existing: %w[omsnumber]
         }
       }
     ]

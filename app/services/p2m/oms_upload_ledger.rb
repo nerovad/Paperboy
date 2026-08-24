@@ -18,8 +18,19 @@ module P2m
     class ImportStarted < StandardError; end
     class ChangedFiles < StandardError; end
 
-    def initialize(staging_path: OmsStaging::DESTINATION)
+    PROCESSED_PATH = Pathname.new('/mnt/o/Outputs/DataRunner/02_Processed')
+
+    def initialize(staging_path: OmsStaging::DESTINATION, processed_path: PROCESSED_PATH)
       @staging_path = Pathname.new(staging_path)
+      @processed_path = Pathname.new(processed_path)
+    end
+
+    def ensure_stageable!(oms_number:)
+      archive = processed_path.join(oms_number.to_s)
+      raise ChangedFiles, "OMS #{oms_number} is already archived in 02_Processed" if archive.directory?
+
+      imported = OmsUpload.where(oms_number: oms_number).where.not(import_status: 'not_started').exists?
+      raise ChangedFiles, "OMS #{oms_number} has already begun import" if imported
     end
 
     def staged!(oms_number:, actor:)
@@ -52,7 +63,7 @@ module P2m
 
     private
 
-    attr_reader :staging_path
+    attr_reader :processed_path, :staging_path
 
     def staged_paths(oms_number)
       paths = staging_path.children.select do |path|

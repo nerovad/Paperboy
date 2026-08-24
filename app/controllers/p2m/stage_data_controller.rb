@@ -37,8 +37,10 @@ module P2m
     end
 
     def move_to_staging
+      ledger = OmsUploadLedger.new
+      ledger.ensure_stageable!(oms_number: staging_parameters.fetch(:oms_number))
       count = OmsStaging.new.stage(**staging_parameters)
-      OmsUploadLedger.new.staged!(oms_number: staging_parameters.fetch(:oms_number), actor: current_user.email)
+      ledger.staged!(oms_number: staging_parameters.fetch(:oms_number), actor: current_user.email)
       render json: { message: "#{count} files copied to 00_SentToUSPS." }
     rescue ActiveRecord::RecordInvalid, ArgumentError, RuntimeError => e
       render json: { message: e.message }, status: :unprocessable_content

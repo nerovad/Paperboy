@@ -76,7 +76,8 @@
         schema: 'dbo',
         table: 'move_results',
         inject: {
-          mode: :append
+          mode: :append,
+          reject_existing: %w[omsnumber]
         }
       }
     ]
