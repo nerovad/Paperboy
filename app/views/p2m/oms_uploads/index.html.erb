@@ -45,16 +45,11 @@
             <th>OMS Number</th>
             <th>Mailer Date</th>
             <th>Budget Job</th>
-            <th>Document Profile</th>
             <th>Input</th>
             <th>Mailed</th>
             <th>Non-Mailed</th>
-            <th>Files</th>
-            <th>Validation</th>
-            <th>Import</th>
-            <th>Archive</th>
+            <th>Stage Progress</th>
             <th>Findings</th>
-            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -72,23 +67,34 @@
               </td>
               <td><%= upload.mailer_date.iso8601 %></td>
               <td><%= upload.budget_job_id.presence || "—" %></td>
-              <td><%= upload.document_profile.presence || "—" %></td>
               <td><%= upload.input_record_count || "—" %></td>
               <td><%= upload.mailed_record_count || "—" %></td>
               <td><%= upload.non_mailed_record_count || "—" %></td>
-              <td><%= upload.files.size %></td>
-              <td><%= upload.validation_status.humanize %></td>
-              <td><%= upload.import_status.humanize %></td>
-              <td><%= upload.archive_status.humanize %></td>
+              <td>
+                <dl class="p2m-upload-stages">
+                  <div><dt>Overall</dt><dd><%= upload.status.humanize %></dd></div>
+                  <div><dt>Validation</dt><dd><%= upload.validation_status.humanize %></dd></div>
+                  <div><dt>Import</dt><dd><%= upload.import_status.humanize %></dd></div>
+                  <div><dt>Archive</dt><dd><%= upload.archive_status.humanize %></dd></div>
+                </dl>
+              </td>
               <td title="<%= upload.findings.map(&:message).compact.join(' ') %>">
                 <%= upload.findings.count { |finding| finding.status == "failed" } %> errors,
                 <%= upload.findings.count { |finding| finding.severity == "info" } %> info
               </td>
-              <td><%= upload.status.humanize %></td>
             </tr>
             <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden>
-              <td colspan="13">
+              <td colspan="8">
                 <div class="p2m-upload-details">
+                  <section>
+                    <h3>Mailing Job</h3>
+                    <dl class="p2m-upload-metadata">
+                      <div><dt>Document Profile</dt><dd><%= upload.document_profile.presence || "—" %></dd></div>
+                      <div><dt>Production Workflow</dt><dd><%= upload.production_workflow.presence || "—" %></dd></div>
+                      <div><dt>AIMS Job</dt><dd><%= upload.aims_job_id.presence || "—" %></dd></div>
+                      <div><dt>Files</dt><dd><%= upload.files.size %></dd></div>
+                    </dl>
+                  </section>
                   <section>
                     <h3>Findings</h3>
                     <ul>
@@ -120,7 +126,7 @@
             </tr>
           <% end %>
           <% if @uploads.empty? %>
-            <tr><td colspan="13">No OMS uploads have been recorded.</td></tr>
+            <tr><td colspan="8">No OMS uploads have been recorded.</td></tr>
           <% end %>
         </tbody>
       </table>

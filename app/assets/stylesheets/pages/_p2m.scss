@@ -17,10 +17,12 @@
 .p2m-stage-data {
   display: grid;
   gap: 1.25rem;
+  min-width: 0;
 }
 
 .p2m-stage-card {
   display: block;
+  min-width: 0;
   padding: 1.25rem;
   border: 1px solid $neutral-border-subtle;
   border-top: 4px solid $green-teal;
@@ -101,6 +103,8 @@
 }
 
 .p2m-maildat-grid {
+  width: 100%;
+  min-width: 0;
   max-height: unquote("min(30.6rem, calc(100vh - 32rem))");
   overflow: auto;
   border: 1px solid $neutral-border-light;
@@ -119,10 +123,23 @@
   th,
   td {
     height: 2.5rem;
-    padding: .5rem 1.5rem;
+    padding: .5rem .75rem;
     text-align: left;
     white-space: nowrap;
     box-sizing: border-box;
+  }
+
+  .p2m-upload-stages {
+    margin: 0;
+
+    div {
+      display: flex;
+      justify-content: space-between;
+      gap: .75rem;
+    }
+
+    dt { color: $text-muted; }
+    dd { margin: 0; font-weight: 600; }
   }
 
   thead th {
@@ -159,6 +176,20 @@
 }
 
 .p2m-maildat-detail ul { margin: .75rem 0; }
+
+.p2m-upload-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1.25rem;
+}
+
+.p2m-upload-metadata {
+  margin: .75rem 0;
+
+  div { margin-bottom: .5rem; }
+  dt { color: $text-muted; font-weight: 600; }
+  dd { margin: .15rem 0 0; overflow-wrap: anywhere; }
+}
 
 .p2m-maildat-actions {
   display: flex;

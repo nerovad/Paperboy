@@ -33,6 +33,27 @@ module P2m
       raise ChangedFiles, "OMS #{oms_number} has already begun import" if imported
     end
 
+    def reconcile_imported!
+      OmsUpload.where.not(status: 'removed').count do |upload|
+        imported_at = imported_dataset_at(upload.oms_number)
+        next false unless imported_at
+
+        archive = processed_path.join(upload.oms_number)
+        attributes = { import_status: 'imported', imported_at: upload.imported_at || imported_at,
+                       failure_message: nil }
+        if archive.directory?
+          attributes.merge!(status: 'completed', archive_status: 'archived',
+                            archived_at: upload.archived_at || archive.mtime)
+        else
+          attributes.merge!(status: 'archiving')
+        end
+        next false unless attributes.any? { |name, value| upload.public_send(name) != value }
+
+        upload.update!(attributes)
+        true
+      end
+    end
+
     def staged!(oms_number:, actor:)
       paths = staged_paths(oms_number)
       marker = marker_for(paths, oms_number)
@@ -64,6 +85,24 @@ module P2m
     private
 
     attr_reader :processed_path, :staging_path
+
+    def imported_dataset_at(oms_number)
+      connection = OmsUpload.connection
+      oms = connection.quote(oms_number.to_s)
+      tables = %w[companions daily_pesorts move_results]
+      return unless tables.all? { |table| imported_table_has_oms?(connection, table, oms) }
+
+      selects = tables.map do |table|
+        "SELECT MAX(importdatetime) AS imported_at FROM #{connection.quote_table_name(table)} " \
+          "WHERE omsnumber = #{oms}"
+      end
+      connection.select_value("SELECT MAX(imported_at) FROM (#{selects.join(' UNION ALL ')}) imports") || Time.current
+    end
+
+    def imported_table_has_oms?(connection, table, oms)
+      sql = "SELECT COUNT(*) FROM #{connection.quote_table_name(table)} WHERE omsnumber = #{oms}"
+      connection.select_value(sql).to_i.positive?
+    end
 
     def staged_paths(oms_number)
       paths = staging_path.children.select do |path|

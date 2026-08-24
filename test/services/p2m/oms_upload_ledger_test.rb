@@ -51,6 +51,29 @@ module P2m
       end
     end
 
+    test 'reconciles an existing processed archive with its upload state' do
+      with_staged_job do |staging|
+        Dir.mktmpdir do |directory|
+          processed = Pathname.new(directory)
+          archive = processed.join('51780767').tap(&:mkpath)
+          completed_at = Time.new(2026, 8, 24, 9, 30, 0)
+          FileUtils.touch(archive, mtime: completed_at)
+          ledger = OmsUploadLedger.new(staging_path: staging, processed_path: processed)
+          upload = ledger.staged!(oms_number: '51780767', actor: 'operator@example.com')
+
+          ledger.stub(:imported_dataset_at, completed_at) do
+            assert_equal 1, ledger.reconcile_imported!
+          end
+          assert_equal 'completed', upload.reload.status
+          assert_equal 'imported', upload.import_status
+          assert_equal 'archived', upload.archive_status
+          ledger.stub(:imported_dataset_at, completed_at) do
+            assert_equal 0, ledger.reconcile_imported!
+          end
+        end
+      end
+    end
+
     private
 
     def with_staged_job
