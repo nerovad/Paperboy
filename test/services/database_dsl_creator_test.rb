@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 require 'test_helper'
+require 'tmpdir'
 
 class DatabaseDslCreatorTest < ActiveSupport::TestCase
   test 'syncs a selected SQL Server table into a DSL' do
     catalog = Object.new
-    catalog.define_singleton_method(:databases) { |_server| ['GSABSS'] }
+    catalog.define_singleton_method(:databases) do |server|
+      server == 'TARGETSQL' ? ['Reporting'] : ['GSABSS']
+    end
     catalog.define_singleton_method(:tables) { |_server, _database| ['dbo.SampleTable'] }
     status = Struct.new(:success?).new(true)
     commands = []
@@ -15,20 +18,29 @@ class DatabaseDslCreatorTest < ActiveSupport::TestCase
     end
     entry = Struct.new(:config).new({ header: [['id', 'id', 'int', 'NOT NULL', nil]] })
 
-    Open3.stub(:capture2e, runner) do
-      DslCatalog.stub(:reload!, nil) do
-        DslCatalog.stub(:find!, entry) do
-          slug = DatabaseDslCreator.new(
-            server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable', catalog: catalog
-          ).create!
+    Dir.mktmpdir do |directory|
+      Open3.stub(:capture2e, runner) do
+        DslCatalog.stub(:reload!, nil) do
+          DslCatalog.stub(:find!, entry) do
+            slug = DatabaseDslCreator.new(
+              server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable',
+              target: { server: 'TARGETSQL', database: 'Reporting', schema: 'etl',
+                        table: 'SampleReplica' },
+              catalog: catalog, dsl_directory: directory
+            ).create!
 
-          assert_equal 'SampleTable', slug
+            assert_equal 'SampleTable', slug
+            dsl = File.read(File.join(directory, 'SampleTable.rb'))
+            assert_includes dsl, 'strategy: :replicate'
+            assert_includes dsl, 'host: "TARGETSQL"'
+            assert_includes dsl, 'table: "SampleReplica"'
+            assert_includes dsl, 'mode: :truncate_insert'
+          end
         end
       end
     end
 
     expected_commands = [
-      ['DataRunner:dsl_stub', 'GSASQL16.GSABSS.dbo.SampleTable'],
       ['DataRunner:dump_sql', 'SampleTable'],
       ['DataRunner:use_sql', 'SampleTable'],
       ['DataRunner:from_sql', 'SampleTable']
@@ -40,14 +52,18 @@ class DatabaseDslCreatorTest < ActiveSupport::TestCase
 
   test 'previews the validated target without creating a DSL' do
     catalog = Object.new
-    catalog.define_singleton_method(:databases) { |_server| ['GSABSS'] }
+    catalog.define_singleton_method(:databases) do |server|
+      server == 'TARGETSQL' ? ['Reporting'] : ['GSABSS']
+    end
     catalog.define_singleton_method(:tables) { |_server, _database| ['dbo.SampleTable'] }
 
     preview = DatabaseDslCreator.new(
-      server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable', catalog: catalog
+      server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable',
+      target: { server: 'TARGETSQL', database: 'Reporting', schema: 'etl', table: 'SampleReplica' },
+      catalog: catalog
     ).preview!
 
-    assert_equal %w[GSASQL16 GSABSS dbo SampleTable], preview.to_a
+    assert_equal %w[GSASQL16 GSABSS dbo SampleTable TARGETSQL Reporting etl SampleReplica], preview.to_a
   end
 
   test 'rejects database and table values not returned by the server' do
@@ -57,7 +73,9 @@ class DatabaseDslCreatorTest < ActiveSupport::TestCase
 
     error = assert_raises(DatabaseDslCreator::ImportFailed) do
       DatabaseDslCreator.new(
-        server: 'GSASQL16', database: 'Other', table: 'dbo.Unknown', catalog: catalog
+        server: 'GSASQL16', database: 'Other', table: 'dbo.Unknown',
+        target: { server: 'TARGETSQL', database: 'Reporting', schema: 'dbo', table: 'Unknown' },
+        catalog: catalog
       ).create!
     end
 

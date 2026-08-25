@@ -8,7 +8,9 @@
                       database_dsl_databases_url_value: databases_data_runner_database_dsls_path,
                       database_dsl_tables_url_value: tables_data_runner_database_dsls_path,
                       database_dsl_selected_database_value: @database,
-                      database_dsl_selected_table_value: @table } do |form| %>
+                      database_dsl_selected_table_value: @table,
+                      database_dsl_selected_target_database_value: @target_database } do |form| %>
+  <h2>Source table</h2>
   <div class="field">
     <%= form.label :server, "Database server" %>
     <%= form.text_field :server, value: @server, required: true, autofocus: true,
@@ -24,6 +26,26 @@
     <%= form.label :table, "Table name" %>
     <%= form.select :table, [], { prompt: "Select a table" }, required: true,
                     data: { database_dsl_target: "table" } %>
+  </div>
+  <h2>Replication target</h2>
+  <div class="field">
+    <%= form.label :target_server, "Target database server" %>
+    <%= form.text_field :target_server, value: @target_server, required: true,
+                        data: { database_dsl_target: "targetServer",
+                                action: "change->database-dsl#loadTargetDatabases" } %>
+  </div>
+  <div class="field">
+    <%= form.label :target_database, "Target database name" %>
+    <%= form.select :target_database, [], { prompt: "Select a target database" }, required: true,
+                    data: { database_dsl_target: "targetDatabase" } %>
+  </div>
+  <div class="field">
+    <%= form.label :target_schema, "Target schema" %>
+    <%= form.text_field :target_schema, value: @target_schema, required: true %>
+  </div>
+  <div class="field">
+    <%= form.label :target_table, "Target table" %>
+    <%= form.text_field :target_table, value: @target_table, required: true %>
   </div>
   <p class="form-help" data-database-dsl-target="status" aria-live="polite"></p>
   <div class="form-actions">
