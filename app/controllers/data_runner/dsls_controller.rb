@@ -8,7 +8,7 @@ module DataRunner
     def index
       @groups = DslCatalog.grouped if user_signed_in?
       @ungrouped = DslCatalog.ungrouped if user_signed_in?
-      @selected_group = params[:group].presence_in(@groups&.keys || [])
+      @selected_group = params[:group].presence&.parameterize(separator: '_')
       @selected_entries = @groups&.fetch(@selected_group, []) || []
       @active_group_run = GroupRun.active.find_by(group_name: @selected_group) if @selected_group
     end
