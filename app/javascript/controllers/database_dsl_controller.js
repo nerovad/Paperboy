@@ -1,7 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["server", "database", "table", "targetServer", "targetDatabase", "status"]
+  static targets = [
+    "server", "database", "table", "replicate", "targetCard", "targetServer",
+    "targetDatabase", "targetSchema", "targetTable", "status"
+  ]
   static values = {
     databasesUrl: String,
     tablesUrl: String,
@@ -12,7 +15,32 @@ export default class extends Controller {
 
   connect() {
     if (this.serverTarget.value) this.loadDatabases()
+    if (this.replicateTarget.value === "1") this.enableReplication()
+  }
+
+  showReplication() {
+    this.replicateTarget.value = "1"
+    this.enableReplication()
+    this.defaultTargetTable()
+    this.targetServerTarget.focus()
+  }
+
+  enableReplication() {
+    this.targetCardTarget.hidden = false
+    this.targetInputs().forEach(input => { input.required = true })
     if (this.targetServerTarget.value) this.loadTargetDatabases()
+  }
+
+  sourceTableChanged() {
+    if (this.replicateTarget.value === "1") this.defaultTargetTable()
+  }
+
+  defaultTargetTable() {
+    this.targetTableTarget.value = this.tableTarget.value.split(".").pop() || ""
+  }
+
+  targetInputs() {
+    return [this.targetServerTarget, this.targetDatabaseTarget, this.targetSchemaTarget, this.targetTableTarget]
   }
 
   async loadTargetDatabases() {

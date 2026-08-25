@@ -25,30 +25,38 @@
   <div class="field">
     <%= form.label :table, "Table name" %>
     <%= form.select :table, [], { prompt: "Select a table" }, required: true,
-                    data: { database_dsl_target: "table" } %>
+                    data: { database_dsl_target: "table", action: "change->database-dsl#sourceTableChanged" } %>
   </div>
-  <h2>Replication target</h2>
-  <div class="field">
-    <%= form.label :target_server, "Target database server" %>
-    <%= form.text_field :target_server, value: @target_server, required: true,
-                        data: { database_dsl_target: "targetServer",
-                                action: "change->database-dsl#loadTargetDatabases" } %>
-  </div>
-  <div class="field">
-    <%= form.label :target_database, "Target database name" %>
-    <%= form.select :target_database, [], { prompt: "Select a target database" }, required: true,
-                    data: { database_dsl_target: "targetDatabase" } %>
-  </div>
-  <div class="field">
-    <%= form.label :target_schema, "Target schema" %>
-    <%= form.text_field :target_schema, value: @target_schema, required: true %>
-  </div>
-  <div class="field">
-    <%= form.label :target_table, "Target table" %>
-    <%= form.text_field :target_table, value: @target_table, required: true %>
-  </div>
+  <%= form.hidden_field :replicate, value: @replicate ? "1" : "0",
+                        data: { database_dsl_target: "replicate" } %>
+  <section class="card" data-database-dsl-target="targetCard" <%= "hidden" unless @replicate %>>
+    <h2>Replication target</h2>
+    <div class="field">
+      <%= form.label :target_server, "Target database server" %>
+      <%= form.text_field :target_server, value: @target_server, required: @replicate,
+                          data: { database_dsl_target: "targetServer",
+                                  action: "change->database-dsl#loadTargetDatabases" } %>
+    </div>
+    <div class="field">
+      <%= form.label :target_database, "Target database name" %>
+      <%= form.select :target_database, [], { prompt: "Select a target database" }, required: @replicate,
+                      data: { database_dsl_target: "targetDatabase" } %>
+    </div>
+    <div class="field">
+      <%= form.label :target_schema, "Target schema" %>
+      <%= form.text_field :target_schema, value: @target_schema, required: @replicate,
+                          data: { database_dsl_target: "targetSchema" } %>
+    </div>
+    <div class="field">
+      <%= form.label :target_table, "Target table" %>
+      <%= form.text_field :target_table, value: @target_table, required: @replicate,
+                          data: { database_dsl_target: "targetTable" } %>
+    </div>
+  </section>
   <p class="form-help" data-database-dsl-target="status" aria-live="polite"></p>
   <div class="form-actions">
+    <%= button_tag "Replicate", type: "button", class: "btn reassign",
+                   data: { action: "database-dsl#showReplication" } %>
     <%= form.submit "Review Import", class: "btn approve" %>
     <%= link_to "Cancel", data_runner_root_path, class: "btn" %>
   </div>

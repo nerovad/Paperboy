@@ -9,6 +9,7 @@ module DataRunner
       @server = params[:server].presence || default_server
       @target_server = params[:target_server].presence || default_server
       @target_schema = params[:target_schema].presence || 'dbo'
+      @replicate = params[:replicate] == '1'
     end
 
     def create
@@ -25,6 +26,7 @@ module DataRunner
       @target_database = params[:target_database]
       @target_schema = params[:target_schema]
       @target_table = params[:target_table]
+      @replicate = params[:replicate] == '1'
       flash.now[:alert] = e.message
       render :new, status: :unprocessable_entity
     end
@@ -49,7 +51,8 @@ module DataRunner
     end
 
     def database_dsl_params
-      params.permit(:server, :database, :table, :target_server, :target_database, :target_schema, :target_table)
+      params.permit(:server, :database, :table, :replicate, :target_server, :target_database, :target_schema,
+                    :target_table)
     end
 
     def creator_params

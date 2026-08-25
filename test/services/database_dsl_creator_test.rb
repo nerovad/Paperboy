@@ -24,6 +24,7 @@ class DatabaseDslCreatorTest < ActiveSupport::TestCase
           DslCatalog.stub(:find!, entry) do
             slug = DatabaseDslCreator.new(
               server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable',
+              replicate: true,
               target: { server: 'TARGETSQL', database: 'Reporting', schema: 'etl',
                         table: 'SampleReplica' },
               catalog: catalog, dsl_directory: directory
@@ -59,11 +60,27 @@ class DatabaseDslCreatorTest < ActiveSupport::TestCase
 
     preview = DatabaseDslCreator.new(
       server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable',
+      replicate: true,
       target: { server: 'TARGETSQL', database: 'Reporting', schema: 'etl', table: 'SampleReplica' },
       catalog: catalog
     ).preview!
 
-    assert_equal %w[GSASQL16 GSABSS dbo SampleTable TARGETSQL Reporting etl SampleReplica], preview.to_a
+    assert_equal ['GSASQL16', 'GSABSS', 'dbo', 'SampleTable', true,
+                  'TARGETSQL', 'Reporting', 'etl', 'SampleReplica'], preview.to_a
+  end
+
+  test 'normal import does not require a replication target' do
+    catalog = Object.new
+    catalog.define_singleton_method(:databases) { |_server| ['GSABSS'] }
+    catalog.define_singleton_method(:tables) { |_server, _database| ['dbo.SampleTable'] }
+
+    preview = DatabaseDslCreator.new(
+      server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable', catalog: catalog
+    ).preview!
+
+    assert_not preview.replicate
+    assert_empty preview.target_server
+    assert_empty preview.target_table
   end
 
   test 'rejects database and table values not returned by the server' do
