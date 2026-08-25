@@ -26,6 +26,19 @@ class OmsOrchestrationTest < Minitest::Test
     end
   end
 
+  def test_preprocesses_null_aims_mail_piece_ids
+    with_job do |sent, output, _processed|
+      companion = sent.join('51780767-000001-job.csv')
+      rows = CSV.read(companion)
+      rows.drop(1).each { |row| row[1] = nil }
+      CSV.open(companion, 'w') { |csv| rows.each { |row| csv << row } }
+
+      run_script(PREPROCESS, sent, output)
+
+      assert_equal [nil, nil], CSV.read(output.join('companions.csv'), headers: true)['AIMS mail piece ID']
+    end
+  end
+
   def test_archives_every_original_only_after_success
     with_job do |sent, output, processed|
       originals = sent.children.to_h { |path| [path.basename.to_s, path.binread] }
