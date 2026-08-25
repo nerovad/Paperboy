@@ -1,16 +1,31 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["server", "database", "table", "status"]
+  static targets = ["server", "database", "table", "targetServer", "targetDatabase", "status"]
   static values = {
     databasesUrl: String,
     tablesUrl: String,
     selectedDatabase: String,
     selectedTable: String,
+    selectedTargetDatabase: String,
   }
 
   connect() {
     if (this.serverTarget.value) this.loadDatabases()
+    if (this.targetServerTarget.value) this.loadTargetDatabases()
+  }
+
+  async loadTargetDatabases() {
+    this.replaceOptions(this.targetDatabaseTarget, "Loading databases…")
+    const loaded = await this.loadOptions(
+      this.targetDatabaseTarget,
+      this.databasesUrlValue,
+      { server: this.targetServerTarget.value },
+      "Select a target database"
+    )
+    if (loaded && this.selectedTargetDatabaseValue) {
+      this.targetDatabaseTarget.value = this.selectedTargetDatabaseValue
+    }
   }
 
   async loadDatabases() {

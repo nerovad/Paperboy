@@ -122,6 +122,10 @@ source: {
 
   Scripted sources must set `location: nil`; the script creates the file named
   by `source.local` in the DataRunner inbox.
+- Use `source.strategy: :replicate` to export a SQL Server source table during
+  the download stage. Put the source `host`, `database`, `schema`, and `table`
+  in `source`; `database_connections` contains only replication targets. The
+  imported target defaults to `inject.mode: :truncate_insert`.
 
 - Use `database_connections: [...]` even when a dataset has only one destination.
   Each entry should include `host`, `database`, `schema`, `table`, and `inject`.

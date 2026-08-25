@@ -224,11 +224,19 @@ begin
     base = EtlHelpers.base_for(cfg)
     out = File.join(SQL_SCHEMA_DIR, "#{base}.sql")
 
-    targets = EtlHelpers.database_targets(
-      cfg,
-      env_host: MssqlHelpers.env_any('MSSQL_HOST', 'GSABSS_HOST'),
-      env_database: MssqlHelpers.env_any('MSSQL_DATABASE', 'GSABSS_DATABASE')
-    )
+    targets = if EtlHelpers.source_strategy(cfg) == :replicate
+                [EtlHelpers.source_database_target(
+                  cfg,
+                  env_host: MssqlHelpers.env_any('MSSQL_HOST', 'GSABSS_HOST'),
+                  env_database: MssqlHelpers.env_any('MSSQL_DATABASE', 'GSABSS_DATABASE')
+                )]
+              else
+                EtlHelpers.database_targets(
+                  cfg,
+                  env_host: MssqlHelpers.env_any('MSSQL_HOST', 'GSABSS_HOST'),
+                  env_database: MssqlHelpers.env_any('MSSQL_DATABASE', 'GSABSS_DATABASE')
+                )
+              end
 
     begin
       raise 'missing database:' if targets.any? { |target| target.database.empty? }

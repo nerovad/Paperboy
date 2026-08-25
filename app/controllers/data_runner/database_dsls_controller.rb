@@ -7,10 +7,12 @@ module DataRunner
 
     def new
       @server = params[:server].presence || default_server
+      @target_server = params[:target_server].presence || default_server
+      @target_schema = params[:target_schema].presence || 'dbo'
     end
 
     def create
-      creator = DatabaseDslCreator.new(**database_dsl_params.to_h.symbolize_keys)
+      creator = DatabaseDslCreator.new(**creator_params)
       return render_confirmation(creator) unless params[:confirmed] == '1'
 
       slug = creator.create!
@@ -19,6 +21,10 @@ module DataRunner
       @server = params[:server]
       @database = params[:database]
       @table = params[:table]
+      @target_server = params[:target_server]
+      @target_database = params[:target_database]
+      @target_schema = params[:target_schema]
+      @target_table = params[:target_table]
       flash.now[:alert] = e.message
       render :new, status: :unprocessable_entity
     end
@@ -43,7 +49,16 @@ module DataRunner
     end
 
     def database_dsl_params
-      params.permit(:server, :database, :table)
+      params.permit(:server, :database, :table, :target_server, :target_database, :target_schema, :target_table)
+    end
+
+    def creator_params
+      values = database_dsl_params.to_h.symbolize_keys
+      target = {
+        server: values.delete(:target_server), database: values.delete(:target_database),
+        schema: values.delete(:target_schema), table: values.delete(:target_table)
+      }
+      values.merge(target: target)
     end
 
     def default_server
