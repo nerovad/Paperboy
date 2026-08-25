@@ -51,8 +51,8 @@ module SlideshowHelper
   def admin_tools_home_images
     [
       { src: 'Admin_1.png', alt: 'User and account administration' },
-      { src: 'Admin_2.png', alt: 'Roles and access permissions' },
-      { src: 'Admin_3.png', alt: 'Application and system configuration' }
+      { src: 'Admin_4.png', alt: 'Roles and access permissions' },
+      { src: 'Admin_5.png', alt: 'Application and system configuration' }
     ]
   end
 
