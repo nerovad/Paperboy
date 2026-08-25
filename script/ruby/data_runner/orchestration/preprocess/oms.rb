@@ -114,8 +114,9 @@ def validate_dataset!(oms_number, inputs)
   raise "#{oms_number} Presort and MoveResults record IDs differ" unless presort_ids.sort == move_ids.sort
 
   mail_piece_ids = companions.map { |row| row['AIMS mail piece ID'].to_s.strip }
-  raise "#{oms_number} has blank AIMS mail piece IDs" if mail_piece_ids.any?(&:empty?)
-  raise "#{oms_number} has duplicate AIMS mail piece IDs" unless mail_piece_ids.uniq.length == mail_piece_ids.length
+  populated_mail_piece_ids = mail_piece_ids.reject(&:empty?)
+  duplicates = populated_mail_piece_ids.uniq.length != populated_mail_piece_ids.length
+  raise "#{oms_number} has duplicate AIMS mail piece IDs" if duplicates
 
   budget_ids = companions.map { |row| row['Budget 1 - Job ID'].to_s.strip }
   raise "#{oms_number} has blank Budget 1 job IDs" if budget_ids.any?(&:empty?)

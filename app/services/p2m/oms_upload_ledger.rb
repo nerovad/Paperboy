@@ -159,8 +159,8 @@ module P2m
     end
 
     def identifiers_valid?(mail_piece_ids, budget_ids)
-      mail_piece_ids.none?(&:empty?) && mail_piece_ids.uniq.length == mail_piece_ids.length &&
-        budget_ids.none?(&:empty?)
+      populated_mail_piece_ids = mail_piece_ids.reject(&:empty?)
+      populated_mail_piece_ids.uniq.length == populated_mail_piece_ids.length && budget_ids.none?(&:empty?)
     end
 
     def summary_attributes(paths, companions, rows, presort, presort_rows, mailed)
@@ -219,6 +219,7 @@ module P2m
     end
 
     def build_findings(companions, presort, move, counts, ids_match, mail_piece_ids, budget_ids, non_mailed)
+      populated_mail_piece_ids = mail_piece_ids.reject(&:empty?)
       [
         finding('required_files', companions.any? && presort && move, counts.join('/'), 'all three datasets',
                 'Companion, Presort, and MoveResults files are required.'),
@@ -226,10 +227,9 @@ module P2m
                 'Companion, Presort, and MoveResults row counts must agree.'),
         finding('record_ids', ids_match, ids_match ? 'matching' : 'different', 'matching',
                 'Presort and MoveResults record IDs must agree.'),
-        finding('aims_mail_piece_ids_present', mail_piece_ids.none?(&:empty?),
-                mail_piece_ids.count(&:empty?).to_s, '0', 'AIMS mail piece IDs cannot be blank.'),
-        finding('aims_mail_piece_ids_unique', mail_piece_ids.uniq.length == mail_piece_ids.length,
-                (mail_piece_ids.length - mail_piece_ids.uniq.length).to_s, '0',
+        finding('aims_mail_piece_ids_unique',
+                populated_mail_piece_ids.uniq.length == populated_mail_piece_ids.length,
+                (populated_mail_piece_ids.length - populated_mail_piece_ids.uniq.length).to_s, '0',
                 'AIMS mail piece IDs must be unique.'),
         finding('budget_job_ids_present', budget_ids.none?(&:empty?), budget_ids.count(&:empty?).to_s, '0',
                 'Budget 1 job IDs cannot be blank.'),

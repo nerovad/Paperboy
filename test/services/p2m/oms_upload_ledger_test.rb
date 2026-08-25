@@ -51,22 +51,6 @@ module P2m
       end
     end
 
-    test 'rejects a dataset with blank AIMS mail piece IDs before staging' do
-      with_staged_job do |staging|
-        path = staging.join('51780767-000001-job.csv')
-        rows = CSV.read(path)
-        rows.drop(1).each { |row| row[2] = nil }
-        CSV.open(path, 'w') { |csv| rows.each { |row| csv << row } }
-
-        error = assert_raises(OmsUploadLedger::InvalidDataset) do
-          OmsUploadLedger.new(staging_path: staging).validate!(oms_number: '51780767')
-        end
-
-        assert_includes error.message, 'AIMS mail piece IDs cannot be blank.'
-        assert_empty OmsUpload.where(oms_number: '51780767')
-      end
-    end
-
     test 'reconciles an existing processed archive with its upload state' do
       with_staged_job do |staging|
         Dir.mktmpdir do |directory|
