@@ -1,0 +1,11 @@
+<div class="form-header p2m-form-header">
+  <h1>Pre Production</h1>
+</div>
+
+<div class="form-wrapper p2m-stage-data">
+  <%= render "p2m/shared/date_range_card",
+             title_id: "p2m-pre-production-date-range-title",
+             url: p2m_pre_production_path,
+             method: :get,
+             scope: :pre_production %>
+</div>
