@@ -36,7 +36,7 @@ module P2m
 
     def validate!(oms_number:)
       analysis = analyze(staged_paths(oms_number))
-      return if analysis.fetch(:valid)
+      return analysis if analysis.fetch(:valid)
 
       messages = analysis.fetch(:findings).filter_map do |finding|
         finding.fetch(:message) if finding.fetch(:severity) == 'error' && finding.fetch(:status) == 'failed'
@@ -65,17 +65,17 @@ module P2m
       end
     end
 
-    def staged!(oms_number:, actor:)
+    def staged!(oms_number:, actor:, analysis: nil, checksums: {})
       paths = staged_paths(oms_number)
       marker = marker_for(paths, oms_number)
-      analysis = analyze(paths)
+      analysis ||= analyze(paths)
 
       OmsUpload.transaction do
         upload = OmsUpload.find_or_initialize_by(oms_number: oms_number, mailer_date: marker.mtime.to_date)
         verify_existing_files!(upload, paths)
         upload.assign_attributes(analysis.fetch(:attributes).merge(staging_attributes(actor, analysis)))
         upload.save!
-        replace_files(upload, paths)
+        replace_files(upload, paths, checksums)
         replace_findings(upload, analysis.fetch(:findings))
         upload
       end
@@ -203,12 +203,14 @@ module P2m
       }
     end
 
-    def replace_files(upload, paths)
+    def replace_files(upload, paths, checksums)
       upload.files.delete_all
       paths.each do |path|
+        name = path.basename.to_s
         upload.files.create!(
-          original_filename: path.basename.to_s, category: category(path), byte_size: path.size,
-          checksum: Digest::SHA256.file(path).hexdigest, source_modified_at: path.mtime
+          original_filename: name, category: category(path), byte_size: path.size,
+          checksum: checksums.fetch(name) { Digest::SHA256.file(path).hexdigest },
+          source_modified_at: path.mtime
         )
       end
     end
