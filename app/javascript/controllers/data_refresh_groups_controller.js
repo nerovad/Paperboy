@@ -2,6 +2,8 @@ import { Controller } from "@hotwired/stimulus"
 import { pbAlert, pbConfirm } from "pb_modal"
 
 export default class extends Controller {
+  static batchConcurrency = 4
+
   async toggle(event) {
     const detailId = event.currentTarget.dataset.detailId
     const detailRow = document.getElementById(detailId)
@@ -111,22 +113,31 @@ export default class extends Controller {
     const timer = this.startBatchProgress(progress, destination, jobs.length, startedAt)
     const successes = []
     const failures = []
+    let completed = 0
+    let nextIndex = 0
     this.setBatchButtonsDisabled(true)
 
-    for (const [index, job] of jobs.entries()) {
-      try {
-        const result = await this.sendStagingRequest(button.dataset.batchUrl, "POST", job)
-        if (result.ok) {
-          successes.push(job)
-          if (destination === "staging") this.removeOmsRow(job.row)
-        } else {
-          failures.push({ job, message: result.message })
+    const processJobs = async () => {
+      while (nextIndex < jobs.length) {
+        const job = jobs[nextIndex]
+        nextIndex += 1
+        try {
+          const result = await this.sendStagingRequest(button.dataset.batchUrl, "POST", job)
+          if (result.ok) {
+            successes.push(job)
+            if (destination === "staging") this.removeOmsRow(job.row)
+          } else {
+            failures.push({ job, message: result.message })
+          }
+        } catch (_error) {
+          failures.push({ job, message: "The request could not be completed." })
         }
-      } catch (_error) {
-        failures.push({ job, message: "The request could not be completed." })
+        completed += 1
+        this.updateBatchProgress(progress, destination, completed, jobs.length, startedAt)
       }
-      this.updateBatchProgress(progress, destination, index + 1, jobs.length, startedAt)
     }
+    const workerCount = Math.min(this.constructor.batchConcurrency, jobs.length)
+    await Promise.all(Array.from({ length: workerCount }, processJobs))
 
     this.stopBatchProgress(progress, timer)
     this.setBatchButtonsDisabled(false)
@@ -197,13 +208,13 @@ export default class extends Controller {
   }
 
   updateBatchProgress(progress, destination, completed, total, startedAt) {
-    const label = destination === "staging" ? "staging" : "Shipping Station"
+    const unit = destination === "staging" ? "uploads" : "Mail.dat moves"
     const bar = progress.querySelector("[data-batch-progress-bar]")
     progress.dataset.completed = completed
     bar.max = total
     bar.value = completed
     progress.querySelector("[data-batch-progress-label]").textContent =
-      `Moving ${completed} of ${total} OMS numbers to ${label}… ${this.elapsedSeconds(startedAt)} seconds elapsed`
+      `${completed} of ${total} ${unit} completed · ${this.elapsedSeconds(startedAt)} seconds elapsed`
   }
 
   stopBatchProgress(progress, timer) {
