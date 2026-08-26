@@ -14,11 +14,12 @@ module Paperboy
   #   * forms by class_name — see AclSeed::FormKey.
   #   * org grants by the GSABSS agency/division/department/unit ids, which are
   #     shared reference data and so mean the same thing in every environment.
+  #   * memberships by group name + GSABSS employee id — see membership_rows.
   #
   # Deliberately NOT handled:
-  #   * Employee_Groups — memberships are meant to differ. Dev wants you in
-  #     every group to test; prod wants the real assignments.
   #   * contractors — carries password_digest, which must not leave production.
+  #     Their *memberships* are dropped from the dump for the same reason their
+  #     ids cannot travel; see membership_rows.
   #   * form_visibility_grants — the Inbox and Submissions visibility screen.
   #     Still per-environment; add it here if it outgrows a handful of rows.
   module AclSeed
@@ -28,7 +29,7 @@ module Paperboy
 
     def snapshot
       forms = FormKey.index
-      { 'groups' => group_rows(forms), 'org_permissions' => org_rows(forms) }
+      { 'groups' => group_rows(forms), 'org_permissions' => org_rows(forms), 'memberships' => membership_rows }
     end
 
     def group_rows(forms)
@@ -51,6 +52,38 @@ module Paperboy
       end
     end
 
+    # Who is in which group. Portable because Employee_Groups.EmployeeID names a
+    # row in GSABSS Employees — org reference data on a server all three
+    # environments read, so an employee id means the same person in each. The
+    # group is carried by name for the usual reason: GroupID is local.
+    #
+    # Contractor memberships are the exception and are dropped here. Contractors
+    # live in each Paperboy database with ids allocated locally from
+    # 1,000,000,000 (see Contractor), so the same id names a different person,
+    # or nobody, in the next environment — syncing one would be a mis-grant, not
+    # a mirror. Membership in Employee_Groups is keyed only by that id, so there
+    # is nothing portable to record. Grant those by hand where the contractor
+    # exists. acl:dump reports how many were skipped.
+    def membership_rows
+      names = Group.pluck(:GroupID, :Group_Name).to_h
+      pairs = EmployeeGroup.pluck(:GroupID, :EmployeeID)
+      employees = gsabss_employee_ids(pairs.map(&:last))
+      rows = pairs.filter_map do |group_id, employee_id|
+        name = names[group_id]
+        next unless name && employees.include?(employee_id)
+
+        { 'group' => name, 'employee_id' => employee_id }
+      end
+      rows.sort_by { |row| [row['group'].to_s, row['employee_id']] }
+    end
+
+    # One cross-connection lookup rather than one per membership. Employee lives
+    # in GSABSS, Employee_Groups in the Paperboy database, so this cannot be a
+    # join (see the disable_joins associations on Group and Employee).
+    def gsabss_employee_ids(ids)
+      Employee.where(id: ids.uniq).pluck(:id).to_set
+    end
+
     def load_file
       raise "#{PATH} not found — run `bin/rails acl:dump` against production first." unless PATH.exist?
 
@@ -67,7 +100,8 @@ module Paperboy
     # so read the db/acl.yml diff before committing it, and preview the far end
     # with DRY_RUN=1. acl:org_delta lists what a merge would add.
     def merge(file_data, snapshot)
-      { 'groups' => merge_groups(file_data, snapshot), 'org_permissions' => merge_org(file_data, snapshot) }
+      { 'groups' => merge_groups(file_data, snapshot), 'org_permissions' => merge_org(file_data, snapshot),
+        'memberships' => merge_memberships(file_data, snapshot) }
     end
 
     def merge_groups(file_data, snapshot)
@@ -96,6 +130,19 @@ module Paperboy
         rows[identity] = richer(rows[identity], row)
       end
       rows.values.sort_by { |row| org_identity(row).map(&:to_s) }
+    end
+
+    def merge_memberships(file_data, snapshot)
+      rows = {}
+      (Array(file_data['memberships']) + Array(snapshot['memberships'])).each do |row|
+        rows[membership_identity(row)] = row
+      end
+      rows.values.sort_by { |row| membership_identity(row) }
+    end
+
+    # Group names are matched case-insensitively here exactly as in merge_groups.
+    def membership_identity(row)
+      [row['group'].to_s.downcase, row['employee_id'].to_i]
     end
 
     # Two rows for the same grant disagree about the form id whenever they came
