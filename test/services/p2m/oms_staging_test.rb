@@ -16,9 +16,14 @@ class P2mOmsStagingTest < Minitest::Test
       names.each { |name| source.join(name).write('fixture') }
       source.join('50000002-companion.csv').write('other')
       staging = P2m::OmsStaging.new(root: root, destination: destination)
+      checksums = {}
 
-      assert_equal 3, staging.stage(directory: 'job', oms_number: '50000001')
+      assert_equal 3, staging.stage(directory: 'job', oms_number: '50000001', checksums: checksums)
       assert_equal names.sort, destination.children.map { |path| path.basename.to_s }.sort
+      names.each do |name|
+        assert_equal Digest::SHA256.file(source.join(name)).hexdigest, checksums.fetch(name)
+        assert_equal source.join(name).mtime, destination.join(name).mtime
+      end
       assert_equal 3, staging.remove(directory: 'job', oms_number: '50000001')
       assert_empty destination.children
     end

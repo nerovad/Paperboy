@@ -53,9 +53,11 @@ module P2m
     def move_to_staging
       ledger = OmsUploadLedger.new
       ledger.ensure_stageable!(oms_number: staging_parameters.fetch(:oms_number))
-      validate_staging_source!
-      count = OmsStaging.new.stage(**staging_parameters)
-      ledger.staged!(oms_number: staging_parameters.fetch(:oms_number), actor: current_user.email)
+      analysis = validate_staging_source!
+      checksums = {}
+      count = OmsStaging.new.stage(**staging_parameters, checksums: checksums)
+      ledger.staged!(oms_number: staging_parameters.fetch(:oms_number), actor: current_user.email,
+                     analysis: analysis, checksums: checksums)
       render json: { message: "#{count} files copied to 00_SentToUSPS." }
     rescue P2m::OmsUploadLedger::ChangedFiles,
            P2m::OmsUploadLedger::InvalidDataset,

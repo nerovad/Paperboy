@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require 'digest'
 require 'pathname'
+require 'tempfile'
 
 module P2m
   class OmsStaging
@@ -13,10 +15,13 @@ module P2m
       @associated_files = OmsAssociatedFiles.new(root: @root)
     end
 
-    def stage(directory:, oms_number:)
+    def stage(directory:, oms_number:, checksums: nil)
       files = associated_files.call(directory: directory, oms_number: oms_number)
       destination.mkpath
-      files.each { |name| copy(root.join(directory, name), destination.join(name)) }
+      files.each do |name|
+        checksum = copy(root.join(directory, name), destination.join(name))
+        checksums[name] = checksum if checksums
+      end
       files.length
     end
 
@@ -36,14 +41,39 @@ module P2m
     attr_reader :root, :destination, :associated_files
 
     def copy(source, target)
-      return if matching_file?(source, target)
+      return Digest::SHA256.file(target).hexdigest if matching_file?(source, target)
       raise "staged file already exists with different contents: #{target.basename}" if target.exist?
 
-      FileUtils.cp(source, target, preserve: true)
+      copy_with_checksum(source, target)
     end
 
     def matching_file?(source, target)
       target.file? && source.size == target.size && source.mtime == target.mtime
+    end
+
+    def copy_with_checksum(source, target)
+      source_stat = source.stat
+      digest = Digest::SHA256.new
+      temporary = Tempfile.new([".#{target.basename}", '.part'], destination.to_s, binmode: true)
+      moved = false
+
+      begin
+        File.open(source, 'rb') do |input|
+          while (chunk = input.read(1024 * 1024))
+            digest.update(chunk)
+            temporary.write(chunk)
+          end
+        end
+        temporary.close
+        File.chmod(source_stat.mode, temporary.path)
+        File.utime(source_stat.atime, source_stat.mtime, temporary.path)
+        File.rename(temporary.path, target)
+        moved = true
+        digest.hexdigest
+      ensure
+        temporary.close unless temporary.closed?
+        temporary.unlink unless moved
+      end
     end
   end
 end
