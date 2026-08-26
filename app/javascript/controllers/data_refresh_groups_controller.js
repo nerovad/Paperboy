@@ -75,8 +75,11 @@ export default class extends Controller {
       this.stopStagingProgress(progress, timer)
       if (response.ok && button.dataset.stagingRemoveOnSuccess === "true") this.removeOmsRows(button)
 
+      const title = response.ok && button.dataset.stagingRemoveOnSuccess === "true"
+        ? `${button.dataset.omsNumber} Moved to Staging`
+        : response.ok ? button.dataset.stagingAction : "Staging failed"
       await pbAlert({
-        title: response.ok ? button.dataset.stagingAction : "Staging failed",
+        title,
         message: `${result.message || `The staging request failed (${response.status}).`} ` +
           `Elapsed time: ${duration} seconds.`
       })
