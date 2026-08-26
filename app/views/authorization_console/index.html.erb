@@ -54,9 +54,11 @@
     </div>
 
     <div class="department-header">
-      <%= link_to "+ Add New Authorized Approver",
-            new_authorization_console_path(department_id: @department_ids.first || @managed_departments.first&.department_id),
-            class: "btn approve" %>
+      <% if can_write_authorization_console?(AuthorizationConsole::SERVICES) %>
+        <%= link_to "+ Add New Authorized Approver",
+              new_authorization_console_path(department_id: @department_ids.first || @managed_departments.first&.department_id),
+              class: "btn approve" %>
+      <% end %>
       <%= link_to "Export CSV",
             authorization_console_index_path(format: :csv, department_id: @department_ids,
               employee_id: @employee_id_filter, service_type: @service_type_filter, location: @location_filter),
@@ -108,17 +110,21 @@
                   </div>
 
                   <div class="approval-actions">
-                    <%= link_to "Edit",
-                          group_edit_authorization_console_index_path(ids: group[:ids]),
-                          class: "btn" %>
-                    <button type="button"
-                            class="btn deny"
-                            data-action="click->confirm-modal#open"
-                            data-delete-path="<%= group_destroy_authorization_console_index_path(ids: group[:ids]) %>"
-                            data-confirm-title="Remove Authorization"
-                            data-confirm-message="Remove this authorization (<%= group[:service_types].join("/") %>) for <%= employee&.first_name %> <%= employee&.last_name %>?">
-                      Remove
-                    </button>
+                    <% if can_write_authorization_console?(AuthorizationConsole::SERVICES) %>
+                      <%= link_to "Edit",
+                            group_edit_authorization_console_index_path(ids: group[:ids]),
+                            class: "btn" %>
+                    <% end %>
+                    <% if can_delete_authorization_console?(AuthorizationConsole::SERVICES) %>
+                      <button type="button"
+                              class="btn deny"
+                              data-action="click->confirm-modal#open"
+                              data-delete-path="<%= group_destroy_authorization_console_index_path(ids: group[:ids]) %>"
+                              data-confirm-title="Remove Authorization"
+                              data-confirm-message="Remove this authorization (<%= group[:service_types].join("/") %>) for <%= employee&.first_name %> <%= employee&.last_name %>?">
+                        Remove
+                      </button>
+                    <% end %>
                   </div>
                 </div>
               <% end %>
@@ -129,7 +135,9 @@
     <% else %>
       <div class="empty-state">
         <p>No authorized approvers have been assigned yet.</p>
-        <p class="empty-state-hint">Click "+ Add New Authorized Approver" to get started.</p>
+        <% if can_write_authorization_console?(AuthorizationConsole::SERVICES) %>
+          <p class="empty-state-hint">Click "+ Add New Authorized Approver" to get started.</p>
+        <% end %>
       </div>
     <% end %>
     </div>

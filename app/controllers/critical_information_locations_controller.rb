@@ -12,6 +12,8 @@
 # reports readable.
 class CriticalInformationLocationsController < ApplicationController
   before_action :require_cir_auth_console
+  before_action -> { require_cir_auth_console('write') }, only: %i[new create]
+  before_action -> { require_cir_auth_console('delete') }, only: %i[destroy]
 
   def new
     @location = CriticalInformationLocation.new(name: params[:name])

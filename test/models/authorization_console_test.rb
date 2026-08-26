@@ -35,6 +35,47 @@ class AuthorizationConsoleTest < ActiveSupport::TestCase
     assert_equal AuthorizationConsole::HCA_SAFETY, AuthorizationConsole.console_for_routing_key('hca_safety')
   end
 
+  # --- ACL rights -------------------------------------------------------------
+
+  test 'every console issues one key per right, namespaced to itself' do
+    cir_keys = AuthorizationConsole::RIGHT_KEYS.map { |r| AuthorizationConsole.permission_key('cir', r) }
+
+    assert_equal %w[cir:read cir:write cir:delete], cir_keys
+
+    keys = AuthorizationConsole.permission_keys
+
+    assert_equal AuthorizationConsole::ALL.size * AuthorizationConsole::RIGHT_KEYS.size, keys.size
+    assert_equal keys.uniq, keys
+  end
+
+  test 'write and delete each imply read, so no grant is unreachable' do
+    assert_equal Set['read'], AuthorizationConsole.rights_from_keys('cir', Set['cir:read'])
+    assert_equal Set['read', 'write'], AuthorizationConsole.rights_from_keys('cir', Set['cir:write'])
+    assert_equal Set['read', 'delete'], AuthorizationConsole.rights_from_keys('cir', Set['cir:delete'])
+    assert_equal Set['read', 'write', 'delete'],
+                 AuthorizationConsole.rights_from_keys('cir', Set['cir:write', 'cir:delete'])
+  end
+
+  test 'holding nothing on a console yields nothing' do
+    assert_empty AuthorizationConsole.rights_from_keys('cir', Set.new)
+  end
+
+  test 'rights on one console say nothing about another' do
+    granted = Set['cir:write', 'cir:delete']
+
+    assert_empty AuthorizationConsole.rights_from_keys('services', granted)
+    assert_empty AuthorizationConsole.rights_from_keys('hca_safety', granted)
+  end
+
+  test 'the ACL catalogue offers every console and every right' do
+    catalogue = AuthorizationConsole.permission_catalog
+
+    assert_equal AuthorizationConsole::ALL.map(&:key), catalogue.pluck(:key)
+    assert_equal AuthorizationConsole::ALL.map(&:label), catalogue.pluck(:label)
+    assert_equal AuthorizationConsole.permission_keys.sort,
+                 catalogue.flat_map { |c| c[:rights].map { |r| r[:permission_key] } }.sort
+  end
+
   test 'an unknown routing key resolves to no console and routes to nobody' do
     assert_nil AuthorizationConsole.console_for_routing_key('nonsense')
     assert_empty AuthorizationConsole.approver_ids_for('nonsense', nil)

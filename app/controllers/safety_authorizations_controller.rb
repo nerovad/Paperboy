@@ -12,6 +12,8 @@
 # (via OrgLabels) while the column keeps the database's name.
 class SafetyAuthorizationsController < ApplicationController
   before_action :require_safety_auth_console
+  before_action -> { require_safety_auth_console('write') }, only: %i[new create edit update]
+  before_action -> { require_safety_auth_console('delete') }, only: %i[destroy]
   before_action :set_authorization, only: %i[edit update destroy]
 
   def index

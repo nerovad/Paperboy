@@ -35,9 +35,11 @@
   </div>
 
   <div class="department-header">
-    <%= link_to "+ Add Safety Officer",
-          new_safety_authorization_path(division_id: @division_filter.first),
-          class: "btn approve" %>
+    <% if can_write_authorization_console?(AuthorizationConsole::HCA_SAFETY) %>
+      <%= link_to "+ Add Safety Officer",
+            new_safety_authorization_path(division_id: @division_filter.first),
+            class: "btn approve" %>
+    <% end %>
   </div>
 
   <div class="approvers-scroll">
@@ -68,15 +70,19 @@
                     </div>
 
                     <div class="approval-actions">
-                      <%= link_to "Edit", edit_safety_authorization_path(authorization), class: "btn" %>
-                      <button type="button"
-                              class="btn deny"
-                              data-action="click->confirm-modal#open"
-                              data-delete-path="<%= safety_authorization_path(authorization) %>"
-                              data-confirm-title="Remove Authorization"
-                              data-confirm-message="Remove <%= officer ? "#{officer.first_name} #{officer.last_name}" : authorization.employee_id %> as a safety officer for <%= card[:label] %>?">
-                        Remove
-                      </button>
+                      <% if can_write_authorization_console?(AuthorizationConsole::HCA_SAFETY) %>
+                        <%= link_to "Edit", edit_safety_authorization_path(authorization), class: "btn" %>
+                      <% end %>
+                      <% if can_delete_authorization_console?(AuthorizationConsole::HCA_SAFETY) %>
+                        <button type="button"
+                                class="btn deny"
+                                data-action="click->confirm-modal#open"
+                                data-delete-path="<%= safety_authorization_path(authorization) %>"
+                                data-confirm-title="Remove Authorization"
+                                data-confirm-message="Remove <%= officer ? "#{officer.first_name} #{officer.last_name}" : authorization.employee_id %> as a safety officer for <%= card[:label] %>?">
+                          Remove
+                        </button>
+                      <% end %>
                     </div>
                   </div>
                 <% end %>
@@ -85,9 +91,11 @@
                   <div class="approval-details">
                     <span class="unassigned">No safety officer assigned</span>
                   </div>
-                  <div class="approval-actions">
-                    <%= link_to "Assign", new_safety_authorization_path(division_id: card[:division_id]), class: "btn" %>
-                  </div>
+                  <% if can_write_authorization_console?(AuthorizationConsole::HCA_SAFETY) %>
+                    <div class="approval-actions">
+                      <%= link_to "Assign", new_safety_authorization_path(division_id: card[:division_id]), class: "btn" %>
+                    </div>
+                  <% end %>
                 </div>
               <% end %>
             </div>

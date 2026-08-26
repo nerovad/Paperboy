@@ -11,6 +11,12 @@
 # and it should not take a deploy.
 class CriticalInformationAuthorizationsController < ApplicationController
   before_action :require_cir_auth_console
+  # new/edit carry the form for write and the removal buttons for delete, so
+  # either right opens them; saving still needs write.
+  before_action -> { require_authorization_console_any(AuthorizationConsole::CIR, 'write', 'delete') },
+                only: %i[new edit]
+  before_action -> { require_cir_auth_console('write') }, only: %i[create update]
+  before_action -> { require_cir_auth_console('delete') }, only: %i[destroy]
   before_action :set_authorization, only: %i[edit update destroy]
 
   # Assignment filter values. "unassigned" is the reason this filter exists:
