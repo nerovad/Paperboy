@@ -8,15 +8,17 @@
 
   <% if @report.present? %>
     <section class="p2m-stage-card" aria-labelledby="p2m-oms-results-title">
-      <h2 id="p2m-oms-results-title">
-        Mail.dat Files Found at <%= @report.fetch("source_root", "/mnt/o/Outputs") %>/...
-      </h2>
-      <p>
-        Inclusive range: <%= @report.fetch("start_date") %> through
-        <%= @report.fetch("end_date") %>
-        — found <%= @report.fetch("found_count", 0) %> in
-        <%= format("%.4f", @report.fetch("search_seconds", 0)) %> seconds
-      </p>
+      <div class="p2m-results-summary">
+        <h2 id="p2m-oms-results-title">
+          Mail.dat Files Found at <%= @report.fetch("source_root", "/mnt/o/Outputs") %>/...
+        </h2>
+        <p>
+          Inclusive range: <%= @report.fetch("start_date") %> through
+          <%= @report.fetch("end_date") %>
+          — found <%= @report.fetch("found_count", 0) %> in
+          <%= format("%.4f", @report.fetch("search_seconds", 0)) %> seconds
+        </p>
+      </div>
       <div class="table-wrap p2m-maildat-grid">
         <table class="p2m-maildat-table" data-controller="output-table data-refresh-groups"
                data-simple-sort="true">

@@ -8,23 +8,26 @@
 
   <section class="p2m-stage-card" aria-labelledby="p2m-oms-uploads-title">
     <h2 id="p2m-oms-uploads-title">Staged Mailing Jobs</h2>
-    <p>One row per OMS number and mailer date. Mailed counts indicate records with postage.</p>
+    <p>Mailed counts indicate records with postage.</p>
 
     <div class="table-wrap p2m-maildat-grid">
-      <table class="submission-table p2m-maildat-table"
+      <table class="submission-table p2m-maildat-table p2m-maildat-table--uploads"
              data-controller="output-table data-refresh-groups" data-simple-sort="true">
         <thead>
           <tr>
             <th class="p2m-expand-column" aria-label="Expand"></th>
-            <th aria-sort="descending" data-column-index="1" data-sort-type="number">
+            <th class="p2m-oms-number-column" aria-sort="descending"
+                data-column-index="1" data-sort-type="number">
               <button type="button" class="p2m-sort-header"
                       data-action="click->output-table#changeSort">OMS Number</button>
             </th>
-            <th aria-sort="none" data-column-index="2" data-sort-type="text">
+            <th class="p2m-date-column" aria-sort="none"
+                data-column-index="2" data-sort-type="text">
               <button type="button" class="p2m-sort-header"
                       data-action="click->output-table#changeSort">Date</button>
             </th>
-            <th aria-sort="none" data-column-index="3" data-sort-type="text">
+            <th class="p2m-job-number-column" aria-sort="none"
+                data-column-index="3" data-sort-type="text">
               <button type="button" class="p2m-sort-header"
                       data-action="click->output-table#changeSort">JOB NUMBER</button>
             </th>
@@ -41,7 +44,6 @@
                       data-action="click->output-table#changeSort">UAA</button>
             </th>
             <th>Progress</th>
-            <th>Findings</th>
           </tr>
         </thead>
         <tbody>
@@ -67,19 +69,18 @@
               </td>
               <td>
                 <dl class="p2m-upload-stages">
-                  <div><dt>Overall</dt><dd><%= upload.status.humanize %></dd></div>
-                  <div><dt>Validation</dt><dd><%= upload.validation_status.humanize %></dd></div>
-                  <div><dt>Import</dt><dd><%= upload.import_status.humanize %></dd></div>
-                  <div><dt>Archive</dt><dd><%= upload.archive_status.humanize %></dd></div>
+                  <% [["Overall", upload.status], ["Validation", upload.validation_status],
+                      ["Import", upload.import_status], ["Archive", upload.archive_status]].each do |label, status| %>
+                    <div>
+                      <dt><%= label %></dt>
+                      <dd data-status="<%= status %>"><%= status.humanize %></dd>
+                    </div>
+                  <% end %>
                 </dl>
-              </td>
-              <td title="<%= upload.findings.map(&:message).compact.join(' ') %>">
-                <%= upload.findings.count { |finding| finding.status == "failed" } %> errors,
-                <%= upload.findings.count { |finding| finding.severity == "info" } %> info
               </td>
             </tr>
             <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden>
-              <td colspan="9">
+              <td colspan="8">
                 <div class="p2m-upload-details">
                   <section>
                     <h3>Mailing Job</h3>
@@ -121,7 +122,7 @@
             </tr>
           <% end %>
           <% if @uploads.empty? %>
-            <tr><td colspan="9">No OMS uploads have been recorded.</td></tr>
+            <tr><td colspan="8">No OMS uploads have been recorded.</td></tr>
           <% end %>
         </tbody>
       </table>
