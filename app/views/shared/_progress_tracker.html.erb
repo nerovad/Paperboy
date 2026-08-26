@@ -1,21 +1,47 @@
 <% percent = run.total_count.zero? ? 100 : (run.completed_count * 100.0 / run.total_count).round %>
 <% display_name = ->(item) { item.dsl_name.sub(/\AOMS (?=\d{8,9}\z)/, "") } %>
+<% unit_name = local_assigns.fetch(:unit_name, "DSL") %>
+<% format_duration = lambda do |seconds| %>
+  <% if seconds >= 3600 %>
+    <% "#{(seconds / 3600).floor}h #{((seconds % 3600) / 60).floor}m #{(seconds % 60).floor}s" %>
+  <% elsif seconds >= 60 %>
+    <% "#{(seconds / 60).floor}m #{(seconds % 60).floor}s" %>
+  <% else %>
+    <% "#{seconds.round(1)}s" %>
+  <% end %>
+<% end %>
+<% run_elapsed = run.started_at ? ((run.completed_at || Time.current) - run.started_at) : 0 %>
 <div class="progress-tracker__panel" data-progress-status="<%= run.status %>">
   <div class="progress-tracker__summary">
     <div>
-      <h2><%= run.status == "queued" ? "Preparing refresh" : "#{run.completed_count} of #{pluralize(run.total_count, local_assigns.fetch(:unit_name, 'DSL'))} completed" %></h2>
+      <h2><%= run.status == "queued" ? "Preparing refresh" : "#{run.completed_count} of #{pluralize(run.total_count, unit_name)} completed" %></h2>
       <% running_dsls = run.items.select { |item| item.status == "running" }
                                  .sort_by(&:position).map(&display_name) %>
       <% if running_dsls.any? %><p>Running: <strong><%= running_dsls.to_sentence %></strong></p><% end %>
       <% if run.active? %><p>You may leave this page. Processing will continue.</p><% end %>
     </div>
-    <span class="progress-tracker__percent"><%= percent %>%</span>
+    <div class="progress-tracker__metrics">
+      <span class="progress-tracker__percent"><%= percent %>%</span>
+      <% if run.started_at %>
+        <span>Elapsed:
+          <% if run.active? %>
+            <strong data-progress-elapsed data-started-at="<%= run.started_at.iso8601(3) %>"><%= format_duration.call(run_elapsed) %></strong>
+          <% else %>
+            <strong><%= format_duration.call(run_elapsed) %></strong>
+          <% end %>
+        </span>
+      <% end %>
+    </div>
   </div>
   <progress max="<%= run.total_count %>" value="<%= run.completed_count %>"><%= percent %>%</progress>
 
   <% if run.finished? %>
+    <% durations = run.items.filter_map(&:duration_ms) %>
+    <% average_seconds = durations.sum.to_f / durations.length / 1000 if durations.any? %>
     <p class="progress-tracker__result <%= run.status %>">
-      <%= run.status == "succeeded" ? "Refresh completed successfully." : "Refresh completed with #{run.failed_count} failed DSLs." %>
+      <%= run.status == "succeeded" ? "Refresh completed successfully." : "Refresh completed with #{pluralize(run.failed_count, "failed #{unit_name.singularize}")}." %>
+      Completed in <%= format_duration.call(run_elapsed) %>.
+      <% if average_seconds %>Average <%= format_duration.call(average_seconds) %> per <%= unit_name.singularize %>.<% end %>
     </p>
   <% end %>
 
@@ -26,7 +52,9 @@
         <span><%= display_name.call(item) %></span>
         <span class="progress-tracker__item-label">
           <%= item.status.humanize %>
-          <% if item.duration_ms %>
+          <% if item.status == "running" && item.started_at %>
+            · <span data-progress-elapsed data-started-at="<%= item.started_at.iso8601(3) %>"><%= format_duration.call(Time.current - item.started_at) %></span>
+          <% elsif item.duration_ms %>
             · <%= number_with_precision(item.duration_ms / 1000.0, precision: 1, strip_insignificant_zeros: true) %>s
           <% end %>
         </span>

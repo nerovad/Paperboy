@@ -27,6 +27,16 @@
   font-weight: 700;
 }
 
+.progress-tracker__metrics {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 2px;
+  color: $muted;
+  text-align: right;
+
+  .progress-tracker__percent { display: block; }
+}
+
 .progress-tracker__panel progress {
   width: 100%;
   height: 18px;
