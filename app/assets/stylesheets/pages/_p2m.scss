@@ -58,6 +58,17 @@
   }
 }
 
+.p2m-results-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+
+  h2,
+  p { margin: 0; }
+}
+
 .p2m-stage-date-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -106,14 +117,14 @@
 .p2m-maildat-grid {
   width: 100%;
   min-width: 0;
-  max-height: min(30.6rem, calc(100vh - 32rem));
+  max-height: min(33.66rem, calc(100vh - 32rem));
   overflow: auto;
   border: 1px solid $neutral-border-light;
   scrollbar-width: thin;
   scrollbar-color: $neutral-400 $surface-control;
 
   @media (max-height: 800px) {
-    max-height: 19.8rem;
+    max-height: 21.78rem;
   }
 }
 
@@ -140,7 +151,19 @@
     }
 
     dt { color: $text-muted; }
-    dd { margin: 0; font-weight: 600; }
+    dd {
+      margin: 0;
+      color: $blue-notice-text;
+      font-weight: 400;
+    }
+
+    dd[data-status="completed"],
+    dd[data-status="passed"],
+    dd[data-status="imported"],
+    dd[data-status="archived"] { color: $success-text; }
+
+    dd[data-status="failed"],
+    dd[data-status="needs_attention"] { color: $error-text; }
   }
 
   thead th {
@@ -158,6 +181,12 @@
   th[aria-sort="none"] .p2m-sort-header::after { content: " ↕"; }
   th[aria-sort="ascending"] .p2m-sort-header::after { content: " ▲"; }
   th[aria-sort="descending"] .p2m-sort-header::after { content: " ▼"; }
+}
+
+.p2m-maildat-table--uploads {
+  .p2m-oms-number-column { width: 9rem; }
+  .p2m-date-column { width: 8rem; }
+  .p2m-job-number-column { width: 9rem; }
 }
 
 .p2m-row-trigger {
