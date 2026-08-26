@@ -37,9 +37,11 @@ set -a; source "$APP_DIR/.env"; set +a
 export PAPERBOY_DATABASE=Paperboy_Stage
 RAILS_ENV=staging bundle exec rails db:migrate
 
-# Additive: creates groups and grants from db/acl.yml that are missing here,
-# never removes anything and never touches memberships. Grants for a form that
-# stage does not have yet are held back and reported, not applied.
+# Additive: creates the groups, grants and group memberships from db/acl.yml
+# that are missing here, and never removes anything. Grants for a form stage
+# does not have yet are held back and reported, not applied; so are memberships
+# for anyone no longer in GSABSS. Contractor memberships never travel — their
+# ids are local to each database — so grant those by hand here.
 echo "==> Syncing ACL definitions..."
 RAILS_ENV=staging bundle exec rails acl:sync
 

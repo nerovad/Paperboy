@@ -4,8 +4,9 @@ require 'test_helper'
 
 # The ACL file has to survive the one thing that differs between
 # Paperboy_Dev / _Stage / _Prod: form_templates.id. These cover the identity
-# rewriting and the merge that unions two environments into one file. Neither
-# touches the database — FormKey.index takes any collection of templates.
+# rewriting and the merge that unions two environments into one file, including
+# the memberships that ride along with it. None of them touch the database —
+# FormKey.index takes any collection of templates, and merge is pure.
 class AclSeedTest < ActiveSupport::TestCase
   Template = Struct.new(:id, :class_name, :name)
 
@@ -94,6 +95,23 @@ class AclSeedTest < ActiveSupport::TestCase
     merged = Paperboy::AclSeed.merge(file, dev)
     assert_equal 2, merged['org_permissions'].size
     assert_includes merged['org_permissions'].map { |row| row['class'] }, 'TeleworkLogForm'
+  end
+
+  test 'merge unions memberships so a person put in a group in dev reaches prod' do
+    file = { 'memberships' => [{ 'group' => 'IT_Support', 'employee_id' => 1 }] }
+    dev = { 'memberships' => [{ 'group' => 'it_support', 'employee_id' => 1 },
+                              { 'group' => 'IT_Support', 'employee_id' => 2 },
+                              { 'group' => 'HCA_Test', 'employee_id' => 9 }] }
+
+    merged = Paperboy::AclSeed.merge(file, dev)
+    assert_equal [['hca_test', 9], ['it_support', 1], ['it_support', 2]],
+                 merged['memberships'].map { |row| [row['group'].downcase, row['employee_id']] },
+                 'the same person in the same group must collapse to one row whatever the casing'
+  end
+
+  test 'merge leaves memberships alone when neither side has any' do
+    merged = Paperboy::AclSeed.merge({ 'groups' => [] }, { 'groups' => [] })
+    assert_empty merged['memberships']
   end
 
   test 'merge keeps the row that names a form over one that only holds an id' do
