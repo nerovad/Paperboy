@@ -1,0 +1,11 @@
+<!-- app/views/critical_information_authorizations/edit.html.erb -->
+<div class="form-header">
+  <h1>Edit Incident Manager Authorization</h1>
+</div>
+
+<div class="form-wrapper authorization-console">
+  <%= render "form",
+        form_url: critical_information_authorization_path(@authorization),
+        form_method: :patch,
+        submit_label: "Update Authorization" %>
+</div>

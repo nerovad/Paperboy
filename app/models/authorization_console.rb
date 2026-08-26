@@ -100,7 +100,24 @@ class AuthorizationConsole
     inbox_filter: ->(_routing_key, employee_ids) { SafetyReportAuthorization.inbox_conditions_for(employee_ids) }
   )
 
-  ALL = [SERVICES, HCA_SAFETY].freeze
+  # Critical Information Reporting. Backed by CriticalInformationAuthorization —
+  # just the incident manager covering each site on the form. Routing is by the
+  # report's "Where: Location" field rather than by the submitter's org node.
+  CIR = Definition.new(
+    key: 'cir',
+    label: 'Critical Information Reporting Authorizations',
+    form_class_name: 'CriticalInformationReporting',
+    route_name: :critical_information_authorizations_path,
+    routing_group_label: 'Critical Information Reporting',
+    routing_options: -> { [['CIR Incident Manager (by location)', 'cir_location']] },
+    approver_resolver: lambda { |_routing_key, submission|
+      CriticalInformationAuthorization.manager_ids_for_submission(submission)
+    },
+    holder_counter: ->(_routing_key) { CriticalInformationAuthorization.count },
+    inbox_filter: ->(_routing_key, employee_ids) { CriticalInformationAuthorization.inbox_conditions_for(employee_ids) }
+  )
+
+  ALL = [SERVICES, HCA_SAFETY, CIR].freeze
 
   def self.find(key)
     ALL.find { |console| console.key == key.to_s }

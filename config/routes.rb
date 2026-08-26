@@ -353,6 +353,12 @@ Rails.application.routes.draw do
   resources :safety_authorizations, only: %i[index new create edit update destroy],
                                     path: 'authorization_console/safety'
 
+  # Critical Information Reporting authorization console (incident managers by
+  # the site named in the report's "Where: Location" field).
+  resources :critical_information_authorizations,
+            only: %i[index new create edit update destroy],
+            path: 'authorization_console/critical_information'
+
   resources :acl, only: %i[index show new create edit update destroy] do
     member do
       post :add_member

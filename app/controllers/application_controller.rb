@@ -10,7 +10,7 @@ class ApplicationController < ActionController::Base
                 :current_user_feature_permission_keys,
                 :current_user_record_view_permission_keys, :current_user_record_edit_permission_keys,
                 :current_user_submission_action_permission_keys,
-                :safety_auth_console_user?,
+                :safety_auth_console_user?, :cir_auth_console_user?,
                 :available_authorization_consoles, :authorization_console_accessible?
 
   def current_user
@@ -125,6 +125,14 @@ class ApplicationController < ActionController::Base
       current_user_group_names.include?('safety_auth_console')
   end
 
+  # Who may manage the Critical Information Reporting authorization console.
+  # Its own group for the same reason the Safety one is: routing a critical
+  # incident to the right manager is unrelated to parking or badge approvals.
+  def cir_auth_console_user?
+    current_user_group_names.include?('system_admins') ||
+      current_user_group_names.include?('cir_auth_console')
+  end
+
   # The authorization consoles this user may open, in registry order. Drives
   # the form picker on the console entry screen and the switcher inside it.
   def available_authorization_consoles
@@ -136,6 +144,7 @@ class ApplicationController < ActionController::Base
     case console.key
     when AuthorizationConsole::SERVICES.key   then auth_console_user?
     when AuthorizationConsole::HCA_SAFETY.key then safety_auth_console_user?
+    when AuthorizationConsole::CIR.key        then cir_auth_console_user?
     else false
     end
   end
@@ -233,6 +242,12 @@ class ApplicationController < ActionController::Base
 
   def require_safety_auth_console
     return if safety_auth_console_user?
+
+    redirect_to root_path, alert: 'Access denied. Authorization Console access required.'
+  end
+
+  def require_cir_auth_console
+    return if cir_auth_console_user?
 
     redirect_to root_path, alert: 'Access denied. Authorization Console access required.'
   end
