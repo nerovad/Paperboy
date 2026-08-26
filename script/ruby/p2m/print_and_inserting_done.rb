@@ -22,6 +22,14 @@ module P2m
       daily_presort: /\APresort Fields Export_(#{OMS_NUMBER})\.txt\z/i,
       moveresults: /\AMoveResults_(#{OMS_NUMBER})\.txt\z/i
     }.freeze
+    ASSOCIATED_PATTERNS = [
+      MARKER_PATTERN,
+      /\A(#{OMS_NUMBER})-.+\.csv\z/i,
+      /\APresort Fields Export_(#{OMS_NUMBER})\.txt\z/i,
+      /\AMoveResults_(#{OMS_NUMBER})\.txt\z/i,
+      /\A(#{OMS_NUMBER})[-_].+\.pdf\z/i,
+      /\A.+_(#{OMS_NUMBER})\.pdf\z/i
+    ].freeze
     REQUIRED_INPUTS = INPUT_PATTERNS.keys.freeze
 
     def initialize(source_root:, data_runner_root:, start_date:, end_date:, report_path:)
@@ -73,11 +81,13 @@ module P2m
 
     def record_files(marker_paths)
       @files = marker_paths.sort_by { |path| oms_number(path) }.reverse.map do |path|
+        number = oms_number(path)
         {
           'name' => path.basename.to_s,
-          'oms_number' => oms_number(path),
+          'oms_number' => number,
           'modified_at' => path.mtime.strftime('%Y-%m-%d %H:%M:%S'),
-          'directory' => path.dirname.relative_path_from(source_root).to_s
+          'directory' => path.dirname.relative_path_from(source_root).to_s,
+          'associated_file_count' => associated_file_count(path.dirname, number)
         }
       end
       @found_count = @files.length
@@ -111,6 +121,18 @@ module P2m
 
     def oms_number(marker)
       marker.basename.to_s.match(MARKER_PATTERN)[1]
+    end
+
+    def associated_file_count(directory, number)
+      directory_files(directory).count do |path|
+        match = ASSOCIATED_PATTERNS.filter_map { |pattern| path.basename.to_s.match(pattern) }.first
+        path.file? && match && match[1] == number
+      end
+    end
+
+    def directory_files(directory)
+      @directory_files ||= {}
+      @directory_files[directory.to_s] ||= directory.children
     end
 
     def build_row(number, marker_matches)
