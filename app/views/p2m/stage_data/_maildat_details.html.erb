@@ -1,3 +1,4 @@
+<div data-controller="pdf-preview">
 <table class="p2m-associated-files-table">
   <thead>
     <tr>
@@ -9,9 +10,16 @@
     <% @associated_files.each_slice(2) do |names| %>
       <tr>
         <% names.each do |name| %>
+          <% extension = File.extname(name).downcase %>
           <td>
-            <% if File.extname(name).casecmp?('.zip') %>
+            <% if %w[.csv .zip].include?(extension) %>
               <span class="p2m-associated-file-name" title="<%= name %>"><%= name %></span>
+            <% elsif extension == '.pdf' %>
+              <%= link_to name,
+                          preview_p2m_stage_data_path(directory: params[:directory],
+                                                      oms_number: @oms_number, filename: name),
+                          class: "p2m-associated-file-name", title: name,
+                          data: { action: "pdf-preview#open", pdf_preview_title: name } %>
             <% else %>
               <%= link_to name,
                           preview_p2m_stage_data_path(directory: params[:directory],
@@ -67,4 +75,23 @@
   </button>
   <button type="button" class="btn compact" data-action="data-refresh-groups#feedback"
           data-feedback-action="Cancel" data-feedback-oms="<%= @oms_number %>">Cancel</button>
+</div>
+
+<div class="pb-modal-backdrop" data-pdf-preview-target="backdrop"
+     data-action="click->pdf-preview#backdropClose" hidden>
+  <div class="pb-modal pb-modal--report-preview" role="dialog" aria-modal="true"
+       aria-labelledby="p2m-pdf-preview-title-<%= @oms_number %>">
+    <div class="pb-modal__header">
+      <h3 id="p2m-pdf-preview-title-<%= @oms_number %>" data-pdf-preview-target="title">
+        PDF Preview
+      </h3>
+      <button type="button" class="pb-modal__close" data-action="pdf-preview#close"
+              aria-label="Close">✕</button>
+    </div>
+    <div class="pb-modal__body pb-pdf-preview" data-pdf-preview-target="body"></div>
+    <div class="pb-modal__actions">
+      <button type="button" class="btn" data-action="pdf-preview#close">Close</button>
+    </div>
+  </div>
+</div>
 </div>

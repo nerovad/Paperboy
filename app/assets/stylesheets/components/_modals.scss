@@ -111,6 +111,19 @@
   line-height: 1.5;
 }
 
+.pb-pdf-preview {
+  display: flex;
+  flex-direction: column;
+}
+
+.pb-pdf-preview__frame {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 1px solid $border-faint;
+  border-radius: 8px;
+}
+
 .dsl-sop {
   ol { padding-left: 1.5rem; }
 
