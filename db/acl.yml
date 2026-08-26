@@ -18,6 +18,10 @@ groups:
   - type: dropdown
     key: submissions
   - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
+  - type: form
     key: '29'
     class: CarpoolForm
     label: Carpool
@@ -44,6 +48,10 @@ groups:
     key: settings
   - type: dropdown
     key: submissions
+  - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
   - type: form
     key: '29'
     class: CarpoolForm
@@ -99,6 +107,10 @@ groups:
     key: billing:view_billing
   - type: feature
     key: billing:view_reports
+  - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
 - name: Critical_Incident_Managers
   description: Can manage critical incident reports
   permissions:
@@ -111,6 +123,10 @@ groups:
   - type: dropdown
     key: submissions
   - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
+  - type: form
     key: '29'
     class: CarpoolForm
     label: Carpool
@@ -118,6 +134,14 @@ groups:
   description: Admins for the Critical Information Report that can see all CIR forms
     in their inbox no matter who fills it out.
   permissions:
+  - type: authorization_console
+    key: cir:delete
+  - type: authorization_console
+    key: cir:read
+  - type: authorization_console
+    key: cir:write
+  - type: dropdown
+    key: auth_console
   - type: dropdown
     key: dashboards
   - type: dropdown
@@ -134,9 +158,29 @@ groups:
     key: '17'
     class: CriticalInformationReporting
     label: Critical Information Reporting
+  - type: submission_action
+    key: change_status:CriticalInformationReporting
+  - type: submission_action
+    key: edit:CriticalInformationReporting
 - name: Critical_Info_Email_List
   description: A list of users that get emailed for every Critical Information Reporting
     form
+  permissions:
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
+- name: Critical_Info_Maintenance
+  description: A group created so that users can see all maintenance submissions for
+    the Critical Information Report
   permissions:
   - type: dropdown
     key: help
@@ -172,6 +216,14 @@ groups:
     key: settings
   - type: dropdown
     key: submissions
+  - type: form
+    key: '15'
+    class: ParkingLotSubmission
+    label: Parking Permit Application
+  - type: form
+    key: '41'
+    class: IdBadgeRequestForm
+    label: ID Badge Request
 - name: HCA_HR
   description: HR Dept. for the Health Care Agency
   permissions:
@@ -189,6 +241,10 @@ groups:
     key: settings
   - type: dropdown
     key: submissions
+  - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
   - type: form
     key: '33'
     class: SafetyReport
@@ -222,6 +278,10 @@ groups:
     key: settings
   - type: dropdown
     key: submissions
+  - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
   - type: form
     key: '33'
     class: SafetyReport
@@ -261,6 +321,10 @@ groups:
     key: settings
   - type: dropdown
     key: submissions
+  - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
 - name: IT_Support
   description: IT staff for system support
   permissions:
@@ -278,6 +342,10 @@ groups:
     key: settings
   - type: dropdown
     key: submissions
+  - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
   - type: form
     key: '29'
     class: CarpoolForm
@@ -314,6 +382,10 @@ groups:
   - type: dropdown
     key: submissions
   - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
+  - type: form
     key: '29'
     class: CarpoolForm
     label: Carpool
@@ -328,6 +400,10 @@ groups:
     key: settings
   - type: dropdown
     key: submissions
+  - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
   - type: form
     key: '29'
     class: CarpoolForm
@@ -649,6 +725,10 @@ groups:
   - type: dropdown
     key: submissions
   - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
+  - type: form
     key: '29'
     class: CarpoolForm
     label: Carpool
@@ -661,6 +741,10 @@ groups:
     key: aim:dashboard
   - type: feature
     key: aim:processing_queues
+  - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
 org_permissions:
 - agency_id:
   division_id:
@@ -694,6 +778,14 @@ org_permissions:
   key: '40'
   class: BikeLockerForm
   label: Bike Locker
+- agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
 - agency_id:
   division_id:
   department_id:
@@ -763,6 +855,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: AAA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -819,6 +919,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: ACO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -875,6 +983,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: AGR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -931,6 +1047,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: AIR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -987,6 +1111,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: ALL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1043,6 +1175,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: ANM
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1099,6 +1239,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: APC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1155,6 +1303,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: ASR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1211,6 +1367,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: ATL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1267,6 +1431,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: AUD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1323,6 +1495,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: AVR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1379,6 +1559,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: BCE
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1435,6 +1623,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: BEA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1491,6 +1687,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: BEL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1547,6 +1751,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: BNY
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1603,6 +1815,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: BOS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1659,6 +1879,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: BPL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1715,6 +1943,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CAL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1771,6 +2007,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CAM
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1827,6 +2071,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CAS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1883,6 +2135,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CBW
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1939,6 +2199,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CCD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -1995,6 +2263,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CCR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2051,6 +2327,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CDA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2107,6 +2391,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CED
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2163,6 +2455,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CEO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2219,6 +2519,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CFF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2275,6 +2583,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CGS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2331,6 +2647,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CHC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2387,6 +2711,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CIB
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2443,6 +2775,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CLW
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2499,6 +2839,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CMF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2555,6 +2903,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: COC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2611,6 +2967,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: COF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2667,6 +3031,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: COM
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2723,6 +3095,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: COO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2779,6 +3159,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: COV
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2835,6 +3223,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: COX
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2891,6 +3287,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CPH
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -2947,6 +3351,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CRP
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3003,6 +3415,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CRT
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3059,6 +3479,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CSC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3115,6 +3543,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CSD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3171,6 +3607,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CSL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3227,6 +3671,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CSP
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3283,6 +3735,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CSS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3339,6 +3799,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CSU
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3395,6 +3863,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CSV
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3451,6 +3927,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: CTO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3507,6 +3991,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: DAO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3563,6 +4055,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: FIL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3619,6 +4119,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: FOX
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3675,6 +4183,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: FPD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3731,6 +4247,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: FRM
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3787,6 +4311,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: GCH
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3843,6 +4375,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: GCT
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -3894,6 +4434,14 @@ org_permissions:
   key: '29'
   class: CarpoolForm
   label: Carpool
+- agency_id: GRJ
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
 - agency_id: GRJ
   division_id:
   department_id:
@@ -3980,6 +4528,14 @@ org_permissions:
   key: '29'
   class: CarpoolForm
   label: Carpool
+- agency_id: GSA
+  division_id: '4600'
+  department_id: '4601'
+  unit_id: '4601'
+  type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
 - agency_id: GSA
   division_id: '4600'
   department_id: '4601'
@@ -4136,6 +4692,42 @@ org_permissions:
   division_id: '4640'
   department_id: '4641'
   unit_id: '4641'
+  type: application
+  key: aim
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: application
+  key: billing
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: application
+  key: coa
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: application
+  key: digital_asset_management
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: application
+  key: p2m
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: application
+  key: print_production
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
   type: dropdown
   key: help
 - agency_id: GSA
@@ -4156,6 +4748,186 @@ org_permissions:
   unit_id: '4641'
   type: dropdown
   key: submissions
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: billing:billing_audit
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: billing:reporting_period
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: billing:run_monthly_billing
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: billing:view_billing
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: billing:view_reports
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:activities
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:agencies
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:billing_lookup
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:customer_lookup
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:departments
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:divisions
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:functions
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:funds
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:major_programs
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:object_inferences
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:objects
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:phases
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:programs
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:revenue_sources
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:sub_units
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:tasks
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: coa:units
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: digital_asset_management:collections
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: digital_asset_management:dashboard
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: digital_asset_management:jobs
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: digital_asset_management:search
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: digital_asset_management:shares
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: digital_asset_management:workflows
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: p2m:data_refresh
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: p2m:stage_data
 - agency_id: GSA
   division_id: '4640'
   department_id: '4641'
@@ -4423,6 +5195,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: GSF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -4479,6 +5259,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: HAR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -4530,6 +5318,14 @@ org_permissions:
   key: '29'
   class: CarpoolForm
   label: Carpool
+- agency_id: HCA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
 - agency_id: HCA
   division_id:
   department_id:
@@ -4631,6 +5427,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: HMW
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -4687,6 +5491,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: HRP
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -4743,6 +5555,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: HSA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -4799,6 +5619,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: IND
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -4855,6 +5683,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: ITS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -4911,6 +5747,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: LAF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -4967,6 +5811,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: LTF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5023,6 +5875,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: LWL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5079,6 +5939,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: MBG
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5135,6 +6003,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: MBS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5191,6 +6067,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: MEO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5247,6 +6131,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: MET
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5303,6 +6195,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: MMI
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5359,6 +6259,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: MOW
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5415,6 +6323,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: MRC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5471,6 +6387,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: OHD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5527,6 +6451,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: OVS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5583,6 +6515,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: OWC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5639,6 +6579,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: OX2
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5695,6 +6643,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: OX3
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5751,6 +6707,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: OXD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5807,6 +6771,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: PCE
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5863,6 +6835,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: PDO
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5919,6 +6899,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: PFA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -5975,6 +6963,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: PTS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6031,6 +7027,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: PVC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6087,6 +7091,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: PVR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6143,6 +7155,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: PWA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6199,6 +7219,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: RET
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6255,6 +7283,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: RMA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6311,6 +7347,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: ROF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6367,6 +7411,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: RSR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6423,6 +7475,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: SAT
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6479,6 +7539,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: SHF
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6535,6 +7603,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: SHR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6591,6 +7667,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: SMR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6647,6 +7731,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: SRP
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6703,6 +7795,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: SVD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6759,6 +7859,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: TFS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6815,6 +7923,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: TRJ
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6871,6 +7987,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: TSA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6927,6 +8051,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: TTC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -6983,6 +8115,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: TTT
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7039,6 +8179,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: UVR
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7095,6 +8243,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: UWC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7151,6 +8307,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: VCJ
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7207,6 +8371,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: VCL
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7263,6 +8435,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: VCP
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7319,6 +8499,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: VOE
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7375,6 +8563,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: VPD
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7431,6 +8627,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: VRC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7487,6 +8691,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: VRS
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7543,6 +8755,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: VRW
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7599,6 +8819,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: VTC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7655,6 +8883,14 @@ org_permissions:
   department_id:
   unit_id:
   type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: WRC
+  division_id:
+  department_id:
+  unit_id:
+  type: form
   key: '42'
   class: FormRequestForm
   label: Form Request
@@ -7666,3 +8902,90 @@ org_permissions:
   key: '41'
   class: IdBadgeRequestForm
   label: ID Badge Request
+memberships:
+- group: aim_admin
+  employee_id: 126566
+- group: Auth_Console_Admin
+  employee_id: 104236
+- group: Auth_Console_Admin
+  employee_id: 132497
+- group: Auth_Console_Admin
+  employee_id: 134622
+- group: Billing_Users
+  employee_id: 135609
+- group: Critical_Info_Admins
+  employee_id: 117064
+- group: Critical_Info_Admins
+  employee_id: 122482
+- group: Critical_Info_Admins
+  employee_id: 133926
+- group: Critical_Info_Admins
+  employee_id: 135855
+- group: Critical_Info_Admins
+  employee_id: 137716
+- group: Critical_Info_Admins
+  employee_id: 138482
+- group: Critical_Info_Email_List
+  employee_id: 117064
+- group: Critical_Info_Email_List
+  employee_id: 122482
+- group: Critical_Info_Email_List
+  employee_id: 133926
+- group: Critical_Info_Email_List
+  employee_id: 135855
+- group: Critical_Info_Maintenance
+  employee_id: 116675
+- group: Critical_Info_Maintenance
+  employee_id: 120498
+- group: Critical_Info_Maintenance
+  employee_id: 134692
+- group: Critical_Info_Maintenance
+  employee_id: 136813
+- group: Critical_Info_Maintenance
+  employee_id: 138082
+- group: Critical_Info_Users
+  employee_id: 116675
+- group: Critical_Info_Users
+  employee_id: 120131
+- group: Critical_Info_Users
+  employee_id: 120498
+- group: Critical_Info_Users
+  employee_id: 121520
+- group: Critical_Info_Users
+  employee_id: 124502
+- group: Critical_Info_Users
+  employee_id: 126471
+- group: Critical_Info_Users
+  employee_id: 128975
+- group: Critical_Info_Users
+  employee_id: 134692
+- group: Critical_Info_Users
+  employee_id: 136813
+- group: Critical_Info_Users
+  employee_id: 137554
+- group: Critical_Info_Users
+  employee_id: 138082
+- group: HCA_HR
+  employee_id: 124506
+- group: HCA_HR
+  employee_id: 138189
+- group: HCA_Safety_Officers
+  employee_id: 120703
+- group: HCA_Safety_Officers
+  employee_id: 121825
+- group: HCA_Safety_Officers
+  employee_id: 121871
+- group: HCA_Safety_Officers
+  employee_id: 121904
+- group: HCA_Safety_Officers
+  employee_id: 122982
+- group: HCA_Test
+  employee_id: 126566
+- group: IT_Support
+  employee_id: 126183
+- group: Super_User
+  employee_id: 106663
+- group: System_Admins
+  employee_id: 135272
+- group: System_Admins
+  employee_id: 136626
