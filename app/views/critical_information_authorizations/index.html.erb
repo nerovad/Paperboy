@@ -1,0 +1,116 @@
+<!-- app/views/critical_information_authorizations/index.html.erb -->
+<div class="form-header">
+  <h1>Critical Information Reporting Authorizations</h1>
+</div>
+
+<div class="form-wrapper authorization-console" data-controller="confirm-modal">
+  <%= render "shared/authorization_console_switcher",
+        current_console_key: AuthorizationConsole::CIR.key %>
+
+  <div class="console-filters">
+    <%= form_with url: critical_information_authorizations_path, method: :get,
+                  data: { turbo: false, controller: "auto-submit" } do %>
+      <div class="filter-group" data-controller="choices">
+        <label>Location</label>
+        <%= select_tag :location,
+              options_for_select(@location_filter_options, @location_filter),
+              multiple: true,
+              class: "form-control",
+              data: { choices_target: "select", action: "change->auto-submit#submit",
+                      placeholder: "All Locations" } %>
+      </div>
+
+      <div class="filter-group" data-controller="choices">
+        <label>Incident Manager</label>
+        <%= select_tag :employee_id,
+              options_for_select(@employee_filter_options, @employee_filter),
+              multiple: true,
+              class: "form-control",
+              data: { choices_target: "select", action: "change->auto-submit#submit",
+                      placeholder: "All Incident Managers" } %>
+      </div>
+
+      <div class="filter-group" data-controller="choices">
+        <label>Assignment</label>
+        <%= select_tag :assignment,
+              options_for_select([["Assigned", "assigned"], ["Unassigned", "unassigned"]], @assignment_filter),
+              include_blank: "All Locations",
+              class: "form-control",
+              data: { choices_target: "select", action: "change->auto-submit#submit" } %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="department-header">
+    <p class="console-summary">
+      <%= @assigned_count %> of <%= @total_sites %> locations have an incident manager.
+    </p>
+    <%= link_to "+ Add Incident Manager",
+          new_critical_information_authorization_path(location: @location_filter.first),
+          class: "btn approve" %>
+  </div>
+
+  <div class="approvers-scroll">
+    <% if @cards.any? %>
+      <div class="approvers-list">
+        <% @cards.each do |card| %>
+          <% authorization = card[:authorization] %>
+          <div class="approver-card">
+            <div class="approver-header">
+              <h3><%= card[:label] %></h3>
+            </div>
+
+            <div class="approvals-list">
+              <% if authorization %>
+                <% manager = authorization.employee %>
+                <div class="approval-item">
+                  <div class="approval-details">
+                    <strong>
+                      <%= manager ? "#{manager.first_name} #{manager.last_name}" : "Employee ##{authorization.employee_id}" %>
+                      <span class="employee-id">(<%= authorization.employee_id %>)</span>
+                    </strong>
+                    <% if manager&.email.present? %>
+                      <div class="detail-row">
+                        <span class="label">Email:</span>
+                        <span class="value"><%= manager.email %></span>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <div class="approval-actions">
+                    <%= link_to "Edit", edit_critical_information_authorization_path(authorization), class: "btn" %>
+                    <button type="button"
+                            class="btn deny"
+                            data-action="click->confirm-modal#open"
+                            data-delete-path="<%= critical_information_authorization_path(authorization) %>"
+                            data-confirm-title="Remove Authorization"
+                            data-confirm-message="Remove <%= manager ? "#{manager.first_name} #{manager.last_name}" : authorization.employee_id %> as the incident manager for <%= card[:location] %>? Reports from this location will stop routing to anyone.">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              <% else %>
+                <div class="approval-item">
+                  <div class="approval-details">
+                    <span class="unassigned">No incident manager assigned</span>
+                  </div>
+                  <div class="approval-actions">
+                    <%= link_to "Assign",
+                          new_critical_information_authorization_path(location: card[:location]),
+                          class: "btn" %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <p>No locations match the current filters.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <%= render "shared/confirm_modal" %>
+</div>

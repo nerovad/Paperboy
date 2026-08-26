@@ -43,6 +43,13 @@
   padding-bottom: 16px;
   border-bottom: 2px solid $border-color;
 
+  // Coverage count on the CIR console, sitting opposite the add button.
+  .console-summary {
+    margin: 0;
+    color: $muted;
+    font-size: 0.9rem;
+  }
+
   h2 {
     margin: 0;
     font-size: 1.5rem;
