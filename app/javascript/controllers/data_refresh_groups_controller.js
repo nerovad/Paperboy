@@ -95,6 +95,139 @@ export default class extends Controller {
     }
   }
 
+  async batchMove(event) {
+    const button = event.currentTarget
+    const jobs = this.visibleOmsJobs()
+    if (!jobs.length) {
+      await pbAlert({ title: "No OMS files to move", message: "The grid has no visible OMS numbers." })
+      return
+    }
+
+    const destination = button.dataset.batchDestination
+    if (!await pbConfirm(this.batchConfirmation(destination, jobs))) return
+
+    const progress = this.element.querySelector("[data-batch-progress]")
+    const startedAt = performance.now()
+    const timer = this.startBatchProgress(progress, destination, jobs.length, startedAt)
+    const successes = []
+    const failures = []
+    this.setBatchButtonsDisabled(true)
+
+    for (const [index, job] of jobs.entries()) {
+      try {
+        const result = await this.sendStagingRequest(button.dataset.batchUrl, "POST", job)
+        if (result.ok) {
+          successes.push(job)
+          if (destination === "staging") this.removeOmsRow(job.row)
+        } else {
+          failures.push({ job, message: result.message })
+        }
+      } catch (_error) {
+        failures.push({ job, message: "The request could not be completed." })
+      }
+      this.updateBatchProgress(progress, destination, index + 1, jobs.length, startedAt)
+    }
+
+    this.stopBatchProgress(progress, timer)
+    this.setBatchButtonsDisabled(false)
+    await pbAlert(this.batchResult(destination, jobs, successes, failures, startedAt))
+  }
+
+  visibleOmsJobs() {
+    return Array.from(this.element.querySelectorAll("tr.p2m-maildat-row[data-sort-row]"))
+      .filter(row => !row.hidden)
+      .map(row => ({
+        row,
+        omsNumber: row.dataset.omsNumber,
+        directory: row.dataset.directory,
+        fileCount: Number(row.dataset.associatedFileCount)
+      }))
+  }
+
+  batchConfirmation(destination, jobs) {
+    const omsList = jobs.map(job => destination === "staging"
+      ? `${job.omsNumber} (${job.fileCount} files)`
+      : job.omsNumber).join(", ")
+    const totalFiles = destination === "staging"
+      ? jobs.reduce((total, job) => total + job.fileCount, 0)
+      : jobs.length
+    const detail = destination === "staging"
+      ? `This will validate and copy ${totalFiles} associated files for ${jobs.length} visible OMS numbers ` +
+        "to 00_SentToUSPS. Successful OMS numbers will be removed from this grid; failures will remain visible."
+      : `This will copy one Mail.dat ZIP for each of ${jobs.length} visible OMS numbers ` +
+        `to 00_ShippingStation (${totalFiles} files total). Associated files will not be copied.`
+
+    return {
+      title: destination === "staging" ? "Move All to Staging" : "Move All to Shipping Station",
+      message: `${detail}\n\nOMS numbers: ${omsList}\n\nProcessing will continue if an individual OMS fails.`,
+      confirmLabel: "Continue",
+      confirmVariant: destination === "staging" ? "approve" : "reassign"
+    }
+  }
+
+  async sendStagingRequest(url, method, job) {
+    const parameters = new URLSearchParams({
+      directory: job.directory,
+      oms_number: job.omsNumber
+    })
+    const response = await fetch(url, {
+      method,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
+      },
+      body: parameters.toString()
+    })
+    const contentType = response.headers.get("content-type") || ""
+    const result = contentType.includes("application/json") ? await response.json() : {}
+    return {
+      ok: response.ok,
+      message: result.message || `The staging request failed (${response.status}).`
+    }
+  }
+
+  startBatchProgress(progress, destination, total, startedAt) {
+    progress.hidden = false
+    this.updateBatchProgress(progress, destination, 0, total, startedAt)
+    return window.setInterval(() => {
+      const completed = Number(progress.dataset.completed)
+      this.updateBatchProgress(progress, destination, completed, total, startedAt)
+    }, 100)
+  }
+
+  updateBatchProgress(progress, destination, completed, total, startedAt) {
+    const label = destination === "staging" ? "staging" : "Shipping Station"
+    const bar = progress.querySelector("[data-batch-progress-bar]")
+    progress.dataset.completed = completed
+    bar.max = total
+    bar.value = completed
+    progress.querySelector("[data-batch-progress-label]").textContent =
+      `Moving ${completed} of ${total} OMS numbers to ${label}… ${this.elapsedSeconds(startedAt)} seconds elapsed`
+  }
+
+  stopBatchProgress(progress, timer) {
+    window.clearInterval(timer)
+    progress.hidden = true
+  }
+
+  setBatchButtonsDisabled(disabled) {
+    this.element.querySelectorAll("[data-batch-move]").forEach(button => {
+      button.disabled = disabled
+    })
+  }
+
+  batchResult(destination, jobs, successes, failures, startedAt) {
+    const target = destination === "staging" ? "Staging" : "Shipping Station"
+    let message = `${successes.length} of ${jobs.length} OMS numbers moved successfully. ` +
+      `Elapsed time: ${this.elapsedSeconds(startedAt)} seconds.`
+    if (failures.length) {
+      const details = failures.map(({ job, message: failure }) => `${job.omsNumber}: ${failure}`).join("; ")
+      message += `\n\n${failures.length} failed and remain visible. ${details}`
+    }
+    return { title: `Move All to ${target} Complete`, message }
+  }
+
   startStagingProgress(progress, startedAt) {
     if (!progress) return null
 
@@ -119,8 +252,12 @@ export default class extends Controller {
   removeOmsRows(button) {
     const detailRow = button.closest("tr.p2m-maildat-detail")
     const resultRow = detailRow?.previousElementSibling
-    if (resultRow?.matches("tr.p2m-maildat-row")) resultRow.remove()
-    detailRow?.remove()
+    if (resultRow?.matches("tr.p2m-maildat-row")) this.removeOmsRow(resultRow)
+  }
+
+  removeOmsRow(resultRow) {
+    document.getElementById(resultRow.dataset.detailId)?.remove()
+    resultRow.remove()
     this.element.querySelectorAll("tr[data-sort-row]").forEach((row, index) => {
       row.classList.toggle("is-alternate", index % 2 === 1)
     })
