@@ -21,7 +21,7 @@
 #   MSSQL_ENCRYPT   (optional)  "true"/"false" (TinyTDS supports :encrypt on newer stacks)
 #
 # Notes:
-# - This is row-by-row insert (simple + reliable). Bulk later.
+# - Inserts are grouped into bounded multi-row statements.
 
 require 'csv'
 require 'bigdecimal'
@@ -32,6 +32,7 @@ require_relative 'dsl_map'
 require_relative '../helpers/etl_helpers'
 require_relative '../helpers/etl_mapping_helpers'
 require_relative '../helpers/dependency_helpers'
+require_relative '../helpers/insert_batch_writer'
 require_relative '../db/mssql_helpers'
 require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
@@ -42,19 +43,18 @@ $LOAD_PATH.unshift(ROOT)
 APPLIED_DIR = WorkflowPaths::APPLIED_DIR
 
 # -------------------------------------------------------------------------- }}}
-# {{{ Helper: build_insert_sql
+# {{{ Helper: build batched insert SQL
 
-# Build INSERT statement with parameter placeholders. TinyTDS supports named
-# parameters via :name => value in some patterns, but the most reliable
-# cross-version approach is to safely literal-quote values. For v1, we do
-# literal quoting via the connection's escape method.
-
-def build_insert_sql(client, schema, table, columns, values, column_types = {})
+def insert_prefix(schema, table, columns)
   cols_sql = columns.map { |c| MssqlHelpers.quote_ident(c) }.join(', ')
+  "INSERT INTO #{MssqlHelpers.sql_qualified(schema, table)} (#{cols_sql}) VALUES "
+end
+
+def insert_values_sql(client, columns, values, column_types = {})
   vals_sql = columns.zip(values).map do |column, value|
     sql_value_literal(client, value, column_types[column])
   end.join(', ')
-  "INSERT INTO #{MssqlHelpers.sql_qualified(schema, table)} (#{cols_sql}) VALUES (#{vals_sql})"
+  "(#{vals_sql})"
 end
 
 def sql_value_literal(client, value, data_type = nil)
@@ -220,20 +220,6 @@ end
 
 def reject_existing_columns(cfg, database_connection = nil)
   Array(inject_cfg(cfg, database_connection)[:reject_existing]).map(&:to_s)
-end
-
-def ensure_columns!(client, target, cfg, database_connection = nil)
-  columns = inject_cfg(cfg, database_connection)[:ensure_columns] || {}
-  columns.each do |column, definition|
-    qualified_name = "#{target.schema}.#{target.table}".gsub("'", "''")
-    column_name = column.to_s.gsub("'", "''")
-    sql = [
-      "IF COL_LENGTH(N'#{qualified_name}', N'#{column_name}') IS NULL",
-      "ALTER TABLE #{MssqlHelpers.sql_qualified(target.schema, target.table)}",
-      "ADD #{MssqlHelpers.quote_ident(column)} #{definition}"
-    ].join(' ')
-    client.execute(sql).do
-  end
 end
 
 def existing_row_sql(client, schema, table, columns, row, column_types)
@@ -412,7 +398,10 @@ begin
         unless atomic_client
           client.execute('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE').do
           client.execute('BEGIN TRAN').do
+          lock_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           acquire_atomic_inject_lock!(client)
+          lock_seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - lock_started
+          puts format('[TIMING] Atomic inject lock wait: %.3fs', lock_seconds)
           atomic_client = client
         end
       else
@@ -420,7 +409,6 @@ begin
       end
 
       where_sql = delete_where(cfg, target.connection)
-      ensure_columns!(client, target, cfg, target.connection)
 
       case mode
       when :truncate_insert
@@ -442,27 +430,40 @@ begin
       columns = nil
       column_types = column_type_map(cfg)
       identity_insert_enabled = false
+      insert_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      duplicate_check_seconds = 0.0
+      batch_writer = nil
 
       CSV.foreach(input, headers: true, encoding: 'bom|utf-8').with_index(2) do |row, line_number|
         if columns.nil?
           columns = row.headers.map(&:to_s)
+          duplicate_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           reject_existing!(client, target, reject_existing_columns(cfg, target.connection), row, column_types)
+          duplicate_check_seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - duplicate_started
           if needs_identity_insert?(cfg, columns)
             client.execute(identity_insert_sql(target.schema, target.table, true)).do
             identity_insert_enabled = true
           end
+          batch_writer = DataRunner::InsertBatchWriter.new(
+            client: client,
+            prefix: insert_prefix(target.schema, target.table, columns)
+          )
         end
 
         values = columns.map { |c| row[c] }
 
         begin
-          sql = build_insert_sql(client, target.schema, target.table, columns, values, column_types)
+          tuple = insert_values_sql(client, columns, values, column_types)
         rescue StandardError => e
           raise "#{input}: CSV row #{line_number}: #{e.message}"
         end
-        client.execute(sql).do
-        inserted += 1
+        batch_writer.add(tuple)
       end
+      inserted = batch_writer&.finish || 0
+      insert_seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - insert_started
+      rows_per_second = insert_seconds.positive? ? inserted / insert_seconds : inserted
+      puts format('[TIMING] %s: duplicate check %.3fs; insert %.3fs; %.0f rows/s',
+                  name, duplicate_check_seconds, insert_seconds, rows_per_second)
 
       client.execute(identity_insert_sql(target.schema, target.table, false)).do if identity_insert_enabled
       client.execute('COMMIT TRAN').do unless atomic_inject
@@ -487,7 +488,9 @@ begin
     end
   end
   if atomic_client
+    commit_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     atomic_client.execute('COMMIT TRAN').do
+    puts format('[TIMING] Atomic commit: %.3fs', Process.clock_gettime(Process::CLOCK_MONOTONIC) - commit_started)
     atomic_committed = true
   end
 ensure
