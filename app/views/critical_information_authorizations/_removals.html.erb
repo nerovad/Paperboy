@@ -1,0 +1,51 @@
+<%# Destructive actions for one location, on the pages that already know which
+    location is in hand. They used to sit on each index card, which put 212 of
+    them one stray click apart. Kept outside the form above, since neither can
+    be nested inside it. %>
+<% manager = @authorization if @authorization&.persisted? %>
+<% if manager || @location_record %>
+  <div class="console-removals">
+    <% if manager %>
+      <div class="console-removal">
+        <div class="console-removal__text">
+          <strong>Remove incident manager</strong>
+          <p>
+            <%= @location_record&.name || manager.location %> stays on the form, but reports
+            from it stop routing to anyone until another manager is assigned.
+          </p>
+        </div>
+        <button type="button"
+                class="btn deny"
+                data-action="click->confirm-modal#open"
+                data-delete-path="<%= critical_information_authorization_path(manager) %>"
+                data-confirm-title="Remove Incident Manager"
+                data-confirm-message="Remove <%= manager.manager_name || "Employee ##{manager.employee_id}" %> as the incident manager for <%= manager.location %>? The location stays on the form, but reports from it will stop routing to anyone.">
+          Remove Manager
+        </button>
+      </div>
+    <% end %>
+
+    <% if @location_record %>
+      <div class="console-removal">
+        <div class="console-removal__text">
+          <strong>Remove location</strong>
+          <p>
+            Takes <%= @location_record.name %> off the form
+            <%= "and its incident manager assignment with it" if manager %>.
+            Reports already filed from it keep the location and are not affected.
+          </p>
+        </div>
+        <button type="button"
+                class="btn deny"
+                data-action="click->confirm-modal#open"
+                data-delete-path="<%= critical_information_location_path(@location_record) %>"
+                data-confirm-title="Remove Location"
+                data-confirm-message="Remove <%= @location_record.name %> from the Critical Information Reporting form?<%= " Its incident manager assignment goes with it." if manager %> Reports already filed from this location keep it and are not affected.">
+          Remove Location
+        </button>
+      </div>
+    <% end %>
+  </div>
+
+  <%= render "shared/confirm_modal" %>
+<% end %>

@@ -95,6 +95,11 @@ class CriticalInformationAuthorizationsController < ApplicationController
     @location_options += [[current, current]] if current.present? && !CriticalInformationLocation.exists_named?(current)
 
     @employee_options = employee_options(@authorization&.employee_id)
+
+    # The catalogue row behind this authorization, so the page can offer to
+    # delete the site itself. Nil on a bare "Add Incident Manager" where no
+    # location has been picked yet, and on a row whose site is already gone.
+    @location_record = CriticalInformationLocation.find_by(name: current)
   end
 
   # Candidate incident managers: everyone in the General Services Agency. The

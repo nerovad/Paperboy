@@ -169,6 +169,45 @@
   }
 }
 
+// Destructive actions on the CIR console's add/edit pages, below the form.
+// They live here rather than on the index cards so removing a location or a
+// manager takes a deliberate trip to the page for it.
+.console-removals {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 2px solid $border-color;
+}
+
+.console-removal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 0;
+
+  + .console-removal {
+    border-top: 1px solid $border-muted;
+  }
+
+  .console-removal__text {
+    strong {
+      display: block;
+      font-size: 1rem;
+      color: $text-color;
+    }
+
+    p {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      color: $muted;
+    }
+  }
+
+  .btn {
+    flex-shrink: 0;
+  }
+}
+
 // List of approvals within a card
 .approvals-list {
   padding: 0;
