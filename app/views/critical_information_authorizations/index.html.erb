@@ -3,7 +3,7 @@
   <h1>Critical Information Reporting Authorizations</h1>
 </div>
 
-<div class="form-wrapper authorization-console" data-controller="confirm-modal">
+<div class="form-wrapper authorization-console">
   <%= render "shared/authorization_console_switcher",
         current_console_key: AuthorizationConsole::CIR.key %>
 
@@ -61,16 +61,6 @@
           <div class="approver-card">
             <div class="approver-header">
               <h3><%= card.label %></h3>
-              <% if card.on_the_form? %>
-                <button type="button"
-                        class="btn deny compact"
-                        data-action="click->confirm-modal#open"
-                        data-delete-path="<%= critical_information_location_path(card.location_id) %>"
-                        data-confirm-title="Remove Location"
-                        data-confirm-message="Remove <%= card.location %> from the Critical Information Reporting form?<%= " Its incident manager assignment goes with it." if card.assigned? %> Reports already filed from this location keep it and are not affected.">
-                  Remove Location
-                </button>
-              <% end %>
             </div>
 
             <div class="approvals-list">
@@ -92,14 +82,6 @@
 
                   <div class="approval-actions">
                     <%= link_to "Edit", edit_critical_information_authorization_path(authorization), class: "btn" %>
-                    <button type="button"
-                            class="btn deny"
-                            data-action="click->confirm-modal#open"
-                            data-delete-path="<%= critical_information_authorization_path(authorization) %>"
-                            data-confirm-title="Remove Incident Manager"
-                            data-confirm-message="Remove <%= manager ? "#{manager.first_name} #{manager.last_name}" : authorization.employee_id %> as the incident manager for <%= card.location %>? The location stays on the form, but reports from it will stop routing to anyone.">
-                      Remove Manager
-                    </button>
                   </div>
                 </div>
               <% else %>
@@ -124,6 +106,4 @@
       </div>
     <% end %>
   </div>
-
-  <%= render "shared/confirm_modal" %>
 </div>

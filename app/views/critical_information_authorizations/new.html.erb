@@ -3,9 +3,11 @@
   <h1>Add Incident Manager</h1>
 </div>
 
-<div class="form-wrapper authorization-console">
+<div class="form-wrapper authorization-console" data-controller="confirm-modal">
   <%= render "form",
         form_url: critical_information_authorizations_path,
         form_method: :post,
         submit_label: "Add Authorization" %>
+
+  <%= render "removals" %>
 </div>
