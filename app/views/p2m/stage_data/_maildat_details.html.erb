@@ -2,21 +2,28 @@
   <thead>
     <tr>
       <th scope="col">File name</th>
+      <th scope="col">File name</th>
     </tr>
   </thead>
   <tbody>
-    <% @associated_files.each do |name| %>
+    <% @associated_files.each_slice(2) do |names| %>
       <tr>
-        <td>
-          <% if File.extname(name).casecmp?('.zip') %>
-            <%= name %>
-          <% else %>
-            <%= link_to name,
-                        preview_p2m_stage_data_path(directory: params[:directory],
-                                                    oms_number: @oms_number, filename: name),
-                        target: "_blank", rel: "noopener" %>
-          <% end %>
-        </td>
+        <% names.each do |name| %>
+          <td>
+            <% if File.extname(name).casecmp?('.zip') %>
+              <span class="p2m-associated-file-name" title="<%= name %>"><%= name %></span>
+            <% else %>
+              <%= link_to name,
+                          preview_p2m_stage_data_path(directory: params[:directory],
+                                                      oms_number: @oms_number, filename: name),
+                          class: "p2m-associated-file-name", title: name,
+                          target: "_blank", rel: "noopener" %>
+            <% end %>
+          </td>
+        <% end %>
+        <% if names.one? %>
+          <td aria-hidden="true"></td>
+        <% end %>
       </tr>
     <% end %>
   </tbody>
