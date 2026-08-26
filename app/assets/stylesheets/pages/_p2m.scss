@@ -117,14 +117,14 @@
 .p2m-maildat-grid {
   width: 100%;
   min-width: 0;
-  max-height: min(33.66rem, calc(100vh - 32rem));
+  max-height: min(38.71rem, calc(100vh - 32rem));
   overflow: auto;
   border: 1px solid $neutral-border-light;
   scrollbar-width: thin;
   scrollbar-color: $neutral-400 $surface-control;
 
   @media (max-height: 800px) {
-    max-height: 21.78rem;
+    max-height: 25.05rem;
   }
 }
 
@@ -210,7 +210,27 @@
   white-space: normal;
 }
 
-.p2m-maildat-detail ul { margin: .75rem 0; }
+.p2m-associated-files-table {
+  width: 100%;
+  margin-bottom: .75rem;
+  border-collapse: collapse;
+
+  th,
+  td {
+    height: auto;
+    padding: .45rem .75rem;
+    text-align: left;
+  }
+
+  thead th {
+    position: static;
+    background: $sidebar-navy;
+    color: $surface-base;
+  }
+
+  tbody tr:nth-child(odd) { background: $surface-base; }
+  tbody tr:nth-child(even) { background: $surface-control; }
+}
 
 .p2m-upload-details {
   display: grid;
