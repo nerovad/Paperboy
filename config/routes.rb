@@ -358,6 +358,12 @@ Rails.application.routes.draw do
             only: %i[index new create edit update destroy],
             path: 'authorization_console/critical_information'
 
+  # The site catalogue the CIR form's location dropdown is built from. Add and
+  # delete only — a rename would orphan every report filed under the old name.
+  resources :critical_information_locations,
+            only: %i[new create destroy],
+            path: 'authorization_console/critical_information/locations'
+
   resources :acl, only: %i[index show new create edit update destroy] do
     member do
       post :add_member

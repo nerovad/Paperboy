@@ -25,15 +25,17 @@ class CriticalInformationAuthorizationsController < ApplicationController
     @employee_filter   = Array(params[:employee_id]).reject(&:blank?)
     @assignment_filter = params[:assignment].to_s.presence_in(ASSIGNMENT_FILTERS)
 
-    @location_filter_options = CriticalInformationLocation.options
+    catalogue = CriticalInformationLocation.ordered.to_a
+    @location_filter_options = catalogue.map { |site| [site.name, site.name] }
     @employee_filter_options = employee_filter_options(scoped)
 
     scoped = scoped.select { |a| @employee_filter.include?(a.employee_id.to_s) } if @employee_filter.any?
 
     @cards = CriticalInformationConsoleCards.new(
-      scoped, locations: @location_filter, employee_ids: @employee_filter, assignment: @assignment_filter
+      scoped, catalogue: catalogue, locations: @location_filter,
+              employee_ids: @employee_filter, assignment: @assignment_filter
     ).to_a
-    @total_sites = CriticalInformationLocation::ALL.size
+    @total_sites    = catalogue.size
     @assigned_count = CriticalInformationAuthorization.count
   end
 
@@ -90,29 +92,25 @@ class CriticalInformationAuthorizationsController < ApplicationController
     # has since dropped that site, so the row stays editable and removable.
     @location_options = CriticalInformationLocation.options
     current = @authorization&.location
-    @location_options += [[current, current]] if current.present? && !CriticalInformationLocation.include?(current)
+    @location_options += [[current, current]] if current.present? && !CriticalInformationLocation.exists_named?(current)
 
-    candidates = CriticalInformationAuthorization.manager_candidate_ids
-    @manager_group_empty = candidates.empty?
-    @employee_options = employee_options(candidates, @authorization&.employee_id)
+    @employee_options = employee_options(@authorization&.employee_id)
   end
 
-  # Candidate incident managers: members of the Critical_Incident_Managers
-  # group, not every employee. The manager already on the row is kept in the
-  # list so an existing authorization stays editable if they later leave.
-  #
-  # If nobody is in the group the console would otherwise offer an empty
-  # dropdown, so it falls back to the managers already covering a site — the
-  # form says so, because the fix is to populate the group. The matching
-  # validation stands down the same way.
-  def employee_options(candidate_ids, selected_employee_id = nil)
-    ids = candidate_ids.presence || CriticalInformationAuthorization.distinct.pluck(:employee_id).map(&:to_s)
-    ids |= [selected_employee_id.to_s] if selected_employee_id.present?
-    return [] if ids.empty?
+  # Candidate incident managers: everyone in the General Services Agency. The
+  # manager already on the row is kept in the list so an existing authorization
+  # stays editable if they later transfer out.
+  def employee_options(selected_employee_id = nil)
+    options = CriticalInformationAuthorization.manager_candidates.map { |e| employee_option(e) }
+    return options if selected_employee_id.blank?
+    return options if options.any? { |(_label, id)| id == selected_employee_id.to_s }
 
-    Employee.where(id: ids)
-            .order(:last_name, :first_name)
-            .map { |e| ["#{e.first_name} #{e.last_name} (#{e.employee_id})", e.employee_id.to_s] }
+    selected = Employee.find_by(id: selected_employee_id.to_s)
+    selected ? options + [employee_option(selected)] : options
+  end
+
+  def employee_option(employee)
+    ["#{employee.first_name} #{employee.last_name} (#{employee.employee_id})", employee.employee_id.to_s]
   end
 
   def employee_filter_options(authorizations)

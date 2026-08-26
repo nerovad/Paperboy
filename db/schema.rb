@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_26_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_26_000003) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -190,6 +190,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_26_000002) do
     t.datetime "updated_at", null: false
     t.index ["employee_id"], name: "index_critical_information_authorizations_on_employee_id"
     t.index ["location"], name: "index_critical_information_authorizations_on_location", unique: true
+  end
+
+  create_table "critical_information_locations", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "created_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_critical_information_locations_on_name", unique: true
   end
 
   create_table "critical_information_reportings", force: :cascade do |t|

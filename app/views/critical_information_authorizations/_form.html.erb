@@ -24,19 +24,13 @@
 
   <div class="form-group" data-controller="choices">
     <%= form.label :employee_id, "Incident Manager" %>
-    <% if @manager_group_empty %>
-      <p class="help-text">
-        Nobody is in the <%= CriticalInformationAuthorization::MANAGER_GROUP_NAME %> group yet,
-        so this list is limited to the managers already covering a location. Add people to that
-        group to widen it.
-      </p>
-    <% end %>
     <%= form.select :employee_id,
           options_for_select(@employee_options, @authorization.employee_id),
           { prompt: "Select Employee" },
           class: "form-control",
           required: true,
           data: { choices_target: "select", placeholder: "Search for an employee..." } %>
+    <small class="help-text">General Services Agency staff</small>
   </div>
 
   <div class="form-actions">

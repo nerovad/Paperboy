@@ -12,25 +12,22 @@
 # second manager on the same site could never be routed to; the console makes
 # you pick instead of silently dropping one.
 #
-# `location` holds a CriticalInformationLocation::ALL value verbatim — the same
+# `location` holds a CriticalInformationLocation name verbatim — the same
 # string the form's dropdown submits — so routing is an exact lookup rather
 # than the address fuzzy-matching this table replaced.
 class CriticalInformationAuthorization < ApplicationRecord
-  # Only members of this group can be named an incident manager. Mirrors the
-  # Safety console's officer group: holding a CIR authorization should follow
-  # from being on the incident team, not from any admin having a free hand.
-  MANAGER_GROUP_NAME = 'Critical_Incident_Managers'
+  # Incident managers are General Services Agency staff. The org tables call
+  # the agency GSA; employee records carry the four-character personnel-system
+  # variant, which is what employees.agency has to be matched on.
+  MANAGER_AGENCY_CODE = 'GSAV'
 
   validates :employee_id, presence: true
   validates :location, presence: true
   validates :location, uniqueness: { message: 'already has an incident manager' }
-  validates :location, inclusion: {
-    in: -> { CriticalInformationLocation::ALL },
-    message: 'is not a location on the Critical Information Reporting form'
-  }
+  validate :location_on_the_form, if: :location_changed?
   # Only checked when the manager changes, so an existing row stays editable
-  # (and removable) if someone later leaves the group.
-  validate :employee_in_manager_group, if: :employee_id_changed?
+  # (and removable) if someone later transfers out of the agency.
+  validate :employee_in_manager_agency, if: :employee_id_changed?
 
   scope :for_location, ->(location) { where(location: location) }
 
@@ -73,14 +70,18 @@ class CriticalInformationAuthorization < ApplicationRecord
     locations.empty? ? nil : { location: locations }
   end
 
-  # Employee ids eligible to be named an incident manager. Groups and
-  # Employee_Groups live in the Paperboy DB while Employees lives in GSABSS, so
-  # this can't be a join — the ids come back first and are looked up separately.
-  def self.manager_candidate_ids
-    group_id = Group.find_by(Group_Name: MANAGER_GROUP_NAME)&.GroupID
-    return [] if group_id.blank?
+  # Employees eligible to be named an incident manager: everyone in the General
+  # Services Agency.
+  def self.manager_candidates
+    Employee.where(agency: MANAGER_AGENCY_CODE).order(:last_name, :first_name)
+  end
 
-    EmployeeGroup.where(GroupID: group_id).pluck(:EmployeeID).map(&:to_s).uniq
+  def self.manager_candidate_ids
+    manager_candidates.pluck(:id).map(&:to_s)
+  end
+
+  def self.manager_in_agency?(employee_id)
+    Employee.where(id: employee_id.to_s, agency: MANAGER_AGENCY_CODE).exists?
   end
 
   # Case, punctuation and spacing only — no address-word rewriting. The old
@@ -93,13 +94,17 @@ class CriticalInformationAuthorization < ApplicationRecord
 
   private
 
-  def employee_in_manager_group
+  def location_on_the_form
+    return if location.blank?
+    return if CriticalInformationLocation.exists_named?(location)
+
+    errors.add(:location, 'is not a location on the Critical Information Reporting form')
+  end
+
+  def employee_in_manager_agency
     return if employee_id.blank?
+    return if self.class.manager_in_agency?(employee_id)
 
-    candidates = self.class.manager_candidate_ids
-    return if candidates.empty? # group missing or empty — don't block the console
-    return if candidates.include?(employee_id.to_s)
-
-    errors.add(:employee_id, "is not a member of the #{MANAGER_GROUP_NAME} group")
+    errors.add(:employee_id, 'is not a General Services Agency employee')
   end
 end

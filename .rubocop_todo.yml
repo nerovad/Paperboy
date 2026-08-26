@@ -118,7 +118,6 @@ Metrics/ClassLength:
     - 'app/controllers/workplace_violence_forms_controller.rb'
     - 'app/jobs/report_generation_job.rb'
     - 'app/models/authorization_console.rb'
-    - 'app/models/critical_information_location.rb'
     - 'app/models/form_field.rb'
     - 'app/models/form_template.rb'
     - 'app/models/form_template_routing_step.rb'
@@ -130,6 +129,7 @@ Metrics/ClassLength:
     - 'app/services/safety_report_pdf_generator.rb'
     - 'db/migrate/20260227000005_create_org_hierarchy.rb'
     - 'db/migrate/20260826000002_create_critical_information_authorizations.rb'
+    - 'db/migrate/20260826000003_create_critical_information_locations.rb'
     - 'db/migrate/20260227000007_create_form_submissions.rb'
     - 'db/migrate/20260227000008_create_dynamic_forms.rb'
 

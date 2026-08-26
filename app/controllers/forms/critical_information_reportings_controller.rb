@@ -304,7 +304,7 @@ module Forms
     def load_location_options
       manager_names = CriticalInformationLocationRouter.manager_names_by_location
 
-      CriticalInformationLocation::ALL.map do |location|
+      CriticalInformationLocation.names.map do |location|
         name = manager_names[location]
         [name.present? ? "#{location} - #{name}" : location, location]
       end
