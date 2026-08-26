@@ -1,0 +1,15 @@
+<!-- app/views/critical_information_authorizations/new.html.erb -->
+<div class="form-header">
+  <h1>Add Incident Manager</h1>
+</div>
+
+<div class="form-wrapper authorization-console" data-controller="confirm-modal">
+  <% if can_write_authorization_console?(AuthorizationConsole::CIR) %>
+    <%= render "form",
+          form_url: critical_information_authorizations_path,
+          form_method: :post,
+          submit_label: "Add Authorization" %>
+  <% end %>
+
+  <%= render "removals" %>
+</div>

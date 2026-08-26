@@ -43,6 +43,21 @@
   padding-bottom: 16px;
   border-bottom: 2px solid $border-color;
 
+  // Coverage count on the CIR console, sitting opposite the add buttons.
+  .console-summary {
+    margin: 0;
+    color: $muted;
+    font-size: 0.9rem;
+  }
+
+  // The CIR console adds locations as well as managers, so its header carries
+  // a pair of buttons rather than one.
+  .console-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
   h2 {
     margin: 0;
     font-size: 1.5rem;
@@ -129,6 +144,12 @@
   }
 
   .approver-header {
+    // Space-between so the CIR console can hang a "Remove Location" button off
+    // the right. Headers with only a heading in them are unaffected.
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
     padding: 16px 20px;
     background-color: $surface-subtle;
     border-bottom: 1px solid $border-color;
@@ -145,6 +166,45 @@
         font-size: 0.95rem;
       }
     }
+  }
+}
+
+// Destructive actions on the CIR console's add/edit pages, below the form.
+// They live here rather than on the index cards so removing a location or a
+// manager takes a deliberate trip to the page for it.
+.console-removals {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 2px solid $border-color;
+}
+
+.console-removal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 0;
+
+  + .console-removal {
+    border-top: 1px solid $border-muted;
+  }
+
+  .console-removal__text {
+    strong {
+      display: block;
+      font-size: 1rem;
+      color: $text-color;
+    }
+
+    p {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      color: $muted;
+    }
+  }
+
+  .btn {
+    flex-shrink: 0;
   }
 }
 

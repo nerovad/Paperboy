@@ -126,7 +126,7 @@
                 <% end %>
                 <%# Lands on the console picker, which forwards straight through
                     for users who only hold one console. %>
-                <% if available_authorization_consoles.any? || current_user_dropdown_permissions.include?('auth_console') %>
+                <% if available_authorization_consoles.any? %>
                   <%= link_to "Authorizations", select_authorization_console_index_path %>
                 <% end %>
                 <%# Records is a tab of My Work, not a dropdown entry of its own.

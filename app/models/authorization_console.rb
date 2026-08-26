@@ -20,6 +20,22 @@
 # Adding a console means adding a Definition here — the picker, the switcher,
 # the access checks and the builder's routing dropdown all read from this list.
 class AuthorizationConsole
+  # Group_Permissions / org_permissions rows carrying console access, granted in
+  # ACL > Authorization Consoles. One row per console per right, keyed
+  # "<console>:<right>" — "cir:write" — so it cascades org → group like every
+  # other permission (see ApplicationController#load_user_permissions).
+  PERMISSION_TYPE = 'authorization_console'
+
+  # What a right lets you do once you are in a console. Read is the gate; write
+  # and delete each imply it, so no combination produces a grant nobody can use.
+  RIGHTS = [
+    { key: 'read',   label: 'View' },
+    { key: 'write',  label: 'Add & Edit' },
+    { key: 'delete', label: 'Remove' }
+  ].freeze
+
+  RIGHT_KEYS = RIGHTS.map { |right| right[:key] }.freeze
+
   Definition = Struct.new(:key, :label, :form_class_name, :route_name,
                           :routing_group_label, :routing_options,
                           :approver_resolver, :holder_counter, :inbox_filter,
@@ -67,10 +83,10 @@ class AuthorizationConsole
   # by AuthorizedApprover and scoped by department + budget unit + building.
   SERVICES = Definition.new(
     key: 'services',
-    label: 'Parking, Badges & Keys Authorizations',
+    label: 'Parking, Badges, Keys Authorizations',
     form_class_name: 'ParkingLotSubmission',
     route_name: :authorization_console_index_path,
-    routing_group_label: 'Parking, Badges & Keys',
+    routing_group_label: 'Parking, Badges, Keys',
     routing_options: -> { AuthorizedApprover::SERVICE_TYPES.map { |code, label| [label, code] } },
     approver_resolver: lambda { |routing_key, submission|
       next [] unless submission.respond_to?(:unit) && submission.unit.present?
@@ -100,10 +116,53 @@ class AuthorizationConsole
     inbox_filter: ->(_routing_key, employee_ids) { SafetyReportAuthorization.inbox_conditions_for(employee_ids) }
   )
 
-  ALL = [SERVICES, HCA_SAFETY].freeze
+  # Critical Information Reporting. Backed by CriticalInformationAuthorization —
+  # just the incident manager covering each site on the form. Routing is by the
+  # report's "Where: Location" field rather than by the submitter's org node.
+  CIR = Definition.new(
+    key: 'cir',
+    label: 'Critical Information Reporting Authorizations',
+    form_class_name: 'CriticalInformationReporting',
+    route_name: :critical_information_authorizations_path,
+    routing_group_label: 'Critical Information Reporting',
+    routing_options: -> { [['CIR Incident Manager (by location)', 'cir_location']] },
+    approver_resolver: lambda { |_routing_key, submission|
+      CriticalInformationAuthorization.manager_ids_for_submission(submission)
+    },
+    holder_counter: ->(_routing_key) { CriticalInformationAuthorization.count },
+    inbox_filter: ->(_routing_key, employee_ids) { CriticalInformationAuthorization.inbox_conditions_for(employee_ids) }
+  )
+
+  ALL = [SERVICES, HCA_SAFETY, CIR].freeze
 
   def self.find(key)
     ALL.find { |console| console.key == key.to_s }
+  end
+
+  def self.permission_key(console_key, right)
+    "#{console_key}:#{right}"
+  end
+
+  # Every key this section can issue. Used to reject anything else posted back
+  # from the ACL form.
+  def self.permission_keys
+    ALL.flat_map { |console| RIGHT_KEYS.map { |right| permission_key(console.key, right) } }
+  end
+
+  # The rights a set of granted permission keys yields on one console. Write and
+  # delete each imply read, so ticking either on its own in the ACL still lets
+  # the group in to use it — no combination produces a grant nobody can reach.
+  def self.rights_from_keys(console_key, granted_keys)
+    granted = RIGHT_KEYS.select { |right| granted_keys.include?(permission_key(console_key, right)) }.to_set
+    granted.any? ? granted << 'read' : granted
+  end
+
+  # The consoles and their rights, in registry order, for the ACL screen.
+  def self.permission_catalog
+    ALL.map do |console|
+      { key: console.key, label: console.label,
+        rights: RIGHTS.map { |right| right.merge(permission_key: permission_key(console.key, right[:key])) } }
+    end
   end
 
   # Grouped choices for the builder's authorization dropdown, in the shape

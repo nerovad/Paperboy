@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { choicesOptions } from "choices_setup";
 
 export default class extends Controller {
   static targets = ["agency", "division", "department", "unit", "accountFields", "result",
@@ -150,8 +151,7 @@ export default class extends Controller {
     if (!window.Choices) return
 
     select.disabled = false
-    const choices = new window.Choices(select, {
-      allowHTML: false,
+    const choices = new window.Choices(select, choicesOptions({
       itemSelectText: "",
       placeholder: true,
       placeholderValue: placeholder,
@@ -159,7 +159,7 @@ export default class extends Controller {
       searchEnabled: true,
       searchPlaceholderValue: "Type to search…",
       shouldSort: false
-    })
+    }))
     this.choiceInstances.set(select, choices)
     if (disabled) choices.disable()
   }
