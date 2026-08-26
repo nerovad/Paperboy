@@ -67,10 +67,10 @@ class AuthorizationConsole
   # by AuthorizedApprover and scoped by department + budget unit + building.
   SERVICES = Definition.new(
     key: 'services',
-    label: 'Parking, Badges & Keys Authorizations',
+    label: 'Parking, Badges, Keys Authorizations',
     form_class_name: 'ParkingLotSubmission',
     route_name: :authorization_console_index_path,
-    routing_group_label: 'Parking, Badges & Keys',
+    routing_group_label: 'Parking, Badges, Keys',
     routing_options: -> { AuthorizedApprover::SERVICE_TYPES.map { |code, label| [label, code] } },
     approver_resolver: lambda { |routing_key, submission|
       next [] unless submission.respond_to?(:unit) && submission.unit.present?
