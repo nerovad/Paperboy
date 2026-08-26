@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'fileutils'
+
 module DataRunner
   class GroupRefreshJob < ApplicationJob
     queue_as :default
@@ -49,9 +51,7 @@ module DataRunner
       workers.each(&:value)
     end
 
-    def worker_count(run)
-      run.group_name == P2m::DataRefresh::GROUP_RUN_NAME ? 1 : DOWNLOAD_CONCURRENCY
-    end
+    def worker_count(_run) = DOWNLOAD_CONCURRENCY
 
     def work_items(run_id, item_ids)
       Rails.application.executor.wrap do
@@ -66,16 +66,19 @@ module DataRunner
     def process_item(run, item)
       started_at = Time.current
       started_clock = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      workspace = item_workspace(run, item)
       item.update!(status: 'running', started_at: started_at)
       status = with_log(run) do |log|
         TaskRunner.run_selector!(task: 'refresh', selector: item.dsl_slug, output: log,
-                                 environment: dependency_environment(run, item))
+                                 environment: dependency_environment(run, item, workspace))
       end
       item_status = status.success? ? 'succeeded' : 'failed'
       complete_item(run, item, status: item_status, started_clock: started_clock)
     rescue StandardError => e
       complete_item(run, item, status: 'failed', started_clock: started_clock, error_message: e.message)
       append_log(run) { |log| log.puts("[FAIL] #{item.dsl_name}: #{e.message}") }
+    ensure
+      FileUtils.rm_rf(workspace) if workspace&.to_s&.start_with?(Rails.root.join('tmp/data_runner_runs').to_s)
     end
 
     def complete_item(run, item, status:, started_clock:, error_message: nil)
@@ -85,14 +88,25 @@ module DataRunner
       GroupRun.increment_counter(:failed_count, run.id) if status == 'failed'
     end
 
-    def dependency_environment(run, item)
+    def dependency_environment(run, item, workspace)
       environment = {
         'DATARUNNER_RUN_ID' => run.run_id,
         'DATARUNNER_RUN_DSLS' => run.items.order(:position).pluck(:dsl_name).join(',')
       }
+      if workspace
+        environment.merge!(
+          'DATARUNNER_OUTPUT_ROOT' => workspace.to_s
+        )
+      end
       oms_number = item.dsl_name.match(/\AOMS (\d{8,9})\z/)&.[](1)
       environment['DATARUNNER_QUEUE_OMS'] = oms_number if oms_number
       environment
+    end
+
+    def item_workspace(run, item)
+      return unless run.group_name == P2m::DataRefresh::GROUP_RUN_NAME
+
+      Rails.root.join('tmp/data_runner_runs', run.run_id, item.id.to_s)
     end
 
     def finish(run)
