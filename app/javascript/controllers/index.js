@@ -74,10 +74,12 @@ import CoaBillingLookupController from "controllers/coa_billing_lookup_controlle
 import CoaCustomerLookupController from "controllers/coa_customer_lookup_controller"
 import AimOcrController from "controllers/aim_ocr_controller"
 import DateRangeController from "controllers/date_range_controller"
+import PdfPreviewController from "controllers/pdf_preview_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
 application.register("date-range", DateRangeController)
+application.register("pdf-preview", PdfPreviewController)
 application.register("probation-transfer-request", ProbationTransferRequestController)
 application.register("form-navigation", FormNavigationController)
 application.register("login-modal", LoginModalController)
