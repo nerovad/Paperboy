@@ -13,6 +13,86 @@ git pull origin "$BRANCH"
 echo "==> Installing gems (including development/test)..."
 bundle install
 
+# development is in the dotenv-rails group (see Gemfile), so .env is loaded for
+# us here — unlike bin/deploy-stage, which has to source it by hand. .env names
+# Paperboy_Dev, which is also what database.yml defaults development to.
+echo "==> Running migrations..."
+RAILS_ENV=development bundle exec rails db:migrate
+
+# Dev is the source of truth for the ACL: groups, their permission grants, the
+# org-level grants and who is in which group. None of it travels between the
+# three databases on its own — Groups, Group_Permissions, org_permissions and
+# Employee_Groups all live in each Paperboy_* database — so a group built on the
+# dev ACL screen reaches stage and prod only by riding in db/acl.yml, which
+# bin/deploy-stage and bin/deploy apply with `rails acl:sync`. This block is the
+# dump half: it unions dev's ACL into the file and pushes it, so the next
+# stage/prod deploy picks it up. See lib/tasks/acl.rake.
+#
+#   NO_ACL=1   skip the block entirely
+#   ACL_YES=1  do not pause for confirmation when new org grants appear
+if [ -n "$NO_ACL" ]; then
+  echo "==> Skipping ACL dump (NO_ACL set)"
+else
+  echo "==> Dumping ACL definitions to db/acl.yml..."
+
+  # A commit needs an author. Fail here rather than three commands later.
+  if [ -z "$(git config user.email)" ]; then
+    echo "!!! git user.email is not set on this box — cannot commit db/acl.yml" >&2
+    exit 1
+  fi
+
+  # Anything already staged would be swept into the ACL commit below, which
+  # commits by path. Refuse rather than author a commit nobody meant to make.
+  if ! git diff --cached --quiet; then
+    echo "!!! staged changes present — commit or reset them before deploying" >&2
+    exit 1
+  fi
+
+  # Counted before the dump, while the file still lacks them. org grants are the
+  # broadest thing in the ACL — one row can open a form to a whole agency — so
+  # they get a second look before being pushed toward production.
+  NEW_ORG="$(RAILS_ENV=development bundle exec rails acl:org_delta |
+             grep -m1 'org grants' | cut -d' ' -f1 || true)"
+
+  RAILS_ENV=development bundle exec rails acl:dump MERGE=1
+
+  if git diff --quiet -- db/acl.yml; then
+    echo "    db/acl.yml already matches this database — nothing to push"
+  else
+    echo "==> db/acl.yml diff:"
+    git --no-pager diff -- db/acl.yml
+
+    if [ "${NEW_ORG:-0}" != "0" ] && [ -z "$ACL_YES" ] && [ -t 0 ]; then
+      echo
+      echo "    ^ $NEW_ORG org grant(s) above are new and will reach production."
+      read -r -p "    Commit and push db/acl.yml? [y/N] " reply
+      case "$reply" in
+        [yY]*) ACL_PUSH=1 ;;
+        *) ACL_PUSH=""
+           git checkout -- db/acl.yml
+           echo "!!! ACL dump discarded — stage and prod will not see these grants." >&2
+           echo "!!! Continuing with the dev deploy." >&2 ;;
+      esac
+    fi
+
+    if [ "${ACL_PUSH-1}" = "1" ]; then
+      git commit -q -m "Sync ACL definitions from dev" -- db/acl.yml
+      # A rejected push is not fatal: dev deploys off this checkout either way
+      # and the commit is sitting here to be pushed by hand. But stage and prod
+      # stay unaware of these grants until it lands, so say so loudly.
+      if git push origin "$BRANCH"; then
+        echo "    db/acl.yml pushed — bin/deploy-stage and bin/deploy will sync it"
+      else
+        echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&2
+        echo "!!! db/acl.yml is COMMITTED BUT NOT PUSHED to $BRANCH." >&2
+        echo "!!! Stage and prod will not receive these grants until it is." >&2
+        echo "!!! Resolve and run: git push origin $BRANCH" >&2
+        echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&2
+      fi
+    fi
+  fi
+fi
+
 # nginx serves /assets/ straight from disk on this box (see
 # config/nginx/dev-gsa-forms) and never falls back to Rails, so the digested
 # files have to exist in public/assets or every stylesheet and script 404s.
