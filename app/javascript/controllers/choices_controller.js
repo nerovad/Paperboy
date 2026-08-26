@@ -1,5 +1,6 @@
 // app/javascript/controllers/choices_controller.js
 import { Controller } from "@hotwired/stimulus";
+import { choicesOptions } from "choices_setup";
 
 export default class extends Controller {
   static targets = ["select"];
@@ -23,14 +24,13 @@ export default class extends Controller {
       select.getAttribute("placeholder") ||
       "Select options…";
 
-    this.choices = new ChoicesLib(select, {
+    this.choices = new ChoicesLib(select, choicesOptions({
       removeItemButton: true,
       shouldSort: false,
       searchEnabled: true,
-      allowHTML: false,
       placeholder: true,
       placeholderValue: placeholder
-    });
+    }));
   }
 
   disconnect() {

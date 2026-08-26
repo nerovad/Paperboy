@@ -8,6 +8,7 @@
 // Choices.js for search, so options are swapped through the Choices API
 // (setChoices) rather than by rewriting innerHTML, which Choices wouldn't see.
 import { Controller } from "@hotwired/stimulus"
+import { choicesOptions } from "choices_setup";
 
 export default class extends Controller {
   static targets = ["agency", "unit", "supervisor"]
@@ -86,15 +87,14 @@ export default class extends Controller {
 
   _enhance(select, placeholder) {
     if (!window.Choices || !select) return null
-    return new window.Choices(select, {
+    return new window.Choices(select, choicesOptions({
       removeItemButton: false,
       shouldSort: false,
       searchEnabled: true,
-      allowHTML: false,
       itemSelectText: "",
       placeholder: true,
       placeholderValue: placeholder
-    })
+    }))
   }
 
   // Replace a Choices-enhanced select's options. Choices keeps the underlying

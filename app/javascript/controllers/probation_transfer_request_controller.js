@@ -1,5 +1,6 @@
 // app/javascript/controllers/probation_transfer_request_controller.js
 import { Controller } from "@hotwired/stimulus";
+import { choicesOptions } from "choices_setup";
 
 // Uses window.Choices (exactly like your old controller)
 export default class extends Controller {
@@ -69,13 +70,12 @@ export default class extends Controller {
   _initSelect(selectEl) {
     const ChoicesLib = window.Choices;
 
-    const choices = new ChoicesLib(selectEl, {
+    const choices = new ChoicesLib(selectEl, choicesOptions({
       removeItemButton: true,
       placeholderValue: "Select destination(s)…",
       searchPlaceholderValue: "Type to filter…",
-      shouldSort: false,
-      allowHTML: false
-    });
+      shouldSort: false
+    }));
 
     // Defer until Choices builds wrapper/dropdown
     const handle = { selectEl, choices };
