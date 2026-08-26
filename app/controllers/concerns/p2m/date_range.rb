@@ -8,8 +8,9 @@ module P2m
 
     def set_dates
       values = params.fetch(date_range_param_key, {}).permit(:start_date, :end_date)
-      @start_date = parse_date(values[:start_date]) || Date.current
-      @end_date = parse_date(values[:end_date]) || Date.current
+      active_period = Billing::ActiveBillingPeriod.current
+      @start_date = parse_date(values[:start_date]) || active_period&.start_date || Date.current
+      @end_date = parse_date(values[:end_date]) || active_period&.end_date || Date.current
     end
 
     def parse_date(value)
