@@ -61,12 +61,14 @@ class DataRunnerGroupRefreshJobTest < ActiveJob::TestCase
     TaskRunner.output_path(run.run_id).delete if run&.run_id && TaskRunner.output_path(run.run_id).file?
   end
 
-  test 'refreshes Print 2 Mail uploads sequentially with their OMS number' do
+  test 'refreshes up to four Print 2 Mail uploads in parallel with isolated workspaces' do
     run = DataRunner::GroupRun.create!(
-      run_id: SecureRandom.uuid, group_name: P2m::DataRefresh::GROUP_RUN_NAME, total_count: 2
+      run_id: SecureRandom.uuid, group_name: P2m::DataRefresh::GROUP_RUN_NAME, total_count: 6
     )
-    run.items.create!(dsl_name: 'OMS 51671902', dsl_slug: 'oms', position: 0)
-    run.items.create!(dsl_name: 'OMS 51786524', dsl_slug: 'oms', position: 1)
+    oms_numbers = %w[51671902 51786524 51786525 51786526 51786527 51786528]
+    oms_numbers.each_with_index do |oms_number, position|
+      run.items.create!(dsl_name: "OMS #{oms_number}", dsl_slug: 'oms', position: position)
+    end
     success = Struct.new(:success?).new(true)
     environments = []
     active = 0
@@ -88,9 +90,9 @@ class DataRunnerGroupRefreshJobTest < ActiveJob::TestCase
       DataRunner::GroupRefreshJob.perform_now(run.id)
     end
 
-    assert_equal 1, maximum_active
-    oms_numbers = environments.map { |value| value.fetch('DATARUNNER_QUEUE_OMS') }
-    assert_equal %w[51671902 51786524], oms_numbers
+    assert_equal 4, maximum_active
+    assert_equal oms_numbers, environments.map { |value| value.fetch('DATARUNNER_QUEUE_OMS') }.sort
+    assert_equal 6, environments.map { |value| value.fetch('DATARUNNER_OUTPUT_ROOT') }.uniq.length
   ensure
     TaskRunner.output_path(run.run_id).delete if run&.run_id && TaskRunner.output_path(run.run_id).file?
   end

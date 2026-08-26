@@ -197,6 +197,8 @@ module DataRunnerTaskHelpers
     %i[sent_path output_path processed_path].each do |key|
       context[key] = File.absolute_path(raw.fetch(key).to_s, root_path)
     end
+    workspace = ENV.fetch('DATARUNNER_OUTPUT_ROOT', nil)
+    context[:output_path] = File.join(workspace, 'orchestration') if workspace
     context
   end
   private_class_method :orchestration_context
