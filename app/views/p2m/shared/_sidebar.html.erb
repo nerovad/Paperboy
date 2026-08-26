@@ -6,6 +6,8 @@
 
   <nav class="p2m-links">
     <% if can_use_app_feature?('p2m', 'stage_data') %>
+      <%= link_to "Pre Production", p2m_pre_production_path,
+                  class: "nav-link#{' active' if current_page?(p2m_pre_production_path)}" %>
       <%= link_to "Post Production", p2m_stage_data_path,
                   class: "nav-link#{' active' if current_page?(p2m_stage_data_path)}" %>
       <%= link_to "OMS Uploads", p2m_oms_uploads_path,

@@ -129,6 +129,7 @@ Rails.application.routes.draw do
   namespace :p2m do
     root 'dashboard#home'
     get 'dashboard', to: 'dashboard#index', as: :dashboard
+    resource :pre_production, only: :show
     resource :stage_data, only: %i[show create] do
       get :details
       get :print_tray_labels
