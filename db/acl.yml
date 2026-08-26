@@ -359,8 +359,6 @@ groups:
   - type: dropdown
     key: inbox
   - type: dropdown
-    key: lookup_tables
-  - type: dropdown
     key: manage_forms
   - type: dropdown
     key: reports
@@ -550,8 +548,6 @@ groups:
   - type: dropdown
     key: inbox
   - type: dropdown
-    key: lookup_tables
-  - type: dropdown
     key: manage_forms
   - type: dropdown
     key: reports
@@ -563,8 +559,6 @@ groups:
     key: admin_tools:acl
   - type: feature
     key: admin_tools:emulate
-  - type: feature
-    key: admin_tools:lookup_tables
   - type: feature
     key: admin_tools:manage_forms
   - type: feature
