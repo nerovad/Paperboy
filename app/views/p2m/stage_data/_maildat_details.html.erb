@@ -40,7 +40,8 @@
   <%= link_to "Print Tray Labels",
               print_tray_labels_p2m_stage_data_path(directory: params[:directory],
                                                     oms_number: @oms_number),
-              class: "btn pdf compact", target: "_blank", rel: "noopener" %>
+              class: "btn pdf compact",
+              data: { action: "pdf-preview#open", pdf_preview_title: "Tray Labels" } %>
   <button type="button" class="btn reassign compact"
           data-action="data-refresh-groups#staging"
           data-staging-url="<%= move_to_shipping_station_p2m_stage_data_path %>"
@@ -62,6 +63,7 @@
           data-action="data-refresh-groups#staging"
           data-staging-url="<%= move_to_staging_p2m_stage_data_path %>"
           data-staging-method="POST" data-staging-action="Move to Staging"
+          data-staging-remove-on-success="true"
           data-directory="<%= params[:directory] %>" data-oms-number="<%= @oms_number %>">
     Move to Staging
   </button>
@@ -75,6 +77,11 @@
   </button>
   <button type="button" class="btn compact" data-action="data-refresh-groups#feedback"
           data-feedback-action="Cancel" data-feedback-oms="<%= @oms_number %>">Cancel</button>
+</div>
+
+<div class="p2m-staging-progress" data-staging-progress hidden>
+  <progress aria-label="Moving files to staging"></progress>
+  <span data-staging-progress-label aria-live="polite">Moving files… 0.0 seconds elapsed</span>
 </div>
 
 <div class="pb-modal-backdrop" data-pdf-preview-target="backdrop"
