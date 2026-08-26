@@ -12,7 +12,7 @@
         <% names.each do |name| %>
           <% extension = File.extname(name).downcase %>
           <td>
-            <% if %w[.csv .zip].include?(extension) %>
+            <% if %w[.csv .txt .zip].include?(extension) %>
               <span class="p2m-associated-file-name" title="<%= name %>"><%= name %></span>
             <% elsif extension == '.pdf' %>
               <%= link_to name,
