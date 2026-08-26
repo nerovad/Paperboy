@@ -40,6 +40,18 @@ module P2m
       path.join(filename)
     end
 
+    def preview(directory:, oms_number:, filename:)
+      raise ArgumentError, 'ZIP files cannot be previewed' if File.extname(filename.to_s).casecmp?('.zip')
+
+      path = resolve_directory(directory)
+      available_filename = call(directory: directory, oms_number: oms_number).find do |name|
+        name == filename
+      end
+      raise ArgumentError, 'associated file not found' unless available_filename
+
+      path.join(available_filename)
+    end
+
     private
 
     attr_reader :root

@@ -132,6 +132,7 @@ Rails.application.routes.draw do
     resource :pre_production, only: :show
     resource :stage_data, only: %i[show create] do
       get :details
+      get :preview
       get :print_tray_labels
       post :move_to_staging
       delete :remove_from_staging

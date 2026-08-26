@@ -55,4 +55,51 @@ class P2mOmsAssociatedFilesTest < Minitest::Test
       assert_equal 'Tray Labels PDF not found', error.message
     end
   end
+
+  def test_returns_an_associated_file_for_preview
+    Dir.mktmpdir do |root|
+      directory = Pathname.new(root).join('job')
+      directory.mkpath
+      expected = directory.join('MoveResults_50000001.txt')
+      expected.write('results')
+
+      file = P2m::OmsAssociatedFiles.new(root: root).preview(
+        directory: 'job', oms_number: '50000001', filename: expected.basename.to_s
+      )
+
+      assert_equal expected, file
+    end
+  end
+
+  def test_rejects_zip_file_previews
+    Dir.mktmpdir do |root|
+      directory = Pathname.new(root).join('job')
+      directory.mkpath
+      directory.join('Mail.dat_50000001.zip').write('archive')
+
+      error = assert_raises(ArgumentError) do
+        P2m::OmsAssociatedFiles.new(root: root).preview(
+          directory: 'job', oms_number: '50000001', filename: 'Mail.dat_50000001.zip'
+        )
+      end
+
+      assert_equal 'ZIP files cannot be previewed', error.message
+    end
+  end
+
+  def test_rejects_files_that_are_not_associated_with_the_oms_number
+    Dir.mktmpdir do |root|
+      directory = Pathname.new(root).join('job')
+      directory.mkpath
+      directory.join('50000002-companion.csv').write('other OMS')
+
+      error = assert_raises(ArgumentError) do
+        P2m::OmsAssociatedFiles.new(root: root).preview(
+          directory: 'job', oms_number: '50000001', filename: '50000002-companion.csv'
+        )
+      end
+
+      assert_equal 'associated file not found', error.message
+    end
+  end
 end

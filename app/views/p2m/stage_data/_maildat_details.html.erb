@@ -1,9 +1,26 @@
-<strong>Associated files</strong>
-<ul>
-  <% @associated_files.each do |name| %>
-    <li><%= name %></li>
-  <% end %>
-</ul>
+<table class="p2m-associated-files-table">
+  <thead>
+    <tr>
+      <th scope="col">File name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @associated_files.each do |name| %>
+      <tr>
+        <td>
+          <% if File.extname(name).casecmp?('.zip') %>
+            <%= name %>
+          <% else %>
+            <%= link_to name,
+                        preview_p2m_stage_data_path(directory: params[:directory],
+                                                    oms_number: @oms_number, filename: name),
+                        target: "_blank", rel: "noopener" %>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
 <div class="p2m-maildat-actions">
   <%= link_to "Print Tray Labels",
               print_tray_labels_p2m_stage_data_path(directory: params[:directory],

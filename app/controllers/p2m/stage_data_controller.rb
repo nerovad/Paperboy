@@ -39,6 +39,17 @@ module P2m
       render plain: e.message, status: :unprocessable_content
     end
 
+    def preview
+      file = OmsAssociatedFiles.new.preview(
+        **staging_parameters, filename: params.require(:filename)
+      )
+      send_file file, filename: file.basename.to_s,
+                      type: Rack::Mime.mime_type(file.extname, 'application/octet-stream'),
+                      disposition: 'inline'
+    rescue ArgumentError, ActionController::ParameterMissing => e
+      render plain: e.message, status: :unprocessable_content
+    end
+
     def move_to_staging
       ledger = OmsUploadLedger.new
       ledger.ensure_stageable!(oms_number: staging_parameters.fetch(:oms_number))
