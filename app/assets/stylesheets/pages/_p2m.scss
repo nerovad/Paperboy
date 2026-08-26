@@ -217,6 +217,8 @@
 
   th,
   td {
+    width: 50%;
+    max-width: 0;
     height: auto;
     padding: .45rem .75rem;
     text-align: left;
@@ -230,6 +232,13 @@
 
   tbody tr:nth-child(odd) { background: $surface-base; }
   tbody tr:nth-child(even) { background: $surface-control; }
+}
+
+.p2m-associated-file-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .p2m-upload-details {
