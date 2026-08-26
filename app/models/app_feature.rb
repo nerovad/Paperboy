@@ -12,7 +12,7 @@
 # (see ApplicationController#load_user_permissions).
 #
 # Admin Tools already had per-button grants, issued as "dropdown" keys back
-# when its screens hung off the profile menu. Those five keep working: each
+# when its screens hung off the profile menu. Those three keep working: each
 # entry names its +legacy_key+ and ApplicationHelper#can_use_app_feature?
 # accepts either. New apps only need the feature grant.
 #
@@ -23,9 +23,7 @@ class AppFeature
     'admin_tools' => [
       { key: 'acl',             label: 'ACL',             legacy_key: 'acl' },
       { key: 'manage_forms',    label: 'Manage Forms',    legacy_key: 'manage_forms' },
-      { key: 'emulate',         label: 'Emulate',         legacy_key: 'emulate' },
-      { key: 'data_validation', label: 'Data Validation', legacy_key: 'data_validation' },
-      { key: 'lookup_tables',   label: 'Lookup Tables',   legacy_key: 'lookup_tables' }
+      { key: 'emulate',         label: 'Emulate',         legacy_key: 'emulate' }
     ],
     'billing' => [
       { key: 'reporting_period',    label: 'Reporting Period' },

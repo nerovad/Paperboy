@@ -135,7 +135,6 @@ Metrics/ClassLength:
 # Configuration parameters: AllowedMethods, AllowedPatterns, Max.
 Metrics/CyclomaticComplexity:
   Exclude:
-    - 'app/controllers/admin/data_validation_controller.rb'
     - 'app/controllers/authorization_console_controller.rb'
     - 'app/controllers/bike_locker_forms_controller.rb'
     - 'app/controllers/carpool_forms_controller.rb'
@@ -204,7 +203,6 @@ Metrics/ParameterLists:
 # Configuration parameters: AllowedMethods, AllowedPatterns, Max.
 Metrics/PerceivedComplexity:
   Exclude:
-    - 'app/controllers/admin/data_validation_controller.rb'
     - 'app/controllers/authorization_console_controller.rb'
     - 'app/controllers/bike_locker_forms_controller.rb'
     - 'app/controllers/carpool_forms_controller.rb'

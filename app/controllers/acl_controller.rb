@@ -24,7 +24,7 @@ class AclController < ApplicationController
     { key: 'help',          label: 'Help',           default_public: true },
     { key: 'reports',       label: 'Reports' },
     { key: 'dashboards',    label: 'Dashboards' },
-    # The six keys below are superseded. The Admin Tools buttons are now
+    # The four keys below are superseded. The Admin Tools buttons are now
     # granted under "Application Features" like every other app's sidebar, but
     # these older keys still grant the same access, so they stay listed —
     # unticking one here is how an existing grant is taken away. 'admin' is the
@@ -33,8 +33,6 @@ class AclController < ApplicationController
     { key: 'manage_forms',  label: 'Admin Tools: Manage Forms (legacy)' },
     { key: 'emulate',       label: 'Admin Tools: Emulate (legacy)' },
     { key: 'acl',           label: 'Admin Tools: ACL (legacy)' },
-    { key: 'data_validation', label: 'Admin Tools: Data Validation (legacy)' },
-    { key: 'lookup_tables', label: 'Admin Tools: Lookup Tables (legacy)' },
     { key: 'auth_console',  label: 'Auth Console' },
     { key: 'osha_log',      label: 'OSHA 300' }
   ].freeze

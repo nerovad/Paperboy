@@ -324,7 +324,6 @@ Rails.application.routes.draw do
   # ============================================================================
   namespace :admin do
     resources :impersonations, only: %i[new create destroy]
-    resources :data_validation, only: [:index]
   end
 
   # Records pillar landing page (lists the Registry grid tables) + generic grid
@@ -478,11 +477,6 @@ Rails.application.routes.draw do
       patch :close
     end
   end
-
-  # ============================================================================
-  # Lookup Tables Management
-  # ============================================================================
-  resources :lookup_tables, only: %i[index show new create]
 
   namespace :coa do
     root to: 'list#home'
