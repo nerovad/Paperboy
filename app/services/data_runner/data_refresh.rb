@@ -89,6 +89,10 @@ module DataRunner
       GroupRefresh.start!(group: group_run_name, entries: enabled_entries(selected_groups), requested_by: requested_by)
     end
 
+    def self.restart_entries(previous_run)
+      previous_run.items.order(:position).map { |item| DslCatalog.find!(item.dsl_slug) }
+    end
+
     def self.enabled_entries(group_keys)
       catalog = DslCatalog.grouped
       group_keys.flat_map do |key|

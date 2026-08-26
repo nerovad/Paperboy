@@ -93,12 +93,11 @@ module DataRunner
         'DATARUNNER_RUN_ID' => run.run_id,
         'DATARUNNER_RUN_DSLS' => run.items.order(:position).pluck(:dsl_name).join(',')
       }
-      if workspace
-        environment.merge!(
-          'DATARUNNER_OUTPUT_ROOT' => workspace.to_s
-        )
-      end
+      environment['DATARUNNER_OUTPUT_ROOT'] = workspace.to_s if workspace
       oms_number = item.dsl_name.match(/\AOMS (\d{8,9})\z/)&.[](1)
+      missing_oms = run.group_name == P2m::DataRefresh::GROUP_RUN_NAME && oms_number.nil?
+      raise ArgumentError, "OMS number missing from refresh item #{item.id}" if missing_oms
+
       environment['DATARUNNER_QUEUE_OMS'] = oms_number if oms_number
       environment
     end

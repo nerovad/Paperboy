@@ -337,6 +337,19 @@ def truncate_sql(schema, table)
   "TRUNCATE TABLE #{MssqlHelpers.sql_qualified(schema, table)}"
 end
 
+def acquire_atomic_inject_lock!(client)
+  sql = <<~SQL
+    DECLARE @result int;
+    EXEC @result = sys.sp_getapplock
+      @Resource = N'Paperboy.DataRunner.AtomicInject',
+      @LockMode = N'Exclusive',
+      @LockOwner = N'Transaction',
+      @LockTimeout = 600000;
+    IF @result < 0 THROW 51000, 'Could not acquire the DataRunner atomic inject lock.', 1;
+  SQL
+  client.execute(sql).do
+end
+
 # -------------------------------------------------------------------------- }}}
 # {{{ Main logic
 
@@ -399,6 +412,7 @@ begin
         unless atomic_client
           client.execute('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE').do
           client.execute('BEGIN TRAN').do
+          acquire_atomic_inject_lock!(client)
           atomic_client = client
         end
       else

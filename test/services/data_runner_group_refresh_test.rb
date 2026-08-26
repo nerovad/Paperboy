@@ -3,6 +3,17 @@
 require 'test_helper'
 
 class DataRunnerGroupRefreshTest < ActiveSupport::TestCase
+  test 'rejects Print 2 Mail refresh entries without an OMS number' do
+    entry = Data.define(:key, :slug).new(key: 'Oms', slug: 'oms')
+
+    error = assert_raises(ArgumentError) do
+      DataRunner::GroupRefresh.start!(group: P2m::DataRefresh::GROUP_RUN_NAME,
+                                      entries: [entry], requested_by: 'employee@example.com')
+    end
+
+    assert_match 'require an OMS number', error.message
+  end
+
   test 'restart fails the interrupted run and queues a replacement' do
     interrupted = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid, group_name: 'sample',
                                                status: 'running', total_count: 1)

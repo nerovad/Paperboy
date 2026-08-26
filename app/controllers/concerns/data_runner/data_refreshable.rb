@@ -34,7 +34,7 @@ module DataRunner
     def restart
       previous_run = GroupRun.find_by!(id: params.require(:run_id),
                                        group_name: data_refresh_service.group_run_name)
-      entries = previous_run.items.order(:position).map { |item| DslCatalog.find!(item.dsl_slug) }
+      entries = data_refresh_service.restart_entries(previous_run)
       run = GroupRefresh.restart!(group: data_refresh_service.group_run_name, entries: entries,
                                   requested_by: current_user.email)
       redirect_to data_refresh_progress_path(run), notice: "Data refresh restarted for #{run.total_count} DSLs."

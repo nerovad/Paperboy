@@ -13,6 +13,7 @@ module DataRunner
     end
 
     def self.create!(group:, entries:, requested_by:, restart: false)
+      validate_entries!(group, entries)
       run = nil
       GroupRun.transaction do
         active_run = GroupRun.active.where(group_name: group).lock.first
@@ -40,6 +41,13 @@ module DataRunner
       )
       run.update!(status: 'failed', current_dsl: nil, completed_count: run.total_count,
                   failed_count: run.items.where(status: 'failed').count, completed_at: now)
+    end
+
+    private_class_method def self.validate_entries!(group, entries)
+      return unless group == P2m::DataRefresh::GROUP_RUN_NAME
+      return if entries.all? { |entry| entry.key.match?(/\AOMS \d{8,9}\z/) && entry.slug == 'oms' }
+
+      raise ArgumentError, 'Print 2 Mail refresh entries require an OMS number'
     end
   end
 end
