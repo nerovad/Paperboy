@@ -6,6 +6,8 @@ require 'csv'
 class AuthorizationConsoleController < ApplicationController
   before_action :require_any_authorization_console, only: %i[select]
   before_action :require_auth_console, except: %i[select]
+  before_action -> { require_auth_console('write') }, only: %i[new create group_edit group_update]
+  before_action -> { require_auth_console('delete') }, only: %i[group_destroy destroy_all_for_employee]
   before_action :set_managed_departments, except: %i[select]
 
   # Entry screen for the console: pick which form's authorizations to manage.

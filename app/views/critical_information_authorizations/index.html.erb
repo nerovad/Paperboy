@@ -3,6 +3,8 @@
   <h1>Critical Information Reporting Authorizations</h1>
 </div>
 
+<% may_write  = can_write_authorization_console?(AuthorizationConsole::CIR) %>
+<% may_delete = can_delete_authorization_console?(AuthorizationConsole::CIR) %>
 <div class="form-wrapper authorization-console">
   <%= render "shared/authorization_console_switcher",
         current_console_key: AuthorizationConsole::CIR.key %>
@@ -45,12 +47,14 @@
     <p class="console-summary">
       <%= @assigned_count %> of <%= @total_sites %> locations have an incident manager.
     </p>
-    <div class="console-actions">
-      <%= link_to "+ Add Location", new_critical_information_location_path, class: "btn secondary" %>
-      <%= link_to "+ Add Incident Manager",
-            new_critical_information_authorization_path(location: @location_filter.first),
-            class: "btn approve" %>
-    </div>
+    <% if may_write %>
+      <div class="console-actions">
+        <%= link_to "+ Add Location", new_critical_information_location_path, class: "btn secondary" %>
+        <%= link_to "+ Add Incident Manager",
+              new_critical_information_authorization_path(location: @location_filter.first),
+              class: "btn approve" %>
+      </div>
+    <% end %>
   </div>
 
   <div class="approvers-scroll">
@@ -80,20 +84,25 @@
                     <% end %>
                   </div>
 
-                  <div class="approval-actions">
-                    <%= link_to "Edit", edit_critical_information_authorization_path(authorization), class: "btn" %>
-                  </div>
+                  <% if may_write || may_delete %>
+                    <div class="approval-actions">
+                      <%= link_to may_write ? "Edit" : "Remove",
+                            edit_critical_information_authorization_path(authorization), class: "btn" %>
+                    </div>
+                  <% end %>
                 </div>
               <% else %>
                 <div class="approval-item">
                   <div class="approval-details">
                     <span class="unassigned">No incident manager assigned</span>
                   </div>
-                  <div class="approval-actions">
-                    <%= link_to "Assign",
-                          new_critical_information_authorization_path(location: card.location),
-                          class: "btn" %>
-                  </div>
+                  <% if may_write || may_delete %>
+                    <div class="approval-actions">
+                      <%= link_to may_write ? "Assign" : "Remove",
+                            new_critical_information_authorization_path(location: card.location),
+                            class: "btn" %>
+                    </div>
+                  <% end %>
                 </div>
               <% end %>
             </div>

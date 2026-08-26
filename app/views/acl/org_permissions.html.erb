@@ -40,6 +40,9 @@
 
     <%= render "acl/feature_permissions", apps: @feature_apps, selected_keys: @org_feature_keys %>
 
+    <%= render "acl/authorization_console_permissions",
+          consoles: @authorization_consoles, selected_keys: @org_authorization_console_keys %>
+
     <div class="acl-permissions-section" data-controller="select-all">
       <h3>Profile Dropdown Items</h3>
       <p class="acl-subtitle">Select which profile dropdown items are accessible at this organization level.</p>
