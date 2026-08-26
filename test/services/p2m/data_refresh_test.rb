@@ -93,5 +93,25 @@ module P2m
         assert_equal %w[oms oms], calls.first.fetch(:entries).map(&:slug)
       end
     end
+
+    test 'rebuilds restart entries from OMS numbers still in the queue' do
+      Dir.mktmpdir do |directory|
+        queue = Pathname.new(directory).join('sent').tap(&:mkpath)
+        queue.join('Mail.dat_51786524.zip').write('marker')
+        entry = Struct.new(:slug, :key, :config) do
+          def enabled? = true
+        end.new(
+          'oms', 'Oms',
+          { orchestration: { root_path: directory, sent_path: 'sent', queue: { path: :sent_path } } }
+        )
+
+        DslCatalog.stub(:grouped, { 'print_2_mail_billing_data' => [entry] }) do
+          entries = DataRefresh.restart_entries(nil)
+
+          assert_equal ['OMS 51786524'], entries.map(&:key)
+          assert_equal %w[oms], entries.map(&:slug)
+        end
+      end
+    end
   end
 end
