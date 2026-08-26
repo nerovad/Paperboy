@@ -5,8 +5,10 @@ class CreateCriticalInformationAuthorizations < ActiveRecord::Migration[8.0]
   # to an incident manager by the "Where: Location" field, so a row is just
   # (location -> employee_id) — no service types, budget units or org nodes.
   #
-  # `location` holds a value from CriticalInformationLocation::ALL verbatim,
-  # which is what the form's location dropdown submits. One manager per
+  # `location` holds a CriticalInformationLocation name verbatim, which is what
+  # the form's location dropdown submits. That catalogue was still a frozen
+  # array in the code when this ran; CreateCriticalInformationLocations moves it
+  # into its own table straight after. One manager per
   # location: CriticalInformationReporting#assigned_manager_id is a single
   # column, so a second manager could never be reached.
   #

@@ -7,22 +7,28 @@ require 'test_helper'
 # about the two things that used to go wrong: a location matching nobody, and a
 # location matching more than one manager.
 class CriticalInformationAuthorizationTest < ActiveSupport::TestCase
-  A_LOCATION       = CriticalInformationLocation::ALL.first
-  ANOTHER_LOCATION = CriticalInformationLocation::ALL.last
+  A_LOCATION       = 'TEST CITY-1 FIRST ST.'
+  ANOTHER_LOCATION = 'TEST CITY-2 SECOND ST.'
 
-  # The table ships seeded with the mapping migrated out of the old router, so
-  # clear it first — these tests are about the rules, not that data. Transactional
-  # tests roll the deletion back.
-  setup { CriticalInformationAuthorization.delete_all }
+  # Both tables ship seeded — the catalogue, and the mapping migrated out of the
+  # old router. These tests are about the rules, not that data, so start from an
+  # empty pair with two sites of their own. Transactional tests roll it back.
+  setup do
+    CriticalInformationAuthorization.delete_all
+    CriticalInformationLocation.delete_all
+    [A_LOCATION, ANOTHER_LOCATION].each { |name| CriticalInformationLocation.create!(name: name) }
+  end
 
   def build(**attributes)
     CriticalInformationAuthorization.new(location: A_LOCATION, employee_id: '999001', **attributes)
   end
 
-  # Group membership is a live GSABSS/Paperboy lookup; these tests are about the
-  # location rules, so pin the candidate list rather than the environment's.
+  # Whether an employee is General Services Agency staff is a live GSABSS
+  # lookup. These tests are about the location rules, so pin the answer rather
+  # than depending on who happens to be in the agency.
   def with_candidates(ids, &block)
-    CriticalInformationAuthorization.stub(:manager_candidate_ids, ids, &block)
+    accept = ->(employee_id) { ids.include?(employee_id.to_s) }
+    CriticalInformationAuthorization.stub(:manager_in_agency?, accept, &block)
   end
 
   test 'a location and a manager are both required' do
@@ -37,7 +43,7 @@ class CriticalInformationAuthorizationTest < ActiveSupport::TestCase
 
   test 'the location has to be one the form actually offers' do
     with_candidates(['999001']) do
-      subject = build(location: 'VENTURA-1 MADE UP ST.')
+      subject = build(location: 'NOWHERE-1 MADE UP ST.')
 
       assert_not subject.valid?
       assert_includes subject.errors[:location],
@@ -45,19 +51,12 @@ class CriticalInformationAuthorizationTest < ActiveSupport::TestCase
     end
   end
 
-  test 'a manager has to be in the incident manager group' do
+  test 'a manager has to be a General Services Agency employee' do
     with_candidates(['999002']) do
       subject = build(employee_id: '999001')
 
       assert_not subject.valid?
-      assert_includes subject.errors[:employee_id],
-                      'is not a member of the Critical_Incident_Managers group'
-    end
-  end
-
-  test 'an empty or missing group does not block the console' do
-    with_candidates([]) do
-      assert build(employee_id: '999001').valid?
+      assert_includes subject.errors[:employee_id], 'is not a General Services Agency employee'
     end
   end
 
@@ -72,11 +71,11 @@ class CriticalInformationAuthorizationTest < ActiveSupport::TestCase
     end
   end
 
-  test 'an existing row stays editable after its manager leaves the group' do
+  test 'an existing row stays editable after its manager leaves the agency' do
     subject = with_candidates(['999001']) { build(employee_id: '999001').tap(&:save!) }
 
     with_candidates(['999002']) do
-      assert subject.valid?, 'unchanged manager should not be re-checked against the group'
+      assert subject.valid?, 'unchanged manager should not be re-checked against the agency'
       assert subject.update(location: ANOTHER_LOCATION)
     end
   end
@@ -99,6 +98,17 @@ class CriticalInformationAuthorizationTest < ActiveSupport::TestCase
     drifted = A_LOCATION.downcase.delete('.')
 
     assert_equal '999001', CriticalInformationAuthorization.manager_id_for_location(drifted)
+  end
+
+  test 'deleting the site a manager covers is what removes the authorization' do
+    with_candidates(['999001']) { build(location: A_LOCATION, employee_id: '999001').save! }
+
+    CriticalInformationLocation.find_by(name: A_LOCATION).destroy!
+
+    # The row survives on its own — the console cascades the delete, and until
+    # then the site shows as "no longer on the form" rather than vanishing.
+    assert CriticalInformationAuthorization.exists?(location: A_LOCATION)
+    assert_not_includes CriticalInformationLocation.names, A_LOCATION
   end
 
   test 'normalizing keeps addresses apart instead of guessing at abbreviations' do

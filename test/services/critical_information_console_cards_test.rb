@@ -5,10 +5,17 @@ require 'test_helper'
 # The CIR console lists one card per site on the form — including the sites
 # nobody covers, which is the whole reason the screen exists.
 class CriticalInformationConsoleCardsTest < ActiveSupport::TestCase
-  CATALOGUE = CriticalInformationLocation::ALL
-  COVERED   = CATALOGUE.first
-  UNCOVERED = CATALOGUE.second
+  COVERED   = 'TEST CITY-1 FIRST ST.'
+  UNCOVERED = 'TEST CITY-2 SECOND ST.'
   RETIRED   = 'RETIRED-1 OLD ST.'
+
+  # Built in memory: these are list-shaping rules, and the cards never load the
+  # catalogue themselves — it is handed to them.
+  def catalogue
+    @catalogue ||= [COVERED, UNCOVERED].each_with_index.map do |name, i|
+      CriticalInformationLocation.new(id: i + 1, name: name)
+    end
+  end
 
   def rows
     [CriticalInformationAuthorization.new(location: COVERED, employee_id: '111'),
@@ -16,13 +23,13 @@ class CriticalInformationConsoleCardsTest < ActiveSupport::TestCase
   end
 
   def cards(from: rows, **filters)
-    CriticalInformationConsoleCards.new(from, **filters).to_a
+    CriticalInformationConsoleCards.new(from, catalogue: catalogue, **filters).to_a
   end
 
   test 'every site on the form gets a card, covered or not' do
     listed = cards
 
-    assert_equal CATALOGUE.size + 1, listed.size, 'expected one card per site, plus the retired location'
+    assert_equal catalogue.size + 1, listed.size, 'expected one card per site, plus the retired location'
     assert_not listed.find { |c| c.location == UNCOVERED }.assigned?
     assert_equal '111', listed.find { |c| c.location == COVERED }.authorization.employee_id
   end
@@ -34,10 +41,21 @@ class CriticalInformationConsoleCardsTest < ActiveSupport::TestCase
     assert_equal '222', card.authorization.employee_id
   end
 
+  # The console offers to delete a site from the card, so a card needs the row
+  # behind it. A retired card has none — there is nothing left to delete.
+  test 'a card carries its location row, except a retired one' do
+    listed = cards
+
+    assert_equal 1, listed.find { |c| c.location == COVERED }.location_id
+    assert listed.find { |c| c.location == COVERED }.on_the_form?
+    assert_not listed.find { |c| c.location == RETIRED }.on_the_form?
+    assert_nil listed.find { |c| c.location == RETIRED }.location_id
+  end
+
   test 'the unassigned filter shows only sites nobody covers' do
     listed = cards(assignment: 'unassigned')
 
-    assert_equal CATALOGUE.size - 1, listed.size
+    assert_equal catalogue.size - 1, listed.size
     assert(listed.none?(&:assigned?), 'a covered site survived the unassigned filter')
   end
 
