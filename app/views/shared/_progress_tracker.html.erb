@@ -1,9 +1,11 @@
 <% percent = run.total_count.zero? ? 100 : (run.completed_count * 100.0 / run.total_count).round %>
+<% display_name = ->(item) { item.dsl_name.sub(/\AOMS (?=\d{8,9}\z)/, "") } %>
 <div class="progress-tracker__panel" data-progress-status="<%= run.status %>">
   <div class="progress-tracker__summary">
     <div>
       <h2><%= run.status == "queued" ? "Preparing refresh" : "#{run.completed_count} of #{pluralize(run.total_count, local_assigns.fetch(:unit_name, 'DSL'))} completed" %></h2>
-      <% running_dsls = run.items.select { |item| item.status == "running" }.sort_by(&:position).map(&:dsl_name) %>
+      <% running_dsls = run.items.select { |item| item.status == "running" }
+                                 .sort_by(&:position).map(&display_name) %>
       <% if running_dsls.any? %><p>Running: <strong><%= running_dsls.to_sentence %></strong></p><% end %>
       <% if run.active? %><p>You may leave this page. Processing will continue.</p><% end %>
     </div>
@@ -21,7 +23,7 @@
     <% run.items.sort_by(&:position).each do |item| %>
       <li class="progress-tracker__item <%= item.status %>">
         <span class="progress-tracker__item-state" aria-hidden="true"><%= { "pending" => "○", "running" => "→", "succeeded" => "✓", "failed" => "✕" }.fetch(item.status) %></span>
-        <span><%= item.dsl_name %></span>
+        <span><%= display_name.call(item) %></span>
         <span class="progress-tracker__item-label">
           <%= item.status.humanize %>
           <% if item.duration_ms %>
