@@ -145,10 +145,12 @@ class NavigationCatalog
                                     .map { |link| { label: link[:label], path: public_send(link[:route]) } }
   end
 
-  # Every DSL by name, because that is what the Data Runner sidebar is. Which
-  # DSLs a user sees is not an ACL question today; getting into the app is.
+  # Every DSL the viewer is granted, by name, because that is what the Data
+  # Runner sidebar is. Each one is a grant of its own under ACL > Application
+  # Features, so this asks the helper the sidebar asks rather than reading the
+  # catalog straight.
   def data_runner_rows
-    rows = DslCatalog.entries.map do |entry|
+    rows = view.permitted_dsls.map do |entry|
       { label: entry.key, path: data_runner_dsl_path(entry.slug), keywords: "#{entry.group} #{entry.slug}" }
     end
     return rows unless feature?('data_runner', 'manage_groups')

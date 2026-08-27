@@ -79,18 +79,42 @@ class AppFeature
       { key: 'processing_queues', label: 'Processing Queues' }
     ],
     # Data Runner's sidebar is a live list of DSLs rather than fixed buttons,
-    # so only its standing controls are grantable here. Which DSLs a user sees
-    # is not an ACL question today.
+    # so only its standing control is fixed here. Every DSL is grantable too —
+    # see +data_runner_dsl_features+, which reads the catalog at call time and
+    # is appended by +for+.
     'data_runner' => [
       { key: 'manage_groups', label: 'Create and manage DSL groups' }
     ]
   }.freeze
 
+  # A DSL's feature key. Prefixed so a DSL can never be named the same thing as
+  # one of Data Runner's standing controls and quietly grant it.
+  DSL_KEY_PREFIX = 'dsl_'
+
   class << self
     # The features an app declares, in sidebar order. Unknown app keys — and
     # apps with nothing worth splitting up, like Print Production — return [].
+    #
+    # Data Runner's list is part fixed and part catalog: its sidebar *is* the
+    # DSL list, so the DSLs are grantable one by one alongside the standing
+    # control above them.
     def for(app_key)
-      FEATURES.fetch(app_key.to_s, [])
+      FEATURES.fetch(app_key.to_s, []) + (app_key.to_s == 'data_runner' ? data_runner_dsl_features : [])
+    end
+
+    # One grant per DSL, read from the catalog rather than declared here — a
+    # DSL is a file in config/data_runner/dsl, so a new one is grantable the
+    # moment it lands. Labelled by group so the ACL screen reads the way the
+    # sidebar does.
+    def data_runner_dsl_features
+      DslCatalog.entries.map do |entry|
+        label = entry.group.present? ? "#{entry.group.humanize}: #{entry.key}" : entry.key
+        { key: dsl_key(entry.slug), label: label }
+      end
+    end
+
+    def dsl_key(slug)
+      "#{DSL_KEY_PREFIX}#{slug}"
     end
 
     def permission_key(app_key, feature_key)

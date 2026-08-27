@@ -12,13 +12,14 @@ require 'test_helper'
 # config/routes.rb either way.
 class NavigationCatalogTest < ActiveSupport::TestCase
   class FakeView
-    def initialize(apps:, features: [], dropdown: [], tools: [], billing: [], aim_queues: false)
+    def initialize(apps:, features: [], dropdown: [], tools: [], billing: [], aim_queues: false, dsls: [])
       @apps = apps
       @features = features
       @dropdown = dropdown
       @tools = tools
       @billing = billing
       @aim_queues = aim_queues
+      @dsls = dsls
     end
 
     attr_reader :apps
@@ -32,6 +33,7 @@ class NavigationCatalogTest < ActiveSupport::TestCase
     def admin_tools_links = @tools
     def billing_sidebar_items = @billing
     def aim_queue_access? = @aim_queues
+    def permitted_dsls = @dsls
   end
 
   def catalog(**options)
@@ -133,15 +135,18 @@ class NavigationCatalogTest < ActiveSupport::TestCase
     assert_not subject.destinations.first.external
   end
 
-  test 'Data Runner offers every DSL by name' do
+  # Only the DSLs the viewer is granted: each one is an ACL entry of its own,
+  # and the palette asks the helper the Data Runner sidebar asks.
+  test 'Data Runner offers the DSLs the viewer is granted, by name' do
     entry = DslCatalog::Entry.new(key: 'Vendor Load', slug: 'vendor_load', path: nil,
                                   config: { group: { name: 'Finance' } })
+    apps = [{ key: 'data_runner', label: 'Data Runner', path: '/data_runner' }]
 
-    DslCatalog.stub(:entries, [entry]) do
-      subject = catalog(apps: [{ key: 'data_runner', label: 'Data Runner', path: '/data_runner' }])
+    subject = catalog(apps: apps, dsls: [entry])
 
-      assert_equal ['Data Runner', 'Vendor Load'], labels(subject)
-      assert_equal data_runner_dsl_path('vendor_load'), subject.destinations.last.path
-    end
+    assert_equal ['Data Runner', 'Vendor Load'], labels(subject)
+    assert_equal data_runner_dsl_path('vendor_load'), subject.destinations.last.path
+
+    assert_equal ['Data Runner'], labels(catalog(apps: apps))
   end
 end
