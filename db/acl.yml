@@ -4927,13 +4927,13 @@ org_permissions:
   department_id: '4641'
   unit_id: '4641'
   type: feature
-  key: p2m:stage_data
+  key: p2m:oms_status
 - agency_id: GSA
   division_id: '4640'
   department_id: '4641'
   unit_id: '4641'
   type: feature
-  key: p2m:oms_status
+  key: p2m:stage_data
 - agency_id: GSA
   division_id: '4640'
   department_id: '4641'
