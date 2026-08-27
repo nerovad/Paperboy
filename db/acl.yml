@@ -4932,6 +4932,12 @@ org_permissions:
   division_id: '4640'
   department_id: '4641'
   unit_id: '4641'
+  type: feature
+  key: p2m:oms_status
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
   type: form
   key: '40'
   class: BikeLockerForm

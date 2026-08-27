@@ -5,7 +5,7 @@ module P2m
     include Pagy::Method
     include DateRange
 
-    before_action -> { require_app_feature('p2m', 'stage_data', fallback: p2m_root_path) }
+    before_action -> { require_app_feature('p2m', 'oms_status', fallback: p2m_root_path) }
     before_action :set_dates
 
     def index
