@@ -1,37 +1,51 @@
 // app/javascript/controllers/sidebar_search_controller.js
 import { Controller } from "@hotwired/stimulus"
 
-// The metadata a form link carries, in the order a match is preferred: the
-// form's own name first, then its official number, its tags, its field labels
-// and finally its description. `bonus` keeps that order even when a weaker
-// source happens to score the tighter match, and `hint` is the label shown
-// beside the form name to explain why a form is in the list at all when the
+// The metadata a row carries, in the order a match is preferred: the row's own
+// name first, then a form's official number, its tags, the app a destination
+// belongs to, the words a destination answers to besides its name, and finally
+// a form's field labels and description. `bonus` keeps that order even when a
+// weaker source happens to score the tighter match, and `hint` is the label
+// shown beside the name to explain why a row is in the list at all when the
 // match was not on its name.
+//
+// Forms carry number/tags/fields/description; destinations carry
+// context/keywords. Each simply skips the sources it has none of.
 const MATCH_SOURCES = [
   { key: "originalName", bonus: 50, multi: false, hint: null, hintClass: null },
   { key: "number", bonus: 40, multi: false, hint: "No.", hintClass: "matched-tag" },
   { key: "tags", bonus: 30, multi: true, hint: "Tag", hintClass: "matched-tag" },
+  // The app a destination is in is already printed on the row, so a match on
+  // it needs no hint — typing "billing" should just list Billing's screens.
+  { key: "context", bonus: 25, multi: false, hint: null, hintClass: null },
+  { key: "keywords", bonus: 20, multi: false, hint: null, hintClass: null },
   { key: "fields", bonus: 0, multi: true, hint: "Field", hintClass: "matched-field" },
   { key: "description", bonus: 0, multi: false, hint: null, hintClass: null }
 ]
 
 export default class extends Controller {
-  static targets = ["input", "formLink", "formsList", "item", "emptyState", "command"]
+  static targets = ["input", "formLink", "formsList", "destination", "destinationsList", "item", "emptyState", "command"]
   static values = { debounce: { type: Number, default: 0 } }
 
   connect() {
     this.filterTimer = null
-    // Store original form names before any modifications
-    // If data-original-name is already set (e.g. on complex cards), keep it
-    this.formLinkTargets.forEach(link => {
-      if (!link.dataset.originalName) {
-        link.dataset.originalName = link.textContent.trim()
+    // Store original names before any modifications. If data-original-name is
+    // already set — on complex cards, and on the palette's destinations, whose
+    // markup includes the app label — keep it.
+    this.rows().forEach(row => {
+      if (!row.dataset.originalName) {
+        row.dataset.originalName = row.textContent.trim()
       }
     })
   }
 
   disconnect() {
     clearTimeout(this.filterTimer)
+  }
+
+  // Every row this controller ranks, whichever list it lives in.
+  rows() {
+    return [...this.formLinkTargets, ...this.destinationTargets]
   }
 
   filter() {
@@ -53,90 +67,112 @@ export default class extends Controller {
       return
     }
 
+    // Each list is ranked against the query on its own, so a destination is
+    // never sorted in among the forms. Destinations keep their declared order
+    // when nothing is typed — they are grouped by app, which is more use than
+    // one alphabetical run of every screen in the system.
+    this.rankList(searchTerm, this.formLinkTargets, this.formsListTarget, true)
+    if (this.hasDestinationTarget) {
+      this.rankList(searchTerm, this.destinationTargets, this.destinationsListTarget, false)
+    }
+
+    this.updateEmptyState()
+  }
+
+  // Score every row against each of its metadata sources and keep its best
+  // match, then reorder the list best-first. MATCH_SOURCES is in priority
+  // order, so a tie goes to the stronger source and a name match still wins a
+  // field match of equal tightness.
+  rankList(searchTerm, rows, list, sortWhenEmpty) {
     if (searchTerm === "") {
-      // Show every link the facets still allow, remove highlighting, and
-      // restore alphabetical order.
-      const links = [...this.formLinkTargets]
-      links.sort((a, b) => a.dataset.originalName.localeCompare(b.dataset.originalName))
-      links.forEach(link => {
-        link.style.display = this.facetHidden(link) ? "none" : ""
-        if (!link.hasAttribute("data-search-card")) {
-          link.innerHTML = link.dataset.originalName
-        }
-        this.formsListTarget.appendChild(link)
+      const ordered = sortWhenEmpty
+        ? [...rows].sort((a, b) => a.dataset.originalName.localeCompare(b.dataset.originalName))
+        : rows
+
+      ordered.forEach(row => {
+        row.style.display = this.facetHidden(row) ? "none" : ""
+        this.renderRow(row, { matched: false })
+        list.appendChild(row)
       })
-      this.updateEmptyState()
+      this.markListEmpty(list, rows)
       return
     }
 
-    // Score every link against each of its metadata sources and keep its best
-    // match. MATCH_SOURCES is in priority order, so a tie goes to the stronger
-    // source and a name match still wins a field match of equal tightness.
-    const scored = this.formLinkTargets.map(link => {
-      let best = { score: 0, matches: [], hint: null, hintClass: null, matchedValue: null, isName: false }
+    const scored = rows.map(row => ({ row, ...this.bestMatch(searchTerm, row) }))
 
-      MATCH_SOURCES.forEach(source => {
-        const raw = link.dataset[source.key] || ""
-        if (!raw) return
-
-        const candidates = source.multi ? raw.split(", ") : [raw]
-        candidates.forEach(candidate => {
-          const result = this.fuzzyMatch(searchTerm, candidate)
-          if (result.score === 0) return
-
-          const score = result.score + source.bonus
-          if (score <= best.score) return
-
-          best = {
-            score,
-            matches: result.matches,
-            hint: source.hint,
-            hintClass: source.hintClass,
-            matchedValue: candidate,
-            isName: source.key === "originalName"
-          }
-        })
-      })
-
-      return { link, formName: link.dataset.originalName, ...best }
-    })
-
-    // Sort by score (higher is better), then alphabetically
     scored.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score
-      return a.formName.localeCompare(b.formName)
+      return a.row.dataset.originalName.localeCompare(b.row.dataset.originalName)
     })
 
-    // Reorder and display links
-    scored.forEach(({ link, formName, matches, score, hint, hintClass, matchedValue, isName }) => {
-      const isCard = link.hasAttribute("data-search-card")
-
+    scored.forEach(({ row, score, ...match }) => {
       // A form the facets have excluded stays out however well its text
       // matches — Advanced Search is the narrower question, and a search
       // inside it should never reach back past it.
-      if (score > 0 && !this.facetHidden(link)) {
-        link.style.display = ""
-        // Only modify innerHTML for simple link targets (sidebar), not complex cards
-        if (!isCard) {
-          if (isName) {
-            link.innerHTML = this.highlightMatches(formName, matches)
-          } else if (hint) {
-            link.innerHTML = `${this.escapeHtml(formName)}<span class="${hintClass}">${hint}: ${this.escapeHtml(matchedValue)}</span>`
-          } else {
-            link.innerHTML = this.escapeHtml(formName)
-          }
-        }
-      } else {
-        link.style.display = "none"
-        if (!isCard) {
-          link.innerHTML = formName
-        }
-      }
-      // Reorder in DOM
-      this.formsListTarget.appendChild(link)
+      const visible = score > 0 && !this.facetHidden(row)
+      row.style.display = visible ? "" : "none"
+      this.renderRow(row, { ...match, matched: visible })
+      list.appendChild(row)
     })
 
-    this.updateEmptyState()
+    this.markListEmpty(list, rows)
+  }
+
+  bestMatch(searchTerm, row) {
+    let best = { score: 0, matches: [], hint: null, hintClass: null, matchedValue: null, isName: false }
+
+    MATCH_SOURCES.forEach(source => {
+      const raw = row.dataset[source.key] || ""
+      if (!raw) return
+
+      const candidates = source.multi ? raw.split(", ") : [raw]
+      candidates.forEach(candidate => {
+        const result = this.fuzzyMatch(searchTerm, candidate)
+        if (result.score === 0) return
+
+        const score = result.score + source.bonus
+        if (score <= best.score) return
+
+        best = {
+          score,
+          matches: result.matches,
+          hint: source.hint,
+          hintClass: source.hintClass,
+          matchedValue: candidate,
+          isName: source.key === "originalName"
+        }
+      })
+    })
+
+    return best
+  }
+
+  // A row reads: the app it belongs to (destinations only), its name with the
+  // typed letters marked, and — when the match was not on the name — what it
+  // did match. Cards render their own contents and are left alone.
+  renderRow(row, { matched, matches, hint, hintClass, matchedValue, isName }) {
+    if (row.hasAttribute("data-search-card")) return
+
+    const name = row.dataset.originalName
+    const context = row.dataset.context
+      ? `<span class="search-context">${this.escapeHtml(row.dataset.context)}</span>`
+      : ""
+    const body = matched && isName ? this.highlightMatches(name, matches) : this.escapeHtml(name)
+    const why = matched && !isName && hint
+      ? `<span class="${hintClass}">${hint}: ${this.escapeHtml(matchedValue)}</span>`
+      : ""
+
+    row.innerHTML = context + body + why
+  }
+
+  // A list whose rows have all been filtered out hides itself, heading and
+  // all, rather than leaving "Go to" standing over nothing. A list that holds
+  // the empty-state message is left alone — it says so itself, and hiding it
+  // would take the message with it.
+  markListEmpty(list, rows) {
+    if (this.hasEmptyStateTarget && list.contains(this.emptyStateTarget)) return
+
+    list.hidden = !rows.some(row => row.style.display !== "none")
   }
 
   // Commands are what the sidebar can *do* rather than what it can open —
@@ -177,8 +213,8 @@ export default class extends Controller {
   // Whether Advanced Search has ruled this form out. Set by
   // advanced_search_controller.js; absent everywhere else, which reads as
   // "nothing has been ruled out".
-  facetHidden(link) {
-    return link.dataset.facetHidden === "true"
+  facetHidden(row) {
+    return row.dataset.facetHidden === "true"
   }
 
   // Says so when the filters between them leave nothing, rather than leaving a
@@ -189,7 +225,7 @@ export default class extends Controller {
     const commandOffered = this.hasCommandTarget && this.commandTargets.some(command => !command.hidden)
 
     this.emptyStateTarget.hidden = commandOffered ||
-      this.formLinkTargets.some(link => link.style.display !== "none")
+      this.rows().some(row => row.style.display !== "none")
   }
 
   filterItems() {

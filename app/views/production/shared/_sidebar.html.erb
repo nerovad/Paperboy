@@ -1,91 +1,23 @@
 <%# app/views/production/shared/_sidebar.html.erb
     Sidebar for the Production app. The app switcher header is shared with
-    every other app; everything below it is this app's own navigation. %>
+    every other app; below it is the bookmark list from Production::Links,
+    which the command palette searches from every other app. %>
 <div class="sidebar production-sidebar">
   <%= render "shared/app_switcher" %>
 
   <nav class="production-links">
     <div class="production-links__label">Paperboy</div>
-    <%= link_to "Production", "https://gsa-forms",
-                class: "nav-link",
-                title: "Paperboy Production Server",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "Staging", "https://stage-gsa-forms",
-                class: "nav-link",
-                title: "Paperboy Staging Server",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "Development", "https://dev-gsa-forms",
-                class: "nav-link",
-                title: "Paperboy Development Server",
-                target: "_blank",
-                rel: "noopener" %>
-    <div class="production-links__divider" role="separator"></div>
-    <%= link_to "ACO", "http://acweb/index.php/vcfms",
-                class: "nav-link",
-                title: "Audit-Controller's Office",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "Asana", "https://app.asana.com/",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "CalSAWS", "https://id.calsaws.net/#/login",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "Creative Service Lookbook", "https://indd.adobe.com/view/ea6cbcee-f331-4b4e-9ea7-c92a33f81239",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "DocuShare", "http://docushare",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "Gitea", "http://gsa-gitea:3000/user/login",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "GSA Service Desk", "https://gsa-itportal",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "Impress Automate", "http://gsa-oms:690/local/#/login",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "Legacy e-Forms", "http://docushare:99/jsp/login.jsp",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "Legacy PSI:Fusion", "http://gsa-scan01:8080",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "MyVCWeb", "http://MyVCWeb",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "Purchase Order Status", "https://app.powerbigov.us/view?r=eyJrIjoiNTlkYmY1YzItNjdkNy00NDYzLWIzOGQtZDU4ZDUwY2EyMDhlIiwidCI6ImJjZTBlYzA0LWQxZjEtNGY1YS1hMDUwLWE0YjVlOTE4MTY4MyJ9",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "Timecard", "https://vchrp.co.ventura.ca.us/",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "USPS Gateway", "https://gateway.usps.com/eAdmin/view/signin",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "VCPrint", "https://vcprint/public/login",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
-    <%= link_to "VCFMS", "https://vcfms.cgiadvantage.com/PRDFIN1X1/Advantage4kj",
-                class: "nav-link",
-                target: "_blank",
-                rel: "noopener" %>
+    <% Production::Links.grouped.each_value.with_index do |links, index| %>
+      <% if index.positive? %>
+        <div class="production-links__divider" role="separator"></div>
+      <% end %>
+      <% links.each do |link| %>
+        <%= link_to link[:label], link[:url],
+                    class: "nav-link",
+                    title: link[:title],
+                    target: "_blank",
+                    rel: "noopener" %>
+      <% end %>
+    <% end %>
   </nav>
 </div>

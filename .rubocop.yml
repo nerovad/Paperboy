@@ -31,6 +31,7 @@ Metrics/CyclomaticComplexity:
 Metrics/ClassLength:
   Exclude:
     - 'app/controllers/forms/**/*_controller.rb'
+    - 'app/services/navigation_catalog.rb'
     - 'app/models/forms/field.rb'
     - 'app/models/forms/template.rb'
     - 'app/models/forms/template_routing_step.rb'

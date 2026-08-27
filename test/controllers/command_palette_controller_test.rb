@@ -4,7 +4,8 @@ require 'test_helper'
 
 # The palette's contents — what ":" puts on screen. The keyboard that opens it
 # is command_palette_controller.js; what matters here is that the response is a
-# bare frame carrying the search box, the commands and the viewer's own forms.
+# bare frame carrying the search box, the commands, everywhere the viewer can
+# go and every form they can open.
 class CommandPaletteControllerTest < ActionController::TestCase
   tests CommandPaletteController
 
@@ -56,6 +57,35 @@ class CommandPaletteControllerTest < ActionController::TestCase
 
     assert_select "a.pb-palette__row[data-sidebar-search-target='formLink']",
                   text: 'Leave of Absence', count: 1
+  end
+
+  # The reason the palette exists: search from Billing, land in DAM. Each row
+  # names the app it belongs to so "collections" is answerable without knowing
+  # which sidebar owns it.
+  test 'show lists destinations from every app, not only the one being viewed' do
+    show_palette
+
+    assert_select "a.pb-palette__row[data-sidebar-search-target='destination']" \
+                  "[data-context='Digital Asset Management']",
+                  text: /Collections/, count: 1
+    assert_select "a[data-sidebar-search-target='destination'][data-context='Print 2 Mail']",
+                  text: /OMS Status/, count: 1
+  end
+
+  test 'a destination that leaves Paperboy opens in its own tab' do
+    show_palette
+
+    assert_select "a[data-sidebar-search-target='destination'][target='_blank'][rel='noopener']",
+                  text: /Asana/, count: 1
+  end
+
+  # Turbo answers a link inside a frame by looking for that frame in the
+  # response. No page in the app carries this one, so without target="_top"
+  # every result lands on "Content missing" instead of the page it named.
+  test 'the frame sends its results to the whole page' do
+    show_palette
+
+    assert_select 'turbo-frame#command_palette[target=?]', '_top', count: 1
   end
 
   test 'show refuses signed-out visitors' do
