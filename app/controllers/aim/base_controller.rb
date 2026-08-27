@@ -7,8 +7,6 @@ module Aim
     before_action :require_app_access
     before_action :load_aim_sidebar_counts
 
-    helper_method :aim_admin?, :aim_queue_access?
-
     private
 
     # The sidebar app switcher only *hides* apps the user cannot reach, so
@@ -25,24 +23,12 @@ module Aim
       redirect_to root_path, alert: 'You do not have access to Automated Invoice Management.'
     end
 
+    # Who may reach the processing queues lives in Aim::AccessHelper, so the
+    # command palette can ask it from apps where no AIM controller is running.
     def require_aim_admin
-      return if aim_queue_access?
+      return if helpers.aim_queue_access?
 
       redirect_to aim_root_path, alert: 'You do not have access to AIM processing queues.'
-    end
-
-    def aim_admin?
-      current_user_group_names.include?('system_admins') ||
-        current_user_group_names.include?('aim_admin') ||
-        current_user_group_names.include?('aim_staff')
-    end
-
-    # Who sees the Processing Queues section of the sidebar, and the screens
-    # behind it. The aim_admin/aim_staff groups predate the ACL section and
-    # keep working; the grant under ACL > Application Features is the way to
-    # hand out queue access without adding someone to those groups.
-    def aim_queue_access?
-      aim_admin? || helpers.can_use_app_feature?('aim', 'processing_queues')
     end
 
     def load_aim_sidebar_counts

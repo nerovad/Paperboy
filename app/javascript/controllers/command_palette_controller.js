@@ -136,9 +136,16 @@ export default class extends Controller {
   // Read from the DOM every time rather than cached: sidebar-search reorders
   // and re-hides these rows on each keystroke, so any list kept from the last
   // one is already wrong.
+  //
+  // Document order is the order Enter walks: a command, then a destination,
+  // then a form. Each list is ranked on its own, so this is also the tie-break
+  // between them — asked the same question, going somewhere beats opening a
+  // blank form.
   results() {
     const rows = this.element.querySelectorAll(
-      "[data-sidebar-search-target='command'], [data-sidebar-search-target='formLink']"
+      "[data-sidebar-search-target='command']," +
+      "[data-sidebar-search-target='destination']," +
+      "[data-sidebar-search-target='formLink']"
     )
 
     return [...rows].filter(row => !row.hidden && row.style.display !== "none")

@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 # The contents of the command palette that ":" opens — the search box, the
-# commands, and every blank form the viewer may open.
+# commands, everywhere in the system the viewer can go, and every blank form
+# they may open.
 #
 # It is only ever fetched into the palette's turbo-frame, which the layout
 # renders on every page and no one loads until the first ":", so this renders
@@ -15,5 +16,6 @@ class CommandPaletteController < ApplicationController
 
     @catalog = FormCatalog.new(admin: helpers.system_admin?,
                                permitted_keys: current_user_form_permission_keys)
+    @navigation = NavigationCatalog.new(helpers)
   end
 end

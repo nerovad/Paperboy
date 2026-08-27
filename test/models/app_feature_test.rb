@@ -27,12 +27,17 @@ class AppFeatureTest < ActiveSupport::TestCase
   end
 
   test 'every Chart of Accounts table is grantable' do
-    controller = Coa::BaseController.new
-    tables = controller.send(:coa_all_resources).map { |model| controller.send(:coa_feature_key, model) }
+    lookups = Coa::Tables::LOOKUPS.map { |lookup| lookup[:key] }
 
-    assert_equal tables.sort,
+    assert_equal Coa::Tables::ALL.map { |table| table[:collection] }.sort,
                  AppFeature.for('coa').map { |feature| feature[:key] }
-                                      .reject { |key| %w[billing_lookup customer_lookup].include?(key) }.sort
+                                      .reject { |key| lookups.include?(key) }.sort
+  end
+
+  test 'both Chart of Accounts lookups are grantable' do
+    assert_equal %w[billing_lookup customer_lookup],
+                 Coa::Tables::LOOKUPS.map { |lookup| lookup[:key] } &
+                 AppFeature.for('coa').map { |feature| feature[:key] }
   end
 
   test 'only Admin Tools carries legacy dropdown keys' do
