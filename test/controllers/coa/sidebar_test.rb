@@ -17,6 +17,7 @@ class CoaSidebarTest < ActionController::TestCase
 
     assert_response :success
     assert_select '.coa-sidebar details.nav-group', count: 3
+    assert_select '.coa-sidebar details.nav-group > summary.btn', count: 3
     assert_sidebar_group 'Lookups', ['Billing Lookup', 'Customer Lookup'], open: true
     assert_sidebar_group 'Budget Unit', ['Agency', 'Division', 'Department', 'Unit', 'Sub Unit']
     assert_sidebar_group 'Accounting Codes',

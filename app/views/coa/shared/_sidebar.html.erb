@@ -36,7 +36,7 @@
 
     <% unless lookup_links.empty? %>
       <details class="nav-group" <%= "open" if lookup_links.any? { |_, path, _| current_page?(path) } %>>
-        <summary><span class="nav-group-label">Lookups</span></summary>
+        <summary class="btn"><span class="nav-group-label">Lookups</span></summary>
         <% lookup_links.each do |label, path, _| %>
           <%= link_to label, path, class: "nav-link" %>
         <% end %>
@@ -45,7 +45,7 @@
 
     <% unless budget_unit_resources.empty? %>
       <details class="nav-group" <%= "open" if budget_unit_resources.any?(&current_resource) %>>
-        <summary><span class="nav-group-label">Budget Unit</span></summary>
+        <summary class="btn"><span class="nav-group-label">Budget Unit</span></summary>
         <% budget_unit_resources.each do |model_class| %>
           <%= link_to resource_labels.fetch(model_class.name),
                       coa_sidebar_collection_path(model_class), class: "nav-link" %>
@@ -55,7 +55,7 @@
 
     <% unless accounting_code_resources.empty? %>
       <details class="nav-group" <%= "open" if accounting_code_resources.any?(&current_resource) %>>
-        <summary><span class="nav-group-label">Accounting Codes</span></summary>
+        <summary class="btn"><span class="nav-group-label">Accounting Codes</span></summary>
         <% accounting_code_resources.each do |model_class| %>
           <%= link_to resource_labels.fetch(model_class.name),
                       coa_sidebar_collection_path(model_class), class: "nav-link" %>
