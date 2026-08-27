@@ -1,10 +1,10 @@
 <div class="form-header p2m-form-header">
-  <h1>OMS Uploads</h1>
+  <h1>OMS Status</h1>
 </div>
 
 <div class="form-wrapper p2m-stage-data">
   <%= render "p2m/shared/date_range_card", title_id: "p2m-upload-date-range-title",
-             url: p2m_oms_uploads_path, method: :get, scope: :oms_uploads %>
+             url: p2m_oms_status_path, method: :get, scope: :oms_uploads %>
 
   <section class="p2m-stage-card" aria-labelledby="p2m-oms-uploads-title">
     <h2 id="p2m-oms-uploads-title">Staged Mailing Jobs</h2>
