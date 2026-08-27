@@ -22,5 +22,6 @@ module P2m
     def data_refresh_restart_path(run_id:) = restart_p2m_data_refresh_path(run_id: run_id)
     def data_refresh_cancel_path = p2m_root_path
     def data_refresh_unit_name = 'upload'
+    def data_refresh_preview_entries = data_refresh_service.preview_entries
   end
 end

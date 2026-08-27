@@ -53,7 +53,10 @@ module DataRunner
 
     def load_data_refresh_groups
       @groups = data_refresh_service.groups(end_date: data_refresh_end_date)
+      @refresh_entries = data_refresh_preview_entries
     end
+
+    def data_refresh_preview_entries = []
 
     def data_refresh_group_values
       params.require(:groups).permit(*data_refresh_service.group_configuration.keys).to_h
