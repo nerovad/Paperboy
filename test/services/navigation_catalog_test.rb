@@ -48,11 +48,16 @@ class NavigationCatalogTest < ActiveSupport::TestCase
     assert_equal ['Application'], subject.destinations.map(&:app).uniq
   end
 
+  # The app switcher is already filtered by ACL > Applications, so an app the
+  # viewer cannot open never reaches this list — and neither does anything
+  # inside it, however generously its own sidebar would have answered.
   test 'an app the switcher left out contributes nothing' do
     subject = catalog(apps: [{ key: 'paperboy', label: 'Paperboy', path: '/' }],
-                      features: ['digital_asset_management:collections'])
+                      features: ['digital_asset_management:collections'],
+                      billing: [{ label: 'View Billing', path: '/billing/dashboard', page: true }],
+                      aim_queues: true)
 
-    assert_not_includes labels(subject), 'Collections'
+    assert_equal ['Paperboy'], labels(subject)
   end
 
   test 'a sidebar link is offered only with the feature grant behind it' do
