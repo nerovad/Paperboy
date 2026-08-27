@@ -41,7 +41,7 @@ class AppFeature
     ],
     'p2m' => [
       { key: 'stage_data', label: 'Post Production' },
-      { key: 'data_refresh', label: 'Refresh Data' }
+      { key: 'data_refresh', label: 'Upload Billing Data' }
     ],
     # Keys match Coa::BaseController#coa_route_collection_name, which is also
     # how a request is mapped back to its grant.
