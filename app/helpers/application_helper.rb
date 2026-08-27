@@ -42,6 +42,24 @@ module ApplicationHelper
     current_user_group_names.include?('system_admins')
   end
 
+  # Whether ":" opens the command palette for this person.
+  #
+  # The palette is a grant of its own rather than something everybody gets,
+  # because it is the one surface that reaches across every app: it lists
+  # Billing's screens, DAM's collections and COA's tables side by side. What it
+  # lists is still filtered app by app — NavigationCatalog asks the same
+  # question each sidebar asks — so this decides whether somebody gets the
+  # search at all, not what they find in it.
+  #
+  # System admins bypass, as everywhere else. Everyone else needs the
+  # 'command_palette' key under ACL > Profile Dropdown Items, which is not in
+  # DEFAULT_PUBLIC_DROPDOWN_KEYS on purpose.
+  def can_use_command_palette?
+    return false unless current_user
+
+    system_admin? || current_user_dropdown_permissions.include?('command_palette')
+  end
+
   # The Admin Tools app's screens — the list, its ACL filtering and the
   # request-to-tool matching — live in AdminToolsHelper.
 

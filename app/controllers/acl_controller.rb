@@ -34,7 +34,11 @@ class AclController < ApplicationController
     { key: 'emulate',       label: 'Admin Tools: Emulate (legacy)' },
     { key: 'acl',           label: 'Admin Tools: ACL (legacy)' },
     { key: 'auth_console',  label: 'Auth Console' },
-    { key: 'osha_log',      label: 'OSHA 300' }
+    { key: 'osha_log',      label: 'OSHA 300' },
+    # ":" from any page, which searches every app the holder can reach. Not
+    # default_public: the palette lists the whole system's navigation, so it
+    # starts with system admins alone and is handed out deliberately.
+    { key: 'command_palette', label: 'Command Palette (":" search)' }
   ].freeze
 
   DEFAULT_PUBLIC_DROPDOWN_KEYS = DROPDOWN_ITEMS.select { |i| i[:default_public] }.map { |i| i[:key] }.freeze

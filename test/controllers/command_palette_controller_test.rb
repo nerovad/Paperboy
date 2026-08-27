@@ -16,8 +16,13 @@ class CommandPaletteControllerTest < ActionController::TestCase
       'first_name' => 'Maria',
       'last_name' => 'Acosta'
     }
-    @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
+    sign_in_as(groups: ['system_admins'])
     @controller.define_singleton_method(:inbox_count) { 0 }
+  end
+
+  def sign_in_as(groups: [], dropdowns: [])
+    @controller.define_singleton_method(:current_user_group_names) { Set.new(groups) }
+    @controller.define_singleton_method(:current_user_dropdown_permissions) { Set.new(dropdowns) }
   end
 
   def show_palette
@@ -94,5 +99,24 @@ class CommandPaletteControllerTest < ActionController::TestCase
     get :show
 
     assert_response :forbidden
+  end
+
+  # The layout only renders the frame for somebody who may use the palette, but
+  # its URL is a URL like any other and has to say no on its own.
+  test 'show refuses a signed-in user without the palette grant' do
+    sign_in_as(dropdowns: %w[inbox submissions])
+
+    get :show
+
+    assert_response :forbidden
+  end
+
+  test 'show serves a non-admin who holds the palette grant' do
+    sign_in_as(dropdowns: ['command_palette'])
+
+    show_palette
+
+    assert_response :success
+    assert_select 'turbo-frame#command_palette', count: 1
   end
 end

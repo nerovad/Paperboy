@@ -47,10 +47,15 @@
       <% end %>
     </div>
     
-    <%# Always available, on every page of every app: ":" opens the palette,
-        and both it and the sidebar's search can open the Who Am I dialog. %>
+    <%# On every page of every app: ":" opens the palette, and both it and the
+        sidebar's search can open the Who Am I dialog.
+
+        The palette is an ACL grant of its own — see
+        ApplicationHelper#can_use_command_palette? — so without it ":" is just a
+        colon and no keyboard listener is installed. The Who Am I dialog stays
+        for everyone: the Paperboy sidebar's search offers it too. %>
     <% if current_user %>
-      <%= render "shared/command_palette" %>
+      <%= render "shared/command_palette" if can_use_command_palette? %>
       <%= render "shared/who_am_i_dialog" %>
     <% end %>
 
