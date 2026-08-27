@@ -403,14 +403,8 @@
     --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$green-teal});
   }
 
-  &.data-runner-sidebar {
-    /* Blue / navy theme (from $brand-navy in _tokens.scss). */
-    --sidebar-accent: #{$brand-navy};
-    --sidebar-accent-hover: #{$brand-navy-hover};
-    --sidebar-accent-ring: #{rgba($brand-navy, 0.2)};
-    --sidebar-accent-soft: #{rgba($brand-navy, 0.08)};
-    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$brand-navy});
-
+  &.data-runner-sidebar,
+  &.coa-sidebar {
     .nav-group {
       margin: 10px 0;
       border-radius: 6px;
@@ -441,6 +435,15 @@
       text-align: left;
       word-break: break-word;
     }
+  }
+
+  &.data-runner-sidebar {
+    /* Blue / navy theme (from $brand-navy in _tokens.scss). */
+    --sidebar-accent: #{$brand-navy};
+    --sidebar-accent-hover: #{$brand-navy-hover};
+    --sidebar-accent-ring: #{rgba($brand-navy, 0.2)};
+    --sidebar-accent-soft: #{rgba($brand-navy, 0.08)};
+    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$brand-navy});
 
     .nav-link.dragging {
       opacity: 0.45;
