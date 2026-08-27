@@ -17,7 +17,7 @@ class CoaCustomerLookupsControllerTest < ActionController::TestCase
 
     assert_response :success
     assert_select '#customer-selection-title', text: 'Customer Selection'
-    assert_select '.coa-lookup-card__heading', count: 3
+    assert_select '.coa-billing-result[data-controller=?][hidden]', 'coa-billing-string', count: 1
     assert_select '.coa-sidebar .coa-table-links a:nth-of-type(1)', text: 'Billing Lookup'
     assert_select '.coa-sidebar .coa-table-links a:nth-of-type(2)', text: 'Customer Lookup'
   end

@@ -1,0 +1,42 @@
+<section class="coa-lookup-card coa-billing-result"
+         aria-labelledby="billing-account-string-title"
+         data-controller="coa-billing-string"
+         data-action="coa-organization-selected@window->coa-billing-string#organizationSelected
+                      coa-organization-cleared@window->coa-billing-string#clear"
+         data-coa-billing-string-objects-url-value="<%= objects_coa_billing_lookup_path %>"
+         data-coa-billing-string-activities-url-value="<%= activities_coa_billing_lookup_path %>"
+         data-coa-billing-string-cfunctions-url-value="<%= cfunctions_coa_billing_lookup_path %>"
+         data-coa-billing-string-programs-url-value="<%= programs_coa_billing_lookup_path %>"
+         data-coa-billing-string-phases-url-value="<%= phases_coa_billing_lookup_path %>"
+         data-coa-billing-string-tasks-url-value="<%= tasks_coa_billing_lookup_path %>"
+         hidden>
+  <h2 id="billing-account-string-title" class="coa-lookup-card__heading">Billing Account String</h2>
+  <div class="coa-lookup-card__body">
+    <div class="coa-billing-string-grid-wrap">
+      <div class="coa-billing-string-grid">
+        <% %w[Agency Division Department Unit COBJECT CACTIVITY CFUNCTION CPROGRAM CPHASE CTASK].each do |label| %>
+          <div class="coa-billing-string-grid__heading"><%= label %></div>
+        <% end %>
+        <% %w[agency division department unit].each do |target| %>
+          <code data-coa-billing-string-target="<%= target %>"></code>
+        <% end %>
+        <% [
+          ["COBJECT", "cobject"],
+          ["CACTIVITY", "cactivity"],
+          ["CFUNCTION", "cfunction"],
+          ["CPROGRAM", "cprogram"],
+          ["CPHASE", "cphase"],
+          ["CTASK", "ctask"]
+        ].each do |label, target| %>
+          <div class="coa-billing-string-grid__field">
+            <%= select_tag "billing_#{target}", options_for_select([["Select an agency first", ""]]),
+                           disabled: true, aria: { label: label },
+                           data: { coa_billing_string_target: target } %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    <button type="button" class="btn approve compact coa-billing-copy"
+            data-action="coa-billing-string#copy">Copy</button>
+  </div>
+</section>
