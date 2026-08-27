@@ -10,10 +10,10 @@ module P2m
 
     def index
       validate_date_range!
-      OmsUploadLedger.new.reconcile_imported!
-      scope = OmsUpload.includes(:files, :findings)
+      scope = OmsUpload.where.not(status: 'removed')
                        .where(mailer_date: @start_date..@end_date)
-                       .newest_first
+      OmsUploadLedger.new.reconcile_imported!(scope: scope)
+      scope = scope.includes(:files, :findings).newest_first
       @pagy, @uploads = pagy(:offset, scope)
     rescue ArgumentError
       @uploads = OmsUpload.none

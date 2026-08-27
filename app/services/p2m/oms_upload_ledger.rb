@@ -8,11 +8,16 @@ module P2m
   # rubocop:disable Metrics/ClassLength
   class OmsUploadLedger
     MARKER_PATTERN = /\AMail\.dat_(\d{8,9})\.zip\z/i
-    COMPANION_PATTERN = /\A\d{8,9}-.+\.csv\z/i
-    PRODUCTION_PATTERN = /\A\d{8,9}-.+\.pdf\z/i
+    COMPANION_PATTERN = /\A(\d{8,9})-.+\.csv\z/i
+    PRODUCTION_PATTERN = /\A(\d{8,9})-.+\.pdf\z/i
+    PREFIX_REPORT_PATTERN = /\A(\d{8,9})_.+\.pdf\z/i
+    SUFFIX_REPORT_PATTERN = /\A.+_(\d{8,9})\.pdf\z/i
     REPORT_PATTERN = /\.pdf\z/i
-    PRESORT_PATTERN = /\APresort Fields Export_\d{8,9}\.txt\z/i
-    MOVE_PATTERN = /\AMoveResults_\d{8,9}\.txt\z/i
+    PRESORT_PATTERN = /\APresort Fields Export_(\d{8,9})\.txt\z/i
+    MOVE_PATTERN = /\AMoveResults_(\d{8,9})\.txt\z/i
+    OMS_FILE_PATTERNS = [MARKER_PATTERN, COMPANION_PATTERN, PRODUCTION_PATTERN,
+                         PREFIX_REPORT_PATTERN, SUFFIX_REPORT_PATTERN, PRESORT_PATTERN,
+                         MOVE_PATTERN].freeze
     TSV_OPTIONS = { headers: true, col_sep: "\t", encoding: 'UTF-16LE:UTF-8', liberal_parsing: true }.freeze
 
     class ImportStarted < StandardError; end
@@ -44,8 +49,8 @@ module P2m
       raise InvalidDataset, "OMS #{oms_number} cannot be staged: #{messages.join(' ')}"
     end
 
-    def reconcile_imported!
-      OmsUpload.where.not(status: 'removed').count do |upload|
+    def reconcile_imported!(scope: OmsUpload.all)
+      scope.where.not(status: %w[removed completed]).find_each.count do |upload|
         imported_at = imported_dataset_at(upload.oms_number)
         next false unless imported_at
 
@@ -118,7 +123,7 @@ module P2m
 
     def staged_paths(oms_number)
       paths = staging_path.children.select do |path|
-        path.file? && path.basename.to_s.include?(oms_number.to_s)
+        path.file? && file_oms_number(path) == oms_number.to_s
       end
       raise ArgumentError, "no staged files found for OMS #{oms_number}" if paths.empty?
 
@@ -126,10 +131,21 @@ module P2m
     end
 
     def marker_for(paths, oms_number)
-      marker = paths.find { |path| path.basename.to_s.match?(MARKER_PATTERN) }
+      marker = paths.find do |path|
+        match = path.basename.to_s.match(MARKER_PATTERN)
+        match && match[1] == oms_number.to_s
+      end
       raise ArgumentError, "Mail.dat marker not found for OMS #{oms_number}" unless marker
 
       marker
+    end
+
+    def file_oms_number(path)
+      OMS_FILE_PATTERNS.each do |pattern|
+        match = path.basename.to_s.match(pattern)
+        return match[1] if match
+      end
+      nil
     end
 
     def upload_for_staged_job(oms_number)

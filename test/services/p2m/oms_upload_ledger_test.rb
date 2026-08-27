@@ -51,6 +51,19 @@ module P2m
       end
     end
 
+    test 'does not include files for a longer OMS number containing the target' do
+      with_staged_job do |staging|
+        staging.join('Mail.dat_517807678.zip').write('other marker')
+        staging.join('517807678-other.csv').write('other companion')
+
+        upload = OmsUploadLedger.new(staging_path: staging)
+                                .staged!(oms_number: '51780767', actor: 'operator@example.com')
+
+        assert_equal 4, upload.files.count
+        assert(upload.files.none? { |file| file.original_filename.include?('517807678') })
+      end
+    end
+
     test 'reconciles an existing processed archive with its upload state' do
       with_staged_job do |staging|
         Dir.mktmpdir do |directory|
