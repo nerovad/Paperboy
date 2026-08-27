@@ -1,5 +1,5 @@
 <div class="form-header data-refresh-form-header <%= data_refresh_css_class %>-data-refresh-theme">
-  <h1>Refresh Data</h1>
+  <h1>Upload Billing Data</h1>
 </div>
 
 <div class="form-wrapper data-refresh-form <%= data_refresh_css_class %>-data-refresh-theme">
@@ -15,7 +15,7 @@
           <span><%= group.label %></span>
           <% if download_dsl %>
             <button type="button" class="btn info compact"
-                    data-action="sop-modal#open">How to Download</button>
+                    data-action="sop-modal#open">How to Upload</button>
             <%= render "data_runner/shared/sop", dsl: download_dsl %>
           <% end %>
         </div>
@@ -51,7 +51,7 @@
             <% end %>
           <% else %>
             <tr>
-              <td colspan="3">No OMS numbers are queued for refresh.</td>
+              <td colspan="3">No OMS numbers are queued for upload.</td>
             </tr>
           <% end %>
         </tbody>
@@ -59,7 +59,7 @@
     </div>
 
     <div class="form-actions">
-      <%= submit_tag "Refresh", class: "btn approve" %>
+      <%= submit_tag "Upload", class: "btn approve" %>
       <%= link_to "Cancel", data_refresh_cancel_path, class: "btn" %>
     </div>
   <% end %>

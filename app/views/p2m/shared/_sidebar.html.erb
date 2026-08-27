@@ -14,7 +14,7 @@
                   class: "nav-link#{' active' if current_page?(p2m_oms_uploads_path)}" %>
     <% end %>
     <% if can_use_app_feature?('p2m', 'data_refresh') %>
-      <%= link_to "Refresh Data", p2m_data_refresh_path,
+      <%= link_to "Upload Billing Data", p2m_data_refresh_path,
                   class: "nav-link#{' active' if current_page?(p2m_data_refresh_path)}" %>
     <% end %>
   </nav>
