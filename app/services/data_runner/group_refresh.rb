@@ -3,6 +3,7 @@
 module DataRunner
   class GroupRefresh
     class ActiveRun < StandardError; end
+    class QueueUnavailable < StandardError; end
 
     def self.start!(group:, entries:, requested_by:)
       create!(group: group, entries: entries, requested_by: requested_by)
@@ -27,7 +28,7 @@ module DataRunner
           run.items.create!(dsl_name: entry.key, dsl_slug: entry.slug, position: position)
         end
       end
-      GroupRefreshJob.perform_later(run.id)
+      enqueue!(run.id)
       run
     rescue StandardError
       run&.update(status: 'failed', completed_at: Time.current) if run&.persisted?
@@ -41,6 +42,22 @@ module DataRunner
       )
       run.update!(status: 'failed', current_dsl: nil, completed_count: run.total_count,
                   failed_count: run.items.where(status: 'failed').count, completed_at: now)
+    end
+
+    private_class_method def self.enqueue!(run_id)
+      GroupRefreshJob.perform_later(run_id)
+    rescue StandardError => e
+      raise QueueUnavailable, e.message if redis_connection_error?(e)
+
+      raise
+    end
+
+    private_class_method def self.redis_connection_error?(error)
+      error_chain(error).any?(Errno::ECONNREFUSED)
+    end
+
+    private_class_method def self.error_chain(error)
+      Enumerator.produce(error, &:cause).take_while(&:present?)
     end
 
     private_class_method def self.validate_entries!(group, entries)

@@ -36,4 +36,18 @@ class DataRunnerGroupRefreshTest < ActiveSupport::TestCase
       assert_equal replacement.id, enqueued_run_id
     end
   end
+
+  test 'raises queue unavailable when Redis refuses the enqueue' do
+    entry = Struct.new(:key, :slug).new('Sample', 'sample')
+    error = StandardError.new('enqueue failed')
+    error.define_singleton_method(:cause) { Errno::ECONNREFUSED.new }
+
+    DataRunner::GroupRefreshJob.stub(:perform_later, ->(_) { raise error }) do
+      assert_raises(DataRunner::GroupRefresh::QueueUnavailable) do
+        DataRunner::GroupRefresh.start!(
+          group: 'sample', entries: [entry], requested_by: 'employee@example.com'
+        )
+      end
+    end
+  end
 end
