@@ -5,9 +5,11 @@ module DataRunner
     before_action :require_login, except: :index
     before_action :set_dsl, except: %i[index new create] + DataRunner::ApplicationController::GROUP_ACTIONS
 
+    # Filtered rather than the whole catalog: a DSL the ACL withholds should
+    # not be listed here any more than it is in the sidebar.
     def index
-      @groups = DslCatalog.grouped if user_signed_in?
-      @ungrouped = DslCatalog.ungrouped if user_signed_in?
+      @groups = helpers.permitted_grouped_dsls if user_signed_in?
+      @ungrouped = helpers.permitted_ungrouped_dsls if user_signed_in?
       @selected_group = params[:group].presence&.parameterize(separator: '_')
       @selected_entries = @groups&.fetch(@selected_group, []) || []
       @active_group_run = GroupRun.active.find_by(group_name: @selected_group) if @selected_group

@@ -8,6 +8,7 @@ module DataRunner
     GROUP_ACTIONS = %i[new_group create_group update_group rename_group destroy_group].freeze
 
     before_action :require_app_access
+    before_action :require_dsl_access
     before_action :require_group_management
 
     helper_method :user_signed_in?
@@ -37,9 +38,24 @@ module DataRunner
       redirect_to root_path, alert: 'You do not have access to Data Runner.'
     end
 
-    # Which individual DSLs a user sees is not an ACL question today — only
-    # whether they may create groups and move DSLs between them. See ACL >
-    # Application Features under Data Runner.
+    # Every route that names a DSL names it in +params[:name]+ — the catalog is
+    # `resources :dsls, param: :name`, so show, edit, update, destroy, run,
+    # reference and the output routes all arrive here. Gating in one place
+    # rather than in each controller's set_dsl means a controller added later
+    # is covered before it is written.
+    #
+    # As everywhere else, the sidebar only hides: without this a DSL stays
+    # reachable by typing its URL.
+    def require_dsl_access
+      slug = params[:name]
+      return if slug.blank? || helpers.can_use_dsl?(slug)
+
+      redirect_to data_runner_root_path, alert: 'You do not have access to that DSL.'
+    end
+
+    # Creating groups and moving DSLs between them is a grant of its own, over
+    # and above being able to open the DSLs themselves. See ACL > Application
+    # Features under Data Runner.
     def require_group_management
       return unless GROUP_ACTIONS.include?(action_name.to_sym)
 
