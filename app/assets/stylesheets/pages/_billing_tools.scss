@@ -307,9 +307,22 @@
 .p2m-data-refresh-table {
   table-layout: fixed;
 
-  .p2m-data-refresh-oms-column { width: 36%; }
-  .p2m-data-refresh-dsl-column { width: 34%; }
-  .p2m-data-refresh-status-column { width: 30%; }
+  .p2m-data-refresh-oms-column { width: calc(100% / 3); }
+}
+
+.p2m-data-refresh-summary {
+  margin: 1.25rem 0 0;
+}
+
+.p2m-data-refresh-summary__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid $neutral-border-subtle;
+  color: var(--data-refresh-accent);
+  font-weight: 600;
 }
 
 .data-refresh-dsl-cards {
