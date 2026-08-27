@@ -40,6 +40,15 @@ function withDecodedLabel(data) {
   return { ...data, label: decodeEntities(data.label) };
 }
 
+function withSelectedLabel(data) {
+  const decoded = withDecodedLabel(data);
+  const selectedLabel = decoded?.customProperties?.selectedLabel;
+
+  if (selectedLabel === undefined || selectedLabel === null) return decoded;
+
+  return { ...decoded, label: String(selectedLabel) };
+}
+
 // Wraps the stock `item` (the selected chip) and `choice` (the dropdown row)
 // templates, the only two that render a label. Optgroup headings are read from
 // the element's `label` attribute rather than its innerHTML, so they arrive
@@ -49,7 +58,7 @@ function decodeLabelsInTemplates() {
 
   return {
     item(config, data, removeItemButton) {
-      return base.item.call(this, config, withDecodedLabel(data), removeItemButton);
+      return base.item.call(this, config, withSelectedLabel(data), removeItemButton);
     },
     choice(config, data, selectText) {
       return base.choice.call(this, config, withDecodedLabel(data), selectText);
