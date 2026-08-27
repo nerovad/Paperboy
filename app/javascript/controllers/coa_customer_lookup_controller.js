@@ -23,6 +23,7 @@ export default class extends Controller {
     this.hideResults()
     this.hierarchyTarget.hidden = true
     this.contactTarget.hidden = true
+    window.dispatchEvent(new CustomEvent("coa-organization-cleared"))
 
     const query = this.inputTarget.value.trim()
     if (!query) return
@@ -94,6 +95,7 @@ export default class extends Controller {
     }
     this.hierarchyTarget.hidden = false
     this.renderContact(payload.contact)
+    this.renderBillingString(payload.nodes)
   }
 
   renderContact(contact) {
@@ -113,6 +115,23 @@ export default class extends Controller {
     link.href = `${protocol}${value}`
     link.textContent = value
     target.append(link)
+  }
+
+  renderBillingString(nodes) {
+    const ids = Object.fromEntries(nodes.map(node => [node.level, node.id]))
+    if (!ids.Agency || !ids.Division || !ids.Department || !ids.Unit) {
+      window.dispatchEvent(new CustomEvent("coa-organization-cleared"))
+      return
+    }
+
+    window.dispatchEvent(new CustomEvent("coa-organization-selected", {
+      detail: {
+        agency: ids.Agency,
+        division: ids.Division,
+        department: ids.Department,
+        unit: ids.Unit
+      }
+    }))
   }
 
   buildBranch(nodes, index) {
