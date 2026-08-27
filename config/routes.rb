@@ -294,7 +294,10 @@ Rails.application.routes.draw do
   # Root & Home
   # ============================================================================
   root 'forms#home'
+  # Both fill a frame in a dialog the layout renders; neither is a page anyone
+  # navigates to on its own.
   get '/who_am_i', to: 'who_am_i#show', as: :who_am_i
+  get '/command_palette', to: 'command_palette#show', as: :command_palette
   get 'forms/home'
   get '/form_success', to: 'shared#form_success', as: :form_success
   get '/ticket_success', to: 'shared#ticket_success', as: :ticket_success

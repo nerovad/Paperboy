@@ -1,0 +1,29 @@
+<%# The "Who Am I" dialog. It lives in the layout rather than beside anything
+    that opens it, because both the sidebar's search and the command palette
+    offer it and the palette answers ":" from every app. Opening is a window
+    event (see shared/_search_commands), so neither has to reach it.
+
+    The frame is lazy: nothing is fetched until the backdrop is first revealed,
+    so the employee lookup behind it costs nothing on the pages where nobody
+    asks. %>
+<div data-controller="who-am-i"
+     data-action="who-am-i:open@window->who-am-i#open">
+  <div class="pb-modal-backdrop" hidden
+       data-who-am-i-target="modal"
+       data-action="click->who-am-i#backdropClose">
+    <div class="pb-modal pb-modal--lg" role="dialog" aria-modal="true"
+         aria-labelledby="pb-who-am-i-title">
+      <div class="pb-modal__header">
+        <h3 id="pb-who-am-i-title">Who Am I</h3>
+        <button type="button" class="pb-modal__close" aria-label="Close"
+                data-action="who-am-i#close">&#10005;</button>
+      </div>
+
+      <div class="pb-modal__body">
+        <%= turbo_frame_tag "who_am_i", src: who_am_i_path, loading: "lazy" do %>
+          <p class="pb-modal__message">Loading your account hierarchy…</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

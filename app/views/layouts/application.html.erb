@@ -47,6 +47,13 @@
       <% end %>
     </div>
     
+    <%# Always available, on every page of every app: ":" opens the palette,
+        and both it and the sidebar's search can open the Who Am I dialog. %>
+    <% if current_user %>
+      <%= render "shared/command_palette" %>
+      <%= render "shared/who_am_i_dialog" %>
+    <% end %>
+
     <div class="app-container">
       <%= render "shared/sidebar" %>
       

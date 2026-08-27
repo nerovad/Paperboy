@@ -1,0 +1,113 @@
+@use "base/tokens" as *;
+
+/* ---------------------------------------------------------------------------
+   Command palette — the dialog ":" opens.
+
+   The shell is the shared modal system (components/modals); everything here
+   styles its contents. It is pinned near the top of the viewport rather than
+   centred, because the list grows downward as you type and a centred dialog
+   would walk up the screen with every keystroke.
+   --------------------------------------------------------------------------- */
+
+.pb-palette-backdrop {
+  align-items: flex-start;
+  padding-top: 12vh;
+}
+
+/* The frame is the dialog's only child, so it blockifies as a flex item on
+   its own — but the list inside has to be allowed to shrink before it will
+   scroll rather than push the dialog past its max height. */
+.pb-palette-modal turbo-frame {
+  display: block;
+  min-height: 0;
+}
+
+.pb-palette__input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 18px 20px;
+  border: none;
+  border-bottom: 1px solid $border-color;
+  border-radius: 0;
+  font-size: 1.05rem;
+  color: $text-color;
+  background: $surface-base;
+
+  &::placeholder {
+    color: $text-muted;
+    font-style: italic;
+  }
+
+  &:focus {
+    outline: none;
+    border-bottom-color: $primary-color;
+  }
+}
+
+.pb-palette__results {
+  max-height: clamp(8rem, calc(100vh - 22rem), 24rem);
+  overflow-y: auto;
+}
+
+/* One result. Commands and forms are the same row — what differs is the glyph
+   in front of a command and the tint that keeps it apart from the list it
+   sits above. */
+.pb-palette__row {
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 0;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  color: $text-color;
+  background: $surface-base;
+  cursor: pointer;
+
+  &:hover { background: $surface-hover; }
+
+  /* Where the arrow keys are. Enter takes this row. */
+  &.is-cursor {
+    background: $surface-hover;
+    box-shadow: inset 3px 0 0 $primary-color;
+  }
+
+  &[hidden] { display: none; }
+}
+
+.pb-palette__row--command {
+  color: $text-strong;
+  background: $surface-subtle;
+  border-bottom: 1px solid $border-faint;
+
+  &:hover,
+  &.is-cursor { background: $surface-hover; }
+}
+
+/* The palette shows the same match hints the sidebar does — which field or
+   tag put a form in the list — but on a light surface. */
+.pb-palette__row mark {
+  padding: 0;
+  border-radius: 2px;
+  color: inherit;
+  background: $warning-soft-bg;
+}
+
+.pb-palette__row .matched-field,
+.pb-palette__row .matched-tag {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75em;
+  font-style: italic;
+  color: $text-muted;
+}
+
+.pb-palette__empty {
+  margin: 0;
+  padding: 16px 20px;
+  font-size: 0.9em;
+  font-style: italic;
+  color: $text-muted;
+}

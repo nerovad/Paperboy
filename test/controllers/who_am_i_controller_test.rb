@@ -16,30 +16,52 @@ class WhoAmIControllerTest < ActionController::TestCase
     @controller.define_singleton_method(:inbox_count) { 0 }
   end
 
-  test 'show renders the shared hierarchy card for the signed-in employee' do
-    employee = Struct.new(:employee_id, :first_name, :last_name)
-                     .new(102_989, 'Maria', 'Acosta')
+  test 'show renders the hierarchy card inside the dialog frame' do
     nodes = [{ level: 'Agency', id: 'HCA', name: 'Health Care Agency' }]
 
-    Employee.stub(:find_by!, employee) do
-      Coa::EmployeeHierarchy.stub(:call, nodes) do
-        get :show
-      end
-    end
+    stub_employee(nodes) { get :show }
 
     assert_response :success
-    assert_select 'h1', text: 'Who Am I'
-    assert_select '.work-tab--who-am-i.is-active', text: 'Who Am I'
-    assert_select '.sidebar a[href=?]', who_am_i_path, count: 0
+    assert_select 'turbo-frame#who_am_i', count: 1
     assert_select '[data-controller=?]', 'coa-account-hierarchy', count: 1
     assert_select '[data-coa-account-hierarchy-nodes-value]', count: 1
   end
 
-  test 'show redirects signed-out visitors' do
+  # The layout renders the dialog on every page, and that dialog holds the
+  # frame this response fills. Sending the layout back would hand Turbo two
+  # frames of the same name and it would fill the placeholder with itself.
+  test 'show renders without the layout' do
+    stub_employee { get :show }
+
+    assert_select 'div.sidebar', count: 0
+    assert_select '.work-tabs', count: 0
+  end
+
+  test 'show reports a missing employee record inside the frame' do
+    Employee.stub(:find_by!, ->(*) { raise ActiveRecord::RecordNotFound }) do
+      get :show
+    end
+
+    assert_response :success
+    assert_select 'turbo-frame#who_am_i', text: /Employee record not found/
+  end
+
+  test 'show refuses signed-out visitors' do
     session.delete(:user)
 
     get :show
 
-    assert_redirected_to root_path
+    assert_response :forbidden
+  end
+
+  private
+
+  def stub_employee(nodes = [], &block)
+    employee = Struct.new(:employee_id, :first_name, :last_name)
+                     .new(102_989, 'Maria', 'Acosta')
+
+    Employee.stub(:find_by!, employee) do
+      Coa::EmployeeHierarchy.stub(:call, nodes, &block)
+    end
   end
 end
