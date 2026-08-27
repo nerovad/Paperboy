@@ -40,46 +40,11 @@ module Coa
     end
 
     def hierarchy_for(employee)
-      agency_id = Coa::Agency.normalize_id(employee.agency)
-      sub_unit = hca_sub_unit(employee, agency_id)
-      unit_id = sub_unit&.unit_id || employee.unit
-      unit = Coa::Unit.find_by(agency_id: agency_id, unit_id: unit_id)
-
       {
         employee: employee_option(employee.id, employee.first_name, employee.last_name, employee.unit),
         contact: { email: employee.email, phone: employee.work_phone },
-        nodes: hierarchy_nodes(unit, sub_unit)
+        nodes: Coa::EmployeeHierarchy.call(employee)
       }
-    end
-
-    def hca_sub_unit(employee, agency_id)
-      return unless agency_id == 'HCA'
-
-      Coa::SubUnit.find_by(agency_id: agency_id, sub_unit_id: employee.unit)
-    end
-
-    def hierarchy_nodes(unit, sub_unit)
-      return [] unless unit
-
-      agency = Coa::Agency.find_by(agency_id: unit.agency_id)
-      division = Coa::Division.find_by(agency_id: unit.agency_id, division_id: unit.division_id)
-      department = Coa::Department.find_by(
-        agency_id: unit.agency_id,
-        division_id: unit.division_id,
-        department_id: unit.department_id
-      )
-
-      [
-        node('Agency', unit.agency_id, agency&.long_name),
-        node('Division', unit.division_id, division&.long_name),
-        node('Department', unit.department_id, department&.long_name),
-        node('Unit', unit.unit_id, unit.long_name),
-        (node('Sub-Unit', sub_unit.sub_unit_id, sub_unit.sub_unit_name) if sub_unit)
-      ].compact
-    end
-
-    def node(level, id, name)
-      { level: level, id: id, name: name }
     end
   end
 end

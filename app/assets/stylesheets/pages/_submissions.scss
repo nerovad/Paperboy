@@ -433,6 +433,7 @@
 $inbox-accent: $brand-navy;
 $submissions-accent: $primary-color;
 $records-accent: $cyan-action;
+$who-am-i-accent: $orange-action;
 
 .work-tabs {
   display: flex;
@@ -482,6 +483,11 @@ $records-accent: $cyan-action;
   &--records.is-active {
     color: $records-accent;
     border-bottom-color: $records-accent;
+  }
+
+  &--who-am-i.is-active {
+    color: $who-am-i-accent;
+    border-bottom-color: $who-am-i-accent;
   }
 }
 

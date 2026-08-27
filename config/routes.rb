@@ -294,6 +294,7 @@ Rails.application.routes.draw do
   # Root & Home
   # ============================================================================
   root 'forms#home'
+  get '/who_am_i', to: 'who_am_i#show', as: :who_am_i
   get 'forms/home'
   get '/form_success', to: 'shared#form_success', as: :form_success
   get '/ticket_success', to: 'shared#ticket_success', as: :ticket_success
