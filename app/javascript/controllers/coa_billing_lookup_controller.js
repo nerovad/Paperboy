@@ -6,9 +6,7 @@ export default class extends Controller {
                     "cobject", "cactivity", "cfunction", "cprogram", "cphase", "ctask",
                     "agencyId", "divisionId", "departmentId", "unitId",
                     "agencyName", "divisionName", "departmentName", "unitName",
-                    "billingAgencyId", "billingDivisionId", "billingDepartmentId", "billingUnitId",
-                    "billingCobject", "billingCactivity", "billingCfunction",
-                    "billingCprogram", "billingCphase", "billingCtask"]
+                    "billingAgencyId", "billingDivisionId", "billingDepartmentId", "billingUnitId"]
   static values = {
     divisionsUrl: String, departmentsUrl: String, unitsUrl: String,
     objectsUrl: String, activitiesUrl: String, cfunctionsUrl: String,
@@ -77,13 +75,8 @@ export default class extends Controller {
       billingIdTargets[index].textContent = select.value
       nameTargets[index].textContent = this.longName(select)
     })
-    this.syncAccountingFields()
     this.accountFieldsTarget.hidden = false
     this.resultTarget.hidden = false
-  }
-
-  accountFieldChanged() {
-    this.syncAccountingFields()
   }
 
   async copy() {
@@ -100,15 +93,6 @@ export default class extends Controller {
     this.load(this.cprogramTarget, this.programsUrlValue, agencyParams)
     this.load(this.cphaseTarget, this.phasesUrlValue, agencyParams)
     this.load(this.ctaskTarget, this.tasksUrlValue, agencyParams)
-  }
-
-  syncAccountingFields() {
-    const outputTargets = [this.billingCobjectTarget, this.billingCactivityTarget,
-                           this.billingCfunctionTarget, this.billingCprogramTarget,
-                           this.billingCphaseTarget, this.billingCtaskTarget]
-    this.accountSelects().forEach((select, index) => {
-      outputTargets[index].textContent = select.value
-    })
   }
 
   accountSelects() {
@@ -173,8 +157,13 @@ export default class extends Controller {
     }
 
     choices.clearStore()
+    const renderedOptions = this.accountSelects().includes(select) ? options.map(option => ({
+      ...option,
+      customProperties: { selectedLabel: option.value }
+    })) : options
     choices.setChoices(
-      [{ value: "", label: placeholder, placeholder: true, selected: true }, ...options],
+      [{ value: "", label: placeholder, placeholder: true, selected: true },
+       ...renderedOptions],
       "value",
       "label",
       true
