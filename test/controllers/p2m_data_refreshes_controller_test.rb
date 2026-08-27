@@ -26,6 +26,21 @@ class P2mDataRefreshesControllerTest < ActionController::TestCase
     assert_select 'button', text: 'Reset', count: 0
   end
 
+  test 'queue outage redirects back to the refresh form' do
+    sign_in
+    original = P2m::DataRefresh.method(:run!)
+    P2m::DataRefresh.define_singleton_method(:run!) do |*, **|
+      raise DataRunner::GroupRefresh::QueueUnavailable, 'connection refused'
+    end
+
+    patch :update, params: { groups: { print_2_mail_billing_data: '1' } }
+
+    assert_redirected_to p2m_data_refresh_path
+    assert_equal 'The data refresh could not be queued because Redis is unavailable.', flash[:alert]
+  ensure
+    P2m::DataRefresh.define_singleton_method(:run!, original) if original
+  end
+
   private
 
   def sign_in

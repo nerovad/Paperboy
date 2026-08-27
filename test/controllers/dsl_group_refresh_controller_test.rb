@@ -54,6 +54,21 @@ class DslGroupRefreshControllerTest < ActionController::TestCase
     DataRunner::GroupRefresh.define_singleton_method(:restart!, original) if original
   end
 
+  test 'queue outage redirects back to the selected group' do
+    sign_in
+    original = DataRunner::GroupRefresh.method(:start!)
+    DataRunner::GroupRefresh.define_singleton_method(:start!) do |**|
+      raise DataRunner::GroupRefresh::QueueUnavailable, 'connection refused'
+    end
+
+    post :create, params: { group: 'paperboy' }
+
+    assert_redirected_to data_runner_root_path(group: 'paperboy')
+    assert_equal 'The refresh could not be queued because Redis is unavailable.', flash[:alert]
+  ensure
+    DataRunner::GroupRefresh.define_singleton_method(:start!, original) if original
+  end
+
   private
 
   def sign_in
