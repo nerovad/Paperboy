@@ -2,9 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { choicesOptions } from "choices_setup";
 
 export default class extends Controller {
-  static targets = ["agency", "division", "department", "unit", "accountFields",
-                    "agencyId", "divisionId", "departmentId", "unitId",
-                    "agencyName", "divisionName", "departmentName", "unitName"]
+  static targets = ["agency", "division", "department", "unit"]
   static values = {
     divisionsUrl: String, departmentsUrl: String, unitsUrl: String
   }
@@ -51,27 +49,23 @@ export default class extends Controller {
 
   unitChanged() {
     if (!this.unitTarget.value) {
-      this.accountFieldsTarget.hidden = true
       this.clearBillingString()
       return
     }
 
     const selects = [this.agencyTarget, this.divisionTarget, this.departmentTarget, this.unitTarget]
-    const idTargets = [this.agencyIdTarget, this.divisionIdTarget,
-                       this.departmentIdTarget, this.unitIdTarget]
-    const nameTargets = [this.agencyNameTarget, this.divisionNameTarget,
-                         this.departmentNameTarget, this.unitNameTarget]
-    selects.forEach((select, index) => {
-      idTargets[index].textContent = select.value
-      nameTargets[index].textContent = this.longName(select)
-    })
-    this.accountFieldsTarget.hidden = false
+    const levels = ["Agency", "Division", "Department", "Unit"]
     window.dispatchEvent(new CustomEvent("coa-organization-selected", {
       detail: {
         agency: this.agencyTarget.value,
         division: this.divisionTarget.value,
         department: this.departmentTarget.value,
-        unit: this.unitTarget.value
+        unit: this.unitTarget.value,
+        nodes: selects.map((select, index) => ({
+          level: levels[index],
+          id: select.value,
+          name: this.longName(select)
+        }))
       }
     }))
   }
@@ -99,7 +93,6 @@ export default class extends Controller {
     selects.forEach(select => {
       this.setChoices(select, [], "Select one", true)
     })
-    this.accountFieldsTarget.hidden = true
     this.clearBillingString()
   }
 

@@ -1,0 +1,15 @@
+<section class="coa-lookup-card"
+         aria-labelledby="account-hierarchy-title"
+         data-controller="coa-account-hierarchy"
+         data-action="coa-organization-selected@window->coa-account-hierarchy#organizationSelected
+                      coa-organization-cleared@window->coa-account-hierarchy#clear"
+         hidden>
+  <h2 id="account-hierarchy-title" class="coa-lookup-card__heading">Account Hierarchy</h2>
+  <div class="coa-lookup-card__body">
+    <p class="coa-customer-name" data-coa-account-hierarchy-target="customerName" hidden></p>
+    <div data-coa-account-hierarchy-target="tree"></div>
+    <p class="coa-customer-empty" data-coa-account-hierarchy-target="empty" hidden>
+      No account hierarchy was found.
+    </p>
+  </div>
+</section>

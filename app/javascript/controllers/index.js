@@ -72,6 +72,7 @@ import OrgCascadeController from "controllers/org_cascade_controller"
 import AdvancedSearchController from "controllers/advanced_search_controller"
 import CoaBillingLookupController from "controllers/coa_billing_lookup_controller"
 import CoaBillingStringController from "controllers/coa_billing_string_controller"
+import CoaAccountHierarchyController from "controllers/coa_account_hierarchy_controller"
 import CoaCustomerLookupController from "controllers/coa_customer_lookup_controller"
 import AimOcrController from "controllers/aim_ocr_controller"
 import DateRangeController from "controllers/date_range_controller"
@@ -105,6 +106,7 @@ application.register("bike-locker-selects", BikeLockerSelectsController)
 application.register("sidebar-search", SidebarSearchController)
 application.register("coa-customer-lookup", CoaCustomerLookupController)
 application.register("coa-billing-string", CoaBillingStringController)
+application.register("coa-account-hierarchy", CoaAccountHierarchyController)
 application.register("form-builder", FormBuilderController)
 application.register("reports", ReportsController)
 application.register("scheduled-report-form", ScheduledReportController)

@@ -45,33 +45,7 @@
       </div>
     </section>
 
-    <div class="coa-billing-sections" data-coa-billing-lookup-target="accountFields" hidden>
-    <section class="coa-lookup-card" aria-labelledby="account-hierarchy-title">
-      <h2 id="account-hierarchy-title" class="coa-lookup-card__heading">Account Hierarchy</h2>
-      <div class="coa-lookup-card__body">
-        <ul class="coa-account-tree">
-          <li>
-            <span>Agency - <code data-coa-billing-lookup-target="agencyId"></code> - <strong data-coa-billing-lookup-target="agencyName"></strong></span>
-            <ul>
-              <li>
-                <span>Division - <code data-coa-billing-lookup-target="divisionId"></code> - <strong data-coa-billing-lookup-target="divisionName"></strong></span>
-                <ul>
-                  <li>
-                    <span>Department - <code data-coa-billing-lookup-target="departmentId"></code> - <strong data-coa-billing-lookup-target="departmentName"></strong></span>
-                    <ul>
-                      <li><span>Unit - <code data-coa-billing-lookup-target="unitId"></code> - <strong data-coa-billing-lookup-target="unitName"></strong></span></li>
-                    </ul>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </div>
-    </section>
-
-    </div>
-
+    <%= render "coa/shared/account_hierarchy" %>
     <%= render "coa/shared/billing_account_string" %>
   </div>
 </section>

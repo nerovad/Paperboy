@@ -2,8 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = [
-    "input", "results", "hierarchy", "customerName", "tree", "empty",
-    "contact", "email", "phone"
+    "input", "results", "contact", "email", "phone"
   ]
   static values = { employeesUrl: String, hierarchyUrl: String }
 
@@ -21,7 +20,6 @@ export default class extends Controller {
     clearTimeout(this.searchTimer)
     this.searchRequest?.abort()
     this.hideResults()
-    this.hierarchyTarget.hidden = true
     this.contactTarget.hidden = true
     window.dispatchEvent(new CustomEvent("coa-organization-cleared"))
 
@@ -86,16 +84,8 @@ export default class extends Controller {
   }
 
   renderHierarchy(payload) {
-    this.customerNameTarget.textContent = payload.employee.label
-    this.treeTarget.replaceChildren()
-    this.emptyTarget.hidden = payload.nodes.length > 0
-
-    if (payload.nodes.length) {
-      this.treeTarget.append(this.buildBranch(payload.nodes, 0))
-    }
-    this.hierarchyTarget.hidden = false
     this.renderContact(payload.contact)
-    this.renderBillingString(payload.nodes)
+    this.publishOrganization(payload)
   }
 
   renderContact(contact) {
@@ -117,8 +107,8 @@ export default class extends Controller {
     target.append(link)
   }
 
-  renderBillingString(nodes) {
-    const ids = Object.fromEntries(nodes.map(node => [node.level, node.id]))
+  publishOrganization(payload) {
+    const ids = Object.fromEntries(payload.nodes.map(node => [node.level, node.id]))
     if (!ids.Agency || !ids.Division || !ids.Department || !ids.Unit) {
       window.dispatchEvent(new CustomEvent("coa-organization-cleared"))
       return
@@ -129,28 +119,11 @@ export default class extends Controller {
         agency: ids.Agency,
         division: ids.Division,
         department: ids.Department,
-        unit: ids.Unit
+        unit: ids.Unit,
+        customerName: payload.employee.label,
+        nodes: payload.nodes
       }
     }))
-  }
-
-  buildBranch(nodes, index) {
-    const list = document.createElement("ul")
-    if (index === 0) list.className = "coa-account-tree"
-    const item = document.createElement("li")
-    const node = nodes[index]
-    const label = document.createElement("span")
-    label.append(`${node.level} - `)
-    const code = document.createElement("code")
-    code.textContent = node.id
-    const name = document.createElement("strong")
-    name.textContent = node.name || "Name unavailable"
-    label.append(code, " - ", name)
-    item.append(label)
-
-    if (index + 1 < nodes.length) item.append(this.buildBranch(nodes, index + 1))
-    list.append(item)
-    return list
   }
 
   hideResults() {
