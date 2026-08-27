@@ -1,0 +1,22 @@
+<%# The command palette — ":" from anywhere that is not a text box.
+
+    It lives in the layout because every app has one: the Paperboy sidebar's
+    search box only exists on Paperboy pages, and COA, Billing, DAM, P2M, Data
+    Runner and Admin Tools each render a sidebar of their own. The palette is
+    the one search that is always there.
+
+    The frame is lazy, so the form list — an ACL pass and a template query —
+    is not built until the first ":" of a session. %>
+<div data-controller="command-palette">
+  <div class="pb-modal-backdrop pb-palette-backdrop" hidden
+       data-command-palette-target="modal"
+       data-action="click->command-palette#backdropClose
+                    turbo:frame-load->command-palette#focusInput">
+    <div class="pb-modal pb-modal--lg pb-palette-modal" role="dialog" aria-modal="true"
+         aria-label="Search forms and commands">
+      <%= turbo_frame_tag "command_palette", src: command_palette_path, loading: "lazy" do %>
+        <p class="pb-modal__message">Loading…</p>
+      <% end %>
+    </div>
+  </div>
+</div>

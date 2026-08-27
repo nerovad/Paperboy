@@ -16,7 +16,7 @@ const MATCH_SOURCES = [
 ]
 
 export default class extends Controller {
-  static targets = ["input", "formLink", "formsList", "item", "emptyState"]
+  static targets = ["input", "formLink", "formsList", "item", "emptyState", "command"]
   static values = { debounce: { type: Number, default: 0 } }
 
   connect() {
@@ -45,12 +45,13 @@ export default class extends Controller {
   }
 
   performFilter() {
+    const searchTerm = this.inputTarget.value.toLowerCase().trim()
+    this.filterCommands(searchTerm)
+
     if (this.hasItemTarget) {
       this.filterItems()
       return
     }
-
-    const searchTerm = this.inputTarget.value.toLowerCase().trim()
 
     if (searchTerm === "") {
       // Show every link the facets still allow, remove highlighting, and
@@ -138,6 +139,41 @@ export default class extends Controller {
     this.updateEmptyState()
   }
 
+  // Commands are what the sidebar can *do* rather than what it can open —
+  // "who am i" today, anything added beside it later. They are offered only
+  // once something has been typed, so an untouched sidebar stays a plain list
+  // of forms, and they sit above that list because a command answers the whole
+  // question typed rather than matching one form's metadata.
+  filterCommands(searchTerm) {
+    if (!this.hasCommandTarget) return
+
+    this.commandTargets.forEach(command => {
+      command.hidden = searchTerm === "" || !this.commandMatches(searchTerm, command.dataset.search)
+    })
+  }
+
+  // Every word typed has to start a word the command answers to. Deliberately
+  // stricter than the fuzzy match used on forms: a command is offered above
+  // everything else, so "hi" must not summon "Who Am I" on its way to a form.
+  commandMatches(searchTerm, terms) {
+    const words = terms.toLowerCase().split(/\s+/)
+
+    return searchTerm.split(/\s+/).every(token => words.some(word => word.startsWith(token)))
+  }
+
+  // Enter runs the command on offer, so asking is one typed phrase and no
+  // reach for the mouse. With nothing matching it does nothing — the form
+  // links are ordinary navigation, and Enter has never opened them.
+  activate(event) {
+    if (!this.hasCommandTarget) return
+
+    const command = this.commandTargets.find(candidate => !candidate.hidden)
+    if (!command) return
+
+    event.preventDefault()
+    command.click()
+  }
+
   // Whether Advanced Search has ruled this form out. Set by
   // advanced_search_controller.js; absent everywhere else, which reads as
   // "nothing has been ruled out".
@@ -150,7 +186,10 @@ export default class extends Controller {
   updateEmptyState() {
     if (!this.hasEmptyStateTarget) return
 
-    this.emptyStateTarget.hidden = this.formLinkTargets.some(link => link.style.display !== "none")
+    const commandOffered = this.hasCommandTarget && this.commandTargets.some(command => !command.hidden)
+
+    this.emptyStateTarget.hidden = commandOffered ||
+      this.formLinkTargets.some(link => link.style.display !== "none")
   }
 
   filterItems() {

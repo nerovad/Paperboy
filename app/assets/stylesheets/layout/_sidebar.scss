@@ -193,6 +193,27 @@
   
   .nav-link.active { background-color: var(--sidebar-accent); }
 
+  /* A search command — something the sidebar does rather than a form it
+     opens. It wears .nav-link so a matched command sits in the result list as
+     one of its rows; everything typographic is inherited, the way the Billing
+     tool buttons do it. The palette renders the same rows under its own
+     class; see components/command_palette. */
+  .sidebar-command {
+    width: 100%;
+    border: none;
+    font: inherit;
+    background-color: rgba(255, 255, 255, 0.2);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+
+    &[hidden] { display: none; }
+  }
+
+  .search-command__glyph {
+    margin-right: 8px;
+    font-size: 0.8em;
+    opacity: 0.7;
+  }
+
   /* Application switcher (sidebar header) */
   .app-switcher {
     position: relative;

@@ -1,0 +1,35 @@
+<%# The palette's body, fetched into its frame the first time ":" is pressed.
+
+    Filtering is sidebar_search_controller — the same matching, ranking and
+    highlighting the sidebar's box does, over the same list from the same
+    catalog. Only the surface differs, so the palette adds no search logic of
+    its own; what it does add is the keyboard, which command_palette_controller
+    owns from the layout above. %>
+<%= turbo_frame_tag "command_palette" do %>
+  <div class="pb-palette" data-controller="sidebar-search">
+    <input type="text"
+           class="pb-palette__input"
+           autocomplete="off"
+           aria-label="Search forms and commands"
+           placeholder="Search forms, numbers, fields, tags — or ask who am i"
+           data-sidebar-search-target="input"
+           data-command-palette-target="input"
+           data-action="input->sidebar-search#filter
+                        input->command-palette#resetCursor
+                        keydown.enter->command-palette#activate
+                        keydown.down->command-palette#next
+                        keydown.up->command-palette#previous" />
+
+    <%= render "shared/search_commands", row_class: "pb-palette__row pb-palette__row--command" %>
+
+    <div class="pb-palette__results" data-sidebar-search-target="formsList">
+      <% @catalog.forms.each do |label, path| %>
+        <%= link_to label, path, class: "pb-palette__row",
+            data: @catalog.search_data(label).merge(sidebar_search_target: "formLink") %>
+      <% end %>
+      <p class="pb-palette__empty" data-sidebar-search-target="emptyState" hidden>
+        No forms match.
+      </p>
+    </div>
+  </div>
+<% end %>

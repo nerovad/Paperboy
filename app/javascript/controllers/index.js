@@ -24,6 +24,9 @@ import ConditionalFieldsController from "controllers/conditional_fields_controll
 import GsabssSelectsController from "controllers/gsabss_selects_controller"
 import BikeLockerSelectsController from "controllers/bike_locker_selects_controller"
 import SidebarSearchController from "controllers/sidebar_search_controller"
+import WhoAmIController from "controllers/who_am_i_controller"
+import CommandPaletteController from "controllers/command_palette_controller"
+import SearchCommandController from "controllers/search_command_controller"
 import FormBuilderController from "controllers/form_builder_controller"
 import ReportsController from "controllers/reports_controller"
 import ScheduledReportController from "controllers/scheduled_report_form_controller"
@@ -104,6 +107,9 @@ application.register("conditional-fields", ConditionalFieldsController)
 application.register("gsabss-selects", GsabssSelectsController)
 application.register("bike-locker-selects", BikeLockerSelectsController)
 application.register("sidebar-search", SidebarSearchController)
+application.register("who-am-i", WhoAmIController)
+application.register("command-palette", CommandPaletteController)
+application.register("search-command", SearchCommandController)
 application.register("coa-customer-lookup", CoaCustomerLookupController)
 application.register("coa-billing-string", CoaBillingStringController)
 application.register("coa-account-hierarchy", CoaAccountHierarchyController)
