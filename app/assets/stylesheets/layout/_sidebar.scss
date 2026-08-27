@@ -415,7 +415,7 @@
       padding-bottom: 8px;
     }
 
-    .nav-group summary {
+    .nav-group summary:not(.btn) {
       cursor: pointer;
       list-style-position: inside;
       padding: 11px 12px;
@@ -468,6 +468,19 @@
     --sidebar-accent-ring: #{rgba($orange-action, 0.2)};
     --sidebar-accent-soft: #{rgba($orange-action, 0.08)};
     --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$orange-action});
+
+    .nav-group summary.btn {
+      width: 100%;
+      justify-content: flex-start;
+
+      &::before {
+        content: "›";
+        font-size: 1.35em;
+        transition: transform 0.2s ease;
+      }
+    }
+
+    .nav-group[open] summary.btn::before { transform: rotate(90deg); }
   }
 
   .nav-link mark {
