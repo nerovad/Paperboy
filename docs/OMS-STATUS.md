@@ -73,8 +73,9 @@ For an authorized `GET /p2m/oms_status` request:
 4. The controller rejects a range where the start date is after the end date.
    It renders the status page with HTTP `422` and the alert
    `Start date must be on or before end date.`
-5. `P2m::OmsUploadLedger#reconcile_imported!` refreshes status fields for
-   imports that are present in all three destination tables:
+5. `P2m::OmsUploadLedger#reconcile_imported!` refreshes unresolved status
+   fields within the selected date range for imports that are present in all
+   three destination tables:
    `companions`, `daily_presorts`, and `move_results`.
 6. The controller selects OMS records whose `mailer_date` is inside the
    inclusive selected range and whose status is not `removed`.
@@ -87,9 +88,11 @@ selected range is represented in the URL and can be bookmarked or revisited.
 
 ## Reconciliation behavior
 
-Reconciliation is a read-time consistency update. For each non-removed
-`P2m::OmsUpload`, it checks whether the OMS number exists in all three
-destination tables. If so, it sets `import_status` to `imported` and clears
+Reconciliation is a read-time consistency repair. For each non-removed,
+non-completed `P2m::OmsUpload` in the selected date range, it checks whether
+the OMS number exists in all three destination tables. Normal orchestration
+updates these states directly; this check repairs interrupted or stale runs.
+If all three datasets exist, it sets `import_status` to `imported` and clears
 any prior failure message.
 
 If `02_Processed/<OMS number>` exists below the configured Data Runner
@@ -160,4 +163,3 @@ Only the route helper, URL, ACL feature key, and visible label need the
 - `app/views/p2m/oms_uploads/index.html.erb`
 - `app/models/app_feature.rb`
 - `db/acl.yml`
-
