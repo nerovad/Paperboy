@@ -5,16 +5,62 @@
     <%# Each entry is an ACL > Application Features grant under Chart of
         Accounts; coa_sidebar_resources is already filtered to what this user
         holds. %>
-    <% if can_use_app_feature?("coa", "billing_lookup") %>
-      <%= link_to "Billing Lookup", coa_billing_lookup_path, class: "nav-link" %>
+    <% lookup_links = [
+         ["Billing Lookup", coa_billing_lookup_path, "billing_lookup"],
+         ["Customer Lookup", coa_customer_lookup_path, "customer_lookup"]
+       ].select { |_, _, feature| can_use_app_feature?("coa", feature) } %>
+    <% resource_labels = {
+         "Coa::Agency" => "Agency",
+         "Coa::Division" => "Division",
+         "Coa::Department" => "Department",
+         "Coa::Unit" => "Unit",
+         "Coa::SubUnit" => "Sub Unit",
+         "Coa::Activity" => "Activity",
+         "Coa::Function" => "Function",
+         "Coa::Fund" => "Fund",
+         "Coa::MajorProgram" => "Major Programs",
+         "Coa::Object" => "Object",
+         "Coa::Phase" => "Phase",
+         "Coa::Program" => "Program",
+         "Coa::RevenueSource" => "Revenue Source",
+         "Coa::ObjectInference" => "Object Inference",
+         "Coa::Task" => "Task"
+       } %>
+    <% budget_unit_names = %w[Coa::Agency Coa::Division Coa::Department Coa::Unit Coa::SubUnit] %>
+    <% budget_unit_resources = coa_sidebar_resources.select { |resource| budget_unit_names.include?(resource.name) } %>
+    <% accounting_code_resources = coa_sidebar_resources.reject { |resource| budget_unit_names.include?(resource.name) } %>
+    <% current_resource = lambda do |resource|
+         path = coa_sidebar_collection_path(resource)
+         current_page?(path) || request.path.start_with?("#{path}/")
+       end %>
+
+    <% unless lookup_links.empty? %>
+      <details class="nav-group" <%= "open" if lookup_links.any? { |_, path, _| current_page?(path) } %>>
+        <summary><span class="nav-group-label">Lookups</span></summary>
+        <% lookup_links.each do |label, path, _| %>
+          <%= link_to label, path, class: "nav-link" %>
+        <% end %>
+      </details>
     <% end %>
-    <% if can_use_app_feature?("coa", "customer_lookup") %>
-      <%= link_to "Customer Lookup", coa_customer_lookup_path, class: "nav-link" %>
+
+    <% unless budget_unit_resources.empty? %>
+      <details class="nav-group" <%= "open" if budget_unit_resources.any?(&current_resource) %>>
+        <summary><span class="nav-group-label">Budget Unit</span></summary>
+        <% budget_unit_resources.each do |model_class| %>
+          <%= link_to resource_labels.fetch(model_class.name),
+                      coa_sidebar_collection_path(model_class), class: "nav-link" %>
+        <% end %>
+      </details>
     <% end %>
-    <% coa_sidebar_resources.each do |model_class| %>
-      <%= link_to model_class.model_name.human(count: 2),
-                  coa_sidebar_collection_path(model_class),
-                  class: "nav-link" %>
+
+    <% unless accounting_code_resources.empty? %>
+      <details class="nav-group" <%= "open" if accounting_code_resources.any?(&current_resource) %>>
+        <summary><span class="nav-group-label">Accounting Codes</span></summary>
+        <% accounting_code_resources.each do |model_class| %>
+          <%= link_to resource_labels.fetch(model_class.name),
+                      coa_sidebar_collection_path(model_class), class: "nav-link" %>
+        <% end %>
+      </details>
     <% end %>
   </div>
 </div>
