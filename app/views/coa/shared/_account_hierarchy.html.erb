@@ -3,6 +3,10 @@
          data-controller="coa-account-hierarchy"
          data-action="coa-organization-selected@window->coa-account-hierarchy#organizationSelected
                       coa-organization-cleared@window->coa-account-hierarchy#clear"
+         <%= tag.attributes(data: {
+           "coa-account-hierarchy-nodes-value": local_assigns[:nodes].to_json,
+           "coa-account-hierarchy-customer-name-value": local_assigns[:customer_name]
+         }) if local_assigns.key?(:nodes) %>
          hidden>
   <h2 id="account-hierarchy-title" class="coa-lookup-card__heading">Account Hierarchy</h2>
   <div class="coa-lookup-card__body">

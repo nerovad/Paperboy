@@ -2,6 +2,15 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["customerName", "tree", "empty"]
+  static values = { nodes: Array, customerName: String }
+
+  connect() {
+    if (this.hasNodesValue) {
+      this.organizationSelected({
+        detail: { nodes: this.nodesValue, customerName: this.customerNameValue }
+      })
+    }
+  }
 
   organizationSelected({ detail }) {
     this.customerNameTarget.textContent = detail.customerName || ""

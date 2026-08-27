@@ -1,5 +1,5 @@
-<%# Tab bar shared by the Inbox, Submissions and Records pages. `active` is
-    :inbox, :submissions or :records. Tab visibility mirrors the navbar dropdown
+<%# Tab bar shared by the Inbox, Submissions, Records and Who Am I pages.
+    `active` is :inbox, :submissions, :records or :who_am_i. Visibility mirrors the navbar dropdown
     permission checks so a user only ever sees (and can switch to) tabs they're
     allowed to view. %>
 <nav class="work-tabs work-tabs--<%= active %>" aria-label="My Work">
@@ -28,5 +28,11 @@
         aria: { current: ("page" if active == :records) } do %>
       Records
     <% end %>
+  <% end %>
+
+  <%= link_to who_am_i_path,
+      class: "work-tab work-tab--who-am-i #{'is-active' if active == :who_am_i}",
+      aria: { current: ("page" if active == :who_am_i) } do %>
+    Who Am I
   <% end %>
 </nav>

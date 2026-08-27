@@ -1,0 +1,18 @@
+<div class="who-am-i-page">
+  <%= render "shared/work_tabs", active: :who_am_i %>
+
+  <section class="coa-page">
+    <div class="coa-header">
+      <div>
+        <h1>Who Am I</h1>
+        <p class="coa-subtitle">Your current organizational account hierarchy.</p>
+      </div>
+    </div>
+
+    <div class="coa-form coa-billing-lookup">
+      <%= render "coa/shared/account_hierarchy",
+                 nodes: @hierarchy_nodes,
+                 customer_name: @customer_name %>
+    </div>
+  </section>
+</div>
