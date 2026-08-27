@@ -24,6 +24,10 @@ module P2m
       enabled_entries(group_configuration.keys)
     end
 
+    def self.preview_entries
+      enabled_entries(group_configuration.keys)
+    end
+
     def self.queued_oms_entries(entry, queue_path)
       Pathname.new(queue_path).children.filter_map do |path|
         match = path.file? && path.basename.to_s.match(OMS_MARKER)

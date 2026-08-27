@@ -1,0 +1,48 @@
+<div class="form-header data-refresh-form-header <%= data_refresh_css_class %>-data-refresh-theme">
+  <h1>Refresh Data</h1>
+</div>
+
+<div class="form-wrapper data-refresh-form <%= data_refresh_css_class %>-data-refresh-theme">
+  <%= form_with url: data_refresh_form_path, method: :patch, data: { turbo: false } do %>
+    <% @groups.each do |group| %>
+      <%= hidden_field_tag "groups[#{group.key}]", group.default ? "1" : "0" %>
+    <% end %>
+
+    <div class="data-refresh-grid">
+      <table class="submission-table data-refresh-table p2m-data-refresh-table">
+        <colgroup>
+          <col class="p2m-data-refresh-oms-column">
+          <col class="p2m-data-refresh-dsl-column">
+          <col class="p2m-data-refresh-status-column">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>OMS Number</th>
+            <th>Data Runner DSL</th>
+            <th>Refresh</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if @refresh_entries.any? %>
+            <% @refresh_entries.each do |entry| %>
+              <tr>
+                <td><%= entry.key.delete_prefix("OMS ") %></td>
+                <td><%= entry.slug.upcase %></td>
+                <td>Queued</td>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="3">No OMS numbers are queued for refresh.</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-actions">
+      <%= submit_tag "Refresh", class: "btn approve" %>
+      <%= link_to "Cancel", data_refresh_cancel_path, class: "btn" %>
+    </div>
+  <% end %>
+</div>
