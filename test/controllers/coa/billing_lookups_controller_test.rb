@@ -28,8 +28,8 @@ class CoaBillingLookupsControllerTest < ActionController::TestCase
     assert_select '[data-controller=?]', 'coa-billing-lookup'
     assert_select '.coa-billing-field select', count: 10
     assert_select '.coa-billing-result[data-controller=?][hidden]', 'coa-billing-string', count: 1
-    assert_select '.coa-billing-sections[data-coa-billing-lookup-target=?][hidden]', 'accountFields', count: 1
-    assert_select '.coa-account-tree [data-coa-billing-lookup-target]', count: 8
+    assert_select '.coa-lookup-card[data-controller=?][hidden]', 'coa-account-hierarchy', count: 1
+    assert_select '[data-coa-account-hierarchy-target]', count: 3
     assert_select '.coa-lookup-card__heading', count: 3
     assert_select '#tc60-fields-title', count: 0
     assert_select '.coa-billing-string-grid .coa-billing-string-grid__field select', count: 6

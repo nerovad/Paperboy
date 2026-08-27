@@ -28,17 +28,7 @@
       </div>
     </section>
 
-    <section class="coa-lookup-card" aria-labelledby="customer-account-hierarchy-title"
-             data-coa-customer-lookup-target="hierarchy" hidden>
-      <h2 id="customer-account-hierarchy-title" class="coa-lookup-card__heading">Account Hierarchy</h2>
-      <div class="coa-lookup-card__body">
-        <p class="coa-customer-name" data-coa-customer-lookup-target="customerName"></p>
-        <div data-coa-customer-lookup-target="tree"></div>
-        <p class="coa-customer-empty" data-coa-customer-lookup-target="empty" hidden>
-          No account hierarchy was found for this employee's unit.
-        </p>
-      </div>
-    </section>
+    <%= render "coa/shared/account_hierarchy" %>
 
     <section class="coa-lookup-card" aria-labelledby="employee-contact-title"
              data-coa-customer-lookup-target="contact" hidden>
