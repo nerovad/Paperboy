@@ -425,7 +425,8 @@
   }
 
   &.data-runner-sidebar,
-  &.coa-sidebar {
+  &.coa-sidebar,
+  &.admin-tools-sidebar {
     .nav-group {
       margin: 10px 0;
       border: 1px solid rgba(255, 255, 255, 0.12);
