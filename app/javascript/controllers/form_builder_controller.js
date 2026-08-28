@@ -77,6 +77,12 @@ export default class extends Controller {
     // Initialize wizard navigation
     this.initializeWizard()
 
+    // The Admin Tools sidebar can reach the builder from any Manage Forms
+    // screen. Once navigation lands on the index, open the existing modal.
+    if (!this.editModeValue && new URLSearchParams(window.location.search).has('create')) {
+      this.openModal(new Event('click'))
+    }
+
     // Hydrate routing-step condition editors that were rendered server-side
     this.initializeRoutingStepConditions()
 
