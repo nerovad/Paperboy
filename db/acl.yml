@@ -425,7 +425,21 @@ groups:
   - type: application
     key: digital_asset_management
   - type: application
+    key: p2m
+  - type: application
     key: print_production
+  - type: authorization_console
+    key: cir:read
+  - type: authorization_console
+    key: cir:write
+  - type: authorization_console
+    key: hca_safety:read
+  - type: authorization_console
+    key: hca_safety:write
+  - type: authorization_console
+    key: services:read
+  - type: authorization_console
+    key: services:write
   - type: dropdown
     key: auth_console
   - type: dropdown
