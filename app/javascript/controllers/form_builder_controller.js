@@ -58,6 +58,8 @@ export default class extends Controller {
     this.fieldsContainerTarget?.querySelectorAll('.field-item').forEach(f => this.assignFieldUid(f))
     this.fieldsContainerTarget?.querySelectorAll('.field-item').forEach(f => this.addFieldDisclosure(f))
     this.updateFieldPositions()
+    this.routingStepItemTargets.forEach(step => this.addRoutingStepDisclosure(step))
+    this.renumberRoutingSteps()
     this.initializeConditionalUids()
     // Populate/preserve each field's "Repeats in section" selector.
     this.updateSectionDropdowns()
@@ -240,6 +242,62 @@ export default class extends Controller {
     body.hidden = expanded
   }
 
+  addRoutingStepDisclosure(stepItem, expanded = false) {
+    if (stepItem.querySelector(':scope > .routing-step-disclosure-header')) return
+
+    const header = document.createElement('div')
+    header.className = 'routing-step-disclosure-header'
+    header.innerHTML = `
+      <div class="routing-step-drag-handle" title="Drag to reorder">
+        <span class="step-number"></span>
+        <span aria-hidden="true">&#x2630;</span>
+      </div>
+      <button type="button" class="routing-step-disclosure-toggle"
+              aria-expanded="${expanded}"
+              data-action="click->form-builder#toggleRoutingStepDisclosure">
+        <span class="routing-step-disclosure-label"></span>
+        <span class="routing-step-disclosure-chevron" aria-hidden="true">&#x25BE;</span>
+      </button>`
+
+    const body = document.createElement('div')
+    body.className = 'routing-step-disclosure-body'
+    body.hidden = !expanded
+    while (stepItem.firstChild) body.appendChild(stepItem.firstChild)
+    stepItem.append(header, body)
+
+    const summaryLabel = header.querySelector('.routing-step-disclosure-label')
+    const updateLabel = () => {
+      const route = stepItem.querySelector('.routing-type-select')
+      const destination = this.routingStepDestination(stepItem)
+      const routeLabel = route?.selectedOptions[0]?.text.trim() || 'Select route'
+      summaryLabel.textContent = destination ? `${routeLabel} — ${destination}` : routeLabel
+    }
+    updateLabel()
+    stepItem.querySelectorAll('select').forEach(select => select.addEventListener('change', updateLabel))
+  }
+
+  routingStepDestination(stepItem) {
+    const routeType = stepItem.querySelector('.routing-type-select')?.value
+    const selectors = {
+      employee: '.step-employee-dropdown',
+      group: '.step-group-dropdown',
+      authorization: '.step-authorization-dropdown'
+    }
+    const select = stepItem.querySelector(selectors[routeType])
+    return select?.value ? select.selectedOptions[0]?.text.trim() : ''
+  }
+
+  toggleRoutingStepDisclosure(event) {
+    event.preventDefault()
+    const button = event.currentTarget
+    const stepItem = button.closest('.routing-step-item')
+    const body = stepItem.querySelector(':scope > .routing-step-disclosure-body')
+    const expanded = button.getAttribute('aria-expanded') === 'true'
+
+    button.setAttribute('aria-expanded', String(!expanded))
+    body.hidden = expanded
+  }
+
   // Show the modal
   openModal(event) {
     event.preventDefault()
@@ -381,7 +439,9 @@ export default class extends Controller {
     // Populate the just-added step's condition field dropdown
     const addedStep = this.routingStepsContainerTarget.lastElementChild
     if (addedStep) {
+      this.addRoutingStepDisclosure(addedStep, true)
       this.populateStepConditionFields(addedStep)
+      this.renumberRoutingSteps()
     }
   }
 
