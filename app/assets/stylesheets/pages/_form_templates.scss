@@ -470,6 +470,42 @@
     }
   }
 
+  .field-disclosure-header {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .field-disclosure-toggle {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 4px;
+    border: 0;
+    background: transparent;
+    color: $text-color;
+    font: inherit;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .field-disclosure-chevron {
+    font-size: 18px;
+    transition: transform 0.2s ease;
+  }
+
+  .field-disclosure-toggle[aria-expanded="true"] .field-disclosure-chevron {
+    transform: rotate(180deg);
+  }
+
+  .field-disclosure-body:not([hidden]) {
+    display: block;
+    margin-top: 16px;
+  }
+
   /* Drag handle styles */
   .drag-handle {
     display: flex;

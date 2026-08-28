@@ -56,6 +56,8 @@ export default class extends Controller {
     // references survive reorder/add/remove (positional field_N indices don't).
     this.fieldUidSeq = 0
     this.fieldsContainerTarget?.querySelectorAll('.field-item').forEach(f => this.assignFieldUid(f))
+    this.fieldsContainerTarget?.querySelectorAll('.field-item').forEach(f => this.addFieldDisclosure(f))
+    this.updateFieldPositions()
     this.initializeConditionalUids()
     // Populate/preserve each field's "Repeats in section" selector.
     this.updateSectionDropdowns()
@@ -189,11 +191,53 @@ export default class extends Controller {
   updateFieldPositions() {
     const fields = this.fieldsContainerTarget.querySelectorAll('.field-item')
     fields.forEach((field, index) => {
-      const positionLabel = field.querySelector('.field-position')
-      if (positionLabel) {
+      field.querySelectorAll('.field-position').forEach((positionLabel) => {
         positionLabel.textContent = `#${index + 1}`
-      }
+      })
     })
+  }
+
+  addFieldDisclosure(fieldItem, expanded = false) {
+    if (fieldItem.querySelector(':scope > .field-disclosure-header')) return
+
+    const labelInput = fieldItem.querySelector('input[name="fields[][label]"]')
+    const header = document.createElement('div')
+    header.className = 'field-disclosure-header'
+    header.innerHTML = `
+      <div class="drag-handle" title="Drag to reorder">
+        <span class="field-position"></span>
+        <span class="drag-icon">&#x2630;</span>
+      </div>
+      <button type="button" class="field-disclosure-toggle"
+              aria-expanded="${expanded}"
+              data-action="click->form-builder#toggleFieldDisclosure">
+        <span class="field-disclosure-label"></span>
+        <span class="field-disclosure-chevron" aria-hidden="true">&#x25BE;</span>
+      </button>`
+
+    const body = document.createElement('div')
+    body.className = 'field-disclosure-body'
+    body.hidden = !expanded
+    while (fieldItem.firstChild) body.appendChild(fieldItem.firstChild)
+    fieldItem.append(header, body)
+
+    const summaryLabel = header.querySelector('.field-disclosure-label')
+    const updateLabel = () => {
+      summaryLabel.textContent = labelInput?.value.trim() || 'Untitled field'
+    }
+    updateLabel()
+    labelInput?.addEventListener('input', updateLabel)
+  }
+
+  toggleFieldDisclosure(event) {
+    event.preventDefault()
+    const button = event.currentTarget
+    const fieldItem = button.closest('.field-item')
+    const body = fieldItem.querySelector(':scope > .field-disclosure-body')
+    const expanded = button.getAttribute('aria-expanded') === 'true'
+
+    button.setAttribute('aria-expanded', String(!expanded))
+    body.hidden = expanded
   }
 
   // Show the modal
@@ -1092,6 +1136,7 @@ export default class extends Controller {
     const addedField = this.fieldsContainerTarget.lastElementChild
     if (addedField) {
       this.assignFieldUid(addedField)
+      this.addFieldDisclosure(addedField, true)
       this.populateRestrictionDropdowns(addedField)
     }
 
