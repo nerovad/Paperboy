@@ -1,9 +1,11 @@
 <%# The palette's body, fetched into its frame the first time ":" is pressed.
 
     Two lists, because there are two questions: where do I want to be, and
-    which form do I want to fill out. Destinations come first — a search that
-    can reach every app's sidebar is the reason the palette exists, and "go
-    there" is the more common ask.
+    which form do I want to fill out. Above them sit the two kinds of answer
+    that are neither: a reference number resolves to one submission, and a
+    command does something rather than opening anything. Destinations come
+    first among the lists — a search that can reach every app's sidebar is the
+    reason the palette exists, and "go there" is the more common ask.
 
     Filtering is sidebar_search_controller — the same matching, ranking and
     highlighting the sidebar's box does, over the same catalog. Only the
@@ -20,7 +22,7 @@
            class="pb-palette__input"
            autocomplete="off"
            aria-label="Search the whole system"
-           placeholder="Go anywhere, open any form — or ask who am i"
+           placeholder="Go anywhere, open any form, jump to PLS-845 — or ask who am i"
            data-sidebar-search-target="input"
            data-command-palette-target="input"
            data-action="input->sidebar-search#filter
@@ -29,6 +31,7 @@
                         keydown.down->command-palette#next
                         keydown.up->command-palette#previous" />
 
+    <%= render "shared/search_reference", row_class: "pb-palette__row pb-palette__row--reference" %>
     <%= render "shared/search_commands", row_class: "pb-palette__row pb-palette__row--command" %>
 
     <div class="pb-palette__results">

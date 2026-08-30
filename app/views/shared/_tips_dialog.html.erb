@@ -60,6 +60,18 @@
             </p>
           </li>
 
+          <% if can_use_command_palette? %>
+            <li class="pb-tip">
+              <span class="pb-tip__glyph" aria-hidden="true">&#9670;</span>
+              <p class="pb-tip__text">
+                <strong>Jump to a submission by its number.</strong> Type a
+                reference like <kbd>PLS-845</kbd> into the command palette and
+                Enter opens that submission. A bare <kbd>845</kbd> lands on
+                Submissions filtered to it instead — every form has an 845.
+              </p>
+            </li>
+          <% end %>
+
           <li class="pb-tip">
             <span class="pb-tip__glyph" aria-hidden="true">&#9670;</span>
             <p class="pb-tip__text">

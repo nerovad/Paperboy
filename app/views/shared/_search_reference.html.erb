@@ -1,0 +1,20 @@
+<%# The row that turns a typed reference number into the submission it names.
+
+    "PLS-845", "pls845" or the bare "845" are all somebody reaching for one
+    record. sidebar_search_controller decides whether what has been typed is
+    reference-shaped and points this row at SubmissionsController#lookup, which
+    is what actually resolves it — nothing on this side knows which submissions
+    exist or which of them the viewer may open, and a search box that guessed
+    at either would be guessing about permissions.
+
+    Rendered above the commands so Enter takes it first: somebody who typed a
+    reference number wants that record, not a form whose number looks like it.
+
+    Locals:
+      row_class  the CSS class the surrounding surface styles its rows with %>
+<a class="<%= row_class %>" hidden
+   href="<%= submission_lookup_path %>"
+   data-sidebar-search-target="reference"
+   data-lookup-path="<%= submission_lookup_path %>"
+   data-action="command-palette#close"
+  ><span class="search-command__glyph" aria-hidden="true">&#9670;</span>Open submission <strong data-sidebar-search-target="referenceLabel"></strong></a>
