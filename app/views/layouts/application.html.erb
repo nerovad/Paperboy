@@ -57,6 +57,7 @@
     <% if current_user %>
       <%= render "shared/command_palette" if can_use_command_palette? %>
       <%= render "shared/who_am_i_dialog" %>
+      <%= render "shared/tips_dialog" %>
     <% end %>
 
     <div class="app-container">
@@ -162,6 +163,24 @@
         </div>
       </div>
     </div>
+
+    <%# The paperboy in the bottom-left corner. Signed in he is the app's help
+        affordance and opens Tips & Tricks; he dispatches the window event
+        rather than reaching for the dialog, which is rendered below. Signed
+        out there is nothing to give tips about, so he is just scenery. %>
+    <% if current_user %>
+      <button type="button"
+              class="app-mascot"
+              data-controller="search-command"
+              data-command-event="tips:open"
+              data-action="search-command#run"
+              aria-label="Tips and tricks">
+        <%= image_tag "Paperboy_Icon_0826.png", alt: "", aria: { hidden: true } %>
+      </button>
+    <% else %>
+      <%= image_tag "Paperboy_Icon_0826.png", alt: "", aria: { hidden: true },
+                    class: "app-mascot" %>
+    <% end %>
 
     <%= link_to "Powered by GSA",
                 "http://10.135.204.167:3002/",

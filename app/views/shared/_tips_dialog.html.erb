@@ -1,0 +1,115 @@
+<%# "Tips & Tricks" — what the paperboy in the bottom-left corner opens.
+
+    It lives in the layout because the mascot does, and it is opened by the
+    `tips:open` window event so nothing has to reach it (see
+    shared/_search_commands for the same pattern).
+
+    Every tip here describes something the app actually does. The quick-search
+    row is behind the same ACL check that decides whether ":" installs a
+    keyboard listener at all — offering the shortcut to someone who does not
+    hold the grant would just be a key that does nothing. %>
+<div data-controller="tips"
+     data-action="tips:open@window->tips#open">
+  <div class="pb-modal-backdrop" hidden
+       data-tips-target="modal"
+       data-action="click->tips#backdropClose">
+    <div class="pb-modal pb-modal--lg" role="dialog" aria-modal="true"
+         aria-labelledby="pb-tips-title">
+      <div class="pb-modal__header">
+        <h3 id="pb-tips-title">Tips &amp; Tricks</h3>
+        <button type="button" class="pb-modal__close" aria-label="Close"
+                data-action="tips#close">&#10005;</button>
+      </div>
+
+      <div class="pb-modal__body">
+        <ul class="pb-tips">
+          <% if can_use_command_palette? %>
+            <li class="pb-tip">
+              <kbd class="pb-tip__key">:</kbd>
+              <p class="pb-tip__text">
+                <strong>Quick search.</strong> Press <kbd>:</kbd> anywhere you are
+                not typing in a box to open the command palette — every form and
+                command in the system, searchable from any app.
+              </p>
+            </li>
+          <% end %>
+
+          <li class="pb-tip">
+            <kbd class="pb-tip__key">Esc</kbd>
+            <p class="pb-tip__text">
+              <strong>Close anything.</strong> Escape dismisses this dialog, the
+              command palette, and every other dialog in the app.
+            </p>
+          </li>
+
+          <li class="pb-tip">
+            <kbd class="pb-tip__key">&crarr;</kbd>
+            <p class="pb-tip__text">
+              <strong>Enter runs the command.</strong> In the sidebar's search
+              box, Enter fires whichever command is on offer instead of just
+              filtering the list.
+            </p>
+          </li>
+
+          <li class="pb-tip">
+            <span class="pb-tip__glyph" aria-hidden="true">&#9670;</span>
+            <p class="pb-tip__text">
+              <strong>Ask "who am i".</strong> Type it into the sidebar search or
+              the command palette to see your account and where you sit in the
+              organization.
+            </p>
+          </li>
+
+          <li class="pb-tip">
+            <span class="pb-tip__glyph" aria-hidden="true">&#9670;</span>
+            <p class="pb-tip__text">
+              <strong>Search forms by more than name.</strong> The sidebar box
+              matches numbers, fields and tags too — and
+              <em>Advanced Search</em> underneath it narrows by the metadata an
+              admin set in the form builder. The two compose.
+            </p>
+          </li>
+
+          <li class="pb-tip">
+            <span class="pb-tip__glyph" aria-hidden="true">&#9670;</span>
+            <p class="pb-tip__text">
+              <strong>Switch apps.</strong> The chevron beside the app name at
+              the top of the sidebar moves between Paperboy, Data Runner and
+              Chart of Accounts.
+            </p>
+          </li>
+
+          <li class="pb-tip">
+            <span class="pb-tip__glyph" aria-hidden="true">&#9670;</span>
+            <p class="pb-tip__text">
+              <strong>My Work is three tabs.</strong> Inbox, Submissions and
+              Records are one page — the badge counts what is waiting on you.
+            </p>
+          </li>
+
+          <li class="pb-tip">
+            <span class="pb-tip__glyph" aria-hidden="true">&#9670;</span>
+            <p class="pb-tip__text">
+              <strong>Choose your columns.</strong> The <kbd>+</kbd> above the
+              table on Inbox, Submissions and Records opens
+              <em>Customize columns &amp; filters</em>.
+            </p>
+          </li>
+
+          <li class="pb-tip">
+            <span class="pb-tip__glyph" aria-hidden="true">&#9670;</span>
+            <p class="pb-tip__text">
+              <strong>Save a search.</strong> On Submissions,
+              <em>Save Search</em> keeps a set of filters and puts it in the
+              dropdown for next time.
+            </p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pb-modal__actions">
+        <button type="button" class="btn" data-action="tips#close">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
