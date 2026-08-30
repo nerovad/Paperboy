@@ -134,6 +134,23 @@ class SubmissionsController < ApplicationController
     end
   end
 
+  # Turns a reference number typed into the quick search into the submission it
+  # names, and sends the viewer straight to that submission's page — the same
+  # place Open lands on the list below, without the trip through the list.
+  #
+  # Anything that does not resolve to exactly one submission this viewer may see
+  # falls back to Submissions filtered by what they typed. That is the honest
+  # answer for a bare id, which names one record per form type and so belongs to
+  # no single one of them, and for a reference that is real but not theirs to
+  # open — the list applies these same visibility rules and simply comes back
+  # empty, rather than the lookup confirming the record exists.
+  def lookup
+    record = referenced_submission(params[:reference])
+    return redirect_to(submissions_path(filter_reference: params[:reference])) unless record
+
+    redirect_to submission_path_for(record)
+  end
+
   # Changes a submission's status from its own page. Forms that carry a status
   # dropdown in the inbox keep that control here after they reach an end state
   # and drop out of the queue — the only place they still live is Submissions,
@@ -176,6 +193,42 @@ class SubmissionsController < ApplicationController
   rescue ActiveRecord::RecordNotFound
     redirect_to submissions_path, alert: 'Submission not found.'
     nil
+  end
+
+  # The one submission a typed reference names, or nil when it names none: an
+  # unparseable query, a prefix no form uses, a bare id with no prefix to say
+  # which form it belongs to, or a record outside what this viewer may see.
+  def referenced_submission(query)
+    parsed = Forms::Reference.parse_query(query)
+    return nil unless parsed && parsed[:prefix]
+
+    class_name = Forms::Reference.class_name_for_prefix(parsed[:prefix])
+    model_class = class_name && application_record_class_named(class_name)
+    return nil unless model_class&.table_exists?
+
+    visible_submissions(model_class).find_by(id: parsed[:id])
+  end
+
+  # Everything of one form type this viewer may see on the Submissions page:
+  # their own submissions and their reporting chain's — everybody's, for a
+  # system admin — widened by their visibility grants. index reaches the same
+  # place through @scoped_employee_ids, which additionally honours the employee
+  # filter; a lookup has no filter bar and wants the widest view the viewer
+  # holds, so it asks for that directly.
+  #
+  # A form that records no submitter is nobody's own, so only a grant opens it.
+  def visible_submissions(model_class)
+    employee_id = session.dig(:user, 'employee_id').to_s
+    own = if current_user_group_names.include?('system_admins')
+            model_class.all
+          elsif model_class.column_names.include?('employee_id')
+            model_class.where(employee_id: [employee_id] + Employee.subordinate_ids(employee_id))
+          else
+            model_class.none
+          end
+
+    grants = Forms::VisibilityGrant.for_viewer(employee_id, current_user_group_ids).for_submissions.to_a
+    Forms::VisibilityGrant.widen(own, grants, model_class)
   end
 
   # The submission's own page, so a status change lands back where it started.

@@ -23,8 +23,16 @@ const MATCH_SOURCES = [
   { key: "description", bonus: 0, multi: false, hint: null, hintClass: null }
 ]
 
+// A reference number typed into the box — "PLS-845", "pls845", or the bare id
+// "845". Deliberately loose about the prefix: the box holds no list of them,
+// and SubmissionsController#lookup is what decides whether a typed prefix
+// belongs to a real form. Kept in step with Forms::Reference::QUERY_RE, which
+// asks the same question of the query server-side.
+const REFERENCE_RE = /^([a-z]{2,8})?-?(\d{1,9})$/i
+
 export default class extends Controller {
-  static targets = ["input", "formLink", "formsList", "destination", "destinationsList", "item", "emptyState", "command"]
+  static targets = ["input", "formLink", "formsList", "destination", "destinationsList", "item",
+                    "emptyState", "command", "reference", "referenceLabel"]
   static values = { debounce: { type: Number, default: 0 } }
 
   connect() {
@@ -60,6 +68,7 @@ export default class extends Controller {
 
   performFilter() {
     const searchTerm = this.inputTarget.value.toLowerCase().trim()
+    this.filterReference(searchTerm)
     this.filterCommands(searchTerm)
 
     if (this.hasItemTarget) {
@@ -175,6 +184,33 @@ export default class extends Controller {
     list.hidden = !rows.some(row => row.style.display !== "none")
   }
 
+  // Offers the typed reference as a row of its own, above everything else. What
+  // it resolves to is the server's business — this only recognises the shape of
+  // a reference and hands what was typed to the lookup, because which
+  // submissions exist and which of them this person may open are questions a
+  // filter over a prefetched list has no way to answer.
+  filterReference(searchTerm) {
+    if (!this.hasReferenceTarget) return
+
+    const reference = this.referenceFor(searchTerm)
+    this.referenceTarget.hidden = !reference
+    if (!reference) return
+
+    const lookup = this.referenceTarget.dataset.lookupPath
+    this.referenceTarget.href = `${lookup}?reference=${encodeURIComponent(reference)}`
+    if (this.hasReferenceLabelTarget) this.referenceLabelTarget.textContent = reference
+  }
+
+  // The reference the query names, written the way a submission wears it, or
+  // null when the query is not one. A bare id keeps its bare form — the lookup
+  // sends it to the Submissions list, since the same id exists on every form.
+  referenceFor(searchTerm) {
+    const match = REFERENCE_RE.exec(searchTerm)
+    if (!match) return null
+
+    return [match[1] && match[1].toUpperCase(), match[2]].filter(Boolean).join("-")
+  }
+
   // Commands are what the sidebar can *do* rather than what it can open —
   // "who am i" today, anything added beside it later. They are offered only
   // once something has been typed, so an untouched sidebar stays a plain list
@@ -223,8 +259,9 @@ export default class extends Controller {
     if (!this.hasEmptyStateTarget) return
 
     const commandOffered = this.hasCommandTarget && this.commandTargets.some(command => !command.hidden)
+    const referenceOffered = this.hasReferenceTarget && !this.referenceTarget.hidden
 
-    this.emptyStateTarget.hidden = commandOffered ||
+    this.emptyStateTarget.hidden = commandOffered || referenceOffered ||
       this.rows().some(row => row.style.display !== "none")
   }
 

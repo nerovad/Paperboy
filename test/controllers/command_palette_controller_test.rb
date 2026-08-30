@@ -47,6 +47,18 @@ class CommandPaletteControllerTest < ActionController::TestCase
     assert_select '[data-command-event=?]', 'who-am-i:open', count: 1
   end
 
+  # Typing a reference number in the palette should reach that submission, but
+  # which submissions exist and which of them the viewer may open are not
+  # questions the palette's prefetched list can answer — so the row points at
+  # the lookup and carries what was typed there.
+  test 'show offers a row that resolves a typed reference number' do
+    show_palette
+
+    assert_select "a.pb-palette__row--reference[data-sidebar-search-target='reference']" \
+                  '[data-lookup-path=?][hidden]', submission_lookup_path, count: 1
+    assert_select "[data-sidebar-search-target='referenceLabel']", count: 1
+  end
+
   # The palette is rendered by the layout on every page, and that copy already
   # holds a frame of this name. Sending the layout back would hand Turbo two
   # and it would fill the placeholder with itself.

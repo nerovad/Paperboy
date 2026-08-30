@@ -27,6 +27,17 @@ module Forms
     # Common class-name suffixes stripped before deriving an initials prefix.
     SUFFIX_RE = /(Form|Submission|Request|Reporting)\z/
 
+    # The shape of a reference typed into a search box: a form prefix, an id, or
+    # both, with or without the dash — "PLS-845", "pls845" and "845" are all
+    # somebody reaching for the same submission. The prefix is not checked
+    # against the ones in use here; class_name_for_prefix is where a typed
+    # prefix meets reality.
+    #
+    # Kept in step with REFERENCE_RE in sidebar_search_controller.js, which asks
+    # the same question of the query so a search box can offer the row before
+    # anything has been asked of the server.
+    QUERY_RE = /\A([A-Za-z]{2,8})?-?(\d{1,9})\z/
+
     module_function
 
     # class_name => prefix for every known form. Template-backed forms supply
@@ -69,6 +80,24 @@ module Forms
       letters = base.scan(/[A-Z]/).join
       letters = base[0, 3].to_s.upcase if letters.length < 2
       letters.presence || 'FORM'
+    end
+
+    # What a user typed, read as a reference: { prefix: "PLS", id: "845" } for
+    # anything reference-shaped, with a nil prefix for a bare id, and nil for
+    # anything that is not a reference at all.
+    def parse_query(query)
+      match = QUERY_RE.match(query.to_s.strip)
+      return nil unless match
+
+      { prefix: match[1]&.upcase, id: match[2] }
+    end
+
+    # The form class a typed prefix belongs to, or nil when no form uses it.
+    # Pass a prefix_map (built the same way) to avoid the query.
+    def class_name_for_prefix(prefix, map = nil)
+      return nil if prefix.blank?
+
+      (map || prefix_map).find { |_class_name, value| value.to_s.casecmp?(prefix.to_s) }&.first
     end
 
     # Normalize a user-typed reference for matching: trim and upcase.

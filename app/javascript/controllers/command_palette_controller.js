@@ -137,12 +137,14 @@ export default class extends Controller {
   // and re-hides these rows on each keystroke, so any list kept from the last
   // one is already wrong.
   //
-  // Document order is the order Enter walks: a command, then a destination,
-  // then a form. Each list is ranked on its own, so this is also the tie-break
-  // between them — asked the same question, going somewhere beats opening a
-  // blank form.
+  // Document order is the order Enter walks: the reference row, then a command,
+  // then a destination, then a form. Each list is ranked on its own, so this is
+  // also the tie-break between them — asked the same question, a typed
+  // submission number beats a form whose number looks like it, and going
+  // somewhere beats opening a blank form.
   results() {
     const rows = this.element.querySelectorAll(
+      "[data-sidebar-search-target='reference']," +
       "[data-sidebar-search-target='command']," +
       "[data-sidebar-search-target='destination']," +
       "[data-sidebar-search-target='formLink']"

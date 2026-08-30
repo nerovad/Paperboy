@@ -94,13 +94,24 @@
   &[hidden] { display: none; }
 }
 
-.pb-palette__row--command {
+/* The two rows that are neither a destination nor a form: a command, and the
+   submission a typed reference number names. Both sit above the lists and both
+   answer the whole query rather than matching one row's metadata, so they read
+   as one tinted band across the top. */
+.pb-palette__row--command,
+.pb-palette__row--reference {
   color: $text-strong;
   background: $surface-subtle;
   border-bottom: 1px solid $border-faint;
 
   &:hover,
   &.is-cursor { background: $surface-hover; }
+
+  .search-command__glyph {
+    margin-right: 8px;
+    font-size: 0.8em;
+    opacity: 0.7;
+  }
 }
 
 /* The palette shows the same match hints the sidebar does — which field or
