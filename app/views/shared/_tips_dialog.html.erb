@@ -1,4 +1,4 @@
-<%# "Tips & Tricks" — what the paperboy in the bottom-left corner opens.
+<%# "Tips & Tricks" is what the paperboy in the bottom-left corner opens.
 
     It lives in the layout because the mascot does, and it is opened by the
     `tips:open` window event so nothing has to reach it (see
@@ -6,7 +6,7 @@
 
     Every tip here describes something the app actually does. The quick-search
     row is behind the same ACL check that decides whether ":" installs a
-    keyboard listener at all — offering the shortcut to someone who does not
+    keyboard listener at all. Offering the shortcut to someone who does not
     hold the grant would just be a key that does nothing. %>
 <div data-controller="tips"
      data-action="tips:open@window->tips#open">
@@ -28,8 +28,8 @@
               <kbd class="pb-tip__key">:</kbd>
               <p class="pb-tip__text">
                 <strong>Quick search.</strong> Press <kbd>:</kbd> anywhere you are
-                not typing in a box to open the command palette — every form and
-                command in the system, searchable from any app.
+                not typing in a box to open the command palette. Every form and
+                command in the system is searchable from any app.
               </p>
             </li>
           <% end %>
@@ -67,7 +67,8 @@
                 <strong>Jump to a submission by its number.</strong> Type a
                 reference like <kbd>PLS-845</kbd> into the command palette and
                 Enter opens that submission. A bare <kbd>845</kbd> lands on
-                Submissions filtered to it instead — every form has an 845.
+                Submissions filtered to it instead, because every form has an
+                845.
               </p>
             </li>
           <% end %>
@@ -76,7 +77,7 @@
             <span class="pb-tip__glyph" aria-hidden="true">&#9670;</span>
             <p class="pb-tip__text">
               <strong>Search forms by more than name.</strong> The sidebar box
-              matches numbers, fields and tags too — and
+              matches numbers, fields and tags too, and
               <em>Advanced Search</em> underneath it narrows by the metadata an
               admin set in the form builder. The two compose.
             </p>
@@ -95,7 +96,8 @@
             <span class="pb-tip__glyph" aria-hidden="true">&#9670;</span>
             <p class="pb-tip__text">
               <strong>My Work is three tabs.</strong> Inbox, Submissions and
-              Records are one page — the badge counts what is waiting on you.
+              Records are one page, and the badge counts what is waiting on
+              you.
             </p>
           </li>
 
