@@ -28,7 +28,7 @@
       ['employeeid',  'employeeid',  'int',      'NOT NULL',               nil],
       ['groupid',     'groupid',     'bigint',   'NOT NULL',               nil],
       ['assigned_at', 'assigned_at', 'datetime', 'NULL',                   '(getdate())'],
-      ['assigned_by', 'assigned_by', 'int',      'NULL',                   nil],
+      ['assigned_by', 'assigned_by', 'int',      'NULL',                   nil]
     ],
     database_connections: [
       {

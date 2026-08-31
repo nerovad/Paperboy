@@ -48,10 +48,10 @@ gem 'sidekiq-cron'
 gem 'jwt'
 
 # PDF Generation
+gem 'caxlsx'
 gem 'prawn'
 gem 'prawn-table'
 gem 'prawn-templates'
-gem 'caxlsx'
 
 # CSV Generation
 gem 'csv'

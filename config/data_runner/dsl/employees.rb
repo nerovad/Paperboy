@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 [
-  "Employees",
+  'Employees',
   {
     steps: {
       manual: { enabled: true, steps: Workflow::MANUAL_STEPS },
@@ -11,11 +11,11 @@
       name: 'human_resources'
     },
     source: {
-      host: "GSASQL16",
-      database: "GSABSS",
-      schema: "dbo",
-      table: "employees",
-      local: "employees.csv",
+      host: 'GSASQL16',
+      database: 'GSABSS',
+      schema: 'dbo',
+      table: 'employees',
+      local: 'employees.csv',
       format: :csv,
       strategy: :replicate
     },
@@ -40,14 +40,14 @@
       ['supervisor_first_name', 'supervisor_first_name', 'nvarchar(50)', 'NULL',     nil],
       ['person_email',          nil,                     'nvarchar(50)', 'NULL',     nil],
       ['email',                 'email',                 'nvarchar(50)', 'NULL',     nil],
-      [nil,                     'active',                'bit',          'NOT NULL', 1],
+      [nil,                     'active',                'bit',          'NOT NULL', 1]
     ],
     database_connections: [
       {
-        host: "GSASQL16",
-        database: "GSARecords",
-        schema: "dbo",
-        table: "employees",
+        host: 'GSASQL16',
+        database: 'GSARecords',
+        schema: 'dbo',
+        table: 'employees',
         inject: { mode: :truncate_insert }
       }
     ]

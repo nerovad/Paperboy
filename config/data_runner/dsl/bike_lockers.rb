@@ -34,7 +34,7 @@
       ['assigned_employee_id', 'assigned_employee_id', 'nvarchar(4000)', 'NULL',                   nil],
       ['assigned_at',          'assigned_at',          'datetime2(6)',   'NULL',                   nil],
       ['created_at',           'created_at',           'datetime2(6)',   'NOT NULL',               nil],
-      ['updated_at',           'updated_at',           'datetime2(6)',   'NOT NULL',               nil],
+      ['updated_at',           'updated_at',           'datetime2(6)',   'NOT NULL',               nil]
     ],
     database_connections: [
       {

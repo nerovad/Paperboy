@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
 [
-  "Universal_Data_Import",
+  'Universal_Data_Import',
   {
     steps: {
       manual: { enabled: true, steps: Workflow::MANUAL_STEPS },
       scheduled: { enabled: true, frequency: :daily, steps: Workflow::SCHEDULED_STEPS }
     },
     source: {
-      host: "10.135.204.161",
-      database: "GSA Scan",
-      schema: "dbo",
-      table: "Universal_Data_Import",
-      local: "Universal_Data_Import.csv",
+      host: '10.135.204.161',
+      database: 'GSA Scan',
+      schema: 'dbo',
+      table: 'Universal_Data_Import',
+      local: 'Universal_Data_Import.csv',
       format: :csv,
       strategy: :replicate
     },
@@ -52,14 +52,14 @@
       ['date_value_04', 'date_value_04', 'date',          'NULL',                   nil],
       ['date_value_05', 'date_value_05', 'date',          'NULL',                   nil],
       ['project',       'project',       'nvarchar(100)', 'NULL',                   nil],
-      ['jobid',         'jobid',         'nvarchar(100)', 'NULL',                   nil],
+      ['jobid',         'jobid',         'nvarchar(100)', 'NULL',                   nil]
     ],
     database_connections: [
       {
-        host: "10.135.204.161",
-        database: "GSAStores",
-        schema: "dbo",
-        table: "Universal_Data_Import",
+        host: '10.135.204.161',
+        database: 'GSAStores',
+        schema: 'dbo',
+        table: 'Universal_Data_Import',
         inject: { mode: :truncate_insert }
       }
     ]

@@ -27,7 +27,7 @@
       ['groupid',     'groupid',     'int',           'IDENTITY(1,1) NOT NULL', nil],
       ['group_name',  'group_name',  'nvarchar(100)', 'NOT NULL',               nil],
       ['description', 'description', 'nvarchar(500)', 'NULL',                   nil],
-      ['created_at',  'created_at',  'datetime',      'NULL',                   '(getdate())'],
+      ['created_at',  'created_at',  'datetime',      'NULL',                   '(getdate())']
     ],
     database_connections: [
       {
