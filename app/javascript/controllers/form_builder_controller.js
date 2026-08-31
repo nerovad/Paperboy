@@ -191,6 +191,8 @@ export default class extends Controller {
 
   // Update visual position indicators after reorder
   updateFieldPositions() {
+    if (!this.hasFieldsContainerTarget) return
+
     const fields = this.fieldsContainerTarget.querySelectorAll('.field-item')
     fields.forEach((field, index) => {
       field.querySelectorAll('.field-position').forEach((positionLabel) => {
@@ -221,6 +223,9 @@ export default class extends Controller {
     body.className = 'field-disclosure-body'
     body.hidden = !expanded
     while (fieldItem.firstChild) body.appendChild(fieldItem.firstChild)
+    // The header now owns the drag handle and position badge, so drop the
+    // server-rendered pair rather than showing both when expanded.
+    body.querySelector('.drag-handle')?.remove()
     fieldItem.append(header, body)
 
     const summaryLabel = header.querySelector('.field-disclosure-label')
@@ -263,6 +268,9 @@ export default class extends Controller {
     body.className = 'routing-step-disclosure-body'
     body.hidden = !expanded
     while (stepItem.firstChild) body.appendChild(stepItem.firstChild)
+    // Same as fields: the header owns the drag handle and step number, so the
+    // server-rendered pair goes rather than lingering with a stale number.
+    body.querySelector('.routing-step-drag-handle')?.remove()
     stepItem.append(header, body)
 
     const summaryLabel = header.querySelector('.routing-step-disclosure-label')
@@ -460,10 +468,9 @@ export default class extends Controller {
   renumberRoutingSteps() {
     this.routingStepItemTargets.forEach((item, index) => {
       const stepNumber = index + 1
-      const stepLabel = item.querySelector('.step-number')
-      if (stepLabel) {
+      item.querySelectorAll('.step-number').forEach((stepLabel) => {
         stepLabel.textContent = `Step ${stepNumber}`
-      }
+      })
       const stepInput = item.querySelector('.step-number-input')
       if (stepInput) {
         stepInput.value = stepNumber
