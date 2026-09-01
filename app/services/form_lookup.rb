@@ -1,8 +1,15 @@
 # frozen_string_literal: true
 
 # Runtime resolver for the form builder's generic ("custom") dropdown data
-# source. Generated form views call FormLookup.options(field_id) with ONLY an
-# integer, so no user-supplied strings ever reach generated code on disk.
+# source. Generated form views call FormLookup.options_for(class_name,
+# field_name): that pair names the same field in every database, while
+# form_fields.id is an identity column and means something different in each,
+# so an id baked into a committed view resolves to the wrong row -- or to
+# nothing -- everywhere but the database it was generated against.
+#
+# Neither argument reaches SQL. They only find a row; the table and column
+# names that do reach SQL still come from that row's stored config, so nothing
+# a form author types is interpolated into a query.
 #
 # All table/column names are validated against the live schema and passed
 # through the adapter's identifier quoting before they touch SQL; the category
@@ -134,6 +141,40 @@ class FormLookup
 
     field.merge_extra_values(lookup_rows(field))
   end
+
+  # The same list, addressed by the form's class name and the field's own name
+  # rather than by primary key. This is what generated views call; see the note
+  # at the top of the file for why an id cannot be published into one.
+  def self.options_for(class_name, field_name)
+    field = lookup_field(class_name, field_name)
+    return [] unless field
+
+    field.merge_extra_values(lookup_rows(field))
+  end
+
+  # The custom-lookup field a view is asking for, or nil having said in the log
+  # what missed. An unresolvable field is a deployment fault rather than a user
+  # error -- the row belongs to a form that was never promoted to this database,
+  # or was promoted without its lookup config -- and it is invisible from the
+  # page, which renders a dropdown that is merely empty. Assumes field_name is
+  # unique within a template, as it is for every field backed by a column.
+  def self.lookup_field(class_name, field_name)
+    template = Forms::Template.find_by(class_name: class_name)
+    return missing("no form template named #{class_name}") unless template
+
+    field = Forms::Field.find_by(form_template_id: template.id, field_name: field_name)
+    return missing("#{class_name} has no field #{field_name}") unless field
+    return missing("#{class_name}##{field_name} (id #{field.id}) has no custom lookup") unless field.custom_lookup?
+
+    field
+  end
+
+  # Log why a lookup could not be resolved and hand back nil for the caller.
+  def self.missing(detail)
+    Rails.logger.warn("FormLookup.options_for: #{detail}")
+    nil
+  end
+  private_class_method :lookup_field, :missing
 
   # The rows the configured lookup returns. [] on any invalid/failed config.
   def self.lookup_rows(field)

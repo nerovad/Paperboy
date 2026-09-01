@@ -136,7 +136,7 @@
 <!-- FIELD:passengers START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :passengers, "Passengers" %>
             <%= form.select :passengers,
-                  options_for_select(FormLookup.options(4125)),
+                  options_for_select(FormLookup.options_for("CarpoolForm", "passengers")),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
