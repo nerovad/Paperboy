@@ -7,7 +7,8 @@ module Billing
     def self.all(root: configured_root)
       return [] unless root.directory?
 
-      [root, *root.glob('**/').reject(&:symlink?)].uniq.sort.map do |path|
+      directories = root.glob('**/*').select(&:directory?).reject(&:symlink?)
+      [root, *directories].uniq.sort.map do |path|
         new(path: path, root: root)
       end
     end

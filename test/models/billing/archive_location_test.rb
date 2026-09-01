@@ -14,6 +14,18 @@ module Billing
       end
     end
 
+    test 'does not include directories above the archive root' do
+      Dir.mktmpdir do |directory|
+        root = Pathname(directory).join('archive')
+        root.join('AP01').mkpath
+
+        locations = ArchiveLocation.all(root: root)
+
+        assert_equal ['.', 'AP01'], locations.map(&:relative_path)
+        assert_not_includes locations.map(&:path), Pathname('/')
+      end
+    end
+
     test 'rejects a location outside the configured choices' do
       Dir.mktmpdir do |directory|
         assert_raises(ActiveRecord::RecordNotFound) do
