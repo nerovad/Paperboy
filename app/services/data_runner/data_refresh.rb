@@ -49,7 +49,7 @@ module DataRunner
       file_date = File.mtime(source[:location])
       Dsl.new(
         name: entry.key, slug: entry.slug, location: source[:location], file_date: file_date,
-        current: end_date.present? && file_date.to_date > end_date + 1, script: false, sop: entry.sop
+        current: end_date.present? && file_date.to_date > end_date, script: false, sop: entry.sop
       )
     rescue SystemCallError, TypeError
       Dsl.new(

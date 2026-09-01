@@ -64,7 +64,7 @@ module Billing
         'billing' => [entry, disabled],
         'mail_center_and_warehousing' => []
       }
-      modified_at = Time.zone.local(2026, 8, 3, 8)
+      modified_at = Time.zone.local(2026, 8, 2, 8)
 
       DslCatalog.stub(:grouped, catalog) do
         File.stub(:mtime, modified_at) do
