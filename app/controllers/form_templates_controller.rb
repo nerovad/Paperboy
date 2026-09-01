@@ -2505,11 +2505,14 @@ class FormTemplatesController < ApplicationController
   end
 
   # Dropdown option-source expression, shared by every generated view.
-  # Custom lookups merge their manual extras inside FormLookup.options; the
+  # Custom lookups merge their manual extras inside FormLookup.options_for; the
   # curated tables get theirs pinned on here.
   def field_options_expr(field)
     if field.custom_lookup?
-      "FormLookup.options(#{field.id})"
+      # Class name + field name, never field.id: the id is an identity column
+      # and the file this string lands in is committed and deployed to every
+      # database. See the note at the top of FormLookup.
+      "FormLookup.options_for(#{field.form_template.class_name.inspect}, #{field.field_name.inspect})"
     elsif field.data_source?
       pin_extra_values_expr(field, field.data_source_query_code)
     else

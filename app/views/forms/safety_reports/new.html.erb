@@ -142,7 +142,7 @@
 <!-- FIELD:report_type START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :report_type, "Report Type" %>
             <%= form.select :report_type,
-                  options_for_select(FormLookup.options(4803)),
+                  options_for_select(FormLookup.options_for("SafetyReport", "report_type")),
                   { include_blank: "Select..." },
                   { class: "form-control" } %>
           </div>
@@ -157,7 +157,7 @@
 <!-- FIELD:impacted_employee START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :impacted_employee, "Impacted Employee" %>
             <%= form.select :impacted_employee,
-                  options_for_select(FormLookup.options(4805)),
+                  options_for_select(FormLookup.options_for("SafetyReport", "impacted_employee")),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
@@ -239,7 +239,7 @@
 <!-- FIELD:who_gave_the_dwc1 START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :who_gave_the_dwc1, "Who Gave the DWC-1" %>
             <%= form.select :who_gave_the_dwc1,
-                  options_for_select(FormLookup.options(4814)),
+                  options_for_select(FormLookup.options_for("SafetyReport", "who_gave_the_dwc1")),
                   { include_blank: "Select..." },
                   { class: "form-control" } %>
           </div>
@@ -287,7 +287,7 @@
 <!-- FIELD:location_of_incident START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :location_of_incident, "Location of Incident" %>
             <%= form.select :location_of_incident,
-                  options_for_select(FormLookup.options(4820)),
+                  options_for_select(FormLookup.options_for("SafetyReport", "location_of_incident")),
                   { include_blank: "Select..." },
                   { class: "form-control" } %>
           </div>
@@ -308,7 +308,7 @@
 <!-- FIELD:department_where_event_occurred START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :department_where_event_occurred, "Department Where Event Occurred" %>
             <%= form.select :department_where_event_occurred,
-                  options_for_select(FormLookup.options(4823)),
+                  options_for_select(FormLookup.options_for("SafetyReport", "department_where_event_occurred")),
                   { include_blank: "Select..." },
                   { class: "form-control" } %>
           </div>
@@ -512,7 +512,7 @@
   <%= form.label :nature_of_incident, "Nature of Incident" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :nature_of_incident,
-                  options_for_select(FormLookup.options(4844)),
+                  options_for_select(FormLookup.options_for("SafetyReport", "nature_of_incident")),
                   { include_blank: false },
                   { class: "form-control", disabled: !field_4844_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
@@ -524,7 +524,7 @@
   <%= form.label :cause_of_incident, "Cause of Incident" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :cause_of_incident,
-                  options_for_select(FormLookup.options(4845)),
+                  options_for_select(FormLookup.options_for("SafetyReport", "cause_of_incident")),
                   { include_blank: false },
                   { class: "form-control", disabled: !field_4845_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
@@ -545,7 +545,7 @@
   <%= form.label :root_cause, "Root Cause" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :root_cause,
-                  options_for_select(FormLookup.options(4846)),
+                  options_for_select(FormLookup.options_for("SafetyReport", "root_cause")),
                   { include_blank: false },
                   { class: "form-control", disabled: !field_4846_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
@@ -557,7 +557,7 @@
   <%= form.label :assessment_of_future_severity_potential, "Assessment of Future Severity Potential" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :assessment_of_future_severity_potential,
-                  options_for_select(FormLookup.options(4847)),
+                  options_for_select(FormLookup.options_for("SafetyReport", "assessment_of_future_severity_potential")),
                   { include_blank: false },
                   { class: "form-control", disabled: !field_4847_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
@@ -569,7 +569,7 @@
   <%= form.label :assessment_of_probability_of_recurrence, "Assessment of Probability of Recurrence" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :assessment_of_probability_of_recurrence,
-                  options_for_select(FormLookup.options(4848)),
+                  options_for_select(FormLookup.options_for("SafetyReport", "assessment_of_probability_of_recurrence")),
                   { include_blank: false },
                   { class: "form-control", disabled: !field_4848_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
@@ -683,7 +683,7 @@
   <%= form.label :reportable_injury_codes, "Reportable Injury Codes" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :reportable_injury_codes,
-                  options_for_select(FormLookup.options(4857)),
+                  options_for_select(FormLookup.options_for("SafetyReport", "reportable_injury_codes")),
                   { include_blank: false },
                   { class: "form-control", disabled: !field_4857_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
