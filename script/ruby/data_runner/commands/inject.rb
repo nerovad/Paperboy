@@ -245,6 +245,13 @@ def reject_existing!(client, target, columns, row, column_types)
   raise "job already imported: #{identity}"
 end
 
+def inject_timing(name, duplicate_check_seconds, insert_seconds, rows_per_second)
+  parts = []
+  parts << format('duplicate check %.3fs', duplicate_check_seconds) if duplicate_check_seconds
+  parts << format('insert %.3fs', insert_seconds)
+  format('[TIMING] %s: %s; %.0f rows/s', name, parts.join('; '), rows_per_second)
+end
+
 # -------------------------------------------------------------------------- }}}
 # {{{ Helper: inject_cfg
 
@@ -429,17 +436,20 @@ begin
       inserted = 0
       columns = nil
       column_types = column_type_map(cfg)
+      duplicate_check_columns = reject_existing_columns(cfg, target.connection)
       identity_insert_enabled = false
       insert_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      duplicate_check_seconds = 0.0
+      duplicate_check_seconds = nil
       batch_writer = nil
 
       CSV.foreach(input, headers: true, encoding: 'bom|utf-8').with_index(2) do |row, line_number|
         if columns.nil?
           columns = row.headers.map(&:to_s)
-          duplicate_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          reject_existing!(client, target, reject_existing_columns(cfg, target.connection), row, column_types)
-          duplicate_check_seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - duplicate_started
+          if duplicate_check_columns.any?
+            duplicate_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+            reject_existing!(client, target, duplicate_check_columns, row, column_types)
+            duplicate_check_seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - duplicate_started
+          end
           if needs_identity_insert?(cfg, columns)
             client.execute(identity_insert_sql(target.schema, target.table, true)).do
             identity_insert_enabled = true
@@ -462,8 +472,7 @@ begin
       inserted = batch_writer&.finish || 0
       insert_seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - insert_started
       rows_per_second = insert_seconds.positive? ? inserted / insert_seconds : inserted
-      puts format('[TIMING] %s: duplicate check %.3fs; insert %.3fs; %.0f rows/s',
-                  name, duplicate_check_seconds, insert_seconds, rows_per_second)
+      puts inject_timing(name, duplicate_check_seconds, insert_seconds, rows_per_second)
 
       client.execute(identity_insert_sql(target.schema, target.table, false)).do if identity_insert_enabled
       client.execute('COMMIT TRAN').do unless atomic_inject
