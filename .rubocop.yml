@@ -18,7 +18,7 @@ Layout/ExtraSpacing:
 Metrics/AbcSize:
   Max: 67
   Exclude:
-    - 'app/controllers/forms/**/*_controller.rb'
+    - "app/controllers/forms/**/*_controller.rb"
 
 Metrics/BlockLength:
   Max: 107
@@ -26,22 +26,22 @@ Metrics/BlockLength:
 Metrics/CyclomaticComplexity:
   Max: 16
   Exclude:
-    - 'app/controllers/forms/**/*_controller.rb'
+    - "app/controllers/forms/**/*_controller.rb"
 
 Metrics/ClassLength:
   Exclude:
-    - 'app/controllers/forms/**/*_controller.rb'
-    - 'app/services/navigation_catalog.rb'
-    - 'app/models/forms/field.rb'
-    - 'app/models/forms/template.rb'
-    - 'app/models/forms/template_routing_step.rb'
-    - 'app/services/forms/inbox_query.rb'
-    - 'app/services/form_lookup.rb'
+    - "app/controllers/forms/**/*_controller.rb"
+    - "app/services/navigation_catalog.rb"
+    - "app/models/forms/field.rb"
+    - "app/models/forms/template.rb"
+    - "app/models/forms/template_routing_step.rb"
+    - "app/services/forms/inbox_query.rb"
+    - "app/services/form_lookup.rb"
 
 Metrics/MethodLength:
   Max: 44
   Exclude:
-    - 'app/controllers/forms/**/*_controller.rb'
+    - "app/controllers/forms/**/*_controller.rb"
 
 Metrics/ModuleLength:
   Max: 146
@@ -52,12 +52,15 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Max: 14
   Exclude:
-    - 'app/controllers/forms/**/*_controller.rb'
-    - 'app/models/forms/template_routing_step.rb'
+    - "app/controllers/forms/**/*_controller.rb"
+    - "app/models/forms/template_routing_step.rb"
 
 Style/MultilineBlockChain:
   Exclude:
-    - 'app/models/forms/template_routing_step.rb'
+    - "app/models/forms/template_routing_step.rb"
+Style/StringLiterals:
+  Enabled: true
+  EnforcedStyle: single_quotes
 
 Naming/MethodParameterName:
   MinNameLength: 1
