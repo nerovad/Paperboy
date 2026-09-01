@@ -5,7 +5,7 @@ module Billing
     include DataRunner::DataRefreshable
 
     before_action -> { require_app_feature('billing', 'data_refresh', fallback: billing_root_path) }
-    before_action :set_active_billing_period, only: %i[show update]
+    prepend_before_action :set_active_billing_period, only: %i[show update]
 
     def status
       render_data_refresh_status

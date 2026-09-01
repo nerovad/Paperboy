@@ -5,11 +5,11 @@
   {
     steps: {
       manual: {
-        enabled: true,
+        enabled: false,
         steps: Workflow::MANUAL_STEPS
       },
       scheduled: {
-        enabled: true,
+        enabled: false,
         frequency: :daily,
         steps: Workflow::SCHEDULED_STEPS
       }

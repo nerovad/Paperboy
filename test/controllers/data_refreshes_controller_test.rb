@@ -10,6 +10,13 @@ class DataRefreshesControllerTest < ActiveSupport::TestCase
     assert_empty expected - P2m::DataRefreshesController.action_methods.to_a
   end
 
+  test 'loads the active billing period before building refresh groups' do
+    callbacks = Billing::DataRefreshesController._process_action_callbacks
+    filters = callbacks.select { |callback| callback.kind == :before }.map(&:filter)
+
+    assert_operator filters.index(:set_active_billing_period), :<, filters.index(:load_data_refresh_groups)
+  end
+
   test 'exposes Print 2 Mail stage data actions' do
     assert_includes P2m::StageDataController.action_methods, 'show'
     assert_includes P2m::StageDataController.action_methods, 'create'
