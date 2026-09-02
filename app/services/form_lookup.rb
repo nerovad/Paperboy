@@ -43,17 +43,57 @@ class FormLookup
     table.to_s == 'employees' ? %w[full_name] : []
   end
 
-  # Answer-lookup autofill. Given target field IDs that share one trigger field
-  # and the trigger's selected display text, return { field_id => filled_value }.
-  # Fields are grouped by [database, table, match_column] so one query per group
-  # fills many fields. All identifiers are validated against the live schema and
-  # quoted; the match value is bound via #quote. Returns {} on any failure so a
-  # bad config or unreachable DB can never 500 a live form.
-  def self.answer_fills(field_ids, value)
-    return {} if value.to_s.strip.empty?
+  # Answer-lookup autofill, addressed by the form's class name and each field's
+  # own name -- the pair that means the same thing in every database. Returns
+  # { field_name => filled_value }; see the note at the top of the file for why
+  # a generated view cannot carry an id.
+  def self.answer_fills_for(class_name, field_names, value)
+    fills(answer_fields(class_name, field_names), value, &:field_name)
+  end
 
-    fields = Forms::Field.where(id: field_ids).select(&:answer_lookup?)
-    return {} if fields.empty?
+  # The same autofill keyed by field id. Kept for requests already in flight
+  # from a page rendered before the switch above; generated views send names.
+  def self.answer_fills(field_ids, value)
+    fills(Forms::Field.where(id: field_ids).select(&:answer_lookup?), value, &:id)
+  end
+
+  # The answer-lookup fields a view is asking for -- lowest id per name, the
+  # same tie-break first_named makes -- having said in the log what missed.
+  def self.answer_fields(class_name, field_names)
+    template = Forms::Template.find_by(class_name: class_name)
+    unless template
+      missing_answer("no form template named #{class_name}")
+      return []
+    end
+
+    names = Array(field_names).map(&:to_s).reject(&:empty?).uniq
+    found = Forms::Field.where(form_template_id: template.id, field_name: names).order(:id).to_a.group_by(&:field_name)
+    names.filter_map { |name| answer_field(class_name, name, found[name]) }
+  end
+
+  def self.answer_field(class_name, name, candidates)
+    field = Array(candidates).first
+    return missing_answer("#{class_name} has no field #{name}") unless field
+    return missing_answer("#{class_name}##{name} (id #{field.id}) has no answer lookup") unless field.answer_lookup?
+
+    field
+  end
+
+  # Log why an answer-lookup field could not be resolved and hand back nil.
+  def self.missing_answer(detail)
+    Rails.logger.warn("FormLookup.answer_fills_for: #{detail}")
+    nil
+  end
+  private_class_method :answer_fields, :answer_field, :missing_answer
+
+  # Fill the given fields from the trigger's selected display text, keyed by
+  # whatever the block names each field. Fields are grouped by [database, table,
+  # match_column] so one query per group fills many fields. All identifiers are
+  # validated against the live schema and quoted; the match value is bound via
+  # #quote. Returns {} on any failure so a bad config or an unreachable DB can
+  # never 500 a live form.
+  def self.fills(fields, value)
+    return {} if value.to_s.strip.empty? || fields.empty?
 
     result = {}
     fields.group_by { |f| f.answer_lookup_config.values_at('database', 'table', 'match_column') }
@@ -72,14 +112,15 @@ class FormLookup
           table, cfg['return_column'], cfg['return_join_columns'],
           cfg['return_join_separator'], row, columns, synthetic
         )
-        result[field.id] = filled unless filled.nil? || filled.to_s.empty?
+        result[yield(field)] = filled unless filled.nil? || filled.to_s.empty?
       end
     end
     result
   rescue StandardError => e
-    Rails.logger.error("FormLookup.answer_fills failed: #{e.class}: #{e.message}")
+    Rails.logger.error("FormLookup.fills failed: #{e.class}: #{e.message}")
     {}
   end
+  private_class_method :fills
 
   # Fetch the single row matching `value` on `match_column`. Supports the
   # employees "full_name" synthetic key by splitting "Last, First" and matching

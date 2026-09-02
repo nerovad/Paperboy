@@ -103,7 +103,7 @@ export default class extends Controller {
                             this.element.querySelector(`select[name$="[${dependsOn}][]"]`)
       if (!triggerSelect) return
 
-      if (answerEl.dataset.answerLookupFieldId) {
+      if (answerEl.dataset.answerLookupField) {
         if (!lookupGroups[dependsOn]) lookupGroups[dependsOn] = { triggerSelect, targets: [] }
         lookupGroups[dependsOn].targets.push(answerEl)
         return
@@ -140,25 +140,29 @@ export default class extends Controller {
     }
     if (!value) return
 
+    // Addressed by form + field name: the field id is an identity column and
+    // means something different in each database, so a generated view cannot
+    // carry one. See app/services/form_lookup.rb.
     const params = new URLSearchParams()
     params.set("value", value)
-    const byId = {}
+    params.set("form", targets[0]?.dataset.answerLookupForm || "")
+    const byName = {}
     targets.forEach(el => {
-      const id = el.dataset.answerLookupFieldId
-      params.append("field_ids[]", id)
-      byId[id] = el
+      const name = el.dataset.answerLookupField
+      params.append("fields[]", name)
+      byName[name] = el
     })
 
     try {
       const res = await fetch(`/lookups/answer_fill?${params.toString()}`)
       if (!res.ok) return
       const fills = await res.json()
-      Object.keys(fills).forEach(id => {
-        const el = byId[id]
+      Object.keys(fills).forEach(name => {
+        const el = byName[name]
         if (!el) return
         const input = el.querySelector("input, select, textarea")
         if (!input) return
-        input.value = fills[id]
+        input.value = fills[name]
         input.dispatchEvent(new Event("change", { bubbles: true }))
       })
     } catch (e) {

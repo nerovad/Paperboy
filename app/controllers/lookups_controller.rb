@@ -104,12 +104,21 @@ class LookupsController < ApplicationController
     render json: Forms::Field.category_options_for(params[:source])
   end
 
-  # Answer-lookup autofill: given the target field IDs (which carry the saved
-  # table/column config) and the trigger's selected text, return the values to
-  # fill, keyed by field id. No user-supplied table/column strings reach SQL —
-  # only integer field ids plus the match value.
+  # Answer-lookup autofill: given the form's class name and the target field
+  # names (which carry the saved table/column config) and the trigger's selected
+  # text, return the values to fill, keyed by field name. No user-supplied
+  # table/column strings reach SQL — only names that have to match a row, plus
+  # the match value.
+  #
+  # A page rendered before the views switched from ids to names still sends
+  # field_ids[]; those are served by id until the last such tab is gone.
   def answer_fill
-    fills = FormLookup.answer_fills(Array(params[:field_ids]), params[:value].to_s)
+    form = params[:form].to_s
+    fills = if form.present?
+              FormLookup.answer_fills_for(form, Array(params[:fields]), params[:value].to_s)
+            else
+              FormLookup.answer_fills(Array(params[:field_ids]), params[:value].to_s)
+            end
     render json: fills
   end
 
