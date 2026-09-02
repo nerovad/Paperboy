@@ -244,6 +244,13 @@ forms:
   - Impact
   - Outcome
   submission_type: database
+  description: ''
+  form_number: ''
+  form_type: ''
+  agency_id: ''
+  division_id: ''
+  department_id: ''
+  unit_id: ''
   fields:
   - field_name: incident_type
     field_type: dropdown
@@ -488,7 +495,10 @@ forms:
           value: GSAV
         order_column:
         order_direction: asc
-      values: []
+      values:
+      - Unknown
+      - Other
+      values_position: end
     read_only: none
     has_custom_view: true
     visible_to_filler: false
@@ -1931,16 +1941,6 @@ forms:
   - Billing Information
   submission_type: approval
   fields:
-  - field_name: brown_mail_number
-    field_type: text
-    label: Brown Mail Number
-    page_number: 3
-    position: 0
-    required: true
-    options: {}
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
   - field_name: brown_mail_location_number
     field_type: text
     label: Brown Mail Location Number
@@ -1988,56 +1988,6 @@ forms:
     label: Approver Name
     page_number: 4
     position: 4
-    required: true
-    options: {}
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-  - field_name: title
-    field_type: text
-    label: Title
-    page_number: 4
-    position: 5
-    required: true
-    options: {}
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-  - field_name: address
-    field_type: text
-    label: Address
-    page_number: 4
-    position: 6
-    required: true
-    options: {}
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-  - field_name: city
-    field_type: text
-    label: City
-    page_number: 4
-    position: 7
-    required: true
-    options: {}
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-  - field_name: state
-    field_type: text
-    label: State
-    page_number: 4
-    position: 8
-    required: true
-    options: {}
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-  - field_name: zip
-    field_type: text
-    label: Zip
-    page_number: 4
-    position: 9
     required: true
     options: {}
     has_custom_view: false
@@ -3185,6 +3135,227 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+- class_name: WorkScheduleOrLocationUpdateForm
+  name: Work Schedule or Location Update
+  page_count: 4
+  page_headers:
+  - Change Request
+  - HR Only
+  submission_type: approval
+  fields:
+  - field_name: requested_by
+    field_type: dropdown
+    label: Requested By
+    page_number: 3
+    position: 0
+    required: true
+    options:
+      values:
+      - Supervisor
+      - Employee
+      - Other
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: other
+    field_type: text
+    label: Other
+    page_number: 3
+    position: 1
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: requested_by
+  - field_name: type_of_change
+    field_type: dropdown
+    label: Type of Change
+    page_number: 3
+    position: 2
+    required: true
+    options:
+      values:
+      - Schedule
+      - Location
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: present_schedule
+    field_type: dropdown
+    label: Present Schedule
+    page_number: 3
+    position: 3
+    required: false
+    options:
+      values:
+      - 5/40 Mon-Fri 8hr/day
+      - 9/80
+      - 4/10
+      - Other
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Schedule
+    conditional_field: type_of_change
+  - field_name: other_schedule
+    field_type: text
+    label: Other Schedule
+    page_number: 3
+    position: 4
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: present_schedule
+  - field_name: proposed_schedule
+    field_type: dropdown
+    label: Proposed Schedule
+    page_number: 3
+    position: 5
+    required: false
+    options:
+      values:
+      - 5/40 Mon-Fri 8hr/day
+      - 9/80
+      - 4/10
+      - Other
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Schedule
+    conditional_field: type_of_change
+  - field_name: other_proposed_schedule
+    field_type: text
+    label: Other Proposed Schedule
+    page_number: 3
+    position: 6
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: proposed_schedule
+  - field_name: present_location
+    field_type: dropdown
+    label: Present Location
+    page_number: 3
+    position: 7
+    required: false
+    options:
+      values:
+      - JJC
+      - HOA
+      - Service Building
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Location
+    conditional_field: type_of_change
+  - field_name: probation_cleared
+    field_type: dropdown
+    label: Probation Cleared
+    page_number: 3
+    position: 8
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - JJC
+    conditional_field: present_location
+  - field_name: effective_location_change_date
+    field_type: date
+    label: Effective Location Change Date
+    page_number: 3
+    position: 9
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Location
+    conditional_field: type_of_change
+  - field_name: effective_date_shift_change
+    field_type: date
+    label: Effective Date Shift Change
+    page_number: 4
+    position: 10
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: pay_group_changed
+    field_type: dropdown
+    label: Pay Group Changed?
+    page_number: 4
+    position: 11
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+      - N/A
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: work_day_hours_changed
+    field_type: dropdown
+    label: Work Day Hours Changed?
+    page_number: 4
+    position: 12
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+      - N/A
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: shift_differential_apaf
+    field_type: dropdown
+    label: Shift Differential - APAF
+    page_number: 4
+    position: 13
+    required: false
+    options:
+      values:
+      - Added
+      - Deleted
+      - 'No'
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: vchrp_schedule_change_submitted
+    field_type: dropdown
+    label: VCHRP Schedule Change Submitted?
+    page_number: 4
+    position: 14
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
 - class_name: WorkplaceViolenceForm
   name: Workplace Violence
   page_count: 5
@@ -3575,227 +3746,6 @@ forms:
     required: false
     options: {}
     read_only: none
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-- class_name: WorkScheduleOrLocationUpdateForm
-  name: Work Schedule or Location Update
-  page_count: 4
-  page_headers:
-  - Change Request
-  - HR Only
-  submission_type: approval
-  fields:
-  - field_name: requested_by
-    field_type: dropdown
-    label: Requested By
-    page_number: 3
-    position: 0
-    required: true
-    options:
-      values:
-      - Supervisor
-      - Employee
-      - Other
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-  - field_name: other
-    field_type: text
-    label: Other
-    page_number: 3
-    position: 1
-    required: true
-    options: {}
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-    conditional_values:
-    - Other
-    conditional_field: requested_by
-  - field_name: type_of_change
-    field_type: dropdown
-    label: Type of Change
-    page_number: 3
-    position: 2
-    required: true
-    options:
-      values:
-      - Schedule
-      - Location
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-  - field_name: present_schedule
-    field_type: dropdown
-    label: Present Schedule
-    page_number: 3
-    position: 3
-    required: false
-    options:
-      values:
-      - 5/40 Mon-Fri 8hr/day
-      - 9/80
-      - 4/10
-      - Other
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-    conditional_values:
-    - Schedule
-    conditional_field: type_of_change
-  - field_name: other_schedule
-    field_type: text
-    label: Other Schedule
-    page_number: 3
-    position: 4
-    required: false
-    options: {}
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-    conditional_values:
-    - Other
-    conditional_field: present_schedule
-  - field_name: proposed_schedule
-    field_type: dropdown
-    label: Proposed Schedule
-    page_number: 3
-    position: 5
-    required: false
-    options:
-      values:
-      - 5/40 Mon-Fri 8hr/day
-      - 9/80
-      - 4/10
-      - Other
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-    conditional_values:
-    - Schedule
-    conditional_field: type_of_change
-  - field_name: other_proposed_schedule
-    field_type: text
-    label: Other Proposed Schedule
-    page_number: 3
-    position: 6
-    required: false
-    options: {}
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-    conditional_values:
-    - Other
-    conditional_field: proposed_schedule
-  - field_name: present_location
-    field_type: dropdown
-    label: Present Location
-    page_number: 3
-    position: 7
-    required: false
-    options:
-      values:
-      - JJC
-      - HOA
-      - Service Building
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-    conditional_values:
-    - Location
-    conditional_field: type_of_change
-  - field_name: probation_cleared
-    field_type: dropdown
-    label: Probation Cleared
-    page_number: 3
-    position: 8
-    required: false
-    options:
-      values:
-      - 'Yes'
-      - 'No'
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-    conditional_values:
-    - JJC
-    conditional_field: present_location
-  - field_name: effective_location_change_date
-    field_type: date
-    label: Effective Location Change Date
-    page_number: 3
-    position: 9
-    required: false
-    options: {}
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-    conditional_values:
-    - Location
-    conditional_field: type_of_change
-  - field_name: effective_date_shift_change
-    field_type: date
-    label: Effective Date Shift Change
-    page_number: 4
-    position: 10
-    required: false
-    options: {}
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-  - field_name: pay_group_changed
-    field_type: dropdown
-    label: Pay Group Changed?
-    page_number: 4
-    position: 11
-    required: false
-    options:
-      values:
-      - 'Yes'
-      - 'No'
-      - N/A
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-  - field_name: work_day_hours_changed
-    field_type: dropdown
-    label: Work Day Hours Changed?
-    page_number: 4
-    position: 12
-    required: false
-    options:
-      values:
-      - 'Yes'
-      - 'No'
-      - N/A
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-  - field_name: shift_differential_apaf
-    field_type: dropdown
-    label: Shift Differential - APAF
-    page_number: 4
-    position: 13
-    required: false
-    options:
-      values:
-      - Added
-      - Deleted
-      - 'No'
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-  - field_name: vchrp_schedule_change_submitted
-    field_type: dropdown
-    label: VCHRP Schedule Change Submitted?
-    page_number: 4
-    position: 14
-    required: false
-    options:
-      values:
-      - 'Yes'
-      - 'No'
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
