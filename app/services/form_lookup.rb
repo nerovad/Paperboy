@@ -156,17 +156,28 @@ class FormLookup
   # what missed. An unresolvable field is a deployment fault rather than a user
   # error -- the row belongs to a form that was never promoted to this database,
   # or was promoted without its lookup config -- and it is invisible from the
-  # page, which renders a dropdown that is merely empty. Assumes field_name is
-  # unique within a template, as it is for every field backed by a column.
+  # page, which renders a dropdown that is merely empty.
   def self.lookup_field(class_name, field_name)
     template = Forms::Template.find_by(class_name: class_name)
     return missing("no form template named #{class_name}") unless template
 
-    field = Forms::Field.find_by(form_template_id: template.id, field_name: field_name)
+    field = first_named(template, class_name, field_name)
     return missing("#{class_name} has no field #{field_name}") unless field
     return missing("#{class_name}##{field_name} (id #{field.id}) has no custom lookup") unless field.custom_lookup?
 
     field
+  end
+
+  # field_name is unique per template for every field the builder maps to its own
+  # column, but not universally -- PcardRequestForm repeats six names across its
+  # pages. Take the lowest id and say so, rather than let find_by pick by
+  # whatever order the adapter happens to return.
+  def self.first_named(template, class_name, field_name)
+    fields = Forms::Field.where(form_template_id: template.id, field_name: field_name).order(:id).to_a
+    return fields.first if fields.size <= 1
+
+    Rails.logger.warn("FormLookup.options_for: #{class_name}##{field_name} names #{fields.size} fields; using id #{fields.first.id}")
+    fields.first
   end
 
   # Log why a lookup could not be resolved and hand back nil for the caller.
@@ -174,7 +185,7 @@ class FormLookup
     Rails.logger.warn("FormLookup.options_for: #{detail}")
     nil
   end
-  private_class_method :lookup_field, :missing
+  private_class_method :lookup_field, :first_named, :missing
 
   # The rows the configured lookup returns. [] on any invalid/failed config.
   def self.lookup_rows(field)

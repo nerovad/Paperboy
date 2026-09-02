@@ -1,0 +1,3801 @@
+---
+forms:
+- class_name: BikeLockerForm
+  name: Bike Locker
+  page_count: 3
+  page_headers:
+  - Locker Information
+  submission_type: approval
+  description: 'Fill out the Bike Locker form to reserve a bike locker on campus. '
+  form_number: GSA-101
+  form_type: Request
+  agency_id: GSA
+  division_id: '4660'
+  department_id: '4661'
+  unit_id: '4661'
+  fields:
+  - field_name: locker_location
+    field_type: dropdown
+    label: Locker Location
+    page_number: 3
+    position: 0
+    required: true
+    options:
+      values:
+      - 669 CSD
+      - A Lot
+      - E Lot
+      - ECCH
+      - FJC Ventura
+      - G Lot
+      - H Lot
+      - Partridge
+      - R Lot
+      - Saticoy Yard
+      - TRB
+      - Vangaurd
+      - Williams
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: locker_number
+    field_type: dropdown
+    label: Locker Number
+    page_number: 3
+    position: 1
+    required: true
+    options:
+      values:
+      - '1'
+      - '2'
+      - '3'
+      - None Available
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: terms_and_conditions
+    field_type: information
+    label: Terms and Conditions
+    page_number: 3
+    position: 2
+    required: true
+    options:
+      information_text: "Terms and Conditions\r\n\r\n \r\n\r\n1. The County and the
+        Employee Transportation Program disclaim any liability for the loss of personal\r\nproperty
+        stored in the bike lockers.\r\n\r\n \r\n\r\n2. Bike Lockers are reserved for
+        workday storage of bicycles only.\r\n\r\n \r\n\r\n3. The County and the Employee
+        Transportation Program reserve the right to revoke this permit at their\r\ndiscretion.\r\n\r\n
+        \r\n\r\n4. The user understands and agrees that this locker permit is issued
+        because the user frequently commutes\r\nby bicycle to the Government Center
+        complex or off-site County location. If regular bicycle commuting\r\nceases,
+        the user agrees to relinquish this permit, vacate the locker and notify the
+        Employee Transportation\r\nCoordinator at 805-654-2051.\r\n\r\n \r\n\r\n5.
+        If a locker appears to be unused or abandoned, the Employee Transportation
+        Coordinator will contact\r\nthe registered user by telephone or e-mail and
+        by posting a written notice on the locker. If the user cannot\r\nbe found
+        and if a response to the written notice is not received after five (5) working
+        days, the County\r\nretains the right to cut the lock and remove the locker
+        contents.\r\n\r\n \r\n\r\n6. The user agrees to keep the padlock (provided
+        by the user) in a clean and rust free condition. Please see\r\na list of recommended
+        locks here:\r\n\r\n \r\n\r\n \r\n\r\n7. The user agrees to keep the locker
+        clean and clutter free and will be responsible for any damages due to\r\nmisuse
+        or abuse.\r\n\r\n \r\n\r\n8. The user agrees to remove the padlock and the
+        contents from the locker when notified via email of\r\nupcoming locker maintenance.\r\n\r\n9.
+        By clicking \"Submit\" I agree to the above Conditions."
+      acknowledgeable: true
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: CarpoolForm
+  name: Carpool
+  page_count: 5
+  page_headers:
+  - Participants
+  - Vehicle Info
+  - Additional Information
+  submission_type: approval
+  fields:
+  - field_name: passengers
+    field_type: choices_dropdown
+    label: Passengers
+    page_number: 3
+    position: 0
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: first_name
+        join_columns:
+        - last_name
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: year
+    field_type: text
+    label: Year
+    page_number: 4
+    position: 1
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: make
+    field_type: text
+    label: Make
+    page_number: 4
+    position: 2
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: model
+    field_type: text
+    label: Model
+    page_number: 4
+    position: 3
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: license_plate
+    field_type: text
+    label: License Plate
+    page_number: 4
+    position: 4
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: color
+    field_type: text
+    label: Color
+    page_number: 4
+    position: 5
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: drivers_license_
+    field_type: text
+    label: 'Drivers License #'
+    page_number: 4
+    position: 6
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: final_location
+    field_type: yes_no
+    label: Final Location
+    page_number: 5
+    position: 7
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: carpool_origin_zip
+    field_type: yes_no
+    label: Carpool Origin Zip
+    page_number: 5
+    position: 8
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: vacant_seats
+    field_type: dropdown
+    label: Vacant Seats?
+    page_number: 5
+    position: 9
+    required: true
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: willing_to_add_more_people
+    field_type: dropdown
+    label: Willing to Add More People?
+    page_number: 5
+    position: 10
+    required: true
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: CriticalInformationReporting
+  name: Critical Information Reporting
+  page_count: 5
+  page_headers:
+  - Incident Info
+  - Impact
+  - Outcome
+  submission_type: database
+  fields:
+  - field_name: incident_type
+    field_type: dropdown
+    label: Incident Type
+    page_number: 3
+    position: 0
+    required: true
+    options:
+      values:
+      - Approved Event Permit
+      - CEO Interest
+      - Elevator Outage (Entrapment)
+      - Elevator Outage (No Entrapment)
+      - Generator of Alarm Testing
+      - HVAC
+      - Natural Disaster
+      - Planned Outage
+      - Unplanned Outage
+      - Safety Incident
+      - Tree Removal
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: urgency
+    field_type: dropdown
+    label: Urgency of Reporting
+    page_number: 3
+    position: 1
+    required: true
+    options:
+      values:
+      - Immediate
+      - Earliest convenience
+      - Before it happens
+    read_only: initial
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_mappings:
+      Approved Event Permit: Before it happens
+      CEO Interest: Earliest convenience
+      Elevator Outage (Entrapment): Immediate
+      Elevator Outage (No Entrapment): Immediate
+      Generator of Alarm Testing: Before it happens
+      HVAC: Earliest convenience
+      Natural Disaster: Immediate
+      Planned Outage: Earliest convenience
+      Unplanned Outage: Immediate
+      Safety Incident: Earliest convenience
+      Tree Removal: Before it happens
+    conditional_answer_field: incident_type
+  - field_name: location
+    field_type: dropdown
+    label: 'Where: Location'
+    page_number: 3
+    position: 2
+    required: true
+    options:
+      values: []
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: staff_involved
+    field_type: choices_dropdown
+    label: Staff Involved
+    page_number: 3
+    position: 3
+    required: true
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: first_name
+        join_columns:
+        - last_name
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
+      values:
+      - Unknown
+      - Other
+      values_position: end
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: other_staff_involved
+    field_type: text
+    label: Other Staff Involved
+    page_number: 3
+    position: 4
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: staff_involved
+  - field_name: incident_details
+    field_type: text_box
+    label: Incident Details
+    page_number: 3
+    position: 5
+    required: true
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: cause
+    field_type: text_box
+    label: Cause
+    page_number: 3
+    position: 6
+    required: true
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: impact
+    field_type: dropdown
+    label: Impact
+    page_number: 4
+    position: 7
+    required: true
+    options:
+      values:
+      - Low
+      - Medium
+      - High
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: impact_started
+    field_type: date
+    label: 'When: Impact Started'
+    page_number: 4
+    position: 8
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: impacted_customers
+    field_type: choices_dropdown
+    label: Impacted Customers
+    page_number: 4
+    position: 9
+    required: true
+    options:
+      values:
+      - Building
+      - Agency
+      - Employee
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: building
+    field_type: choices_dropdown
+    label: Building
+    page_number: 4
+    position: 10
+    required: true
+    options:
+      values:
+      - HOA
+      - JJC
+      - Service Building
+      - Other
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Building
+    conditional_field: impacted_customers
+  - field_name: other_building
+    field_type: text
+    label: Other Building
+    page_number: 4
+    position: 11
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: building
+  - field_name: impacted_agency
+    field_type: choices_dropdown
+    label: Agency
+    page_number: 4
+    position: 12
+    required: true
+    options:
+      custom_lookup:
+        database: gsabss
+        table: agencies
+        column: name
+        join_columns: []
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Agency
+    conditional_field: impacted_customers
+  - field_name: impacted_employee
+    field_type: choices_dropdown
+    label: Employee
+    page_number: 4
+    position: 13
+    required: true
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: first_name
+        join_columns:
+        - last_name
+        join_separator: " "
+        category_filters:
+        - column: agency
+          value: GSAV
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Employee
+    conditional_field: impacted_customers
+  - field_name: next_steps
+    field_type: text_box
+    label: Next Steps
+    page_number: 5
+    position: 14
+    required: true
+    options:
+      rows: 3
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: media_photo_pdf_etc
+    field_type: media_attachment
+    label: Media (Photo, PDF, etc.)
+    page_number: 5
+    position: 15
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: FleetVehicleGaragingForm
+  name: Fleet Vehicle Garaging
+  page_count: 4
+  page_headers:
+  - Vehicle Info
+  - Garaging Location
+  submission_type: approval
+  fields:
+  - field_name: vehicle_number
+    field_type: dropdown
+    label: Vehicle Number
+    page_number: 3
+    position: 0
+    required: false
+    options:
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: year
+    field_type: text
+    label: Year
+    page_number: 3
+    position: 1
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: make
+    field_type: text
+    label: Make
+    page_number: 3
+    position: 2
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: model
+    field_type: text
+    label: Model
+    page_number: 3
+    position: 3
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: location
+    field_type: dropdown
+    label: Location
+    page_number: 4
+    position: 4
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: fleet_locations
+        column: Address
+        join_columns:
+        - City
+        - State
+        - Zip
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
+      repeatable: true
+      repeat_min: 1
+      repeat_max: 2
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: FormRequestForm
+  name: Form Request
+  page_count: 7
+  page_headers:
+  - About
+  - Fields
+  - Routing
+  - Notifications
+  - Extras
+  submission_type: database
+  fields:
+  - field_name: about_the_form
+    field_type: text_box
+    label: About the Form
+    page_number: 3
+    position: 0
+    required: false
+    options:
+      rows: 7
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: list_all_fields_on_form
+    field_type: text_box
+    label: List all Fields on Form
+    page_number: 4
+    position: 1
+    required: false
+    options:
+      rows: 10
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: attach_existing_pdf_form
+    field_type: media_attachment
+    label: Attach Existing PDF Form
+    page_number: 4
+    position: 2
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: form_routing
+    field_type: choices_dropdown
+    label: Form Routing
+    page_number: 5
+    position: 3
+    required: false
+    options:
+      values:
+      - Database
+      - Supervisor
+      - Group
+      - Specific Employee
+      - Other
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: specific_employee
+    field_type: choices_dropdown
+    label: Specific Employee
+    page_number: 5
+    position: 4
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: first_name
+        join_columns:
+        - last_name
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Specific Employee
+    conditional_field: form_routing
+  - field_name: other_routing
+    field_type: text
+    label: Other Routing
+    page_number: 5
+    position: 5
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: form_routing
+  - field_name: group_name
+    field_type: text
+    label: Group Name
+    page_number: 5
+    position: 6
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Group
+    conditional_field: form_routing
+  - field_name: employees_in_group
+    field_type: choices_dropdown
+    label: Employees in Group
+    page_number: 5
+    position: 7
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: first_name
+        join_columns:
+        - last_name
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Group
+    conditional_field: form_routing
+  - field_name: email_or_teams_notifications
+    field_type: choices_dropdown
+    label: Email or Teams Notifications
+    page_number: 6
+    position: 8
+    required: false
+    options:
+      values:
+      - Email
+      - Teams
+      - Other
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: other_notification
+    field_type: text
+    label: Other Notification
+    page_number: 6
+    position: 9
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: GymLockerForm
+  name: Gym Locker
+  page_count: 4
+  page_headers:
+  - Lockers 13
+  - Lockers 12
+  submission_type: database
+  fields:
+  - field_name: which_locker
+    field_type: text
+    label: Which locker
+    page_number: 3
+    position: 0
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: how_many_days
+    field_type: dropdown
+    label: How many days?
+    page_number: 3
+    position: 1
+    required: false
+    options:
+      values:
+      - '1'
+      - '2'
+      - '3'
+      - '4'
+      - '5'
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: why_do_you_need_it
+    field_type: text_box
+    label: Why do you need it?
+    page_number: 4
+    position: 2
+    required: false
+    options:
+      rows: 5
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: are_you_sure_need_it
+    field_type: text_box
+    label: Are you sure need it?
+    page_number: 4
+    position: 3
+    required: false
+    options:
+      rows: 5
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: IdBadgeRequestForm
+  name: ID Badge Request
+  page_count: 4
+  page_headers:
+  - Badge Type
+  - Price List
+  submission_type: approval
+  fields:
+  - field_name: badge_type
+    field_type: choices_dropdown
+    label: Badge Type
+    page_number: 3
+    position: 0
+    required: true
+    options:
+      values:
+      - Regular Employee
+      - Management
+      - Contractor or Vendor
+      - Grandy Jury
+      - Extra - Help Employee
+      - Intermittent Employee
+      - Visitor
+      - Volunteer
+      - Department Provided Card
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: contractor_or_vendor_name
+    field_type: text
+    label: Contractor or Vendor Name
+    page_number: 3
+    position: 1
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Contractor or Vendor
+    conditional_field: badge_type
+  - field_name: services
+    field_type: choices_dropdown
+    label: Services
+    page_number: 4
+    position: 2
+    required: false
+    options:
+      values:
+      - "$20.00 Lamination/Photo/Clip on Provided Card"
+      - "$5.00 Lamination (Letter)"
+      - "$11.00 Employee ID Photo Extraction"
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: badges
+    field_type: choices_dropdown
+    label: Badges
+    page_number: 4
+    position: 3
+    required: false
+    options:
+      values:
+      - "$5.00 ID Badge (No Access)"
+      - "$5.00 Renewal with Badge Provided"
+      - "$32.00 Reprinting due to Customer Error"
+      - "$68.31 Complete Badge with an Access Card"
+      - "$68.31 Replacement of Lost Badge with Access Card"
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: supplies
+    field_type: choices_dropdown
+    label: Supplies
+    page_number: 4
+    position: 4
+    required: false
+    options:
+      values:
+      - "$1.15 Clear Plastic Pouch"
+      - "$4.00 Nylon Sports Lanyard COV"
+      - "$12.25 Leather Badge Holder with Clip"
+      - "$3.50 Premier Retractable Badge Holder"
+      - "$4.50 Chrome Retracable Badge Holder"
+      - "$8.00 Extra Photo (on Plastic Car)"
+      - "$48.00 Background Check"
+      - "$16.00 Digital Key Fob"
+      - "$5.00 Blank Card"
+      - Other
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: total_charges
+    field_type: number
+    label: Total Charges
+    page_number: 4
+    position: 5
+    required: false
+    options: {}
+    read_only: initial
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: LeaveOfAbsenceForm
+  name: Leave of Absence
+  page_count: 4
+  page_headers:
+  - Leave Details
+  - Employee Declarations
+  submission_type: approval
+  fields:
+  - field_name: last_date_worked
+    field_type: date
+    label: Last Date Worked
+    page_number: 3
+    position: 0
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: leave_start_date
+    field_type: date
+    label: Leave Start Date
+    page_number: 3
+    position: 1
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: leave_end_date
+    field_type: date
+    label: Leave End Date
+    page_number: 3
+    position: 2
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: is_this_an_extension
+    field_type: dropdown
+    label: Is this an extension?
+    page_number: 3
+    position: 3
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: pay_status_during_leave
+    field_type: dropdown
+    label: Pay Status During Leave
+    page_number: 3
+    position: 4
+    required: false
+    options:
+      values:
+      - Full integration with disability benefits up to 100% of base biweekly compensation
+        (Required if receiving disability benefits optional if receiving TTD)
+      - Leave bank hours equal to total biweekly scheduled work hours (Required if
+        not receiving disability benefits or if disability benefits waived)
+      - Leave without pay (LWOP) equal to total biweekly scheduled work hours (Fully
+        unpaid no leave bank hours may be reported for the duration of the leave)
+      - Partial integration with temporary total disability (TTD) benefits (Reported
+        hours must be consistent each pay period)
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: type_of_leave
+    field_type: dropdown
+    label: Type of Leave
+    page_number: 3
+    position: 5
+    required: false
+    options:
+      values:
+      - FMLA
+      - Personal
+      - Disability
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: reason_for_leave
+    field_type: dropdown
+    label: Reason for Leave
+    page_number: 3
+    position: 6
+    required: false
+    options:
+      values:
+      - Employee Health Condition
+      - Disabled by Pregnancy or Childbirth
+      - Care for Immediate Family Member
+      - Bonding Leave
+      - Military Service Leave
+      - Emergency Rescue Personnel Leave
+      - To assist a child spouse or parent who is a member of the National Guard or
+        Reserves with a qualifying exigency related to active duty or a call of active
+        duty status in support of a contingency operation
+      - To care for a child spouse parent or next of kin service member of the United
+        States Armed Forces with serious injury or illness incurred in the line of
+        duty
+      - Donor Leave
+      - Personal Leave
+      - Other
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: work_related_injury
+    field_type: dropdown
+    label: Work related Injury?
+    page_number: 3
+    position: 7
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Employee Health Condition
+    conditional_field: reason_for_leave
+  - field_name: injury_date
+    field_type: date
+    label: Injury Date
+    page_number: 3
+    position: 8
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Employee Health Condition
+    conditional_field: reason_for_leave
+  - field_name: accomodations_upon_return_to_work
+    field_type: dropdown
+    label: Accomodations Upon Return to Work?
+    page_number: 3
+    position: 9
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Employee Health Condition
+    conditional_field: reason_for_leave
+  - field_name: doctors_note_attachment
+    field_type: media_attachment
+    label: Doctors Note Attachment
+    page_number: 3
+    position: 10
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Employee Health Condition
+    conditional_field: reason_for_leave
+  - field_name: other_reason
+    field_type: text_box
+    label: Other Reason
+    page_number: 3
+    position: 11
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: reason_for_leave
+  - field_name: are_you_applying_for_disability_benefits
+    field_type: dropdown
+    label: Are you applying for disability benefits?
+    page_number: 4
+    position: 12
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: do_you_waive_benefits_from_any_sources
+    field_type: dropdown
+    label: Do you waive benefits from any sources?
+    page_number: 4
+    position: 13
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: did_the_employee_confirm_this_request_via_email
+    field_type: dropdown
+    label: Did the employee confirm this request via email?
+    page_number: 4
+    position: 14
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: additional_notes_or_comments
+    field_type: text_box
+    label: Additional Notes or Comments
+    page_number: 4
+    position: 15
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: terms
+    field_type: information
+    label: Terms
+    page_number: 4
+    position: 16
+    required: true
+    options:
+      information_text: ".*\r\nInitial Here*: CRC Date*: 10/31/2022 Employee ID 130799
+        Employee Name*: Carmen Contreras *:\r\n1. I am bound by all the terms and
+        conditions of the County’s Leave of Absence Program and that the County has
+        the\r\nright to grant or deny any request for a leave of absence or an extension
+        thereof, subject by provisions of the Federal\r\nFamily Medical Leave Act,
+        the California Family Rights Act, the California Pregnancy Disability Leave
+        rights,\r\napplicable collective bargaining agreements, Article 22, Section
+        2203 of the County of Ventura Personnel Rules and\r\nRegulations, and the
+        County Administrative Policy Manual.\r\n2. I may be required to make premium
+        payments directly to the County or its third-party administrator while on
+        leave of\r\nabsence. If I fail to make payments on a timely basis, coverage
+        under that benefit will be canceled until I return from\r\nleave and deductions
+        resume. If the County mistakenly pays any premiums on my behalf, I agree to
+        repay the County\r\ndirectly or through wage/salary deduction.\r\n3. The failure
+        to return to work on the day following the “Date Leave Ends” may be considered
+        inexcusable absence\r\nwithout leave and subject me to disciplinary action.
+        I also understand that if I am absent from work without\r\nauthorization for
+        three (3) days or two (2) consecutive twenty-four hour work shifts beginning
+        with the day following\r\nthe “Date Leave Ends” I have entered on the front
+        of this form, the County may deem that I have voluntarily\r\nabandoned my
+        job under Article 22, Section 2203, of the County of Ventura Personnel Rules
+        and Regulations.\r\n4. Failure to provide a complete and sufficient medical
+        certification may result in a denial of my leave of absence\r\nrequest. I
+        further understand that I may be required to provide periodic reports on my
+        status and intent to return to\r\nwork. I agree to notify BOTH, my supervisor
+        and leave of absence coordinator of my availability to return to full or\r\nrestricted
+        duty if I am released by my doctor prior to the end of an approved medical
+        leave of absence.\r\n5. I agree to comply with the County’s Integration policy
+        to which employees may use approved leave bank hours in\r\nconjunction with
+        disability benefits that result in the employee’s full biweekly base pay.
+        The policy prevents employees\r\nfrom using leave bank hours that result in
+        pay that is greater than their biweekly base rate. I understand that the\r\nappropriate
+        use of your leave bank hours must be because of and consistent with the leave
+        granted and that I have\r\nprovided my department with payroll instructions
+        during my leave of absence.\r\n6. My dependent(s) eligibility for health care
+        coverage is contingent on my submitting the proper forms within 31 days\r\nof
+        (1) acquiring a new dependent (birth, marriage, placement for adoption, permanent
+        legal custody), (2) a current\r\ndependent losing eligibility (divorce, dependent
+        child turns age 26, death), even when the event occurs during my\r\nleave
+        of absence.\r\n7. I must comply with the Flexible Benefits Program Open Enrollment
+        rules even if I am on leave of absence. Any\r\napplicable forms must be completed
+        and submitted during the open enrollment period, not when I return from leave
+        of\r\nabsence and failure to comply may jeopardize my participation.\r\n8.
+        I agree to notify my department of any change of address and/or phone number.
+        I understand and agree that all\r\ncommunications from the County of Ventura
+        will be sent to the address I have on file and that I am responsible for\r\nacknowledging
+        information sent to the address on file. READ THE TERMS CAREFULLY BEFORE INITIALING.
+        I understand that:\r\nI am bound by all the terms and conditions of the County’s
+        Leave of Absence Program and that the County has the\r\nright to grant or
+        deny any request for a leave of absence or an extension thereof, subject by
+        provisions of the Federal\r\nFamily Medical Leave Act, the California Family
+        Rights Act, the California Pregnancy Disability Leave rights,\r\napplicable
+        collective bargaining agreements, Article 22, Section 2203 of the County of
+        Ventura Personnel Rules and\r\nRegulations, and the County Administrative
+        Policy Manual.\r\nI may be required to make premium payments directly to the
+        County or its third-party administrator while on leave of\r\nabsence. If I
+        fail to make payments on a timely basis, coverage under that benefit will
+        be canceled until I return from\r\nleave and deductions resume. If the County
+        mistakenly pays any premiums on my behalf, I agree to repay the County\r\ndirectly
+        or through wage/salary deduction.\r\nThe failure to return to work on the
+        day following the “Date Leave Ends” may be considered inexcusable absence\r\nwithout
+        leave and subject me to disciplinary action. I also understand that if I am
+        absent from work without\r\nauthorization for three (3) days or two (2) consecutive
+        twenty-four hour work shifts beginning with the day following\r\nthe “Date
+        Leave Ends” I have entered on the front of this form, the County may deem
+        that I have voluntarily\r\nabandoned my job under Article 22, Section 2203,
+        of the County of Ventura Personnel Rules and Regulations.\r\nFailure to provide
+        a complete and sufficient medical certification may result in a denial of
+        my leave of absence\r\nrequest. I further understand that I may be required
+        to provide periodic reports on my status and intent to return to\r\nwork.
+        I agree to notify BOTH, my supervisor and leave of absence coordinator of
+        my availability to return to full or\r\nrestricted duty if I am released by
+        my doctor prior to the end of an approved medical leave of absence.\r\nI agree
+        to comply with the County’s Integration policy to which employees may use
+        approved leave bank hours in\r\nconjunction with disability benefits that
+        result in the employee’s full biweekly base pay. The policy prevents employees\r\nfrom
+        using leave bank hours that result in pay that is greater than their biweekly
+        base rate. I understand that the\r\nappropriate use of your leave bank hours
+        must be because of and consistent with the leave granted and that I have\r\nprovided
+        my department with payroll instructions during my leave of absence.\r\nMy
+        dependent(s) eligibility for health care coverage is contingent on my submitting
+        the proper forms within 31 days of\r\n(1) acquiring a new dependent (birth,
+        marriage, placement for adoption, permanent legal custody), (2) a current\r\ndependent
+        losing eligibility (divorce, dependent child turns age 26, death), even when
+        the event occurs during my\r\nleave of absence.\r\nI must comply with the
+        Flexible Benefits Program Open Enrollment rules even if I am on leave of absence.
+        Any\r\napplicable forms must be completed and submitted during the open enrollment
+        period, not when I return from leave of\r\nabsence and failure to comply may
+        jeopardize my participation.\r\nI agree to notify my department of any change
+        of address and/or phone number. I understand and agree that all\r\ncommunications
+        from the County of Ventura will be sent to the address I have on file and
+        that I am responsible for\r\nacknowledging information sent to the address
+        on file.\r\n\r\nI affirm that I have read, understand, and agree to the terms
+        of this request as stated above.\r\nI have received the Leave of Absence Handbook
+        (see LOA Handbook button) and the\r\ninformational packet (see Resources Packet
+        button) and will be provided with appropriate\r\nentitlement notices by the
+        LOA Coordinator once the leave request has been processed"
+      acknowledgeable: true
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: waiver_of_disability_benefits
+    field_type: information
+    label: Waiver of Disability Benefits
+    page_number: 4
+    position: 17
+    required: false
+    options:
+      information_text: "If you choose not to file a claim for disability benefits
+        with your group disability plan(s) and are requesting a paid leave, you\r\nmust
+        read and sign this waiver, and submit it to your agency/department in advance
+        of your leave of absence. After\r\nreceiving the signed Waiver, you will be
+        allowed to use the appropriate hours from your leave bank balances in increments\r\nto
+        equal your full biweekly schedule, and until balances are exhausted or you
+        stop authorizing leave bank usage.\r\nBy not filing a claim with your disability
+        plan(s), you may be forfeiting a variety of benefits including but not limited
+        to: full\r\nand partial disability benefit payments, Return to Work Incentive
+        payments, Reasonable Accommodation Expense\r\nBenefits and Temporary Recovery
+        benefits. Please note that each plan has an application deadline, after which
+        you forfeit\r\nall rights to benefits. Your department representative may
+        provide a copy of this signed Waiver to your group disability\r\nplan(s) and
+        to County Human Resources.\r\nI understand that leave bank usage must begin
+        at the onset of my leave of absence. I further understand that if I change\r\nmy
+        decision and later elect to file a claim for any group disability plan(s),
+        I will be expected to repay the County of Ventura\r\nand/or any group disability
+        plan(s) that has paid me any disability benefit(s) for the same time period
+        of this Waiver.\r\nI have read this form and acknowledge that I understand
+        and agree not to file for disability benefits with any group\r\ndisability
+        plan(s) for this leave of absence. I authorize use of my leave bank balances
+        in order to receive pay equal to my\r\nfull regular work schedule for the
+        following period(s):"
+      acknowledgeable: true
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: benefits_waived
+    field_type: choices_dropdown
+    label: Benefits Waived
+    page_number: 4
+    position: 18
+    required: false
+    options:
+      values:
+      - SDI (State Disability Insurance)
+      - PFL (Paid Family Leave)
+      - LTD (COV Group Plan)
+      - Wage Supplement Plan
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: NoticeOfChangeForm
+  name: Notice of Change
+  page_count: 4
+  page_headers:
+  - Services
+  - Billing Information
+  submission_type: approval
+  fields:
+  - field_name: change_or_service_requested
+    field_type: dropdown
+    label: Change or Service Requested
+    page_number: 3
+    position: 0
+    required: false
+    options:
+      values:
+      - Increase in Existing Service
+      - Decrease in Existing Service
+      - New Additional Service
+      - New Basic Service
+      - Occupancy Change
+      - Special Service or Security
+      - Maintenance
+      - Utilities
+      - Housekeeping
+      - Grounds
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: old_location_or_address
+    field_type: text
+    label: Old Location or Address
+    page_number: 3
+    position: 1
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Occupancy Change
+    conditional_field: change_or_service_requested
+  - field_name: new_location_or_address
+    field_type: text
+    label: New Location or Address
+    page_number: 3
+    position: 2
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Occupancy Change
+    conditional_field: change_or_service_requested
+  - field_name: description_of_new_service
+    field_type: text_box
+    label: Description of New Service
+    page_number: 3
+    position: 3
+    required: true
+    options:
+      rows: 5
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: object
+    field_type: text
+    label: Object
+    page_number: 4
+    position: 4
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: activity
+    field_type: text
+    label: Activity
+    page_number: 4
+    position: 5
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: function
+    field_type: text
+    label: Function
+    page_number: 4
+    position: 6
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: program
+    field_type: text
+    label: Program
+    page_number: 4
+    position: 7
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: phase
+    field_type: text
+    label: Phase
+    page_number: 4
+    position: 8
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: task
+    field_type: text
+    label: Task
+    page_number: 4
+    position: 9
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: monthly_cost
+    field_type: text
+    label: Monthly Cost
+    page_number: 4
+    position: 10
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: annual_cost
+    field_type: text
+    label: Annual Cost
+    page_number: 4
+    position: 11
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: OshaReport
+  name: OSHA Reporting
+  page_count: 5
+  page_headers:
+  - Additonal Employee Info
+  - Physician Information
+  - Case Information
+  submission_type: approval
+  fields:
+  - field_name: street
+    field_type: text
+    label: Street
+    page_number: 3
+    position: 0
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: city
+    field_type: dropdown
+    label: City
+    page_number: 3
+    position: 1
+    required: false
+    options:
+      values:
+      - Ventura
+      - Ojai
+      - Santa Barbara
+      - Camarillo
+      - Los Angeles
+      - Thousand Oaks
+      - Somis
+      - Oxnard
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: state
+    field_type: dropdown
+    label: State
+    page_number: 3
+    position: 2
+    required: false
+    options:
+      values:
+      - California
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: zip
+    field_type: text
+    label: ZIP
+    page_number: 3
+    position: 3
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_of_birth
+    field_type: date
+    label: Date of Birth
+    page_number: 3
+    position: 4
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_hired
+    field_type: date
+    label: Date Hired
+    page_number: 3
+    position: 5
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: sex
+    field_type: dropdown
+    label: Sex
+    page_number: 3
+    position: 6
+    required: false
+    options:
+      values:
+      - Male
+      - Female
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: name_of_physician_or_other_health_care_professional
+    field_type: text
+    label: Name of physician or other health care professional
+    page_number: 3
+    position: 7
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: was_treatment_given_away_from_the_worksite
+    field_type: dropdown
+    label: Was treatment given away from the worksite?
+    page_number: 4
+    position: 8
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: facility_name
+    field_type: text
+    label: Facility Name
+    page_number: 4
+    position: 9
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: was_treatment_given_away_from_the_worksite
+  - field_name: facility_street_address
+    field_type: text
+    label: Facility Street Address
+    page_number: 4
+    position: 10
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: was_treatment_given_away_from_the_worksite
+  - field_name: facility_city
+    field_type: dropdown
+    label: Facility City
+    page_number: 4
+    position: 11
+    required: false
+    options:
+      values:
+      - Ventura
+      - Oxnard
+      - Camarillo
+      - Thousand Oaks
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: was_treatment_given_away_from_the_worksite
+  - field_name: facility_state
+    field_type: dropdown
+    label: Facility State
+    page_number: 4
+    position: 12
+    required: false
+    options:
+      values:
+      - California
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: was_treatment_given_away_from_the_worksite
+  - field_name: facility_zip
+    field_type: yes_no
+    label: Facility ZIP
+    page_number: 4
+    position: 13
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: was_treatment_given_away_from_the_worksite
+  - field_name: was_the_employee_treated_in_an_emergency_room
+    field_type: dropdown
+    label: Was the employee treated in an emergency room?
+    page_number: 4
+    position: 14
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: was_the_employee_hospitalized_overnight_as_an_inpatient
+    field_type: dropdown
+    label: Was the employee hospitalized overnight as an in-patient?
+    page_number: 4
+    position: 15
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: case_number_from_the_log
+    field_type: text
+    label: Case Number from the Log
+    page_number: 5
+    position: 16
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_of_injury_or_illness
+    field_type: date
+    label: Date of Injury or Illness
+    page_number: 5
+    position: 17
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: time_employee_began_work
+    field_type: time
+    label: Time employee began work
+    page_number: 5
+    position: 18
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: time_of_event
+    field_type: time
+    label: Time of Event
+    page_number: 5
+    position: 19
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: what_happened_tell_us_how_the_injury_occurred
+    field_type: text_box
+    label: What happened? Tell us how the injury occurred.
+    page_number: 5
+    position: 20
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: what_was_the_injury_or_illness
+    field_type: text_box
+    label: What was the injury or illness?
+    page_number: 5
+    position: 21
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: what_was_the_employee_doing_just_before_the_incident_occurred
+    field_type: text_box
+    label: What was the employee doing just before the incident occurred?
+    page_number: 5
+    position: 22
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: what_object_or_substance_directly_harmed_the_employee
+    field_type: text_box
+    label: What object or substance directly harmed the employee?
+    page_number: 5
+    position: 23
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: did_employee_die
+    field_type: dropdown
+    label: Did employee die?
+    page_number: 5
+    position: 24
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_of_death
+    field_type: date
+    label: Date of Death
+    page_number: 5
+    position: 25
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: did_employee_die
+  - field_name: case_type
+    field_type: dropdown
+    label: Case Type
+    page_number: 5
+    position: 26
+    required: false
+    options:
+      values:
+      - Injury
+      - Skin Disorder
+      - Respiratory Condition
+      - Poisoning
+      - Hearing Loss
+      - Other Illness
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: case_classification
+    field_type: dropdown
+    label: Case Classification
+    page_number: 5
+    position: 27
+    required: false
+    options:
+      values:
+      - Death
+      - DAFW
+      - DJTR
+      - Other
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: other_case_classfication
+    field_type: text
+    label: Other Case Classfication
+    page_number: 5
+    position: 28
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: case_classification
+  - field_name: other_illness
+    field_type: text
+    label: Other Illness
+    page_number: 5
+    position: 29
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other Illness
+    conditional_field: case_type
+- class_name: ParkingLotSubmission
+  name: Parking Permit Application
+  page_count: 3
+  page_headers:
+  - Vehicle and Parking Info
+  submission_type: approval
+  description: 'Request for a parking permit for lots on the County of Ventura''s
+    campus. '
+  form_number: GSA-102
+  form_type: Request
+  agency_id: GSA
+  division_id: '4660'
+  department_id: '4661'
+  unit_id: '4661'
+  fields:
+  - field_name: vehicles
+    field_type: text
+    label: Vehicles
+    page_number: 3
+    position: 0
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: PcardRequestForm
+  name: P-Card Request
+  page_count: 5
+  page_headers:
+  - Spending Limits
+  - Approver Information
+  - Billing Information
+  submission_type: approval
+  fields:
+  - field_name: brown_mail_number
+    field_type: text
+    label: Brown Mail Number
+    page_number: 3
+    position: 0
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: brown_mail_location_number
+    field_type: text
+    label: Brown Mail Location Number
+    page_number: 3
+    position: 1
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: spending_limit_30_day
+    field_type: dropdown
+    label: Spending Limit 30 Day
+    page_number: 3
+    position: 2
+    required: false
+    options:
+      values: []
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: single_purchase_limit
+    field_type: dropdown
+    label: Single Purchase Limit
+    page_number: 3
+    position: 3
+    required: true
+    options:
+      values:
+      - '100'
+      - '200'
+      - '300'
+      - '400'
+      - '500'
+      - '600'
+      - '700'
+      - '800'
+      - '900'
+      - '1000'
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: approver_name
+    field_type: text
+    label: Approver Name
+    page_number: 4
+    position: 4
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: title
+    field_type: text
+    label: Title
+    page_number: 4
+    position: 5
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: address
+    field_type: text
+    label: Address
+    page_number: 4
+    position: 6
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: city
+    field_type: text
+    label: City
+    page_number: 4
+    position: 7
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: state
+    field_type: text
+    label: State
+    page_number: 4
+    position: 8
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: zip
+    field_type: text
+    label: Zip
+    page_number: 4
+    position: 9
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: brown_mail_number
+    field_type: text
+    label: Brown Mail Number
+    page_number: 4
+    position: 10
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: billing_official_name
+    field_type: text
+    label: Billing Official Name
+    page_number: 5
+    position: 11
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: title
+    field_type: text
+    label: Title
+    page_number: 5
+    position: 12
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: address
+    field_type: text
+    label: Address
+    page_number: 5
+    position: 13
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: city
+    field_type: text
+    label: City
+    page_number: 5
+    position: 14
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: state
+    field_type: text
+    label: State
+    page_number: 5
+    position: 15
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: zip
+    field_type: text
+    label: Zip
+    page_number: 5
+    position: 16
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: org_number
+    field_type: text
+    label: Org Number
+    page_number: 5
+    position: 17
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: activity
+    field_type: text
+    label: Activity
+    page_number: 5
+    position: 18
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: function
+    field_type: text
+    label: Function
+    page_number: 5
+    position: 19
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: project
+    field_type: text
+    label: Project
+    page_number: 5
+    position: 20
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: category
+    field_type: text
+    label: Category
+    page_number: 5
+    position: 21
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: ProbationTransferRequest
+  name: Probation Transfer Request
+  page_count: 3
+  page_headers:
+  - Transfer Request Details
+  submission_type: database
+  fields:
+  - field_name: current_work_location
+    field_type: dropdown
+    label: Current Work Location
+    page_number: 3
+    position: 0
+    required: false
+    options:
+      values: []
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: current_assignment_start_date
+    field_type: date
+    label: Current Assignment Start Date
+    page_number: 3
+    position: 1
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: SafetyReport
+  name: Safety Reporting
+  page_count: 11
+  page_headers:
+  - Report
+  - Supervisor and Witness Info
+  - Incident Dates and Status
+  - Incident Description
+  - Medical Info
+  - Investigation Details
+  - Severity & Root Cause
+  - Corrective Actions
+  - OSHA Info
+  submission_type: approval
+  description: Safety Forms AKA RM75 and RM75i for the Health Care Agency.
+  form_number: HCA-101
+  form_type: Report
+  agency_id: HCA
+  division_id: ''
+  department_id: ''
+  unit_id: ''
+  fields:
+  - field_name: report_type
+    field_type: dropdown
+    label: Report Type
+    page_number: 3
+    position: 0
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Report Type
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: medical_record_number_for_the_employee
+    field_type: number
+    label: Medical record number for the Employee
+    page_number: 3
+    position: 1
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: bloodborne_pathogen_exposure
+  - field_name: impacted_employee
+    field_type: choices_dropdown
+    label: Impacted Employee
+    page_number: 3
+    position: 2
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: last_name
+        join_columns:
+        - first_name
+        join_separator: ", "
+        category_filters:
+        - column: agency
+          value: GSAV
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: impacted_employees_email
+    field_type: email
+    label: Impacted Employee's Email
+    page_number: 3
+    position: 3
+    required: false
+    options:
+      answer_lookup:
+        database: gsabss
+        table: employees
+        match_column: full_name
+        return_column: email
+        return_join_columns: []
+        return_join_separator: " "
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_field: impacted_employee
+  - field_name: impacted_employees_phone
+    field_type: phone
+    label: Impacted Employee's Phone
+    page_number: 3
+    position: 4
+    required: false
+    options:
+      answer_lookup:
+        database: gsabss
+        table: employees
+        match_column: full_name
+        return_column: work_phone
+        return_join_columns: []
+        return_join_separator: " "
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_field: impacted_employee
+  - field_name: impacted_employees_supervisor
+    field_type: text
+    label: Impacted Employee's Supervisor
+    page_number: 4
+    position: 5
+    required: false
+    options:
+      answer_lookup:
+        database: gsabss
+        table: employees
+        match_column: full_name
+        return_column: supervisor_first_name
+        return_join_columns:
+        - supervisor_last_name
+        return_join_separator: " "
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_field: impacted_employee
+  - field_name: witness_name
+    field_type: text
+    label: Witness Name
+    page_number: 4
+    position: 6
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: witness_phone
+    field_type: phone
+    label: Witness Phone
+    page_number: 4
+    position: 7
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_of_injury_or_illness
+    field_type: date
+    label: Date of Injury or Illness
+    page_number: 5
+    position: 8
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_employer_notified
+    field_type: date
+    label: Date Employer Notified
+    page_number: 5
+    position: 9
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_dwc1_given
+    field_type: date
+    label: Date DWC-1 Given
+    page_number: 5
+    position: 10
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: who_gave_the_dwc1
+    field_type: dropdown
+    label: Who Gave the DWC-1
+    page_number: 5
+    position: 11
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: first_name
+        join_columns:
+        - last_name
+        join_separator: " "
+        category_filters:
+        - column: agency
+          value: HCAV
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_last_worked
+    field_type: date
+    label: Date Last Worked
+    page_number: 5
+    position: 12
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_returned_to_work
+    field_type: date
+    label: Date Returned to Work
+    page_number: 5
+    position: 13
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: missed_full_work_day_
+    field_type: dropdown
+    label: 'Missed Full Work Day? '
+    page_number: 5
+    position: 14
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: still_off_work
+    field_type: dropdown
+    label: Still off Work?
+    page_number: 5
+    position: 15
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: missed_full_work_day_
+  - field_name: specific_injury_and_body_part_affected
+    field_type: text_box
+    label: Specific Injury and Body Part Affected
+    page_number: 6
+    position: 16
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: location_of_incident
+    field_type: dropdown
+    label: Location of Incident
+    page_number: 6
+    position: 17
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: buildings
+        column: occupant_description
+        join_columns:
+        - address
+        join_separator: " "
+        category_filters:
+        - column: site_description
+          value: Clinic
+        - column: site_description
+          value: Office
+        - column: site_description
+          value: Hospital
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: location_description
+    field_type: text_box
+    label: Location Description
+    page_number: 6
+    position: 18
+    required: false
+    options:
+      rows: 3
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: on_employer_premises
+    field_type: dropdown
+    label: On Employer Premises?
+    page_number: 6
+    position: 19
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: department_where_event_occurred
+    field_type: dropdown
+    label: Department Where Event Occurred
+    page_number: 6
+    position: 20
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: departments
+        column: long_name
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: agency_id
+          value: HCA
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: activity_at_time_of_incident
+    field_type: text_box
+    label: Activity at Time of Incident
+    page_number: 6
+    position: 21
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: how_the_injury_occurred
+    field_type: text_box
+    label: How the Injury Occurred
+    page_number: 6
+    position: 22
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: bloodborne_pathogen_exposure
+    field_type: dropdown
+    label: Bloodborne Pathogen Exposure?
+    page_number: 7
+    position: 23
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: is_the_source_blood_tested
+    field_type: dropdown
+    label: Is the source blood tested?
+    page_number: 7
+    position: 24
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: bloodborne_pathogen_exposure
+  - field_name: is_the_employees_blood_tested
+    field_type: dropdown
+    label: Is the employees blood tested?
+    page_number: 7
+    position: 25
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: bloodborne_pathogen_exposure
+  - field_name: source_patient_medical_number
+    field_type: text
+    label: Source Patient Medical Number
+    page_number: 7
+    position: 26
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: is_the_source_blood_tested
+  - field_name: employee_medical_number
+    field_type: text
+    label: Employee Medical Number
+    page_number: 7
+    position: 27
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: is_the_employees_blood_tested
+  - field_name: physician_name
+    field_type: text
+    label: Physician Name
+    page_number: 7
+    position: 28
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: physician_address
+    field_type: text
+    label: Physician Address
+    page_number: 7
+    position: 29
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: physician_phone
+    field_type: phone
+    label: Physician Phone
+    page_number: 7
+    position: 30
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: hospital_name
+    field_type: dropdown
+    label: Hospital Name
+    page_number: 7
+    position: 31
+    required: false
+    options:
+      values:
+      - Community Memorial Hospital
+      - St. Johns Regional Medical Center
+      - Ventura County Medical Center
+      - Other
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: other_hospital
+    field_type: text
+    label: Other Hospital
+    page_number: 7
+    position: 32
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: hospital_name
+  - field_name: hospital_address
+    field_type: dropdown
+    label: Hospital Address
+    page_number: 7
+    position: 33
+    required: false
+    options:
+      values:
+      - 1600 North Rose Ave. Oxnard California 93030
+      - 147 N. Brent St. Ventura California 93003
+      - 300 Hillmont Ave. Ventura California 93003
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_mappings:
+      Community Memorial Hospital: 147 N. Brent St. Ventura California 93003
+      St. Johns Regional Medical Center: 1600 North Rose Ave. Oxnard California 93030
+      Ventura County Medical Center: 300 Hillmont Ave. Ventura California 93003
+    conditional_answer_field: hospital_name
+  - field_name: other_hospital_address
+    field_type: text
+    label: Other Hospital Address
+    page_number: 7
+    position: 34
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: hospital_name
+  - field_name: hospital_phone
+    field_type: dropdown
+    label: Hospital Phone
+    page_number: 7
+    position: 35
+    required: false
+    options:
+      values:
+      - 805-988-2500
+      - 805-948-5011
+      - 805-652-6000
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_mappings:
+      Community Memorial Hospital: 805-948-5011
+      St. Johns Regional Medical Center: 805-988-2500
+      Ventura County Medical Center: 805-652-6000
+    conditional_answer_field: hospital_name
+  - field_name: other_hospital_phone
+    field_type: phone
+    label: Other Hospital Phone
+    page_number: 7
+    position: 36
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: hospital_name
+  - field_name: hospitalized_overnight
+    field_type: dropdown
+    label: Hospitalized Overnight?
+    page_number: 7
+    position: 37
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: investigator_name
+    field_type: text
+    label: Investigator Name
+    page_number: 8
+    position: 38
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: investigator_title
+    field_type: text
+    label: Investigator Title
+    page_number: 8
+    position: 39
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: investigator_phone
+    field_type: phone
+    label: Investigator Phone
+    page_number: 8
+    position: 40
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: nature_of_incident
+    field_type: choices_dropdown
+    label: Nature of Incident
+    page_number: 8
+    position: 41
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Nature of Incident
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: cause_of_incident
+    field_type: choices_dropdown
+    label: Cause of Incident
+    page_number: 8
+    position: 42
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Cause of Incident
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: root_cause
+    field_type: choices_dropdown
+    label: Root Cause
+    page_number: 9
+    position: 43
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Root Cause
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: assessment_of_future_severity_potential
+    field_type: choices_dropdown
+    label: Assessment of Future Severity Potential
+    page_number: 9
+    position: 44
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Assessment of Future Severity Potential
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: assessment_of_probability_of_recurrence
+    field_type: choices_dropdown
+    label: Assessment of Probability of Recurrence
+    page_number: 9
+    position: 45
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Assessment of Probability of Recurrence
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: unsafe_condition_corrected_immediately
+    field_type: dropdown
+    label: Unsafe condition corrected immediately?
+    page_number: 10
+    position: 46
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: checklistprocedurestraining_modified
+    field_type: dropdown
+    label: Checklist/procedures/training modified?
+    page_number: 10
+    position: 47
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: person_responsible_for_corrective_action
+    field_type: text
+    label: Person Responsible for Corrective Action
+    page_number: 10
+    position: 48
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: title
+    field_type: text
+    label: Title
+    page_number: 10
+    position: 49
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: targeted_completion_date
+    field_type: date
+    label: Targeted Completion Date
+    page_number: 10
+    position: 50
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: actual_completion_date
+    field_type: date
+    label: Actual Completion Date
+    page_number: 10
+    position: 51
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: osha_recordable
+    field_type: dropdown
+    label: OSHA Recordable
+    page_number: 11
+    position: 52
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: osha_reportable
+    field_type: dropdown
+    label: OSHA Reportable
+    page_number: 11
+    position: 53
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: reportable_injury_codes
+    field_type: choices_dropdown
+    label: Reportable Injury Codes
+    page_number: 11
+    position: 54
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Reportable Injury Codes (OSHA Related)
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+- class_name: SocialMediaForm
+  name: Social Media
+  page_count: 3
+  page_headers:
+  - Social Media
+  submission_type: database
+  fields:
+  - field_name: social_media_platform
+    field_type: dropdown
+    label: Social Media Platform
+    page_number: 3
+    position: 0
+    required: false
+    options:
+      values:
+      - Instagram
+      - Tik Tok
+      - Facebook
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: account_username
+    field_type: text
+    label: Account Username
+    page_number: 3
+    position: 1
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: what_will_the_accoutn_be_used_for
+    field_type: text_box
+    label: What will the accoutn be used for?
+    page_number: 3
+    position: 2
+    required: false
+    options:
+      rows: 5
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: notes
+    field_type: text_box
+    label: Notes
+    page_number: 3
+    position: 3
+    required: false
+    options:
+      rows: 5
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: TeleworkLogForm
+  name: Telework Log
+  page_count: 3
+  page_headers:
+  - Log
+  submission_type: approval
+  fields:
+  - field_name: work_performed
+    field_type: text_box
+    label: Work Performed
+    page_number: 3
+    position: 0
+    required: true
+    options:
+      rows: 3
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: hours
+    field_type: number
+    label: Hours
+    page_number: 3
+    position: 1
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: WorkplaceViolenceForm
+  name: Workplace Violence
+  page_count: 5
+  page_headers:
+  - Incident Details
+  - Incident Details Cont'd
+  - Corrective Action Safety Officer Only
+  submission_type: approval
+  fields:
+  - field_name: date_of_incident
+    field_type: date
+    label: Date of Incident
+    page_number: 3
+    position: 0
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: location_where_event_occurred
+    field_type: dropdown
+    label: Location Where Event Occurred
+    page_number: 3
+    position: 1
+    required: true
+    options:
+      values:
+      - HOA
+      - Service Building
+      - JJC
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: witness_name
+    field_type: text
+    label: Witness Name
+    page_number: 3
+    position: 2
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: witness_phone
+    field_type: yes_no
+    label: Witness Phone
+    page_number: 3
+    position: 3
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: was_the_victim_injured
+    field_type: dropdown
+    label: Was the victim injured
+    page_number: 3
+    position: 4
+    required: true
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: specify_the_injuries
+    field_type: yes_no
+    label: Specify the injuries
+    page_number: 3
+    position: 5
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: was_the_victim_injured
+  - field_name: were_the_police_involved
+    field_type: dropdown
+    label: Were the Police Involved
+    page_number: 3
+    position: 6
+    required: true
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: which_police_department
+    field_type: yes_no
+    label: Which Police Department
+    page_number: 3
+    position: 7
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: were_the_police_involved
+  - field_name: police_report_filed
+    field_type: dropdown
+    label: Police Report Filed
+    page_number: 3
+    position: 8
+    required: true
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: police_report_number
+    field_type: yes_no
+    label: Police Report Number
+    page_number: 3
+    position: 9
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: police_report_filed
+  - field_name: was_the_victims_union_rep_notified
+    field_type: dropdown
+    label: Was the Victims Union Rep Notified
+    page_number: 3
+    position: 10
+    required: true
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: union_rep_name
+    field_type: yes_no
+    label: Union Rep Name
+    page_number: 3
+    position: 11
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: was_the_victims_union_rep_notified
+  - field_name: was_the_victims_supervisor_notified
+    field_type: dropdown
+    label: Was the Victims Supervisor Notified
+    page_number: 3
+    position: 12
+    required: true
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: any_action_taken_by_employer
+    field_type: dropdown
+    label: Any Action Taken by Employer
+    page_number: 4
+    position: 13
+    required: true
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: describe_action_taken_
+    field_type: text_box
+    label: 'Describe Action Taken '
+    page_number: 4
+    position: 14
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: any_action_taken_by_employer
+  - field_name: assailantperpetrator
+    field_type: dropdown
+    label: Assailant/Perpetrator
+    page_number: 4
+    position: 15
+    required: true
+    options:
+      values:
+      - Intruder
+      - Customer
+      - Patient
+      - Resident
+      - Client
+      - Visitor
+      - Student
+      - Co-Worker
+      - Former Worker
+      - Supervisor
+      - Family
+      - Friend
+      - Other
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: other
+    field_type: text
+    label: Other
+    page_number: 4
+    position: 16
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: assailantperpetrator_name
+    field_type: text
+    label: Assailant/Perpetrator Name
+    page_number: 4
+    position: 17
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: describe_the_incident
+    field_type: text_box
+    label: Describe the Incident
+    page_number: 4
+    position: 18
+    required: true
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: incident_disposition
+    field_type: dropdown
+    label: Incident Disposition
+    page_number: 4
+    position: 19
+    required: true
+    options:
+      values:
+      - No Action Taken
+      - Arrest
+      - Warning
+      - Suspension
+      - Reprimand
+      - Other
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: other_specify
+    field_type: yes_no
+    label: Other, Specify
+    page_number: 4
+    position: 20
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: did_the_incident_involve_a_weapon
+    field_type: dropdown
+    label: Did the Incident Involve a Weapon
+    page_number: 4
+    position: 21
+    required: true
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: describe_the_weapon
+    field_type: text_box
+    label: Describe the Weapon
+    page_number: 4
+    position: 22
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: did_the_incident_involve_a_weapon
+  - field_name: was_the_problem_corrected_immediately
+    field_type: dropdown
+    label: Was the Problem Corrected Immediately
+    page_number: 5
+    position: 23
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+      - No corrective action required
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: will_inspection_checklists_procedures_andor_training_have_to_be_modified_to_prevent_recurrence
+    field_type: dropdown
+    label: Will inspection checklists, procedures and/or training have to be modified
+      to prevent recurrence
+    page_number: 5
+    position: 24
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: additional_comments
+    field_type: text_box
+    label: Additional Comments
+    page_number: 5
+    position: 25
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: targeted_corrective_action_completion_date
+    field_type: date
+    label: Targeted Corrective Action Completion Date
+    page_number: 5
+    position: 26
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: actual_corrective_action_completion_date
+    field_type: date
+    label: Actual Corrective Action Completion Date
+    page_number: 5
+    position: 27
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: WorkScheduleOrLocationUpdateForm
+  name: Work Schedule or Location Update
+  page_count: 4
+  page_headers:
+  - Change Request
+  - HR Only
+  submission_type: approval
+  fields:
+  - field_name: requested_by
+    field_type: dropdown
+    label: Requested By
+    page_number: 3
+    position: 0
+    required: true
+    options:
+      values:
+      - Supervisor
+      - Employee
+      - Other
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: other
+    field_type: text
+    label: Other
+    page_number: 3
+    position: 1
+    required: true
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: requested_by
+  - field_name: type_of_change
+    field_type: dropdown
+    label: Type of Change
+    page_number: 3
+    position: 2
+    required: true
+    options:
+      values:
+      - Schedule
+      - Location
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: present_schedule
+    field_type: dropdown
+    label: Present Schedule
+    page_number: 3
+    position: 3
+    required: false
+    options:
+      values:
+      - 5/40 Mon-Fri 8hr/day
+      - 9/80
+      - 4/10
+      - Other
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Schedule
+    conditional_field: type_of_change
+  - field_name: other_schedule
+    field_type: text
+    label: Other Schedule
+    page_number: 3
+    position: 4
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: present_schedule
+  - field_name: proposed_schedule
+    field_type: dropdown
+    label: Proposed Schedule
+    page_number: 3
+    position: 5
+    required: false
+    options:
+      values:
+      - 5/40 Mon-Fri 8hr/day
+      - 9/80
+      - 4/10
+      - Other
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Schedule
+    conditional_field: type_of_change
+  - field_name: other_proposed_schedule
+    field_type: text
+    label: Other Proposed Schedule
+    page_number: 3
+    position: 6
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: proposed_schedule
+  - field_name: present_location
+    field_type: dropdown
+    label: Present Location
+    page_number: 3
+    position: 7
+    required: false
+    options:
+      values:
+      - JJC
+      - HOA
+      - Service Building
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Location
+    conditional_field: type_of_change
+  - field_name: probation_cleared
+    field_type: dropdown
+    label: Probation Cleared
+    page_number: 3
+    position: 8
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - JJC
+    conditional_field: present_location
+  - field_name: effective_location_change_date
+    field_type: date
+    label: Effective Location Change Date
+    page_number: 3
+    position: 9
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Location
+    conditional_field: type_of_change
+  - field_name: effective_date_shift_change
+    field_type: date
+    label: Effective Date Shift Change
+    page_number: 4
+    position: 10
+    required: false
+    options: {}
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: pay_group_changed
+    field_type: dropdown
+    label: Pay Group Changed?
+    page_number: 4
+    position: 11
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+      - N/A
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: work_day_hours_changed
+    field_type: dropdown
+    label: Work Day Hours Changed?
+    page_number: 4
+    position: 12
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+      - N/A
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: shift_differential_apaf
+    field_type: dropdown
+    label: Shift Differential - APAF
+    page_number: 4
+    position: 13
+    required: false
+    options:
+      values:
+      - Added
+      - Deleted
+      - 'No'
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: vchrp_schedule_change_submitted
+    field_type: dropdown
+    label: VCHRP Schedule Change Submitted?
+    page_number: 4
+    position: 14
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none

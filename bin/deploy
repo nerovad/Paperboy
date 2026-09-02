@@ -38,6 +38,18 @@ RAILS_ENV=production bundle exec rails db:migrate
 echo "==> Syncing ACL definitions..."
 RAILS_ENV=production bundle exec rails acl:sync
 
+# Additive: creates the form templates' fields from db/forms.yml that are
+# missing here and updates the ones whose definition has changed, so a dropdown
+# configured in dev's form builder actually reaches this database -- the .erb
+# views have always travelled through git, the rows behind them never did.
+# Nothing is removed; run PRUNE=1 by hand if you want fields dropped. A form
+# with no template here is held back and reported rather than invented, since a
+# template carries workflow this file does not: CREATE_TEMPLATES=1 opts in to a
+# bare one. After acl:sync, so a field restricted to a group finds it.
+# See lib/tasks/forms.rake.
+echo "==> Syncing form definitions..."
+RAILS_ENV=production bundle exec rails forms:sync
+
 echo "==> Clobbering old assets..."
 RAILS_ENV=production bundle exec rails assets:clobber
 
