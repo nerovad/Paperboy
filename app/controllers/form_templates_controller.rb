@@ -489,8 +489,10 @@ class FormTemplatesController < ApplicationController
   end
 
   # Data attributes wiring a field's conditional answer to its trigger on the
-  # generated form. Lookup mode carries the field id (server resolves the DB
-  # lookup at fill time); static mode inlines the value->value mapping JSON.
+  # generated form. Lookup mode carries the form and field names the server
+  # resolves the DB lookup from at fill time -- never the field id, which is an
+  # identity column this file is committed and deployed past; static mode
+  # inlines the value->value mapping JSON.
   def build_conditional_answer_attrs(field)
     return '' unless field.conditional_answer?
 
@@ -498,7 +500,9 @@ class FormTemplatesController < ApplicationController
     return '' unless answer_field
 
     if field.answer_lookup?
-      " data-answer-depends-on=\"#{answer_field.field_name}\" data-answer-lookup-field-id=\"#{field.id}\""
+      " data-answer-depends-on=\"#{answer_field.field_name}\" " \
+        "data-answer-lookup-form=\"#{field.form_template.class_name}\" " \
+        "data-answer-lookup-field=\"#{field.field_name}\""
     else
       mappings_json = field.conditional_answer_mappings.to_json.gsub('"', '&quot;')
       " data-answer-depends-on=\"#{answer_field.field_name}\" data-answer-mappings=\"#{mappings_json}\""
@@ -506,15 +510,17 @@ class FormTemplatesController < ApplicationController
   end
 
   # A field with has_custom_view keeps its HTML verbatim across regenerations,
-  # but the conditional-answer attributes embed the field's DB id and trigger
-  # name, and the id is reassigned every time fields are rebuilt. Left as-is a
-  # preserved block points autofill at a since-deleted field id and silently
-  # fills nothing. Refresh (or strip, or inject) those attrs from the current
-  # field so preserved custom HTML keeps working.
+  # but the conditional-answer attributes embed the trigger name, and blocks
+  # written before this addressed fields by name embed the field's DB id, which
+  # is reassigned every time fields are rebuilt. Left as-is such a block points
+  # autofill at a since-deleted field id and silently fills nothing. Refresh
+  # (or strip, or inject) those attrs from the current field so preserved
+  # custom HTML keeps working -- which also upgrades an id-bearing block.
   def refresh_conditional_answer_attrs(html, field)
     fresh = build_conditional_answer_attrs(field)
-    # Matches the answer-lookup / answer-mappings attrs already on the wrapper.
-    stale = /\s+data-answer-depends-on="[^"]*"(?:\s+data-answer-lookup-field-id="[^"]*"|\s+data-answer-mappings="[^"]*")/
+    # Matches the answer-lookup / answer-mappings attrs already on the wrapper,
+    # in either the name-addressed or the older id-addressed shape.
+    stale = /\s+data-answer-depends-on="[^"]*"(?:\s+data-answer-lookup-form="[^"]*"\s+data-answer-lookup-field="[^"]*"|\s+data-answer-lookup-field-id="[^"]*"|\s+data-answer-mappings="[^"]*")/
 
     if html.match?(stale)
       html.sub(stale, fresh)

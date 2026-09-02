@@ -158,12 +158,12 @@
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
 <!-- FIELD:impacted_employee END -->
-<!-- FIELD:impacted_employees_email START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="impacted_employee" data-answer-lookup-field-id="4806">
+<!-- FIELD:impacted_employees_email START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="impacted_employee" data-answer-lookup-form="SafetyReport" data-answer-lookup-field="impacted_employees_email">
   <%= form.label :impacted_employees_email, "Impacted Employee's Email" %>
             <%= form.email_field :impacted_employees_email, class: "form-control", placeholder: "e.g. name@example.com", autocomplete: "email" %>
           </div>
 <!-- FIELD:impacted_employees_email END -->
-<!-- FIELD:impacted_employees_phone START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="impacted_employee" data-answer-lookup-field-id="4807">
+<!-- FIELD:impacted_employees_phone START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="impacted_employee" data-answer-lookup-form="SafetyReport" data-answer-lookup-field="impacted_employees_phone">
   <%= form.label :impacted_employees_phone, "Impacted Employee's Phone" %>
             <%= form.text_field :impacted_employees_phone,
                   class: "form-control",
@@ -185,7 +185,7 @@
 <div class="form-page" style="display:none;">
   <h2>Supervisor and Witness Info</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:impacted_employees_supervisor START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="impacted_employee" data-answer-lookup-field-id="4808">
+<!-- FIELD:impacted_employees_supervisor START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="impacted_employee" data-answer-lookup-form="SafetyReport" data-answer-lookup-field="impacted_employees_supervisor">
   <%= form.label :impacted_employees_supervisor, "Impacted Employee's Supervisor" %>
             <%= form.text_field :impacted_employees_supervisor, class: "form-control" %>
           </div>
