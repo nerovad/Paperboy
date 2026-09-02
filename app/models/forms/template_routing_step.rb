@@ -177,10 +177,14 @@ module Forms
     def eligible_approver_ids(submission)
       case routing_type
       when 'supervisor'
+        # Single-approver steps follow the same away redirect that
+        # TrackableStatus#approver_id_for_routing_step applies, so the person
+        # notified is the person the form was actually handed to. Pool steps
+        # below are left alone — the rest of the group is already the cover.
         sup = step_submitter_employee(submission)&.supervisor_id
-        sup.present? ? [sup.to_s] : []
+        sup.present? ? [AwayPeriod.assignee_for(sup.to_s)] : []
       when 'employee'
-        employee_id.present? ? [employee_id.to_s] : []
+        employee_id.present? ? [AwayPeriod.assignee_for(employee_id.to_s)] : []
       when 'group'
         group_eligible_ids(submission)
       when 'authorization'

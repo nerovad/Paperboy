@@ -28,6 +28,8 @@
     </div>
   <% end %>
 
+  <%= render "settings/away", periods: @away_periods, employees: @delegate_options %>
+
   <%= render "settings/form_subscriptions",
              subscriptions: @form_subscriptions,
              form_types: @subscription_form_types,

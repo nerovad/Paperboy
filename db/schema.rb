@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_09_02_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_02_000002) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -88,6 +88,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_02_000001) do
     t.datetime "updated_at", null: false
     t.boolean "all_budget_units", default: false, null: false
     t.boolean "all_locations", default: false, null: false
+  end
+
+  create_table "away_periods", force: :cascade do |t|
+    t.string "employee_id", null: false
+    t.string "delegate_id", null: false
+    t.date "starts_on", null: false
+    t.date "ends_on", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id", "starts_on", "ends_on"], name: "index_away_periods_on_employee_and_dates"
+    t.index ["ends_on"], name: "index_away_periods_on_ends_on"
   end
 
   create_table "bike_locker_forms", force: :cascade do |t|

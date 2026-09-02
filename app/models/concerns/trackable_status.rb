@@ -295,17 +295,22 @@ module TrackableStatus
   end
 
   def approver_id_for_routing_step(step)
-    case step.routing_type
-    when 'supervisor'
-      submitter_employee&.supervisor_id&.to_s
-    when 'employee'
-      step.employee_id.to_s
-    when 'group', 'authorization'
-      # Multi-approver queue: approver_id stays nil so every eligible approver
-      # (group members / authorized approvers for the budget unit) sees it in
-      # their inbox; the first to act claims it.
-      nil
-    end
+    assignee = case step.routing_type
+               when 'supervisor'
+                 submitter_employee&.supervisor_id&.to_s
+               when 'employee'
+                 step.employee_id.to_s
+               when 'group', 'authorization'
+                 # Multi-approver queue: approver_id stays nil so every eligible
+                 # approver (group members / authorized approvers for the budget
+                 # unit) sees it in their inbox; the first to act claims it.
+                 nil
+               end
+
+    # Work aimed at somebody who is out goes to whoever is covering for them, so
+    # it never lands in an inbox nobody is reading. A pool step resolves to nil
+    # and is left alone: the rest of the group is already the cover.
+    AwayPeriod.assignee_for(assignee)
   end
 
   def submitter_employee

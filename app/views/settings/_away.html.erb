@@ -1,0 +1,89 @@
+<%# Away cover — hand your inbox to a colleague for a stretch of days.
+
+    Rendered outside the settings form: a period is its own row.
+
+    Locals:
+      periods    this user's away periods, soonest first
+      employees  delegate picker options
+-%>
+<section class="settings-section">
+  <h2>Away Cover</h2>
+  <p class="settings-description">
+    Set yourself away and everything routed to you goes to a colleague instead,
+    until the end date. Anything already waiting in your inbox is handed over
+    as soon as the period starts. Work stays with them when you get back — use
+    <strong>Take Back</strong> in the inbox for anything you want returned.
+  </p>
+
+  <% current = periods.find(&:active?) %>
+  <% if current %>
+    <div class="settings-notice">
+      You are away until <strong><%= current.ends_on.strftime("%B %-d, %Y") %></strong>.
+      Work is going to
+      <strong><%= employees.to_h { |name, id| [id.to_s, name] }[current.delegate_id.to_s] || "employee ##{current.delegate_id}" %></strong>.
+    </div>
+  <% end %>
+
+  <%= form_with model: AwayPeriod.new, url: away_periods_path, method: :post, data: { turbo: false } do |f| %>
+    <div class="pb-filter-grid">
+      <div class="pb-filter">
+        <%= f.label :delegate_id, "Hand my work to" %>
+        <%= f.select :delegate_id, options_for_select(employees),
+              { include_blank: "Select a colleague…" }, class: "form-control" %>
+      </div>
+
+      <div class="pb-filter">
+        <%= f.label :starts_on, "From" %>
+        <%= f.date_field :starts_on, value: Date.current, class: "form-control" %>
+      </div>
+
+      <div class="pb-filter">
+        <%= f.label :ends_on, "Until (last day away)" %>
+        <%= f.date_field :ends_on, class: "form-control" %>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <%= f.submit "Set Away", class: "btn approve" %>
+    </div>
+  <% end %>
+
+  <% if periods.any? %>
+    <table class="visibility-grants-table">
+      <thead>
+        <tr>
+          <th scope="col">From</th>
+          <th scope="col">Until</th>
+          <th scope="col">Covered by</th>
+          <th scope="col">Status</th>
+          <th scope="col" class="actions-column">Cancel</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% names = employees.to_h { |name, id| [id.to_s, name] } %>
+        <% periods.each do |period| %>
+          <tr>
+            <td><%= period.starts_on.strftime("%b %-d, %Y") %></td>
+            <td><%= period.ends_on.strftime("%b %-d, %Y") %></td>
+            <td><%= names[period.delegate_id.to_s] || "Employee ##{period.delegate_id}" %></td>
+            <td>
+              <% if period.active? %>
+                <span class="grant-badge">Away now</span>
+              <% elsif period.starts_on > Date.current %>
+                <span class="pb-search-chip">Upcoming</span>
+              <% else %>
+                <span class="grant-muted">Finished</span>
+              <% end %>
+            </td>
+            <td class="actions-column">
+              <%= button_to "Cancel", away_period_path(period), method: :delete,
+                    class: "btn deny compact",
+                    form: { data: { turbo_confirm: "Cancel this away period? Work already handed over stays with your delegate.",
+                                    confirm_title: "Cancel away period", confirm_label: "Cancel period" } } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>

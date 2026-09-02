@@ -57,7 +57,8 @@ module Forms
 
     def create
       employee = session[:user]
-      sup_id    = fetch_supervisor_id(employee['employee_id'])
+      # A supervisor who is away has their queue covered by their delegate.
+      sup_id    = AwayPeriod.assignee_for(fetch_supervisor_id(employee['employee_id']))
       sup_email = fetch_employee_email(sup_id)
 
       @probation_transfer_request = ProbationTransferRequest.new(probation_transfer_request_params)

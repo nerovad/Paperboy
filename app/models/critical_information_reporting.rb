@@ -107,6 +107,8 @@ class CriticalInformationReporting < ApplicationRecord
     return unless location.present? && assigned_manager_id.blank?
 
     manager_id = CriticalInformationLocationRouter.find_manager_for_location(location)
-    self.assigned_manager_id = manager_id if manager_id.present?
+    # An incident manager who is out has their reports covered by their
+    # delegate, the same as any other routed work.
+    self.assigned_manager_id = AwayPeriod.assignee_for(manager_id) if manager_id.present?
   end
 end
