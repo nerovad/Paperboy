@@ -10,6 +10,12 @@ module TrackableStatus
 
   TERMINAL_STATUSES = %w[approved denied cancelled].freeze
 
+  # Columns an edit log should never carry. `status` is left out because
+  # StatusChange already records transitions in full, with labels rather than
+  # raw values; approver_id and the timestamps are routing mechanics rather
+  # than anything a person edited.
+  EDIT_AUDIT_IGNORED_COLUMNS = %w[id created_at updated_at status approver_id].freeze
+
   included do
     has_many :status_changes, as: :trackable, dependent: :destroy
     has_many :form_submission_copies, as: :submission, dependent: :destroy
@@ -17,10 +23,13 @@ module TrackableStatus
     after_create :deliver_copy_recipients_on_submit
     after_create :deliver_email_steps_on_submit
     after_create :notify_direct_assignee
+    after_create :notify_subscribers_of_creation
     after_update :record_status_change, if: :saved_change_to_status?
     after_update :deliver_copy_recipients_on_approval, if: :saved_change_to_status?
     after_update :deliver_email_steps_on_status_change, if: :saved_change_to_status?
     after_update :stamp_actor_on_terminal_status, if: :saved_change_to_status?
+    after_update :audit_and_notify_field_edits
+    after_update :notify_subscribers_of_status_change, if: :saved_change_to_status?
   end
 
   # Class method to convert status value to label
@@ -435,6 +444,75 @@ module TrackableStatus
     end
   rescue StandardError => e
     Rails.logger.warn("inbox notification dispatch failed for #{self.class.name} ##{id}: #{e.message}")
+  end
+
+  # --- Form subscriptions (Forms::Subscription) ---
+
+  # Somebody filed this form. Subscribers are a different audience from the
+  # approver the inbox notification goes to: they follow a form type rather
+  # than owning any one submission.
+  def notify_subscribers_of_creation
+    deliver_subscription_notifications('created')
+  end
+
+  # Record what actually changed on this update, then tell the people following
+  # edits. Auditing and notifying are one callback because the mail names the
+  # very rows just written -- capturing them separately would leave the mailer
+  # guessing which edits were part of this save.
+  def audit_and_notify_field_edits
+    edit_ids = capture_field_edits
+    return if edit_ids.empty?
+
+    deliver_subscription_notifications('edited', edit_ids: edit_ids)
+  end
+
+  def notify_subscribers_of_status_change
+    deliver_subscription_notifications('status_changed')
+  end
+
+  # Write one RecordEdit per column that actually moved, and return their ids.
+  # Values come from saved_changes, so this reflects what the database took,
+  # not what was assigned. Shares the Records grid's audit table: an edit is an
+  # edit whether it arrived through the grid or the form, and RecordEdit#for_row
+  # then returns a record's whole history from one place.
+  def capture_field_edits
+    changes = saved_changes.except(*EDIT_AUDIT_IGNORED_COLUMNS)
+    return [] if changes.empty?
+
+    actor = { id: Current.user&.dig('employee_id')&.to_s, name: current_user_display_name }
+
+    changes.filter_map do |column, (before, after)|
+      next if before.to_s == after.to_s
+
+      RecordEdit.capture(row: self, table_slug: edit_audit_table_slug, column_name: column,
+                         old_value: before, new_value: after, actor: actor)&.id
+    end
+  rescue StandardError => e
+    Rails.logger.warn("edit audit failed for #{self.class.name} ##{id}: #{e.message}")
+    []
+  end
+
+  # RecordEdit#table_slug is provenance. Registry-backed models already have a
+  # slug the grid uses; a plain form model has none, so its table name says
+  # where the edit landed.
+  def edit_audit_table_slug
+    self.class.try(:registry_slug).presence || self.class.table_name
+  end
+
+  # Queue immediate mail for everyone subscribed to this event on this form.
+  # Digest subscribers are not touched here -- FormSubscriptionDigestJob finds
+  # their events by querying the same audit rows on its own schedule.
+  def deliver_subscription_notifications(event, edit_ids: [])
+    recipient_ids = Forms::Subscription.recipient_ids_for(
+      form_type: self.class.name, event: event, delivery_mode: Forms::Subscription::IMMEDIATE
+    )
+    return if recipient_ids.empty?
+
+    recipient_ids.each do |employee_id|
+      FormSubscriptionMailer.activity(self.class.name, id, event, employee_id, edit_ids).deliver_later
+    end
+  rescue StandardError => e
+    Rails.logger.warn("subscription #{event} dispatch failed for #{self.class.name} ##{id}: #{e.message}")
   end
 
   # --- Configurable workflow emails (Forms::TemplateEmailStep) ---

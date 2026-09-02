@@ -132,6 +132,14 @@
              form_types: @submission_forms,
              form_labels: @submission_form_labels %>
 
+  <%# Same reasoning as the section above: its own rows, its own form. %>
+  <%= render "acl/form_subscriptions",
+             group: @group,
+             groups: @groups,
+             subscriptions: @form_subscriptions,
+             form_types: @submission_forms,
+             form_labels: @submission_form_labels %>
+
   <%# Last thing on the page, so nothing sits below Save. The form attribute
       ties it back to the permissions form it submits. %>
   <div class="form-actions acl-save-row">

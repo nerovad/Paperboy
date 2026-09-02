@@ -231,6 +231,7 @@ class AclController < ApplicationController
     load_submission_form_catalog
     @groups = Group.order(:group_name)
     @visibility_grants = all_visibility_grants
+    @form_subscriptions = all_form_subscriptions
 
     # If no permissions exist yet for this group, pre-check default public items
     return unless @current_permissions.empty?
@@ -449,6 +450,17 @@ class AclController < ApplicationController
                           .includes(:group)
                           .sort_by do |grant|
       [grant.form_label(@submission_form_labels).to_s.downcase, grant.group&.group_name.to_s.downcase]
+    end
+  end
+
+  # Group-held subscriptions only. Personal ones belong to their owner and are
+  # managed from that person's Settings page, not from here.
+  def all_form_subscriptions
+    Forms::Subscription.for_group(Group.pluck(:GroupID))
+                       .includes(:group)
+                       .sort_by do |subscription|
+      [subscription.form_label(@submission_form_labels).to_s.downcase,
+       subscription.group&.group_name.to_s.downcase]
     end
   end
 

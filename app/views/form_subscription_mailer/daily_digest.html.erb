@@ -1,0 +1,67 @@
+<p>Hello <%= @employee.first_name %>,</p>
+
+<p>Here is the form activity you follow, for <%= @digest.since.to_date.strftime("%B %-d, %Y") %>.</p>
+
+<% if @digest.created_submissions.any? %>
+  <h3 style="font-size: 1em; color: #004976; border-bottom: 2px solid #004976; padding-bottom: 4px;">
+    New submissions (<%= @digest.created_submissions.size %>)
+  </h3>
+  <ul style="padding-left: 18px;">
+    <% @digest.created_submissions.each do |submission| %>
+      <li style="margin-bottom: 6px;">
+        <strong><%= Forms::Reference.reference_for(submission, @prefix_map) %></strong>
+        — <%= form_label(submission.class.name) %>
+        <% if submission.try(:name).present? %>
+          <span style="color: #666;">from <%= submission.name %></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if @digest.status_changes.any? %>
+  <h3 style="font-size: 1em; color: #004976; border-bottom: 2px solid #004976; padding-bottom: 4px;">
+    Status changes (<%= @digest.status_changes.size %>)
+  </h3>
+  <ul style="padding-left: 18px;">
+    <% @digest.status_changes.each do |change| %>
+      <li style="margin-bottom: 6px;">
+        <strong><%= reference_label(change.trackable_type, change.trackable_id) %></strong>:
+        <span style="color: #a33;"><%= change.from_status %></span>
+        &rarr;
+        <strong style="color: #185;"><%= change.to_status %></strong>
+        <% if change.changed_by_name.present? %>
+          <span style="color: #666;">— by <%= change.changed_by_name %></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if @digest.edits.any? %>
+  <h3 style="font-size: 1em; color: #004976; border-bottom: 2px solid #004976; padding-bottom: 4px;">
+    Edits (<%= @digest.edits.size %>)
+  </h3>
+  <% @digest.edits_by_record.each do |(record_type, record_id), edits| %>
+    <p style="margin-bottom: 0;">
+      <strong><%= reference_label(record_type, record_id) %></strong>
+      <span style="color: #666;">— <%= form_label(record_type) %></span>
+      <% if (editor = edits.map(&:changed_by_name).compact_blank.uniq.first) %>
+        <span style="color: #666;">, edited by <%= editor %></span>
+      <% end %>
+    </p>
+    <%= render "edits_table", edits: edits %>
+  <% end %>
+<% end %>
+
+<p>
+  <a href="<%= inbox_queue_url %>"
+     style="display: inline-block; padding: 10px 20px; background-color: #004976; color: #ffffff; text-decoration: none; border-radius: 4px;">
+    Open Paperboy
+  </a>
+</p>
+
+<p style="color: #666; font-size: 0.9em; margin-top: 30px;">
+  You are receiving this daily digest because of your form subscriptions.
+  Manage them under <a href="<%= settings_url %>" style="color: #004976;">Settings</a>.
+</p>

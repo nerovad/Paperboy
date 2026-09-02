@@ -1,0 +1,56 @@
+<p>Hello <%= @employee.first_name %>,</p>
+
+<% if @event == "created" %>
+  <p>A new <strong><%= @form_name %></strong> has been submitted.</p>
+<% elsif @event == "edited" %>
+  <p><strong><%= @form_name %> <%= @reference %></strong> has been edited.</p>
+<% elsif @event == "status_changed" %>
+  <p>The status of <strong><%= @form_name %> <%= @reference %></strong> has changed.</p>
+<% end %>
+
+<table style="width: 100%; max-width: 640px; border-collapse: collapse; margin: 20px 0;">
+  <tr>
+    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; background-color: #f5f5f5;">Reference:</th>
+    <td style="padding: 10px; border-bottom: 1px solid #ddd;"><%= @reference %></td>
+  </tr>
+  <% if @submission.try(:name).present? %>
+    <tr>
+      <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; background-color: #f5f5f5;">Submitted by:</th>
+      <td style="padding: 10px; border-bottom: 1px solid #ddd;"><%= @submission.name %></td>
+    </tr>
+  <% end %>
+  <% if @submission.respond_to?(:status_label) %>
+    <tr>
+      <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; background-color: #f5f5f5;">Current status:</th>
+      <td style="padding: 10px; border-bottom: 1px solid #ddd;"><%= @submission.status_label %></td>
+    </tr>
+  <% end %>
+</table>
+
+<% if @event == "status_changed" && @status_change %>
+  <p style="margin: 20px 0;">
+    <span style="color: #a33;"><%= @status_change.from_status.presence || "—" %></span>
+    &nbsp;&rarr;&nbsp;
+    <strong style="color: #185;"><%= @status_change.to_status %></strong>
+    <% if @status_change.changed_by_name.present? %>
+      <span style="color: #666;">— by <%= @status_change.changed_by_name %></span>
+    <% end %>
+  </p>
+<% end %>
+
+<% if @edits.any? %>
+  <h3 style="font-size: 1em; margin-bottom: 0;">What changed</h3>
+  <%= render "edits_table", edits: @edits %>
+<% end %>
+
+<p>
+  <a href="<%= inbox_queue_url %>"
+     style="display: inline-block; padding: 10px 20px; background-color: #004976; color: #ffffff; text-decoration: none; border-radius: 4px;">
+    Open Paperboy
+  </a>
+</p>
+
+<p style="color: #666; font-size: 0.9em; margin-top: 30px;">
+  You are receiving this because you are subscribed to <%= @form_name %> activity.
+  Manage your subscriptions under <a href="<%= settings_url %>" style="color: #004976;">Settings</a>.
+</p>

@@ -1,0 +1,15 @@
+<%# One block of field changes. Locals: edits (RecordEdit rows). -%>
+<table style="width: 100%; max-width: 640px; border-collapse: collapse; margin: 12px 0;">
+  <tr>
+    <th style="padding: 8px 10px; text-align: left; border-bottom: 1px solid #ddd; background-color: #f5f5f5;">Field</th>
+    <th style="padding: 8px 10px; text-align: left; border-bottom: 1px solid #ddd; background-color: #f5f5f5;">Was</th>
+    <th style="padding: 8px 10px; text-align: left; border-bottom: 1px solid #ddd; background-color: #f5f5f5;">Now</th>
+  </tr>
+  <% edits.each do |edit| %>
+    <tr>
+      <td style="padding: 8px 10px; border-bottom: 1px solid #eee;"><%= column_label(edit.column_name) %></td>
+      <td style="padding: 8px 10px; border-bottom: 1px solid #eee; color: #a33;"><%= edit.old_value.presence || "—" %></td>
+      <td style="padding: 8px 10px; border-bottom: 1px solid #eee; color: #185; font-weight: 600;"><%= edit.new_value.presence || "—" %></td>
+    </tr>
+  <% end %>
+</table>

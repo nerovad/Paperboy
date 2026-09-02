@@ -452,6 +452,7 @@ Rails.application.routes.draw do
 
   # Rows behind the ACL group page's Submission Visibility section.
   resources :form_visibility_grants, only: %i[create destroy]
+  resources :form_subscriptions, only: %i[create destroy]
 
   # ============================================================================
   # Workflow Forms (with approval/denial workflows)
