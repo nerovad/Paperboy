@@ -238,7 +238,7 @@
 <div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :impacted_employee, "Employee" %>
             <%= form.select :impacted_employee,
-                  options_for_select(Employee.where(agency: 'GSA').order(:last_name).map { |e| "#{e.last_name}, #{e.first_name}" }, @critical_information_reporting.impacted_employee.to_s.split(/,(?! )/)),
+                  options_for_select(FormLookup.options_for("CriticalInformationReporting", "impacted_employee"), @critical_information_reporting.impacted_employee.to_s.split(/,(?! )/)),
                   { include_blank: false },
                   { class: "form-control", multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
