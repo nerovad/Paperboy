@@ -10,6 +10,7 @@ module Billing
 
       @billing_type_audits = BillingTypeAudit.new(@active_billing_period).results
       @audit_groups = Audit.new(@active_billing_period).results
+      @cost_analysis = CostAnalysis.new(@active_billing_period).result
     rescue ActiveRecord::ActiveRecordError => e
       Rails.logger.error("Billing audit failed: #{e.class}: #{e.message}")
       @audit_error = 'The Billing audit could not be loaded.'
@@ -40,6 +41,20 @@ module Billing
     rescue ActiveRecord::ActiveRecordError => e
       Rails.logger.error("Billing audit rows failed: #{e.class}: #{e.message}")
       @audit_error = 'The TC60 audit rows could not be loaded.'
+    end
+
+    def cost_rows
+      @active_billing_period = ActiveBillingPeriod.current
+      @cost_check = CostAnalysis.find_check(params[:key])
+      raise ActiveRecord::RecordNotFound unless @cost_check
+      return unless @active_billing_period
+
+      @tc60_rows = CostAnalysis.new(@active_billing_period).error_rows(@cost_check.key)
+    rescue ActiveRecord::RecordNotFound
+      raise
+    rescue ActiveRecord::ActiveRecordError => e
+      Rails.logger.error("Billing cost audit rows failed: #{e.class}: #{e.message}")
+      @audit_error = 'The TC60 cost audit rows could not be loaded.'
     end
 
     def type_rows

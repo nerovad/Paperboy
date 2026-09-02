@@ -93,6 +93,7 @@ Rails.application.routes.draw do
 
     resource :dashboard, only: :show, controller: :dashboards
     resource :audit, only: :show, controller: :audits
+    get 'audit/cost/:key/rows', to: 'audits#cost_rows', as: :cost_audit_rows
     get 'audit/type/:code/rows', to: 'audits#type_rows', as: :type_audit_rows
     get 'audit/:key/rows', to: 'audits#rows', as: :audit_rows
     get 'audit/:key', to: 'audits#detail', as: :audit_detail

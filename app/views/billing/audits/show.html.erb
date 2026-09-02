@@ -48,6 +48,26 @@
       <% end %>
     </section>
 
+    <section class="billing-audit-group" aria-labelledby="cost-analysis-title">
+      <h2 id="cost-analysis-title">Cost Analysis</h2>
+      <div class="billing-audit-grid">
+        <% amount_cost_failed = !@cost_analysis.amount_cost_variance.zero? %>
+        <% amount_cost_card = capture do %>
+          <h3>Amount vs Cost</h3>
+          <p class="billing-audit-formula">Amount − Cost</p>
+          <div class="billing-audit-count"><%= number_to_currency @cost_analysis.amount_cost_variance %></div>
+        <% end %>
+        <% if amount_cost_failed %>
+          <%= link_to billing_cost_audit_rows_path(:amount_vs_cost),
+                      class: "billing-audit-card billing-audit-card--failure billing-audit-card--link" do %>
+            <%= amount_cost_card %>
+          <% end %>
+        <% else %>
+          <article class="billing-audit-card"><%= amount_cost_card %></article>
+        <% end %>
+      </div>
+    </section>
+
     <% @audit_groups.each do |group, results| %>
       <section class="billing-audit-group" aria-labelledby="<%= group.key %>-title">
         <h2 id="<%= group.key %>-title"><%= group.label %></h2>
