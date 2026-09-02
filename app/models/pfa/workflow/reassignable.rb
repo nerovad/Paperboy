@@ -11,13 +11,24 @@ module Pfa
         has_many :task_reassignments, as: :task, dependent: :destroy
       end
 
-      # These methods must be implemented by models that include this concern
-      def current_assignee_id
-        raise NotImplementedError, "#{self.class} must implement #current_assignee_id"
+      # Where an approval form keeps its assignee. Every form the form builder
+      # generates uses this one column, so they get reassignment by including
+      # the concern and nothing else. The hand-written forms route by their own
+      # column (a supervisor, an incident manager) and override the two methods
+      # below to say so.
+      DEFAULT_ASSIGNMENT_COLUMN = 'approver_id'
+
+      # The column an assignment is written to. Models with no recognisable
+      # assignee column must name theirs, so a form can never be silently
+      # reassigned by writing the wrong field.
+      def assignment_field_name
+        return DEFAULT_ASSIGNMENT_COLUMN if self.class.column_names.include?(DEFAULT_ASSIGNMENT_COLUMN)
+
+        raise NotImplementedError, "#{self.class} must implement #assignment_field_name"
       end
 
-      def assignment_field_name
-        raise NotImplementedError, "#{self.class} must implement #assignment_field_name"
+      def current_assignee_id
+        public_send(assignment_field_name)
       end
 
       # Reassign this task to a new employee

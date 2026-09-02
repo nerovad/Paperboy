@@ -2,6 +2,7 @@
 
 class FormRequestForm < ApplicationRecord
   include TrackableStatus
+  include Reassignable
 
   has_many_attached :attach_existing_pdf_form
 
@@ -24,11 +25,6 @@ class FormRequestForm < ApplicationRecord
   # For inbox queue filtering - returns the form type name
   def form_type
     self.class.name.demodulize.titleize
-  end
-
-  # For inbox reassignment - returns the current approver's ID
-  def current_assignee_id
-    approver_id
   end
 
   # Get the form template for this model (for button configuration)

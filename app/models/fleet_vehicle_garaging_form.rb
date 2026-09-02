@@ -2,6 +2,7 @@
 
 class FleetVehicleGaragingForm < ApplicationRecord
   include TrackableStatus
+  include Reassignable
 
   has_many :fleet_vehicle_garaging_form_locations, dependent: :destroy
   accepts_nested_attributes_for :fleet_vehicle_garaging_form_locations, allow_destroy: true, reject_if: :all_blank
@@ -35,11 +36,6 @@ class FleetVehicleGaragingForm < ApplicationRecord
   # For inbox queue filtering - returns the form type name
   def form_type
     self.class.name.demodulize.titleize
-  end
-
-  # For inbox reassignment - returns the current approver's ID
-  def current_assignee_id
-    approver_id
   end
 
   # Get the form template for this model (for button configuration)
