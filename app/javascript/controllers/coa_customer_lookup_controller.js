@@ -2,18 +2,56 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = [
-    "input", "results", "contact", "email", "phone"
+    "input", "results", "contact", "email", "phone", "accountItemInput",
+    "accountItemResult", "accountItemCard"
   ]
-  static values = { employeesUrl: String, hierarchyUrl: String }
+  static values = { employeesUrl: String, hierarchyUrl: String, accountItemsUrl: String }
 
   connect() {
     this.searchTimer = null
     this.searchRequest = null
+    this.accountItemTimer = null
+    this.accountItemRequest = null
   }
 
   disconnect() {
     clearTimeout(this.searchTimer)
     this.searchRequest?.abort()
+    clearTimeout(this.accountItemTimer)
+    this.accountItemRequest?.abort()
+  }
+
+  searchAccountItems() {
+    clearTimeout(this.accountItemTimer)
+    this.accountItemRequest?.abort()
+    this.accountItemResultTarget.hidden = true
+
+    const query = this.accountItemInputTarget.value.trim()
+    if (!query) return
+
+    this.accountItemTimer = setTimeout(() => this.loadAccountItems(query), 250)
+  }
+
+  async loadAccountItems(query) {
+    this.accountItemRequest = new AbortController()
+    const url = new URL(this.accountItemsUrlValue, window.location.origin)
+    url.searchParams.set("q", query)
+
+    try {
+      const response = await fetch(url, {
+        headers: { Accept: "application/json" },
+        signal: this.accountItemRequest.signal
+      })
+      if (!response.ok) return
+
+      const { tables } = await response.json()
+      this.accountItemResultTarget.textContent = tables.length
+        ? `Found in: ${tables.join(", ")}.`
+        : "Not found."
+      this.accountItemResultTarget.hidden = false
+    } catch (error) {
+      if (error.name !== "AbortError") throw error
+    }
   }
 
   search() {
@@ -21,6 +59,7 @@ export default class extends Controller {
     this.searchRequest?.abort()
     this.hideResults()
     this.contactTarget.hidden = true
+    this.resetAccountItemLookup()
     window.dispatchEvent(new CustomEvent("coa-organization-cleared"))
 
     const query = this.inputTarget.value.trim()
@@ -85,7 +124,17 @@ export default class extends Controller {
 
   renderHierarchy(payload) {
     this.renderContact(payload.contact)
+    this.accountItemCardTarget.hidden = false
     this.publishOrganization(payload)
+  }
+
+  resetAccountItemLookup() {
+    clearTimeout(this.accountItemTimer)
+    this.accountItemRequest?.abort()
+    this.accountItemInputTarget.value = ""
+    this.accountItemResultTarget.replaceChildren()
+    this.accountItemResultTarget.hidden = true
+    this.accountItemCardTarget.hidden = true
   }
 
   renderContact(contact) {

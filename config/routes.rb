@@ -519,6 +519,7 @@ Rails.application.routes.draw do
     resource :customer_lookup, only: :show do
       get :employees
       get :hierarchy
+      get :account_items
     end
 
     resources :agencies

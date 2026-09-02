@@ -9,7 +9,8 @@
   <div class="coa-form coa-billing-lookup"
        data-controller="coa-customer-lookup"
        data-coa-customer-lookup-employees-url-value="<%= employees_coa_customer_lookup_path %>"
-       data-coa-customer-lookup-hierarchy-url-value="<%= hierarchy_coa_customer_lookup_path %>">
+       data-coa-customer-lookup-hierarchy-url-value="<%= hierarchy_coa_customer_lookup_path %>"
+       data-coa-customer-lookup-account-items-url-value="<%= account_items_coa_customer_lookup_path %>">
     <section class="coa-lookup-card" aria-labelledby="employee-selection-title">
       <h2 id="employee-selection-title" class="coa-lookup-card__heading">Employee Selection</h2>
       <div class="coa-lookup-card__body">
@@ -44,6 +45,25 @@
             <dd data-coa-customer-lookup-target="phone"></dd>
           </div>
         </dl>
+      </div>
+    </section>
+
+    <section class="coa-lookup-card" aria-labelledby="account-item-lookup-title"
+             data-coa-customer-lookup-target="accountItemCard" hidden>
+      <h2 id="account-item-lookup-title" class="coa-lookup-card__heading">Chart of Account Item Lookup</h2>
+      <div class="coa-lookup-card__body">
+        <div class="field coa-billing-field">
+          <%= label_tag :account_item_search, "Find" %>
+          <div class="coa-customer-search">
+            <%= search_field_tag :account_item_search, nil,
+                                 placeholder: "Enter an account item ID…",
+                                 autocomplete: "off",
+                                 data: { coa_customer_lookup_target: "accountItemInput",
+                                         action: "input->coa-customer-lookup#searchAccountItems" } %>
+            <p class="coa-account-item-result" role="status" aria-live="polite"
+               data-coa-customer-lookup-target="accountItemResult" hidden></p>
+          </div>
+        </div>
       </div>
     </section>
 

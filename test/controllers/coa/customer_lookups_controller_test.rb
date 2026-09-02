@@ -125,6 +125,71 @@ class CoaCustomerLookupsControllerTest < ActionController::TestCase
   end
 end
 
+class CoaAccountItemLookupsControllerTest < ActionController::TestCase
+  tests Coa::CustomerLookupsController
+
+  setup do
+    session[:user] = { 'employee_id' => 1, 'email' => 'employee@example.com' }
+    @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
+    @controller.define_singleton_method(:inbox_count) { 0 }
+  end
+
+  test 'show renders the Chart of Account item lookup card' do
+    get :show
+
+    assert_response :success
+    assert_select '#account-item-lookup-title', text: 'Chart of Account Item Lookup'
+    assert_select '[data-coa-customer-lookup-target=accountItemCard][hidden]', count: 1
+    assert_select 'label[for=account_item_search]', text: 'Find'
+    assert_select '[data-coa-customer-lookup-account-items-url-value=?]',
+                  account_items_coa_customer_lookup_path
+  end
+
+  test 'reports every table containing the exact id' do
+    requested = []
+    matches = { Coa::Activity => true, Coa::Program => true }
+
+    with_account_item_stubs(requested, matches) do
+      get :account_items, params: { q: ' 100 ' }
+    end
+
+    assert_response :success
+    assert_equal %w[Activity Program], response.parsed_body['tables']
+    assert_equal expected_requests('100'), requested
+  end
+
+  test 'blank query does not search account tables' do
+    Coa::Activity.stub(:exists?, ->(*) { flunk 'blank lookup queried an account table' }) do
+      get :account_items, params: { q: ' ' }
+    end
+
+    assert_response :success
+    assert_equal({ 'tables' => [] }, response.parsed_body)
+  end
+
+  private
+
+  def with_account_item_stubs(requested, matches, index = 0, &block)
+    table = Coa::CustomerLookupsController::ACCOUNT_ITEM_TABLES[index]
+    return yield unless table
+
+    model_class, = table
+    finder = lambda do |conditions|
+      requested << [model_class, conditions]
+      matches.fetch(model_class, false)
+    end
+    model_class.stub(:exists?, finder) do
+      with_account_item_stubs(requested, matches, index + 1, &block)
+    end
+  end
+
+  def expected_requests(query)
+    Coa::CustomerLookupsController::ACCOUNT_ITEM_TABLES.map do |model_class, column, _label|
+      [model_class, { column => query }]
+    end
+  end
+end
+
 class CoaEmployeeIdLookupsControllerTest < ActionController::TestCase
   tests Coa::CustomerLookupsController
 

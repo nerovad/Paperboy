@@ -3,6 +3,14 @@
 module Coa
   class CustomerLookupsController < BaseController
     SEARCH_LIMIT = 20
+    ACCOUNT_ITEM_TABLES = [
+      [Coa::Activity, :activity_id, 'Activity'],
+      [Coa::Function, :function_id, 'Function'],
+      [Coa::Fund, :fund_id, 'Fund'],
+      [Coa::Object, :object_id, 'Object'],
+      [Coa::Program, :program_id, 'Program'],
+      [Coa::Task, :task_id, 'Task']
+    ].freeze
 
     before_action -> { require_app_feature('coa', 'customer_lookup', fallback: coa_root_path) }
 
@@ -26,6 +34,17 @@ module Coa
       render json: hierarchy_for(employee)
     rescue ActiveRecord::RecordNotFound
       render json: { error: 'Employee not found.' }, status: :not_found
+    end
+
+    def account_items
+      query = params[:q].to_s.strip
+      return render json: { tables: [] } if query.blank?
+
+      tables = ACCOUNT_ITEM_TABLES.filter_map do |model_class, column, label|
+        label if model_class.exists?(column => query)
+      end
+
+      render json: { tables: tables }
     end
 
     private
