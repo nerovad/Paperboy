@@ -37,7 +37,7 @@ module Coa
     # NavigationCatalog::FEATURE_LINKS reads a link in.
     LOOKUPS = [
       { key: 'billing_lookup',  label: 'Billing Lookup',  route: :coa_billing_lookup_path },
-      { key: 'customer_lookup', label: 'Customer Lookup', route: :coa_customer_lookup_path }
+      { key: 'customer_lookup', label: 'Employee Lookup', route: :coa_customer_lookup_path }
     ].freeze
 
     class << self

@@ -6,20 +6,21 @@ class CoaCustomerLookupsControllerTest < ActionController::TestCase
   tests Coa::CustomerLookupsController
 
   setup do
-    session[:user] = { 'employee_id' => 1, 'email' => 'employee@example.com',
-                       'first_name' => 'Test', 'last_name' => 'User' }
+    session[:user] = { 'employee_id' => 1, 'email' => 'employee@example.com' }
     @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
     @controller.define_singleton_method(:inbox_count) { 0 }
   end
 
-  test 'show renders customer selection and sidebar link below billing lookup' do
+  test 'show renders employee selection and sidebar link below billing lookup' do
     get :show
 
     assert_response :success
-    assert_select '#customer-selection-title', text: 'Customer Selection'
+    assert_select 'h1', text: 'Employee Lookup'
+    assert_select '#employee-selection-title', text: 'Employee Selection'
+    assert_select 'input[placeholder=?]', 'Search first name, last name, or employee ID…'
     assert_select '[data-controller=?]', 'coa-account-hierarchy', count: 1
     assert_select '.coa-sidebar .coa-table-links a:nth-of-type(1)', text: 'Billing Lookup'
-    assert_select '.coa-sidebar .coa-table-links a:nth-of-type(2)', text: 'Customer Lookup'
+    assert_select '.coa-sidebar .coa-table-links a:nth-of-type(2)', text: 'Employee Lookup'
   end
 
   test 'employees fuzzy finds first or last name and limits results' do
@@ -35,9 +36,8 @@ class CoaCustomerLookupsControllerTest < ActionController::TestCase
     end
 
     assert_response :success
-    assert_equal [
-      { 'value' => 7, 'label' => 'Smith, Avery (7)', 'unit' => '1450' }
-    ], response.parsed_body
+    assert_equal [{ 'value' => 7, 'label' => 'Smith, Avery (7)', 'unit' => '1450' }],
+                 response.parsed_body
     assert_equal 20, matches.limit_value
   end
 
@@ -122,5 +122,44 @@ class CoaCustomerLookupsControllerTest < ActionController::TestCase
         end
       end
     end
+  end
+end
+
+class CoaEmployeeIdLookupsControllerTest < ActionController::TestCase
+  tests Coa::CustomerLookupsController
+
+  setup do
+    session[:user] = { 'employee_id' => 1, 'email' => 'employee@example.com' }
+    @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
+    @controller.define_singleton_method(:inbox_count) { 0 }
+  end
+
+  test 'employees finds numeric input by employee id' do
+    matches = employee_relation([[102_989, 'Avery', 'Smith', '1450']])
+    finder = lambda do |conditions|
+      assert_equal({ id: '102989' }, conditions)
+      matches
+    end
+
+    Employee.stub(:where, finder) { get :employees, params: { q: '102989' } }
+
+    assert_response :success
+    assert_equal [{ 'value' => 102_989, 'label' => 'Smith, Avery (102989)', 'unit' => '1450' }],
+                 response.parsed_body
+    assert_equal 20, matches.limit_value
+  end
+
+  private
+
+  def employee_relation(rows)
+    relation = Object.new
+    relation.define_singleton_method(:order) { |*| self }
+    relation.define_singleton_method(:limit) do |value|
+      @limit_value = value
+      self
+    end
+    relation.define_singleton_method(:limit_value) { @limit_value }
+    relation.define_singleton_method(:pluck) { |*| rows }
+    relation
   end
 end

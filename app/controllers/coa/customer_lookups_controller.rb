@@ -12,11 +12,10 @@ module Coa
       query = params[:q].to_s.strip
       return render json: [] if query.blank?
 
-      pattern = "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
-      matches = Employee.where('first_name LIKE :query OR last_name LIKE :query', query: pattern)
-                        .order(:last_name, :first_name)
-                        .limit(SEARCH_LIMIT)
-                        .pluck(:id, :first_name, :last_name, :unit)
+      matches = employee_matches(query)
+                .order(:last_name, :first_name)
+                .limit(SEARCH_LIMIT)
+                .pluck(:id, :first_name, :last_name, :unit)
 
       render json: matches.map { |id, first, last, unit| employee_option(id, first, last, unit) }
     end
@@ -30,6 +29,13 @@ module Coa
     end
 
     private
+
+    def employee_matches(query)
+      return Employee.where(id: query) if query.match?(/\A\d+\z/)
+
+      pattern = "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
+      Employee.where('first_name LIKE :query OR last_name LIKE :query', query: pattern)
+    end
 
     def employee_option(id, first_name, last_name, unit)
       {
