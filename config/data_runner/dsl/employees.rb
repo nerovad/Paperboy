@@ -45,9 +45,9 @@
     database_connections: [
       {
         host: 'GSASQL16',
-        database: 'GSARecords',
+        database: 'GSABSS',
         schema: 'dbo',
-        table: 'employees',
+        table: 'employees_new',
         inject: { mode: :truncate_insert }
       }
     ]
