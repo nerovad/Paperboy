@@ -7,6 +7,10 @@ require 'test_helper'
 # TrackableStatus model with fixtures, and it routes by a direct assignee rather
 # than routing steps, so no template lookup is involved.
 class TrackableStatusEditAuditTest < ActiveSupport::TestCase
+  # ActiveJob::TestHelper comes with this and swaps the sidekiq adapter for the
+  # test one, so the mail a subscription triggers can be asserted on.
+  include ActionMailer::TestHelper
+
   setup do
     @record = probation_transfer_requests(:one)
   end
@@ -64,6 +68,58 @@ class TrackableStatusEditAuditTest < ActiveSupport::TestCase
         work_location: 'W', current_assignment_date: Date.current,
         desired_transfer_destination: 'Anywhere'
       )
+    end
+  end
+
+  # --- reassignment ---
+  #
+  # Reassignable#reassign_to! writes the assignee with update_column, so none of
+  # the callbacks above run for it. These cover the explicit audit that
+  # replaces them.
+
+  def reassign(to:, from: '5001')
+    @record.update_column(:supervisor_id, from)
+    # The real lookup is a GSABSS read the suite does not make; any truthy value
+    # gets past reassign_to!'s "does this employee exist" guard.
+    Employee.stub(:find_by, Object.new) do
+      @record.reassign_to!(new_assignee_id: to, reassigned_by_id: '5003')
+    end
+  end
+
+  test 'a reassignment is audited even though it bypasses callbacks' do
+    assert_difference -> { audit_rows.size }, 1 do
+      reassign(to: '5002')
+    end
+
+    row = audit_rows.find { |edit| edit.column_name == 'supervisor_id' }
+
+    assert_equal '5001', row.old_value
+    assert_equal '5002', row.new_value
+  end
+
+  test 'a reassignment still records its own history row' do
+    assert_difference -> { @record.task_reassignments.count }, 1 do
+      reassign(to: '5002')
+    end
+  end
+
+  test 'a reassignment mails an immediate subscriber following edits' do
+    Forms::Subscription.create!(form_type: 'ProbationTransferRequest', grantee_type: 'employee',
+                                employee_id: '5009', notify_edited: true,
+                                delivery_mode: Forms::Subscription::IMMEDIATE)
+
+    assert_enqueued_emails 1 do
+      reassign(to: '5002')
+    end
+  end
+
+  test 'a reassignment mails nobody when no one follows edits' do
+    Forms::Subscription.create!(form_type: 'ProbationTransferRequest', grantee_type: 'employee',
+                                employee_id: '5009', notify_status_changed: true,
+                                delivery_mode: Forms::Subscription::IMMEDIATE)
+
+    assert_no_enqueued_emails do
+      reassign(to: '5002')
     end
   end
 end

@@ -45,6 +45,14 @@ module Pfa
           # Update the assignment field
           update_column(field_name, new_assignee_id)
 
+          # update_column skips callbacks, so the edit trail and any form
+          # subscribers have to be told by hand. Guarded because this concern
+          # does not require TrackableStatus, which is what supplies the audit.
+          if respond_to?(:record_out_of_band_edit, true)
+            record_out_of_band_edit(field_name, old_assignee_id,
+                                    new_assignee_id)
+          end
+
           reassignment
         end
       end

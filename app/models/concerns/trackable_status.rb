@@ -499,6 +499,29 @@ module TrackableStatus
     self.class.try(:registry_slug).presence || self.class.table_name
   end
 
+  # Audit and announce one column written outside the normal update path.
+  #
+  # Reassignable#reassign_to! writes the assignee with update_column so that a
+  # record whose validations have since tightened can still be handed to
+  # somebody else. That skips callbacks entirely, so a reassignment would
+  # otherwise leave no trace in the edit trail and tell no subscriber. Rather
+  # than loosen that write, the caller asks for the audit explicitly.
+  #
+  # Public in effect but private by placement: it is called on self from the
+  # concern, not from outside the record.
+  def record_out_of_band_edit(column_name, old_value, new_value)
+    return if old_value.to_s == new_value.to_s
+
+    actor = { id: Current.user&.dig('employee_id')&.to_s, name: current_user_display_name }
+    edit = RecordEdit.capture(row: self, table_slug: edit_audit_table_slug,
+                              column_name: column_name.to_s,
+                              old_value: old_value, new_value: new_value, actor: actor)
+
+    deliver_subscription_notifications('edited', edit_ids: [edit&.id].compact)
+  rescue StandardError => e
+    Rails.logger.warn("out-of-band edit audit failed for #{self.class.name} ##{id}: #{e.message}")
+  end
+
   # Queue immediate mail for everyone subscribed to this event on this form.
   # Digest subscribers are not touched here -- FormSubscriptionDigestJob finds
   # their events by querying the same audit rows on its own schedule.
