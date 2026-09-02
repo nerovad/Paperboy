@@ -16,6 +16,7 @@ module TrackableStatus
     after_create :record_initial_status
     after_create :deliver_copy_recipients_on_submit
     after_create :deliver_email_steps_on_submit
+    after_create :notify_direct_assignee
     after_update :record_status_change, if: :saved_change_to_status?
     after_update :deliver_copy_recipients_on_approval, if: :saved_change_to_status?
     after_update :deliver_email_steps_on_status_change, if: :saved_change_to_status?
@@ -172,6 +173,7 @@ module TrackableStatus
       approver_id: approver_id_for_routing_step(first_step)
     )
     warn_if_no_eligible_approver(first_step)
+    notify_pending_approvers(first_step)
   end
 
   # Advances a multi-step approval form to the next matching step, skipping
@@ -202,6 +204,7 @@ module TrackableStatus
       approver_id: approver_id_for_routing_step(next_step)
     )
     warn_if_no_eligible_approver(next_step)
+    notify_pending_approvers(next_step)
   end
 
   # Human-readable label for the current status. Sourced from
@@ -369,6 +372,69 @@ module TrackableStatus
     StuckSubmissionMailer.no_eligible_approver(self.class.name, id, step.id).deliver_later
   rescue StandardError => e
     Rails.logger.warn("no-eligible-approver guard failed: #{e.message}")
+  end
+
+  # Email every approver this submission has just landed on, for whoever opted
+  # in under Settings -> Inbox notifications. Runs beside the no-approver guard
+  # at both points a form arrives on a step, and resolves the pool through the
+  # step's own eligible_approver_ids so the recipients are exactly the people
+  # who will see it in their inbox.
+  def notify_pending_approvers(step)
+    return unless step
+
+    deliver_inbox_notifications(step.eligible_approver_ids(self), step_id: step.id)
+  end
+
+  # The legacy forms (Probation, CIR) have no routing steps: they land in an
+  # inbox the moment they are created, by writing an assignee straight onto the
+  # record, so start_approval! never runs for them and the step-arrival hook
+  # above never fires. Notify that assignee here instead. Forms that do route
+  # through steps are left alone -- notifying here as well would mail everyone
+  # twice on submission.
+  def notify_direct_assignee
+    return if routed_through_steps?
+
+    assignee_id = direct_assignee_id
+    return if assignee_id.blank?
+
+    deliver_inbox_notifications([assignee_id], step_id: nil)
+  end
+
+  # This submission's assignee under the Reassignable contract, or nil when the
+  # form does not have one. The concern's base implementation raises
+  # NotImplementedError (a ScriptError, so outside the rescues below) for a
+  # model that includes it without defining the method.
+  def direct_assignee_id
+    return nil unless respond_to?(:current_assignee_id)
+
+    current_assignee_id
+  rescue StandardError, NotImplementedError
+    nil
+  end
+
+  # True when this form's approvals are driven by routing steps, in which case
+  # start_approval! / advance_approval! own the notification.
+  def routed_through_steps?
+    template = approval_template
+    template.respond_to?(:routing_steps) && template.routing_steps.any?
+  rescue StandardError
+    false
+  end
+
+  # Queue one mail per opted-in recipient. The acting user is dropped: at
+  # submission they are the submitter, and on an advance they are the approver
+  # who just pushed the form forward -- either way they are in the app looking
+  # at it, and do not need mail about it.
+  def deliver_inbox_notifications(employee_ids, step_id:)
+    actor_id = Current.user&.dig('employee_id')&.to_s
+    recipient_ids = Array(employee_ids).map(&:to_s).compact_blank.uniq - [actor_id].compact_blank
+    return if recipient_ids.empty?
+
+    UserSetting.notifiable_employee_ids(recipient_ids).each do |employee_id|
+      InboxNotificationMailer.pending_approval(self.class.name, id, step_id, employee_id).deliver_later
+    end
+  rescue StandardError => e
+    Rails.logger.warn("inbox notification dispatch failed for #{self.class.name} ##{id}: #{e.message}")
   end
 
   # --- Configurable workflow emails (Forms::TemplateEmailStep) ---

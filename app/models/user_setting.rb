@@ -32,6 +32,18 @@ class UserSetting < ApplicationRecord
     find_or_initialize_by(employee_id: employee_id.to_s)
   end
 
+  # Of `employee_ids`, the ones whose owner has opted in to inbox email
+  # notifications. Employees with no settings row are absent from the result:
+  # the column defaults to false, so nobody is emailed until they ask to be.
+  # Kept as a single pluck because the caller (TrackableStatus) resolves an
+  # approver pool that can run to a whole group.
+  def self.notifiable_employee_ids(employee_ids)
+    ids = Array(employee_ids).map(&:to_s).compact_blank.uniq
+    return [] if ids.empty?
+
+    where(employee_id: ids, inbox_email_notifications: true).pluck(:employee_id)
+  end
+
   # Which DAM storage location this person's uploads default to, or nil for
   # "follow the library default". Read straight off the column rather than
   # through a row, because the DAM asks on every ingest and most people never

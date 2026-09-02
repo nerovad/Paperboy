@@ -1,0 +1,45 @@
+<p>Hello <%= @approver.first_name %>,</p>
+
+<p>A <strong><%= @form_name %></strong> is waiting for your approval in Paperboy.</p>
+
+<table style="width: 100%; max-width: 600px; border-collapse: collapse; margin: 20px 0;">
+  <tr>
+    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; background-color: #f5f5f5;">Reference:</th>
+    <td style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;"><%= @reference %></td>
+  </tr>
+  <% if @submission.try(:name).present? %>
+    <tr>
+      <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; background-color: #f5f5f5;">Submitted by:</th>
+      <td style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;"><%= @submission.name %></td>
+    </tr>
+  <% end %>
+  <% if @submission.respond_to?(:created_at) && @submission.created_at.present? %>
+    <tr>
+      <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; background-color: #f5f5f5;">Submitted:</th>
+      <td style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;"><%= @submission.created_at.strftime('%b %d, %Y %I:%M %p') %></td>
+    </tr>
+  <% end %>
+  <% if @step %>
+    <tr>
+      <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; background-color: #f5f5f5;">Approval step:</th>
+      <td style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Step <%= @step.step_number %> — <%= @step.routing_label %></td>
+    </tr>
+  <% end %>
+</table>
+
+<p>
+  <a href="<%= inbox_queue_url %>"
+     style="display: inline-block; padding: 10px 20px; background-color: #004976; color: #ffffff; text-decoration: none; border-radius: 4px;">
+    Open Inbox Queue
+  </a>
+</p>
+
+<p style="color: #666; font-size: 0.9em; margin-top: 30px;">
+  You are receiving this because inbox notifications are switched on for your
+  account. You can turn them off any time under
+  <a href="<%= settings_url %>" style="color: #004976;">Settings</a>.
+</p>
+
+<p style="color: #666; font-size: 0.9em;">
+  This is an automated message from the County of Ventura GSA Forms system.
+</p>
