@@ -26,6 +26,7 @@
       format: :xlsx,
       strategy: :copy
     },
+    output: 'printers.csv',
     to_csv: {
       sheet: 0,
       header_row: 0,

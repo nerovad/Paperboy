@@ -26,6 +26,7 @@
       format: :xlsx,
       strategy: :copy
     },
+    output: 'printer_queues.csv',
     to_csv: {
       sheet: 1,
       header_row: 0,
