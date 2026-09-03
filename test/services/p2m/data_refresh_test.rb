@@ -46,7 +46,7 @@ module P2m
         'Oms', 'oms',
         {
           orchestration: {
-            root_path: '/mnt/o/Outputs/DataRunner', sent_path: '00_SentToUSPS',
+            root_path: ENV.fetch('P2M_DATARUNNER_ROOT'), sent_path: '00_SentToUSPS',
             queue: { path: :sent_path }
           }
         },
@@ -57,7 +57,7 @@ module P2m
       DslCatalog.stub(:grouped, catalog) do
         dsl = DataRefresh.groups.last.enabled_dsls.first
 
-        assert_equal '/mnt/o/Outputs/DataRunner/00_SentToUSPS', dsl.location
+        assert_equal File.join(ENV.fetch('P2M_DATARUNNER_ROOT'), '00_SentToUSPS'), dsl.location
         assert dsl.script
         assert dsl.current
         assert_equal 'Mail.dat sent to USPS', dsl.sop.fetch(:reference_title)

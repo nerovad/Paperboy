@@ -71,6 +71,9 @@ defaults, so Rails will not boot without it. At minimum:
 ```bash
 GSABSS_HOST=  GSABSS_PORT=  GSABSS_USERNAME=  GSABSS_PASSWORD=
 GSABSS_DATABASE=GSABSS
+GSABSS_ROOT=/mnt/i
+P2M_DATARUNNER_ROOT=/mnt/o/Outputs/DataRunner
+AIM_ROOT=/mnt/a
 PAPERBOY_DATABASE=Paperboy_Dev
 ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=
 ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=
@@ -529,7 +532,8 @@ bundle exec rake 'DataRunner:target[selector]'
 
 The selector can be a DSL name, a group name, or `ALL`. The `new_dsl` target
 also accepts no selector and then discovers every supported file in
-`/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox`; existing DSL files are skipped.
+`$GSABSS_ROOT/BUSINESS_SUPPORT/DataRunner/00_Inbox`; existing DSL files are
+skipped.
 
 ```bash
 bundle exec rake DataRunner:new_dsl

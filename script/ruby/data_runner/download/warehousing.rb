@@ -44,7 +44,7 @@ require_relative '../constants/workflow_paths'
 # - Excel date serials use the common 1899-12-30 base. Blank DATE cells may be
 #   derived from POSTING_REF when it contains a category prefix plus MMYY.
 ROOT = Pathname.pwd.expand_path
-SEARCH_ROOT = Pathname.new('/mnt/i/BUSINESS_SUPPORT/Billing').expand_path
+SEARCH_ROOT = Pathname.new(ENV.fetch('GSABSS_ROOT')).join('BUSINESS_SUPPORT/Billing').expand_path
 SEARCH_DIRS = %w[FY26-27 FY25-26].map { |year| SEARCH_ROOT.join(year) }.freeze
 OUTPUT_DIR = ROOT.join(WorkflowPaths::DOWNLOAD_DIR)
 

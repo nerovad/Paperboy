@@ -49,12 +49,15 @@ def empty_header_block
   ].join("\n")
 end
 
+def source_location(name)
+  "File.join(ENV.fetch('GSABSS_ROOT'), 'BUSINESS_SUPPORT/DataRunner/00_Inbox/#{name}.csv')"
+end
+
 def render_stub(target)
   name = target.dsl_name
   key = dataset_key(name)
   quoted_name = single_quoted(name)
   quoted_csv = single_quoted("#{name}.csv")
-  quoted_location = single_quoted("/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/#{name}.csv")
 
   <<~RUBY
     # frozen_string_literal: true
@@ -74,7 +77,7 @@ def render_stub(target)
           }
         },
         source: {
-          location: #{quoted_location},
+          location: #{source_location(name)},
           local: #{quoted_csv},
           format: :csv,
           strategy: :copy

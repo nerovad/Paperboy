@@ -255,8 +255,8 @@ end
 
 def options
   values = {
-    source_root: '/mnt/o/Outputs',
-    data_runner_root: '/mnt/o/Outputs/DataRunner'
+    source_root: P2m::Paths::DATA_RUNNER_ROOT.parent.to_s,
+    data_runner_root: P2m::Paths::DATA_RUNNER_ROOT.to_s
   }
   OptionParser.new do |parser|
     parser.on('--source-root PATH') { |value| values[:source_root] = value }

@@ -4,7 +4,7 @@ require 'pathname'
 
 module P2m
   class OmsAssociatedFiles
-    ROOT = Pathname.new('/mnt/o/Outputs')
+    ROOT = Paths::DATA_RUNNER_ROOT.parent
     OMS_NUMBER = '\d{8,9}'
     PATTERNS = [
       /\AMail\.dat_(#{OMS_NUMBER})\.zip\z/i,

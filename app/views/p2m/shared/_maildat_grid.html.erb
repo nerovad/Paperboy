@@ -4,7 +4,7 @@
          data-data-refresh-groups-shipping-station-name-value="<%= P2m::Paths::SHIPPING_STATION %>">
   <div class="p2m-results-summary">
     <h2 id="p2m-oms-results-title">
-      Mail.dat Files Found at <%= report.fetch("source_root", "/mnt/o/Outputs") %>/...
+      Mail.dat Files Found at <%= report.fetch("source_root", P2m::OmsAssociatedFiles::ROOT.to_s) %>/...
     </h2>
     <p>
       Inclusive range: <%= report.fetch("start_date") %> through

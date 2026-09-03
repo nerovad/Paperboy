@@ -64,7 +64,8 @@ http://127.0.0.1:3001
 Start command used:
 
 ```bash
-mise exec -- bundle exec dotenv -f /mnt/gsa-scan02-AIM/_PROGRAM/.env -- bundle exec puma -C config/puma/development.rb
+set -a; source .env; set +a
+mise exec -- bundle exec dotenv -f "$AIM_ROOT/_PROGRAM/.env" -- bundle exec puma -C config/puma/development.rb
 ```
 
 The server was serving the updated CSP after restart. Header check showed:
@@ -196,7 +197,8 @@ git diff --check
 mise exec -- ruby -rerb -e "ERB.new(File.read('app/views/aim/invoices/show.html.erb')).src; puts 'erb ok'"
 node --check app/javascript/controllers/aim_ocr_controller.js
 mise exec -- bundle exec rubocop config/initializers/content_security_policy.rb app/controllers/aim/invoices_controller.rb app/controllers/concerns/aim/invoice_file_support.rb app/controllers/concerns/aim/invoice_queue_support.rb app/services/aim/vendor_review_payload_service.rb test/controllers/aim/invoices_controller_test.rb
-mise exec -- bundle exec dotenv -f /mnt/gsa-scan02-AIM/_PROGRAM/.env -- bundle exec rails runner "Rails.application.assets.find_asset('application.js'); Rails.application.assets.find_asset('application.css'); puts 'assets ok'"
+set -a; source .env; set +a
+mise exec -- bundle exec dotenv -f "$AIM_ROOT/_PROGRAM/.env" -- bundle exec rails runner "Rails.application.assets.find_asset('application.js'); Rails.application.assets.find_asset('application.css'); puts 'assets ok'"
 ```
 
 Full Rails tests were not run successfully because the local `Paperboy_Test`

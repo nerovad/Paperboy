@@ -5,7 +5,7 @@ require 'open3'
 
 module P2m
   class PrintAndInsertingDone
-    DATA_RUNNER_ROOT = Pathname.new('/mnt/o/Outputs/DataRunner')
+    DATA_RUNNER_ROOT = Paths::DATA_RUNNER_ROOT
     REPORT_PATH = DATA_RUNNER_ROOT.join('p2m_oms_backfill_report.json')
     SCRIPT_PATH = Rails.root.join('script/ruby/p2m/print_and_inserting_done.rb')
 

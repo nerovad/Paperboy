@@ -68,7 +68,8 @@ class DslCreator
             }
           },
           source: {
-            location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/#{@target.dsl_name}.csv',
+            location: File.join(ENV.fetch('GSABSS_ROOT'),
+                                'BUSINESS_SUPPORT/DataRunner/00_Inbox/#{@target.dsl_name}.csv'),
             local: '#{@target.dsl_name}.csv',
             format: :csv,
             strategy: :copy

@@ -2,11 +2,12 @@
 
 ## Purpose
 
-This document records the files found under `/mnt/o/Outputs` that appear to
+This document records the files found under the parent of
+`$P2M_DATARUNNER_ROOT` that appear to
 be eligible for OMS preprocessing on or after July 1, 2026, and recommends a
 safe way to process them exactly once through Data Runner.
 
-The `/mnt/o/Outputs/DataRunner` subtree was excluded from the historical
+The `$P2M_DATARUNNER_ROOT` subtree was excluded from the historical
 scan.
 
 ## Matching criteria
@@ -89,20 +90,20 @@ imports.
 
 ## Recommended backfile design
 
-Keep the existing OMS orchestration root at
-`/mnt/o/Outputs/DataRunner`. Do not point it directly at
-`/mnt/o/Outputs`, because the preprocessor expects a flat staging directory
-while the historical inputs are spread across multiple output and archive
-directories.
+Keep the existing OMS orchestration root at `$P2M_DATARUNNER_ROOT`. Do not
+point it at the variable's parent directory, because the preprocessor expects
+a flat staging directory while the historical inputs are spread across
+multiple output and archive directories.
 
 Add a one-time historical backfile staging command with the following
 behavior:
 
-1. Recursively scan `/mnt/o/Outputs`, excluding its `DataRunner` subtree.
+1. Recursively scan the parent of `$P2M_DATARUNNER_ROOT`, excluding the
+   DataRunner subtree.
 2. Apply the filename and cutoff criteria documented above.
 3. Reject or report jobs that do not contain all required input categories.
 4. Before staging an OMS number, check for
-   `/mnt/o/Outputs/DataRunner/02_Processed/<OMS number>`.
+   `$P2M_DATARUNNER_ROOT/02_Processed/<OMS number>`.
 5. Skip the job when that processed directory already exists.
 6. Copy the recognized inputs for one OMS number into the DataRunner root.
 7. Copy its `Mail.dat_<OMS number>.zip` marker into
@@ -117,7 +118,7 @@ After a successful import, the existing OMS postprocessor moves the staged
 inputs and marker into:
 
 ```text
-/mnt/o/Outputs/DataRunner/02_Processed/<OMS number>/
+$P2M_DATARUNNER_ROOT/02_Processed/<OMS number>/
 ```
 
 That directory should be treated as the durable idempotency record. A later

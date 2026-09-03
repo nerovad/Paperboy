@@ -19,11 +19,13 @@ DOWNLOAD_DIR = Pathname.new(WorkflowPaths::DOWNLOAD_DIR)
 OUTPUT_PATH = DOWNLOAD_DIR.join(EtlHelpers.source_local(CFG).to_s)
 DEFAULT_BU_FILE = DATA_RUNNER_ROOT.join('download/oversized.csv').expand_path
 OUTPUT_HEADER = %w[Date ProfileType BU Length Width Type FilePath FileName].freeze
-XML_DIR = '/mnt/i/BUSINESS_SUPPORT/Scan\ Center/Oversized\ Scan\ Data/Monthly\ Exports/'
+XML_DIR = Pathname.new(ENV.fetch('GSABSS_ROOT')).join(
+  'BUSINESS_SUPPORT/Scan Center/Oversized Scan Data/Monthly Exports'
+)
 XML_FILE_PATTERN = 'ovs-*.xml'
 
 def xml_source_dir
-  Pathname.new(XML_DIR.gsub('\ ', ' ')).expand_path(ROOT)
+  XML_DIR.expand_path(ROOT)
 end
 
 def configured_location

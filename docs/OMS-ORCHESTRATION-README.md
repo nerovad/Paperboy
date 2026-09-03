@@ -19,10 +19,10 @@ The DSL establishes the following directory contract:
 
 | Configuration key | Resolved path | Purpose |
 | --- | --- | --- |
-| `root_path` | `/mnt/o/Outputs/DataRunner` | Parent for orchestration directories |
-| `sent_path` | `/mnt/o/Outputs/DataRunner/00_SentToUSPS` | Complete-job queue |
-| `output_path` | `/mnt/o/Outputs/DataRunner/01_TemporaryOutput` | Preprocessed CSV output |
-| `processed_path` | `/mnt/o/Outputs/DataRunner/02_Processed` | Per-OMS archive after injection |
+| `root_path` | `$P2M_DATARUNNER_ROOT` | Parent for orchestration directories |
+| `sent_path` | `$P2M_DATARUNNER_ROOT/00_SentToUSPS` | Complete-job queue |
+| `output_path` | `$P2M_DATARUNNER_ROOT/01_TemporaryOutput` | Preprocessed CSV output |
+| `processed_path` | `$P2M_DATARUNNER_ROOT/02_Processed` | Per-OMS archive after injection |
 
 The three relative paths are resolved against `root_path` by the shared
 orchestration helper. The symbolic queue path, `:sent_path`, resolves to the
@@ -196,7 +196,7 @@ SENT_PATH OUTPUT_PATH PROCESSED_PATH
 After all child injections succeed, it creates this archive directory:
 
 ```text
-/mnt/o/Outputs/DataRunner/02_Processed/<OMS number>/
+$P2M_DATARUNNER_ROOT/02_Processed/<OMS number>/
 ```
 
 It moves every original staged file for the selected OMS number into that

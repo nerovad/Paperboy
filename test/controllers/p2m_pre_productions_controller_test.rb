@@ -8,7 +8,7 @@ class P2mPreProductionsControllerTest < ActionController::TestCase
   test 'shows the shared Mail.dat grid with pre-production batch action' do
     sign_in
     report = {
-      'source_root' => '/mnt/o/Outputs',
+      'source_root' => Pathname.new(ENV.fetch('P2M_DATARUNNER_ROOT')).parent.to_s,
       'start_date' => '2026-08-01',
       'end_date' => '2026-08-31',
       'found_count' => 1,
