@@ -5361,6 +5361,548 @@ org_permissions:
   type: form
   key: creative_job_request
 - agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: application
+  key: aim
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: application
+  key: billing
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: application
+  key: coa
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: application
+  key: digital_asset_management
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: application
+  key: print_production
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: aim:dashboard
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: aim:processing_queues
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:activities
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:agencies
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:billing_lookup
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:customer_lookup
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:departments
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:divisions
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:functions
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:funds
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:major_programs
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:object_inferences
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:objects
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:phases
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:programs
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:revenue_sources
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:sub_units
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:tasks
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: coa:units
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: digital_asset_management:collections
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: digital_asset_management:dashboard
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: digital_asset_management:jobs
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: digital_asset_management:search
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: digital_asset_management:shares
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: feature
+  key: digital_asset_management:workflows
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: form
+  key: '40'
+  class: BikeLockerForm
+  label: Bike Locker
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: form
+  key: '42'
+  class: FormRequestForm
+  label: Form Request
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: form
+  key: '41'
+  class: IdBadgeRequestForm
+  label: ID Badge Request
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4643'
+  unit_id:
+  type: form
+  key: '15'
+  class: ParkingLotSubmission
+  label: Parking Permit Application
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: application
+  key: aim
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: application
+  key: billing
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: application
+  key: coa
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: application
+  key: digital_asset_management
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: application
+  key: print_production
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: dropdown
+  key: help
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: dropdown
+  key: inbox
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: dropdown
+  key: settings
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: dropdown
+  key: submissions
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: billing:archive_reports
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: billing:billing_audit
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: billing:email_recipients
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: billing:email_reports
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: billing:email_subjects
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: billing:enable_billing
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: billing:print_reports
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: billing:reporting_period
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: billing:run_monthly_billing
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: billing:view_billing
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: billing:view_reports
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:activities
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:agencies
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:billing_lookup
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:customer_lookup
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:departments
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:divisions
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:functions
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:funds
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:major_programs
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:object_inferences
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:objects
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:phases
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:programs
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:revenue_sources
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:sub_units
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:tasks
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: coa:units
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: digital_asset_management:collections
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: digital_asset_management:dashboard
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: digital_asset_management:jobs
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: digital_asset_management:search
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: digital_asset_management:shares
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: feature
+  key: digital_asset_management:workflows
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: form
+  key: '40'
+  class: BikeLockerForm
+  label: Bike Locker
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: form
+  key: '17'
+  class: CriticalInformationReporting
+  label: Critical Information Reporting
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: form
+  key: '42'
+  class: FormRequestForm
+  label: Form Request
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: form
+  key: '41'
+  class: IdBadgeRequestForm
+  label: ID Badge Request
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4645'
+  unit_id:
+  type: form
+  key: '15'
+  class: ParkingLotSubmission
+  label: Parking Permit Application
+- agency_id: GSA
   division_id: '4700'
   department_id: '4703'
   unit_id: '4703'
