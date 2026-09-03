@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 [
-  'PrinterQueues',
+  'Printers',
   {
     steps: {
       manual: {
@@ -27,23 +27,22 @@
       strategy: :copy
     },
     to_csv: {
-      sheet: 1,
+      sheet: 0,
       header_row: 0,
       data_row: 1
     },
     header: [
 
       ['printer',  'printer',  'nvarchar(max)', 'NOT NULL', nil],
-      ['queue',    'queue',    'nvarchar(max)', 'NOT NULL', nil],
-      ['location', 'location', 'nvarchar(max)', 'NOT NULL', nil]
-
+      ['ip',       'ip',       'nvarchar(max)', 'NOT NULL', nil],
+      ['rip_type', 'rip_type', 'nvarchar(max)', 'NOT NULL', nil]
     ],
     database_connections: [
       {
         host: 'GSASQL16',
         database: 'GSABSS',
         schema: 'dbo',
-        table: 'printer_queues',
+        table: 'printers',
         inject: {
           mode: :truncate_insert
         }

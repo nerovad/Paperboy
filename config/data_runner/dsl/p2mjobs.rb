@@ -17,6 +17,9 @@
     group: {
       name: 'print_2_mail'
     },
+    sop: {
+      shared: :print_2_mail
+    },
     source: {
       location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/p2mjobs.csv',
       local: 'p2mjobs.csv',

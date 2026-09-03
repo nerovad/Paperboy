@@ -84,6 +84,18 @@ class DslCatalogTest < ActiveSupport::TestCase
     end
   end
 
+  test 'shares group refresh instructions across Print 2 Mail DSLs' do
+    entries = DslCatalog.grouped.fetch('print_2_mail')
+
+    assert_not_empty entries
+    entries.each do |entry|
+      assert_equal :print_2_mail, entry.config.dig(:sop, :shared)
+      assert_equal DslSharedSop.fetch!(:print_2_mail).fetch(:instructions), entry.sop.fetch(:instructions)
+      assert_equal 'print_2_mail', entry.sop_reference_group
+      assert_equal entry.config.dig(:source, :location), entry.sop_reference_path
+    end
+  end
+
   test 'uses the shared Print 2 Mail billing SOP' do
     entry = DslCatalog.find!('oms')
 
