@@ -5,7 +5,7 @@ require 'pathname'
 
 module P2m
   module Paths
-    DATA_RUNNER_ROOT = ENV.fetch('P2M_DATARUNNER_ROOT')
+    DATA_RUNNER_ROOT = Pathname.new(ENV.fetch('P2M_DATARUNNER_ROOT'))
     SENT_TO_USPS = ENV.fetch('P2M_SENT_TO_USPS')
     SHIPPING_STATION = ENV.fetch('P2M_SHIPPING_STATION')
     TEMPORARY_OUTPUT = ENV.fetch('P2M_TEMPORARY_OUTPUT')
