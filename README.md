@@ -518,3 +518,52 @@ rails dev:seed:probation TRANSFERS=80
 
 Notes:
 Use REPLANT=1 with seeds to reset test data.
+
+## DataRunner Rake Targets
+
+Run DataRunner tasks with Bundler so they use the application's locked gems:
+
+```bash
+bundle exec rake 'DataRunner:target[selector]'
+```
+
+The selector can be a DSL name, a group name, or `ALL`. The `new_dsl` target
+also accepts no selector and then discovers every supported file in
+`/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox`; existing DSL files are skipped.
+
+```bash
+bundle exec rake DataRunner:new_dsl
+bundle exec rake 'DataRunner:new_dsl[widgets]'
+bundle exec rake 'DataRunner:refresh[Widgets]'
+bundle exec rake 'DataRunner:refresh[ALL]'
+```
+
+Available targets:
+
+| Target | Purpose |
+| --- | --- |
+| `new_dsl` | Create initial DSL files from one or all inbox sources |
+| `dsl_stub` | Create a DSL stub from a name or `host.database.schema.name` |
+| `sync_dsl` | Create a database DSL and synchronize its SQL metadata and source CSV |
+| `download` | Download or validate configured source files |
+| `to_csv` | Convert source files into normalized CSV files |
+| `to_dsl` | Convert normalized CSV files into DSL mapping scaffolds |
+| `to_sql` | Write SQL Server table scaffolds from DSL mappings |
+| `dump_sql` | Dump live SQL Server definitions into the schema workspace |
+| `from_sql` | Export SQL Server tables into inbox CSV files |
+| `table_drop` | Drop configured SQL Server tables |
+| `table_create` | Create configured SQL Server tables |
+| `use_dsl` | Apply locked DSL mappings to normalized CSV files |
+| `use_sql` | Update DSL mappings from reviewed SQL scaffolds |
+| `inject` | Load DSL-applied CSV files into SQL Server |
+| `setup` | Run `download`, `to_csv`, `to_sql`, and `use_dsl` |
+| `oneshot` | Run setup, create tables, and inject the data |
+| `refresh` | Run `download`, `to_csv`, `use_dsl`, and `inject` |
+| `reset` | Clear staged generated ETL files |
+| `reconcile_oms_uploads` | Reconcile OMS upload state from imported data and archives |
+
+List the current targets and their descriptions with:
+
+```bash
+bundle exec rake -T DataRunner
+```
