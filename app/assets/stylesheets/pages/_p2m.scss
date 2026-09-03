@@ -217,7 +217,7 @@
 
   th,
   td {
-    width: 50%;
+    width: calc(50% - 1.5rem);
     max-width: 0;
     height: auto;
     padding: .45rem .75rem;
@@ -232,6 +232,13 @@
 
   tbody tr:nth-child(odd) { background: $surface-base; }
   tbody tr:nth-child(even) { background: $surface-control; }
+
+  .p2m-associated-file-select {
+    width: 3rem;
+    max-width: 3rem;
+    padding-right: .25rem;
+    text-align: center;
+  }
 }
 
 .p2m-associated-file-name {

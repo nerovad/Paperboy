@@ -62,6 +62,9 @@ class P2mPreProductionsControllerTest < ActionController::TestCase
     end
     assert_select 'a[data-action="pdf-preview#open"]', text: 'tray-labels.pdf', count: 1
     assert_select '[data-pdf-preview-target="backdrop"]', count: 1
+    assert_select '.p2m-associated-files-table thead th', count: 4
+    assert_select '.p2m-associated-files-table tbody tr:first-child td', count: 4
+    assert_select 'input[type="checkbox"][name="selected_files[]"]', count: 2
     assert_select 'button', text: 'Cancel', count: 1
     assert_select 'button', text: 'Move to Staging', count: 0
   end
