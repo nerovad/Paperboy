@@ -100,14 +100,17 @@ module Aim
       redirect_to aim_invoice_path(@invoice_id, queue: @queue), alert: 'Vendor alias could not be saved to the alias file.'
     end
 
+    # The `readonly` attribute on an input is only a hint to the browser, so
+    # this is what actually keeps pipeline-owned values from being rewritten by
+    # a crafted post. Keys dropped here keep whatever the pipeline last wrote —
+    # write_metadata merges, so omitting a key leaves it untouched.
     def writable_metadata_params
       return {} if params[:metadata].blank?
 
-      params[:metadata].to_unsafe_h.tap do |metadata|
-        next unless @queue == 'vendor_review'
+      protected_fields = helpers.aim_readonly_fields(@queue) + helpers.aim_hidden_fields(@queue)
+      protected_fields += Aim::InvoicesHelper::VENDOR_REVIEW_PROTECTED_FIELDS if @queue == 'vendor_review'
 
-        Aim::InvoicesHelper::VENDOR_REVIEW_PROTECTED_FIELDS.each { |field| metadata.delete(field) }
-      end
+      params[:metadata].to_unsafe_h.except(*protected_fields)
     end
 
     def vendor_review_extracted_name(metadata, learn_data)

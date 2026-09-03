@@ -58,7 +58,7 @@
 
         <div class="aim-fields">
           <% fields = @metadata.keys.any? ? @metadata.keys : ['BU', 'Submitter', 'VendorName', 'InvoiceTotal', 'InvoiceNumber', 'InvoiceDate', 'Status'] %>
-          <% excluded_fields = ['BoundingBoxes', 'ConfidenceScores', 'OriginalText'] %>
+          <% excluded_fields = aim_hidden_fields(@queue) %>
           <% if @queue == 'vendor_review' %>
             <% excluded_fields += aim_vendor_review_hidden_fields %>
 
@@ -75,6 +75,7 @@
 
           <% fields.each do |key| %>
             <% next if excluded_fields.include?(key) %>
+            <% field_readonly = aim_readonly_field?(@queue, key) %>
 
             <div class="aim-field-row">
               <div class="aim-field">
@@ -97,11 +98,14 @@
                   </div>
                 <% else %>
                   <%= form.text_field "metadata[#{key}]",
-                                      value: (@metadata[key].is_a?(Hash) || @metadata[key].is_a?(Array) ? @metadata[key].to_json : @metadata[key]) %>
+                                      value: (@metadata[key].is_a?(Hash) || @metadata[key].is_a?(Array) ? @metadata[key].to_json : @metadata[key]),
+                                      readonly: field_readonly,
+                                      class: ('aim-readonly-field' if field_readonly) %>
                 <% end %>
               </div>
 
-              <% unless @metadata[key].is_a?(Array) && key == 'Invoices' %>
+              <%# OCR writes into the field, so it is pointless on a locked one. %>
+              <% unless field_readonly || (@metadata[key].is_a?(Array) && key == 'Invoices') %>
                 <button type="button"
                         class="btn secondary compact btn-ocr"
                         data-ocr-target-name="metadata[<%= key %>]">OCR</button>

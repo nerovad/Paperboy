@@ -38,6 +38,32 @@ module Aim
       VENDOR_REVIEW_HIDDEN_FIELDS
     end
 
+    # Raw AI output that is noise in every review grid.
+    ALWAYS_HIDDEN_FIELDS = %w[BoundingBoxes ConfidenceScores OriginalText].freeze
+
+    # Per-queue field rules. Read-only keys are values the pipeline owns — the
+    # AI worker or the SQL export writes them — so they stay visible for
+    # troubleshooting but are never editable and are dropped from anything
+    # posted back. Add a queue here to extend the same treatment to it.
+    QUEUE_FIELD_RULES = {
+      'action_needed' => {
+        readonly: %w[InvoiceConcatID ProcessedTimestamp ErrorMessage Status],
+        hidden: %w[ExtractedMetadata]
+      }
+    }.freeze
+
+    def aim_readonly_fields(queue)
+      QUEUE_FIELD_RULES.dig(queue.to_s, :readonly) || []
+    end
+
+    def aim_readonly_field?(queue, key)
+      aim_readonly_fields(queue).include?(key.to_s)
+    end
+
+    def aim_hidden_fields(queue)
+      ALWAYS_HIDDEN_FIELDS + (QUEUE_FIELD_RULES.dig(queue.to_s, :hidden) || [])
+    end
+
     def aim_queue_label(queue)
       Aim::InvoiceDirectoryService::BACKEND_QUEUES.dig(queue.to_s.to_sym, :label) ||
         queue.to_s.tr('_', ' ').titleize
