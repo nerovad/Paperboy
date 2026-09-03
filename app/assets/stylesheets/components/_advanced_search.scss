@@ -1,5 +1,6 @@
-/* Advanced Search — the sidebar trigger, the panel's contents and the chips
-   that report an active search above the results.
+@use "base/tokens" as *;
+/* Advanced Search — the sidebar trigger and the panel's contents, plus the
+   chips the Submissions list uses to report an active filter above its results.
 
    The shell is the shared .pb-modal; these rules style only what sits inside
    it, and the trigger is a shared .btn given a sidebar-width and a "filters
@@ -95,4 +96,12 @@
   background: $surface-subtle;
   color: $label-color;
   font-size: 0.8rem;
+}
+
+/* The tag facet can run to dozens of entries, so it scrolls inside its
+   fieldset rather than pushing the panel's buttons off the screen. */
+.pb-checkbox-row--scroll {
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
 }

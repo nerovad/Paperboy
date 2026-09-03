@@ -1,0 +1,14 @@
+<%# The body of the "Who Am I" dialog, fetched into its frame the first time
+    the dialog is opened. The heading and chrome belong to the dialog itself
+    (shared/_who_am_i_dialog), so this renders the hierarchy alone. %>
+<%= turbo_frame_tag "who_am_i" do %>
+  <% if @error %>
+    <p class="pb-modal__message"><%= @error %></p>
+  <% else %>
+    <div class="coa-form coa-billing-lookup">
+      <%= render "coa/shared/account_hierarchy",
+                 nodes: @hierarchy_nodes,
+                 customer_name: @customer_name %>
+    </div>
+  <% end %>
+<% end %>

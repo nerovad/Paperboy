@@ -11,6 +11,6 @@ class AuthorizationManager < ApplicationRecord
   end
 
   def department
-    Department.find_by(department_id: department_id)
+    Coa::Department.find_by(department_id: department_id)
   end
 end

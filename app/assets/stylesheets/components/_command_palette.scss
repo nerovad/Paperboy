@@ -1,0 +1,153 @@
+@use "base/tokens" as *;
+
+/* ---------------------------------------------------------------------------
+   Command palette — the dialog ":" opens.
+
+   The shell is the shared modal system (components/modals); everything here
+   styles its contents. It is pinned near the top of the viewport rather than
+   centred, because the list grows downward as you type and a centred dialog
+   would walk up the screen with every keystroke.
+   --------------------------------------------------------------------------- */
+
+.pb-palette-backdrop {
+  align-items: flex-start;
+  padding-top: 12vh;
+}
+
+/* The frame is the dialog's only child, so it blockifies as a flex item on
+   its own — but the list inside has to be allowed to shrink before it will
+   scroll rather than push the dialog past its max height. */
+.pb-palette-modal turbo-frame {
+  display: block;
+  min-height: 0;
+}
+
+.pb-palette__input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 18px 20px;
+  border: none;
+  border-bottom: 1px solid $border-color;
+  border-radius: 0;
+  font-size: 1.05rem;
+  color: $text-color;
+  background: $surface-base;
+
+  &::placeholder {
+    color: $text-muted;
+    font-style: italic;
+  }
+
+  &:focus {
+    outline: none;
+    border-bottom-color: $primary-color;
+  }
+}
+
+.pb-palette__results {
+  max-height: clamp(8rem, calc(100vh - 22rem), 24rem);
+  overflow-y: auto;
+}
+
+/* "Go to" and "Open a form". Each section hides itself, heading and all, once
+   the query has filtered every row out of it. */
+.pb-palette__section-label {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 8px 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $text-muted;
+  background: $surface-subtle;
+  border-bottom: 1px solid $border-faint;
+}
+
+/* One result. Commands and forms are the same row — what differs is the glyph
+   in front of a command and the tint that keeps it apart from the list it
+   sits above. */
+.pb-palette__row {
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 0;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  color: $text-color;
+  background: $surface-base;
+  cursor: pointer;
+
+  &:hover { background: $surface-hover; }
+
+  /* Where the arrow keys are. Enter takes this row. */
+  &.is-cursor {
+    background: $surface-hover;
+    box-shadow: inset 3px 0 0 $primary-color;
+  }
+
+  &[hidden] { display: none; }
+}
+
+/* The two rows that are neither a destination nor a form: a command, and the
+   submission a typed reference number names. Both sit above the lists and both
+   answer the whole query rather than matching one row's metadata, so they read
+   as one tinted band across the top. */
+.pb-palette__row--command,
+.pb-palette__row--reference {
+  color: $text-strong;
+  background: $surface-subtle;
+  border-bottom: 1px solid $border-faint;
+
+  &:hover,
+  &.is-cursor { background: $surface-hover; }
+
+  .search-command__glyph {
+    margin-right: 8px;
+    font-size: 0.8em;
+    opacity: 0.7;
+  }
+}
+
+/* The palette shows the same match hints the sidebar does — which field or
+   tag put a form in the list — but on a light surface. */
+.pb-palette__row mark {
+  padding: 0;
+  border-radius: 2px;
+  color: inherit;
+  background: $warning-soft-bg;
+}
+
+/* Which app a destination belongs to, printed above its name — the answer to
+   "Collections, but whose Collections?" without making the row read like a
+   breadcrumb. */
+.pb-palette__row .search-context {
+  display: block;
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $text-muted;
+}
+
+.pb-palette__row .matched-field,
+.pb-palette__row .matched-tag {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75em;
+  font-style: italic;
+  color: $text-muted;
+}
+
+.pb-palette__empty {
+  margin: 0;
+  padding: 16px 20px;
+  font-size: 0.9em;
+  font-style: italic;
+  color: $text-muted;
+}

@@ -1,119 +1,268 @@
 // app/javascript/controllers/sidebar_search_controller.js
 import { Controller } from "@hotwired/stimulus"
 
+// The metadata a row carries, in the order a match is preferred: the row's own
+// name first, then a form's official number, its tags, the app a destination
+// belongs to, the words a destination answers to besides its name, and finally
+// a form's field labels and description. `bonus` keeps that order even when a
+// weaker source happens to score the tighter match, and `hint` is the label
+// shown beside the name to explain why a row is in the list at all when the
+// match was not on its name.
+//
+// Forms carry number/tags/fields/description; destinations carry
+// context/keywords. Each simply skips the sources it has none of.
+const MATCH_SOURCES = [
+  { key: "originalName", bonus: 50, multi: false, hint: null, hintClass: null },
+  { key: "number", bonus: 40, multi: false, hint: "No.", hintClass: "matched-tag" },
+  { key: "tags", bonus: 30, multi: true, hint: "Tag", hintClass: "matched-tag" },
+  // The app a destination is in is already printed on the row, so a match on
+  // it needs no hint — typing "billing" should just list Billing's screens.
+  { key: "context", bonus: 25, multi: false, hint: null, hintClass: null },
+  { key: "keywords", bonus: 20, multi: false, hint: null, hintClass: null },
+  { key: "fields", bonus: 0, multi: true, hint: "Field", hintClass: "matched-field" },
+  { key: "description", bonus: 0, multi: false, hint: null, hintClass: null }
+]
+
+// A reference number typed into the box — "PLS-845", "pls845", or the bare id
+// "845". Deliberately loose about the prefix: the box holds no list of them,
+// and SubmissionsController#lookup is what decides whether a typed prefix
+// belongs to a real form. Kept in step with Forms::Reference::QUERY_RE, which
+// asks the same question of the query server-side.
+const REFERENCE_RE = /^([a-z]{2,8})?-?(\d{1,9})$/i
+
 export default class extends Controller {
-  static targets = ["input", "formLink", "formsList", "item"]
+  static targets = ["input", "formLink", "formsList", "destination", "destinationsList", "item",
+                    "emptyState", "command", "reference", "referenceLabel"]
+  static values = { debounce: { type: Number, default: 0 } }
 
   connect() {
-    // Store original form names before any modifications
-    // If data-original-name is already set (e.g. on complex cards), keep it
-    this.formLinkTargets.forEach(link => {
-      if (!link.dataset.originalName) {
-        link.dataset.originalName = link.textContent.trim()
+    this.filterTimer = null
+    // Store original names before any modifications. If data-original-name is
+    // already set — on complex cards, and on the palette's destinations, whose
+    // markup includes the app label — keep it.
+    this.rows().forEach(row => {
+      if (!row.dataset.originalName) {
+        row.dataset.originalName = row.textContent.trim()
       }
     })
   }
 
+  disconnect() {
+    clearTimeout(this.filterTimer)
+  }
+
+  // Every row this controller ranks, whichever list it lives in.
+  rows() {
+    return [...this.formLinkTargets, ...this.destinationTargets]
+  }
+
   filter() {
+    clearTimeout(this.filterTimer)
+    if (this.debounceValue > 0) {
+      this.filterTimer = setTimeout(() => this.performFilter(), this.debounceValue)
+      return
+    }
+
+    this.performFilter()
+  }
+
+  performFilter() {
+    const searchTerm = this.inputTarget.value.toLowerCase().trim()
+    this.filterReference(searchTerm)
+    this.filterCommands(searchTerm)
+
     if (this.hasItemTarget) {
       this.filterItems()
       return
     }
 
-    const searchTerm = this.inputTarget.value.toLowerCase().trim()
+    // Each list is ranked against the query on its own, so a destination is
+    // never sorted in among the forms. Destinations keep their declared order
+    // when nothing is typed — they are grouped by app, which is more use than
+    // one alphabetical run of every screen in the system.
+    this.rankList(searchTerm, this.formLinkTargets, this.formsListTarget, true)
+    if (this.hasDestinationTarget) {
+      this.rankList(searchTerm, this.destinationTargets, this.destinationsListTarget, false)
+    }
 
+    this.updateEmptyState()
+  }
+
+  // Score every row against each of its metadata sources and keep its best
+  // match, then reorder the list best-first. MATCH_SOURCES is in priority
+  // order, so a tie goes to the stronger source and a name match still wins a
+  // field match of equal tightness.
+  rankList(searchTerm, rows, list, sortWhenEmpty) {
     if (searchTerm === "") {
-      // Show all links, remove highlighting, and restore alphabetical order
-      const links = [...this.formLinkTargets]
-      links.sort((a, b) => a.dataset.originalName.localeCompare(b.dataset.originalName))
-      links.forEach(link => {
-        link.style.display = ""
-        if (!link.hasAttribute("data-search-card")) {
-          link.innerHTML = link.dataset.originalName
-        }
-        this.formsListTarget.appendChild(link)
+      const ordered = sortWhenEmpty
+        ? [...rows].sort((a, b) => a.dataset.originalName.localeCompare(b.dataset.originalName))
+        : rows
+
+      ordered.forEach(row => {
+        row.style.display = this.facetHidden(row) ? "none" : ""
+        this.renderRow(row, { matched: false })
+        list.appendChild(row)
       })
+      this.markListEmpty(list, rows)
       return
     }
 
-    // Score and filter links (search form name, field labels, and tags)
-    const scored = this.formLinkTargets.map(link => {
-      const formName = link.dataset.originalName
-      const fields = link.dataset.fields || ""
-      const tags = link.dataset.tags || ""
+    const scored = rows.map(row => ({ row, ...this.bestMatch(searchTerm, row) }))
 
-      // Match against form name
-      const nameResult = this.fuzzyMatch(searchTerm, formName)
-
-      // Match against field labels (search each field separately)
-      let bestFieldMatch = { matches: [], score: 0, fieldName: null }
-      if (fields) {
-        const fieldList = fields.split(", ")
-        for (const field of fieldList) {
-          const fieldResult = this.fuzzyMatch(searchTerm, field)
-          if (fieldResult.score > bestFieldMatch.score) {
-            bestFieldMatch = { ...fieldResult, fieldName: field }
-          }
-        }
-      }
-
-      // Match against tags (search each tag separately)
-      let bestTagMatch = { matches: [], score: 0, tagName: null }
-      if (tags) {
-        const tagList = tags.split(", ")
-        for (const tag of tagList) {
-          const tagResult = this.fuzzyMatch(searchTerm, tag)
-          if (tagResult.score > bestTagMatch.score) {
-            bestTagMatch = { ...tagResult, tagName: tag }
-          }
-        }
-      }
-
-      // Use the better match (name match gets priority bonus, then tags, then fields)
-      const nameScore = nameResult.score > 0 ? nameResult.score + 50 : 0
-      const tagScore = bestTagMatch.score > 0 ? bestTagMatch.score + 30 : 0
-      const fieldScore = bestFieldMatch.score
-
-      if (nameScore >= tagScore && nameScore >= fieldScore) {
-        return { link, formName, ...nameResult, matchedField: null, matchedTag: null }
-      } else if (tagScore >= fieldScore) {
-        return { link, formName, matches: [], score: tagScore, matchedField: null, matchedTag: bestTagMatch.tagName }
-      } else {
-        return { link, formName, matches: [], score: fieldScore, matchedField: bestFieldMatch.fieldName, matchedTag: null }
-      }
-    })
-
-    // Sort by score (higher is better), then alphabetically
     scored.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score
-      return a.formName.localeCompare(b.formName)
+      return a.row.dataset.originalName.localeCompare(b.row.dataset.originalName)
     })
 
-    // Reorder and display links
-    scored.forEach(({ link, formName, matches, score, matchedField, matchedTag }) => {
-      const isCard = link.hasAttribute("data-search-card")
-
-      if (score > 0) {
-        link.style.display = ""
-        // Only modify innerHTML for simple link targets (sidebar), not complex cards
-        if (!isCard) {
-          if (matchedTag) {
-            link.innerHTML = `${this.escapeHtml(formName)}<span class="matched-tag">Tag: ${this.escapeHtml(matchedTag)}</span>`
-          } else if (matchedField) {
-            link.innerHTML = `${this.escapeHtml(formName)}<span class="matched-field">Field: ${this.escapeHtml(matchedField)}</span>`
-          } else {
-            link.innerHTML = this.highlightMatches(formName, matches)
-          }
-        }
-      } else {
-        link.style.display = "none"
-        if (!isCard) {
-          link.innerHTML = formName
-        }
-      }
-      // Reorder in DOM
-      this.formsListTarget.appendChild(link)
+    scored.forEach(({ row, score, ...match }) => {
+      // A form the facets have excluded stays out however well its text
+      // matches — Advanced Search is the narrower question, and a search
+      // inside it should never reach back past it.
+      const visible = score > 0 && !this.facetHidden(row)
+      row.style.display = visible ? "" : "none"
+      this.renderRow(row, { ...match, matched: visible })
+      list.appendChild(row)
     })
+
+    this.markListEmpty(list, rows)
+  }
+
+  bestMatch(searchTerm, row) {
+    let best = { score: 0, matches: [], hint: null, hintClass: null, matchedValue: null, isName: false }
+
+    MATCH_SOURCES.forEach(source => {
+      const raw = row.dataset[source.key] || ""
+      if (!raw) return
+
+      const candidates = source.multi ? raw.split(", ") : [raw]
+      candidates.forEach(candidate => {
+        const result = this.fuzzyMatch(searchTerm, candidate)
+        if (result.score === 0) return
+
+        const score = result.score + source.bonus
+        if (score <= best.score) return
+
+        best = {
+          score,
+          matches: result.matches,
+          hint: source.hint,
+          hintClass: source.hintClass,
+          matchedValue: candidate,
+          isName: source.key === "originalName"
+        }
+      })
+    })
+
+    return best
+  }
+
+  // A row reads: the app it belongs to (destinations only), its name with the
+  // typed letters marked, and — when the match was not on the name — what it
+  // did match. Cards render their own contents and are left alone.
+  renderRow(row, { matched, matches, hint, hintClass, matchedValue, isName }) {
+    if (row.hasAttribute("data-search-card")) return
+
+    const name = row.dataset.originalName
+    const context = row.dataset.context
+      ? `<span class="search-context">${this.escapeHtml(row.dataset.context)}</span>`
+      : ""
+    const body = matched && isName ? this.highlightMatches(name, matches) : this.escapeHtml(name)
+    const why = matched && !isName && hint
+      ? `<span class="${hintClass}">${hint}: ${this.escapeHtml(matchedValue)}</span>`
+      : ""
+
+    row.innerHTML = context + body + why
+  }
+
+  // A list whose rows have all been filtered out hides itself, heading and
+  // all, rather than leaving "Go to" standing over nothing. A list that holds
+  // the empty-state message is left alone — it says so itself, and hiding it
+  // would take the message with it.
+  markListEmpty(list, rows) {
+    if (this.hasEmptyStateTarget && list.contains(this.emptyStateTarget)) return
+
+    list.hidden = !rows.some(row => row.style.display !== "none")
+  }
+
+  // Offers the typed reference as a row of its own, above everything else. What
+  // it resolves to is the server's business — this only recognises the shape of
+  // a reference and hands what was typed to the lookup, because which
+  // submissions exist and which of them this person may open are questions a
+  // filter over a prefetched list has no way to answer.
+  filterReference(searchTerm) {
+    if (!this.hasReferenceTarget) return
+
+    const reference = this.referenceFor(searchTerm)
+    this.referenceTarget.hidden = !reference
+    if (!reference) return
+
+    const lookup = this.referenceTarget.dataset.lookupPath
+    this.referenceTarget.href = `${lookup}?reference=${encodeURIComponent(reference)}`
+    if (this.hasReferenceLabelTarget) this.referenceLabelTarget.textContent = reference
+  }
+
+  // The reference the query names, written the way a submission wears it, or
+  // null when the query is not one. A bare id keeps its bare form — the lookup
+  // sends it to the Submissions list, since the same id exists on every form.
+  referenceFor(searchTerm) {
+    const match = REFERENCE_RE.exec(searchTerm)
+    if (!match) return null
+
+    return [match[1] && match[1].toUpperCase(), match[2]].filter(Boolean).join("-")
+  }
+
+  // Commands are what the sidebar can *do* rather than what it can open —
+  // "who am i" today, anything added beside it later. They are offered only
+  // once something has been typed, so an untouched sidebar stays a plain list
+  // of forms, and they sit above that list because a command answers the whole
+  // question typed rather than matching one form's metadata.
+  filterCommands(searchTerm) {
+    if (!this.hasCommandTarget) return
+
+    this.commandTargets.forEach(command => {
+      command.hidden = searchTerm === "" || !this.commandMatches(searchTerm, command.dataset.search)
+    })
+  }
+
+  // Every word typed has to start a word the command answers to. Deliberately
+  // stricter than the fuzzy match used on forms: a command is offered above
+  // everything else, so "hi" must not summon "Who Am I" on its way to a form.
+  commandMatches(searchTerm, terms) {
+    const words = terms.toLowerCase().split(/\s+/)
+
+    return searchTerm.split(/\s+/).every(token => words.some(word => word.startsWith(token)))
+  }
+
+  // Enter runs the command on offer, so asking is one typed phrase and no
+  // reach for the mouse. With nothing matching it does nothing — the form
+  // links are ordinary navigation, and Enter has never opened them.
+  activate(event) {
+    if (!this.hasCommandTarget) return
+
+    const command = this.commandTargets.find(candidate => !candidate.hidden)
+    if (!command) return
+
+    event.preventDefault()
+    command.click()
+  }
+
+  // Whether Advanced Search has ruled this form out. Set by
+  // advanced_search_controller.js; absent everywhere else, which reads as
+  // "nothing has been ruled out".
+  facetHidden(row) {
+    return row.dataset.facetHidden === "true"
+  }
+
+  // Says so when the filters between them leave nothing, rather than leaving a
+  // blank space that reads as a list that failed to load.
+  updateEmptyState() {
+    if (!this.hasEmptyStateTarget) return
+
+    const commandOffered = this.hasCommandTarget && this.commandTargets.some(command => !command.hidden)
+    const referenceOffered = this.hasReferenceTarget && !this.referenceTarget.hidden
+
+    this.emptyStateTarget.hidden = commandOffered || referenceOffered ||
+      this.rows().some(row => row.style.display !== "none")
   }
 
   filterItems() {

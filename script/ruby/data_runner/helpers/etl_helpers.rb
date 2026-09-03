@@ -98,6 +98,17 @@ module EtlHelpers
     end
   end
 
+  def source_database_target(cfg, env_host: nil, env_database: nil)
+    src = source(cfg)
+    DatabaseTarget.new(
+      host: sql_host(src, env_host: env_host),
+      database: sql_database(src, env_database: env_database),
+      schema: sql_schema(src),
+      table: sql_table(src),
+      connection: src
+    )
+  end
+
   def database_connections(cfg)
     raw = cfg[:database_connections]
     connections =

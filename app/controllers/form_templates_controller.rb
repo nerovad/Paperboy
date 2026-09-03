@@ -7,18 +7,18 @@ class FormTemplatesController < ApplicationController
   before_action :set_form_template, only: %i[show edit update destroy archive unarchive]
 
   def index
-    @form_templates = FormTemplate.includes(:form_fields).order(:name)
+    @form_templates = Forms::Template.includes(:form_fields).order(:name)
     @acl_groups = fetch_acl_groups
     @employees = fetch_employees
-    @existing_tags = FormTemplate.all_tags
+    @existing_tags = Forms::Template.all_tags
   end
 
   def new
-    @form_template = FormTemplate.new
+    @form_template = Forms::Template.new
   end
 
   def create
-    @form_template = FormTemplate.new(form_template_params)
+    @form_template = Forms::Template.new(form_template_params)
     @form_template.created_by = session.dig(:user, 'employee_id')
 
     # Set pending routing steps to pass validation (they'll be saved after the form_template)
@@ -154,12 +154,9 @@ class FormTemplatesController < ApplicationController
         # Fix the sidebar to put the form in the correct array
         fix_sidebar_placement(class_name)
 
-        # Grant access: public forms go to everyone, restricted forms auto-grant to select-all scopes
-        if @form_template.visibility == 'public'
-          grant_to_all_scopes(@form_template)
-        else
-          auto_grant_to_select_all_scopes(@form_template)
-        end
+        # Access is managed in the ACL screen; new forms only inherit the
+        # scopes that already had every form selected.
+        auto_grant_to_select_all_scopes(@form_template)
 
         render json: {
           success: true,
@@ -191,7 +188,7 @@ class FormTemplatesController < ApplicationController
     @acl_groups = fetch_acl_groups
     @employees = fetch_employees
     @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
-    @existing_tags = FormTemplate.all_tags
+    @existing_tags = Forms::Template.all_tags
   end
 
   def update
@@ -200,14 +197,11 @@ class FormTemplatesController < ApplicationController
     statuses_changed = statuses_fields_changed?
     copy_recipients_changed = copy_recipients_fields_changed?
     email_steps_changed = email_steps_fields_changed?
-    visibility_changed_to_public = @form_template.visibility != 'public' && form_template_params[:visibility] == 'public'
 
     # Set pending routing steps to pass validation (same as create)
     @form_template.pending_routing_steps = params[:routing_steps] if params[:routing_steps].present?
 
     if @form_template.update(form_template_params)
-      # If visibility just changed to public, grant to all orgs and groups
-      grant_to_all_scopes(@form_template) if visibility_changed_to_public
       # Only rebuild routing steps when routing actually changed
       rebuild_routing_steps(@form_template) if routing_changed
 
@@ -266,7 +260,7 @@ class FormTemplatesController < ApplicationController
           @employees = fetch_employees
           @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
           @agency_options = begin
-            Agency.order(:long_name).pluck(:long_name, :agency_id)
+            Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
           rescue StandardError
             []
           end
@@ -348,7 +342,7 @@ class FormTemplatesController < ApplicationController
   private
 
   def set_form_template
-    @form_template = FormTemplate.find(params[:id])
+    @form_template = Forms::Template.find(params[:id])
   end
 
   def run_rails_command(*arguments)
@@ -359,7 +353,7 @@ class FormTemplatesController < ApplicationController
     sidebar = 'app/views/shared/_sidebar.html.erb'
     return unless File.exist?(sidebar)
 
-    form_template = FormTemplate.find_by(class_name: class_name)
+    form_template = Forms::Template.find_by(class_name: class_name)
     return unless form_template
 
     label = form_template.name
@@ -381,9 +375,9 @@ class FormTemplatesController < ApplicationController
   def auto_grant_to_select_all_scopes(new_template)
     # Build the set of all form permission keys that existed BEFORE this template
     legacy_keys = AclController::LEGACY_FORMS.map { |f| f[:key] }
-    template_names = FormTemplate.pluck(:name).to_set(&:downcase)
+    template_names = Forms::Template.pluck(:name).to_set(&:downcase)
     legacy_keys.reject! { |k| template_names.include?(AclController::LEGACY_FORMS.find { |f| f[:key] == k }&.dig(:label)&.downcase) }
-    existing_keys = legacy_keys + FormTemplate.where.not(id: new_template.id).pluck(:id).map(&:to_s)
+    existing_keys = legacy_keys + Forms::Template.where.not(id: new_template.id).pluck(:id).map(&:to_s)
     expected_count = existing_keys.size
     new_key = new_template.id.to_s
 
@@ -419,47 +413,9 @@ class FormTemplatesController < ApplicationController
     Rails.logger.warn "Auto-grant failed for template #{new_template.id}: #{e.message}"
   end
 
-  def grant_to_all_scopes(template)
-    permission_key = template.id.to_s
-
-    # Grant to every distinct org scope that has any permissions
-    existing_scopes = OrgPermission
-                      .select(:agency_id, :division_id, :department_id, :unit_id)
-                      .distinct
-                      .to_set { |s| [s.agency_id, s.division_id, s.department_id, s.unit_id] }
-
-    # Also ensure every agency has a grant (even if not yet in org_permissions)
-    Agency.pluck(:agency_id).each do |aid|
-      existing_scopes << [aid, nil, nil, nil]
-    end
-
-    existing_scopes.each do |agency_id, division_id, department_id, unit_id|
-      OrgPermission.find_or_create_by!(
-        agency_id: agency_id,
-        division_id: division_id,
-        department_id: department_id,
-        unit_id: unit_id,
-        permission_type: 'form',
-        permission_key: permission_key
-      )
-    end
-
-    # Grant to every group
-    Group.pluck(:GroupID).each do |gid|
-      GroupPermission.find_or_create_by!(
-        group_id: gid,
-        permission_type: 'form',
-        permission_key: permission_key
-      )
-    end
-  rescue StandardError => e
-    Rails.logger.warn "Grant-to-all failed for template #{template.id}: #{e.message}"
-  end
-
   def form_template_params
     params.require(:form_template).permit(
       :name,
-      :visibility,
       :reference_prefix,
       :page_count,
       :submission_type,
@@ -470,6 +426,13 @@ class FormTemplatesController < ApplicationController
       :metabase_dashboard_id,
       :status_transition_mode,
       :tags,
+      :description,
+      :form_number,
+      :form_type,
+      :agency_id,
+      :division_id,
+      :department_id,
+      :unit_id,
       :skip_code_generation,
       page_headers: [],
       inbox_buttons: []
@@ -499,9 +462,37 @@ class FormTemplatesController < ApplicationController
     }
   end
 
+  # Option hash for a dropdown/choices field from submitted params. Manual values
+  # either stand alone as the whole option list, or ride along with a lookup
+  # source as extra entries pinned to the start or end of the fetched rows.
+  def dropdown_options_from_params(f)
+    lookup =
+      if f[:custom_table].present?
+        { 'custom_lookup' => build_custom_lookup(f) }
+      elsif f[:data_source].present?
+        opts = { 'data_source' => f[:data_source], 'data_source_column' => f[:data_source_column] }
+        opts['data_source_agency'] = f[:data_source_agency] if f[:data_source_agency].present?
+        opts['data_source_category'] = f[:data_source_category] if f[:data_source_category].present?
+        opts
+      else
+        {}
+      end
+
+    values = f[:dropdown_values].to_s.split(',').map(&:strip).reject(&:blank?)
+    return lookup if values.empty?
+
+    options = lookup.merge('values' => values)
+    # Position only means something next to a fetched list; on their own the
+    # manual values already are the list, in the order they were typed.
+    options['values_position'] = f[:dropdown_values_position] == 'start' ? 'start' : 'end' if lookup.any?
+    options
+  end
+
   # Data attributes wiring a field's conditional answer to its trigger on the
-  # generated form. Lookup mode carries the field id (server resolves the DB
-  # lookup at fill time); static mode inlines the value->value mapping JSON.
+  # generated form. Lookup mode carries the form and field names the server
+  # resolves the DB lookup from at fill time -- never the field id, which is an
+  # identity column this file is committed and deployed past; static mode
+  # inlines the value->value mapping JSON.
   def build_conditional_answer_attrs(field)
     return '' unless field.conditional_answer?
 
@@ -509,7 +500,9 @@ class FormTemplatesController < ApplicationController
     return '' unless answer_field
 
     if field.answer_lookup?
-      " data-answer-depends-on=\"#{answer_field.field_name}\" data-answer-lookup-field-id=\"#{field.id}\""
+      " data-answer-depends-on=\"#{answer_field.field_name}\" " \
+        "data-answer-lookup-form=\"#{field.form_template.class_name}\" " \
+        "data-answer-lookup-field=\"#{field.field_name}\""
     else
       mappings_json = field.conditional_answer_mappings.to_json.gsub('"', '&quot;')
       " data-answer-depends-on=\"#{answer_field.field_name}\" data-answer-mappings=\"#{mappings_json}\""
@@ -517,15 +510,17 @@ class FormTemplatesController < ApplicationController
   end
 
   # A field with has_custom_view keeps its HTML verbatim across regenerations,
-  # but the conditional-answer attributes embed the field's DB id and trigger
-  # name, and the id is reassigned every time fields are rebuilt. Left as-is a
-  # preserved block points autofill at a since-deleted field id and silently
-  # fills nothing. Refresh (or strip, or inject) those attrs from the current
-  # field so preserved custom HTML keeps working.
+  # but the conditional-answer attributes embed the trigger name, and blocks
+  # written before this addressed fields by name embed the field's DB id, which
+  # is reassigned every time fields are rebuilt. Left as-is such a block points
+  # autofill at a since-deleted field id and silently fills nothing. Refresh
+  # (or strip, or inject) those attrs from the current field so preserved
+  # custom HTML keeps working -- which also upgrades an id-bearing block.
   def refresh_conditional_answer_attrs(html, field)
     fresh = build_conditional_answer_attrs(field)
-    # Matches the answer-lookup / answer-mappings attrs already on the wrapper.
-    stale = /\s+data-answer-depends-on="[^"]*"(?:\s+data-answer-lookup-field-id="[^"]*"|\s+data-answer-mappings="[^"]*")/
+    # Matches the answer-lookup / answer-mappings attrs already on the wrapper,
+    # in either the name-addressed or the older id-addressed shape.
+    stale = /\s+data-answer-depends-on="[^"]*"(?:\s+data-answer-lookup-form="[^"]*"\s+data-answer-lookup-field="[^"]*"|\s+data-answer-lookup-field-id="[^"]*"|\s+data-answer-mappings="[^"]*")/
 
     if html.match?(stale)
       html.sub(stale, fresh)
@@ -575,16 +570,7 @@ class FormTemplatesController < ApplicationController
     when 'text_box'
       options['rows'] = field_data[:rows].to_i if field_data[:rows].present?
     when 'dropdown', 'choices_dropdown'
-      if field_data[:custom_table].present?
-        options['custom_lookup'] = build_custom_lookup(field_data)
-      elsif field_data[:data_source].present?
-        options['data_source'] = field_data[:data_source]
-        options['data_source_column'] = field_data[:data_source_column]
-        options['data_source_agency'] = field_data[:data_source_agency] if field_data[:data_source_agency].present?
-        options['data_source_category'] = field_data[:data_source_category] if field_data[:data_source_category].present?
-      elsif field_data[:dropdown_values].present?
-        options['values'] = field_data[:dropdown_values].split(',').map(&:strip)
-      end
+      options.merge!(dropdown_options_from_params(field_data))
     when 'information'
       options['information_text'] = field_data[:information_text].to_s
       options['acknowledgeable'] = field_data[:acknowledgeable] == '1'
@@ -875,7 +861,7 @@ class FormTemplatesController < ApplicationController
   end
 
   def customize_generated_controller(form_template, update_routing: true)
-    controller_path = Rails.root.join("app/controllers/#{form_template.plural_file_name}_controller.rb")
+    controller_path = Rails.root.join("app/controllers/forms/#{form_template.plural_file_name}_controller.rb")
     return unless File.exist?(controller_path)
 
     content = File.read(controller_path)
@@ -1017,7 +1003,7 @@ class FormTemplatesController < ApplicationController
 
       # Insert into the member block for this resource
       content.sub!(
-        /(resources :#{form_template.plural_file_name} do\s*\n\s*member do\n)/,
+        /(resources :#{form_template.plural_file_name}[^\n]* do\s*\n\s*member do\n)/,
         "\\1            #{route_line}\n"
       )
     end
@@ -1112,19 +1098,7 @@ class FormTemplatesController < ApplicationController
         conditional_answer_mappings: normalize_conditional_mappings(f[:conditional_answer_mappings]),
         options: case f[:field_type]
                  when 'text_box' then { 'rows' => f[:rows].to_i }
-                 when 'dropdown', 'choices_dropdown'
-                   if f[:custom_table].present?
-                     { 'custom_lookup' => build_custom_lookup(f) }
-                   elsif f[:data_source].present?
-                     opts = { 'data_source' => f[:data_source], 'data_source_column' => f[:data_source_column] }
-                     opts['data_source_agency'] = f[:data_source_agency] if f[:data_source_agency].present?
-                     opts['data_source_category'] = f[:data_source_category] if f[:data_source_category].present?
-                     opts
-                   elsif f[:dropdown_values].present?
-                     { 'values' => f[:dropdown_values].split(',').map(&:strip) }
-                   else
-                     {}
-                   end
+                 when 'dropdown', 'choices_dropdown' then dropdown_options_from_params(f)
                  when 'information'
                    {
                      'information_text' => f[:information_text].to_s,
@@ -1225,7 +1199,7 @@ class FormTemplatesController < ApplicationController
     raw = step_data[:inbox_buttons]
     return [] if raw.blank?
 
-    Array(raw).map(&:to_s).reject(&:blank?) & FormTemplate::INBOX_BUTTON_TYPES.keys
+    Array(raw).map(&:to_s).reject(&:blank?) & Forms::Template::INBOX_BUTTON_TYPES.keys
   end
 
   def save_copy_recipients(form_template)
@@ -1676,10 +1650,10 @@ class FormTemplatesController < ApplicationController
   end
 
   def generate_dynamic_view(class_name)
-    form_template = FormTemplate.find_by(class_name: class_name)
+    form_template = Forms::Template.find_by(class_name: class_name)
     return unless form_template
 
-    view_path = Rails.root.join("app/views/#{form_template.plural_file_name}/new.html.erb")
+    view_path = Rails.root.join("app/views/forms/#{form_template.plural_file_name}/new.html.erb")
 
     # Extract existing custom field blocks before regenerating
     existing_blocks = extract_existing_field_blocks(view_path)
@@ -1790,10 +1764,10 @@ class FormTemplatesController < ApplicationController
   end
 
   def generate_dynamic_edit_view(class_name)
-    form_template = FormTemplate.find_by(class_name: class_name)
+    form_template = Forms::Template.find_by(class_name: class_name)
     return unless form_template
 
-    view_path = Rails.root.join("app/views/#{form_template.plural_file_name}/edit.html.erb")
+    view_path = Rails.root.join("app/views/forms/#{form_template.plural_file_name}/edit.html.erb")
 
     # Extract existing custom field blocks before regenerating
     existing_blocks = extract_existing_field_blocks(view_path)
@@ -2083,14 +2057,7 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'dropdown'
-      if field.custom_lookup?
-        options_expr = "FormLookup.options(#{field.id})"
-      elsif field.data_source?
-        options_expr = field.data_source_query_code
-      else
-        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-        options_expr = "[#{options}]"
-      end
+      options_expr = field_options_expr(field)
       selected_expr = "@#{form_template.file_name}.#{field.field_name}"
       html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
@@ -2108,14 +2075,7 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'choices_dropdown'
-      if field.custom_lookup?
-        options_expr = "FormLookup.options(#{field.id})"
-      elsif field.data_source?
-        options_expr = field.data_source_query_code
-      else
-        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-        options_expr = "[#{options}]"
-      end
+      options_expr = field_options_expr(field)
       # Build merged data hash for choices_dropdown (avoid duplicate data: keys)
       data_entries = ['choices_target: "select"', 'placeholder: "Select options..."']
       data_entries << "conditional_trigger: '#{field.field_name}'" if conditional_dependents?(field)
@@ -2550,15 +2510,35 @@ class FormTemplatesController < ApplicationController
     end
   end
 
-  # Dropdown option-source expression, shared with generate_field_html.
+  # Dropdown option-source expression, shared by every generated view.
+  # Custom lookups merge their manual extras inside FormLookup.options_for; the
+  # curated tables get theirs pinned on here.
   def field_options_expr(field)
     if field.custom_lookup?
-      "FormLookup.options(#{field.id})"
+      # Class name + field name, never field.id: the id is an identity column
+      # and the file this string lands in is committed and deployed to every
+      # database. See the note at the top of FormLookup.
+      "FormLookup.options_for(#{field.form_template.class_name.inspect}, #{field.field_name.inspect})"
     elsif field.data_source?
-      field.data_source_query_code
+      pin_extra_values_expr(field, field.data_source_query_code)
     else
-      "[#{field.dropdown_values.map { |v| "'#{v}'" }.join(', ')}]"
+      values_literal_expr(field.dropdown_values)
     end
+  end
+
+  # Pin a table-backed field's manual extras onto its query expression, in the
+  # position the builder chose.
+  def pin_extra_values_expr(field, expr)
+    return expr unless field.extra_values?
+
+    literal = values_literal_expr(field.dropdown_values)
+    field.extra_values_position == 'start' ? "(#{literal} + #{expr}).uniq" : "(#{expr} + #{literal}).uniq"
+  end
+
+  # Ruby array literal for a list of option values, safe to embed in generated
+  # code (values like "Don't know" carry quotes of their own).
+  def values_literal_expr(values)
+    "[#{values.map { |v| v.to_s.dump }.join(', ')}]"
   end
 
   def generate_field_html(field, form_template)
@@ -2638,14 +2618,7 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'dropdown'
-      if field.custom_lookup?
-        options_expr = "FormLookup.options(#{field.id})"
-      elsif field.data_source?
-        options_expr = field.data_source_query_code
-      else
-        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-        options_expr = "[#{options}]"
-      end
+      options_expr = field_options_expr(field)
       html = ''
       html += "        <% #{editable_check} %>\n" if editable_check
       html += conditional_wrapper_start
@@ -2662,14 +2635,7 @@ class FormTemplatesController < ApplicationController
       html += conditional_wrapper_end
       html
     when 'choices_dropdown'
-      if field.custom_lookup?
-        options_expr = "FormLookup.options(#{field.id})"
-      elsif field.data_source?
-        options_expr = field.data_source_query_code
-      else
-        options = field.dropdown_values.map { |v| "'#{v}'" }.join(', ')
-        options_expr = "[#{options}]"
-      end
+      options_expr = field_options_expr(field)
       # Build merged data hash for choices_dropdown (avoid duplicate data: keys)
       edit_data_entries = ['choices_target: "select"', 'placeholder: "Select options..."']
       edit_data_entries << "conditional_trigger: '#{field.field_name}'" if conditional_dependents?(field)

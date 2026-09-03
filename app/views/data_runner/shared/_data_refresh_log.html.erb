@@ -1,0 +1,14 @@
+<div class="form-header data-refresh-form-header <%= data_refresh_css_class %>-data-refresh-theme">
+  <h1>Refresh Data</h1>
+</div>
+
+<div class="form-wrapper data-refresh-form <%= data_refresh_css_class %>-data-refresh-theme">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow"><%= data_refresh_app_label %></p>
+      <h2>Refresh log</h2>
+    </div>
+    <%= link_to "Close", data_refresh_progress_path(@run), class: "btn compact" %>
+  </div>
+  <pre class="captured-output run-output"><%= @output %></pre>
+</div>

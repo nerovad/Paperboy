@@ -1,4 +1,5 @@
-@import "base/tokens";
+@use "sass:color";
+@use "base/tokens" as *;
 
 /* Pages: Probation Transfer Request */
 
@@ -194,7 +195,7 @@
 }
 .ptr-btn--secondary {
   background-color: $surface-control; border-color: $border-color; color: $text-color;
-  &:hover { background-color: $surface-control-hover; border-color: darken($border-color, 6%); }
+  &:hover { background-color: $surface-control-hover; border-color: color.adjust($border-color, $lightness: -6%); }
 }
 
 /* Utility for disabled placeholder options used on PTR (safe globally) */

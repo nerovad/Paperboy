@@ -2,34 +2,26 @@
 
 module Billing
   class DataRefreshesController < BaseController
+    include DataRunner::DataRefreshable
+
     before_action -> { require_app_feature('billing', 'data_refresh', fallback: billing_root_path) }
-    before_action :set_active_billing_period
-    before_action :load_groups
+    prepend_before_action :set_active_billing_period, only: %i[show update]
 
-    def show
-      @output = TaskRunner.output!(params[:run_id]) if params[:run_id].present?
-    end
-
-    def update
-      result = DataRefresh.run!(group_values)
-      return redirect_to billing_data_refresh_path, notice: 'No Data Runner groups were selected.' unless result
-
-      message = "Data refresh #{result.success ? 'completed successfully' : 'failed'}."
-      destination = billing_data_refresh_path(run_id: result.id)
-      redirect_to destination, result.success ? { notice: message } : { alert: message }
-    rescue ActionController::ParameterMissing, ArgumentError, KeyError => e
-      Rails.logger.error("Billing data refresh failed: #{e.class}: #{e.message}")
-      redirect_to billing_data_refresh_path, alert: 'The data refresh could not be started.'
+    def status
+      render_data_refresh_status
     end
 
     private
 
-    def load_groups
-      @groups = DataRefresh.groups(end_date: @active_billing_period&.end_date)
-    end
-
-    def group_values
-      params.require(:groups).permit(*DataRefresh::GROUPS.keys).to_h
-    end
+    def data_refresh_service = DataRefresh
+    def data_refresh_app_label = 'Billing'
+    def data_refresh_css_class = 'billing'
+    def data_refresh_form_path = billing_data_refresh_path
+    def data_refresh_progress_path(run) = billing_data_refresh_run_path(run)
+    def data_refresh_status_path(run) = billing_data_refresh_run_status_path(run)
+    def data_refresh_log_path(run) = billing_data_refresh_run_log_path(run)
+    def data_refresh_restart_path(run_id:) = restart_billing_data_refresh_path(run_id: run_id)
+    def data_refresh_cancel_path = billing_root_path
+    def data_refresh_end_date = @active_billing_period&.end_date
   end
 end

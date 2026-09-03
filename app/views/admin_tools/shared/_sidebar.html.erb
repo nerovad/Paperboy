@@ -9,8 +9,19 @@
   <% active_key = current_admin_tool_key %>
   <nav class="admin-tools-links">
     <% admin_tools_links.each do |tool| %>
-      <%= link_to tool[:label], tool[:path],
-                  class: "nav-link#{' active' if tool[:key] == active_key}" %>
+      <% if tool[:key] == 'manage_forms' %>
+        <details class="nav-group" <%= "open" if active_key == 'manage_forms' %>>
+          <summary><span class="nav-group-label"><%= tool[:label] %></span></summary>
+          <%= link_to "Create Form", form_templates_path(create: true), class: "nav-link" %>
+          <% admin_tools_form_templates.each do |template| %>
+            <%= link_to template.name, edit_form_template_path(template),
+                        class: "nav-link#{' active' if current_page?(edit_form_template_path(template))}" %>
+          <% end %>
+        </details>
+      <% else %>
+        <%= link_to tool[:label], tool[:path],
+                    class: "nav-link#{' active' if tool[:key] == active_key}" %>
+      <% end %>
     <% end %>
   </nav>
 </div>

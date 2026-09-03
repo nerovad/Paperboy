@@ -4,8 +4,6 @@
 require 'fileutils'
 require 'pathname'
 
-require_relative '../../constants/workflow_paths'
-
 OUTPUT_FILES = %w[
   companions.csv
   dailypresorts.csv
@@ -15,14 +13,18 @@ OMS_NUMBER_PATTERN = '\d{8,9}'
 MARKER_PATTERN = /\AMail\.dat_(#{OMS_NUMBER_PATTERN})\.zip\z/i
 
 def paths
-  usage = "usage: #{$PROGRAM_NAME} ROOT_PATH SENT_PATH OUTPUT_PATH PROCESSED_PATH"
-  raise usage unless ARGV.length == 4
+  usage = "usage: #{$PROGRAM_NAME} SENT_PATH OUTPUT_PATH PROCESSED_PATH"
+  raise usage unless ARGV.length == 3
 
   ARGV.map { |value| Pathname.new(value).expand_path }
 end
 
 def marker_and_oms_number(sent_dir)
-  marker = sent_dir.children.select(&:file?).sort.find { |path| path.basename.to_s.match?(MARKER_PATTERN) }
+  target = ENV.fetch('DATARUNNER_QUEUE_OMS', nil)
+  marker = sent_dir.children.select(&:file?).sort.find do |path|
+    match = path.basename.to_s.match(MARKER_PATTERN)
+    match && (target.nil? || match[1] == target)
+  end
   raise "no Mail.dat OMS marker found in #{sent_dir}" unless marker
 
   [marker, marker.basename.to_s.match(MARKER_PATTERN)[1]]
@@ -44,17 +46,15 @@ def remove_file(path)
   end
 end
 
-root_dir, sent_dir, output_dir, processed_dir = paths
-marker, oms_number = marker_and_oms_number(sent_dir)
+sent_dir, output_dir, processed_dir = paths
+_marker, oms_number = marker_and_oms_number(sent_dir)
 archive_dir = processed_dir.join(oms_number)
-FileUtils.mkdir_p(archive_dir)
+raise "archive already exists: #{archive_dir}" if archive_dir.exist?
 
-sources = root_dir.children.select do |path|
-  path.file? && path.basename.to_s.include?(oms_number)
-end
-(sources + [marker]).uniq.each { |path| archive_file(path, archive_dir) }
+sources = sent_dir.children.select { |path| path.file? && path.basename.to_s.include?(oms_number) }
+raise "no staged files found for #{oms_number}" if sources.empty?
+
+FileUtils.mkdir_p(archive_dir)
+sources.each { |path| archive_file(path, archive_dir) }
 
 OUTPUT_FILES.each { |name| remove_file(output_dir.join(name)) }
-
-download_dir = Pathname.new(WorkflowPaths::DOWNLOAD_DIR)
-OUTPUT_FILES.each { |name| remove_file(download_dir.join(name)) }

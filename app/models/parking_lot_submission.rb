@@ -18,29 +18,29 @@ class ParkingLotSubmission < ApplicationRecord
   # Links this hand-written model to its form-builder template so TrackableStatus
   # can run the UI-defined routing steps (Authorization -> Sean Payne -> GSA_Security).
   def form_template
-    @form_template ||= FormTemplate.find_by(class_name: self.class.name)
+    @form_template ||= Forms::Template.find_by(class_name: self.class.name)
   end
 
   # Stored columns on this model for org hierarchy are *codes/IDs*:
   #   agency, division, department, unit
   # === Associations to lookup tables (resolve codes -> LongName) ===
   belongs_to :agency_record,
-             class_name: 'Agency',
+             class_name: 'Coa::Agency',
              primary_key: :agency_id,
              foreign_key: :agency,
              optional: true
   belongs_to :division_record,
-             class_name: 'Division',
+             class_name: 'Coa::Division',
              primary_key: :division_id,
              foreign_key: :division,
              optional: true
   belongs_to :department_record,
-             class_name: 'Department',
+             class_name: 'Coa::Department',
              primary_key: :department_id,
              foreign_key: :department,
              optional: true
   belongs_to :unit_record,
-             class_name: 'Unit',
+             class_name: 'Coa::Unit',
              primary_key: :unit_id,
              foreign_key: :unit,
              optional: true

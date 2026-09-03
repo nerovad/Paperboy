@@ -1,0 +1,18 @@
+<div class="form-header">
+  <%= render "shared/back_button" %>
+  <h1>Pcard Request Form</h1>
+</div>
+
+<div class="form-wrapper">
+  <div class="form-inner">
+
+  <%= render partial: "shared/readonly_record",
+             locals: { record: @pcard_request_form,
+                       exclude: %w[id created_at updated_at approver_id deny_reason] } %>
+
+  <div class="form-actions" style="margin-top: 16px;">
+    <%= link_to "Download PDF", pdf_pcard_request_form_path(@pcard_request_form), target: "_blank", class: "form-btn" %>
+    <%= render "shared/change_status", record: @pcard_request_form %>
+  </div>
+  </div>
+</div>

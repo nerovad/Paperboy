@@ -13,16 +13,6 @@ module ApplicationHelper
     session[:user]
   end
 
-  # The Advanced Search panel lives in the sidebar, so it renders on every page
-  # and has to read its own state from the URL. On the Submissions list the
-  # controller has already built this object and the panel opens showing the
-  # search you are looking at; anywhere else it opens blank — the inbox uses
-  # some of the same `filter_` params for its own bar, and those are a
-  # different question about a different list.
-  def form_search
-    @form_search ||= FormSearch.new(params[:controller] == 'submissions' ? params : {})
-  end
-
   def format_phone(digits)
     d = digits.to_s.gsub(/\D/, '')
     return digits if d.length != 10
@@ -50,6 +40,24 @@ module ApplicationHelper
 
   def system_admin?
     current_user_group_names.include?('system_admins')
+  end
+
+  # Whether ":" opens the command palette for this person.
+  #
+  # The palette is a grant of its own rather than something everybody gets,
+  # because it is the one surface that reaches across every app: it lists
+  # Billing's screens, DAM's collections and COA's tables side by side. What it
+  # lists is still filtered app by app — NavigationCatalog asks the same
+  # question each sidebar asks — so this decides whether somebody gets the
+  # search at all, not what they find in it.
+  #
+  # System admins bypass, as everywhere else. Everyone else needs the
+  # 'command_palette' key under ACL > Profile Dropdown Items, which is not in
+  # DEFAULT_PUBLIC_DROPDOWN_KEYS on purpose.
+  def can_use_command_palette?
+    return false unless current_user
+
+    system_admin? || current_user_dropdown_permissions.include?('command_palette')
   end
 
   # The Admin Tools app's screens — the list, its ACL filtering and the
@@ -121,6 +129,7 @@ module ApplicationHelper
     apps << { key: 'print_production', label: 'Production', path: production_root_path } if can_access_app?('print_production')
     apps << { key: 'billing', label: 'Billing', path: billing_root_path } if can_access_app?('billing')
     apps << { key: 'admin_tools', label: 'Admin Tools', path: admin_tools_root_path } if can_access_app?('admin_tools')
+    apps << { key: 'p2m', label: 'Print 2 Mail', path: p2m_root_path } if can_access_app?('p2m')
     [apps.first, *apps.drop(1).sort_by { |app| app.fetch(:label).downcase }]
   end
 
@@ -177,6 +186,8 @@ module ApplicationHelper
       'print_production'
     elsif controller_path.start_with?('billing/')
       'billing'
+    elsif controller_path.start_with?('p2m/')
+      'p2m'
     else
       'paperboy'
     end
@@ -198,7 +209,7 @@ module ApplicationHelper
     non_display = %w[media_attachment information]
     catalog = {}
 
-    FormTemplate.includes(:form_fields).order(:name).each do |template|
+    Forms::Template.includes(:form_fields).order(:name).each do |template|
       klass = template.class_name.safe_constantize
       next unless klass.respond_to?(:column_names)
 

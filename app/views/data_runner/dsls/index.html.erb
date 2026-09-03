@@ -39,9 +39,15 @@
           <%= button_tag "Delete", type: "submit", class: "btn deny",
                          form: "delete-group-form",
                          data: { turbo_confirm: "Delete #{@selected_group.humanize} and remove it from associated DSLs?" } %>
-          <%= button_tag "Refresh", type: "submit", class: "btn approve",
-                         form: "refresh-group-form",
-                         data: { turbo_confirm: "Run DataRunner:refresh for #{@selected_group.humanize}?" } %>
+          <% if @active_group_run %>
+            <%= link_to "View Progress", data_runner_group_run_path(@active_group_run),
+                        class: "btn approve", id: "refresh-group" %>
+          <% else %>
+            <%= button_tag "Refresh", type: "submit", class: "btn approve",
+                           id: "refresh-group",
+                           form: "refresh-group-form",
+                           data: { turbo_confirm: "Refresh #{@selected_entries.count(&:enabled?)} #{@selected_group.humanize} DSLs? Processing will continue if you leave the progress page." } %>
+          <% end %>
         </div>
       </div>
       <div class="dsl-dropzone" data-dsl-group-target="dropzone">

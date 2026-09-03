@@ -5,6 +5,20 @@ APP_DIR="/home/matthew/gitea/Paperboy"
 BRANCH="${1:-master}"
 cd "$APP_DIR"
 
+# Installs a unit file unless /etc/systemd/system already symlinks straight at
+# the repo copy, where git pull has updated it already and cp would fail with
+# "are the same file" — aborting the deploy under set -e, after the migrations
+# have run but before anything restarts.
+sync_unit() {
+  local src="$APP_DIR/config/systemd/$1"
+  local dst="/etc/systemd/system/$1"
+  if [ "$(readlink -f "$src")" = "$(readlink -f "$dst")" ]; then
+    echo "    $1 already links to the repo copy"
+  else
+    sudo cp "$src" "$dst"
+  fi
+}
+
 echo "==> Fetching and checking out branch: $BRANCH ..."
 git fetch origin
 git checkout "$BRANCH"
@@ -16,11 +30,25 @@ bundle install --without development test
 echo "==> Running database migrations..."
 RAILS_ENV=production bundle exec rails db:migrate
 
-# Additive: creates groups and grants from db/acl.yml that are missing here,
-# never removes anything and never touches memberships. Run PRUNE=1 by hand if
-# you actually want grants dropped. See lib/tasks/acl.rake.
+# Additive: creates the groups, grants and group memberships from db/acl.yml
+# that are missing here, and never removes anything. Run PRUNE=1 by hand if you
+# actually want grants or memberships dropped. Contractor memberships never
+# travel — their ids are local to each database — so grant those by hand here.
+# See lib/tasks/acl.rake.
 echo "==> Syncing ACL definitions..."
 RAILS_ENV=production bundle exec rails acl:sync
+
+# Additive: creates the form templates' fields from db/forms.yml that are
+# missing here and updates the ones whose definition has changed, so a dropdown
+# configured in dev's form builder actually reaches this database -- the .erb
+# views have always travelled through git, the rows behind them never did.
+# Nothing is removed; run PRUNE=1 by hand if you want fields dropped. A form
+# with no template here is held back and reported rather than invented, since a
+# template carries workflow this file does not: CREATE_TEMPLATES=1 opts in to a
+# bare one. After acl:sync, so a field restricted to a group finds it.
+# See lib/tasks/forms.rake.
+echo "==> Syncing form definitions..."
+RAILS_ENV=production bundle exec rails forms:sync
 
 echo "==> Clobbering old assets..."
 RAILS_ENV=production bundle exec rails assets:clobber
@@ -29,7 +57,8 @@ echo "==> Precompiling assets..."
 RAILS_ENV=production bundle exec rails assets:precompile
 
 echo "==> Syncing systemd units..."
-sudo cp config/systemd/paperboy.service config/systemd/paperboy-sidekiq.service /etc/systemd/system/
+sync_unit paperboy.service
+sync_unit paperboy-sidekiq.service
 sudo systemctl daemon-reload
 
 echo "==> Restarting Puma..."

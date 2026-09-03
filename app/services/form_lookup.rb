@@ -1,8 +1,15 @@
 # frozen_string_literal: true
 
 # Runtime resolver for the form builder's generic ("custom") dropdown data
-# source. Generated form views call FormLookup.options(field_id) with ONLY an
-# integer, so no user-supplied strings ever reach generated code on disk.
+# source. Generated form views call FormLookup.options_for(class_name,
+# field_name): that pair names the same field in every database, while
+# form_fields.id is an identity column and means something different in each,
+# so an id baked into a committed view resolves to the wrong row -- or to
+# nothing -- everywhere but the database it was generated against.
+#
+# Neither argument reaches SQL. They only find a row; the table and column
+# names that do reach SQL still come from that row's stored config, so nothing
+# a form author types is interpolated into a query.
 #
 # All table/column names are validated against the live schema and passed
 # through the adapter's identifier quoting before they touch SQL; the category
@@ -33,23 +40,63 @@ class FormLookup
   # real columns. Only the employees "full_name" (Last, First) key today, which
   # mirrors how employee dropdowns render their option labels.
   def self.synthetic_columns(table)
-    table.to_s == "employees" ? %w[full_name] : []
+    table.to_s == 'employees' ? %w[full_name] : []
   end
 
-  # Answer-lookup autofill. Given target field IDs that share one trigger field
-  # and the trigger's selected display text, return { field_id => filled_value }.
-  # Fields are grouped by [database, table, match_column] so one query per group
-  # fills many fields. All identifiers are validated against the live schema and
-  # quoted; the match value is bound via #quote. Returns {} on any failure so a
-  # bad config or unreachable DB can never 500 a live form.
-  def self.answer_fills(field_ids, value)
-    return {} if value.to_s.strip.empty?
+  # Answer-lookup autofill, addressed by the form's class name and each field's
+  # own name -- the pair that means the same thing in every database. Returns
+  # { field_name => filled_value }; see the note at the top of the file for why
+  # a generated view cannot carry an id.
+  def self.answer_fills_for(class_name, field_names, value)
+    fills(answer_fields(class_name, field_names), value, &:field_name)
+  end
 
-    fields = FormField.where(id: field_ids).select(&:answer_lookup?)
-    return {} if fields.empty?
+  # The same autofill keyed by field id. Kept for requests already in flight
+  # from a page rendered before the switch above; generated views send names.
+  def self.answer_fills(field_ids, value)
+    fills(Forms::Field.where(id: field_ids).select(&:answer_lookup?), value, &:id)
+  end
+
+  # The answer-lookup fields a view is asking for -- lowest id per name, the
+  # same tie-break first_named makes -- having said in the log what missed.
+  def self.answer_fields(class_name, field_names)
+    template = Forms::Template.find_by(class_name: class_name)
+    unless template
+      missing_answer("no form template named #{class_name}")
+      return []
+    end
+
+    names = Array(field_names).map(&:to_s).reject(&:empty?).uniq
+    found = Forms::Field.where(form_template_id: template.id, field_name: names).order(:id).to_a.group_by(&:field_name)
+    names.filter_map { |name| answer_field(class_name, name, found[name]) }
+  end
+
+  def self.answer_field(class_name, name, candidates)
+    field = Array(candidates).first
+    return missing_answer("#{class_name} has no field #{name}") unless field
+    return missing_answer("#{class_name}##{name} (id #{field.id}) has no answer lookup") unless field.answer_lookup?
+
+    field
+  end
+
+  # Log why an answer-lookup field could not be resolved and hand back nil.
+  def self.missing_answer(detail)
+    Rails.logger.warn("FormLookup.answer_fills_for: #{detail}")
+    nil
+  end
+  private_class_method :answer_fields, :answer_field, :missing_answer
+
+  # Fill the given fields from the trigger's selected display text, keyed by
+  # whatever the block names each field. Fields are grouped by [database, table,
+  # match_column] so one query per group fills many fields. All identifiers are
+  # validated against the live schema and quoted; the match value is bound via
+  # #quote. Returns {} on any failure so a bad config or an unreachable DB can
+  # never 500 a live form.
+  def self.fills(fields, value)
+    return {} if value.to_s.strip.empty? || fields.empty?
 
     result = {}
-    fields.group_by { |f| f.answer_lookup_config.values_at("database", "table", "match_column") }
+    fields.group_by { |f| f.answer_lookup_config.values_at('database', 'table', 'match_column') }
           .each do |(database, table, match_column), group|
       conn = connection_for(database)
       next unless conn && table_exists_in?(conn, table)
@@ -62,17 +109,18 @@ class FormLookup
       group.each do |field|
         cfg = field.answer_lookup_config
         filled = combined_value(
-          table, cfg["return_column"], cfg["return_join_columns"],
-          cfg["return_join_separator"], row, columns, synthetic
+          table, cfg['return_column'], cfg['return_join_columns'],
+          cfg['return_join_separator'], row, columns, synthetic
         )
-        result[field.id] = filled unless filled.nil? || filled.to_s.empty?
+        result[yield(field)] = filled unless filled.nil? || filled.to_s.empty?
       end
     end
     result
-  rescue => e
-    Rails.logger.error("FormLookup.answer_fills failed: #{e.class}: #{e.message}")
+  rescue StandardError => e
+    Rails.logger.error("FormLookup.fills failed: #{e.class}: #{e.message}")
     {}
   end
+  private_class_method :fills
 
   # Fetch the single row matching `value` on `match_column`. Supports the
   # employees "full_name" synthetic key by splitting "Last, First" and matching
@@ -81,12 +129,13 @@ class FormLookup
     qt = conn.quote_table_name(table)
 
     where_sql =
-      if synthetic.include?(match_column) && table == "employees" && match_column == "full_name"
-        last, first = value.to_s.split(", ", 2)
+      if synthetic.include?(match_column) && table == 'employees' && match_column == 'full_name'
+        last, first = value.to_s.split(', ', 2)
         return nil if last.to_s.empty?
-        clauses = [ "#{conn.quote_column_name('last_name')} = #{conn.quote(last)}" ]
+
+        clauses = ["#{conn.quote_column_name('last_name')} = #{conn.quote(last)}"]
         clauses << "#{conn.quote_column_name('first_name')} = #{conn.quote(first)}" if first.present?
-        clauses.join(" AND ")
+        clauses.join(' AND ')
       elsif columns.include?(match_column)
         "#{conn.quote_column_name(match_column)} = #{conn.quote(value)}"
       end
@@ -100,7 +149,7 @@ class FormLookup
   # space). Mirrors the join_columns/join_separator option-source pattern. The
   # employees "full_name" synthetic key is still honored for back-compat.
   def self.combined_value(table, primary, join_cols, sep, row, columns, synthetic)
-    sep = " " unless sep.is_a?(String) && !sep.empty?
+    sep = ' ' unless sep.is_a?(String) && !sep.empty?
 
     # The primary value may be a synthetic column (e.g. employees "full_name");
     # the "+ also" join columns are always real columns from the same row.
@@ -112,23 +161,75 @@ class FormLookup
       end
 
     join_values = Array(join_cols).select { |c| columns.include?(c) }.map { |c| row[c] }
-    ([ primary_value ] + join_values).reject { |v| v.nil? || v.to_s.empty? }.join(sep)
+    ([primary_value] + join_values).reject { |v| v.nil? || v.to_s.empty? }.join(sep)
   end
 
   # Build a synthetic column's value from a fetched row.
   def self.synthesize(table, column, row)
-    return nil unless table == "employees" && column == "full_name"
+    return nil unless table == 'employees' && column == 'full_name'
+
     "#{row['last_name']}, #{row['first_name']}"
   end
   private_class_method :matched_row, :combined_value, :synthesize
 
-  # Distinct option values (value == label) for a custom-lookup field, ordered.
-  # Returns [] for non-custom fields or any invalid/failed config so a bad
-  # setting can never 500 a live form.
+  # Distinct option values (value == label) for a custom-lookup field, ordered,
+  # with any manual extras ("Other", …) pinned to the start or end. Returns []
+  # for non-custom fields so a bad setting can never 500 a live form; the extras
+  # still show even when the lookup itself fails.
   def self.options(field_id)
-    field = FormField.find_by(id: field_id)
+    field = Forms::Field.find_by(id: field_id)
     return [] unless field&.custom_lookup?
 
+    field.merge_extra_values(lookup_rows(field))
+  end
+
+  # The same list, addressed by the form's class name and the field's own name
+  # rather than by primary key. This is what generated views call; see the note
+  # at the top of the file for why an id cannot be published into one.
+  def self.options_for(class_name, field_name)
+    field = lookup_field(class_name, field_name)
+    return [] unless field
+
+    field.merge_extra_values(lookup_rows(field))
+  end
+
+  # The custom-lookup field a view is asking for, or nil having said in the log
+  # what missed. An unresolvable field is a deployment fault rather than a user
+  # error -- the row belongs to a form that was never promoted to this database,
+  # or was promoted without its lookup config -- and it is invisible from the
+  # page, which renders a dropdown that is merely empty.
+  def self.lookup_field(class_name, field_name)
+    template = Forms::Template.find_by(class_name: class_name)
+    return missing("no form template named #{class_name}") unless template
+
+    field = first_named(template, class_name, field_name)
+    return missing("#{class_name} has no field #{field_name}") unless field
+    return missing("#{class_name}##{field_name} (id #{field.id}) has no custom lookup") unless field.custom_lookup?
+
+    field
+  end
+
+  # field_name is unique per template for every field the builder maps to its own
+  # column, but not universally -- PcardRequestForm repeats six names across its
+  # pages. Take the lowest id and say so, rather than let find_by pick by
+  # whatever order the adapter happens to return.
+  def self.first_named(template, class_name, field_name)
+    fields = Forms::Field.where(form_template_id: template.id, field_name: field_name).order(:id).to_a
+    return fields.first if fields.size <= 1
+
+    Rails.logger.warn("FormLookup.options_for: #{class_name}##{field_name} names #{fields.size} fields; using id #{fields.first.id}")
+    fields.first
+  end
+
+  # Log why a lookup could not be resolved and hand back nil for the caller.
+  def self.missing(detail)
+    Rails.logger.warn("FormLookup.options_for: #{detail}")
+    nil
+  end
+  private_class_method :lookup_field, :first_named, :missing
+
+  # The rows the configured lookup returns. [] on any invalid/failed config.
+  def self.lookup_rows(field)
     cfg  = field.custom_lookup_config
     conn = connection_for(cfg['database'])
     return [] unless conn
@@ -206,7 +307,8 @@ class FormLookup
                   .join(sep)
     end.reject(&:empty?).uniq
   rescue StandardError => e
-    Rails.logger.error("FormLookup.options(#{field_id}) failed: #{e.class}: #{e.message}")
+    Rails.logger.error("FormLookup.lookup_rows(#{field.id}) failed: #{e.class}: #{e.message}")
     []
   end
+  private_class_method :lookup_rows
 end

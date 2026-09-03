@@ -1,0 +1,24 @@
+<% if @reference_error %>
+  <p class="dsl-reference-list__message"><%= @reference_error %></p>
+<% else %>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Type</th><th>Size</th><th>Modified</th></tr>
+      </thead>
+      <tbody>
+        <% @reference_entries.each do |entry| %>
+          <tr>
+            <td><%= entry.name %></td>
+            <td><%= entry.directory ? "Folder" : "File" %></td>
+            <td><%= number_to_human_size(entry.size) if entry.size %></td>
+            <td><%= l(entry.modified, format: :short) %></td>
+          </tr>
+        <% end %>
+        <% if @reference_entries.empty? %>
+          <tr><td colspan="4">The folder is empty.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>

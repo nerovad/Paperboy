@@ -4,9 +4,12 @@
   'Companions',
   {
     steps: {
-      enabled: true,
-      manual_steps: Workflow::MANUAL_STEPS,
+      manual: {
+        enabled: false,
+        steps: Workflow::MANUAL_STEPS
+      },
       scheduled: {
+        enabled: true,
         frequency: :daily,
         steps: Workflow::SCHEDULED_STEPS
       }
@@ -99,7 +102,8 @@
         schema: 'dbo',
         table: 'companions',
         inject: {
-          mode: :append
+          mode: :append,
+          reject_existing: %w[omsnumber]
         }
       }
     ]

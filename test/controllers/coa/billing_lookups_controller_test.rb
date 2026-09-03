@@ -27,10 +27,12 @@ class CoaBillingLookupsControllerTest < ActionController::TestCase
     assert_select '#billing_agency option[value=?]', 'GSA', text: 'GSA - General Services Agency'
     assert_select '[data-controller=?]', 'coa-billing-lookup'
     assert_select '.coa-billing-field select', count: 10
-    assert_select '.coa-billing-result[data-coa-billing-lookup-target=?][hidden]', 'result', count: 1
-    assert_select '.coa-lookup-card[data-coa-billing-lookup-target=?][hidden]', 'accountFields', count: 1
-    assert_select '.coa-account-tree [data-coa-billing-lookup-target]', count: 8
-    assert_select '.coa-lookup-card__heading', count: 4
+    assert_select '.coa-billing-result[data-controller=?][hidden]', 'coa-billing-string', count: 1
+    assert_select '.coa-lookup-card[data-controller=?][hidden]', 'coa-account-hierarchy', count: 1
+    assert_select '[data-coa-account-hierarchy-target]', count: 3
+    assert_select '.coa-lookup-card__heading', count: 3
+    assert_select '#tc60-fields-title', count: 0
+    assert_select '.coa-billing-string-grid .coa-billing-string-grid__field select', count: 6
     assert_select '#billing-account-string-title + .coa-lookup-card__body .coa-billing-string-grid', count: 1
     assert_select '.coa-billing-string-grid__heading', count: 10
     assert_select '.coa-sidebar a[href=?]', coa_billing_lookup_path, text: 'Billing Lookup'

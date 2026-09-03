@@ -5,7 +5,7 @@ class SubmissionsController < ApplicationController
   include Filterable
   include Pagy::Method
 
-  # Legacy forms that are hardcoded (not created via FormTemplate)
+  # Legacy forms that are hardcoded (not created via Forms::Template)
   LEGACY_FORMS = [
     { model: 'ParkingLotSubmission', type: 'Parking Lot', path_helper: :parking_lot_submission_path },
     { model: 'ProbationTransferRequest', type: 'Probation Transfer', path_helper: :probation_transfer_request_path },
@@ -24,7 +24,7 @@ class SubmissionsController < ApplicationController
     @saved_searches = SavedSearch.for_employee(employee_id).order(:name)
 
     @status_items = []
-    @prefix_map = FormReference.prefix_map
+    @prefix_map = Forms::Reference.prefix_map
 
     # Advanced Search (the sidebar modal): org narrowing plus form type, status
     # and category. Shares this page's filter params, so the modal and the
@@ -52,15 +52,15 @@ class SubmissionsController < ApplicationController
                              [employee_id]
                            end
 
-    # Form types the viewer holds a visibility grant for (direct or via a
-    # group) — see FormVisibilityGrant. These widen the list to every
-    # submission of that type regardless of submitter, the same grant that
-    # widens the inbox.
-    @viewer_form_types = FormVisibilityGrant.form_types_for(employee_id, current_user_group_ids)
+    # Visibility grants the viewer holds (direct or via a group) that widen this
+    # page — see Forms::VisibilityGrant. Each adds submissions of one form type
+    # regardless of submitter, either every one of them or only those filed
+    # inside the grant's slice of the organization.
+    @viewer_grants = Forms::VisibilityGrant.for_viewer(employee_id, current_user_group_ids).for_submissions.to_a
 
     # Show the owner column whenever the viewer can see submissions that aren't
     # their own — as a supervisor/admin, or via a visibility grant.
-    @show_employee_column = @show_employee_filter || @viewer_form_types.any?
+    @show_employee_column = @show_employee_filter || @viewer_grants.any?
 
     # Resolve the viewer's customized column/filter layout. Done before loading
     # items so build_status_item can populate custom form-field values. The
@@ -104,7 +104,7 @@ class SubmissionsController < ApplicationController
     # Reference-number (ID) search, e.g. "PLS-845", "pls-845" or "845".
     if params[:filter_reference].present?
       query = params[:filter_reference]
-      @status_items = @status_items.select { |item| FormReference.matches?(item[:reference], query) }
+      @status_items = @status_items.select { |item| Forms::Reference.matches?(item[:reference], query) }
     end
 
     # Apply sorting. Default falls back gracefully if the user hid Last Updated.
@@ -134,7 +134,110 @@ class SubmissionsController < ApplicationController
     end
   end
 
+  # Turns a reference number typed into the quick search into the submission it
+  # names, and sends the viewer straight to that submission's page — the same
+  # place Open lands on the list below, without the trip through the list.
+  #
+  # Anything that does not resolve to exactly one submission this viewer may see
+  # falls back to Submissions filtered by what they typed. That is the honest
+  # answer for a bare id, which names one record per form type and so belongs to
+  # no single one of them, and for a reference that is real but not theirs to
+  # open — the list applies these same visibility rules and simply comes back
+  # empty, rather than the lookup confirming the record exists.
+  def lookup
+    record = referenced_submission(params[:reference])
+    return redirect_to(submissions_path(filter_reference: params[:reference])) unless record
+
+    redirect_to submission_path_for(record)
+  end
+
+  # Changes a submission's status from its own page. Forms that carry a status
+  # dropdown in the inbox keep that control here after they reach an end state
+  # and drop out of the queue — the only place they still live is Submissions,
+  # so this is where the status has to be changeable, and this is where the user
+  # is sent back to afterwards rather than to the inbox.
+  def update_status
+    record = status_change_record
+    return if performed?
+
+    unless helpers.can_change_submission_status?(record)
+      redirect_to submission_path_for(record), alert: "You don't have permission to change this submission's status."
+      return
+    end
+
+    if update_trackable_status(record, params[:status])
+      redirect_to submission_path_for(record), notice: "Status changed to #{record.status_label}."
+    else
+      redirect_to submission_path_for(record), alert: 'That status is not valid for this form.'
+    end
+  end
+
   private
+
+  # Resolves :type/:id into a submission this endpoint is willing to act on:
+  # one that tracks status and whose form is configured with a status dropdown.
+  # Redirects (leaving the action to bail on `performed?`) when it isn't.
+  def status_change_record
+    klass = application_record_class_named(params[:type])
+
+    unless klass.is_a?(Class) && klass < ApplicationRecord && klass.include?(TrackableStatus)
+      redirect_to submissions_path, alert: 'Unknown submission type.'
+      return nil
+    end
+
+    record = klass.find(params[:id])
+    return record if Forms::SubmissionPolicy.status_dropdown?(record)
+
+    redirect_to submissions_path, alert: 'This form does not support changing its status.'
+    nil
+  rescue ActiveRecord::RecordNotFound
+    redirect_to submissions_path, alert: 'Submission not found.'
+    nil
+  end
+
+  # The one submission a typed reference names, or nil when it names none: an
+  # unparseable query, a prefix no form uses, a bare id with no prefix to say
+  # which form it belongs to, or a record outside what this viewer may see.
+  def referenced_submission(query)
+    parsed = Forms::Reference.parse_query(query)
+    return nil unless parsed && parsed[:prefix]
+
+    class_name = Forms::Reference.class_name_for_prefix(parsed[:prefix])
+    model_class = class_name && application_record_class_named(class_name)
+    return nil unless model_class&.table_exists?
+
+    visible_submissions(model_class).find_by(id: parsed[:id])
+  end
+
+  # Everything of one form type this viewer may see on the Submissions page:
+  # their own submissions and their reporting chain's — everybody's, for a
+  # system admin — widened by their visibility grants. index reaches the same
+  # place through @scoped_employee_ids, which additionally honours the employee
+  # filter; a lookup has no filter bar and wants the widest view the viewer
+  # holds, so it asks for that directly.
+  #
+  # A form that records no submitter is nobody's own, so only a grant opens it.
+  def visible_submissions(model_class)
+    employee_id = session.dig(:user, 'employee_id').to_s
+    own = if current_user_group_names.include?('system_admins')
+            model_class.all
+          elsif model_class.column_names.include?('employee_id')
+            model_class.where(employee_id: [employee_id] + Employee.subordinate_ids(employee_id))
+          else
+            model_class.none
+          end
+
+    grants = Forms::VisibilityGrant.for_viewer(employee_id, current_user_group_ids).for_submissions.to_a
+    Forms::VisibilityGrant.widen(own, grants, model_class)
+  end
+
+  # The submission's own page, so a status change lands back where it started.
+  # Falls back to the Submissions list for anything without a show route.
+  def submission_path_for(record)
+    polymorphic_path(record)
+  rescue StandardError
+    submissions_path
+  end
 
   def build_status_options_by_type
     options = {}
@@ -149,7 +252,7 @@ class SubmissionsController < ApplicationController
     end
 
     # Dynamic forms from FormTemplates
-    FormTemplate.joins(:statuses).distinct.each do |template|
+    Forms::Template.joins(:statuses).distinct.each do |template|
       model_class = application_record_class_named(template.class_name)
       next unless model_class
 
@@ -170,7 +273,7 @@ class SubmissionsController < ApplicationController
     end
 
     # Check dynamic forms
-    template = FormTemplate.find_by(name: form_type)
+    template = Forms::Template.find_by(name: form_type)
     if template
       model_class = application_record_class_named(template.class_name)
       return [] unless model_class
@@ -205,7 +308,7 @@ class SubmissionsController < ApplicationController
       next
     end
 
-    FormTemplate.joins(:statuses).distinct.each do |template|
+    Forms::Template.joins(:statuses).distinct.each do |template|
       model_class = application_record_class_named(template.class_name)
       next unless model_class
 
@@ -229,7 +332,7 @@ class SubmissionsController < ApplicationController
       includes_list << :parking_lot_vehicles if model_class.reflect_on_association(:parking_lot_vehicles)
 
       # Scope to the determined employee IDs (own, specific subordinate, or all);
-      # a visibility grant on this form type widens it to every submission.
+      # a visibility grant on this form type widens it.
       scope = submission_scope_for(model_class)
 
       # Apply SQL-level date and Advanced Search org filters
@@ -254,7 +357,7 @@ class SubmissionsController < ApplicationController
 
   def load_form_template_submissions(_employee_id)
     # Find all form templates that have statuses configured
-    FormTemplate.joins(:statuses).distinct.each do |template|
+    Forms::Template.joins(:statuses).distinct.each do |template|
       # Skip templates that don't match the type filter
       next unless @form_search.include_form_type?(template.name)
 
@@ -268,7 +371,7 @@ class SubmissionsController < ApplicationController
       next unless model_class.new.respond_to?(:status_category)
 
       # Scope to the determined employee IDs (own, specific subordinate, or all);
-      # a visibility grant on this form type widens it to every submission.
+      # a visibility grant on this form type widens it.
       scope = submission_scope_for(model_class)
 
       # Apply SQL-level date and Advanced Search org filters
@@ -286,15 +389,15 @@ class SubmissionsController < ApplicationController
     end
   end
 
-  # Records of model_class to load for the Submissions list. A visibility grant
-  # (FormVisibilityGrant) lets the viewer see every submission of a granted form
-  # type regardless of who submitted it — the same grant that widens the inbox.
-  # Otherwise the list is scoped to the viewer's own/subordinate ids (nil = no
-  # restriction, i.e. system admin viewing All).
+  # Records of model_class to load for the Submissions list: the viewer's own /
+  # subordinates' submissions (nil ids = no restriction, i.e. system admin
+  # viewing All), widened by whatever their visibility grants open up — every
+  # submission of the granted form type, or only the ones filed inside the
+  # grant's org window.
   def submission_scope_for(model_class)
-    return model_class.all if @viewer_form_types.include?(model_class.name)
+    own = @scoped_employee_ids ? model_class.where(employee_id: @scoped_employee_ids) : model_class.all
 
-    @scoped_employee_ids ? model_class.where(employee_id: @scoped_employee_ids) : model_class.all
+    Forms::VisibilityGrant.widen(own, @viewer_grants, model_class)
   end
 
   # SQL-level date filter config (applied per-table before combining)
@@ -344,7 +447,7 @@ class SubmissionsController < ApplicationController
 
     item = {
       id: submission.id,
-      reference: FormReference.reference_for(submission, @prefix_map),
+      reference: Forms::Reference.reference_for(submission, @prefix_map),
       type: type,
       title: title,
       status: submission.status_label,

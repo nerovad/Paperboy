@@ -16,7 +16,7 @@ namespace :DataRunner do
   end
 
   desc 'Download or validate configured ETL source files'
-  task :download, [:name] do |_task, args|
+  task :download, [:name] => :environment do |_task, args|
     selector = DataRunnerTaskHelpers.task_arg(args, allow_all: true)
     DataRunnerTaskHelpers.run_stage_or_orchestration(selector, :download, 'download.rb')
   end
@@ -74,25 +74,25 @@ namespace :DataRunner do
   end
 
   desc 'Load DSL-applied CSV files into SQL Server'
-  task :inject, [:name] do |_task, args|
+  task :inject, [:name] => :environment do |_task, args|
     selector = DataRunnerTaskHelpers.task_arg(args, allow_all: true)
     DataRunnerTaskHelpers.run_stage_or_orchestration(selector, :inject, 'inject.rb')
   end
 
   desc 'Run download, to_csv, to_sql, and use_dsl in sequence'
-  task :setup, [:name] do |_task, args|
+  task :setup, [:name] => :environment do |_task, args|
     selector = DataRunnerTaskHelpers.task_arg(args, allow_all: true)
     DataRunnerTaskHelpers.run_setup(selector)
   end
 
   desc 'Run download, to_csv, to_sql, use_dsl, table_create, and inject in sequence'
-  task :oneshot, [:name] do |_task, args|
+  task :oneshot, [:name] => :environment do |_task, args|
     selector = DataRunnerTaskHelpers.task_arg(args, allow_all: true)
     DataRunnerTaskHelpers.run_oneshot(selector)
   end
 
   desc 'Run download, to_csv, use_dsl, and inject in sequence'
-  task :refresh, [:name] do |_task, args|
+  task :refresh, [:name] => :environment do |_task, args|
     selector = DataRunnerTaskHelpers.task_arg(args, allow_all: true)
 
     if DataRunnerTaskHelpers.orchestrated?(selector)
@@ -103,6 +103,12 @@ namespace :DataRunner do
       DataRunnerTaskHelpers.run_ruby_stage('use_dsl.rb', selector, log_selectors: DataRunnerTaskHelpers.log_selectors(:use_dsl, selector))
       DataRunnerTaskHelpers.run_ruby_stage('inject.rb', selector, log_selectors: DataRunnerTaskHelpers.log_selectors(:inject, selector))
     end
+  end
+
+  desc 'Reconcile OMS upload states from imported GSABSS data and archives'
+  task reconcile_oms_uploads: :environment do
+    count = P2m::OmsUploadLedger.new.reconcile_imported!
+    puts "Reconciled #{count} processed OMS upload#{'s' unless count == 1}."
   end
 
   desc 'Create a DSL stub, then run dump_sql and use_sql for the DSL name'

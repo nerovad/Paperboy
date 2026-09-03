@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 /* App shell */
 .app-container {
@@ -8,6 +8,7 @@
 
 .content-container {
   flex: 1;
+  min-width: 0;
   padding: 0;
   background: $app-bg;
   min-height: 100vh;

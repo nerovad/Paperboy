@@ -1,0 +1,88 @@
+#!/bin/bash
+# Run Paperboy on this workstation: Puma + Sidekiq in one terminal.
+#
+# This is NOT a deploy script. bin/deploy-dev pulls master, precompiles assets
+# and restarts systemd units that only exist on the dev server; running it here
+# would reset your branch and leave stale assets shadowing your edits.
+#
+#   bin/dev-local            # Puma on :3001 + Sidekiq, cron schedule off
+#   bin/dev-local 3005       # different port
+#   bin/dev-local --cron     # also run the scheduled jobs (see warning below)
+#   bin/dev-local --no-jobs  # Puma only
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+PORT="${PORT:-3001}"
+BIND="${BIND:-127.0.0.1}"
+ENABLE_CRON=0
+RUN_SIDEKIQ=1
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --cron)     ENABLE_CRON=1; shift ;;
+    --no-jobs)  RUN_SIDEKIQ=0; shift ;;
+    -p|--port)  PORT="$2"; shift 2 ;;
+    [0-9]*)     PORT="$1"; shift ;;
+    -h|--help)  sed -n '2,10p' "$0"; exit 0 ;;
+    *) echo "unknown option: $1 (try --help)" >&2; exit 1 ;;
+  esac
+done
+
+# --- Preflight -------------------------------------------------------------
+if [[ ! -f .env ]]; then
+  echo "==> .env is missing. Rails cannot boot without GSABSS_* and the" >&2
+  echo "    ACTIVE_RECORD_ENCRYPTION_* keys; copy it from another machine." >&2
+  exit 1
+fi
+
+if ss -ltn 2>/dev/null | grep -qE "[:.]${PORT}[[:space:]]"; then
+  echo "==> Port ${PORT} is already in use. Pass another: bin/dev-local 3002" >&2
+  exit 1
+fi
+
+if [[ "$RUN_SIDEKIQ" -eq 1 ]] && ! redis-cli ping >/dev/null 2>&1; then
+  echo "==> Redis is not answering on 127.0.0.1:6379." >&2
+  echo "    sudo systemctl start redis-server" >&2
+  exit 1
+fi
+
+# --- Shutdown --------------------------------------------------------------
+PIDS=()
+
+cleanup() {
+  trap - INT TERM EXIT
+  echo
+  echo "==> Shutting down..."
+  for pid in "${PIDS[@]:-}"; do
+    kill "$pid" 2>/dev/null || true
+  done
+  wait 2>/dev/null || true
+}
+trap cleanup INT TERM EXIT
+
+# --- Sidekiq ---------------------------------------------------------------
+if [[ "$RUN_SIDEKIQ" -eq 1 ]]; then
+  if [[ "$ENABLE_CRON" -eq 1 ]]; then
+    echo "==> Sidekiq cron ENABLED — scheduled jobs will write to the shared"
+    echo "    Paperboy_Dev database, racing the dev server's own Sidekiq."
+  else
+    export PAPERBOY_DISABLE_CRON=true
+  fi
+
+  echo "==> Starting Sidekiq..."
+  bundle exec sidekiq -C config/sidekiq.yml \
+    > >(sed -u 's/^/[sidekiq] /') 2>&1 &
+  PIDS+=($!)
+fi
+
+# --- Puma ------------------------------------------------------------------
+# Both processes run in the background and the script blocks in `wait`: bash
+# defers traps while a foreground child runs, so a foreground Puma would make
+# `kill` on this script hang instead of shutting the pair down.
+echo "==> Starting Puma on http://localhost:${PORT} ..."
+bundle exec rails server -p "$PORT" -b "$BIND" &
+PIDS+=($!)
+
+# Returns as soon as either process exits, so one dying takes the other with it.
+wait -n

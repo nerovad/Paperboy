@@ -1,0 +1,43 @@
+<%# app/views/acl/_authorization_console_permissions.html.erb
+    The "Authorization Consoles" section, shared by the group and org-level
+    permission screens.
+
+    Locals:
+      consoles      — AuthorizationConsole.permission_catalog
+      selected_keys — Set of "<console>:<right>" keys already granted
+
+    One Select All per console rather than one for the section: these route
+    unrelated forms, and "everything on the CIR console" is a thing an admin
+    means, while "every right on every console" is not. %>
+<div class="acl-permissions-section acl-feature-section">
+  <h3>Authorization Consoles</h3>
+  <p class="acl-subtitle">
+    Which authorization consoles this group may open, and what it may do in each.
+    View is the gate — it puts the console in the picker. Add &amp; Edit and Remove
+    each decide which buttons appear, and each implies View, so granting one on
+    its own still lets the group in to use it.
+  </p>
+
+  <% consoles.each do |console| %>
+    <div class="acl-feature-app" data-controller="select-all">
+      <h4><%= console[:label] %></h4>
+      <div class="permissions-grid">
+        <label class="permission-checkbox select-all-checkbox">
+          <%= check_box_tag "select_all_console_#{console[:key]}", "1",
+              console[:rights].all? { |right| selected_keys.include?(right[:permission_key]) },
+              data: { select_all_target: "selectAll", action: "change->select-all#toggle" } %>
+          <span><strong>Select All</strong></span>
+        </label>
+        <% console[:rights].each do |right| %>
+          <label class="permission-checkbox">
+            <%= check_box_tag "authorization_console_permissions[]", right[:permission_key],
+                selected_keys.include?(right[:permission_key]),
+                id: "authorization_console_permissions_#{console[:key]}_#{right[:key]}",
+                data: { select_all_target: "checkbox", action: "change->select-all#update" } %>
+            <span><%= right[:label] %></span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

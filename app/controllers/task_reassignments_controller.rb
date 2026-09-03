@@ -69,15 +69,19 @@ class TaskReassignmentsController < ApplicationController
 
   private
 
+  # Any form that can actually be reassigned, rather than the three that used to
+  # be listed here by hand. The form-builder forms all carry their assignee in
+  # approver_id and were never resolvable, so the Reassign button on them
+  # answered "Task not found".
+  #
+  # Resolution goes through application_record_class_named and then checks the
+  # model includes Reassignable, so the posted type cannot name an arbitrary
+  # class — the same guard InboxController#status_history uses.
   def find_task(task_type, task_id)
-    case task_type
-    when 'CriticalInformationReporting'
-      CriticalInformationReporting.find_by(id: task_id)
-    when 'ParkingLotSubmission'
-      ParkingLotSubmission.find_by(id: task_id)
-    when 'ProbationTransferRequest'
-      ProbationTransferRequest.find_by(id: task_id)
-    end
+    klass = application_record_class_named(task_type)
+    return nil unless klass.is_a?(Class) && klass < ApplicationRecord && klass.include?(Reassignable)
+
+    klass.find_by(id: task_id)
   end
 
   def require_login

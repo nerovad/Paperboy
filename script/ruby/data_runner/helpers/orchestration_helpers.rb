@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 
 # Stage-by-stage orchestration support for control-only DataRunner DSL entries.
+require 'date'
+require 'pathname'
+
 # rubocop:disable Metrics/ModuleLength
 module DataRunnerTaskHelpers
   module_function
+
+  ORCHESTRATION_CONCURRENCY = 4
 
   ORCHESTRATED_SCRIPTS = {
     to_csv: 'to_csv.rb',
@@ -38,8 +43,7 @@ module DataRunnerTaskHelpers
 
     case stage.to_sym
     when :download
-      run_preprocessing(name, orchestration)
-      verify_orchestration_outputs!(orchestration)
+      run_tracked_validation(name, orchestration)
     when :to_csv
       verify_orchestration_outputs!(orchestration)
       stage_orchestration_inputs(orchestration)
@@ -62,8 +66,7 @@ module DataRunnerTaskHelpers
       run_children(orchestration, :use_dsl)
     when :inject
       verify_child_stage_files!(orchestration, WorkflowPaths::APPLIED_DIR)
-      run_children(orchestration, :inject)
-      run_postprocessing(orchestration)
+      run_tracked_injection(orchestration)
     else
       raise "unsupported orchestration stage: #{stage}"
     end
@@ -115,7 +118,9 @@ module DataRunnerTaskHelpers
 
   def drain_orchestration_queue(selector, orchestration)
     processed = 0
+    target_oms = ENV.fetch('DATARUNNER_QUEUE_OMS', nil)
     while (entry = next_queue_entry(orchestration.fetch(:queue)))
+      ensure_queue_entry_not_processed!(orchestration, entry)
       puts "[QUEUE] Processing #{entry}"
       run_orchestration_stages(selector, %i[download to_csv use_dsl inject])
       processed += 1
@@ -123,16 +128,31 @@ module DataRunnerTaskHelpers
 
       raise "orchestration queue item was not removed: #{entry}"
     end
+    raise "OMS #{target_oms} is not present in the orchestration queue" if target_oms && processed.zero?
+
     puts "[QUEUE] Processed #{processed} item(s)"
   end
   private_class_method :drain_orchestration_queue
+
+  def ensure_queue_entry_not_processed!(orchestration, entry)
+    match = entry.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
+    return unless match
+
+    processed = File.absolute_path(orchestration.fetch(:processed_path).to_s,
+                                   orchestration.fetch(:root_path))
+    archive = File.join(processed, match[1])
+    raise "duplicate OMS number: archive already exists: #{archive}" if Dir.exist?(archive)
+  end
+  private_class_method :ensure_queue_entry_not_processed!
 
   def next_queue_entry(queue)
     path = queue.fetch(:path)
     raise "orchestration queue directory not found: #{path}" unless Dir.exist?(path)
 
+    target_oms = ENV.fetch('DATARUNNER_QUEUE_OMS', nil)
     Dir.children(path).sort.find do |entry|
-      File.file?(File.join(path, entry)) && queue.fetch(:pattern).match?(entry)
+      matches_target = target_oms.nil? || entry.match?(/\AMail\.dat_#{Regexp.escape(target_oms)}\.zip\z/i)
+      File.file?(File.join(path, entry)) && queue.fetch(:pattern).match?(entry) && matches_target
     end
   end
   private_class_method :next_queue_entry
@@ -177,6 +197,8 @@ module DataRunnerTaskHelpers
     %i[sent_path output_path processed_path].each do |key|
       context[key] = File.absolute_path(raw.fetch(key).to_s, root_path)
     end
+    workspace = ENV.fetch('DATARUNNER_OUTPUT_ROOT', nil)
+    context[:output_path] = File.join(workspace, 'orchestration') if workspace
     context
   end
   private_class_method :orchestration_context
@@ -280,11 +302,105 @@ module DataRunnerTaskHelpers
 
   def run_children(orchestration, stage)
     script = ORCHESTRATED_SCRIPTS.fetch(stage)
-    orchestration_children(orchestration).map(&:first).each do |child_name|
-      run_ruby_stage(script, child_name, log_selectors: [child_name])
+    children = orchestration_children(orchestration).map(&:first)
+    queue = Queue.new
+    children.each { |child_name| queue << child_name }
+    failures = Queue.new
+
+    [children.length, ORCHESTRATION_CONCURRENCY].min.times.map do
+      Thread.new do
+        loop do
+          child_name = queue.pop(true)
+          begin
+            run_orchestrated_child(script, child_name)
+          rescue SystemExit, StandardError => e
+            failures << [child_name, e]
+          end
+        rescue ThreadError
+          break
+        end
+      end
+    end.each(&:join)
+
+    return if failures.empty?
+
+    messages = []
+    messages << failures.pop until failures.empty?
+    details = messages.sort_by(&:first).map { |child_name, error| "#{child_name}: #{error.message}" }
+    raise "orchestration #{stage} failures:\n  #{details.join("\n  ")}"
+  end
+
+  def run_orchestrated_child(script, child_name)
+    environment = { Workflow::ORCHESTRATION_ENV => '1' }
+    run_ruby_stage(script, child_name, log_selectors: [child_name], environment: environment)
+  end
+  private_class_method :run_orchestrated_child
+  private_class_method :run_children
+
+  def run_tracked_validation(name, orchestration)
+    upload = orchestration_upload(orchestration)
+    upload&.update!(status: 'validating', validation_status: 'running',
+                    validation_started_at: Time.current, failure_message: nil)
+    run_preprocessing(name, orchestration)
+    verify_orchestration_outputs!(orchestration)
+    upload&.update!(status: 'ready', validation_status: 'passed', validated_at: Time.current)
+  rescue StandardError, SystemExit => e
+    upload&.update!(status: 'needs_attention', validation_status: 'failed',
+                    failed_at: Time.current, failure_message: e.message)
+    raise
+  end
+  private_class_method :run_tracked_validation
+
+  def run_tracked_injection(orchestration)
+    upload = orchestration_upload(orchestration)
+    upload&.begin_import!
+    orchestration[:atomic_inject] ? run_atomic_inject(orchestration) : run_children(orchestration, :inject)
+    upload&.update!(status: 'archiving', import_status: 'imported', imported_at: Time.current,
+                    archive_status: 'archiving')
+    run_postprocessing(orchestration)
+    mark_files_archived(upload, orchestration)
+    upload&.update!(status: 'completed', archive_status: 'archived', archived_at: Time.current)
+  rescue StandardError, SystemExit => e
+    failure = { status: 'failed', failed_at: Time.current, failure_message: e.message }
+    failure[:import_status] = 'failed' unless upload&.import_status == 'imported'
+    failure[:archive_status] = 'failed' if upload&.import_status == 'imported'
+    upload&.update!(failure)
+    raise
+  end
+  private_class_method :run_tracked_injection
+
+  def orchestration_upload(orchestration)
+    queue = orchestration[:queue]
+    entry = queue && next_queue_entry(queue)
+    match = entry&.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
+    return unless match
+
+    marker = Pathname.new(queue.fetch(:path)).join(entry)
+    P2m::OmsUpload.find_by(oms_number: match[1], mailer_date: marker.mtime.to_date)
+  end
+  private_class_method :orchestration_upload
+
+  def mark_files_archived(upload, orchestration)
+    return unless upload
+
+    processed = File.absolute_path(orchestration.fetch(:processed_path).to_s,
+                                   orchestration.fetch(:root_path))
+    archived_at = Time.current
+    upload.files.each do |file|
+      file.update!(archived_path: File.join(processed, upload.oms_number, file.original_filename), archived_at: archived_at)
     end
   end
-  private_class_method :run_children
+  private_class_method :mark_files_archived
+
+  def run_atomic_inject(orchestration)
+    children = orchestration_children(orchestration).map(&:first)
+    environment = {
+      Workflow::ORCHESTRATION_ENV => '1',
+      'DATARUNNER_ATOMIC_INJECT' => '1'
+    }
+    run_ruby_stage('inject.rb', *children, log_selectors: children, environment: environment)
+  end
+  private_class_method :run_atomic_inject
 
   def run_postprocessing(orchestration)
     config = orchestration[:postprocessing]

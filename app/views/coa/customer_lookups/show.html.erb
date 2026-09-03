@@ -1,0 +1,72 @@
+<section class="coa-page">
+  <div class="coa-header">
+    <div>
+      <h1>Employee Lookup</h1>
+      <p class="coa-subtitle">Find an employee's account hierarchy by name or employee ID.</p>
+    </div>
+  </div>
+
+  <div class="coa-form coa-billing-lookup"
+       data-controller="coa-customer-lookup"
+       data-coa-customer-lookup-employees-url-value="<%= employees_coa_customer_lookup_path %>"
+       data-coa-customer-lookup-hierarchy-url-value="<%= hierarchy_coa_customer_lookup_path %>"
+       data-coa-customer-lookup-account-items-url-value="<%= account_items_coa_customer_lookup_path %>">
+    <section class="coa-lookup-card" aria-labelledby="employee-selection-title">
+      <h2 id="employee-selection-title" class="coa-lookup-card__heading">Employee Selection</h2>
+      <div class="coa-lookup-card__body">
+        <div class="field coa-billing-field">
+          <%= label_tag :customer_search, "Employee" %>
+          <div class="coa-customer-search">
+            <%= search_field_tag :customer_search, nil,
+                                 placeholder: "Search first name, last name, or employee ID…",
+                                 autocomplete: "off",
+                                 data: { coa_customer_lookup_target: "input",
+                                         action: "input->coa-customer-lookup#search keydown->coa-customer-lookup#keydown" } %>
+            <div class="coa-customer-results" role="listbox"
+                 data-coa-customer-lookup-target="results" hidden></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <%= render "coa/shared/account_hierarchy" %>
+
+    <section class="coa-lookup-card" aria-labelledby="employee-contact-title"
+             data-coa-customer-lookup-target="contact" hidden>
+      <h2 id="employee-contact-title" class="coa-lookup-card__heading">Employee Contact</h2>
+      <div class="coa-lookup-card__body">
+        <dl class="coa-detail-list">
+          <div class="coa-detail-row">
+            <dt>Email</dt>
+            <dd data-coa-customer-lookup-target="email"></dd>
+          </div>
+          <div class="coa-detail-row">
+            <dt>Phone Number</dt>
+            <dd data-coa-customer-lookup-target="phone"></dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="coa-lookup-card" aria-labelledby="account-item-lookup-title"
+             data-coa-customer-lookup-target="accountItemCard" hidden>
+      <h2 id="account-item-lookup-title" class="coa-lookup-card__heading">Chart of Account Item Lookup</h2>
+      <div class="coa-lookup-card__body">
+        <div class="field coa-billing-field">
+          <%= label_tag :account_item_search, "Find" %>
+          <div class="coa-customer-search">
+            <%= search_field_tag :account_item_search, nil,
+                                 placeholder: "Enter an account item ID…",
+                                 autocomplete: "off",
+                                 data: { coa_customer_lookup_target: "accountItemInput",
+                                         action: "input->coa-customer-lookup#searchAccountItems" } %>
+            <p class="coa-account-item-result" role="status" aria-live="polite"
+               data-coa-customer-lookup-target="accountItemResult" hidden></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <%= render "coa/shared/billing_account_string" %>
+  </div>
+</section>

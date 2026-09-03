@@ -246,6 +246,11 @@ selected_entries.each do |name, cfg|
   when :script
     run_source_script?(name, target, src) ? stats.ok! : stats.fail!
 
+  when :replicate
+    command = File.join(__dir__, 'from_sql.rb')
+    backup_existing_download(name, target)
+    system(RbConfig.ruby, command, name) ? stats.ok! : stats.fail!
+
   when :http
     url_s = (url || '').to_s.strip
     if url_s.empty?

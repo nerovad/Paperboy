@@ -8,10 +8,15 @@ class ApplicationHelperTest < ActionView::TestCase
   # can_use_app_feature? reads these three. Two of them are controller methods
   # published with helper_method, which the bare view context in this test does
   # not carry, so they are supplied here rather than stubbed.
-  attr_writer :granted_features, :granted_dropdowns, :acting_as_system_admin
+  attr_writer :granted_features, :granted_dropdowns, :acting_as_system_admin, :signed_in
 
   def system_admin?
     @acting_as_system_admin.present?
+  end
+
+  # Signed in unless a test says otherwise; can_use_command_palette? asks.
+  def current_user
+    @signed_in.nil? ? Object.new : @signed_in
   end
 
   def current_user_feature_permission_keys
@@ -86,5 +91,39 @@ class ApplicationHelperTest < ActionView::TestCase
       assert_equal 'Paperboy', labels.first
       assert_equal labels.drop(1).sort_by(&:downcase), labels.drop(1)
     end
+  end
+
+  # The palette reaches across every app, so it is handed out deliberately
+  # rather than being one of the default-public dropdown items.
+  test 'the command palette is closed to an ordinary user' do
+    with_grants(dropdowns: %w[inbox submissions settings help]) do
+      assert_not can_use_command_palette?
+    end
+  end
+
+  test 'the command palette grant opens it' do
+    with_grants(dropdowns: ['command_palette']) do
+      assert can_use_command_palette?
+    end
+  end
+
+  test 'system admins hold the command palette without a grant' do
+    self.acting_as_system_admin = true
+
+    with_grants(dropdowns: []) do
+      assert can_use_command_palette?
+    end
+  end
+
+  test 'the command palette is closed to a signed-out visitor' do
+    self.signed_in = false
+    self.acting_as_system_admin = true
+
+    assert_not can_use_command_palette?
+  end
+
+  test 'the command palette grant is not handed out by default' do
+    assert_not_includes AclController::DEFAULT_PUBLIC_DROPDOWN_KEYS, 'command_palette'
+    assert_includes AclController::DROPDOWN_ITEMS.map { |item| item[:key] }, 'command_palette'
   end
 end

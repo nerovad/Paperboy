@@ -40,6 +40,9 @@
 
     <%= render "acl/feature_permissions", apps: @feature_apps, selected_keys: @org_feature_keys %>
 
+    <%= render "acl/authorization_console_permissions",
+          consoles: @authorization_consoles, selected_keys: @org_authorization_console_keys %>
+
     <div class="acl-permissions-section" data-controller="select-all">
       <h3>Profile Dropdown Items</h3>
       <p class="acl-subtitle">Select which profile dropdown items are accessible at this organization level.</p>
@@ -79,6 +82,11 @@
         <% end %>
       </div>
     </div>
+
+    <%= render "acl/submission_action_permissions",
+               forms: @submission_forms,
+               selected_keys: @org_submission_action_keys,
+               scope_label: "users at this organization level" %>
 
     <div class="form-actions">
       <%= submit_tag "Save Permissions", class: "btn approve" %>

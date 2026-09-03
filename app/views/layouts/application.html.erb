@@ -47,6 +47,19 @@
       <% end %>
     </div>
     
+    <%# On every page of every app: ":" opens the palette, and both it and the
+        sidebar's search can open the Who Am I dialog.
+
+        The palette is an ACL grant of its own — see
+        ApplicationHelper#can_use_command_palette? — so without it ":" is just a
+        colon and no keyboard listener is installed. The Who Am I dialog stays
+        for everyone: the Paperboy sidebar's search offers it too. %>
+    <% if current_user %>
+      <%= render "shared/command_palette" if can_use_command_palette? %>
+      <%= render "shared/who_am_i_dialog" %>
+      <%= render "shared/tips_dialog" %>
+    <% end %>
+
     <div class="app-container">
       <%= render "shared/sidebar" %>
       
@@ -58,16 +71,31 @@
             <%= yield %>
           <% end %>
           
-          <!-- Login Buttons (over image) -->
+          <!-- Login (over image) -->
           <% unless session[:user_id] %>
-            <div class="login-buttons-over-image">
-              <%= form_with url: auth_setup_path, method: :post, local: true,
-                            authenticity_token: true,
-                            data: { turbo: false } do |f| %>
-                <%= f.submit "Employee Login", class: "login-button-over-image" %>
-              <% end %>
-              <%= link_to "Contractor Login", contractor_login_path,
-                          class: "login-button-over-image", data: { turbo: false } %>
+            <%# One "Login" button that opens the identity picker. Employee is a
+                POST to the Entra handshake, Contractor a plain GET, so the menu
+                holds a form and a link side by side. Reuses the profile
+                dropdown's shell and Stimulus controller. %>
+            <div class="login-dropdown" data-controller="profile-dropdown">
+              <button type="button"
+                      class="login-toggle"
+                      data-action="click->profile-dropdown#toggle"
+                      aria-haspopup="true"
+                      aria-expanded="false">
+                Login
+              </button>
+
+              <div class="dropdown-content"
+                   data-profile-dropdown-target="dropdown">
+                <%= form_with url: auth_setup_path, method: :post, local: true,
+                              authenticity_token: true,
+                              data: { turbo: false } do |f| %>
+                  <%= f.submit "Employee", class: "login-dropdown__item" %>
+                <% end %>
+                <%= link_to "Contractor", contractor_login_path,
+                            class: "login-dropdown__item", data: { turbo: false } %>
+              </div>
             </div>
           <% else %>
             <div class="profile-dropdown" data-controller="profile-dropdown">
@@ -111,7 +139,7 @@
                 <% end %>
                 <%# Lands on the console picker, which forwards straight through
                     for users who only hold one console. %>
-                <% if available_authorization_consoles.any? || current_user_dropdown_permissions.include?('auth_console') %>
+                <% if available_authorization_consoles.any? %>
                   <%= link_to "Authorizations", select_authorization_console_index_path %>
                 <% end %>
                 <%# Records is a tab of My Work, not a dropdown entry of its own.
@@ -124,10 +152,10 @@
                 <% if system_admin? || current_user_dropdown_permissions.include?('help') %>
                   <%= link_to "Help", help_path %>
                 <% end %>
-                <%# ACL, Manage Forms, Emulate, Data Validation and Lookup
-                    Tables moved out of this dropdown: they are now buttons in
-                    the Admin Tools app's sidebar, reached from the sidebar's
-                    app switcher. Their ACL grants are unchanged. %>
+                <%# ACL, Manage Forms and Emulate moved out of this dropdown:
+                    they are now buttons in the Admin Tools app's sidebar,
+                    reached from the sidebar's app switcher. Their ACL grants
+                    are unchanged. %>
                 <%= button_to "Logout", logout_path, method: :delete, class: "logout-btn" %>
               </div>
             </div>
@@ -136,8 +164,26 @@
       </div>
     </div>
 
+    <%# The paperboy in the bottom-left corner. Signed in he is the app's help
+        affordance and opens Tips & Tricks; he dispatches the window event
+        rather than reaching for the dialog, which is rendered below. Signed
+        out there is nothing to give tips about, so he is just scenery. %>
+    <% if current_user %>
+      <button type="button"
+              class="app-mascot"
+              data-controller="search-command"
+              data-command-event="tips:open"
+              data-action="search-command#run"
+              aria-label="Tips and tricks">
+        <%= image_tag "Paperboy_Icon_0826.png", alt: "", aria: { hidden: true } %>
+      </button>
+    <% else %>
+      <%= image_tag "Paperboy_Icon_0826.png", alt: "", aria: { hidden: true },
+                    class: "app-mascot" %>
+    <% end %>
+
     <%= link_to "Powered by GSA",
-                "http://localhost:3002/",
+                "http://10.135.204.167:3002/",
                 class: "powered-by-gsa",
                 target: "_blank",
                 rel: "noopener" %>

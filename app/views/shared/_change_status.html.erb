@@ -1,0 +1,51 @@
+<%# "Change Status" button and dialog for a submission's detail page.
+
+    Renders nothing unless the form carries a status dropdown and the viewer is
+    allowed to use it (Forms::SubmissionPolicy). Drop it in next to the other
+    actions. The dialog is fixed-position, so where it sits in the row makes no
+    difference to how it appears.
+
+    Render it with: render "shared/change_status", record: @some_submission
+-%>
+<% status_options = can_change_submission_status?(record) ? Forms::SubmissionPolicy.status_options(record) : [] %>
+<% if status_options.any? %>
+  <% modal_id = "change-status-#{record.class.name.underscore}-#{record.id}" %>
+  <div class="change-status-action" data-controller="change-status-modal">
+    <button type="button" class="form-btn" data-action="change-status-modal#open">Change Status</button>
+
+    <div class="pb-modal-backdrop" data-change-status-modal-target="backdrop" hidden>
+      <div class="pb-modal" role="dialog" aria-modal="true" aria-labelledby="<%= modal_id %>-title">
+        <div class="pb-modal__header">
+          <h3 id="<%= modal_id %>-title">Change Status</h3>
+          <button type="button" class="pb-modal__close" data-action="change-status-modal#close" aria-label="Close">✕</button>
+        </div>
+
+        <div class="pb-modal__body">
+          <p class="pb-modal__message">
+            <%= Forms::Reference.reference_for(record) %> is currently
+            <strong><%= record.status_label %></strong>. Pick its new status.
+            The submission stays here in Submissions either way.
+          </p>
+
+          <%= form_with url: submission_status_path(type: record.class.name, id: record.id),
+                        method: :patch, data: { turbo: false } do |f| %>
+            <div class="form-group">
+              <label for="<%= modal_id %>-select">New status</label>
+              <%= f.select :status,
+                    options_for_select(status_options, record.status.to_s),
+                    {},
+                    id: "#{modal_id}-select",
+                    class: "form-control",
+                    data: { change_status_modal_target: "select" } %>
+            </div>
+
+            <div class="pb-modal__actions">
+              <button type="button" class="btn" data-action="change-status-modal#close">Cancel</button>
+              <button type="submit" class="btn approve">Save Status</button>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

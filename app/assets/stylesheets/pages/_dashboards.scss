@@ -1,5 +1,5 @@
 /* Pages: Dashboards */
-@import '../base/tokens';
+@use "base/tokens" as *;
 
 /* Dashboards wrapper */
 .dashboards-wrapper {

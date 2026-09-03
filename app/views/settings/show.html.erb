@@ -27,4 +27,11 @@
       <%= f.submit "Save Settings", class: "btn approve" %>
     </div>
   <% end %>
+
+  <%= render "settings/away", periods: @away_periods, employees: @delegate_options %>
+
+  <%= render "settings/form_subscriptions",
+             subscriptions: @form_subscriptions,
+             form_types: @subscription_form_types,
+             form_labels: @subscription_form_labels %>
 </div>

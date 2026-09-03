@@ -4,15 +4,23 @@
   'Oms',
   {
     steps: {
-      enabled: true,
-      manual_steps: Workflow::MANUAL_STEPS,
+      manual: {
+        enabled: true,
+        steps: Workflow::MANUAL_STEPS
+      },
       scheduled: {
+        enabled: true,
         frequency: :daily,
         steps: Workflow::SCHEDULED_STEPS
       }
     },
     group: {
       name: 'print_2_mail_billing_data'
+    },
+    sop: {
+      shared: :p2m_billing,
+      reference_title: 'Mail.dat sent to USPS',
+      reference_path: :downloaded_file
     },
     orchestration: {
       root_path: '/mnt/o/Outputs/DataRunner',
@@ -30,12 +38,13 @@
       ],
       preprocessing: {
         enabled: true,
-        args: %i[root_path sent_path output_path]
+        args: %i[sent_path output_path]
       },
       postprocessing: {
         enabled: true,
-        args: %i[root_path sent_path output_path processed_path]
-      }
+        args: %i[sent_path output_path processed_path]
+      },
+      atomic_inject: true
     }
   }
 ]

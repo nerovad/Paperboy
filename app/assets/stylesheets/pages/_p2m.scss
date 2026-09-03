@@ -1,0 +1,313 @@
+@use "base/tokens" as *;
+
+.p2m-form-header {
+  max-width: 900px;
+  margin-right: auto;
+  margin-left: auto;
+  padding-top: .85rem;
+  padding-bottom: .85rem;
+  border-radius: 8px;
+  background: $green-teal;
+  color: $surface-base;
+  box-sizing: border-box;
+
+  h1 { margin: 0; }
+}
+
+.p2m-stage-data {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 1200px;
+  min-width: 0;
+}
+
+.p2m-stage-card {
+  display: block;
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid $neutral-border-subtle;
+  border-top: 4px solid $green-teal;
+  border-radius: 8px;
+  background: $surface-panel;
+  color: $text-strong;
+  box-sizing: border-box;
+
+  h2 {
+    margin: 0 0 1rem;
+    color: $green-teal;
+    font-size: 1.15rem;
+  }
+
+  .form-actions {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+  }
+}
+
+.p2m-stage-card--compact {
+  padding: .85rem 1rem;
+
+  h2 { margin-bottom: .65rem; }
+
+  .form-actions {
+    gap: .5rem;
+    margin-top: .75rem;
+  }
+}
+
+.p2m-results-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+
+  h2,
+  p { margin: 0; }
+}
+
+.p2m-stage-date-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+
+  .form-group { margin: 0; }
+
+  .form-control {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.p2m-oms-status {
+  display: inline-block;
+  padding: .25rem .65rem;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: .85rem;
+  font-weight: 600;
+  line-height: 1.2;
+
+  &.is-conflict {
+    border-color: $blue-notice-border;
+    background: $blue-notice-bg;
+    color: $blue-notice-text;
+  }
+
+  &.is-missing {
+    border-color: $error-border;
+    background: $error-bg;
+    color: $error-text;
+  }
+
+  &.is-good {
+    border-color: $success-border;
+    background: $success-bg;
+    color: $success-text;
+  }
+}
+
+.p2m-maildat-grid {
+  width: 100%;
+  min-width: 0;
+  max-height: min(38.71rem, calc(100vh - 32rem));
+  overflow: auto;
+  border: 1px solid $neutral-border-light;
+  scrollbar-width: thin;
+  scrollbar-color: $neutral-400 $surface-control;
+
+  @media (max-height: 800px) {
+    max-height: 25.05rem;
+  }
+}
+
+.p2m-maildat-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    height: 2.5rem;
+    padding: .5rem .75rem;
+    text-align: left;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  .p2m-upload-stages {
+    margin: 0;
+
+    div {
+      display: flex;
+      justify-content: space-between;
+      gap: .75rem;
+    }
+
+    dt { color: $text-muted; }
+    dd {
+      margin: 0;
+      color: $blue-notice-text;
+      font-weight: 400;
+    }
+
+    dd[data-status="completed"],
+    dd[data-status="passed"],
+    dd[data-status="imported"],
+    dd[data-status="archived"] { color: $success-text; }
+
+    dd[data-status="failed"],
+    dd[data-status="needs_attention"] { color: $error-text; }
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 2.75rem;
+    background: linear-gradient(135deg, $sidebar-navy, $green-teal);
+    color: $surface-base;
+  }
+
+  .p2m-maildat-row { background: $surface-base; }
+  .p2m-maildat-row.is-alternate { background: $surface-control; }
+
+  th[aria-sort="none"] .p2m-sort-header::after { content: " ↕"; }
+  th[aria-sort="ascending"] .p2m-sort-header::after { content: " ▲"; }
+  th[aria-sort="descending"] .p2m-sort-header::after { content: " ▼"; }
+}
+
+.p2m-maildat-table--uploads {
+  .p2m-oms-number-column { width: 9rem; }
+  .p2m-date-column { width: 8rem; }
+  .p2m-job-number-column { width: 9rem; }
+}
+
+.p2m-row-trigger {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: $brand-navy;
+  cursor: pointer;
+}
+
+.p2m-maildat-table .p2m-expand-column {
+  width: 2.5rem;
+  padding-right: .5rem;
+  padding-left: .75rem;
+}
+
+.p2m-row-trigger[aria-expanded="true"] span { display: inline-block; transform: rotate(90deg); }
+
+.p2m-maildat-detail td {
+  background: $surface-raised;
+  white-space: normal;
+}
+
+.p2m-associated-files-table {
+  width: 100%;
+  margin-bottom: .75rem;
+  border-collapse: collapse;
+
+  th,
+  td {
+    width: 50%;
+    max-width: 0;
+    height: auto;
+    padding: .45rem .75rem;
+    text-align: left;
+  }
+
+  thead th {
+    position: static;
+    background: $sidebar-navy;
+    color: $surface-base;
+  }
+
+  tbody tr:nth-child(odd) { background: $surface-base; }
+  tbody tr:nth-child(even) { background: $surface-control; }
+}
+
+.p2m-associated-file-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.p2m-staging-progress {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) auto;
+  align-items: center;
+  gap: .75rem;
+  margin-top: .75rem;
+  color: $text-muted;
+
+  &[hidden] { display: none; }
+
+  progress {
+    width: 100%;
+    height: .75rem;
+    accent-color: $green-teal;
+  }
+}
+
+.p2m-batch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1rem;
+}
+
+.p2m-batch-progress {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) auto;
+  align-items: center;
+  gap: .75rem;
+  margin-top: .75rem;
+  color: $text-muted;
+
+  &[hidden] { display: none; }
+
+  progress {
+    width: 100%;
+    height: .75rem;
+    accent-color: $green-teal;
+  }
+}
+
+.p2m-upload-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1.25rem;
+}
+
+.p2m-upload-metadata {
+  margin: .75rem 0;
+
+  div { margin-bottom: .5rem; }
+  dt { color: $text-muted; font-weight: 600; }
+  dd { margin: .15rem 0 0; overflow-wrap: anywhere; }
+}
+
+.p2m-maildat-actions {
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.p2m-sort-header {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}

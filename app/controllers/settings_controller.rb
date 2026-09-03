@@ -3,6 +3,8 @@
 class SettingsController < ApplicationController
   def show
     @settings = current_user_settings
+    load_subscriptions
+    load_away_cover
   end
 
   def update
@@ -10,6 +12,8 @@ class SettingsController < ApplicationController
     if @settings.update(settings_params)
       redirect_to settings_path, notice: 'Settings saved.'
     else
+      load_subscriptions
+      load_away_cover
       render :show, status: :unprocessable_entity
     end
   end
@@ -42,6 +46,28 @@ class SettingsController < ApplicationController
         entry.to_s
       end
     end
+  end
+
+  # This person's own form subscriptions, plus the catalog the picker needs.
+  # Group-held subscriptions are deliberately not listed: they belong to the
+  # group's ACL page, and one member cannot unsubscribe the rest.
+  def load_subscriptions
+    employee_id = session.dig(:user, 'employee_id').to_s
+    @form_subscriptions = Forms::Subscription.for_employee(employee_id).includes(:group).ordered.to_a
+    @subscription_form_types = Forms::Subscription.form_type_catalog
+    @subscription_form_labels = @subscription_form_types.to_h { |form| [form[:class_name], form[:label]] }
+  end
+
+  # Away cover for this person, plus the colleagues they can hand work to.
+  # Everyone is offered: cover is routinely a peer or a manager rather than
+  # anyone in the reporting chain.
+  def load_away_cover
+    employee_id = session.dig(:user, 'employee_id').to_s
+    @away_periods = AwayPeriod.for_employee(employee_id).chronological.to_a
+    @delegate_options = Employee.where.not(id: employee_id)
+                                .order(:last_name, :first_name)
+                                .pluck(:last_name, :first_name, :id)
+                                .map { |last, first, id| ["#{last}, #{first}", id] }
   end
 
   def current_user_settings

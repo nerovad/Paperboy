@@ -1,0 +1,99 @@
+# frozen_string_literal: true
+
+require 'test_helper'
+
+class DataRunnerGroupRefreshJobTest < ActiveJob::TestCase
+  test 'records each DSL result and continues after failure' do
+    run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid, group_name: 'chart_of_accounts', total_count: 2)
+    run.items.create!(dsl_name: 'Activities', dsl_slug: 'activities', position: 0)
+    run.items.create!(dsl_name: 'Agencies', dsl_slug: 'agencies', position: 1)
+    success = Struct.new(:success?).new(true)
+    failure = Struct.new(:success?).new(false)
+    environments = []
+    runner = lambda do |selector:, output:, environment:, **|
+      environments << environment
+      output.puts "Processed #{selector}"
+      selector == 'activities' ? success : failure
+    end
+
+    TaskRunner.stub(:run_selector!, runner) do
+      DataRunner::GroupRefreshJob.perform_now(run.id)
+    end
+
+    run.reload
+    assert_equal 'failed', run.status
+    assert_equal 2, run.completed_count
+    assert_equal 1, run.failed_count
+    assert_equal %w[succeeded failed], run.items.order(:position).pluck(:status)
+    assert(run.items.all? { |item| item.duration_ms.is_a?(Integer) })
+    assert(environments.all? { |environment| environment['DATARUNNER_RUN_ID'] == run.run_id })
+    assert(environments.all? { |environment| environment['DATARUNNER_RUN_DSLS'] == 'Activities,Agencies' })
+    assert_includes TaskRunner.output!(run.run_id), 'Processed agencies'
+  ensure
+    TaskRunner.output_path(run.run_id).delete if run&.run_id && TaskRunner.output_path(run.run_id).file?
+  end
+
+  test 'refreshes at most four DSLs in parallel' do
+    run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid, group_name: 'parallel', total_count: 6)
+    6.times { |position| run.items.create!(dsl_name: "DSL #{position}", dsl_slug: "dsl_#{position}", position: position) }
+    success = Struct.new(:success?).new(true)
+    lock = Mutex.new
+    active = 0
+    maximum_active = 0
+    runner = lambda do |**|
+      lock.synchronize do
+        active += 1
+        maximum_active = [maximum_active, active].max
+      end
+      sleep 0.02
+      success
+    ensure
+      lock.synchronize { active -= 1 }
+    end
+
+    TaskRunner.stub(:run_selector!, runner) do
+      DataRunner::GroupRefreshJob.perform_now(run.id)
+    end
+
+    assert_equal 4, maximum_active
+    assert_equal 6, run.reload.completed_count
+  ensure
+    TaskRunner.output_path(run.run_id).delete if run&.run_id && TaskRunner.output_path(run.run_id).file?
+  end
+
+  test 'refreshes up to four Print 2 Mail uploads in parallel with isolated workspaces' do
+    run = DataRunner::GroupRun.create!(
+      run_id: SecureRandom.uuid, group_name: P2m::DataRefresh::GROUP_RUN_NAME, total_count: 6
+    )
+    oms_numbers = %w[51671902 51786524 51786525 51786526 51786527 51786528]
+    oms_numbers.each_with_index do |oms_number, position|
+      run.items.create!(dsl_name: "OMS #{oms_number}", dsl_slug: 'oms', position: position)
+    end
+    success = Struct.new(:success?).new(true)
+    environments = []
+    active = 0
+    maximum_active = 0
+    lock = Mutex.new
+    runner = lambda do |environment:, **|
+      lock.synchronize do
+        active += 1
+        maximum_active = [maximum_active, active].max
+        environments << environment
+      end
+      sleep 0.02
+      success
+    ensure
+      lock.synchronize { active -= 1 }
+    end
+
+    TaskRunner.stub(:run_selector!, runner) do
+      DataRunner::GroupRefreshJob.perform_now(run.id)
+    end
+
+    assert_equal 4, maximum_active
+    assert_equal oms_numbers, environments.map { |value| value.fetch('DATARUNNER_QUEUE_OMS') }.sort
+    assert_equal 6, environments.map { |value| value.fetch('DATARUNNER_OUTPUT_ROOT') }.uniq.length
+  ensure
+    TaskRunner.output_path(run.run_id).delete if run&.run_id && TaskRunner.output_path(run.run_id).file?
+  end
+end

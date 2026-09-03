@@ -2,10 +2,10 @@
 
 # app/helpers/admin_tools_helper.rb
 #
-# The Admin Tools app: ACL, Manage Forms, Emulate, Data Validation and Lookup
-# Tables. These used to hang off the profile dropdown's "Admin" button as a tab
-# bar; they are now buttons in the Admin Tools sidebar. Only the entry point
-# moved — each screen kept its original route, controller and ACL grant.
+# The Admin Tools app: ACL, Manage Forms and Emulate. These used to hang off
+# the profile dropdown's "Admin" button as a tab bar; they are now buttons in
+# the Admin Tools sidebar. Only the entry point moved — each screen kept its
+# original route, controller and ACL grant.
 module AdminToolsHelper
   # The screens that make up the app, in sidebar order. Because the tools are
   # not in an admin_tools/ controller namespace, each one names the controllers
@@ -21,13 +21,7 @@ module AdminToolsHelper
       controllers: %w[form_templates form_visibility_grants] },
     { key: 'emulate', label: 'Emulate', route: :new_admin_impersonation_path,
       blurb: 'Sign in as another employee to see what they see.',
-      controllers: %w[admin/impersonations] },
-    { key: 'data_validation', label: 'Data Validation', route: :admin_data_validation_index_path,
-      blurb: 'Find employee records with missing or malformed data.',
-      controllers: %w[admin/data_validation] },
-    { key: 'lookup_tables', label: 'Lookup Tables', route: :lookup_tables_path,
-      blurb: 'View and maintain the organization reference tables.',
-      controllers: %w[lookup_tables] }
+      controllers: %w[admin/impersonations] }
   ].freeze
 
   # Sidebar buttons, as { key:, label:, blurb:, path: }. Entries the current
@@ -38,8 +32,16 @@ module AdminToolsHelper
                .map { |tool| tool.slice(:key, :label, :blurb).merge(path: public_send(tool[:route])) }
   end
 
+  # Forms shown inside the Manage Forms sidebar group. Keep this query small:
+  # the sidebar only needs the stable id and the human-readable name.
+  def admin_tools_form_templates
+    return Forms::Template.none unless can_view_admin_tool?('manage_forms')
+
+    Forms::Template.order(:name).select(:id, :name)
+  end
+
   # Admin Tools is now one of several apps whose sidebar buttons are granted
-  # individually (see AppFeature). These five predate that section and were
+  # individually (see AppFeature). These three predate that section and were
   # issued as ACL "Profile Dropdown Items"; can_use_app_feature? honours both
   # the old key and the new one, so existing grants needed no migration.
   def can_view_admin_tool?(key)

@@ -1,0 +1,58 @@
+<% title_id = "#{dsl.slug}-sop-title" %>
+<% reference_path = dsl.sop_reference_path %>
+<% reference_group = dsl.sop_reference_group %>
+<div class="pb-modal-backdrop" data-sop-modal-target="backdrop"
+     data-action="click->sop-modal#backdropClose" hidden>
+  <div class="pb-modal" role="dialog" aria-modal="true"
+       aria-labelledby="<%= title_id %>">
+    <div class="pb-modal__header">
+      <h3 id="<%= title_id %>"><%= dsl.sop.fetch(:title, "How to Download") %></h3>
+      <button type="button" class="pb-modal__close" data-action="sop-modal#close" aria-label="Close">✕</button>
+    </div>
+    <div class="pb-modal__body dsl-sop">
+      <% if dsl.sop[:source_system].present? %>
+        <p>Download the source data from <strong><%= dsl.sop[:source_system] %></strong>.</p>
+      <% end %>
+      <ol>
+        <% dsl.sop.fetch(:instructions).each do |instruction| %>
+          <li><%= instruction %></li>
+        <% end %>
+      </ol>
+    </div>
+    <div class="pb-modal__actions">
+      <button type="button" class="btn" data-action="sop-modal#close">Close</button>
+      <% if dsl.sop[:reference_url].present? %>
+        <%= link_to "Open", dsl.sop[:reference_url], class: "btn pdf",
+                    target: "_blank", rel: "noopener" %>
+      <% end %>
+      <% if reference_path.present? %>
+        <button type="button" class="btn pdf" data-action="sop-modal#openReference"
+                data-url="<%= reference_data_runner_dsl_path(dsl.slug) %>">View File</button>
+      <% end %>
+      <% if reference_group.present? %>
+        <%= link_to "View Group", data_runner_root_path(group: reference_group, anchor: "refresh-group"),
+                    class: "btn pdf" %>
+      <% end %>
+    </div>
+  </div>
+</div>
+<% if reference_path.present? %>
+  <% reference_title_id = "#{dsl.slug}-reference-title" %>
+  <div class="pb-modal-backdrop" data-sop-reference
+       data-action="click->sop-modal#backdropClose" hidden>
+    <div class="pb-modal pb-modal--xl" role="dialog" aria-modal="true"
+         aria-labelledby="<%= reference_title_id %>">
+      <div class="pb-modal__header">
+        <h3 id="<%= reference_title_id %>"><%= dsl.sop.fetch(:reference_title, "Reference Files") %></h3>
+        <button type="button" class="pb-modal__close" data-action="sop-modal#close"
+                aria-label="Close">✕</button>
+      </div>
+      <div class="pb-modal__body dsl-reference-list" data-sop-reference-body>
+        Loading folder contents…
+      </div>
+      <div class="pb-modal__actions">
+        <button type="button" class="btn" data-action="sop-modal#close">Close</button>
+      </div>
+    </div>
+  </div>
+<% end %>

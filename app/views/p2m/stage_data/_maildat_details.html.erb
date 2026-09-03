@@ -1,0 +1,104 @@
+<div data-controller="pdf-preview">
+<table class="p2m-associated-files-table">
+  <thead>
+    <tr>
+      <th scope="col">File name</th>
+      <th scope="col">File name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @associated_files.each_slice(2) do |names| %>
+      <tr>
+        <% names.each do |name| %>
+          <% extension = File.extname(name).downcase %>
+          <td>
+            <% if %w[.csv .txt .zip].include?(extension) %>
+              <span class="p2m-associated-file-name" title="<%= name %>"><%= name %></span>
+            <% elsif extension == '.pdf' %>
+              <%= link_to name,
+                          preview_p2m_stage_data_path(directory: params[:directory],
+                                                      oms_number: @oms_number, filename: name),
+                          class: "p2m-associated-file-name", title: name,
+                          data: { action: "pdf-preview#open", pdf_preview_title: name } %>
+            <% else %>
+              <%= link_to name,
+                          preview_p2m_stage_data_path(directory: params[:directory],
+                                                      oms_number: @oms_number, filename: name),
+                          class: "p2m-associated-file-name", title: name,
+                          target: "_blank", rel: "noopener" %>
+            <% end %>
+          </td>
+        <% end %>
+        <% if names.one? %>
+          <td aria-hidden="true"></td>
+        <% end %>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+<div class="p2m-maildat-actions">
+  <%= link_to "Print Tray Labels",
+              print_tray_labels_p2m_stage_data_path(directory: params[:directory],
+                                                    oms_number: @oms_number),
+              class: "btn pdf compact",
+              data: { action: "pdf-preview#open", pdf_preview_title: "Tray Labels" } %>
+  <button type="button" class="btn reassign compact"
+          data-action="data-refresh-groups#staging"
+          data-staging-url="<%= move_to_shipping_station_p2m_stage_data_path %>"
+          data-staging-method="POST" data-staging-action="Move to Shipping Station"
+          data-directory="<%= params[:directory] %>" data-oms-number="<%= @oms_number %>">
+    Move to Shipping Station
+  </button>
+  <button type="button" class="btn deny compact"
+          data-action="data-refresh-groups#staging"
+          data-staging-url="<%= remove_from_shipping_station_p2m_stage_data_path %>"
+          data-staging-method="DELETE" data-staging-action="Remove from Shipping Station"
+          data-confirm-message="Remove the Mail.dat file for OMS <%= @oms_number %> from the Shipping Station?"
+          data-directory="<%= params[:directory] %>" data-oms-number="<%= @oms_number %>">
+    Remove from Shipping Station
+  </button>
+  <%= link_to "Upload to USPS", "https://gateway.usps.com/eAdmin/view/signin",
+              class: "btn approve compact", target: "_blank", rel: "noopener" %>
+  <button type="button" class="btn approve compact"
+          data-action="data-refresh-groups#staging"
+          data-staging-url="<%= move_to_staging_p2m_stage_data_path %>"
+          data-staging-method="POST" data-staging-action="Move to Staging"
+          data-staging-remove-on-success="true"
+          data-directory="<%= params[:directory] %>" data-oms-number="<%= @oms_number %>">
+    Move to Staging
+  </button>
+  <button type="button" class="btn deny compact"
+          data-action="data-refresh-groups#staging"
+          data-staging-url="<%= remove_from_staging_p2m_stage_data_path %>"
+          data-staging-method="DELETE" data-staging-action="Remove from Staging"
+          data-confirm-message="Remove associated files for OMS <%= @oms_number %> from Staging?"
+          data-directory="<%= params[:directory] %>" data-oms-number="<%= @oms_number %>">
+    Remove from Staging
+  </button>
+  <button type="button" class="btn compact" data-action="data-refresh-groups#feedback"
+          data-feedback-action="Cancel" data-feedback-oms="<%= @oms_number %>">Cancel</button>
+</div>
+
+<div class="p2m-staging-progress" data-staging-progress hidden>
+  <progress aria-label="Moving files to staging"></progress>
+  <span data-staging-progress-label aria-live="polite">Moving files… 0.0 seconds elapsed</span>
+</div>
+
+<div class="pb-modal-backdrop" data-pdf-preview-target="backdrop"
+     data-action="click->pdf-preview#backdropClose" hidden>
+  <div class="pb-modal pb-modal--report-preview" role="dialog" aria-modal="true"
+       aria-labelledby="p2m-pdf-preview-title-<%= @oms_number %>">
+    <div class="pb-modal__header">
+      <h3 id="p2m-pdf-preview-title-<%= @oms_number %>" data-pdf-preview-target="title">
+        PDF Preview
+      </h3>
+      <button type="button" class="pb-modal__close" data-action="pdf-preview#close"
+              aria-label="Close">✕</button>
+    </div>
+    <div class="pb-modal__body pb-pdf-preview" data-pdf-preview-target="body"></div>
+    <div class="pb-modal__actions">
+      <button type="button" class="btn" data-action="pdf-preview#close">Close</button>
+    </div>
+  </div>
+</div>
+</div>

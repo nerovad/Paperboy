@@ -4,9 +4,12 @@
   'Warehousing',
   {
     steps: {
-      enabled: true,
-      manual_steps: Workflow::MANUAL_STEPS,
+      manual: {
+        enabled: true,
+        steps: Workflow::MANUAL_STEPS
+      },
       scheduled: {
+        enabled: true,
         frequency: :daily,
         steps: Workflow::SCHEDULED_STEPS
       }
@@ -14,8 +17,18 @@
     group: {
       name: 'mail_center_and_warehousing'
     },
+    sop: {
+      title: 'How to Download Mail Center and Warhousing Data',
+      source_system: 'Mail Center and Warehousing',
+      reference_path: '/mnt/i/BUSINESS_SUPPORT/Billing/FY26-27/..',
+      instructions: [
+        'Open the Monthly Billing Folder.',
+        'Confirm monthly billing files was exported from macro.',
+        'Examine the folder contents and verify both files are current.'
+      ]
+    },
     source: {
-      location: 'warehousing.csv',
+      location: nil,
       local: 'warehousing.csv',
       format: :csv,
       strategy: :script,

@@ -15,6 +15,8 @@
   <%= render "production/shared/sidebar" %>
 <% elsif controller_path.start_with?("billing/") %>
   <%= render "billing/shared/sidebar" %>
+<% elsif controller_path.start_with?("p2m/") %>
+  <%= render "p2m/shared/sidebar" %>
 <% else %>
   <%= render "shared/paperboy_sidebar" %>
 <% end %>

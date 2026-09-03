@@ -6,97 +6,63 @@
 <!-- Overlay -->
 <div class="sidebar-overlay" data-controller="sidebar" data-action="click->sidebar#close"></div>
 
-<div class="sidebar" data-controller="sidebar-search advanced-search"
-     data-advanced-search-org-labels-value="<%= OrgLabels.js_config.to_json %>">
+<%
+  # The list of forms and the facets over it are the same on both surfaces that
+  # offer them — this sidebar and the command palette — so FormCatalog builds
+  # them for both. Nothing here runs for a signed-out visitor: the ACL lookups
+  # inside need somebody to ask about.
+  #
+  # Billing Tools used to be pinned to the top of this list for system admins.
+  # Its buttons are now in the Billing app's sidebar, reached from the app
+  # switcher above.
+  catalog = if current_user
+              FormCatalog.new(admin: system_admin?,
+                              permitted_keys: current_user_form_permission_keys)
+            end
+%>
+<div class="sidebar"
+     <%= tag.attributes(data: { controller: "sidebar-search advanced-search",
+                                "advanced-search-org-labels-value": OrgLabels.js_config.to_json,
+                                "advanced-search-org-tree-value": catalog.finder.org_tree.to_json }) if catalog %>>
   <%= render "shared/app_switcher" %>
   <% if current_user %>
     <input
       type="text"
-      placeholder="Search forms, fields, tags..."
+      placeholder="Search forms, numbers, fields, tags — or ask who am i"
       data-sidebar-search-target="input"
-      data-action="input->sidebar-search#filter"
+      data-action="input->sidebar-search#filter keydown.enter->sidebar-search#activate"
       class="sidebar-search-input"
     />
 
-    <%# The box above narrows the list of forms you can fill out; this searches
-        forms already submitted, and lands on the Submissions list. %>
+    <%# Both controls narrow the same list of forms you can fill out: the box
+        above matches text, this one filters on the metadata an admin set in
+        the form builder. They compose — a search inside a narrowed list. %>
     <button type="button"
-            class="btn secondary compact pb-advanced-trigger<%= ' has-filters' if form_search.advanced? %>"
+            class="btn secondary compact pb-advanced-trigger"
+            data-advanced-search-target="trigger"
             data-action="advanced-search#open">
-      Advanced Search<%= " •" if form_search.advanced? %>
+      Advanced Search
     </button>
-    <%
-    # Map legacy form names to ACL keys
-    legacy_form_key_map = {
-      "Creative Job Request" => "creative_job_request",
-      "Leave of Absence"    => "leave_of_absence",
-      "Workplace Violence"  => "workplace_violence",
-      "Notice of Change"    => "notice_of_change",
-    }
 
-    # Legacy forms not managed via FormTemplate
-    legacy_forms = [
-      ["Creative Job Request", new_creative_job_request_path],
-      ["Leave of Absence", new_leave_of_absence_form_path],
-      ["Workplace Violence", new_workplace_violence_form_path],
-      ["Notice of Change", new_notice_of_change_form_path],
-    ]
-    # Billing Tools used to be pinned to the top of this list for system
-    # admins. Its buttons are now in the Billing app's sidebar, reached from
-    # the app switcher above.
+    <%= render "shared/search_commands", row_class: "nav-link sidebar-command" %>
 
-    # ACL whitelist: non-admins only see forms they have explicit permission for
-    form_perm_keys = system_admin? ? nil : current_user_form_permission_keys
-
-    # Filter legacy forms through ACL (admins bypass)
-    unless system_admin?
-      legacy_forms.select! { |name, _| form_perm_keys&.include?(legacy_form_key_map[name]) }
-    end
-
-    available_forms = legacy_forms.dup
-
-    # Cache form templates with their field labels and tags for search
-    form_field_labels = {}
-    form_tags = {}
-    FormTemplate.active.includes(:form_fields).each do |template|
-      form_field_labels[template.name] = template.form_fields.pluck(:label).join(", ")
-      form_tags[template.name] = template.tags_array.join(", ")
-    end
-
-    # Resolve the route path for a FormTemplate.
-    # Tries the standard _form convention first, then falls back
-    # to the base name for legacy forms (e.g. critical_information_reportings).
-    resolve_path = ->(template) {
-      begin
-        send("new_#{template.file_name}_path")
-      rescue NoMethodError
-        send("new_#{template.file_name.chomp('_form')}_path") rescue nil
-      end
-    }
-
-    # Add form templates — non-admins only see those granted by ACL
-    # Archived templates are excluded from the sidebar but remain in Manage Form Templates.
-    FormTemplate.active.each do |template|
-      path = resolve_path.call(template)
-      next unless path
-      next if available_forms.any? { |f| f[0] == template.name }
-      next if !system_admin? && !form_perm_keys&.include?(template.id.to_s)
-      available_forms << [template.name, path]
-    end
-    %>
     <div data-sidebar-search-target="formsList">
-      <% available_forms.sort_by { |f| f[0] }.each do |label, path| %>
+      <% catalog.forms.each do |label, path| %>
         <%= link_to label, path, class: "nav-link",
-            data: {
-              turbo_frame: "main-content",
-              sidebar_search_target: "formLink",
-              fields: form_field_labels[label] || "",
-              tags: form_tags[label] || ""
-            } %>
+            data: catalog.search_data(label)
+                         .merge(catalog.facet_data(label))
+                         .merge(turbo_frame: "main-content",
+                                sidebar_search_target: "formLink",
+                                advanced_search_target: "formLink") %>
       <% end %>
+      <%# Shown only when the search box and Advanced Search between them leave
+          nothing, so a list that has gone empty says why. %>
+      <p class="sidebar-p sidebar-empty" data-sidebar-search-target="emptyState" hidden>
+        No forms match.
+      </p>
     </div>
 
-    <%= render "shared/advanced_search_modal" %>
+    <%= render "shared/advanced_search_modal", form_finder: catalog.finder %>
   <% else %>
     <p class="sidebar-p">Please log in to access forms.</p>
   <% end %>

@@ -1,0 +1,31 @@
+<!-- app/views/critical_information_locations/new.html.erb -->
+<div class="form-header">
+  <h1>Add Location</h1>
+</div>
+
+<div class="form-wrapper authorization-console">
+  <%= form_with model: @location, url: critical_information_locations_path, method: :post,
+                scope: :critical_information_location, data: { turbo: false } do |form| %>
+    <% if @location.errors.any? %>
+      <div class="alert alert-danger">
+        <p><strong>There was a problem:</strong></p>
+        <ul>
+          <% @location.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <%= form.label :name, "Location" %>
+      <%= form.text_field :name, class: "form-control", required: true,
+            placeholder: "CITY-STREET ADDRESS", autocomplete: "off" %>
+    </div>
+
+    <div class="form-actions">
+      <%= link_to "Cancel", critical_information_authorizations_path, class: "btn" %>
+      <%= form.submit "Add Location", class: "btn approve" %>
+    </div>
+  <% end %>
+</div>

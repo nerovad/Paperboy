@@ -1,8 +1,8 @@
 ================================================================================
                     PAPERBOY - TECHNICAL DOCUMENTATION
-                    County of Ventura GSA Forms Platform
+                  County of Ventura GSA Application Platform
 ================================================================================
-                    Last Updated: March 9, 2026
+                    Last Updated: August 16, 2026
                     Rails Version: 8.0.2
                     Ruby Module: FormsApp
 ================================================================================
@@ -43,13 +43,15 @@ TABLE OF CONTENTS
 32. DEPLOYMENT & INFRASTRUCTURE
 33. KEY ARCHITECTURAL PATTERNS
 34. DATA FLOW DIAGRAMS
+35. APPLICATION PORTFOLIO & FRAMEWORK BOUNDARIES
 
 ================================================================================
 1. APPLICATION OVERVIEW
 ================================================================================
 
-Paperboy is a Rails 8 internal web application built for the County of Ventura
-General Services Agency (GSA). It serves as a centralized forms platform that
+Paperboy is a Rails 8 modular-monolith application platform built for the
+County of Ventura General Services Agency (GSA). Forms remain a major domain,
+but the shared host now also runs separately authorized operational apps. It
 handles:
 
   - Dynamic form creation and management (no-code form builder)
@@ -62,6 +64,10 @@ handles:
   - Access control at both group and organizational hierarchy levels
   - Help desk ticketing system
   - Lookup table management for reference data
+  - Administrative tools for ACL, forms, impersonation, and validation
+  - Data Runner definitions, transformation runs, and output artifacts
+  - Digital asset ingestion, search, metadata, collections, and workflows
+  - A Production application shell for future print-production operations
 
 The app is used by County of Ventura employees to submit various operational
 forms (parking permits, probation transfer requests, critical incident reports,
@@ -2276,13 +2282,26 @@ layout/_sidebar.scss (200 lines)
 -----------------------
 
 components/_buttons.scss
-  .btn          -> Base (38px height, 16px padding)
-  .btn.approve  -> Green (#4caf50)
-  .btn.deny     -> Red (#e53935)
-  .btn.pdf      -> Navy (#004976)
-  .btn.reassign -> Blue (#3b82f6)
+  .btn            -> Complete neutral slate button (38px height)
+  .btn.approve    -> Affirmative action (green)
+  .btn.deny       -> Destructive/reject action (red)
+  .btn.pdf,
+  .btn.secondary  -> Navigation/view action (navy)
+  .btn.edit,
+  .btn.warning    -> Edit/caution action (amber)
+  .btn.reassign   -> Reassignment action (blue)
   .btn.take-back -> Teal (#10b981)
+  .btn.info       -> Informational action (cyan)
+  .btn.ghost      -> Lightest-weight action
+  .btn.active     -> Selected filter/toggle state
+  .btn.compact    -> 30px size modifier (btn-sm is a compatibility alias)
   .form-btn     -> Alternate button style with variants
+
+  New markup uses .btn, at most one color variant, and at most one size
+  modifier. Button colors, text colors, height, padding, radius, and font are
+  declared only in components/_buttons.scss. Page styles may position buttons
+  but may not reskin them. btn-primary, btn-secondary, btn-danger, and
+  btn-info are legacy aliases and are not used in new code.
 
 components/_tables.scss
   .submission-table  -> Inbox/submissions data table
@@ -2294,12 +2313,19 @@ components/_tables.scss
   .status-dropdown   -> Inline status change selector
 
 components/_modals.scss
-  .modal                -> Generic modal (login)
-  .deny-modal-backdrop  -> Flex-centered backdrop
-  .deny-modal           -> Container (520px max-width)
-  .deny-modal__header   -> Modal header
-  .deny-modal__body     -> Modal content
-  .deny-modal__actions  -> Modal action buttons
+  .pb-modal-backdrop -> Shared, flex-centered backdrop
+  .pb-modal          -> Shared dialog shell (520px default)
+  .pb-modal__header  -> Title and required close control
+  .pb-modal__body    -> Scrollable dialog content
+  .pb-modal__message -> Confirmation/alert message
+  .pb-modal__actions -> Dialog action row or pinned footer
+  .pb-modal--lg      -> 600px size modifier
+  .pb-modal--xl      -> 720px size modifier
+
+  Every shared dialog has role="dialog", aria-modal="true", an accessible
+  label, and a .pb-modal__close button. JavaScript confirmations and alerts use
+  pbConfirm/pbAlert from app/javascript/pb_modal.js. Turbo form confirmations
+  use data-turbo-confirm; native alert(), confirm(), and prompt() are prohibited.
 
 components/_badges.scss
   .badge.is-pending    -> Gray (#f2f2f2)
@@ -2330,6 +2356,11 @@ pages/cir.scss, pages/form_templates.scss,
 pages/reports.scss, pages/dashboards.scss,
 pages/acl.scss, pages/lookup_tables.scss,
 pages/help.scss
+
+Application page styles also include admin_tools, data_runner, coa,
+aim_invoices, digital_asset_management, and billing_tools. These files own page
+layout and domain-specific content only; shared component appearance remains in
+the component layer.
 
 25.5 RESPONSIVE BREAKPOINTS
 -----------------------------
@@ -2708,6 +2739,200 @@ Service Dependencies:
                                                       Generate view.html.erb
                                                       Add route entry
                                                       Add sidebar link
+
+================================================================================
+35. APPLICATION PORTFOLIO & FRAMEWORK BOUNDARIES
+================================================================================
+
+35.1 HOST AND FRAMEWORK RESPONSIBILITIES
+------------------------------------------
+
+Paperboy is the host and Rails composition root. It owns process boot,
+deployment, route assembly, authentication, the application switcher, and
+registration of application adapters.
+
+Pfa is the reusable framework namespace. It currently provides permission
+aggregation, Teams transport, reusable reassignment behavior, and the shared
+work contracts and queries. Pfa may depend on Rails and shared infrastructure.
+It must not depend on AdminTools, Aim, Billing, Dam, DataRunner, Forms, or
+Production constants.
+
+Each application owns its domain models, policy, state transitions, services,
+controllers, views, and domain-specific integrations. Applications consume Pfa
+contracts and are registered by the host. They do not become framework modules
+because they share a database or deployment.
+
+Required dependency direction:
+
+  Applications  ---> Pfa contracts ---> Rails/shared infrastructure
+  Paperboy host ---> Applications and Pfa (composition only)
+  Pfa           -X-> Application namespaces
+
+See docs/PAPERBOY_FRAMEWORK_ARCHITECTURE.md for contracts, compatibility rules,
+and the detailed extraction recommendations.
+
+35.2 ADMIN TOOLS
+------------------
+
+Namespace/root: AdminTools, /admin_tools
+
+Purpose:
+  - Launch and authorize ACL management, dynamic-form management,
+    impersonation, data validation, and lookup-table administration.
+  - Present only the tools allowed by application-feature or compatible legacy
+    dropdown grants.
+
+Boundary:
+  Admin Tools owns its catalog and navigation. The individual tools retain
+  their domain rules and feature checks. Several existing controllers remain
+  top-level for route compatibility and should migrate behind explicit owning
+  namespaces without changing public URLs.
+
+35.3 BILLING
+--------------
+
+Namespace/root: Billing, /billing
+Data access: BillingBase uses the separately configured billing connection.
+
+Purpose:
+  - Configure the active fiscal/reporting period and enabled billing types.
+  - Refresh source data and orchestrate monthly billing runs.
+  - Audit billing results and inspect detail rows.
+  - Generate, preview, print, email, and archive report artifacts.
+  - Manage report recipients and subject templates.
+
+Boundary:
+  Billing owns fiscal rules, TC60 concepts, stored-procedure contracts, report
+  definitions, and delivery/archive policy. Generic email transport, artifact
+  storage, or job execution may move into Pfa only behind application-neutral
+  interfaces with at least two real consumers.
+
+35.4 DATA RUNNER
+------------------
+
+Namespace/root: DataRunner, /data_runner
+Configuration: config/data_runner/dsl
+Workflow code: script/ruby/data_runner
+
+Purpose:
+  - Catalog and group dataset DSL definitions.
+  - Create definitions from commands, inbox files, or database tables.
+  - Execute configured tasks and expose captured run results.
+  - Browse, download, and remove generated and backup artifacts.
+  - Record and inspect operational logs.
+
+Boundary:
+  Data Runner owns its DSL vocabulary, stage directories, dataset definitions,
+  task mapping, and filesystem safety rules. A future generic runner can expose
+  Definition, Run, Artifact, and Runner contracts, but must not contain dataset
+  keys, billing-specific tasks, or Data Runner path conventions. Durable run
+  and artifact records are recommended before other apps consume run state.
+
+35.5 DIGITAL ASSET MANAGEMENT
+-------------------------------
+
+Controller namespace/root:
+  DigitalAssetManagement, /digital_asset_management
+Domain namespace: Dam
+
+Purpose:
+  - Ingest, edit, archive, browse, and search assets.
+  - Define metadata and filter assets by live search facets.
+  - Organize assets in collections and track favorites/recent views.
+  - Execute workflows and monitor/requeue/cancel jobs.
+  - Manage shares, storage locations, and upload destinations.
+
+Boundary:
+  DAM owns asset lifecycle, metadata schemas, visibility, search semantics,
+  collection rules, workflows, and sharing policy. Binary I/O may use a Pfa
+  storage adapter, but the framework must not know DAM metadata or lifecycle
+  states. New domain code uses Dam::*; DigitalAssetManagement remains the web
+  namespace until a coordinated constant and route migration is justified.
+
+35.6 PRODUCTION
+-----------------
+
+Namespace/root: Production, /production
+ACL application key: print_production
+
+Purpose:
+  Production is currently an ACL-protected application shell and dashboard for
+  future print-production operations. No production job, device, scheduling,
+  material, or completion domain is implemented yet.
+
+Boundary:
+  Add future domain code under Production::* and publish actionable work via a
+  Pfa::Work::Provider. Do not place production state machines in Pfa. Billing
+  data and Data Runner transformations should be consumed through application
+  adapters rather than direct access to their internal classes.
+
+35.7 APPLICATION ACCESS
+-------------------------
+
+The ACL application allow-list controls entry to each secondary application.
+Each namespaced application base controller enforces access server-side;
+existing top-level Admin Tools endpoints enforce their own tool grants. Hiding
+an app in the switcher is not an authorization control. Application-feature
+grants then control individual screens or standing actions. System
+administrators bypass both layers.
+
+The application catalog is currently duplicated between ApplicationHelper,
+AclController, and AppFeature. Replace these lists with one host-owned catalog
+containing the stable key, label, route, controller/domain namespaces, and
+feature catalog. Pfa should consume an interface supplied by this catalog and
+must not construct application classes.
+
+35.8 USER INTERFACE STANDARDIZATION
+-------------------------------------
+
+Framework/host-owned UI:
+  - Design tokens in base/_tokens.scss.
+  - The application layout, responsive sidebar behavior, app switcher, profile
+    menu, environment badge, toast region, and global accessibility rules.
+  - Shared buttons, modals, forms, tables, badges, toasts, slideshow, file
+    preview, column customizer, portal tabs, and advanced-search components.
+
+Application-owned UI:
+  - Sidebar entries below the shared app switcher.
+  - Page composition, domain terminology, domain-specific form fields,
+    timelines, previews, and visualizations.
+  - Page layout rules that do not redefine a shared component's appearance.
+
+Mandatory standards:
+  1. Use the shared application shell and app switcher for every app.
+  2. Use design tokens instead of literal copies of shared visual values.
+  3. Use .btn plus at most one semantic color variant and one size modifier.
+     Declare button appearance only in components/_buttons.scss.
+  4. Use the pb-modal shell and pbConfirm/pbAlert. Do not use native browser
+     dialogs or create a modal shell in a page stylesheet.
+  5. Reuse shared table, badge, form, toast, and search components before
+     adding an application-specific component.
+  6. Supply keyboard operation, visible focus, accessible names, ARIA state,
+     and responsive behavior for every interactive component.
+
+Recommended enforcement:
+  - Maintain a component catalog with canonical ERB and interaction states.
+  - Add view/component tests for required classes and accessibility attributes.
+  - Add CI checks for page-level button colors, modal-shell declarations,
+    native browser dialogs, and raw values where design tokens exist.
+  - Migrate inline-styled controls and legacy .button markup when touched.
+
+35.9 RECOMMENDED IMPLEMENTATION SEQUENCE
+------------------------------------------
+
+1. Introduce the host-owned application catalog and remove duplicated app
+   metadata.
+2. Move provider construction from Pfa into a Rails initializer/composition
+   layer.
+3. Add architecture tests for forbidden Pfa-to-application dependencies and
+   unknown application keys.
+4. Complete the Pfa::Work::Item presentation migration for Inbox/Submissions.
+5. Add durable work/run projections where filesystem state currently drives
+   user-facing queues.
+6. Namespace remaining top-level Admin Tools controllers while preserving
+   routes and compatibility grants.
+7. Establish the UI component catalog and automated standards checks before
+   expanding Production.
 
 ================================================================================
 END OF DOCUMENT

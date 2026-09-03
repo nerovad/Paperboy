@@ -1,0 +1,67 @@
+<%# The palette's body, fetched into its frame the first time ":" is pressed.
+
+    Two lists, because there are two questions: where do I want to be, and
+    which form do I want to fill out. Above them sit the two kinds of answer
+    that are neither: a reference number resolves to one submission, and a
+    command does something rather than opening anything. Destinations come
+    first among the lists — a search that can reach every app's sidebar is the
+    reason the palette exists, and "go there" is the more common ask.
+
+    Filtering is sidebar_search_controller — the same matching, ranking and
+    highlighting the sidebar's box does, over the same catalog. Only the
+    surface differs, so the palette adds no search logic of its own; what it
+    does add is the keyboard, which command_palette_controller owns from the
+    layout above.
+
+    `target: "_top"` on the frame is repeated here for the same reason it is
+    set on the placeholder in shared/_command_palette: a result has to leave
+    the frame or Turbo answers it with "Content missing". %>
+<%= turbo_frame_tag "command_palette", target: "_top" do %>
+  <div class="pb-palette" data-controller="sidebar-search">
+    <input type="text"
+           class="pb-palette__input"
+           autocomplete="off"
+           aria-label="Search the whole system"
+           placeholder="Go anywhere, open any form, jump to PLS-845 — or ask who am i"
+           data-sidebar-search-target="input"
+           data-command-palette-target="input"
+           data-action="input->sidebar-search#filter
+                        input->command-palette#resetCursor
+                        keydown.enter->command-palette#activate
+                        keydown.down->command-palette#next
+                        keydown.up->command-palette#previous" />
+
+    <%= render "shared/search_reference", row_class: "pb-palette__row pb-palette__row--reference" %>
+    <%= render "shared/search_commands", row_class: "pb-palette__row pb-palette__row--command" %>
+
+    <div class="pb-palette__results">
+      <div class="pb-palette__section" data-sidebar-search-target="destinationsList">
+        <p class="pb-palette__section-label">Go to</p>
+        <% @navigation.destinations.each do |destination| %>
+          <%= link_to destination.path,
+                      class: "pb-palette__row",
+                      target: ("_blank" if destination.external),
+                      rel: ("noopener" if destination.external),
+                      data: { sidebar_search_target: "destination",
+                              original_name: destination.label,
+                              context: destination.app,
+                              keywords: destination.keywords } do %>
+            <span class="search-context"><%= destination.app %></span><%= destination.label %>
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="pb-palette__section" data-sidebar-search-target="formsList">
+        <p class="pb-palette__section-label">Open a form</p>
+        <% @catalog.forms.each do |label, path| %>
+          <%= link_to label, path, class: "pb-palette__row",
+              data: @catalog.search_data(label).merge(sidebar_search_target: "formLink") %>
+        <% end %>
+      </div>
+
+      <p class="pb-palette__empty" data-sidebar-search-target="emptyState" hidden>
+        Nothing matches.
+      </p>
+    </div>
+  </div>
+<% end %>

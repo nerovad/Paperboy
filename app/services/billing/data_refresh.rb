@@ -1,77 +1,11 @@
 # frozen_string_literal: true
 
 module Billing
-  class DataRefresh
-    Dsl = Data.define(:name, :location, :file_date, :current, :script)
-    Group = Data.define(:key, :label, :default, :enabled_dsls) do
-      def enabled_dsl_count = enabled_dsls.size
-    end
-
+  class DataRefresh < DataRunner::DataRefresh
     GROUPS = {
       'billing' => { label: 'Billing', default: true },
       'mail_center_and_warehousing' => { label: 'Mail Center and Warehousing', default: false }
     }.freeze
-    VALUES = %w[0 1].freeze
-
-    def self.groups(end_date: nil)
-      catalog = DslCatalog.grouped
-      GROUPS.map do |key, configuration|
-        entries = catalog.fetch(key).select(&:enabled?)
-        Group.new(
-          key: key,
-          label: configuration.fetch(:label),
-          default: configuration.fetch(:default),
-          enabled_dsls: entries.map { |entry| dsl_status(entry, end_date) }
-        )
-      end
-    end
-
-    def self.dsl_status(entry, end_date)
-      source = entry.config.fetch(:source)
-      return script_status(entry, source) if source[:strategy] == :script
-
-      file_date = File.mtime(source[:location])
-      Dsl.new(
-        name: entry.key, location: source[:location], file_date: file_date,
-        current: end_date.present? && file_date.to_date > end_date + 1, script: false
-      )
-    rescue SystemCallError, TypeError
-      Dsl.new(
-        name: entry.key, location: entry.config.dig(:source, :location),
-        file_date: nil, current: false, script: false
-      )
-    end
-    private_class_method :dsl_status
-
-    def self.script_status(entry, source)
-      script_name = File.basename(source.dig(:script, :path).to_s)
-      Dsl.new(
-        name: entry.key, location: script_name, file_date: Date.current,
-        current: true, script: true
-      )
-    end
-    private_class_method :script_status
-
-    def self.run!(values)
-      validate!(values)
-      selected_groups = GROUPS.keys.select { |key| values.fetch(key) == '1' }
-      return if selected_groups.empty?
-
-      TaskRunner.run!(task: 'refresh', selector: enabled_slugs(selected_groups))
-    end
-
-    def self.enabled_slugs(group_keys)
-      catalog = DslCatalog.grouped
-      group_keys.flat_map do |key|
-        catalog.fetch(key).select(&:enabled?).map(&:slug)
-      end
-    end
-    private_class_method :enabled_slugs
-
-    def self.validate!(values)
-      raise ArgumentError unless values.keys.sort == GROUPS.keys.sort
-      raise ArgumentError unless values.values.all? { |value| VALUES.include?(value) }
-    end
-    private_class_method :validate!
+    GROUP_RUN_NAME = 'billing_data_refresh'
   end
 end

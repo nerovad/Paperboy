@@ -1,0 +1,35 @@
+<div class="page-heading">
+  <div><p class="eyebrow">Confirm configuration</p><h1>Import Database Table</h1></div>
+</div>
+
+<section class="card database-dsl-confirmation" aria-labelledby="database-dsl-confirmation-title">
+  <h2 id="database-dsl-confirmation-title">Confirm DSL import</h2>
+  <p>DataRunner will create a DSL and populate its header mappings from the live database columns.</p>
+  <dl class="detail-grid">
+    <div><dt>Server</dt><dd><code><%= @preview.server %></code></dd></div>
+    <div><dt>Database</dt><dd><code><%= @preview.database %></code></dd></div>
+    <div><dt>Table</dt><dd><code><%= [@preview.schema, @preview.table].join(".") %></code></dd></div>
+    <% if @preview.replicate %>
+      <div><dt>Target server</dt><dd><code><%= @preview.target_server %></code></dd></div>
+      <div><dt>Target database</dt><dd><code><%= @preview.target_database %></code></dd></div>
+      <div><dt>Target table</dt><dd><code><%= [@preview.target_schema, @preview.target_table].join(".") %></code></dd></div>
+      <div><dt>Injection mode</dt><dd><code>truncate_insert</code></dd></div>
+    <% end %>
+  </dl>
+
+  <%= form_with url: data_runner_database_dsls_path, data: { turbo: false } do |form| %>
+    <%= form.hidden_field :server, value: @preview.server %>
+    <%= form.hidden_field :database, value: @preview.database %>
+    <%= form.hidden_field :table, value: [@preview.schema, @preview.table].join(".") %>
+    <%= form.hidden_field :replicate, value: @preview.replicate ? "1" : "0" %>
+    <%= form.hidden_field :target_server, value: @preview.target_server %>
+    <%= form.hidden_field :target_database, value: @preview.target_database %>
+    <%= form.hidden_field :target_schema, value: @preview.target_schema %>
+    <%= form.hidden_field :target_table, value: @preview.target_table %>
+    <%= hidden_field_tag :confirmed, "1" %>
+    <div class="form-actions">
+      <%= form.submit "Create DSL", class: "btn approve" %>
+      <%= link_to "Cancel", new_data_runner_database_dsls_path, class: "btn" %>
+    </div>
+  <% end %>
+</section>

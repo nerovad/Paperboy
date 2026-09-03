@@ -1,17 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
+import { choicesOptions } from "choices_setup";
 
 export default class extends Controller {
-  static targets = ["agency", "division", "department", "unit", "accountFields", "result",
-                    "cobject", "cactivity", "cfunction", "cprogram", "cphase", "ctask",
-                    "agencyId", "divisionId", "departmentId", "unitId",
-                    "agencyName", "divisionName", "departmentName", "unitName",
-                    "billingAgencyId", "billingDivisionId", "billingDepartmentId", "billingUnitId",
-                    "billingCobject", "billingCactivity", "billingCfunction",
-                    "billingCprogram", "billingCphase", "billingCtask"]
+  static targets = ["agency", "division", "department", "unit"]
   static values = {
-    divisionsUrl: String, departmentsUrl: String, unitsUrl: String,
-    objectsUrl: String, activitiesUrl: String, cfunctionsUrl: String,
-    programsUrl: String, phasesUrl: String, tasksUrl: String
+    divisionsUrl: String, departmentsUrl: String, unitsUrl: String
   }
 
   connect() {
@@ -20,7 +13,6 @@ export default class extends Controller {
     this.enhance(this.divisionTarget, "Select an agency first", true)
     this.enhance(this.departmentTarget, "Select a division first", true)
     this.enhance(this.unitTarget, "Select a department first", true)
-    this.accountSelects().forEach(select => this.enhance(select, "Select an agency first", true))
   }
 
   disconnect() {
@@ -29,11 +21,9 @@ export default class extends Controller {
 
   agencyChanged() {
     this.reset(this.divisionTarget, this.departmentTarget, this.unitTarget)
-    this.reset(...this.accountSelects())
     if (!this.agencyTarget.value) return
 
     this.load(this.divisionTarget, this.divisionsUrlValue, { agency_id: this.agencyTarget.value })
-    this.loadAccountFields()
   }
 
   divisionChanged() {
@@ -59,60 +49,25 @@ export default class extends Controller {
 
   unitChanged() {
     if (!this.unitTarget.value) {
-      this.accountFieldsTarget.hidden = true
-      this.resultTarget.hidden = true
+      this.clearBillingString()
       return
     }
 
     const selects = [this.agencyTarget, this.divisionTarget, this.departmentTarget, this.unitTarget]
-    const idTargets = [this.agencyIdTarget, this.divisionIdTarget,
-                       this.departmentIdTarget, this.unitIdTarget]
-    const billingIdTargets = [this.billingAgencyIdTarget, this.billingDivisionIdTarget,
-                              this.billingDepartmentIdTarget, this.billingUnitIdTarget]
-    const nameTargets = [this.agencyNameTarget, this.divisionNameTarget,
-                         this.departmentNameTarget, this.unitNameTarget]
-    selects.forEach((select, index) => {
-      idTargets[index].textContent = select.value
-      billingIdTargets[index].textContent = select.value
-      nameTargets[index].textContent = this.longName(select)
-    })
-    this.syncAccountingFields()
-    this.accountFieldsTarget.hidden = false
-    this.resultTarget.hidden = false
-  }
-
-  accountFieldChanged() {
-    this.syncAccountingFields()
-  }
-
-  async copy() {
-    const accountString = [this.agencyTarget, this.divisionTarget, this.departmentTarget,
-                           this.unitTarget, ...this.accountSelects()].map(select => select.value).join("")
-    await navigator.clipboard.writeText(accountString)
-  }
-
-  loadAccountFields() {
-    const agencyParams = { agency_id: this.agencyTarget.value }
-    this.load(this.cobjectTarget, this.objectsUrlValue, agencyParams)
-    this.load(this.cactivityTarget, this.activitiesUrlValue, agencyParams)
-    this.load(this.cfunctionTarget, this.cfunctionsUrlValue, agencyParams)
-    this.load(this.cprogramTarget, this.programsUrlValue, agencyParams)
-    this.load(this.cphaseTarget, this.phasesUrlValue, agencyParams)
-    this.load(this.ctaskTarget, this.tasksUrlValue, agencyParams)
-  }
-
-  syncAccountingFields() {
-    const outputTargets = [this.billingCobjectTarget, this.billingCactivityTarget,
-                           this.billingCfunctionTarget, this.billingCprogramTarget,
-                           this.billingCphaseTarget, this.billingCtaskTarget]
-    this.accountSelects().forEach((select, index) => {
-      outputTargets[index].textContent = select.value
-    })
-  }
-
-  accountSelects() {
-    return [this.cobjectTarget, this.cactivityTarget, this.cfunctionTarget,
-            this.cprogramTarget, this.cphaseTarget, this.ctaskTarget]
+    const levels = ["Agency", "Division", "Department", "Unit"]
+    window.dispatchEvent(new CustomEvent("coa-organization-selected", {
+      detail: {
+        agency: this.agencyTarget.value,
+        division: this.divisionTarget.value,
+        department: this.departmentTarget.value,
+        unit: this.unitTarget.value,
+        nodes: selects.map((select, index) => ({
+          level: levels[index],
+          id: select.value,
+          name: this.longName(select)
+        }))
+      }
+    }))
   }
 
   longName(select) {
@@ -138,8 +93,7 @@ export default class extends Controller {
     selects.forEach(select => {
       this.setChoices(select, [], "Select one", true)
     })
-    this.accountFieldsTarget.hidden = true
-    this.resultTarget.hidden = true
+    this.clearBillingString()
   }
 
   setLoading(select) {
@@ -150,8 +104,7 @@ export default class extends Controller {
     if (!window.Choices) return
 
     select.disabled = false
-    const choices = new window.Choices(select, {
-      allowHTML: false,
+    const choices = new window.Choices(select, choicesOptions({
       itemSelectText: "",
       placeholder: true,
       placeholderValue: placeholder,
@@ -159,7 +112,7 @@ export default class extends Controller {
       searchEnabled: true,
       searchPlaceholderValue: "Type to search…",
       shouldSort: false
-    })
+    }))
     this.choiceInstances.set(select, choices)
     if (disabled) choices.disable()
   }
@@ -174,11 +127,16 @@ export default class extends Controller {
 
     choices.clearStore()
     choices.setChoices(
-      [{ value: "", label: placeholder, placeholder: true, selected: true }, ...options],
+      [{ value: "", label: placeholder, placeholder: true, selected: true },
+       ...options],
       "value",
       "label",
       true
     )
     disabled ? choices.disable() : choices.enable()
+  }
+
+  clearBillingString() {
+    window.dispatchEvent(new CustomEvent("coa-organization-cleared"))
   }
 }

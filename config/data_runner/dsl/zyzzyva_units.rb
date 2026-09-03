@@ -4,15 +4,22 @@
   'ZyzzyvaUnits',
   {
     steps: {
-      enabled: true,
-      manual_steps: Workflow::MANUAL_STEPS,
+      manual: {
+        enabled: true,
+        steps: Workflow::MANUAL_STEPS
+      },
       scheduled: {
+        enabled: true,
         frequency: :daily,
         steps: Workflow::SCHEDULED_STEPS
       }
     },
     group: {
       name: 'chart_of_accounts'
+    },
+    dependency: 'Units',
+    sop: {
+      shared: :chart_of_accounts
     },
     source: {
       location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/zyzzyva_units.xlsx',

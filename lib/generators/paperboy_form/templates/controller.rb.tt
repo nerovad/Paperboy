@@ -1,4 +1,7 @@
-class <%= class_name.pluralize %>Controller < ApplicationController
+# Generated controllers use the compact spelling so this template can preserve
+# the established action indentation without a second formatting pass.
+# rubocop:disable Style/ClassAndModuleChildren
+class Forms::<%= class_name.pluralize %>Controller < Forms::BaseController
   # Generated controller for <%= class_name %> form
   before_action :set_<%= file_name %>, only: [:show, :edit, :update, :pdf, :approve, :deny, :update_status]
 
@@ -210,3 +213,4 @@ class <%= class_name.pluralize %>Controller < ApplicationController
     )
   end
 end
+# rubocop:enable Style/ClassAndModuleChildren

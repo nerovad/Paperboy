@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 /* Date input polish shared across the app */
 input[type="date"].form-control {

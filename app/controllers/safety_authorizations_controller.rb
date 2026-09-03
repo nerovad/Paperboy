@@ -12,6 +12,8 @@
 # (via OrgLabels) while the column keeps the database's name.
 class SafetyAuthorizationsController < ApplicationController
   before_action :require_safety_auth_console
+  before_action -> { require_safety_auth_console('write') }, only: %i[new create edit update]
+  before_action -> { require_safety_auth_console('delete') }, only: %i[destroy]
   before_action :set_authorization, only: %i[edit update destroy]
 
   def index
@@ -106,10 +108,10 @@ class SafetyAuthorizationsController < ApplicationController
 
   # GSABSS has duplicate org rows; collapse by id the way the GSA console does.
   def ordered_divisions
-    @ordered_divisions ||= Division.where(agency_id: SafetyReportAuthorization::AGENCY_ID)
-                                   .order(:long_name)
-                                   .to_a
-                                   .uniq(&:division_id)
+    @ordered_divisions ||= Coa::Division.where(agency_id: SafetyReportAuthorization::AGENCY_ID)
+                                        .order(:long_name)
+                                        .to_a
+                                        .uniq(&:division_id)
   end
 
   def division_options

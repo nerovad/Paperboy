@@ -30,17 +30,6 @@
             
             
             <div class="detail-row">
-              <span class="label">Access Level:</span>
-              <span class="value">
-                <% if @form_template.visibility == 'public' %>
-                  <span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">Public</span>
-                <% else %>
-                  <span style="background: #6c757d; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">Restricted</span>
-                <% end %>
-              </span>
-            </div>
-
-            <div class="detail-row">
               <span class="label">Number of Pages:</span>
               <span class="value"><%= @form_template.page_count %></span>
             </div>
@@ -53,6 +42,36 @@
             <div class="detail-row">
               <span class="label">Created:</span>
               <span class="value"><%= @form_template.created_at.strftime("%m/%d/%Y at %I:%M %p") %></span>
+            </div>
+
+            <%# The metadata the sidebar's Advanced Search narrows on. Unset
+                fields read as "Not set" here rather than being left out — this
+                is the page an admin checks to see what still needs filling in. %>
+            <div class="detail-row">
+              <span class="label">Form Number:</span>
+              <span class="value"><%= @form_template.form_number.presence || "Not set" %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Form Type:</span>
+              <span class="value"><%= @form_template.form_type.presence || "Not set" %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Organization:</span>
+              <span class="value">
+                <%= FormFinder.new([@form_template]).org_path(@form_template).presence || "Not set" %>
+              </span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Tags:</span>
+              <span class="value"><%= @form_template.tags_array.join(", ").presence || "None" %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Description:</span>
+              <span class="value"><%= @form_template.description.presence || "Not set" %></span>
             </div>
           </div>
         </div>
@@ -91,7 +110,11 @@
                         <% if field.text_box? %>
                           <span class="text-muted"> - Rows: <%= field.rows %></span>
                         <% elsif field.dropdown? || field.choices_dropdown? %>
-                          <span class="text-muted"> - Options: <%= field.dropdown_values.join(', ') %></span>
+                          <% if field.extra_values? %>
+                            <span class="text-muted"> - Options: from table, plus <%= field.dropdown_values.join(', ') %> (<%= field.extra_values_position == 'start' ? 'first' : 'last' %>)</span>
+                          <% elsif field.dropdown_values.any? %>
+                            <span class="text-muted"> - Options: <%= field.dropdown_values.join(', ') %></span>
+                          <% end %>
                         <% end %>
                       </span>
                     </div>

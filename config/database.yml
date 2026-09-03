@@ -5,8 +5,16 @@ sqlserver: &sqlserver
   adapter: sqlserver
   host: <%= ENV.fetch("GSABSS_HOST") %>
   port: <%= ENV.fetch("GSABSS_PORT").to_i %>
-  username: <%= ENV.fetch("GSABSS_USERNAME") %>
-  password: <%= ENV.fetch("GSABSS_PASSWORD") %>
+  # Auth mode is chosen by whether GSABSS_USERNAME is set:
+  #   set   -> SQL/NTLM auth with those credentials (used by CI, which has no AD)
+  #   unset -> Kerberos (GSSAPI) using the ticket in KRB5CCNAME, refreshed by
+  #            cronjobs/kerberos/run_kinit.sh. This is the mode on all servers.
+  # Kerberos requires tiny_tds built against the system FreeTDS
+  # (see Gemfile: force_ruby_platform: true) - the precompiled gem has no GSSAPI.
+<% unless ENV["GSABSS_USERNAME"].to_s.strip.empty? %>
+  username: <%= ENV["GSABSS_USERNAME"] %>
+  password: <%= ENV["GSABSS_PASSWORD"] %>
+<% end %>
   timeout: <%= ENV.fetch("GSABSS_TIMEOUT", 5).to_i %>
   encoding: utf8
   pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>

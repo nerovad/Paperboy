@@ -27,11 +27,17 @@ class AppFeatureTest < ActiveSupport::TestCase
   end
 
   test 'every Chart of Accounts table is grantable' do
-    controller = Coa::BaseController.new
-    tables = controller.send(:coa_all_resources).map { |model| controller.send(:coa_feature_key, model) }
+    lookups = Coa::Tables::LOOKUPS.map { |lookup| lookup[:key] }
 
-    assert_equal tables.sort,
-                 AppFeature.for('coa').map { |feature| feature[:key] }.reject { |key| key == 'billing_lookup' }.sort
+    assert_equal Coa::Tables::ALL.map { |table| table[:collection] }.sort,
+                 AppFeature.for('coa').map { |feature| feature[:key] }
+                                      .reject { |key| lookups.include?(key) }.sort
+  end
+
+  test 'both Chart of Accounts lookups are grantable' do
+    assert_equal %w[billing_lookup customer_lookup],
+                 Coa::Tables::LOOKUPS.map { |lookup| lookup[:key] } &
+                 AppFeature.for('coa').map { |feature| feature[:key] }
   end
 
   test 'only Admin Tools carries legacy dropdown keys' do
@@ -49,6 +55,47 @@ class AppFeatureTest < ActiveSupport::TestCase
   end
 
   test 'permission keys for an app are fully qualified' do
-    assert_equal %w[data_runner:manage_groups], AppFeature.permission_keys_for('data_runner')
+    assert_equal %w[p2m:stage_data p2m:oms_status p2m:data_refresh], AppFeature.permission_keys_for('p2m')
+
+    with_dsls do
+      assert_equal %w[data_runner:manage_groups data_runner:dsl_vendor_load data_runner:dsl_orphan],
+                   AppFeature.permission_keys_for('data_runner')
+    end
+  end
+
+  # Data Runner's sidebar is its DSL catalog, so its grants are read from the
+  # catalog rather than declared: a DSL dropped into config/data_runner/dsl is
+  # grantable without anyone editing this registry.
+  test 'every DSL in the catalog is grantable' do
+    with_dsls do
+      labels = AppFeature.for('data_runner').map { |feature| feature[:label] }
+
+      assert_includes labels, 'Finance: Vendor Load'
+      assert_includes labels, 'Orphan'
+    end
+  end
+
+  test 'a DSL grant is prefixed so it cannot collide with a standing control' do
+    assert_equal 'dsl_manage_groups', AppFeature.dsl_key('manage_groups')
+
+    DslCatalog.stub(:entries, [dsl(key: 'Manage Groups', slug: 'manage_groups')]) do
+      keys = AppFeature.for('data_runner').map { |feature| feature[:key] }
+
+      assert_equal keys.uniq, keys
+      assert_includes keys, 'manage_groups'
+      assert_includes keys, 'dsl_manage_groups'
+    end
+  end
+
+  def dsl(key:, slug:, group: nil)
+    DslCatalog::Entry.new(key: key, slug: slug, path: nil,
+                          config: group ? { group: { name: group } } : {})
+  end
+
+  def with_dsls(&block)
+    entries = [dsl(key: 'Vendor Load', slug: 'vendor_load', group: 'finance'),
+               dsl(key: 'Orphan', slug: 'orphan')]
+
+    DslCatalog.stub(:entries, entries, &block)
   end
 end

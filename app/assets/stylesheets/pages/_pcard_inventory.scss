@@ -1,5 +1,5 @@
 /* Pages: P-Card Inventory */
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .pcard-inventory {
   max-height: calc(100vh - 180px);

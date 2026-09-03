@@ -7,6 +7,8 @@
 .env
 *.png
 !app/assets/images/Billing*.png
+!app/assets/images/Admin*.png
+!app/assets/images/DAM*.png
 00_Inbox/
 output/data_runner/01_Download/
 output/data_runner/02_Normalized/
@@ -24,7 +26,6 @@ output/data_runner/06_Download_Backup/
 
 # Per-environment bundler config (set BUNDLE_WITHOUT via deploy env, do not commit)
 /.bundle/
-
 # Per-developer AI assistant working files. The shared instructions live in
 # tracked AGENTS.md and CLAUDE.md at the repo root; everything below is local
 # scratch, session state and personal settings that no one else should inherit.
@@ -33,3 +34,7 @@ output/data_runner/06_Download_Backup/
 /.gemini/
 /.antigravity/
 CLAUDE.local.md
+
+# Dart Sass build output (compiled from app/assets/stylesheets)
+/app/assets/builds/*
+!/app/assets/builds/.keep

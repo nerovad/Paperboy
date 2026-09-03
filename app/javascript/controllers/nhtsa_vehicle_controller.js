@@ -1,5 +1,6 @@
 // app/javascript/controllers/nhtsa_vehicle_controller.js
 import { Controller } from "@hotwired/stimulus"
+import { choicesOptions } from "choices_setup";
 
 // Module-level caches shared across all controller instances
 let makesPromise = null
@@ -168,15 +169,14 @@ export default class extends Controller {
     if (!C || !this.hasMakeTarget) return
 
     this.makeTarget.disabled = false
-    this.makeChoices = new C(this.makeTarget, {
+    this.makeChoices = new C(this.makeTarget, choicesOptions({
       shouldSort: false,
       searchEnabled: true,
-      allowHTML: false,
       placeholder: true,
       placeholderValue: "Search Make...",
       noResultsText: "No makes found",
       noChoicesText: "Select a Year first",
-    })
+    }))
     if (disabled) this.makeChoices.disable()
   }
 
@@ -186,15 +186,14 @@ export default class extends Controller {
     if (!C || !this.hasModelTarget) return
 
     this.modelTarget.disabled = false
-    this.modelChoices = new C(this.modelTarget, {
+    this.modelChoices = new C(this.modelTarget, choicesOptions({
       shouldSort: false,
       searchEnabled: true,
-      allowHTML: false,
       placeholder: true,
       placeholderValue: "Search Model...",
       noResultsText: "No models found",
       noChoicesText: "Select a Make first",
-    })
+    }))
     if (disabled) this.modelChoices.disable()
   }
 

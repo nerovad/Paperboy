@@ -4,9 +4,12 @@
   'Oversized',
   {
     steps: {
-      enabled: true,
-      manual_steps: Workflow::MANUAL_STEPS,
+      manual: {
+        enabled: true,
+        steps: Workflow::MANUAL_STEPS
+      },
       scheduled: {
+        enabled: true,
         frequency: :daily,
         steps: Workflow::SCHEDULED_STEPS
       }
@@ -14,8 +17,20 @@
     group: {
       name: 'billing'
     },
+    sop: {
+      title: 'How to Download Oversized Scan Data',
+      source_system: 'Oversized Scanners',
+      reference_title: 'Scanner Export Folder',
+      reference_path: '/mnt/i/BUSINESS_SUPPORT/Scan Center/Oversized Scan Data/Monthly Exports',
+      instructions: [
+        'Open the Monthly Exports folder.',
+        'Confirm ovs-1.xml was exported from Context IQ Quattro.',
+        'Confirm ovs-2.xml was exported from Context HD Ultra.',
+        'Examine the folder contents and verify both files are current.'
+      ]
+    },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/oversized.csv',
+      location: nil,
       local: 'oversized.csv',
       format: :csv,
       strategy: :script,

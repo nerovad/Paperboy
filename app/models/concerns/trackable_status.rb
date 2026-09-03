@@ -10,16 +10,26 @@ module TrackableStatus
 
   TERMINAL_STATUSES = %w[approved denied cancelled].freeze
 
+  # Columns an edit log should never carry. `status` is left out because
+  # StatusChange already records transitions in full, with labels rather than
+  # raw values; approver_id and the timestamps are routing mechanics rather
+  # than anything a person edited.
+  EDIT_AUDIT_IGNORED_COLUMNS = %w[id created_at updated_at status approver_id].freeze
+
   included do
     has_many :status_changes, as: :trackable, dependent: :destroy
     has_many :form_submission_copies, as: :submission, dependent: :destroy
     after_create :record_initial_status
     after_create :deliver_copy_recipients_on_submit
     after_create :deliver_email_steps_on_submit
+    after_create :notify_direct_assignee
+    after_create :notify_subscribers_of_creation
     after_update :record_status_change, if: :saved_change_to_status?
     after_update :deliver_copy_recipients_on_approval, if: :saved_change_to_status?
     after_update :deliver_email_steps_on_status_change, if: :saved_change_to_status?
     after_update :stamp_actor_on_terminal_status, if: :saved_change_to_status?
+    after_update :audit_and_notify_field_edits
+    after_update :notify_subscribers_of_status_change, if: :saved_change_to_status?
   end
 
   # Class method to convert status value to label
@@ -41,7 +51,7 @@ module TrackableStatus
       end
     end
 
-    # key => FormTemplateStatus for this model's template, cached per class.
+    # key => Forms::TemplateStatus for this model's template, cached per class.
     # Empty for models with no template (legacy/custom forms), which then fall
     # back to their own STATUS_LABELS / STATUS_CATEGORIES / STATUS_MAP constants.
     def central_status_definitions
@@ -49,7 +59,7 @@ module TrackableStatus
 
       @central_status_definitions =
         begin
-          template = FormTemplate.find_by(class_name: name)
+          template = Forms::Template.find_by(class_name: name)
           template ? template.statuses.index_by { |s| s.key.to_s } : {}
         rescue StandardError
           {}
@@ -172,6 +182,7 @@ module TrackableStatus
       approver_id: approver_id_for_routing_step(first_step)
     )
     warn_if_no_eligible_approver(first_step)
+    notify_pending_approvers(first_step)
   end
 
   # Advances a multi-step approval form to the next matching step, skipping
@@ -202,6 +213,7 @@ module TrackableStatus
       approver_id: approver_id_for_routing_step(next_step)
     )
     warn_if_no_eligible_approver(next_step)
+    notify_pending_approvers(next_step)
   end
 
   # Human-readable label for the current status. Sourced from
@@ -261,7 +273,7 @@ module TrackableStatus
     actor_id = Current.user&.dig('employee_id')&.to_s.presence
     return unless actor_id
 
-    FormSubmissionCopy.find_or_create_by!(
+    Forms::SubmissionCopy.find_or_create_by!(
       submission_type: self.class.name,
       submission_id: id,
       recipient_employee_id: actor_id.to_i
@@ -283,17 +295,22 @@ module TrackableStatus
   end
 
   def approver_id_for_routing_step(step)
-    case step.routing_type
-    when 'supervisor'
-      submitter_employee&.supervisor_id&.to_s
-    when 'employee'
-      step.employee_id.to_s
-    when 'group', 'authorization'
-      # Multi-approver queue: approver_id stays nil so every eligible approver
-      # (group members / authorized approvers for the budget unit) sees it in
-      # their inbox; the first to act claims it.
-      nil
-    end
+    assignee = case step.routing_type
+               when 'supervisor'
+                 submitter_employee&.supervisor_id&.to_s
+               when 'employee'
+                 step.employee_id.to_s
+               when 'group', 'authorization'
+                 # Multi-approver queue: approver_id stays nil so every eligible
+                 # approver (group members / authorized approvers for the budget
+                 # unit) sees it in their inbox; the first to act claims it.
+                 nil
+               end
+
+    # Work aimed at somebody who is out goes to whoever is covering for them, so
+    # it never lands in an inbox nobody is reading. A pool step resolves to nil
+    # and is left alone: the rest of the group is already the cover.
+    AwayPeriod.assignee_for(assignee)
   end
 
   def submitter_employee
@@ -342,7 +359,7 @@ module TrackableStatus
       recipient.resolve_recipient_ids(self).uniq.each do |emp_id|
         next if emp_id.blank?
 
-        FormSubmissionCopy.find_or_create_by!(
+        Forms::SubmissionCopy.find_or_create_by!(
           submission_type: self.class.name,
           submission_id: id,
           recipient_employee_id: emp_id.to_i
@@ -371,7 +388,162 @@ module TrackableStatus
     Rails.logger.warn("no-eligible-approver guard failed: #{e.message}")
   end
 
-  # --- Configurable workflow emails (FormTemplateEmailStep) ---
+  # Email every approver this submission has just landed on, for whoever opted
+  # in under Settings -> Inbox notifications. Runs beside the no-approver guard
+  # at both points a form arrives on a step, and resolves the pool through the
+  # step's own eligible_approver_ids so the recipients are exactly the people
+  # who will see it in their inbox.
+  def notify_pending_approvers(step)
+    return unless step
+
+    deliver_inbox_notifications(step.eligible_approver_ids(self), step_id: step.id)
+  end
+
+  # The legacy forms (Probation, CIR) have no routing steps: they land in an
+  # inbox the moment they are created, by writing an assignee straight onto the
+  # record, so start_approval! never runs for them and the step-arrival hook
+  # above never fires. Notify that assignee here instead. Forms that do route
+  # through steps are left alone -- notifying here as well would mail everyone
+  # twice on submission.
+  def notify_direct_assignee
+    return if routed_through_steps?
+
+    assignee_id = direct_assignee_id
+    return if assignee_id.blank?
+
+    deliver_inbox_notifications([assignee_id], step_id: nil)
+  end
+
+  # This submission's assignee under the Reassignable contract, or nil when the
+  # form does not have one. The concern's base implementation raises
+  # NotImplementedError (a ScriptError, so outside the rescues below) for a
+  # model that includes it without defining the method.
+  def direct_assignee_id
+    return nil unless respond_to?(:current_assignee_id)
+
+    current_assignee_id
+  rescue StandardError, NotImplementedError
+    nil
+  end
+
+  # True when this form's approvals are driven by routing steps, in which case
+  # start_approval! / advance_approval! own the notification.
+  def routed_through_steps?
+    template = approval_template
+    template.respond_to?(:routing_steps) && template.routing_steps.any?
+  rescue StandardError
+    false
+  end
+
+  # Queue one mail per opted-in recipient. The acting user is dropped: at
+  # submission they are the submitter, and on an advance they are the approver
+  # who just pushed the form forward -- either way they are in the app looking
+  # at it, and do not need mail about it.
+  def deliver_inbox_notifications(employee_ids, step_id:)
+    actor_id = Current.user&.dig('employee_id')&.to_s
+    recipient_ids = Array(employee_ids).map(&:to_s).compact_blank.uniq - [actor_id].compact_blank
+    return if recipient_ids.empty?
+
+    UserSetting.notifiable_employee_ids(recipient_ids).each do |employee_id|
+      InboxNotificationMailer.pending_approval(self.class.name, id, step_id, employee_id).deliver_later
+    end
+  rescue StandardError => e
+    Rails.logger.warn("inbox notification dispatch failed for #{self.class.name} ##{id}: #{e.message}")
+  end
+
+  # --- Form subscriptions (Forms::Subscription) ---
+
+  # Somebody filed this form. Subscribers are a different audience from the
+  # approver the inbox notification goes to: they follow a form type rather
+  # than owning any one submission.
+  def notify_subscribers_of_creation
+    deliver_subscription_notifications('created')
+  end
+
+  # Record what actually changed on this update, then tell the people following
+  # edits. Auditing and notifying are one callback because the mail names the
+  # very rows just written -- capturing them separately would leave the mailer
+  # guessing which edits were part of this save.
+  def audit_and_notify_field_edits
+    edit_ids = capture_field_edits
+    return if edit_ids.empty?
+
+    deliver_subscription_notifications('edited', edit_ids: edit_ids)
+  end
+
+  def notify_subscribers_of_status_change
+    deliver_subscription_notifications('status_changed')
+  end
+
+  # Write one RecordEdit per column that actually moved, and return their ids.
+  # Values come from saved_changes, so this reflects what the database took,
+  # not what was assigned. Shares the Records grid's audit table: an edit is an
+  # edit whether it arrived through the grid or the form, and RecordEdit#for_row
+  # then returns a record's whole history from one place.
+  def capture_field_edits
+    changes = saved_changes.except(*EDIT_AUDIT_IGNORED_COLUMNS)
+    return [] if changes.empty?
+
+    actor = { id: Current.user&.dig('employee_id')&.to_s, name: current_user_display_name }
+
+    changes.filter_map do |column, (before, after)|
+      next if before.to_s == after.to_s
+
+      RecordEdit.capture(row: self, table_slug: edit_audit_table_slug, column_name: column,
+                         old_value: before, new_value: after, actor: actor)&.id
+    end
+  rescue StandardError => e
+    Rails.logger.warn("edit audit failed for #{self.class.name} ##{id}: #{e.message}")
+    []
+  end
+
+  # RecordEdit#table_slug is provenance. Registry-backed models already have a
+  # slug the grid uses; a plain form model has none, so its table name says
+  # where the edit landed.
+  def edit_audit_table_slug
+    self.class.try(:registry_slug).presence || self.class.table_name
+  end
+
+  # Audit and announce one column written outside the normal update path.
+  #
+  # Reassignable#reassign_to! writes the assignee with update_column so that a
+  # record whose validations have since tightened can still be handed to
+  # somebody else. That skips callbacks entirely, so a reassignment would
+  # otherwise leave no trace in the edit trail and tell no subscriber. Rather
+  # than loosen that write, the caller asks for the audit explicitly.
+  #
+  # Public in effect but private by placement: it is called on self from the
+  # concern, not from outside the record.
+  def record_out_of_band_edit(column_name, old_value, new_value)
+    return if old_value.to_s == new_value.to_s
+
+    actor = { id: Current.user&.dig('employee_id')&.to_s, name: current_user_display_name }
+    edit = RecordEdit.capture(row: self, table_slug: edit_audit_table_slug,
+                              column_name: column_name.to_s,
+                              old_value: old_value, new_value: new_value, actor: actor)
+
+    deliver_subscription_notifications('edited', edit_ids: [edit&.id].compact)
+  rescue StandardError => e
+    Rails.logger.warn("out-of-band edit audit failed for #{self.class.name} ##{id}: #{e.message}")
+  end
+
+  # Queue immediate mail for everyone subscribed to this event on this form.
+  # Digest subscribers are not touched here -- FormSubscriptionDigestJob finds
+  # their events by querying the same audit rows on its own schedule.
+  def deliver_subscription_notifications(event, edit_ids: [])
+    recipient_ids = Forms::Subscription.recipient_ids_for(
+      form_type: self.class.name, event: event, delivery_mode: Forms::Subscription::IMMEDIATE
+    )
+    return if recipient_ids.empty?
+
+    recipient_ids.each do |employee_id|
+      FormSubscriptionMailer.activity(self.class.name, id, event, employee_id, edit_ids).deliver_later
+    end
+  rescue StandardError => e
+    Rails.logger.warn("subscription #{event} dispatch failed for #{self.class.name} ##{id}: #{e.message}")
+  end
+
+  # --- Configurable workflow emails (Forms::TemplateEmailStep) ---
 
   # Fire any "On submission" email rules right after the record is created.
   def deliver_email_steps_on_submit

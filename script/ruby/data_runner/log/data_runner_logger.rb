@@ -13,7 +13,7 @@ module DataRunnerLogger
   LOG_DATABASE = 'GSABSS'
   LOG_SCHEMA = 'dbo'
   LOG_TABLE = 'DataRunner_Log'
-  RUN_ID = SecureRandom.uuid
+  RUN_ID = ENV.fetch('DATARUNNER_RUN_ID') { SecureRandom.uuid }
 
   def log_command(command:, script:, args:, started_at:, completed_at:, success:, exit_status:, options: {})
     return if disabled?

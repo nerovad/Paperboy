@@ -1,5 +1,4 @@
 # frozen_string_literal: true
 
-class Division < GsabssBase
-  self.primary_key = 'division_id'
-end
+# Compatibility constant for callers not yet migrated to the Coa namespace.
+Division = Coa::Division

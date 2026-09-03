@@ -19,14 +19,14 @@ module InboxHelper
     INBOX_FILTER_PARAMS.any? { |key| params[key].present? }
   end
 
-  # Look up the FormTemplate for a given submission
+  # Look up the Forms::Template for a given submission
   # Returns nil for hardcoded forms or if no template exists
   def form_template_for(submission)
     class_name = submission.class.name
     return nil if HARDCODED_FORM_TYPES.include?(class_name)
 
     @form_template_cache ||= {}
-    @form_template_cache[class_name] ||= FormTemplate.find_by(class_name: class_name)
+    @form_template_cache[class_name] ||= Forms::Template.find_by(class_name: class_name)
   end
 
   # Check if a submission is from a dynamically generated form
@@ -37,8 +37,8 @@ module InboxHelper
   # Human-facing reference number for a submission, e.g. "LOA-1042". Memoizes
   # the class_name => prefix map so rendering a page of rows is a single query.
   def inbox_reference(submission)
-    @prefix_map ||= FormReference.prefix_map
-    FormReference.reference_for(submission, @prefix_map)
+    @prefix_map ||= Forms::Reference.prefix_map
+    Forms::Reference.reference_for(submission, @prefix_map)
   end
 
   # Rows that have blown a filing deadline get flagged in the queue. Currently
@@ -73,7 +73,7 @@ module InboxHelper
     template.routing_steps.find_by(step_number: match[1].to_i)
   end
 
-  # The active (undismissed) FormSubmissionCopy this submission represents
+  # The active (undismissed) Forms::SubmissionCopy this submission represents
   # for the current viewer, or nil if the viewer isn't a copy recipient.
   # Looked up against @copy_submission_ids prepopulated by InboxController.
   def copy_row_for(submission)
@@ -88,7 +88,7 @@ module InboxHelper
 
     @copy_rows_cache ||= {}
     @copy_rows_cache[[submission.class.name, submission.id]] ||=
-      FormSubmissionCopy.active.find_by(
+      Forms::SubmissionCopy.active.find_by(
         submission_type: submission.class.name,
         submission_id: submission.id,
         recipient_employee_id: employee_id

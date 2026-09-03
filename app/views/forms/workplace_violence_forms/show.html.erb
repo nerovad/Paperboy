@@ -1,0 +1,18 @@
+<div class="form-header">
+  <%= render "shared/back_button" %>
+  <h1>Workplace Violence Form</h1>
+</div>
+
+<div class="form-wrapper">
+  <div class="form-inner">
+
+  <%= render partial: "shared/readonly_record",
+             locals: { record: @workplace_violence_form,
+                       exclude: %w[id created_at updated_at approver_id deny_reason] } %>
+
+  <div class="form-actions" style="margin-top: 16px;">
+    <%= link_to "Download PDF", pdf_workplace_violence_form_path(@workplace_violence_form), target: "_blank", class: "form-btn" %>
+    <%= render "shared/change_status", record: @workplace_violence_form %>
+  </div>
+  </div>
+</div>

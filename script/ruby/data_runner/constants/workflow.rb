@@ -30,33 +30,52 @@ module Workflow
     monthly
   ].freeze
 
+  ORCHESTRATION_ENV = 'DATA_RUNNER_ORCHESTRATION'
+
   def self.step_config(cfg)
     configured = cfg[:steps]
-    return configured if configured.is_a?(Hash)
+    return configured if configured.is_a?(Hash) && configured.key?(:manual)
+
+    if configured.is_a?(Hash)
+      enabled = configured.fetch(:enabled, true)
+      scheduled = configured[:scheduled]
+
+      return {
+        manual: {
+          enabled: enabled,
+          steps: configured[:manual_steps] || MANUAL_STEPS
+        },
+        scheduled: scheduled&.merge(enabled: scheduled.fetch(:enabled, enabled))
+      }
+    end
 
     {
-      enabled: true,
-      manual_steps: cfg[:manual_steps] || configured,
+      manual: {
+        enabled: true,
+        steps: configured || MANUAL_STEPS
+      },
       scheduled: cfg[:scheduled]
     }
   end
 
   def self.steps_enabled?(cfg)
-    step_config(cfg).fetch(:enabled, true) != false
+    manual = step_config(cfg).fetch(:manual)
+    manual.fetch(:enabled, true) != false
   end
 
   def self.wants_step?(cfg, step)
-    return false unless steps_enabled?(cfg)
+    manual = step_config(cfg).fetch(:manual)
+    enabled = manual.fetch(:enabled, true) || ENV[ORCHESTRATION_ENV] == '1'
+    return false unless enabled
 
-    steps = step_config(cfg)[:manual_steps] || MANUAL_STEPS
+    steps = manual[:steps] || MANUAL_STEPS
     steps.include?(step)
   end
 
   def self.wants_scheduled_step?(cfg, step, frequency = nil)
-    return false unless steps_enabled?(cfg)
-
     scheduled = step_config(cfg)[:scheduled]
     return false unless scheduled
+    return false if scheduled[:enabled] == false
 
     scheduled_frequency = scheduled[:frequency] || :daily
     return false if frequency && scheduled_frequency != frequency

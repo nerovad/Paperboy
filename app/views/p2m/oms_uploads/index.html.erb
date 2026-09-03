@@ -1,0 +1,139 @@
+<div class="form-header p2m-form-header">
+  <h1>OMS Status</h1>
+</div>
+
+<div class="form-wrapper p2m-stage-data">
+  <%= render "p2m/shared/date_range_card", title_id: "p2m-upload-date-range-title",
+             url: p2m_oms_status_path, method: :get, scope: :oms_uploads %>
+
+  <section class="p2m-stage-card" aria-labelledby="p2m-oms-uploads-title">
+    <h2 id="p2m-oms-uploads-title">Staged Mailing Jobs</h2>
+
+    <div class="table-wrap p2m-maildat-grid">
+      <table class="submission-table p2m-maildat-table p2m-maildat-table--uploads"
+             data-controller="output-table data-refresh-groups" data-simple-sort="true">
+        <thead>
+          <tr>
+            <th class="p2m-expand-column" aria-label="Expand"></th>
+            <th class="p2m-oms-number-column" aria-sort="descending"
+                data-column-index="1" data-sort-type="number">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">OMS #</button>
+            </th>
+            <th class="p2m-date-column" aria-sort="none"
+                data-column-index="2" data-sort-type="text">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">Date</button>
+            </th>
+            <th class="p2m-job-number-column" aria-sort="none"
+                data-column-index="3" data-sort-type="text">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">JOB #</button>
+            </th>
+            <th aria-sort="none" data-column-index="4" data-sort-type="number">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">Printed</button>
+            </th>
+            <th aria-sort="none" data-column-index="5" data-sort-type="number">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">Mailed</button>
+            </th>
+            <th aria-sort="none" data-column-index="6" data-sort-type="number">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">UAA</button>
+            </th>
+            <th>Progress</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @uploads.each_with_index do |upload, index| %>
+            <% detail_id = "p2m-oms-upload-#{upload.id}-details" %>
+            <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>"
+                data-sort-row data-detail-id="<%= detail_id %>">
+              <td class="p2m-expand-column">
+                <button type="button" class="p2m-row-trigger"
+                        aria-expanded="false" aria-controls="<%= detail_id %>"
+                        aria-label="Show details for OMS <%= upload.oms_number %>"
+                        data-action="data-refresh-groups#toggle" data-detail-id="<%= detail_id %>">
+                  <span aria-hidden="true">▸</span>
+                </button>
+              </td>
+              <td data-sort-value="<%= upload.oms_number %>"><%= upload.oms_number %></td>
+              <td data-sort-value="<%= upload.mailer_date.iso8601 %>"><%= upload.mailer_date.iso8601 %></td>
+              <td data-sort-value="<%= upload.budget_job_id %>"><%= upload.budget_job_id.presence || "—" %></td>
+              <td data-sort-value="<%= upload.input_record_count || -1 %>"><%= upload.input_record_count || "—" %></td>
+              <td data-sort-value="<%= upload.mailed_record_count || -1 %>"><%= upload.mailed_record_count || "—" %></td>
+              <td data-sort-value="<%= upload.non_mailed_record_count || -1 %>">
+                <%= upload.non_mailed_record_count || "—" %>
+              </td>
+              <td>
+                <dl class="p2m-upload-stages">
+                  <% [["Overall", upload.status], ["Validation", upload.validation_status],
+                      ["Import", upload.import_status], ["Archive", upload.archive_status]].each do |label, status| %>
+                    <div>
+                      <dt><%= label %></dt>
+                      <dd data-status="<%= status %>"><%= status.humanize %></dd>
+                    </div>
+                  <% end %>
+                </dl>
+              </td>
+            </tr>
+            <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden>
+              <td colspan="8">
+                <div class="p2m-upload-details">
+                  <section>
+                    <h3>Mailing Job</h3>
+                    <dl class="p2m-upload-metadata">
+                      <div><dt>Document Profile</dt><dd><%= upload.document_profile.presence || "—" %></dd></div>
+                      <div><dt>Production Workflow</dt><dd><%= upload.production_workflow.presence || "—" %></dd></div>
+                      <div><dt>AIMS Job</dt><dd><%= upload.aims_job_id.presence || "—" %></dd></div>
+                      <div><dt>Files</dt><dd><%= upload.files.size %></dd></div>
+                    </dl>
+                  </section>
+                  <section>
+                    <h3>Findings</h3>
+                    <ul>
+                      <% upload.findings.each do |finding| %>
+                        <li>
+                          <strong><%= finding.rule.humanize %>:</strong>
+                          <%= finding.status.humanize %>
+                          <% if finding.observed_value.present? %>
+                            — observed <%= finding.observed_value %>
+                          <% end %>
+                          <% if finding.message.present? %> — <%= finding.message %><% end %>
+                        </li>
+                      <% end %>
+                    </ul>
+                  </section>
+                  <section>
+                    <h3>Original Files</h3>
+                    <ul>
+                      <% upload.files.sort_by(&:original_filename).each do |file| %>
+                        <li>
+                          <%= file.original_filename %> — <%= file.category.humanize %>,
+                          <%= number_to_human_size(file.byte_size) %>
+                        </li>
+                      <% end %>
+                    </ul>
+                  </section>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+          <% if @uploads.empty? %>
+            <tr><td colspan="8">No OMS uploads have been recorded.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if @pagy&.pages.to_i > 1 %>
+      <div class="pagination-wrapper">
+        <%== @pagy.series_nav %>
+        <p class="pagination-info">
+          Showing <%= @pagy.from %>–<%= @pagy.to %> of <%= @pagy.count %> OMS uploads
+        </p>
+      </div>
+    <% end %>
+  </section>
+</div>

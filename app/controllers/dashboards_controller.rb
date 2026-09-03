@@ -4,7 +4,7 @@ class DashboardsController < ApplicationController
   before_action :require_dashboards_access
 
   def index
-    @dashboard_forms = FormTemplate.with_dashboards.order(:name)
+    @dashboard_forms = Forms::Template.with_dashboards.order(:name)
 
     unless current_user_group_names.include?('system_admins')
       perm_keys = current_user_form_permission_keys

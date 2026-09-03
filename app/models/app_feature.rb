@@ -12,7 +12,7 @@
 # (see ApplicationController#load_user_permissions).
 #
 # Admin Tools already had per-button grants, issued as "dropdown" keys back
-# when its screens hung off the profile menu. Those five keep working: each
+# when its screens hung off the profile menu. Those three keep working: each
 # entry names its +legacy_key+ and ApplicationHelper#can_use_app_feature?
 # accepts either. New apps only need the feature grant.
 #
@@ -23,9 +23,7 @@ class AppFeature
     'admin_tools' => [
       { key: 'acl',             label: 'ACL',             legacy_key: 'acl' },
       { key: 'manage_forms',    label: 'Manage Forms',    legacy_key: 'manage_forms' },
-      { key: 'emulate',         label: 'Emulate',         legacy_key: 'emulate' },
-      { key: 'data_validation', label: 'Data Validation', legacy_key: 'data_validation' },
-      { key: 'lookup_tables',   label: 'Lookup Tables',   legacy_key: 'lookup_tables' }
+      { key: 'emulate',         label: 'Emulate',         legacy_key: 'emulate' }
     ],
     'billing' => [
       { key: 'reporting_period',    label: 'Reporting Period' },
@@ -41,10 +39,16 @@ class AppFeature
       { key: 'email_reports',       label: 'Email Billing Reports' },
       { key: 'archive_reports',     label: 'Archive Billing Reports' }
     ],
+    'p2m' => [
+      { key: 'stage_data', label: 'Post Production' },
+      { key: 'oms_status', label: 'OMS Status' },
+      { key: 'data_refresh', label: 'Upload Billing Data' }
+    ],
     # Keys match Coa::BaseController#coa_route_collection_name, which is also
     # how a request is mapped back to its grant.
     'coa' => [
       { key: 'billing_lookup',    label: 'Billing Lookup' },
+      { key: 'customer_lookup',   label: 'Employee Lookup' },
       { key: 'agencies',          label: 'Agencies' },
       { key: 'divisions',         label: 'Divisions' },
       { key: 'departments',       label: 'Departments' },
@@ -75,18 +79,42 @@ class AppFeature
       { key: 'processing_queues', label: 'Processing Queues' }
     ],
     # Data Runner's sidebar is a live list of DSLs rather than fixed buttons,
-    # so only its standing controls are grantable here. Which DSLs a user sees
-    # is not an ACL question today.
+    # so only its standing control is fixed here. Every DSL is grantable too —
+    # see +data_runner_dsl_features+, which reads the catalog at call time and
+    # is appended by +for+.
     'data_runner' => [
       { key: 'manage_groups', label: 'Create and manage DSL groups' }
     ]
   }.freeze
 
+  # A DSL's feature key. Prefixed so a DSL can never be named the same thing as
+  # one of Data Runner's standing controls and quietly grant it.
+  DSL_KEY_PREFIX = 'dsl_'
+
   class << self
     # The features an app declares, in sidebar order. Unknown app keys — and
     # apps with nothing worth splitting up, like Print Production — return [].
+    #
+    # Data Runner's list is part fixed and part catalog: its sidebar *is* the
+    # DSL list, so the DSLs are grantable one by one alongside the standing
+    # control above them.
     def for(app_key)
-      FEATURES.fetch(app_key.to_s, [])
+      FEATURES.fetch(app_key.to_s, []) + (app_key.to_s == 'data_runner' ? data_runner_dsl_features : [])
+    end
+
+    # One grant per DSL, read from the catalog rather than declared here — a
+    # DSL is a file in config/data_runner/dsl, so a new one is grantable the
+    # moment it lands. Labelled by group so the ACL screen reads the way the
+    # sidebar does.
+    def data_runner_dsl_features
+      DslCatalog.entries.map do |entry|
+        label = entry.group.present? ? "#{entry.group.humanize}: #{entry.key}" : entry.key
+        { key: dsl_key(entry.slug), label: label }
+      end
+    end
+
+    def dsl_key(slug)
+      "#{DSL_KEY_PREFIX}#{slug}"
     end
 
     def permission_key(app_key, feature_key)

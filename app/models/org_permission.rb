@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class OrgPermission < ApplicationRecord
-  validates :permission_type, presence: true, inclusion: { in: %w[dropdown form application feature] }
+  validates :permission_type, presence: true,
+                              inclusion: { in: %w[dropdown form application feature submission_action] }
   validates :permission_key, presence: true
 
   # Returns the most specific org level label for display

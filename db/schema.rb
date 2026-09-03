@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_10_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_02_000002) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -88,6 +88,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_000001) do
     t.datetime "updated_at", null: false
     t.boolean "all_budget_units", default: false, null: false
     t.boolean "all_locations", default: false, null: false
+  end
+
+  create_table "away_periods", force: :cascade do |t|
+    t.string "employee_id", null: false
+    t.string "delegate_id", null: false
+    t.date "starts_on", null: false
+    t.date "ends_on", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id", "starts_on", "ends_on"], name: "index_away_periods_on_employee_and_dates"
+    t.index ["ends_on"], name: "index_away_periods_on_ends_on"
   end
 
   create_table "bike_locker_forms", force: :cascade do |t|
@@ -180,6 +191,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_000001) do
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "critical_information_authorizations", force: :cascade do |t|
+    t.string "location", null: false
+    t.string "employee_id", null: false
+    t.string "authorized_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id"], name: "index_critical_information_authorizations_on_employee_id"
+    t.index ["location"], name: "index_critical_information_authorizations_on_location", unique: true
+  end
+
+  create_table "critical_information_locations", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "created_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_critical_information_locations_on_name", unique: true
   end
 
   create_table "critical_information_reportings", force: :cascade do |t|
@@ -390,6 +419,39 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_000001) do
     t.index ["slug"], name: "index_dam_workflows_on_slug", unique: true
   end
 
+  create_table "data_runner_group_run_items", force: :cascade do |t|
+    t.bigint "group_run_id", null: false
+    t.string "dsl_name", null: false
+    t.string "dsl_slug", null: false
+    t.string "status", default: "pending", null: false
+    t.integer "position", null: false
+    t.text "error_message"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "duration_ms"
+    t.index ["group_run_id", "position"], name: "idx_group_run_items_position", unique: true
+    t.index ["group_run_id"], name: "index_data_runner_group_run_items_on_group_run_id"
+  end
+
+  create_table "data_runner_group_runs", force: :cascade do |t|
+    t.string "run_id", null: false
+    t.string "group_name", null: false
+    t.string "status", default: "queued", null: false
+    t.integer "total_count", default: 0, null: false
+    t.integer "completed_count", default: 0, null: false
+    t.integer "failed_count", default: 0, null: false
+    t.string "current_dsl"
+    t.string "requested_by"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["group_name", "status"], name: "index_data_runner_group_runs_on_group_name_and_status"
+    t.index ["run_id"], name: "index_data_runner_group_runs_on_run_id", unique: true
+  end
+
   create_table "employee_union_codes", force: :cascade do |t|
     t.string "employee_id", null: false
     t.string "union_code", null: false
@@ -495,6 +557,21 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_000001) do
     t.index ["submission_type", "submission_id"], name: "index_form_submission_copies_on_submission"
   end
 
+  create_table "form_subscriptions", force: :cascade do |t|
+    t.string "form_type", null: false
+    t.string "grantee_type", null: false
+    t.string "employee_id"
+    t.integer "group_id"
+    t.boolean "notify_created", default: false, null: false
+    t.boolean "notify_edited", default: false, null: false
+    t.boolean "notify_status_changed", default: false, null: false
+    t.string "delivery_mode", default: "immediate", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["delivery_mode"], name: "index_form_subscriptions_on_delivery_mode"
+    t.index ["form_type", "grantee_type", "employee_id", "group_id"], name: "index_form_subscriptions_on_target", unique: true
+  end
+
   create_table "form_template_copy_recipients", force: :cascade do |t|
     t.bigint "form_template_id", null: false
     t.string "recipient_type", null: false
@@ -574,13 +651,21 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_000001) do
     t.text "inbox_buttons"
     t.string "status_transition_mode", default: "automatic"
     t.text "tags"
-    t.string "visibility", default: "restricted", null: false
     t.integer "metabase_dashboard_id"
     t.boolean "archived", default: false, null: false
     t.boolean "skip_code_generation", default: false, null: false
     t.string "reference_prefix"
     t.boolean "records_table", default: false, null: false
+    t.string "description", limit: 500
+    t.string "form_number", limit: 30
+    t.string "form_type", limit: 50
+    t.string "agency_id", limit: 10
+    t.string "division_id", limit: 20
+    t.string "department_id", limit: 20
+    t.string "unit_id", limit: 20
+    t.index ["agency_id"], name: "index_form_templates_on_agency_id"
     t.index ["archived"], name: "index_form_templates_on_archived"
+    t.index ["form_type"], name: "index_form_templates_on_form_type"
     t.index ["reference_prefix"], name: "index_form_templates_on_reference_prefix", unique: true, where: "([reference_prefix] IS NOT NULL)"
   end
 
@@ -591,6 +676,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_000001) do
     t.integer "employee_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "applies_to", default: "both", null: false
+    t.string "agency_id"
+    t.string "division_id"
+    t.string "department_id"
+    t.string "unit_id"
     t.index ["form_type"], name: "index_form_visibility_grants_on_form_type"
     t.index ["grantee_type", "group_id"], name: "index_form_visibility_grants_on_grantee_type_and_group_id"
   end
@@ -684,6 +774,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_000001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "status", default: "in_progress", null: false
+    t.string "change_or_service_requested"
+    t.string "old_location_or_address"
+    t.string "new_location_or_address"
+    t.text "description_of_new_service"
+    t.string "object"
+    t.string "activity"
+    t.string "function"
+    t.string "program"
+    t.string "phase"
+    t.string "task"
+    t.string "monthly_cost"
+    t.string "annual_cost"
   end
 
   create_table "org_permissions", force: :cascade do |t|
@@ -1130,6 +1232,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_000001) do
   add_foreign_key "dam_collections", "dam_collections", column: "parent_id"
   add_foreign_key "dam_jobs", "dam_workflows", column: "workflow_id"
   add_foreign_key "dam_metadata_values", "dam_assets", column: "asset_id"
+  add_foreign_key "data_runner_group_run_items", "data_runner_group_runs", column: "group_run_id"
   add_foreign_key "form_fields", "form_templates"
   add_foreign_key "form_template_copy_recipients", "form_templates"
   add_foreign_key "form_template_email_steps", "form_templates"

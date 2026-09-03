@@ -1,0 +1,13 @@
+<%# app/views/p2m/dashboard/home.html.erb
+    The app's front door — a slideshow, matching every other sub-app. The
+    layout swaps the page body for :image, so this view is the slideshow and
+    nothing else.
+
+    It starts on Paperboy's own pictures. To give Print 2 Mail its own, drop three
+    images in app/assets/images/p2m/ named slide_01.png, slide_02.png and
+    slide_03.png, add a p2m_home_images method to
+    app/helpers/slideshow_helper.rb alongside the others, and render that
+    instead of paperboy_home_images. %>
+<% content_for :image do %>
+  <%= render "shared/slideshow", images: paperboy_home_images %>
+<% end %>

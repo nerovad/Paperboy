@@ -1,0 +1,66 @@
+@use "base/tokens" as *;
+
+/* The paperboy mascot, fixed to the bottom-left of every page. Sits just clear
+   of the 280px sidebar so it reads as part of the main content area, not the
+   nav.
+
+   Signed in it is a button that opens Tips & Tricks; signed out it is a plain
+   decorative image. It is a one-off affordance like .cc-trigger or
+   .hamburger-btn, deliberately outside the .btn system — see AGENTS.md. */
+.app-mascot {
+  position: fixed;
+  left: calc(280px + 16px);
+  bottom: 10px;
+  z-index: 900;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  line-height: 0;
+
+  img {
+    display: block;
+    width: auto;
+    height: 84px;
+  }
+
+  @media (max-width: 768px) {
+    /* The sidebar is off-canvas below this breakpoint. */
+    left: 12px;
+
+    img { height: 56px; }
+  }
+}
+
+/* The signed-out mascot is scenery, not a control: clicks pass through it. */
+img.app-mascot {
+  width: auto;
+  height: 84px;
+  pointer-events: none;
+  user-select: none;
+
+  @media (max-width: 768px) { height: 56px; }
+}
+
+button.app-mascot {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-2px) scale(1.04);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-color;
+    outline-offset: 4px;
+    border-radius: 8px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover,
+    &:focus-visible { transform: none; }
+  }
+}

@@ -1,0 +1,53 @@
+<%# Submission Actions: what may be done to somebody else's submission.
+
+    Rendered on both ACL surfaces, so the same grant can be given to a group or
+    to everyone in an agency, division, department or unit. Keys are
+    "<action>:<FormClass>", read back by Forms::SubmissionPolicy.
+
+    Locals:
+      forms          [{ class_name:, label: }] from the form-type catalog
+      selected_keys  Set of keys already granted at this scope
+      scope_label    "members of this group" / "users at this organization level"
+-%>
+<div class="acl-permissions-section">
+  <h3>Submission Actions</h3>
+  <p class="acl-subtitle">
+    Choose what <%= scope_label %> may do to submissions that aren't their own.
+    Whoever a submission is assigned to can already do both without a tick here,
+    and the person who filed it can already edit their own, so these widen that
+    to people who are neither. <strong>Change Status</strong> covers the control
+    on a submission's page, the way a report that has been resolved gets
+    reopened or moved on. <strong>Edit</strong> covers rewriting the submitted
+    form.
+  </p>
+
+  <table class="submission-action-grid">
+    <thead>
+      <tr>
+        <th scope="col">Form</th>
+        <% Forms::SubmissionPolicy::ACTION_LABELS.each_value do |label| %>
+          <th scope="col" class="action-column"><%= label %></th>
+        <% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <%# "All forms" first, for a group that reviews everything rather than one
+          workflow, using the same sentinel the visibility grants use. %>
+      <% rows = [{ class_name: Forms::SubmissionPolicy::ALL_FORMS,
+                   label: Forms::VisibilityGrant::ALL_FORMS_LABEL }] + forms %>
+      <% rows.each do |form| %>
+        <tr>
+          <th scope="row"><%= form[:label] %></th>
+          <% Forms::SubmissionPolicy::ACTIONS.each do |action| %>
+            <% key = Forms::SubmissionPolicy.permission_key(action, form[:class_name]) %>
+            <td class="action-column">
+              <%= check_box_tag "submission_action_permissions[]", key, selected_keys.include?(key),
+                    id: "submission_action_#{action}_#{form[:class_name].parameterize.underscore.presence || 'all'}",
+                    aria: { label: "#{Forms::SubmissionPolicy::ACTION_LABELS[action]}: #{form[:label]}" } %>
+            </td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

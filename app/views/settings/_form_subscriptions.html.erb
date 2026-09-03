@@ -1,0 +1,87 @@
+<%# Personal form subscriptions — the same table the ACL page manages for
+    groups, from the other end. Rendered outside the settings form: a
+    subscription is its own row, and HTML has no nested forms.
+
+    Locals:
+      subscriptions  this user's own Forms::Subscription rows
+      form_types     [{ class_name:, label: }] catalog
+      form_labels    class_name => label
+-%>
+<section class="settings-section">
+  <h2>Form Activity Notifications</h2>
+  <p class="settings-description">
+    Follow a form and get emailed when something happens to it — a new
+    submission, an edit to any field, or a status change. Edit notifications
+    list exactly which fields changed and what they changed from. This is
+    separate from the inbox notification above, which only covers work routed
+    to you for approval.
+  </p>
+
+  <%= form_with url: form_subscriptions_path, method: :post, data: { turbo: false } do %>
+    <div class="pb-filter-grid">
+      <div class="pb-filter">
+        <%= label_tag :form_type, "Form" %>
+        <%= select_tag :form_type,
+              options_for_select([[Forms::Subscription::ALL_FORMS_LABEL, Forms::Subscription::ALL_FORMS]] +
+                                 form_types.map { |ft| [ft[:label], ft[:class_name]] }),
+              include_blank: "Select a form…", class: "form-control" %>
+      </div>
+
+      <div class="pb-filter">
+        <%= label_tag :delivery_mode, "Delivery" %>
+        <%= select_tag :delivery_mode,
+              options_for_select(Forms::Subscription::DELIVERY_MODE_LABELS.map { |value, label| [label, value] },
+                                 Forms::Subscription::IMMEDIATE),
+              class: "form-control" %>
+      </div>
+    </div>
+
+    <fieldset class="pb-filter-set">
+      <legend>Notify me about</legend>
+      <% Forms::Subscription::EVENT_LABELS.each do |event, label| %>
+        <label class="settings-toggle">
+          <%= check_box_tag "events[]", event, false, id: "settings_event_#{event}" %>
+          <span class="settings-label"><strong><%= label %></strong></span>
+        </label>
+      <% end %>
+    </fieldset>
+
+    <div class="form-actions">
+      <%= submit_tag "Subscribe", class: "btn approve" %>
+    </div>
+  <% end %>
+
+  <% if subscriptions.any? %>
+    <table class="visibility-grants-table">
+      <thead>
+        <tr>
+          <th scope="col">Form</th>
+          <th scope="col">Notify me about</th>
+          <th scope="col">Delivery</th>
+          <th scope="col" class="actions-column">Remove</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% subscriptions.each do |subscription| %>
+          <tr>
+            <td><strong><%= subscription.form_label(form_labels) %></strong></td>
+            <td>
+              <% subscription.event_labels.each do |label| %>
+                <span class="pb-search-chip"><%= label %></span>
+              <% end %>
+            </td>
+            <td><span class="grant-badge"><%= subscription.delivery_mode_label %></span></td>
+            <td class="actions-column">
+              <%= button_to "Remove", form_subscription_path(subscription), method: :delete,
+                    class: "btn deny compact",
+                    form: { data: { turbo_confirm: "Stop being emailed about this form?",
+                                    confirm_title: "Remove subscription", confirm_label: "Remove" } } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="settings-description">You are not following any forms yet.</p>
+  <% end %>
+</section>

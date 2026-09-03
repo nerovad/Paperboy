@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .billing-form-header {
   max-width: 900px;
@@ -10,6 +10,22 @@
   background: $slate-action;
   color: $surface-base;
   box-sizing: border-box;
+
+  h1 { margin: 0; }
+}
+
+.data-refresh-form-header {
+  max-width: 900px;
+  margin-right: auto;
+  margin-left: auto;
+  padding-top: .85rem;
+  padding-bottom: .85rem;
+  border-radius: 8px;
+  background: $slate-action;
+  color: $surface-base;
+  box-sizing: border-box;
+
+  &.p2m-data-refresh-theme { background: $green-teal; }
 
   h1 { margin: 0; }
 }
@@ -46,6 +62,35 @@
   }
 
   /* Buttons use the shared .btn system; see components/buttons. */
+}
+
+.data-refresh-form {
+  --data-refresh-accent: #{$slate-action};
+
+  &.p2m-data-refresh-theme { --data-refresh-accent: #{$green-teal}; }
+
+  .data-refresh-grid {
+    margin: 1.25rem 0;
+    overflow-x: auto;
+  }
+
+  .submission-table thead th {
+    background: var(--data-refresh-accent);
+    color: $surface-base;
+  }
+
+  .submission-table th,
+  .submission-table td {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .form-actions {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    flex-wrap: wrap;
+  }
 }
 
 .billing-period-card {
@@ -188,7 +233,7 @@
   }
 
   &__input--true:checked + &__option {
-    background: $primary-color;
+    background: var(--data-refresh-accent, #{$primary-color});
     color: $surface-base;
   }
 
@@ -207,13 +252,13 @@
   }
 }
 
-.billing-refresh-table {
+.data-refresh-table {
   table-layout: fixed;
   border: 1px solid $neutral-border-subtle;
 
-  .billing-refresh-group-column { width: 70%; }
-  .billing-refresh-count-column { width: 14%; }
-  .billing-refresh-toggle-column { width: 16%; }
+  .data-refresh-group-column { width: 70%; }
+  .data-refresh-count-column { width: 14%; }
+  .data-refresh-toggle-column { width: 16%; }
 
   > thead > tr > th,
   > tbody > tr > td {
@@ -221,16 +266,16 @@
   }
 
   > thead > tr > th:nth-child(n+2),
-  > tbody > .billing-refresh-group-row > td:nth-child(n+2) {
+  > tbody > .data-refresh-group-row > td:nth-child(n+2) {
     padding-right: 8px;
     padding-left: 8px;
   }
 
-  .billing-refresh-group-trigger {
+  .data-refresh-group-trigger {
     padding: 0;
     border: 0;
     background: transparent;
-    color: $blue-action;
+    color: var(--data-refresh-accent);
     font: inherit;
     font-weight: 600;
     cursor: pointer;
@@ -238,76 +283,140 @@
     &:hover { text-decoration: underline; }
 
     &:focus-visible {
-      outline: 2px solid $blue-action;
+      outline: 2px solid var(--data-refresh-accent);
       outline-offset: 3px;
     }
   }
 
-  .billing-refresh-group-chevron {
+  .data-refresh-group-chevron {
     display: inline-block;
     margin-right: .3rem;
     transition: transform .15s ease;
   }
 
-  .billing-refresh-group-trigger[aria-expanded="true"] .billing-refresh-group-chevron {
+  .data-refresh-group-trigger[aria-expanded="true"] .data-refresh-group-chevron {
     transform: rotate(90deg);
   }
 
-  .billing-refresh-detail-row > td {
+  .data-refresh-detail-row > td {
     padding: .75rem 1.25rem;
     background: $surface-panel;
   }
 }
 
-.billing-refresh-dsl-table {
-  width: 100%;
+.p2m-data-refresh-table {
   table-layout: fixed;
+
+  .p2m-data-refresh-oms-column { width: calc(100% / 3); }
+}
+
+.p2m-data-refresh-summary {
+  margin: 1.25rem 0 0;
+}
+
+.p2m-data-refresh-summary__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid $neutral-border-subtle;
+  color: var(--data-refresh-accent);
+  font-weight: 600;
+}
+
+.data-refresh-dsl-cards {
+  display: grid;
+  gap: .75rem;
+}
+
+.data-refresh-dsl-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
   border: 1px solid $neutral-border-subtle;
-  border-collapse: collapse;
+  background: $surface-base;
 
-  .billing-refresh-dsl-name-column { width: 22%; }
-  .billing-refresh-dsl-location-column { width: 60%; }
-  .billing-refresh-dsl-date-column { width: 18%; }
+  h3 { margin: 0 0 .5rem; }
 
-  th,
-  td {
-    padding: .5rem .75rem;
-    border: 1px solid $neutral-border-subtle;
-    text-align: left;
-  }
-
-  th {
-    background: $surface-subtle;
-    color: $label-color;
-    font-size: .8rem;
-    text-transform: uppercase;
-  }
-
-  td:first-child { font-weight: 600; }
-
-  td:nth-child(1),
-  td:nth-child(2) {
+  p {
+    margin: .25rem 0;
     overflow-wrap: anywhere;
   }
 
-  td:nth-child(3),
-  th:nth-child(3) {
-    white-space: nowrap;
+  p span {
+    display: inline-block;
+    min-width: 9rem;
+    color: $label-color;
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
   }
 
-  .is-script > td {
+  &.is-script {
     background: $blue-notice-bg;
     color: $blue-action;
   }
 
-  .is-current > td {
+  &.is-current {
     background: $green-status-bg;
     color: $green-status-text;
   }
 
-  .is-stale > td {
+  &.is-stale {
     background: $red-status-bg;
     color: $red-status-text;
+  }
+}
+
+@media (max-width: 700px) {
+  .data-refresh-dsl-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.data-refresh-boolean-toggle {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(64px, 1fr));
+  border: 1px solid $neutral-border-light;
+  border-radius: 6px;
+  overflow: hidden;
+
+  &__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &__option {
+    padding: 4px 12px;
+    margin: 0;
+    background: $neutral-button-bg;
+    color: $neutral-700;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+  }
+
+  &__input--false:checked + &__option {
+    background: $danger;
+    color: $surface-base;
+  }
+
+  &__input--true:checked + &__option {
+    background: $primary-color;
+    color: $surface-base;
+  }
+
+  &__input:focus-visible + &__option {
+    outline: 3px solid rgba($blue-action, .35);
+    outline-offset: -3px;
   }
 }
 
@@ -441,6 +550,11 @@
   color: $text-strong;
   font-size: 2rem;
   font-weight: 700;
+}
+
+.billing-audit-card .billing-audit-formula {
+  margin-top: .5rem;
+  font-size: .9rem;
 }
 
 .billing-type-audit-card > p { margin-top: .5rem; }

@@ -2,6 +2,7 @@
 
 class OshaReport < ApplicationRecord
   include TrackableStatus
+  include Reassignable
   include Registry
 
   enum :status, {
@@ -113,13 +114,8 @@ class OshaReport < ApplicationRecord
     reportable_due_at.present? && in_progress? && reportable_due_at <= Time.current
   end
 
-  # For inbox reassignment - returns the current approver's ID
-  def current_assignee_id
-    approver_id
-  end
-
   # Get the form template for this model (for button configuration)
   def form_template
-    @form_template ||= FormTemplate.find_by(class_name: self.class.name)
+    @form_template ||= Forms::Template.find_by(class_name: self.class.name)
   end
 end

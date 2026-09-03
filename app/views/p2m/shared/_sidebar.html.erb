@@ -1,0 +1,23 @@
+<%# app/views/p2m/shared/_sidebar.html.erb
+    Sidebar for the Print 2 Mail app. The app switcher header is shared with
+    every other app; everything below it is this app's own navigation. %>
+<div class="sidebar p2m-sidebar">
+  <%= render "shared/app_switcher" %>
+
+  <nav class="p2m-links">
+    <% if can_use_app_feature?('p2m', 'stage_data') %>
+      <%= link_to "Pre Production", p2m_pre_production_path,
+                  class: "nav-link#{' active' if current_page?(p2m_pre_production_path)}" %>
+      <%= link_to "Post Production", p2m_stage_data_path,
+                  class: "nav-link#{' active' if current_page?(p2m_stage_data_path)}" %>
+    <% end %>
+    <% if can_use_app_feature?('p2m', 'oms_status') %>
+      <%= link_to "OMS Status", p2m_oms_status_path,
+                  class: "nav-link#{' active' if current_page?(p2m_oms_status_path)}" %>
+    <% end %>
+    <% if can_use_app_feature?('p2m', 'data_refresh') %>
+      <%= link_to "Upload Billing Data", p2m_data_refresh_path,
+                  class: "nav-link#{' active' if current_page?(p2m_data_refresh_path)}" %>
+    <% end %>
+  </nav>
+</div>

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
 
-class Department < GsabssBase
-  self.primary_key = 'department_id'
-end
+# Compatibility constant for callers not yet migrated to the Coa namespace.
+Department = Coa::Department

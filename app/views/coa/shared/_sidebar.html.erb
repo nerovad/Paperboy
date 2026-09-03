@@ -4,14 +4,44 @@
   <div class="coa-table-links">
     <%# Each entry is an ACL > Application Features grant under Chart of
         Accounts; coa_sidebar_resources is already filtered to what this user
-        holds. %>
-    <% if can_use_app_feature?("coa", "billing_lookup") %>
-      <%= link_to "Billing Lookup", coa_billing_lookup_path, class: "nav-link" %>
+        holds, and Coa::Tables says how each one is labelled and grouped. %>
+    <% lookup_links = Coa::Tables::LOOKUPS
+                        .select { |lookup| can_use_app_feature?("coa", lookup[:key]) }
+                        .map { |lookup| [lookup[:label], send(lookup[:route])] } %>
+    <% budget_unit_resources, accounting_code_resources =
+         coa_sidebar_resources.partition { |resource| coa_budget_unit?(resource) } %>
+    <% current_resource = lambda do |resource|
+         path = coa_sidebar_collection_path(resource)
+         current_page?(path) || request.path.start_with?("#{path}/")
+       end %>
+
+    <% unless lookup_links.empty? %>
+      <details class="nav-group" <%= "open" if lookup_links.any? { |_, path| current_page?(path) } %>>
+        <summary><span class="nav-group-label">Lookups</span></summary>
+        <% lookup_links.each do |label, path| %>
+          <%= link_to label, path, class: "nav-link#{' active' if current_page?(path)}" %>
+        <% end %>
+      </details>
     <% end %>
-    <% coa_sidebar_resources.each do |model_class| %>
-      <%= link_to model_class.model_name.human(count: 2),
-                  coa_sidebar_collection_path(model_class),
-                  class: "nav-link" %>
+
+    <% unless budget_unit_resources.empty? %>
+      <details class="nav-group" <%= "open" if budget_unit_resources.any?(&current_resource) %>>
+        <summary><span class="nav-group-label">Budget Unit</span></summary>
+        <% budget_unit_resources.each do |model_class| %>
+          <%= link_to coa_table_label(model_class),
+                      coa_sidebar_collection_path(model_class), class: "nav-link" %>
+        <% end %>
+      </details>
+    <% end %>
+
+    <% unless accounting_code_resources.empty? %>
+      <details class="nav-group" <%= "open" if accounting_code_resources.any?(&current_resource) %>>
+        <summary><span class="nav-group-label">Accounting Codes</span></summary>
+        <% accounting_code_resources.each do |model_class| %>
+          <%= link_to coa_table_label(model_class),
+                      coa_sidebar_collection_path(model_class), class: "nav-link" %>
+        <% end %>
+      </details>
     <% end %>
   </div>
 </div>

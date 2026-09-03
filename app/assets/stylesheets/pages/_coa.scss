@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 .coa-home {
   height: 100vh;
@@ -13,8 +13,7 @@
 }
 
 .coa-table-links {
-  display: grid;
-  gap: 8px;
+  display: block;
 }
 
 .coa-page {
@@ -151,7 +150,8 @@
   display: none;
 }
 
-.coa-billing-lookup > .coa-lookup-card {
+.coa-billing-lookup>.coa-lookup-card,
+.coa-billing-sections>.coa-lookup-card {
   z-index: 2;
 }
 
@@ -170,14 +170,23 @@
 }
 
 .coa-billing-fields,
+.coa-billing-sections,
 .coa-billing-result {
   display: grid;
   gap: 16px;
 }
 
+.coa-billing-sections[hidden] {
+  display: none;
+}
+
 .coa-billing-result {
   position: relative;
   z-index: 1;
+
+  &:has(.choices.is-open) {
+    z-index: 20;
+  }
 }
 
 .coa-billing-result[hidden] {
@@ -202,20 +211,32 @@
   margin: 0;
 }
 
+.coa-account-item-result {
+  margin: 8px 0 0;
+  color: $text-muted;
+}
+
 .coa-billing-string-grid-wrap {
   overflow-x: auto;
+
+  /* Choices menus are overlays. Release the scroll clipping while one is
+     open so its full width and height can extend beyond the compact cell. */
+  &:has(.choices.is-open) {
+    overflow: visible;
+  }
 }
 
 .coa-billing-string-grid {
   display: grid;
-  grid-template-columns: repeat(10, minmax(120px, 1fr));
-  min-width: 1200px;
+  grid-template-columns:
+    repeat(4, minmax(120px, 1fr)) 9rem 10rem 10rem 10rem 8rem 7rem;
+  min-width: 84rem;
   margin: 0;
   border-top: 1px solid $border-muted;
   border-left: 1px solid $border-muted;
 }
 
-.coa-billing-string-grid > * {
+.coa-billing-string-grid>* {
   padding: 10px 12px;
   border-right: 1px solid $border-muted;
   border-bottom: 1px solid $border-muted;
@@ -228,12 +249,102 @@
   font-weight: 700;
 }
 
-.coa-billing-string-grid > code {
+.coa-billing-string-grid>code {
   font-size: 1.1rem;
+}
+
+.coa-billing-string-grid__field {
+  min-width: 0;
+  padding: 4px;
+
+  .choices {
+    width: 100%;
+    margin: 0;
+  }
+
+  .choices__list--dropdown .choices__item--selectable {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left;
+  }
+
+  .choices__list--dropdown {
+    width: max-content;
+    min-width: max(100%, 28rem);
+    max-width: min(40rem, calc(100vw - 2rem));
+  }
+
+  .choices__list--dropdown .choices__list {
+    max-height: min(30rem, calc(100vh - 12rem));
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  &:nth-child(n + 18) .choices__list--dropdown {
+    right: 0;
+    left: auto;
+  }
 }
 
 .coa-billing-copy {
   margin-top: 12px;
+}
+
+.coa-customer-search {
+  position: relative;
+}
+
+.coa-customer-search input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.coa-customer-results {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid $border-muted;
+  border-radius: $radius-6;
+  background: $surface-base;
+  box-shadow: 0 4px 12px rgba($text-color, 0.14);
+}
+
+.coa-customer-result {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid $border-faint;
+  background: transparent;
+  color: $text-color;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.coa-customer-result:hover,
+.coa-customer-result:focus {
+  outline: 0;
+  background: $surface-control;
+}
+
+.coa-customer-results__empty,
+.coa-customer-name,
+.coa-customer-empty {
+  margin: 0;
+}
+
+.coa-customer-results__empty {
+  padding: 10px 12px;
+  color: $text-muted;
+}
+
+.coa-customer-name {
+  font-weight: 700;
 }
 
 .coa-account-tree,
@@ -266,7 +377,7 @@
   padding: 4px 0;
 }
 
-.coa-account-tree ul > li::before {
+.coa-account-tree ul>li::before {
   content: "";
   position: absolute;
   top: 16px;
@@ -275,7 +386,7 @@
   border-top: 2px solid $border-muted;
 }
 
-.coa-account-tree li > span {
+.coa-account-tree li>span {
   display: inline-block;
   padding: 6px 10px;
   border-radius: $radius-6;
@@ -332,7 +443,7 @@
   }
 
   .coa-billing-string-grid {
-    min-width: 1200px;
+    min-width: 84rem;
   }
 
   .coa-detail-row dt {

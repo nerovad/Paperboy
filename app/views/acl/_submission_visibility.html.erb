@@ -1,0 +1,121 @@
+<%# Inbox and Submissions Visibility: whose submissions a group can see.
+
+    Unlike the tick-box sections above, a grant is a row rather than a key. It
+    carries which surfaces it widens and, optionally, the slice of the county
+    whose submissions it covers, so this section posts on its own and must be
+    rendered outside the permissions form.
+
+    Locals:
+      group        the Group whose ACL page this is, preselected in the picker
+      groups       every group, for the picker
+      grants       all Forms::VisibilityGrant rows
+      form_types   [{ class_name:, label: }] catalog
+      form_labels  class_name => label
+-%>
+<div class="acl-permissions-section visibility-grants">
+  <h3>Inbox and Submissions Visibility</h3>
+  <p class="acl-subtitle">
+    A grant lets every member of a group see submissions that aren't their own,
+    including forms filed by people outside their reporting chain, for one form
+    or for every form at once. Choose whether it widens their
+    <strong>Inbox</strong>, the <strong>Submissions</strong> page or both, and
+    narrow it to part of the organization when the group should only see one
+    agency, division, department or unit. On the Submissions page granted forms
+    appear automatically; in the Inbox they appear once the user filters to that
+    form type. Seeing a submission is not permission to act on it. That is the
+    Submission Actions section above.
+  </p>
+
+  <%= form_with url: form_visibility_grants_path, method: :post, data: { turbo: false } do %>
+    <div class="pb-filter-grid">
+      <div class="pb-filter">
+        <%= label_tag :form_type, "Form" %>
+        <%# "All forms" covers every form at once, the right answer when a group
+            is being given a whole department's paperwork rather than one
+            workflow. %>
+        <%= select_tag :form_type,
+              options_for_select([[Forms::VisibilityGrant::ALL_FORMS_LABEL, Forms::VisibilityGrant::ALL_FORMS]] +
+                                 form_types.map { |ft| [ft[:label], ft[:class_name]] }),
+              include_blank: "Select a form…", class: "form-control" %>
+      </div>
+
+      <div class="pb-filter">
+        <%= label_tag :group_id, "Group" %>
+        <%# Defaults to the group whose page this is, but any group can be
+            granted from here, the way the standalone screen used to work. %>
+        <%= select_tag :group_id,
+              options_for_select(groups.map { |g| [g.group_name, g.GroupID] }, group.GroupID),
+              include_blank: "Select a group…", class: "form-control" %>
+      </div>
+
+      <div class="pb-filter">
+        <%= label_tag :applies_to, "Applies to" %>
+        <%= select_tag :applies_to,
+              options_for_select(Forms::VisibilityGrant::APPLIES_TO_LABELS.map { |value, label| [label, value] }, "both"),
+              class: "form-control" %>
+      </div>
+    </div>
+
+    <fieldset class="pb-filter-set visibility-grant-org">
+      <legend>Limit to part of the organization</legend>
+      <p class="acl-subtitle">
+        Leave a level blank for "all". A grant narrowed here only covers
+        submissions <em>filed inside</em> that part of the county, so a group
+        asked to review General Services Agency, Maintenance sees those and
+        nothing else.
+      </p>
+      <%= render "shared/org_cascade", labels: { agency: "All Agencies" } %>
+    </fieldset>
+
+    <div class="form-actions">
+      <%= submit_tag "Add Grant", class: "btn approve" %>
+    </div>
+  <% end %>
+
+  <h4 class="visibility-grants-heading">Current grants</h4>
+
+  <% if grants.any? %>
+    <table class="visibility-grants-table">
+      <thead>
+        <tr>
+          <th scope="col">Form</th>
+          <th scope="col">Group</th>
+          <th scope="col">Applies to</th>
+          <th scope="col">Submissions filed in</th>
+          <th scope="col" class="actions-column">Remove</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% grants.each do |grant| %>
+          <tr>
+            <td>
+              <strong><%= grant.form_label(form_labels) %></strong>
+              <% unless grant.all_forms? %>
+                <span class="grant-class-name"><%= grant.form_type %></span>
+              <% end %>
+            </td>
+            <td><%= grant.group&.group_name || "Group ##{grant.group_id}" %></td>
+            <td><span class="grant-badge"><%= grant.applies_to_label %></span></td>
+            <td>
+              <% if grant.org_scoped? %>
+                <% grant.org_summary.each do |chip| %>
+                  <span class="pb-search-chip"><%= chip %></span>
+                <% end %>
+              <% else %>
+                <span class="grant-muted">Entire organization</span>
+              <% end %>
+            </td>
+            <td class="actions-column">
+              <%= button_to "Remove", form_visibility_grant_path(grant), method: :delete,
+                    class: "btn deny compact",
+                    form: { data: { turbo_confirm: "Remove this visibility grant? The group goes back to seeing only their own submissions of this form.",
+                                    confirm_title: "Remove grant", confirm_label: "Remove" } } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="acl-subtitle">No visibility grants yet. Everyone sees only their own submissions.</p>
+  <% end %>
+</div>

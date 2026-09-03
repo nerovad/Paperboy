@@ -4,15 +4,31 @@
   'VCPrint',
   {
     steps: {
-      enabled: true,
-      manual_steps: Workflow::MANUAL_STEPS,
+      manual: {
+        enabled: true,
+        steps: Workflow::MANUAL_STEPS
+      },
       scheduled: {
+        enabled: true,
         frequency: :daily,
         steps: Workflow::SCHEDULED_STEPS
       }
     },
     group: {
       name: 'billing'
+    },
+    sop: {
+      title: 'How to Download VCPrint Data',
+      source_system: 'VCPrint',
+      reference_url: 'https://vcprint/public/login',
+      reference_path: :source_location,
+      instructions: [
+        'Sign in to VCPrint.',
+        'Open the completed orders report and select the required reporting period.',
+        'Export the report as a CSV file.',
+        'Save the downloaded file as vcprint.csv in the DataRunner inbox.',
+        'Verify vcprint.csv is current.'
+      ]
     },
     source: {
       location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/vcprint.csv',

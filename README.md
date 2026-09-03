@@ -21,6 +21,121 @@ For the product story / sales pitch, see [docs/PITCH.md](docs/PITCH.md).
 
 ---
 
+## Local development
+
+Running Paperboy on your own workstation. This is **not** a deployment —
+do not use `bin/deploy-dev` here. That script checks out `master`,
+precompiles assets and restarts systemd units that only exist on the dev
+server; on a workstation it resets your branch, leaves precompiled assets
+shadowing your live edits, and then fails at the `systemctl` calls.
+
+### First-time setup
+
+Ruby is pinned in `mise.toml`. Install it and hook mise into your shell —
+the `echo` line is run once, `.bashrc` sources it on every shell after
+that:
+
+```bash
+mise install
+echo 'eval "$(mise activate bash)"' >> ~/.bashrc
+exec bash
+ruby -v            # expect 4.0.6
+```
+
+Do not `apt install ruby-bundler` or `snap install ruby`. Both put a
+second Ruby on `PATH` ahead of mise's and the pin stops meaning anything.
+
+System packages (Ubuntu; see [Redis-compatible queue
+service](#redis-compatible-queue-service) below for the Arch/Valkey
+equivalent):
+
+```bash
+sudo apt install build-essential libyaml-dev libffi-dev \
+                 freetds-dev freetds-bin redis-server
+sudo systemctl enable --now redis-server
+redis-cli ping     # expect PONG
+```
+
+`freetds-dev` backs the `tiny_tds` gem. Then:
+
+```bash
+bundle install
+```
+
+### The .env file
+
+`.env` is gitignored, so it does not arrive with a fresh clone — copy it
+from another machine. `config/database.yml` uses `ENV.fetch` with no
+defaults, so Rails will not boot without it. At minimum:
+
+```bash
+GSABSS_HOST=  GSABSS_PORT=  GSABSS_USERNAME=  GSABSS_PASSWORD=
+GSABSS_DATABASE=GSABSS
+PAPERBOY_DATABASE=Paperboy_Dev
+ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=
+ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=
+ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=
+REDIS_URL=redis://localhost:6379/0
+```
+
+`PAPERBOY_DATABASE` is read in every environment, not just development —
+`config/database.yml` uses it as the database name for development, staging
+and production alike. The stage host overrides it back to `Paperboy_Stage`
+in its systemd units and in `bin/deploy-stage`; see "Stage has its own
+database" below. Copying a dev `.env` onto a server without that override
+points that server at dev's data.
+
+The three encryption keys must match the values used elsewhere or
+existing encrypted columns will not decrypt. Add `ENTRA_*`, `METABASE_*`,
+`POWERBI_*`, `TEAMS_WEBHOOK_URL`, `AIM_*` and `BILLING_ARCHIVE_ROOT` as
+the area you are working on needs them.
+
+### Running it
+
+```bash
+bin/dev-local            # Puma on :3001 + Sidekiq, one terminal
+bin/dev-local 3005       # different port
+bin/dev-local --cron     # also run the scheduled jobs
+bin/dev-local --no-jobs  # Puma only
+```
+
+It preflights `.env`, the port and Redis, prefixes Sidekiq output with
+`[sidekiq]`, and shuts both processes down together on Ctrl-C. If one
+dies the other is torn down with it.
+
+`bin/dev` still works if you only want Puma with no preflight.
+
+### Two things to know
+
+**There is no local database.** `development` points at `Paperboy_Dev` on
+the shared SQL Server, so this machine needs network access to it, and
+anything you write is visible to everyone else on dev. Avoid `bin/setup`
+— it runs `db:prepare`, which would migrate the shared database.
+
+**Scheduled jobs are off by default.** `bin/dev-local` sets
+`PAPERBOY_DISABLE_CRON=true`, because the cron schedule loads at Sidekiq
+boot whether or not `-C` is passed. Left on, a workstation runs
+`OshaReportableDeadlineJob` hourly against `Paperboy_Dev`, and that job
+writes `reportable_breach_notified_at` as its dedupe stamp — so it would
+race the dev server and consume notices the server should have sent. Pass
+`--cron` only when you are deliberately testing a scheduled job. Servers
+never set the variable and keep their schedule.
+
+### Logging in
+
+Entra's callback is `/auth/callback`, which is not registered for
+`localhost:3001` in the app registration, so OAuth will not complete
+locally. Use the impersonation route instead: `POST /login`
+(`sessions#create_legacy`) takes an employee id.
+
+### Assets
+
+Development compiles assets on demand through sprockets. Leave
+`public/assets` empty — if you ever run `assets:precompile` locally those
+files shadow your SCSS and JS edits until you run `assets:clobber`.
+
+---
+
 ## Redis-compatible queue service
 
 Sidekiq requires a Redis-compatible server on `127.0.0.1:6379`. On
@@ -89,6 +204,40 @@ bin/deploy-stage some-branch  # deploys a different branch
   The script prompts for your sudo password during the two systemctl restart
   calls near the end.
 
+### Stage has its own database
+
+  Stage runs against Paperboy_Stage, not Paperboy_Dev. That distinction is
+  easy to lose: .env is shared with the dev host and sets
+  PAPERBOY_DATABASE=Paperboy_Dev, and config/database.yml reads that value in
+  every environment, so without an override a staging deploy quietly writes to
+  dev. The override is set twice, and both are needed:
+
+  - `Environment=PAPERBOY_DATABASE=Paperboy_Stage` in
+    config/systemd/paperboy-stage.service and paperboy-stage-sidekiq.service,
+    after the EnvironmentFile line so it wins — this covers Puma and Sidekiq.
+  - `export PAPERBOY_DATABASE=Paperboy_Stage` in bin/deploy-stage — this covers
+    db:migrate, acl:sync and the asset tasks the script runs.
+
+  bin/deploy-stage reinstalls both unit files and runs daemon-reload before it
+  restarts, the same way bin/deploy does for prod, so a normal deploy picks up
+  a change to either one. Where /etc/systemd/system/paperboy-stage*.service are
+  symlinks into this repo, git pull has already updated them and the copy is
+  skipped — the daemon-reload is still what makes systemd re-read them. To do
+  it by hand:
+
+```bash
+sudo cp config/systemd/paperboy-stage*.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl restart paperboy-stage paperboy-stage-sidekiq
+```
+
+  To confirm which database stage is actually on:
+
+```bash
+PAPERBOY_DATABASE=Paperboy_Stage RAILS_ENV=staging bundle exec rails runner \
+  'puts ActiveRecord::Base.connection.current_database'
+```
+
   Tail logs while debugging:
 
 ```bash
@@ -123,6 +272,43 @@ git reset --hard prod-20251112-2050  # example tag
 ```
 
 Rebuild assets + restart app
+
+## Promoting ACLs (dev → stage → prod)
+
+Groups, their permission grants and the org-level grants live in each
+Paperboy_* database, not in shared GSABSS, so they have to be carried across
+by hand. `db/acl.yml` is that carrier: it is committed, and it describes every
+environment at once.
+
+```bash
+# On dev, after setting groups and permissions up in ACL > Groups
+bin/rails acl:dump MERGE=1        # union dev's ACL into db/acl.yml
+git add db/acl.yml && git commit  # read the diff first — org grants are broad
+
+# On stage, then prod, after deploying
+bin/rails acl:sync DRY_RUN=1      # print the plan, write nothing
+bin/rails acl:sync                # apply it
+bin/rails acl:sync PRUNE=1        # also remove grants the file does not list
+```
+
+`acl:sync` is additive and safe to re-run: it creates what is missing and
+leaves everything else alone. Nothing is matched on an id the local database
+owns — groups go by name, forms by class name, org scopes by the shared GSABSS
+agency/division/department/unit ids.
+
+A form grant is only applied where the form itself exists, because
+`form_templates.id` is allocated per database. Grants for a form the target
+does not have are listed as `!` lines and held back rather than pointed at
+whatever form happens to hold that id there:
+
+```
+! HCA_HR: form/34 — LeaveOfAbsenceForm does not exist in this database; create the form here first
+```
+
+So promote the form template first, then re-run `acl:sync` and the held-back
+grants land. Two things are deliberately left out of the file: Employee_Groups,
+because memberships are meant to differ per environment, and contractors,
+because that table carries password digests.
 
 ## Form Template Workflow
 

@@ -41,13 +41,19 @@ module SlideshowHelper
   end
 
   def digital_asset_management_home_images
-    slideshow_images('digital_asset_management', 'Digital asset ingestion',
-                     'Digital asset cataloging', 'Digital asset delivery')
+    [
+      { src: 'DAM_1.png', alt: 'Digital asset ingestion into a secure repository' },
+      { src: 'DAM_2.png', alt: 'Digital asset cataloging by type and metadata' },
+      { src: 'DAM_3.png', alt: 'Digital asset delivery across devices' }
+    ]
   end
 
   def admin_tools_home_images
-    slideshow_images('admin_tools', 'User and account administration',
-                     'Roles and access permissions', 'Application and system configuration')
+    [
+      { src: 'Admin_1.png', alt: 'User and account administration' },
+      { src: 'Admin_4.png', alt: 'Roles and access permissions' },
+      { src: 'Admin_5.png', alt: 'Application and system configuration' }
+    ]
   end
 
   private

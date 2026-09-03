@@ -50,7 +50,7 @@ module Paperboy
               "path: #{app.key}_root_path } if can_access_app?('#{app.key}')\n"
       branch = "    elsif controller_path.start_with?('#{app.key}/')\n      '#{app.key}'\n"
 
-      content = insert_before(read(path), scope: 'def paperboy_apps', anchor: '^    apps$',
+      content = insert_before(read(path), scope: 'def paperboy_apps', anchor: '^    \[apps\.first,',
                                           text: entry, label: "#{path} (paperboy_apps)")
       insert_before(content, scope: 'def current_app_key', anchor: '^    else$',
                              text: branch, label: "#{path} (current_app_key)")

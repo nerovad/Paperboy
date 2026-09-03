@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 /* ---------------------------------------------------------------------------
    Modal system — single source of truth.
@@ -109,6 +109,36 @@
   padding: 16px 20px;
   overflow-y: auto;
   line-height: 1.5;
+}
+
+.pb-pdf-preview {
+  display: flex;
+  flex-direction: column;
+}
+
+.pb-pdf-preview__frame {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 1px solid $border-faint;
+  border-radius: 8px;
+}
+
+.dsl-sop {
+  ol { padding-left: 1.5rem; }
+
+  li + li { margin-top: .6rem; }
+}
+
+.dsl-reference-list {
+  .table-wrap { margin: 0; }
+
+  table { width: 100%; }
+}
+
+.dsl-reference-list__message {
+  margin: 0;
+  color: $muted;
 }
 
 /* The prompt text in a confirm-style dialog. */

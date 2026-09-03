@@ -5,12 +5,14 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
   before_action :set_current_user
   helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain,
-                :auth_console_admin?, :auth_console_user?, :pcard_admin?, :current_user_dropdown_permissions,
+                :auth_console_admin?, :pcard_admin?, :current_user_dropdown_permissions,
                 :current_user_form_permission_keys, :current_user_application_permission_keys,
                 :current_user_feature_permission_keys,
                 :current_user_record_view_permission_keys, :current_user_record_edit_permission_keys,
-                :safety_auth_console_user?,
-                :available_authorization_consoles, :authorization_console_accessible?
+                :current_user_submission_action_permission_keys,
+                :available_authorization_consoles, :authorization_console_accessible?,
+                :authorization_console_rights, :can_read_authorization_console?,
+                :can_write_authorization_console?, :can_delete_authorization_console?
 
   def current_user
     user_data = session[:user]
@@ -34,7 +36,7 @@ class ApplicationController < ActionController::Base
     user = session[:user]
     @inbox_count =
       if user && user['employee_id'].present?
-        InboxQuery.new(scoped_employee_ids: [user['employee_id'].to_s]).count
+        Forms::InboxQuery.new(scoped_employee_ids: [user['employee_id'].to_s]).count
       else
         0
       end
@@ -44,10 +46,10 @@ class ApplicationController < ActionController::Base
     employee = Submitter.resolve(employee_id)
     return {} unless employee
 
-    unit = Unit.resolve_for_employee(employee)
-    department = Department.find_by(department_id: unit&.department_id)
-    division   = Division.find_by(division_id: department&.division_id)
-    agency     = Agency.find_by(agency_id: division&.agency_id)
+    unit = Coa::Unit.resolve_for_employee(employee)
+    department = Coa::Department.find_by(department_id: unit&.department_id)
+    division   = Coa::Division.find_by(division_id: department&.division_id)
+    agency     = Coa::Agency.find_by(agency_id: division&.agency_id)
 
     {
       employee_id: employee.employee_id,
@@ -79,7 +81,7 @@ class ApplicationController < ActionController::Base
     employee_id = session.dig(:user, 'employee_id')
     if employee_id.present?
       employee = Submitter.resolve(employee_id)
-      unit     = Unit.resolve_for_employee(employee)
+      unit     = Coa::Unit.resolve_for_employee(employee)
 
       # agency_id comes straight off the Employee row, normalized to the
       # three-character id the org tables and org_permissions use — Employees
@@ -89,7 +91,7 @@ class ApplicationController < ActionController::Base
       # Units), which previously zeroed out the whole chain and skipped every
       # org-level grant in load_user_permissions.
       @_current_user_org_chain = {
-        agency_id: Agency.normalize_id(employee&.agency),
+        agency_id: Coa::Agency.normalize_id(employee&.agency),
         division_id: unit&.division_id,
         department_id: unit&.department_id,
         unit_id: unit&.unit_id
@@ -101,14 +103,12 @@ class ApplicationController < ActionController::Base
     @_current_user_org_chain = {}
   end
 
+  # Whether the parking/badge/key console shows every department or only the
+  # user's own. A scope question, not an access one — access is the ACL grants
+  # below. Kept on the group name because there is nowhere else to say it.
   def auth_console_admin?
     current_user_group_names.include?('system_admins') ||
       current_user_group_names.include?('auth_console_admin')
-  end
-
-  def auth_console_user?
-    auth_console_admin? ||
-      current_user_group_names.include?('auth_console_approvers')
   end
 
   def pcard_admin?
@@ -116,12 +116,40 @@ class ApplicationController < ActionController::Base
       current_user_group_names.include?('pcard_admin')
   end
 
-  # Who may manage the Safety Reporting authorization console. Deliberately its
-  # own group rather than the GSA console's — holding a parking/badge
-  # authorization says nothing about who assigns HCA safety officers.
-  def safety_auth_console_user?
-    current_user_group_names.include?('system_admins') ||
-      current_user_group_names.include?('safety_auth_console')
+  # Console access is granted per console in ACL > Authorization Consoles, as
+  # "<console>:<right>" keys. The old per-console group names
+  # (auth_console_approvers, safety_auth_console, cir_auth_console) no longer
+  # grant anything; system_admins keeps blanket access so the ACL can always be
+  # reached to set the rest up.
+  def current_user_authorization_console_keys
+    return @current_user_authorization_console_keys if defined?(@current_user_authorization_console_keys)
+
+    @current_user_authorization_console_keys = load_user_permissions(AuthorizationConsole::PERMISSION_TYPE)
+  end
+
+  def authorization_console_superuser?
+    current_user_group_names.include?('system_admins')
+  end
+
+  # The rights this user holds on one console. Write and delete each imply read,
+  # so ticking write alone in the ACL still lets them in to use it.
+  def authorization_console_rights(console)
+    key = console.respond_to?(:key) ? console.key : console.to_s
+    return AuthorizationConsole::RIGHT_KEYS.to_set if authorization_console_superuser?
+
+    AuthorizationConsole.rights_from_keys(key, current_user_authorization_console_keys)
+  end
+
+  def can_read_authorization_console?(console)
+    authorization_console_rights(console).include?('read')
+  end
+
+  def can_write_authorization_console?(console)
+    authorization_console_rights(console).include?('write')
+  end
+
+  def can_delete_authorization_console?(console)
+    authorization_console_rights(console).include?('delete')
   end
 
   # The authorization consoles this user may open, in registry order. Drives
@@ -132,11 +160,7 @@ class ApplicationController < ActionController::Base
   end
 
   def authorization_console_accessible?(console)
-    case console.key
-    when AuthorizationConsole::SERVICES.key   then auth_console_user?
-    when AuthorizationConsole::HCA_SAFETY.key then safety_auth_console_user?
-    else false
-    end
+    can_read_authorization_console?(console)
   end
 
   def current_user_dropdown_permissions
@@ -186,6 +210,17 @@ class ApplicationController < ActionController::Base
     @current_user_record_edit_permission_keys = load_user_permissions('record_edit')
   end
 
+  # Actions a viewer may take on a submission that isn't theirs to begin with,
+  # keyed "<action>:<FormClass>" — see Forms::SubmissionPolicy. Granted per
+  # group (ACL > group > permissions) or to everyone in an org node (ACL >
+  # Organization Permissions); both flow through the same cascade below.
+  def current_user_submission_action_permission_keys
+    return @current_user_submission_action_permission_keys if defined?(@current_user_submission_action_permission_keys)
+
+    @current_user_submission_action_permission_keys =
+      load_user_permissions(Forms::SubmissionPolicy::PERMISSION_TYPE)
+  end
+
   def require_system_admin
     return if current_user_group_names.include?('system_admins')
 
@@ -213,16 +248,38 @@ class ApplicationController < ActionController::Base
     require_app_feature('admin_tools', key)
   end
 
-  def require_auth_console
-    return if auth_console_user?
+  # Gate a console screen on one right. Read sends you out of the console
+  # entirely; write and delete send you back to the console you are already in,
+  # because you can see it — you just cannot do that to it.
+  def require_authorization_console(console, right = 'read')
+    return if authorization_console_rights(console).include?(right)
 
-    redirect_to root_path, alert: 'Access denied. Authorization Console access required.'
+    if right == 'read'
+      redirect_to root_path, alert: 'Access denied. Authorization Console access required.'
+    else
+      redirect_to public_send(console.route_name), alert: "Access denied. You do not have #{right} access to this console."
+    end
   end
 
-  def require_safety_auth_console
-    return if safety_auth_console_user?
+  # Gate a screen that more than one right can reach — the CIR console's
+  # add/edit pages, which carry the form for write and the removal buttons for
+  # delete, and so must open for either.
+  def require_authorization_console_any(console, *rights)
+    return if authorization_console_rights(console).intersect?(rights.to_set)
 
-    redirect_to root_path, alert: 'Access denied. Authorization Console access required.'
+    redirect_to public_send(console.route_name), alert: 'Access denied. You do not have access to that.'
+  end
+
+  def require_auth_console(right = 'read')
+    require_authorization_console(AuthorizationConsole::SERVICES, right)
+  end
+
+  def require_safety_auth_console(right = 'read')
+    require_authorization_console(AuthorizationConsole::HCA_SAFETY, right)
+  end
+
+  def require_cir_auth_console(right = 'read')
+    require_authorization_console(AuthorizationConsole::CIR, right)
   end
 
   # Gate for the console picker itself: any one console is enough to get in.
@@ -275,42 +332,10 @@ class ApplicationController < ActionController::Base
   end
 
   def load_user_permissions(permission_type)
-    keys = Set.new
-
-    # 1. Global permissions (all org fields nil — apply to everyone)
-    keys.merge(
-      OrgPermission.where(
-        agency_id: nil, division_id: nil, department_id: nil, unit_id: nil,
-        permission_type: permission_type
-      ).pluck(:permission_key)
-    )
-
-    # 2. Org-level permissions (cascading: agency → division → department → unit)
-    org = current_user_org_chain
-    if org[:agency_id].present?
-      conditions = [
-        { agency_id: org[:agency_id], division_id: nil, department_id: nil, unit_id: nil }
-      ]
-      conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: nil, unit_id: nil } if org[:division_id].present?
-      conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: org[:department_id], unit_id: nil } if org[:department_id].present?
-      conditions << { agency_id: org[:agency_id], division_id: org[:division_id], department_id: org[:department_id], unit_id: org[:unit_id] } if org[:unit_id].present?
-
-      query = conditions.map { |c| OrgPermission.where(c.merge(permission_type: permission_type)) }.reduce(:or)
-      keys.merge(query.pluck(:permission_key))
-    end
-
-    # 3. Group-level permissions (additive on top of org)
-    group_ids = current_user_group_ids
-    if group_ids.any?
-      keys.merge(
-        GroupPermission.where(group_id: group_ids, permission_type: permission_type)
-                       .pluck(:permission_key)
-      )
-    end
-
-    keys
-  rescue StandardError
-    Set.new
+    Pfa::Access::PermissionSet.new(
+      org_chain: current_user_org_chain,
+      group_ids: current_user_group_ids
+    ).keys(permission_type)
   end
 
   def set_current_user

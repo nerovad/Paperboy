@@ -52,6 +52,14 @@ def output_path_for(cfg)
 end
 
 def first_target_for(cfg)
+  if EtlHelpers.source_strategy(cfg) == :replicate
+    return EtlHelpers.source_database_target(
+      cfg,
+      env_host: MssqlHelpers.env_any('MSSQL_HOST', 'GSABSS_HOST'),
+      env_database: MssqlHelpers.env_any('MSSQL_DATABASE', 'GSABSS_DATABASE')
+    )
+  end
+
   targets = EtlHelpers.database_targets(
     cfg,
     env_host: MssqlHelpers.env_any('MSSQL_HOST', 'GSABSS_HOST'),

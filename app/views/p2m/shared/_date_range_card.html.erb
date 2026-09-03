@@ -1,0 +1,30 @@
+<section class="p2m-stage-card p2m-stage-card--compact" aria-labelledby="<%= title_id %>">
+  <h2 id="<%= title_id %>">Date Range</h2>
+
+  <%= form_with(url: url, method: method,
+                data: { turbo: false, controller: "date-range",
+                        action: "submit->date-range#validate reset->date-range#reset" }) do %>
+    <div class="p2m-stage-date-fields">
+      <div class="form-group">
+        <%= label_tag "#{scope}_start_date", "Start Date" %>
+        <%= date_field_tag "#{scope}[start_date]", @start_date,
+                           id: "#{scope}_start_date", class: "form-control", required: true,
+                           data: { date_range_target: "startDate",
+                                   action: "input->date-range#validateRange" } %>
+      </div>
+      <div class="form-group">
+        <%= label_tag "#{scope}_end_date", "End Date" %>
+        <%= date_field_tag "#{scope}[end_date]", @end_date,
+                           id: "#{scope}_end_date", class: "form-control", required: true,
+                           data: { date_range_target: "endDate",
+                                   action: "input->date-range#validateRange" } %>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <%= submit_tag "Confirm", class: "btn approve compact" %>
+      <%= button_tag "Reset", type: :reset, class: "btn warning compact" %>
+      <%= link_to "Cancel", p2m_root_path, class: "btn compact" %>
+    </div>
+  <% end %>
+</section>

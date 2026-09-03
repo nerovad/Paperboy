@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 /* Hamburger menu button (mobile only) */
 .hamburger-btn {
@@ -133,6 +133,14 @@
   }
   
   .sidebar-p { text-align: center; }
+
+  /* Shown only when the search box and Advanced Search between them leave
+     no forms, so an empty list says why. */
+  .sidebar-empty {
+    font-size: 0.85em;
+    font-style: italic;
+    opacity: 0.75;
+  }
   
   .nav-link {
     display: block;
@@ -184,6 +192,27 @@
   }
   
   .nav-link.active { background-color: var(--sidebar-accent); }
+
+  /* A search command — something the sidebar does rather than a form it
+     opens. It wears .nav-link so a matched command sits in the result list as
+     one of its rows; everything typographic is inherited, the way the Billing
+     tool buttons do it. The palette renders the same rows under its own
+     class; see components/command_palette. */
+  .sidebar-command {
+    width: 100%;
+    border: none;
+    font: inherit;
+    background-color: rgba(255, 255, 255, 0.2);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+
+    &[hidden] { display: none; }
+  }
+
+  .search-command__glyph {
+    margin-right: 8px;
+    font-size: 0.8em;
+    opacity: 0.7;
+  }
 
   /* Application switcher (sidebar header) */
   .app-switcher {
@@ -352,6 +381,20 @@
     --sidebar-accent-ring: #{rgba($green-teal, 0.2)};
     --sidebar-accent-soft: #{rgba($green-teal, 0.08)};
     --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$green-teal});
+
+    .production-links__label {
+      color: $surface-base;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .production-links__divider {
+      height: 1px;
+      margin: 14px 0;
+      background: var(--sidebar-accent);
+    }
   }
 
   &.billing-sidebar {
@@ -372,16 +415,21 @@
     --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$green-teal});
   }
 
-  &.data-runner-sidebar {
-    /* Blue / navy theme (from $brand-navy in _tokens.scss). */
-    --sidebar-accent: #{$brand-navy};
-    --sidebar-accent-hover: #{$brand-navy-hover};
-    --sidebar-accent-ring: #{rgba($brand-navy, 0.2)};
-    --sidebar-accent-soft: #{rgba($brand-navy, 0.08)};
-    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$brand-navy});
+  &.p2m-sidebar {
+    /* Teal theme (from $green-teal in _tokens.scss). */
+    --sidebar-accent: #{$green-teal};
+    --sidebar-accent-hover: #{$green-teal-hover};
+    --sidebar-accent-ring: #{rgba($green-teal, 0.2)};
+    --sidebar-accent-soft: #{rgba($green-teal, 0.08)};
+    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$green-teal});
+  }
 
+  &.data-runner-sidebar,
+  &.coa-sidebar,
+  &.admin-tools-sidebar {
     .nav-group {
       margin: 10px 0;
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 6px;
       background-color: rgba(255, 255, 255, 0.08);
     }
@@ -390,7 +438,7 @@
       padding-bottom: 8px;
     }
 
-    .nav-group summary {
+    .nav-group summary:not(.btn) {
       cursor: pointer;
       list-style-position: inside;
       padding: 11px 12px;
@@ -410,6 +458,15 @@
       text-align: left;
       word-break: break-word;
     }
+  }
+
+  &.data-runner-sidebar {
+    /* Blue / navy theme (from $brand-navy in _tokens.scss). */
+    --sidebar-accent: #{$brand-navy};
+    --sidebar-accent-hover: #{$brand-navy-hover};
+    --sidebar-accent-ring: #{rgba($brand-navy, 0.2)};
+    --sidebar-accent-soft: #{rgba($brand-navy, 0.08)};
+    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$brand-navy});
 
     .nav-link.dragging {
       opacity: 0.45;
@@ -434,6 +491,7 @@
     --sidebar-accent-ring: #{rgba($orange-action, 0.2)};
     --sidebar-accent-soft: #{rgba($orange-action, 0.08)};
     --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$orange-action});
+
   }
 
   .nav-link mark {

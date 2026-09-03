@@ -86,7 +86,7 @@ class ReportGenerationJob < ApplicationJob
   def form_type_to_model(form_type)
     # form_type is the tableized class name (e.g., "parking_lot_submissions")
     # Find the template whose class_name tableizes to this value
-    template = FormTemplate.all.find { |t| t.class_name.tableize == form_type }
+    template = Forms::Template.all.find { |t| t.class_name.tableize == form_type }
 
     raise "Unknown form type: #{form_type}" unless template
 
@@ -118,7 +118,7 @@ class ReportGenerationJob < ApplicationJob
 
     # Every report covers a single form type, so the reference prefix is uniform —
     # resolve it once and prepend a "Reference" column (e.g. LOA-1042).
-    reference_prefix = FormReference.prefix_for(submissions.first.class)
+    reference_prefix = Forms::Reference.prefix_for(submissions.first.class)
 
     # Generate CSV
     CSV.open(csv_filename, 'wb') do |csv|
@@ -198,7 +198,7 @@ class ReportGenerationJob < ApplicationJob
       pdf.font 'Helvetica', size: 12
 
       # Basic Info
-      pdf.text "Reference: #{FormReference.reference_for(submission)}", style: :bold
+      pdf.text "Reference: #{Forms::Reference.reference_for(submission)}", style: :bold
       pdf.move_down 5
 
       # Created/Submitted Date

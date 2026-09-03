@@ -4,7 +4,8 @@ module Coa
   class BaseController < ApplicationController
     before_action :require_app_access
 
-    helper_method :coa_sidebar_resources, :coa_sidebar_collection_path, :coa_feature_key
+    helper_method :coa_sidebar_resources, :coa_sidebar_collection_path, :coa_feature_key,
+                  :coa_table_label, :coa_budget_unit?
 
     private
 
@@ -28,57 +29,25 @@ module Coa
     # gated wholesale so the sidebar and the row-count overview on the COA
     # index both show exactly what the grants allow.
     def coa_sidebar_resources
-      coa_all_resources.select { |model_class| helpers.can_use_app_feature?('coa', coa_feature_key(model_class)) }
+      Coa::Tables.models.select { |model_class| helpers.can_use_app_feature?('coa', coa_feature_key(model_class)) }
     end
 
     # A table's ACL feature key is its route collection name, so the sidebar
     # button and the controller behind it are gated by the same string.
     def coa_feature_key(model_class)
-      coa_route_collection_name(model_class)
+      Coa::Tables.collection_for(model_class)
     end
 
-    def coa_all_resources
-      [
-        Coa::Agency,
-        Coa::Division,
-        Coa::Department,
-        Coa::Unit,
-        Coa::Activity,
-        Coa::Function,
-        Coa::Fund,
-        Coa::MajorProgram,
-        Coa::Object,
-        Coa::Phase,
-        Coa::Program,
-        Coa::RevenueSource,
-        Coa::ObjectInference,
-        Coa::SubUnit,
-        Coa::Task
-      ]
+    def coa_table_label(model_class)
+      Coa::Tables.label_for(model_class)
+    end
+
+    def coa_budget_unit?(model_class)
+      Coa::Tables.budget_unit?(model_class)
     end
 
     def coa_sidebar_collection_path(model_class)
-      public_send("coa_#{coa_route_collection_name(model_class)}_path")
-    end
-
-    def coa_route_collection_name(model_class)
-      {
-        'Coa::Agency' => 'agencies',
-        'Coa::Activity' => 'activities',
-        'Coa::Department' => 'departments',
-        'Coa::Division' => 'divisions',
-        'Coa::Function' => 'functions',
-        'Coa::Fund' => 'funds',
-        'Coa::MajorProgram' => 'major_programs',
-        'Coa::Object' => 'objects',
-        'Coa::ObjectInference' => 'object_inferences',
-        'Coa::Phase' => 'phases',
-        'Coa::Program' => 'programs',
-        'Coa::RevenueSource' => 'revenue_sources',
-        'Coa::SubUnit' => 'sub_units',
-        'Coa::Task' => 'tasks',
-        'Coa::Unit' => 'units'
-      }.fetch(model_class.name)
+      public_send("coa_#{coa_feature_key(model_class)}_path")
     end
   end
 end

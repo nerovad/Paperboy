@@ -1,19 +1,21 @@
-<%# Advanced Search — the filter panel behind the sidebar button.
+<%# Advanced Search — the panel behind the sidebar button.
 
-    It is a GET to the Submissions list using the same parameter names its
-    filter bar already uses, so a search is always reproducible from its URL
-    and can be bookmarked, saved or handed to somebody else. The bar sends one
-    value per filter; this panel sends several, which FormSearch and
-    Filterable#apply_filters both understand.
+    It narrows the list of forms you can *fill out*, on the official metadata
+    an admin set on each form in the form builder: which part of the county
+    issues it, what kind of form it is, and its free-text tags. It does not
+    search submitted forms — that is the Submissions list's own filter bar.
 
-    The org selects cascade Agency → Division → Department → Unit. The server
-    renders whatever levels the current search already chose; everything below
-    the level the user changes is refetched by advanced_search_controller.js
-    from /lookups. %>
+    Everything here is applied in the browser. The sidebar has already rendered
+    every form the viewer is allowed to use, each carrying its metadata, so
+    narrowing is instant and needs no round trip. FormFinder built the option
+    lists from those same forms, so no choice here can come back empty.
+
+    Locals:
+      form_finder  FormFinder over the forms this sidebar is showing %>
 <div class="pb-modal-backdrop" hidden
      data-advanced-search-target="modal"
      data-action="click->advanced-search#backdropClose">
-  <div class="pb-modal pb-modal--xl" role="dialog" aria-modal="true"
+  <div class="pb-modal pb-modal--lg" role="dialog" aria-modal="true"
        aria-labelledby="pb-advanced-search-title">
     <div class="pb-modal__header">
       <h3 id="pb-advanced-search-title">Advanced Search</h3>
@@ -21,117 +23,74 @@
               data-action="advanced-search#close">✕</button>
     </div>
 
-    <%= form_with url: submissions_path, method: :get,
-                  class: "pb-advanced-form", data: { turbo: false } do %>
-      <%# A search looks across everything the viewer is allowed to see, rather
-          than the list's default of "mine" — asking for a whole unit's forms
-          and getting back your own reads as a broken search. `all` still means
-          the viewer's own and their subordinates' unless they are a system
-          admin, and the Submissions list ignores it entirely for anyone with
-          neither reports nor admin rights. Sent as a parameter so the widening
-          stays visible in the URL and can be narrowed again from the filter
-          bar. %>
-      <%= hidden_field_tag :filter_employee, params[:filter_employee].presence || "all" %>
+    <div class="pb-modal__body">
+      <% if form_finder.any_facets? %>
+        <p class="pb-modal__message">
+          Narrow the forms in the sidebar. Leave a filter unset to include everything.
+        </p>
 
-      <div class="pb-modal__body">
-        <fieldset class="pb-filter-set">
-          <legend>Organization</legend>
-          <div class="pb-filter-grid">
-            <div class="pb-filter">
-              <%= label_tag :filter_agency, "Agency" %>
-              <%= select_tag :filter_agency,
-                             options_for_select(FormSearch.agency_options, form_search.agency),
-                             include_blank: "All Agencies", class: "form-control",
-                             data: { advanced_search_target: "agency",
-                                     action: "change->advanced-search#loadDivisions" } %>
+        <% if form_finder.org_tree[:agencies].any? %>
+          <fieldset class="pb-filter-set">
+            <legend>Organization</legend>
+            <%# Only the agencies are rendered; the deeper levels are filled
+                from the org tree as the user narrows, by the same controller
+                that would otherwise fetch them from /lookups. %>
+            <%= render "shared/org_cascade",
+                       scope: "advanced-search", standalone: false, prefix: "form_filter",
+                       labels: { agency: "Any Agency", division: "Any",
+                                 department: "Any", unit: "Any Unit" },
+                       options: { agency: form_finder.org_tree[:agencies],
+                                  division: [], department: [], unit: [] } %>
+          </fieldset>
+        <% end %>
+
+        <% if form_finder.form_types.any? %>
+          <fieldset class="pb-filter-set">
+            <legend>Form Type</legend>
+            <div class="pb-checkbox-row">
+              <% form_finder.form_types.each_with_index do |form_type, index| %>
+                <label class="pb-checkbox">
+                  <%= check_box_tag "form_filter_type[]", form_type, false,
+                                    id: "pb-search-type-#{index}",
+                                    data: { advanced_search_target: "formType" } %>
+                  <span><%= form_type %></span>
+                </label>
+              <% end %>
             </div>
+          </fieldset>
+        <% end %>
 
-            <div class="pb-filter">
-              <%# Label text is set by the controller: HCA calls a division a
-                  department and vice versa, and the viewer can change agency
-                  without leaving the panel. %>
-              <label for="filter_division" data-advanced-search-target="divisionLabel">
-                <%= form_search.level_label(:division) %>
-              </label>
-              <%= select_tag :filter_division,
-                             options_for_select(FormSearch.division_options(form_search.agency), form_search.division),
-                             include_blank: "All", class: "form-control",
-                             data: { advanced_search_target: "division",
-                                     action: "change->advanced-search#loadDepartments" } %>
+        <% if form_finder.tags.any? %>
+          <fieldset class="pb-filter-set">
+            <%# Ticking several tags widens rather than narrows: a form needs
+                only one of them, the same way the type boxes work. %>
+            <legend>Tags</legend>
+            <div class="pb-checkbox-row pb-checkbox-row--scroll">
+              <% form_finder.tags.each_with_index do |tag, index| %>
+                <label class="pb-checkbox">
+                  <%= check_box_tag "form_filter_tag[]", tag, false,
+                                    id: "pb-search-tag-#{index}",
+                                    data: { advanced_search_target: "tag" } %>
+                  <span><%= tag %></span>
+                </label>
+              <% end %>
             </div>
+          </fieldset>
+        <% end %>
+      <% else %>
+        <p class="pb-modal__message">
+          None of your forms have been tagged yet. An administrator sets a
+          form's agency, type, number and tags in Manage Form Templates, and
+          they become filters here.
+        </p>
+      <% end %>
+    </div>
 
-            <div class="pb-filter">
-              <label for="filter_department" data-advanced-search-target="departmentLabel">
-                <%= form_search.level_label(:department) %>
-              </label>
-              <%= select_tag :filter_department,
-                             options_for_select(FormSearch.department_options(form_search.division), form_search.department),
-                             include_blank: "All", class: "form-control",
-                             data: { advanced_search_target: "department",
-                                     action: "change->advanced-search#loadUnits" } %>
-            </div>
-
-            <div class="pb-filter">
-              <%= label_tag :filter_unit, "Unit" %>
-              <%= select_tag :filter_unit,
-                             options_for_select(FormSearch.unit_options(form_search.department), form_search.unit),
-                             include_blank: "All Units", class: "form-control",
-                             data: { advanced_search_target: "unit" } %>
-            </div>
-          </div>
-        </fieldset>
-
-        <fieldset class="pb-filter-set">
-          <legend>Form</legend>
-          <div class="pb-checkbox-row">
-            <% FormSearch.form_type_options.each_with_index do |form_type, index| %>
-              <label class="pb-checkbox">
-                <%= check_box_tag "filter_type[]", form_type,
-                                  form_search.form_types.include?(form_type),
-                                  id: "pb-search-type-#{index}" %>
-                <span><%= form_type %></span>
-              </label>
-            <% end %>
-          </div>
-        </fieldset>
-
-        <fieldset class="pb-filter-set">
-          <legend>Status</legend>
-          <div class="pb-checkbox-row">
-            <% FormSearch.status_options.each_with_index do |status, index| %>
-              <label class="pb-checkbox">
-                <%= check_box_tag "filter_status[]", status,
-                                  form_search.statuses.include?(status),
-                                  id: "pb-search-status-#{index}" %>
-                <span><%= status %></span>
-              </label>
-            <% end %>
-          </div>
-        </fieldset>
-
-        <fieldset class="pb-filter-set">
-          <%# A status belongs to exactly one category, so this is the coarse
-              way to ask the same question — "anything denied", whatever each
-              form calls its denial. %>
-          <legend>Category</legend>
-          <div class="pb-checkbox-row">
-            <% FormSearch.category_options.each_with_index do |category, index| %>
-              <label class="pb-checkbox">
-                <%= check_box_tag "filter_category[]", category,
-                                  form_search.categories.include?(category),
-                                  id: "pb-search-category-#{index}" %>
-                <span><%= category %></span>
-              </label>
-            <% end %>
-          </div>
-        </fieldset>
-      </div>
-
-      <div class="pb-modal__actions">
-        <%= link_to "Clear filters", submissions_path, class: "btn clear-filters", data: { turbo: false } %>
-        <button type="button" class="btn" data-action="advanced-search#close">Cancel</button>
-        <button type="submit" class="btn approve">Search</button>
-      </div>
-    <% end %>
+    <div class="pb-modal__actions">
+      <button type="button" class="btn clear-filters"
+              data-action="advanced-search#clear">Clear filters</button>
+      <button type="button" class="btn" data-action="advanced-search#close">Cancel</button>
+      <button type="button" class="btn approve" data-action="advanced-search#apply">Apply</button>
+    </div>
   </div>
 </div>

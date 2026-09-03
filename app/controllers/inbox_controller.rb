@@ -19,10 +19,11 @@ class InboxController < ApplicationController
     @has_subordinates = @subordinate_ids.any?
     @show_employee_filter = @is_system_admin || @has_subordinates
 
-    # Form-wide visibility grants: class names of forms this user may see every
-    # submission of (via a granted group). Surfaced only when the user explicitly
-    # filters the inbox to that form type — see InboxQuery#granted_submissions.
-    @viewer_form_types = FormVisibilityGrant.form_types_for(employee_id, current_user_group_ids)
+    # Visibility grants that widen this inbox (via a granted group), each with
+    # its own org window. Surfaced only when the user explicitly filters the
+    # inbox to that form type — see InboxQuery#granted_submissions.
+    @viewer_grants = Forms::VisibilityGrant.for_viewer(employee_id, current_user_group_ids).for_inbox.to_a
+    @viewer_form_types = Forms::VisibilityGrant.covered_form_types(@viewer_grants)
 
     # nil means "no assignee restriction" (system admin viewing All).
     @scoped_employee_ids = if @show_employee_filter && params[:filter_employee].present?
@@ -41,9 +42,9 @@ class InboxController < ApplicationController
     # Parking permits flow entirely through the dynamic-form path: their print/
     # pickup steps are non-terminal and stay actionable, while a picked-up
     # (approved) permit drops out with the rest of the terminal items.
-    inbox = InboxQuery.new(
+    inbox = Forms::InboxQuery.new(
       scoped_employee_ids: @scoped_employee_ids,
-      viewer_form_types: @viewer_form_types,
+      viewer_grants: @viewer_grants,
       filter_form_type: params[:filter_form_type],
       date_from: params[:filter_date_from],
       date_to: params[:filter_date_to]
@@ -83,11 +84,11 @@ class InboxController < ApplicationController
 
     # Reference-number search (e.g. "LOA-1042", "loa-1042" or "1042"). Filters
     # the already-scoped list, so a reference the viewer can't see won't match.
-    @prefix_map = FormReference.prefix_map
+    @prefix_map = Forms::Reference.prefix_map
     if params[:filter_reference].present?
       query = params[:filter_reference]
       @submissions = @submissions.select do |s|
-        FormReference.matches?(FormReference.reference_for(s, @prefix_map), query)
+        Forms::Reference.matches?(Forms::Reference.reference_for(s, @prefix_map), query)
       end
     end
 
@@ -144,7 +145,7 @@ class InboxController < ApplicationController
   def inbox_sort_configs
     configs = {
       'reference' => lambda { |s|
-        ref = FormReference.reference_for(s, @prefix_map) || ''
+        ref = Forms::Reference.reference_for(s, @prefix_map) || ''
         prefix, id = ref.split('-')
         format('%s-%012d', prefix.to_s, id.to_i)
       }

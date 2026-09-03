@@ -1,0 +1,8 @@
+<% entries.select(&:sop).each do |dsl| %>
+  <div class="dsl-sop-scope" data-controller="sop-modal">
+    <button type="button" class="btn info compact" data-action="sop-modal#open">
+      How to Download
+    </button>
+    <%= render "data_runner/shared/sop", dsl: dsl %>
+  </div>
+<% end %>

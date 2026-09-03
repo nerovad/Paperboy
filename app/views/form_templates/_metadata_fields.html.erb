@@ -1,0 +1,58 @@
+<%# The official metadata an admin sets on a form, and what the sidebar's
+    Advanced Search facets on. Shared by the create wizard and the edit page so
+    the two can never offer different fields.
+
+    These describe the form; none of them gate it. Who may see a form is the
+    ACL's business alone, so tagging a form to an agency narrows a search
+    without ever taking the form away from anybody.
+
+    Locals:
+      f         the form builder
+      template  the Forms::Template being edited (a new one on create) %>
+<div class="form-group">
+  <label for="form_form_number">Form Number</label>
+  <%= f.text_field :form_number,
+                   id: "form_form_number",
+                   class: "form-control",
+                   maxlength: 30,
+                   placeholder: "e.g. HR-101" %>
+  <small class="form-text" style="color: #6c757d;">
+    The official number printed on the form, if it has one. People search by it.
+  </small>
+</div>
+
+<div class="form-group">
+  <label for="form_form_type">Form Type</label>
+  <%= f.select :form_type,
+               options_for_select(Forms::Template::FORM_TYPES, template.form_type),
+               { include_blank: "Not set" },
+               { id: "form_form_type", class: "form-control" } %>
+</div>
+
+<div class="form-group">
+  <label for="form_description">Description</label>
+  <%= f.text_area :description,
+                  id: "form_description",
+                  class: "form-control",
+                  rows: 2,
+                  maxlength: 500,
+                  placeholder: "e.g. Request time off for a qualifying medical or family event." %>
+  <small class="form-text" style="color: #6c757d;">
+    One line saying what the form is for. Shown when searching and matched on,
+    so it is the easiest way to make a form findable.
+  </small>
+</div>
+
+<div class="form-group">
+  <label>Owning Organization</label>
+  <small class="form-text" style="display: block; margin-bottom: 8px; color: #6c757d;">
+    Which part of the county issues this form. Used for searching only — it does
+    not control who can see or submit it.
+  </small>
+  <%= render "shared/org_cascade",
+             param_scope: "form_template",
+             labels: { agency: "Not set", division: "Not set",
+                       department: "Not set", unit: "Not set" },
+             selected: { agency: template.agency_id, division: template.division_id,
+                         department: template.department_id, unit: template.unit_id } %>
+</div>

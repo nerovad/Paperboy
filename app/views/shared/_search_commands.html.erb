@@ -1,0 +1,21 @@
+<%# The command rows offered by a search box, shared by the Paperboy sidebar
+    and the command palette. Each dispatches its window event and lets whatever
+    listens do the work, so the same row works from either surface.
+
+    `command-palette#close` is listed first so the palette is out of the way
+    before the command runs; in the sidebar there is no palette controller
+    above these rows and Stimulus ignores the action.
+
+    Locals:
+      row_class  the CSS class the surrounding surface styles its rows with %>
+<div class="search-commands" data-controller="search-command">
+  <% SearchCommands::ALL.each do |command| %>
+    <button type="button" class="<%= row_class %>" hidden
+            data-sidebar-search-target="command"
+            data-search="<%= command[:terms] %>"
+            data-command-event="<%= command[:event] %>"
+            data-action="command-palette#close search-command#run">
+      <span class="search-command__glyph" aria-hidden="true">&#9670;</span><%= command[:label] %>
+    </button>
+  <% end %>
+</div>

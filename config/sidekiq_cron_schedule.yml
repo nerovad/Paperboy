@@ -5,3 +5,15 @@ scheduled_reports_runner:
   class: "ScheduledReportsRunnerJob"
   queue: default
   description: "Checks for scheduled reports that are due and executes them"
+
+form_subscription_digest:
+  cron: "0 7 * * *"  # Every day at 07:00
+  class: "FormSubscriptionDigestJob"
+  queue: default
+  description: "Sends the daily form-activity digest to digest-mode subscribers"
+
+away_period_sweep:
+  cron: "10 6 * * *"  # Every day at 06:10, before the digest
+  class: "AwayPeriodSweepJob"
+  queue: default
+  description: "Reassigns the inbox of anyone whose away period covers today"

@@ -1,0 +1,66 @@
+<div class="form-header data-refresh-form-header <%= data_refresh_css_class %>-data-refresh-theme">
+  <h1>Upload Billing Data</h1>
+</div>
+
+<div class="form-wrapper data-refresh-form <%= data_refresh_css_class %>-data-refresh-theme">
+  <%= form_with url: data_refresh_form_path, method: :patch, data: { turbo: false } do %>
+    <% @groups.each do |group| %>
+      <%= hidden_field_tag "groups[#{group.key}]", group.default ? "1" : "0" %>
+    <% end %>
+
+    <div class="p2m-data-refresh-summary" data-controller="sop-modal">
+      <% @groups.each do |group| %>
+        <% download_dsl = group.enabled_dsls.find(&:sop) %>
+        <div class="p2m-data-refresh-summary__row">
+          <span><%= group.label %></span>
+          <% if download_dsl %>
+            <button type="button" class="btn info compact"
+                    data-action="sop-modal#open">How to Upload</button>
+            <%= render "data_runner/shared/sop", dsl: download_dsl %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="data-refresh-grid">
+      <table class="submission-table data-refresh-table p2m-data-refresh-table">
+        <colgroup>
+          <col class="p2m-data-refresh-oms-column">
+          <col class="p2m-data-refresh-oms-column">
+          <col class="p2m-data-refresh-oms-column">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>OMS #</th>
+            <th>OMS #</th>
+            <th>OMS #</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% oms_numbers = @refresh_entries.map { |entry| entry.key.delete_prefix("OMS ") }.sort_by(&:to_i) %>
+          <% if oms_numbers.any? %>
+            <% oms_numbers.each_slice(3) do |row_numbers| %>
+              <tr>
+                <% row_numbers.each do |oms_number| %>
+                  <td><%= oms_number %></td>
+                <% end %>
+                <% (3 - row_numbers.size).times do %>
+                  <td></td>
+                <% end %>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="3">No OMS numbers are queued for upload.</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-actions">
+      <%= submit_tag "Upload", class: "btn approve" %>
+      <%= link_to "Cancel", data_refresh_cancel_path, class: "btn" %>
+    </div>
+  <% end %>
+</div>

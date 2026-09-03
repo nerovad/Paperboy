@@ -4,15 +4,25 @@
   'Agencies',
   {
     steps: {
-      enabled: true,
-      manual_steps: Workflow::MANUAL_STEPS,
+      manual: {
+        enabled: true,
+        steps: Workflow::MANUAL_STEPS
+      },
       scheduled: {
+        enabled: true,
         frequency: :daily,
         steps: Workflow::SCHEDULED_STEPS
       }
     },
     group: {
       name: 'chart_of_accounts'
+    },
+    sop: {
+      shared: :chart_of_accounts,
+      source_system: 'ACO',
+      reference_url: 'http://acweb/cutoff',
+      reference_title: 'Downloaded Agencies File',
+      reference_path: :downloaded_file
     },
     source: {
       url: 'http://acweb/cutoff/WP Department on AUD Web Page.xlsx',

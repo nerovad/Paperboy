@@ -14,7 +14,7 @@ namespace :paperboy do
     # The model's page_headers/inbox_buttons accessors now auto-unwrap strings,
     # so we can read the corrected value and re-save it to fix the DB permanently.
     puts '== Repairing double-encoded JSON fields =='
-    FormTemplate.find_each do |ft|
+    Forms::Template.find_each do |ft|
       raw_headers = ft.read_attribute_before_type_cast('page_headers')
       raw_buttons = ft.read_attribute_before_type_cast('inbox_buttons')
 
@@ -51,12 +51,12 @@ namespace :paperboy do
     end
     puts ''
 
-    FormTemplate.find_each do |ft|
+    Forms::Template.find_each do |ft|
       puts "\n== #{ft.name} (#{ft.class_name}) =="
 
-      controller_path = Rails.root.join("app/controllers/#{ft.plural_file_name}_controller.rb")
+      controller_path = Rails.root.join("app/controllers/forms/#{ft.plural_file_name}_controller.rb")
       model_path = Rails.root.join("app/models/#{ft.file_name}.rb")
-      view_path = Rails.root.join("app/views/#{ft.plural_file_name}/new.html.erb")
+      view_path = Rails.root.join("app/views/forms/#{ft.plural_file_name}/new.html.erb")
 
       unless File.exist?(controller_path) && File.exist?(model_path)
         puts '  SKIP - missing model or controller files'

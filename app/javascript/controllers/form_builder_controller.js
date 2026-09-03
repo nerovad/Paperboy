@@ -56,6 +56,10 @@ export default class extends Controller {
     // references survive reorder/add/remove (positional field_N indices don't).
     this.fieldUidSeq = 0
     this.fieldsContainerTarget?.querySelectorAll('.field-item').forEach(f => this.assignFieldUid(f))
+    this.fieldsContainerTarget?.querySelectorAll('.field-item').forEach(f => this.addFieldDisclosure(f))
+    this.updateFieldPositions()
+    this.routingStepItemTargets.forEach(step => this.addRoutingStepDisclosure(step))
+    this.renumberRoutingSteps()
     this.initializeConditionalUids()
     // Populate/preserve each field's "Repeats in section" selector.
     this.updateSectionDropdowns()
@@ -76,6 +80,12 @@ export default class extends Controller {
 
     // Initialize wizard navigation
     this.initializeWizard()
+
+    // The Admin Tools sidebar can reach the builder from any Manage Forms
+    // screen. Once navigation lands on the index, open the existing modal.
+    if (!this.editModeValue && new URLSearchParams(window.location.search).has('create')) {
+      this.openModal(new Event('click'))
+    }
 
     // Hydrate routing-step condition editors that were rendered server-side
     this.initializeRoutingStepConditions()
@@ -181,13 +191,119 @@ export default class extends Controller {
 
   // Update visual position indicators after reorder
   updateFieldPositions() {
+    if (!this.hasFieldsContainerTarget) return
+
     const fields = this.fieldsContainerTarget.querySelectorAll('.field-item')
     fields.forEach((field, index) => {
-      const positionLabel = field.querySelector('.field-position')
-      if (positionLabel) {
+      field.querySelectorAll('.field-position').forEach((positionLabel) => {
         positionLabel.textContent = `#${index + 1}`
-      }
+      })
     })
+  }
+
+  addFieldDisclosure(fieldItem, expanded = false) {
+    if (fieldItem.querySelector(':scope > .field-disclosure-header')) return
+
+    const labelInput = fieldItem.querySelector('input[name="fields[][label]"]')
+    const header = document.createElement('div')
+    header.className = 'field-disclosure-header'
+    header.innerHTML = `
+      <div class="drag-handle" title="Drag to reorder">
+        <span class="field-position"></span>
+        <span class="drag-icon">&#x2630;</span>
+      </div>
+      <button type="button" class="field-disclosure-toggle"
+              aria-expanded="${expanded}"
+              data-action="click->form-builder#toggleFieldDisclosure">
+        <span class="field-disclosure-label"></span>
+        <span class="field-disclosure-chevron" aria-hidden="true">&#x25BE;</span>
+      </button>`
+
+    const body = document.createElement('div')
+    body.className = 'field-disclosure-body'
+    body.hidden = !expanded
+    while (fieldItem.firstChild) body.appendChild(fieldItem.firstChild)
+    // The header now owns the drag handle and position badge, so drop the
+    // server-rendered pair rather than showing both when expanded.
+    body.querySelector('.drag-handle')?.remove()
+    fieldItem.append(header, body)
+
+    const summaryLabel = header.querySelector('.field-disclosure-label')
+    const updateLabel = () => {
+      summaryLabel.textContent = labelInput?.value.trim() || 'Untitled field'
+    }
+    updateLabel()
+    labelInput?.addEventListener('input', updateLabel)
+  }
+
+  toggleFieldDisclosure(event) {
+    event.preventDefault()
+    const button = event.currentTarget
+    const fieldItem = button.closest('.field-item')
+    const body = fieldItem.querySelector(':scope > .field-disclosure-body')
+    const expanded = button.getAttribute('aria-expanded') === 'true'
+
+    button.setAttribute('aria-expanded', String(!expanded))
+    body.hidden = expanded
+  }
+
+  addRoutingStepDisclosure(stepItem, expanded = false) {
+    if (stepItem.querySelector(':scope > .routing-step-disclosure-header')) return
+
+    const header = document.createElement('div')
+    header.className = 'routing-step-disclosure-header'
+    header.innerHTML = `
+      <div class="routing-step-drag-handle" title="Drag to reorder">
+        <span class="step-number"></span>
+        <span aria-hidden="true">&#x2630;</span>
+      </div>
+      <button type="button" class="routing-step-disclosure-toggle"
+              aria-expanded="${expanded}"
+              data-action="click->form-builder#toggleRoutingStepDisclosure">
+        <span class="routing-step-disclosure-label"></span>
+        <span class="routing-step-disclosure-chevron" aria-hidden="true">&#x25BE;</span>
+      </button>`
+
+    const body = document.createElement('div')
+    body.className = 'routing-step-disclosure-body'
+    body.hidden = !expanded
+    while (stepItem.firstChild) body.appendChild(stepItem.firstChild)
+    // Same as fields: the header owns the drag handle and step number, so the
+    // server-rendered pair goes rather than lingering with a stale number.
+    body.querySelector('.routing-step-drag-handle')?.remove()
+    stepItem.append(header, body)
+
+    const summaryLabel = header.querySelector('.routing-step-disclosure-label')
+    const updateLabel = () => {
+      const route = stepItem.querySelector('.routing-type-select')
+      const destination = this.routingStepDestination(stepItem)
+      const routeLabel = route?.selectedOptions[0]?.text.trim() || 'Select route'
+      summaryLabel.textContent = destination ? `${routeLabel} — ${destination}` : routeLabel
+    }
+    updateLabel()
+    stepItem.querySelectorAll('select').forEach(select => select.addEventListener('change', updateLabel))
+  }
+
+  routingStepDestination(stepItem) {
+    const routeType = stepItem.querySelector('.routing-type-select')?.value
+    const selectors = {
+      employee: '.step-employee-dropdown',
+      group: '.step-group-dropdown',
+      authorization: '.step-authorization-dropdown'
+    }
+    const select = stepItem.querySelector(selectors[routeType])
+    return select?.value ? select.selectedOptions[0]?.text.trim() : ''
+  }
+
+  toggleRoutingStepDisclosure(event) {
+    event.preventDefault()
+    const button = event.currentTarget
+    const stepItem = button.closest('.routing-step-item')
+    const body = stepItem.querySelector(':scope > .routing-step-disclosure-body')
+    const expanded = button.getAttribute('aria-expanded') === 'true'
+
+    button.setAttribute('aria-expanded', String(!expanded))
+    body.hidden = expanded
   }
 
   // Show the modal
@@ -331,7 +447,9 @@ export default class extends Controller {
     // Populate the just-added step's condition field dropdown
     const addedStep = this.routingStepsContainerTarget.lastElementChild
     if (addedStep) {
+      this.addRoutingStepDisclosure(addedStep, true)
       this.populateStepConditionFields(addedStep)
+      this.renumberRoutingSteps()
     }
   }
 
@@ -350,10 +468,9 @@ export default class extends Controller {
   renumberRoutingSteps() {
     this.routingStepItemTargets.forEach((item, index) => {
       const stepNumber = index + 1
-      const stepLabel = item.querySelector('.step-number')
-      if (stepLabel) {
+      item.querySelectorAll('.step-number').forEach((stepLabel) => {
         stepLabel.textContent = `Step ${stepNumber}`
-      }
+      })
       const stepInput = item.querySelector('.step-number-input')
       if (stepInput) {
         stepInput.value = stepNumber
@@ -1086,6 +1203,7 @@ export default class extends Controller {
     const addedField = this.fieldsContainerTarget.lastElementChild
     if (addedField) {
       this.assignFieldUid(addedField)
+      this.addFieldDisclosure(addedField, true)
       this.populateRestrictionDropdowns(addedField)
     }
 
@@ -1232,11 +1350,12 @@ export default class extends Controller {
     })
   }
 
-  // Toggle between manual values, a curated database table, and a custom lookup
+  // Toggle between manual values, a curated database table, and a custom lookup.
+  // Manual values stay available in every mode: on their own they are the whole
+  // option list, alongside a table they are extras pinned to one end of it.
   handleDropdownSourceChange(event) {
     const fieldItem = event.target.closest('.field-item')
     const source = event.target.value
-    const manualSection = fieldItem.querySelector('.dropdown-manual-values')
     const dataSourceSection = fieldItem.querySelector('.dropdown-data-source')
     const customSection = fieldItem.querySelector('.dropdown-custom-source')
 
@@ -1245,7 +1364,7 @@ export default class extends Controller {
       radio.checked = (radio === event.target)
     })
 
-    if (manualSection) manualSection.style.display = source === 'manual' ? 'block' : 'none'
+    this.updateManualValuesMode(fieldItem, source !== 'manual')
     if (dataSourceSection) dataSourceSection.style.display = source === 'database' ? 'block' : 'none'
     if (customSection) customSection.style.display = source === 'custom' ? 'block' : 'none'
 
@@ -1263,6 +1382,28 @@ export default class extends Controller {
     if (source !== 'custom') {
       this.resetCustomLookup(fieldItem)
     }
+  }
+
+  // Relabel the manual values box for the active source, showing the position
+  // picker only when those values ride along with a table-backed list.
+  updateManualValuesMode(fieldItem, lookupBacked) {
+    const manualSection = fieldItem.querySelector('.dropdown-manual-values')
+    if (!manualSection) return
+
+    manualSection.style.display = 'block'
+
+    const label = manualSection.querySelector('.dropdown-values-label')
+    if (label) {
+      label.textContent = lookupBacked
+        ? 'Extra manual values (comma-separated):'
+        : 'Values (comma-separated):'
+    }
+
+    const position = manualSection.querySelector('.dropdown-values-position')
+    if (position) position.style.display = lookupBacked ? 'block' : 'none'
+
+    const hint = manualSection.querySelector('.dropdown-values-hint')
+    if (hint) hint.style.display = lookupBacked ? 'block' : 'none'
   }
 
   resetCustomLookup(fieldItem) {

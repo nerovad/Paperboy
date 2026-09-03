@@ -1,5 +1,6 @@
+@use "sass:color";
 /* Pages: Form Templates - Form Builder UI */
-@import '../base/tokens';
+@use "base/tokens" as *;
 
 /* Container matching your form style */
 .page-form_templates-index,
@@ -43,7 +44,7 @@
     }
 
     &:hover {
-      border-color: darken($border-color, 10%);
+      border-color: color.adjust($border-color, $lightness: -10%);
     }
   }
 
@@ -466,6 +467,67 @@
 
     &:last-child {
       margin-bottom: 0;
+    }
+  }
+
+  .field-disclosure-header,
+  .routing-step-disclosure-header {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .field-disclosure-toggle,
+  .routing-step-disclosure-toggle {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 4px;
+    border: 0;
+    background: transparent;
+    color: $text-color;
+    font: inherit;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .field-disclosure-chevron,
+  .routing-step-disclosure-chevron {
+    font-size: 18px;
+    transition: transform 0.2s ease;
+  }
+
+  .field-disclosure-toggle[aria-expanded="true"] .field-disclosure-chevron,
+  .routing-step-disclosure-toggle[aria-expanded="true"] .routing-step-disclosure-chevron {
+    transform: rotate(180deg);
+  }
+
+  .field-disclosure-body:not([hidden]),
+  .routing-step-disclosure-body:not([hidden]) {
+    display: block;
+    margin-top: 16px;
+  }
+
+  .routing-step-disclosure-header .routing-step-drag-handle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: $blue-gray-panel;
+    color: $text-muted;
+    cursor: grab;
+    user-select: none;
+
+    .step-number {
+      color: $text-color;
+      font-size: 12px;
+      font-weight: 700;
     }
   }
 

@@ -24,19 +24,21 @@ class AclController < ApplicationController
     { key: 'help',          label: 'Help',           default_public: true },
     { key: 'reports',       label: 'Reports' },
     { key: 'dashboards',    label: 'Dashboards' },
-    # The six keys below are superseded. The Admin Tools buttons are now
+    # The four keys below are superseded. The Admin Tools buttons are now
     # granted under "Application Features" like every other app's sidebar, but
     # these older keys still grant the same access, so they stay listed —
     # unticking one here is how an existing grant is taken away. 'admin' is the
     # old menu's own key and grants nothing on its own.
-    { key: 'admin',         label: 'Admin (legacy — grants nothing)' },
-    { key: 'manage_forms',  label: 'Admin Tools → Manage Forms (legacy)' },
-    { key: 'emulate',       label: 'Admin Tools → Emulate (legacy)' },
-    { key: 'acl',           label: 'Admin Tools → ACL (legacy)' },
-    { key: 'data_validation', label: 'Admin Tools → Data Validation (legacy)' },
-    { key: 'lookup_tables', label: 'Admin Tools → Lookup Tables (legacy)' },
+    { key: 'admin',         label: 'Admin (legacy, grants nothing)' },
+    { key: 'manage_forms',  label: 'Admin Tools: Manage Forms (legacy)' },
+    { key: 'emulate',       label: 'Admin Tools: Emulate (legacy)' },
+    { key: 'acl',           label: 'Admin Tools: ACL (legacy)' },
     { key: 'auth_console',  label: 'Auth Console' },
-    { key: 'osha_log',      label: 'OSHA 300' }
+    { key: 'osha_log',      label: 'OSHA 300' },
+    # ":" from any page, which searches every app the holder can reach. Not
+    # default_public: the palette lists the whole system's navigation, so it
+    # starts with system admins alone and is handed out deliberately.
+    { key: 'command_palette', label: 'Command Palette (":" search)' }
   ].freeze
 
   DEFAULT_PUBLIC_DROPDOWN_KEYS = DROPDOWN_ITEMS.select { |i| i[:default_public] }.map { |i| i[:key] }.freeze
@@ -52,7 +54,8 @@ class AclController < ApplicationController
     { key: 'aim', label: 'Automated Invoice Management' },
     { key: 'print_production', label: 'Print Production' },
     { key: 'billing', label: 'Billing' },
-    { key: 'admin_tools', label: 'Admin Tools' }
+    { key: 'admin_tools', label: 'Admin Tools' },
+    { key: 'p2m', label: 'Print 2 Mail' }
   ].freeze
 
   LEGACY_FORMS = [
@@ -67,7 +70,7 @@ class AclController < ApplicationController
   def index
     @groups = Group.all.order(:group_name)
     @group_member_counts = EmployeeGroup.group(:group_id).count
-    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+    @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
   end
 
   def show
@@ -77,7 +80,7 @@ class AclController < ApplicationController
     @members = @group.employees.order(:last_name, :first_name)
     member_ids = @group.employee_groups.pluck(:employee_id)
     @contractor_members = Contractor.where(id: member_ids).order(:last_name, :first_name)
-    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+    @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
     return unless params[:search].present?
 
@@ -172,7 +175,7 @@ class AclController < ApplicationController
 
   def edit_contractor
     @contractor = Contractor.find(params[:contractor_id])
-    @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+    @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
   end
 
   def update_contractor
@@ -181,7 +184,7 @@ class AclController < ApplicationController
 
     sup = @contractor.supervisor_id
     if sup.present? && !Employee.exists?(employee_id: sup)
-      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+      @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
       flash.now[:alert] = "Supervisor ID #{sup} does not match any employee."
       return render :edit_contractor, status: :unprocessable_entity
     end
@@ -189,7 +192,7 @@ class AclController < ApplicationController
     if @contractor.save
       redirect_to acl_path(@group), notice: "Contractor #{@contractor.full_name} updated."
     else
-      @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
+      @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
       flash.now[:alert] = @contractor.errors.full_messages.to_sentence
       render :edit_contractor, status: :unprocessable_entity
     end
@@ -212,6 +215,7 @@ class AclController < ApplicationController
     @dropdown_items = DROPDOWN_ITEMS
     @application_items = APPLICATION_ITEMS
     @feature_apps = feature_apps
+    @authorization_consoles = AuthorizationConsole.permission_catalog
     @record_table_items = record_table_items
     @all_forms = build_all_forms_list
     @current_permissions = @group.group_permissions.pluck(:permission_type, :permission_key)
@@ -220,8 +224,14 @@ class AclController < ApplicationController
     @form_keys = Array(by_type['form']).to_set(&:last)
     @application_keys = Array(by_type['application']).to_set(&:last)
     @feature_keys = Array(by_type['feature']).to_set(&:last)
+    @authorization_console_keys = Array(by_type[AuthorizationConsole::PERMISSION_TYPE]).to_set(&:last)
     @record_view_keys = Array(by_type['record_view']).to_set(&:last)
     @record_edit_keys = Array(by_type['record_edit']).to_set(&:last)
+    @submission_action_keys = Array(by_type[Forms::SubmissionPolicy::PERMISSION_TYPE]).to_set(&:last)
+    load_submission_form_catalog
+    @groups = Group.order(:group_name)
+    @visibility_grants = all_visibility_grants
+    @form_subscriptions = all_form_subscriptions
 
     # If no permissions exist yet for this group, pre-check default public items
     return unless @current_permissions.empty?
@@ -235,8 +245,10 @@ class AclController < ApplicationController
       'form' => Array(params[:form_permissions]),
       'application' => Array(params[:application_permissions]),
       'feature' => permitted_feature_keys,
+      AuthorizationConsole::PERMISSION_TYPE => permitted_authorization_console_keys,
       'record_view' => Array(params[:record_view_permissions]),
-      'record_edit' => Array(params[:record_edit_permissions])
+      'record_edit' => Array(params[:record_edit_permissions]),
+      Forms::SubmissionPolicy::PERMISSION_TYPE => permitted_submission_action_keys
     }
 
     ActiveRecord::Base.transaction do
@@ -258,6 +270,7 @@ class AclController < ApplicationController
     @dropdown_items = DROPDOWN_ITEMS
     @application_items = APPLICATION_ITEMS
     @feature_apps = feature_apps
+    @authorization_consoles = AuthorizationConsole.permission_catalog
     @all_forms = build_all_forms_list
 
     @agency_id = params[:agency_id]
@@ -288,6 +301,9 @@ class AclController < ApplicationController
     @org_form_keys = Array(by_type['form']).to_set(&:last)
     @org_application_keys = Array(by_type['application']).to_set(&:last)
     @org_feature_keys = Array(by_type['feature']).to_set(&:last)
+    @org_authorization_console_keys = Array(by_type[AuthorizationConsole::PERMISSION_TYPE]).to_set(&:last)
+    @org_submission_action_keys = Array(by_type[Forms::SubmissionPolicy::PERMISSION_TYPE]).to_set(&:last)
+    load_submission_form_catalog
 
     # If no permissions exist yet for this scope, pre-check default public items
     return unless @current_org_permissions.empty?
@@ -306,7 +322,9 @@ class AclController < ApplicationController
       'dropdown' => Array(params[:dropdown_permissions]),
       'form' => Array(params[:form_permissions]),
       'application' => Array(params[:application_permissions]),
-      'feature' => permitted_feature_keys
+      'feature' => permitted_feature_keys,
+      AuthorizationConsole::PERMISSION_TYPE => permitted_authorization_console_keys,
+      Forms::SubmissionPolicy::PERMISSION_TYPE => permitted_submission_action_keys
     }
 
     ActiveRecord::Base.transaction do
@@ -406,16 +424,63 @@ class AclController < ApplicationController
   # keys the registry actually declares are written: the form is a checkbox
   # list, so anything else was hand-crafted, and an unrecognised key would sit
   # in the table granting nothing while looking like a grant.
+  def permitted_authorization_console_keys
+    known = AuthorizationConsole.permission_keys.to_set
+    Array(params[:authorization_console_permissions]).select { |key| known.include?(key) }
+  end
+
   def permitted_feature_keys
     known = AppFeature::FEATURES.keys.flat_map { |app_key| AppFeature.permission_keys_for(app_key) }.to_set
     Array(params[:feature_permissions]).select { |key| known.include?(key) }
   end
 
+  # Form catalog shared by the Submission Actions and Submission Visibility
+  # sections: every form a grant can name, dynamic templates and legacy forms
+  # alike. Same catalog the visibility grants have always used, so the two
+  # sections can't drift apart.
+  def load_submission_form_catalog
+    @submission_forms = Forms::VisibilityGrant.form_type_catalog
+    @submission_form_labels = @submission_forms.to_h { |form| [form[:class_name], form[:label]] }
+  end
+
+  # Every group grant, listed the way the standalone screen listed them: the
+  # picker above can name any group, so the table has to show any group too.
+  def all_visibility_grants
+    Forms::VisibilityGrant.for_group(Group.pluck(:GroupID))
+                          .includes(:group)
+                          .sort_by do |grant|
+      [grant.form_label(@submission_form_labels).to_s.downcase, grant.group&.group_name.to_s.downcase]
+    end
+  end
+
+  # Group-held subscriptions only. Personal ones belong to their owner and are
+  # managed from that person's Settings page, not from here.
+  def all_form_subscriptions
+    Forms::Subscription.for_group(Group.pluck(:GroupID))
+                       .includes(:group)
+                       .sort_by do |subscription|
+      [subscription.form_label(@submission_form_labels).to_s.downcase,
+       subscription.group&.group_name.to_s.downcase]
+    end
+  end
+
+  # Only keys this screen actually offers, so a hand-posted form can't invent a
+  # grant on something that isn't a form.
+  def permitted_submission_action_keys
+    valid = Forms::VisibilityGrant.form_type_catalog.map { |form| form[:class_name] } +
+            [Forms::SubmissionPolicy::ALL_FORMS]
+
+    Array(params[:submission_action_permissions]).select do |key|
+      action, form_type = key.to_s.split(':', 2)
+      Forms::SubmissionPolicy::ACTIONS.include?(action) && valid.include?(form_type)
+    end
+  end
+
   def build_all_forms_list
-    template_names = FormTemplate.pluck(:name).to_set(&:downcase)
+    template_names = Forms::Template.pluck(:name).to_set(&:downcase)
     forms = []
 
-    # Add legacy forms that don't exist as a FormTemplate
+    # Add legacy forms that don't exist as a Forms::Template
     LEGACY_FORMS.each do |form|
       next if template_names.include?(form[:label].downcase)
 
@@ -423,7 +488,7 @@ class AclController < ApplicationController
     end
 
     # Add all FormTemplates
-    FormTemplate.order(:name).each do |template|
+    Forms::Template.order(:name).each do |template|
       forms << { key: template.id.to_s, label: template.name }
     end
 
@@ -444,19 +509,19 @@ class AclController < ApplicationController
   def build_org_label
     parts = []
     if @agency_id.present?
-      agency = Agency.find_by(agency_id: @agency_id)
+      agency = Coa::Agency.find_by(agency_id: @agency_id)
       parts << "Agency: #{agency&.long_name || @agency_id}"
     end
     if @division_id.present?
-      division = Division.find_by(division_id: @division_id)
+      division = Coa::Division.find_by(division_id: @division_id)
       parts << "Division: #{division&.long_name || @division_id}"
     end
     if @department_id.present?
-      department = Department.find_by(department_id: @department_id)
+      department = Coa::Department.find_by(department_id: @department_id)
       parts << "Department: #{department&.long_name || @department_id}"
     end
     if @unit_id.present?
-      unit = Unit.find_by(unit_id: @unit_id)
+      unit = Coa::Unit.find_by(unit_id: @unit_id)
       parts << "Unit: #{unit&.unit_id} - #{unit&.long_name || @unit_id}"
     end
     parts.any? ? parts.join(' > ') : 'Global (All Users)'

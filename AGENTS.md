@@ -10,8 +10,88 @@
   * Prose limited to 72 characters
   * Blank Line
   * Description lines limited to 80 characters
+  * Do not indent proposed commit
 - Git
   * use git mv when moving files
+
+## Stylesheets
+
+SCSS is compiled by **Dart Sass** (`dartsass-rails` + `sass-embedded`).
+Sprockets only serves and digests the result. Source lives in
+`app/assets/stylesheets/`, entrypoint `application.scss`; the compiled
+output lands in `app/assets/builds/application.css`, which is generated
+and gitignored — never edit or commit it.
+
+Modern CSS is fully supported. Write it directly:
+
+```scss
+max-height: min(30.6rem, calc(100vh - 32rem));
+height: clamp(18rem, 50vh, 36rem);
+width: max(20rem, 50%);
+inset: 0;
+gap: 1rem;
+```
+
+Rules:
+
+- **Never reintroduce `sass-rails`, `sassc-rails` or `sassc`.** They pull
+  in libsass, which has been end-of-life since 2020. libsass parses
+  `min()` and `max()` as Sass numeric functions, so
+  `min(30.6rem, calc(100vh - 32rem))` fails to compile. That took staging
+  down on 2026-08-24.
+- **Never wrap CSS in `unquote()`** to sneak it past the compiler. That
+  was a libsass workaround. Dart Sass emits modern CSS verbatim.
+- **Never use global built-in Sass functions** — `darken()`, `lighten()`,
+  `saturate()`, `transparentize()`, `unquote()` and friends are removed
+  in Dart Sass 3.0. Load the module instead:
+
+  ```scss
+  @use "sass:color";
+  border-color: color.adjust($border-color, $lightness: -10%);
+  ```
+
+- **Never use `@import`.** It is deprecated and is removed in Dart Sass
+  3.0. Load what a partial needs with the module system:
+
+  ```scss
+  @use "base/tokens" as *;   // design tokens, unnamespaced
+  ```
+
+  Every partial that references a `$token` must `@use` it itself --
+  `@use` is file-scoped, so nothing leaks in from `application.scss` the
+  way `@import` used to.
+- New stylesheets are partials `@use`d by `application.scss`. A second
+  top-level entrypoint needs a `config.dartsass.builds` entry or it is
+  never compiled.
+
+`test/lib/stylesheet_conventions_test.rb` enforces all of the above, so a
+regression fails `bundle exec rake test` rather than a deploy. A clean
+build prints no deprecation warnings at all -- if you see one, something
+in the list above came back.
+
+### Working on CSS locally
+
+Run `bin/dev` — it starts `dartsass:watch` alongside the server, so a
+saved `.scss` rebuilds in about 100ms and a browser refresh shows it.
+
+Keep `public/assets` empty on your workstation. sprockets-rails resolves
+`[:manifest, :environment]` -- manifest first -- so a precompiled manifest
+takes priority over live compilation and freezes your CSS until
+`assets:clobber` runs. With nothing precompiled, resolution falls through
+to live compilation and the watcher's output is served immediately. If you
+ever precompile locally, `bin/rails assets:clobber` undoes it.
+
+The deploy scripts are a different story: `bin/deploy-dev`,
+`bin/deploy-stage` and `bin/deploy` all clobber and precompile, and must.
+nginx on those boxes serves `/assets/` straight from disk
+(`try_files $uri =404`, see `config/nginx/`) and never falls back to
+Rails, so the digested files have to exist or every asset 404s and the app
+renders as unstyled HTML.
+
+For the same reason, never set `config.assets.debug = true` in
+`development.rb` -- the dev server runs that environment behind nginx, and
+debug mode emits `/assets/application.debug-<digest>.css`, a filename
+`assets:precompile` never writes.
 
 ## Buttons
 

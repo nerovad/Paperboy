@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'csv'
+require 'date'
 require 'fileutils'
 require 'pathname'
 require 'tempfile'
@@ -12,7 +13,7 @@ require 'time'
 #
 # Usage:
 #   ruby script/ruby/data_runner/orchestration/preprocess/oms.rb \
-#     ROOT_PATH SENT_PATH OUTPUT_PATH
+#     SENT_PATH OUTPUT_PATH
 #
 # Generated files are written to OUTPUT_PATH:
 #   companions.csv
@@ -28,17 +29,22 @@ MARKER_PATTERN = /\AMail\.dat_(#{OMS_NUMBER_PATTERN})\.zip\z/i
 COMPANION_PATTERN = /\A(#{OMS_NUMBER_PATTERN})-.+\.csv\z/i
 MOVE_RESULTS_PATTERN = /\AMoveResults_(#{OMS_NUMBER_PATTERN})\.txt\z/i
 DAILY_PRESORT_PATTERN = /\APresort Fields Export_(#{OMS_NUMBER_PATTERN})\.txt\z/i
-METADATA_HEADER = %w[omsnumber importdatetime].freeze
+METADATA_HEADER = %w[omsnumber maildate importdatetime].freeze
 OUTPUT_FILES = %w[companions.csv dailypresorts.csv moveresults.csv].freeze
+TSV_OPTIONS = { col_sep: "\t", encoding: 'UTF-16LE:UTF-8', liberal_parsing: true }.freeze
 
 def paths
-  raise "usage: #{$PROGRAM_NAME} ROOT_PATH SENT_PATH OUTPUT_PATH" unless ARGV.length == 3
+  raise "usage: #{$PROGRAM_NAME} SENT_PATH OUTPUT_PATH" unless ARGV.length == 2
 
   ARGV.map { |value| Pathname.new(value).expand_path }
 end
 
 def selected_oms_number(sent_dir)
-  marker = sent_dir.children.select(&:file?).sort.find { |path| path.basename.to_s.match?(MARKER_PATTERN) }
+  target = ENV.fetch('DATARUNNER_QUEUE_OMS', nil)
+  marker = sent_dir.children.select(&:file?).sort.find do |path|
+    match = path.basename.to_s.match(MARKER_PATTERN)
+    match && (target.nil? || match[1] == target)
+  end
   raise "no Mail.dat OMS marker found in #{sent_dir}" unless marker
 
   marker.basename.to_s.match(MARKER_PATTERN)[1]
@@ -87,14 +93,40 @@ def atomic_write(output_path)
 end
 
 def without_line_feeds(row)
-  row.map { |value| value&.gsub(/\R+/, ' ') }
+  row.map { |value| value&.gsub(/[\t\r\n]+/, ' ') }
 end
 
-def output_row(row, oms_number, date_inserted)
-  [oms_number, date_inserted, *without_line_feeds(row)]
+def data_rows(path, **options)
+  CSV.read(path, headers: true, **options)
 end
 
-def write_companion(output_path, paths, oms_number, date_inserted)
+def validate_dataset!(oms_number, inputs)
+  companions = inputs.fetch(:companion).flat_map do |path|
+    data_rows(path, encoding: 'bom|utf-8').map(&:itself)
+  end
+  presorts = data_rows(inputs.fetch(:daily_presort).first, **TSV_OPTIONS)
+  moves = data_rows(inputs.fetch(:moveresults).first, **TSV_OPTIONS)
+  counts = [companions.length, presorts.length, moves.length]
+  raise "#{oms_number} row counts differ: #{counts.join(', ')}" unless counts.uniq.one?
+
+  presort_ids = presorts.map { |row| row['FLD_RECORD_ID'] }
+  move_ids = moves.map { |row| row['RECORD_ID'] }
+  raise "#{oms_number} Presort and MoveResults record IDs differ" unless presort_ids.sort == move_ids.sort
+
+  mail_piece_ids = companions.map { |row| row['AIMS mail piece ID'].to_s.strip }
+  populated_mail_piece_ids = mail_piece_ids.reject(&:empty?)
+  duplicates = populated_mail_piece_ids.uniq.length != populated_mail_piece_ids.length
+  raise "#{oms_number} has duplicate AIMS mail piece IDs" if duplicates
+
+  budget_ids = companions.map { |row| row['Budget 1 - Job ID'].to_s.strip }
+  raise "#{oms_number} has blank Budget 1 job IDs" if budget_ids.any?(&:empty?)
+end
+
+def output_row(row, oms_number, mail_date, date_inserted)
+  [oms_number, mail_date, date_inserted, *without_line_feeds(row)]
+end
+
+def write_companion(output_path, paths, oms_number, mail_date, date_inserted)
   expected_header = nil
 
   atomic_write(output_path) do |temp|
@@ -108,29 +140,28 @@ def write_companion(output_path, paths, oms_number, date_inserted)
 
           output << [*METADATA_HEADER, *without_line_feeds(row)] if output.lineno.zero?
         else
-          output << output_row(row, oms_number, date_inserted)
+          output << output_row(row, oms_number, mail_date, date_inserted)
         end
       end
     end
   end
 end
 
-def write_utf16_tsv(output_path, input_path, oms_number, date_inserted)
+def write_utf16_tsv(output_path, input_path, oms_number, mail_date, date_inserted)
   atomic_write(output_path) do |temp|
     output = CSV.new(temp)
-    options = { col_sep: "\t", encoding: 'UTF-16LE:UTF-8' }
-    CSV.foreach(input_path, **options).with_index do |row, index|
+    CSV.foreach(input_path, **TSV_OPTIONS).with_index do |row, index|
       converted = if index.zero?
                     [*METADATA_HEADER, *without_line_feeds(row)]
                   else
-                    output_row(row, oms_number, date_inserted)
+                    output_row(row, oms_number, mail_date, date_inserted)
                   end
       output << converted
     end
   end
 end
 
-def build_outputs(output_dir, grouped_inputs)
+def build_outputs(output_dir, grouped_inputs, mail_date)
   written = []
   raise 'multiple OMS numbers found; process one print job at a time' if grouped_inputs.length > 1
 
@@ -140,20 +171,20 @@ def build_outputs(output_dir, grouped_inputs)
 
     unless inputs[:companion].empty?
       path = output_dir.join('companions.csv')
-      write_companion(path, inputs[:companion], oms_number, date_inserted)
+      write_companion(path, inputs[:companion], oms_number, mail_date, date_inserted)
       written << [path, inputs[:companion]]
     end
 
     unless inputs[:daily_presort].empty?
       path = output_dir.join('dailypresorts.csv')
-      write_utf16_tsv(path, inputs[:daily_presort].first, oms_number, date_inserted)
+      write_utf16_tsv(path, inputs[:daily_presort].first, oms_number, mail_date, date_inserted)
       written << [path, inputs[:daily_presort]]
     end
 
     next if inputs[:moveresults].empty?
 
     path = output_dir.join('moveresults.csv')
-    write_utf16_tsv(path, inputs[:moveresults].first, oms_number, date_inserted)
+    write_utf16_tsv(path, inputs[:moveresults].first, oms_number, mail_date, date_inserted)
     written << [path, inputs[:moveresults]]
   end
 
@@ -161,16 +192,24 @@ def build_outputs(output_dir, grouped_inputs)
 end
 
 def main
-  root_dir, sent_dir, output_dir = paths
-  raise "root directory not found: #{root_dir}" unless root_dir.directory?
+  sent_dir, output_dir = paths
   raise "sent directory not found: #{sent_dir}" unless sent_dir.directory?
 
   oms_number = selected_oms_number(sent_dir)
-  grouped_inputs = classified_inputs(root_dir, oms_number)
-  raise "no OMS input files found for #{oms_number} in #{root_dir}" if grouped_inputs.empty?
+  marker = sent_dir.children.find { |path| path.basename.to_s.match?(MARKER_PATTERN) }
+  mail_date = marker.mtime.to_date.iso8601
+  grouped_inputs = classified_inputs(sent_dir, oms_number)
+  raise "no OMS input files found for #{oms_number} in #{sent_dir}" if grouped_inputs.empty?
+
+  inputs = grouped_inputs.fetch(oms_number)
+  missing = inputs.select { |_type, files| files.empty? }.keys
+  raise "#{oms_number} is incomplete: missing #{missing.join(', ')}" if missing.any?
+
+  validate_single_inputs!(oms_number, inputs)
+  validate_dataset!(oms_number, inputs)
 
   OUTPUT_FILES.each { |name| FileUtils.rm_f(output_dir.join(name)) }
-  written = build_outputs(output_dir, grouped_inputs)
+  written = build_outputs(output_dir, grouped_inputs, mail_date)
   written.each do |output, inputs|
     names = inputs.map { |path| path.basename.to_s }.join(', ')
     puts "[OK] #{names} -> #{output}"

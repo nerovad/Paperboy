@@ -38,7 +38,7 @@ class AuthorizedApprover < ApplicationRecord
   end
 
   def department
-    Department.find_by(department_id: department_id)
+    Coa::Department.find_by(department_id: department_id)
   end
 
   def service_type_label
@@ -81,7 +81,7 @@ class AuthorizedApprover < ApplicationRecord
   # in the approver's department; otherwise the unit must be listed explicitly.
   def covers_unit?(unit_id)
     if all_budget_units?
-      Unit.exists?(unit_id: unit_id, department_id: department_id)
+      Coa::Unit.exists?(unit_id: unit_id, department_id: department_id)
     else
       budget_units.to_s.split(',').map(&:strip).include?(unit_id.to_s)
     end
@@ -105,7 +105,7 @@ class AuthorizedApprover < ApplicationRecord
     unit_ids = Set.new
     rows.each do |a|
       if a.all_budget_units?
-        Unit.where(department_id: a.department_id).pluck(:unit_id).each { |u| unit_ids << u.to_s }
+        Coa::Unit.where(department_id: a.department_id).pluck(:unit_id).each { |u| unit_ids << u.to_s }
       else
         a.budget_units.to_s.split(',').map(&:strip).each { |u| unit_ids << u if u.present? }
       end

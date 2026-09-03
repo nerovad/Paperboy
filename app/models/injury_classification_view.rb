@@ -3,7 +3,7 @@
 # Read-only view that backs the "Injury Classifications" categorized dropdown
 # source. One physical view holds many independent option-lists, keyed by
 # injury_category_id (e.g. Report Type, Nature of Incident, Cause of Incident).
-# Selected per-field in the form builder via FormField::DATA_SOURCES.
+# Selected per-field in the form builder via Forms::Field::DATA_SOURCES.
 class InjuryClassificationView < ApplicationRecord
   self.table_name = 'injury_classification_views'
 

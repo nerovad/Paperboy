@@ -27,8 +27,8 @@
      data-form-builder-form-fields-value="<%= form_fields_for_conditions.to_json %>"
      data-form-builder-routing-step-choices-value="<%= routing_step_choices.to_json %>"
      data-form-builder-email-field-choices-value="<%= email_field_choices.to_json %>"
-     data-form-builder-predefined-statuses-value="<%= FormTemplateStatus::PREDEFINED_STATUSES.to_json %>"
-     data-form-builder-valid-categories-value="<%= FormTemplateStatus::VALID_CATEGORIES.to_json %>"
+     data-form-builder-predefined-statuses-value="<%= Forms::TemplateStatus::PREDEFINED_STATUSES.to_json %>"
+     data-form-builder-valid-categories-value="<%= Forms::TemplateStatus::VALID_CATEGORIES.to_json %>"
      data-form-builder-edit-mode-value="true">
   <div class="form-builder-modal-content">
     <% if @form_template.errors.any? %>
@@ -97,23 +97,7 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="form_visibility">Access Level <span class="required">*</span></label>
-            <%= f.select :visibility,
-                        options_for_select([
-                          ['Public (accessible to all users)', 'public'],
-                          ['Restricted (manage access in ACL)', 'restricted']
-                        ], @form_template.visibility),
-                        {},
-                        {
-                          id: "form_visibility",
-                          class: "form-control"
-                        } %>
-            <small class="form-text" style="color: #6c757d;">
-              Public forms are automatically granted to every organization and group.
-              Restricted forms require access to be configured in the ACL page.
-            </small>
-          </div>
+          <%= render "form_templates/metadata_fields", f: f, template: @form_template %>
 
           <div class="form-group">
             <label for="form_reference_prefix">Reference Prefix</label>
@@ -275,8 +259,8 @@
                                 data-action="change->form-builder#updateStepDisplayName"
                                 title="Restrict group members to those matching the submitter at this org level">
                           <option value="">Filter by submitter's…</option>
-                          <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
-                            <option value="<%= lvl %>" <%= 'selected' if step.org_filter_level == lvl %>>Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+                          <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+                            <option value="<%= lvl %>" <%= 'selected' if step.org_filter_level == lvl %>>Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
                           <% end %>
                         </select>
                       </div>
@@ -337,7 +321,7 @@
                     <div class="step-inbox-buttons-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #007bff;">
                       <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Inbox queue buttons at this step</div>
                       <div class="step-inbox-buttons-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+                        <% Forms::Template::INBOX_BUTTON_TYPES.each do |key, config| %>
                           <label style="flex: 0 0 calc(50% - 8px); display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 0.85em; cursor: pointer;">
                             <input type="checkbox"
                                    name="routing_steps[][inbox_buttons][]"
@@ -431,8 +415,8 @@
                               class="form-control form-control-sm step-org-filter-dropdown"
                               title="Restrict group members to those matching the submitter at this org level">
                         <option value="">Filter by submitter's…</option>
-                        <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
-                          <option value="<%= lvl %>">Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+                        <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+                          <option value="<%= lvl %>">Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
                         <% end %>
                       </select>
                     </div>
@@ -450,7 +434,7 @@
                   <div class="step-inbox-buttons-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #007bff;">
                     <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Inbox queue buttons at this step</div>
                     <div class="step-inbox-buttons-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                      <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+                      <% Forms::Template::INBOX_BUTTON_TYPES.each do |key, config| %>
                         <label style="flex: 0 0 calc(50% - 8px); display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 0.85em; cursor: pointer;">
                           <input type="checkbox"
                                  name="routing_steps[][inbox_buttons][]"
@@ -967,14 +951,32 @@
                         </label>
                       </div>
 
-                      <div class="dropdown-manual-values" style="<%= 'display: none;' if field.data_source? || field.custom_lookup? %>">
-                        <label style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
-                        <input type="text"
-                               name="fields[][dropdown_values]"
-                               class="form-control form-control-sm"
-                               value="<%= field.dropdown_values.join(', ') %>"
-                               placeholder="Option 1, Option 2, Option 3"
-                               data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
+                      <% lookup_backed = field.data_source? || field.custom_lookup? %>
+                      <div class="dropdown-manual-values">
+                        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                          <div style="flex: 1; min-width: 180px;">
+                            <label class="dropdown-values-label" style="font-size: 0.9em; color: #495057;">
+                              <%= lookup_backed ? 'Extra manual values (comma-separated):' : 'Values (comma-separated):' %>
+                            </label>
+                            <input type="text"
+                                   name="fields[][dropdown_values]"
+                                   class="form-control form-control-sm"
+                                   value="<%= field.dropdown_values.join(', ') %>"
+                                   placeholder="Option 1, Option 2, Option 3"
+                                   data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
+                          </div>
+                          <div class="dropdown-values-position" style="flex: 0 0 auto; min-width: 150px; <%= 'display: none;' unless lookup_backed %>">
+                            <label style="font-size: 0.9em; color: #495057;">Position:</label>
+                            <select name="fields[][dropdown_values_position]"
+                                    class="form-control form-control-sm dropdown-values-position-select">
+                              <option value="end" <%= 'selected' unless field.extra_values_position == 'start' %>>End of list</option>
+                              <option value="start" <%= 'selected' if field.extra_values_position == 'start' %>>Beginning of list</option>
+                            </select>
+                          </div>
+                        </div>
+                        <small class="dropdown-values-hint" style="color: #6c757d; font-size: 0.78em; margin-top: 2px; <%= lookup_backed ? 'display: block;' : 'display: none;' %>">
+                          Added to the values fetched from the table — e.g. an "Other" entry.
+                        </small>
                       </div>
 
                       <% categorized = field.categorized_data_source? %>
@@ -986,7 +988,7 @@
                                     class="form-control form-control-sm data-source-table-select"
                                     data-action="change->form-builder#handleDataSourceTableChange">
                               <option value="">Select table...</option>
-                              <% FormField::DATA_SOURCES.each do |key, config| %>
+                              <% Forms::Field::DATA_SOURCES.each do |key, config| %>
                                 <option value="<%= key %>"
                                         data-columns="<%= (config[:columns] || {}).to_json %>"
                                         data-categorized="<%= config[:kind] == :categorized %>"
@@ -999,8 +1001,8 @@
                             <select name="fields[][data_source_column]"
                                     class="form-control form-control-sm data-source-column-select">
                               <option value="">Select column...</option>
-                              <% if field.data_source? && FormField::DATA_SOURCES[field.data_source_table] %>
-                                <% (FormField::DATA_SOURCES[field.data_source_table][:columns] || {}).each do |col_key, col_label| %>
+                              <% if field.data_source? && Forms::Field::DATA_SOURCES[field.data_source_table] %>
+                                <% (Forms::Field::DATA_SOURCES[field.data_source_table][:columns] || {}).each do |col_key, col_label| %>
                                   <option value="<%= col_key %>" <%= 'selected' if field.data_source_column == col_key %>><%= col_label %></option>
                                 <% end %>
                               <% end %>
@@ -1012,7 +1014,7 @@
                                     class="form-control form-control-sm data-source-category-select">
                               <option value="">Select category...</option>
                               <% if categorized %>
-                                <% FormField.category_options_for(field.data_source_table).each do |cat_label, cat_id| %>
+                                <% Forms::Field.category_options_for(field.data_source_table).each do |cat_label, cat_id| %>
                                   <option value="<%= cat_id %>" <%= 'selected' if field.data_source_category.to_s == cat_id.to_s %>><%= cat_label %></option>
                                 <% end %>
                               <% end %>
@@ -1024,7 +1026,7 @@
                           <select name="fields[][data_source_agency]"
                                   class="form-control form-control-sm data-source-agency-select">
                             <option value="">All agencies</option>
-                            <% Agency.order(:long_name).each do |agency| %>
+                            <% Coa::Agency.order(:long_name).each do |agency| %>
                               <option value="<%= agency.agency_id %>" <%= 'selected' if field.options&.dig('data_source_agency') == agency.agency_id.to_s %>><%= agency.long_name %></option>
                             <% end %>
                           </select>
@@ -1197,8 +1199,8 @@
                                   style="min-width: 200px;"
                                   title="Restrict group members to those matching the submitter at this org level">
                             <option value="">Filter by submitter's…</option>
-                            <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
-                              <option value="<%= lvl %>" <%= 'selected' if field.restricted_to_org_filter_level == lvl %>>Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+                            <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+                              <option value="<%= lvl %>" <%= 'selected' if field.restricted_to_org_filter_level == lvl %>>Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
                             <% end %>
                           </select>
                         </div>
@@ -1705,12 +1707,27 @@
       </div>
 
       <div class="dropdown-manual-values">
-        <label style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
-        <input type="text"
-               name="fields[][dropdown_values]"
-               class="form-control form-control-sm"
-               placeholder="Option 1, Option 2, Option 3"
-               data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
+        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 180px;">
+            <label class="dropdown-values-label" style="font-size: 0.9em; color: #495057;">Values (comma-separated):</label>
+            <input type="text"
+                   name="fields[][dropdown_values]"
+                   class="form-control form-control-sm"
+                   placeholder="Option 1, Option 2, Option 3"
+                   data-action="change->form-builder#handleDropdownValuesChange blur->form-builder#handleDropdownValuesChange">
+          </div>
+          <div class="dropdown-values-position" style="flex: 0 0 auto; min-width: 150px; display: none;">
+            <label style="font-size: 0.9em; color: #495057;">Position:</label>
+            <select name="fields[][dropdown_values_position]"
+                    class="form-control form-control-sm dropdown-values-position-select">
+              <option value="end" selected>End of list</option>
+              <option value="start">Beginning of list</option>
+            </select>
+          </div>
+        </div>
+        <small class="dropdown-values-hint" style="color: #6c757d; font-size: 0.78em; margin-top: 2px; display: none;">
+          Added to the values fetched from the table — e.g. an "Other" entry.
+        </small>
       </div>
 
       <div class="dropdown-custom-source" style="display: none;">
@@ -1839,8 +1856,8 @@
                   style="min-width: 200px;"
                   title="Restrict group members to those matching the submitter at this org level">
             <option value="">Filter by submitter's…</option>
-            <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
-              <option value="<%= lvl %>">Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+            <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+              <option value="<%= lvl %>">Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
             <% end %>
           </select>
         </div>
@@ -2067,8 +2084,8 @@
                 data-action="change->form-builder#updateStepDisplayName"
                 title="Restrict group members to those matching the submitter at this org level">
           <option value="">Filter by submitter's…</option>
-          <% FormTemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
-            <option value="<%= lvl %>">Filter by submitter's <%= FormTemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+          <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+            <option value="<%= lvl %>">Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
           <% end %>
         </select>
       </div>
@@ -2124,7 +2141,7 @@
     <div class="step-inbox-buttons-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #007bff;">
       <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Inbox queue buttons at this step</div>
       <div class="step-inbox-buttons-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
-        <% FormTemplate::INBOX_BUTTON_TYPES.each do |key, config| %>
+        <% Forms::Template::INBOX_BUTTON_TYPES.each do |key, config| %>
           <label style="flex: 0 0 calc(50% - 8px); display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 0.85em; cursor: pointer;">
             <input type="checkbox"
                    name="routing_steps[][inbox_buttons][]"

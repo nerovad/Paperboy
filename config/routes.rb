@@ -3,7 +3,7 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
-  resources :telework_log_forms do
+  resources :telework_log_forms, controller: 'forms/telework_log_forms' do
     member do
       get :pdf
       patch :approve
@@ -93,11 +93,17 @@ Rails.application.routes.draw do
 
     resource :dashboard, only: :show, controller: :dashboards
     resource :audit, only: :show, controller: :audits
+    get 'audit/cost/:key/rows', to: 'audits#cost_rows', as: :cost_audit_rows
     get 'audit/type/:code/rows', to: 'audits#type_rows', as: :type_audit_rows
     get 'audit/:key/rows', to: 'audits#rows', as: :audit_rows
     get 'audit/:key', to: 'audits#detail', as: :audit_detail
     resource :reporting_period, only: %i[show update]
-    resource :data_refresh, only: %i[show update]
+    resource :data_refresh, only: %i[show update] do
+      post :restart
+    end
+    get 'data_refresh/runs/:run_id', to: 'data_refreshes#progress', as: :data_refresh_run
+    get 'data_refresh/runs/:run_id/status', to: 'data_refreshes#status', as: :data_refresh_run_status
+    get 'data_refresh/runs/:run_id/log', to: 'data_refreshes#log', as: :data_refresh_run_log
     resources :email_recipients, only: %i[index create destroy]
     resource :email_subjects, only: %i[show update]
     resource :email_reports, only: %i[show create]
@@ -121,13 +127,41 @@ Rails.application.routes.draw do
     root 'dashboard#index'
   end
 
+  namespace :p2m do
+    root 'dashboard#home'
+    get 'dashboard', to: 'dashboard#index', as: :dashboard
+    resource :pre_production, only: :show
+    resource :stage_data, only: %i[show create] do
+      get :details
+      get :preview
+      get :print_tray_labels
+      post :move_to_staging
+      delete :remove_from_staging
+      post :move_to_shipping_station
+      delete :remove_from_shipping_station
+    end
+    get 'oms_status', to: 'oms_uploads#index', as: :oms_status
+    resource :data_refresh, only: %i[show update] do
+      post :restart
+    end
+    get 'data_refresh/runs/:run_id', to: 'data_refreshes#progress', as: :data_refresh_run
+    get 'data_refresh/runs/:run_id/status', to: 'data_refreshes#status', as: :data_refresh_run_status
+    get 'data_refresh/runs/:run_id/log', to: 'data_refreshes#log', as: :data_refresh_run_log
+  end
+
   namespace :data_runner do
     root 'dsls#index'
 
     resources :logs
+    resource :inbox_dsls, only: :create
+    resource :database_dsls, only: %i[new create] do
+      get :databases
+      get :tables
+    end
     resources :dsls, only: %i[index show new create edit update destroy], param: :name do
       member do
         post :run
+        get 'reference', to: 'dsl_references#show', as: :reference
         get :outputs
         get 'outputs/backup', to: 'backup_outputs#index', as: :backup_outputs
         delete 'outputs/backup', to: 'backup_outputs#destroy_all', as: :destroy_backup_outputs
@@ -140,11 +174,14 @@ Rails.application.routes.draw do
     patch '/dsl_groups/:group', to: 'dsls#update_group', as: :dsl_group
     patch '/dsl_groups/:group/rename', to: 'dsls#rename_group', as: :rename_dsl_group
     delete '/dsl_groups/:group', to: 'dsls#destroy_group', as: :destroy_dsl_group
-    post '/dsl_groups/:group/refresh', to: 'dsls#refresh_group', as: :refresh_dsl_group
+    post '/dsl_groups/:group/refresh', to: 'group_refreshes#create', as: :refresh_dsl_group
     get '/runs/:id', to: 'runs#show', as: :run
+    resources :group_runs, only: :show do
+      member { get :status }
+    end
   end
 
-  resources :fleet_vehicle_garaging_forms do
+  resources :fleet_vehicle_garaging_forms, controller: 'forms/fleet_vehicle_garaging_forms' do
     member do
       get :pdf
       patch :approve
@@ -152,7 +189,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :form_request_forms do
+  resources :form_request_forms, controller: 'forms/form_request_forms' do
     member do
       get :download_attach_existing_pdf_form
       get :pdf
@@ -161,7 +198,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :id_badge_request_forms do
+  resources :id_badge_request_forms, controller: 'forms/id_badge_request_forms' do
     member do
       get :pdf
       patch :approve
@@ -169,7 +206,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :bike_locker_forms do
+  resources :bike_locker_forms, controller: 'forms/bike_locker_forms' do
     collection do
       get :available_lockers
     end
@@ -180,7 +217,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :pcard_request_forms do
+  resources :pcard_request_forms, controller: 'forms/pcard_request_forms' do
     member do
       get :pdf
       patch :approve
@@ -188,7 +225,10 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :notice_of_change_forms do
+  resources :notice_of_change_forms, controller: 'forms/notice_of_change_forms' do
+    collection do
+      get :accounting_options
+    end
     member do
       get :pdf
       patch :approve
@@ -196,7 +236,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :workplace_violence_forms do
+  resources :workplace_violence_forms, controller: 'forms/workplace_violence_forms' do
     member do
       get :pdf
       patch :approve
@@ -204,7 +244,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :osha_reports do
+  resources :osha_reports, controller: 'forms/osha_reports' do
     member do
       get :pdf
       patch :approve
@@ -216,7 +256,7 @@ Rails.application.routes.draw do
   patch 'osha_300a',         to: 'osha_300as#update'
   get   'osha_300a/payload', to: 'osha_300as#payload', as: :osha_300a_payload
   post  'osha_300a/submit',  to: 'osha_300as#submit',  as: :osha_300a_submit
-  resources :leave_of_absence_forms do
+  resources :leave_of_absence_forms, controller: 'forms/leave_of_absence_forms' do
     member do
       get :download_doctors_note_attachment
       get :pdf
@@ -225,7 +265,7 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :safety_reports do
+  resources :safety_reports, controller: 'forms/safety_reports' do
     member do
       get :pdf
       patch :approve
@@ -239,7 +279,8 @@ Rails.application.routes.draw do
   get 'manifest' => 'rails/pwa#manifest', as: :pwa_manifest
   get 'service-worker' => 'rails/pwa#service_worker', as: :pwa_service_worker
 
-  resources :work_schedule_or_location_update_forms do
+  resources :work_schedule_or_location_update_forms,
+            controller: 'forms/work_schedule_or_location_update_forms' do
     member do
       get :pdf
       patch :approve
@@ -247,13 +288,17 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
-  resources :social_media_forms
-  resources :gym_locker_forms
-  resources :carpool_forms
+  resources :social_media_forms, controller: 'forms/social_media_forms'
+  resources :gym_locker_forms, controller: 'forms/gym_locker_forms'
+  resources :carpool_forms, controller: 'forms/carpool_forms'
   # ============================================================================
   # Root & Home
   # ============================================================================
   root 'forms#home'
+  # Both fill a frame in a dialog the layout renders; neither is a page anyone
+  # navigates to on its own.
+  get '/who_am_i', to: 'who_am_i#show', as: :who_am_i
+  get '/command_palette', to: 'command_palette#show', as: :command_palette
   get 'forms/home'
   get '/form_success', to: 'shared#form_success', as: :form_success
   get '/ticket_success', to: 'shared#ticket_success', as: :ticket_success
@@ -285,7 +330,6 @@ Rails.application.routes.draw do
   # ============================================================================
   namespace :admin do
     resources :impersonations, only: %i[new create destroy]
-    resources :data_validation, only: [:index]
   end
 
   # Records pillar landing page (lists the Registry grid tables) + generic grid
@@ -313,6 +357,18 @@ Rails.application.routes.draw do
   # Safety Reporting authorization console (HCA safety officers by org node).
   resources :safety_authorizations, only: %i[index new create edit update destroy],
                                     path: 'authorization_console/safety'
+
+  # Critical Information Reporting authorization console (incident managers by
+  # the site named in the report's "Where: Location" field).
+  resources :critical_information_authorizations,
+            only: %i[index new create edit update destroy],
+            path: 'authorization_console/critical_information'
+
+  # The site catalogue the CIR form's location dropdown is built from. Add and
+  # delete only — a rename would orphan every report filed under the old name.
+  resources :critical_information_locations,
+            only: %i[new create destroy],
+            path: 'authorization_console/critical_information/locations'
 
   resources :acl, only: %i[index show new create edit update destroy] do
     member do
@@ -354,6 +410,11 @@ Rails.application.routes.draw do
   get '/inbox/status_history/:type/:id', to: 'inbox#status_history', as: 'inbox_status_history'
   get '/submissions', to: 'submissions#index', as: :submissions
   get '/submissions/status_options', to: 'submissions#status_options', as: :submissions_status_options
+  # Reference number typed into the quick search ("PLS-845") -> that submission.
+  get '/submissions/lookup', to: 'submissions#lookup', as: :submission_lookup
+  # Status change from a submission's own page, for forms that carry a status
+  # dropdown in the inbox but have reached an end state and dropped out of it.
+  patch '/submissions/:type/:id/status', to: 'submissions#update_status', as: :submission_status
   resources :saved_searches, only: %i[create destroy]
 
   # Per-user column/filter layout for the Inbox & Submissions tables
@@ -389,12 +450,16 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :form_visibility_grants, only: %i[index create destroy]
+  # Rows behind the ACL group page's Submission Visibility section.
+  resources :form_visibility_grants, only: %i[create destroy]
+  resources :form_subscriptions, only: %i[create destroy]
+  resources :away_periods, only: %i[create destroy]
 
   # ============================================================================
   # Workflow Forms (with approval/denial workflows)
   # ============================================================================
-  resources :parking_lot_submissions, only: %i[new create index show] do
+  resources :parking_lot_submissions, only: %i[new create index show],
+                                      controller: 'forms/parking_lot_submissions' do
     member do
       get :pdf
       patch :approve
@@ -402,7 +467,8 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :probation_transfer_requests, only: %i[new create index show] do
+  resources :probation_transfer_requests, only: %i[new create index show],
+                                          controller: 'forms/probation_transfer_requests' do
     member do
       get :pdf
       patch :approve
@@ -411,21 +477,21 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :critical_information_reportings, only: %i[new create show edit update] do
+  resources :critical_information_reportings, only: %i[new create show edit update],
+                                              controller: 'forms/critical_information_reportings' do
     member do
       get :pdf
       get 'download_media/:attachment_id', action: :download_media, as: :download_media
       patch :approve
       patch :deny
       patch :update_status
-      patch :reopen
     end
   end
 
   # ============================================================================
   # Standard Forms (alphabetical)
   # ============================================================================
-  resources :creative_job_requests, only: %i[new create]
+  resources :creative_job_requests, only: %i[new create], controller: 'forms/creative_job_requests'
   get 'help', to: 'help#index', as: :help
   resource :settings, only: %i[show update]
   resources :help_tickets, only: %i[new create index show] do
@@ -433,11 +499,6 @@ Rails.application.routes.draw do
       patch :close
     end
   end
-
-  # ============================================================================
-  # Lookup Tables Management
-  # ============================================================================
-  resources :lookup_tables, only: %i[index show new create]
 
   namespace :coa do
     root to: 'list#home'
@@ -453,6 +514,12 @@ Rails.application.routes.draw do
       get :programs
       get :phases
       get :tasks
+    end
+
+    resource :customer_lookup, only: :show do
+      get :employees
+      get :hierarchy
+      get :account_items
     end
 
     resources :agencies

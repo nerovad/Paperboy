@@ -1,4 +1,4 @@
-@import "base/tokens";
+@use "base/tokens" as *;
 
 // Column customizer: the "+" trigger in the table header and the modal that
 // lets a user reorder / show / hide / add columns on the My Work tables.

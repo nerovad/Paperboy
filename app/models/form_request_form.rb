@@ -2,6 +2,7 @@
 
 class FormRequestForm < ApplicationRecord
   include TrackableStatus
+  include Reassignable
 
   has_many_attached :attach_existing_pdf_form
 
@@ -26,14 +27,9 @@ class FormRequestForm < ApplicationRecord
     self.class.name.demodulize.titleize
   end
 
-  # For inbox reassignment - returns the current approver's ID
-  def current_assignee_id
-    approver_id
-  end
-
   # Get the form template for this model (for button configuration)
   def form_template
-    @form_template ||= FormTemplate.find_by(class_name: self.class.name)
+    @form_template ||= Forms::Template.find_by(class_name: self.class.name)
   end
 
   def acceptable_attach_existing_pdf_form_files

@@ -47,6 +47,34 @@ module SubmissionsHelper
     }[category.to_sym] || 'Unknown'
   end
 
+  # True when the viewer may change this submission's status from its detail
+  # page — the form carries a status dropdown and they're allowed to use it.
+  # Enforced for real by SubmissionsController#update_status.
+  def can_change_submission_status?(record, routing_step: nil)
+    Forms::SubmissionPolicy.status_dropdown?(record) &&
+      submission_action_permitted?(record, 'change_status', routing_step: routing_step)
+  end
+
+  # True when the viewer may edit this submission. Enforced for real by
+  # Forms::BaseController, which guards every form's edit/update.
+  def can_edit_submission?(record, routing_step: nil)
+    submission_action_permitted?(record, 'edit', routing_step: routing_step)
+  end
+
+  # Both buttons above ask Forms::SubmissionPolicy the same question the
+  # endpoints ask, so a button a viewer can see is one they can use, and one
+  # they can't see is refused if the URL is typed by hand.
+  def submission_action_permitted?(record, action, routing_step: nil)
+    Forms::SubmissionPolicy.permitted?(
+      record,
+      action: action,
+      employee_id: session.dig(:user, 'employee_id'),
+      group_names: current_user_group_names,
+      permission_keys: current_user_submission_action_permission_keys,
+      routing_step: routing_step
+    )
+  end
+
   private
 
   # Maps legacy status strings to categories for backwards compatibility

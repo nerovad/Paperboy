@@ -1,0 +1,40 @@
+<%= form_with model: @authorization, url: form_url, method: form_method,
+              scope: :critical_information_authorization, data: { turbo: false } do |form| %>
+  <% if @authorization.errors.any? %>
+    <div class="alert alert-danger">
+      <p><strong>There was a problem:</strong></p>
+      <ul>
+        <% @authorization.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group" data-controller="choices">
+    <%= form.label :location, "Location" %>
+    <%= form.select :location,
+          options_for_select(@location_options, @authorization.location),
+          { prompt: "Select Location" },
+          class: "form-control",
+          required: true,
+          data: { choices_target: "select", placeholder: "Search for a location..." } %>
+    <small class="help-text">Critical Information Reports naming this location route to the incident manager below</small>
+  </div>
+
+  <div class="form-group" data-controller="choices">
+    <%= form.label :employee_id, "Incident Manager" %>
+    <%= form.select :employee_id,
+          options_for_select(@employee_options, @authorization.employee_id),
+          { prompt: "Select Employee" },
+          class: "form-control",
+          required: true,
+          data: { choices_target: "select", placeholder: "Search for an employee..." } %>
+    <small class="help-text">General Services Agency staff</small>
+  </div>
+
+  <div class="form-actions">
+    <%= link_to "Cancel", critical_information_authorizations_path, class: "btn" %>
+    <%= form.submit submit_label, class: "btn approve" %>
+  </div>
+<% end %>

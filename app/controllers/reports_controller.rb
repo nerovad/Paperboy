@@ -48,7 +48,7 @@ class ReportsController < ApplicationController
 
     begin
       # Get the model class
-      template = FormTemplate.all.find { |t| t.class_name.tableize == form_type }
+      template = Forms::Template.all.find { |t| t.class_name.tableize == form_type }
 
       if template.nil?
         render json: { status_options: [] }
@@ -172,7 +172,7 @@ class ReportsController < ApplicationController
   end
 
   def available_forms
-    templates = FormTemplate.all.order(:name)
+    templates = Forms::Template.all.order(:name)
 
     # Non-admins only see forms they have ACL permission for
     unless current_user_group_names.include?('system_admins')
@@ -189,7 +189,7 @@ class ReportsController < ApplicationController
   end
 
   def permitted_form_type?(form_type)
-    template = FormTemplate.all.find { |t| t.class_name.tableize == form_type }
+    template = Forms::Template.all.find { |t| t.class_name.tableize == form_type }
     return false unless template
 
     current_user_form_permission_keys.include?(template.id.to_s)
