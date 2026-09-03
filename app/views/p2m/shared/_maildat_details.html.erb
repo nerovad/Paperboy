@@ -39,8 +39,10 @@
 <div class="p2m-maildat-actions">
   <% if production_stage == :pre %>
     <button type="button" class="btn approve compact"
-            data-action="data-refresh-groups#feedback"
-            data-feedback-action="Send to Printer" data-feedback-oms="<%= @oms_number %>">
+            data-controller="printer-selection"
+            data-action="printer-selection#open"
+            data-printer-selection-oms-value="<%= @oms_number %>"
+            data-printer-selection-catalog-value="<%= @printer_queues.to_json %>">
       Send to Printer
     </button>
     <button type="button" class="btn compact" data-action="data-refresh-groups#feedback"

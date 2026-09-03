@@ -24,6 +24,7 @@ module P2m
       @associated_files = OmsAssociatedFiles.new.call(
         directory: params.require(:directory), oms_number: @oms_number
       )
+      @printer_queues = PrinterCatalog.new.call
       render partial: 'p2m/shared/maildat_details', locals: { production_stage: :pre }
     rescue ArgumentError, ActionController::ParameterMissing => e
       render plain: e.message, status: :unprocessable_content

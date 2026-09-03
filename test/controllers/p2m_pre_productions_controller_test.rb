@@ -37,13 +37,21 @@ class P2mPreProductionsControllerTest < ActionController::TestCase
     sign_in
     associated_files = Object.new
     associated_files.define_singleton_method(:call) { |**| ['51780767.zip', 'tray-labels.pdf'] }
+    catalog = { 'Printer One' => ['Queue A', 'Queue B'] }
+    printer_catalog = Object.new
+    printer_catalog.define_singleton_method(:call) { catalog }
 
-    P2m::OmsAssociatedFiles.stub(:new, associated_files) do
-      get :details, params: { directory: '2026/51780767', oms_number: '51780767' }
+    P2m::PrinterCatalog.stub(:new, printer_catalog) do
+      P2m::OmsAssociatedFiles.stub(:new, associated_files) do
+        get :details, params: { directory: '2026/51780767', oms_number: '51780767' }
+      end
     end
 
     assert_response :success
     assert_select 'button', text: 'Send to Printer', count: 1
+    assert_select 'button[data-printer-selection-catalog-value]', count: 1 do |buttons|
+      assert_equal catalog.to_json, buttons.first['data-printer-selection-catalog-value']
+    end
     assert_select 'button', text: 'Cancel', count: 1
     assert_select 'button', text: 'Move to Staging', count: 0
   end

@@ -81,6 +81,7 @@ import CoaCustomerLookupController from "controllers/coa_customer_lookup_control
 import AimOcrController from "controllers/aim_ocr_controller"
 import DateRangeController from "controllers/date_range_controller"
 import PdfPreviewController from "controllers/pdf_preview_controller"
+import PrinterSelectionController from "controllers/printer_selection_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -99,6 +100,7 @@ application.register("billing-types", BillingTypesController)
 application.register("billing-email-selection", BillingEmailSelectionController)
 application.register("billing-report-preview", BillingReportPreviewController)
 application.register("data-refresh-groups", DataRefreshGroupsController)
+application.register("printer-selection", PrinterSelectionController)
 application.register("coa-account-fields", CoaAccountFieldsController)
 application.register("approve-modal", ApproveModalController)
 application.register("reassign-modal", ReassignModalController)
