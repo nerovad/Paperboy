@@ -62,8 +62,10 @@
   <div class="p2m-batch-actions">
     <% if production_stage == :pre %>
       <button type="button" class="btn approve"
-              data-action="data-refresh-groups#batchFeedback"
-              data-feedback-action="Send All to Printer">
+              data-controller="printer-selection"
+              data-action="printer-selection#open"
+              data-printer-selection-mode-value="batch"
+              data-printer-selection-catalog-value="<%= @printer_queues.to_json %>">
         Send All to Printer
       </button>
     <% else %>

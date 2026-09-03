@@ -20,16 +20,24 @@ class P2mPreProductionsControllerTest < ActionController::TestCase
         'associated_file_count' => 3
       }]
     }
+    catalog = { 'Printer One' => ['Queue A', 'Queue B'] }
+    printer_catalog = Object.new
+    printer_catalog.define_singleton_method(:call) { catalog }
 
-    P2m::PrintAndInsertingDone.stub(:scan, report) do
-      get :show, params: {
-        pre_production: { start_date: '2026-08-01', end_date: '2026-08-31' }
-      }
+    P2m::PrinterCatalog.stub(:new, printer_catalog) do
+      P2m::PrintAndInsertingDone.stub(:scan, report) do
+        get :show, params: {
+          pre_production: { start_date: '2026-08-01', end_date: '2026-08-31' }
+        }
+      end
     end
 
     assert_response :success
     assert_select '.p2m-maildat-table tr[data-oms-number="51780767"]', count: 1
-    assert_select 'button', text: 'Send All to Printer', count: 1
+    assert_select 'button[data-printer-selection-mode-value="batch"]',
+                  text: 'Send All to Printer', count: 1 do |buttons|
+      assert_equal catalog.to_json, buttons.first['data-printer-selection-catalog-value']
+    end
     assert_select 'button', text: 'Move All to Staging', count: 0
   end
 

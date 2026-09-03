@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { pbConfirm } from "pb_modal"
 
 export default class extends Controller {
-  static values = { catalog: Object, oms: String }
+  static values = { catalog: Object, mode: String, oms: String }
 
   open() {
     const backdrop = document.createElement("div")
@@ -34,12 +34,20 @@ export default class extends Controller {
       close()
       await pbConfirm({
         title: "Confirm Printer and Queue",
-        message: `Send OMS ${this.omsValue} to printer ${selection.printer} using queue ${selection.queue}?`,
-        confirmLabel: "Send to Printer"
+        message: this.confirmationMessage(selection),
+        confirmLabel: this.modeValue === "batch" ? "Send All to Printer" : "Send to Printer"
       })
     })
     dialog.addEventListener("keydown", (event) => { if (event.key === "Escape") close() })
     printer.focus()
+  }
+
+  confirmationMessage(selection) {
+    if (this.modeValue === "batch") {
+      return `Send all visible Mail.dat files to printer ${selection.printer} using queue ${selection.queue}?`
+    }
+
+    return `Send OMS ${this.omsValue} to printer ${selection.printer} using queue ${selection.queue}?`
   }
 
   dialogMarkup() {

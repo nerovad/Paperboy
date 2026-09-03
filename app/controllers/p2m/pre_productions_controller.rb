@@ -9,7 +9,10 @@ module P2m
 
     def show
       validate_date_range!
-      @report = PrintAndInsertingDone.scan(start_date: @start_date, end_date: @end_date) if params[:pre_production]
+      if params[:pre_production]
+        @report = PrintAndInsertingDone.scan(start_date: @start_date, end_date: @end_date)
+        @printer_queues = PrinterCatalog.new.call
+      end
     rescue ArgumentError
       @report = nil
       render_invalid_date_range(:show)
