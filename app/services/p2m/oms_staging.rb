@@ -4,10 +4,11 @@ require 'fileutils'
 require 'digest'
 require 'pathname'
 require 'tempfile'
+require_relative 'paths'
 
 module P2m
   class OmsStaging
-    DESTINATION = Pathname.new('/mnt/o/Outputs/DataRunner/00_SentToUSPS')
+    DESTINATION = Paths::STAGING_PATH
 
     def initialize(root: OmsAssociatedFiles::ROOT, destination: DESTINATION)
       @root = Pathname.new(root).expand_path

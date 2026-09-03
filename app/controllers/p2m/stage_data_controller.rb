@@ -58,7 +58,7 @@ module P2m
       count = OmsStaging.new.stage(**staging_parameters, checksums: checksums)
       ledger.staged!(oms_number: staging_parameters.fetch(:oms_number), actor: current_user.email,
                      analysis: analysis, checksums: checksums)
-      render json: { message: "#{count} files copied to 00_SentToUSPS." }
+      render json: { message: "#{count} files copied to #{Paths::SENT_TO_USPS}." }
     rescue P2m::OmsUploadLedger::ChangedFiles,
            P2m::OmsUploadLedger::InvalidDataset,
            ActiveRecord::RecordInvalid, ArgumentError, RuntimeError => e
@@ -70,7 +70,7 @@ module P2m
       OmsUploadLedger.new.remove!(oms_number: staging_parameters.fetch(:oms_number), actor: current_user.email) do
         count = OmsStaging.new.remove(**staging_parameters)
       end
-      render json: { message: "#{count} files removed from 00_SentToUSPS." }
+      render json: { message: "#{count} files removed from #{Paths::SENT_TO_USPS}." }
     rescue P2m::OmsUploadLedger::ImportStarted,
            ActiveRecord::RecordNotFound, ArgumentError, RuntimeError => e
       render json: { message: e.message }, status: :unprocessable_content
@@ -78,14 +78,14 @@ module P2m
 
     def move_to_shipping_station
       count = OmsShippingStation.new.copy(**staging_parameters)
-      render json: { message: "#{count} Mail.dat file copied to 00_ShippingStation." }
+      render json: { message: "#{count} Mail.dat file copied to #{Paths::SHIPPING_STATION}." }
     rescue ArgumentError, RuntimeError => e
       render json: { message: e.message }, status: :unprocessable_content
     end
 
     def remove_from_shipping_station
       count = OmsShippingStation.new.remove(**staging_parameters)
-      render json: { message: "#{count} Mail.dat file removed from 00_ShippingStation." }
+      render json: { message: "#{count} Mail.dat file removed from #{Paths::SHIPPING_STATION}." }
     rescue ArgumentError, RuntimeError => e
       render json: { message: e.message }, status: :unprocessable_content
     end

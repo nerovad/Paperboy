@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require Rails.root.join('app/services/p2m/paths')
+
 [
   'Oms',
   {
@@ -24,9 +26,9 @@
     },
     orchestration: {
       root_path: '/mnt/o/Outputs/DataRunner',
-      sent_path: '00_SentToUSPS',
-      output_path: '01_TemporaryOutput',
-      processed_path: '02_Processed',
+      sent_path: P2m::Paths::SENT_TO_USPS,
+      output_path: P2m::Paths::TEMPORARY_OUTPUT,
+      processed_path: P2m::Paths::PROCESSED,
       queue: {
         path: :sent_path,
         pattern: /\AMail\.dat_\d{8,9}\.zip\z/i

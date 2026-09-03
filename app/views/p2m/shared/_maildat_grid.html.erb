@@ -1,5 +1,7 @@
 <section class="p2m-stage-card" aria-labelledby="p2m-oms-results-title"
-         data-controller="data-refresh-groups">
+         data-controller="data-refresh-groups"
+         data-data-refresh-groups-sent-to-usps-name-value="<%= P2m::Paths::SENT_TO_USPS %>"
+         data-data-refresh-groups-shipping-station-name-value="<%= P2m::Paths::SHIPPING_STATION %>">
   <div class="p2m-results-summary">
     <h2 id="p2m-oms-results-title">
       Mail.dat Files Found at <%= report.fetch("source_root", "/mnt/o/Outputs") %>/...

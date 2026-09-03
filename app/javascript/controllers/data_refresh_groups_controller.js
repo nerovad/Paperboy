@@ -3,6 +3,7 @@ import { pbAlert, pbConfirm } from "pb_modal"
 
 export default class extends Controller {
   static batchConcurrency = 4
+  static values = { sentToUspsName: String, shippingStationName: String }
 
   async toggle(event) {
     const detailId = event.currentTarget.dataset.detailId
@@ -164,9 +165,9 @@ export default class extends Controller {
       : jobs.length
     const detail = destination === "staging"
       ? `This will validate and copy ${totalFiles} associated files for ${jobs.length} visible OMS numbers ` +
-        "to 00_SentToUSPS. Successful OMS numbers will be removed from this grid; failures will remain visible."
+        `to ${this.sentToUspsNameValue}. Successful OMS numbers will be removed from this grid; failures will remain visible.`
       : `This will copy one Mail.dat ZIP for each of ${jobs.length} visible OMS numbers ` +
-        `to 00_ShippingStation (${totalFiles} files total). Associated files will not be copied.`
+        `to ${this.shippingStationNameValue} (${totalFiles} files total). Associated files will not be copied.`
 
     return {
       title: destination === "staging" ? "Move All to Staging" : "Move All to Shipping Station",

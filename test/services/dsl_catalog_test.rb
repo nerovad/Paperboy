@@ -103,6 +103,7 @@ class DslCatalogTest < ActiveSupport::TestCase
     assert_equal DslSharedSop.fetch!(:p2m_billing).fetch(:instructions), entry.sop.fetch(:instructions)
     assert_equal 'Mail.dat sent to USPS', entry.sop.fetch(:reference_title)
     assert_equal :downloaded_file, entry.sop.fetch(:reference_path)
-    assert_equal Pathname.new('/mnt/o/Outputs/DataRunner/00_SentToUSPS'), entry.sop_reference_path
+    expected = Pathname.new('/mnt/o/Outputs/DataRunner').join(ENV.fetch('P2M_SENT_TO_USPS'))
+    assert_equal expected, entry.sop_reference_path
   end
 end

@@ -2,10 +2,11 @@
 
 require 'fileutils'
 require 'pathname'
+require_relative 'paths'
 
 module P2m
   class OmsShippingStation
-    DESTINATION = Pathname.new('/mnt/o/Outputs/DataRunner/00_ShippingStation')
+    DESTINATION = Paths::SHIPPING_STATION_PATH
 
     def initialize(root: OmsAssociatedFiles::ROOT, destination: DESTINATION)
       @root = Pathname.new(root).expand_path

@@ -10,6 +10,7 @@ require 'pathname'
 require 'set'
 require 'tempfile'
 require 'time'
+require_relative '../../../app/services/p2m/paths'
 
 module P2m
   # Scans historical OMS output and safely stages one complete job per run.
@@ -164,7 +165,7 @@ module P2m
     end
 
     def status_for(number, markers, missing, duplicates)
-      return ['duplicate OMS number', 'OMS number exists in 02_Processed.'] if processed_path.join(number).directory?
+      return ['duplicate OMS number', "OMS number exists in #{Paths::PROCESSED}."] if processed_path.join(number).directory?
       return ['duplicate marker', "Found #{markers.length} source markers."] if markers.length > 1
       return ['incomplete', "Missing: #{missing.map { |type| label(type) }.join(', ')}."] if missing.any?
       return ['duplicate input', "Multiple: #{duplicates.map { |type| label(type) }.join(', ')}."] if duplicates.any?
@@ -180,7 +181,7 @@ module P2m
       conflicts = queued_oms_numbers
       rows.select { |row| row.fetch('status') == 'ready' && conflicts.include?(row.fetch('oms_number')) }.each do |row|
         row['status'] = 'staging conflict'
-        row['detail'] = 'OMS number exists in 00_SentToUSPS.'
+        row['detail'] = "OMS number exists in #{Paths::SENT_TO_USPS}."
       end
     end
 
@@ -246,8 +247,8 @@ module P2m
       end
     end
 
-    def sent_path = data_runner_root.join('00_SentToUSPS')
-    def processed_path = data_runner_root.join('02_Processed')
+    def sent_path = data_runner_root.join(Paths::SENT_TO_USPS)
+    def processed_path = data_runner_root.join(Paths::PROCESSED)
   end
   # rubocop:enable Metrics/ClassLength
 end

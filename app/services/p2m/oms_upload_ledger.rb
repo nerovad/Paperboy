@@ -3,6 +3,7 @@
 require 'csv'
 require 'digest'
 require 'pathname'
+require_relative 'paths'
 
 module P2m
   # rubocop:disable Metrics/ClassLength
@@ -24,7 +25,7 @@ module P2m
     class ChangedFiles < StandardError; end
     class InvalidDataset < StandardError; end
 
-    PROCESSED_PATH = Pathname.new('/mnt/o/Outputs/DataRunner/02_Processed')
+    PROCESSED_PATH = Paths::PROCESSED_PATH
 
     def initialize(staging_path: OmsStaging::DESTINATION, processed_path: PROCESSED_PATH)
       @staging_path = Pathname.new(staging_path)
@@ -33,7 +34,7 @@ module P2m
 
     def ensure_stageable!(oms_number:)
       archive = processed_path.join(oms_number.to_s)
-      raise ChangedFiles, "OMS #{oms_number} is already archived in 02_Processed" if archive.directory?
+      raise ChangedFiles, "OMS #{oms_number} is already archived in #{Paths::PROCESSED}" if archive.directory?
 
       imported = OmsUpload.where(oms_number: oms_number).where.not(import_status: 'not_started').exists?
       raise ChangedFiles, "OMS #{oms_number} has already begun import" if imported
