@@ -40,6 +40,14 @@ export default class extends Controller {
     })
   }
 
+  async batchFeedback(event) {
+    const action = event.currentTarget.dataset.feedbackAction
+    await pbAlert({
+      title: `${action} pressed`,
+      message: `${action} was pressed for all Mail.dat files in the grid.`
+    })
+  }
+
   async staging(event) {
     const button = event.currentTarget
     const destructive = button.dataset.stagingMethod === "DELETE"

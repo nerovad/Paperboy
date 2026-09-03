@@ -8,4 +8,12 @@
              url: p2m_pre_production_path,
              method: :get,
              scope: :pre_production %>
+
+  <% if @report.present? %>
+    <%= render "p2m/shared/maildat_grid", report: @report, production_stage: :pre,
+               details_path: ->(file) {
+                 details_p2m_pre_production_path(directory: file.fetch("directory"),
+                                                 oms_number: file.fetch("oms_number"))
+               } %>
+  <% end %>
 </div>

@@ -37,6 +37,15 @@
   </tbody>
 </table>
 <div class="p2m-maildat-actions">
+  <% if production_stage == :pre %>
+    <button type="button" class="btn approve compact"
+            data-action="data-refresh-groups#feedback"
+            data-feedback-action="Send to Printer" data-feedback-oms="<%= @oms_number %>">
+      Send to Printer
+    </button>
+    <button type="button" class="btn compact" data-action="data-refresh-groups#feedback"
+            data-feedback-action="Cancel" data-feedback-oms="<%= @oms_number %>">Cancel</button>
+  <% else %>
   <%= link_to "Print Tray Labels",
               print_tray_labels_p2m_stage_data_path(directory: params[:directory],
                                                     oms_number: @oms_number),
@@ -77,8 +86,10 @@
   </button>
   <button type="button" class="btn compact" data-action="data-refresh-groups#feedback"
           data-feedback-action="Cancel" data-feedback-oms="<%= @oms_number %>">Cancel</button>
+  <% end %>
 </div>
 
+<% unless production_stage == :pre %>
 <div class="p2m-staging-progress" data-staging-progress hidden>
   <progress aria-label="Moving files to staging"></progress>
   <span data-staging-progress-label aria-live="polite">Moving files… 0.0 seconds elapsed</span>
@@ -101,4 +112,5 @@
     </div>
   </div>
 </div>
+<% end %>
 </div>

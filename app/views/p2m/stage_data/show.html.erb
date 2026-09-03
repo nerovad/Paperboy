@@ -7,84 +7,10 @@
              url: p2m_stage_data_path, method: :post, scope: :stage_data %>
 
   <% if @report.present? %>
-    <section class="p2m-stage-card" aria-labelledby="p2m-oms-results-title"
-             data-controller="data-refresh-groups">
-      <div class="p2m-results-summary">
-        <h2 id="p2m-oms-results-title">
-          Mail.dat Files Found at <%= @report.fetch("source_root", "/mnt/o/Outputs") %>/...
-        </h2>
-        <p>
-          Inclusive range: <%= @report.fetch("start_date") %> through
-          <%= @report.fetch("end_date") %>
-          — found <%= @report.fetch("found_count", 0) %> in
-          <%= format("%.4f", @report.fetch("search_seconds", 0)) %> seconds
-        </p>
-      </div>
-      <div class="table-wrap p2m-maildat-grid">
-        <table class="p2m-maildat-table" data-controller="output-table" data-simple-sort="true">
-          <thead>
-            <tr>
-              <th aria-sort="descending" data-column-index="0" data-sort-type="number">
-                <button type="button" class="p2m-sort-header"
-                        data-action="click->output-table#changeSort">OMS #</button>
-              </th>
-              <th aria-sort="none" data-column-index="1" data-sort-type="text">
-                <button type="button" class="p2m-sort-header"
-                        data-action="click->output-table#changeSort">Location</button>
-              </th>
-              <th aria-sort="none" data-column-index="2" data-sort-type="text">
-                <button type="button" class="p2m-sort-header"
-                        data-action="click->output-table#changeSort">Modified</button>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @report.fetch("files", []).each_with_index do |file, index| %>
-              <% detail_id = "p2m-maildat-#{index}-details" %>
-              <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>"
-                  data-sort-row data-detail-id="<%= detail_id %>"
-                  data-oms-number="<%= file.fetch("oms_number") %>"
-                  data-directory="<%= file.fetch("directory") %>"
-                  data-associated-file-count="<%= file.fetch("associated_file_count") %>">
-                <td data-sort-value="<%= file.fetch("oms_number") %>">
-                  <button type="button" class="p2m-row-trigger"
-                          aria-expanded="false" aria-controls="<%= detail_id %>"
-                          aria-label="Show files for OMS <%= file.fetch("oms_number") %>"
-                          data-action="data-refresh-groups#toggle" data-detail-id="<%= detail_id %>">
-                    <span aria-hidden="true">▸</span>
-                  </button>
-                  <%= file.fetch("oms_number") %>
-                </td>
-                <td><%= file.fetch("directory") %></td>
-                <td><%= file.fetch("modified_at") %></td>
-              </tr>
-              <tr id="<%= detail_id %>" class="p2m-maildat-detail"
-                  data-details-url="<%= details_p2m_stage_data_path(
-                    directory: file.fetch("directory"), oms_number: file.fetch("oms_number")) %>" hidden>
-                <td colspan="3">
-                  <div data-lazy-details>Loading associated files…</div>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-      <div class="p2m-batch-actions">
-        <button type="button" class="btn reassign" data-batch-move
-                data-action="data-refresh-groups#batchMove" data-batch-destination="shipping"
-                data-batch-url="<%= move_to_shipping_station_p2m_stage_data_path %>">
-          Move All to Shipping Station
-        </button>
-        <button type="button" class="btn approve" data-batch-move
-                data-action="data-refresh-groups#batchMove" data-batch-destination="staging"
-                data-batch-url="<%= move_to_staging_p2m_stage_data_path %>">
-          Move All to Staging
-        </button>
-      </div>
-      <div class="p2m-batch-progress" data-batch-progress hidden>
-        <progress data-batch-progress-bar max="1" value="0"></progress>
-        <span data-batch-progress-label aria-live="polite"></span>
-      </div>
-    </section>
+    <%= render "p2m/shared/maildat_grid", report: @report, production_stage: :post,
+               details_path: ->(file) {
+                 details_p2m_stage_data_path(directory: file.fetch("directory"),
+                                             oms_number: file.fetch("oms_number"))
+               } %>
   <% end %>
 </div>
