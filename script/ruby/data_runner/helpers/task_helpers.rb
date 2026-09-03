@@ -47,10 +47,14 @@ module DataRunnerTaskHelpers
     Rake::Task.define_task(task_name.to_sym)
   end
 
-  def task_arg(args, argv = ARGV, allow_all: false)
+  def task_arg(args, argv = ARGV, allow_all: false, required: true)
     value = args[:name] || argv[1]
     value = value.to_s.strip unless value.nil?
-    abort 'Usage: rake DataRunner:task[dslName|groupName|ALL]' if value.nil? || value.empty?
+    if value.nil? || value.empty?
+      abort 'Usage: rake DataRunner:task[dslName|groupName|ALL]' if required
+
+      return nil
+    end
     return nil if allow_all && value.casecmp(ALL_SELECTOR).zero?
 
     value

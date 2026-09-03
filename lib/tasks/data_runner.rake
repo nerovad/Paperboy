@@ -10,9 +10,10 @@ namespace :DataRunner do
     DataRunnerTaskHelpers.run_ruby_stage('dsl_stub.rb', DataRunnerTaskHelpers.task_arg(args))
   end
 
-  desc 'Create initial DSL files from 00_Inbox source files'
+  desc 'Create initial DSL files from one or all 00_Inbox source files'
   task :new_dsl, [:name] do |_task, args|
-    DataRunnerTaskHelpers.run_ruby_stage('initial_dsl.rb', DataRunnerTaskHelpers.task_arg(args))
+    selector = DataRunnerTaskHelpers.task_arg(args, allow_all: true, required: false)
+    DataRunnerTaskHelpers.run_ruby_stage('initial_dsl.rb', selector)
   end
 
   desc 'Download or validate configured ETL source files'
