@@ -13,7 +13,7 @@ class P2mPrintAndInsertingDoneScanTest < Minitest::Test
       create_job(source.join('FinalOutput'), '50000002')
       create_job(source.join('staged'), '50000003')
       create_job(source.join('uploaded'), '50000004')
-      sent = runner.join(ENV.fetch('P2M_SENT_TO_USPS')).tap(&:mkpath)
+      sent = runner.join(ENV.fetch('P2M_STAGING')).tap(&:mkpath)
       sent.join('Mail.dat_50000003.zip').write('fixture')
       FileUtils.mkdir_p(runner.join(ENV.fetch('P2M_PROCESSED'), '50000004'))
       report = runner.join('report.json')

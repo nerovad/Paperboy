@@ -26,7 +26,7 @@ require Rails.root.join('app/services/p2m/paths')
     },
     orchestration: {
       root_path: '/mnt/o/Outputs/DataRunner',
-      sent_path: P2m::Paths::SENT_TO_USPS,
+      sent_path: P2m::Paths::STAGING,
       output_path: P2m::Paths::TEMPORARY_OUTPUT,
       processed_path: P2m::Paths::PROCESSED,
       queue: {

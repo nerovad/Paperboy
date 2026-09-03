@@ -181,7 +181,7 @@ module P2m
       conflicts = queued_oms_numbers
       rows.select { |row| row.fetch('status') == 'ready' && conflicts.include?(row.fetch('oms_number')) }.each do |row|
         row['status'] = 'staging conflict'
-        row['detail'] = "OMS number exists in #{Paths::SENT_TO_USPS}."
+        row['detail'] = "OMS number exists in #{Paths::STAGING}."
       end
     end
 
@@ -247,7 +247,7 @@ module P2m
       end
     end
 
-    def sent_path = data_runner_root.join(Paths::SENT_TO_USPS)
+    def sent_path = data_runner_root.join(Paths::STAGING)
     def processed_path = data_runner_root.join(Paths::PROCESSED)
   end
   # rubocop:enable Metrics/ClassLength

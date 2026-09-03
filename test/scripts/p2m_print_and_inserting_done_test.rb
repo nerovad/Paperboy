@@ -26,7 +26,7 @@ class P2mPrintAndInsertingDoneTest < Minitest::Test
       statuses = rows.map { |row| row.fetch('status') }
       assert_equal ['ready', 'incomplete', 'duplicate OMS number'], statuses
       assert runner.join('50000001-companion.csv').file?
-      refute runner.join(ENV.fetch('P2M_SENT_TO_USPS'), 'Mail.dat_50000001.zip').exist?
+      refute runner.join(ENV.fetch('P2M_STAGING'), 'Mail.dat_50000001.zip').exist?
       assert report.file?
     end
   end
@@ -38,7 +38,7 @@ class P2mPrintAndInsertingDoneTest < Minitest::Test
       %w[50000001 50000002 50000003].each do |number|
         create_job(source.join(number), number)
       end
-      sent = runner.join(ENV.fetch('P2M_SENT_TO_USPS')).tap(&:mkpath)
+      sent = runner.join(ENV.fetch('P2M_STAGING')).tap(&:mkpath)
       sent.join('Mail.dat_50000001.zip').write('fixture')
       FileUtils.mkdir_p(runner.join(ENV.fetch('P2M_PROCESSED'), '50000002'))
       runner.join('unrelated-staged-input.csv').write('fixture')
@@ -78,7 +78,7 @@ class P2mPrintAndInsertingDoneTest < Minitest::Test
 
       statuses = rows.map { |row| row.fetch('status') }
       assert_equal ['ready'], statuses
-      refute runner.join(ENV.fetch('P2M_SENT_TO_USPS'), 'Mail.dat_50000001.zip').exist?
+      refute runner.join(ENV.fetch('P2M_STAGING'), 'Mail.dat_50000001.zip').exist?
     end
   end
 
