@@ -60,6 +60,8 @@ class P2mPreProductionsControllerTest < ActionController::TestCase
     assert_select 'button[data-printer-selection-catalog-value]', count: 1 do |buttons|
       assert_equal catalog.to_json, buttons.first['data-printer-selection-catalog-value']
     end
+    assert_select 'a[data-action="pdf-preview#open"]', text: 'tray-labels.pdf', count: 1
+    assert_select '[data-pdf-preview-target="backdrop"]', count: 1
     assert_select 'button', text: 'Cancel', count: 1
     assert_select 'button', text: 'Move to Staging', count: 0
   end
