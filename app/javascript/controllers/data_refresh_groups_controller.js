@@ -35,6 +35,11 @@ export default class extends Controller {
   async feedback(event) {
     const action = event.currentTarget.dataset.feedbackAction
     const omsNumber = event.currentTarget.dataset.feedbackOms
+    if (action === "Cancel") {
+      event.currentTarget.closest("[data-controller~='pdf-preview']")
+        ?.querySelectorAll("input[name='selected_files[]']:checked")
+        .forEach(input => { input.checked = false })
+    }
     await pbAlert({
       title: `${action} pressed`,
       message: `${action} was pressed for OMS ${omsNumber}.`

@@ -6,7 +6,8 @@ export default class extends Controller {
   static values = { catalog: Object, directory: String, mode: String, oms: String, operation: String, url: String }
 
   open() {
-    if (this.modeValue !== "batch" && !this.selectedJob()) {
+    const jobs = this.modeValue === "batch" ? this.visibleJobs() : [this.selectedJob()]
+    if (!jobs.length || jobs.some(job => !job)) {
       void pbAlert({ title: "No files selected", message: "Select at least one file first." })
       return
     }
@@ -20,7 +21,10 @@ export default class extends Controller {
     const printer = backdrop.querySelector("[data-printer-select]")
     const queue = backdrop.querySelector("[data-queue-select]")
     const continueButton = backdrop.querySelector("[data-printer-continue]")
-    const close = () => backdrop.remove()
+    const close = (clearSelection = true) => {
+      backdrop.remove()
+      if (clearSelection) this.clearSelectedFiles()
+    }
 
     Object.keys(this.catalogValue).forEach((name) => printer.add(new Option(name, name)))
     printer.addEventListener("change", () => {
@@ -37,16 +41,20 @@ export default class extends Controller {
     backdrop.addEventListener("click", (event) => { if (event.target === backdrop) close() })
     continueButton.addEventListener("click", async () => {
       const selection = { printer: printer.value, queue: queue.value }
-      close()
+      close(false)
       if (!await pbConfirm({
         title: this.isRemoval ? "Confirm Removal from Printer" : "Confirm Printer and Queue",
         message: this.confirmationMessage(selection),
         confirmLabel: this.isRemoval ? "Remove from Printer" :
           this.modeValue === "batch" ? "Send All to Printer" : "Send to Printer",
         confirmVariant: this.isRemoval ? "deny" : "approve"
-      })) return
+      })) {
+        this.clearSelectedFiles()
+        return
+      }
 
-      await this.copyFiles(selection)
+      this.clearSelectedFiles()
+      await this.copyFiles(selection, jobs)
     })
     dialog.addEventListener("keydown", (event) => { if (event.key === "Escape") close() })
     printer.focus()
@@ -65,13 +73,7 @@ export default class extends Controller {
     return `Send OMS ${this.omsValue} to printer ${selection.printer} using queue ${selection.queue}?`
   }
 
-  async copyFiles(selection) {
-    const jobs = this.modeValue === "batch" ? this.visibleJobs() : [this.selectedJob()]
-    if (!jobs.length || jobs.some(job => !job)) {
-      await pbAlert({ title: "No files selected", message: "Select at least one file to send to the printer." })
-      return
-    }
-
+  async copyFiles(selection, jobs) {
     const progress = this.progressElement()
     const startedAt = performance.now()
     let completed = 0
@@ -113,6 +115,12 @@ export default class extends Controller {
     if (!selectedFiles.length) return null
 
     return { omsNumber: this.omsValue, directory: this.directoryValue, selectedFiles }
+  }
+
+  clearSelectedFiles() {
+    const container = this.element.closest("[data-controller~='pdf-preview']")
+    container?.querySelectorAll("input[name='selected_files[]']:checked")
+      .forEach(input => { input.checked = false })
   }
 
   visibleJobs() {
