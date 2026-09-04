@@ -7,20 +7,29 @@ class P2mProductionsControllerTest < ActionController::TestCase
 
   test 'shows printer queues with collapsible file links' do
     sign_in
-    queues = [{
-      'printer' => 'Printer One', 'queue' => 'Queue A', 'files' => %w[one.pdf two.pdf],
-      'modified_at' => Time.zone.local(2026, 9, 4, 10, 30)
-    }]
+    queues = [
+      {
+        'printer' => 'Printer One', 'queue' => 'Queue A', 'files' => %w[one.pdf two.pdf],
+        'modified_at' => Time.zone.local(2026, 9, 4, 10, 30)
+      },
+      {
+        'printer' => 'Printer One', 'queue' => 'Queue B', 'files' => %w[three.pdf],
+        'modified_at' => Time.zone.local(2026, 9, 4, 11, 30)
+      }
+    ]
     production_files = Object.new
     production_files.define_singleton_method(:call) { queues }
 
     P2m::ProductionFiles.stub(:new, production_files) { get :show }
 
     assert_response :success
-    assert_select '.p2m-maildat-row', text: %r{Printer One/Queue A}, count: 1
-    assert_select '.p2m-row-trigger[aria-expanded="false"]', count: 1
+    assert_select '.p2m-maildat-row', text: /Printer One/, count: 1
+    assert_select '.p2m-production-queue-row', text: /Queue A/, count: 1
+    assert_select '.p2m-production-queue-row', text: /Queue B/, count: 1
+    assert_select '.p2m-row-trigger[aria-expanded="false"]', count: 3
     assert_select '.p2m-maildat-detail[hidden]', count: 1
-    assert_select 'a[data-action="pdf-preview#open"]', count: 2
+    assert_select '.p2m-production-queue-detail[hidden]', count: 2
+    assert_select 'a[data-action="pdf-preview#open"]', count: 3
     assert_select '[data-pdf-preview-target="backdrop"]', count: 1
     assert_select "a.btn[href='#{p2m_production_path}']", text: 'Refresh', count: 1
   end

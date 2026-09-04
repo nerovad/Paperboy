@@ -255,6 +255,32 @@
   padding-left: 1.25rem;
 }
 
+.p2m-production-queues {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    height: auto;
+    padding: .45rem .75rem;
+    text-align: left;
+  }
+
+  thead th {
+    position: static;
+    background: $sidebar-navy;
+    color: $surface-base;
+  }
+
+  tbody .p2m-production-queue-row:nth-of-type(4n + 1) { background: $surface-base; }
+  tbody .p2m-production-queue-row:nth-of-type(4n + 3) { background: $surface-control; }
+}
+
+.p2m-production-queue-detail td {
+  background: $surface-raised;
+  white-space: normal;
+}
+
 .p2m-staging-progress {
   display: grid;
   grid-template-columns: minmax(12rem, 1fr) auto;

@@ -16,7 +16,7 @@
           <tr>
             <th aria-sort="ascending" data-column-index="0" data-sort-type="text">
               <button type="button" class="p2m-sort-header"
-                      data-action="click->output-table#changeSort">Printer/Queue</button>
+                      data-action="click->output-table#changeSort">Printer</button>
             </th>
             <th aria-sort="none" data-column-index="1" data-sort-type="number">
               <button type="button" class="p2m-sort-header"
@@ -29,34 +29,67 @@
           </tr>
         </thead>
         <tbody>
-          <% @queues.each_with_index do |item, index| %>
-            <% detail_id = "p2m-production-queue-#{index}-details" %>
-            <% location = "#{item.fetch("printer")}/#{item.fetch("queue")}" %>
+          <% @queues.group_by { |item| item.fetch("printer") }.each_with_index do |(printer, queues), index| %>
+            <% detail_id = "p2m-production-printer-#{index}-details" %>
+            <% file_count = queues.sum { |item| item.fetch("files").size } %>
+            <% modified_at = queues.map { |item| item.fetch("modified_at") }.max %>
             <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>" data-sort-row
                 data-detail-id="<%= detail_id %>">
-              <td data-sort-value="<%= location %>">
+              <td data-sort-value="<%= printer %>">
                 <button type="button" class="p2m-row-trigger" aria-expanded="false"
-                        aria-controls="<%= detail_id %>" aria-label="Show files in <%= location %>"
+                        aria-controls="<%= detail_id %>" aria-label="Show queues for <%= printer %>"
                         data-action="data-refresh-groups#toggle" data-detail-id="<%= detail_id %>">
                   <span aria-hidden="true">▸</span>
                 </button>
-                <%= location %>
+                <%= printer %>
               </td>
-              <td data-sort-value="<%= item.fetch("files").size %>"><%= item.fetch("files").size %></td>
-              <td><%= l(item.fetch("modified_at"), format: :short) %></td>
+              <td data-sort-value="<%= file_count %>"><%= file_count %></td>
+              <td data-sort-value="<%= modified_at.iso8601 %>"><%= l(modified_at, format: :short) %></td>
             </tr>
             <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden>
               <td colspan="3">
-                <ul class="p2m-production-files">
-                  <% item.fetch("files").each do |filename| %>
-                    <li><%= link_to filename,
-                                    preview_p2m_production_path(printer: item.fetch("printer"),
-                                                                queue: item.fetch("queue"),
-                                                                filename: filename),
-                                    data: { action: "pdf-preview#open",
-                                            pdf_preview_title: filename } %></li>
+                <table class="p2m-production-queues">
+                  <thead>
+                    <tr>
+                      <th>Queue</th>
+                      <th>Files</th>
+                      <th>Modified</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  <% queues.each_with_index do |item, queue_index| %>
+                    <% queue_detail_id = "p2m-production-printer-#{index}-queue-#{queue_index}-details" %>
+                    <tr class="p2m-production-queue-row">
+                      <td>
+                        <button type="button" class="p2m-row-trigger" aria-expanded="false"
+                                aria-controls="<%= queue_detail_id %>"
+                                aria-label="Show files in <%= printer %>/<%= item.fetch("queue") %>"
+                                data-action="data-refresh-groups#toggle"
+                                data-detail-id="<%= queue_detail_id %>">
+                          <span aria-hidden="true">▸</span>
+                        </button>
+                        <%= item.fetch("queue") %>
+                      </td>
+                      <td><%= item.fetch("files").size %></td>
+                      <td><%= l(item.fetch("modified_at"), format: :short) %></td>
+                    </tr>
+                    <tr id="<%= queue_detail_id %>" class="p2m-production-queue-detail" hidden>
+                      <td colspan="3">
+                        <ul class="p2m-production-files">
+                          <% item.fetch("files").each do |filename| %>
+                            <li><%= link_to filename,
+                                            preview_p2m_production_path(printer: printer,
+                                                                        queue: item.fetch("queue"),
+                                                                        filename: filename),
+                                            data: { action: "pdf-preview#open",
+                                                    pdf_preview_title: filename } %></li>
+                          <% end %>
+                        </ul>
+                      </td>
+                    </tr>
                   <% end %>
-                </ul>
+                  </tbody>
+                </table>
               </td>
             </tr>
           <% end %>
