@@ -105,12 +105,28 @@ module P2m
 
     def fd_command
       [
-        'fd', '--no-ignore', '--type', 'f', '--extension', 'zip', '--print0',
+        fd_binary, '--no-ignore', '--type', 'f', '--extension', 'zip', '--print0',
         '--exclude', 'FinalOutput',
         '--changed-within', start_date.iso8601,
         '--changed-before', (end_date + 1).iso8601,
         "^Mail\\.dat_#{OMS_NUMBER}\\.zip$", source_root.to_s
       ]
+    end
+
+    # Debian and Ubuntu ship fd as fdfind, so resolve whichever name exists.
+    def fd_binary
+      @fd_binary ||= fd_candidates.filter_map { |name| executable_path(name) }.first ||
+                     raise("fd not found in PATH (looked for #{fd_candidates.join(', ')})")
+    end
+
+    def fd_candidates = [ENV.fetch('FD_BIN', nil), 'fd', 'fdfind'].compact
+
+    def executable_path(name)
+      return name if name.include?(File::SEPARATOR)
+
+      ENV.fetch('PATH', '').split(File::PATH_SEPARATOR)
+         .map { |directory| File.join(directory, name) }
+         .find { |candidate| File.file?(candidate) && File.executable?(candidate) }
     end
 
     def within_range?(path) = path.mtime.to_date.between?(start_date, end_date)
