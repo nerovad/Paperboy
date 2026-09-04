@@ -179,15 +179,33 @@ While the branch is unmerged, keep the repo `.env` in step with it by
 copying `LockBox/Paperboy.env` over `Paperboy/.env` as usual. Development
 and testing proceed normally.
 
+**Never merge the LockBox branch. Pushing the branch itself is fine.**
+
+An assistant may create the `aim-config` branch, edit `Paperboy.env` on it,
+commit, and push **that branch** to the LockBox remote. Pushing a branch
+disturbs nobody — it does not reach anyone's `.env`.
+
+`git merge` into LockBox master is where it becomes everyone's problem: it
+lands in every other developer's environment and breaks it until they pull
+by hand and refresh their `.env`. The timing of that is a coordination
+problem with Joshua's coworkers, not a code one.
+
+**So: never merge `aim-config` unless Joshua says to, specifically, that
+time.** Not implied by approval to push, not implied by the phase being
+finished, not carried over from a previous merge. Notifying the team is his
+as well. Report that the branch is pushed and ready to land, and stop
+there.
+
 To add or change an AIM variable:
 
 1. Add it to `Paperboy.env` on the `aim-config` branch and commit there.
 2. Copy the file to the Paperboy repo `.env` and carry on working.
-3. When the phase is ready to land: merge `aim-config` into LockBox master
-   and push it **before** pushing any AIM code that requires the variable.
-4. **Notify the other Paperboy developers** that LockBox changed and they
-   need to pull it and refresh their `.env`.
-5. Only then push the AIM code.
+3. Push the `aim-config` branch, tell Joshua it is ready to land, and
+   stop. **He** merges it into LockBox master, **before** any AIM code that
+   requires the variable is pushed.
+4. **Joshua notifies the other Paperboy developers** that LockBox changed
+   and they need to pull it and refresh their `.env`.
+5. Only then does the AIM code get pushed.
 
 Batch variable additions so the team is interrupted once per phase rather
 than once per step. The branch is what makes batching easy — variables can
@@ -277,16 +295,23 @@ python3 -m pytest test/python/aim
 
 ### Commit message format
 
-Subject line 72 characters or less, blank line, body lines 80 or less, not
-indented. Reference the step number.
+**Say what was done, and stop.** 30 words or less, signed
+`authored by claude` — no `Co-Authored-By` trailer and no session URL. This
+is Joshua's standing instruction and it overrides any default attribution an
+assistant is otherwise told to use.
+
+Usually that is a subject line and the sign-off, nothing more. Reference the
+step number, keep the subject inside 72 characters.
 
 ```text
 AIM 1.1: raise when a SQL payload maps to no columns
 
-insert_sql_record returned silently when no key in the payload matched the
-mapping file, so callers reported success and deleted the batch. It now
-raises so the batch lands in the failed queue instead.
+authored by claude
 ```
+
+Do not explain the reasoning, the symptom or the numbers in the commit. All
+of that belongs in this document. Add a body line only when the subject
+genuinely cannot carry the change, and keep it to one line.
 
 ### Before every step
 
@@ -499,7 +524,7 @@ Steps 0.1, 0.4 and 0.5 are tooling rather than config work. They are here
 because there is no way to prove a configuration change is safe without
 them.
 
-- [ ] **0.1 Create the `Paperboy_Test` database.** An empty database on
+- [x] **0.1 Create the `Paperboy_Test` database.** An empty database on
   `GSASQL16`, named by `PAPERBOY_TEST_DATABASE`. Then `bin/rails
   db:test:prepare` to load `db/schema.rb` into it.
   *Test:* `bundle exec rake test` runs to completion. Record the baseline
@@ -529,13 +554,42 @@ them.
   migrations' worth of Paperboy tables, and the name comes from shared
   config that every other developer's test run depends on.
 
+  **Done 2026-09-04. Baseline: 537 runs, 324 pass, 60 failures, 153
+  errors, 0 skips** (serial). The suite now runs to completion, which was
+  the point of the step. It is not green, and none of the red is AIM's —
+  see `## Open Questions → Pre-existing suite failures`.
+
+  **What it took, beyond the plan.** `db:test:prepare` purges by *dropping*
+  the database and recreating it, so the `GSAETL` login needs the
+  server-level `GRANT CREATE ANY DATABASE`, not just `db_owner` on
+  `Paperboy_Test`. Without it the drop succeeds and the recreate fails,
+  leaving no database at all. `GRANT CREATE DATABASE` in `master` is the
+  wrong spelling — it needs a `master` user, and `GSAETL` is a login.
+  Rails re-creates the database on every schema change, so this is not a
+  one-time setup.
+
+  **Run the suite serially — `PARALLEL_WORKERS=1 bundle exec rake test`.**
+  `test_helper.rb` calls `parallelize(workers: :number_of_processors)`,
+  which on this workstation spawns 22 workers and 22 `Paperboy_Test-N`
+  databases on GSASQL16. In parallel the run is nondeterministic and
+  mostly bogus: fixture teardown truncates FK-referenced tables, which
+  SQL Server refuses, so every test errors with
+  `Cannot truncate table 'active_storage_blobs'`. Two consecutive parallel
+  runs gave 149 and 537 errors. Serial is stable and is the number to
+  compare against.
+
+  **`rake test` dirties the working tree.** `DslGroupUpdaterTest` edits the
+  real `config/data_runner/dsl/*.rb` rather than fixtures, rewriting the
+  group name in 22 files. Always `git status` after a suite run and
+  `git checkout -- config/data_runner/dsl/` before committing.
+
 - [ ] **0.2 Inventory every hardcoded path and credential, and add the
   missing variables to a LockBox branch.** Produce the full list first,
   agree the variable names, then `git checkout -b aim-config` in LockBox
   and add them there. The branch stays unmerged until Phase 0 is finished,
-  so nobody else is disturbed while the work is in progress. Merge, push
-  and notify once, at the end of the phase — see
-  `## Guardrails → Changing LockBox`.
+  so nobody else is disturbed while the work is in progress. The branch may
+  be pushed; Joshua merges and notifies once, at the end of the phase — an
+  assistant never merges LockBox, see `## Guardrails → Changing LockBox`.
   Known additions needed: `AIM_AI_QUEUE_DIR` for the workers (Rails already
   reads it, Python ignores it), `AIM_ERROR_QUEUE_DIR`,
   `AIM_SPOOL_STATE_DIR`, `AIM_READY_TO_SPLIT_DIR` for Rails,
@@ -856,6 +910,22 @@ layout feeds another system. The target is the same flow through Laserfiche.
 
 ## Open Questions
 
+- **Pre-existing suite failures (found in 0.1).** 213 of 537 tests are red
+  on a clean master checkout, none of it AIM's doing. Three causes, all
+  outside AIM and so all needing Joshua's decision before anyone touches
+  them:
+  1. **98 errors: `undefined method 'stub'`.** `Gemfile.lock` pins
+     minitest 6.0.6, which removed `minitest/mock`; the tests calling
+     `SomeClass.stub` have nothing providing it. Fixing it means adding a
+     gem — shared config, needs approval.
+  2. **Parallel runs are unusable.** Fixture teardown truncates
+     FK-referenced tables and SQL Server refuses. Needs `delete` instead
+     of `truncate`, or FKs dropped around teardown.
+  3. **`DslGroupUpdaterTest` mutates real config files** in
+     `config/data_runner/dsl/`.
+  Until 1 and 2 are settled, "the suite is green before and after" cannot
+  mean literally green. The workable standard is: *serial run, and the
+  same 324 tests pass after as before.*
 - **5.1** Paperboy database or `GSA_Scan` for the new AIM tables?
 - **0.2** Exact worker install folder on the AIM share.
 - **11** Final field layout Fiscal needs, and whether the existing
@@ -871,4 +941,4 @@ Append one line per pushed step: date, step number, commit, result.
 
 | Date | Step | Commit | Result |
 |---|---|---|---|
-| | | | |
+| 2026-09-04 | 0.1 | (no code) | `Paperboy_Test` created; baseline 537 runs, 324 pass, 60 fail, 153 error, 0 skips (serial) |
