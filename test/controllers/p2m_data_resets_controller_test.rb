@@ -22,6 +22,27 @@ class P2mDataResetsControllerTest < ActionController::TestCase
     assert_select '.p2m-maildat-row', text: /P2M_STAGING/, count: 1
   end
 
+  test 'shows nested printers, queues, OMS numbers, and files' do
+    sign_in
+    results = [
+      reset_result('P2M_PRINTERS', ['Printer One/Queue A/printed.pdf']),
+      reset_result('P2M_STAGING', ['51780767-tray-labels.pdf', 'Mail.dat_51780767.zip']),
+      reset_result('p2m_oms_backfill_report.json', ['p2m_oms_backfill_report.json'])
+    ]
+    reset = Object.new
+    reset.define_singleton_method(:preview) { results }
+
+    P2m::DataReset.stub(:new, reset) { get :show }
+
+    assert_response :success
+    assert_select '.p2m-production-printer-row', text: /Printer One/, count: 1
+    assert_select '.p2m-production-queue-row', text: /Queue A/, count: 1
+    assert_select '.p2m-production-queue-detail[hidden] li', text: 'printed.pdf', count: 1
+    assert_select '.p2m-production-oms-row', text: /51780767/, count: 1
+    assert_select '.p2m-production-oms-detail[hidden] li', count: 2
+    assert_select '.p2m-maildat-detail[hidden] li', text: 'p2m_oms_backfill_report.json', count: 1
+  end
+
   test 'resets one target as JSON for progressive row removal' do
     sign_in
     results = [{
@@ -71,6 +92,11 @@ class P2mDataResetsControllerTest < ActionController::TestCase
   end
 
   private
+
+  def reset_result(target, items)
+    { 'target' => target, 'action' => 'Files found', 'items' => items,
+      'count' => items.size, 'error' => false }
+  end
 
   def sign_in
     session[:user] = { 'employee_id' => 1, 'email' => 'employee@example.com',

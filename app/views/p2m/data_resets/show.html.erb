@@ -52,7 +52,64 @@
               </tr>
               <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden>
                 <td colspan="3">
-                  <% if result.fetch("items").any? %>
+                  <% if result.fetch("target") == "P2M_PRINTERS" && result.fetch("items").any? %>
+                    <table class="p2m-production-printers">
+                      <thead><tr><th>Printer</th><th>Files</th></tr></thead>
+                      <tbody>
+                        <% p2m_reset_printer_queues(result.fetch("items")).group_by {
+                             |item| item.fetch("printer")
+                           }.each_with_index do |(printer, queues), printer_index| %>
+                          <% printer_detail_id = "#{detail_id}-printer-#{printer_index}-details" %>
+                          <tr class="p2m-production-printer-row">
+                            <td>
+                              <button type="button" class="p2m-row-trigger" aria-expanded="false"
+                                      aria-controls="<%= printer_detail_id %>"
+                                      aria-label="Show queues for <%= printer %>"
+                                      data-action="data-refresh-groups#toggle"
+                                      data-detail-id="<%= printer_detail_id %>">
+                                <span aria-hidden="true">▸</span>
+                              </button>
+                              <%= printer %>
+                            </td>
+                            <td><%= queues.sum { |item| item.fetch("files").size } %></td>
+                          </tr>
+                          <tr id="<%= printer_detail_id %>" class="p2m-production-printer-detail" hidden>
+                            <td colspan="2">
+                              <%= render "p2m/shared/printer_queue_table", queues: queues,
+                                         printer: printer, id_prefix: "#{detail_id}-printer-#{printer_index}" %>
+                            </td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  <% elsif %w[P2M_STAGING P2M_SHIPPING_STATION P2M_PROCESSED].include?(result.fetch("target")) &&
+                           result.fetch("items").any? %>
+                    <table class="p2m-production-oms-files">
+                      <thead><tr><th>OMS Number</th><th>Files</th></tr></thead>
+                      <tbody>
+                        <% p2m_reset_oms_files(result.fetch("items")).each_with_index do |(oms_number, files), oms_index| %>
+                          <% oms_detail_id = "#{detail_id}-oms-#{oms_index}-details" %>
+                          <tr class="p2m-production-oms-row">
+                            <td>
+                              <button type="button" class="p2m-row-trigger" aria-expanded="false"
+                                      aria-controls="<%= oms_detail_id %>"
+                                      aria-label="Show files for OMS <%= oms_number %>"
+                                      data-action="data-refresh-groups#toggle" data-detail-id="<%= oms_detail_id %>">
+                                <span aria-hidden="true">▸</span>
+                              </button>
+                              <%= oms_number %>
+                            </td>
+                            <td><%= files.size %></td>
+                          </tr>
+                          <tr id="<%= oms_detail_id %>" class="p2m-production-oms-detail" hidden>
+                            <td colspan="2"><ul class="p2m-production-files">
+                              <% files.each do |file| %><li><%= file %></li><% end %>
+                            </ul></td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  <% elsif result.fetch("items").any? %>
                     <ul class="p2m-production-files">
                       <% result.fetch("items").each do |item| %>
                         <li><%= item %></li>

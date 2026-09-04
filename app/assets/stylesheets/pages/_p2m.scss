@@ -255,7 +255,9 @@
   padding-left: 1.25rem;
 }
 
-.p2m-production-queues {
+.p2m-production-queues,
+.p2m-production-printers,
+.p2m-production-oms-files {
   width: 100%;
   border-collapse: collapse;
 
@@ -272,11 +274,13 @@
     color: $surface-base;
   }
 
-  tbody .p2m-production-queue-row:nth-of-type(4n + 1) { background: $surface-base; }
-  tbody .p2m-production-queue-row:nth-of-type(4n + 3) { background: $surface-control; }
+  tbody > tr:nth-of-type(4n + 1) { background: $surface-base; }
+  tbody > tr:nth-of-type(4n + 3) { background: $surface-control; }
 }
 
-.p2m-production-queue-detail td {
+.p2m-production-queue-detail td,
+.p2m-production-printer-detail td,
+.p2m-production-oms-detail td {
   background: $surface-raised;
   white-space: normal;
 }
