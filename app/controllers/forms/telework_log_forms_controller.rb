@@ -211,7 +211,9 @@ module Forms
     def telework_log_form_params
       # Only the baseline fields you asked for
       params.require(:telework_log_form).permit(
-        :name, :phone, :email, :agency, :division, :department, :unit
+        :name, :phone, :email, :agency, :division, :department, :unit,
+      telework_log_form_work_performeds_attributes: %i[id _destroy work_performed],
+      telework_log_form_hours_attributes: %i[id _destroy hours]
       )
     end
   end

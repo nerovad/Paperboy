@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_09_02_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_04_164527) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.integer "EmployeeID", null: false
     t.bigint "GroupID", null: false
@@ -1161,6 +1161,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_02_000002) do
     t.string "task_id", limit: 4, null: false
     t.string "long_name", limit: 100, null: false
     t.string "short_name", limit: 50, null: false
+  end
+
+  create_table "telework_log_form_hours", force: :cascade do |t|
+    t.bigint "telework_log_form_id", null: false
+    t.integer "hours"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["telework_log_form_id"], name: "index_telework_log_form_hours_on_telework_log_form_id"
+  end
+
+  create_table "telework_log_form_work_performeds", force: :cascade do |t|
+    t.bigint "telework_log_form_id", null: false
+    t.text "work_performed"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["telework_log_form_id"], name: "idx_on_telework_log_form_id_793165cd13"
   end
 
   create_table "telework_log_forms", force: :cascade do |t|
