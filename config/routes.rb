@@ -132,6 +132,8 @@ Rails.application.routes.draw do
     get 'dashboard', to: 'dashboard#index', as: :dashboard
     resource :pre_production, only: :show do
       get :details
+      post :send_to_printer
+      delete :remove_from_printer
     end
     resource :stage_data, only: %i[show create] do
       get :details

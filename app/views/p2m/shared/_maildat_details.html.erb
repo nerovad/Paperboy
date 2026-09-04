@@ -50,8 +50,20 @@
             data-controller="printer-selection"
             data-action="printer-selection#open"
             data-printer-selection-oms-value="<%= @oms_number %>"
+            data-printer-selection-directory-value="<%= params[:directory] %>"
+            data-printer-selection-url-value="<%= send_to_printer_p2m_pre_production_path %>"
             data-printer-selection-catalog-value="<%= @printer_queues.to_json %>">
       Send to Printer
+    </button>
+    <button type="button" class="btn deny compact"
+            data-controller="printer-selection"
+            data-action="printer-selection#open"
+            data-printer-selection-operation-value="remove"
+            data-printer-selection-oms-value="<%= @oms_number %>"
+            data-printer-selection-directory-value="<%= params[:directory] %>"
+            data-printer-selection-url-value="<%= remove_from_printer_p2m_pre_production_path %>"
+            data-printer-selection-catalog-value="<%= @printer_queues.to_json %>">
+      Remove from Printer
     </button>
     <button type="button" class="btn compact" data-action="data-refresh-groups#feedback"
             data-feedback-action="Cancel" data-feedback-oms="<%= @oms_number %>">Cancel</button>

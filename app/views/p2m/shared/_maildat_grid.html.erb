@@ -67,6 +67,7 @@
               data-controller="printer-selection"
               data-action="printer-selection#open"
               data-printer-selection-mode-value="batch"
+              data-printer-selection-url-value="<%= send_to_printer_p2m_pre_production_path %>"
               data-printer-selection-catalog-value="<%= @printer_queues.to_json %>">
         Send All to Printer
       </button>
@@ -87,6 +88,12 @@
     <div class="p2m-batch-progress" data-batch-progress hidden>
       <progress data-batch-progress-bar max="1" value="0"></progress>
       <span data-batch-progress-label aria-live="polite"></span>
+    </div>
+  <% end %>
+  <% if production_stage == :pre %>
+    <div class="p2m-batch-progress" data-printer-progress hidden>
+      <progress data-printer-progress-bar max="1" value="0"></progress>
+      <span data-printer-progress-label aria-live="polite"></span>
     </div>
   <% end %>
 </section>

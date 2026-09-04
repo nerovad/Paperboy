@@ -33,10 +33,51 @@ module P2m
       render plain: e.message, status: :unprocessable_content
     end
 
+    def send_to_printer
+      parameters = printer_parameters
+      validate_printer_queue!(parameters.fetch(:printer), parameters.fetch(:queue))
+      started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      count = PrinterQueue.new.copy(**parameters)
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at
+      render json: {
+        message: "#{count} files copied to #{parameters.fetch(:printer)}/#{parameters.fetch(:queue)}.",
+        elapsed_seconds: elapsed.round(4)
+      }
+    rescue ArgumentError, ActionController::ParameterMissing, RuntimeError => e
+      render json: { message: e.message }, status: :unprocessable_content
+    end
+
+    def remove_from_printer
+      parameters = printer_parameters
+      validate_printer_queue!(parameters.fetch(:printer), parameters.fetch(:queue))
+      started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      count = PrinterQueue.new.remove(**parameters)
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at
+      render json: {
+        message: "#{count} #{'file'.pluralize(count)} removed from " \
+                 "#{parameters.fetch(:printer)}/#{parameters.fetch(:queue)}.",
+        elapsed_seconds: elapsed.round(4)
+      }
+    rescue ArgumentError, ActionController::ParameterMissing, RuntimeError => e
+      render json: { message: e.message }, status: :unprocessable_content
+    end
+
     private
 
     def date_range_param_key
       :pre_production
+    end
+
+    def printer_parameters
+      permitted = params.permit(:directory, :oms_number, :printer, :queue, selected_files: [])
+      values = permitted.to_h.symbolize_keys
+      values[:filenames] = values.delete(:selected_files) if permitted.key?(:selected_files)
+      values
+    end
+
+    def validate_printer_queue!(printer, queue)
+      queues = PrinterCatalog.new.call
+      raise ArgumentError, 'invalid printer or queue' unless queues.fetch(printer, []).include?(queue)
     end
   end
 end
