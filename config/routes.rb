@@ -138,6 +138,7 @@ Rails.application.routes.draw do
     resource :production, only: :show do
       get :preview
     end
+    resource :data_reset, only: %i[show create]
     resource :stage_data, only: %i[show create] do
       get :details
       get :preview

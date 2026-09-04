@@ -1,0 +1,78 @@
+<div class="form-header p2m-form-header">
+  <h1>Data Reset</h1>
+</div>
+
+<div class="form-wrapper p2m-stage-data" data-controller="data-refresh-groups">
+  <section class="p2m-stage-card" aria-labelledby="p2m-data-reset-title">
+    <h2 id="p2m-data-reset-title">Reset P2M Data</h2>
+    <p>
+      Remove P2M working files and clear the associated GSABSS processing tables.
+      This action cannot be undone.
+    </p>
+
+    <% if @file_results.any? || @database_result %>
+      <div class="table-wrap p2m-maildat-grid">
+        <table class="p2m-maildat-table" data-controller="output-table" data-simple-sort="true">
+          <thead>
+            <tr>
+              <th aria-sort="ascending" data-column-index="0" data-sort-type="text">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">Target</button>
+              </th>
+              <th aria-sort="none" data-column-index="1" data-sort-type="text">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">Action</button>
+              </th>
+              <th aria-sort="none" data-column-index="2" data-sort-type="number">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">Items</button>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <% (@file_results + [@database_result].compact).each_with_index do |result, index| %>
+              <% detail_id = "p2m-data-reset-#{index}-details" %>
+              <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>" data-sort-row
+                  data-detail-id="<%= detail_id %>">
+                <td data-sort-value="<%= result.fetch("target") %>">
+                  <button type="button" class="p2m-row-trigger" aria-expanded="false"
+                          aria-controls="<%= detail_id %>"
+                          aria-label="Show reset results for <%= result.fetch("target") %>"
+                          data-action="data-refresh-groups#toggle" data-detail-id="<%= detail_id %>">
+                    <span aria-hidden="true">▸</span>
+                  </button>
+                  <%= result.fetch("target") %>
+                </td>
+                <td><%= result.fetch("action") %></td>
+                <td data-sort-value="<%= result.fetch("count") %>">
+                  <%= result.fetch("count") %>
+                </td>
+              </tr>
+              <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden>
+                <td colspan="3">
+                  <% if result.fetch("items").any? %>
+                    <ul class="p2m-production-files">
+                      <% result.fetch("items").each do |item| %>
+                        <li><%= item %></li>
+                      <% end %>
+                    </ul>
+                  <% else %>
+                    Nothing to remove.
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="p2m-batch-actions">
+        <%= button_to "Reset Data", p2m_data_reset_path, method: :post, class: "btn deny",
+                      form: { data: {
+                        turbo_confirm: "Remove all P2M working files and clear the GSABSS processing tables? This cannot be undone.",
+                        confirm_title: "Reset P2M data", confirm_label: "Reset Data"
+                      } } %>
+      </div>
+    <% end %>
+  </section>
+</div>
