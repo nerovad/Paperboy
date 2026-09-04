@@ -37,17 +37,21 @@ class P2mDataResetsControllerTest < ActionController::TestCase
     }]
     reset = Object.new
     reset.define_singleton_method(:call) { results }
+    reset.define_singleton_method(:preview) do
+      [{
+        'target' => 'P2M_STAGING', 'action' => 'Files found',
+        'items' => [], 'count' => 0, 'error' => false
+      }]
+    end
 
     P2m::DataReset.stub(:new, reset) { post :create }
 
     assert_response :success
     assert_select '.p2m-maildat-row', text: /P2M_STAGING/, count: 1
-    assert_select '.p2m-maildat-row', text: /GSABSS database tables/, count: 1
-    assert_select '.p2m-row-trigger[aria-expanded="false"]', count: 2
-    assert_select '.p2m-maildat-detail[hidden] li', text: 'output.pdf', count: 1
-    assert_select '.p2m-maildat-detail[hidden] li', text: /GSABSS\.dbo\.companions: 2 rows/, count: 1
-    upload_rows = /GSABSS\.dbo\.p2m_oms_uploads: 3 rows/
-    assert_select '.p2m-maildat-detail[hidden] li', text: upload_rows, count: 1
+    assert_select '.p2m-maildat-row td', text: '0', count: 1
+    assert_select '.p2m-maildat-row', text: /GSABSS database tables/, count: 0
+    assert_select '.p2m-row-trigger[aria-expanded="false"]', count: 1
+    assert_select '.p2m-maildat-detail[hidden] li', text: 'output.pdf', count: 0
   end
 
   private

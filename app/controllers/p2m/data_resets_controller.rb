@@ -10,7 +10,9 @@ module P2m
     end
 
     def create
-      @results = DataReset.new.call
+      reset = DataReset.new
+      reset.call
+      @results = reset.preview
       prepare_results
       flash.now[:notice] = 'P2M data reset completed.'
       render :show

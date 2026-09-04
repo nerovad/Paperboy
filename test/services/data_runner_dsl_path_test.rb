@@ -13,4 +13,14 @@ class DataRunnerDslPathTest < ActiveSupport::TestCase
     assert status.success?, output
     assert_equal 'true', output
   end
+
+  test 'OMS DSL loads without Rails in standalone Data Runner commands' do
+    script = Rails.root.join('script/ruby/data_runner/commands/dsl_map.rb')
+    command = "require #{script.to_s.inspect}; print DSL_MAP.key?('Oms')"
+
+    output, status = Open3.capture2e(RbConfig.ruby, '-e', command)
+
+    assert status.success?, output
+    assert_equal 'true', output
+  end
 end
