@@ -62,6 +62,19 @@ module P2m
       render json: { message: e.message }, status: :unprocessable_content
     end
 
+    def destroy_oms
+      started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      result = OmsDestroyer.new.call(**params.permit(:directory, :oms_number).to_h.symbolize_keys)
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at
+      render json: {
+        message: "#{result.fetch(:archived)} files copied to Destroyed; " \
+                 "#{result.fetch(:removed)} working copies removed.",
+        elapsed_seconds: elapsed.round(4)
+      }
+    rescue ArgumentError, ActionController::ParameterMissing, RuntimeError => e
+      render json: { message: e.message }, status: :unprocessable_content
+    end
+
     private
 
     def date_range_param_key

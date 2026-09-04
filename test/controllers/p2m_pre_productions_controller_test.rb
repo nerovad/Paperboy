@@ -63,6 +63,9 @@ class P2mPreProductionsControllerTest < ActionController::TestCase # rubocop:dis
     assert_response :success
     assert_select 'button', text: 'Send to Printer', count: 1
     assert_select 'button', text: 'Remove from Printer', count: 1
+    assert_select 'button[data-staging-method="DELETE"]', text: 'Destroy', count: 1 do |buttons|
+      assert_match 'Copy OMS 51780767 to Destroyed', buttons.first['data-confirm-message']
+    end
     assert_select 'button[data-printer-selection-catalog-value]', count: 1 do |buttons|
       assert_equal catalog.to_json, buttons.first['data-printer-selection-catalog-value']
     end
@@ -137,6 +140,22 @@ class P2mPreProductionsControllerTest < ActionController::TestCase # rubocop:dis
     assert_response :success
     assert_match '1 file removed from Printer One/Queue A', response.parsed_body.fetch('message')
     printer_queue.verify
+  end
+
+  test 'destroys an OMS and removes its expanded row' do
+    sign_in
+    destroyer = Minitest::Mock.new
+    parameters = { directory: '2026/51780767', oms_number: '51780767' }
+    destroyer.expect :call, { archived: 3, removed: 5 }, [parameters]
+
+    P2m::OmsDestroyer.stub(:new, destroyer) do
+      delete :destroy_oms, params: parameters
+    end
+
+    assert_response :success
+    assert_match '3 files copied to Destroyed', response.parsed_body.fetch('message')
+    assert_match '5 working copies removed', response.parsed_body.fetch('message')
+    destroyer.verify
   end
 
   private

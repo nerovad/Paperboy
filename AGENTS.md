@@ -6,6 +6,7 @@
   * bundle exec brakeman
   * bundle exec bundle-audit check
   * bundle exec rake test
+  * Use 10.135.204.161 when GSASQL16 cannot be resolved
 - Propose git commit message.
   * Prose limited to 72 characters
   * Blank Line

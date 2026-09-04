@@ -10,11 +10,15 @@ module P2m
     SHIPPING_STATION = ENV.fetch('P2M_SHIPPING_STATION')
     TEMPORARY_OUTPUT = ENV.fetch('P2M_TEMPORARY_OUTPUT')
     PROCESSED = ENV.fetch('P2M_PROCESSED')
+    DESTROYED = ENV.fetch('P2M_DESTROYED')
     PRINTERS = ENV.fetch('P2M_PRINTERS')
 
     STAGING_PATH = DATA_RUNNER_ROOT.join(STAGING)
     SHIPPING_STATION_PATH = DATA_RUNNER_ROOT.join(SHIPPING_STATION)
     PROCESSED_PATH = DATA_RUNNER_ROOT.join(PROCESSED)
+    DESTROYED_PATH = Pathname.new(DESTROYED).then do |path|
+      path.absolute? ? path : DATA_RUNNER_ROOT.join(path)
+    end
     PRINTERS_PATH = Pathname.new(PRINTERS).then do |path|
       path.absolute? ? path : DATA_RUNNER_ROOT.join(path)
     end

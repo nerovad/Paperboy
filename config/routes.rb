@@ -134,6 +134,7 @@ Rails.application.routes.draw do
       get :details
       post :send_to_printer
       delete :remove_from_printer
+      delete :destroy_oms
     end
     resource :production, only: :show do
       get :preview
