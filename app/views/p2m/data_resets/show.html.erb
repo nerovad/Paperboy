@@ -2,7 +2,8 @@
   <h1>Data Reset</h1>
 </div>
 
-<div class="form-wrapper p2m-stage-data" data-controller="data-refresh-groups">
+<div class="form-wrapper p2m-stage-data" data-controller="data-refresh-groups p2m-data-reset"
+     data-p2m-data-reset-url-value="<%= p2m_data_reset_path %>">
   <section class="p2m-stage-card" aria-labelledby="p2m-data-reset-title">
     <h2 id="p2m-data-reset-title">Reset P2M Data</h2>
     <p>
@@ -33,7 +34,8 @@
             <% (@file_results + [@database_result].compact).each_with_index do |result, index| %>
               <% detail_id = "p2m-data-reset-#{index}-details" %>
               <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>" data-sort-row
-                  data-detail-id="<%= detail_id %>">
+                  data-detail-id="<%= detail_id %>" data-p2m-reset-row
+                  data-reset-target="<%= result.fetch("target") %>">
                 <td data-sort-value="<%= result.fetch("target") %>">
                   <button type="button" class="p2m-row-trigger" aria-expanded="false"
                           aria-controls="<%= detail_id %>"
@@ -67,11 +69,8 @@
       </div>
 
       <div class="p2m-batch-actions">
-        <%= button_to "Reset Data", p2m_data_reset_path, method: :post, class: "btn deny",
-                      form: { data: {
-                        turbo_confirm: "Remove all P2M working files and clear the GSABSS processing tables? This cannot be undone.",
-                        confirm_title: "Reset P2M data", confirm_label: "Reset Data"
-                      } } %>
+        <button type="button" class="btn deny" data-p2m-data-reset-target="button"
+                data-action="p2m-data-reset#reset">Reset Data</button>
       </div>
     <% end %>
   </section>

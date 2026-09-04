@@ -47,6 +47,25 @@ module P2m
       end
     end
 
+    test 'resets only the requested filesystem target' do
+      Dir.mktmpdir do |directory|
+        root = Pathname.new(directory)
+        staging = root.join('staging').tap(&:mkpath)
+        processed = root.join('processed').tap(&:mkpath)
+        staging.join('staged.pdf').write('pdf')
+        processed.join('processed.pdf').write('pdf')
+
+        result = DataReset.new(
+          paths: { 'P2M_STAGING' => staging, 'P2M_PROCESSED' => processed },
+          report_path: root.join('report.json'), connection: RecordingConnection.new
+        ).reset_target('P2M_STAGING')
+
+        assert_empty staging.children
+        assert processed.join('processed.pdf').exist?
+        assert_equal ['staged.pdf'], result.first.fetch('items')
+      end
+    end
+
     class RecordingConnection
       attr_reader :executed
 

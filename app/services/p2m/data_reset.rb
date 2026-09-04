@@ -43,6 +43,14 @@ module P2m
         [inspect_report] + database_results(reset: false)
     end
 
+    def reset_target(target)
+      return database_results if target == 'GSABSS database tables'
+      return [remove_report] if target == 'p2m_oms_backfill_report.json'
+
+      path = paths.fetch(target) { raise ArgumentError, 'invalid P2M reset target' }
+      [reset_directory(target, path)]
+    end
+
     private
 
     attr_reader :paths, :report_path, :connection

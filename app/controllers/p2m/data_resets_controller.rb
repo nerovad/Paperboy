@@ -10,6 +10,8 @@ module P2m
     end
 
     def create
+      return reset_target if params[:target].present?
+
       reset = DataReset.new
       reset.call
       @results = reset.preview
@@ -19,6 +21,21 @@ module P2m
     end
 
     private
+
+    def reset_target
+      results = DataReset.new.reset_target(params.require(:target))
+      errors = results.select { |result| result.fetch('error') }
+      status = errors.empty? ? :ok : :unprocessable_content
+      render json: { results: results, message: reset_message(errors) }, status: status
+    rescue ArgumentError, ActionController::ParameterMissing => e
+      render json: { message: e.message }, status: :unprocessable_content
+    end
+
+    def reset_message(errors)
+      return 'Reset target removed.' if errors.empty?
+
+      errors.flat_map { |result| result.fetch('items') }.join('; ')
+    end
 
     def prepare_results
       @file_results, database_results = @results.partition do |result|

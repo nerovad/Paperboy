@@ -17,10 +17,26 @@ class P2mDataResetsControllerTest < ActionController::TestCase
     P2m::DataReset.stub(:new, reset) { get :show }
 
     assert_response :success
-    assert_select 'form[data-turbo-confirm][action=?]', p2m_data_reset_path, count: 1
     assert_select 'button.btn.deny', text: 'Reset Data', count: 1
     assert_select '.p2m-maildat-table', count: 1
     assert_select '.p2m-maildat-row', text: /P2M_STAGING/, count: 1
+  end
+
+  test 'resets one target as JSON for progressive row removal' do
+    sign_in
+    results = [{
+      'target' => 'P2M_STAGING', 'action' => 'Files removed',
+      'items' => ['output.pdf'], 'count' => 1, 'error' => false
+    }]
+    reset = Object.new
+    reset.define_singleton_method(:reset_target) { |_target| results }
+
+    P2m::DataReset.stub(:new, reset) do
+      post :create, params: { target: 'P2M_STAGING' }, format: :json
+    end
+
+    assert_response :success
+    assert_equal 'Reset target removed.', response.parsed_body.fetch('message')
   end
 
   test 'runs reset and shows collapsible results' do
