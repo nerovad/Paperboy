@@ -22,6 +22,7 @@ class P2mProductionsControllerTest < ActionController::TestCase
     assert_select '.p2m-maildat-detail[hidden]', count: 1
     assert_select 'a[data-action="pdf-preview#open"]', count: 2
     assert_select '[data-pdf-preview-target="backdrop"]', count: 1
+    assert_select "a.btn[href='#{p2m_production_path}']", text: 'Refresh', count: 1
   end
 
   test 'previews a production file inline' do
