@@ -27,6 +27,25 @@ module P2m
       end
     end
 
+    def test_copies_only_pdf_documents_when_filenames_are_omitted
+      Dir.mktmpdir do |directory|
+        root = Pathname.new(directory).join('Outputs')
+        source = root.join('job').tap(&:mkpath)
+        destination = Pathname.new(directory).join('99_Printers')
+        source.join('Mail.dat_50000001.zip').write('maildat')
+        source.join('50000001-companion.csv').write('companion')
+        source.join('50000001-document.PDF').write('document')
+
+        count = PrinterQueue.new(root: root, destination: destination).copy(
+          directory: 'job', oms_number: '50000001', printer: 'Printer One', queue: 'Queue A'
+        )
+
+        assert_equal 1, count
+        copied_names = destination.join('Printer One/Queue A').children.map { _1.basename.to_s }
+        assert_equal ['50000001-document.PDF'], copied_names
+      end
+    end
+
     def test_rejects_destination_path_traversal
       service = PrinterQueue.new(root: '/tmp/source', destination: '/tmp/printers')
 

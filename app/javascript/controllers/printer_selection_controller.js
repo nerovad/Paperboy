@@ -66,7 +66,7 @@ export default class extends Controller {
         `queue ${selection.queue}?`
     }
     if (this.modeValue === "batch") {
-      return `Send all associated files for the visible OMS numbers to printer ${selection.printer} ` +
+      return `Send all PDF documents for the visible OMS numbers to printer ${selection.printer} ` +
         `using queue ${selection.queue}?`
     }
 
