@@ -1,0 +1,83 @@
+<div class="form-header p2m-form-header">
+  <h1>Production</h1>
+</div>
+
+<div class="form-wrapper p2m-stage-data" data-controller="data-refresh-groups pdf-preview">
+  <section class="p2m-stage-card" aria-labelledby="p2m-production-results-title">
+    <div class="p2m-results-summary">
+      <h2 id="p2m-production-results-title">Mail.dat Files</h2>
+      <p><%= pluralize(@queues.sum { |item| item.fetch("files").size }, "file") %> in
+         <%= pluralize(@queues.size, "printer queue") %></p>
+    </div>
+
+    <div class="table-wrap p2m-maildat-grid">
+      <table class="p2m-maildat-table" data-controller="output-table" data-simple-sort="true">
+        <thead>
+          <tr>
+            <th aria-sort="ascending" data-column-index="0" data-sort-type="text">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">Printer/Queue</button>
+            </th>
+            <th aria-sort="none" data-column-index="1" data-sort-type="number">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">Files</button>
+            </th>
+            <th aria-sort="none" data-column-index="2" data-sort-type="text">
+              <button type="button" class="p2m-sort-header"
+                      data-action="click->output-table#changeSort">Modified</button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @queues.each_with_index do |item, index| %>
+            <% detail_id = "p2m-production-queue-#{index}-details" %>
+            <% location = "#{item.fetch("printer")}/#{item.fetch("queue")}" %>
+            <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>" data-sort-row
+                data-detail-id="<%= detail_id %>">
+              <td data-sort-value="<%= location %>">
+                <button type="button" class="p2m-row-trigger" aria-expanded="false"
+                        aria-controls="<%= detail_id %>" aria-label="Show files in <%= location %>"
+                        data-action="data-refresh-groups#toggle" data-detail-id="<%= detail_id %>">
+                  <span aria-hidden="true">▸</span>
+                </button>
+                <%= location %>
+              </td>
+              <td data-sort-value="<%= item.fetch("files").size %>"><%= item.fetch("files").size %></td>
+              <td><%= l(item.fetch("modified_at"), format: :short) %></td>
+            </tr>
+            <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden>
+              <td colspan="3">
+                <ul class="p2m-production-files">
+                  <% item.fetch("files").each do |filename| %>
+                    <li><%= link_to filename,
+                                    preview_p2m_production_path(printer: item.fetch("printer"),
+                                                                queue: item.fetch("queue"),
+                                                                filename: filename),
+                                    data: { action: "pdf-preview#open",
+                                            pdf_preview_title: filename } %></li>
+                  <% end %>
+                </ul>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="pb-modal-backdrop" data-pdf-preview-target="backdrop"
+       data-action="click->pdf-preview#backdropClose" hidden>
+    <div class="pb-modal pb-modal--report-preview" role="dialog" aria-modal="true"
+         aria-labelledby="p2m-production-pdf-preview-title">
+      <div class="pb-modal__header">
+        <h3 id="p2m-production-pdf-preview-title" data-pdf-preview-target="title">PDF Preview</h3>
+        <button type="button" class="pb-modal__close" data-action="pdf-preview#close"
+                aria-label="Close">✕</button>
+      </div>
+      <div class="pb-modal__body pb-pdf-preview" data-pdf-preview-target="body"></div>
+      <div class="pb-modal__actions">
+        <button type="button" class="btn" data-action="pdf-preview#close">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

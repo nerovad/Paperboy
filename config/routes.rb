@@ -135,6 +135,9 @@ Rails.application.routes.draw do
       post :send_to_printer
       delete :remove_from_printer
     end
+    resource :production, only: :show do
+      get :preview
+    end
     resource :stage_data, only: %i[show create] do
       get :details
       get :preview
