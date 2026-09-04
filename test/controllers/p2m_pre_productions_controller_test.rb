@@ -38,6 +38,11 @@ class P2mPreProductionsControllerTest < ActionController::TestCase # rubocop:dis
                   text: 'Send All to Printer', count: 1 do |buttons|
       assert_equal catalog.to_json, buttons.first['data-printer-selection-catalog-value']
     end
+    assert_select 'button[data-printer-selection-mode-value="batch"]',
+                  text: 'Remove All from Printer', count: 1 do |buttons|
+      assert_equal 'remove', buttons.first['data-printer-selection-operation-value']
+      assert_equal catalog.to_json, buttons.first['data-printer-selection-catalog-value']
+    end
     assert_select 'button', text: 'Move All to Staging', count: 0
   end
 

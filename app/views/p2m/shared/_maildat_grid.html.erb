@@ -71,6 +71,15 @@
               data-printer-selection-catalog-value="<%= @printer_queues.to_json %>">
         Send All to Printer
       </button>
+      <button type="button" class="btn deny"
+              data-controller="printer-selection"
+              data-action="printer-selection#open"
+              data-printer-selection-mode-value="batch"
+              data-printer-selection-operation-value="remove"
+              data-printer-selection-url-value="<%= remove_from_printer_p2m_pre_production_path %>"
+              data-printer-selection-catalog-value="<%= @printer_queues.to_json %>">
+        Remove All from Printer
+      </button>
     <% else %>
       <button type="button" class="btn reassign" data-batch-move
               data-action="data-refresh-groups#batchMove" data-batch-destination="shipping"

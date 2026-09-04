@@ -38,11 +38,12 @@ module P2m
       selected.length
     end
 
-    def remove(directory:, oms_number:, printer:, queue:, filenames:)
+    def remove(directory:, oms_number:, printer:, queue:, filenames: nil)
       validate_component!(printer, 'printer')
       validate_component!(queue, 'queue')
       available = associated_files.call(directory: directory, oms_number: oms_number)
       selected = Array(filenames)
+      selected = available.select { |name| File.extname(name).casecmp?('.pdf') } if filenames.nil?
       invalid = selected - available
       raise ArgumentError, "associated file not found: #{invalid.first}" if invalid.any?
       raise ArgumentError, 'select at least one file' if selected.empty?
