@@ -3110,16 +3110,38 @@ forms:
   page_count: 3
   page_headers:
   - Log
-  submission_type: approval
+  submission_type: database
+  description: The telework log is for logging your hours and work performed while
+    working remotely
+  form_number: TW-101
+  form_type: Log
+  agency_id: GSA
+  division_id: ''
+  department_id: ''
+  unit_id: ''
   fields:
+  - field_name: telework_date
+    field_type: date
+    label: Telework Date
+    page_number: 3
+    position: 0
+    required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
   - field_name: work_performed
     field_type: text_box
     label: Work Performed
     page_number: 3
-    position: 0
+    position: 1
     required: true
     options:
       rows: 3
+      repeatable: true
+      repeat_min: 1
+      repeat_max: 0
     read_only: none
     has_custom_view: false
     visible_to_filler: false
@@ -3128,7 +3150,21 @@ forms:
     field_type: number
     label: Hours
     page_number: 3
-    position: 1
+    position: 2
+    required: true
+    options:
+      repeatable: true
+      repeat_min: 1
+      repeat_max: 0
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: total_hours
+    field_type: number
+    label: Total Hours
+    page_number: 3
+    position: 3
     required: true
     options: {}
     read_only: none
