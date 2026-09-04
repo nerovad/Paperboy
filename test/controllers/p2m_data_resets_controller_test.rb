@@ -27,6 +27,7 @@ class P2mDataResetsControllerTest < ActionController::TestCase
     results = [
       reset_result('P2M_PRINTERS', ['Printer One/Queue A/printed.pdf']),
       reset_result('P2M_STAGING', ['51780767-tray-labels.pdf', 'Mail.dat_51780767.zip']),
+      reset_result('P2M_DESTROYED', ['51780768/destroyed.pdf']),
       reset_result('p2m_oms_backfill_report.json', ['p2m_oms_backfill_report.json'])
     ]
     reset = Object.new
@@ -39,7 +40,8 @@ class P2mDataResetsControllerTest < ActionController::TestCase
     assert_select '.p2m-production-queue-row', text: /Queue A/, count: 1
     assert_select '.p2m-production-queue-detail[hidden] li', text: 'printed.pdf', count: 1
     assert_select '.p2m-production-oms-row', text: /51780767/, count: 1
-    assert_select '.p2m-production-oms-detail[hidden] li', count: 2
+    assert_select '.p2m-production-oms-row', text: /51780768/, count: 1
+    assert_select '.p2m-production-oms-detail[hidden] li', count: 3
     assert_select '.p2m-maildat-detail[hidden] li', text: 'p2m_oms_backfill_report.json', count: 1
   end
 

@@ -82,7 +82,8 @@
                         <% end %>
                       </tbody>
                     </table>
-                  <% elsif %w[P2M_STAGING P2M_SHIPPING_STATION P2M_PROCESSED].include?(result.fetch("target")) &&
+                  <% elsif %w[P2M_STAGING P2M_SHIPPING_STATION P2M_PROCESSED P2M_DESTROYED]
+                           .include?(result.fetch("target")) &&
                            result.fetch("items").any? %>
                     <table class="p2m-production-oms-files">
                       <thead><tr><th>OMS Number</th><th>Files</th></tr></thead>

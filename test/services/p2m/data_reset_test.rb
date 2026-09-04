@@ -66,6 +66,23 @@ module P2m
       end
     end
 
+    test 'resets the destroyed directory when requested' do
+      Dir.mktmpdir do |directory|
+        root = Pathname.new(directory)
+        destroyed = root.join('destroyed').tap(&:mkpath)
+        destroyed.join('51780767').mkpath
+        destroyed.join('51780767/output.pdf').write('pdf')
+
+        result = DataReset.new(
+          paths: { 'P2M_DESTROYED' => destroyed }, report_path: root.join('report.json'),
+          connection: RecordingConnection.new
+        ).reset_target('P2M_DESTROYED')
+
+        assert_empty destroyed.children
+        assert_equal ['51780767/output.pdf'], result.first.fetch('items')
+      end
+    end
+
     class RecordingConnection
       attr_reader :executed
 

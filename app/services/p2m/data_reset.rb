@@ -61,6 +61,7 @@ module P2m
         'P2M_STAGING' => Paths::STAGING_PATH,
         'P2M_TEMPORARY_OUTPUT' => Paths::DATA_RUNNER_ROOT.join(Paths::TEMPORARY_OUTPUT),
         'P2M_PROCESSED' => Paths::PROCESSED_PATH,
+        'P2M_DESTROYED' => Paths::DESTROYED_PATH,
         'P2M_PRINTERS' => Paths::PRINTERS_PATH
       }
     end
