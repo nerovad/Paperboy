@@ -6,6 +6,7 @@
 require 'fileutils'
 require_relative 'dsl_map'
 require_relative '../helpers/etl_helpers'
+require_relative '../helpers/identity_helpers'
 require_relative '../db/mssql_helpers'
 require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
@@ -66,8 +67,8 @@ def columns_for(client, object_id)
         c.scale,
         c.is_nullable,
         c.is_identity,
-        ic.seed_value,
-        ic.increment_value,
+        CONVERT(varchar(40), ic.seed_value) AS seed_value,
+        CONVERT(varchar(40), ic.increment_value) AS increment_value,
         c.is_computed,
         cc.definition AS computed_definition,
         dc.definition AS default_definition,
@@ -158,7 +159,7 @@ end
 def identity_clause(row)
   return '' unless sql_true?(row.fetch('is_identity'))
 
-  " IDENTITY(#{row.fetch('seed_value').to_i},#{row.fetch('increment_value').to_i})"
+  " #{DataRunner::IdentityHelpers.from_metadata(row)}"
 end
 
 def nullability_clause(row)
