@@ -214,6 +214,12 @@ if __FILE__ == $PROGRAM_NAME
       next
     end
 
+    if EtlHelpers.source_strategy(entry.cfg) == :replicate
+      puts "[SKIP] #{entry.key}: replication keeps configured destination mappings"
+      stats.skip!
+      next
+    end
+
     unless File.exist?(path)
       puts "[FAIL] #{File.basename(path)}: missing #{SQL_SCHEMA_DIR}/#{File.basename(path)}"
       stats.fail!

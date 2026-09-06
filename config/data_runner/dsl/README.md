@@ -160,6 +160,14 @@ orchestration: {
   `reset[orchestrator]` runs postprocessing and resets every child DSL.
   Symbol arguments resolve from the orchestration context.
 
+- Replication (`source.strategy: :replicate`) copies source data using the
+  configured destination mappings. Import setup skips `dump_sql` and `use_sql`;
+  explicitly running those commands also skips replication entries. No source
+  schema snapshot is created or applied. Configure destination headers for a
+  new replication DSL before running it. Existing headers and destination
+  `inject.post_script` settings are preserved. `to_sql` still generates the
+  destination table definition from those headers when requested.
+
 - Use `inject.post_script` when a destination should run a local Ruby script
   after its inject transaction commits:
 

@@ -12,7 +12,6 @@ require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
 
 SQL_SCHEMA_DIR = WorkflowPaths::SQL_SCHEMA_DIR
-FileUtils.mkdir_p(SQL_SCHEMA_DIR)
 
 def sql_string(value)
   "N'#{value.to_s.gsub("'", "''")}'"
@@ -216,28 +215,27 @@ clients = {}
 
 begin
   EtlHelpers.selected_dsl_entries(DSL_MAP, ARGV).each do |name, cfg|
+    if EtlHelpers.source_strategy(cfg) == :replicate
+      puts "[SKIP] #{name}: replication uses configured destination mappings; no schema capture"
+      stats.skip!
+      next
+    end
+
     unless Workflow.wants_step?(cfg, :to_sql)
       puts "[SKIP] #{name}: step disabled (:to_sql)"
       stats.skip!
       next
     end
 
+    FileUtils.mkdir_p(SQL_SCHEMA_DIR)
     base = EtlHelpers.base_for(cfg)
     out = File.join(SQL_SCHEMA_DIR, "#{base}.sql")
 
-    targets = if EtlHelpers.source_strategy(cfg) == :replicate
-                [EtlHelpers.source_database_target(
-                  cfg,
-                  env_host: MssqlHelpers.env_any('MSSQL_HOST', 'GSABSS_HOST'),
-                  env_database: MssqlHelpers.env_any('MSSQL_DATABASE', 'GSABSS_DATABASE')
-                )]
-              else
-                EtlHelpers.database_targets(
-                  cfg,
-                  env_host: MssqlHelpers.env_any('MSSQL_HOST', 'GSABSS_HOST'),
-                  env_database: MssqlHelpers.env_any('MSSQL_DATABASE', 'GSABSS_DATABASE')
-                )
-              end
+    targets = EtlHelpers.database_targets(
+      cfg,
+      env_host: MssqlHelpers.env_any('MSSQL_HOST', 'GSABSS_HOST'),
+      env_database: MssqlHelpers.env_any('MSSQL_DATABASE', 'GSABSS_DATABASE')
+    )
 
     begin
       raise 'missing database:' if targets.any? { |target| target.database.empty? }
