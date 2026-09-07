@@ -405,6 +405,7 @@ Rails.application.routes.draw do
   get 'reports', to: 'reports#index', as: 'reports'
   post 'reports/generate', to: 'reports#generate', as: 'reports_generate'
   get 'reports/status_options', to: 'reports#status_options', as: 'reports_status_options'
+  post 'reports/audit_export', to: 'reports#export_audit', as: 'reports_audit_export'
 
   resources :scheduled_reports do
     member do

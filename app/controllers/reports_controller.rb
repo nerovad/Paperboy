@@ -6,6 +6,8 @@ class ReportsController < ApplicationController
 
   def index
     @forms = available_forms
+    @audit_forms = auditable_forms
+    @audit_sources = Forms::AuditExport::SOURCES
 
     # Load user's scheduled reports (if model exists)
     employee_id = session.dig(:user, 'employee_id')
@@ -41,6 +43,35 @@ class ReportsController < ApplicationController
       # Generate one-time report
       generate_one_time_report(employee_id, form_type, format_param, status)
     end
+  end
+
+  # The trails behind the submissions rather than the submissions themselves.
+  # Same ACL as a form report, for the same reason: an edit trail names who
+  # changed what, so it may only cover forms the requester could already report
+  # on.
+  def export_audit
+    sources = Forms::AuditExport::SOURCES.keys & Array(params[:sources]).map(&:to_s)
+    if sources.empty?
+      redirect_to reports_path, alert: 'Choose at least one history to export.'
+      return
+    end
+
+    start_date, end_date = audit_date_range
+    if start_date.nil?
+      redirect_to reports_path, alert: 'Enter a valid date range — the start date must be on or before the end date.'
+      return
+    end
+
+    form_types = requested_audit_form_types
+    if form_types.empty?
+      redirect_to reports_path, alert: audit_scope_alert
+      return
+    end
+
+    AuditExportJob.perform_later(session.dig(:user, 'employee_id'), form_types, sources,
+                                 start_date.to_s, end_date.to_s)
+
+    redirect_to reports_path, notice: "Your audit history export is being compiled. You will receive an email when it's ready."
   end
 
   def status_options
@@ -171,21 +202,67 @@ class ReportsController < ApplicationController
     end
   end
 
+  def audit_date_range
+    start_date = Date.parse(params[:start_date].to_s)
+    end_date = Date.parse(params[:end_date].to_s)
+    return nil if start_date > end_date
+
+    [start_date, end_date]
+  rescue StandardError
+    nil
+  end
+
+  # Nothing to export reads two ways, and telling them apart is the difference
+  # between "ask for access" and "there is nothing here to ask for".
+  def audit_scope_alert
+    return 'No form you can report on keeps an audit trail.' if params[:form_type].blank?
+
+    'You do not have permission to export audit history for that form.'
+  end
+
+  # Blank means "every form I can report on", which is what an audit export is
+  # usually for. A named form still has to clear the same per-form ACL check a
+  # submission report does.
+  def requested_audit_form_types
+    requested = params[:form_type].to_s
+
+    return auditable_forms.map { |form| form[:value] } if requested.blank?
+    return [] unless Forms::AuditExport.auditable?(requested)
+    return [] unless current_user_group_names.include?('system_admins') || permitted_form_type?(requested)
+
+    [requested]
+  end
+
+  # Only forms whose model actually keeps a trail — offering the rest would
+  # promise a spreadsheet that could only ever come back empty.
+  def auditable_forms
+    @auditable_forms ||= available_forms.select { |form| form[:auditable] }
+  end
+
   def available_forms
-    templates = Forms::Template.all.order(:name)
+    @available_forms ||= begin
+      templates = Forms::Template.all.order(:name)
 
-    # Non-admins only see forms they have ACL permission for
-    unless current_user_group_names.include?('system_admins')
-      perm_keys = current_user_form_permission_keys
-      templates = templates.select { |t| perm_keys.include?(t.id.to_s) }
-    end
+      # Non-admins only see forms they have ACL permission for
+      unless current_user_group_names.include?('system_admins')
+        perm_keys = current_user_form_permission_keys
+        templates = templates.select { |t| perm_keys.include?(t.id.to_s) }
+      end
 
-    templates.map do |template|
-      {
-        name: template.name,
-        value: template.class_name.tableize # Converts "ParkingLotSubmission" → "parking_lot_submissions"
-      }
+      templates.map { |template| form_option(template) }
     end
+  end
+
+  # Auditability is settled here because the template is already in hand: the
+  # model is resolved once per form rather than once per lookup.
+  def form_option(template)
+    model = Forms::AuditExport.model_named(template.class_name)
+
+    {
+      name: template.name,
+      value: template.class_name.tableize, # Converts "ParkingLotSubmission" → "parking_lot_submissions"
+      auditable: model.present? && model.include?(AuditableEdits)
+    }
   end
 
   def permitted_form_type?(form_type)

@@ -70,12 +70,7 @@ module Forms
     end
 
     def form_field_labels
-      @form_field_labels ||= begin
-        template = Forms::Template.find_by(class_name: @record.class.name)
-        template ? template.form_fields.pluck(:field_name, :label).to_h : {}
-      rescue StandardError
-        {}
-      end
+      @form_field_labels ||= Forms::FieldLabels.for(@record.class)
     end
   end
 end
