@@ -1,0 +1,19 @@
+<%# One modal shell shared by every on-demand history — status timeline, edit
+    trail — whose heading and body the history-modal controller fills in from
+    the trigger that opened it. %>
+<div id="history-modal"
+     class="pb-modal-backdrop"
+     data-history-modal-target="backdrop"
+     style="display:none;">
+  <div class="pb-modal pb-modal--lg pb-modal--history" data-history-modal-target="modal"
+       role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+    <div class="pb-modal__header">
+      <h3 id="history-modal-title" data-history-modal-target="title">History</h3>
+      <button type="button" class="pb-modal__close" data-action="history-modal#close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="pb-modal__body" data-history-modal-target="body">
+      <p class="history-modal__loading">Loading…</p>
+    </div>
+  </div>
+</div>

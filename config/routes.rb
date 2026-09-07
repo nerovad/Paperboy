@@ -416,7 +416,10 @@ Rails.application.routes.draw do
   # Inbox & Submissions
   # ============================================================================
   get '/inboxqueue', to: 'inbox#queue', as: 'inbox_queue'
-  get '/inbox/status_history/:type/:id', to: 'inbox#status_history', as: 'inbox_status_history'
+  # Fragments the inbox history modal fetches. Kept on the /inbox path they have
+  # always been served from; see SubmissionHistoriesController.
+  get '/inbox/status_history/:type/:id', to: 'submission_histories#status', as: 'inbox_status_history'
+  get '/inbox/edit_history/:type/:id', to: 'submission_histories#edits', as: 'inbox_edit_history'
   get '/submissions', to: 'submissions#index', as: :submissions
   get '/submissions/status_options', to: 'submissions#status_options', as: :submissions_status_options
   # Reference number typed into the quick search ("PLS-845") -> that submission.

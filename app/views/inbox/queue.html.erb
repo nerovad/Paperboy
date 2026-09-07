@@ -1,6 +1,6 @@
 <!-- app/views/inbox/queue.html.erb -->
 <div class="inbox-page-wrapper"
-     data-controller="task-selection approve-modal deny-modal reassign-modal status-history-modal column-customizer"
+     data-controller="task-selection approve-modal deny-modal reassign-modal history-modal column-customizer"
      data-column-customizer-page-value="inbox"
      data-column-customizer-save-url-value="<%= settings_table_layout_path %>"
      data-column-customizer-catalog-value="<%= table_field_catalog.to_json %>"
@@ -112,6 +112,19 @@
                     edit_critical_information_reporting_path(submission),
                     class: "btn edit",
                     data: { turbo: false } %>
+
+                <%# Edit History follows the Edit button here the same way it does for
+                    template-driven forms in inbox/_dynamic_buttons. %>
+                <% if can_edit_submission?(submission) %>
+                  <button type="button"
+                          class="btn status-history"
+                          data-action="click->history-modal#open"
+                          data-history-url="<%= inbox_edit_history_path(type: submission.class.name, id: submission.id) %>"
+                          data-history-label="Edit History"
+                          data-record-title="<%= "Critical Information Report ##{submission.id}" %>">
+                    Edit History
+                  </button>
+                <% end %>
 
                 <%= form_with url: update_status_critical_information_reporting_path(submission),
                               method: :patch,
@@ -262,6 +275,6 @@
 
   <%= render "shared/deny_modal" %>
   <%= render "shared/reassign_modal" %>
-  <%= render "shared/status_history_modal" %>
+  <%= render "shared/history_modal" %>
   <%= render "shared/column_customizer", page: "inbox", columns: @columns, employee_column: true %>
 </div>

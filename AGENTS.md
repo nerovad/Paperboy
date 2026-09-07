@@ -228,3 +228,47 @@ Not part of this system, and deliberately left alone: the form builder's
 `.modal` / `.modal-content` / `.form-builder-modal` shell in
 `pages/_form_templates.scss`, which is entangled with
 `form_templates/edit.html.erb`.
+
+## Submission history
+
+Every submission keeps two histories, both rendered by
+`SubmissionHistoriesController` as fragments the shared `history-modal`
+Stimulus controller fetches on demand:
+
+| History | Table | Written by | Shown to |
+|---------|-------|------------|----------|
+| Status  | `status_changes` | `TrackableStatus` | anyone whose form template enables the `status_history` inbox button |
+| Edit    | `record_edits`   | `AuditableEdits`  | anyone who may edit the submission |
+
+**Edit History is not a configurable button.** It rides along with the Edit
+button everywhere Edit appears — `inbox/_dynamic_buttons.html.erb`, the CIR
+row in `inbox/queue.html.erb`, and `shared/_readonly_record.html.erb` — so a
+form is auditable without anyone switching it on. Do not add `edit_history`
+to `Forms::Template::INBOX_BUTTON_TYPES`; that would make it opt-in again.
+
+Visibility follows the edit right, not view access: `SubmissionPolicy`
+`action: 'edit'` gates the endpoint, the inbox button and the detail-page
+section alike. A trail names who changed what, so whoever may rewrite a
+submission may see who already has.
+
+Rules:
+
+- **Every new form model includes `AuditableEdits`**, directly or through
+  `TrackableStatus` (which includes it). `FormGenerator` and
+  `lib/generators/paperboy_form` both emit it; a hand-written model has to
+  say so itself. `test/models/auditable_edits_test.rb` fails the build if a
+  form under `app/controllers/forms/` has a model that doesn't.
+- `AuditableEdits` writes one `RecordEdit` per column from an `after_update`.
+  A write that skips callbacks (`update_column`, as
+  `Reassignable#reassign_to!` does) leaves no trace, so such a caller must
+  ask for the audit explicitly with `record_out_of_band_edit`.
+- Anything happening after an edit is captured belongs in
+  `#after_edits_captured`, not in a second `after_update`. `TrackableStatus`
+  overrides it to mail edit subscribers, naming the exact rows the save wrote.
+- A save that skips the audit needs a column in `AuditableEdits::IGNORED_COLUMNS`,
+  not a conditional at the call site.
+- Raw stored values are unreadable in a trail (`agency: 12 → 15`), so
+  `Forms::AuditValue` resolves org and employee ids to names. Add a column to
+  its `LOOKUPS` / `MULTI_VALUE` tables rather than formatting in a view. Every
+  lookup crosses to GSABSS and falls back to the raw value, so it must stay
+  best-effort.

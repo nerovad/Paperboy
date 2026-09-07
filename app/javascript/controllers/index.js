@@ -57,7 +57,7 @@ import ClickableRowController from "controllers/clickable_row_controller"
 import InformationFieldController from "controllers/information_field_controller"
 import CardToggleController from "controllers/card_toggle_controller"
 import AuthorizationSelectController from "controllers/authorization_select_controller"
-import StatusHistoryModalController from "controllers/status_history_modal_controller"
+import HistoryModalController from "controllers/history_modal_controller"
 import ChangeStatusModalController from "controllers/change_status_modal_controller"
 import BackLinkController from "controllers/back_link_controller"
 import ContractorSelectsController from "controllers/contractor_selects_controller"
@@ -148,7 +148,7 @@ application.register("clickable-row", ClickableRowController)
 application.register("information-field", InformationFieldController)
 application.register("card-toggle", CardToggleController)
 application.register("authorization-select", AuthorizationSelectController)
-application.register("status-history-modal", StatusHistoryModalController)
+application.register("history-modal", HistoryModalController)
 application.register("change-status-modal", ChangeStatusModalController)
 application.register("back-link", BackLinkController)
 application.register("contractor-selects", ContractorSelectsController)
