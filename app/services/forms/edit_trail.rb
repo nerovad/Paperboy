@@ -26,7 +26,7 @@ module Forms
 
     def initialize(record)
       @record = record
-      @values = Forms::AuditValue.new
+      @values = Forms::AuditValue.new(model: record.class)
     end
 
     def entries
