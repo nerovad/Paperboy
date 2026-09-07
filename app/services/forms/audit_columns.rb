@@ -8,7 +8,7 @@ module Forms
   # label its form puts on a column, and the readable form of a stored value.
   #
   # Held apart from Forms::AuditExport because all of this is per-model lookup
-  # with a cache in front — a template name, a field label map, an AuditValue —
+  # with a cache in front: a template name, a field label map, an AuditValue,
   # and every one of those is shared by all three audit tables. The export
   # itself is then only three queries and the shape of their rows.
   #

@@ -9,7 +9,7 @@ module Forms
   # which field changed, StatusChange where it moved through the workflow, and
   # TaskReassignment who it was handed to. All three are polymorphic across
   # every form model, so an export is one query per source scoped to the form
-  # classes the requester may see — not a query per form.
+  # classes the requester may see, not a query per form.
   #
   # Rows read the way the on-screen trails read; Forms::AuditColumns owns that
   # translation. The raw column name is exported alongside its label anyway,
@@ -34,16 +34,16 @@ module Forms
     }.freeze
 
     class << self
-      # The model behind one of the reports page's form_type values — a
-      # tableized class name such as "leave_of_absence_forms" — or nil.
+      # The model behind one of the reports page's form_type values: a
+      # tableized class name such as "leave_of_absence_forms", or nil.
       def model_for(form_type)
         template = Forms::Template.all.find { |candidate| candidate.class_name.tableize == form_type.to_s }
         template && model_named(template.class_name)
       end
 
       # A form is exportable only if its model actually keeps a trail. Status
-      # history and reassignments ride on models that are edit-audited too —
-      # TrackableStatus includes AuditableEdits — so this one test covers all
+      # history and reassignments ride on models that are edit-audited too
+      # (TrackableStatus includes AuditableEdits), so this one test covers all
       # three sources.
       def auditable?(form_type)
         model = model_for(form_type)

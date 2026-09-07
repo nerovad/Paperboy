@@ -34,7 +34,7 @@ class ReportMailer < ApplicationMailer
   end
 
   # The audit-trail export from the Reports page. Its subject counts entries
-  # rather than submissions — a single submission can account for a dozen rows.
+  # rather than submissions; a single submission can account for a dozen rows.
   def audit_export_ready(employee, file_path, summary, start_date, end_date)
     @employee = employee
     @summary = summary

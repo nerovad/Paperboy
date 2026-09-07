@@ -58,7 +58,7 @@ class ReportsController < ApplicationController
 
     start_date, end_date = audit_date_range
     if start_date.nil?
-      redirect_to reports_path, alert: 'Enter a valid date range — the start date must be on or before the end date.'
+      redirect_to reports_path, alert: 'Enter a valid date range; the start date must be on or before the end date.'
       return
     end
 
@@ -233,7 +233,7 @@ class ReportsController < ApplicationController
     [requested]
   end
 
-  # Only forms whose model actually keeps a trail — offering the rest would
+  # Only forms whose model actually keeps a trail; offering the rest would
   # promise a spreadsheet that could only ever come back empty.
   def auditable_forms
     @auditable_forms ||= available_forms.select { |form| form[:auditable] }

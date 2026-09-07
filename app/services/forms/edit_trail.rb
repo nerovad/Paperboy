@@ -8,7 +8,7 @@ module Forms
   #
   # RecordEdit deliberately stores a row per column, because that is the unit a
   # subscription digest and the Records grid both want. A person reading the
-  # history wants the save — "Jane changed 3 fields at 9:14" — so the rows are
+  # history wants the save, "Jane changed 3 fields at 9:14", so the rows are
   # regrouped here. They are stamped a row at a time (RecordEdit.capture sets
   # its own created_at), so a save's rows can land microseconds apart; rows by
   # the same actor inside GROUPING_WINDOW are treated as one save.

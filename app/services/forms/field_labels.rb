@@ -12,7 +12,7 @@ module Forms
   #
   # Best-effort by design. A model with no template, or a template with no
   # field rows, yields an empty map and the caller falls back to humanizing the
-  # column — a trail that cannot name a field prettily is still a trail.
+  # column; a trail that cannot name a field prettily is still a trail.
   class FieldLabels
     def self.for(model_class)
       new(model_class).to_h
