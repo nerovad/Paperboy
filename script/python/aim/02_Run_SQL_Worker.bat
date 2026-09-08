@@ -5,7 +5,9 @@ call "%~dp0_prepare_aim_environment.bat" || (
 )
 mode con: cols=120 lines=30
 color 0B
-title AI Invoice Pipeline - SQL Worker
+REM This title is how START_ALL_SERVICES.bat finds a running
+REM worker to restart it. Change both or neither.
+title AIM - 02 SQL Worker
 echo ======================================================================
 echo                 AI INVOICE PIPELINE: SQL WORKER
 echo ======================================================================

@@ -3,7 +3,9 @@ call "%~dp0_prepare_aim_environment.bat" || (
     pause
     exit /b 1
 )
-title AI - 00 INGESTION WATCHER
+REM This title is how START_ALL_SERVICES.bat finds a running
+REM worker to restart it. Change both or neither.
+title AIM - 00 Ingestion Watcher
 color 0b
 
 echo ======================================================================
