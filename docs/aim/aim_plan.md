@@ -904,7 +904,7 @@ them.
   `bin/` is not in the Guardrails' allowed paths. This is a new AIM-only
   file the plan calls for, not an edit to anything shared.
 
-- [ ] **0.8 Make the suite enforce the protocol.** Add
+- [x] **0.8 Make the suite enforce the protocol.** Add
   `test/lib/aim/configuration_conventions_test.rb`, which scans the AIM
   Ruby and Python for literal paths, share names, ODBC driver strings,
   model names and credentials, and fails with a clear message naming the
@@ -915,6 +915,31 @@ them.
   discovered months later.
   *Test:* the guard fails on a deliberately planted literal and passes on
   the cleaned tree.
+
+  **Done 2026-09-08.** `test/lib/aim/configuration_conventions_test.rb`
+  with `configuration_scanner.rb` beside it. Eight rules: no Windows path,
+  UNC share or mount point; no queue folder literal; no ODBC driver or
+  encryption setting; no model name; no server name or credential; `env()`
+  takes a name and nothing else; `env()` is never called with a fallback;
+  the `.env` seed does not walk parents or the working directory. A ninth
+  checks that AIM's own tests never reference the real share or a real
+  server, since a test that touches `/mnt/a` breaks for anyone who has not
+  pulled LockBox.
+
+  **Verified by planting eight violations** — a Windows path, a mount
+  point, a server name, a credential, a queue folder, a model name, an ODBC
+  connection string and an `env()` fallback — and confirming six of the
+  eight tests went red and named the file and line. The tree was then
+  restored and the suite re-run green. A guard nobody has watched fail is
+  not a guard.
+
+  **Precision was the hard part, and it is the point.** The first version
+  flagged `.claim.json`, `ollama` (for containing "llama"),
+  `Encrypt={encrypt}` and the phrase "Routed to _BATCH_SPLIT for human
+  review" in a log message. A guard that cries wolf gets switched off, and
+  the protocol it defends then rots. So it distinguishes a folder used as a
+  *path component* from one merely named in a message, skips Python
+  docstrings, and ignores `.bat` launchers per Guardrails exception 1.
 
 ## Phase 1 — Stop The Silent Data Loss
 
@@ -1250,3 +1275,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 0.7 | (this commit) | `bin/deploy-aim-workers` added and run; 22 files + AIM-only `.env` deployed to `/mnt/a/_PROGRAM`; 36 pytest green |
 | 2026-09-08 | — | 7c97bac7 | Merged master (26 commits, incl. Rails 8.1); pulled LockBox; launcher now restarts workers; redeployed |
 | 2026-09-08 | — | (this commit) | Fixed UNC working-directory assumption in the launchers; redeployed; all five workers restart and run clean |
+| 2026-09-08 | 0.8 | (this commit) | Configuration guard added and proved against planted literals; **Phase 0 complete**; 624 runs, 406 pass, 58 fail, 160 error |
