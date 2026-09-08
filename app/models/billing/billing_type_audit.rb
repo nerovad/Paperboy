@@ -44,7 +44,7 @@ module Billing
                COALESCE(SUM(Audited.cost), 0) AS total_cost
         FROM (
           SELECT T.[TYPE] AS billing_type,
-                 T.[COST] AS cost,
+                 ROUND(T.[COST], 2) AS cost,
                  CONVERT(bigint, CASE WHEN #{error_predicate} THEN 1 ELSE 0 END) AS is_error
           FROM GSABSS.dbo.tc60 T
           WHERE #{Tc60PeriodScope::PREDICATE}

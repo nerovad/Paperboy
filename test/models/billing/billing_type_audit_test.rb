@@ -19,7 +19,7 @@ module Billing
       connection.expect(:exec_query, rows) do |sql|
         assert_includes sql, 'SUM(Audited.is_error)'
         assert_includes sql, 'COALESCE(SUM(Audited.cost), 0) AS total_cost'
-        assert_includes sql, 'T.[COST] AS cost'
+        assert_includes sql, 'ROUND(T.[COST], 2) AS cost'
         assert_includes sql, 'FROM ( SELECT T.[TYPE]'
         assert_includes sql, "N'GPH'"
         refute_includes sql, 'OFF'
