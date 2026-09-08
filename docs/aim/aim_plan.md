@@ -405,6 +405,38 @@ Recorded here so nobody has to rediscover it.
 `/mnt/gsa-scan02-AIM` and `/mnt/gsa-scan02` are stale mount points and are
 empty. Do not use them.
 
+### How configuration reaches the workers
+
+**GSA-SCAN02 has no git checkout. It never sees LockBox.** The workers read
+a copy of the environment file that sits on the share next to them:
+
+```text
+LockBox/Paperboy.env  ->  repo .env  ->  /mnt/a/_PROGRAM/.env  ->  workers
+   git, shared           git-ignored      copy on the share      read at import
+```
+
+`pipeline_common.py` searches for `.env` beside the script
+(`env_file_candidates`), and the workers are installed in `_PROGRAM`
+alongside it, so that copy is what they actually run on.
+
+**That third hop was manual and had already drifted.** As of 2026-09-04 the
+repo `.env` defined `AIM_AI_QUEUE_DIR` and the share `.env` did not —
+exactly the variable at the centre of the `pipeline_common.py:109` bug. A
+code fix alone would have reviewed clean, passed tests, and changed nothing
+in production. `_PROGRAM/.env.before-lockbox` is the fossil of the last
+hand copy.
+
+**Step 0.7 closes the hop:** `bin/deploy-aim-workers` ships code and config
+together, extracting only the `AIM_*` subset. Until that step lands, adding
+a variable to LockBox does nothing for the workers, so no Python step that
+depends on a new variable can be verified on GSA-SCAN02 before 0.7.
+
+The share copy is currently the *whole* Paperboy environment, including
+`ENTRA_ID_CLIENT_SECRET` and `POSTGRES_PASSWORD`, on a share readable by
+anyone who can reach `E:\AIM`. The workers need only the `AIM_*` set.
+Extracting the subset in 0.7 stops this recurring; cleaning up the existing
+file is Joshua's call and is not AIM's to do unasked.
+
 ### Budget Units seen in the watch tree
 
 `0000`, `4601`, `4621`, `4641`, `4701`, `4703`, `4721` — four-digit codes.
@@ -634,14 +666,29 @@ them.
   *Test:* importing with a variable unset fails with a message naming it;
   the fake-tree fixture drives every path from the fake environment.
 
-- [ ] **0.7 Add `bin/deploy-aim-workers`.** Copies `script/python/aim/`
-  from the repo to the worker location on the AIM share, mirroring the
-  existing `bin/deploy-dev` and `bin/deploy-stage` conventions. Must be in
-  place before any Python change ships to GSA-SCAN02.
-  *Test:* dry-run mode lists what it would copy; a real run round-trips a
-  checksum comparison.
-  *Needs:* confirmation of the exact worker install folder under the AIM
-  share.
+- [ ] **0.7 Add `bin/deploy-aim-workers`, shipping code *and* config.**
+  Copies `script/python/aim/` from the repo to `_PROGRAM` on the AIM share,
+  mirroring the existing `bin/deploy-dev` and `bin/deploy-stage`
+  conventions. Must be in place before any Python change ships to
+  GSA-SCAN02.
+
+  **It also writes `_PROGRAM/.env`, containing only the `AIM_*` subset** of
+  the repo `.env`. Decided 2026-09-08. This is what closes the manual hop
+  described in `## Environment Reference → How configuration reaches the
+  workers`; without it a variable added to LockBox never reaches a worker.
+  Extracting only `AIM_*` also keeps `ENTRA_ID_CLIENT_SECRET`,
+  `POSTGRES_PASSWORD` and the rest of Paperboy's secrets off the share.
+
+  Code and config ship in the same run, so they cannot drift apart again.
+  The script never reads LockBox directly — the repo `.env` is its source,
+  and that is a copy of `LockBox/Paperboy.env` as usual.
+  *Test:* dry-run mode lists what it would copy and which variables the
+  rendered `.env` would contain; a real run round-trips a checksum
+  comparison; the rendered file contains every `AIM_*` variable and no
+  non-`AIM_*` one.
+  *Note:* the worker install folder is `_PROGRAM` on the AIM share
+  (`/mnt/a/_PROGRAM`), confirmed 2026-09-04 — the workers and their `.env`
+  are already there.
 
 - [ ] **0.8 Make the suite enforce the protocol.** Add
   `test/lib/aim/configuration_conventions_test.rb`, which scans the AIM
@@ -927,7 +974,8 @@ layout feeds another system. The target is the same flow through Laserfiche.
   mean literally green. The workable standard is: *serial run, and the
   same 324 tests pass after as before.*
 - **5.1** Paperboy database or `GSA_Scan` for the new AIM tables?
-- **0.2** Exact worker install folder on the AIM share.
+- ~~**0.2** Exact worker install folder on the AIM share.~~ Answered
+  2026-09-04: `_PROGRAM` (`/mnt/a/_PROGRAM`).
 - **11** Final field layout Fiscal needs, and whether the existing
   `Aim_Invoices` approval columns stay authoritative or the new tables do.
 - Whether the existing 207 rows in `Aim_Invoices` and `Aim_Processing_Logs`
