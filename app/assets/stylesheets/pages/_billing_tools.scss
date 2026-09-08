@@ -637,6 +637,15 @@
   &--failure { background: $danger; }
 }
 
+.billing-summary-audit-table {
+  th:last-child,
+  td:last-child {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
 .billing-audit-detail-table th:nth-child(2),
 .billing-audit-detail-table td:nth-child(2) {
   width: 10rem;
