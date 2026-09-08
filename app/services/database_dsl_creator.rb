@@ -30,11 +30,15 @@ class DatabaseDslCreator
     preview = preview!
     table_name = preview.table
     create_initial_dsl!(preview) unless dsl_path(table_name).file?
-    run_task!('DataRunner:dump_sql', table_name)
-    run_task!('DataRunner:use_sql', table_name)
+    unless preview.replicate
+      run_task!('DataRunner:dump_sql', table_name)
+      run_task!('DataRunner:use_sql', table_name)
+    end
     run_task!('DataRunner:from_sql', table_name)
 
     DslCatalog.reload!
+    return table_name if preview.replicate
+
     entry = DslCatalog.find!(table_name)
     raise ImportFailed, 'The database DSL was created without column mappings.' if entry.config.fetch(:header, []).empty?
 

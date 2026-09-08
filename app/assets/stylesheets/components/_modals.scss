@@ -176,15 +176,16 @@
 
 /* --- Per-dialog variations ------------------------------------------------ */
 
-/* Status history: a scrollable timeline rather than a form. */
-.pb-modal--status-history {
+/* Histories (status timeline, edit trail): a scrollable list rather than a
+   form. */
+.pb-modal--history {
   .status-timeline .timeline-header {
-    display: none; /* the modal header already says "Status History" */
+    display: none; /* the modal header already names the history */
   }
 }
 
-.status-history-modal__loading,
-.status-history-modal__error {
+.history-modal__loading,
+.history-modal__error {
   text-align: center;
   color: $muted;
   padding: 20px 0;

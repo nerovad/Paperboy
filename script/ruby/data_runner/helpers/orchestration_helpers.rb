@@ -59,7 +59,7 @@ module DataRunnerTaskHelpers
     when :dump_sql
       run_children(orchestration, :dump_sql)
     when :use_sql
-      verify_child_stage_files!(orchestration, WorkflowPaths::SQL_SCHEMA_DIR, extension: '.sql')
+      verify_child_stage_files!(orchestration, WorkflowPaths::SQL_SCHEMA_DIR, extension: '.sql', skip_replication: true)
       run_children(orchestration, :use_sql)
     when :use_dsl
       verify_child_stage_files!(orchestration, WorkflowPaths::NORMALIZED_DIR)
@@ -288,8 +288,10 @@ module DataRunnerTaskHelpers
   end
   private_class_method :stage_orchestration_inputs
 
-  def verify_child_stage_files!(orchestration, stage_dir, extension: nil)
+  def verify_child_stage_files!(orchestration, stage_dir, extension: nil, skip_replication: false)
     missing = orchestration_children(orchestration).filter_map do |child_name, child_cfg|
+      next if skip_replication && EtlHelpers.source_strategy(child_cfg) == :replicate
+
       filename = extension ? "#{EtlHelpers.base_for(child_cfg)}#{extension}" : EtlHelpers.output_for(child_cfg)
       path = File.join(stage_dir, filename)
       "#{child_name}: #{path}" unless File.file?(path)

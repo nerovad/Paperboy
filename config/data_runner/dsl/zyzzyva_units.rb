@@ -22,7 +22,7 @@
       shared: :chart_of_accounts
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/zyzzyva_units.xlsx',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'zyzzyva_units.xlsx'),
       local: 'zyzzyva_units.xlsx',
       format: :xlsx,
       strategy: :append

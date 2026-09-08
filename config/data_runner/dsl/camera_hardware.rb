@@ -18,7 +18,7 @@
       name: 'gsa_security'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/camera_hardware.xlsx',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'camera_hardware.xlsx'),
       local: 'camera_hardware.xlsx',
       format: :xlsx,
       strategy: :copy

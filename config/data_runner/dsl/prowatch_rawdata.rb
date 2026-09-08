@@ -18,7 +18,7 @@
       name: 'gsa_security'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/prowatch_rawdata.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'prowatch_rawdata.csv'),
       local: 'prowatch_rawdata.csv',
       format: :csv,
       strategy: :copy

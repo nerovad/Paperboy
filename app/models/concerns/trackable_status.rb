@@ -10,11 +10,10 @@ module TrackableStatus
 
   TERMINAL_STATUSES = %w[approved denied cancelled].freeze
 
-  # Columns an edit log should never carry. `status` is left out because
-  # StatusChange already records transitions in full, with labels rather than
-  # raw values; approver_id and the timestamps are routing mechanics rather
-  # than anything a person edited.
-  EDIT_AUDIT_IGNORED_COLUMNS = %w[id created_at updated_at status approver_id].freeze
+  # Every status-tracked form is also edit-audited. AuditableEdits owns the
+  # trail itself and calls #after_edits_captured below once a save has been
+  # recorded; a form without a status workflow includes it on its own.
+  include AuditableEdits
 
   included do
     has_many :status_changes, as: :trackable, dependent: :destroy
@@ -28,7 +27,6 @@ module TrackableStatus
     after_update :deliver_copy_recipients_on_approval, if: :saved_change_to_status?
     after_update :deliver_email_steps_on_status_change, if: :saved_change_to_status?
     after_update :stamp_actor_on_terminal_status, if: :saved_change_to_status?
-    after_update :audit_and_notify_field_edits
     after_update :notify_subscribers_of_status_change, if: :saved_change_to_status?
   end
 
@@ -460,71 +458,14 @@ module TrackableStatus
     deliver_subscription_notifications('created')
   end
 
-  # Record what actually changed on this update, then tell the people following
-  # edits. Auditing and notifying are one callback because the mail names the
-  # very rows just written -- capturing them separately would leave the mailer
-  # guessing which edits were part of this save.
-  def audit_and_notify_field_edits
-    edit_ids = capture_field_edits
-    return if edit_ids.empty?
-
+  # AuditableEdits has just written the trail for this save. Tell the people
+  # following edits, naming the very rows it wrote so the mail can list them.
+  def after_edits_captured(edit_ids)
     deliver_subscription_notifications('edited', edit_ids: edit_ids)
   end
 
   def notify_subscribers_of_status_change
     deliver_subscription_notifications('status_changed')
-  end
-
-  # Write one RecordEdit per column that actually moved, and return their ids.
-  # Values come from saved_changes, so this reflects what the database took,
-  # not what was assigned. Shares the Records grid's audit table: an edit is an
-  # edit whether it arrived through the grid or the form, and RecordEdit#for_row
-  # then returns a record's whole history from one place.
-  def capture_field_edits
-    changes = saved_changes.except(*EDIT_AUDIT_IGNORED_COLUMNS)
-    return [] if changes.empty?
-
-    actor = { id: Current.user&.dig('employee_id')&.to_s, name: current_user_display_name }
-
-    changes.filter_map do |column, (before, after)|
-      next if before.to_s == after.to_s
-
-      RecordEdit.capture(row: self, table_slug: edit_audit_table_slug, column_name: column,
-                         old_value: before, new_value: after, actor: actor)&.id
-    end
-  rescue StandardError => e
-    Rails.logger.warn("edit audit failed for #{self.class.name} ##{id}: #{e.message}")
-    []
-  end
-
-  # RecordEdit#table_slug is provenance. Registry-backed models already have a
-  # slug the grid uses; a plain form model has none, so its table name says
-  # where the edit landed.
-  def edit_audit_table_slug
-    self.class.try(:registry_slug).presence || self.class.table_name
-  end
-
-  # Audit and announce one column written outside the normal update path.
-  #
-  # Reassignable#reassign_to! writes the assignee with update_column so that a
-  # record whose validations have since tightened can still be handed to
-  # somebody else. That skips callbacks entirely, so a reassignment would
-  # otherwise leave no trace in the edit trail and tell no subscriber. Rather
-  # than loosen that write, the caller asks for the audit explicitly.
-  #
-  # Public in effect but private by placement: it is called on self from the
-  # concern, not from outside the record.
-  def record_out_of_band_edit(column_name, old_value, new_value)
-    return if old_value.to_s == new_value.to_s
-
-    actor = { id: Current.user&.dig('employee_id')&.to_s, name: current_user_display_name }
-    edit = RecordEdit.capture(row: self, table_slug: edit_audit_table_slug,
-                              column_name: column_name.to_s,
-                              old_value: old_value, new_value: new_value, actor: actor)
-
-    deliver_subscription_notifications('edited', edit_ids: [edit&.id].compact)
-  rescue StandardError => e
-    Rails.logger.warn("out-of-band edit audit failed for #{self.class.name} ##{id}: #{e.message}")
   end
 
   # Queue immediate mail for everyone subscribed to this event on this form.
@@ -592,12 +533,6 @@ module TrackableStatus
     end
   rescue StandardError => e
     Rails.logger.warn("TrackableStatus fire_email_steps(#{event}) failed: #{e.message}")
-  end
-
-  def current_user_display_name
-    return nil unless Current.user
-
-    [Current.user['first_name'], Current.user['last_name']].compact.join(' ').presence
   end
 
   def status_label_was

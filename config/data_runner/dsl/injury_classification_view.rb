@@ -18,7 +18,7 @@
       name: 'paperboy'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/injury_classifications.xlsx',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'injury_classifications.xlsx'),
       local: 'injury_classifications.xlsx',
       format: :xlsx,
       strategy: :copy

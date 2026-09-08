@@ -18,7 +18,7 @@
       name: 'paperboy'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/parking_lots.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'parking_lots.csv'),
       local: 'parking_lots.csv',
       format: :csv,
       strategy: :copy

@@ -77,5 +77,26 @@ module P2m
         assert_equal ['50000001-second.pdf'], remaining_names
       end
     end
+
+    def test_removes_only_pdf_documents_when_filenames_are_omitted
+      Dir.mktmpdir do |directory|
+        root = Pathname.new(directory).join('Outputs')
+        source = root.join('job').tap(&:mkpath)
+        destination = Pathname.new(directory).join('99_Printers')
+        queue = destination.join('Printer One/Queue A').tap(&:mkpath)
+        %w[50000001-document.pdf 50000001-companion.csv].each do |name|
+          source.join(name).write(name)
+          queue.join(name).write(name)
+        end
+
+        count = PrinterQueue.new(root: root, destination: destination).remove(
+          directory: 'job', oms_number: '50000001', printer: 'Printer One', queue: 'Queue A'
+        )
+
+        assert_equal 1, count
+        remaining_names = queue.children.map { _1.basename.to_s }
+        assert_equal ['50000001-companion.csv'], remaining_names
+      end
+    end
   end
 end

@@ -182,6 +182,83 @@
 
   <% end %>
 
+  <%# Audit & History Exports %>
+  <%# The trails behind the submissions rather than the submissions themselves.
+      Same page, separate form: it posts to its own endpoint and shares nothing
+      with the report generator above but the ACL that decides which forms are
+      on offer. %>
+  <div class="section-divider"></div>
+
+  <div class="section-header">
+    <h2>Export Audit &amp; History</h2>
+  </div>
+
+  <p class="section-intro">
+    Everything Paperboy records about a submission after it is filed: who edited which field, where it
+    moved through the workflow, and who it was handed to. Each history becomes its own spreadsheet, and
+    picking more than one sends them as a ZIP.
+  </p>
+
+  <% if @audit_forms.any? %>
+    <%= form_with url: reports_audit_export_path, method: :post, local: true do %>
+
+      <%# Form Selection %>
+      <div class="form-group">
+        <%= label_tag "audit_form_type", "Form", class: "form-label" %>
+        <%= select_tag "form_type",
+          options_for_select(@audit_forms.map { |form| [form[:name], form[:value]] }),
+          include_blank: "All forms I can access",
+          class: "form-control",
+          id: "audit_form_type"
+        %>
+        <small class="help-text">Leave this on all forms to export every trail your permissions cover</small>
+      </div>
+
+      <%# History Selection %>
+      <div class="form-group">
+        <span class="form-label">Histories to include</span>
+        <div class="checkbox-group">
+          <% @audit_sources.each do |key, label| %>
+            <label class="checkbox-option" for="audit_source_<%= key %>">
+              <%= check_box_tag "sources[]", key, true, id: "audit_source_#{key}" %>
+              <span><%= label %></span>
+            </label>
+          <% end %>
+        </div>
+        <small class="help-text">A submission that was never edited can still have a status trail, so include both if you are unsure</small>
+      </div>
+
+      <%# Date Range %>
+      <div class="form-row">
+        <div class="form-group flex-fill">
+          <%= label_tag "audit_start_date", "Start Date", class: "form-label" %>
+          <%= date_field_tag "start_date", 1.month.ago.to_date, class: "form-control", id: "audit_start_date" %>
+          <small class="help-text">Entries recorded on or after this date</small>
+        </div>
+
+        <div class="form-group flex-fill">
+          <%= label_tag "audit_end_date", "End Date", class: "form-label" %>
+          <%= date_field_tag "end_date", Date.current, class: "form-control", id: "audit_end_date" %>
+          <small class="help-text">Entries recorded on or before this date</small>
+        </div>
+      </div>
+
+      <%= submit_tag "Export Audit History",
+        class: "btn approve",
+        data: {
+          disable_with: "Queuing...",
+          confirm_title: "Export audit history",
+          turbo_confirm: "Compile this export and email it to you?"
+        }
+      %>
+    <% end %>
+  <% else %>
+    <div class="empty-state">
+      <p>No form you can report on keeps an audit trail yet.</p>
+      <span class="empty-state-hint">Edit and status history are recorded per form; ask an administrator which forms are enabled for you.</span>
+    </div>
+  <% end %>
+
   <%# Scheduled Reports List %>
   <% if @scheduled_reports.any? %>
     <div class="section-divider"></div>
@@ -241,17 +318,30 @@
           </div>
           
           <div class="approval-actions">
-            <%= button_to toggle_scheduled_report_path(report), 
+            <%# turbo_confirm, not confirm: Turbo ignores the Rails UJS spelling,
+                and these two actions would then fire with no confirmation at
+                all. Both buttons carry `deny` when they are the destructive
+                one, which is what turns the dialog's confirm button red. %>
+            <% verb = report.enabled? ? 'Pause' : 'Resume' %>
+            <%= button_to toggle_scheduled_report_path(report),
                   method: :patch,
                   class: "btn #{report.enabled? ? 'deny' : 'approve'}",
-                  data: { confirm: "#{report.enabled? ? 'Pause' : 'Resume'} this scheduled report?" } do %>
-              <%= report.enabled? ? 'Pause' : 'Resume' %>
+                  data: {
+                    confirm_title: "#{verb} report",
+                    turbo_confirm: "#{verb} this scheduled report?",
+                    confirm_label: verb
+                  } do %>
+              <%= verb %>
             <% end %>
-            
-            <%= button_to scheduled_report_path(report), 
+
+            <%= button_to scheduled_report_path(report),
                   method: :delete,
                   class: "btn deny",
-                  data: { confirm: "Delete this scheduled report? This cannot be undone." } do %>
+                  data: {
+                    confirm_title: "Delete scheduled report",
+                    turbo_confirm: "Delete this scheduled report? This cannot be undone.",
+                    confirm_label: "Delete"
+                  } do %>
               Delete
             <% end %>
           </div>

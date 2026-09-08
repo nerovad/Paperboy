@@ -1,0 +1,50 @@
+<%# Field-level edit history for one submission. Locals: entries
+    (Forms::EditTrail::Entry, oldest first), item_id. Rendered both inline on a
+    submission's page and into the inbox history modal, so it must stand on its
+    own with no surrounding chrome. %>
+<%# No heading of its own: the modal title names it when it is fetched into the
+    history modal, and the section heading does when it is rendered inline. %>
+<div class="status-timeline edit-timeline" id="edit-timeline-<%= item_id %>">
+  <% if entries.empty? %>
+    <p class="timeline-empty">No edits have been made since this was submitted.</p>
+  <% else %>
+    <div class="timeline-items">
+      <% entries.each_with_index do |entry, index| %>
+        <div class="timeline-item <%= 'latest' if index == entries.length - 1 %>">
+          <div class="timeline-marker">
+            <div class="timeline-dot"></div>
+            <% if index < entries.length - 1 %>
+              <div class="timeline-line"></div>
+            <% end %>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-meta">
+              <span class="timeline-date"><%= l(entry.at, format: :long) %></span>
+              <% if entry.actor_name.present? %>
+                <span class="timeline-by">by <%= entry.actor_name %></span>
+                <% if entry.actor_id.present? %>
+                  <span class="timeline-by-id">(ID: <%= entry.actor_id %>)</span>
+                <% end %>
+              <% else %>
+                <span class="timeline-by">by an unrecorded user</span>
+              <% end %>
+            </div>
+
+            <ul class="edit-changes">
+              <% entry.changes.each do |change| %>
+                <li class="edit-change">
+                  <span class="edit-field"><%= change.label %></span>
+                  <span class="edit-values">
+                    <span class="edit-old" title="<%= change.old_value %>"><%= change.old_value %></span>
+                    <span class="arrow">&rarr;</span>
+                    <span class="edit-new" title="<%= change.new_value %>"><%= change.new_value %></span>
+                  </span>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

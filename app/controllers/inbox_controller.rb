@@ -113,25 +113,6 @@ class InboxController < ApplicationController
     @current_user_id = employee_id
   end
 
-  # Renders the workflow status timeline for a single submission as an HTML
-  # fragment, loaded on demand into the inbox "Status History" modal. Restricted
-  # to models that actually track status (include TrackableStatus) so the type
-  # param can't be used to render arbitrary records.
-  def status_history
-    klass = application_record_class_named(params[:type])
-
-    head :not_found and return unless klass.is_a?(Class) && klass < ApplicationRecord && klass.include?(TrackableStatus)
-
-    record = klass.find(params[:id])
-    changes = record.status_timeline.to_a
-
-    render partial: 'submissions/status_timeline',
-           locals: { status_changes: changes, item_id: "inbox-#{klass.name}-#{record.id}" },
-           layout: false
-  rescue ActiveRecord::RecordNotFound
-    head :not_found
-  end
-
   private
 
   def inbox_date_filters

@@ -1,0 +1,48 @@
+<table class="p2m-production-queues">
+  <thead>
+    <tr>
+      <th>Queue</th>
+      <th>Files</th>
+      <% if local_assigns.fetch(:show_modified, false) %><th>Modified</th><% end %>
+    </tr>
+  </thead>
+  <tbody>
+    <% queues.each_with_index do |item, queue_index| %>
+      <% queue_detail_id = "#{id_prefix}-queue-#{queue_index}-details" %>
+      <tr class="p2m-production-queue-row">
+        <td>
+          <button type="button" class="p2m-row-trigger" aria-expanded="false"
+                  aria-controls="<%= queue_detail_id %>"
+                  aria-label="Show files in <%= printer %>/<%= item.fetch("queue") %>"
+                  data-action="data-refresh-groups#toggle" data-detail-id="<%= queue_detail_id %>">
+            <span aria-hidden="true">▸</span>
+          </button>
+          <%= item.fetch("queue") %>
+        </td>
+        <td><%= item.fetch("files").size %></td>
+        <% if local_assigns.fetch(:show_modified, false) %>
+          <td><%= l(item.fetch("modified_at"), format: :short) %></td>
+        <% end %>
+      </tr>
+      <tr id="<%= queue_detail_id %>" class="p2m-production-queue-detail" hidden>
+        <td colspan="<%= local_assigns.fetch(:show_modified, false) ? 3 : 2 %>">
+          <ul class="p2m-production-files">
+            <% item.fetch("files").each do |filename| %>
+              <li>
+                <% if local_assigns.fetch(:preview_links, false) %>
+                  <%= link_to filename,
+                              preview_p2m_production_path(printer: printer,
+                                                          queue: item.fetch("queue"),
+                                                          filename: filename),
+                              data: { action: "pdf-preview#open", pdf_preview_title: filename } %>
+                <% else %>
+                  <%= filename %>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require Rails.root.join('app/services/p2m/paths')
+require File.expand_path('../../../app/services/p2m/paths', __dir__)
 
 [
   'Oms',

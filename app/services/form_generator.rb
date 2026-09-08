@@ -59,6 +59,12 @@ class FormGenerator
       # Access controlled via ACL Manager
 
       class #{form_template.class_name} < ApplicationRecord
+        # Every change made through the inbox/submissions Edit button is
+        # audited; the Edit History button beside it reads the trail this
+        # writes. Included here rather than left to whoever edits the generated
+        # file, so a form built in the builder is auditable the day it exists.
+        include AuditableEdits
+
         # Form fields
       #{field_definitions}
       #{'  '}

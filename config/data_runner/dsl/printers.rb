@@ -21,7 +21,7 @@
       shared: :print_2_mail
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/printer_queues.xlsx',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'printer_queues.xlsx'),
       local: 'printer_queues.xlsx',
       format: :xlsx,
       strategy: :copy

@@ -2,14 +2,19 @@
 
 class TeleworkLogForm < ApplicationRecord
   include TrackableStatus
-  include Reassignable
+
+  has_many :telework_log_form_hours, dependent: :destroy
+  accepts_nested_attributes_for :telework_log_form_hours, allow_destroy: true, reject_if: :all_blank
+
+  has_many :telework_log_form_work_performeds, dependent: :destroy
+  accepts_nested_attributes_for :telework_log_form_work_performeds, allow_destroy: true, reject_if: :all_blank
 
   enum :status, {
     in_progress: 'in_progress',
-    step_1_pending: 'step_1_pending',
     approved: 'approved',
     denied: 'denied'
   }, default: :in_progress
+  include Reassignable
 
   # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }

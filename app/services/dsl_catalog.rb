@@ -71,11 +71,19 @@ class DslCatalog
 
     private
 
+    def directory
+      Rails.root.join('config/data_runner/dsl')
+    end
+
+    def evaluation_path(path)
+      path
+    end
+
     def load_entries
       require Rails.root.join('script/ruby/data_runner/constants/workflow')
       require Rails.root.join('script/ruby/data_runner/constants/workflow_paths')
-      Rails.root.glob('config/data_runner/dsl/*.rb').map do |path|
-        key, config = TOPLEVEL_BINDING.eval(path.read, path.to_s)
+      directory.glob('*.rb').map do |path|
+        key, config = TOPLEVEL_BINDING.eval(path.read, evaluation_path(path).to_s)
         Entry.new(key: key, slug: path.basename('.rb').to_s, path: path, config: config)
       end
     end

@@ -50,7 +50,7 @@ def empty_header_block
 end
 
 def source_location(name)
-  "File.join(ENV.fetch('GSABSS_ROOT'), 'BUSINESS_SUPPORT/DataRunner/00_Inbox/#{name}.csv')"
+  "File.join(ENV.fetch('DATARUNNER_INBOX'), '#{name}.csv')"
 end
 
 def render_stub(target)

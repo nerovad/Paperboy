@@ -15,7 +15,7 @@
       }
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/bike_lockers.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'bike_lockers.csv'),
       local: 'bike_lockers.csv',
       format: :csv,
       strategy: :copy

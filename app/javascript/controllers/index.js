@@ -57,7 +57,7 @@ import ClickableRowController from "controllers/clickable_row_controller"
 import InformationFieldController from "controllers/information_field_controller"
 import CardToggleController from "controllers/card_toggle_controller"
 import AuthorizationSelectController from "controllers/authorization_select_controller"
-import StatusHistoryModalController from "controllers/status_history_modal_controller"
+import HistoryModalController from "controllers/history_modal_controller"
 import ChangeStatusModalController from "controllers/change_status_modal_controller"
 import BackLinkController from "controllers/back_link_controller"
 import ContractorSelectsController from "controllers/contractor_selects_controller"
@@ -82,6 +82,7 @@ import AimOcrController from "controllers/aim_ocr_controller"
 import DateRangeController from "controllers/date_range_controller"
 import PdfPreviewController from "controllers/pdf_preview_controller"
 import PrinterSelectionController from "controllers/printer_selection_controller"
+import P2mDataResetController from "controllers/p2m_data_reset_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -101,6 +102,7 @@ application.register("billing-email-selection", BillingEmailSelectionController)
 application.register("billing-report-preview", BillingReportPreviewController)
 application.register("data-refresh-groups", DataRefreshGroupsController)
 application.register("printer-selection", PrinterSelectionController)
+application.register("p2m-data-reset", P2mDataResetController)
 application.register("coa-account-fields", CoaAccountFieldsController)
 application.register("approve-modal", ApproveModalController)
 application.register("reassign-modal", ReassignModalController)
@@ -146,7 +148,7 @@ application.register("clickable-row", ClickableRowController)
 application.register("information-field", InformationFieldController)
 application.register("card-toggle", CardToggleController)
 application.register("authorization-select", AuthorizationSelectController)
-application.register("status-history-modal", StatusHistoryModalController)
+application.register("history-modal", HistoryModalController)
 application.register("change-status-modal", ChangeStatusModalController)
 application.register("back-link", BackLinkController)
 application.register("contractor-selects", ContractorSelectsController)

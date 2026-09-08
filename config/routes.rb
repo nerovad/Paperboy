@@ -134,7 +134,12 @@ Rails.application.routes.draw do
       get :details
       post :send_to_printer
       delete :remove_from_printer
+      delete :destroy_oms
     end
+    resource :production, only: :show do
+      get :preview
+    end
+    resource :data_reset, only: %i[show create]
     resource :stage_data, only: %i[show create] do
       get :details
       get :preview
@@ -400,6 +405,7 @@ Rails.application.routes.draw do
   get 'reports', to: 'reports#index', as: 'reports'
   post 'reports/generate', to: 'reports#generate', as: 'reports_generate'
   get 'reports/status_options', to: 'reports#status_options', as: 'reports_status_options'
+  post 'reports/audit_export', to: 'reports#export_audit', as: 'reports_audit_export'
 
   resources :scheduled_reports do
     member do
@@ -411,7 +417,10 @@ Rails.application.routes.draw do
   # Inbox & Submissions
   # ============================================================================
   get '/inboxqueue', to: 'inbox#queue', as: 'inbox_queue'
-  get '/inbox/status_history/:type/:id', to: 'inbox#status_history', as: 'inbox_status_history'
+  # Fragments the inbox history modal fetches. Kept on the /inbox path they have
+  # always been served from; see SubmissionHistoriesController.
+  get '/inbox/status_history/:type/:id', to: 'submission_histories#status', as: 'inbox_status_history'
+  get '/inbox/edit_history/:type/:id', to: 'submission_histories#edits', as: 'inbox_edit_history'
   get '/submissions', to: 'submissions#index', as: :submissions
   get '/submissions/status_options', to: 'submissions#status_options', as: :submissions_status_options
   # Reference number typed into the quick search ("PLS-845") -> that submission.

@@ -4,7 +4,11 @@
 
 <section class="card database-dsl-confirmation" aria-labelledby="database-dsl-confirmation-title">
   <h2 id="database-dsl-confirmation-title">Confirm DSL import</h2>
-  <p>DataRunner will create a DSL and populate its header mappings from the live database columns.</p>
+  <% if @preview.replicate %>
+    <p>DataRunner will download the source data and preserve existing destination mappings. For a new DSL, configure destination column mappings before running replication.</p>
+  <% else %>
+    <p>DataRunner will create a DSL and populate its header mappings from the live database columns.</p>
+  <% end %>
   <dl class="detail-grid">
     <div><dt>Server</dt><dd><code><%= @preview.server %></code></dd></div>
     <div><dt>Database</dt><dd><code><%= @preview.database %></code></dd></div>

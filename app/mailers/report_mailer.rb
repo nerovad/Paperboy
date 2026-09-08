@@ -33,6 +33,36 @@ class ReportMailer < ApplicationMailer
     )
   end
 
+  # The audit-trail export from the Reports page. Its subject counts entries
+  # rather than submissions; a single submission can account for a dozen rows.
+  def audit_export_ready(employee, file_path, summary, start_date, end_date)
+    @employee = employee
+    @summary = summary
+    @start_date = start_date
+    @end_date = end_date
+    @filename = File.basename(file_path)
+    @total = summary.values.sum
+
+    attachments[@filename] = File.binread(file_path)
+
+    mail(
+      to: employee.email,
+      subject: "Your Audit History Export is Ready (#{@total} #{'entry'.pluralize(@total)})"
+    )
+  end
+
+  def no_audit_history_found(employee, sources, start_date, end_date)
+    @employee = employee
+    @labels = Array(sources).filter_map { |source| Forms::AuditExport::SOURCES[source.to_s] }
+    @start_date = start_date
+    @end_date = end_date
+
+    mail(
+      to: employee.email,
+      subject: 'No Audit History Found'
+    )
+  end
+
   def report_generation_failed(employee, form_type, error_message)
     @employee = employee
     @form_type = form_type.humanize

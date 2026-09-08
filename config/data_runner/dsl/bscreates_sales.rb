@@ -18,7 +18,7 @@
       name: 'billing_configuration'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/bscreates_sales.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'bscreates_sales.csv'),
       local: 'bscreates_sales.csv',
       format: :csv,
       strategy: :copy

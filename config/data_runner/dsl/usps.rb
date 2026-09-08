@@ -31,7 +31,7 @@
       ]
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/usps.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'usps.csv'),
       local: 'usps.csv',
       format: :csv,
       strategy: :copy
