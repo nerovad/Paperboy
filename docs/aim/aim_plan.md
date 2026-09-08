@@ -564,6 +564,36 @@ Recorded so they are not relitigated.
 - **Vendor CSV import.** A rake task plus a small AIM admin upload page. Not
   Data Runner — the files arrive once a year.
 - **Laserfiche** is the target repository. Docushare is being retired.
+- **Metadata is embedded in the PDF, not shipped beside it as XML.** Decided by
+  Joshua 2026-09-08, from a working Laserfiche setup on another project. Fields
+  are written as **custom keys in the PDF Info dictionary** -- not XMP, no
+  namespace, no schema to register -- and Laserfiche reads each one by name as
+  `%(PDFmetadata_<Key>)`, spaces written as underscores. Verified against a
+  real example: `Box_Number`, `Vendor`, `Record_Series_Code` and the rest sit
+  in the Info dictionary of a file Laserfiche already indexes.
+
+  This removes the failure the XML causes rather than managing it. The XML is a
+  second copy of the truth in a second file: it can drift from the SQL row
+  (audit H5 / step 4.1), be regenerated wrong (step 1.3 found every
+  manually-corrected invoice reaching Laserfiche with `TemplateName` `Unknown`),
+  or be orphaned from its PDF. One file carrying its own metadata has none of
+  those states.
+
+  Mechanics, confirmed 2026-09-08:
+
+  - `pymupdf` is already in `script/python/aim/requirements.txt`, so stamping
+    costs no new dependency. `set_metadata()` only reaches the standard keys;
+    custom ones are written with `xref_set_key` on the Info object.
+  - A round-trip preserved `AT&T MOBILITY` and `INV-2024/001` exactly -- the
+    values steps 4.1 and 4.2 exist to stop mangling.
+  - **The original PDF is archived before stamping.** Agreed with Joshua; a
+    stamp rewrites the file, and the document as received has to survive.
+  - The stamp happens at handoff, generated from the invoice row. Nothing edits
+    metadata inside a PDF in place, so this is consistent with Phase 5: the row
+    is the truth and the PDF is an export artifact.
+
+  Consequence: `generate_laserfiche_xml` and the `.xml` sidecar are retired in
+  Phase 11, not carried alongside the new path.
 - `aimusers` / `GSABSS.dbo.aimusers` is **not** in scope and is not the
   source for BU access.
 - **Database placement (settles step 5.1).** The new AIM tables live in
@@ -1310,21 +1340,19 @@ layout feeds another system. The target is the same flow through Laserfiche.
 - [ ] **11.1 Populate the chart-of-accounts columns** from the vendor/BU
   lookup.
 - [ ] **11.2 The fiscal export** in the layout Fiscal specifies.
+- [ ] **11.3 Stamp the metadata into the PDF.** Write the invoice's fields as
+  custom PDF Info-dictionary keys at handoff, archiving the unstamped original
+  first. See `## Decisions Already Made`.
+  *Test:* a stamped PDF round-trips every field unchanged, punctuation and
+  ampersands included; the archived original is byte-identical to what arrived.
+- [ ] **11.4 Retire the Laserfiche XML.** Remove `generate_laserfiche_xml`, the
+  `.xml` sidecar and the regeneration in `02_sql_worker.py` once 11.3 is
+  proven in Laserfiche.
+  *Test:* a full pipeline run produces no `.xml`, and nothing reads one.
 
 ---
 
 ## Open Questions
-
-- **What generates the Laserfiche XML after Phase 5?** Once the row is the
-  truth, an edit made on an AIM screen updates `aim_invoices` -- but the XML on
-  the share is what Laserfiche actually imports, and nothing in 5.5 or 5.6 says
-  who rewrites it. Today `02_sql_worker.py` regenerates it for manual-fix
-  batches (`is_manual_fix`). The clean answer is that the XML becomes an export
-  artifact generated from the row at handoff and never edited in place, which
-  would make a stale XML impossible rather than merely unlikely. Raised with
-  Joshua 2026-09-08; decide before 5.5 is written, because it changes what that
-  step does. Related: audit H5 / step 4.1, where `&` -> `and` already makes the
-  XML disagree with the SQL row.
 
 - **Pre-existing suite failures (found in 0.1).** 213 of 537 tests are red
   on a clean master checkout, none of it AIM's doing. Three causes, all
