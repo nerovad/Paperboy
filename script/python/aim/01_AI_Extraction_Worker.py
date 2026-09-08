@@ -29,6 +29,12 @@ STALE_QUEUE_FOLDER_SECONDS = 300
 AI_QUEUE_ERROR_MARKER = ".ai_queue_error.json"
 REPROCESS_ERROR_MARKER = ".ai_reprocess_error.json"
 
+# The vendor-rule sidecar the review screens offer for rule entry. It used to
+# be written as "{processing_id}.json", the same shape as a real SQL payload,
+# in folders that already hold one -- so whichever the filesystem listed first
+# won. The suffix makes the two tellable apart by name. Plan step 1.2.
+VENDOR_RULE_SUFFIX = "_VENDOR_RULE.json"
+
 class Phase1Data(BaseModel):
     contains_multiple_invoices: bool
     is_high_confidence: bool
@@ -74,6 +80,19 @@ def mark_reprocess_error(folder_path, folder_name, pdf_path, error):
             }, marker, indent=4)
     except Exception:
         pass
+
+def write_vendor_rule_sidecar(dest_folder, processing_id, master_data):
+    """Write the vendor-rule sidecar a reviewer fills in, under its own name."""
+    vendor_name = master_data.vendor_name or master_data.extracted_vendor_name or ""
+    rule_sidecar = {
+        "vendor_name": vendor_name,
+        "existing_vendor_rules": get_rules_for_vendor(vendor_name) if master_data.vendor_name else "",
+        "new_vendor_rule": ""
+    }
+    sidecar_path = os.path.join(dest_folder, f"{processing_id}{VENDOR_RULE_SUFFIX}")
+    with open(sidecar_path, "w", encoding="utf-8") as sf:
+        json.dump(rule_sidecar, sf, indent=4)
+    return sidecar_path
 
 def folder_age_seconds(folder_path):
     try:
@@ -408,13 +427,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
         
         # Add sidecar data for GUI rule entry
-        rule_sidecar = {
-            "vendor_name": master_data.vendor_name or master_data.extracted_vendor_name or "",
-            "existing_vendor_rules": get_rules_for_vendor(master_data.vendor_name or master_data.extracted_vendor_name or "") if master_data.vendor_name else "",
-            "new_vendor_rule": ""
-        }
-        with open(os.path.join(dest_folder, f"{processing_id}.json"), "w", encoding="utf-8") as sf:
-            json.dump(rule_sidecar, sf, indent=4)
+        write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Handwritten financials detected", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
@@ -486,13 +499,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
         
         # Add sidecar data for GUI rule entry
-        rule_sidecar = {
-            "vendor_name": master_data.vendor_name or master_data.extracted_vendor_name or "",
-            "existing_vendor_rules": get_rules_for_vendor(master_data.vendor_name or master_data.extracted_vendor_name or "") if master_data.vendor_name else "",
-            "new_vendor_rule": ""
-        }
-        with open(os.path.join(dest_folder, f"{processing_id}.json"), "w", encoding="utf-8") as sf:
-            json.dump(rule_sidecar, sf, indent=4)
+        write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
         write_log(filename, "CPU Test", "ACTION_NEEDED", f"Missing: {missing}", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
@@ -508,13 +515,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
         
         # Add sidecar data for GUI rule entry
-        rule_sidecar = {
-            "vendor_name": master_data.vendor_name or master_data.extracted_vendor_name or "",
-            "existing_vendor_rules": get_rules_for_vendor(master_data.vendor_name or master_data.extracted_vendor_name or "") if master_data.vendor_name else "",
-            "new_vendor_rule": ""
-        }
-        with open(os.path.join(dest_folder, f"{processing_id}.json"), "w", encoding="utf-8") as sf:
-            json.dump(rule_sidecar, sf, indent=4)
+        write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Routed for manual check", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)

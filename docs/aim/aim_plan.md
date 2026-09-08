@@ -1002,13 +1002,40 @@ Small, surgical, no schema changes. Highest value per line changed.
   Kept out of 1.3 deliberately: 1.3 is `02_sql_worker.py` choosing which JSON
   is the payload, a different file and a different question.
 
-- [ ] **1.2 Rename the vendor-rule sidecar.** The AI worker writes both
+- [x] **1.2 Rename the vendor-rule sidecar.** The AI worker writes both
   `{id}.json` (vendor rules) and `{id}_READY_FOR_SQL.json` (the real
   payload) into one folder. Rename the former to `{id}_VENDOR_RULE.json`
   and teach `Aim::InvoiceQueueSupport#metadata_path_for` to ignore it. See
   audit C1.
   *Test:* Ruby — a folder containing both files resolves metadata to the
   payload. Python — the worker writes the new name.
+
+  Done 2026-09-08. The sidecar was written in three identical inline blocks;
+  they are now one `write_vendor_rule_sidecar()` and the name comes from a
+  single `VENDOR_RULE_SUFFIX` constant, mirrored in Ruby as
+  `Aim::InvoiceQueueSupport::VENDOR_RULE_SUFFIX` with a test asserting the two
+  strings match. `metadata_path_for` now prefers a `*_READY_FOR_SQL.json`
+  explicitly rather than trusting `Dir.children` order, and the filtering moved
+  into `metadata_candidate?`.
+
+  Not renamed: the **vendor-review payload** at `01_AI_Extraction_Worker.py`
+  line 466 is also `{id}.json`, but it is real invoice metadata and the review
+  screen reads it. Only the three rule sidecars moved.
+
+  Two findings for later steps:
+
+  - **1.3 needs more than the step says.** `write_log` puts the SUCCESS
+    payload in the SQL queue as `{id}.json` (`pipeline_common.py:325`) and
+    only the ACTION_NEEDED copy as `{id}_READY_FOR_SQL.json`. Searching the
+    SQL queue for `*_READY_FOR_SQL.json`, as 1.3 is written, would skip every
+    normally-processed invoice. The SUCCESS write has to be renamed in the
+    same step, or 1.3 has to accept both names.
+  - **`test/controllers/aim/invoices_controller_test.rb` proves nothing
+    today.** Every test in it is red in the baseline: `require_app_access`
+    calls `can_access_app?('aim')`, which reaches GSABSS, so each request
+    redirects to `/` with "You do not have access". Four more error on
+    `undefined method 'stub'`. 1.2's Ruby test therefore exercises the
+    concern directly through a small host class. See Open Questions.
 
 - [ ] **1.3 SQL worker selects its payload by name.** Replace
   `json_files[0]` with an explicit search for `*_READY_FOR_SQL.json`, and
@@ -1249,6 +1276,17 @@ layout feeds another system. The target is the same flow through Laserfiche.
 
 ## Open Questions
 
+- **The AIM controller tests are all red, for two reasons (found in 1.2).**
+  `test/controllers/aim/invoices_controller_test.rb` has no passing test on a
+  clean checkout. Every request redirects to `/` because `require_app_access`
+  asks `can_access_app?('aim')`, which crosses to GSABSS; four others error on
+  the `undefined method 'stub'` pin already recorded below. So AIM controller
+  behaviour is currently unverified, and a change that broke a queue screen
+  would not fail the build. Fixing it means either a test double for the ACL
+  lookup or a fixture in `Paperboy_Test` -- both touch shared plumbing outside
+  AIM, so it needs Joshua's decision before anyone starts. Until then, new AIM
+  logic is tested at the concern or service level, where no ACL is involved.
+
 - **Pre-existing suite failures (found in 0.1).** 213 of 537 tests are red
   on a clean master checkout, none of it AIM's doing. Three causes, all
   outside AIM and so all needing Joshua's decision before anyone touches
@@ -1333,3 +1371,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | — | `8e4a6dda` | **Phase 0 merged to Paperboy master.** LockBox landed first, as the ordering requires |
 | 2026-09-08 | 1.1 | (this commit) | `insert_sql_record` raises `SqlMappingError`; dead `env()` second argument fixed; 40 pytest green, Ruby suite unchanged at 624/406/58/160 |
 | 2026-09-08 | 1.1a | (this commit) | Missing mapping file raises rather than skipping; 42 pytest green, Ruby suite unchanged |
+| 2026-09-08 | 1.2 | (this commit) | Vendor-rule sidecar renamed `_VENDOR_RULE.json`; `metadata_path_for` prefers the payload; 629 runs, 411 pass, 58 fail, 160 error; 45 pytest green |
