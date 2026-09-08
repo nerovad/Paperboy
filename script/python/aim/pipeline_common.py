@@ -229,6 +229,13 @@ def get_sql_connection(section):
     )
     return pyodbc.connect(conn_str)
 
+# The one name a SQL payload is ever written under. Before step 1.3 a payload
+# routed as SUCCESS was "{processing_id}.json" while the same payload routed as
+# ACTION_NEEDED was "{processing_id}_READY_FOR_SQL.json", and the SQL worker
+# took whichever .json the filesystem listed first -- which could be a vendor
+# rule sidecar. Aim::InvoiceQueueSupport::PAYLOAD_SUFFIX is the Ruby half.
+PAYLOAD_SUFFIX = "_READY_FOR_SQL.json"
+
 class SqlMappingError(Exception):
     """A SQL payload could not be inserted because its mapping did not apply.
 
@@ -322,7 +329,7 @@ def write_log(filename, stage, status, details, bu_number, submitter_name, proce
     if status == "SUCCESS":
         folder_path = os.path.join(SQL_QUEUE_DIR, processing_id)
         os.makedirs(folder_path, exist_ok=True)
-        queue_path = os.path.join(folder_path, f"{processing_id}.json")
+        queue_path = os.path.join(folder_path, f"{processing_id}{PAYLOAD_SUFFIX}")
         try:
             with open(queue_path, 'w', encoding='utf-8') as f:
                 json.dump(sql_payload, f, indent=4)
@@ -331,7 +338,7 @@ def write_log(filename, stage, status, details, bu_number, submitter_name, proce
     elif status == "ACTION_NEEDED":
         folder_path = os.path.join(ACTION_NEEDED_DIR, processing_id)
         os.makedirs(folder_path, exist_ok=True)
-        manual_fix_path = os.path.join(folder_path, f"{processing_id}_READY_FOR_SQL.json")
+        manual_fix_path = os.path.join(folder_path, f"{processing_id}{PAYLOAD_SUFFIX}")
         try:
             with open(manual_fix_path, 'w', encoding='utf-8') as f:
                 json.dump(sql_payload, f, indent=4)

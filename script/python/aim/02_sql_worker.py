@@ -9,10 +9,23 @@ from pipeline_common import (
     SQL_QUEUE_DIR, SQL_FAILED_DIR, ACTION_NEEDED_DIR, PROCESSED_DIR,
     READY_TO_DELETE_DIR, DELETED_DIR, VENDOR_REVIEW_DIR,
     insert_sql_record, archive_batch, InvoiceData, generate_laserfiche_xml, sanitize_data,
-    bootstrap,
+    bootstrap, PAYLOAD_SUFFIX,
 )
 
 import pyodbc
+
+def find_payload(folder_path):
+    """The batch's SQL payload, by name, or None.
+
+    A batch folder holds several JSON files -- the payload, the vendor-rule
+    sidecar, the learn sidecar, a claim marker. Taking whichever one the
+    filesystem listed first meant a sidecar could be read as an invoice and
+    the real payload never inserted. Only this name is a payload. Step 1.3.
+    """
+    for file_name in sorted(os.listdir(folder_path)):
+        if file_name.endswith(PAYLOAD_SUFFIX):
+            return file_name
+    return None
 
 def move_folder_to_failed(folder_path, folder_name):
     if not os.path.exists(folder_path):
@@ -36,19 +49,21 @@ def run_sql_worker():
     for folder_name in os.listdir(SQL_QUEUE_DIR):
         folder_path = os.path.join(SQL_QUEUE_DIR, folder_name)
         if os.path.isdir(folder_path):
-            # Find the JSON payload file in the subfolder
+            # Find the JSON payload file in the subfolder, by name.
             try:
-                json_files = [f for f in os.listdir(folder_path) if f.lower().endswith(".json")]
+                json_file = find_payload(folder_path)
             except FileNotFoundError:
                 print(f"    [i] SQL queue folder disappeared before it could be read: {folder_path}")
                 continue
 
-            if not json_files:
-                # The AI worker creates the folder, XML, and PDF before the final JSON.
-                # No JSON means the batch is not ready for SQL yet.
+            if json_file is None:
+                # The AI worker creates the folder, XML and PDF before the
+                # payload, so a folder without one is either still being
+                # written or is missing it. Leave it where it is either way --
+                # this loop must never delete a batch it could not read.
+                print(f"    [i] Skipping {folder_name}: no *{PAYLOAD_SUFFIX} payload in the folder.")
                 continue
-                
-            json_file = json_files[0]
+
             filepath = os.path.join(folder_path, json_file)
             
             try:
@@ -82,25 +97,32 @@ def run_sql_worker():
             try:
                 print(f"\n[SQL WORKER] Processing batch folder {folder_name}...")
                 
-                # Check if this was a manual fix (came from Action Needed)
-                is_manual_fix = json_file.lower().endswith("_ready_for_sql.json")
-                if is_manual_fix:
-                    print(f"    [i] Detected manual fix batch. Regenerating Laserfiche XML...")
-                    corrected_data = InvoiceData(
-                        extracted_vendor_name=payload.get("VendorName"),
-                        vendor_name=payload.get("VendorName"),
-                        invoice_date=payload.get("InvoiceDate"),
-                        invoice_number=payload.get("InvoiceNumber"),
-                        invoice_total=payload.get("InvoiceTotal"),
-                        order_number=payload.get("OrderNumber"),
-                        subtotal=payload.get("Subtotal"),
-                        sales_tax=payload.get("SalesTax"),
-                        customer_number=payload.get("CustomerNumber")
-                    )
-                    corrected_data = sanitize_data(corrected_data)
-                    xml_path = os.path.join(folder_path, f"{processing_id}.xml")
-                    generate_laserfiche_xml(corrected_data, payload.get("BU"), payload.get("Submitter"), xml_path, processing_id)
-                    print(f"    [✓] Laserfiche XML updated successfully.")
+                # The XML is regenerated from the payload that is about to be
+                # inserted, so Laserfiche and the database cannot disagree.
+                # This used to run only for "manual fix" batches, told apart by
+                # their filename -- a distinction step 1.3 removed by giving
+                # every payload one name. It is also not a distinction that
+                # held: Rails writes a hand-corrected vendor-review payload
+                # with Status "SUCCESS".
+                print(f"    [i] Regenerating Laserfiche XML from the payload...")
+                corrected_data = InvoiceData(
+                    extracted_vendor_name=payload.get("VendorName"),
+                    vendor_name=payload.get("VendorName"),
+                    invoice_date=payload.get("InvoiceDate"),
+                    invoice_number=payload.get("InvoiceNumber"),
+                    invoice_total=payload.get("InvoiceTotal"),
+                    order_number=payload.get("OrderNumber"),
+                    subtotal=payload.get("Subtotal"),
+                    sales_tax=payload.get("SalesTax"),
+                    customer_number=payload.get("CustomerNumber"),
+                    # Without this the XML's TemplateName fell back to
+                    # "Unknown" on every regenerated batch.
+                    document_type=payload.get("DocumentType")
+                )
+                corrected_data = sanitize_data(corrected_data)
+                xml_path = os.path.join(folder_path, f"{processing_id}.xml")
+                generate_laserfiche_xml(corrected_data, payload.get("BU"), payload.get("Submitter"), xml_path, processing_id)
+                print(f"    [✓] Laserfiche XML updated successfully.")
                 
                 # Refresh ProcessedTimestamp to current time upon database insertion
                 payload["ProcessedTimestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -175,9 +197,9 @@ def run_delete_worker():
             # Try to load metadata from any JSON file inside the folder
             bu_number = "Unknown"
             submitter_name = "UnknownUser"
-            json_files = [f for f in os.listdir(folder_path) if f.lower().endswith(".json")]
-            if json_files:
-                filepath = os.path.join(folder_path, json_files[0])
+            payload_file = find_payload(folder_path)
+            if payload_file:
+                filepath = os.path.join(folder_path, payload_file)
                 try:
                     with open(filepath, 'r', encoding='utf-8') as f:
                         payload = json.load(f)

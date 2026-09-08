@@ -1054,11 +1054,33 @@ Small, surgical, no schema changes. Highest value per line changed.
   fix. Note for future sessions: a redirect to `/` in an AIM controller test
   means the session, not the ACL.
 
-- [ ] **1.3 SQL worker selects its payload by name.** Replace
+- [x] **1.3 SQL worker selects its payload by name.** Replace
   `json_files[0]` with an explicit search for `*_READY_FOR_SQL.json`, and
   skip the folder with a logged reason if none is found. Never treat an
   arbitrary `.json` as a payload. See audit C1.
   *Test:* a folder with a sidecar and no payload is skipped, not deleted.
+
+  Done 2026-09-08. `find_payload()` in `02_sql_worker.py` is the only way a
+  payload is chosen, used by both the SQL worker and the delete worker (which
+  read "any JSON" for the BU and submitter of its archive path).
+
+  As predicted in 1.2, the step needed the naming fixed first: `write_log`
+  wrote the SUCCESS payload as `{id}.json` and only the ACTION_NEEDED copy as
+  `{id}_READY_FOR_SQL.json`. Both now use `PAYLOAD_SUFFIX`, defined once in
+  `pipeline_common.py` and mirrored by `Aim::InvoiceQueueSupport::PAYLOAD_SUFFIX`,
+  with a test asserting the two agree. No transitional acceptance of the old
+  name was needed: `_SQL_QUEUE` was empty at deploy time and was checked.
+
+  **Behaviour change worth knowing about.** The Laserfiche XML is now
+  regenerated from the payload for *every* batch, not only "manual fix" ones.
+  That branch identified a manual fix by its filename, which the rename makes
+  meaningless -- and the test was never sound anyway, since Rails writes a
+  hand-corrected vendor-review payload with `Status` `SUCCESS`
+  (`Aim::VendorReviewPayloadService`). Regenerating always means the XML and
+  the inserted row cannot disagree, which is the invariant step 4.1 is about.
+  The regeneration also now passes `document_type` through; without it every
+  regenerated XML fell back to `TemplateName` `Unknown`, so until today each
+  manually-corrected invoice reached Laserfiche with its document type lost.
 
 - [ ] **1.4 Never delete a batch whose archive failed.** `archive_batch`
   already returns a boolean that the SQL worker ignores before calling
@@ -1390,3 +1412,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 1.1a | (this commit) | Missing mapping file raises rather than skipping; 42 pytest green, Ruby suite unchanged |
 | 2026-09-08 | 1.2 | (this commit) | Vendor-rule sidecar renamed `_VENDOR_RULE.json`; `metadata_path_for` prefers the payload; 629 runs, 411 pass, 58 fail, 160 error; 45 pytest green |
 | 2026-09-08 | 1.2a | (this commit) | AIM controller tests unblocked (missing `employee_id` in the test session); 630 runs, 413 pass, 57 fail, 160 error |
+| 2026-09-08 | 1.3 | (this commit) | One payload name (`PAYLOAD_SUFFIX`); SQL worker picks it explicitly; XML always regenerated, document type kept; 50 pytest green, Ruby suite unchanged |
