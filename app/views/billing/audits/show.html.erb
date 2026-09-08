@@ -31,6 +31,10 @@
                   <span class="billing-audit-count"><%= number_with_delimiter result.error_count %></span>
                   <span>Errors</span>
                 </div>
+                <div class="billing-type-audit-cost">
+                  <span class="billing-audit-count"><%= number_to_currency result.total_cost %></span>
+                  <span>Total Cost</span>
+                </div>
               </div>
             <% end %>
             <% if result.error_count.positive? %>

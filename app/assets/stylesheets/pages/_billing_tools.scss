@@ -572,6 +572,15 @@
 
   .billing-audit-count { margin: 0; }
 
+  .billing-type-audit-cost {
+    grid-column: 1 / -1;
+
+    .billing-audit-count {
+      font-size: 1.5rem;
+      overflow-wrap: anywhere;
+    }
+  }
+
   span:last-child {
     color: $text-muted;
     font-size: .85rem;

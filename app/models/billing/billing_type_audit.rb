@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module Billing
-  # Counts active-period TC60 rows for types enabled on the Billing Types page.
+  # Summarizes active-period TC60 rows for types enabled on the Billing Types page.
   class BillingTypeAudit
-    Result = Data.define(:code, :name, :row_count, :error_count)
+    Result = Data.define(:code, :name, :row_count, :error_count, :total_cost)
 
     def initialize(period, types: nil, connection: BillingBase.connection)
       @period = period
@@ -17,13 +17,14 @@ module Billing
 
       counts = connection.exec_query(query(active_types.map(&:code))).to_a.to_h do |row|
         [row.fetch('billing_type').to_s,
-         [row.fetch('row_count').to_i, row.fetch('error_count').to_i]]
+         [row.fetch('row_count').to_i, row.fetch('error_count').to_i,
+          BigDecimal(row.fetch('total_cost').to_s)]]
       end
 
       active_types.map do |type|
-        row_count, error_count = counts.fetch(type.code, [0, 0])
+        row_count, error_count, total_cost = counts.fetch(type.code, [0, 0, BigDecimal('0')])
         Result.new(code: type.code, name: type.name,
-                   row_count: row_count, error_count: error_count)
+                   row_count: row_count, error_count: error_count, total_cost: total_cost)
       end
     end
 
@@ -39,9 +40,11 @@ module Billing
       sql = <<~SQL.squish
         SELECT Audited.billing_type,
                COUNT_BIG(*) AS row_count,
-               SUM(Audited.is_error) AS error_count
+               SUM(Audited.is_error) AS error_count,
+               COALESCE(SUM(Audited.cost), 0) AS total_cost
         FROM (
           SELECT T.[TYPE] AS billing_type,
+                 T.[COST] AS cost,
                  CONVERT(bigint, CASE WHEN #{error_predicate} THEN 1 ELSE 0 END) AS is_error
           FROM GSABSS.dbo.tc60 T
           WHERE #{Tc60PeriodScope::PREDICATE}
