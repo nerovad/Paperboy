@@ -10,6 +10,7 @@ class P2mPrintAndInsertingDoneScanTest < Minitest::Test
       source = Pathname.new(directory).join('Outputs')
       runner = source.join('DataRunner')
       create_job(source.join('job'), '50000001')
+      source.join('job', '50000001-fake.pdf').mkpath
       create_job(source.join('FinalOutput'), '50000002')
       create_job(source.join('staged'), '50000003')
       create_job(source.join('uploaded'), '50000004')

@@ -143,13 +143,20 @@ module P2m
     def associated_file_count(directory, number)
       directory_files(directory).count do |path|
         match = ASSOCIATED_PATTERNS.filter_map { |pattern| path.basename.to_s.match(pattern) }.first
-        path.file? && match && match[1] == number
+        match && match[1] == number
       end
     end
 
     def directory_files(directory)
       @directory_files ||= {}
-      @directory_files[directory.to_s] ||= directory.children
+      @directory_files[directory.to_s] ||= begin
+        output, error, status = Open3.capture3(
+          fd_binary, '--no-ignore', '--max-depth', '1', '--type', 'f', '--print0', '.', directory.to_s
+        )
+        raise "File search failed in #{directory}: #{error.strip}" unless status.success?
+
+        output.split("\0").map { |name| Pathname.new(name) }
+      end
     end
 
     def build_row(number, marker_matches)
@@ -172,8 +179,8 @@ module P2m
 
     def classified_inputs(directory, number)
       INPUT_PATTERNS.to_h do |type, pattern|
-        matches = directory.children.select do |path|
-          match = path.file? && path.basename.to_s.match(pattern)
+        matches = directory_files(directory).select do |path|
+          match = path.basename.to_s.match(pattern)
           match && match[1] == number
         end
         [type, matches.sort]
