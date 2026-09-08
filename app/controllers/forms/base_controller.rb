@@ -8,7 +8,12 @@ module Forms
     # form rather than sixteen copies of the same check, and it runs on the
     # endpoint rather than only hiding a button — a hand-typed /edit URL is
     # refused just the same.
-    before_action :authorize_submission_edit!, only: %i[edit update]
+    #
+    # Guarded with :if rather than :only because several forms (parking lot,
+    # carpool, gym locker, creative job request, social media) are submit-only
+    # and define no edit/update at all; Rails raises on an :only naming an
+    # action the controller doesn't have.
+    before_action :authorize_submission_edit!, if: -> { action_name.in?(%w[edit update]) }
 
     private
 
