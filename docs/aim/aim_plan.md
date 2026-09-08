@@ -981,10 +981,26 @@ Small, surgical, no schema changes. Highest value per line changed.
     MappingFile configured" skip deleted -- `env()` exits naming the variable.
     A grep of `script/python/aim/*.py` found no other two-argument call, so
     this was the last one 0.6 missed.
-  - The **mapping file missing from disk** is still a silent `return` a few
-    lines above, and it fails exactly the same way: success printed, batch
-    deleted, no row. It is outside 1.1's wording so it was left alone. See
-    Open Questions.
+  - The **mapping file missing from disk** was a silent `return` a few lines
+    above, failing in exactly the same way: success printed, batch deleted,
+    no row. Outside 1.1's wording, so it became step 1.1a below.
+
+- [x] **1.1a A missing mapping file raises too.** The sibling of 1.1, in the
+  same function: `insert_sql_record` printed "Mapping file ... not found" and
+  returned, so a mapping that was mistyped or never deployed lost invoices the
+  same way. Added by Joshua's decision 2026-09-08, on the finding recorded in
+  1.1. Now raises `SqlMappingError` naming the resolved path and the variable.
+  *Test:* an absent mapping file raises and executes no SQL; an absolute
+  configured path is used as-is.
+
+  Safe to raise because nothing legitimately runs without the file: both
+  `Aim_Invoices_MAPPING.json` and `Aim_Processing_Logs_MAPPING.json` are in
+  `script/python/aim/` and on the share, and `bin/deploy-aim-workers` ships
+  `*.json`, so the two cannot drift. An absent file now means something is
+  actually broken, and the batch stops instead of vanishing.
+
+  Kept out of 1.3 deliberately: 1.3 is `02_sql_worker.py` choosing which JSON
+  is the payload, a different file and a different question.
 
 - [ ] **1.2 Rename the vendor-rule sidecar.** The AI worker writes both
   `{id}.json` (vendor rules) and `{id}_READY_FOR_SQL.json` (the real
@@ -1233,16 +1249,6 @@ layout feeds another system. The target is the same flow through Laserfiche.
 
 ## Open Questions
 
-- **A missing mapping file is still a silent skip (found in 1.1).**
-  `insert_sql_record` returns after printing "Mapping file ... not found" when
-  the configured file is absent from `_PROGRAM`. The caller then archives and
-  deletes the batch exactly as it did before 1.1, so a mistyped or
-  undeployed mapping loses invoices in the way 1.1 was written to stop.
-  Fixing it is one line -- raise instead of return -- but it is outside the
-  step as written, and `bin/deploy-aim-workers` has to be shipping both
-  mapping files first or the workers stop dead. Joshua's call: fold it into
-  1.3, or take it as its own step.
-
 - **Pre-existing suite failures (found in 0.1).** 213 of 537 tests are red
   on a clean master checkout, none of it AIM's doing. Three causes, all
   outside AIM and so all needing Joshua's decision before anyone touches
@@ -1326,3 +1332,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | — | `76a33ae` (LockBox) | LockBox `aim-config` merged to master and pushed; the twelve AIM variables are live for the team |
 | 2026-09-08 | — | `8e4a6dda` | **Phase 0 merged to Paperboy master.** LockBox landed first, as the ordering requires |
 | 2026-09-08 | 1.1 | (this commit) | `insert_sql_record` raises `SqlMappingError`; dead `env()` second argument fixed; 40 pytest green, Ruby suite unchanged at 624/406/58/160 |
+| 2026-09-08 | 1.1a | (this commit) | Missing mapping file raises rather than skipping; 42 pytest green, Ruby suite unchanged |

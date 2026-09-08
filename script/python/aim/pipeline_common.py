@@ -230,11 +230,13 @@ def get_sql_connection(section):
     return pyodbc.connect(conn_str)
 
 class SqlMappingError(Exception):
-    """A SQL payload could not be mapped onto any column of its table.
+    """A SQL payload could not be inserted because its mapping did not apply.
 
-    Silently returning here is how invoices disappeared: the worker printed a
-    success line, archived the batch and deleted the folder while the database
-    never received a row. Raising sends the batch to the failed queue instead.
+    Either the mapping file is missing from the worker install, or no key in
+    it matched the payload. Silently returning in either case is how invoices
+    disappeared: the worker printed a success line, archived the batch and
+    deleted the folder while the database never received a row. Raising sends
+    the batch to the failed queue instead.
     """
 
 def insert_sql_record(section, data_dict):
@@ -247,8 +249,12 @@ def insert_sql_record(section, data_dict):
         mapping_file_path = os.path.join(PROGRAM_DIR, mapping_filename)
     
     if not os.path.exists(mapping_file_path):
-        print(f"    [!] Mapping file {mapping_filename} not found. Skipping SQL insert for {section}.")
-        return
+        raise SqlMappingError(
+            f"{section}: mapping file {mapping_file_path} does not exist. "
+            f"AIM_{section}_MAPPING_FILE names {mapping_filename}; the "
+            "worker install should carry it. Deploy it with "
+            "bin/deploy-aim-workers rather than letting the insert be skipped."
+        )
 
     with open(mapping_file_path, 'r') as f:
         mapping = json.load(f)

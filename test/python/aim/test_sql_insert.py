@@ -92,3 +92,28 @@ def test_missing_mapping_variable_exits(pipeline, monkeypatch):
         pipeline.insert_sql_record("SQL_BILLING", {"VendorName": "Acme"})
 
     assert "AIM_SQL_BILLING_MAPPING_FILE" in str(raised.value)
+
+
+def test_missing_mapping_file_raises(pipeline, billing_section):
+    """Step 1.1a: an absent mapping file skipped the insert and reported success."""
+    os.makedirs(pipeline.PROGRAM_DIR, exist_ok=True)
+
+    with pytest.raises(pipeline.SqlMappingError) as raised:
+        pipeline.insert_sql_record("SQL_BILLING", {"VendorName": "Acme"})
+
+    assert "billing_mapping.json" in str(raised.value)
+    assert billing_section == [], "no SQL should be executed without a mapping"
+
+
+def test_absolute_mapping_path_is_honoured(pipeline, billing_section, tmp_path, monkeypatch):
+    """A configured absolute path is used as-is, not resolved under PROGRAM_DIR."""
+    mapping_path = tmp_path / "elsewhere_mapping.json"
+    with open(mapping_path, "w", encoding="utf-8") as handle:
+        json.dump({"VendorName": "VendorName"}, handle)
+    monkeypatch.setenv("AIM_SQL_BILLING_MAPPING_FILE", str(mapping_path))
+
+    pipeline.insert_sql_record("SQL_BILLING", {"VendorName": "Acme"})
+
+    query, values = billing_section[0]
+    assert query.startswith("INSERT INTO Aim_Invoices (")
+    assert values == ["Acme"]
