@@ -4,7 +4,6 @@ require 'fileutils'
 
 module Aim
   class VendorAliasService
-    DEFAULT_ALIAS_FILE = Rails.root.join('script/python/aim/vendor_aliases.json')
     NOTE_PREFIX = 'Learned from AIM vendor review'
 
     class AliasStoreError < StandardError; end
@@ -30,9 +29,9 @@ module Aim
 
       def alias_file_path
         configured_path = ENV.fetch('AIM_ALIAS_DB_FILE', nil).presence
-        return translated_path(configured_path) if configured_path.present?
+        raise MissingConfiguration.for('AIM_ALIAS_DB_FILE', 'The AIM vendor alias store') if configured_path.nil?
 
-        mounted_alias_file_path || DEFAULT_ALIAS_FILE
+        translated_path(configured_path)
       end
 
       private
@@ -79,22 +78,29 @@ module Aim
         "#{path}.lock"
       end
 
-      def mounted_alias_file_path
-        linux_base = ENV.fetch('AIM_LINUX_QUEUE_BASE_PATH', nil).presence
-        return if linux_base.blank?
+      # The worker install folder on the AIM share. AIM_ALIAS_DB_FILE is
+      # normally a bare filename, and this is what it is resolved against.
+      def program_dir
+        configured = ENV.fetch('AIM_PROGRAM_DIR', nil).presence
+        raise MissingConfiguration.for('AIM_PROGRAM_DIR', 'The AIM program folder') if configured.nil?
 
-        Pathname.new(File.join(linux_base, '_PROGRAM', 'vendor_aliases.json'))
+        Pathname.new(to_linux(configured))
       end
 
       def translated_path(path)
+        normalized_path = to_linux(path)
+        return Pathname.new(normalized_path) if normalized_path.include?('/')
+
+        program_dir.join(normalized_path)
+      end
+
+      def to_linux(path)
         linux_base = ENV.fetch('AIM_LINUX_QUEUE_BASE_PATH', nil).presence
         windows_base = ENV.fetch('AIM_WINDOWS_QUEUE_BASE_PATH', nil).presence
         normalized_path = path.to_s
 
         normalized_path = normalized_path.gsub(windows_base, linux_base) if linux_base.present? && windows_base.present?
-        return Pathname.new(File.join(linux_base, '_PROGRAM', normalized_path)) if linux_base.present? && normalized_path.exclude?('/')
-
-        Pathname.new(normalized_path.tr('\\', '/'))
+        normalized_path.tr('\\', '/')
       end
 
       def normalize_vendor_text(value)

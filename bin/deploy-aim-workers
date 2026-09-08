@@ -1,0 +1,256 @@
+#!/bin/bash
+#
+# Deploy the AIM workers and their configuration to the AIM share.
+#
+# Ships code and config together, in one run, so the two cannot drift apart.
+# That mattered: GSA-SCAN02 has no git checkout and never sees LockBox, so the
+# worker .env was a hand copy. On 2026-09-04 the repo .env defined
+# AIM_AI_QUEUE_DIR and the share copy did not -- a code fix alone would have
+# reviewed clean, passed tests, and changed nothing in production.
+#
+# Safe by default: this prints what it would do and changes nothing. Pass
+# --apply to actually write.
+#
+#   bin/deploy-aim-workers                    # dry run
+#   bin/deploy-aim-workers --apply            # deploy
+#   bin/deploy-aim-workers --lockbox ~/gitea/LockBox --apply
+#
+# Options:
+#   --apply              perform the copy (default is a dry run)
+#   --lockbox <dir>      LockBox checkout, for the provenance check
+#                        (default: $LOCKBOX_DIR)
+#   --env-file <file>    environment file to read and render from
+#                        (default: <repo>/.env)
+#   --target <dir>       destination directory
+#                        (default: AIM_PROGRAM_DIR translated to its mount)
+#   --backup-dir <dir>   where replaced files are kept
+#                        (default: <target>/_PREVIOUS_SCRIPTS)
+#   --skip-provenance    deploy without checking .env against LockBox.
+#                        Prints a warning. For emergencies, not routine use.
+#
+set -euo pipefail
+
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SOURCE_DIR="$APP_DIR/script/python/aim"
+
+APPLY=0
+SKIP_PROVENANCE=0
+LOCKBOX="${LOCKBOX_DIR:-}"
+ENV_FILE="$APP_DIR/.env"
+TARGET=""
+BACKUP_ROOT=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --apply) APPLY=1; shift ;;
+    --skip-provenance) SKIP_PROVENANCE=1; shift ;;
+    --lockbox) LOCKBOX="$2"; shift 2 ;;
+    --env-file) ENV_FILE="$2"; shift 2 ;;
+    --target) TARGET="$2"; shift 2 ;;
+    --backup-dir) BACKUP_ROOT="$2"; shift 2 ;;
+    -h|--help) sed -n '2,27p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "unknown option: $1" >&2; exit 2 ;;
+  esac
+done
+
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+[ -f "$ENV_FILE" ] || die "environment file not found: $ENV_FILE"
+[ -d "$SOURCE_DIR" ] || die "worker source not found: $SOURCE_DIR"
+
+# ---------------------------------------------------------------------------
+# Provenance. The repo .env is meant to be a copy of LockBox/Paperboy.env.
+# Nothing enforces that, so a hand-edited repo copy would send the workers a
+# value LockBox never defined and the deploy would look entirely successful.
+# ---------------------------------------------------------------------------
+LOCKBOX_STAMP="not checked"
+if [ "$SKIP_PROVENANCE" -eq 1 ]; then
+  echo "WARNING: skipping the LockBox provenance check."
+  echo "         The workers may receive values LockBox never defined."
+elif [ -z "$LOCKBOX" ]; then
+  die "LockBox checkout unknown. Set LOCKBOX_DIR or pass --lockbox <dir>.
+       LockBox is the definition point for every AIM variable; deploying
+       without checking against it would make that claim untrue.
+       Use --skip-provenance only if you accept that."
+else
+  [ -f "$LOCKBOX/Paperboy.env" ] || die "no Paperboy.env in $LOCKBOX"
+  if ! diff -q "$LOCKBOX/Paperboy.env" "$ENV_FILE" >/dev/null 2>&1; then
+    echo "ERROR: $ENV_FILE does not match $LOCKBOX/Paperboy.env" >&2
+    echo "Differences (repo copy vs LockBox):" >&2
+    diff "$LOCKBOX/Paperboy.env" "$ENV_FILE" | head -40 >&2
+    die "refusing to deploy. Refresh the repo .env from LockBox, or commit
+       the change to LockBox first."
+  fi
+  LOCKBOX_STAMP="$(cd "$LOCKBOX" && git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+  echo "==> Provenance OK: .env matches LockBox ($LOCKBOX_STAMP)"
+fi
+
+# ---------------------------------------------------------------------------
+# Where to deploy. AIM_PROGRAM_DIR is a Windows path; translate it to this
+# machine's mount the same way Rails does. No path is written literally here.
+# ---------------------------------------------------------------------------
+# Read one variable out of the env file. Deliberately parsed, not sourced:
+# sourcing executes whatever the file contains, and Paperboy's .env holds
+# values that are not valid shell.
+env_value() {
+  local name="$1" line
+  line="$(grep -m1 -E "^${name}=" "$ENV_FILE" || true)"
+  line="${line#*=}"
+  line="${line%\'}"; line="${line#\'}"
+  line="${line%\"}"; line="${line#\"}"
+  printf '%s' "$line"
+}
+
+if [ -z "$TARGET" ]; then
+  program_dir="$(env_value AIM_PROGRAM_DIR)"
+  windows_base="$(env_value AIM_WINDOWS_QUEUE_BASE_PATH)"
+  linux_base="$(env_value AIM_LINUX_QUEUE_BASE_PATH)"
+  [ -n "$program_dir" ] || die "AIM_PROGRAM_DIR is not set in $ENV_FILE"
+  [ -n "$windows_base" ] || die "AIM_WINDOWS_QUEUE_BASE_PATH is not set in $ENV_FILE"
+  [ -n "$linux_base" ] || die "AIM_LINUX_QUEUE_BASE_PATH is not set in $ENV_FILE"
+  # Normalise to forward slashes *before* the prefix swap: a backslash in a
+  # bash pattern is an escape, so matching 'E:\AIM' against 'E:\AIM\_PROGRAM'
+  # silently fails and leaves the Windows path in place.
+  program_dir="${program_dir//\\//}"
+  windows_base="${windows_base//\\//}"
+  TARGET="${program_dir/#$windows_base/$linux_base}"
+  [ "$TARGET" != "$program_dir" ] \
+    || die "could not translate $program_dir to a local path.
+       AIM_WINDOWS_QUEUE_BASE_PATH ($windows_base) is not a prefix of
+       AIM_PROGRAM_DIR, so the share location is unknown. Pass --target."
+fi
+
+echo "==> Source: $SOURCE_DIR"
+echo "==> Target: $TARGET"
+
+# ---------------------------------------------------------------------------
+# What ships. Everything the workers need, and nothing generated.
+# ---------------------------------------------------------------------------
+# Runtime state the workers own. These live on the share and are written
+# there; the repo copy is a stale snapshot. Shipping vendor_aliases.json on
+# 2026-09-08 would have deleted three aliases learned on the server
+# (Canon U.S.A., Vortex Industries, Team Play Events) -- the share had 907
+# keys, the repo 904, and every extra one was on the share.
+STATE_FILES=(
+  'vendor_aliases.json'
+)
+
+is_state() {
+  local candidate="$1" name
+  for name in "${STATE_FILES[@]}"; do
+    [ "$candidate" = "$name" ] && return 0
+  done
+  return 1
+}
+
+mapfile -t ALL_FILES < <(cd "$SOURCE_DIR" && find . -maxdepth 1 -type f \
+  \( -name '*.py' -o -name '*.bat' -o -name '*.json' -o -name '*.txt' -o -name '*.md' \) \
+  -printf '%P\n' | sort)
+
+FILES=()
+SKIPPED=()
+for file in "${ALL_FILES[@]}"; do
+  if is_state "$file"; then SKIPPED+=("$file"); else FILES+=("$file"); fi
+done
+
+[ "${#FILES[@]}" -gt 0 ] || die "no worker files found in $SOURCE_DIR"
+
+echo "==> ${#FILES[@]} files to copy:"
+printf '      %s\n' "${FILES[@]}"
+
+if [ "${#SKIPPED[@]}" -gt 0 ]; then
+  echo "==> ${#SKIPPED[@]} left alone (runtime state owned by the share):"
+  printf '      %s\n' "${SKIPPED[@]}"
+fi
+
+# ---------------------------------------------------------------------------
+# The rendered worker .env: the AIM_* subset and nothing else. The share copy
+# used to carry the whole Paperboy environment, including ENTRA_ID_CLIENT_SECRET
+# and POSTGRES_PASSWORD, on a share anyone reaching it could read.
+# ---------------------------------------------------------------------------
+RENDERED="$(mktemp)"
+trap 'rm -f "$RENDERED"' EXIT
+{
+  echo "# AIM worker environment. GENERATED by bin/deploy-aim-workers -- do not"
+  echo "# edit here; edit LockBox/Paperboy.env and redeploy."
+  echo "# Rendered $(date -u '+%Y-%m-%dT%H:%M:%SZ') from LockBox $LOCKBOX_STAMP"
+  echo "# Contains only AIM_* variables; the rest of Paperboy's environment,"
+  echo "# including its secrets, deliberately does not ship to the share."
+  echo
+  grep -E '^AIM_[A-Z0-9_]+=' "$ENV_FILE" || true
+} > "$RENDERED"
+
+RENDERED_COUNT="$(grep -cE '^AIM_' "$RENDERED" || true)"
+SOURCE_COUNT="$(grep -cE '^AIM_[A-Z0-9_]+=' "$ENV_FILE" || true)"
+LEAKED="$(grep -E '^[A-Z]' "$RENDERED" | grep -vE '^AIM_' || true)"
+
+[ "$RENDERED_COUNT" -eq "$SOURCE_COUNT" ] \
+  || die "rendered .env has $RENDERED_COUNT AIM_* variables, source has $SOURCE_COUNT"
+[ -z "$LEAKED" ] && echo "==> Rendered .env: $RENDERED_COUNT AIM_* variables, no others" \
+  || die "rendered .env contains non-AIM variables:
+$LEAKED"
+
+if [ "$APPLY" -eq 0 ]; then
+  echo "==> Replaced files would be moved into ${BACKUP_ROOT:-$TARGET/_PREVIOUS_SCRIPTS}/$(date '+%Y-%m-%d')"
+  echo
+  echo "Dry run. Nothing was written. Re-run with --apply to deploy."
+  exit 0
+fi
+
+[ -d "$TARGET" ] || die "target does not exist: $TARGET (is the AIM share mounted?)"
+
+# ---------------------------------------------------------------------------
+# Keep what we are about to replace. These scripts run unattended on
+# GSA-SCAN02; if a deploy goes wrong, the version that was working needs to be
+# one copy away, on the server, not in somebody's shell history.
+# ---------------------------------------------------------------------------
+[ -n "$BACKUP_ROOT" ] || BACKUP_ROOT="$TARGET/_PREVIOUS_SCRIPTS"
+BACKUP_DIR="$BACKUP_ROOT/$(date '+%Y-%m-%d')"
+# A second deploy on the same day must not overwrite the morning's copy.
+if [ -e "$BACKUP_DIR" ]; then
+  BACKUP_DIR="$BACKUP_ROOT/$(date '+%Y-%m-%d_%H%M%S')"
+fi
+
+REPLACED=()
+for file in "${FILES[@]}"; do
+  [ -f "$TARGET/$file" ] && REPLACED+=("$file")
+done
+[ -f "$TARGET/.env" ] && REPLACED+=(".env")
+
+if [ "${#REPLACED[@]}" -gt 0 ]; then
+  echo "==> Moving ${#REPLACED[@]} replaced files to $BACKUP_DIR"
+  mkdir -p "$BACKUP_DIR"
+  for file in "${REPLACED[@]}"; do
+    mv -- "$TARGET/$file" "$BACKUP_DIR/$file"
+  done
+else
+  echo "==> Nothing to back up; no existing files are being replaced"
+fi
+
+echo "==> Copying..."
+for file in "${FILES[@]}"; do
+  cp -- "$SOURCE_DIR/$file" "$TARGET/$file"
+done
+cp -- "$RENDERED" "$TARGET/.env"
+
+# ---------------------------------------------------------------------------
+# Round-trip: every copied file must match the source byte for byte.
+# ---------------------------------------------------------------------------
+echo "==> Verifying checksums..."
+FAILED=0
+for file in "${FILES[@]}"; do
+  src="$(md5sum < "$SOURCE_DIR/$file" | cut -d' ' -f1)"
+  dst="$(md5sum < "$TARGET/$file" | cut -d' ' -f1)"
+  if [ "$src" != "$dst" ]; then
+    echo "    MISMATCH $file" >&2
+    FAILED=1
+  fi
+done
+if [ "$(md5sum < "$RENDERED" | cut -d' ' -f1)" != "$(md5sum < "$TARGET/.env" | cut -d' ' -f1)" ]; then
+  echo "    MISMATCH .env" >&2
+  FAILED=1
+fi
+[ "$FAILED" -eq 0 ] || die "deployment verification failed"
+
+echo "==> Deployed ${#FILES[@]} files and the worker .env to $TARGET"
+echo "    Restart the workers on GSA-SCAN02 for the change to take effect."

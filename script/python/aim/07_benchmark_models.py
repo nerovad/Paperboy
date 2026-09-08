@@ -6,9 +6,8 @@ import ollama
 from dotenv import load_dotenv
 from PIL import Image
 
-# Modify these to the two models you want to test
-MODEL_A = "qwen2.5vl"
-MODEL_B = "qwen3-vl:4b-instruct"
+# The two models to compare. Configured, not hardcoded -- these change with
+# every move to new hardware.
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -18,12 +17,7 @@ def env_file_candidates():
     if explicit_env_file:
         candidates.append(explicit_env_file)
 
-    candidates.extend([
-        os.path.join(SCRIPT_DIR, ".env"),
-        os.path.join(SCRIPT_DIR, "..", ".env"),
-        os.path.join(SCRIPT_DIR, "..", "..", "..", ".env"),
-        os.path.join(os.getcwd(), ".env")
-    ])
+    candidates.append(os.path.join(SCRIPT_DIR, ".env"))
 
     seen = set()
     for candidate in candidates:
@@ -38,10 +32,11 @@ for env_file in env_file_candidates():
         load_dotenv(env_file)
         break
 
-TEST_DIR = os.getenv(
-    "AIM_BENCHMARK_DIR",
-    os.path.join(os.getenv("AIM_BASE_DIR", r"E:\AIM\Invoices"), "_Benchmark")
-)
+from pipeline_common import env
+
+MODEL_A = env("AIM_BENCHMARK_MODEL_A")
+MODEL_B = env("AIM_BENCHMARK_MODEL_B")
+TEST_DIR = env("AIM_BENCHMARK_DIR")
 TEMP_IMAGE = "temp_benchmark.jpg"
 
 PROMPT = (

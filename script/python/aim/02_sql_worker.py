@@ -8,7 +8,8 @@ from datetime import datetime
 from pipeline_common import (
     SQL_QUEUE_DIR, SQL_FAILED_DIR, ACTION_NEEDED_DIR, PROCESSED_DIR,
     READY_TO_DELETE_DIR, DELETED_DIR, VENDOR_REVIEW_DIR,
-    insert_sql_record, archive_batch, InvoiceData, generate_laserfiche_xml, sanitize_data
+    insert_sql_record, archive_batch, InvoiceData, generate_laserfiche_xml, sanitize_data,
+    bootstrap,
 )
 
 import pyodbc
@@ -226,6 +227,10 @@ def run_delete_worker():
                 print(f"    [!] Deletion / Archiving failed for {folder_name}: {e}")
 
 if __name__ == "__main__":
+    # Prepare the machine before any work: directories, shortcuts, alias
+    # sync. Import alone does none of it.
+    bootstrap()
+
     print(f"Monitoring '{SQL_QUEUE_DIR}' (SQL WORKER) for ready invoices and deletions...")
     try:
         while True:

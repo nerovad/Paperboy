@@ -5,14 +5,17 @@ call "%~dp0_prepare_aim_environment.bat" || (
 )
 mode con: cols=120 lines=30
 color 0E
-title AI Invoice Pipeline - Batch Splitter
+REM This title is how START_ALL_SERVICES.bat finds a running
+REM worker to restart it. Change both or neither.
+title AIM - 03 Batch Splitter
 echo ======================================================================
 echo              AI INVOICE PIPELINE: BATCH SPLITTER
 echo ======================================================================
 echo Starting 03_batch_splitter.py...
 echo.
-python 03_batch_splitter.py
-
+REM Absolute path: the working directory is not dependable when
+REM these run from a UNC share.
+python "%~dp003_batch_splitter.py"
 if %errorlevel% neq 0 (
     echo.
     echo ======================================================================

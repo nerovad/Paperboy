@@ -1,0 +1,23 @@
+# AIM worker dependencies.
+#
+# Installed by deployment (bin/deploy-aim-workers, plan step 0.7), never by
+# importing a module. pipeline_common.py used to pip-install these on import,
+# which meant importing it reached the network and mutated the machine -- and
+# made every Python step in the pipeline untestable.
+#
+# pywin32 is Windows-only and is what plants the .lnk review shortcuts. It is
+# not installable on Linux, so a Linux test environment installs everything
+# below except that line; create_windows_shortcut imports it lazily and
+# already tolerates its absence.
+
+ollama
+pydantic
+pymupdf
+pillow
+pytesseract
+pyodbc
+python-dateutil
+thefuzz
+python-Levenshtein
+python-dotenv
+pywin32; sys_platform == "win32"
