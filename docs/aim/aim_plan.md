@@ -655,7 +655,7 @@ them.
   *Test:* none — configuration only. Verify by diffing the variable names
   the code reads against the names LockBox defines.
 
-- [ ] **0.3 Remove hardcoded paths from the AIM Ruby.** Every fallback that
+- [x] **0.3 Remove hardcoded paths from the AIM Ruby.** Every fallback that
   guesses a folder name becomes a required variable that fails loudly when
   missing. This also fixes the audit M3 inconsistency where `path_for` and
   the `*_dir` readers disagree, so the sidebar reports "not configured"
@@ -665,6 +665,26 @@ them.
   (`Rails.root.join`), lines 86 and 95 (`_PROGRAM`, `vendor_aliases.json`).
   *Test:* a missing variable raises a named error; `path_for` and the
   matching `*_dir` reader return the same value for every queue.
+
+  **Done 2026-09-08.** `Aim::MissingConfiguration` (new, in
+  `app/services/aim/missing_configuration.rb`) is raised at the point of
+  use, never at boot. The service now has two readers and the split is the
+  point: `path_for` is lenient and returns nil so the sidebar can say "not
+  configured", while `path_for!` raises naming the variable and is what
+  every `*_dir` reader calls. That fixes audit M3 — the two used to
+  disagree, so the sidebar reported "not configured" while writes still
+  landed in a guessed folder. `queue_base_child` is deleted outright, and
+  `PATH_ENV` now carries `ai_queue` and `manual_processing` instead of
+  special-casing them.
+
+  In `VendorAliasService`, `DEFAULT_ALIAS_FILE` is gone and a bare
+  `AIM_ALIAS_DB_FILE` filename now resolves against `AIM_PROGRAM_DIR`
+  rather than a guessed `_PROGRAM`. One existing test asserted the old
+  guess as correct behaviour and was inverted into a regression test.
+
+  Suite 544 -> 552 runs, 333 -> 341 passing, failures and errors unchanged
+  at 59/152. rubocop clean. Brakeman's 2 warnings and bundle-audit's
+  findings are pre-existing on master and touch no AIM file.
 
 - [ ] **0.4 Make `pipeline_common.py` importable without side effects.**
   Today importing it pip-installs packages, plants Windows shortcuts,
@@ -1072,3 +1092,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 0.2 | 8127afbc, 55e3b231 | Inventory complete; 12 variables added on LockBox branch `aim-config` (`a68212c`, local only) |
 | 2026-09-08 | 0.2 | (baseline reset) | Master moved on 15 commits; new baseline 544 runs, 333 pass, 59 fail, 152 error (serial) |
 | 2026-09-08 | 0.2 | `5e0de53` (LockBox) | Pulled LockBox: P2M added `P2M_PRINTERS`/`P2M_DESTROYED`; rebased `aim-config`, dropped the stopgap, baseline unchanged |
+| 2026-09-08 | 0.3 | (this commit) | Fallbacks removed from AIM Ruby; audit M3 fixed; 552 runs, 341 pass, 59 fail, 152 error |
