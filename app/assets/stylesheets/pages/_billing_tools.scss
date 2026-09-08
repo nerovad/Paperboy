@@ -1,3 +1,4 @@
+@use "sass:color";
 @use "base/tokens" as *;
 
 .billing-form-header {
@@ -557,34 +558,83 @@
   font-size: .9rem;
 }
 
-.billing-type-audit-card > p { margin-top: .5rem; }
+.billing-type-audit-table-wrapper {
+  padding: .75rem;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  background: $surface-panel;
+  overflow-x: auto;
+}
 
-.billing-type-audit-counts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin-top: .75rem;
+.billing-type-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: $text-strong;
+  font-size: .95rem;
 
-  > div {
-    display: flex;
-    flex-direction: column;
+  th, td {
+    padding: .65rem .85rem;
+    text-align: left;
   }
 
-  .billing-audit-count { margin: 0; }
+  thead {
+    color: $surface-base;
+    background: linear-gradient(120deg, $slate-action, $green-teal);
+    font-weight: 700;
 
-  .billing-type-audit-cost {
-    grid-column: 1 / -1;
-
-    .billing-audit-count {
-      font-size: 1.5rem;
-      overflow-wrap: anywhere;
+    th {
+      border: 0;
+      white-space: nowrap;
     }
+
+    th:first-child { border-radius: 6px 0 0 0; }
+    th:last-child { border-radius: 0 6px 0 0; }
   }
 
-  span:last-child {
-    color: $text-muted;
-    font-size: .85rem;
+  tbody tr {
+    border-bottom: 1px solid $neutral-border-subtle;
+    background: $surface-base;
   }
+
+  tbody tr:nth-child(even) { background: color.scale($surface-panel, $lightness: 2%); }
+
+  tbody tr:last-child { border-bottom: 0; }
+
+  th:first-child, td:first-child {
+    width: 3rem;
+    text-align: center;
+  }
+
+  th:nth-child(n+4), td:nth-child(n+4) {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  tbody tr.clickable-row:hover,
+  tbody tr.clickable-row:focus-within {
+    background: rgba($blue-action, .1);
+  }
+
+  a {
+    color: $text-strong;
+    font-weight: 700;
+    text-underline-offset: .2em;
+  }
+}
+
+.billing-type-audit-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: $green-teal;
+  color: $surface-base;
+  font-weight: 700;
+
+  &--failure { background: $danger; }
 }
 
 .billing-audit-detail-table th:nth-child(2),
