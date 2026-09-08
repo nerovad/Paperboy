@@ -11,29 +11,9 @@ from datetime import datetime
 # -----------------------------------------------------------------------------
 # AUTOMATIC DEPENDENCY INSTALLER
 # -----------------------------------------------------------------------------
-def install_prerequisites():
-    required_packages = {
-        'ollama': 'ollama', 
-        'pydantic': 'pydantic', 
-        'fitz': 'pymupdf',
-        'PIL': 'pillow',
-        'pytesseract': 'pytesseract',
-        'pyodbc': 'pyodbc',
-        'dateutil': 'python-dateutil',
-        'thefuzz': 'thefuzz',
-        'Levenshtein': 'python-Levenshtein',
-        'win32com': 'pywin32',
-        'dotenv': 'python-dotenv'
-    }
-    for import_name, install_name in required_packages.items():
-        try:
-            __import__(import_name)
-        except ImportError:
-            print(f"Installing missing dependency: {install_name}...")
-            subprocess.check_call([sys.executable, "-m", "pip", "install", install_name])
-
-install_prerequisites()
-
+# Dependencies are installed by deployment (requirements.txt), never on
+# import. Importing a module must not reach the network or mutate the
+# machine -- that is what made every Python step here untestable.
 import fitz  
 import pyodbc
 from dotenv import load_dotenv
@@ -109,20 +89,11 @@ DELETED_DIR = env('AIM_DELETED_DIR')
 AI_QUEUE_DIR = os.path.join(os.path.dirname(SQL_QUEUE_DIR), "_AI_QUEUE")
 ERROR_QUEUE_DIR = env('AIM_ERROR_QUEUE_DIR', os.path.join(os.path.dirname(SQL_QUEUE_DIR), "_ERROR_QUEUE"))
 
-for directory in [PROCESSED_DIR, PENDING_VISION_DIR, ACTION_NEEDED_DIR, LOG_DIR, 
-                  SQL_FAILED_DIR, SQL_QUEUE_DIR, BATCH_SPLIT_DIR, READY_TO_SPLIT_DIR,
-                  VENDOR_REVIEW_DIR, READY_TO_LEARN_DIR, LOW_CONFIDENCE_REVIEW_DIR,
-                  REPROCESS_QUEUE_DIR, TEMP_DIR, ARCHIVE_DIR, READY_TO_DELETE_DIR,
-                  DELETED_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR]:
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
 SPLIT_FOLDER_NAME = env('AIM_SPLIT_FOLDER_NAME', 'Split_Invoices')
 
 # We also set the Tesseract command globally
 import pytesseract
 TESSERACT_CMD = env('AIM_TESSERACT_CMD')
-pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
 
 TEMP_IMAGE = os.path.join(TEMP_DIR, "_temp_page_render_vision.png")
 log_filename_cfg = env('AIM_LOG_FILE_NAME', 'pipeline_log.csv')
@@ -148,10 +119,6 @@ if os.path.isabs(field_aliases_cfg):
     FIELD_ALIASES_FILE = field_aliases_cfg
 else:
     FIELD_ALIASES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), field_aliases_cfg)
-
-for folder in [PROCESSED_DIR, PENDING_VISION_DIR, ACTION_NEEDED_DIR, LOG_DIR, SQL_FAILED_DIR, SQL_QUEUE_DIR, BATCH_SPLIT_DIR, READY_TO_SPLIT_DIR, VENDOR_REVIEW_DIR, READY_TO_LEARN_DIR, LOW_CONFIDENCE_REVIEW_DIR, REPROCESS_QUEUE_DIR, TEMP_DIR, ARCHIVE_DIR, READY_TO_DELETE_DIR, DELETED_DIR, ERROR_QUEUE_DIR]:
-    os.makedirs(folder, exist_ok=True)
-
 
 def create_windows_shortcut(target_path, shortcut_path):
     """Create a Windows .lnk shortcut to a folder/file."""
@@ -183,7 +150,34 @@ def setup_shortcuts():
         if not os.path.exists(path):
             create_windows_shortcut(target, path)
 
-setup_shortcuts()
+MANAGED_DIRECTORIES = [
+    PROCESSED_DIR, PENDING_VISION_DIR, ACTION_NEEDED_DIR, LOG_DIR,
+    SQL_FAILED_DIR, SQL_QUEUE_DIR, BATCH_SPLIT_DIR, READY_TO_SPLIT_DIR,
+    VENDOR_REVIEW_DIR, READY_TO_LEARN_DIR, LOW_CONFIDENCE_REVIEW_DIR,
+    REPROCESS_QUEUE_DIR, TEMP_DIR, ARCHIVE_DIR, READY_TO_DELETE_DIR,
+    DELETED_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR,
+]
+
+
+def bootstrap():
+    """Prepare the machine to run a worker.
+
+    Every side effect the pipeline needs lives here, and nothing calls it on
+    import. Each worker calls it from its own __main__. Keeping import pure
+    is what makes the pipeline testable: a test can import this module
+    against a temp environment without creating a directory, planting a
+    shortcut, or touching the network.
+    """
+    for folder in MANAGED_DIRECTORIES:
+        os.makedirs(folder, exist_ok=True)
+
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
+    setup_shortcuts()
+
+    # Bi-directional vendor alias sync against SQL. This opens a database
+    # connection, so it must never happen merely because someone imported
+    # the module.
+    get_vendor_aliases()
 
 class InvoiceData(BaseModel):
     is_urgent: Optional[bool] = False
@@ -753,5 +747,3 @@ def generate_laserfiche_xml(data, bu_number, submitter_name, xml_path, processin
     with open(xml_path, "w", encoding="utf-8") as f:
         f.write(xml_str)
 
-# Run initial synchronization of vendor aliases on script import/startup
-get_vendor_aliases()

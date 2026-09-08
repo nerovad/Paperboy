@@ -5,7 +5,7 @@ import json
 import hashlib
 from datetime import datetime
 from PIL import Image
-from pipeline_common import BASE_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR, is_file_stable
+from pipeline_common import BASE_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR, is_file_stable, bootstrap
 
 # Wait time to ensure file is fully copied over network
 STABLE_WAIT_TIME = 2
@@ -275,6 +275,10 @@ def scan_and_spool():
                 print(f"  [>] Spooled {status_msg}{file} -> {processing_id}")
 
 if __name__ == "__main__":
+    # Prepare the machine before any work: directories, shortcuts, alias
+    # sync. Import alone does none of it.
+    bootstrap()
+
     print("======================================================================")
     print("             AI INVOICE PIPELINE: INGESTION WATCHER")
     print("======================================================================")

@@ -20,7 +20,8 @@ from pipeline_common import (
     InvoiceData, write_log, check_missing_fields, apply_invoice_number_rules,
     sanitize_data, generate_laserfiche_xml, pdf_page_to_image,
     normalize_vendor_name, VENDOR_REVIEW_DIR, SQL_QUEUE_DIR, REPROCESS_QUEUE_DIR, LOW_CONFIDENCE_REVIEW_DIR,
-    ERROR_QUEUE_DIR, get_rules_for_vendor, get_global_field_aliases
+    ERROR_QUEUE_DIR, get_rules_for_vendor, get_global_field_aliases,
+    bootstrap,
 )
 from typing import Optional
 
@@ -670,6 +671,10 @@ def scan_directories():
                     pass
 
 if __name__ == "__main__":
+    # Prepare the machine before any work: directories, shortcuts, alias
+    # sync. Import alone does none of it.
+    bootstrap()
+
     from pipeline_common import AI_QUEUE_DIR
     print(f"Monitoring '{AI_QUEUE_DIR}' for AI Extraction Jobs...")
     

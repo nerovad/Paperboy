@@ -686,13 +686,46 @@ them.
   at 59/152. rubocop clean. Brakeman's 2 warnings and bundle-audit's
   findings are pre-existing on master and touch no AIM file.
 
-- [ ] **0.4 Make `pipeline_common.py` importable without side effects.**
+- [x] **0.4 Make `pipeline_common.py` importable without side effects.**
   Today importing it pip-installs packages, plants Windows shortcuts,
   creates directories, and runs a full SQL alias sync. Move all of that
   behind an explicit `bootstrap()` call invoked from each worker's
   `__main__`. This is what makes every later Python step testable.
   *Test:* a new test imports the module with a temp environment and asserts
   no directories were created and no network calls attempted.
+
+  **Done 2026-09-08.** Import is now pure. `bootstrap()` holds the
+  directory creation, the `pytesseract` command assignment, the `.lnk`
+  shortcut planting and the bi-directional SQL alias sync (a bare
+  `get_vendor_aliases()` used to run at module scope, opening a database
+  connection on import). Each worker calls `bootstrap()` from its own
+  `__main__`.
+
+  **`install_prerequisites()` is deleted rather than moved.** A bootstrap
+  cannot install packages the module already needs at import, so
+  dependencies belong to deployment: `script/python/aim/requirements.txt`
+  carries all eleven, and step 0.7 installs them. `pywin32` is marked
+  `sys_platform == "win32"` -- it is Windows-only and cannot install on
+  Linux, which is why it could never have been a runtime install anyway.
+  `create_windows_shortcut` already imports it lazily and tolerates its
+  absence.
+
+  **Test environment.** The workstation had none of the worker
+  dependencies and no pytest. The venv lives at `~/.venvs/aim`, outside the
+  repo deliberately: `.gitignore` has no venv entry and it is not an AIM
+  file, so putting it in-tree would have needed a shared-config approval
+  for something incidental. Create it with
+  `python3 -m venv ~/.venvs/aim && ~/.venvs/aim/bin/pip install pytest -r
+  script/python/aim/requirements.txt`, then run
+  `~/.venvs/aim/bin/pytest test/python/aim`.
+
+  **What these tests do and do not cover.** They assert that importing
+  creates no directory, opens no socket and shells out to no pip, and that
+  `bootstrap()` is what builds the queue tree. No Ollama, no SQL, no
+  Windows, no invoice. Anything involving the vision model, real ODBC or
+  Tesseract stays a manual check on GSA-SCAN02 after deployment -- the
+  point of local tests is to tell routing bugs from model behaviour, not to
+  prove the model works.
 
 - [ ] **0.5 Stand up the Python test harness.** `pytest`, a fixture that
   builds a fake queue tree in a temp directory, and a fake environment. No
@@ -1093,3 +1126,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 0.2 | (baseline reset) | Master moved on 15 commits; new baseline 544 runs, 333 pass, 59 fail, 152 error (serial) |
 | 2026-09-08 | 0.2 | `5e0de53` (LockBox) | Pulled LockBox: P2M added `P2M_PRINTERS`/`P2M_DESTROYED`; rebased `aim-config`, dropped the stopgap, baseline unchanged |
 | 2026-09-08 | 0.3 | (this commit) | Fallbacks removed from AIM Ruby; audit M3 fixed; 552 runs, 341 pass, 59 fail, 152 error |
+| 2026-09-08 | 0.4 | (this commit) | `pipeline_common` import made pure; deps moved to requirements.txt; 4 pytest tests green, Ruby suite unchanged |

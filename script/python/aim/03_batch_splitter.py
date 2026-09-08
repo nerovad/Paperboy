@@ -4,7 +4,7 @@ import shutil
 import json
 
 # Import shared core FIRST so it auto-installs missing dependencies
-from pipeline_common import BASE_DIR, BATCH_SPLIT_DIR, READY_TO_SPLIT_DIR, SPLIT_FOLDER_NAME, REPROCESS_QUEUE_DIR, ERROR_QUEUE_DIR
+from pipeline_common import BASE_DIR, BATCH_SPLIT_DIR, READY_TO_SPLIT_DIR, SPLIT_FOLDER_NAME, REPROCESS_QUEUE_DIR, ERROR_QUEUE_DIR, bootstrap
 
 import fitz
 
@@ -158,6 +158,10 @@ def run_batch_splitter():
                     print(f"    [!] Failed to route crashed split batch: {ex}")
 
 if __name__ == "__main__":
+    # Prepare the machine before any work: directories, shortcuts, alias
+    # sync. Import alone does none of it.
+    bootstrap()
+
     print(f"Monitoring '{READY_TO_SPLIT_DIR}' (BATCH SPLITTER) for approved manifests...")
     try:
         while True:

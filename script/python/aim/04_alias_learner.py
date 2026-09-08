@@ -11,6 +11,7 @@ from pipeline_common import (
     REPROCESS_QUEUE_DIR,
     SQL_QUEUE_DIR,
     save_new_vendor_alias,
+    bootstrap,
 )
 
 NEXT_ACTION_CONTINUE = "continue_processing"
@@ -143,6 +144,10 @@ def run_alias_learner():
                     print(f"    [!] Failed to route crashed batch: {ex}")
 
 if __name__ == "__main__":
+    # Prepare the machine before any work: directories, shortcuts, alias
+    # sync. Import alone does none of it.
+    bootstrap()
+
     print(f"Monitoring '{READY_TO_LEARN_DIR}' (ALIAS LEARNER) for approved vendor aliases...")
     try:
         while True:
