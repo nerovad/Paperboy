@@ -281,7 +281,9 @@ The end state, in order of delivery:
 3. **Fiscal handoff.** Approved data continues to the fiscal team.
 
 Laserfiche is the system of record for the finished document. Docushare is
-the legacy system being retired.
+the legacy system being retired. The finished document reaches it as **one
+PDF carrying its own metadata** -- see `## Decisions Already Made` -- not as a
+PDF paired with a sidecar.
 
 ---
 
@@ -1111,6 +1113,7 @@ Small, surgical, no schema changes. Highest value per line changed.
   The regeneration also now passes `document_type` through; without it every
   regenerated XML fell back to `TemplateName` `Unknown`, so until today each
   manually-corrected invoice reached Laserfiche with its document type lost.
+  This whole branch is temporary: step 11.4 deletes it along with the XML.
 
 - [ ] **1.4 Never delete a batch whose archive failed.** `archive_batch`
   already returns a boolean that the SQL worker ignores before calling
@@ -1167,8 +1170,12 @@ is built from these values as strings.
 
 - [ ] **4.1 Stop mangling vendor names.** `sanitize_data` rewrites `&` to
   `and`, which changes the business key for 58 of ~900 official vendors and
-  makes the Laserfiche XML disagree with the SQL row. See audit H5.
-  *Test:* `AT&T MOBILITY` survives extraction and XML generation intact.
+  makes what Laserfiche receives disagree with the SQL row. See audit H5.
+  *Test:* `AT&T MOBILITY` survives extraction and reaches Laserfiche intact --
+  the XML today, the stamped PDF after 11.3. A `pymupdf` round-trip through
+  the Info dictionary was checked and preserves `&` and `/` exactly, so the
+  mangling is `sanitize_data`'s alone and does not come back with the new
+  path.
 
 - [ ] **4.2 Stop stripping invoice and order numbers.** `_clean_text_field`
   removes everything outside `[a-zA-Z0-9_\- ]`, so `INV-2024/001` becomes
@@ -1343,11 +1350,24 @@ layout feeds another system. The target is the same flow through Laserfiche.
 - [ ] **11.3 Stamp the metadata into the PDF.** Write the invoice's fields as
   custom PDF Info-dictionary keys at handoff, archiving the unstamped original
   first. See `## Decisions Already Made`.
+
+  The fields are the ones `generate_laserfiche_xml` emits today plus the
+  identity Phase 3 settles: vendor name, invoice number, invoice total,
+  invoice date (the four-field business key), order number, customer number,
+  budget unit, submitter, document type, `business_key` and `batch_id`. Key
+  names use underscores for spaces, because that is how Laserfiche addresses
+  them (`%(PDFmetadata_Vendor_Name)`).
   *Test:* a stamped PDF round-trips every field unchanged, punctuation and
   ampersands included; the archived original is byte-identical to what arrived.
 - [ ] **11.4 Retire the Laserfiche XML.** Remove `generate_laserfiche_xml`, the
   `.xml` sidecar and the regeneration in `02_sql_worker.py` once 11.3 is
-  proven in Laserfiche.
+  proven in Laserfiche. This also retires the unconditional regeneration step
+  1.3 introduced, and `TemplateName`, which becomes the stamped document type.
+
+  `AIM_LASERFICHE_INBOX_PATH` survives the change but moves: it is the XML's
+  `FolderPath` today, and becomes either a stamped key or the destination the
+  finished PDF is written to. Decide which when 11.3 is written -- it stays a
+  variable either way.
   *Test:* a full pipeline run produces no `.xml`, and nothing reads one.
 
 ---
