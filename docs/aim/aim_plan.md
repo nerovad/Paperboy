@@ -943,6 +943,24 @@ them.
 
 ## Phase 1 — Stop The Silent Data Loss
 
+**Branch `aim/phase-1-dataloss`, cut from master 2026-09-08 after Phase 0
+merged (`8e4a6dda`).**
+
+Before starting a step here, read `## Guardrails` and note what Phase 0
+changed about how you work:
+
+- Run the suite **serially**: `PARALLEL_WORKERS=1 bundle exec rake test`.
+- The gate has a fifth command: `~/.venvs/aim/bin/pytest test/python/aim`.
+- The baseline to compare against is **624 runs, 406 pass, 58 failures, 160
+  errors**. The red is pre-existing and none of it is AIM's; the standard is
+  that the same tests pass after as before, not that the suite is green.
+- `env()` takes a name and nothing else, and
+  `test/lib/aim/configuration_conventions_test.rb` fails the build on a
+  hardcoded path, model name or credential. Add the variable to LockBox
+  rather than working around the guard.
+- A Python change reaches GSA-SCAN02 only through
+  `bin/deploy-aim-workers --apply`, which needs `LOCKBOX_DIR` set.
+
 Small, surgical, no schema changes. Highest value per line changed.
 
 - [ ] **1.1 `insert_sql_record` raises when no columns map.** Today it hits
@@ -1276,3 +1294,5 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | — | 7c97bac7 | Merged master (26 commits, incl. Rails 8.1); pulled LockBox; launcher now restarts workers; redeployed |
 | 2026-09-08 | — | (this commit) | Fixed UNC working-directory assumption in the launchers; redeployed; all five workers restart and run clean |
 | 2026-09-08 | 0.8 | (this commit) | Configuration guard added and proved against planted literals; **Phase 0 complete**; 624 runs, 406 pass, 58 fail, 160 error |
+| 2026-09-08 | — | `76a33ae` (LockBox) | LockBox `aim-config` merged to master and pushed; the twelve AIM variables are live for the team |
+| 2026-09-08 | — | `8e4a6dda` | **Phase 0 merged to Paperboy master.** LockBox landed first, as the ordering requires |
