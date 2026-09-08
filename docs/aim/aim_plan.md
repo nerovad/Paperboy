@@ -1139,12 +1139,31 @@ Small, surgical, no schema changes. Highest value per line changed.
   too. Any future worker test must take `import_worker` rather than importing
   the module itself.
 
-- [ ] **1.5 Fix the handwritten-financials merge guard.** The merge loops
+- [x] **1.5 Fix the handwritten-financials merge guard.** The merge loops
   skip any field whose value is not `None`, and the field defaults to
   `False`, so the vision model's answer is always discarded and the routing
   check has never fired. See audit C3.
   *Test:* a vision response with the flag true routes to Low Confidence
   Review.
+
+  Done 2026-09-08. The three copied merge loops are now one
+  `merge_vision_fields()` holding two rules, because the field types need
+  different ones and using the data rule for both is the bug:
+
+  - a **data field** is filled only while still blank, so the first pass to
+    read it wins and a later guess cannot overwrite it;
+  - a **risk flag** in `STICKY_TRUE_FIELDS` latches -- any pass that raises it
+    raises it for the invoice.
+
+  The latching matters beyond the reported bug. Changing the field's default
+  from `False` to `None` would have made the first merge work and still lost a
+  flag raised on the last page after page 1 came back clean, because the field
+  would no longer be blank. That is the same shape of mistake as the original.
+
+  Not covered by a test: the end-to-end route into `LOW_CONFIDENCE_REVIEW_DIR`.
+  It sits inside `process_cpu_hybrid`, which needs Ollama and Tesseract, and
+  the harness rules exclude both. The tests cover the merge, and assert the
+  exact expression the routing branch uses to read it.
 
 - [ ] **1.6 Fix the undefined `folder_name` in the crash handler.** It leaks
   the last value from an earlier loop, so error tickets are filed under the
@@ -1481,3 +1500,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 1.2a | (this commit) | AIM controller tests unblocked (missing `employee_id` in the test session); 630 runs, 413 pass, 57 fail, 160 error |
 | 2026-09-08 | 1.3 | (this commit) | One payload name (`PAYLOAD_SUFFIX`); SQL worker picks it explicitly; XML always regenerated, document type kept; 50 pytest green, Ruby suite unchanged |
 | 2026-09-08 | 1.4 | (this commit) | Unarchived batches go to the failed queue instead of being deleted, duplicate path included; `import_worker` fixture added; 54 pytest green, Ruby suite unchanged |
+| 2026-09-08 | 1.5 | (this commit) | Vision merges unified; risk flags latch instead of being discarded; 59 pytest green, Ruby suite unchanged |

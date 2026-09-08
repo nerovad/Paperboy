@@ -81,6 +81,33 @@ def mark_reprocess_error(folder_path, folder_name, pdf_path, error):
     except Exception:
         pass
 
+# A vision pass fills in what the text pass could not read. Two different
+# rules apply, and using one for both is what broke the handwriting check:
+#
+#   * A data field is filled only when it is still blank -- the first answer
+#     wins, later passes do not overwrite it.
+#   * A risk flag latches. Any pass that raises it raises it for the invoice,
+#     because "page 4's total is handwritten" is not cancelled by page 1
+#     looking fine.
+#
+# `contains_handwritten_financials` defaults to False rather than None, so the
+# blank-filling rule never copied it and the routing check below it had never
+# once fired. Step 1.5.
+STICKY_TRUE_FIELDS = ("contains_handwritten_financials",)
+
+def merge_vision_fields(master_data, vision_data):
+    """Merge one vision pass into the running answer."""
+    for field in InvoiceData.model_fields:
+        value = getattr(vision_data, field)
+
+        if field in STICKY_TRUE_FIELDS:
+            if value:
+                setattr(master_data, field, True)
+            continue
+
+        if getattr(master_data, field) is None and value is not None:
+            setattr(master_data, field, value)
+
 def write_vendor_rule_sidecar(dest_folder, processing_id, master_data):
     """Write the vendor-rule sidecar a reviewer fills in, under its own name."""
     vendor_name = master_data.vendor_name or master_data.extracted_vendor_name or ""
@@ -321,9 +348,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
         v_data1 = InvoiceData.model_validate_json(v_response['message']['content'])
     except Exception as e:
         raise RuntimeError(f"Phase 2 Vision AI Hallucination Error: Model failed to return valid JSON schema. Error: {e}")
-    for field in InvoiceData.model_fields:
-        if getattr(master_data, field) is None and getattr(v_data1, field) is not None:
-            setattr(master_data, field, getattr(v_data1, field))
+    merge_vision_fields(master_data, v_data1)
             
     print(f"      - Page 1 Vision extraction complete in {time.time()-start_time:.1f}s.")
     
@@ -346,9 +371,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
             v_data2 = InvoiceData.model_validate_json(v_response2['message']['content'])
         except Exception as e:
             raise RuntimeError(f"Phase 2 Last Page Vision AI Hallucination Error: Model failed to return valid JSON schema. Error: {e}")
-        for field in InvoiceData.model_fields:
-            if getattr(master_data, field) is None and getattr(v_data2, field) is not None:
-                setattr(master_data, field, getattr(v_data2, field))
+        merge_vision_fields(master_data, v_data2)
                 
         print(f"      - Last Page Vision extraction complete in {time.time()-start_time:.1f}s.")
 
@@ -377,9 +400,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
                     v_data3 = InvoiceData.model_validate_json(v_response3['message']['content'])
                 except Exception as e:
                     raise RuntimeError(f"Fallback Vision AI Hallucination Error: Model failed to return valid JSON schema. Error: {e}")
-                for field in InvoiceData.model_fields:
-                    if getattr(master_data, field) is None and getattr(v_data3, field) is not None:
-                        setattr(master_data, field, getattr(v_data3, field))
+                merge_vision_fields(master_data, v_data3)
                 print(f"      - Fallback Vision extraction complete in {time.time()-start_time:.1f}s.")
                 sanitize_data(master_data)
 
