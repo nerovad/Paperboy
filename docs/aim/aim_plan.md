@@ -199,30 +199,33 @@ While the branch is unmerged, keep the repo `.env` in step with it by
 copying `LockBox/Paperboy.env` over `Paperboy/.env` as usual. Development
 and testing proceed normally.
 
-**Never merge the LockBox branch. Pushing the branch itself is fine.**
+**Never push and never merge LockBox. Commit locally and stop.**
 
 An assistant may create the `aim-config` branch, edit `Paperboy.env` on it,
-commit, and push **that branch** to the LockBox remote. Pushing a branch
-disturbs nobody — it does not reach anyone's `.env`.
+and commit there. That is the end of it. Clarified by Joshua 2026-09-08,
+superseding an earlier note that said pushing the branch was fine:
 
-`git merge` into LockBox master is where it becomes everyone's problem: it
-lands in every other developer's environment and breaks it until they pull
-by hand and refresh their `.env`. The timing of that is a coordination
-problem with Joshua's coworkers, not a code one.
+> we manually DOWNLOAD the lockbox repo. I will manually PUSH it once we
+> have my local copy updated, and then I will let the others know the AIM
+> parts have been updated.
 
-**So: never merge `aim-config` unless Joshua says to, specifically, that
-time.** Not implied by approval to push, not implied by the phase being
-finished, not carried over from a previous merge. Notifying the team is his
-as well. Report that the branch is pushed and ready to land, and stop
-there.
+So the whole distribution half belongs to Joshua: **he** pushes, **he**
+decides when it merges, **he** notifies the team, and they then download
+the new copy by hand. LockBox reaches other people only through that
+sequence, and the timing is a coordination problem with his coworkers
+rather than a code one.
+
+Report that the local commit is ready and leave it. Do not run
+`git push` or `git merge` in LockBox, and do not ask for permission to —
+just say it is ready.
 
 To add or change an AIM variable:
 
 1. Add it to `Paperboy.env` on the `aim-config` branch and commit there.
 2. Copy the file to the Paperboy repo `.env` and carry on working.
-3. Push the `aim-config` branch, tell Joshua it is ready to land, and
-   stop. **He** merges it into LockBox master, **before** any AIM code that
-   requires the variable is pushed.
+3. Tell Joshua the local commit is ready, and stop. **He** pushes and
+   merges it, **before** any AIM code that requires the variable is
+   pushed.
 4. **Joshua notifies the other Paperboy developers** that LockBox changed
    and they need to pull it and refresh their `.env`.
 5. Only then does the AIM code get pushed.
@@ -607,7 +610,9 @@ them.
   config that every other developer's test run depends on.
 
   **Done 2026-09-04. Baseline: 537 runs, 324 pass, 60 failures, 153
-  errors, 0 skips** (serial). The suite now runs to completion, which was
+  errors, 0 skips** (serial). **Superseded 2026-09-08** — the phase branch
+  was cut from a master 15 commits newer, where the suite is 544 runs, 333
+  pass, 59 failures, 152 errors. Compare against that. The suite now runs to completion, which was
   the point of the step. It is not green, and none of the red is AIM's —
   see `## Open Questions → Pre-existing suite failures`.
 
@@ -635,13 +640,13 @@ them.
   group name in 22 files. Always `git status` after a suite run and
   `git checkout -- config/data_runner/dsl/` before committing.
 
-- [ ] **0.2 Inventory every hardcoded path and credential, and add the
+- [x] **0.2 Inventory every hardcoded path and credential, and add the
   missing variables to a LockBox branch.** Produce the full list first,
   agree the variable names, then `git checkout -b aim-config` in LockBox
   and add them there. The branch stays unmerged until Phase 0 is finished,
-  so nobody else is disturbed while the work is in progress. The branch may
-  be pushed; Joshua merges and notifies once, at the end of the phase — an
-  assistant never merges LockBox, see `## Guardrails → Changing LockBox`.
+  so nobody else is disturbed while the work is in progress. Joshua pushes,
+  merges and notifies once, at the end of the phase — an assistant never
+  pushes or merges LockBox, see `## Guardrails → Changing LockBox`.
   Known additions needed: `AIM_AI_QUEUE_DIR` for the workers (Rails already
   reads it, Python ignores it), `AIM_ERROR_QUEUE_DIR`,
   `AIM_SPOOL_STATE_DIR`, `AIM_READY_TO_SPLIT_DIR` for Rails,
@@ -1033,6 +1038,24 @@ layout feeds another system. The target is the same flow through Laserfiche.
 - **5.1** Paperboy database or `GSA_Scan` for the new AIM tables?
 - ~~**0.2** Exact worker install folder on the AIM share.~~ Answered
   2026-09-04: `_PROGRAM` (`/mnt/a/_PROGRAM`).
+- **`P2M_PRINTERS` is missing from LockBox — not AIM's, but it blocks us.**
+  `app/services/p2m/paths.rb:13` fetches it at *module load* (added by
+  commit `07204896`, 2026-09-04), and LockBox never defined it, so on
+  current master `rake test` aborts before a single test runs. P2M belongs
+  to Traap, not Joshua, so this is reported rather than fixed. It is also a
+  live example of the boot-vs-use rule in `## Guardrails`: a module-level
+  `ENV.fetch` takes down the entire suite, exactly as that rule predicts.
+  A clearly-commented local stopgap in the repo `.env` points it at a
+  scratch directory so AIM work can continue; it is not in LockBox and must
+  not be. Remove it once P2M supplies the real value.
+- **Laserfiche import mechanism.** Not designed yet, and blocked on IT
+  resolving a Laserfiche need. The likely shape is a monitored folder on
+  GSA-SCAN02 that LF auto-imports from, but that could change. Noted
+  2026-09-08.
+  `AIM_LASERFICHE_INBOX_PATH` is still added in 0.2, pinned to today's
+  literal `\AIM\00 INBOX\`, precisely so that settling this later is a
+  LockBox value change and not a code change. Do not design the Laserfiche
+  handoff around the current value.
 - **11** Final field layout Fiscal needs, and whether the existing
   `Aim_Invoices` approval columns stay authoritative or the new tables do.
 - Whether the existing 207 rows in `Aim_Invoices` and `Aim_Processing_Logs`
@@ -1047,3 +1070,5 @@ Append one line per pushed step: date, step number, commit, result.
 | Date | Step | Commit | Result |
 |---|---|---|---|
 | 2026-09-04 | 0.1 | (no code) | `Paperboy_Test` created; baseline 537 runs, 324 pass, 60 fail, 153 error, 0 skips (serial) |
+| 2026-09-08 | 0.2 | 8127afbc, 55e3b231 | Inventory complete; 12 variables added on LockBox branch `aim-config` (`a68212c`, local only) |
+| 2026-09-08 | 0.2 | (baseline reset) | Master moved on 15 commits; new baseline 544 runs, 333 pass, 59 fail, 152 error (serial), with the `P2M_PRINTERS` stopgap in place |
