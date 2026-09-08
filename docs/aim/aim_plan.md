@@ -313,8 +313,25 @@ bundle exec rake test
 For steps that touch `script/python/aim/`, also:
 
 ```bash
-python3 -m pytest test/python/aim
+~/.venvs/aim/bin/pytest test/python/aim
 ```
+
+That venv is built once, outside the repo:
+
+```bash
+python3 -m venv ~/.venvs/aim
+~/.venvs/aim/bin/pip install pytest -r script/python/aim/requirements.txt
+```
+
+**This one is local only, and deliberately so.** `.github/workflows/ci.yml`
+is not changed. Decided 2026-09-08: adding a Python step there would slow
+every Billing, Forms and Print 2 Mail pull request and could fail them over
+a Python install problem their authors never touched -- real cost to people
+who get no benefit. AIM is the only area with Python workers and nobody else
+edits them, so the check would almost only ever catch AIM's own mistakes,
+which running the command above already does. If that changes, the fallback
+is a path-filtered CI step that runs only when `script/python/aim/**` or
+`test/python/aim/**` changed, so other teams' PRs skip it.
 
 ### Commit message format
 
@@ -741,8 +758,8 @@ them.
   `add_invoice()` for staging an invoice folder the way the watcher would).
   Nine tests pass: `~/.venvs/aim/bin/pytest test/python/aim`.
 
-  **The CI step is a shared-config change and is not made yet.** See
-  `## Open Questions -> Python tests in CI`.
+  **CI is deliberately not changed.** The pytest command is a local gate
+  step; see `## How We Work -> The CI gate`.
 
 - [ ] **0.6 Remove hardcoded paths and connection literals from the AIM
   Python.**
@@ -1112,16 +1129,14 @@ layout feeds another system. The target is the same flow through Laserfiche.
   so one absent variable aborted the whole suite — Billing, Forms and AIM
   included — which is exactly what that rule exists to prevent. **Pull
   LockBox before assuming a missing variable is a bug.**
-- **Python tests in CI (blocks finishing 0.5).** `.github/workflows/ci.yml`
-  is shared config, so the step below is proposed rather than made. Two
-  things to decide with it:
-  1. CI triggers on `push: branches: [main]`, but this repository's default
-     branch is `master`. The push trigger has therefore never fired; only
-     `pull_request` runs CI. Not AIM's to fix, but worth knowing before
-     relying on "CI is green".
-  2. `pywin32` is Windows-only. `requirements.txt` marks it
-     `sys_platform == "win32"`, so a Linux runner installs the other ten
-     and skips it cleanly.
+- ~~**Python tests in CI.**~~ Settled 2026-09-08: **not** wired into
+  `.github/workflows/ci.yml`. The pytest command is a local gate step
+  instead -- see `## How We Work -> The CI gate` for the reasoning and the
+  fallback if it ever needs revisiting.
+- **CI's push trigger has never fired.** `.github/workflows/ci.yml` runs on
+  `push: branches: [main]`, but this repository's default branch is
+  `master`, so only `pull_request` ever runs CI. Not AIM's to fix, and no
+  change made -- but worth knowing before trusting "CI is green on master".
 - **Laserfiche import mechanism.** Not designed yet, and blocked on IT
   resolving a Laserfiche need. The likely shape is a monitored folder on
   GSA-SCAN02 that LF auto-imports from, but that could change. Noted
