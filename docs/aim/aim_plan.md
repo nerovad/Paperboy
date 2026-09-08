@@ -818,7 +818,7 @@ them.
   against a temp environment: every one imports, and importing creates no
   directory.
 
-- [ ] **0.7 Add `bin/deploy-aim-workers`, shipping code *and* config.**
+- [x] **0.7 Add `bin/deploy-aim-workers`, shipping code *and* config.**
   Copies `script/python/aim/` from the repo to `_PROGRAM` on the AIM share,
   mirroring the existing `bin/deploy-dev` and `bin/deploy-stage`
   conventions. Must be in place before any Python change ships to
@@ -852,6 +852,46 @@ them.
   *Note:* the worker install folder is `_PROGRAM` on the AIM share
   (`/mnt/a/_PROGRAM`), confirmed 2026-09-04 — the workers and their `.env`
   are already there.
+
+  **Done 2026-09-08, and deployed.** Dry run is the default; `--apply`
+  writes. Provenance is enforced: the run refuses if the repo `.env` differs
+  from `LockBox/Paperboy.env`, prints the diff, and stamps the rendered file
+  with the LockBox commit. `--skip-provenance` exists for emergencies and
+  warns.
+
+  **Replaced files are kept on the server.** Every `--apply` moves what it is
+  about to overwrite into `_PROGRAM/_PREVIOUS_SCRIPTS/<YYYY-MM-DD>/` first; a
+  second deploy the same day gets its own timestamped folder. Joshua's
+  standing instruction, 2026-09-08: do this every time an established step is
+  replaced, because the workers run unattended and the last working version
+  has to be one copy away on the server.
+
+  **Runtime state the share owns is never shipped.** `vendor_aliases.json` is
+  written by the workers: the share had 907 keys and the repo copy 904, so
+  deploying it would have deleted three aliases learned in production (Canon
+  U.S.A., Vortex Industries, Team Play Events). It is on a permanent
+  exclusion list. Anything else the workers write must be added there too.
+
+  **Two bugs the dry run caught before they could do harm:** the
+  Windows-to-Linux translation silently failed and resolved the target to
+  `E:/AIM/_PROGRAM` (a backslash inside a bash pattern is an escape), and the
+  script originally sourced `.env`, which executes whatever it contains and
+  broke on a `DATARUNNER_*` value that is not valid shell. It now parses the
+  three variables it needs and refuses if the prefix does not match.
+
+  **Deployed result:** 22 files plus a rendered `.env` of 58 `AIM_*`
+  variables and nothing else. The share `.env` went from 111 variables to 58,
+  taking `ENTRA_ID_CLIENT_SECRET`, `POSTGRES_PASSWORD` and eight other
+  non-AIM secrets off the share. `AIM_AI_QUEUE_DIR` is on the share for the
+  first time, so Rails and the workers finally read the same variable.
+
+  **On restart, expect no pip self-install.** `install_prerequisites()` is
+  gone (step 0.4), so a missing dependency now fails immediately instead of
+  installing itself. Nothing new was added; if one does fail,
+  `pip install -r requirements.txt` in `_PROGRAM` fixes it.
+
+  `bin/` is not in the Guardrails' allowed paths. This is a new AIM-only
+  file the plan calls for, not an edit to anything shared.
 
 - [ ] **0.8 Make the suite enforce the protocol.** Add
   `test/lib/aim/configuration_conventions_test.rb`, which scans the AIM
@@ -1185,3 +1225,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 0.4 | (this commit) | `pipeline_common` import made pure; deps moved to requirements.txt; 4 pytest tests green, Ruby suite unchanged |
 | 2026-09-08 | 0.5 | 170ab1e4, 01e85597 | Python harness stood up, 9 pytest tests green; CI deliberately unchanged |
 | 2026-09-08 | 0.6 | 8f7419d9 | AIM Python literals removed; `env()` fallback parameter deleted; 25 pytest green, Ruby suite unchanged |
+| 2026-09-08 | 0.7 | (this commit) | `bin/deploy-aim-workers` added and run; 22 files + AIM-only `.env` deployed to `/mnt/a/_PROGRAM`; 36 pytest green |
