@@ -1030,12 +1030,29 @@ Small, surgical, no schema changes. Highest value per line changed.
     SQL queue for `*_READY_FOR_SQL.json`, as 1.3 is written, would skip every
     normally-processed invoice. The SUCCESS write has to be renamed in the
     same step, or 1.3 has to accept both names.
-  - **`test/controllers/aim/invoices_controller_test.rb` proves nothing
-    today.** Every test in it is red in the baseline: `require_app_access`
-    calls `can_access_app?('aim')`, which reaches GSABSS, so each request
-    redirects to `/` with "You do not have access". Four more error on
-    `undefined method 'stub'`. 1.2's Ruby test therefore exercises the
-    concern directly through a small host class. See Open Questions.
+  - **`test/controllers/aim/invoices_controller_test.rb` proved nothing.**
+    Every test in it redirected to `/` with "You do not have access". The
+    first reading -- that `can_access_app?('aim')` was crossing to GSABSS --
+    was wrong. `current_user` returns nil unless the session hash carries
+    **both** `email` and `employee_id`, and the file only set `email`, so
+    `require_app_access` failed on `current_user.present?` before the ACL
+    was ever consulted. Fixed in 1.2a below.
+
+- [x] **1.2a Make the AIM controller tests run at all.** Every test in
+  `test/controllers/aim/invoices_controller_test.rb` redirected to `/` before
+  reaching any AIM code, so the queue screens had no coverage and a broken one
+  would not have failed the build. Cause: `ApplicationController#current_user`
+  returns nil unless `session[:user]` has both `email` and `employee_id`, and
+  the file set only `email`. One line in `setup` fixes it; the 1.2 controller
+  test then passes end to end and is kept alongside the concern test.
+
+  Test-only, inside AIM's own file -- no shared plumbing, no fixture, no ACL
+  double. The suite went from 58 failures to 57 with nothing else touched.
+
+  Still red in that file: four tests erroring on `undefined method 'stub'`,
+  which is the shared minitest/mocha pin in Open Questions and is not AIM's to
+  fix. Note for future sessions: a redirect to `/` in an AIM controller test
+  means the session, not the ACL.
 
 - [ ] **1.3 SQL worker selects its payload by name.** Replace
   `json_files[0]` with an explicit search for `*_READY_FOR_SQL.json`, and
@@ -1276,16 +1293,16 @@ layout feeds another system. The target is the same flow through Laserfiche.
 
 ## Open Questions
 
-- **The AIM controller tests are all red, for two reasons (found in 1.2).**
-  `test/controllers/aim/invoices_controller_test.rb` has no passing test on a
-  clean checkout. Every request redirects to `/` because `require_app_access`
-  asks `can_access_app?('aim')`, which crosses to GSABSS; four others error on
-  the `undefined method 'stub'` pin already recorded below. So AIM controller
-  behaviour is currently unverified, and a change that broke a queue screen
-  would not fail the build. Fixing it means either a test double for the ACL
-  lookup or a fixture in `Paperboy_Test` -- both touch shared plumbing outside
-  AIM, so it needs Joshua's decision before anyone starts. Until then, new AIM
-  logic is tested at the concern or service level, where no ACL is involved.
+- **What generates the Laserfiche XML after Phase 5?** Once the row is the
+  truth, an edit made on an AIM screen updates `aim_invoices` -- but the XML on
+  the share is what Laserfiche actually imports, and nothing in 5.5 or 5.6 says
+  who rewrites it. Today `02_sql_worker.py` regenerates it for manual-fix
+  batches (`is_manual_fix`). The clean answer is that the XML becomes an export
+  artifact generated from the row at handoff and never edited in place, which
+  would make a stale XML impossible rather than merely unlikely. Raised with
+  Joshua 2026-09-08; decide before 5.5 is written, because it changes what that
+  step does. Related: audit H5 / step 4.1, where `&` -> `and` already makes the
+  XML disagree with the SQL row.
 
 - **Pre-existing suite failures (found in 0.1).** 213 of 537 tests are red
   on a clean master checkout, none of it AIM's doing. Three causes, all
@@ -1372,3 +1389,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 1.1 | (this commit) | `insert_sql_record` raises `SqlMappingError`; dead `env()` second argument fixed; 40 pytest green, Ruby suite unchanged at 624/406/58/160 |
 | 2026-09-08 | 1.1a | (this commit) | Missing mapping file raises rather than skipping; 42 pytest green, Ruby suite unchanged |
 | 2026-09-08 | 1.2 | (this commit) | Vendor-rule sidecar renamed `_VENDOR_RULE.json`; `metadata_path_for` prefers the payload; 629 runs, 411 pass, 58 fail, 160 error; 45 pytest green |
+| 2026-09-08 | 1.2a | (this commit) | AIM controller tests unblocked (missing `employee_id` in the test session); 630 runs, 413 pass, 57 fail, 160 error |
