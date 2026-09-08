@@ -4,7 +4,6 @@ The AI worker wrote it as "{processing_id}.json" into folders that already
 hold "{processing_id}_READY_FOR_SQL.json", so whichever the filesystem listed
 first was treated as the invoice's metadata. Plan step 1.2.
 """
-import importlib
 import json
 import os
 
@@ -12,9 +11,9 @@ import pytest
 
 
 @pytest.fixture
-def ai_worker(fake_environment):
+def ai_worker(import_worker):
     """01_AI_Extraction_Worker imported against the fake environment."""
-    return importlib.import_module("01_AI_Extraction_Worker")
+    return import_worker("01_AI_Extraction_Worker")
 
 
 class FakeInvoice:

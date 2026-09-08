@@ -10,6 +10,7 @@ Three rules this harness enforces, from the plan's Guardrails:
   GSA-SCAN02.
 * **No hardcoded paths.** Every directory comes from `tmp_path`.
 """
+import importlib
 import json
 import os
 import sys
@@ -86,6 +87,23 @@ def pipeline(fake_environment):
     import pipeline_common
 
     return pipeline_common
+
+
+@pytest.fixture
+def import_worker(fake_environment):
+    """Import a worker module freshly against this test's environment.
+
+    Worker modules read their queue directories from pipeline_common at import
+    time and are then cached in sys.modules. Without dropping the cached copy,
+    the second test in a file keeps the first test's temp tree and quietly
+    finds nothing.
+    """
+    def _import(module_name):
+        for module in [m for m in list(sys.modules) if m.startswith(module_name)]:
+            del sys.modules[module]
+        return importlib.import_module(module_name)
+
+    return _import
 
 
 @pytest.fixture

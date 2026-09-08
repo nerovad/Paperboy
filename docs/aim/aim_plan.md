@@ -1115,10 +1115,29 @@ Small, surgical, no schema changes. Highest value per line changed.
   manually-corrected invoice reached Laserfiche with its document type lost.
   This whole branch is temporary: step 11.4 deletes it along with the XML.
 
-- [ ] **1.4 Never delete a batch whose archive failed.** `archive_batch`
+- [x] **1.4 Never delete a batch whose archive failed.** `archive_batch`
   already returns a boolean that the SQL worker ignores before calling
   `shutil.rmtree`. See audit H8.
   *Test:* archive raises, folder survives, batch moves to the failed queue.
+
+  Done 2026-09-08. `archive_or_raise()` wraps the boolean in an `ArchiveFailed`
+  the existing `except Exception` already routes to the failed queue, so the
+  success path needed no other change.
+
+  The **duplicate-key path had the same hole** and could not use the same fix:
+  its `archive_batch` call sits inside an `except pyodbc.IntegrityError` block,
+  and a raise from there escapes the per-folder loop and takes the worker down
+  rather than being caught by the sibling handler. That one checks the boolean
+  and calls `move_folder_to_failed` before `continue`.
+
+  **Harness fix that came with it.** Worker modules read their queue
+  directories from `pipeline_common` at import and are then cached in
+  `sys.modules`, while `conftest` only dropped `pipeline_common`. The second
+  test in a file therefore kept the *first* test's temp tree and silently found
+  nothing -- it passed alone and failed in the file. New `import_worker`
+  fixture re-imports the worker per test; the 1.2 and 1.3 test files use it
+  too. Any future worker test must take `import_worker` rather than importing
+  the module itself.
 
 - [ ] **1.5 Fix the handwritten-financials merge guard.** The merge loops
   skip any field whose value is not `None`, and the field defaults to
@@ -1461,3 +1480,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 1.2 | (this commit) | Vendor-rule sidecar renamed `_VENDOR_RULE.json`; `metadata_path_for` prefers the payload; 629 runs, 411 pass, 58 fail, 160 error; 45 pytest green |
 | 2026-09-08 | 1.2a | (this commit) | AIM controller tests unblocked (missing `employee_id` in the test session); 630 runs, 413 pass, 57 fail, 160 error |
 | 2026-09-08 | 1.3 | (this commit) | One payload name (`PAYLOAD_SUFFIX`); SQL worker picks it explicitly; XML always regenerated, document type kept; 50 pytest green, Ruby suite unchanged |
+| 2026-09-08 | 1.4 | (this commit) | Unarchived batches go to the failed queue instead of being deleted, duplicate path included; `import_worker` fixture added; 54 pytest green, Ruby suite unchanged |

@@ -5,7 +5,6 @@ first -- so a vendor-rule sidecar could be read as an invoice, and a folder
 with no payload at all could be archived and deleted as though it had been
 inserted. Plan step 1.3.
 """
-import importlib
 import json
 import os
 
@@ -13,9 +12,9 @@ import pytest
 
 
 @pytest.fixture
-def sql_worker(fake_environment):
+def sql_worker(import_worker):
     """02_sql_worker imported against the fake environment."""
-    return importlib.import_module("02_sql_worker")
+    return import_worker("02_sql_worker")
 
 
 def batch(folder, files):

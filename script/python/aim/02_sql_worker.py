@@ -27,6 +27,25 @@ def find_payload(folder_path):
             return file_name
     return None
 
+class ArchiveFailed(Exception):
+    """The batch could not be archived, so it must not be deleted.
+
+    `archive_batch` swallows its own errors and reports the outcome as a
+    boolean. Both callers ignored it and went on to `shutil.rmtree`, so a
+    share that was full, locked or briefly unreachable meant the only copy of
+    the invoice was removed. Step 1.4.
+    """
+
+def archive_or_raise(processing_id, payload, folder_path):
+    """Archive the batch, or raise so the caller routes it to the failed queue."""
+    if archive_batch(processing_id, payload.get("BU"), payload.get("Submitter"), folder_path):
+        return
+
+    raise ArchiveFailed(
+        f"{processing_id}: archive_batch reported failure. The batch folder is "
+        "left in place; nothing was deleted."
+    )
+
 def move_folder_to_failed(folder_path, folder_name):
     if not os.path.exists(folder_path):
         print(f"    [i] SQL queue folder already moved or removed: {folder_path}")
@@ -141,8 +160,9 @@ def run_sql_worker():
                 insert_sql_record("SQL_BILLING", payload)
                 print(f"    [✓] Billing inserted.")
                 
-                # 3. Archive the batch folder
-                archive_batch(processing_id, payload.get("BU"), payload.get("Submitter"), folder_path)
+                # 3. Archive the batch folder. Raises rather than returning
+                #    False, so step 5 below cannot delete an unarchived batch.
+                archive_or_raise(processing_id, payload, folder_path)
                 
                 # 4. Move PDF and XML flat to ProcessedDir
                 pdf_src = os.path.join(folder_path, f"{processing_id}.pdf")
@@ -169,8 +189,12 @@ def run_sql_worker():
             except pyodbc.IntegrityError as e:
                 if '2601' in str(e) or '2627' in str(e):
                     print(f"    [i] Duplicate billing key detected for {json_file}. Record already exists. Discarding batch.")
-                    # Still archive and clean up to prevent infinite loops, and move PDF to ProcessedDir just in case
-                    archive_batch(processing_id, payload.get("BU"), payload.get("Submitter"), folder_path)
+                    # Still archive and clean up to prevent infinite loops, and move PDF to ProcessedDir just in case.
+                    # A raise here would escape the loop, so this one checks.
+                    if not archive_batch(processing_id, payload.get("BU"), payload.get("Submitter"), folder_path):
+                        print(f"    [!] Archive failed for duplicate {processing_id}. Moving to Failed queue instead of deleting.")
+                        move_folder_to_failed(folder_path, folder_name)
+                        continue
                     pdf_src = os.path.join(folder_path, f"{processing_id}.pdf")
                     xml_src = os.path.join(folder_path, f"{processing_id}.xml")
                     if os.path.exists(pdf_src):
