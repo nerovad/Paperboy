@@ -1207,6 +1207,17 @@ layout feeds another system. The target is the same flow through Laserfiche.
   `push: branches: [main]`, but this repository's default branch is
   `master`, so only `pull_request` ever runs CI. Not AIM's to fix, and no
   change made -- but worth knowing before trusting "CI is green on master".
+- **The workers run from a UNC path, so nothing may assume a working
+  directory.** They are launched from `\\gsa-scan02\aim\_PROGRAM\`, and
+  `cd /d` refuses to make a UNC path the working directory — cmd falls back
+  to `C:\Windows`. On 2026-09-08 that made every worker fail with
+  `python: can't open file 'C:\Windows\00_Ingestion_Watcher.py'`. Fixed by
+  using `pushd` (which maps a temporary drive letter for UNC) in
+  `_prepare_aim_environment.bat`, and by invoking python with
+  `"%~dp0<script>.py"` so the working directory stops mattering. The bug was
+  latent: the old share `.bat` files never called the preparer, and anyone
+  running from a mapped drive letter would never see it. **Never add a
+  relative path or a bare `cd` to a `.bat` here.**
 - **Laserfiche import mechanism.** Not designed yet, and blocked on IT
   resolving a Laserfiche need. The likely shape is a monitored folder on
   GSA-SCAN02 that LF auto-imports from, but that could change. Noted
@@ -1238,3 +1249,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 0.6 | 8f7419d9 | AIM Python literals removed; `env()` fallback parameter deleted; 25 pytest green, Ruby suite unchanged |
 | 2026-09-08 | 0.7 | (this commit) | `bin/deploy-aim-workers` added and run; 22 files + AIM-only `.env` deployed to `/mnt/a/_PROGRAM`; 36 pytest green |
 | 2026-09-08 | — | 7c97bac7 | Merged master (26 commits, incl. Rails 8.1); pulled LockBox; launcher now restarts workers; redeployed |
+| 2026-09-08 | — | (this commit) | Fixed UNC working-directory assumption in the launchers; redeployed; all five workers restart and run clean |

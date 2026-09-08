@@ -13,8 +13,9 @@ echo               AI INVOICE PIPELINE: CPU VISION TEST
 echo ======================================================================
 echo Starting 01_AI_Extraction_Worker.py...
 echo.
-python 01_AI_Extraction_Worker.py
-
+REM Absolute path: the working directory is not dependable when
+REM these run from a UNC share.
+python "%~dp001_AI_Extraction_Worker.py"
 if %errorlevel% neq 0 (
     echo.
     echo ======================================================================

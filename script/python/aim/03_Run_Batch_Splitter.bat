@@ -13,8 +13,9 @@ echo              AI INVOICE PIPELINE: BATCH SPLITTER
 echo ======================================================================
 echo Starting 03_batch_splitter.py...
 echo.
-python 03_batch_splitter.py
-
+REM Absolute path: the working directory is not dependable when
+REM these run from a UNC share.
+python "%~dp003_batch_splitter.py"
 if %errorlevel% neq 0 (
     echo.
     echo ======================================================================

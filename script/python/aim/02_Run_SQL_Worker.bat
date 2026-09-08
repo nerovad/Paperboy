@@ -13,8 +13,9 @@ echo                 AI INVOICE PIPELINE: SQL WORKER
 echo ======================================================================
 echo Starting 02_sql_worker.py...
 echo.
-python 02_sql_worker.py
-
+REM Absolute path: the working directory is not dependable when
+REM these run from a UNC share.
+python "%~dp002_sql_worker.py"
 if %errorlevel% neq 0 (
     echo.
     echo ======================================================================

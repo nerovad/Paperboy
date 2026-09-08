@@ -13,8 +13,9 @@ echo             AI INVOICE PIPELINE: INGESTION WATCHER
 echo ======================================================================
 echo Starting 00_Ingestion_Watcher.py...
 echo.
-python 00_Ingestion_Watcher.py
-
+REM Absolute path: the working directory is not dependable when
+REM these run from a UNC share.
+python "%~dp000_Ingestion_Watcher.py"
 if %errorlevel% neq 0 (
     echo.
     echo ======================================================================

@@ -13,8 +13,9 @@ echo              AI INVOICE PIPELINE: ALIAS LEARNER
 echo ======================================================================
 echo Starting 04_alias_learner.py...
 echo.
-python 04_alias_learner.py
-
+REM Absolute path: the working directory is not dependable when
+REM these run from a UNC share.
+python "%~dp004_alias_learner.py"
 if %errorlevel% neq 0 (
     echo.
     echo ======================================================================

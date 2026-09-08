@@ -1,5 +1,9 @@
 @echo off
-cd /d "%~dp0"
+REM pushd, not cd /d: when these scripts live on a UNC path
+REM (\\gsa-scan02\aim\_PROGRAM\), cd /d refuses and cmd falls back to
+REM C:\Windows, so every worker looked for its .py there. pushd maps a
+REM temporary drive letter for a UNC path, which cd /d will not do.
+pushd "%~dp0"
 
 if defined AIM_ENV_FILE (
     if exist "%AIM_ENV_FILE%" (
