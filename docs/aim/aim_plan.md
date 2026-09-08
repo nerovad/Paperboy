@@ -727,10 +727,22 @@ them.
   point of local tests is to tell routing bugs from model behaviour, not to
   prove the model works.
 
-- [ ] **0.5 Stand up the Python test harness.** `pytest`, a fixture that
+- [x] **0.5 Stand up the Python test harness.** `pytest`, a fixture that
   builds a fake queue tree in a temp directory, and a fake environment. No
   Windows, no Ollama, no SQL required.
   *Test:* the harness runs green in CI with one trivial test.
+
+  **Done 2026-09-08, except the CI wiring, which needs approval.**
+  `test/python/aim/conftest.py` provides four fixtures:
+  `no_real_environment` (autouse -- strips every `AIM_*` variable so a real
+  `.env` cannot change a result), `fake_environment` (a full configuration
+  in `tmp_path`, creating nothing on disk), `pipeline` (the module imported
+  against it) and `queue_tree` (the same with every directory created, plus
+  `add_invoice()` for staging an invoice folder the way the watcher would).
+  Nine tests pass: `~/.venvs/aim/bin/pytest test/python/aim`.
+
+  **The CI step is a shared-config change and is not made yet.** See
+  `## Open Questions -> Python tests in CI`.
 
 - [ ] **0.6 Remove hardcoded paths and connection literals from the AIM
   Python.**
@@ -1100,6 +1112,16 @@ layout feeds another system. The target is the same flow through Laserfiche.
   so one absent variable aborted the whole suite — Billing, Forms and AIM
   included — which is exactly what that rule exists to prevent. **Pull
   LockBox before assuming a missing variable is a bug.**
+- **Python tests in CI (blocks finishing 0.5).** `.github/workflows/ci.yml`
+  is shared config, so the step below is proposed rather than made. Two
+  things to decide with it:
+  1. CI triggers on `push: branches: [main]`, but this repository's default
+     branch is `master`. The push trigger has therefore never fired; only
+     `pull_request` runs CI. Not AIM's to fix, but worth knowing before
+     relying on "CI is green".
+  2. `pywin32` is Windows-only. `requirements.txt` marks it
+     `sys_platform == "win32"`, so a Linux runner installs the other ten
+     and skips it cleanly.
 - **Laserfiche import mechanism.** Not designed yet, and blocked on IT
   resolving a Laserfiche need. The likely shape is a monitored folder on
   GSA-SCAN02 that LF auto-imports from, but that could change. Noted
@@ -1127,3 +1149,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 0.2 | `5e0de53` (LockBox) | Pulled LockBox: P2M added `P2M_PRINTERS`/`P2M_DESTROYED`; rebased `aim-config`, dropped the stopgap, baseline unchanged |
 | 2026-09-08 | 0.3 | (this commit) | Fallbacks removed from AIM Ruby; audit M3 fixed; 552 runs, 341 pass, 59 fail, 152 error |
 | 2026-09-08 | 0.4 | (this commit) | `pipeline_common` import made pure; deps moved to requirements.txt; 4 pytest tests green, Ruby suite unchanged |
+| 2026-09-08 | 0.5 | (this commit) | Python harness stood up, 9 pytest tests green; CI wiring awaiting approval |
