@@ -1038,16 +1038,15 @@ layout feeds another system. The target is the same flow through Laserfiche.
 - **5.1** Paperboy database or `GSA_Scan` for the new AIM tables?
 - ~~**0.2** Exact worker install folder on the AIM share.~~ Answered
   2026-09-04: `_PROGRAM` (`/mnt/a/_PROGRAM`).
-- **`P2M_PRINTERS` is missing from LockBox — not AIM's, but it blocks us.**
-  `app/services/p2m/paths.rb:13` fetches it at *module load* (added by
-  commit `07204896`, 2026-09-04), and LockBox never defined it, so on
-  current master `rake test` aborts before a single test runs. P2M belongs
-  to Traap, not Joshua, so this is reported rather than fixed. It is also a
-  live example of the boot-vs-use rule in `## Guardrails`: a module-level
-  `ENV.fetch` takes down the entire suite, exactly as that rule predicts.
-  A clearly-commented local stopgap in the repo `.env` points it at a
-  scratch directory so AIM work can continue; it is not in LockBox and must
-  not be. Remove it once P2M supplies the real value.
+- ~~**`P2M_PRINTERS` is missing from LockBox.**~~ Resolved 2026-09-08 by
+  someone on the P2M side: LockBox master gained `P2M_PRINTERS=99_Printers`
+  (`292b3a8`) and `P2M_DESTROYED=04_Destroyed` (`da5d6da`). The local
+  stopgap has been removed and the baseline is unchanged with the real
+  value. Worth remembering as a live example of the boot-vs-use rule in
+  `## Guardrails`: `app/services/p2m/paths.rb:13` fetches at *module load*,
+  so one absent variable aborted the whole suite — Billing, Forms and AIM
+  included — which is exactly what that rule exists to prevent. **Pull
+  LockBox before assuming a missing variable is a bug.**
 - **Laserfiche import mechanism.** Not designed yet, and blocked on IT
   resolving a Laserfiche need. The likely shape is a monitored folder on
   GSA-SCAN02 that LF auto-imports from, but that could change. Noted
@@ -1071,4 +1070,5 @@ Append one line per pushed step: date, step number, commit, result.
 |---|---|---|---|
 | 2026-09-04 | 0.1 | (no code) | `Paperboy_Test` created; baseline 537 runs, 324 pass, 60 fail, 153 error, 0 skips (serial) |
 | 2026-09-08 | 0.2 | 8127afbc, 55e3b231 | Inventory complete; 12 variables added on LockBox branch `aim-config` (`a68212c`, local only) |
-| 2026-09-08 | 0.2 | (baseline reset) | Master moved on 15 commits; new baseline 544 runs, 333 pass, 59 fail, 152 error (serial), with the `P2M_PRINTERS` stopgap in place |
+| 2026-09-08 | 0.2 | (baseline reset) | Master moved on 15 commits; new baseline 544 runs, 333 pass, 59 fail, 152 error (serial) |
+| 2026-09-08 | 0.2 | `5e0de53` (LockBox) | Pulled LockBox: P2M added `P2M_PRINTERS`/`P2M_DESTROYED`; rebased `aim-config`, dropped the stopgap, baseline unchanged |
