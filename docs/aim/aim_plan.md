@@ -761,7 +761,7 @@ them.
   **CI is deliberately not changed.** The pytest command is a local gate
   step; see `## How We Work -> The CI gate`.
 
-- [ ] **0.6 Remove hardcoded paths and connection literals from the AIM
+- [x] **0.6 Remove hardcoded paths and connection literals from the AIM
   Python.**
 
   **Change `env()` to take a name and nothing else.** Today the signature
@@ -798,6 +798,25 @@ them.
   The `.bat` launchers are out of scope — see `## Guardrails`.
   *Test:* importing with a variable unset fails with a message naming it;
   the fake-tree fixture drives every path from the fake environment.
+
+  **Done 2026-09-08.** `env()` now takes a name and nothing else, so a
+  fallback cannot be added without changing the signature. All eight
+  fallbacks are gone, `AI_QUEUE_DIR` reads `AIM_AI_QUEUE_DIR` instead of
+  deriving it from `SQL_QUEUE_DIR`'s parent, the ODBC driver and encryption
+  come from `AIM_ODBC_DRIVER`/`AIM_ODBC_ENCRYPT`, the six model names read
+  `AIM_TEXT_MODEL`/`AIM_VISION_MODEL`, the benchmark script reads its two
+  models and its directory, the watcher reads `AIM_SPOOL_STATE_DIR`, the
+  Laserfiche folder reads `AIM_LASERFICHE_INBOX_PATH`, and the four
+  `__file__`-relative resolutions now use `PROGRAM_DIR`.
+
+  `env_file_candidates()` no longer walks parent directories or the working
+  directory — a worker could previously pick up a stranger's `.env`
+  depending on where it was started from. It is now `AIM_ENV_FILE` then the
+  script's own directory, which is Guardrails exception 2 and nothing more.
+
+  16 new pytest tests (25 total). All seven workers were smoke-imported
+  against a temp environment: every one imports, and importing creates no
+  directory.
 
 - [ ] **0.7 Add `bin/deploy-aim-workers`, shipping code *and* config.**
   Copies `script/python/aim/` from the repo to `_PROGRAM` on the AIM share,
@@ -1164,4 +1183,5 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 0.2 | `5e0de53` (LockBox) | Pulled LockBox: P2M added `P2M_PRINTERS`/`P2M_DESTROYED`; rebased `aim-config`, dropped the stopgap, baseline unchanged |
 | 2026-09-08 | 0.3 | (this commit) | Fallbacks removed from AIM Ruby; audit M3 fixed; 552 runs, 341 pass, 59 fail, 152 error |
 | 2026-09-08 | 0.4 | (this commit) | `pipeline_common` import made pure; deps moved to requirements.txt; 4 pytest tests green, Ruby suite unchanged |
-| 2026-09-08 | 0.5 | (this commit) | Python harness stood up, 9 pytest tests green; CI wiring awaiting approval |
+| 2026-09-08 | 0.5 | 170ab1e4, 01e85597 | Python harness stood up, 9 pytest tests green; CI deliberately unchanged |
+| 2026-09-08 | 0.6 | 8f7419d9 | AIM Python literals removed; `env()` fallback parameter deleted; 25 pytest green, Ruby suite unchanged |
