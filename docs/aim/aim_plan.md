@@ -629,7 +629,18 @@ them.
   **Done 2026-09-04. Baseline: 537 runs, 324 pass, 60 failures, 153
   errors, 0 skips** (serial). **Superseded 2026-09-08** — the phase branch
   was cut from a master 15 commits newer, where the suite is 544 runs, 333
-  pass, 59 failures, 152 errors. Compare against that. The suite now runs to completion, which was
+  pass, 59 failures, 152 errors. **Superseded again the same day** after
+  merging 26 further commits from master, including the Rails 8.0 to 8.1
+  upgrade: **616 runs, 398 pass, 58 failures, 160 errors** (serial). Compare
+  against that.
+
+  Two of those commits fix things this plan had recorded as problems:
+  `6a3bcdbf` gives each parallel run a unique database namespace and drops
+  its worker databases when the run ends, and `9dde40ac` isolates the DSL
+  test writes so `rake test` no longer dirties `config/data_runner/dsl/`.
+  Both confirmed here. All seven red AIM tests are identical before and
+  after the merge — the `stub` problem and a `Struct` keyword error, both
+  pre-existing and neither caused by AIM. The suite now runs to completion, which was
   the point of the step. It is not green, and none of the red is AIM's —
   see `## Open Questions → Pre-existing suite failures`.
 
@@ -1226,3 +1237,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 0.5 | 170ab1e4, 01e85597 | Python harness stood up, 9 pytest tests green; CI deliberately unchanged |
 | 2026-09-08 | 0.6 | 8f7419d9 | AIM Python literals removed; `env()` fallback parameter deleted; 25 pytest green, Ruby suite unchanged |
 | 2026-09-08 | 0.7 | (this commit) | `bin/deploy-aim-workers` added and run; 22 files + AIM-only `.env` deployed to `/mnt/a/_PROGRAM`; 36 pytest green |
+| 2026-09-08 | — | 7c97bac7 | Merged master (26 commits, incl. Rails 8.1); pulled LockBox; launcher now restarts workers; redeployed |

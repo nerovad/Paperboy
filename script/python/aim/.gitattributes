@@ -1,0 +1,4 @@
+# Batch files run on GSA-SCAN02 under cmd.exe, which is happier with CRLF —
+# LF-only .bat files can misparse labels and goto. Keep them CRLF in the
+# working tree so bin/deploy-aim-workers ships them that way.
+*.bat text eol=crlf
