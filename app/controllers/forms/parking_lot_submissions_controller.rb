@@ -19,63 +19,11 @@ module Forms
       employee_id = session.dig(:user, 'employee_id').to_s
       @employee   = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
 
-      unless @employee
-        redirect_to login_path, alert: 'Please sign in to start a submission.' and return
-
-        @agency_options     = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
-        @division_options   = []
-        @department_options = []
-        @unit_options       = []
-        return
-      end
+      redirect_to login_path, alert: 'Please sign in to start a submission.' and return unless @employee
 
       # MB3 flag — union codes live in the Paperboy-owned employee_union_codes
       # table, not on the GSABSS Employees record. Defaults to non-MB3 when unset.
-      @is_mb3 = EmployeeUnionCode.code_for(@employee.employee_id) == 'MB3'
-
-      # Org lookups (guard each step)
-      unit        = Coa::Unit.resolve_for_employee(@employee)
-      department  = unit ? Coa::Department.find_by(department_id: unit.department_id) : nil
-      division    = department ? Coa::Division.find_by(division_id: department.division_id) : nil
-      agency      = division ? Coa::Agency.find_by(agency_id: division.agency_id) : nil
-
-      # Prefill with IDs (unit = ID only)
-      @prefill_data = {
-        employee_id: @employee.employee_id,
-        name: [@employee.first_name, @employee.last_name].compact.join(' '),
-        phone: @employee.work_phone,
-        email: @employee.email,
-        agency: agency&.agency_id,
-        division: division&.division_id,
-        department: department&.department_id,
-        unit: unit&.unit_id
-      }
-
-      # Permit types (R Lot is MB3-only)
-      @permit_type_options = permit_type_options(@is_mb3)
-
-      # Dropdowns
-      @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
-
-      @division_options = if agency
-                            Coa::Division.where(agency_id: agency.agency_id).order(:long_name).pluck(:long_name, :division_id)
-                          else
-                            []
-                          end
-
-      @department_options = if division
-                              Coa::Department.where(division_id: division.division_id).order(:long_name).pluck(:long_name, :department_id)
-                            else
-                              []
-                            end
-
-      @unit_options = if department
-                        Coa::Unit.where(department_id: department.department_id)
-                                 .order(:unit_id)
-                                 .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
-                      else
-                        []
-                      end
+      load_new_form_state(@employee, EmployeeUnionCode.code_for(@employee.employee_id) == 'MB3')
     end
 
     def create
@@ -217,24 +165,75 @@ module Forms
       end
     end
 
-    # Rebuild the option ivars and re-render the new form on a failed create.
+    # Re-render the new form after a failed create. new.html.erb reads every
+    # field's value out of @prefill_data, so it has to be rebuilt here or the
+    # view dereferences nil and the failure becomes a 500 instead of the
+    # message the form was trying to show.
     def render_new_with_options(emp_record, is_mb3)
-      @is_mb3 = is_mb3
-      @permit_type_options = permit_type_options(is_mb3)
-      reload_form_options(emp_record)
+      load_new_form_state(emp_record, is_mb3, submission: @parking_lot_submission)
       render :new, status: :unprocessable_entity
     end
 
-    def reload_form_options(emp_record)
-      unit       = Coa::Unit.resolve_for_employee(emp_record)
+    # Everything new.html.erb needs, built the same way for a first visit and
+    # for a re-render, so the two can't drift apart again.
+    def load_new_form_state(employee, is_mb3, submission: nil)
+      @employee            = employee
+      @is_mb3              = is_mb3
+      @permit_type_options = permit_type_options(is_mb3)
+      @prefill_data        = prefill_data_for(employee, submission)
+      load_org_options(@prefill_data)
+    end
+
+    # The employee's own record supplies the defaults, but on a re-render the
+    # answers they just gave win — otherwise a rejected submission silently
+    # resets their contact fields and all four org selects.
+    def prefill_data_for(employee, submission)
+      unit       = Coa::Unit.resolve_for_employee(employee)
       department = unit ? Coa::Department.find_by(department_id: unit.department_id) : nil
       division   = department ? Coa::Division.find_by(division_id: department.division_id) : nil
       agency     = division ? Coa::Agency.find_by(agency_id: division.agency_id) : nil
 
-      @agency_options     = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
-      @division_options   = division ? Coa::Division.where(agency_id: agency&.agency_id).order(:long_name).pluck(:long_name, :division_id) : []
-      @department_options = department ? Coa::Department.where(division_id: division&.division_id).order(:long_name).pluck(:long_name, :department_id) : []
-      @unit_options       = department ? Coa::Unit.where(department_id: department.department_id).order(:unit_id).map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] } : []
+      defaults = {
+        employee_id: employee&.employee_id,
+        name: [employee&.first_name, employee&.last_name].compact.join(' '),
+        phone: employee&.work_phone,
+        email: employee&.email,
+        agency: agency&.agency_id,
+        division: division&.division_id,
+        department: department&.department_id,
+        unit: unit&.unit_id
+      }
+      return defaults if submission.nil?
+
+      submitted = submission.slice(:name, :phone, :email, :agency, :division, :department, :unit)
+      defaults.merge(submitted.symbolize_keys.compact_blank)
+    end
+
+    # Each list hangs off the level above it as it is actually selected, so a
+    # re-render offers the divisions of the agency they picked rather than the
+    # ones under their home agency.
+    def load_org_options(selected)
+      @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
+
+      @division_options = if selected[:agency].present?
+                            Coa::Division.where(agency_id: selected[:agency]).order(:long_name).pluck(:long_name, :division_id)
+                          else
+                            []
+                          end
+
+      @department_options = if selected[:division].present?
+                              Coa::Department.where(division_id: selected[:division]).order(:long_name).pluck(:long_name, :department_id)
+                            else
+                              []
+                            end
+
+      @unit_options = if selected[:department].present?
+                        Coa::Unit.where(department_id: selected[:department])
+                                 .order(:unit_id)
+                                 .map { |u| ["#{u.unit_id} - #{u.long_name}", u.unit_id] }
+                      else
+                        []
+                      end
     end
 
     def parking_lot_submission_params
