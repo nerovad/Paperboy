@@ -127,6 +127,26 @@ name, the Ollama model names, and the Laserfiche import folder are all
 configuration, not constants. Model names especially, since the move to a
 GPU server will change them.
 
+**The rule has exactly two exceptions. Both are written down here; there
+are no others.**
+
+1. **The `.bat` launchers in `script/python/aim/` are out of scope.**
+   Decided by Joshua, 2026-09-08. Their only job is to start a worker on
+   the server — `python 00_Ingestion_Watcher.py` and nothing more. They
+   are the thing being launched *by* the environment rather than code that
+   reads configuration, so a path inside one is not the failure this rule
+   exists to prevent. Do not rewrite them to read variables.
+
+2. **Finding the `.env` file itself.** `env_file_candidates()` in
+   `pipeline_common.py` has to know somewhere to look before any variable
+   is readable — configuration cannot say where configuration lives.
+   Keep that seed as small as possible: `AIM_ENV_FILE` first, then the
+   script's own directory. Nothing else; the `cwd` and parent-directory
+   guesses are removed in step 0.6.
+
+Everything else — every `.py`, `.rb`, `.erb`, rake task and test — obeys
+the rule with no fallbacks at all.
+
 Credentials additionally must never be printed, logged, echoed into a
 terminal, or committed. Reading them from the environment to open a
 connection is fine; showing their values is not.
@@ -656,13 +676,39 @@ them.
 
 - [ ] **0.6 Remove hardcoded paths and connection literals from the AIM
   Python.**
-  Targets: `pipeline_common.py:109` (`_AI_QUEUE`, currently not
-  configurable at all), `:110` (`_ERROR_QUEUE`), `:95` (`_SQL_FAILED`),
-  `:227` (ODBC driver name and `Encrypt=no`), `:730` (the
-  `\AIM\00 INBOX\` Laserfiche path), `:656` and the six model names in
-  `01_AI_Extraction_Worker.py`; `00_Ingestion_Watcher.py:13`
-  (`_SPOOL_STATE`); `07_benchmark_models.py:10-11` and `:43`, which
-  contains a literal `E:\AIM\Invoices`.
+
+  **Change `env()` to take a name and nothing else.** Today the signature
+  is `env(name, fallback=None)`, and the fallback parameter is what makes
+  every violation below possible and invisible to review. With it gone, a
+  missing variable can only exit with a message naming it, and step 0.8's
+  guard mostly reduces to "nobody added the parameter back". Do this
+  first; the call sites then fail loudly until each is fixed.
+
+  **All eight fallbacks go** (inventoried 2026-09-08 — the last five were
+  first dismissed as "just filenames", which is the same violation):
+  `pipeline_common.py:95` `_SQL_FAILED`, `:110` `_ERROR_QUEUE`, `:120`
+  `Split_Invoices`, `:128` `pipeline_log.csv`, `:132`
+  `vendor_aliases.json`, `:139` `vendor_rules.json`, `:146`
+  `field_aliases.json`, and `07_benchmark_models.py:43`
+  `E:\AIM\Invoices`.
+
+  Other targets: `pipeline_common.py:109` (`_AI_QUEUE`, currently not
+  configurable at all), `:227` (ODBC driver name and `Encrypt=no`), `:240`
+  (mapping files resolved against `os.path.dirname(__file__)` — use
+  `AIM_PROGRAM_DIR`), `:730` (the `\AIM\00 INBOX\` Laserfiche path),
+  `:656` and the six model names in `01_AI_Extraction_Worker.py`;
+  `00_Ingestion_Watcher.py:13` (`_SPOOL_STATE`);
+  `07_benchmark_models.py:10-11`. Also narrow `env_file_candidates()` to
+  the two entries allowed by `## Guardrails` exception 2.
+
+  **Pin every new variable to the value the code derives today**, so this
+  is a pure refactor with no behaviour change. Verified 2026-09-04: the
+  derived `_AI_QUEUE`, `_ERROR_QUEUE` and `_SPOOL_STATE` paths all exist
+  on the share and are in use, and the derived AI queue path is byte-identical
+  to what the repo `.env` already declares. If a path is wrong, that is a
+  separate finding, fixed by a LockBox edit rather than a code change.
+
+  The `.bat` launchers are out of scope — see `## Guardrails`.
   *Test:* importing with a variable unset fails with a message naming it;
   the fake-tree fixture drives every path from the fake environment.
 
@@ -680,8 +726,19 @@ them.
   `POSTGRES_PASSWORD` and the rest of Paperboy's secrets off the share.
 
   Code and config ship in the same run, so they cannot drift apart again.
-  The script never reads LockBox directly — the repo `.env` is its source,
-  and that is a copy of `LockBox/Paperboy.env` as usual.
+  **Verify provenance before shipping.** The repo `.env` is *supposed* to
+  be a copy of `LockBox/Paperboy.env`, but nothing enforces that — a
+  hand-edited repo copy would send the workers a value LockBox never
+  defined, and the deploy would look entirely successful. The script must
+  compare the two and refuse to ship when they differ, or stamp the
+  rendered file with the LockBox commit it came from. This is the
+  difference between LockBox being the definition point and LockBox merely
+  being where the values happened to start.
+
+  While here, fix `_prepare_aim_environment.bat:38`, which tells a human to
+  copy the env file to a literal `E:\AIM\_PROGRAM\.env`. That is stale
+  advice once this step lands, not a rule violation — the `.bat` files are
+  out of scope per `## Guardrails`.
   *Test:* dry-run mode lists what it would copy and which variables the
   rendered `.env` would contain; a real run round-trips a checksum
   comparison; the rendered file contains every `AIM_*` variable and no
