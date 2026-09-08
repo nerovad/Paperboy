@@ -1165,10 +1165,26 @@ Small, surgical, no schema changes. Highest value per line changed.
   the harness rules exclude both. The tests cover the merge, and assert the
   exact expression the routing branch uses to read it.
 
-- [ ] **1.6 Fix the undefined `folder_name` in the crash handler.** It leaks
+- [x] **1.6 Fix the undefined `folder_name` in the crash handler.** It leaks
   the last value from an earlier loop, so error tickets are filed under the
   wrong invoice. See audit M6.
   *Test:* a crash during processing files its ticket under the right id.
+
+  Done 2026-09-08. The job dict carries `folder_name`, and the processing loop
+  unpacks it like every other field, so nothing there depends on a variable
+  left behind by the queue-building loop.
+
+  **`job_folders` is now sorted**, which the step did not ask for but the test
+  needed. `os.listdir` order is the filesystem's, so which invoice the leak
+  landed on changed from run to run -- the first version of the test passed
+  against the unfixed worker because the wrong answer happened to be the right
+  one. Sorted, the queue is built in a reproducible order, the crashing
+  invoice can be chosen so it is deliberately *not* the last folder seen, and
+  the test fails against the old code with `['INV-2'] == ['INV-1']`.
+
+  Worth remembering for the rest of Phase 1 and beyond: a test that passes
+  against the unfixed code proves nothing, and two of the six steps here had
+  one at first. Check every new test both ways.
 
 ---
 
@@ -1501,3 +1517,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 1.3 | (this commit) | One payload name (`PAYLOAD_SUFFIX`); SQL worker picks it explicitly; XML always regenerated, document type kept; 50 pytest green, Ruby suite unchanged |
 | 2026-09-08 | 1.4 | (this commit) | Unarchived batches go to the failed queue instead of being deleted, duplicate path included; `import_worker` fixture added; 54 pytest green, Ruby suite unchanged |
 | 2026-09-08 | 1.5 | (this commit) | Vision merges unified; risk flags latch instead of being discarded; 59 pytest green, Ruby suite unchanged |
+| 2026-09-08 | 1.6 | (this commit) | Crash tickets file against the invoice that crashed; queue build order made deterministic; **Phase 1 complete**; 61 pytest green, 630 runs, 413 pass, 57 fail, 160 error |

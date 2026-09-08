@@ -582,7 +582,12 @@ def scan_directories():
     if not os.path.exists(AI_QUEUE_DIR):
         return
         
-    job_folders = [f for f in os.listdir(AI_QUEUE_DIR) if os.path.isdir(os.path.join(AI_QUEUE_DIR, f))]
+    # Sorted so a run is reproducible. os.listdir order is the filesystem's,
+    # which made the folder_name leak fixed in step 1.6 land on a different
+    # invoice from one run to the next.
+    job_folders = sorted(
+        f for f in os.listdir(AI_QUEUE_DIR) if os.path.isdir(os.path.join(AI_QUEUE_DIR, f))
+    )
     
     urgent_queue = []
     standard_queue = []
@@ -618,6 +623,11 @@ def scan_directories():
             job_data = {
                 "pdf_path": pdf_path,
                 "folder_path": folder_path,
+                # Carried explicitly. The crash handler below used to read the
+                # loop variable `folder_name`, which by then held whichever
+                # folder this build loop happened to see last -- so an error
+                # ticket was filed against a different invoice. Step 1.6.
+                "folder_name": folder_name,
                 "bu_number": ticket.get("bu_number", "Unknown"),
                 "submitter_name": ticket.get("submitter_name", "Unknown"),
                 "is_urgent": is_urgent,
@@ -644,6 +654,7 @@ def scan_directories():
     for job in master_queue:
         pdf_path = job["pdf_path"]
         folder_path = job["folder_path"]
+        folder_name = job["folder_name"]
         bu_number = job["bu_number"]
         submitter_name = job["submitter_name"]
         is_urgent = job["is_urgent"]
