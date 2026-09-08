@@ -229,13 +229,18 @@ def get_sql_connection(section):
     )
     return pyodbc.connect(conn_str)
 
+class SqlMappingError(Exception):
+    """A SQL payload could not be mapped onto any column of its table.
+
+    Silently returning here is how invoices disappeared: the worker printed a
+    success line, archived the batch and deleted the folder while the database
+    never received a row. Raising sends the batch to the failed queue instead.
+    """
+
 def insert_sql_record(section, data_dict):
     prefix = f"AIM_{section}_"
-    mapping_filename = env(f"{prefix}MAPPING_FILE", '')
-    if not mapping_filename:
-        print(f"    [!] No MappingFile configured for {section}. Skipping SQL insert.")
-        return
-        
+    mapping_filename = env(f"{prefix}MAPPING_FILE")
+
     if os.path.isabs(mapping_filename):
         mapping_file_path = mapping_filename
     else:
@@ -263,7 +268,12 @@ def insert_sql_record(section, data_dict):
             placeholders.append("?")
 
     if not columns:
-        return
+        raise SqlMappingError(
+            f"{section}: no column of {table} matched the payload. "
+            f"Mapping {mapping_filename} expects "
+            f"{sorted(mapping.keys())}; the payload carries "
+            f"{sorted(data_dict.keys())}."
+        )
 
     query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(placeholders)})"
     

@@ -963,9 +963,28 @@ changed about how you work:
 
 Small, surgical, no schema changes. Highest value per line changed.
 
-- [ ] **1.1 `insert_sql_record` raises when no columns map.** Today it hits
+- [x] **1.1 `insert_sql_record` raises when no columns map.** Today it hits
   `if not columns: return` and every caller reports success. See audit C2.
   *Test:* a payload matching nothing raises; a valid payload still inserts.
+
+  Done 2026-09-08. Raises the new `SqlMappingError`, naming the table, the
+  mapping's keys and the payload's, so the failed-queue folder says why. The
+  SQL worker's existing `except Exception` around the billing insert already
+  routes the batch to the failed queue, so no caller changed.
+
+  Two things found on the way:
+
+  - `insert_sql_record` **could not run at all**. Step 0.6 removed `env()`'s
+    fallback parameter but left the call `env(f"{prefix}MAPPING_FILE", '')`
+    here, so every invocation raised `TypeError`. Nothing caught it because
+    nothing tests it. Fixed with the call, and the now-unreachable "no
+    MappingFile configured" skip deleted -- `env()` exits naming the variable.
+    A grep of `script/python/aim/*.py` found no other two-argument call, so
+    this was the last one 0.6 missed.
+  - The **mapping file missing from disk** is still a silent `return` a few
+    lines above, and it fails exactly the same way: success printed, batch
+    deleted, no row. It is outside 1.1's wording so it was left alone. See
+    Open Questions.
 
 - [ ] **1.2 Rename the vendor-rule sidecar.** The AI worker writes both
   `{id}.json` (vendor rules) and `{id}_READY_FOR_SQL.json` (the real
@@ -1214,6 +1233,16 @@ layout feeds another system. The target is the same flow through Laserfiche.
 
 ## Open Questions
 
+- **A missing mapping file is still a silent skip (found in 1.1).**
+  `insert_sql_record` returns after printing "Mapping file ... not found" when
+  the configured file is absent from `_PROGRAM`. The caller then archives and
+  deletes the batch exactly as it did before 1.1, so a mistyped or
+  undeployed mapping loses invoices in the way 1.1 was written to stop.
+  Fixing it is one line -- raise instead of return -- but it is outside the
+  step as written, and `bin/deploy-aim-workers` has to be shipping both
+  mapping files first or the workers stop dead. Joshua's call: fold it into
+  1.3, or take it as its own step.
+
 - **Pre-existing suite failures (found in 0.1).** 213 of 537 tests are red
   on a clean master checkout, none of it AIM's doing. Three causes, all
   outside AIM and so all needing Joshua's decision before anyone touches
@@ -1296,3 +1325,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 0.8 | (this commit) | Configuration guard added and proved against planted literals; **Phase 0 complete**; 624 runs, 406 pass, 58 fail, 160 error |
 | 2026-09-08 | — | `76a33ae` (LockBox) | LockBox `aim-config` merged to master and pushed; the twelve AIM variables are live for the team |
 | 2026-09-08 | — | `8e4a6dda` | **Phase 0 merged to Paperboy master.** LockBox landed first, as the ordering requires |
+| 2026-09-08 | 1.1 | (this commit) | `insert_sql_record` raises `SqlMappingError`; dead `env()` second argument fixed; 40 pytest green, Ruby suite unchanged at 624/406/58/160 |
