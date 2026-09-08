@@ -18,7 +18,7 @@
       name: 'gsa_security'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/alarm_rawdata.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'alarm_rawdata.csv'),
       local: 'alarm_rawdata.csv',
       format: :csv,
       strategy: :copy

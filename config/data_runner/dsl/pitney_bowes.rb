@@ -18,7 +18,7 @@
       name: 'mail_center_and_warehousing'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/pitney_bowes.xlsx',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'pitney_bowes.xlsx'),
       local: 'pitney_bowes.xlsx',
       format: :xlsx,
       strategy: :copy

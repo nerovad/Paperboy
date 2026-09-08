@@ -18,7 +18,7 @@
       name: 'print_2_mail_billing_data'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/companions.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'companions.csv'),
       local: 'companions.csv',
       format: :csv,
       strategy: :copy

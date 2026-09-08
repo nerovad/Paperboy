@@ -18,7 +18,7 @@
       name: 'billing_configuration'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/tc60_types.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'tc60_types.csv'),
       local: 'tc60_types.csv',
       format: :csv,
       strategy: :copy

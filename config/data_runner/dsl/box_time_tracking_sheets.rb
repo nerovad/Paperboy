@@ -18,7 +18,7 @@
       name: 'scan_center'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/box_time_tracking_sheets.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'box_time_tracking_sheets.csv'),
       local: 'box_time_tracking_sheets.csv',
       format: :csv,
       strategy: :copy

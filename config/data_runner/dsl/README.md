@@ -89,12 +89,12 @@ sop: {
   `reference_path: :downloaded_file`, so every group DSL can display its own
   `01_Download/source.local` file.
 - Use `source.location` for the file or path to stage and `source.local` for
-  the filename used inside `00_Inbox` and downstream stages.
-- Use `source.strategy: :manual` when a human places the file in `00_Inbox`;
+  the filename used inside `$DATARUNNER_INBOX` and downstream stages.
+- Use `source.strategy: :manual` when a human places the file in `$DATARUNNER_INBOX`;
   if `source.location` differs from `source.local`, the download stage copies
   the placed file to the local staged name.
 - Use `source.strategy: :copy` when the download stage should copy
-  `source.location` into `00_Inbox/source.local`.
+  `source.location` into `$DATARUNNER_INBOX/source.local`.
 - Use `source.strategy: :append` when a locally staged supplemental file should
   flow through the normal stages and append into another dataset's destination
   table via `inject.mode: :append`.
@@ -105,7 +105,7 @@ sop: {
   dependency. A failed dependency fails the dependent DSL; a missing dependency
   or an hour-long wait raises an explicit error.
 - Use `source.strategy: :script` when the download stage should run a local Ruby
-  script that creates `00_Inbox/source.local`:
+  script that creates `$DATARUNNER_INBOX/source.local`:
 
 ```ruby
 source: {

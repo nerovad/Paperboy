@@ -18,7 +18,7 @@
       name: 'human_resources'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/fiscalmonths.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'fiscalmonths.csv'),
       local: 'fiscalmonths.csv',
       format: :csv,
       strategy: :copy

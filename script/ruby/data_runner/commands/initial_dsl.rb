@@ -181,7 +181,7 @@ def render_entry(dataset_key, local_name, format, header_row_idx, header_cols)
           }
         },
         source: {
-          location: #{ruby_literal(File.join(INBOX_DIR, local_name))},
+          location: File.join(ENV.fetch('DATARUNNER_INBOX'), #{ruby_literal(local_name)}),
           local: #{ruby_literal(local_name)},
           format: :#{format},
           strategy: :copy

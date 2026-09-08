@@ -18,7 +18,7 @@
       name: 'budget_rate_development'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/bdmrates.xlsx',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'bdmrates.xlsx'),
       local: 'bdmrates.xlsx',
       format: :xlsx,
       strategy: :copy

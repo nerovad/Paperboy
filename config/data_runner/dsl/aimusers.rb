@@ -18,7 +18,7 @@
       name: 'user_entitlements'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/aimusers.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'aimusers.csv'),
       local: 'aimusers.csv',
       format: :csv,
       strategy: :copy

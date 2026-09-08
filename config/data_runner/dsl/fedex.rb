@@ -18,7 +18,7 @@
       name: 'mail_center_and_warehousing'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/fedex.xlsx',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'fedex.xlsx'),
       local: 'fedex.xlsx',
       format: :xlsx,
       strategy: :copy

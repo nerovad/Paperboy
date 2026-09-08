@@ -18,7 +18,7 @@
       name: 'human_resources'
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/paychecks.xlsx',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'paychecks.xlsx'),
       local: 'paychecks.xlsx',
       format: :xlsx,
       strategy: :copy

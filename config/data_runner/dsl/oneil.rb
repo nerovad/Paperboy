@@ -31,7 +31,7 @@
       ]
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/oneil.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'oneil.csv'),
       local: 'oneil.csv',
       format: :csv,
       strategy: :copy

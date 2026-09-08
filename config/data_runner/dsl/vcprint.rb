@@ -31,7 +31,7 @@
       ]
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/vcprint.csv',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'vcprint.csv'),
       local: 'vcprint.csv',
       format: :csv,
       strategy: :copy

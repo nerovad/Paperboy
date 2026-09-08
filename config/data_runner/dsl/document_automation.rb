@@ -28,7 +28,7 @@
       ]
     },
     source: {
-      location: '/mnt/i/BUSINESS_SUPPORT/DataRunner/00_Inbox/document_automation.xlsx',
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'document_automation.xlsx'),
       local: 'document_automation.xlsx',
       format: :xlsx,
       strategy: :copy
