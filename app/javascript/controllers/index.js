@@ -14,6 +14,7 @@ import BillingToolsController from "controllers/billing_tools_controller"
 import BillingTypesController from "controllers/billing_types_controller"
 import BillingEmailSelectionController from "controllers/billing_email_selection_controller"
 import BillingReportPreviewController from "controllers/billing_report_preview_controller"
+import BillingAuditSectionsController from "controllers/billing_audit_sections_controller"
 import DataRefreshGroupsController from "controllers/data_refresh_groups_controller"
 import CoaAccountFieldsController from "controllers/coa_account_fields_controller"
 import ApproveModalController from "controllers/approve_modal_controller"
@@ -145,6 +146,7 @@ application.register("delete-form", DeleteFormController)
 application.register("select-all", SelectAllController)
 application.register("dependent-select", DependentSelectController)
 application.register("clickable-row", ClickableRowController)
+application.register("billing-audit-sections", BillingAuditSectionsController)
 application.register("information-field", InformationFieldController)
 application.register("card-toggle", CardToggleController)
 application.register("authorization-select", AuthorizationSelectController)

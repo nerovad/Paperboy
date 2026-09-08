@@ -502,6 +502,30 @@
     font-size: 1rem;
     text-transform: uppercase;
   }
+
+  .billing-audit-group-toggle {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    text-transform: inherit;
+    cursor: pointer;
+
+    span { transition: transform .15s ease; }
+
+    &[aria-expanded="false"] span { transform: rotate(-90deg); }
+
+    &:focus-visible {
+      outline: 2px solid $surface-base;
+      outline-offset: 3px;
+    }
+  }
 }
 
 .billing-audit-grid {
