@@ -24,6 +24,13 @@ module P2m
       enabled_entries(group_configuration.keys)
     end
 
+    def self.select_entries(entries, selected_oms_numbers)
+      return entries if selected_oms_numbers.nil?
+
+      entries.select { |entry| selected_oms_numbers.include?(entry.key.delete_prefix('OMS ')) }
+    end
+    private_class_method :select_entries
+
     def self.preview_entries
       enabled_entries(group_configuration.keys)
     end

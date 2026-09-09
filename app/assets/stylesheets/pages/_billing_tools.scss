@@ -308,7 +308,9 @@
 .p2m-data-refresh-table {
   table-layout: fixed;
 
-  .p2m-data-refresh-oms-column { width: calc(100% / 3); }
+  .p2m-data-refresh-select-column { width: 2.5rem; }
+  .p2m-data-refresh-oms-column { width: calc((100% - 7.5rem) / 3); }
+  .p2m-data-refresh-select-cell { text-align: center; }
 }
 
 .p2m-data-refresh-summary {

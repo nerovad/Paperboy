@@ -25,14 +25,20 @@
     <div class="data-refresh-grid">
       <table class="submission-table data-refresh-table p2m-data-refresh-table">
         <colgroup>
+          <col class="p2m-data-refresh-select-column">
           <col class="p2m-data-refresh-oms-column">
+          <col class="p2m-data-refresh-select-column">
           <col class="p2m-data-refresh-oms-column">
+          <col class="p2m-data-refresh-select-column">
           <col class="p2m-data-refresh-oms-column">
         </colgroup>
         <thead>
           <tr>
+            <th aria-label="Select OMS"></th>
             <th>OMS #</th>
+            <th aria-label="Select OMS"></th>
             <th>OMS #</th>
+            <th aria-label="Select OMS"></th>
             <th>OMS #</th>
           </tr>
         </thead>
@@ -42,16 +48,21 @@
             <% oms_numbers.each_slice(3) do |row_numbers| %>
               <tr>
                 <% row_numbers.each do |oms_number| %>
+                  <td class="p2m-data-refresh-select-cell">
+                    <%= check_box_tag "selected_oms_numbers[]", oms_number, true,
+                                      id: "selected-oms-#{oms_number}",
+                                      aria: { label: "Upload OMS #{oms_number}" } %>
+                  </td>
                   <td><%= oms_number %></td>
                 <% end %>
                 <% (3 - row_numbers.size).times do %>
-                  <td></td>
+                  <td></td><td></td>
                 <% end %>
               </tr>
             <% end %>
           <% else %>
             <tr>
-              <td colspan="3">No OMS numbers are queued for upload.</td>
+              <td colspan="6">No OMS numbers are queued for upload.</td>
             </tr>
           <% end %>
         </tbody>
