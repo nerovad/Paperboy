@@ -171,8 +171,16 @@
     top: 0;
     z-index: 1;
     height: 2.75rem;
-    background: linear-gradient(135deg, $sidebar-navy, $green-teal);
     color: $surface-base;
+
+    &:nth-child(1) { background: linear-gradient(135deg, $sidebar-navy, $brand-navy); }
+    &:nth-child(2) { background: linear-gradient(135deg, $brand-navy, $blue-action); }
+    &:nth-child(3) { background: linear-gradient(135deg, $blue-action, $green-teal); }
+    &:nth-child(4) { background: linear-gradient(135deg, $green-teal, $green-teal-hover); }
+    &:nth-child(5) { background: linear-gradient(135deg, $green-teal-hover, $slate-action); }
+    &:nth-child(6) { background: linear-gradient(135deg, $slate-action, $sidebar-navy); }
+    &:nth-child(7) { background: linear-gradient(135deg, $sidebar-navy, $brand-navy-hover); }
+    &:nth-child(8) { background: linear-gradient(135deg, $brand-navy-hover, $green-teal); }
   }
 
   .p2m-maildat-row { background: $surface-base; }
