@@ -73,7 +73,7 @@ class P2mPreProductionsControllerTest < ActionController::TestCase # rubocop:dis
     assert_select '[data-pdf-preview-target="backdrop"]', count: 1
     assert_select '.p2m-associated-files-table thead th', count: 4
     assert_select '.p2m-associated-files-table tbody tr:first-child td', count: 4
-    assert_select 'input[type="checkbox"][name="selected_files[]"]', count: 2
+    assert_select 'input[type="checkbox"][name="selected_files[]"]', count: 1
     assert_select 'button', text: 'Cancel', count: 1
     assert_select 'button', text: 'Move to Staging', count: 0
   end
@@ -86,7 +86,7 @@ class P2mPreProductionsControllerTest < ActionController::TestCase # rubocop:dis
     printer_queue = Minitest::Mock.new
     copy_parameters = {
       directory: '2026/51780767', oms_number: '51780767', printer: 'Printer One',
-      queue: 'Queue A', filenames: ['one.pdf', 'two.csv']
+      queue: 'Queue A', filenames: ['one.pdf', 'two.pdf']
     }
     printer_queue.expect :copy, 2, [copy_parameters]
 
@@ -94,7 +94,7 @@ class P2mPreProductionsControllerTest < ActionController::TestCase # rubocop:dis
       P2m::PrinterQueue.stub(:new, printer_queue) do
         post :send_to_printer, params: {
           directory: '2026/51780767', oms_number: '51780767', printer: 'Printer One',
-          queue: 'Queue A', selected_files: ['one.pdf', 'two.csv']
+          queue: 'Queue A', selected_files: ['one.pdf', 'two.pdf']
         }
       end
     end
@@ -103,6 +103,26 @@ class P2mPreProductionsControllerTest < ActionController::TestCase # rubocop:dis
     assert_kind_of Numeric, response.parsed_body.fetch('elapsed_seconds')
     assert_match '2 files copied to Printer One/Queue A', response.parsed_body.fetch('message')
     printer_queue.verify
+  end
+
+  test 'rejects non-PDF files sent to a printer' do
+    sign_in
+    catalog = { 'Printer One' => ['Queue A'] }
+    printer_catalog = Object.new
+    printer_catalog.define_singleton_method(:call) { catalog }
+    printer_queue = Minitest::Mock.new
+
+    P2m::PrinterCatalog.stub(:new, printer_catalog) do
+      P2m::PrinterQueue.stub(:new, printer_queue) do
+        post :send_to_printer, params: {
+          directory: '2026/51780767', oms_number: '51780767', printer: 'Printer One',
+          queue: 'Queue A', selected_files: ['two.csv']
+        }
+      end
+    end
+
+    assert_response :unprocessable_content
+    assert_match 'only PDF files may be sent to a printer', response.parsed_body.fetch('message')
   end
 
   test 'rejects a printer and queue outside the catalog' do

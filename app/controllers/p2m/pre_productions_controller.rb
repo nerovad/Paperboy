@@ -85,12 +85,18 @@ module P2m
       permitted = params.permit(:directory, :oms_number, :printer, :queue, selected_files: [])
       values = permitted.to_h.symbolize_keys
       values[:filenames] = values.delete(:selected_files) if permitted.key?(:selected_files)
+      validate_pdf_filenames!(values[:filenames]) if values.key?(:filenames)
       values
     end
 
     def validate_printer_queue!(printer, queue)
       queues = PrinterCatalog.new.call
       raise ArgumentError, 'invalid printer or queue' unless queues.fetch(printer, []).include?(queue)
+    end
+
+    def validate_pdf_filenames!(filenames)
+      invalid = Array(filenames).reject { |name| File.extname(name).casecmp?('.pdf') }
+      raise ArgumentError, "only PDF files may be sent to a printer: #{invalid.first}" if invalid.any?
     end
   end
 end
