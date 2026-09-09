@@ -21,6 +21,10 @@
       <%= link_to "Upload Billing Data", p2m_data_refresh_path,
                   class: "nav-link#{' active' if current_page?(p2m_data_refresh_path)}" %>
     <% end %>
+    <% if can_use_app_feature?('p2m', 'quality_control') %>
+      <%= link_to "Quality Control", p2m_quality_control_path,
+                  class: "nav-link#{' active' if current_page?(p2m_quality_control_path)}" %>
+    <% end %>
     <% if can_use_app_feature?('p2m', 'data_reset') %>
       <%= link_to "Data Reset", p2m_data_reset_path,
                   class: "nav-link#{' active' if current_page?(p2m_data_reset_path)}" %>

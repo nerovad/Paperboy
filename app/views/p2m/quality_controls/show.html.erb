@@ -1,0 +1,33 @@
+<div class="form-header p2m-form-header"><h1>Quality Control</h1></div>
+
+<div class="form-wrapper p2m-stage-data">
+  <%= render "p2m/shared/date_range_card", title_id: "p2m-qc-date-range-title",
+             url: p2m_quality_control_path, method: :get, scope: :quality_control %>
+
+  <section class="p2m-stage-card" aria-labelledby="p2m-qc-title"
+           data-controller="p2m-quality-control">
+    <h2 id="p2m-qc-title">OMS Quality Control</h2>
+    <div class="table-wrap p2m-qc-grid">
+      <table class="submission-table p2m-qc-table">
+        <thead><tr><th aria-label="Expand"></th><th>OMS #</th><th>Date</th></tr></thead>
+        <tbody>
+          <% @oms_rows.each_with_index do |row, index| %>
+            <% oms_number = row.fetch('omsnumber').to_s %>
+            <% detail_id = "p2m-qc-#{oms_number}-details" %>
+            <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>">
+              <td><button type="button" class="p2m-row-trigger" aria-expanded="false"
+                          aria-controls="<%= detail_id %>" aria-label="Show details for OMS <%= oms_number %>"
+                          data-action="p2m-quality-control#toggle" data-detail-id="<%= detail_id %>"
+                          data-details-url="<%= details_p2m_quality_control_path(oms_number: oms_number,
+                            quality_control: { start_date: @start_date, end_date: @end_date }) %>"><span aria-hidden="true">▸</span></button></td>
+              <td><%= oms_number %></td>
+              <td><%= row['qc_date'] ? row['qc_date'].to_date : "Missing" %></td>
+            </tr>
+            <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden><td colspan="3"><div data-lazy-details>Loading…</div></td></tr>
+          <% end %>
+          <% if @oms_rows.empty? %><tr><td colspan="3">No OMS numbers were found in the selected date range.</td></tr><% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

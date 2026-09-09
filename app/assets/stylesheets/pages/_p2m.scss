@@ -210,6 +210,19 @@
   white-space: normal;
 }
 
+.p2m-qc-grid { overflow-x: auto; }
+
+.p2m-qc-table {
+  min-width: 900px;
+
+  th, td { white-space: nowrap; }
+}
+
+.p2m-qc-job-table {
+  min-width: 980px;
+  margin: .5rem 0;
+}
+
 .p2m-associated-files-table {
   width: 100%;
   margin-bottom: .75rem;
