@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require File.expand_path('../../../app/services/p2m/paths', __dir__)
+require File.expand_path('../../../../app/services/p2m/paths', __dir__)
 
 [
   'Oms',

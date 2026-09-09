@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
+require 'fileutils'
+
 class DslGroupUpdater
   class DslNameConflict < StandardError; end
 
   GROUP_PATTERN = /^    group: \{\n      name: ['"][^'"]+['"]\n    \},\n/
   GROUP_NAME_PATTERN = /\A[a-z0-9_]+\z/
+  OTHER_DSLS = 'other_dsls'
 
   def initialize(group:, slugs:)
     @group = group.to_s
@@ -62,6 +65,11 @@ class DslGroupUpdater
     without_group = source.sub(GROUP_PATTERN, '')
     updated = group ? insert_group(without_group, group) : without_group
     entry.path.write(updated) unless updated == source
+
+    destination_directory = entry.path.dirname.parent.join(group || OTHER_DSLS)
+    destination_directory.mkpath
+    destination = destination_directory.join(entry.path.basename)
+    FileUtils.mv(entry.path, destination) unless destination == entry.path
   end
 
   def insert_group(source, group)

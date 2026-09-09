@@ -12,7 +12,7 @@ class DatabaseDslCreator
   IDENTIFIER = /\A[A-Za-z0-9_]+\z/
 
   def initialize(server:, database:, table:, replicate: false, target: {}, catalog: DataRunnerDatabaseCatalog.new,
-                 dsl_directory: Rails.root.join('config/data_runner/dsl'))
+                 dsl_directory: Rails.root.join('config/data_runner/dsl/other_dsls'))
     @server = server.to_s.strip
     @database = database.to_s.strip
     @table = table.to_s.strip
