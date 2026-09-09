@@ -6,11 +6,11 @@ module P2m
       { label: 'GSABSS Companions', database: 'GSABSS', table: 'companions', job: 'budget_1_job_id' },
       { label: 'GSABSS Daily Presorts', database: 'GSABSS', table: 'daily_presorts', job: 'flduserdefined9' },
       { label: 'GSABSS Move Results', database: 'GSABSS', table: 'move_results', job: 'USER_DEFINED_9' },
-      { label: 'GSAP2M Companion', database: 'GSAP2M', table: 'Companion', job: 'budget_1_job_id' },
-      { label: 'GSAP2M Daily Presorts', database: 'GSAP2M', table: 'DailyPresort', job: 'flduserdefined09' },
+      { label: 'GSAP2M Companion', database: 'GSAP2M', table: 'Companion', job: 'Budget 1 - Job ID' },
+      { label: 'GSAP2M Daily Presorts', database: 'GSAP2M', table: 'DailyPresort', job: 'flduserdefined9' },
       { label: 'GSAP2M Move Results', database: 'GSAP2M', table: 'MoveResults', job: 'USER_DEFINED_9' }
     ].freeze
-    DETAIL_SOURCES = SOURCES.select { |source| source.fetch(:database) == 'GSABSS' }.freeze
+    DETAIL_SOURCES = SOURCES
 
     class << self
       def oms_rows(start_date:, end_date:)

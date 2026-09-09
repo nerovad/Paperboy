@@ -212,6 +212,15 @@
 
 .p2m-qc-grid { overflow-x: auto; }
 
+.p2m-qc-oms-table {
+  min-width: 0;
+  table-layout: fixed;
+
+  th:first-child, td:first-child { width: 2rem; }
+  th:nth-child(2), td:nth-child(2) { width: 9rem; }
+  th:nth-child(3), td:nth-child(3) { width: 9rem; }
+}
+
 .p2m-qc-table {
   min-width: 900px;
 
