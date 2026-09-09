@@ -1,7 +1,7 @@
 # Paperboy: Connecting County Requests, Approvals, and Operations
 
-**Executive session proposal draft**  
-**Intended audience:** County General Services Association (CGSA)  
+**Executive session proposal draft**
+**Intended audience:** County General Services Association (CGSA)
 **Status:** For review and session consideration. A complete presentation will
 be developed if CGSA accepts the proposal.
 
@@ -112,11 +112,3 @@ Before submission, confirm the presenter name, title, county affiliation,
 contact information, and any CGSA abstract or format requirements. Before the
 presentation, confirm which workflows can be demonstrated and which operational
 results are approved for public sharing.
-
-## Internal drafting references
-
-The description is grounded in the repository's [application overview](../README.md),
-[Paperboy story](PITCH.md), and [framework architecture](PAPERBOY_FRAMEWORK_ARCHITECTURE.md).
-Illustrative anecdotes and timing claims in the story are not treated here as
-verified outcomes. Remove this internal reference section from the submitted
-proposal if it will circulate independently of the repository.
