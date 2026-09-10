@@ -1518,3 +1518,5 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 1.4 | (this commit) | Unarchived batches go to the failed queue instead of being deleted, duplicate path included; `import_worker` fixture added; 54 pytest green, Ruby suite unchanged |
 | 2026-09-08 | 1.5 | (this commit) | Vision merges unified; risk flags latch instead of being discarded; 59 pytest green, Ruby suite unchanged |
 | 2026-09-08 | 1.6 | (this commit) | Crash tickets file against the invoice that crashed; queue build order made deterministic; **Phase 1 complete**; 61 pytest green, 630 runs, 413 pass, 57 fail, 160 error |
+| 2026-09-10 | — | `939a140f` | Merged master (19 commits: billing, P2M, forms) into the phase branch. Master's own errors rose 160 -> 190 in that window; measured on a clean `origin/master` worktree to confirm none of it is AIM's. Merged branch: 635 runs, 56 fail, 190 error -- six more tests and one fewer failure than master alone |
+| 2026-09-10 | — | (this merge) | **Phase 1 merged to Paperboy master.** New baseline for Phase 2: 635 runs, 56 fail, 190 error (serial), plus 61 pytest |
