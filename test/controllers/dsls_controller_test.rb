@@ -11,7 +11,7 @@ class DslsControllerTest < ActionController::TestCase
     get :index
 
     assert_response :success
-    assert_select 'h2', text: 'Empty palette'
+    assert_select 'h1', text: 'DataRunner DSLs'
   end
 
   test 'group selection opens the control center group editor' do
@@ -31,7 +31,7 @@ class DslsControllerTest < ActionController::TestCase
     assert_select '.control-center-actions input[name=?][placeholder=?]', 'new_group_name', 'Rename dslGroup name'
     assert_select '.control-center-actions input[value=?]', 'Update', false
     assert_select '.control-center-actions button[data-dsl-group-target=?][disabled=?]', 'renameButton', 'disabled', text: 'Update'
-    assert_select '.control-center-actions .button.danger', text: 'Delete'
+    assert_select '.control-center-actions .btn.deny', text: 'Delete'
     assert_select '.control-center-actions #refresh-group.btn.approve', text: 'Refresh'
     assert_select 'form[action=?]', data_runner_rename_dsl_group_path('chart_of_accounts')
     assert_select 'form[action=?]', data_runner_destroy_dsl_group_path('chart_of_accounts')
@@ -46,11 +46,11 @@ class DslsControllerTest < ActionController::TestCase
     assert_response :success
     assert_dsl_layout_order
     assert_select '.page-heading form[action=?]', data_runner_dsl_path('employees'), false
-    assert_select '.hot-menu .button', text: 'Overview'
-    assert_select '.hot-menu .button.success', text: 'Edit'
-    assert_select '.hot-menu form[action=?] .button.danger', data_runner_dsl_path('employees'), text: 'Delete'
-    assert_select '.hot-menu .button', text: 'Outputs'
-    assert_select '.hot-menu summary.button.primary', text: 'Run Task'
+    assert_select '.hot-menu .btn', text: 'Overview'
+    assert_select '.hot-menu .btn.edit', text: 'Edit'
+    assert_select '.hot-menu form[action=?] .btn.deny', data_runner_dsl_path('employees'), text: 'Delete'
+    assert_select '.hot-menu .btn', text: 'Outputs'
+    assert_select '.hot-menu summary.btn.approve', text: 'Run Task'
   end
 
   test 'edit form uses syntax highlighted source editor' do
