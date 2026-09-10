@@ -55,7 +55,7 @@ module DataRunner
 
     def work_items(run_id, item_ids)
       while (item_id = item_ids.pop(true))
-        Rails.application.executor.wrap { process_item(GroupRun.find(run_id), GroupRunItem.find(item_id)) }
+        process_item(GroupRun.find(run_id), GroupRunItem.find(item_id))
       end
     rescue ThreadError
       nil

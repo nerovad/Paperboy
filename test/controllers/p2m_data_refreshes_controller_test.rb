@@ -14,7 +14,7 @@ class P2mDataRefreshesControllerTest < ActionController::TestCase
 
     assert_response :success
     assert_select '.p2m-data-refresh-summary__row', text: /Print 2 Mail Billing Data/
-    assert_select '.p2m-data-refresh-summary__row .btn.info', text: 'How to Download'
+    assert_select '.p2m-data-refresh-summary__row .btn.info', text: 'How to Upload'
     assert_select 'table.p2m-data-refresh-table' do
       assert_select 'th', text: 'OMS #', count: 3
       assert_select 'th', text: 'Data Runner DSL', count: 0

@@ -22,5 +22,6 @@ class DslCreationLinksControllerTest < ActionController::TestCase
   def sign_in
     session[:user] = { 'employee_id' => 1, 'email' => 'employee@example.com',
                        'first_name' => 'Test', 'last_name' => 'User' }
+    @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
   end
 end
