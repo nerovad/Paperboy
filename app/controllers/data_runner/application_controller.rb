@@ -34,7 +34,7 @@ module DataRunner
     # through on the actions that skip login.
     def require_app_access
       return unless user_signed_in?
-      return if helpers.can_access_app?('data_runner') || Rails.env.test?
+      return if helpers.can_access_app?('data_runner')
 
       redirect_to root_path, alert: 'You do not have access to Data Runner.'
     end
