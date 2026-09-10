@@ -26,17 +26,6 @@ module ActiveSupport
   class TestCase
     include Rails.application.routes.url_helpers
 
-    setup do
-      next unless is_a?(ActionController::TestCase)
-      next unless controller.is_a?(DataRunner::ApplicationController)
-      next if defined?(DslAccessControllerTest) && is_a?(DslAccessControllerTest)
-
-      # These controller tests exercise actions after authentication. Give
-      # them the same broad grant as the admin user used by the fixtures;
-      # DslAccessControllerTest supplies narrower grants for the gate itself.
-      controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
-    end
-
     BASE_TEST_DATABASE = ActiveRecord::Base.connection_db_config.database
     BASE_TEST_DATABASE_CONFIGURATION = ActiveRecord::Base.connection_db_config.configuration_hash.freeze
     PARALLEL_TEST_DATABASE = "#{BASE_TEST_DATABASE}_#{SecureRandom.hex(6)}".freeze
@@ -70,6 +59,21 @@ module ActiveSupport
     # Add more helper methods to be used by all tests here...
   end
 end
+
+module DataRunnerControllerTestAccess
+  def after_setup
+    super
+    return unless @controller.is_a?(DataRunner::ApplicationController)
+    return if defined?(DslAccessControllerTest) && is_a?(DslAccessControllerTest)
+
+    # These controller tests exercise actions after authentication. Give
+    # them the same broad grant as the admin user used by the fixtures;
+    # DslAccessControllerTest supplies narrower grants for the gate itself.
+    @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
+  end
+end
+
+ActionController::TestCase.prepend(DataRunnerControllerTestAccess)
 
 Minitest.after_run do
   next unless ActiveSupport::TestCase.parallel_database_run_started
