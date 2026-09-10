@@ -60,7 +60,7 @@ class DslsControllerTest < ActionController::TestCase
 
     assert_response :success
     assert_select '[data-controller=?]', 'source-editor'
-    assert_select 'pre.code-editor-highlight .k', minimum: 1
+    assert_select 'pre.code-editor-highlight span', minimum: 1
     assert_select 'textarea[name=?][data-source-editor-target=?]', 'source', 'input'
   end
 
