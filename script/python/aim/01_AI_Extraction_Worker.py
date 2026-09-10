@@ -29,6 +29,12 @@ STALE_QUEUE_FOLDER_SECONDS = 300
 AI_QUEUE_ERROR_MARKER = ".ai_queue_error.json"
 REPROCESS_ERROR_MARKER = ".ai_reprocess_error.json"
 
+# The vendor-rule sidecar the review screens offer for rule entry. It used to
+# be written as "{processing_id}.json", the same shape as a real SQL payload,
+# in folders that already hold one -- so whichever the filesystem listed first
+# won. The suffix makes the two tellable apart by name. Plan step 1.2.
+VENDOR_RULE_SUFFIX = "_VENDOR_RULE.json"
+
 class Phase1Data(BaseModel):
     contains_multiple_invoices: bool
     is_high_confidence: bool
@@ -74,6 +80,46 @@ def mark_reprocess_error(folder_path, folder_name, pdf_path, error):
             }, marker, indent=4)
     except Exception:
         pass
+
+# A vision pass fills in what the text pass could not read. Two different
+# rules apply, and using one for both is what broke the handwriting check:
+#
+#   * A data field is filled only when it is still blank -- the first answer
+#     wins, later passes do not overwrite it.
+#   * A risk flag latches. Any pass that raises it raises it for the invoice,
+#     because "page 4's total is handwritten" is not cancelled by page 1
+#     looking fine.
+#
+# `contains_handwritten_financials` defaults to False rather than None, so the
+# blank-filling rule never copied it and the routing check below it had never
+# once fired. Step 1.5.
+STICKY_TRUE_FIELDS = ("contains_handwritten_financials",)
+
+def merge_vision_fields(master_data, vision_data):
+    """Merge one vision pass into the running answer."""
+    for field in InvoiceData.model_fields:
+        value = getattr(vision_data, field)
+
+        if field in STICKY_TRUE_FIELDS:
+            if value:
+                setattr(master_data, field, True)
+            continue
+
+        if getattr(master_data, field) is None and value is not None:
+            setattr(master_data, field, value)
+
+def write_vendor_rule_sidecar(dest_folder, processing_id, master_data):
+    """Write the vendor-rule sidecar a reviewer fills in, under its own name."""
+    vendor_name = master_data.vendor_name or master_data.extracted_vendor_name or ""
+    rule_sidecar = {
+        "vendor_name": vendor_name,
+        "existing_vendor_rules": get_rules_for_vendor(vendor_name) if master_data.vendor_name else "",
+        "new_vendor_rule": ""
+    }
+    sidecar_path = os.path.join(dest_folder, f"{processing_id}{VENDOR_RULE_SUFFIX}")
+    with open(sidecar_path, "w", encoding="utf-8") as sf:
+        json.dump(rule_sidecar, sf, indent=4)
+    return sidecar_path
 
 def folder_age_seconds(folder_path):
     try:
@@ -302,9 +348,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
         v_data1 = InvoiceData.model_validate_json(v_response['message']['content'])
     except Exception as e:
         raise RuntimeError(f"Phase 2 Vision AI Hallucination Error: Model failed to return valid JSON schema. Error: {e}")
-    for field in InvoiceData.model_fields:
-        if getattr(master_data, field) is None and getattr(v_data1, field) is not None:
-            setattr(master_data, field, getattr(v_data1, field))
+    merge_vision_fields(master_data, v_data1)
             
     print(f"      - Page 1 Vision extraction complete in {time.time()-start_time:.1f}s.")
     
@@ -327,9 +371,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
             v_data2 = InvoiceData.model_validate_json(v_response2['message']['content'])
         except Exception as e:
             raise RuntimeError(f"Phase 2 Last Page Vision AI Hallucination Error: Model failed to return valid JSON schema. Error: {e}")
-        for field in InvoiceData.model_fields:
-            if getattr(master_data, field) is None and getattr(v_data2, field) is not None:
-                setattr(master_data, field, getattr(v_data2, field))
+        merge_vision_fields(master_data, v_data2)
                 
         print(f"      - Last Page Vision extraction complete in {time.time()-start_time:.1f}s.")
 
@@ -358,9 +400,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
                     v_data3 = InvoiceData.model_validate_json(v_response3['message']['content'])
                 except Exception as e:
                     raise RuntimeError(f"Fallback Vision AI Hallucination Error: Model failed to return valid JSON schema. Error: {e}")
-                for field in InvoiceData.model_fields:
-                    if getattr(master_data, field) is None and getattr(v_data3, field) is not None:
-                        setattr(master_data, field, getattr(v_data3, field))
+                merge_vision_fields(master_data, v_data3)
                 print(f"      - Fallback Vision extraction complete in {time.time()-start_time:.1f}s.")
                 sanitize_data(master_data)
 
@@ -408,13 +448,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
         
         # Add sidecar data for GUI rule entry
-        rule_sidecar = {
-            "vendor_name": master_data.vendor_name or master_data.extracted_vendor_name or "",
-            "existing_vendor_rules": get_rules_for_vendor(master_data.vendor_name or master_data.extracted_vendor_name or "") if master_data.vendor_name else "",
-            "new_vendor_rule": ""
-        }
-        with open(os.path.join(dest_folder, f"{processing_id}.json"), "w", encoding="utf-8") as sf:
-            json.dump(rule_sidecar, sf, indent=4)
+        write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Handwritten financials detected", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
@@ -486,13 +520,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
         
         # Add sidecar data for GUI rule entry
-        rule_sidecar = {
-            "vendor_name": master_data.vendor_name or master_data.extracted_vendor_name or "",
-            "existing_vendor_rules": get_rules_for_vendor(master_data.vendor_name or master_data.extracted_vendor_name or "") if master_data.vendor_name else "",
-            "new_vendor_rule": ""
-        }
-        with open(os.path.join(dest_folder, f"{processing_id}.json"), "w", encoding="utf-8") as sf:
-            json.dump(rule_sidecar, sf, indent=4)
+        write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
         write_log(filename, "CPU Test", "ACTION_NEEDED", f"Missing: {missing}", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
@@ -508,13 +536,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
         
         # Add sidecar data for GUI rule entry
-        rule_sidecar = {
-            "vendor_name": master_data.vendor_name or master_data.extracted_vendor_name or "",
-            "existing_vendor_rules": get_rules_for_vendor(master_data.vendor_name or master_data.extracted_vendor_name or "") if master_data.vendor_name else "",
-            "new_vendor_rule": ""
-        }
-        with open(os.path.join(dest_folder, f"{processing_id}.json"), "w", encoding="utf-8") as sf:
-            json.dump(rule_sidecar, sf, indent=4)
+        write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Routed for manual check", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
@@ -560,7 +582,12 @@ def scan_directories():
     if not os.path.exists(AI_QUEUE_DIR):
         return
         
-    job_folders = [f for f in os.listdir(AI_QUEUE_DIR) if os.path.isdir(os.path.join(AI_QUEUE_DIR, f))]
+    # Sorted so a run is reproducible. os.listdir order is the filesystem's,
+    # which made the folder_name leak fixed in step 1.6 land on a different
+    # invoice from one run to the next.
+    job_folders = sorted(
+        f for f in os.listdir(AI_QUEUE_DIR) if os.path.isdir(os.path.join(AI_QUEUE_DIR, f))
+    )
     
     urgent_queue = []
     standard_queue = []
@@ -596,6 +623,11 @@ def scan_directories():
             job_data = {
                 "pdf_path": pdf_path,
                 "folder_path": folder_path,
+                # Carried explicitly. The crash handler below used to read the
+                # loop variable `folder_name`, which by then held whichever
+                # folder this build loop happened to see last -- so an error
+                # ticket was filed against a different invoice. Step 1.6.
+                "folder_name": folder_name,
                 "bu_number": ticket.get("bu_number", "Unknown"),
                 "submitter_name": ticket.get("submitter_name", "Unknown"),
                 "is_urgent": is_urgent,
@@ -622,6 +654,7 @@ def scan_directories():
     for job in master_queue:
         pdf_path = job["pdf_path"]
         folder_path = job["folder_path"]
+        folder_name = job["folder_name"]
         bu_number = job["bu_number"]
         submitter_name = job["submitter_name"]
         is_urgent = job["is_urgent"]

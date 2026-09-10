@@ -12,6 +12,7 @@ module Aim
       AIM_LINUX_QUEUE_BASE_PATH
       AIM_VENDOR_REVIEW_DIR
       AIM_READY_TO_LEARN_DIR
+      AIM_ACTION_NEEDED_DIR
     ].freeze
 
     setup do
@@ -22,11 +23,16 @@ module Aim
       ENV['AIM_LINUX_QUEUE_BASE_PATH'] = @tmpdir
       ENV['AIM_VENDOR_REVIEW_DIR'] = 'E:\AIM\_BACK_END\_VENDOR_REVIEW'
       ENV['AIM_READY_TO_LEARN_DIR'] = 'E:\AIM\_BACK_END\_READY_TO_LEARN'
+      ENV['AIM_ACTION_NEEDED_DIR'] = 'E:\AIM\_BACK_END\_ACTION_NEEDED'
 
       FileUtils.mkdir_p(vendor_review_dir)
       FileUtils.mkdir_p(ready_to_learn_dir)
+      FileUtils.mkdir_p(action_needed_dir)
 
-      session[:user] = { 'email' => 'aim.staff@example.com' }
+      # current_user is nil unless the session carries BOTH keys, and a nil
+      # current_user fails require_app_access before any AIM code runs. Every
+      # test in this file used to 302 to / for want of the employee_id.
+      session[:user] = { 'email' => 'aim.staff@example.com', 'employee_id' => 42 }
       @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
     end
 
@@ -206,7 +212,31 @@ module Aim
       assert_equal 'Test User', retry_sidecar['submitter']
     end
 
+    test 'action needed renders the payload, not the vendor-rule sidecar' do
+      create_action_needed_invoice(
+        'INV-5',
+        payload: { 'VendorName' => 'AIRGAS USA, LLC', 'InvoiceNumber' => 'INV-50' },
+        vendor_rule: { 'vendor_name' => 'AIRGAS USA, LLC', 'new_vendor_rule' => '' }
+      )
+
+      get :show, params: { id: 'INV-5', queue: 'action_needed' }
+
+      assert_response :success
+      assert_includes response.body, 'INV-50'
+      refute_includes response.body, 'new_vendor_rule'
+    end
+
     private
+
+    def create_action_needed_invoice(invoice_id, payload:, vendor_rule:)
+      folder_path = File.join(action_needed_dir, invoice_id)
+      FileUtils.mkdir_p(folder_path)
+      File.write(File.join(folder_path, "#{invoice_id}.pdf"), 'pdf')
+      File.write(File.join(folder_path, "#{invoice_id}_VENDOR_RULE.json"),
+                 JSON.pretty_generate(vendor_rule))
+      File.write(File.join(folder_path, "#{invoice_id}_READY_FOR_SQL.json"),
+                 JSON.pretty_generate(payload))
+    end
 
     def create_vendor_review_invoice(invoice_id, metadata:, learn_data: {})
       folder_path = File.join(vendor_review_dir, invoice_id)
@@ -224,6 +254,10 @@ module Aim
 
     def ready_to_learn_dir
       Aim::InvoiceDirectoryService.instance.ready_to_learn_dir
+    end
+
+    def action_needed_dir
+      Aim::InvoiceDirectoryService.instance.path_for('action_needed')
     end
   end
   # rubocop:enable Metrics/ClassLength

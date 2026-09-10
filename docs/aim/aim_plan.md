@@ -281,7 +281,9 @@ The end state, in order of delivery:
 3. **Fiscal handoff.** Approved data continues to the fiscal team.
 
 Laserfiche is the system of record for the finished document. Docushare is
-the legacy system being retired.
+the legacy system being retired. The finished document reaches it as **one
+PDF carrying its own metadata** -- see `## Decisions Already Made` -- not as a
+PDF paired with a sidecar.
 
 ---
 
@@ -564,6 +566,36 @@ Recorded so they are not relitigated.
 - **Vendor CSV import.** A rake task plus a small AIM admin upload page. Not
   Data Runner — the files arrive once a year.
 - **Laserfiche** is the target repository. Docushare is being retired.
+- **Metadata is embedded in the PDF, not shipped beside it as XML.** Decided by
+  Joshua 2026-09-08, from a working Laserfiche setup on another project. Fields
+  are written as **custom keys in the PDF Info dictionary** -- not XMP, no
+  namespace, no schema to register -- and Laserfiche reads each one by name as
+  `%(PDFmetadata_<Key>)`, spaces written as underscores. Verified against a
+  real example: `Box_Number`, `Vendor`, `Record_Series_Code` and the rest sit
+  in the Info dictionary of a file Laserfiche already indexes.
+
+  This removes the failure the XML causes rather than managing it. The XML is a
+  second copy of the truth in a second file: it can drift from the SQL row
+  (audit H5 / step 4.1), be regenerated wrong (step 1.3 found every
+  manually-corrected invoice reaching Laserfiche with `TemplateName` `Unknown`),
+  or be orphaned from its PDF. One file carrying its own metadata has none of
+  those states.
+
+  Mechanics, confirmed 2026-09-08:
+
+  - `pymupdf` is already in `script/python/aim/requirements.txt`, so stamping
+    costs no new dependency. `set_metadata()` only reaches the standard keys;
+    custom ones are written with `xref_set_key` on the Info object.
+  - A round-trip preserved `AT&T MOBILITY` and `INV-2024/001` exactly -- the
+    values steps 4.1 and 4.2 exist to stop mangling.
+  - **The original PDF is archived before stamping.** Agreed with Joshua; a
+    stamp rewrites the file, and the document as received has to survive.
+  - The stamp happens at handoff, generated from the invoice row. Nothing edits
+    metadata inside a PDF in place, so this is consistent with Phase 5: the row
+    is the truth and the PDF is an export artifact.
+
+  Consequence: `generate_laserfiche_xml` and the `.xml` sidecar are retired in
+  Phase 11, not carried alongside the new path.
 - `aimusers` / `GSABSS.dbo.aimusers` is **not** in scope and is not the
   source for BU access.
 - **Database placement (settles step 5.1).** The new AIM tables live in
@@ -943,13 +975,66 @@ them.
 
 ## Phase 1 — Stop The Silent Data Loss
 
+**Branch `aim/phase-1-dataloss`, cut from master 2026-09-08 after Phase 0
+merged (`8e4a6dda`).**
+
+Before starting a step here, read `## Guardrails` and note what Phase 0
+changed about how you work:
+
+- Run the suite **serially**: `PARALLEL_WORKERS=1 bundle exec rake test`.
+- The gate has a fifth command: `~/.venvs/aim/bin/pytest test/python/aim`.
+- The baseline to compare against is **624 runs, 406 pass, 58 failures, 160
+  errors**. The red is pre-existing and none of it is AIM's; the standard is
+  that the same tests pass after as before, not that the suite is green.
+- `env()` takes a name and nothing else, and
+  `test/lib/aim/configuration_conventions_test.rb` fails the build on a
+  hardcoded path, model name or credential. Add the variable to LockBox
+  rather than working around the guard.
+- A Python change reaches GSA-SCAN02 only through
+  `bin/deploy-aim-workers --apply`, which needs `LOCKBOX_DIR` set.
+
 Small, surgical, no schema changes. Highest value per line changed.
 
-- [ ] **1.1 `insert_sql_record` raises when no columns map.** Today it hits
+- [x] **1.1 `insert_sql_record` raises when no columns map.** Today it hits
   `if not columns: return` and every caller reports success. See audit C2.
   *Test:* a payload matching nothing raises; a valid payload still inserts.
 
-- [ ] **1.2 Rename the vendor-rule sidecar.** The AI worker writes both
+  Done 2026-09-08. Raises the new `SqlMappingError`, naming the table, the
+  mapping's keys and the payload's, so the failed-queue folder says why. The
+  SQL worker's existing `except Exception` around the billing insert already
+  routes the batch to the failed queue, so no caller changed.
+
+  Two things found on the way:
+
+  - `insert_sql_record` **could not run at all**. Step 0.6 removed `env()`'s
+    fallback parameter but left the call `env(f"{prefix}MAPPING_FILE", '')`
+    here, so every invocation raised `TypeError`. Nothing caught it because
+    nothing tests it. Fixed with the call, and the now-unreachable "no
+    MappingFile configured" skip deleted -- `env()` exits naming the variable.
+    A grep of `script/python/aim/*.py` found no other two-argument call, so
+    this was the last one 0.6 missed.
+  - The **mapping file missing from disk** was a silent `return` a few lines
+    above, failing in exactly the same way: success printed, batch deleted,
+    no row. Outside 1.1's wording, so it became step 1.1a below.
+
+- [x] **1.1a A missing mapping file raises too.** The sibling of 1.1, in the
+  same function: `insert_sql_record` printed "Mapping file ... not found" and
+  returned, so a mapping that was mistyped or never deployed lost invoices the
+  same way. Added by Joshua's decision 2026-09-08, on the finding recorded in
+  1.1. Now raises `SqlMappingError` naming the resolved path and the variable.
+  *Test:* an absent mapping file raises and executes no SQL; an absolute
+  configured path is used as-is.
+
+  Safe to raise because nothing legitimately runs without the file: both
+  `Aim_Invoices_MAPPING.json` and `Aim_Processing_Logs_MAPPING.json` are in
+  `script/python/aim/` and on the share, and `bin/deploy-aim-workers` ships
+  `*.json`, so the two cannot drift. An absent file now means something is
+  actually broken, and the batch stops instead of vanishing.
+
+  Kept out of 1.3 deliberately: 1.3 is `02_sql_worker.py` choosing which JSON
+  is the payload, a different file and a different question.
+
+- [x] **1.2 Rename the vendor-rule sidecar.** The AI worker writes both
   `{id}.json` (vendor rules) and `{id}_READY_FOR_SQL.json` (the real
   payload) into one folder. Rename the former to `{id}_VENDOR_RULE.json`
   and teach `Aim::InvoiceQueueSupport#metadata_path_for` to ignore it. See
@@ -957,28 +1042,149 @@ Small, surgical, no schema changes. Highest value per line changed.
   *Test:* Ruby — a folder containing both files resolves metadata to the
   payload. Python — the worker writes the new name.
 
-- [ ] **1.3 SQL worker selects its payload by name.** Replace
+  Done 2026-09-08. The sidecar was written in three identical inline blocks;
+  they are now one `write_vendor_rule_sidecar()` and the name comes from a
+  single `VENDOR_RULE_SUFFIX` constant, mirrored in Ruby as
+  `Aim::InvoiceQueueSupport::VENDOR_RULE_SUFFIX` with a test asserting the two
+  strings match. `metadata_path_for` now prefers a `*_READY_FOR_SQL.json`
+  explicitly rather than trusting `Dir.children` order, and the filtering moved
+  into `metadata_candidate?`.
+
+  Not renamed: the **vendor-review payload** at `01_AI_Extraction_Worker.py`
+  line 466 is also `{id}.json`, but it is real invoice metadata and the review
+  screen reads it. Only the three rule sidecars moved.
+
+  Two findings for later steps:
+
+  - **1.3 needs more than the step says.** `write_log` puts the SUCCESS
+    payload in the SQL queue as `{id}.json` (`pipeline_common.py:325`) and
+    only the ACTION_NEEDED copy as `{id}_READY_FOR_SQL.json`. Searching the
+    SQL queue for `*_READY_FOR_SQL.json`, as 1.3 is written, would skip every
+    normally-processed invoice. The SUCCESS write has to be renamed in the
+    same step, or 1.3 has to accept both names.
+  - **`test/controllers/aim/invoices_controller_test.rb` proved nothing.**
+    Every test in it redirected to `/` with "You do not have access". The
+    first reading -- that `can_access_app?('aim')` was crossing to GSABSS --
+    was wrong. `current_user` returns nil unless the session hash carries
+    **both** `email` and `employee_id`, and the file only set `email`, so
+    `require_app_access` failed on `current_user.present?` before the ACL
+    was ever consulted. Fixed in 1.2a below.
+
+- [x] **1.2a Make the AIM controller tests run at all.** Every test in
+  `test/controllers/aim/invoices_controller_test.rb` redirected to `/` before
+  reaching any AIM code, so the queue screens had no coverage and a broken one
+  would not have failed the build. Cause: `ApplicationController#current_user`
+  returns nil unless `session[:user]` has both `email` and `employee_id`, and
+  the file set only `email`. One line in `setup` fixes it; the 1.2 controller
+  test then passes end to end and is kept alongside the concern test.
+
+  Test-only, inside AIM's own file -- no shared plumbing, no fixture, no ACL
+  double. The suite went from 58 failures to 57 with nothing else touched.
+
+  Still red in that file: four tests erroring on `undefined method 'stub'`,
+  which is the shared minitest/mocha pin in Open Questions and is not AIM's to
+  fix. Note for future sessions: a redirect to `/` in an AIM controller test
+  means the session, not the ACL.
+
+- [x] **1.3 SQL worker selects its payload by name.** Replace
   `json_files[0]` with an explicit search for `*_READY_FOR_SQL.json`, and
   skip the folder with a logged reason if none is found. Never treat an
   arbitrary `.json` as a payload. See audit C1.
   *Test:* a folder with a sidecar and no payload is skipped, not deleted.
 
-- [ ] **1.4 Never delete a batch whose archive failed.** `archive_batch`
+  Done 2026-09-08. `find_payload()` in `02_sql_worker.py` is the only way a
+  payload is chosen, used by both the SQL worker and the delete worker (which
+  read "any JSON" for the BU and submitter of its archive path).
+
+  As predicted in 1.2, the step needed the naming fixed first: `write_log`
+  wrote the SUCCESS payload as `{id}.json` and only the ACTION_NEEDED copy as
+  `{id}_READY_FOR_SQL.json`. Both now use `PAYLOAD_SUFFIX`, defined once in
+  `pipeline_common.py` and mirrored by `Aim::InvoiceQueueSupport::PAYLOAD_SUFFIX`,
+  with a test asserting the two agree. No transitional acceptance of the old
+  name was needed: `_SQL_QUEUE` was empty at deploy time and was checked.
+
+  **Behaviour change worth knowing about.** The Laserfiche XML is now
+  regenerated from the payload for *every* batch, not only "manual fix" ones.
+  That branch identified a manual fix by its filename, which the rename makes
+  meaningless -- and the test was never sound anyway, since Rails writes a
+  hand-corrected vendor-review payload with `Status` `SUCCESS`
+  (`Aim::VendorReviewPayloadService`). Regenerating always means the XML and
+  the inserted row cannot disagree, which is the invariant step 4.1 is about.
+  The regeneration also now passes `document_type` through; without it every
+  regenerated XML fell back to `TemplateName` `Unknown`, so until today each
+  manually-corrected invoice reached Laserfiche with its document type lost.
+  This whole branch is temporary: step 11.4 deletes it along with the XML.
+
+- [x] **1.4 Never delete a batch whose archive failed.** `archive_batch`
   already returns a boolean that the SQL worker ignores before calling
   `shutil.rmtree`. See audit H8.
   *Test:* archive raises, folder survives, batch moves to the failed queue.
 
-- [ ] **1.5 Fix the handwritten-financials merge guard.** The merge loops
+  Done 2026-09-08. `archive_or_raise()` wraps the boolean in an `ArchiveFailed`
+  the existing `except Exception` already routes to the failed queue, so the
+  success path needed no other change.
+
+  The **duplicate-key path had the same hole** and could not use the same fix:
+  its `archive_batch` call sits inside an `except pyodbc.IntegrityError` block,
+  and a raise from there escapes the per-folder loop and takes the worker down
+  rather than being caught by the sibling handler. That one checks the boolean
+  and calls `move_folder_to_failed` before `continue`.
+
+  **Harness fix that came with it.** Worker modules read their queue
+  directories from `pipeline_common` at import and are then cached in
+  `sys.modules`, while `conftest` only dropped `pipeline_common`. The second
+  test in a file therefore kept the *first* test's temp tree and silently found
+  nothing -- it passed alone and failed in the file. New `import_worker`
+  fixture re-imports the worker per test; the 1.2 and 1.3 test files use it
+  too. Any future worker test must take `import_worker` rather than importing
+  the module itself.
+
+- [x] **1.5 Fix the handwritten-financials merge guard.** The merge loops
   skip any field whose value is not `None`, and the field defaults to
   `False`, so the vision model's answer is always discarded and the routing
   check has never fired. See audit C3.
   *Test:* a vision response with the flag true routes to Low Confidence
   Review.
 
-- [ ] **1.6 Fix the undefined `folder_name` in the crash handler.** It leaks
+  Done 2026-09-08. The three copied merge loops are now one
+  `merge_vision_fields()` holding two rules, because the field types need
+  different ones and using the data rule for both is the bug:
+
+  - a **data field** is filled only while still blank, so the first pass to
+    read it wins and a later guess cannot overwrite it;
+  - a **risk flag** in `STICKY_TRUE_FIELDS` latches -- any pass that raises it
+    raises it for the invoice.
+
+  The latching matters beyond the reported bug. Changing the field's default
+  from `False` to `None` would have made the first merge work and still lost a
+  flag raised on the last page after page 1 came back clean, because the field
+  would no longer be blank. That is the same shape of mistake as the original.
+
+  Not covered by a test: the end-to-end route into `LOW_CONFIDENCE_REVIEW_DIR`.
+  It sits inside `process_cpu_hybrid`, which needs Ollama and Tesseract, and
+  the harness rules exclude both. The tests cover the merge, and assert the
+  exact expression the routing branch uses to read it.
+
+- [x] **1.6 Fix the undefined `folder_name` in the crash handler.** It leaks
   the last value from an earlier loop, so error tickets are filed under the
   wrong invoice. See audit M6.
   *Test:* a crash during processing files its ticket under the right id.
+
+  Done 2026-09-08. The job dict carries `folder_name`, and the processing loop
+  unpacks it like every other field, so nothing there depends on a variable
+  left behind by the queue-building loop.
+
+  **`job_folders` is now sorted**, which the step did not ask for but the test
+  needed. `os.listdir` order is the filesystem's, so which invoice the leak
+  landed on changed from run to run -- the first version of the test passed
+  against the unfixed worker because the wrong answer happened to be the right
+  one. Sorted, the queue is built in a reproducible order, the crashing
+  invoice can be chosen so it is deliberately *not* the last folder seen, and
+  the test fails against the old code with `['INV-2'] == ['INV-1']`.
+
+  Worth remembering for the rest of Phase 1 and beyond: a test that passes
+  against the unfixed code proves nothing, and two of the six steps here had
+  one at first. Check every new test both ways.
 
 ---
 
@@ -1018,8 +1224,12 @@ is built from these values as strings.
 
 - [ ] **4.1 Stop mangling vendor names.** `sanitize_data` rewrites `&` to
   `and`, which changes the business key for 58 of ~900 official vendors and
-  makes the Laserfiche XML disagree with the SQL row. See audit H5.
-  *Test:* `AT&T MOBILITY` survives extraction and XML generation intact.
+  makes what Laserfiche receives disagree with the SQL row. See audit H5.
+  *Test:* `AT&T MOBILITY` survives extraction and reaches Laserfiche intact --
+  the XML today, the stamped PDF after 11.3. A `pymupdf` round-trip through
+  the Info dictionary was checked and preserves `&` and `/` exactly, so the
+  mangling is `sanitize_data`'s alone and does not come back with the new
+  path.
 
 - [ ] **4.2 Stop stripping invoice and order numbers.** `_clean_text_field`
   removes everything outside `[a-zA-Z0-9_\- ]`, so `INV-2024/001` becomes
@@ -1191,6 +1401,28 @@ layout feeds another system. The target is the same flow through Laserfiche.
 - [ ] **11.1 Populate the chart-of-accounts columns** from the vendor/BU
   lookup.
 - [ ] **11.2 The fiscal export** in the layout Fiscal specifies.
+- [ ] **11.3 Stamp the metadata into the PDF.** Write the invoice's fields as
+  custom PDF Info-dictionary keys at handoff, archiving the unstamped original
+  first. See `## Decisions Already Made`.
+
+  The fields are the ones `generate_laserfiche_xml` emits today plus the
+  identity Phase 3 settles: vendor name, invoice number, invoice total,
+  invoice date (the four-field business key), order number, customer number,
+  budget unit, submitter, document type, `business_key` and `batch_id`. Key
+  names use underscores for spaces, because that is how Laserfiche addresses
+  them (`%(PDFmetadata_Vendor_Name)`).
+  *Test:* a stamped PDF round-trips every field unchanged, punctuation and
+  ampersands included; the archived original is byte-identical to what arrived.
+- [ ] **11.4 Retire the Laserfiche XML.** Remove `generate_laserfiche_xml`, the
+  `.xml` sidecar and the regeneration in `02_sql_worker.py` once 11.3 is
+  proven in Laserfiche. This also retires the unconditional regeneration step
+  1.3 introduced, and `TemplateName`, which becomes the stamped document type.
+
+  `AIM_LASERFICHE_INBOX_PATH` survives the change but moves: it is the XML's
+  `FolderPath` today, and becomes either a stamped key or the destination the
+  finished PDF is written to. Decide which when 11.3 is written -- it stays a
+  variable either way.
+  *Test:* a full pipeline run produces no `.xml`, and nothing reads one.
 
 ---
 
@@ -1276,3 +1508,15 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | — | 7c97bac7 | Merged master (26 commits, incl. Rails 8.1); pulled LockBox; launcher now restarts workers; redeployed |
 | 2026-09-08 | — | (this commit) | Fixed UNC working-directory assumption in the launchers; redeployed; all five workers restart and run clean |
 | 2026-09-08 | 0.8 | (this commit) | Configuration guard added and proved against planted literals; **Phase 0 complete**; 624 runs, 406 pass, 58 fail, 160 error |
+| 2026-09-08 | — | `76a33ae` (LockBox) | LockBox `aim-config` merged to master and pushed; the twelve AIM variables are live for the team |
+| 2026-09-08 | — | `8e4a6dda` | **Phase 0 merged to Paperboy master.** LockBox landed first, as the ordering requires |
+| 2026-09-08 | 1.1 | (this commit) | `insert_sql_record` raises `SqlMappingError`; dead `env()` second argument fixed; 40 pytest green, Ruby suite unchanged at 624/406/58/160 |
+| 2026-09-08 | 1.1a | (this commit) | Missing mapping file raises rather than skipping; 42 pytest green, Ruby suite unchanged |
+| 2026-09-08 | 1.2 | (this commit) | Vendor-rule sidecar renamed `_VENDOR_RULE.json`; `metadata_path_for` prefers the payload; 629 runs, 411 pass, 58 fail, 160 error; 45 pytest green |
+| 2026-09-08 | 1.2a | (this commit) | AIM controller tests unblocked (missing `employee_id` in the test session); 630 runs, 413 pass, 57 fail, 160 error |
+| 2026-09-08 | 1.3 | (this commit) | One payload name (`PAYLOAD_SUFFIX`); SQL worker picks it explicitly; XML always regenerated, document type kept; 50 pytest green, Ruby suite unchanged |
+| 2026-09-08 | 1.4 | (this commit) | Unarchived batches go to the failed queue instead of being deleted, duplicate path included; `import_worker` fixture added; 54 pytest green, Ruby suite unchanged |
+| 2026-09-08 | 1.5 | (this commit) | Vision merges unified; risk flags latch instead of being discarded; 59 pytest green, Ruby suite unchanged |
+| 2026-09-08 | 1.6 | (this commit) | Crash tickets file against the invoice that crashed; queue build order made deterministic; **Phase 1 complete**; 61 pytest green, 630 runs, 413 pass, 57 fail, 160 error |
+| 2026-09-10 | — | `939a140f` | Merged master (19 commits: billing, P2M, forms) into the phase branch. Master's own errors rose 160 -> 190 in that window; measured on a clean `origin/master` worktree to confirm none of it is AIM's. Merged branch: 635 runs, 56 fail, 190 error -- six more tests and one fewer failure than master alone |
+| 2026-09-10 | — | (this merge) | **Phase 1 merged to Paperboy master.** New baseline for Phase 2: 635 runs, 56 fail, 190 error (serial), plus 61 pytest |
