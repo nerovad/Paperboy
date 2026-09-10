@@ -17,7 +17,8 @@ module TrackableStatus
 
   included do
     has_many :status_changes, as: :trackable, dependent: :destroy
-    has_many :form_submission_copies, as: :submission, dependent: :destroy
+    has_many :form_submission_copies, as: :submission, class_name: 'Forms::SubmissionCopy',
+                                       dependent: :destroy
     after_create :record_initial_status
     after_create :deliver_copy_recipients_on_submit
     after_create :deliver_email_steps_on_submit

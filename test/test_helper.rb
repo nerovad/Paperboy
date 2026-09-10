@@ -13,7 +13,9 @@ require_relative 'support/isolated_dsl_catalog'
 module PaperboyMinitestStubCompatibility
   def stub(name, value, *block_args, **block_kwargs, &block)
     original = value
-    value = ->(*) { original } if original.respond_to?(:call) && !original.is_a?(Proc) && !original.is_a?(Method)
+    mock = original.class == Minitest::Mock # rubocop:disable Style/ClassEqualityComparison
+    callable = !mock && original.respond_to?(:call)
+    value = ->(*) { original } if callable && original.class != Proc && original.class != Method
     super(name, value, *block_args, **block_kwargs, &block) # rubocop:disable Style/SuperArguments
   end
 end
