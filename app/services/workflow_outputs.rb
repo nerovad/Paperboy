@@ -21,8 +21,10 @@ class WorkflowOutputs
 
   def files
     stems = output_stems
-    OUTPUT_DIRECTORIES.flat_map do |directory|
-      @root.glob("#{directory}/**/*").select(&:file?).select do |path|
+    output_roots = [@root, Pathname(WorkflowPaths::INBOX_DIR)]
+    output_roots.flat_map do |root|
+      directories = root == @root ? OUTPUT_DIRECTORIES : ['.']
+      directories.flat_map { |directory| root.glob("#{directory}/**/*") }.select(&:file?).select do |path|
         EXTENSIONS.include?(path.extname.downcase) && stems.include?(path.basename(path.extname).to_s.downcase)
       end
     end.sort

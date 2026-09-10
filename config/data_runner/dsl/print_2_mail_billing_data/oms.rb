@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
-require File.expand_path('../../../../app/services/p2m/paths', __dir__)
+require 'pathname'
+
+app_root = defined?(Rails) ? Rails.root : Pathname.new(File.expand_path('../../../../', __dir__))
+require app_root.join('app/services/p2m/paths').to_s
 
 [
   'Oms',

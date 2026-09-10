@@ -1,7 +1,7 @@
 # AI Instructions
 
 - Generated Ruby conforms to `.rubocop.yml`.
-- CI Pipeline requirements:
+- CI Pipeline requirements does not report errors:
   * bundle exec rubocop
   * bundle exec brakeman
   * bundle exec bundle-audit check

@@ -6,6 +6,10 @@ module Aim
     include Aim::InvoiceFileSupport
     include Aim::InvoiceXmlMetadataSupport
 
+    # Written by 01_AI_Extraction_Worker.py alongside the real payload.
+    VENDOR_RULE_SUFFIX = '_VENDOR_RULE.json'
+    PAYLOAD_SUFFIX = '_READY_FOR_SQL.json'
+
     private
 
     def set_queue
@@ -64,10 +68,24 @@ module Aim
         return File.join(folder_path, xml_files.first) if xml_files.any?
       end
 
-      json_files = children.select do |file_name|
-        file_name.downcase.end_with?('.json') && !file_name.include?('_LEARN') && file_name != '.claim.json'
-      end
-      json_files.any? ? File.join(folder_path, json_files.first) : nil
+      json_files = children.select { |file_name| metadata_candidate?(file_name) }
+      return nil if json_files.empty?
+
+      # A folder can hold more than one JSON, and Dir.children order is the
+      # filesystem's, not ours. The SQL payload is the metadata; the others are
+      # sidecars that only look like it. Step 1.2.
+      payload = json_files.find { |file_name| file_name.end_with?(PAYLOAD_SUFFIX) }
+      File.join(folder_path, payload || json_files.first)
+    end
+
+    def metadata_candidate?(file_name)
+      return false unless file_name.downcase.end_with?('.json')
+      return false if file_name == '.claim.json'
+      return false if file_name.include?('_LEARN')
+
+      # The AI worker's vendor-rule sidecar. It carries rule-entry fields, not
+      # invoice metadata, and reading it as metadata blanked the review screen.
+      !file_name.end_with?(VENDOR_RULE_SUFFIX)
     end
 
     def read_metadata(metadata_path)
