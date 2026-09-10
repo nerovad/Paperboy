@@ -68,9 +68,11 @@ module DataRunner
       started_clock = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       workspace = item_workspace(run, item)
       item.update!(status: 'running', started_at: started_at)
+      environment = dependency_environment(run, item, workspace)
+      ActiveRecord::Base.connection_pool.release_connection
       status = with_log(run) do |log|
         TaskRunner.run_selector!(task: 'refresh', selector: item.dsl_slug, output: log,
-                                 environment: dependency_environment(run, item, workspace))
+                                 environment: environment)
       end
       item_status = status.success? ? 'succeeded' : 'failed'
       complete_item(run, item, status: item_status, started_clock: started_clock)
@@ -79,6 +81,7 @@ module DataRunner
       append_log(run) { |log| log.puts("[FAIL] #{item.dsl_name}: #{e.message}") }
     ensure
       FileUtils.rm_rf(workspace) if workspace&.to_s&.start_with?(Rails.root.join('tmp/data_runner_runs').to_s)
+      ActiveRecord::Base.connection_pool.release_connection
     end
 
     def complete_item(run, item, status:, started_clock:, error_message: nil)
