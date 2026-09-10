@@ -11,7 +11,7 @@ class DslNewGroupPortalControllerTest < ActionController::TestCase
     get :index, params: { group: 'Finance Reporting' }
 
     assert_response :success
-    assert_select 'h1', text: 'Finance Reporting'
+    assert_select 'h1', text: 'Finance reporting'
     assert_select 'form[data-controller=?][action=?]', 'dsl-group',
                   data_runner_dsl_group_path('finance_reporting')
     assert_select '.dsl-dropzone[data-dsl-group-target=?]', 'dropzone'
