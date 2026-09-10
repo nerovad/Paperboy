@@ -6,8 +6,9 @@ module HsaAdoptionCards
   # +mapping+ says which key from the page becomes which procedure parameter.
   # A key not in the mapping is dropped, so the page can never smuggle in a
   # parameter of its own; a key whose value is blank is left out so the
-  # procedure's own default applies. Who ran it always travels along as
-  # @AppUser, which is what the search log records.
+  # procedure's own default applies. Who ran it travels along as @AppUser,
+  # which is what the search log records; the maintenance procedure has no
+  # such parameter, so it is only bound when given.
   #
   # Values are bound with sanitize_sql_array rather than interpolated, the
   # same way Billing calls its export procedures.
@@ -30,7 +31,7 @@ module HsaAdoptionCards
 
     # => Array of Hashes keyed by the procedure's column names, dates as
     #    ISO strings, SQL Server's blank-date placeholder (1900-01-01) as nil.
-    def call(params, app_user:)
+    def call(params, app_user: nil)
       sql = statement(params, app_user)
       Connection.open { |client| client.execute(sql).map { |row| normalize(row) } }
     rescue StandardError => e
@@ -53,7 +54,7 @@ module HsaAdoptionCards
         value = params[key]
         acc[param] = value unless value.nil? || value.to_s.strip.empty?
       end
-      bound['@AppUser'] = app_user
+      bound['@AppUser'] = app_user if app_user
       bound
     end
 

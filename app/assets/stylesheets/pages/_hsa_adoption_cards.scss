@@ -425,3 +425,29 @@
   padding: 30px;
   text-align: center;
 }
+
+/* ---- maintenance ---- */
+
+.hsa-ac-section-title {
+  color: $text-strong;
+  font-size: 1rem;
+  font-weight: 650;
+  margin: 0 0 6px;
+}
+
+.hsa-ac-grid--narrow {
+  grid-template-columns: minmax(190px, 360px);
+}
+
+.hsa-ac-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.hsa-ac-counts {
+  margin-top: 10px;
+  max-width: 360px;
+
+  th { cursor: default; }
+}

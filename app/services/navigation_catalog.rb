@@ -64,7 +64,8 @@ class NavigationCatalog
     'coa' => Coa::Tables::LOOKUPS,
     'hsa_adoption_cards' => [
       { key: 'search', label: 'Search', route: :hsa_adoption_cards_search_path },
-      { key: 'browse', label: 'Browse', route: :hsa_adoption_cards_browse_path }
+      { key: 'browse', label: 'Browse', route: :hsa_adoption_cards_browse_path },
+      { key: 'maintenance', label: 'Maintenance', route: :hsa_adoption_cards_maintenance_path }
     ]
   }.freeze
 

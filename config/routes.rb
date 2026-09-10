@@ -168,6 +168,8 @@ Rails.application.routes.draw do
     get 'browse', to: 'browse#index', as: :browse
     post 'browse', to: 'browse#create'
     get 'cards/pdf', to: 'cards#pdf', as: :card_pdf
+    get 'maintenance', to: 'maintenance#index', as: :maintenance
+    post 'maintenance/rebuild', to: 'maintenance#rebuild', as: :maintenance_rebuild
   end
 
   namespace :data_runner do

@@ -1,0 +1,75 @@
+<%# app/views/hsa_adoption_cards/maintenance/index.html.erb
+    Rebuild every case group after a batch of newly keyed cards. The
+    procedure re-derives the normalised table first, so this one button
+    covers both. Confirmed through the shared modal because it deletes and
+    recreates every link a searcher sees. %>
+<div class="hsa-ac-page">
+  <header class="hsa-ac-page-header">
+    <div>
+      <h1 class="hsa-ac-page-title">Maintenance</h1>
+      <p class="hsa-ac-page-subtitle">Run this after each batch of newly keyed cards so they are linked into their cases.</p>
+    </div>
+    <span class="hsa-ac-who">Signed in as <%= current_user.email %></span>
+  </header>
+
+  <% if @error %>
+    <div class="hsa-ac-error">
+      <strong>The rebuild did not run.</strong><br><%= @error.message %>
+      <% if @error.detail %>
+        <div class="hsa-ac-note hsa-ac-mono"><%= @error.detail %></div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <section class="hsa-ac-panel">
+    <h2 class="hsa-ac-section-title">Rebuild case groups</h2>
+    <p class="hsa-ac-note">
+      Every card is re-read, its names and numbers normalised, and the Child, Birth Parents and
+      Adoptive Parents cards of each case relinked from scratch. Existing links are replaced, so
+      a case someone confirmed by review is scored again. Searching keeps working while it runs.
+    </p>
+
+    <%= form_with url: hsa_adoption_cards_maintenance_rebuild_path, method: :post, local: true,
+                  class: "hsa-ac-rebuild",
+                  data: { turbo_confirm: "This replaces every case group with a fresh scoring of all cards. Continue?",
+                          confirm_title: "Rebuild case groups",
+                          confirm_label: "Rebuild" } do |f| %>
+      <div class="hsa-ac-grid hsa-ac-grid--narrow">
+        <div>
+          <%= f.label :ambiguity_margin, "Ambiguity margin" %>
+          <%= f.number_field :ambiguity_margin, value: @margin, min: HsaAdoptionCards::CaseGroupRebuild::MARGIN_RANGE.min,
+                             max: HsaAdoptionCards::CaseGroupRebuild::MARGIN_RANGE.max, step: 1 %>
+          <p class="hsa-ac-note">
+            When a card's two best candidates score within this many points of each other the case is
+            marked <em>Needs review</em> instead of being linked automatically. The default is
+            <%= HsaAdoptionCards::CaseGroupRebuild::DEFAULT_MARGIN %>; a larger number sends more cases to review.
+          </p>
+        </div>
+      </div>
+      <div class="hsa-ac-actions">
+        <%= f.button "Rebuild case groups", type: :submit, class: "btn warning" %>
+      </div>
+    <% end %>
+  </section>
+
+  <% if @result %>
+    <section class="hsa-ac-panel">
+      <h2 class="hsa-ac-section-title">Result</h2>
+      <p class="hsa-ac-note">Ambiguity margin <%= @result.margin %>. <%= @result.total %> case <%= 'group'.pluralize(@result.total) %> in total.</p>
+      <table class="hsa-ac-browse hsa-ac-counts">
+        <thead><tr><th>Status</th><th>Groups</th></tr></thead>
+        <tbody>
+          <% if @result.counts.empty? %>
+            <tr><td colspan="2">No case groups were formed. There may be no Child cards keyed yet.</td></tr>
+          <% end %>
+          <% @result.counts.each do |status, count| %>
+            <tr>
+              <td><span class="hsa-ac-badge is-<%= status %>"><%= status %></span></td>
+              <td class="hsa-ac-mono"><%= count %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  <% end %>
+</div>

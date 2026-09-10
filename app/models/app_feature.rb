@@ -81,8 +81,9 @@ class AppFeature
       { key: 'processing_queues', label: 'Processing Queues' }
     ],
     'hsa_adoption_cards' => [
-      { key: 'search', label: 'Search' },
-      { key: 'browse', label: 'Browse' }
+      { key: 'search',      label: 'Search' },
+      { key: 'browse',      label: 'Browse' },
+      { key: 'maintenance', label: 'Maintenance (rebuild case groups)' }
     ],
     # Data Runner's sidebar is a live list of DSLs rather than fixed buttons,
     # so only its standing control is fixed here. Every DSL is grantable too —
