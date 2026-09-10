@@ -8,7 +8,9 @@ class DatabaseDslCreator
   Preview = Data.define(
     :server, :database, :schema, :table,
     :replicate, :target_server, :target_database, :target_schema, :target_table
-  )
+  ) do
+    def to_a = deconstruct
+  end
   IDENTIFIER = /\A[A-Za-z0-9_]+\z/
 
   def initialize(server:, database:, table:, replicate: false, target: {}, catalog: DataRunnerDatabaseCatalog.new,

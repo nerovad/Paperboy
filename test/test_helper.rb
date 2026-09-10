@@ -3,10 +3,13 @@
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 require 'rails/test_help'
+require 'minitest/mock'
 require_relative 'support/isolated_dsl_catalog'
 
 module ActiveSupport
   class TestCase
+    include Rails.application.routes.url_helpers
+
     BASE_TEST_DATABASE = ActiveRecord::Base.connection_db_config.database
     BASE_TEST_DATABASE_CONFIGURATION = ActiveRecord::Base.connection_db_config.configuration_hash.freeze
     PARALLEL_TEST_DATABASE = "#{BASE_TEST_DATABASE}_#{SecureRandom.hex(6)}".freeze

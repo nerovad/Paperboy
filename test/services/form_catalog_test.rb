@@ -11,7 +11,7 @@ require 'test_helper'
 # config/routes.rb rather than from any row.
 class FormCatalogTest < ActiveSupport::TestCase
   def template(name:, file_name:, id: nil, **attributes)
-    Forms::Template.new(name: name, file_name: file_name, **attributes).tap do |record|
+    Forms::Template.new(name: name, class_name: file_name.camelize, **attributes).tap do |record|
       record.id = id
       record.define_singleton_method(:form_fields) { [] }
     end

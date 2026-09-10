@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 class DslCatalog
+  SOP_GROUPS = %w[
+    billing chart_of_accounts mail_center_and_warehousing
+    print_2_mail print_2_mail_billing_data
+  ].freeze
+
   Entry = Data.define(:key, :slug, :path, :config) do
     def group
       return config.dig(:group, :name).presence unless path
@@ -18,6 +23,7 @@ class DslCatalog
     def sop
       configured = config[:sop]
       return if configured.nil?
+      return unless SOP_GROUPS.include?(config.dig(:group, :name))
 
       shared = configured[:shared]
       return configured if shared.nil?
