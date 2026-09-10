@@ -187,6 +187,7 @@ Rails.application.routes.draw do
     patch '/dsl_groups/:group/rename', to: 'dsls#rename_group', as: :rename_dsl_group
     delete '/dsl_groups/:group', to: 'dsls#destroy_group', as: :destroy_dsl_group
     post '/dsl_groups/:group/refresh', to: 'group_refreshes#create', as: :refresh_dsl_group
+    get '/group_refreshes', to: 'group_refreshes#index', as: :group_refreshes
     get '/runs/:id', to: 'runs#show', as: :run
     resources :group_runs, only: :show do
       member { get :status }
