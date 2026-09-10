@@ -6,6 +6,7 @@ module Billing
   # A fixed grid avoids Prawn's expensive table measurement for large reports.
   # rubocop:disable Metrics/ClassLength
   class PdfReportRenderer
+    DATE_FORMAT = '%m/%d/%y'
     ROWS_PER_PAGE = 29
     PAGE_SIZE = [17 * 72, 11 * 72].freeze
     ROW_HEIGHT = 8 * 72 / 25.4
@@ -52,7 +53,7 @@ module Billing
 
     def draw_header(pdf)
       pdf.font_size(8) do
-        header_text(pdf, "Date Range: #{report.start_date} to #{report.end_date}", 0, 380, :left)
+        header_text(pdf, date_range, 0, 380, :left)
         header_text(pdf, File.basename(definition.fetch('pdffile')), 380, 300, :center)
         header_text(pdf, billing_summary, 680, pdf.bounds.width - 680, :right)
       end
@@ -164,10 +165,19 @@ module Billing
 
     def pdf_value(value)
       case value
-      when Date, Time, DateTime then value.strftime('%Y-%m-%d')
+      when Date, Time, DateTime then value.strftime(DATE_FORMAT)
       when Float then format('%.2f', value)
       else value.to_s
       end
+    end
+
+    def formatted_report_date(value)
+      Date.iso8601(value).strftime(DATE_FORMAT)
+    end
+
+    def date_range
+      format('Date Range: %s to %s', formatted_report_date(report.start_date),
+             formatted_report_date(report.end_date))
     end
 
     def numeric_value(value)

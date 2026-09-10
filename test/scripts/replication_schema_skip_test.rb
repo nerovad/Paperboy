@@ -50,7 +50,7 @@ class ReplicationSchemaSkipTest < Minitest::Test
       scripts = File.join(root, 'script/ruby')
       FileUtils.mkdir_p(scripts)
       FileUtils.cp_r(File.expand_path('../../script/ruby/data_runner', __dir__), scripts)
-      directory = File.join(root, 'config/data_runner/dsl')
+      directory = File.join(root, 'config/data_runner/dsl/other_dsls')
       FileUtils.mkdir_p(directory)
       path = File.join(directory, 'replica.rb')
       File.write(path, <<~RUBY)

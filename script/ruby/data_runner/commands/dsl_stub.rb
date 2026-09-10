@@ -4,6 +4,7 @@
 require 'fileutils'
 
 DSL_DIR = File.expand_path('../../../../config/data_runner/dsl', __dir__)
+DSL_OTHER_DIR = File.join(DSL_DIR, 'other_dsls')
 StubTarget = Struct.new(:host, :database, :schema, :dsl_name, keyword_init: true)
 
 def usage!
@@ -107,11 +108,11 @@ end
 if __FILE__ == $PROGRAM_NAME
   target = stub_target(ARGV.first)
   name = target.dsl_name
-  path = File.join(DSL_DIR, "#{name}.rb")
+  path = File.join(DSL_OTHER_DIR, "#{name}.rb")
 
   abort "[FAIL] #{path} already exists" if File.exist?(path)
 
-  FileUtils.mkdir_p(DSL_DIR)
+  FileUtils.mkdir_p(DSL_OTHER_DIR)
   File.write(path, render_stub(target))
   puts "[OK] Created config/data_runner/dsl/#{File.basename(path)}"
 end

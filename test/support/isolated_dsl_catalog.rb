@@ -10,7 +10,7 @@ module IsolatedDslCatalog
 
   # DSLs resolve application helpers relative to their original source path.
   def evaluation_path(path)
-    Rails.root.join('config/data_runner/dsl', path.basename)
+    path
   end
 
   def directory

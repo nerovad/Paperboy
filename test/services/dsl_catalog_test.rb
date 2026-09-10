@@ -4,7 +4,9 @@ require 'test_helper'
 
 class DslCatalogTest < ActiveSupport::TestCase
   test 'loads every repository DSL into grouped and ungrouped collections' do
-    expected_count = Rails.root.glob('config/data_runner/dsl/*.rb').size
+    expected_count = Rails.root.glob('config/data_runner/dsl/*/*.rb').count do |path|
+      path.dirname.basename.to_s != 'shared'
+    end
 
     assert_equal expected_count, DslCatalog.entries.size
     assert_equal expected_count, DslCatalog.grouped.values.flatten.size + DslCatalog.ungrouped.size

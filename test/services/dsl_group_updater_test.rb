@@ -5,15 +5,12 @@ require 'test_helper'
 class DslGroupUpdaterTest < ActiveSupport::TestCase
   test 'adds and removes group membership across DSL files' do
     originals = DslCatalog.entries.to_h { |entry| [entry.path, entry.path.read] }
-    grouped = DslCatalog.find!('activities')
-    ungrouped = DslCatalog.find!('employees')
-
     DslGroupUpdater.new(group: 'chart_of_accounts', slugs: ['employees']).update!
 
-    assert_no_match(/group: \{\n      name: 'chart_of_accounts'\n    \},/, grouped.path.read)
-    assert_match(/group: \{\n      name: 'chart_of_accounts'\n    \},\n    source: \{/, ungrouped.path.read)
+    assert_not DslCatalog.find!('activities').path.to_s.include?('/chart_of_accounts/')
+    assert_match(%r{/chart_of_accounts/employees\.rb\z}, DslCatalog.find!('employees').path.to_s)
   ensure
-    originals&.each { |path, source| path.write(source) }
+    restore_catalog(originals)
     DslCatalog.reload!
   end
 
@@ -25,13 +22,11 @@ class DslGroupUpdaterTest < ActiveSupport::TestCase
 
   test 'adds a DSL to a new valid group' do
     originals = DslCatalog.entries.to_h { |entry| [entry.path, entry.path.read] }
-    employee = DslCatalog.find!('employees')
-
     DslGroupUpdater.new(group: 'finance_reporting', slugs: ['employees']).update!
 
-    assert_match(/group: \{\n      name: 'finance_reporting'\n    \},\n    source: \{/, employee.path.read)
+    assert_match(%r{/finance_reporting/employees\.rb\z}, DslCatalog.find!('employees').path.to_s)
   ensure
-    originals&.each { |path, source| path.write(source) }
+    restore_catalog(originals)
     DslCatalog.reload!
   end
 
@@ -44,7 +39,7 @@ class DslGroupUpdaterTest < ActiveSupport::TestCase
     assert(DslCatalog.entries.select { |entry| entry.group == 'finance_reporting' }.many?)
     assert_empty(DslCatalog.entries.select { |entry| entry.group == 'chart_of_accounts' })
   ensure
-    originals&.each { |path, source| path.write(source) }
+    restore_catalog(originals)
     DslCatalog.reload!
   end
 
@@ -61,7 +56,7 @@ class DslGroupUpdaterTest < ActiveSupport::TestCase
 
     assert_equal originals, current
   ensure
-    originals&.each { |path, source| path.write(source) }
+    restore_catalog(originals)
     DslCatalog.reload!
   end
 
@@ -72,7 +67,20 @@ class DslGroupUpdaterTest < ActiveSupport::TestCase
 
     assert_empty(DslCatalog.entries.select { |entry| entry.group == 'chart_of_accounts' })
   ensure
-    originals&.each { |path, source| path.write(source) }
+    restore_catalog(originals)
     DslCatalog.reload!
+  end
+
+  private
+
+  def restore_catalog(originals)
+    return unless originals
+
+    directory = DslCatalog.send(:directory)
+    directory.glob('*/*.rb').each(&:delete)
+    originals.each do |path, source|
+      path.dirname.mkpath
+      path.write(source)
+    end
   end
 end

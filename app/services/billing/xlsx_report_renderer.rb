@@ -4,7 +4,9 @@ require 'axlsx'
 require 'bigdecimal'
 
 module Billing
+  # rubocop:disable Metrics/ClassLength
   class XlsxReportRenderer
+    DATE_FORMAT = '%m/%d/%y'
     BILLING_LABEL_INDEX = 27
     DECIMAL_COLUMN_INDEXES = [7, 23, 24, 25].freeze
     TEXT_COLUMNS = %w[DOC_NMBR DOC_NUBR DOC_NUMBR CUNIT COBJECT CACTIVTY
@@ -71,7 +73,7 @@ module Billing
     def add_data_rows(sheet, styles)
       rows = result.rows.presence || [[]]
       rows.each_with_index do |row, index|
-        values = row
+        values = format_dates(row)
         row_styles = data_styles(styles)
         next sheet.add_row(values, style: row_styles, types: data_types) unless index.zero?
 
@@ -117,10 +119,24 @@ module Billing
     def add_summary_sheet(workbook)
       workbook.add_worksheet(name: 'Summary') do |sheet|
         sheet.add_row ['Report', definition.fetch('name')]
-        sheet.add_row ['Start Date', report.start_date]
-        sheet.add_row ['End Date', report.end_date]
+        sheet.add_row ['Start Date', formatted_report_date(report.start_date)]
+        sheet.add_row ['End Date', formatted_report_date(report.end_date)]
         sheet.add_row ['Rows', result.rows.length]
       end
     end
+
+    def format_dates(values)
+      values.map do |value|
+        case value
+        when Date, Time, DateTime then value.strftime(DATE_FORMAT)
+        else value
+        end
+      end
+    end
+
+    def formatted_report_date(value)
+      Date.iso8601(value).strftime(DATE_FORMAT)
+    end
   end
+  # rubocop:enable Metrics/ClassLength
 end

@@ -21,6 +21,7 @@ module P2m
       available = associated_files.call(directory: directory, oms_number: oms_number)
       selected = Array(filenames)
       selected = available.select { |name| File.extname(name).casecmp?('.pdf') } if filenames.nil?
+      validate_pdf_filenames!(selected)
       invalid = selected - available
       raise ArgumentError, "associated file not found: #{invalid.first}" if invalid.any?
       raise ArgumentError, 'select at least one file' if selected.empty?
@@ -44,6 +45,7 @@ module P2m
       available = associated_files.call(directory: directory, oms_number: oms_number)
       selected = Array(filenames)
       selected = available.select { |name| File.extname(name).casecmp?('.pdf') } if filenames.nil?
+      validate_pdf_filenames!(selected)
       invalid = selected - available
       raise ArgumentError, "associated file not found: #{invalid.first}" if invalid.any?
       raise ArgumentError, 'select at least one file' if selected.empty?
@@ -68,6 +70,11 @@ module P2m
 
     def matching_file?(source, target)
       target.file? && source.size == target.size && source.mtime == target.mtime
+    end
+
+    def validate_pdf_filenames!(filenames)
+      invalid = filenames.reject { |name| File.extname(name).casecmp?('.pdf') }
+      raise ArgumentError, "only PDF files may be sent to a printer: #{invalid.first}" if invalid.any?
     end
   end
 end

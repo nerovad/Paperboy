@@ -1,6 +1,15 @@
 # DSL Dataset Files
 
-This directory stores one `DSL_MAP` entry per file.
+This directory stores one `DSL_MAP` entry per file. Each entry lives under
+the directory for its DSL group:
+
+```text
+config/data_runner/dsl/<dsl_group>/<dsl_name>.rb
+```
+
+DSLs that are not assigned to a group live under `other_dsls/`. When a DSL is
+removed from a group, remove its `group` block and move it there. The `shared/`
+directory contains shared SOP configuration and is not a DSL group.
 
 ## File Contract
 

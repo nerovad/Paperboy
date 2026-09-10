@@ -13,81 +13,87 @@
       <p>Select an active Billing period before running the audit.</p>
     </div>
   <% else %>
-    <section class="billing-audit-group" aria-labelledby="billing-types-title">
-      <h2 id="billing-types-title">Billing Type Audit</h2>
+    <section class="billing-audit-group" data-controller="billing-audit-sections" aria-labelledby="billing-types-title">
+      <h2 id="billing-types-title"><button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle" data-action="billing-audit-sections#toggle" aria-expanded="true" aria-controls="billing-types-content"><span aria-hidden="true">▾</span>Billing Type Audit</button></h2>
       <% if @billing_type_audits.any? %>
-        <div class="billing-audit-grid">
-          <% @billing_type_audits.each do |result| %>
-            <% type_card_classes = "billing-audit-card billing-type-audit-card#{' billing-audit-card--failure' if result.error_count.positive?}" %>
-            <% type_card = capture do %>
-              <h3><%= result.code %></h3>
-              <p><%= result.name.presence || result.code %></p>
-              <div class="billing-type-audit-counts">
-                <div>
-                  <span class="billing-audit-count"><%= number_with_delimiter result.row_count %></span>
-                  <span>Rows</span>
-                </div>
-                <div>
-                  <span class="billing-audit-count"><%= number_with_delimiter result.error_count %></span>
-                  <span>Errors</span>
-                </div>
-              </div>
-            <% end %>
-            <% if result.error_count.positive? %>
-              <%= link_to billing_type_audit_rows_path(result.code),
-                          class: "#{type_card_classes} billing-audit-card--link" do %>
-                <%= type_card %>
+        <div id="billing-types-content" data-billing-audit-sections-target="content">
+        <div class="billing-type-audit-table-wrapper">
+          <table class="billing-type-audit-table" aria-labelledby="billing-types-title">
+            <thead>
+              <tr>
+                <th scope="col" aria-label="Status"></th>
+                <th scope="col">Type</th>
+                <th scope="col">Name</th>
+                <th scope="col">Rows</th>
+                <th scope="col">Errors</th>
+                <th scope="col">Total Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @billing_type_audits.each do |result| %>
+                <% failed = result.error_count.positive? %>
+                <%= tag.tr class: ("clickable-row" if failed),
+                           data: (failed ? { controller: "clickable-row", action: "click->clickable-row#click",
+                                             href: billing_type_audit_rows_path(result.code) } : {}) do %>
+                  <td>
+                    <span class="billing-type-audit-status<%= ' billing-type-audit-status--failure' if failed %>"
+                          role="img" aria-label="<%= failed ? 'Errors found' : 'No errors' %>"><%= failed ? '✕' : '✓' %></span>
+                  </td>
+                  <th scope="row">
+                    <% if failed %>
+                      <%= link_to result.code, billing_type_audit_rows_path(result.code) %>
+                    <% else %>
+                      <%= result.code %>
+                    <% end %>
+                  </th>
+                  <td><%= result.name.presence || result.code %></td>
+                  <td><%= number_with_delimiter result.row_count %></td>
+                  <td><%= number_with_delimiter result.error_count %></td>
+                  <td><%= number_to_currency result.total_cost %></td>
+                <% end %>
               <% end %>
-            <% else %>
-              <article class="<%= type_card_classes %>"><%= type_card %></article>
-            <% end %>
-          <% end %>
+            </tbody>
+          </table>
+        </div>
         </div>
       <% else %>
         <p>No active Billing types are enabled.</p>
       <% end %>
     </section>
 
-    <section class="billing-audit-group" aria-labelledby="cost-analysis-title">
-      <h2 id="cost-analysis-title">Cost Analysis</h2>
-      <div class="billing-audit-grid">
+    <section class="billing-audit-group" data-controller="billing-audit-sections" aria-labelledby="cost-analysis-title">
+      <h2 id="cost-analysis-title"><button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle" data-action="billing-audit-sections#toggle" aria-expanded="true" aria-controls="cost-analysis-content"><span aria-hidden="true">▾</span>Cost Analysis</button></h2>
+      <div id="cost-analysis-content" data-billing-audit-sections-target="content"><div class="billing-type-audit-table-wrapper">
         <% amount_cost_failed = !@cost_analysis.amount_cost_variance.zero? %>
-        <% amount_cost_card = capture do %>
-          <h3>Amount vs Cost</h3>
-          <p class="billing-audit-formula">Amount − Cost</p>
-          <div class="billing-audit-count"><%= number_to_currency @cost_analysis.amount_cost_variance %></div>
-        <% end %>
-        <% if amount_cost_failed %>
-          <%= link_to billing_cost_audit_rows_path(:amount_vs_cost),
-                      class: "billing-audit-card billing-audit-card--failure billing-audit-card--link" do %>
-            <%= amount_cost_card %>
-          <% end %>
-        <% else %>
-          <article class="billing-audit-card"><%= amount_cost_card %></article>
-        <% end %>
-      </div>
+        <table class="billing-type-audit-table billing-summary-audit-table">
+          <thead><tr><th scope="col" aria-label="Status"></th><th scope="col">Check</th><th scope="col">Variance</th></tr></thead>
+          <tbody><%= tag.tr class: ("clickable-row" if amount_cost_failed), data: (amount_cost_failed ? { controller: "clickable-row", action: "click->clickable-row#click", href: billing_cost_audit_rows_path(:amount_vs_cost) } : {}) do %>
+            <td><span class="billing-type-audit-status<%= ' billing-type-audit-status--failure' if amount_cost_failed %>" role="img" aria-label="<%= amount_cost_failed ? 'Errors found' : 'No errors' %>"><%= amount_cost_failed ? '✕' : '✓' %></span></td>
+            <th scope="row"><%= link_to_if amount_cost_failed, 'Amount vs Cost', billing_cost_audit_rows_path(:amount_vs_cost) %></th>
+            <td><%= number_to_currency @cost_analysis.amount_cost_variance %></td>
+          <% end %></tbody>
+        </table>
+      </div></div>
     </section>
 
     <% @audit_groups.each do |group, results| %>
-      <section class="billing-audit-group" aria-labelledby="<%= group.key %>-title">
-        <h2 id="<%= group.key %>-title"><%= group.label %></h2>
-        <div class="billing-audit-grid">
+      <section class="billing-audit-group" data-controller="billing-audit-sections" aria-labelledby="<%= group.key %>-title">
+        <h2 id="<%= group.key %>-title"><button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle" data-action="billing-audit-sections#toggle" aria-expanded="true" aria-controls="<%= group.key %>-content"><span aria-hidden="true">▾</span><%= group.label %></button></h2>
+        <div id="<%= group.key %>-content" data-billing-audit-sections-target="content"><div class="billing-type-audit-table-wrapper">
+          <table class="billing-type-audit-table billing-summary-audit-table">
+            <thead><tr><th scope="col" aria-label="Status"></th><th scope="col">Check</th><th scope="col">Errors</th></tr></thead>
+            <tbody>
           <% results.each do |result| %>
-            <% card_classes = "billing-audit-card#{' billing-audit-card--failure' if result.count.positive?}" %>
-            <% card = capture do %>
-              <h3><%= result.label %></h3>
-              <div class="billing-audit-count"><%= number_with_delimiter result.count %></div>
-              <p><%= 'Error'.pluralize(result.count) %></p>
-            <% end %>
-            <% if result.count.positive? %>
-              <%= link_to billing_audit_detail_path(result.key), class: "#{card_classes} billing-audit-card--link" do %>
-                <%= card %>
-              <% end %>
-            <% else %>
-              <article class="<%= card_classes %>"><%= card %></article>
+            <% failed = result.count.positive? %>
+            <%= tag.tr class: ("clickable-row" if failed), data: (failed ? { controller: "clickable-row", action: "click->clickable-row#click", href: billing_audit_detail_path(result.key) } : {}) do %>
+              <td><span class="billing-type-audit-status<%= ' billing-type-audit-status--failure' if failed %>" role="img" aria-label="<%= failed ? 'Errors found' : 'No errors' %>"><%= failed ? '✕' : '✓' %></span></td>
+              <th scope="row"><%= link_to_if failed, result.label, billing_audit_detail_path(result.key) %></th>
+              <td><%= number_with_delimiter result.count %></td>
             <% end %>
           <% end %>
-        </div>
+            </tbody>
+          </table>
+        </div></div>
       </section>
     <% end %>
   <% end %>

@@ -1,0 +1,40 @@
+<% upload = @details.fetch(:upload) %>
+<div class="p2m-qc-details">
+  <table class="submission-table p2m-qc-summary-table">
+    <thead><tr><th>Printed</th><th>Mailed</th><th>UAA</th></tr></thead>
+    <tbody><tr>
+      <td><%= upload&.input_record_count || "Missing" %></td>
+      <td><%= upload&.mailed_record_count || "Missing" %></td>
+      <td><%= upload&.non_mailed_record_count || "Missing" %></td>
+    </tr></tbody>
+  </table>
+  <table class="submission-table p2m-qc-table p2m-qc-database-table">
+    <thead><tr><th aria-label="Expand"></th><th>Source</th><th>Companions</th><th>Daily Presorts</th><th>Move Results</th><th>QC</th></tr></thead>
+    <tbody>
+      <% @details.fetch(:databases).each do |database, result| %>
+        <% detail_id = "p2m-qc-#{@details.fetch(:oms_number)}-#{database}-jobs" %>
+        <tr>
+          <td><button type="button" class="p2m-row-trigger" aria-expanded="false"
+                      aria-controls="<%= detail_id %>" data-action="p2m-quality-control#toggle"
+                      data-detail-id="<%= detail_id %>"><span aria-hidden="true">▸</span></button></td>
+          <td><%= database %></td>
+          <% result.fetch(:totals).each do |total| %><td><%= total.positive? ? total : "Missing" %></td><% end %>
+          <td><%= result.fetch(:match) ? "Match" : "Mismatch" %></td>
+        </tr>
+        <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden><td colspan="6">
+          <table class="submission-table p2m-qc-job-table">
+            <thead><tr><th>JOB #</th><th>Companions</th><th>Daily Presorts</th><th>Move Results</th><th>Printed</th><th>Mailed</th><th>UAA</th><th>QC</th></tr></thead>
+            <tbody>
+              <% result.fetch(:jobs).each do |job| %><tr><td><%= job.fetch(:job_number) %></td>
+                <% job.fetch(:sources).each do |source| %><td><%= source[:row_count] || "Missing" %></td><% end %>
+                <td><%= upload&.input_record_count || "Missing" %></td><td><%= upload&.mailed_record_count || "Missing" %></td>
+                <td><%= upload&.non_mailed_record_count || "Missing" %></td><td><%= job[:match] ? "Match" : "Mismatch" %></td>
+              </tr><% end %>
+              <% if result.fetch(:jobs).empty? %><tr><td colspan="8">Missing</td></tr><% end %>
+            </tbody>
+          </table>
+        </td></tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

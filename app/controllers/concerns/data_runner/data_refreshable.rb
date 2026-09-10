@@ -18,7 +18,8 @@ module DataRunner
     def show; end
 
     def update
-      run = data_refresh_service.run!(data_refresh_group_values, requested_by: current_user.email)
+      run = data_refresh_service.run!(data_refresh_group_values, requested_by: current_user.email,
+                                                                 selected_entries: data_refresh_selected_entries)
       return redirect_to data_refresh_form_path, notice: 'No Data Runner groups were selected.' unless run
 
       redirect_to data_refresh_progress_path(run),
@@ -63,6 +64,12 @@ module DataRunner
 
     def data_refresh_group_values
       params.require(:groups).permit(*data_refresh_service.group_configuration.keys).to_h
+    end
+
+    def data_refresh_selected_entries
+      return unless params.key?(:selected_oms_numbers)
+
+      params.permit(selected_oms_numbers: []).fetch(:selected_oms_numbers)
     end
 
     def set_data_refresh_run

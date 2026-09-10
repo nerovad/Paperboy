@@ -22,6 +22,8 @@ class P2mDataRefreshesControllerTest < ActionController::TestCase
       assert_select 'td', text: '51671902'
       assert_select 'td', text: '51786524'
       assert_select 'td', text: '51843363'
+      assert_select 'input[type=checkbox][name="selected_oms_numbers[]"]', count: 3
+      assert_select 'input[type=checkbox][name="selected_oms_numbers[]"][checked]', count: 3
       assert_select 'td', text: 'OMS 51671902', count: 0
       assert_select 'td', text: 'Queued', count: 0
     end
@@ -39,7 +41,9 @@ class P2mDataRefreshesControllerTest < ActionController::TestCase
       raise DataRunner::GroupRefresh::QueueUnavailable, 'connection refused'
     end
 
-    patch :update, params: { groups: { print_2_mail_billing_data: '1' } }
+    patch :update, params: {
+      groups: { print_2_mail_billing_data: '1' }, selected_oms_numbers: ['51786524']
+    }
 
     assert_redirected_to p2m_data_refresh_path
     assert_equal 'The data refresh could not be queued because Redis is unavailable.', flash[:alert]

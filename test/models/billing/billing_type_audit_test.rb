@@ -9,15 +9,17 @@ module Billing
       alias_method :active?, :active
     end
 
-    test 'returns counts for active Billing types only' do
+    test 'returns counts and decimal cost totals for active Billing types only' do
       types = [
         FakeType.new(code: 'GPH', name: 'Graphics', active: true),
         FakeType.new(code: 'OFF', name: 'Disabled', active: false)
       ]
-      rows = ActiveRecord::Result.new(%w[billing_type row_count error_count], [['GPH', 7, 2]])
+      rows = ActiveRecord::Result.new(%w[billing_type row_count error_count total_cost], [['GPH', 7, 2, '1234.56']])
       connection = Minitest::Mock.new
       connection.expect(:exec_query, rows) do |sql|
         assert_includes sql, 'SUM(Audited.is_error)'
+        assert_includes sql, 'COALESCE(SUM(Audited.cost), 0) AS total_cost'
+        assert_includes sql, 'ROUND(T.[COST], 2) AS cost'
         assert_includes sql, 'FROM ( SELECT T.[TYPE]'
         assert_includes sql, "N'GPH'"
         refute_includes sql, 'OFF'
@@ -31,6 +33,20 @@ module Billing
       assert_equal ['GPH'], results.map(&:code)
       assert_equal [7], results.map(&:row_count)
       assert_equal [2], results.map(&:error_count)
+      assert_equal BigDecimal('1234.56'), results.first.total_cost
+      connection.verify
+    end
+
+    test 'returns zero totals for active types without rows' do
+      type = FakeType.new(code: 'GPH', name: 'Graphics', active: true)
+      connection = Minitest::Mock.new
+      connection.expect(:exec_query, ActiveRecord::Result.new([], []), [String])
+
+      result = BillingTypeAudit.new(period, types: [type], connection: connection).results.first
+
+      assert_equal 0, result.row_count
+      assert_equal 0, result.error_count
+      assert_equal BigDecimal('0'), result.total_cost
       connection.verify
     end
 

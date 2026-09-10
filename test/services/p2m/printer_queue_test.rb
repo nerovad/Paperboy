@@ -8,7 +8,7 @@ require_relative '../../../app/services/p2m/printer_queue'
 
 module P2m
   class PrinterQueueTest < Minitest::Test
-    def test_copies_only_selected_associated_files_into_the_printer_queue
+    def test_rejects_selected_non_pdf_files
       Dir.mktmpdir do |directory|
         root = Pathname.new(directory).join('Outputs')
         source = root.join('job').tap(&:mkpath)
@@ -16,14 +16,14 @@ module P2m
         source.join('Mail.dat_50000001.zip').write('maildat')
         source.join('50000001-companion.csv').write('companion')
 
-        count = PrinterQueue.new(root: root, destination: destination).copy(
-          directory: 'job', oms_number: '50000001', printer: 'Printer One', queue: 'Queue A',
-          filenames: ['50000001-companion.csv']
-        )
+        error = assert_raises(ArgumentError) do
+          PrinterQueue.new(root: root, destination: destination).copy(
+            directory: 'job', oms_number: '50000001', printer: 'Printer One', queue: 'Queue A',
+            filenames: ['50000001-companion.csv']
+          )
+        end
 
-        assert_equal 1, count
-        copied_names = destination.join('Printer One/Queue A').children.map { _1.basename.to_s }
-        assert_equal ['50000001-companion.csv'], copied_names
+        assert_match 'only PDF files may be sent to a printer', error.message
       end
     end
 

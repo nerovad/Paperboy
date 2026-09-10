@@ -15,8 +15,10 @@
           <% extension = File.extname(name).downcase %>
           <% checkbox_id = "p2m-file-#{@oms_number}-#{row_index}-#{column_index}" %>
           <td class="p2m-associated-file-select">
-            <%= check_box_tag "selected_files[]", name, false, id: checkbox_id,
-                              aria: { label: "Select #{name}" } %>
+            <% if extension == '.pdf' %>
+              <%= check_box_tag "selected_files[]", name, false, id: checkbox_id,
+                                aria: { label: "Select #{name}" } %>
+            <% end %>
           </td>
           <td>
             <% if %w[.csv .txt .zip].include?(extension) %>

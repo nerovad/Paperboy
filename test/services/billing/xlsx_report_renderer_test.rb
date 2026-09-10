@@ -66,6 +66,21 @@ module Billing
       end
     end
 
+    test 'formats dates as month, day, and two-digit year' do
+      report = MonthlyReport.new(
+        operation: 'print', start_date: '2026-07-01', end_date: '2026-07-31'
+      )
+      result = ActiveRecord::Result.new(['DATE'], [[Date.new(2026, 7, 15)]])
+
+      files = xlsx_files(XlsxReportRenderer.new(report, { 'name' => 'Billing' }, result).call)
+      data_sheet = worksheet(files)
+      summary_sheet = Nokogiri::XML(files.fetch('xl/worksheets/sheet2.xml')).tap(&:remove_namespaces!)
+
+      assert_equal '07/15/26', data_sheet.at_xpath("//c[@r='A2']/is/t").text
+      assert_equal '07/01/26', summary_sheet.at_xpath("//c[@r='B2']/is/t").text
+      assert_equal '07/31/26', summary_sheet.at_xpath("//c[@r='B3']/is/t").text
+    end
+
     private
 
     def worksheet(files)
