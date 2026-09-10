@@ -15,7 +15,7 @@ module PaperboyMinitestStubCompatibility
     original = value
     mock = original.class == Minitest::Mock # rubocop:disable Style/ClassEqualityComparison
     callable = !mock && original.respond_to?(:call)
-    value = ->(*) { original } if callable && original.class != Proc && original.class != Method
+    value = ->(*) { original } if mock || (callable && original.class != Proc && original.class != Method)
     super(name, value, *block_args, **block_kwargs, &block) # rubocop:disable Style/SuperArguments
   end
 end
