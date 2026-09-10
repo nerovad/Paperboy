@@ -38,7 +38,8 @@ class NavigationCatalog
     'data_runner' => 'dsl etl data runner',
     'billing' => 'billing charges invoices',
     'admin_tools' => 'admin administration tools',
-    'print_production' => 'production shop bookmarks links'
+    'print_production' => 'production shop bookmarks links',
+    'hsa_adoption_cards' => 'hsa adoption cards scanned records case search'
   }.freeze
 
   # An app's fixed sidebar links, each behind the ACL > Application Features
@@ -60,7 +61,11 @@ class NavigationCatalog
       { key: 'oms_status', label: 'OMS Status', route: :p2m_oms_status_path },
       { key: 'data_refresh', label: 'Upload Billing Data', route: :p2m_data_refresh_path }
     ],
-    'coa' => Coa::Tables::LOOKUPS
+    'coa' => Coa::Tables::LOOKUPS,
+    'hsa_adoption_cards' => [
+      { key: 'search', label: 'Search', route: :hsa_adoption_cards_search_path },
+      { key: 'browse', label: 'Browse', route: :hsa_adoption_cards_browse_path }
+    ]
   }.freeze
 
   def initialize(view)
@@ -86,7 +91,7 @@ class NavigationCatalog
            when 'admin_tools' then admin_tools_rows
            when 'billing' then billing_rows
            when 'coa' then coa_rows
-           when 'digital_asset_management', 'p2m' then feature_rows(app[:key])
+           when 'digital_asset_management', 'p2m', 'hsa_adoption_cards' then feature_rows(app[:key])
            when 'aim' then aim_rows
            when 'data_runner' then data_runner_rows
            when 'print_production' then production_rows

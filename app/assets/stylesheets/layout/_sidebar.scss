@@ -447,6 +447,15 @@
     }
   }
 
+  &.hsa-adoption-cards-sidebar {
+    /* Blue theme (from $blue-action in _tokens.scss). */
+    --sidebar-accent: #{$blue-action};
+    --sidebar-accent-hover: #{$blue-action-hover};
+    --sidebar-accent-ring: #{rgba($blue-action, 0.2)};
+    --sidebar-accent-soft: #{rgba($blue-action, 0.08)};
+    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$blue-action});
+  }
+
   &.data-runner-sidebar {
     /* Blue / navy theme (from $brand-navy in _tokens.scss). */
     --sidebar-accent: #{$brand-navy};

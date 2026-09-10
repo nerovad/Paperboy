@@ -1,0 +1,80 @@
+<%# app/views/hsa_adoption_cards/search/index.html.erb
+    One box that works out what it was given — a surname, a case number, a
+    date — plus specific fields to narrow it. The Stimulus controller posts
+    the JSON to hsa_adoption_cards_search_path and renders the cards grouped
+    by case beneath the form. %>
+<div class="hsa-ac-page"
+     data-controller="hsa-adoption-cards"
+     data-hsa-adoption-cards-mode-value="search"
+     data-hsa-adoption-cards-search-url-value="<%= hsa_adoption_cards_search_path %>"
+     data-hsa-adoption-cards-pdf-url-value="<%= hsa_adoption_cards_card_pdf_path %>"
+     data-hsa-adoption-cards-share-connected-value="<%= @share_status[:connected] %>"
+     data-hsa-adoption-cards-share-message-value="<%= @share_status[:message] %>">
+
+  <header class="hsa-ac-page-header">
+    <div>
+      <h1 class="hsa-ac-page-title">Adoption Card Search</h1>
+      <p class="hsa-ac-page-subtitle">Find a card from any fragment and see the whole case it belongs to.</p>
+    </div>
+    <span class="hsa-ac-who" data-hsa-adoption-cards-target="who">Searching as <%= current_user.email %></span>
+  </header>
+
+  <form class="hsa-ac-panel" data-hsa-adoption-cards-target="form" data-action="submit->hsa-adoption-cards#search">
+    <div class="hsa-ac-searchrow">
+      <input type="search" class="hsa-ac-box" autocomplete="off" autofocus
+             placeholder="Name, case number, VEN/A#, or date of birth"
+             data-hsa-adoption-cards-target="box"
+             data-action="input->hsa-adoption-cards#updateHint">
+      <select class="hsa-ac-select" title="Which card must the match come from?"
+              data-hsa-adoption-cards-target="cardType"
+              data-action="change->hsa-adoption-cards#updateHint">
+        <option value="">Any card</option>
+        <option value="CHILD">Child card</option>
+        <option value="BIRTH PARENTS">Birth Parents card</option>
+        <option value="ADOPTIVE PARENTS">Adoptive Parents card</option>
+      </select>
+      <button type="submit" class="btn approve" data-hsa-adoption-cards-target="go">Search</button>
+      <button type="button" class="btn clear-filters" data-action="hsa-adoption-cards#clear">Clear</button>
+    </div>
+
+    <div class="hsa-ac-hintrow">
+      <div class="hsa-ac-hint" data-hsa-adoption-cards-target="hint">
+        Type anything — a surname, a partial case number, a date. Separate several things with
+        commas to require all of them; wrap anything containing a comma in quotes.
+      </div>
+      <label class="hsa-ac-switch" title="Match each term against every field — names, notes, numbers and all three dates — instead of guessing what it is">
+        <input type="checkbox" data-hsa-adoption-cards-target="everywhere"
+               data-action="change->hsa-adoption-cards#updateHint"> Search everywhere
+      </label>
+    </div>
+
+    <details class="hsa-ac-advanced">
+      <summary>Add specific fields</summary>
+      <p class="hsa-ac-note">These narrow whatever is in the box above. Fill in what you know; leave the rest blank.</p>
+      <div class="hsa-ac-grid">
+        <div><label for="hsa-ac-lastName">Last name</label><input id="hsa-ac-lastName" autocomplete="off" data-hsa-adoption-cards-target="field" data-key="lastName"></div>
+        <div><label for="hsa-ac-firstName">First name</label><input id="hsa-ac-firstName" autocomplete="off" data-hsa-adoption-cards-target="field" data-key="firstName"></div>
+        <div><label for="hsa-ac-caseNumber">Case number</label><input id="hsa-ac-caseNumber" autocomplete="off" data-hsa-adoption-cards-target="field" data-key="caseNumber"></div>
+        <div><label for="hsa-ac-venOrA">VEN or A number</label><input id="hsa-ac-venOrA" autocomplete="off" data-hsa-adoption-cards-target="field" data-key="venOrA"></div>
+        <div><label for="hsa-ac-dob">Date of birth</label><input id="hsa-ac-dob" type="date" data-hsa-adoption-cards-target="field" data-key="dob"></div>
+        <div><label for="hsa-ac-dobYear">Birth year only</label><input id="hsa-ac-dobYear" inputmode="numeric" maxlength="4" data-hsa-adoption-cards-target="field" data-key="dobYear"></div>
+        <div><label for="hsa-ac-closeDate">Closed date</label><input id="hsa-ac-closeDate" type="date" data-hsa-adoption-cards-target="field" data-key="closeDate"></div>
+        <div><label for="hsa-ac-finalDate">Final decree date</label><input id="hsa-ac-finalDate" type="date" data-hsa-adoption-cards-target="field" data-key="finalDate"></div>
+        <div><label for="hsa-ac-anyText">Any text / notes</label><input id="hsa-ac-anyText" autocomplete="off" data-hsa-adoption-cards-target="field" data-key="anyText"></div>
+        <div><label for="hsa-ac-reason">Request reference</label><input id="hsa-ac-reason" autocomplete="off" placeholder="e.g. RR-2026-0142" data-hsa-adoption-cards-target="reason"></div>
+      </div>
+      <div class="hsa-ac-checks">
+        <label><input type="checkbox" checked data-hsa-adoption-cards-target="fuzzy"
+                      data-action="change->hsa-adoption-cards#updateHint"> Include names that sound alike</label>
+        <label><input type="checkbox" data-hsa-adoption-cards-target="dobFuzzy"> Allow one wrong part in a date</label>
+      </div>
+      <p class="hsa-ac-note">The request reference is written to the search log alongside your username.</p>
+    </details>
+  </form>
+
+  <div class="hsa-ac-meta" data-hsa-adoption-cards-target="meta" hidden></div>
+  <div class="hsa-ac-results" data-hsa-adoption-cards-target="results"
+       data-action="click->hsa-adoption-cards#resultsClick"></div>
+
+  <%= render "hsa_adoption_cards/shared/viewer" %>
+</div>

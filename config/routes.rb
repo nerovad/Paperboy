@@ -161,6 +161,15 @@ Rails.application.routes.draw do
     get 'data_refresh/runs/:run_id/log', to: 'data_refreshes#log', as: :data_refresh_run_log
   end
 
+  namespace :hsa_adoption_cards do
+    root 'dashboard#home'
+    get 'search', to: 'search#index', as: :search
+    post 'search', to: 'search#create'
+    get 'browse', to: 'browse#index', as: :browse
+    post 'browse', to: 'browse#create'
+    get 'cards/pdf', to: 'cards#pdf', as: :card_pdf
+  end
+
   namespace :data_runner do
     root 'dsls#index'
 

@@ -55,7 +55,8 @@ class AclController < ApplicationController
     { key: 'print_production', label: 'Print Production' },
     { key: 'billing', label: 'Billing' },
     { key: 'admin_tools', label: 'Admin Tools' },
-    { key: 'p2m', label: 'Print 2 Mail' }
+    { key: 'p2m', label: 'Print 2 Mail' },
+    { key: 'hsa_adoption_cards', label: 'HSA Adoption Card Search' }
   ].freeze
 
   LEGACY_FORMS = [

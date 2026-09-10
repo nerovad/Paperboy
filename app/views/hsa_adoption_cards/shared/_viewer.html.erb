@@ -1,0 +1,20 @@
+<%# app/views/hsa_adoption_cards/shared/_viewer.html.erb
+    The scanned-card viewer: the shared pb-modal shell around an iframe that
+    streams the PDF from hsa_adoption_cards_card_pdf_path. Read-only — a
+    person who wants a copy saves it from the viewer; the source scan on the
+    share is never touched. %>
+<div class="pb-modal-backdrop" hidden data-hsa-adoption-cards-target="viewer"
+     data-action="click->hsa-adoption-cards#viewerBackdrop">
+  <div class="pb-modal pb-modal--xl hsa-ac-viewer" role="dialog" aria-modal="true" aria-labelledby="hsa-ac-viewer-title">
+    <div class="pb-modal__header">
+      <h3 id="hsa-ac-viewer-title" data-hsa-adoption-cards-target="viewerLabel">Scanned card</h3>
+      <button type="button" class="pb-modal__close" aria-label="Close"
+              data-action="hsa-adoption-cards#closeViewer">✕</button>
+    </div>
+    <div class="pb-modal__body hsa-ac-viewer__body">
+      <p class="hsa-ac-viewer__path" data-hsa-adoption-cards-target="viewerPath"></p>
+      <iframe class="hsa-ac-viewer__frame" title="Scanned card" data-hsa-adoption-cards-target="viewerFrame"></iframe>
+      <div class="hsa-ac-viewer__fail" hidden data-hsa-adoption-cards-target="viewerFail"></div>
+    </div>
+  </div>
+</div>

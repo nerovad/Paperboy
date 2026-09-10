@@ -39,6 +39,26 @@
       "user_input": "params[:path]",
       "confidence": "Weak",
       "note": "WorkflowOutputs#find! cleanpaths and limits files to known workflow output directories."
+    },
+    {
+      "warning_type": "File Access",
+      "warning_code": 16,
+      "fingerprint": "328cf7d0cf9e291e5ca790374c294a3d45d8a3b2b454c3313e6c650839a75c5f",
+      "check_name": "SendFile",
+      "message": "Parameter value used in file name",
+      "file": "app/controllers/hsa_adoption_cards/cards_controller.rb",
+      "line": 16,
+      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
+      "code": "send_file(CardFile.resolve(params[:path]), :type => \"application/pdf\", :disposition => \"inline\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "HsaAdoptionCards::CardsController",
+        "method": "pdf"
+      },
+      "user_input": "params[:path]",
+      "confidence": "Weak",
+      "note": "HsaAdoptionCards::CardFile.resolve allows only .pdf, rejects '..', and requires the expanded path to sit under the configured scanned-cards mount (test/services/hsa_adoption_cards/card_file_test.rb)."
     }
   ],
   "updated": "2026-07-10 14:08:00 -0700",
