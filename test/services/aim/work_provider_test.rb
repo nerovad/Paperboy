@@ -13,7 +13,7 @@ module Aim
       Dir.mktmpdir do |directory|
         invoice = File.join(directory, 'INV-123')
         Dir.mkdir(invoice)
-        provider = Aim::WorkProvider.new(directory_service: DirectoryService.new(action_needed: directory))
+        provider = Aim::WorkProvider.new(directory_service: DirectoryService.new(paths: { action_needed: directory }))
 
         items = provider.inbox_items(
           viewer: { email: 'reviewer@example.gov', applications: ['aim'] },
@@ -30,7 +30,7 @@ module Aim
         invoice = File.join(directory, 'INV-456')
         Dir.mkdir(invoice)
         File.write(File.join(invoice, '.claim.json'), { user: 'other@example.gov' }.to_json)
-        provider = Aim::WorkProvider.new(directory_service: DirectoryService.new(action_needed: directory))
+        provider = Aim::WorkProvider.new(directory_service: DirectoryService.new(paths: { action_needed: directory }))
 
         items = provider.inbox_items(
           viewer: { email: 'reviewer@example.gov', applications: ['aim'] },

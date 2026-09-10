@@ -68,9 +68,8 @@
         <div id="main-content">
           <% if content_for?(:image) %>
             <%= yield :image %>
-          <% else %>
-            <%= yield %>
           <% end %>
+          <%= yield %>
           
           <!-- Login (over image) -->
           <% unless session[:user_id] %>

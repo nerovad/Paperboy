@@ -54,13 +54,11 @@ module DataRunner
     def worker_count(_run) = DOWNLOAD_CONCURRENCY
 
     def work_items(run_id, item_ids)
-      Rails.application.executor.wrap do
-        while (item_id = item_ids.pop(true))
-          process_item(GroupRun.find(run_id), GroupRunItem.find(item_id))
-        end
-      rescue ThreadError
-        nil
+      while (item_id = item_ids.pop(true))
+        Rails.application.executor.wrap { process_item(GroupRun.find(run_id), GroupRunItem.find(item_id)) }
       end
+    rescue ThreadError
+      nil
     end
 
     def process_item(run, item)
