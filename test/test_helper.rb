@@ -6,6 +6,20 @@ require 'rails/test_help'
 require 'minitest/mock'
 require_relative 'support/isolated_dsl_catalog'
 
+# Existing tests use callable objects as stubbed return values (for example,
+# service doubles exposing #call). minitest-mock treats every callable value as
+# a callback, so preserve that older test-suite convention while keeping Proc
+# and Method callbacks working normally.
+module PaperboyMinitestStubCompatibility
+  def stub(name, value, *block_args, **block_kwargs, &block)
+    original = value
+    value = ->(*) { original } if original.respond_to?(:call) && !original.is_a?(Proc) && !original.is_a?(Method)
+    super(name, value, *block_args, **block_kwargs, &block) # rubocop:disable Style/SuperArguments
+  end
+end
+
+Object.prepend(PaperboyMinitestStubCompatibility)
+
 module ActiveSupport
   class TestCase
     include Rails.application.routes.url_helpers

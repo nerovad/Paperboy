@@ -483,7 +483,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :probation_transfer_requests, only: %i[new create index show],
+  resources :probation_transfer_requests, only: %i[new create index show edit update destroy],
                                           controller: 'forms/probation_transfer_requests' do
     member do
       get :pdf
