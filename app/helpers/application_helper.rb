@@ -130,6 +130,7 @@ module ApplicationHelper
     apps << { key: 'billing', label: 'Billing', path: billing_root_path } if can_access_app?('billing')
     apps << { key: 'admin_tools', label: 'Admin Tools', path: admin_tools_root_path } if can_access_app?('admin_tools')
     apps << { key: 'p2m', label: 'Print 2 Mail', path: p2m_root_path } if can_access_app?('p2m')
+    apps << { key: 'hsa_adoption_cards', label: 'HSA Adoption Card Search', path: hsa_adoption_cards_root_path } if can_access_app?('hsa_adoption_cards')
     [apps.first, *apps.drop(1).sort_by { |app| app.fetch(:label).downcase }]
   end
 
@@ -188,6 +189,8 @@ module ApplicationHelper
       'billing'
     elsif controller_path.start_with?('p2m/')
       'p2m'
+    elsif controller_path.start_with?('hsa_adoption_cards/')
+      'hsa_adoption_cards'
     else
       'paperboy'
     end

@@ -80,6 +80,7 @@ import CoaBillingStringController from "controllers/coa_billing_string_controlle
 import CoaAccountHierarchyController from "controllers/coa_account_hierarchy_controller"
 import CoaCustomerLookupController from "controllers/coa_customer_lookup_controller"
 import AimOcrController from "controllers/aim_ocr_controller"
+import HsaAdoptionCardsController from "controllers/hsa_adoption_cards_controller"
 import DateRangeController from "controllers/date_range_controller"
 import PdfPreviewController from "controllers/pdf_preview_controller"
 import PrinterSelectionController from "controllers/printer_selection_controller"
@@ -171,3 +172,4 @@ application.register("org-cascade", OrgCascadeController)
 application.register("advanced-search", AdvancedSearchController)
 application.register("coa-billing-lookup", CoaBillingLookupController)
 application.register("aim-ocr", AimOcrController)
+application.register("hsa-adoption-cards", HsaAdoptionCardsController)

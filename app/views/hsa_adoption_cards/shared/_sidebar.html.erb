@@ -1,0 +1,21 @@
+<%# app/views/hsa_adoption_cards/shared/_sidebar.html.erb
+    Sidebar for the HSA Adoption Card Search app. The app switcher header is
+    shared with every other app; everything below it is this app's own
+    navigation. Search and Browse are each behind their own ACL feature
+    grant, the same test their controllers make. %>
+<div class="sidebar hsa-adoption-cards-sidebar">
+  <%= render "shared/app_switcher" %>
+
+  <nav class="hsa-adoption-cards-links">
+    <%= link_to "Home", hsa_adoption_cards_root_path,
+                class: "nav-link#{' active' if current_page?(hsa_adoption_cards_root_path)}" %>
+    <% if can_use_app_feature?("hsa_adoption_cards", "search") %>
+      <%= link_to "Search", hsa_adoption_cards_search_path,
+                  class: "nav-link#{' active' if current_page?(hsa_adoption_cards_search_path)}" %>
+    <% end %>
+    <% if can_use_app_feature?("hsa_adoption_cards", "browse") %>
+      <%= link_to "Browse", hsa_adoption_cards_browse_path,
+                  class: "nav-link#{' active' if current_page?(hsa_adoption_cards_browse_path)}" %>
+    <% end %>
+  </nav>
+</div>

@@ -1,0 +1,63 @@
+<%# app/views/hsa_adoption_cards/browse/index.html.erb
+    The whole card index, one sorted page at a time. The Stimulus controller
+    posts the filters to hsa_adoption_cards_browse_path and renders the table;
+    clicking a row opens the whole card beneath it. %>
+<div class="hsa-ac-page"
+     data-controller="hsa-adoption-cards"
+     data-hsa-adoption-cards-mode-value="browse"
+     data-hsa-adoption-cards-browse-url-value="<%= hsa_adoption_cards_browse_path %>"
+     data-hsa-adoption-cards-pdf-url-value="<%= hsa_adoption_cards_card_pdf_path %>"
+     data-hsa-adoption-cards-share-connected-value="<%= @share_status[:connected] %>"
+     data-hsa-adoption-cards-share-message-value="<%= @share_status[:message] %>">
+
+  <header class="hsa-ac-page-header">
+    <div>
+      <h1 class="hsa-ac-page-title">Browse Adoption Cards</h1>
+      <p class="hsa-ac-page-subtitle">Click a column heading to sort by it (again to reverse). Click a row to see the whole card.</p>
+    </div>
+    <span class="hsa-ac-who" data-hsa-adoption-cards-target="who">Browsing as <%= current_user.email %></span>
+  </header>
+
+  <div class="hsa-ac-panel">
+    <div class="hsa-ac-browsebar">
+      <select class="hsa-ac-select" title="Card type"
+              data-hsa-adoption-cards-target="browseCardType" data-action="change->hsa-adoption-cards#browseFilterChanged">
+        <option value="">All card types</option>
+        <option value="CHILD">Child cards</option>
+        <option value="BIRTH PARENTS">Birth Parents cards</option>
+        <option value="ADOPTIVE PARENTS">Adoptive Parents cards</option>
+      </select>
+      <select class="hsa-ac-select" title="Case link status"
+              data-hsa-adoption-cards-target="browseStatus" data-action="change->hsa-adoption-cards#browseFilterChanged">
+        <option value="">Any link status</option>
+        <option value="AUTO">Linked automatically</option>
+        <option value="CONFIRMED">Confirmed by review</option>
+        <option value="REVIEW">Needs review</option>
+        <option value="MANUAL">Manual</option>
+        <option value="UNLINKED">Not linked to a case</option>
+      </select>
+      <select class="hsa-ac-select" title="Rows per page"
+              data-hsa-adoption-cards-target="browsePageSize" data-action="change->hsa-adoption-cards#browseFilterChanged">
+        <option value="50">50 per page</option>
+        <option value="100" selected>100 per page</option>
+        <option value="250">250 per page</option>
+      </select>
+      <input class="hsa-ac-reason-inline" autocomplete="off" placeholder="Request reference (optional)"
+             title="Written to the search log alongside your username"
+             data-hsa-adoption-cards-target="reason">
+      <div class="hsa-ac-pager">
+        <button type="button" class="btn ghost compact" data-hsa-adoption-cards-target="prev"
+                data-action="hsa-adoption-cards#prevPage">&lsaquo; Prev</button>
+        <span data-hsa-adoption-cards-target="where">&nbsp;</span>
+        <button type="button" class="btn ghost compact" data-hsa-adoption-cards-target="next"
+                data-action="hsa-adoption-cards#nextPage">Next &rsaquo;</button>
+      </div>
+    </div>
+    <p class="hsa-ac-note">Every page viewed is written to the search log, like a search.</p>
+  </div>
+
+  <div class="hsa-ac-tablewrap" data-hsa-adoption-cards-target="table"
+       data-action="click->hsa-adoption-cards#tableClick"></div>
+
+  <%= render "hsa_adoption_cards/shared/viewer" %>
+</div>
