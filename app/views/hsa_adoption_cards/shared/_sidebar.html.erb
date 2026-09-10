@@ -17,5 +17,9 @@
       <%= link_to "Browse", hsa_adoption_cards_browse_path,
                   class: "nav-link#{' active' if current_page?(hsa_adoption_cards_browse_path)}" %>
     <% end %>
+    <% if can_use_app_feature?("hsa_adoption_cards", "maintenance") %>
+      <%= link_to "Maintenance", hsa_adoption_cards_maintenance_path,
+                  class: "nav-link#{' active' if current_page?(hsa_adoption_cards_maintenance_path)}" %>
+    <% end %>
   </nav>
 </div>
