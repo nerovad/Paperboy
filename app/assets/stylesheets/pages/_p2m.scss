@@ -171,8 +171,16 @@
     top: 0;
     z-index: 1;
     height: 2.75rem;
-    background: linear-gradient(135deg, $sidebar-navy, $green-teal);
     color: $surface-base;
+
+    &:nth-child(1) { background: linear-gradient(135deg, $sidebar-navy, $brand-navy); }
+    &:nth-child(2) { background: linear-gradient(135deg, $brand-navy, $blue-action); }
+    &:nth-child(3) { background: linear-gradient(135deg, $blue-action, $green-teal); }
+    &:nth-child(4) { background: linear-gradient(135deg, $green-teal, $green-teal-hover); }
+    &:nth-child(5) { background: linear-gradient(135deg, $green-teal-hover, $slate-action); }
+    &:nth-child(6) { background: linear-gradient(135deg, $slate-action, $sidebar-navy); }
+    &:nth-child(7) { background: linear-gradient(135deg, $sidebar-navy, $brand-navy-hover); }
+    &:nth-child(8) { background: linear-gradient(135deg, $brand-navy-hover, $green-teal); }
   }
 
   .p2m-maildat-row { background: $surface-base; }
@@ -208,6 +216,28 @@
 .p2m-maildat-detail td {
   background: $surface-raised;
   white-space: normal;
+}
+
+.p2m-qc-grid { overflow-x: auto; }
+
+.p2m-qc-oms-table {
+  min-width: 0;
+  table-layout: fixed;
+
+  th:first-child, td:first-child { width: 2rem; }
+  th:nth-child(2), td:nth-child(2) { width: 9rem; }
+  th:nth-child(3), td:nth-child(3) { width: 9rem; }
+}
+
+.p2m-qc-table {
+  min-width: 900px;
+
+  th, td { white-space: nowrap; }
+}
+
+.p2m-qc-job-table {
+  min-width: 980px;
+  margin: .5rem 0;
 }
 
 .p2m-associated-files-table {
@@ -246,6 +276,43 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.p2m-production-files {
+  display: grid;
+  gap: .5rem;
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.p2m-production-queues,
+.p2m-production-printers,
+.p2m-production-oms-files {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    height: auto;
+    padding: .45rem .75rem;
+    text-align: left;
+  }
+
+  thead th {
+    position: static;
+    background: $sidebar-navy;
+    color: $surface-base;
+  }
+
+  tbody > tr:nth-of-type(4n + 1) { background: $surface-base; }
+  tbody > tr:nth-of-type(4n + 3) { background: $surface-control; }
+}
+
+.p2m-production-queue-detail td,
+.p2m-production-printer-detail td,
+.p2m-production-oms-detail td {
+  background: $surface-raised;
+  white-space: normal;
 }
 
 .p2m-staging-progress {

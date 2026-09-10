@@ -141,6 +141,48 @@
   }
 }
 
+/* Lead paragraph under a section header */
+.reports-wrapper .section-intro {
+  margin: -8px 0 24px;
+  color: $muted;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  max-width: 62ch;
+}
+
+/* Checkbox lists (audit history selection) */
+.reports-wrapper .checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reports-wrapper .checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background-color: $form-bg;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  color: $text-color;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+
+  &:hover {
+    border-color: $primary-color;
+  }
+
+  input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    accent-color: $primary-color;
+    cursor: pointer;
+  }
+}
+
 /* Empty state */
 .reports-wrapper .empty-state {
   text-align: center;

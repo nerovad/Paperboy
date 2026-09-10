@@ -11,29 +11,9 @@ from datetime import datetime
 # -----------------------------------------------------------------------------
 # AUTOMATIC DEPENDENCY INSTALLER
 # -----------------------------------------------------------------------------
-def install_prerequisites():
-    required_packages = {
-        'ollama': 'ollama', 
-        'pydantic': 'pydantic', 
-        'fitz': 'pymupdf',
-        'PIL': 'pillow',
-        'pytesseract': 'pytesseract',
-        'pyodbc': 'pyodbc',
-        'dateutil': 'python-dateutil',
-        'thefuzz': 'thefuzz',
-        'Levenshtein': 'python-Levenshtein',
-        'win32com': 'pywin32',
-        'dotenv': 'python-dotenv'
-    }
-    for import_name, install_name in required_packages.items():
-        try:
-            __import__(import_name)
-        except ImportError:
-            print(f"Installing missing dependency: {install_name}...")
-            subprocess.check_call([sys.executable, "-m", "pip", "install", install_name])
-
-install_prerequisites()
-
+# Dependencies are installed by deployment (requirements.txt), never on
+# import. Importing a module must not reach the network or mutate the
+# machine -- that is what made every Python step here untestable.
 import fitz  
 import pyodbc
 from dotenv import load_dotenv
@@ -54,12 +34,10 @@ def env_file_candidates():
     if explicit_env_file:
         candidates.append(explicit_env_file)
 
-    candidates.extend([
-        os.path.join(SCRIPT_DIR, '.env'),
-        os.path.join(SCRIPT_DIR, '..', '.env'),
-        os.path.join(SCRIPT_DIR, '..', '..', '..', '.env'),
-        os.path.join(os.getcwd(), '.env')
-    ])
+    # Only the script's own directory. Walking parents and the working
+    # directory meant a worker could silently pick up a stranger's .env
+    # depending on where it was started from. See Guardrails exception 2.
+    candidates.append(os.path.join(SCRIPT_DIR, '.env'))
 
     seen = set()
     for candidate in candidates:
@@ -80,10 +58,17 @@ def load_aim_environment():
 
 ENV_FILE = load_aim_environment()
 
-def env(name, fallback=None):
-    """Read an AIM environment variable or exit with a useful error."""
-    value = os.getenv(name, fallback)
-    if value is None:
+def env(name):
+    """Read an AIM environment variable, or exit naming it.
+
+    There is deliberately no fallback parameter. A fallback is a hardcoded
+    location living in the code, and a wrong guess puts invoices in a folder
+    nobody is watching. Everything AIM needs is defined in LockBox; if a
+    variable is missing, the worker refuses to start rather than inventing a
+    path. See the plan's Guardrails.
+    """
+    value = os.getenv(name)
+    if value is None or value == '':
         sys.exit(f"CRITICAL ERROR: environment variable {name} is missing")
     return value
 
@@ -92,7 +77,7 @@ PROCESSED_DIR = env('AIM_PROCESSED_DIR')
 PENDING_VISION_DIR = env('AIM_PENDING_VISION_DIR')
 ACTION_NEEDED_DIR = env('AIM_ACTION_NEEDED_DIR')
 LOG_DIR = env('AIM_LOG_DIR')
-SQL_FAILED_DIR = env('AIM_SQL_FAILED_DIR', os.path.join(BASE_DIR, '_SQL_FAILED'))
+SQL_FAILED_DIR = env('AIM_SQL_FAILED_DIR')
 SQL_QUEUE_DIR = env('AIM_SQL_QUEUE_DIR')
 BATCH_SPLIT_DIR = env('AIM_BATCH_SPLIT_DIR')
 READY_TO_SPLIT_DIR = env('AIM_READY_TO_SPLIT_DIR')
@@ -106,52 +91,35 @@ READY_TO_DELETE_DIR = env('AIM_READY_TO_DELETE_DIR')
 DELETED_DIR = env('AIM_DELETED_DIR')
 
 # New AI Queue Dir (for Watcher -> Worker spooling)
-AI_QUEUE_DIR = os.path.join(os.path.dirname(SQL_QUEUE_DIR), "_AI_QUEUE")
-ERROR_QUEUE_DIR = env('AIM_ERROR_QUEUE_DIR', os.path.join(os.path.dirname(SQL_QUEUE_DIR), "_ERROR_QUEUE"))
+AI_QUEUE_DIR = env('AIM_AI_QUEUE_DIR')
+ERROR_QUEUE_DIR = env('AIM_ERROR_QUEUE_DIR')
 
-for directory in [PROCESSED_DIR, PENDING_VISION_DIR, ACTION_NEEDED_DIR, LOG_DIR, 
-                  SQL_FAILED_DIR, SQL_QUEUE_DIR, BATCH_SPLIT_DIR, READY_TO_SPLIT_DIR,
-                  VENDOR_REVIEW_DIR, READY_TO_LEARN_DIR, LOW_CONFIDENCE_REVIEW_DIR,
-                  REPROCESS_QUEUE_DIR, TEMP_DIR, ARCHIVE_DIR, READY_TO_DELETE_DIR,
-                  DELETED_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR]:
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+# The worker install folder on the AIM share. Bare filenames in the
+# configuration resolve against this, not against wherever this file happens
+# to sit on disk.
+PROGRAM_DIR = env('AIM_PROGRAM_DIR')
 
-SPLIT_FOLDER_NAME = env('AIM_SPLIT_FOLDER_NAME', 'Split_Invoices')
+SPLIT_FOLDER_NAME = env('AIM_SPLIT_FOLDER_NAME')
 
 # We also set the Tesseract command globally
 import pytesseract
 TESSERACT_CMD = env('AIM_TESSERACT_CMD')
-pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
 
 TEMP_IMAGE = os.path.join(TEMP_DIR, "_temp_page_render_vision.png")
-log_filename_cfg = env('AIM_LOG_FILE_NAME', 'pipeline_log.csv')
+log_filename_cfg = env('AIM_LOG_FILE_NAME')
 LOG_FILE = os.path.join(LOG_DIR, log_filename_cfg)
 
 # Resolve Alias DB File
-alias_db_cfg = env('AIM_ALIAS_DB_FILE', 'vendor_aliases.json')
-if os.path.isabs(alias_db_cfg):
-    ALIAS_DB_FILE = alias_db_cfg
-else:
-    ALIAS_DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), alias_db_cfg)
+alias_db_cfg = env('AIM_ALIAS_DB_FILE')
+ALIAS_DB_FILE = alias_db_cfg if os.path.isabs(alias_db_cfg) else os.path.join(PROGRAM_DIR, alias_db_cfg)
 
 # Resolve Vendor Rules File
-vendor_rules_cfg = env('AIM_VENDOR_RULES_FILE', 'vendor_rules.json')
-if os.path.isabs(vendor_rules_cfg):
-    VENDOR_RULES_FILE = vendor_rules_cfg
-else:
-    VENDOR_RULES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), vendor_rules_cfg)
+vendor_rules_cfg = env('AIM_VENDOR_RULES_FILE')
+VENDOR_RULES_FILE = vendor_rules_cfg if os.path.isabs(vendor_rules_cfg) else os.path.join(PROGRAM_DIR, vendor_rules_cfg)
 
 # Resolve Field Aliases File
-field_aliases_cfg = env('AIM_FIELD_ALIASES_FILE', 'field_aliases.json')
-if os.path.isabs(field_aliases_cfg):
-    FIELD_ALIASES_FILE = field_aliases_cfg
-else:
-    FIELD_ALIASES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), field_aliases_cfg)
-
-for folder in [PROCESSED_DIR, PENDING_VISION_DIR, ACTION_NEEDED_DIR, LOG_DIR, SQL_FAILED_DIR, SQL_QUEUE_DIR, BATCH_SPLIT_DIR, READY_TO_SPLIT_DIR, VENDOR_REVIEW_DIR, READY_TO_LEARN_DIR, LOW_CONFIDENCE_REVIEW_DIR, REPROCESS_QUEUE_DIR, TEMP_DIR, ARCHIVE_DIR, READY_TO_DELETE_DIR, DELETED_DIR, ERROR_QUEUE_DIR]:
-    os.makedirs(folder, exist_ok=True)
-
+field_aliases_cfg = env('AIM_FIELD_ALIASES_FILE')
+FIELD_ALIASES_FILE = field_aliases_cfg if os.path.isabs(field_aliases_cfg) else os.path.join(PROGRAM_DIR, field_aliases_cfg)
 
 def create_windows_shortcut(target_path, shortcut_path):
     """Create a Windows .lnk shortcut to a folder/file."""
@@ -183,7 +151,34 @@ def setup_shortcuts():
         if not os.path.exists(path):
             create_windows_shortcut(target, path)
 
-setup_shortcuts()
+MANAGED_DIRECTORIES = [
+    PROCESSED_DIR, PENDING_VISION_DIR, ACTION_NEEDED_DIR, LOG_DIR,
+    SQL_FAILED_DIR, SQL_QUEUE_DIR, BATCH_SPLIT_DIR, READY_TO_SPLIT_DIR,
+    VENDOR_REVIEW_DIR, READY_TO_LEARN_DIR, LOW_CONFIDENCE_REVIEW_DIR,
+    REPROCESS_QUEUE_DIR, TEMP_DIR, ARCHIVE_DIR, READY_TO_DELETE_DIR,
+    DELETED_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR,
+]
+
+
+def bootstrap():
+    """Prepare the machine to run a worker.
+
+    Every side effect the pipeline needs lives here, and nothing calls it on
+    import. Each worker calls it from its own __main__. Keeping import pure
+    is what makes the pipeline testable: a test can import this module
+    against a temp environment without creating a directory, planting a
+    shortcut, or touching the network.
+    """
+    for folder in MANAGED_DIRECTORIES:
+        os.makedirs(folder, exist_ok=True)
+
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
+    setup_shortcuts()
+
+    # Bi-directional vendor alias sync against SQL. This opens a database
+    # connection, so it must never happen merely because someone imported
+    # the module.
+    get_vendor_aliases()
 
 class InvoiceData(BaseModel):
     is_urgent: Optional[bool] = False
@@ -224,7 +219,14 @@ def get_sql_connection(section):
     user = env(f"{prefix}USER")
     password = env(f"{prefix}PASSWORD")
     
-    conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={user};PWD={password};Encrypt=no;"
+    # Driver and encryption are properties of the server being talked to,
+    # not of AIM, and both are expected to differ on SQL Server 2022.
+    driver = env('AIM_ODBC_DRIVER')
+    encrypt = env('AIM_ODBC_ENCRYPT')
+    conn_str = (
+        f"DRIVER={{{driver}}};SERVER={server};DATABASE={database};"
+        f"UID={user};PWD={password};Encrypt={encrypt};"
+    )
     return pyodbc.connect(conn_str)
 
 def insert_sql_record(section, data_dict):
@@ -237,7 +239,7 @@ def insert_sql_record(section, data_dict):
     if os.path.isabs(mapping_filename):
         mapping_file_path = mapping_filename
     else:
-        mapping_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), mapping_filename)
+        mapping_file_path = os.path.join(PROGRAM_DIR, mapping_filename)
     
     if not os.path.exists(mapping_file_path):
         print(f"    [!] Mapping file {mapping_filename} not found. Skipping SQL insert for {section}.")
@@ -653,7 +655,7 @@ def normalize_vendor_name(extracted_name):
             )
             try:
                 import ollama
-                response = ollama.chat(model='qwen2.5', messages=[{'role': 'user', 'content': prompt}], options={'temperature': 0})
+                response = ollama.chat(model=env('AIM_TEXT_MODEL'), messages=[{'role': 'user', 'content': prompt}], options={'temperature': 0})
                 answer = response['message']['content'].strip().upper()
                 if "YES" in answer:
                     save_new_vendor_alias(extracted_name, normalized_candidate, "AI Smart Match Typos/Suffixes")
@@ -726,8 +728,9 @@ def generate_laserfiche_xml(data, bu_number, submitter_name, xml_path, processin
     ET.SubElement(doc, "TemplateName").text = doc_type.title()
     
     # FolderPath: the destination folder in the Laserfiche repository
-    # Routes documents into BU-specific subfolders under \AIM\00 INBOX\
-    folder_path = f"\\AIM\\00 INBOX\\{bu_number}" if bu_number else "\\AIM\\00 INBOX\\_UNSORTED"
+    # Routes documents into BU-specific subfolders under the configured inbox
+    inbox = env('AIM_LASERFICHE_INBOX_PATH')
+    folder_path = f"{inbox}\\{bu_number}" if bu_number else f"{inbox}\\_UNSORTED"
     ET.SubElement(doc, "FolderPath").text = folder_path
     
     # FieldData: all metadata fields
@@ -753,5 +756,3 @@ def generate_laserfiche_xml(data, bu_number, submitter_name, xml_path, processin
     with open(xml_path, "w", encoding="utf-8") as f:
         f.write(xml_str)
 
-# Run initial synchronization of vendor aliases on script import/startup
-get_vendor_aliases()

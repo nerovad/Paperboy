@@ -14,7 +14,7 @@ SQL_SCHEMA_DIR = WorkflowPaths::SQL_SCHEMA_DIR
 DslEntry = Struct.new(:key, :cfg, :path, keyword_init: true)
 
 def dsl_entries
-  Dir[File.join(DSL_ENTRY_DIR, '*.rb')].map do |path|
+  Dir[File.join(DSL_ENTRY_DIR, '*', '*.rb')].reject { |path| path.include?('/shared/') }.map do |path|
     entry = TOPLEVEL_BINDING.eval(File.read(path), path)
     DslEntry.new(key: entry[0], cfg: entry[1], path: path)
   end
@@ -210,6 +210,12 @@ if __FILE__ == $PROGRAM_NAME
 
     if entry.nil?
       puts "[SKIP] #{File.basename(path)}: no matching DSL entry"
+      stats.skip!
+      next
+    end
+
+    if EtlHelpers.source_strategy(entry.cfg) == :replicate
+      puts "[SKIP] #{entry.key}: replication keeps configured destination mappings"
       stats.skip!
       next
     end

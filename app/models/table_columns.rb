@@ -16,6 +16,14 @@ class TableColumns
   # builtins method (see records_builtins).
   RECORDS_PREFIX = 'records:'
 
+  # How a custom column's cells are rendered. Both extractors hand the view the
+  # attribute the model holds, so a datetime column renders as
+  # "2026-09-15 00:00:00 -0700" unless the column says it is a time -- the
+  # built-in Created/Last Updated columns only read well because they declare
+  # :datetime. Anything not in the map, and anything whose form no longer
+  # resolves, stays :text.
+  CUSTOM_KINDS = { datetime: :datetime, timestamp: :datetime, date: :date }.freeze
+
   # A resolved column. `value` is the raw extractor used for filtering, sorting
   # and building filter-dropdown options; it returns comparable primitives, not
   # HTML. `kind` tells the view how to render the cell.
@@ -237,7 +245,7 @@ class TableColumns
       id: cid,
       label: label.presence || field.to_s.tr('_', ' ').titleize,
       sort_key: cid,
-      kind: :text,
+      kind: custom_kind(form, field),
       custom: true,
       form: form,
       field: field,
@@ -245,6 +253,16 @@ class TableColumns
       filter_kind: :select,
       value: extractor
     )
+  end
+
+  def self.custom_kind(form, field)
+    model = form.to_s.safe_constantize
+    return :text unless model.is_a?(Class) && model < ActiveRecord::Base
+
+    CUSTOM_KINDS.fetch(model.columns_hash[field.to_s]&.type, :text)
+  rescue StandardError => e
+    Rails.logger.warn("TableColumns.custom_kind failed for #{form}##{field}: #{e.class}: #{e.message}")
+    :text
   end
 
   def self.custom_id(form, field)

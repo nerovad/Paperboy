@@ -1,0 +1,135 @@
+<div class="form-header p2m-form-header">
+  <h1>Data Reset</h1>
+</div>
+
+<div class="form-wrapper p2m-stage-data" data-controller="data-refresh-groups p2m-data-reset"
+     data-p2m-data-reset-url-value="<%= p2m_data_reset_path %>">
+  <section class="p2m-stage-card" aria-labelledby="p2m-data-reset-title">
+    <h2 id="p2m-data-reset-title">Reset P2M Data</h2>
+    <p>
+      Remove P2M working files and clear the associated GSABSS processing tables.
+      This action cannot be undone.
+    </p>
+
+    <% if @file_results.any? || @database_result %>
+      <div class="table-wrap p2m-maildat-grid">
+        <table class="p2m-maildat-table" data-controller="output-table" data-simple-sort="true">
+          <thead>
+            <tr>
+              <th aria-sort="ascending" data-column-index="0" data-sort-type="text">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">Target</button>
+              </th>
+              <th aria-sort="none" data-column-index="1" data-sort-type="text">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">Action</button>
+              </th>
+              <th aria-sort="none" data-column-index="2" data-sort-type="number">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">Items</button>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <% (@file_results + [@database_result].compact).each_with_index do |result, index| %>
+              <% detail_id = "p2m-data-reset-#{index}-details" %>
+              <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>" data-sort-row
+                  data-detail-id="<%= detail_id %>" data-p2m-reset-row
+                  data-reset-target="<%= result.fetch("target") %>">
+                <td data-sort-value="<%= result.fetch("target") %>">
+                  <button type="button" class="p2m-row-trigger" aria-expanded="false"
+                          aria-controls="<%= detail_id %>"
+                          aria-label="Show reset results for <%= result.fetch("target") %>"
+                          data-action="data-refresh-groups#toggle" data-detail-id="<%= detail_id %>">
+                    <span aria-hidden="true">▸</span>
+                  </button>
+                  <%= result.fetch("target") %>
+                </td>
+                <td><%= result.fetch("action") %></td>
+                <td data-sort-value="<%= result.fetch("count") %>">
+                  <%= result.fetch("count") %>
+                </td>
+              </tr>
+              <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden>
+                <td colspan="3">
+                  <% if result.fetch("target") == "P2M_PRINTERS" && result.fetch("items").any? %>
+                    <table class="p2m-production-printers">
+                      <thead><tr><th>Printer</th><th>Files</th></tr></thead>
+                      <tbody>
+                        <% p2m_reset_printer_queues(result.fetch("items")).group_by {
+                             |item| item.fetch("printer")
+                           }.each_with_index do |(printer, queues), printer_index| %>
+                          <% printer_detail_id = "#{detail_id}-printer-#{printer_index}-details" %>
+                          <tr class="p2m-production-printer-row">
+                            <td>
+                              <button type="button" class="p2m-row-trigger" aria-expanded="false"
+                                      aria-controls="<%= printer_detail_id %>"
+                                      aria-label="Show queues for <%= printer %>"
+                                      data-action="data-refresh-groups#toggle"
+                                      data-detail-id="<%= printer_detail_id %>">
+                                <span aria-hidden="true">▸</span>
+                              </button>
+                              <%= printer %>
+                            </td>
+                            <td><%= queues.sum { |item| item.fetch("files").size } %></td>
+                          </tr>
+                          <tr id="<%= printer_detail_id %>" class="p2m-production-printer-detail" hidden>
+                            <td colspan="2">
+                              <%= render "p2m/shared/printer_queue_table", queues: queues,
+                                         printer: printer, id_prefix: "#{detail_id}-printer-#{printer_index}" %>
+                            </td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  <% elsif %w[P2M_STAGING P2M_SHIPPING_STATION P2M_PROCESSED P2M_DESTROYED]
+                           .include?(result.fetch("target")) &&
+                           result.fetch("items").any? %>
+                    <table class="p2m-production-oms-files">
+                      <thead><tr><th>OMS Number</th><th>Files</th></tr></thead>
+                      <tbody>
+                        <% p2m_reset_oms_files(result.fetch("items")).each_with_index do |(oms_number, files), oms_index| %>
+                          <% oms_detail_id = "#{detail_id}-oms-#{oms_index}-details" %>
+                          <tr class="p2m-production-oms-row">
+                            <td>
+                              <button type="button" class="p2m-row-trigger" aria-expanded="false"
+                                      aria-controls="<%= oms_detail_id %>"
+                                      aria-label="Show files for OMS <%= oms_number %>"
+                                      data-action="data-refresh-groups#toggle" data-detail-id="<%= oms_detail_id %>">
+                                <span aria-hidden="true">▸</span>
+                              </button>
+                              <%= oms_number %>
+                            </td>
+                            <td><%= files.size %></td>
+                          </tr>
+                          <tr id="<%= oms_detail_id %>" class="p2m-production-oms-detail" hidden>
+                            <td colspan="2"><ul class="p2m-production-files">
+                              <% files.each do |file| %><li><%= file %></li><% end %>
+                            </ul></td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  <% elsif result.fetch("items").any? %>
+                    <ul class="p2m-production-files">
+                      <% result.fetch("items").each do |item| %>
+                        <li><%= item %></li>
+                      <% end %>
+                    </ul>
+                  <% else %>
+                    Nothing to remove.
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="p2m-batch-actions">
+        <button type="button" class="btn deny" data-p2m-data-reset-target="button"
+                data-action="p2m-data-reset#reset">Reset Data</button>
+      </div>
+    <% end %>
+  </section>
+</div>

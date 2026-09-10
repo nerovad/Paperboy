@@ -20,7 +20,8 @@ from pipeline_common import (
     InvoiceData, write_log, check_missing_fields, apply_invoice_number_rules,
     sanitize_data, generate_laserfiche_xml, pdf_page_to_image,
     normalize_vendor_name, VENDOR_REVIEW_DIR, SQL_QUEUE_DIR, REPROCESS_QUEUE_DIR, LOW_CONFIDENCE_REVIEW_DIR,
-    ERROR_QUEUE_DIR, get_rules_for_vendor, get_global_field_aliases
+    ERROR_QUEUE_DIR, get_rules_for_vendor, get_global_field_aliases,
+    bootstrap, env,
 )
 from typing import Optional
 
@@ -169,7 +170,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
             "Return strictly as JSON."
         )
         response = ollama.chat(
-            model='qwen2.5',
+            model=env('AIM_TEXT_MODEL'),
             messages=[{'role': 'user', 'content': tier1_prompt}],
             format=Phase1Data.model_json_schema(),
             options={'temperature': 0, 'num_ctx': 8192}
@@ -204,7 +205,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
                 "Return strictly as JSON."
             )
             manifest_response = ollama.chat(
-                model='qwen2.5',
+                model=env('AIM_TEXT_MODEL'),
                 messages=[{'role': 'user', 'content': manifest_prompt}],
                 format=DocumentManifest.model_json_schema(),
                 options={'temperature': 0, 'num_ctx': 8192}
@@ -291,7 +292,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
     }
     
     v_response = ollama.chat(
-        model='qwen2.5vl',
+        model=env('AIM_VISION_MODEL'),
         messages=[{'role': 'user', 'content': tier2_prompt, 'images': [TEMP_IMAGE]}],
         format=VISION_SCHEMA,
         options={'temperature': 0, 'num_ctx': 8192, 'num_predict': 1024}
@@ -317,7 +318,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
         pdf_page_to_image(pdf_path, last_page_idx, TEMP_IMAGE)
         
         v_response2 = ollama.chat(
-            model='qwen2.5vl',
+            model=env('AIM_VISION_MODEL'),
             messages=[{'role': 'user', 'content': tier2_prompt, 'images': [TEMP_IMAGE]}],
             format=VISION_SCHEMA,
             options={'temperature': 0, 'num_ctx': 8192, 'num_predict': 1024}
@@ -348,7 +349,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
                 start_time = time.time()
                 pdf_page_to_image(pdf_path, 0, TEMP_IMAGE)
                 v_response3 = ollama.chat(
-                    model='qwen2.5vl',
+                    model=env('AIM_VISION_MODEL'),
                     messages=[{'role': 'user', 'content': enhanced_prompt, 'images': [TEMP_IMAGE]}],
                     format=VISION_SCHEMA,
                     options={'temperature': 0, 'num_ctx': 8192, 'num_predict': 1024}
@@ -670,6 +671,10 @@ def scan_directories():
                     pass
 
 if __name__ == "__main__":
+    # Prepare the machine before any work: directories, shortcuts, alias
+    # sync. Import alone does none of it.
+    bootstrap()
+
     from pipeline_common import AI_QUEUE_DIR
     print(f"Monitoring '{AI_QUEUE_DIR}' for AI Extraction Jobs...")
     

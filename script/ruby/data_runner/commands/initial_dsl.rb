@@ -11,6 +11,7 @@ require_relative '../constants/workflow_paths'
 
 INBOX_DIR = WorkflowPaths::INBOX_DIR
 DSL_DIR = File.expand_path('../../../../config/data_runner/dsl', __dir__)
+DSL_OTHER_DIR = File.join(DSL_DIR, 'other_dsls')
 
 SCAN_LIMIT = 60
 
@@ -181,7 +182,7 @@ def render_entry(dataset_key, local_name, format, header_row_idx, header_cols)
           }
         },
         source: {
-          location: #{ruby_literal(File.join(INBOX_DIR, local_name))},
+          location: File.join(ENV.fetch('DATARUNNER_INBOX'), #{ruby_literal(local_name)}),
           local: #{ruby_literal(local_name)},
           format: :#{format},
           strategy: :copy
@@ -210,7 +211,7 @@ end
 
 puts 'Initial DSL generation started.'
 
-FileUtils.mkdir_p(DSL_DIR)
+FileUtils.mkdir_p(DSL_OTHER_DIR)
 
 inputs = Dir[File.join(INBOX_DIR, '*')].select { |p| File.file?(p) }
 targets = inputs.select do |path|
@@ -234,7 +235,7 @@ targets.sort.each do |input_path|
   file_name = File.basename(input_path)
   format = to_symbol_format(file_name)
   base = File.basename(file_name, File.extname(file_name))
-  out_path = File.join(DSL_DIR, "#{base}.rb")
+  out_path = File.join(DSL_OTHER_DIR, "#{base}.rb")
 
   if File.exist?(out_path)
     puts "[SKIP] #{file_name}: #{File.basename(out_path)} already exists"

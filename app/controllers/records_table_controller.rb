@@ -110,12 +110,18 @@ class RecordsTableController < ApplicationController
   # Write one row's changes and audit each column that actually moved. Previous
   # values are read before assignment: once save! lands, the originals are gone
   # and the audit row is the only place they survive.
+  #
+  # A form model audits itself -- AuditableEdits writes the same rows from an
+  # after_update, attributed to the same Current.user and stamped with the same
+  # registry_slug this passes as table.slug -- so capturing again here would
+  # enter every grid edit twice in the record's Edit History.
   def write_row(table, id, group, actor)
     record = table.model.find(id)
     previous = group.to_h { |change| [change[:column], record[change[:column]]] }
 
     group.each { |change| record[change[:column]] = change[:value] }
     record.save!
+    return record if record.class.include?(AuditableEdits)
 
     group.each do |change|
       before = previous[change[:column]]

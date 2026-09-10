@@ -1,0 +1,51 @@
+# frozen_string_literal: true
+
+[
+  'Tc60Types',
+  {
+    steps: {
+      manual: {
+        enabled: false,
+        steps: Workflow::MANUAL_STEPS
+      },
+      scheduled: {
+        enabled: false,
+        frequency: :daily,
+        steps: Workflow::SCHEDULED_STEPS
+      }
+    },
+    group: {
+      name: 'billing_configuration'
+    },
+    source: {
+      location: File.join(ENV.fetch('DATARUNNER_INBOX'), 'tc60_types.csv'),
+      local: 'tc60_types.csv',
+      format: :csv,
+      strategy: :copy
+    },
+    to_csv: {
+      sheet: 0,
+      header_row: 0,
+      data_row: 1
+    },
+    header: [
+
+      ['type',         'type',         'nvarchar(3)',  'NULL', nil],
+      ['active',       'active',       'bit',          'NULL', nil],
+      ['name',         'name',         'nvarchar(30)', 'NULL', nil],
+      ['funding_type', 'funding_type', 'nvarchar(10)', 'NULL', nil]
+
+    ],
+    database_connections: [
+      {
+        host: 'GSASQL16',
+        database: 'GSABSS',
+        schema: 'dbo',
+        table: 'tc60_types',
+        inject: {
+          mode: :truncate_insert
+        }
+      }
+    ]
+  }
+]

@@ -81,12 +81,16 @@ module DataRunner
     end
     private_class_method :script_status
 
-    def self.run!(values, requested_by:)
+    def self.run!(values, requested_by:, selected_entries: nil)
       validate!(values)
       selected_groups = group_configuration.keys.select { |key| values.fetch(key) == '1' }
       return if selected_groups.empty?
 
-      GroupRefresh.start!(group: group_run_name, entries: enabled_entries(selected_groups), requested_by: requested_by)
+      entries = enabled_entries(selected_groups)
+      entries = select_entries(entries, selected_entries)
+      return if entries.empty?
+
+      GroupRefresh.start!(group: group_run_name, entries: entries, requested_by: requested_by)
     end
 
     def self.restart_entries(previous_run)
@@ -106,5 +110,10 @@ module DataRunner
       raise ArgumentError unless values.values.all? { |value| VALUES.include?(value) }
     end
     private_class_method :validate!
+
+    def self.select_entries(entries, _selected_entries)
+      entries
+    end
+    private_class_method :select_entries
   end
 end

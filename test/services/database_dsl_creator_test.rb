@@ -4,7 +4,7 @@ require 'test_helper'
 require 'tmpdir'
 
 class DatabaseDslCreatorTest < ActiveSupport::TestCase
-  test 'syncs a selected SQL Server table into a DSL' do
+  test 'creates replication without capturing schema or requiring inferred mappings' do
     catalog = Object.new
     catalog.define_singleton_method(:databases) do |server|
       server == 'TARGETSQL' ? ['Reporting'] : ['GSABSS']
@@ -16,7 +16,7 @@ class DatabaseDslCreatorTest < ActiveSupport::TestCase
       commands << [arguments, options]
       ['Imported', status]
     end
-    entry = Struct.new(:config).new({ header: [['id', 'id', 'int', 'NOT NULL', nil]] })
+    entry = Struct.new(:config).new({ header: [] })
 
     Dir.mktmpdir do |directory|
       Open3.stub(:capture2e, runner) do
@@ -42,8 +42,6 @@ class DatabaseDslCreatorTest < ActiveSupport::TestCase
     end
 
     expected_commands = [
-      ['DataRunner:dump_sql', 'SampleTable'],
-      ['DataRunner:use_sql', 'SampleTable'],
       ['DataRunner:from_sql', 'SampleTable']
     ]
     actual_commands = commands.map { |command, _options| command.last(2) }

@@ -15,8 +15,10 @@
           <% extension = File.extname(name).downcase %>
           <% checkbox_id = "p2m-file-#{@oms_number}-#{row_index}-#{column_index}" %>
           <td class="p2m-associated-file-select">
-            <%= check_box_tag "selected_files[]", name, false, id: checkbox_id,
-                              aria: { label: "Select #{name}" } %>
+            <% if extension == '.pdf' %>
+              <%= check_box_tag "selected_files[]", name, false, id: checkbox_id,
+                                aria: { label: "Select #{name}" } %>
+            <% end %>
           </td>
           <td>
             <% if %w[.csv .txt .zip].include?(extension) %>
@@ -64,6 +66,17 @@
             data-printer-selection-url-value="<%= remove_from_printer_p2m_pre_production_path %>"
             data-printer-selection-catalog-value="<%= @printer_queues.to_json %>">
       Remove from Printer
+    </button>
+    <button type="button" class="btn deny compact"
+            data-action="data-refresh-groups#staging"
+            data-staging-url="<%= destroy_oms_p2m_pre_production_path %>"
+            data-staging-method="DELETE" data-staging-action="Destroy OMS"
+            data-staging-remove-on-success="true"
+            data-staging-success-title="OMS <%= @oms_number %> Destroyed"
+            data-staging-progress-label="Destroying OMS"
+            data-confirm-message="Copy OMS <%= @oms_number %> to Destroyed and remove all working copies?"
+            data-directory="<%= params[:directory] %>" data-oms-number="<%= @oms_number %>">
+      Destroy
     </button>
     <button type="button" class="btn compact" data-action="data-refresh-groups#feedback"
             data-feedback-action="Cancel" data-feedback-oms="<%= @oms_number %>">Cancel</button>

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'etl_helpers'
+require_relative 'identity_helpers'
 
 # Shared DSL header mapping helpers for SQL generation and CSV application.
 module EtlMappingHelpers
@@ -45,7 +46,7 @@ module EtlMappingHelpers
       {
         name: output,
         data_type: entry[:data_type],
-        nullability: entry[:nullability],
+        nullability: DataRunner::IdentityHelpers.normalize(entry[:nullability]),
         default_value: entry[:default_value]
       }
     end

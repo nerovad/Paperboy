@@ -5,13 +5,12 @@ import json
 import hashlib
 from datetime import datetime
 from PIL import Image
-from pipeline_common import BASE_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR, is_file_stable
+from pipeline_common import BASE_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR, is_file_stable, bootstrap, env
 
 # Wait time to ensure file is fully copied over network
 STABLE_WAIT_TIME = 2
 SPOOL_RETRY_SECONDS = 900
-SPOOL_STATE_DIR = os.path.join(os.path.dirname(AI_QUEUE_DIR), "_SPOOL_STATE")
-os.makedirs(SPOOL_STATE_DIR, exist_ok=True)
+SPOOL_STATE_DIR = env('AIM_SPOOL_STATE_DIR')
 
 def safe_folder_name(value):
     return "".join(c for c in value if c.isalnum() or c in (" ", "-", "_", ".", "#", "$", "(", ")")).strip()[:140]
@@ -275,6 +274,10 @@ def scan_and_spool():
                 print(f"  [>] Spooled {status_msg}{file} -> {processing_id}")
 
 if __name__ == "__main__":
+    # Prepare the machine before any work: directories, shortcuts, alias
+    # sync. Import alone does none of it.
+    bootstrap()
+
     print("======================================================================")
     print("             AI INVOICE PIPELINE: INGESTION WATCHER")
     print("======================================================================")

@@ -3,7 +3,7 @@
 require 'test_helper'
 
 module P2m
-  class DataRefreshTest < ActiveSupport::TestCase
+  class DataRefreshTest < ActiveSupport::TestCase # rubocop:disable Metrics/ClassLength
     test 'configures the requested Data Runner groups' do
       labels = DataRefresh::GROUPS.transform_values { |configuration| configuration.fetch(:label) }
       defaults = DataRefresh::GROUPS.transform_values { |configuration| configuration.fetch(:default) }
@@ -94,6 +94,51 @@ module P2m
       end
     end
 
+    test 'refreshes only selected queued OMS numbers' do
+      Dir.mktmpdir do |directory|
+        queue = Pathname.new(directory).join('sent').tap(&:mkpath)
+        queue.join('Mail.dat_51786524.zip').write('marker')
+        queue.join('Mail.dat_51671902.zip').write('marker')
+        entry = Struct.new(:slug, :key, :config) do
+          def enabled? = true
+        end.new(
+          'oms', 'Oms',
+          { orchestration: { root_path: directory, sent_path: 'sent', queue: { path: :sent_path } } }
+        )
+        calls = []
+        runner = lambda do |**arguments|
+          calls << arguments
+          DataRunner::GroupRun.new
+        end
+
+        DslCatalog.stub(:grouped, { 'print_2_mail_billing_data' => [entry] }) do
+          DataRunner::GroupRefresh.stub(:start!, runner) do
+            DataRefresh.run!({ 'print_2_mail_billing_data' => '1' },
+                             requested_by: 'employee@example.com',
+                             selected_entries: ['51786524'])
+          end
+        end
+
+        assert_equal ['OMS 51786524'], calls.first.fetch(:entries).map(&:key)
+      end
+    end
+
+    test 'does not refresh any OMS numbers when selection is empty' do
+      entry = Struct.new(:slug, :key) do
+        def enabled? = true
+      end.new('oms', 'OMS 51786524')
+      calls = []
+
+      DslCatalog.stub(:grouped, { 'print_2_mail_billing_data' => [entry] }) do
+        DataRunner::GroupRefresh.stub(:start!, ->(**arguments) { calls << arguments }) do
+          DataRefresh.run!({ 'print_2_mail_billing_data' => '1' },
+                           requested_by: 'employee@example.com', selected_entries: [])
+        end
+      end
+
+      assert_empty calls
+    end
+
     test 'rebuilds restart entries from OMS numbers still in the queue' do
       Dir.mktmpdir do |directory|
         queue = Pathname.new(directory).join('sent').tap(&:mkpath)
@@ -114,4 +159,4 @@ module P2m
       end
     end
   end
-end
+end # rubocop:enable Metrics/ClassLength

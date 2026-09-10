@@ -4987,6 +4987,12 @@ org_permissions:
   department_id: '4641'
   unit_id: '4641'
   type: application
+  key: data_runner
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: application
   key: digital_asset_management
 - agency_id: GSA
   division_id: '4640'
@@ -5161,6 +5167,102 @@ org_permissions:
   department_id: '4641'
   unit_id: '4641'
   type: feature
+  key: data_runner:dsl_aimusers
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_bdmforcasts
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_bdmrates
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_bdmratetypes
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_box_raw_time_data
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_box_time_tracking_sheets
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_boxes
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_document_automation
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_employee_union_codes
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_moveresults
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_oneil
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_oversized
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_tc60_adjustments
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_usps
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:dsl_vcprint
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: data_runner:manage_groups
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
   key: digital_asset_management:collections
 - agency_id: GSA
   division_id: '4640'
@@ -5203,7 +5305,19 @@ org_permissions:
   department_id: '4641'
   unit_id: '4641'
   type: feature
+  key: p2m:data_reset
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
   key: p2m:oms_status
+- agency_id: GSA
+  division_id: '4640'
+  department_id: '4641'
+  unit_id: '4641'
+  type: feature
+  key: p2m:quality_control
 - agency_id: GSA
   division_id: '4640'
   department_id: '4641'

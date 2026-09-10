@@ -1,0 +1,67 @@
+<%# app/views/report_mailer/no_audit_history_found.html.erb %>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background-color: #ffc107;
+      color: #000;
+      padding: 20px;
+      border-radius: 5px 5px 0 0;
+    }
+    .content {
+      background-color: #f8f9fa;
+      padding: 30px;
+      border: 1px solid #dee2e6;
+      border-top: none;
+    }
+    .info-box {
+      background-color: white;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #6c757d;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin: 0;">No Audit History Found</h1>
+  </div>
+
+  <div class="content">
+    <p>Hello <%= @employee.first_name %>,</p>
+
+    <p>Nothing was recorded for the history you asked for, so there was no file to send.</p>
+
+    <div class="info-box">
+      <p><strong>Date Range:</strong> <%= @start_date.strftime('%B %d, %Y') %> to <%= @end_date.strftime('%B %d, %Y') %></p>
+      <% if @labels.any? %>
+        <p><strong>Histories:</strong> <%= @labels.to_sentence %></p>
+      <% end %>
+    </div>
+
+    <p>Try a wider date range, or include another history type; a submission that was never edited still
+      has a status trail.</p>
+  </div>
+
+  <div class="footer">
+    <p>This is an automated message from Paperboy - Ventura County GSA</p>
+    <p>Please do not reply to this email</p>
+  </div>
+</body>
+</html>

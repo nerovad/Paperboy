@@ -4,13 +4,13 @@
 #
 # Canonical file map for ACWEB Excel -> CSV.
 #
-# Entries are split into per-dataset files under config/data_runner/dsl.
+# Entries are split into per-dataset files under config/data_runner/dsl/<group>.
 
 require_relative '../constants/workflow'
 
 DSL_DIR = File.expand_path('../../../../config/data_runner/dsl', __dir__)
 
-entry_files = Dir[File.join(DSL_DIR, '*.rb')]
+entry_files = Dir[File.join(DSL_DIR, '*', '*.rb')].reject { |path| path.include?('/shared/') }
 raise "no DSL files found in #{DSL_DIR}" if entry_files.empty?
 
 entries = entry_files.map do |path|

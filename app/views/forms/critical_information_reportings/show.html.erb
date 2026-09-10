@@ -155,6 +155,19 @@
       <% end %>
     </details>
 
+    <!-- Edit History (Collapsible) -->
+    <%# This form has its own show page rather than shared/_readonly_record, so
+        the edit trail is rendered here explicitly. Same visibility rule as
+        everywhere else: whoever may edit it may see what has been edited. %>
+    <% if can_edit_submission?(@critical_information_reporting) %>
+      <% edit_entries = Forms::EditTrail.for(@critical_information_reporting) %>
+      <details class="audit-section">
+        <summary><h3>Edit History</h3></summary>
+        <%= render partial: "submissions/edit_timeline",
+                   locals: { entries: edit_entries, item_id: @critical_information_reporting.id } %>
+      </details>
+    <% end %>
+
     <!-- Action Buttons -->
     <div class="form-actions">
       <%= link_to "Download PDF", pdf_critical_information_reporting_path(@critical_information_reporting), target: "_blank", class: "form-btn" %>

@@ -3,7 +3,12 @@
 class DslCatalog
   Entry = Data.define(:key, :slug, :path, :config) do
     def group
-      config.dig(:group, :name).presence
+      return config.dig(:group, :name).presence unless path
+
+      parent = path.dirname.basename.to_s
+      return if %w[data_runner dsl other_dsls shared].include?(parent)
+
+      parent.presence
     end
 
     def output_name
@@ -71,11 +76,19 @@ class DslCatalog
 
     private
 
+    def directory
+      Rails.root.join('config/data_runner/dsl')
+    end
+
+    def evaluation_path(path)
+      path
+    end
+
     def load_entries
       require Rails.root.join('script/ruby/data_runner/constants/workflow')
       require Rails.root.join('script/ruby/data_runner/constants/workflow_paths')
-      Rails.root.glob('config/data_runner/dsl/*.rb').map do |path|
-        key, config = TOPLEVEL_BINDING.eval(path.read, path.to_s)
+      directory.glob('*/*.rb').reject { |path| path.dirname.basename.to_s == 'shared' }.map do |path|
+        key, config = TOPLEVEL_BINDING.eval(path.read, evaluation_path(path).to_s)
         Entry.new(key: key, slug: path.basename('.rb').to_s, path: path, config: config)
       end
     end

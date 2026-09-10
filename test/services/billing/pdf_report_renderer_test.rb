@@ -51,5 +51,19 @@ module Billing
         assert_includes text, code
       end
     end
+
+    test 'formats dates as month, day, and two-digit year' do
+      report = MonthlyReport.new(
+        operation: 'print', start_date: '2026-07-01', end_date: '2026-07-31'
+      )
+      result = ActiveRecord::Result.new(['DATE'], [[Date.new(2026, 7, 15)]])
+
+      data = PdfReportRenderer.new(report, { 'pdffile' => 'report.pdf' }, result).call
+      text = PDF::Reader.new(StringIO.new(data)).pages.first.text
+
+      assert_includes text, 'Date Range: 07/01/26 to 07/31/26'
+      assert_includes text, '07/15/26'
+      refute_includes text, '2026-07-15'
+    end
   end
 end

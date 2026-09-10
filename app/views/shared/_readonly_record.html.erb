@@ -45,3 +45,18 @@
     </section>
   <% end %>
 <% end %>
+
+<%# Field-level edit trail: what has been changed on the submission since it was
+    filed, and by whom. Shown on every submission detail page that renders this
+    partial, to whoever may edit the record -- the same right the Edit button
+    grants, and the same check SubmissionHistoriesController#edits applies. %>
+<% if record.class.include?(AuditableEdits) && can_edit_submission?(record) %>
+  <% edit_entries = Forms::EditTrail.for(record) %>
+  <% if edit_entries.any? %>
+    <section class="edit-history" style="margin-top: 24px;">
+      <h3>Edit History</h3>
+      <%= render partial: "submissions/edit_timeline",
+                 locals: { entries: edit_entries, item_id: record.id } %>
+    </section>
+  <% end %>
+<% end %>

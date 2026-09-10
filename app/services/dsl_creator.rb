@@ -5,7 +5,7 @@ class DslCreator
 
   Target = Data.define(:host, :database, :schema, :dsl_name)
 
-  def initialize(name:, commands:, directory: Rails.root.join('config/data_runner/dsl'))
+  def initialize(name:, commands:, directory: Rails.root.join('config/data_runner/dsl/other_dsls'))
     @raw_name = name.to_s.strip
     @commands = Array(commands).map(&:to_s)
     @directory = Pathname(directory)
@@ -16,7 +16,7 @@ class DslCreator
     @directory.mkpath
     path = @directory.join("#{@target.dsl_name}.rb")
     path.open('wx') { |file| file.write(source) }
-    DslCatalog.reload! if @directory == Rails.root.join('config/data_runner/dsl')
+    DslCatalog.reload! if @directory.to_s.start_with?(Rails.root.join('config/data_runner/dsl').to_s)
     @target.dsl_name
   rescue Errno::EEXIST
     raise InvalidDsl, "DSL #{@target.dsl_name} already exists."
@@ -68,8 +68,7 @@ class DslCreator
             }
           },
           source: {
-            location: File.join(ENV.fetch('GSABSS_ROOT'),
-                                'BUSINESS_SUPPORT/DataRunner/00_Inbox/#{@target.dsl_name}.csv'),
+            location: File.join(ENV.fetch('DATARUNNER_INBOX'), '#{@target.dsl_name}.csv'),
             local: '#{@target.dsl_name}.csv',
             format: :csv,
             strategy: :copy

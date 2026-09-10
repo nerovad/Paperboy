@@ -60,7 +60,9 @@ export default class extends Controller {
       ? button.closest("[data-controller~='pdf-preview']")?.querySelector("[data-staging-progress]")
       : null
     const startedAt = performance.now()
-    const timer = this.startStagingProgress(progress, startedAt)
+    const timer = this.startStagingProgress(
+      progress, startedAt, button.dataset.stagingProgressLabel || "Moving files"
+    )
     button.disabled = true
 
     const parameters = new URLSearchParams({
@@ -84,8 +86,8 @@ export default class extends Controller {
       if (response.ok && button.dataset.stagingRemoveOnSuccess === "true") this.removeOmsRows(button)
 
       const title = response.ok && button.dataset.stagingRemoveOnSuccess === "true"
-        ? `${button.dataset.omsNumber} Moved to Staging`
-        : response.ok ? button.dataset.stagingAction : "Staging failed"
+        ? button.dataset.stagingSuccessTitle || `${button.dataset.omsNumber} Moved to Staging`
+        : response.ok ? button.dataset.stagingAction : `${button.dataset.stagingAction} failed`
       await pbAlert({
         title,
         message: `${result.message || `The staging request failed (${response.status}).`} ` +
@@ -95,7 +97,7 @@ export default class extends Controller {
       const duration = this.elapsedSeconds(startedAt)
       this.stopStagingProgress(progress, timer)
       await pbAlert({
-        title: "Staging failed",
+        title: `${button.dataset.stagingAction} failed`,
         message: `The staging request could not be completed. Elapsed time: ${duration} seconds.`
       })
     } finally {
@@ -245,12 +247,12 @@ export default class extends Controller {
     return { title: `Move All to ${target} Complete`, message }
   }
 
-  startStagingProgress(progress, startedAt) {
+  startStagingProgress(progress, startedAt, actionLabel) {
     if (!progress) return null
 
     const label = progress.querySelector("[data-staging-progress-label]")
     const update = () => {
-      label.textContent = `Moving files… ${this.elapsedSeconds(startedAt)} seconds elapsed`
+      label.textContent = `${actionLabel}… ${this.elapsedSeconds(startedAt)} seconds elapsed`
     }
     progress.hidden = false
     update()

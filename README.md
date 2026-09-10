@@ -532,8 +532,12 @@ bundle exec rake 'DataRunner:target[selector]'
 
 The selector can be a DSL name, a group name, or `ALL`. The `new_dsl` target
 also accepts no selector and then discovers every supported file in
-`$GSABSS_ROOT/BUSINESS_SUPPORT/DataRunner/00_Inbox`; existing DSL files are
-skipped.
+`$DATARUNNER_INBOX`; existing DSL files are skipped. Configure the shared
+inbox in `.env`:
+
+```dotenv
+DATARUNNER_INBOX=${GSABSS_ROOT}/BUSINESS_SUPPORT/DataRunner/00_Inbox
+```
 
 ```bash
 bundle exec rake DataRunner:new_dsl

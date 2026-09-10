@@ -11,8 +11,9 @@ echo               AI INVOICE PIPELINE: MODEL BENCHMARK
 echo ======================================================================
 echo Starting 07_benchmark_models.py...
 echo.
-python 07_benchmark_models.py
-
+REM Absolute path: the working directory is not dependable when
+REM these run from a UNC share.
+python "%~dp007_benchmark_models.py"
 if %errorlevel% neq 0 (
     echo.
     echo ======================================================================

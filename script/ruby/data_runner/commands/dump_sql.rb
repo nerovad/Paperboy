@@ -6,12 +6,12 @@
 require 'fileutils'
 require_relative 'dsl_map'
 require_relative '../helpers/etl_helpers'
+require_relative '../helpers/identity_helpers'
 require_relative '../db/mssql_helpers'
 require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
 
 SQL_SCHEMA_DIR = WorkflowPaths::SQL_SCHEMA_DIR
-FileUtils.mkdir_p(SQL_SCHEMA_DIR)
 
 def sql_string(value)
   "N'#{value.to_s.gsub("'", "''")}'"
@@ -66,8 +66,8 @@ def columns_for(client, object_id)
         c.scale,
         c.is_nullable,
         c.is_identity,
-        ic.seed_value,
-        ic.increment_value,
+        CONVERT(varchar(40), ic.seed_value) AS seed_value,
+        CONVERT(varchar(40), ic.increment_value) AS increment_value,
         c.is_computed,
         cc.definition AS computed_definition,
         dc.definition AS default_definition,
@@ -158,7 +158,7 @@ end
 def identity_clause(row)
   return '' unless sql_true?(row.fetch('is_identity'))
 
-  " IDENTITY(#{row.fetch('seed_value').to_i},#{row.fetch('increment_value').to_i})"
+  " #{DataRunner::IdentityHelpers.from_metadata(row)}"
 end
 
 def nullability_clause(row)
@@ -215,28 +215,27 @@ clients = {}
 
 begin
   EtlHelpers.selected_dsl_entries(DSL_MAP, ARGV).each do |name, cfg|
+    if EtlHelpers.source_strategy(cfg) == :replicate
+      puts "[SKIP] #{name}: replication uses configured destination mappings; no schema capture"
+      stats.skip!
+      next
+    end
+
     unless Workflow.wants_step?(cfg, :to_sql)
       puts "[SKIP] #{name}: step disabled (:to_sql)"
       stats.skip!
       next
     end
 
+    FileUtils.mkdir_p(SQL_SCHEMA_DIR)
     base = EtlHelpers.base_for(cfg)
     out = File.join(SQL_SCHEMA_DIR, "#{base}.sql")
 
-    targets = if EtlHelpers.source_strategy(cfg) == :replicate
-                [EtlHelpers.source_database_target(
-                  cfg,
-                  env_host: MssqlHelpers.env_any('MSSQL_HOST', 'GSABSS_HOST'),
-                  env_database: MssqlHelpers.env_any('MSSQL_DATABASE', 'GSABSS_DATABASE')
-                )]
-              else
-                EtlHelpers.database_targets(
-                  cfg,
-                  env_host: MssqlHelpers.env_any('MSSQL_HOST', 'GSABSS_HOST'),
-                  env_database: MssqlHelpers.env_any('MSSQL_DATABASE', 'GSABSS_DATABASE')
-                )
-              end
+    targets = EtlHelpers.database_targets(
+      cfg,
+      env_host: MssqlHelpers.env_any('MSSQL_HOST', 'GSABSS_HOST'),
+      env_database: MssqlHelpers.env_any('MSSQL_DATABASE', 'GSABSS_DATABASE')
+    )
 
     begin
       raise 'missing database:' if targets.any? { |target| target.database.empty? }

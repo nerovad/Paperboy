@@ -43,13 +43,29 @@
   <% end %>
 <% end %>
 
-<!-- Edit -->
+<!-- Edit + Edit History -->
 <%# Gated on the same policy Forms::BaseController enforces, so a step that
-    enables the Edit button never shows it to someone the endpoint refuses. %>
+    enables the Edit button never shows it to someone the endpoint refuses.
+
+    Edit History is deliberately not its own configurable button: it rides
+    along with Edit wherever Edit appears, so every form that can be edited can
+    be audited without anyone remembering to switch it on. The endpoint applies
+    the same policy check. %>
 <% if button_source.inbox_button?('edit') && can_edit_submission?(submission, routing_step: current_step) %>
   <% edit_path = inbox_edit_path(submission) %>
   <% if edit_path %>
     <%= link_to "Edit", edit_path, class: "btn edit", data: { turbo: false } %>
+  <% end %>
+
+  <% if submission.class.include?(AuditableEdits) %>
+    <button type="button"
+            class="btn status-history"
+            data-action="click->history-modal#open"
+            data-history-url="<%= inbox_edit_history_path(type: submission.class.name, id: submission.id) %>"
+            data-history-label="Edit History"
+            data-record-title="<%= "#{submission.class.name.demodulize.titleize} ##{submission.id}" %>">
+      Edit History
+    </button>
   <% end %>
 <% end %>
 
@@ -129,8 +145,9 @@
 <% if button_source.inbox_button?('status_history') %>
   <button type="button"
           class="btn status-history"
-          data-action="click->status-history-modal#open"
+          data-action="click->history-modal#open"
           data-history-url="<%= inbox_status_history_path(type: submission.class.name, id: submission.id) %>"
+          data-history-label="Status History"
           data-record-title="<%= "#{submission.class.name.demodulize.titleize} ##{submission.id}" %>">
     Status History
   </button>

@@ -106,12 +106,28 @@ module P2m
 
     def fd_command
       [
-        'fd', '--no-ignore', '--type', 'f', '--extension', 'zip', '--print0',
+        fd_binary, '--no-ignore', '--type', 'f', '--extension', 'zip', '--print0',
         '--exclude', 'FinalOutput',
         '--changed-within', start_date.iso8601,
         '--changed-before', (end_date + 1).iso8601,
         "^Mail\\.dat_#{OMS_NUMBER}\\.zip$", source_root.to_s
       ]
+    end
+
+    # Debian and Ubuntu ship fd as fdfind, so resolve whichever name exists.
+    def fd_binary
+      @fd_binary ||= fd_candidates.filter_map { |name| executable_path(name) }.first ||
+                     raise("fd not found in PATH (looked for #{fd_candidates.join(', ')})")
+    end
+
+    def fd_candidates = [ENV.fetch('FD_BIN', nil), 'fd', 'fdfind'].compact
+
+    def executable_path(name)
+      return name if name.include?(File::SEPARATOR)
+
+      ENV.fetch('PATH', '').split(File::PATH_SEPARATOR)
+         .map { |directory| File.join(directory, name) }
+         .find { |candidate| File.file?(candidate) && File.executable?(candidate) }
     end
 
     def within_range?(path) = path.mtime.to_date.between?(start_date, end_date)
@@ -127,13 +143,20 @@ module P2m
     def associated_file_count(directory, number)
       directory_files(directory).count do |path|
         match = ASSOCIATED_PATTERNS.filter_map { |pattern| path.basename.to_s.match(pattern) }.first
-        path.file? && match && match[1] == number
+        match && match[1] == number
       end
     end
 
     def directory_files(directory)
       @directory_files ||= {}
-      @directory_files[directory.to_s] ||= directory.children
+      @directory_files[directory.to_s] ||= begin
+        output, error, status = Open3.capture3(
+          fd_binary, '--no-ignore', '--max-depth', '1', '--type', 'f', '--print0', '.', directory.to_s
+        )
+        raise "File search failed in #{directory}: #{error.strip}" unless status.success?
+
+        output.split("\0").map { |name| Pathname.new(name) }
+      end
     end
 
     def build_row(number, marker_matches)
@@ -156,8 +179,8 @@ module P2m
 
     def classified_inputs(directory, number)
       INPUT_PATTERNS.to_h do |type, pattern|
-        matches = directory.children.select do |path|
-          match = path.file? && path.basename.to_s.match(pattern)
+        matches = directory_files(directory).select do |path|
+          match = path.basename.to_s.match(pattern)
           match && match[1] == number
         end
         [type, matches.sort]

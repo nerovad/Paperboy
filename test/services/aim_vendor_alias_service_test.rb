@@ -21,6 +21,34 @@ module Aim
       FileUtils.remove_entry(@tmpdir) if @tmpdir && Dir.exist?(@tmpdir)
     end
 
+    test 'a bare filename resolves under the configured program folder' do
+      old_program = ENV.fetch('AIM_PROGRAM_DIR', nil)
+      ENV['AIM_PROGRAM_DIR'] = @tmpdir
+      ENV['AIM_ALIAS_DB_FILE'] = 'vendor_aliases.json'
+
+      assert_equal File.join(@tmpdir, 'vendor_aliases.json'), VendorAliasService.alias_file_path.to_s
+    ensure
+      old_program.nil? ? ENV.delete('AIM_PROGRAM_DIR') : ENV['AIM_PROGRAM_DIR'] = old_program
+    end
+
+    test 'an unset alias file raises an error naming the variable' do
+      ENV.delete('AIM_ALIAS_DB_FILE')
+
+      error = assert_raises(Aim::MissingConfiguration) { VendorAliasService.official_names }
+      assert_includes error.message, 'AIM_ALIAS_DB_FILE'
+    end
+
+    test 'an unset program folder raises an error naming the variable' do
+      old_program = ENV.fetch('AIM_PROGRAM_DIR', nil)
+      ENV.delete('AIM_PROGRAM_DIR')
+      ENV['AIM_ALIAS_DB_FILE'] = 'vendor_aliases.json'
+
+      error = assert_raises(Aim::MissingConfiguration) { VendorAliasService.official_names }
+      assert_includes error.message, 'AIM_PROGRAM_DIR'
+    ensure
+      old_program.nil? ? ENV.delete('AIM_PROGRAM_DIR') : ENV['AIM_PROGRAM_DIR'] = old_program
+    end
+
     test 'loads unique official names from the alias JSON file' do
       File.write(
         @alias_file,
@@ -48,14 +76,14 @@ module Aim
       assert_equal 'AIRGAS USA, LLC', aliases['AIRGAS USA, LLC']
     end
 
-    test 'defaults to the mounted AIM program alias file' do
+    # Was 'defaults to the mounted AIM program alias file'. That default is
+    # gone: guessing <base>/_PROGRAM/vendor_aliases.json meant a missing
+    # variable silently read and wrote the wrong alias store. Step 0.3.
+    test 'never guesses a _PROGRAM alias path when the variable is unset' do
       ENV.delete('AIM_ALIAS_DB_FILE')
       ENV['AIM_LINUX_QUEUE_BASE_PATH'] = @tmpdir
 
-      assert_equal(
-        Pathname.new(File.join(@tmpdir, '_PROGRAM', 'vendor_aliases.json')),
-        VendorAliasService.alias_file_path
-      )
+      assert_raises(Aim::MissingConfiguration) { VendorAliasService.alias_file_path }
     end
 
     test 'translates configured Windows alias path to the mounted Linux path' do

@@ -1,0 +1,102 @@
+# frozen_string_literal: true
+
+require 'test_helper'
+
+module P2m
+  class DataResetTest < ActiveSupport::TestCase
+    test 'removes configured files and clears GSABSS tables' do
+      Dir.mktmpdir do |directory|
+        root = Pathname.new(directory)
+        staging = root.join('staging').tap(&:mkpath)
+        staging.join('nested').mkpath
+        staging.join('nested/output.pdf').write('pdf')
+        report = root.join('p2m_oms_backfill_report.json').tap { |path| path.write('{}') }
+        connection = RecordingConnection.new
+
+        results = DataReset.new(
+          paths: { 'P2M_STAGING' => staging }, report_path: report, connection: connection
+        ).call
+
+        assert_empty staging.children
+        refute report.exist?
+        assert_equal ['nested/output.pdf'], results.first.fetch('items')
+        assert_equal ['p2m_oms_backfill_report.json'], results.second.fetch('items')
+        assert_equal 6, connection.executed.size
+        assert_includes connection.executed, 'TRUNCATE TABLE GSABSS.dbo.companions'
+        assert_includes connection.executed, 'DELETE FROM GSABSS.dbo.p2m_oms_uploads'
+      end
+    end
+
+    test 'previews files and row counts without removing data' do
+      Dir.mktmpdir do |directory|
+        root = Pathname.new(directory)
+        staging = root.join('staging').tap(&:mkpath)
+        staging.join('output.pdf').write('pdf')
+        report = root.join('p2m_oms_backfill_report.json').tap { |path| path.write('{}') }
+        connection = RecordingConnection.new
+
+        results = DataReset.new(
+          paths: { 'P2M_STAGING' => staging }, report_path: report, connection: connection
+        ).preview
+
+        assert staging.join('output.pdf').exist?
+        assert report.exist?
+        assert_equal ['output.pdf'], results.first.fetch('items')
+        assert_equal 'Rows found', results.last.fetch('action')
+        assert_empty connection.executed
+      end
+    end
+
+    test 'resets only the requested filesystem target' do
+      Dir.mktmpdir do |directory|
+        root = Pathname.new(directory)
+        staging = root.join('staging').tap(&:mkpath)
+        processed = root.join('processed').tap(&:mkpath)
+        staging.join('staged.pdf').write('pdf')
+        processed.join('processed.pdf').write('pdf')
+
+        result = DataReset.new(
+          paths: { 'P2M_STAGING' => staging, 'P2M_PROCESSED' => processed },
+          report_path: root.join('report.json'), connection: RecordingConnection.new
+        ).reset_target('P2M_STAGING')
+
+        assert_empty staging.children
+        assert processed.join('processed.pdf').exist?
+        assert_equal ['staged.pdf'], result.first.fetch('items')
+      end
+    end
+
+    test 'resets the destroyed directory when requested' do
+      Dir.mktmpdir do |directory|
+        root = Pathname.new(directory)
+        destroyed = root.join('destroyed').tap(&:mkpath)
+        destroyed.join('51780767').mkpath
+        destroyed.join('51780767/output.pdf').write('pdf')
+
+        result = DataReset.new(
+          paths: { 'P2M_DESTROYED' => destroyed }, report_path: root.join('report.json'),
+          connection: RecordingConnection.new
+        ).reset_target('P2M_DESTROYED')
+
+        assert_empty destroyed.children
+        assert_equal ['51780767/output.pdf'], result.first.fetch('items')
+      end
+    end
+
+    class RecordingConnection
+      attr_reader :executed
+
+      def initialize
+        @executed = []
+      end
+
+      def select_value(_query)
+        2
+      end
+
+      def execute(query)
+        executed << query
+      end
+    end
+  end
+end

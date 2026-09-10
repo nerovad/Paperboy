@@ -1,6 +1,15 @@
 # DSL Dataset Files
 
-This directory stores one `DSL_MAP` entry per file.
+This directory stores one `DSL_MAP` entry per file. Each entry lives under
+the directory for its DSL group:
+
+```text
+config/data_runner/dsl/<dsl_group>/<dsl_name>.rb
+```
+
+DSLs that are not assigned to a group live under `other_dsls/`. When a DSL is
+removed from a group, remove its `group` block and move it there. The `shared/`
+directory contains shared SOP configuration and is not a DSL group.
 
 ## File Contract
 
@@ -89,12 +98,12 @@ sop: {
   `reference_path: :downloaded_file`, so every group DSL can display its own
   `01_Download/source.local` file.
 - Use `source.location` for the file or path to stage and `source.local` for
-  the filename used inside `00_Inbox` and downstream stages.
-- Use `source.strategy: :manual` when a human places the file in `00_Inbox`;
+  the filename used inside `$DATARUNNER_INBOX` and downstream stages.
+- Use `source.strategy: :manual` when a human places the file in `$DATARUNNER_INBOX`;
   if `source.location` differs from `source.local`, the download stage copies
   the placed file to the local staged name.
 - Use `source.strategy: :copy` when the download stage should copy
-  `source.location` into `00_Inbox/source.local`.
+  `source.location` into `$DATARUNNER_INBOX/source.local`.
 - Use `source.strategy: :append` when a locally staged supplemental file should
   flow through the normal stages and append into another dataset's destination
   table via `inject.mode: :append`.
@@ -105,7 +114,7 @@ sop: {
   dependency. A failed dependency fails the dependent DSL; a missing dependency
   or an hour-long wait raises an explicit error.
 - Use `source.strategy: :script` when the download stage should run a local Ruby
-  script that creates `00_Inbox/source.local`:
+  script that creates `$DATARUNNER_INBOX/source.local`:
 
 ```ruby
 source: {
@@ -159,6 +168,14 @@ orchestration: {
   `use_sql[orchestrator]` updates every child DSL from its reviewed SQL.
   `reset[orchestrator]` runs postprocessing and resets every child DSL.
   Symbol arguments resolve from the orchestration context.
+
+- Replication (`source.strategy: :replicate`) copies source data using the
+  configured destination mappings. Import setup skips `dump_sql` and `use_sql`;
+  explicitly running those commands also skips replication entries. No source
+  schema snapshot is created or applied. Configure destination headers for a
+  new replication DSL before running it. Existing headers and destination
+  `inject.post_script` settings are preserved. `to_sql` still generates the
+  destination table definition from those headers when requested.
 
 - Use `inject.post_script` when a destination should run a local Ruby script
   after its inject transaction commits:

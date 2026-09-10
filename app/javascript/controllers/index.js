@@ -14,6 +14,7 @@ import BillingToolsController from "controllers/billing_tools_controller"
 import BillingTypesController from "controllers/billing_types_controller"
 import BillingEmailSelectionController from "controllers/billing_email_selection_controller"
 import BillingReportPreviewController from "controllers/billing_report_preview_controller"
+import BillingAuditSectionsController from "controllers/billing_audit_sections_controller"
 import DataRefreshGroupsController from "controllers/data_refresh_groups_controller"
 import CoaAccountFieldsController from "controllers/coa_account_fields_controller"
 import ApproveModalController from "controllers/approve_modal_controller"
@@ -57,7 +58,7 @@ import ClickableRowController from "controllers/clickable_row_controller"
 import InformationFieldController from "controllers/information_field_controller"
 import CardToggleController from "controllers/card_toggle_controller"
 import AuthorizationSelectController from "controllers/authorization_select_controller"
-import StatusHistoryModalController from "controllers/status_history_modal_controller"
+import HistoryModalController from "controllers/history_modal_controller"
 import ChangeStatusModalController from "controllers/change_status_modal_controller"
 import BackLinkController from "controllers/back_link_controller"
 import ContractorSelectsController from "controllers/contractor_selects_controller"
@@ -82,6 +83,8 @@ import AimOcrController from "controllers/aim_ocr_controller"
 import DateRangeController from "controllers/date_range_controller"
 import PdfPreviewController from "controllers/pdf_preview_controller"
 import PrinterSelectionController from "controllers/printer_selection_controller"
+import P2mDataResetController from "controllers/p2m_data_reset_controller"
+import P2mQualityControlController from "controllers/p2m_quality_control_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -101,6 +104,8 @@ application.register("billing-email-selection", BillingEmailSelectionController)
 application.register("billing-report-preview", BillingReportPreviewController)
 application.register("data-refresh-groups", DataRefreshGroupsController)
 application.register("printer-selection", PrinterSelectionController)
+application.register("p2m-data-reset", P2mDataResetController)
+application.register("p2m-quality-control", P2mQualityControlController)
 application.register("coa-account-fields", CoaAccountFieldsController)
 application.register("approve-modal", ApproveModalController)
 application.register("reassign-modal", ReassignModalController)
@@ -143,10 +148,11 @@ application.register("delete-form", DeleteFormController)
 application.register("select-all", SelectAllController)
 application.register("dependent-select", DependentSelectController)
 application.register("clickable-row", ClickableRowController)
+application.register("billing-audit-sections", BillingAuditSectionsController)
 application.register("information-field", InformationFieldController)
 application.register("card-toggle", CardToggleController)
 application.register("authorization-select", AuthorizationSelectController)
-application.register("status-history-modal", StatusHistoryModalController)
+application.register("history-modal", HistoryModalController)
 application.register("change-status-modal", ChangeStatusModalController)
 application.register("back-link", BackLinkController)
 application.register("contractor-selects", ContractorSelectsController)

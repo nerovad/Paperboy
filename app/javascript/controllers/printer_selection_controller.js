@@ -45,7 +45,8 @@ export default class extends Controller {
       if (!await pbConfirm({
         title: this.isRemoval ? "Confirm Removal from Printer" : "Confirm Printer and Queue",
         message: this.confirmationMessage(selection),
-        confirmLabel: this.isRemoval ? "Remove from Printer" :
+        confirmLabel: this.isRemoval && this.modeValue === "batch" ? "Remove All from Printer" :
+          this.isRemoval ? "Remove from Printer" :
           this.modeValue === "batch" ? "Send All to Printer" : "Send to Printer",
         confirmVariant: this.isRemoval ? "deny" : "approve"
       })) {
@@ -61,12 +62,16 @@ export default class extends Controller {
   }
 
   confirmationMessage(selection) {
+    if (this.isRemoval && this.modeValue === "batch") {
+      return `Remove all PDF documents for the visible OMS numbers from printer ${selection.printer} ` +
+        `queue ${selection.queue}?`
+    }
     if (this.isRemoval) {
       return `Remove the selected files for OMS ${this.omsValue} from printer ${selection.printer} ` +
         `queue ${selection.queue}?`
     }
     if (this.modeValue === "batch") {
-      return `Send all associated files for the visible OMS numbers to printer ${selection.printer} ` +
+      return `Send all PDF documents for the visible OMS numbers to printer ${selection.printer} ` +
         `using queue ${selection.queue}?`
     }
 
