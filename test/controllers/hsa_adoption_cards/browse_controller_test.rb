@@ -34,6 +34,20 @@ module HsaAdoptionCards
       assert_select '.pb-modal.hsa-ac-viewer[role=dialog]'
     end
 
+    test 'linked cards are served to a browse-only user' do
+      grant_features('hsa_adoption_cards:browse')
+      original = LinkedCards.method(:call)
+      LinkedCards.define_singleton_method(:call) { |params, app_user:| [{ 'ID' => 9, 'GroupID' => params['groupId'], 'user' => app_user }] }
+      begin
+        post :linked, body: { groupId: 7, caseNumber: '56-97-768' }.to_json, as: :json
+      ensure
+        LinkedCards.define_singleton_method(:call, original)
+      end
+
+      assert_response :success
+      assert_equal [{ 'ID' => 9, 'GroupID' => 7, 'user' => 'browser@example.com' }], response.parsed_body['rows']
+    end
+
     test 'the sidebar shows only the screens the person holds' do
       grant_features('hsa_adoption_cards:browse')
       get :index

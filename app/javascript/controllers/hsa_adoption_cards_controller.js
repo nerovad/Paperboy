@@ -109,6 +109,7 @@ export default class extends Controller {
     mode: String,
     searchUrl: String,
     browseUrl: String,
+    linkedUrl: String,
     pdfUrl: String,
     shareConnected: Boolean,
     shareMessage: String
@@ -285,9 +286,11 @@ export default class extends Controller {
         <span class="hsa-ac-grp hsa-ac-mono">#${esc(c.ID)}</span></h3>
       ${direct && c.MatchedOn ? `<div class="hsa-ac-matched">Matched on: ${esc(c.MatchedOn)}</div>` : ""}
       <dl class="hsa-ac-fields">${body}</dl>
-      ${c.Filepath ? `<div class="hsa-ac-pdf">
-          <button type="button" class="btn pdf compact" data-view="${esc(c.Filepath)}"
-                  data-label="${esc(c.CardType)} · card #${esc(c.ID)}">View scanned card</button>
+      ${c.Filepath || (c.HitType === null && c.GroupID) ? `<div class="hsa-ac-pdf">
+          ${c.Filepath ? `<button type="button" class="btn pdf compact" data-view="${esc(c.Filepath)}"
+                  data-label="${esc(c.CardType)} · card #${esc(c.ID)}">View scanned card</button>` : ""}
+          ${c.HitType === null && c.GroupID ? `<button type="button" class="btn info compact"
+                  data-linked="${esc(c.ID)}">Show linked cards</button>` : ""}
         </div>` : ""}
     </div>`
   }
@@ -357,6 +360,9 @@ export default class extends Controller {
     }
     const view = event.target.closest("button[data-view]")
     if (view) { this.openViewer(view.dataset.view, view.dataset.label); return }
+    const linked = event.target.closest("button[data-linked]")
+    if (linked) { this.showLinked(linked); return }
+    if (event.target.closest("tr.hsa-ac-detail")) return   // clicks inside the open card stay put
 
     const tr = event.target.closest("tr.hsa-ac-row")
     if (!tr) return
@@ -373,6 +379,45 @@ export default class extends Controller {
     d.className = "hsa-ac-detail"
     d.innerHTML = `<td colspan="${BROWSE_COLS.length + 1}">${this.renderCard({ ...r, HitType: null })}</td>`
     tr.after(d)
+  }
+
+  // Every card in the clicked row's case group, rendered beneath the open
+  // card as the same case section the Search screen uses.
+  async showLinked(button) {
+    const r = this.browse.rows.find(x => String(x.ID) === button.dataset.linked)
+    if (!r) return
+    const detail = button.closest("tr.hsa-ac-detail")
+    let box = detail.querySelector(".hsa-ac-linked")
+    if (box) { box.remove(); button.textContent = "Show linked cards"; return }
+
+    box = document.createElement("div")
+    box.className = "hsa-ac-linked"
+    box.innerHTML = `<div class="hsa-ac-empty">Loading linked cards…</div>`
+    detail.querySelector("td").appendChild(box)
+    button.disabled = true
+    try {
+      const p = { groupId: r.GroupID, caseNumber: r.Case_Number, venOrA: r.VEN_Number || r.A_Number,
+                  lastName: r.Child_BirthLast || r.Child_AdoptLast, dob: fmtDate(r.Child_DOB) }
+      const rows = await this.post(this.linkedUrlValue, p)
+      const cards = rows.filter(x => String(x.ID) !== String(r.ID))
+      if (!cards.length) {
+        box.innerHTML = `<div class="hsa-ac-empty">No other cards are linked to this one.</div>`
+      } else {
+        cards.sort((a, b) => (TYPE_ORDER[a.CardType] || 9) - (TYPE_ORDER[b.CardType] || 9))
+        const st = r.GroupStatus || "UNLINKED"
+        box.innerHTML = `<section class="hsa-ac-case">
+          <h2><span class="hsa-ac-badge is-${esc(st)}">${esc(st)}</span>
+            <span class="hsa-ac-grp">Case group ${esc(r.GroupID)}</span>
+            <span class="hsa-ac-grp">${cards.length} linked card${cards.length > 1 ? "s" : ""}</span></h2>
+          <div class="hsa-ac-cards">${cards.map(c => this.renderCard({ ...c, HitType: undefined })).join("")}</div>
+        </section>`
+      }
+      button.textContent = "Hide linked cards"
+    } catch (err) {
+      box.innerHTML = this.errorBlock("Could not load the linked cards.", err)
+    } finally {
+      button.disabled = false
+    }
   }
 
   browseFilterChanged() { this.browse.page = 1; this.loadBrowse() }
