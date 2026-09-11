@@ -4,17 +4,34 @@
    can reach another app. Buttons are the shared .btn system and the viewer
    is the shared pb-modal shell; only their layout is touched here. */
 
-/* Fills the content area like AIM's pages do, so a wide screen shows the
-   whole browse table instead of scrolling it inside a fixed column. The
-   bottom padding clears the fixed "Powered by GSA" badge. */
+/* Fills the content area like AIM's pages do, in both directions: the page
+   is exactly the height of the shell and never scrolls itself. The results
+   (search) or the table (browse) is the one scrolling panel, so both of its
+   scrollbars stay in view whatever the window size. #main-content is the
+   shell: 100vh, border-box, with the profile bar's top padding. The bottom
+   padding clears the fixed "Powered by GSA" badge. */
 .hsa-ac-page {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  height: 100%;
   min-width: 0;
-  padding: 24px 24px 60px;
+  overflow: hidden;
+  padding: 24px 24px 48px;
   width: 100%;
+}
+
+.hsa-ac-page > .hsa-ac-panel,
+.hsa-ac-page > .hsa-ac-page-header,
+.hsa-ac-page > .hsa-ac-meta {
+  flex: 0 0 auto;
+}
+
+.hsa-ac-results {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 
 .hsa-ac-page-header {
@@ -334,7 +351,9 @@
   background: $surface-base;
   border: 1px solid $neutral-border-subtle;
   border-radius: 8px;
-  overflow-x: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 
 .hsa-ac-browse {
@@ -395,6 +414,15 @@
     background: $surface-panel;
     padding: 0;
     white-space: normal;
+  }
+
+  /* Pinned to the panel's visible width (set by the controller) and stuck to
+     its left edge, so the open card and its linked cards stay in view while
+     the table scrolls sideways beneath them. */
+  .hsa-ac-detail__inner {
+    box-sizing: border-box;
+    left: 0;
+    position: sticky;
   }
 
   tr.hsa-ac-detail .hsa-ac-card {
