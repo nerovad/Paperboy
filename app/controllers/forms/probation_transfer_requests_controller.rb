@@ -2,11 +2,14 @@
 
 module Forms
   class ProbationTransferRequestsController < Forms::BaseController
+    skip_before_action :authorize_submission_edit!, only: :edit
     before_action :set_probation_transfer_request, only: %i[show edit update destroy pdf approve deny withdraw]
 
     def index
-      @probation_transfer_requests = ProbationTransferRequest.where(status: 'in_progress', supervisor_id: session[:user]['employee_id'])
-      employee = session[:user]
+      employee = session[:user] || {}
+      @probation_transfer_requests = ProbationTransferRequest.where(
+        status: 'in_progress', supervisor_id: employee['employee_id']
+      )
 
       if employee.present? && employee['employee_id'].present?
         Rails.logger.info "Logged in as employee #{employee['employee_id']}"
@@ -34,7 +37,7 @@ module Forms
     end
 
     def new
-      employee_id = session[:user]['employee_id'].to_s
+      employee_id = session.dig(:user, 'employee_id').to_s
 
       # Find most recent ACTIVE request within the past year
       @existing_request = ProbationTransferRequest
@@ -56,9 +59,10 @@ module Forms
     end
 
     def create
-      employee = session[:user]
+      employee = session[:user] || {}
+      employee_id = employee['employee_id'] || params.dig(:probation_transfer_request, :employee_id)
       # A supervisor who is away has their queue covered by their delegate.
-      sup_id    = AwayPeriod.assignee_for(fetch_supervisor_id(employee['employee_id']))
+      sup_id    = AwayPeriod.assignee_for(fetch_supervisor_id(employee_id))
       sup_email = fetch_employee_email(sup_id)
 
       @probation_transfer_request = ProbationTransferRequest.new(probation_transfer_request_params)
@@ -201,7 +205,7 @@ module Forms
     end
 
     def prepare_new_transfer_form
-      employee_id = session[:user]['employee_id']
+      employee_id = session.dig(:user, 'employee_id')
       @employee = Employee.find_by(employee_id: employee_id)
 
       unit = Coa::Unit.resolve_for_employee(@employee)
