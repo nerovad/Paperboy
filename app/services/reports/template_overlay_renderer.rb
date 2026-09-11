@@ -50,8 +50,13 @@ module Reports
         next if [width, height] == [expected_width, expected_height]
 
         raise ArgumentError,
-              "Template page is #{width}x#{height}; expected #{expected_width.to_f}x#{expected_height.to_f}"
+              "Template page is #{format_dimension(width)}x#{format_dimension(height)}; " \
+              "expected #{format_dimension(expected_width)}x#{format_dimension(expected_height)}"
       end
+    end
+
+    def format_dimension(dimension)
+      format('%g', dimension.to_f)
     end
 
     def page_size(page)
