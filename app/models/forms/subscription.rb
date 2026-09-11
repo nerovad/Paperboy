@@ -123,9 +123,10 @@ module Forms
     # ones held by groups they belong to.
     def self.for_subscriber(employee_id, group_ids = nil)
       group_ids ||= EmployeeGroup.where(EmployeeID: employee_id.to_s).pluck(:GroupID)
-      rel = for_employee(employee_id)
-      rel = rel.or(where(grantee_type: 'group', group_id: group_ids)) if group_ids.present?
-      rel
+      employee_scope = where(grantee_type: 'employee', employee_id: employee_id.to_s)
+      return employee_scope if group_ids.blank?
+
+      employee_scope.or(where(grantee_type: 'group', group_id: group_ids))
     end
 
     # Class names a set of subscriptions covers, with "all forms" expanded.

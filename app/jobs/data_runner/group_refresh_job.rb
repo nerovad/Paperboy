@@ -43,64 +43,69 @@ module DataRunner
     private
 
     def process_items(run)
-      item_ids = Queue.new
-      run.items.order(:position).ids.each { |id| item_ids << id }
-      workers = [worker_count(run), item_ids.size].min.times.map do
-        Thread.new { work_items(run.id, item_ids) }
+      items = run.items.order(:position).to_a
+      dsl_names = items.map(&:dsl_name).join(',')
+      work = items.map { |item| prepare_item(run, item, dsl_names) }
+      queue = Queue.new
+      work.each { |item| queue << item }
+      ActiveRecord::Base.connection_pool.release_connection
+      File.open(TaskRunner.output_path(run.run_id), 'a') do |output|
+        log = SynchronizedOutput.new(output, Mutex.new)
+        workers = [worker_count(run), work.size].min.times.map do
+          Thread.new { work_items(run.id, queue, log) }
+        end
+        workers.each(&:value)
       end
-      workers.each(&:value)
     end
 
     def worker_count(_run) = DOWNLOAD_CONCURRENCY
 
-    def work_items(run_id, item_ids)
-      while (item_id = item_ids.pop(true))
-        Rails.application.executor.wrap { process_item(GroupRun.find(run_id), GroupRunItem.find(item_id)) }
+    def work_items(run_id, queue, log)
+      while (item = queue.pop(true))
+        process_item(run_id, item, log)
       end
     rescue ThreadError
       nil
     end
 
-    def process_item(run, item)
+    def prepare_item(run, item, dsl_names)
       started_at = Time.current
-      started_clock = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       workspace = item_workspace(run, item)
       item.update!(status: 'running', started_at: started_at)
-      environment = dependency_environment(run, item, workspace)
-      ActiveRecord::Base.connection_pool.release_connection
-      status = with_log(run) do |log|
-        TaskRunner.run_selector!(task: 'refresh', selector: item.dsl_slug, output: log,
-                                 environment: environment)
-      end
+      environment = {
+        'DATARUNNER_RUN_ID' => run.run_id,
+        'DATARUNNER_RUN_DSLS' => dsl_names
+      }
+      environment['DATARUNNER_OUTPUT_ROOT'] = workspace.to_s if workspace
+      oms_number = item.dsl_name.match(/\AOMS (\d{8,9})\z/)&.[](1)
+      raise ArgumentError, "OMS number missing from refresh item #{item.id}" if
+        run.group_name == P2m::DataRefresh::GROUP_RUN_NAME && oms_number.nil?
+
+      environment['DATARUNNER_QUEUE_OMS'] = oms_number if oms_number
+      { id: item.id, name: item.dsl_name, slug: item.dsl_slug, workspace: workspace,
+        environment: environment, started_clock: Process.clock_gettime(Process::CLOCK_MONOTONIC) }
+    end
+
+    def process_item(run_id, item, log)
+      status = TaskRunner.run_selector!(task: 'refresh', selector: item[:slug], output: log,
+                                        environment: item[:environment])
       item_status = status.success? ? 'succeeded' : 'failed'
-      complete_item(run, item, status: item_status, started_clock: started_clock)
+      complete_item(run_id, item, status: item_status)
     rescue StandardError => e
-      complete_item(run, item, status: 'failed', started_clock: started_clock, error_message: e.message)
-      append_log(run) { |log| log.puts("[FAIL] #{item.dsl_name}: #{e.message}") }
+      complete_item(run_id, item, status: 'failed', error_message: e.message)
+      append_log(run_id) { |failure_log| failure_log.puts("[FAIL] #{item[:name]}: #{e.message}") }
     ensure
+      workspace = item[:workspace]
       FileUtils.rm_rf(workspace) if workspace&.to_s&.start_with?(Rails.root.join('tmp/data_runner_runs').to_s)
       ActiveRecord::Base.connection_pool.release_connection
     end
 
-    def complete_item(run, item, status:, started_clock:, error_message: nil)
-      duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_clock) * 1000).round
-      item.update!(status: status, error_message: error_message, duration_ms: duration_ms, completed_at: Time.current)
-      GroupRun.increment_counter(:completed_count, run.id)
-      GroupRun.increment_counter(:failed_count, run.id) if status == 'failed'
-    end
-
-    def dependency_environment(run, item, workspace)
-      environment = {
-        'DATARUNNER_RUN_ID' => run.run_id,
-        'DATARUNNER_RUN_DSLS' => run.items.order(:position).pluck(:dsl_name).join(',')
-      }
-      environment['DATARUNNER_OUTPUT_ROOT'] = workspace.to_s if workspace
-      oms_number = item.dsl_name.match(/\AOMS (\d{8,9})\z/)&.[](1)
-      missing_oms = run.group_name == P2m::DataRefresh::GROUP_RUN_NAME && oms_number.nil?
-      raise ArgumentError, "OMS number missing from refresh item #{item.id}" if missing_oms
-
-      environment['DATARUNNER_QUEUE_OMS'] = oms_number if oms_number
-      environment
+    def complete_item(run_id, item, status:, error_message: nil)
+      duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - item[:started_clock]) * 1000).round
+      GroupRunItem.find(item[:id]).update!(status: status, error_message: error_message,
+                                           duration_ms: duration_ms, completed_at: Time.current)
+      GroupRun.increment_counter(:completed_count, run_id)
+      GroupRun.increment_counter(:failed_count, run_id) if status == 'failed'
     end
 
     def item_workspace(run, item)
@@ -119,7 +124,7 @@ module DataRunner
       return if run.nil? || run.finished?
 
       run.update(status: 'failed', current_dsl: nil, completed_at: Time.current)
-      append_log(run) { |log| log.puts("[FAIL] Group refresh: #{error.message}") }
+      append_log(run.run_id) { |log| log.puts("[FAIL] Group refresh: #{error.message}") }
     end
 
     def prepare_log(run)
@@ -128,16 +133,9 @@ module DataRunner
       path.write("Refreshing #{run.group_name.humanize} (#{run.total_count} DSLs)\n\n")
     end
 
-    def append_log(run, &block)
+    def append_log(run_id, &block)
       @log_mutex ||= Mutex.new
-      @log_mutex.synchronize { File.open(TaskRunner.output_path(run.run_id), 'a', &block) }
-    end
-
-    def with_log(run)
-      @log_mutex ||= Mutex.new
-      File.open(TaskRunner.output_path(run.run_id), 'a') do |output|
-        yield SynchronizedOutput.new(output, @log_mutex)
-      end
+      @log_mutex.synchronize { File.open(TaskRunner.output_path(run_id), 'a', &block) }
     end
   end
 end
