@@ -3,8 +3,14 @@
 require 'open3'
 
 class FormTemplatesController < ApplicationController
+  helper_method :admin_tools_form_templates
+
   before_action -> { require_admin_tab('manage_forms') }
   before_action :set_form_template, only: %i[show edit update destroy archive unarchive]
+
+  def admin_tools_form_templates
+    @admin_tools_form_templates ||= Forms::Template.order(:name).select(:id, :name).to_a
+  end
 
   def index
     @form_templates = Forms::Template.includes(:form_fields).order(:name)
