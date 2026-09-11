@@ -95,7 +95,7 @@ module Forms
             end
         end
 
-        redirect_to form_success_path, allow_other_host: false, status: :see_other
+        redirect_to @probation_transfer_request, allow_other_host: false, status: :see_other
       else
         # See what failed
         Rails.logger.warn("PTR create failed: #{@probation_transfer_request.errors.full_messages.join('; ')}")
