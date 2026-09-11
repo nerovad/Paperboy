@@ -41,10 +41,10 @@ module SlideshowHelper
   end
 
   def hsa_adoption_cards_home_images
-    slideshow_images('hsa_adoption_cards', 'Fishing boats and sailboats in Ventura Harbor',
+    slideshow_images('hsa_adoption_cards', 'Mission bell tower on a tree-lined main street',
+                     'Fishing boats and sailboats in Ventura Harbor',
                      'Lighthouse and boathouses on the harbor waterfront',
                      'Mission courtyard with a tiled fountain',
-                     'Mission bell tower on a tree-lined main street',
                      'Street clock and bronze bench statue on a downtown plaza')
   end
 
