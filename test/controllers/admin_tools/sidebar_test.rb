@@ -25,7 +25,8 @@ class AdminToolsSidebarTest < ActionController::TestCase
     template = Forms::Template.create!(name: 'Alpha Form', class_name: 'AlphaForm', page_count: 2,
                                        submission_type: 'database')
     templates = [template, zulu].sort_by(&:name)
-    @controller.define_singleton_method(:admin_tools_form_templates) { templates }
+    original_helper = AdminToolsHelper.instance_method(:admin_tools_form_templates)
+    AdminToolsHelper.define_method(:admin_tools_form_templates) { templates }
 
     get :edit, params: { id: template.id }
 
@@ -36,5 +37,7 @@ class AdminToolsSidebarTest < ActionController::TestCase
       assert_select "a.nav-link.active[href='#{edit_form_template_path(template)}']", text: 'Alpha Form'
     end
     assert_select "a.nav-link[href='#{form_templates_path(create: true)}']", text: 'Create Form'
+  ensure
+    AdminToolsHelper.define_method(:admin_tools_form_templates, original_helper) if original_helper
   end
 end

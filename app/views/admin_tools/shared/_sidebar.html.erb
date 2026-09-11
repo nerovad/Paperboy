@@ -13,8 +13,7 @@
         <details class="nav-group" <%= "open" if active_key == 'manage_forms' %>>
           <summary><span class="nav-group-label"><%= tool[:label] %></span></summary>
           <%= link_to "Create Form", form_templates_path(create: true), class: "nav-link" %>
-          <% template_links = controller.admin_tools_form_templates %>
-          <% template_links.each do |template| %>
+          <% admin_tools_form_templates.each do |template| %>
             <%= link_to template.name, edit_form_template_path(template),
                         class: "nav-link#{' active' if current_page?(edit_form_template_path(template))}" %>
           <% end %>
