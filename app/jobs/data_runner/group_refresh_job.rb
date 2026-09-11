@@ -45,6 +45,10 @@ module DataRunner
     def process_items(run)
       item_ids = Queue.new
       run.items.order(:position).ids.each { |id| item_ids << id }
+      # The job's calling thread still owns the connection used to load the
+      # run. Release it before the worker threads start so all four workers
+      # can obtain connections independently.
+      ActiveRecord::Base.connection_pool.release_connection
       workers = [worker_count(run), item_ids.size].min.times.map do
         Thread.new { work_items(run.id, item_ids) }
       end

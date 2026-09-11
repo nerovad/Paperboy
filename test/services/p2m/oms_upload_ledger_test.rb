@@ -90,14 +90,18 @@ module P2m
     private
 
     def with_staged_job
-      Dir.mktmpdir do |directory|
-        staging = Pathname.new(directory)
-        marker = staging.join('Mail.dat_51780767.zip').tap { |path| path.write('marker') }
-        FileUtils.touch(marker, mtime: Time.new(2026, 8, 21, 12, 0, 0))
-        write_companion(staging.join('51780767-000001-job.csv'))
-        write_tsv(staging.join('Presort Fields Export_51780767.txt'), 'FLD_RECORD_ID', %w[0.5])
-        write_tsv(staging.join('MoveResults_51780767.txt'), 'RECORD_ID', [])
-        yield staging
+      lock_path = Rails.root.join('tmp', 'p2m_oms_upload_ledger_test.lock')
+      File.open(lock_path, 'w') do |lock|
+        lock.flock(File::LOCK_EX)
+        Dir.mktmpdir do |directory|
+          staging = Pathname.new(directory)
+          marker = staging.join('Mail.dat_51780767.zip').tap { |path| path.write('marker') }
+          FileUtils.touch(marker, mtime: Time.new(2026, 8, 21, 12, 0, 0))
+          write_companion(staging.join('51780767-000001-job.csv'))
+          write_tsv(staging.join('Presort Fields Export_51780767.txt'), 'FLD_RECORD_ID', %w[0.5])
+          write_tsv(staging.join('MoveResults_51780767.txt'), 'RECORD_ID', [])
+          yield staging
+        end
       end
     end
 

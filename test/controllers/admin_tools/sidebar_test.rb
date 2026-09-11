@@ -13,6 +13,9 @@ class AdminToolsSidebarTest < ActionController::TestCase
     @controller.define_singleton_method(:current_user_feature_permission_keys) do
       Set[AppFeature.permission_key('admin_tools', 'manage_forms')]
     end
+    @controller.define_singleton_method(:current_user_application_permission_keys) do
+      Set['admin_tools']
+    end
     @controller.define_singleton_method(:inbox_count) { 0 }
   end
 

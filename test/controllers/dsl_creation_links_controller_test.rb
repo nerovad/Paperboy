@@ -27,5 +27,8 @@ class DslCreationLinksControllerTest < ActionController::TestCase
     @controller.define_singleton_method(:current_user_feature_permission_keys) do
       Set[AppFeature.permission_key('data_runner', 'manage_groups')]
     end
+    @controller.define_singleton_method(:current_user_application_permission_keys) do
+      Set['data_runner']
+    end
   end
 end
