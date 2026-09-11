@@ -4,13 +4,17 @@
    can reach another app. Buttons are the shared .btn system and the viewer
    is the shared pb-modal shell; only their layout is touched here. */
 
+/* Fills the content area like AIM's pages do, so a wide screen shows the
+   whole browse table instead of scrolling it inside a fixed column. The
+   bottom padding clears the fixed "Powered by GSA" badge. */
 .hsa-ac-page {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 1180px;
+  min-width: 0;
   padding: 24px 24px 60px;
+  width: 100%;
 }
 
 .hsa-ac-page-header {
@@ -234,6 +238,11 @@
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
+/* The search form's specific fields: more columns as the width allows. */
+.hsa-ac-grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
 .hsa-ac-card {
   border-bottom: 1px solid $neutral-border-subtle;
   border-right: 1px solid $neutral-border-subtle;
@@ -368,9 +377,18 @@
 
   td.hsa-ac-notes {
     color: $text-muted;
-    max-width: 280px;
+    max-width: 22rem;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  /* Names may wrap; numbers and dates stay on one line. */
+  td:nth-child(3),
+  td:nth-child(4),
+  td:nth-child(6),
+  td:nth-child(7) {
+    white-space: normal;
+    min-width: 9rem;
   }
 
   tr.hsa-ac-detail td {
