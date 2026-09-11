@@ -32,6 +32,10 @@ module AdminToolsHelper
                .map { |tool| tool.slice(:key, :label, :blurb).merge(path: public_send(tool[:route])) }
   end
 
+  def admin_tools_form_templates
+    @admin_tools_form_templates ||= Forms::Template.order(:name).select(:id, :name).to_a
+  end
+
   # Admin Tools is now one of several apps whose sidebar buttons are granted
   # individually (see AppFeature). These three predate that section and were
   # issued as ACL "Profile Dropdown Items"; can_use_app_feature? honours both
