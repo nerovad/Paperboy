@@ -1917,8 +1917,6 @@ PWA:
 
 DEBUG:
   GET /debug/invoice_grid      -> grid#show
-  /reports/matthew_test_report -> show, run
-  /reports/matthew_test_yay    -> show, run
 
 MISC:
   GET /forms/home              -> forms#home
@@ -2518,9 +2516,6 @@ ReportGenerationJob
 
 28.4 DEV/TEST JOBS
 --------------------
-
-MatthewTestReportJob -> Uses Sidekiq::Job, calls test service
-MatthewTestYayJob -> Uses Sidekiq::Job, calls test service
 
 ================================================================================
 29. RAKE TASKS
