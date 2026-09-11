@@ -575,15 +575,4 @@ Rails.application.routes.draw do
   get '/api/nhtsa/makes', to: 'api/nhtsa#makes'
   get '/api/nhtsa/models', to: 'api/nhtsa#models'
 
-  # ============================================================================
-  # Invoicing & Billing
-  # ============================================================================
-  get '/invoice', to: 'invoices#show'
-  get '/invoice', to: 'invoices#new'
-
-  # ============================================================================
-  # Debug & Development Tools
-  # ============================================================================
-  get '/debug/invoice_grid', to: 'grid#show'
-
 end
