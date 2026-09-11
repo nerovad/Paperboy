@@ -67,8 +67,7 @@
   padding: 10px 12px;
 }
 
-.hsa-ac-select,
-.hsa-ac-reason-inline {
+.hsa-ac-select {
   background: $surface-base;
   border: 1px solid $border-color;
   border-radius: 6px;
@@ -273,9 +272,11 @@
   dd { margin: 0; overflow-wrap: anywhere; }
 }
 
+/* Case, VEN and A numbers. Tabular digits keep them aligned in a column
+   without switching to a monospace face that fights the page font. */
 .hsa-ac-mono {
-  font-family: ui-monospace, Consolas, "Courier New", monospace;
-  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
 }
 
 .hsa-ac-pdf {

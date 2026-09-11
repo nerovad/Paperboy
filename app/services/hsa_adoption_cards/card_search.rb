@@ -11,7 +11,7 @@ module HsaAdoptionCards
       'lastName' => '@LastName',   'firstName' => '@FirstName', 'caseNumber' => '@CaseNumber',
       'venOrA' => '@VEN_or_A',     'dob' => '@DOB',             'dobYear' => '@DOBYear',
       'anyText' => '@AnyText',     'fuzzy' => '@Fuzzy',         'dobFuzzy' => '@DOBFuzzy',
-      'reason' => '@Reason',       'nameRole' => '@NameRole',   'names' => '@Names',
+      'nameRole' => '@NameRole',   'names' => '@Names',
       'anywhere' => '@Anywhere',   'closeDate' => '@CloseDate', 'finalDate' => '@FinalDate',
       'anyDate' => '@AnyDate',     'cardType' => '@CardType'
     }.freeze

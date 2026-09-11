@@ -99,7 +99,7 @@ export default class extends Controller {
     // search
     "form", "box", "cardType", "go", "hint", "everywhere", "field", "fuzzy", "dobFuzzy", "meta", "results",
     // both
-    "reason", "who",
+    "who",
     // browse
     "browseCardType", "browseStatus", "browsePageSize", "prev", "next", "where", "table",
     // viewer
@@ -192,8 +192,6 @@ export default class extends Controller {
     if (this.cardTypeTarget.value) p.cardType = this.cardTypeTarget.value
     p.fuzzy = this.fuzzyTarget.checked ? 1 : 0
     p.dobFuzzy = this.dobFuzzyTarget.checked ? 1 : 0
-    const reason = this.reasonTarget.value.trim()
-    if (reason) p.reason = reason
     return p
   }
 
@@ -306,8 +304,6 @@ export default class extends Controller {
                 pageSize: +this.browsePageSizeTarget.value }
     if (this.browseCardTypeTarget.value) p.cardType = this.browseCardTypeTarget.value
     if (this.browseStatusTarget.value) p.status = this.browseStatusTarget.value
-    const reason = this.reasonTarget.value.trim()
-    if (reason) p.reason = reason
     return p
   }
 

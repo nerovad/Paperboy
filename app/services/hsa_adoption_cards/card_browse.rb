@@ -9,7 +9,7 @@ module HsaAdoptionCards
 
     MAPPING = {
       'cardType' => '@CardType', 'status' => '@GroupStatus', 'sortBy' => '@SortBy', 'sortDir' => '@SortDir',
-      'page' => '@Page',         'pageSize' => '@PageSize',  'reason' => '@Reason'
+      'page' => '@Page',         'pageSize' => '@PageSize'
     }.freeze
 
     def self.call(params, app_user:)

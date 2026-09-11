@@ -40,6 +40,13 @@ module SlideshowHelper
                      'Document folding and envelope insertion', 'Finished mail distribution')
   end
 
+  def hsa_adoption_cards_home_images
+    slideshow_images('hsa_adoption_cards', 'Fishing boats and sailboats in Ventura Harbor',
+                     'Lighthouse and boathouses on the harbor waterfront',
+                     'Mission courtyard with a tiled fountain',
+                     'Mission bell tower on a tree-lined main street')
+  end
+
   def digital_asset_management_home_images
     [
       { src: 'DAM_1.png', alt: 'Digital asset ingestion into a secure repository' },

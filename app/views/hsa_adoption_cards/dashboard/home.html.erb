@@ -1,13 +1,7 @@
 <%# app/views/hsa_adoption_cards/dashboard/home.html.erb
     The app's front door — a slideshow, matching every other sub-app. The
     layout swaps the page body for :image, so this view is the slideshow and
-    nothing else.
-
-    It starts on Paperboy's own pictures. To give HSA Adoption Card Search its own, drop three
-    images in app/assets/images/hsa_adoption_cards/ named slide_01.png, slide_02.png and
-    slide_03.png, add a hsa_adoption_cards_home_images method to
-    app/helpers/slideshow_helper.rb alongside the others, and render that
-    instead of paperboy_home_images. %>
+    nothing else. Images live in app/assets/images/hsa_adoption_cards/. %>
 <% content_for :image do %>
-  <%= render "shared/slideshow", images: paperboy_home_images %>
+  <%= render "shared/slideshow", images: hsa_adoption_cards_home_images %>
 <% end %>
