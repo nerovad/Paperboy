@@ -44,7 +44,8 @@ module SlideshowHelper
     slideshow_images('hsa_adoption_cards', 'Fishing boats and sailboats in Ventura Harbor',
                      'Lighthouse and boathouses on the harbor waterfront',
                      'Mission courtyard with a tiled fountain',
-                     'Mission bell tower on a tree-lined main street')
+                     'Mission bell tower on a tree-lined main street',
+                     'Street clock and bronze bench statue on a downtown plaza')
   end
 
   def digital_asset_management_home_images
