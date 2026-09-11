@@ -17,6 +17,7 @@ module Billing
       remove_replaced_reports
       artifacts.each do |artifact|
         write(artifact.pdf_name, artifact.pdf_data)
+        write(artifact.overlay_pdf_name, artifact.overlay_pdf_data)
         write(artifact.xlsx_name, artifact.xlsx_data)
       end
     end
@@ -34,6 +35,8 @@ module Billing
     end
 
     def write(name, data)
+      return if name.blank? || data.blank?
+
       root.join(File.basename(name)).binwrite(data)
     end
   end

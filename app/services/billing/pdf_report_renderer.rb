@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'prawn'
+require 'prawn/templates'
+require 'yaml'
 
 module Billing
   # A fixed grid avoids Prawn's expensive table measurement for large reports.
@@ -8,7 +10,9 @@ module Billing
   class PdfReportRenderer
     DATE_FORMAT = '%m/%d/%y'
     ROWS_PER_PAGE = 29
+    OVERLAY_ROWS_PER_PAGE = 30
     PAGE_SIZE = [17 * 72, 11 * 72].freeze
+    OVERLAY_PAGE_SIZE = [11 * 72, 8.5 * 72].freeze
     ROW_HEIGHT = 8 * 72 / 25.4
     MARGIN = 8 * 72 / 25.4
     COLUMN_WIDTHS = [
@@ -22,13 +26,16 @@ module Billing
     TEXT_COLUMNS = %w[DOC_NMBR DOC_NUBR DOC_NUMBR CUNIT COBJECT CACTIVTY
                       CFUNCTION CPROGRAM CPHASE SPHASE STASK].freeze
 
-    def initialize(report, definition, result)
+    def initialize(report, definition, result, overlay: false)
       @report = report
       @definition = definition
       @result = result
+      @overlay = overlay
     end
 
     def call
+      return overlay_call if overlay
+
       Prawn::Document.new(page_size: PAGE_SIZE, margin: MARGIN, compress: true) do |pdf|
         render_pages(pdf)
       end.render
@@ -36,7 +43,102 @@ module Billing
 
     private
 
-    attr_reader :report, :definition, :result
+    attr_reader :report, :definition, :result, :overlay
+
+    def overlay_call
+      template = Reports::TemplateCatalog.new.find(
+        group: 'billing', filename: 'template.pdf'
+      )
+      mapping = overlay_mapping
+      pages = overlay_batches.each_with_index.map do |rows, index|
+        {
+          template_page: 1,
+          values: overlay_values(index),
+          rows: rows,
+          offset: index * OVERLAY_ROWS_PER_PAGE
+        }
+      end
+
+      Reports::TemplateOverlayRenderer.new(
+        template: template,
+        mapping: mapping,
+        pages: pages,
+        expected_size: OVERLAY_PAGE_SIZE,
+        page_renderer: method(:draw_overlay_rows)
+      ).call
+    end
+
+    def overlay_mapping
+      config = YAML.safe_load(
+        Rails.root.join('config/reports/billing/template.yml').read,
+        permitted_classes: [], aliases: false
+      )
+      config.fetch('header').fetch('fields').merge(config.fetch('footer').fetch('fields'))
+    end
+
+    def overlay_values(page)
+      {
+        'date_range' => date_range,
+        'filename' => File.basename(definition.fetch('pdffile')),
+        'billing_summary' => billing_summary,
+        'prepared_by' => "Prepared by GSA Business Support Services on #{Time.current}",
+        'page_number' => "Page #{page + 1} of #{overlay_batches.length}"
+      }
+    end
+
+    def draw_overlay_rows(pdf, page, _index)
+      rows = page.fetch(:rows)
+      rows.each_with_index do |row, index|
+        draw_overlay_row(pdf, [page.fetch(:offset, 0) + index + 1] + printable_row(row), index)
+      end
+    end
+
+    def draw_overlay_row(pdf, values, index)
+      config = overlay_body_config
+      rows = config.fetch('table').fetch('rows')
+      y = rows.fetch('first_baseline').to_f - (index * rows.fetch('row_height').to_f)
+      columns = ['line_number'] + result.columns.map { |column| overlay_column_name(column) }
+      values.each_with_index do |value, column_index|
+        field = config.fetch('columns').fetch(columns.fetch(column_index))
+        draw_overlay_cell(pdf, value, field, y)
+      end
+    end
+
+    def overlay_column_name(column)
+      name = column.to_s.downcase
+      return 'doc_nmbr' if %w[doc_nmbr doc_nubr doc_numbr].include?(name)
+      return 'cactivity' if name == 'cactivty'
+
+      name
+    end
+
+    def draw_overlay_cell(pdf, value, field, y)
+      x = field.fetch('x').to_f
+      width = field.fetch('width').to_f
+      text = truncate(pdf_value(value), width)
+      pdf.font('Helvetica', size: 5) do
+        pdf.text_box(
+          text,
+          at: [x + 1, y + 5],
+          width: width - 2,
+          height: 10,
+          align: field.fetch('align', 'left').to_sym,
+          overflow: :truncate,
+          disable_wrap: true
+        )
+      end
+    end
+
+    def overlay_body_config
+      @overlay_body_config ||= YAML.safe_load(
+        Rails.root.join('config/reports/billing/template.yml').read,
+        permitted_classes: [], aliases: false
+      ).fetch('body')
+    end
+
+    def overlay_batches
+      @overlay_batches ||= result.rows.each_slice(OVERLAY_ROWS_PER_PAGE).to_a.presence || [[]]
+    end
 
     def render_pages(pdf)
       batches.each_with_index do |rows, index|

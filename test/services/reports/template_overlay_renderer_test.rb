@@ -40,7 +40,7 @@ module Reports
         ).call
       end
 
-      assert_match 'expected 1224.0x792.0', error.message
+      assert_match 'expected 1224x792', error.message
     ensure
       template&.close!
     end

@@ -31,6 +31,8 @@ module Billing
         name: definition.fetch('name'),
         pdf_name: definition.fetch('pdffile'),
         pdf_data: build_pdf(definition, result),
+        overlay_pdf_name: overlay_pdf_name(definition.fetch('pdffile')),
+        overlay_pdf_data: build_overlay_pdf(definition, result),
         xlsx_name: definition.fetch('xlsfile'),
         xlsx_data: build_xlsx(definition, result)
       )
@@ -53,6 +55,18 @@ module Billing
 
     def build_pdf(definition, result)
       PdfReportRenderer.new(report, definition, result).call
+    end
+
+    def build_overlay_pdf(definition, result)
+      PdfReportRenderer.new(report, definition, result, overlay: true).call
+    end
+
+    def overlay_pdf_name(pdf_name)
+      basename = File.basename(pdf_name)
+      stem = basename.delete_suffix(File.extname(basename))
+      stem = stem.sub(/-v(?=\d+\z)/, '-overlay-v')
+      stem = "#{stem}-overlay" unless stem.include?('-overlay')
+      "#{stem}#{File.extname(basename)}"
     end
 
     def query(sql, *values)

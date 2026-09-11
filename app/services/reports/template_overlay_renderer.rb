@@ -7,11 +7,12 @@ module Reports
   class TemplateOverlayRenderer
     DEFAULT_FONT = 'Helvetica'
 
-    def initialize(template:, mapping:, pages:, expected_size: nil)
+    def initialize(template:, mapping:, pages:, expected_size: nil, page_renderer: nil)
       @template = Pathname(template).expand_path
       @mapping = mapping.deep_stringify_keys
       @pages = pages
       @expected_size = expected_size
+      @page_renderer = page_renderer
     end
 
     def call
@@ -25,6 +26,7 @@ module Reports
             margin: 0
           )
           draw_fields(pdf, page.fetch(:values), page.fetch(:template_page, 1))
+          page_renderer&.call(pdf, page, index)
           raise 'Template overlay created an unexpected page' unless pdf.page_count == index + 1
         end
       end.render
@@ -32,7 +34,7 @@ module Reports
 
     private
 
-    attr_reader :template, :mapping, :pages, :expected_size
+    attr_reader :template, :mapping, :pages, :expected_size, :page_renderer
 
     def validate_template!
       raise ArgumentError, "Template PDF not found: #{template}" unless template.file?
