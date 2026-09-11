@@ -16,6 +16,10 @@ class AdminToolsSidebarTest < ActionController::TestCase
     @controller.define_singleton_method(:current_user_application_permission_keys) do
       Set['admin_tools']
     end
+    @controller.define_singleton_method(:admin_tools_form_templates) do
+      Forms::Template.order(:name).select(:id, :name)
+    end
+    @controller.class.helper_method :admin_tools_form_templates
     @controller.define_singleton_method(:inbox_count) { 0 }
   end
 
