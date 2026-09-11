@@ -24,9 +24,9 @@ class AdminToolsSidebarTest < ActionController::TestCase
                                    submission_type: 'database')
     template = Forms::Template.create!(name: 'Alpha Form', class_name: 'AlphaForm', page_count: 2,
                                        submission_type: 'database')
-    @controller.instance_variable_set(
-      :@admin_tools_form_templates, [template, zulu].sort_by(&:name)
-    )
+    templates = [template, zulu].sort_by(&:name)
+    @controller.define_singleton_method(:admin_tools_form_templates) { templates }
+    @controller.class.helper_method :admin_tools_form_templates
 
     get :edit, params: { id: template.id }
 
