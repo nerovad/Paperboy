@@ -388,7 +388,8 @@ export default class extends Controller {
     if (!this.shareConnectedValue) {
       this.viewerFrameTarget.hidden = true
       this.viewerFailTarget.hidden = false
-      this.viewerFailTarget.textContent = this.shareMessageValue || "The scanned-cards share is not reachable."
+      this.viewerFailTarget.innerHTML = `<div><strong>The scanned card cannot be shown yet.</strong>
+        <p>${esc(this.shareMessageValue || "The scanned-cards share is not reachable.")}</p></div>`
       return
     }
     this.viewerFailTarget.hidden = true

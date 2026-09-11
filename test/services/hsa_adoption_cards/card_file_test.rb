@@ -76,11 +76,14 @@ module HsaAdoptionCards
 
       ENV[CardFile::LINUX_ENV] = File.join(@mount, 'nope')
       refute CardFile.status[:connected]
-      assert_match(/not reachable/, CardFile.status[:message])
+      assert_match(/not mounted/, CardFile.status[:message])
+      assert_includes CardFile.status[:message], File.join(@mount, 'nope')
+      assert_includes CardFile.status[:message], 'Paperboy-wsl2-fstab'
 
       ENV.delete(CardFile::LINUX_ENV)
       refute CardFile.status[:connected]
       assert_match(/not configured/, CardFile.status[:message])
+      assert_includes CardFile.status[:message], CardFile::LINUX_ENV
     end
   end
 end

@@ -26,11 +26,25 @@ module HsaAdoptionCards
       new(unc_path).resolve
     end
 
-    # Lenient: tells the page whether the viewer can work at all.
+    # Lenient: tells the page whether the viewer can work at all, and when it
+    # cannot, what someone setting this machine up has to do. The share and
+    # mount lines are kept in LockBox, so the message points there rather
+    # than repeating them.
     def self.status
       root = ENV.fetch(LINUX_ENV, nil).presence
-      return { connected: false, message: 'The scanned-cards share is not configured.' } if root.nil?
-      return { connected: false, message: 'The scanned-cards share is not reachable.' } unless Dir.exist?(root)
+      share = ENV.fetch(WINDOWS_ENV, nil).presence
+      if root.nil? || share.nil?
+        return { connected: false,
+                 message: "The scanned-cards share is not configured on this server. #{WINDOWS_ENV} and " \
+                          "#{LINUX_ENV} come from LockBox's Paperboy.env; refresh .env from there." }
+      end
+      unless Dir.exist?(root)
+        return { connected: false,
+                 message: "The scanned-cards share is not mounted on this server. #{share} needs to be " \
+                          "mounted at #{root}. On a workstation, map the share to G: in Windows and add the " \
+                          "line from LockBox's Paperboy-wsl2-fstab (Arch on bare metal: Paperboy-archlinux-fstab) " \
+                          'to /etc/fstab; the servers use the line in Paperboy-cifs-fstab.' }
+      end
 
       { connected: true, message: 'Connected.' }
     end
