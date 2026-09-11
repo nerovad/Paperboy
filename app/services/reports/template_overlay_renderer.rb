@@ -48,7 +48,7 @@ module Reports
         next if [width, height] == [expected_width, expected_height]
 
         raise ArgumentError,
-              "Template page is #{width}x#{height}; expected #{expected_width}x#{expected_height}"
+              "Template page is #{width}x#{height}; expected #{expected_width.to_f}x#{expected_height.to_f}"
       end
     end
 
