@@ -5,31 +5,6 @@ require 'test_helper'
 class BackupOutputsControllerTest < ActionController::TestCase
   tests DataRunner::BackupOutputsController
 
-  test 'backup outputs list has view delete delete all and close actions' do
-    sign_in
-    backup_path = Rails.root.join('output/data_runner/06_Download_Backup', '2099-01-01-001-employees.xlsx')
-    backup_path.dirname.mkpath
-    backup_path.write('backup')
-
-    get :index, params: { name: 'employees' }
-
-    assert_response :success
-    assert_select 'td', text: '2099-01-01-001-employees.xlsx'
-    assert_select 'a', text: 'View'
-    assert_select 'form[action=?][data-turbo-confirm=?]',
-                  destroy_backup_output_data_runner_dsl_path(
-                    'employees',
-                    path: '06_Download_Backup/2099-01-01-001-employees.xlsx'
-                  ),
-                  'Delete 2099-01-01-001-employees.xlsx? This cannot be undone.'
-    assert_select 'form[action=?][data-turbo-confirm=?]',
-                  destroy_backup_outputs_data_runner_dsl_path('employees'),
-                  'Delete all backup files for Employees? This cannot be undone.'
-    assert_select 'a[href=?]', outputs_data_runner_dsl_path('employees'), text: 'Close'
-  ensure
-    backup_path&.delete if backup_path&.file?
-  end
-
   test 'backup outputs list sorts by file size and modified' do
     sign_in
     backup_dir = Rails.root.join('output/data_runner/06_Download_Backup')

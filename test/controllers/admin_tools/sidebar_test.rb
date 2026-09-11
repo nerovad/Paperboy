@@ -9,6 +9,10 @@ class AdminToolsSidebarTest < ActionController::TestCase
     session[:user] = { 'employee_id' => 1, 'email' => 'employee@example.com',
                        'first_name' => 'Test', 'last_name' => 'User' }
     @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
+    @controller.define_singleton_method(:system_admin?) { true }
+    @controller.define_singleton_method(:current_user_feature_permission_keys) do
+      Set[AppFeature.permission_key('admin_tools', 'manage_forms')]
+    end
     @controller.define_singleton_method(:inbox_count) { 0 }
   end
 
