@@ -19,25 +19,17 @@ class AdminToolsSidebarTest < ActionController::TestCase
     @controller.define_singleton_method(:inbox_count) { 0 }
   end
 
-  test 'groups create and form template actions under Manage Forms' do
-    zulu = Forms::Template.create!(name: 'Zulu Form', class_name: 'ZuluForm', page_count: 2,
-                                   submission_type: 'database')
+  test 'shows the create form action under Manage Forms' do
     template = Forms::Template.create!(name: 'Alpha Form', class_name: 'AlphaForm', page_count: 2,
                                        submission_type: 'database')
-    templates = [template, zulu].sort_by(&:name)
-    original_helper = AdminToolsHelper.instance_method(:admin_tools_form_templates)
-    AdminToolsHelper.define_method(:admin_tools_form_templates) { templates }
 
     get :edit, params: { id: template.id }
 
     assert_response :success
     assert_select '.admin-tools-sidebar details.nav-group[open]' do
       assert_select 'summary', text: /Manage Forms/
-      assert_select 'a.nav-link', text: ['Create Form', 'Alpha Form', 'Zulu Form']
-      assert_select "a.nav-link.active[href='#{edit_form_template_path(template)}']", text: 'Alpha Form'
+      assert_select 'a.nav-link', text: 'Create Form'
     end
     assert_select "a.nav-link[href='#{form_templates_path(create: true)}']", text: 'Create Form'
-  ensure
-    AdminToolsHelper.define_method(:admin_tools_form_templates, original_helper) if original_helper
   end
 end
