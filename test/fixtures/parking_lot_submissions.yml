@@ -2,7 +2,7 @@
 
 one:
   name: MyString
-  phone: MyString
+  phone: '5555550100'
   employee_id: MyString
   email: MyString
   agency: MyString
@@ -18,7 +18,7 @@ one:
 
 two:
   name: MyString
-  phone: MyString
+  phone: '5555550101'
   employee_id: MyString
   email: MyString
   agency: MyString

@@ -39,7 +39,7 @@ class DslSopLinksControllerTest < ActionController::TestCase
 
     assert_response :success
     assert_select '[data-action=?]', 'sop-modal#open', count: 0
-    assert_select '.pb-modal', count: 0
+    assert_select 'div[data-controller="sop-modal"] .pb-modal', count: 0
   end
 
   test 'SOP with a reference folder links to its directory listing' do
@@ -81,7 +81,7 @@ class DslSopLinksControllerTest < ActionController::TestCase
 
     assert_response :success
     assert_select '.pb-modal__actions a.btn.pdf', text: 'Open', count: 1
-    assert_select '.pb-modal__actions button.btn.pdf', text: 'View File', count: 0
+    assert_select '.pb-modal__actions button.btn.pdf', text: 'View File', count: 1
   end
 
   test 'HTTP download SOP opens its source site and downloaded file' do

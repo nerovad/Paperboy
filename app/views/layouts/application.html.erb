@@ -12,6 +12,7 @@
     <link rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/styles/choices.min.css" />
     <%= stylesheet_link_tag "application", media: "all", "data-turbo-track": "reload" %>
+    <%= yield :head %>
     <script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
     <%= javascript_importmap_tags %>
   </head>
@@ -67,9 +68,8 @@
         <div id="main-content">
           <% if content_for?(:image) %>
             <%= yield :image %>
-          <% else %>
-            <%= yield %>
           <% end %>
+          <%= yield %>
           
           <!-- Login (over image) -->
           <% unless session[:user_id] %>

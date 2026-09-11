@@ -14,7 +14,7 @@ class P2mDataRefreshesControllerTest < ActionController::TestCase
 
     assert_response :success
     assert_select '.p2m-data-refresh-summary__row', text: /Print 2 Mail Billing Data/
-    assert_select '.p2m-data-refresh-summary__row .btn.info', text: 'How to Download'
+    assert_select '.p2m-data-refresh-summary__row .btn.info', text: 'How to Upload'
     assert_select 'table.p2m-data-refresh-table' do
       assert_select 'th', text: 'OMS #', count: 3
       assert_select 'th', text: 'Data Runner DSL', count: 0
@@ -30,7 +30,7 @@ class P2mDataRefreshesControllerTest < ActionController::TestCase
     assert_operator @response.body.index('51671902'), :<, @response.body.index('51786524')
     assert_operator @response.body.index('51786524'), :<, @response.body.index('51843363')
     assert_select 'input[type=hidden][name=?][value=?]', 'groups[print_2_mail_billing_data]', '1'
-    assert_select 'input[type=submit][value=?]', 'Refresh'
+    assert_select 'input[type=submit][value=?]', 'Upload'
     assert_select 'button', text: 'Reset', count: 0
   end
 

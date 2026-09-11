@@ -50,7 +50,7 @@ module P2m
             queue: { path: :sent_path }
           }
         },
-        nil
+        { reference_title: 'Mail.dat sent to USPS', reference_path: :downloaded_file }
       )
       catalog = { 'print_2_mail_billing_data' => [entry] }
 
