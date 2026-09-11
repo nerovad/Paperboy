@@ -229,7 +229,6 @@ export default class extends Controller {
 
   clear() {
     this.formTarget.reset()
-    this.fuzzyTarget.checked = true
     this.metaTarget.hidden = true
     this.resultsTarget.innerHTML = ""
     this.boxTarget.focus()

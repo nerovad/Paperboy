@@ -380,6 +380,7 @@
     text-transform: uppercase;
     top: 0;
     user-select: none;
+    z-index: 2;   /* above the pinned detail contents, which are sticky too */
 
     &:hover { color: $text-color; }
     &.is-sorted { color: $brand-navy; }
@@ -423,6 +424,7 @@
     box-sizing: border-box;
     left: 0;
     position: sticky;
+    z-index: 1;
   }
 
   tr.hsa-ac-detail .hsa-ac-card {
