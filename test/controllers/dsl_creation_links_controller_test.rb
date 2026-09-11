@@ -11,7 +11,7 @@ class DslCreationLinksControllerTest < ActionController::TestCase
     get :index
 
     assert_response :success
-    assert_select 'form[action=?] input.btn.secondary', data_runner_inbox_dsls_path,
+    assert_select 'form[action=?] button.btn.secondary', data_runner_inbox_dsls_path,
                   value: 'Discover Inbox Files'
     assert_select 'a.btn.secondary[href=?]', new_data_runner_database_dsls_path,
                   text: 'Import Database Table'
