@@ -20,10 +20,13 @@ class AdminToolsSidebarTest < ActionController::TestCase
   end
 
   test 'groups create and form template actions under Manage Forms' do
-    Forms::Template.create!(name: 'Zulu Form', class_name: 'ZuluForm', page_count: 2,
-                            submission_type: 'database')
+    zulu = Forms::Template.create!(name: 'Zulu Form', class_name: 'ZuluForm', page_count: 2,
+                                   submission_type: 'database')
     template = Forms::Template.create!(name: 'Alpha Form', class_name: 'AlphaForm', page_count: 2,
                                        submission_type: 'database')
+    @controller.instance_variable_set(
+      :@admin_tools_form_templates, [template, zulu].sort_by(&:name)
+    )
 
     get :edit, params: { id: template.id }
 
