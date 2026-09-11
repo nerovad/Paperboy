@@ -119,12 +119,17 @@ export default class extends Controller {
     this.browse = { sortBy: "ID", sortDir: "ASC", page: 1, total: 0, rows: [], openId: null }
     this.boundKeydown = this.keydown.bind(this)
     document.addEventListener("keydown", this.boundKeydown)
-    if (this.modeValue === "browse") this.loadBrowse()
+    if (this.modeValue === "browse") {
+      this.resizeObserver = new ResizeObserver(() => this.fitDetail())
+      this.resizeObserver.observe(this.tableTarget)
+      this.loadBrowse()
+    }
     if (this.hasBoxTarget) this.boxTarget.focus()
   }
 
   disconnect() {
     document.removeEventListener("keydown", this.boundKeydown)
+    this.resizeObserver?.disconnect()
   }
 
   keydown(event) {
@@ -377,8 +382,18 @@ export default class extends Controller {
     tr.classList.add("is-open")
     const d = document.createElement("tr")
     d.className = "hsa-ac-detail"
-    d.innerHTML = `<td colspan="${BROWSE_COLS.length + 1}">${this.renderCard({ ...r, HitType: null })}</td>`
+    d.innerHTML = `<td colspan="${BROWSE_COLS.length + 1}"><div class="hsa-ac-detail__inner">${this.renderCard({ ...r, HitType: null })}</div></td>`
     tr.after(d)
+    this.fitDetail()
+  }
+
+  // The detail cell spans a table that can be wider than the window, so its
+  // contents are pinned to the visible width of the scrolling panel and
+  // stick to its left edge; otherwise the linked cards lay out across the
+  // whole table and disappear off to the right.
+  fitDetail() {
+    const width = this.tableTarget.clientWidth
+    this.tableTarget.querySelectorAll(".hsa-ac-detail__inner").forEach(el => { el.style.width = `${width}px` })
   }
 
   // Every card in the clicked row's case group, rendered beneath the open
@@ -393,7 +408,7 @@ export default class extends Controller {
     box = document.createElement("div")
     box.className = "hsa-ac-linked"
     box.innerHTML = `<div class="hsa-ac-empty">Loading linked cards…</div>`
-    detail.querySelector("td").appendChild(box)
+    detail.querySelector(".hsa-ac-detail__inner").appendChild(box)
     button.disabled = true
     try {
       const p = { groupId: r.GroupID, caseNumber: r.Case_Number, venOrA: r.VEN_Number || r.A_Number,
