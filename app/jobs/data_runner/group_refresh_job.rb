@@ -3,7 +3,6 @@
 require 'fileutils'
 
 module DataRunner
-  # rubocop:disable Metrics/ClassLength
   class GroupRefreshJob < ApplicationJob
     queue_as :default
 
@@ -50,17 +49,20 @@ module DataRunner
       queue = Queue.new
       work.each { |item| queue << item }
       ActiveRecord::Base.connection_pool.release_connection
-      workers = [worker_count(run), work.size].min.times.map do
-        Thread.new { work_items(run.id, queue) }
+      File.open(TaskRunner.output_path(run.run_id), 'a') do |output|
+        log = SynchronizedOutput.new(output, Mutex.new)
+        workers = [worker_count(run), work.size].min.times.map do
+          Thread.new { work_items(run.id, queue, log) }
+        end
+        workers.each(&:value)
       end
-      workers.each(&:value)
     end
 
     def worker_count(_run) = DOWNLOAD_CONCURRENCY
 
-    def work_items(run_id, queue)
+    def work_items(run_id, queue, log)
       while (item = queue.pop(true))
-        process_item(run_id, item)
+        process_item(run_id, item, log)
       end
     rescue ThreadError
       nil
@@ -84,16 +86,14 @@ module DataRunner
         environment: environment, started_clock: Process.clock_gettime(Process::CLOCK_MONOTONIC) }
     end
 
-    def process_item(run_id, item)
-      status = with_log(run_id) do |log|
-        TaskRunner.run_selector!(task: 'refresh', selector: item[:slug], output: log,
-                                 environment: item[:environment])
-      end
+    def process_item(run_id, item, log)
+      status = TaskRunner.run_selector!(task: 'refresh', selector: item[:slug], output: log,
+                                        environment: item[:environment])
       item_status = status.success? ? 'succeeded' : 'failed'
       complete_item(run_id, item, status: item_status)
     rescue StandardError => e
       complete_item(run_id, item, status: 'failed', error_message: e.message)
-      append_log(run_id) { |log| log.puts("[FAIL] #{item[:name]}: #{e.message}") }
+      append_log(run_id) { |failure_log| failure_log.puts("[FAIL] #{item[:name]}: #{e.message}") }
     ensure
       workspace = item[:workspace]
       FileUtils.rm_rf(workspace) if workspace&.to_s&.start_with?(Rails.root.join('tmp/data_runner_runs').to_s)
@@ -137,13 +137,5 @@ module DataRunner
       @log_mutex ||= Mutex.new
       @log_mutex.synchronize { File.open(TaskRunner.output_path(run_id), 'a', &block) }
     end
-
-    def with_log(run_id)
-      @log_mutex ||= Mutex.new
-      File.open(TaskRunner.output_path(run_id), 'a') do |output|
-        yield SynchronizedOutput.new(output, @log_mutex)
-      end
-    end
   end
-  # rubocop:enable Metrics/ClassLength
 end

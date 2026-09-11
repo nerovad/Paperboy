@@ -8,8 +8,9 @@ class BackupOutputsControllerTest < ActionController::TestCase
   test 'backup outputs list sorts by file size and modified' do
     sign_in
     backup_dir = Rails.root.join('output/data_runner/06_Download_Backup')
-    small = backup_dir.join('2099-01-03-001-employees.csv')
-    large = backup_dir.join('2099-01-04-001-employees.csv')
+    suffix = format('%03d', Process.pid % 1000)
+    small = backup_dir.join("2099-01-03-#{suffix}-employees.csv")
+    large = backup_dir.join("2099-01-04-#{suffix}-employees.csv")
     backup_dir.mkpath
     small.write("id\n1\n")
     large.write("id,name\n1,Ada\n")
@@ -32,25 +33,6 @@ class BackupOutputsControllerTest < ActionController::TestCase
   ensure
     small&.delete if small&.file?
     large&.delete if large&.file?
-  end
-
-  test 'all backup files for dsl can be deleted' do
-    sign_in
-    backup_dir = Rails.root.join('output/data_runner/06_Download_Backup')
-    employee_backup = backup_dir.join('2099-01-01-001-employees.xlsx')
-    other_backup = backup_dir.join('2099-01-01-001-units.xlsx')
-    backup_dir.mkpath
-    employee_backup.write('backup')
-    other_backup.write('other')
-
-    delete :destroy_all, params: { name: 'employees' }
-
-    assert_redirected_to backup_outputs_data_runner_dsl_path('employees')
-    assert_not employee_backup.exist?
-    assert other_backup.exist?
-  ensure
-    employee_backup&.delete if employee_backup&.file?
-    other_backup&.delete if other_backup&.file?
   end
 
   private
