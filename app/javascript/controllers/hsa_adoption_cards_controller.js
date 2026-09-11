@@ -22,6 +22,8 @@ const CARD_LABEL = {
 const DEFAULT_HINT = "Type anything — a surname, a partial case number, a date. Separate several " +
   "things with commas to require all of them; wrap anything containing a comma in quotes."
 const TYPE_ORDER = { "CHILD": 1, "BIRTH PARENTS": 2, "ADOPTIVE PARENTS": 3 }
+// The database stores the type as "Child" / "Birth Parents" / "Adoptive Parents".
+const typeRank = c => TYPE_ORDER[String(c.CardType ?? "").toUpperCase()] || 9
 const CRITERIA = ["lastName", "firstName", "names", "anywhere", "caseNumber", "venOrA",
                   "dob", "dobYear", "closeDate", "finalDate", "anyDate", "anyText"]
 
@@ -250,7 +252,7 @@ export default class extends Controller {
     }
     let html = ""
     for (const [gid, cards] of groups) {
-      cards.sort((a, b) => (TYPE_ORDER[a.CardType] || 9) - (TYPE_ORDER[b.CardType] || 9))
+      cards.sort((a, b) => typeRank(a) - typeRank(b))
       const st = cards[0].GroupStatus || "UNLINKED"
       const amb = cards.some(c => c.Ambiguous)
       const conflict = cards.map(c => c.Conflicts).find(Boolean)
@@ -268,9 +270,11 @@ export default class extends Controller {
 
   renderCard(c) {
     const row = (dt, dd, mono) => (dd ? `<dt>${esc(dt)}</dt><dd${mono ? ' class="hsa-ac-mono"' : ""}>${esc(dd)}</dd>` : "")
+    // The child's names lead every card, whichever card it is: they are what
+    // links the three cards of a case, so a reader should see them on each.
     let body = ""
-    if (c.CardType === "CHILD" || c.CardType === "BIRTH PARENTS") body += row("Birth name", nameOf(c.Child_BirthFirst, c.Child_BirthLast))
-    if (c.CardType === "CHILD" || c.CardType === "ADOPTIVE PARENTS") body += row("Adopted name", nameOf(c.Child_AdoptFirst, c.Child_AdoptLast))
+    body += row("Child's birth name", nameOf(c.Child_BirthFirst, c.Child_BirthLast))
+    body += row("Child's adopted name", nameOf(c.Child_AdoptFirst, c.Child_AdoptLast))
     body += row("Date of birth", fmtDate(c.Child_DOB))
     const bp = [nameOf(c.BirthParent_1_First, c.BirthParent_1_Last), nameOf(c.BirthParent_2_First, c.BirthParent_2_Last)].filter(Boolean)
     const ap = [nameOf(c.AdoptParent_1_First, c.AdoptParent_1_Last), nameOf(c.AdoptParent_2_First, c.AdoptParent_2_Last)].filter(Boolean)
@@ -417,7 +421,7 @@ export default class extends Controller {
       if (!cards.length) {
         box.innerHTML = `<div class="hsa-ac-empty">No other cards are linked to this one.</div>`
       } else {
-        cards.sort((a, b) => (TYPE_ORDER[a.CardType] || 9) - (TYPE_ORDER[b.CardType] || 9))
+        cards.sort((a, b) => typeRank(a) - typeRank(b))
         const st = r.GroupStatus || "UNLINKED"
         box.innerHTML = `<section class="hsa-ac-case">
           <h2><span class="hsa-ac-badge is-${esc(st)}">${esc(st)}</span>
