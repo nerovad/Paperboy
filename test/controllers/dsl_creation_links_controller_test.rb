@@ -23,5 +23,8 @@ class DslCreationLinksControllerTest < ActionController::TestCase
     session[:user] = { 'employee_id' => 1, 'email' => 'employee@example.com',
                        'first_name' => 'Test', 'last_name' => 'User' }
     @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
+    @controller.define_singleton_method(:current_user_feature_permission_keys) do
+      Set[AppFeature.permission_key('data_runner', 'manage_groups')]
+    end
   end
 end
