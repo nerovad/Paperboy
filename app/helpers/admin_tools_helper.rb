@@ -35,7 +35,7 @@ module AdminToolsHelper
   # Forms shown inside the Manage Forms sidebar group. Keep this query small:
   # the sidebar only needs the stable id and the human-readable name.
   def admin_tools_form_templates
-    Forms::Template.order(:name).select(:id, :name)
+    @admin_tools_form_templates ||= Forms::Template.order(:name).select(:id, :name).to_a
   end
 
   # Admin Tools is now one of several apps whose sidebar buttons are granted

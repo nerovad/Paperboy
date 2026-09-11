@@ -185,6 +185,7 @@ class FormTemplatesController < ApplicationController
   end
 
   def edit
+    @admin_tools_form_templates = Forms::Template.order(:name).select(:id, :name).to_a
     @acl_groups = fetch_acl_groups
     @employees = fetch_employees
     @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
