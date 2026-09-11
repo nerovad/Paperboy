@@ -15,7 +15,7 @@ module HsaAdoptionCards
       get :home
 
       assert_response :success
-      assert_select 'img[src*="hsa_adoption_cards/slide_0"]', 4
+      assert_select 'img[src*="hsa_adoption_cards/slide_0"]', 5
     end
 
     test 'a signed-out visitor is sent to the front page' do
