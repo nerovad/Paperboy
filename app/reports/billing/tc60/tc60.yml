@@ -1,4 +1,4 @@
-# Coordinates measured from config/reports/billing/template.pdf.
+# Coordinates measured from app/reports/billing/tc60/tc60.pdf.
 # Units are PDF points. The origin is the bottom-left corner.
 #
 # This template is landscape letter (792 x 612). It reserves a header band
@@ -11,7 +11,7 @@ page:
   paper: letter
 
 template:
-  filename: template.pdf
+  filename: tc60.pdf
 
 header:
   available: true

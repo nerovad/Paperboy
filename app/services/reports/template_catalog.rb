@@ -5,16 +5,17 @@ module Reports
     class InvalidFilename < ArgumentError; end
     class MissingTemplate < StandardError; end
 
-    def initialize(root: Rails.root.join('config/reports'))
+    def initialize(root: Rails.root.join('app/reports'))
       @root = Pathname(root).expand_path
     end
 
-    def find(group:, filename:)
-      name = safe_filename(filename)
-      path = @root.join(group.to_s, name).expand_path
-      return path if path.file? && path.to_s.start_with?(template_root(group).to_s + File::SEPARATOR)
+    def find(family:, report:)
+      family_name = safe_filename(family)
+      report_name = safe_filename(report)
+      path = @root.join(family_name, report_name, "#{report_name}.pdf").expand_path
+      return path if path.file? && path.to_s.start_with?(report_root(family_name, report_name).to_s + File::SEPARATOR)
 
-      raise MissingTemplate, "Report template not found: #{name}"
+      raise MissingTemplate, "Report template not found: #{family_name}/#{report_name}"
     end
 
     private
@@ -28,8 +29,8 @@ module Reports
       raise InvalidFilename, 'Report template filename must be a basename'
     end
 
-    def template_root(group)
-      root.join(group.to_s).expand_path
+    def report_root(family, report)
+      root.join(family, report).expand_path
     end
   end
 end

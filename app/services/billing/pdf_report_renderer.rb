@@ -46,9 +46,7 @@ module Billing
     attr_reader :report, :definition, :result, :overlay
 
     def overlay_call
-      template = Reports::TemplateCatalog.new.find(
-        group: 'billing', filename: 'template.pdf'
-      )
+      template = Reports::TemplateCatalog.new.find(family: 'billing', report: 'tc60')
       mapping = overlay_mapping
       pages = overlay_batches.each_with_index.map do |rows, index|
         {
@@ -70,7 +68,7 @@ module Billing
 
     def overlay_mapping
       config = YAML.safe_load(
-        Rails.root.join('config/reports/billing/template.yml').read,
+        Rails.root.join('app/reports/billing/tc60/tc60.yml').read,
         permitted_classes: [], aliases: false
       )
       config.fetch('header').fetch('fields').merge(config.fetch('footer').fetch('fields'))
@@ -131,7 +129,7 @@ module Billing
 
     def overlay_body_config
       @overlay_body_config ||= YAML.safe_load(
-        Rails.root.join('config/reports/billing/template.yml').read,
+        Rails.root.join('app/reports/billing/tc60/tc60.yml').read,
         permitted_classes: [], aliases: false
       ).fetch('body')
     end

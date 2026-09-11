@@ -2502,7 +2502,7 @@ ReportGenerationJob
 ================================================================================
 
 29.1 REPORTS (lib/tasks/reports.rake, 520 lines)
-  rake reports:new[report_name]      -> Full report scaffolding
+  rake reports:new[family,report_name] -> Report directory and PDF scaffold
   rake reports:destroy[report_name]  -> Remove report files
   rake reports:run[name,sDate,eDate] -> Execute report synchronously
   rake reports:doctor                -> Diagnose autoload issues
