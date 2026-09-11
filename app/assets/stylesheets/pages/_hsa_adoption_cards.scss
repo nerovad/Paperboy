@@ -383,6 +383,16 @@
     border: none;
     max-width: 720px;
   }
+
+  /* The linked-cards case rendered under an open row. */
+  tr.hsa-ac-detail .hsa-ac-linked {
+    border-top: 1px solid $neutral-border-subtle;
+    padding: 12px 14px 14px;
+
+    .hsa-ac-case { margin-bottom: 0; }
+    .hsa-ac-card { border-right: 1px solid $neutral-border-subtle; max-width: none; }
+    .hsa-ac-card:last-child { border-right: none; }
+  }
 }
 
 /* ---- scanned-card viewer (contents only; the shell is pb-modal) ---- */
