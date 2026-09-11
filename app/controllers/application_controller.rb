@@ -10,6 +10,7 @@ class ApplicationController < ActionController::Base
                 :current_user_feature_permission_keys,
                 :current_user_record_view_permission_keys, :current_user_record_edit_permission_keys,
                 :current_user_submission_action_permission_keys,
+                :admin_tools_form_templates,
                 :available_authorization_consoles, :authorization_console_accessible?,
                 :authorization_console_rights, :can_read_authorization_console?,
                 :can_write_authorization_console?, :can_delete_authorization_console?
@@ -40,6 +41,10 @@ class ApplicationController < ActionController::Base
       else
         0
       end
+  end
+
+  def admin_tools_form_templates
+    @admin_tools_form_templates ||= Forms::Template.order(:name).select(:id, :name).to_a
   end
 
   def build_prefill_data(employee_id)
