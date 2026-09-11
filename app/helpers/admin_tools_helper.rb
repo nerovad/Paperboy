@@ -35,8 +35,6 @@ module AdminToolsHelper
   # Forms shown inside the Manage Forms sidebar group. Keep this query small:
   # the sidebar only needs the stable id and the human-readable name.
   def admin_tools_form_templates
-    return Forms::Template.none unless can_view_admin_tool?('manage_forms')
-
     Forms::Template.order(:name).select(:id, :name)
   end
 

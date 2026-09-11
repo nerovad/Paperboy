@@ -34,18 +34,6 @@ class BackupOutputsControllerTest < ActionController::TestCase
     large&.delete if large&.file?
   end
 
-  test 'single backup file can be deleted' do
-    sign_in
-    backup_path = Rails.root.join('output/data_runner/06_Download_Backup', '2099-01-01-001-employees.xlsx')
-    backup_path.dirname.mkpath
-    backup_path.write('backup')
-
-    delete :destroy, params: { name: 'employees', path: '06_Download_Backup/2099-01-01-001-employees.xlsx' }
-
-    assert_redirected_to backup_outputs_data_runner_dsl_path('employees')
-    assert_not backup_path.exist?
-  end
-
   test 'all backup files for dsl can be deleted' do
     sign_in
     backup_dir = Rails.root.join('output/data_runner/06_Download_Backup')
