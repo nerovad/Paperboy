@@ -425,6 +425,15 @@
   justify-content: center;
   padding: 30px;
   text-align: center;
+
+  strong { color: $text-strong; }
+
+  p {
+    line-height: 1.5;
+    margin: 8px auto 0;
+    max-width: 44rem;
+    overflow-wrap: anywhere;
+  }
 }
 
 /* ---- maintenance ---- */
