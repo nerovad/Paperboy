@@ -2,7 +2,7 @@
 
 module Billing
   class EmailReport
-    TYPE_PATTERN = /\A([A-Z]{2,3})\d{4}-TC60-/i
+    TYPE_PATTERN = /\A(?:p)?([A-Z]{2,3})\d{4}-TC60-/i
 
     attr_reader :name, :files, :billing_type
 

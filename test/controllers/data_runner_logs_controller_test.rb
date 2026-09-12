@@ -25,13 +25,13 @@ class DataRunnerLogsControllerTest < ActionController::TestCase
     get :index
 
     assert_response :success
-    assert_select '.run-log-menu .button', text: 'Run Logs'
+    assert_select '.run-log-menu .btn', text: 'Run Logs'
     assert_select '.run-log-menu label', text: 'Date'
     assert_select '.run-log-menu label', text: 'Command'
     assert_select '.run-log-menu label', text: 'DSL'
     assert_select '.run-log-menu label', text: 'Status'
     assert_select '.run-log-menu label', text: 'Duration'
-    assert_select '.run-log-menu .button.primary', text: 'New Log'
+    assert_select '.run-log-menu .btn.approve', text: 'New Log'
   end
 
   test 'show confirms log deletion' do

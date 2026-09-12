@@ -759,6 +759,17 @@ groups:
     key: '17'
     class: CriticalInformationReporting
     label: Critical Information Reporting
+- name: hsa_adoption_searchers
+  description: May search and browse the HSA adoption card index
+  permissions:
+  - type: application
+    key: hsa_adoption_cards
+  - type: feature
+    key: hsa_adoption_cards:browse
+  - type: feature
+    key: hsa_adoption_cards:maintenance
+  - type: feature
+    key: hsa_adoption_cards:search
 org_permissions:
 - agency_id:
   division_id:
@@ -9918,6 +9929,8 @@ memberships:
 - group: HCA_Safety_Officers
   employee_id: 122982
 - group: HCA_Test
+  employee_id: 126566
+- group: hsa_adoption_searchers
   employee_id: 126566
 - group: IT_Support
   employee_id: 126183

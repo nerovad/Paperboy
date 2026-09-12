@@ -19,7 +19,7 @@ class FormsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "form[action='#{auth_setup_path}'][method='post']" do
       assert_select "input[name='authenticity_token']", 1
-      assert_select "input[type='submit'][value='Employee Login']", 1
+      assert_select "input[type='submit'][value='Employee']", 1
     end
   ensure
     ActionController::Base.allow_forgery_protection = previous_forgery_protection

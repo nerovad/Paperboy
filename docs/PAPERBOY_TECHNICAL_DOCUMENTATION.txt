@@ -1737,21 +1737,7 @@ STRONG PARAMS: filter_type, filter_title, filter_category, filter_status,
 19. CONTROLLERS - BILLING & INVOICES
 ================================================================================
 
-19.1 INVOICES CONTROLLER
---------------------------
-
-File: app/controllers/invoices_controller.rb
-
-ACTIONS:
-  new() -> Form for invoice generation parameters
-  show() -> Generates invoice PDF
-    - Calls Tc60Export.call() stored procedure
-    - Renders PDF via InvoiceOverlayPdf service
-    - Sends as inline PDF response
-
-STRONG PARAMS: sDate, eDate, type, digits, encumbered
-
-19.2 BILLING TOOLS CONTROLLER
+19.1 BILLING TOOLS CONTROLLER
 -----------------------------
 
 File: app/controllers/billing/tools_controller.rb
@@ -1908,17 +1894,9 @@ API:
   GET /api/nhtsa/makes         -> api/nhtsa#makes
   GET /api/nhtsa/models        -> api/nhtsa#models
 
-INVOICING:
-  GET /invoice                 -> invoices#show / invoices#new
-
 PWA:
   GET /manifest                -> rails/pwa#manifest
   GET /service-worker          -> rails/pwa#service_worker
-
-DEBUG:
-  GET /debug/invoice_grid      -> grid#show
-  /reports/matthew_test_report -> show, run
-  /reports/matthew_test_yay    -> show, run
 
 MISC:
   GET /forms/home              -> forms#home
@@ -2519,15 +2497,12 @@ ReportGenerationJob
 28.4 DEV/TEST JOBS
 --------------------
 
-MatthewTestReportJob -> Uses Sidekiq::Job, calls test service
-MatthewTestYayJob -> Uses Sidekiq::Job, calls test service
-
 ================================================================================
 29. RAKE TASKS
 ================================================================================
 
 29.1 REPORTS (lib/tasks/reports.rake, 520 lines)
-  rake reports:new[report_name]      -> Full report scaffolding
+  rake reports:new[family,report_name] -> Report directory and PDF scaffold
   rake reports:destroy[report_name]  -> Remove report files
   rake reports:run[name,sDate,eDate] -> Execute report synchronously
   rake reports:doctor                -> Diagnose autoload issues

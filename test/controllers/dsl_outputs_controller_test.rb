@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'test_helper'
+require Rails.root.join('script/ruby/data_runner/constants/workflow_paths')
 
 class DslOutputsControllerTest < ActionController::TestCase
   tests DataRunner::DslsController

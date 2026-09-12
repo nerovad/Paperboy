@@ -28,7 +28,7 @@ class DslSourcePreviewControllerTest < ActionController::TestCase
     assert_response :success
     assert_select '.task-result', text: /Download completed\./
     assert_select 'pre.output', false
-    assert_select 'pre.task-output-box', count: 1
+    assert_select 'pre.captured-output', count: 1
   ensure
     output_path&.delete if output_path&.file?
   end

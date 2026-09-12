@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-file_name=${file_name:-sample_report}
-sDate=${sDate:-2025-11-01}
-eDate=${eDate:-2025-11-01}
-
-git checkout -- config/routes.rb
-rake "reports:destroy[${file_name}]"
-rake "reports:new[${file_name}]"
-rake "reports:run[${file_name},${sDate},${eDate}]"

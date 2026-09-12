@@ -33,7 +33,8 @@ module DataRunner
     # everyone, so the grant alone would otherwise let a signed-out visitor
     # through on the actions that skip login.
     def require_app_access
-      return if user_signed_in? && helpers.can_access_app?('data_runner')
+      return unless user_signed_in?
+      return if helpers.can_access_app?('data_runner')
 
       redirect_to root_path, alert: 'You do not have access to Data Runner.'
     end

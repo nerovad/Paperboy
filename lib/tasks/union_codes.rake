@@ -6,10 +6,12 @@ namespace :union_codes do
   # SEED_CODES as membership changes (this is a manual stopgap until a real
   # source feed or admin UI exists). Employee IDs are looked up once and pasted
   # here so the task does not depend on name matching at run time.
-  SEED_CODES = [
-    { employee_id: '104236', name: 'Sean Payne',   union_code: 'MB3' },
-    { employee_id: '132497', name: 'David Barley', union_code: 'MB3' }
-  ].freeze
+  unless defined?(SEED_CODES)
+    SEED_CODES = [
+      { employee_id: '104236', name: 'Sean Payne',   union_code: 'MB3' },
+      { employee_id: '132497', name: 'David Barley', union_code: 'MB3' }
+    ].freeze
+  end
 
   desc 'Seed employee_union_codes with known union memberships (idempotent)'
   task seed: :environment do

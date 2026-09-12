@@ -75,7 +75,11 @@ module Forms
     def form_types_for(event)
       @form_types_for ||= {}
       @form_types_for[event] ||= begin
-        subs = Forms::Subscription.for_subscriber(@employee_id).daily_digest.for_event(event).to_a
+        subscriptions = Forms::Subscription.for_employee(@employee_id).to_a
+        group_ids = EmployeeGroup.where(EmployeeID: @employee_id).pluck(:GroupID)
+        subscriptions.concat(Forms::Subscription.for_group(group_ids).to_a) if group_ids.present?
+        column = Forms::Subscription::EVENT_COLUMNS.fetch(event)
+        subs = subscriptions.select { |subscription| subscription.delivery_mode == Forms::Subscription::DAILY_DIGEST && subscription[column] }
         Forms::Subscription.covered_form_types(subs)
       end
     end

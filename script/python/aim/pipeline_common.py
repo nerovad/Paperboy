@@ -229,21 +229,39 @@ def get_sql_connection(section):
     )
     return pyodbc.connect(conn_str)
 
+# The one name a SQL payload is ever written under. Before step 1.3 a payload
+# routed as SUCCESS was "{processing_id}.json" while the same payload routed as
+# ACTION_NEEDED was "{processing_id}_READY_FOR_SQL.json", and the SQL worker
+# took whichever .json the filesystem listed first -- which could be a vendor
+# rule sidecar. Aim::InvoiceQueueSupport::PAYLOAD_SUFFIX is the Ruby half.
+PAYLOAD_SUFFIX = "_READY_FOR_SQL.json"
+
+class SqlMappingError(Exception):
+    """A SQL payload could not be inserted because its mapping did not apply.
+
+    Either the mapping file is missing from the worker install, or no key in
+    it matched the payload. Silently returning in either case is how invoices
+    disappeared: the worker printed a success line, archived the batch and
+    deleted the folder while the database never received a row. Raising sends
+    the batch to the failed queue instead.
+    """
+
 def insert_sql_record(section, data_dict):
     prefix = f"AIM_{section}_"
-    mapping_filename = env(f"{prefix}MAPPING_FILE", '')
-    if not mapping_filename:
-        print(f"    [!] No MappingFile configured for {section}. Skipping SQL insert.")
-        return
-        
+    mapping_filename = env(f"{prefix}MAPPING_FILE")
+
     if os.path.isabs(mapping_filename):
         mapping_file_path = mapping_filename
     else:
         mapping_file_path = os.path.join(PROGRAM_DIR, mapping_filename)
     
     if not os.path.exists(mapping_file_path):
-        print(f"    [!] Mapping file {mapping_filename} not found. Skipping SQL insert for {section}.")
-        return
+        raise SqlMappingError(
+            f"{section}: mapping file {mapping_file_path} does not exist. "
+            f"AIM_{section}_MAPPING_FILE names {mapping_filename}; the "
+            "worker install should carry it. Deploy it with "
+            "bin/deploy-aim-workers rather than letting the insert be skipped."
+        )
 
     with open(mapping_file_path, 'r') as f:
         mapping = json.load(f)
@@ -263,7 +281,12 @@ def insert_sql_record(section, data_dict):
             placeholders.append("?")
 
     if not columns:
-        return
+        raise SqlMappingError(
+            f"{section}: no column of {table} matched the payload. "
+            f"Mapping {mapping_filename} expects "
+            f"{sorted(mapping.keys())}; the payload carries "
+            f"{sorted(data_dict.keys())}."
+        )
 
     query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(placeholders)})"
     
@@ -306,7 +329,7 @@ def write_log(filename, stage, status, details, bu_number, submitter_name, proce
     if status == "SUCCESS":
         folder_path = os.path.join(SQL_QUEUE_DIR, processing_id)
         os.makedirs(folder_path, exist_ok=True)
-        queue_path = os.path.join(folder_path, f"{processing_id}.json")
+        queue_path = os.path.join(folder_path, f"{processing_id}{PAYLOAD_SUFFIX}")
         try:
             with open(queue_path, 'w', encoding='utf-8') as f:
                 json.dump(sql_payload, f, indent=4)
@@ -315,7 +338,7 @@ def write_log(filename, stage, status, details, bu_number, submitter_name, proce
     elif status == "ACTION_NEEDED":
         folder_path = os.path.join(ACTION_NEEDED_DIR, processing_id)
         os.makedirs(folder_path, exist_ok=True)
-        manual_fix_path = os.path.join(folder_path, f"{processing_id}_READY_FOR_SQL.json")
+        manual_fix_path = os.path.join(folder_path, f"{processing_id}{PAYLOAD_SUFFIX}")
         try:
             with open(manual_fix_path, 'w', encoding='utf-8') as f:
                 json.dump(sql_payload, f, indent=4)

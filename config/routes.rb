@@ -187,6 +187,7 @@ Rails.application.routes.draw do
     patch '/dsl_groups/:group/rename', to: 'dsls#rename_group', as: :rename_dsl_group
     delete '/dsl_groups/:group', to: 'dsls#destroy_group', as: :destroy_dsl_group
     post '/dsl_groups/:group/refresh', to: 'group_refreshes#create', as: :refresh_dsl_group
+    get '/group_refreshes', to: 'group_refreshes#index', as: :group_refreshes
     get '/runs/:id', to: 'runs#show', as: :run
     resources :group_runs, only: :show do
       member { get :status }
@@ -485,7 +486,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :probation_transfer_requests, only: %i[new create index show],
+  resources :probation_transfer_requests, only: %i[new create index show edit update destroy],
                                           controller: 'forms/probation_transfer_requests' do
     member do
       get :pdf
@@ -576,22 +577,4 @@ Rails.application.routes.draw do
   get '/api/nhtsa/makes', to: 'api/nhtsa#makes'
   get '/api/nhtsa/models', to: 'api/nhtsa#models'
 
-  # ============================================================================
-  # Invoicing & Billing
-  # ============================================================================
-  get '/invoice', to: 'invoices#show'
-  get '/invoice', to: 'invoices#new'
-
-  # ============================================================================
-  # Debug & Development Tools
-  # ============================================================================
-  get '/debug/invoice_grid', to: 'grid#show'
-
-  # MatthewTestReport report
-  get  '/reports/matthew_test_report',     to: 'matthew_test_report_reports#show', as: 'matthew_test_report_reports'
-  post '/reports/matthew_test_report/run', to: 'matthew_test_report_reports#run',  as: 'matthew_test_report_reports_run'
-
-  # MatthewTestYay report
-  get  '/reports/matthew_test_yay',     to: 'matthew_test_yay_reports#show', as: 'matthew_test_yay_reports'
-  post '/reports/matthew_test_yay/run', to: 'matthew_test_yay_reports#run',  as: 'matthew_test_yay_reports_run'
 end

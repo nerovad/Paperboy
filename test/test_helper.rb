@@ -3,10 +3,29 @@
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 require 'rails/test_help'
+require 'minitest/mock'
 require_relative 'support/isolated_dsl_catalog'
+
+# Existing tests use callable objects as stubbed return values (for example,
+# service doubles exposing #call). minitest-mock treats every callable value as
+# a callback, so preserve that older test-suite convention while keeping Proc
+# and Method callbacks working normally.
+module PaperboyMinitestStubCompatibility
+  def stub(name, value, *block_args, **block_kwargs, &block)
+    original = value
+    mock = original.class == Minitest::Mock # rubocop:disable Style/ClassEqualityComparison
+    callable = !mock && original.respond_to?(:call)
+    value = ->(*) { original } if mock || (callable && original.class != Proc && original.class != Method)
+    super(name, value, *block_args, **block_kwargs, &block) # rubocop:disable Style/SuperArguments
+  end
+end
+
+Object.prepend(PaperboyMinitestStubCompatibility)
 
 module ActiveSupport
   class TestCase
+    include Rails.application.routes.url_helpers
+
     BASE_TEST_DATABASE = ActiveRecord::Base.connection_db_config.database
     BASE_TEST_DATABASE_CONFIGURATION = ActiveRecord::Base.connection_db_config.configuration_hash.freeze
     PARALLEL_TEST_DATABASE = "#{BASE_TEST_DATABASE}_#{SecureRandom.hex(6)}".freeze
@@ -40,6 +59,21 @@ module ActiveSupport
     # Add more helper methods to be used by all tests here...
   end
 end
+
+module DataRunnerControllerTestAccess
+  def after_setup
+    super
+    return unless @controller.is_a?(DataRunner::ApplicationController)
+    return if defined?(DslAccessControllerTest) && is_a?(DslAccessControllerTest)
+
+    # These controller tests exercise actions after authentication. Give
+    # them the same broad grant as the admin user used by the fixtures;
+    # DslAccessControllerTest supplies narrower grants for the gate itself.
+    @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
+  end
+end
+
+ActionController::TestCase.prepend(DataRunnerControllerTestAccess)
 
 Minitest.after_run do
   next unless ActiveSupport::TestCase.parallel_database_run_started

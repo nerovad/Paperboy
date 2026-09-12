@@ -1,0 +1,84 @@
+# Coordinates measured from app/reports/billing/tc60/tc60.pdf.
+# Units are PDF points. The origin is the bottom-left corner.
+#
+# This template is landscape letter (792 x 612). It reserves a header band
+# above the table and a footer band below it.
+
+page:
+  width: 792
+  height: 612
+  orientation: landscape
+  paper: letter
+
+template:
+  filename: tc60.pdf
+
+header:
+  available: true
+  band:
+    x: 8
+    y: 574
+    width: 776
+    height: 22
+  fields:
+    date_range: { x: 8, y: 574, width: 270, height: 16, align: left, size: 7 }
+    filename: { x: 278, y: 574, width: 236, height: 16, align: center, size: 7 }
+    billing_summary: { x: 514, y: 574, width: 270, height: 16, align: right, size: 7 }
+
+body:
+  rows_per_page: 30
+  table:
+    x: 8
+    y: 24
+    width: 776
+    height: 536
+    column_header:
+      top: 560
+      bottom: 534
+      height: 26
+    rows:
+      first_top: 534
+      row_height: 17
+      first_baseline: 524
+      last_top: 34
+      last_bottom: 24
+
+  columns:
+    line_number: { x: 8, width: 15.355469, align: center }
+    cunit: { x: 23.355469, width: 19.453125, align: left }
+    cobject: { x: 42.808594, width: 22.519531, align: left }
+    cactivity: { x: 65.328125, width: 24.570313, align: left }
+    cfunction: { x: 89.898438, width: 24.570312, align: left }
+    cprogram: { x: 114.46875, width: 25.59375, align: left }
+    cphase: { x: 140.0625, width: 20.476562, align: left }
+    ctask: { x: 160.539062, width: 20.472657, align: left }
+    amount: { x: 181.011719, width: 24.570312, align: right }
+    sunit: { x: 205.582031, width: 17.40625, align: left }
+    sobject: { x: 222.988281, width: 21.496094, align: left }
+    sactivity: { x: 244.484375, width: 23.546875, align: left }
+    sfunction: { x: 268.03125, width: 23.546875, align: left }
+    sprogram: { x: 291.578125, width: 24.570313, align: left }
+    sphase: { x: 316.148438, width: 20.472656, align: left }
+    stask: { x: 336.621094, width: 20.476562, align: left }
+    posting_ref: { x: 357.097656, width: 28.664063, align: left }
+    service: { x: 385.761719, width: 20.476562, align: left }
+    date: { x: 406.238281, width: 18.425781, align: left }
+    doc_nmbr: { x: 424.664062, width: 23.546876, align: left }
+    description: { x: 448.210938, width: 85.996093, align: left }
+    other1: { x: 534.207031, width: 61.421875, align: left }
+    other2: { x: 595.628906, width: 61.425782, align: left }
+    other3: { x: 657.054688, width: 63.472656, align: left }
+    quantity: { x: 720.527344, width: 25.59375, align: right }
+    rate: { x: 746.121094, width: 18.425781, align: right }
+    cost: { x: 764.546875, width: 19.453125, align: right }
+
+footer:
+  available: true
+  band:
+    x: 8
+    y: 7
+    width: 776
+    height: 12
+  fields:
+    prepared_by: { x: 8, y: 7, width: 410, height: 12, align: left, size: 6 }
+    page_number: { x: 418, y: 7, width: 366, height: 12, align: right, size: 6 }
