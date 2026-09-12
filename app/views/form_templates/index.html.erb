@@ -1,6 +1,6 @@
 <!-- app/views/form_templates/index.html.erb -->
 
-<div class="form-wrapper form-templates" data-controller="sidebar-search">
+<div class="form-wrapper form-templates" data-controller="sidebar-search form-duplicate">
   <div class="department-header">
     <h2>Manage Form Templates</h2>
     <div style="display: flex; gap: 8px;">
@@ -112,6 +112,13 @@
               <div class="approval-actions">
                 <%= link_to "View Details", form_template_path(template), class: "btn" %>
                 <%= link_to "Edit", edit_form_template_path(template), class: "btn approve" %>
+                <button type="button" class="btn"
+                        data-action="form-duplicate#open"
+                        data-form-duplicate-preview-url-param="<%= duplicate_preview_form_template_path(template) %>"
+                        data-form-duplicate-submit-url-param="<%= duplicate_form_template_path(template) %>"
+                        data-form-duplicate-source-param="<%= template.name %>">
+                  Duplicate
+                </button>
                 <% if template.archived %>
                   <%= button_to "Unarchive", unarchive_form_template_path(template),
                                 method: :patch,
@@ -145,6 +152,8 @@
       <p class="empty-state-hint">Click "+ Create Form" to get started.</p>
     </div>
   <% end %>
+
+  <%= render "form_templates/duplicate_modal" %>
 </div>
 
 <!-- Render the modal on this page -->

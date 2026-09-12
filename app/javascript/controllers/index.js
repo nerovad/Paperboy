@@ -52,6 +52,7 @@ import TabsController from "controllers/tabs_controller"
 import OrgPermissionsController from "controllers/org_permissions_controller"
 import ToastController from "controllers/toast_controller"
 import DeleteFormController from "controllers/delete_form_controller"
+import FormDuplicateController from "controllers/form_duplicate_controller"
 import SelectAllController from "controllers/select_all_controller"
 import DependentSelectController from "controllers/dependent_select_controller"
 import ClickableRowController from "controllers/clickable_row_controller"
@@ -145,6 +146,7 @@ application.register("tabs", TabsController)
 application.register("org-permissions", OrgPermissionsController)
 application.register("toast", ToastController)
 application.register("delete-form", DeleteFormController)
+application.register("form-duplicate", FormDuplicateController)
 application.register("select-all", SelectAllController)
 application.register("dependent-select", DependentSelectController)
 application.register("clickable-row", ClickableRowController)

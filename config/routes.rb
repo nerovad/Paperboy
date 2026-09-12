@@ -463,6 +463,8 @@ Rails.application.routes.draw do
     member do
       patch :archive
       patch :unarchive
+      get :duplicate, action: :duplicate_preview, as: :duplicate_preview
+      post :duplicate
     end
   end
 
