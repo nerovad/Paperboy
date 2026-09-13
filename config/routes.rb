@@ -286,6 +286,14 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
+  resources :sheriff_safety_reporting_forms, controller: 'forms/sheriff_safety_reporting_forms' do
+    member do
+      get :pdf
+      patch :approve
+      patch :deny
+      patch :update_status
+    end
+  end
   # ============================================================================
   # PWA
   # ============================================================================

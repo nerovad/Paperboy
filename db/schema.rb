@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_04_164527) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_12_015519) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -1116,6 +1116,80 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_164527) do
     t.string "status_filter"
     t.string "time_of_day", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "sheriff_safety_reporting_forms", force: :cascade do |t|
+    t.text "activity_at_time_of_incident"
+    t.datetime "actual_completion_date"
+    t.string "agency"
+    t.string "approver_id"
+    t.text "assessment_of_future_severity_potential"
+    t.text "assessment_of_probability_of_recurrence"
+    t.string "bloodborne_pathogen_exposure"
+    t.text "cause_of_incident"
+    t.string "checklistprocedurestraining_modified"
+    t.string "corrective_department"
+    t.string "corrective_phone"
+    t.datetime "created_at", null: false
+    t.datetime "date_dwc1_given"
+    t.datetime "date_employer_notified"
+    t.datetime "date_last_worked"
+    t.datetime "date_of_injury_or_illness"
+    t.datetime "date_returned_to_work"
+    t.text "deny_reason"
+    t.string "department"
+    t.string "department_where_event_occurred"
+    t.string "division"
+    t.string "email"
+    t.string "employee_id"
+    t.string "employee_medical_number"
+    t.string "hospital_address"
+    t.string "hospital_name"
+    t.string "hospital_phone"
+    t.string "hospitalized_overnight"
+    t.text "how_the_injury_occurred"
+    t.text "impacted_employee"
+    t.string "impacted_employees_email"
+    t.string "impacted_employees_phone"
+    t.string "impacted_employees_supervisor"
+    t.string "investigator_name"
+    t.string "investigator_phone"
+    t.string "investigator_title"
+    t.string "is_the_employees_blood_tested"
+    t.string "is_the_source_blood_tested"
+    t.text "location_description"
+    t.string "location_of_incident"
+    t.string "medical_record_number_for_the_employee"
+    t.string "missed_full_work_day_"
+    t.string "name"
+    t.text "nature_of_incident"
+    t.string "on_employer_premises"
+    t.string "osha_recordable"
+    t.string "osha_reportable"
+    t.string "other_hospital"
+    t.string "other_hospital_address"
+    t.string "other_hospital_phone"
+    t.string "person_responsible_for_corrective_action"
+    t.string "phone"
+    t.string "physician_address"
+    t.string "physician_name"
+    t.string "physician_phone"
+    t.string "report_type"
+    t.string "reportable_injury_codes"
+    t.text "root_cause"
+    t.string "source_patient_medical_number"
+    t.text "specific_injury_and_body_part_affected"
+    t.string "status", default: "in_progress", null: false
+    t.string "still_off_work"
+    t.string "supervisor_name"
+    t.datetime "targeted_completion_date"
+    t.string "title"
+    t.string "unit"
+    t.string "unsafe_condition_corrected_immediately"
+    t.datetime "updated_at", null: false
+    t.string "who_gave_the_dwc1"
+    t.string "witness_name"
+    t.string "witness_phone"
   end
 
   create_table "social_media_forms", force: :cascade do |t|
