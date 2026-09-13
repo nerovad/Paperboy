@@ -261,6 +261,10 @@ groups:
     key: '36'
     class: WorkplaceViolenceForm
     label: Workplace Violence
+  - type: form
+    key: '98'
+    class: SheriffSafetyReportingForm
+    label: Sheriff Safety Reporting
 - name: HCA_Safety_Officers
   description: Safety Officers for the Health Care Agency.
   permissions:
@@ -298,16 +302,28 @@ groups:
     key: '36'
     class: WorkplaceViolenceForm
     label: Workplace Violence
+  - type: form
+    key: '98'
+    class: SheriffSafetyReportingForm
+    label: Sheriff Safety Reporting
   - type: record_edit
     key: form-33
     class: SafetyReport
     label: Safety Reporting
+  - type: record_edit
+    key: form-98
+    class: SheriffSafetyReportingForm
+    label: Sheriff Safety Reporting
   - type: record_edit
     key: osha-300-log
   - type: record_view
     key: form-33
     class: SafetyReport
     label: Safety Reporting
+  - type: record_view
+    key: form-98
+    class: SheriffSafetyReportingForm
+    label: Sheriff Safety Reporting
   - type: record_view
     key: osha-300-log
 - name: HCA_Test
@@ -370,6 +386,10 @@ groups:
     key: '42'
     class: FormRequestForm
     label: Form Request
+  - type: form
+    key: '98'
+    class: SheriffSafetyReportingForm
+    label: Sheriff Safety Reporting
 - name: Security_Desk
   description: GSA Security desk personnel
   permissions:
@@ -603,6 +623,10 @@ groups:
     class: TeleworkLogForm
     label: Telework Log
   - type: form
+    key: '98'
+    class: SheriffSafetyReportingForm
+    label: Sheriff Safety Reporting
+  - type: form
     key: creative_job_request
   - type: record_view
     key: fleet
@@ -614,6 +638,10 @@ groups:
     key: form-33
     class: SafetyReport
     label: Safety Reporting
+  - type: record_view
+    key: form-98
+    class: SheriffSafetyReportingForm
+    label: Sheriff Safety Reporting
   - type: record_view
     key: osha-300-log
   - type: record_view
@@ -725,6 +753,10 @@ groups:
     key: '51'
     class: TeleworkLogForm
     label: Telework Log
+  - type: form
+    key: '98'
+    class: SheriffSafetyReportingForm
+    label: Sheriff Safety Reporting
   - type: form
     key: creative_job_request
 - name: Ticket_Admin
@@ -6323,6 +6355,14 @@ org_permissions:
   key: '33'
   class: SafetyReport
   label: Safety Reporting
+- agency_id: HCA
+  division_id:
+  department_id:
+  unit_id:
+  type: form
+  key: '98'
+  class: SheriffSafetyReportingForm
+  label: Sheriff Safety Reporting
 - agency_id: HCA
   division_id:
   department_id:
