@@ -125,7 +125,7 @@
             <%= form.select :city,
                   options_for_select(['Ventura', 'Ojai', 'Santa Barbara', 'Camarillo', 'Los Angeles', 'Thousand Oaks', 'Somis', 'Oxnard'], @osha_report.city),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:city END -->
 <!-- FIELD:state START --><div class="form-group flex-fill<%= '' %>">
@@ -133,7 +133,7 @@
             <%= form.select :state,
                   options_for_select(['California'], @osha_report.state),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:state END -->
 <!-- FIELD:zip START --><div class="form-group flex-fill<%= '' %>">
@@ -156,7 +156,7 @@
             <%= form.select :sex,
                   options_for_select(['Male', 'Female'], @osha_report.sex),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:sex END -->
 <!-- FIELD:name_of_physician_or_other_health_care_professional START --><div class="form-group flex-fill<%= '' %>">
@@ -199,7 +199,7 @@
             <%= form.select :facility_city,
                   options_for_select(['Ventura', 'Oxnard', 'Camarillo', 'Thousand Oaks'], @osha_report.facility_city),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
           </div>
 <!-- FIELD:facility_city END -->
@@ -209,7 +209,7 @@
             <%= form.select :facility_state,
                   options_for_select(['California'], @osha_report.facility_state),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
           </div>
 <!-- FIELD:facility_state END -->
@@ -306,7 +306,7 @@
             <%= form.select :case_type,
                   options_for_select(['Injury', 'Skin Disorder', 'Respiratory Condition', 'Poisoning', 'Hearing Loss', 'Other Illness'], @osha_report.case_type),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'case_type' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'case_type' } } %>
           </div>
 <!-- FIELD:case_type END -->
 <!-- FIELD:case_classification START --><div class="form-group flex-fill<%= '' %>">
@@ -314,7 +314,7 @@
             <%= form.select :case_classification,
                   options_for_select(['Death', 'DAFW', 'DTJR', 'Other'], @osha_report.case_classification),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'case_classification' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'case_classification' } } %>
           </div>
 <!-- FIELD:case_classification END -->
 <!-- FIELD:other_case_classfication START -->          <div class="conditional-field" data-depends-on="case_classification" data-show-values="[&quot;Other&quot;]" style="<%= ["Other"].include?(@osha_report.case_classification) ? '' : 'display: none;' %>">

@@ -137,7 +137,7 @@
             <%= form.select :vehicle_number,
                   options_for_select([]),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:vehicle_number END -->
 <!-- FIELD:year START --><div class="form-group flex-fill<%= '' %>">
@@ -172,7 +172,7 @@
           <div class="form-row d-flex flex-wrap">
                     <div class="form-group flex-fill">
                       <%= vf.label :location, "Location" %>
-                      <%= vf.select :location, options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "location"), vf.object.location), { include_blank: "Select..." }, { class: "form-control" } %>
+                      <%= vf.select :location, options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "location"), vf.object.location), { include_blank: "Select..." }, { class: "form-control", data: { controller: "searchable-select" } } %>
                     </div>
           </div>
           <div class="repeatable-row-actions">
@@ -187,7 +187,7 @@
           <div class="form-row d-flex flex-wrap">
                     <div class="form-group flex-fill">
                       <%= vf.label :location, "Location" %>
-                      <%= vf.select :location, options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "location"), vf.object.location), { include_blank: "Select..." }, { class: "form-control" } %>
+                      <%= vf.select :location, options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "location"), vf.object.location), { include_blank: "Select..." }, { class: "form-control", data: { controller: "searchable-select" } } %>
                     </div>
           </div>
           <div class="repeatable-row-actions">

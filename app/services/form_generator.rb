@@ -310,7 +310,7 @@ class FormGenerator
           <%= f.select :#{field.field_name},
                       options_for_select([#{values}]),
                       { include_blank: "Select..." },
-                      { class: "form-control"#{', required: true' if field.required} } %>
+                      { class: "form-control"#{', required: true' if field.required}, data: { controller: "searchable-select" } } %>
         </div>
       HTML
     when 'choices_dropdown'
