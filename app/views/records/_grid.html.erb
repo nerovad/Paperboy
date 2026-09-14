@@ -3,9 +3,13 @@
     batch write). The grid is read-only unless the viewer holds the table's
     record_edit grant; see ApplicationHelper#can_edit_record_table?.
     locals: table, page, columns, rows, edit_path (optional lambda(row) -> path),
-            editable (optional, defaults to the viewer's grant) %>
+            editable (optional, defaults to the viewer's grant),
+            title + toolbar (optional; when given, the title, toolbar and Edit
+            button share one row above the grid — rendered here so the Edit
+            button stays inside the records-edit controller) %>
 <% edit_path = local_assigns.fetch(:edit_path, nil) %>
 <% editable = local_assigns.fetch(:editable) { can_edit_record_table?(table) } %>
+<% title = local_assigns.fetch(:title, nil) %>
 <div class="records-page"
      data-controller="column-customizer records-edit"
      data-column-customizer-page-value="<%= page %>"
@@ -14,7 +18,19 @@
      data-column-customizer-min-col-px-value="150"
      data-column-customizer-scrollable-value="true"
      data-records-edit-url-value="<%= records_table_path(table.slug) %>">
-  <% if editable && rows.any? %>
+  <% if title %>
+    <div class="records-bar">
+      <h1 class="records-title"><%= title %></h1>
+      <div class="records-bar__toolbar"><%= local_assigns[:toolbar] %></div>
+      <div class="records-bar__actions">
+        <% if editable && rows.any? %>
+          <button type="button" class="btn"
+                  data-records-edit-target="modeButton"
+                  data-action="records-edit#toggleMode">Edit</button>
+        <% end %>
+      </div>
+    </div>
+  <% elsif editable && rows.any? %>
     <div class="records-editbar">
       <button type="button" class="btn"
               data-records-edit-target="modeButton"

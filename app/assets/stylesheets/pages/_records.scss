@@ -299,6 +299,48 @@
   margin-bottom: 16px;
 }
 
+/* Title, search and Edit share one row so the grid starts higher. The outer
+   columns are equal, which keeps the search box centred on the page whatever
+   the title's length. On narrower screens the search drops to its own row. */
+.records-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  .records-title {
+    margin: 0;
+  }
+
+  .records-toolbar,
+  .filter-form {
+    margin: 0;
+  }
+
+  .filter-form {
+    width: 28rem;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 1200px) {
+    grid-template-columns: minmax(0, 1fr) auto;
+
+    .records-bar__toolbar {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      justify-self: center;
+      max-width: 100%;
+    }
+  }
+}
+
+.records-bar__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .records-title {
   margin: 4px 0 0;
   font-size: 1.5rem;

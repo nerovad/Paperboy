@@ -1,12 +1,9 @@
 <div class="records-screen records-screen--grid">
   <%= render "shared/work_tabs", active: :records %>
 
-  <div class="records-head">
-    <h1 class="records-title"><%= @table.label %></h1>
-  </div>
+  <% toolbar = render 'records/toolbar', path: records_table_path(@table.slug), page: @page,
+                      columns: @columns, filter_options: @filter_options %>
 
-  <%= render 'records/toolbar', path: records_table_path(@table.slug), page: @page,
-             columns: @columns, filter_options: @filter_options %>
-
-  <%= render 'records/grid', table: @table, page: @page, columns: @columns, rows: @records %>
+  <%= render 'records/grid', table: @table, page: @page, columns: @columns, rows: @records,
+             title: @table.label, toolbar: toolbar %>
 </div>
