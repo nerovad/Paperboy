@@ -1190,13 +1190,66 @@ Small, surgical, no schema changes. Highest value per line changed.
 
 ## Phase 2 — Make The Claim A Real Lock
 
-- [ ] **2.1 Compare the claimant to the signed-in user.** `claim_invoice`
+**Branch `aim/phase-2-claim`, cut from master 2026-09-14 after Phase 1
+merged (`501d5059`).** Baseline: 635 runs, 56 failures, 190 errors
+(serial), plus 61 pytest.
+
+Two things about running the suite here, both found on 2026-09-14:
+
+- **`Paperboy_Test` is no longer reachable** -- `bundle exec rake test`
+  aborts with *the server principal "GSAETL" is not able to access the
+  database "Paperboy_Test"*. Run
+  `PAPERBOY_TEST_DATABASE=Paperboy_Test0 PARALLEL_WORKERS=1 bundle exec rake test`,
+  which reproduces the baseline exactly. Not AIM's to fix; see
+  `AGENTS.md`, which already documents the variable.
+- **`origin/master` is ~70 commits ahead of `501d5059`**, and a long run of
+  them are `WIP: Fix ...` test repairs including *minitest mock
+  compatibility* -- the very thing behind the 190 errors. This branch was
+  deliberately cut from the local `501d5059` so the recorded baseline still
+  means something. Merging master into the phase branch is Joshua's call
+  and will move the baseline a long way; do it deliberately, in its own
+  commit, and re-measure.
+
+- [x] **2.1 Compare the claimant to the signed-in user.** `claim_invoice`
   returns true whenever `.claim.json` merely exists, so a second reviewer
   gets the full action strip on someone else's invoice. Add `Errno::ENOENT`
   to `WRITE_FAILURES` so the losing write is handled rather than 500ing,
   and make the queue list's "View Only" link genuinely read-only. See audit
   C4.
   *Test:* a foreign claim renders read-only; the same user resumes freely.
+
+  Done 2026-09-14. `claim_invoice` now reads the claim's owner and returns
+  true only when the invoice was unclaimed and we just claimed it, or the
+  claim already on it is ours.
+
+  **Hiding the action strip was not enough.** The strip is a view, and the
+  three actions behind it -- `update`, `retry`, `move_to_action_needed` --
+  took no notice of who held the claim, so a posted form still saved, moved
+  or reprocessed another reviewer's invoice. A `require_own_claim`
+  `before_action` on those three is what makes "View Only" true; the view
+  change only stops offering what the controller now refuses. `#show` and
+  `#pdf` stay open, because reading someone else's invoice is fine.
+
+  Two things worth carrying forward:
+
+  - **Identity is compared without case, in one place.** The queue list
+    compared `claimed_by != current_user_email` while `Pfa::Work::Provider`
+    used `casecmp?`; the two could disagree about the same person and hand
+    them a queue row saying "Review Invoice" that opened read-only. Both
+    now go through `own_claim?`.
+  - **The read-only banner used to state a cause it could not know**, telling
+    every reader the share was unwritable. It now names the claimant when
+    that is the reason, and keeps the share wording for the rest.
+
+  `Errno::ENOENT` joins `WRITE_FAILURES`, which covers the loser of a race
+  writing into a folder the winner has already moved. Note this also widens
+  the controller's `rescue_from`: a vanished invoice folder now redirects to
+  the queue instead of 500ing anywhere in AIM.
+
+  Not fixed, and not 2.1's: `test/services/aim/work_provider_test.rb:12` and
+  `:28` are red on master with `ArgumentError: unknown keywords:
+  action_needed` from the test's own `Struct` on Ruby 4. AIM-owned red that
+  wants a step of its own.
 
 ---
 
@@ -1520,3 +1573,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-08 | 1.6 | (this commit) | Crash tickets file against the invoice that crashed; queue build order made deterministic; **Phase 1 complete**; 61 pytest green, 630 runs, 413 pass, 57 fail, 160 error |
 | 2026-09-10 | — | `939a140f` | Merged master (19 commits: billing, P2M, forms) into the phase branch. Master's own errors rose 160 -> 190 in that window; measured on a clean `origin/master` worktree to confirm none of it is AIM's. Merged branch: 635 runs, 56 fail, 190 error -- six more tests and one fewer failure than master alone |
 | 2026-09-10 | — | (this merge) | **Phase 1 merged to Paperboy master.** New baseline for Phase 2: 635 runs, 56 fail, 190 error (serial), plus 61 pytest |
+| 2026-09-14 | 2.1 | (this commit) | Claims compare their owner; `update`/`retry`/`move_to_action_needed` refuse a foreign claim; `Errno::ENOENT` handled; 642 runs, 56 fail, 190 error -- same red set as the baseline |

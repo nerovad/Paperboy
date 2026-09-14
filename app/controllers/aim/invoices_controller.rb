@@ -10,6 +10,10 @@ module Aim
 
     before_action :require_aim_admin
     before_action :set_queue
+    # Everything below #show rewrites or moves the invoice folder, so it needs
+    # the claim. The queue list already offers a second reviewer nothing but a
+    # View Only link; this is what makes that true of a posted form as well.
+    before_action :require_own_claim, only: %i[update retry move_to_action_needed]
 
     # Every action below writes to the queue share. When it is read-only or
     # unreachable, send staff back to the queue with an explanation instead of
@@ -34,8 +38,11 @@ module Aim
       set_invoice_context
       return redirect_to aim_invoices_path(queue: @queue), alert: 'Document not found.' unless @folder_path&.then { Dir.exist?(_1) }
 
-      # A claim that could not be written, or an already-claimed invoice whose
-      # share has since gone read-only, both mean nothing here can be saved.
+      # Three ways this page saves nothing: someone else holds the claim, the
+      # claim could not be written, or the share has gone read-only. The first
+      # is a different message from the other two, so the banner can say who.
+      @claimed_by_other = claimed_by_other?(@folder_path)
+      @claim_holder = claimant_label_for(@folder_path) if @claimed_by_other
       @read_only = !claim_invoice || !File.writable?(@folder_path)
 
       @metadata_path = metadata_path_for(@folder_path)
@@ -114,6 +121,15 @@ module Aim
     end
 
     private
+
+    def require_own_claim
+      set_invoice_context
+      return unless @folder_path && Dir.exist?(@folder_path)
+      return unless claimed_by_other?(@folder_path)
+
+      redirect_to aim_invoices_path(queue: @queue),
+                  alert: "#{claimant_label_for(@folder_path)} has this invoice claimed, so it is view only."
+    end
 
     # A move or a metadata write can fail partway through, so this promises
     # nothing about what did or did not happen on disk.
