@@ -1,4 +1,5 @@
 /* Pages: Records pillar landing */
+@use "sass:color";
 @use "base/tokens" as *;
 
 .records-wrapper {
@@ -158,14 +159,36 @@
     text-overflow: ellipsis;
   }
 
+  /* Navy header row, matching the Inbox table. The sort links and the white
+     column-customizer "+" (components/column_customizer) are built for a dark
+     header, so they read white here rather than as default link blue. */
   thead th {
     position: sticky;
     top: 0;
     z-index: 2;
-    background: $surface-subtle;
+    background: $brand-navy;
     font-weight: 600;
-    color: $label-color;
-    border-bottom: 2px solid $border-color;
+    color: $surface-base;
+    letter-spacing: 0.01em;
+    border-bottom: 2px solid color.adjust($brand-navy, $lightness: -8%);
+    border-right-color: rgba(255, 255, 255, 0.14);
+
+    a.sortable-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: $surface-base;
+      text-decoration: none;
+      transition: color 0.15s ease;
+
+      &:hover,
+      &:focus-visible { color: rgba(255, 255, 255, 0.75); }
+
+      .sort-indicator {
+        font-size: 0.75em;
+        opacity: 0.85;
+      }
+    }
   }
 
   tbody tr {
@@ -200,7 +223,7 @@
 
   thead th:first-child {
     z-index: 3;
-    background: $surface-subtle;
+    background: $brand-navy;
   }
 
   tbody tr:hover td:first-child {
