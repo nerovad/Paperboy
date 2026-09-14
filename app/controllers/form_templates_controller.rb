@@ -2446,7 +2446,6 @@ class FormTemplatesController < ApplicationController
     lines << '             data-controller="repeatable-section"'
     lines << %(             data-repeatable-section-min-value="#{section.repeat_min}")
     lines << %(             data-repeatable-section-max-value="#{section.repeat_max}">)
-    lines << %(          <label class="repeatable-section-label">#{section.label}</label>)
     lines << '          <div data-repeatable-section-target="wrapper">'
     lines << "            <%= form.fields_for :#{assoc} do |vf| %>"
     lines << section_block_html('<%= vf.index %>', member_rows)
