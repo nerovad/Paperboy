@@ -1,40 +1,40 @@
 # frozen_string_literal: true
 
 # Free-text search across a Records table (see Registry). The query is matched
-# against every column the table declares that is backed by a real string/text
-# column on the model. Derived cells are skipped because they have nothing to
-# match in SQL (status_label, masked_card_number and owner_name are methods),
-# and so are encrypted columns, whose stored ciphertext a plaintext query can
-# never hit.
+# against the value of every column the table declares -- the same reader the
+# grid renders (`row.public_send(name)`) -- so derived cells such as a fleet
+# vehicle's "Assigned To" (owner_name, read through the garaging form) or a
+# status label are searchable alongside the stored columns.
 #
-# Conditions are built through Arel so column names stay quoted and the query
-# value stays a bound parameter — the column list is already constrained to the
-# model's own columns_hash, and nothing user-supplied reaches the SQL string.
+# Matching happens in Ruby over rows that are already loaded, because derived
+# cells have no SQL counterpart to put in a WHERE. The records grid loads its
+# whole row set to filter and sort in memory anyway, so this adds no query.
+#
+# Encrypted columns are skipped: their reader returns the decrypted value, and
+# a free-text box must not let someone probe a card number digit by digit.
 module RecordsSearch
-  SEARCHABLE_TYPES = %i[string text].freeze
-
   module_function
 
   # Names of the columns a query is matched against, as strings.
   def searchable_columns(table)
     model = table.model
 
-    table.columns.map { |column| column.name.to_s }.uniq.select do |name|
-      column = model.columns_hash[name]
-      column && SEARCHABLE_TYPES.include?(column.type) && !RecordsEditing.encrypted?(model, name)
+    table.columns.map { |column| column.name.to_s }.uniq.reject do |name|
+      RecordsEditing.encrypted?(model, name)
     end
   end
 
-  # Narrow `scope` to the rows matching `query`. A blank query, or a table with
-  # nothing searchable on it, leaves the scope untouched.
-  def apply(table, scope, query)
-    query = query.to_s.strip
-    return scope if query.blank?
+  # The rows whose searchable cells contain `query`, case-insensitively. A
+  # blank query, or a table with nothing searchable on it, keeps every row.
+  def apply(table, rows, query)
+    needle = query.to_s.strip.downcase
+    return rows.to_a if needle.blank?
 
     names = searchable_columns(table)
-    return scope if names.empty?
+    return rows.to_a if names.empty?
 
-    arel = table.model.arel_table
-    scope.where(names.map { |name| arel[name].matches("%#{query}%") }.reduce(:or))
+    rows.select do |row|
+      names.any? { |name| row.public_send(name).to_s.downcase.include?(needle) }
+    end
   end
 end
