@@ -130,8 +130,14 @@
   gap: 8px;
 }
 
+/* The grid is its own scrollport on both axes, like a spreadsheet: the
+   horizontal scrollbar stays on screen instead of sitting under the last row,
+   and the sticky header and leading column pin against this box. Its height
+   comes from the flex column set up by .records-screen--grid below. */
 .records-table-wrapper {
-  overflow-x: auto;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: auto;
   border: 1px solid $border-color;
   border-radius: $radius-6;
   background: $form-bg;
@@ -153,6 +159,14 @@
     &:last-child {
       border-right: none;
     }
+  }
+
+  /* Cap long values so one wide cell doesn't push every other column off
+     screen; the full value is still there when the cell is edited. */
+  td {
+    max-width: 24rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   thead th {
@@ -261,6 +275,30 @@
      scrolls internally. On mobile the sidebar is off-canvas, so 100% is fine. */
   @media (min-width: 769px) {
     max-width: calc(100vw - 280px - 40px);
+  }
+}
+
+/* A screen holding a records grid fills the scroll area exactly, so the
+   table wrapper takes whatever height the heading and toolbar leave and
+   scrolls internally. #main-content is 100vh with an 80px (60px on mobile)
+   padding-top; subtract that plus this screen's own padding and margin. The
+   min-height keeps short viewports usable — the page scrolls instead. */
+.records-screen--grid {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 80px - 16px - 20px);
+  min-height: 28rem;
+  margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    height: calc(100vh - 60px - 16px - 20px);
+  }
+
+  > .records-page {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
   }
 }
 
