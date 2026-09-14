@@ -332,17 +332,19 @@
 }
 
 /* Title, search and Edit share one row so the grid starts higher. The outer
-   columns are equal, which keeps the search box centred on the page whatever
-   the title's length. On narrower screens the search drops to its own row. */
+   columns grow equally, which keeps the toolbar centred on the page, but never
+   shrink below the title or Edit button. On narrower screens the toolbar drops
+   to its own row. */
 .records-bar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(max-content, 1fr);
   align-items: center;
   gap: 16px;
   margin-bottom: 16px;
 
   .records-title {
     margin: 0;
+    white-space: nowrap;
   }
 
   .records-toolbar,
@@ -350,10 +352,35 @@
     margin: 0;
   }
 
+  /* The toolbar card is at least 28rem and grows to fit every filter on one
+     row (Fleet has four beside Search). Search takes the larger share. If the
+     row still can't fit, it scrolls sideways rather than stacking. */
   .filter-form {
-    width: 28rem;
-    max-width: 100%;
+    min-width: min(28rem, 100%);
     box-sizing: border-box;
+  }
+
+  .filter-controls {
+    flex-wrap: nowrap;
+  }
+
+  .filter-group {
+    flex: 1 1 0;
+    min-width: 8rem;
+
+    &:first-child {
+      flex-grow: 2;
+      min-width: 12rem;
+    }
+  }
+
+  .filter-select {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .filter-controls > .btn {
+    flex: none;
   }
 
   @media (max-width: 1200px) {
@@ -363,9 +390,13 @@
       grid-column: 1 / -1;
       grid-row: 2;
       justify-self: center;
-      max-width: 100%;
     }
   }
+}
+
+.records-bar__toolbar {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .records-bar__actions {
