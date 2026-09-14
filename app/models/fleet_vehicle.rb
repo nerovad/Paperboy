@@ -13,16 +13,16 @@ class FleetVehicle < ApplicationRecord
                  dropdown_key: 'fleet_inventory',
                  includes: :fleet_vehicle_garaging_form
 
-  registry_column :vehicle_number, label: 'Vehicle #', kind: :text, filter: :search
+  registry_column :vehicle_number, label: 'Vehicle #', kind: :text
   registry_column :budget_unit, label: 'Budget Unit', kind: :text, filter: :select
   registry_column :year, kind: :text
   registry_column :make, kind: :text, filter: :select
   registry_column :model, kind: :text
   registry_column :color, kind: :text
-  registry_column :license_plate, label: 'Plate', kind: :text, filter: :search
+  registry_column :license_plate, label: 'Plate', kind: :text
   registry_column :garaging_location, label: 'Garaging Location', kind: :text
   registry_column :take_home, label: 'Take Home', kind: :text
-  registry_column :owner_name, label: 'Assigned To', kind: :text, filter: :search
+  registry_column :owner_name, label: 'Assigned To', kind: :text
   registry_column :owner_agency, label: 'Agency', kind: :text, filter: :select
   registry_column :status_label, label: 'Status', kind: :status, sortable: false
 
