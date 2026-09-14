@@ -1,0 +1,48 @@
+@use "base/tokens" as *;
+
+/* Repeating sections on generated forms (repeatable_section_controller.js).
+   Each .repeatable-block is one copy of the section's fields; its remove
+   control is a small red circle sitting on the same line as the inputs. */
+
+.repeatable-block {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+
+  > .form-row {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.repeatable-row-actions {
+  flex: 0 0 auto;
+  /* Clear .form-row's bottom padding + margin (20px each), then lift the
+     28px circle to the middle of a ~40px single-line input. */
+  margin-bottom: 46px;
+}
+
+.repeatable-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: $danger;
+  color: $surface-base;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover { background-color: $danger-700; }
+
+  &:focus-visible {
+    outline: 2px solid $danger-dark;
+    outline-offset: 2px;
+  }
+}

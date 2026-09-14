@@ -2472,7 +2472,7 @@ class FormTemplatesController < ApplicationController
       #{member_rows.chomp}
                 </div>
                 <div class="repeatable-row-actions">
-                  <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove">&minus; Remove</button>
+                  <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove" aria-label="Remove" title="Remove">&minus;</button>
                 </div>
               </div>
     HTML
