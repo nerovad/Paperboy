@@ -546,7 +546,7 @@ forms:
   unit_id: ''
   fields:
   - field_name: vehicle_number
-    field_type: choices_dropdown
+    field_type: dropdown
     label: Vehicle Number
     page_number: 3
     position: 0
