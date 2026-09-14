@@ -6,21 +6,19 @@
     <p class="records-subtitle">Live database tables for bulk viewing/editing</p>
   </div>
 
-  <div class="records-grid">
+  <ul class="records-list">
     <% @tables.each do |table| %>
       <% path = table.route.present? ? public_send(table.route) : records_table_path(table.slug) %>
-      <%= link_to path, class: "records-card" do %>
-        <div class="records-card__body">
-          <h2 class="records-card__title"><%= table.label %></h2>
-          <p class="records-card__count">
-            <span class="records-card__count-num"><%= table.count %></span>
-            <span class="records-card__count-label"><%= "record".pluralize(table.count) %></span>
-          </p>
-        </div>
-        <div class="records-card__footer">
-          <span class="records-card__open">Open<span class="records-card__arrow" aria-hidden="true">→</span></span>
-        </div>
-      <% end %>
+      <li>
+        <%= link_to path, class: "records-list__item" do %>
+          <h2 class="records-list__title"><%= table.label %></h2>
+          <span class="records-list__count">
+            <span class="records-list__count-num"><%= table.count %></span>
+            <%= "record".pluralize(table.count) %>
+          </span>
+          <span class="records-list__open">Open<span class="records-list__arrow" aria-hidden="true">→</span></span>
+        <% end %>
+      </li>
     <% end %>
-  </div>
+  </ul>
 </div>
