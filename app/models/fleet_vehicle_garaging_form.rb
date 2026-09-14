@@ -5,10 +5,10 @@ class FleetVehicleGaragingForm < ApplicationRecord
 
   enum :status, {
     in_progress: 'in_progress',
-    step_1_pending: 'step_1_pending',
     approved: 'approved',
     denied: 'denied'
   }, default: :in_progress
+
   include Reassignable
 
   has_many :fleet_vehicle_garaging_form_locations, dependent: :destroy

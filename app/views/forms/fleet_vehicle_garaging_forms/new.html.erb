@@ -3,7 +3,7 @@
   <h1>Fleet Vehicle Garaging</h1>
 </div>
 
-<div class="form-wrapper" data-controller="form-navigation">
+<div class="form-wrapper" data-controller="form-navigation conditional-fields">
   <%= form_with model: @fleet_vehicle_garaging_form, local: true do |form| %>
 
   <% if @fleet_vehicle_garaging_form.errors.any? %>
@@ -132,15 +132,15 @@
 <div class="form-page" style="display:none;">
   <h2>Vehicle Info</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:vehicle_number START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:vehicle_number START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
   <%= form.label :vehicle_number, "Vehicle Number" %>
             <%= form.select :vehicle_number,
                   options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "vehicle_number")),
-                  { include_blank: "Select..." },
-                  { class: "form-control", required: true, data: { controller: "searchable-select" } } %>
+                  { include_blank: false },
+                  { class: "form-control", required: true, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
 <!-- FIELD:vehicle_number END -->
-<!-- FIELD:year START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:year START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="vehicle_number" data-answer-lookup-form="FleetVehicleGaragingForm" data-answer-lookup-field="year">
   <%= form.label :year, "Year" %>
             <%= form.select :year,
                   options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "year")),
@@ -148,7 +148,7 @@
                   { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:year END -->
-<!-- FIELD:make START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:make START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="vehicle_number" data-answer-lookup-form="FleetVehicleGaragingForm" data-answer-lookup-field="make">
   <%= form.label :make, "Make" %>
             <%= form.select :make,
                   options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "make")),
@@ -156,7 +156,7 @@
                   { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:make END -->
-<!-- FIELD:model START --><div class="form-group flex-fill<%= '' %>">
+<!-- FIELD:model START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="vehicle_number" data-answer-lookup-form="FleetVehicleGaragingForm" data-answer-lookup-field="model">
   <%= form.label :model, "Model" %>
             <%= form.select :model,
                   options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "model")),
