@@ -2,10 +2,6 @@
 
 class FleetVehicleGaragingForm < ApplicationRecord
   include TrackableStatus
-  include Reassignable
-
-  has_many :fleet_vehicle_garaging_form_locations, dependent: :destroy
-  accepts_nested_attributes_for :fleet_vehicle_garaging_form_locations, allow_destroy: true, reject_if: :all_blank
 
   enum :status, {
     in_progress: 'in_progress',
@@ -13,6 +9,10 @@ class FleetVehicleGaragingForm < ApplicationRecord
     approved: 'approved',
     denied: 'denied'
   }, default: :in_progress
+  include Reassignable
+
+  has_many :fleet_vehicle_garaging_form_locations, dependent: :destroy
+  accepts_nested_attributes_for :fleet_vehicle_garaging_form_locations, allow_destroy: true, reject_if: :all_blank
 
   # Vehicles (nested — each submission can garage multiple fleet vehicles)
   has_many :fleet_vehicles, dependent: :destroy

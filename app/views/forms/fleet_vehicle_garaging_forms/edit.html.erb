@@ -131,24 +131,33 @@
 <!-- FIELD:vehicle_number START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :vehicle_number, "Vehicle Number" %>
             <%= form.select :vehicle_number,
-                  options_for_select([], @fleet_vehicle_garaging_form.vehicle_number),
+                  options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "vehicle_number"), @fleet_vehicle_garaging_form.vehicle_number),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", required: true } %>
           </div>
 <!-- FIELD:vehicle_number END -->
 <!-- FIELD:year START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :year, "Year" %>
-            <%= form.text_field :year, class: "form-control" %>
+            <%= form.select :year,
+                  options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "year"), @fleet_vehicle_garaging_form.year),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:year END -->
 <!-- FIELD:make START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :make, "Make" %>
-            <%= form.text_field :make, class: "form-control" %>
+            <%= form.select :make,
+                  options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "make"), @fleet_vehicle_garaging_form.make),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:make END -->
 <!-- FIELD:model START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :model, "Model" %>
-            <%= form.text_field :model, class: "form-control" %>
+            <%= form.select :model,
+                  options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "model"), @fleet_vehicle_garaging_form.model),
+                  { include_blank: "Select..." },
+                  { class: "form-control" } %>
           </div>
 <!-- FIELD:model END -->
         </div>
