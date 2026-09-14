@@ -12,17 +12,6 @@
   font-size: 0.95rem;
 }
 
-.records-back {
-  display: inline-block;
-  margin-top: 4px;
-  color: $primary-color;
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-decoration: none;
-
-  &:hover { text-decoration: underline; }
-}
-
 .records-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -282,16 +271,20 @@
    table wrapper takes whatever height the heading and toolbar leave and
    scrolls internally. #main-content is 100vh with an 80px (60px on mobile)
    padding-top; subtract that plus this screen's own padding and margin. The
-   min-height keeps short viewports usable — the page scrolls instead. */
+   bottom margin clears the fixed paperboy mascot (components/app_mascot:
+   10px offset + 84px tall, 56px on mobile) so the grid's last row and
+   scrollbar end above him. The min-height keeps short viewports usable —
+   the page scrolls instead. */
 .records-screen--grid {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 80px - 16px - 20px);
+  height: calc(100vh - 80px - 16px - 104px);
   min-height: 28rem;
-  margin-bottom: 20px;
+  margin-bottom: 104px;
 
   @media (max-width: 768px) {
-    height: calc(100vh - 60px - 16px - 20px);
+    height: calc(100vh - 60px - 16px - 76px);
+    margin-bottom: 76px;
   }
 
   > .records-page {
