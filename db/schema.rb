@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_12_015519) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_14_170000) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -488,6 +488,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_12_015519) do
   end
 
   create_table "fleet_vehicles", force: :cascade do |t|
+    t.string "budget_unit", limit: 10
     t.string "color", limit: 20
     t.datetime "created_at", null: false
     t.bigint "fleet_vehicle_garaging_form_id", null: false
@@ -498,8 +499,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_12_015519) do
     t.string "secondary_garaging_location", limit: 200
     t.string "take_home", limit: 3
     t.datetime "updated_at", null: false
+    t.string "vehicle_number", limit: 20
     t.integer "year"
     t.index ["fleet_vehicle_garaging_form_id"], name: "index_fleet_vehicles_on_fleet_vehicle_garaging_form_id"
+    t.index ["vehicle_number"], name: "index_fleet_vehicles_on_vehicle_number"
   end
 
   create_table "form_fields", force: :cascade do |t|

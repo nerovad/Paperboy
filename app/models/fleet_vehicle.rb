@@ -13,6 +13,8 @@ class FleetVehicle < ApplicationRecord
                  dropdown_key: 'fleet_inventory',
                  includes: :fleet_vehicle_garaging_form
 
+  registry_column :vehicle_number, label: 'Vehicle #', kind: :text, filter: :search
+  registry_column :budget_unit, label: 'Budget Unit', kind: :text, filter: :select
   registry_column :year, kind: :text
   registry_column :make, kind: :text, filter: :select
   registry_column :model, kind: :text
