@@ -535,53 +535,124 @@ forms:
   page_headers:
   - Vehicle Info
   - Garaging Location
-  submission_type: approval
+  submission_type: database
+  description: Fleet Vehicle Garaging track the location and person(s) responsible
+    for each county vehicle.
+  form_number: GSAF-101
+  form_type: Registration
+  agency_id: GSA
+  division_id: ''
+  department_id: ''
+  unit_id: ''
   fields:
   - field_name: vehicle_number
-    field_type: dropdown
+    field_type: choices_dropdown
     label: Vehicle Number
     page_number: 3
     position: 0
-    required: false
+    required: true
     options:
+      custom_lookup:
+        database: paperboy
+        table: fleet_vehicles
+        column: vehicle_number
+        join_columns: []
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
       values: []
     read_only: none
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
   - field_name: year
-    field_type: text
+    field_type: dropdown
     label: Year
     page_number: 3
     position: 1
     required: false
-    options: {}
+    options:
+      custom_lookup:
+        database: paperboy
+        table: fleet_vehicles
+        column: year
+        join_columns: []
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
+      answer_lookup:
+        database: paperboy
+        table: fleet_vehicles
+        match_column: vehicle_number
+        return_column: year
+        return_join_columns: []
+        return_join_separator: " "
+      values: []
     read_only: none
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+    conditional_answer_field: vehicle_number
   - field_name: make
-    field_type: text
+    field_type: dropdown
     label: Make
     page_number: 3
     position: 2
     required: false
-    options: {}
+    options:
+      custom_lookup:
+        database: paperboy
+        table: fleet_vehicles
+        column: make
+        join_columns: []
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
+      answer_lookup:
+        database: paperboy
+        table: fleet_vehicles
+        match_column: vehicle_number
+        return_column: make
+        return_join_columns: []
+        return_join_separator: " "
+      values: []
     read_only: none
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+    conditional_answer_field: vehicle_number
   - field_name: model
-    field_type: text
+    field_type: dropdown
     label: Model
     page_number: 3
     position: 3
     required: false
-    options: {}
+    options:
+      custom_lookup:
+        database: paperboy
+        table: fleet_vehicles
+        column: model
+        join_columns: []
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
+      answer_lookup:
+        database: paperboy
+        table: fleet_vehicles
+        match_column: vehicle_number
+        return_column: model
+        return_join_columns: []
+        return_join_separator: " "
+      values: []
     read_only: none
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+    conditional_answer_field: vehicle_number
   - field_name: location
     field_type: dropdown
     label: Location
