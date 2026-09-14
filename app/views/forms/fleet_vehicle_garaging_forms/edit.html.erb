@@ -128,12 +128,12 @@
 <div class="form-page" style="display:none;">
   <h2>Vehicle Info</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:vehicle_number START --><div class="form-group flex-fill<%= '' %>" data-controller="choices">
+<!-- FIELD:vehicle_number START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :vehicle_number, "Vehicle Number" %>
             <%= form.select :vehicle_number,
-                  options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "vehicle_number"), @fleet_vehicle_garaging_form.vehicle_number.to_s.split(/,(?! )/)),
-                  { include_blank: false },
-                  { class: "form-control", required: true, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                  options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "vehicle_number"), @fleet_vehicle_garaging_form.vehicle_number),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: true, data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:vehicle_number END -->
 <!-- FIELD:year START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="vehicle_number" data-answer-lookup-form="FleetVehicleGaragingForm" data-answer-lookup-field="year">
