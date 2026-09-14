@@ -137,7 +137,7 @@
             <%= form.select :vehicle_number,
                   options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "vehicle_number")),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control", required: true, data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:vehicle_number END -->
 <!-- FIELD:year START --><div class="form-group flex-fill<%= '' %>">
@@ -145,7 +145,7 @@
             <%= form.select :year,
                   options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "year")),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:year END -->
 <!-- FIELD:make START --><div class="form-group flex-fill<%= '' %>">
@@ -153,7 +153,7 @@
             <%= form.select :make,
                   options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "make")),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:make END -->
 <!-- FIELD:model START --><div class="form-group flex-fill<%= '' %>">
@@ -161,7 +161,7 @@
             <%= form.select :model,
                   options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "model")),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:model END -->
         </div>
@@ -175,18 +175,17 @@
              data-controller="repeatable-section"
              data-repeatable-section-min-value="1"
              data-repeatable-section-max-value="2">
-          <label class="repeatable-section-label">Location</label>
           <div data-repeatable-section-target="wrapper">
             <%= form.fields_for :fleet_vehicle_garaging_form_locations do |vf| %>
               <div class="repeatable-block" data-block-index="<%= vf.index %>">
           <div class="form-row d-flex flex-wrap">
                     <div class="form-group flex-fill">
                       <%= vf.label :location, "Location" %>
-                      <%= vf.select :location, options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "location"), vf.object.location), { include_blank: "Select..." }, { class: "form-control" } %>
+                      <%= vf.select :location, options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "location"), vf.object.location), { include_blank: "Select..." }, { class: "form-control", data: { controller: "searchable-select" } } %>
                     </div>
           </div>
           <div class="repeatable-row-actions">
-            <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove">&minus; Remove</button>
+            <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove" aria-label="Remove" title="Remove">&minus;</button>
           </div>
         </div>
             <% end %>
@@ -197,11 +196,11 @@
           <div class="form-row d-flex flex-wrap">
                     <div class="form-group flex-fill">
                       <%= vf.label :location, "Location" %>
-                      <%= vf.select :location, options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "location"), vf.object.location), { include_blank: "Select..." }, { class: "form-control" } %>
+                      <%= vf.select :location, options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "location"), vf.object.location), { include_blank: "Select..." }, { class: "form-control", data: { controller: "searchable-select" } } %>
                     </div>
           </div>
           <div class="repeatable-row-actions">
-            <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove">&minus; Remove</button>
+            <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove" aria-label="Remove" title="Remove">&minus;</button>
           </div>
         </div>
             <% end %>

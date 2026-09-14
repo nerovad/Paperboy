@@ -2098,7 +2098,7 @@ class FormTemplatesController < ApplicationController
       html += "            <%= form.select :#{field.field_name},\n"
       html += "                  options_for_select(#{options_expr}, #{selected_expr}),\n"
       html += "                  { include_blank: \"Select...\" },\n"
-      html += "                  { #{select_attrs_str} } %>\n"
+      html += "                  { #{searchable_select_attrs_str(field, select_attrs)} } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html
@@ -2446,7 +2446,6 @@ class FormTemplatesController < ApplicationController
     lines << '             data-controller="repeatable-section"'
     lines << %(             data-repeatable-section-min-value="#{section.repeat_min}")
     lines << %(             data-repeatable-section-max-value="#{section.repeat_max}">)
-    lines << %(          <label class="repeatable-section-label">#{section.label}</label>)
     lines << '          <div data-repeatable-section-target="wrapper">'
     lines << "            <%= form.fields_for :#{assoc} do |vf| %>"
     lines << section_block_html('<%= vf.index %>', member_rows)
@@ -2472,7 +2471,7 @@ class FormTemplatesController < ApplicationController
       #{member_rows.chomp}
                 </div>
                 <div class="repeatable-row-actions">
-                  <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove">&minus; Remove</button>
+                  <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove" aria-label="Remove" title="Remove">&minus;</button>
                 </div>
               </div>
     HTML
@@ -2527,7 +2526,7 @@ class FormTemplatesController < ApplicationController
     when 'yes_no'
       %(                      <%= vf.select :#{fname}, options_for_select(['Yes', 'No'], vf.object.#{fname}), { include_blank: "Select..." }, { class: "form-control"#{trigger} } %>)
     when 'dropdown'
-      %(                      <%= vf.select :#{fname}, options_for_select(#{field_options_expr(field)}, vf.object.#{fname}), { include_blank: "Select..." }, { class: "form-control"#{trigger} } %>)
+      %(                      <%= vf.select :#{fname}, options_for_select(#{field_options_expr(field)}, vf.object.#{fname}), { include_blank: "Select..." }, { #{searchable_select_attrs_str(field, ['class: "form-control"'])} } %>)
     when 'choices_dropdown'
       data = %(data: { choices_target: "select", placeholder: "Select options...")
       data += ", conditional_trigger: '#{fname}'" if conditional_dependents?(field)
@@ -2536,6 +2535,15 @@ class FormTemplatesController < ApplicationController
     else
       %(                      <%= vf.text_field :#{fname}, class: "form-control" %>)
     end
+  end
+
+  # Select attributes for a single-choice dropdown: the caller's attributes with
+  # the searchable-select controller merged into their data hash (one data: key,
+  # alongside any conditional_trigger).
+  def searchable_select_attrs_str(field, select_attrs)
+    data = ['controller: "searchable-select"']
+    data << "conditional_trigger: '#{field.field_name}'" if conditional_dependents?(field)
+    (select_attrs.reject { |a| a.start_with?('data:') } << "data: { #{data.join(', ')} }").join(', ')
   end
 
   # Dropdown option-source expression, shared by every generated view.
@@ -2658,7 +2666,7 @@ class FormTemplatesController < ApplicationController
       html += "            <%= form.select :#{field.field_name},\n"
       html += "                  options_for_select(#{options_expr}),\n"
       html += "                  { include_blank: \"Select...\" },\n"
-      html += "                  { #{select_attrs_str} } %>\n"
+      html += "                  { #{searchable_select_attrs_str(field, select_attrs)} } %>\n"
       html += "          </div>\n"
       html += conditional_wrapper_end
       html

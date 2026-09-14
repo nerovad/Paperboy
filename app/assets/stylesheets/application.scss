@@ -25,6 +25,8 @@
 @use "components/portal_tabs";
 @use "components/advanced_search";
 @use "components/command_palette";
+@use "components/repeatable_section";
+@use "components/searchable_select";
 
 @use "pages/submissions";
 @use "pages/billing_tools";

@@ -125,14 +125,14 @@
             <%= form.select :spending_limit_30_day,
                   options_for_select(['500', '550', '600', '650', '700', '750', '800', '850', '900', '950', '1000', '1050', '1100', '1150', '1200', '1250', '1300', '1350', '1400', '1450', '1500', '1550', '1600', '1650', '1700', '1750', '1800', '1850', '1900', '1950', '2000', '2050', '2100', '2150', '2200', '2250', '2300', '2350', '2400', '2450', '2500', '2550', '2600', '2650', '2700', '2750', '2800', '2850', '2900', '2950', '3000', '3050', '3100', '3150', '3200', '3250', '3300', '3350', '3400', '3450', '3500', '3550', '3600', '3650', '3700', '3750', '3800', '3850', '3900', '3950', '4000', '4050', '4100', '4150', '4200', '4250', '4300', '4350', '4400', '4450', '4500', '4550', '4600', '4650', '4700', '4750', '4800', '4850', '4900', '4950', '5000'], @pcard_request_form.spending_limit_30_day),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control", required: true, data: { controller: "searchable-select" } } %>
           </div>
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :single_purchase_limit, "Single Purchase Limit" %>
             <%= form.select :single_purchase_limit,
                   options_for_select(['100', '200', '300', '400', '500', '600', '700', '800', '900', '1000'], @pcard_request_form.single_purchase_limit),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control", required: true, data: { controller: "searchable-select" } } %>
           </div>
         </div>
       </div>

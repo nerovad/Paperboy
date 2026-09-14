@@ -121,7 +121,7 @@
             <%= form.select :requested_by,
                   options_for_select(['Supervisor', 'Employee', 'Other']),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true, data: { conditional_trigger: 'requested_by' } } %>
+                  { class: "form-control", required: true, data: { controller: "searchable-select", conditional_trigger: 'requested_by' } } %>
           </div>
           <div class="conditional-field" data-depends-on="requested_by" data-show-values="[&quot;Other&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>">
@@ -144,7 +144,7 @@
             <%= form.select :present_schedule,
                   options_for_select(['5/40 Mon-Fri 8hr/day', '9/80', '4/10', 'Other']),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'present_schedule' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'present_schedule' } } %>
           </div>
           </div>
           <div class="conditional-field" data-depends-on="present_schedule" data-show-values="[&quot;Other&quot;]" style="display: none;">
@@ -159,7 +159,7 @@
             <%= form.select :proposed_schedule,
                   options_for_select(['5/40 Mon-Fri 8hr/day', '9/80', '4/10', 'Other']),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'proposed_schedule' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'proposed_schedule' } } %>
           </div>
           </div>
           <div class="conditional-field" data-depends-on="proposed_schedule" data-show-values="[&quot;Other&quot;]" style="display: none;">
@@ -174,7 +174,7 @@
             <%= form.select :present_location,
                   options_for_select(['JJC', 'HOA', 'Service Building']),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'present_location' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'present_location' } } %>
           </div>
           </div>
           <div class="conditional-field" data-depends-on="present_location" data-show-values="[&quot;JJC&quot;]" style="display: none;">
@@ -212,7 +212,7 @@
             <%= form.select :pay_group_changed,
                   options_for_select(['Yes', 'No', 'N/A']),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_318_editable } %>
+                  { class: "form-control", disabled: !field_318_editable, data: { controller: "searchable-select" } } %>
           </div>
         <% field_319_editable = (session.dig(:user, 'employee_id').to_s == '132855') %>
 <div class="form-group flex-fill<%= ' field-restricted' unless field_319_editable %>">
@@ -221,7 +221,7 @@
             <%= form.select :work_day_hours_changed,
                   options_for_select(['Yes', 'No', 'N/A']),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_319_editable } %>
+                  { class: "form-control", disabled: !field_319_editable, data: { controller: "searchable-select" } } %>
           </div>
         <% field_320_editable = (session.dig(:user, 'employee_id').to_s == '132855') %>
 <div class="form-group flex-fill<%= ' field-restricted' unless field_320_editable %>">
@@ -230,7 +230,7 @@
             <%= form.select :shift_differential_apaf,
                   options_for_select(['Added', 'Deleted', 'No']),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_320_editable } %>
+                  { class: "form-control", disabled: !field_320_editable, data: { controller: "searchable-select" } } %>
           </div>
         <% field_321_editable = (session.dig(:user, 'employee_id').to_s == '132855') %>
 <div class="form-group flex-fill<%= ' field-restricted' unless field_321_editable %>">

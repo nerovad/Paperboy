@@ -27,7 +27,8 @@ import { Controller } from "@hotwired/stimulus"
 //
 // Remove buttons inside a block:
 //   <button type="button" class="repeatable-remove-btn"
-//           data-action="repeatable-section#remove">− Remove</button>
+//           data-action="repeatable-section#remove"
+//           aria-label="Remove" title="Remove">−</button>
 export default class extends Controller {
   static targets = ["wrapper", "template", "addButton"]
   static values = {

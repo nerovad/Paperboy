@@ -122,7 +122,7 @@
             <%= form.select :location_where_event_occurred,
                   options_for_select(['HOA', 'Service Building', 'JJC'], @workplace_violence_form.location_where_event_occurred),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control", required: true, data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:location_where_event_occurred END -->
 <!-- FIELD:witness_name START --><div class="form-group flex-fill<%= '' %>">
@@ -245,7 +245,7 @@
             <%= form.select :assailantperpetrator,
                   options_for_select(['Intruder', 'Customer', 'Patient', 'Resident', 'Client', 'Visitor', 'Student', 'Co-Worker', 'Former Worker', 'Supervisor', 'Family', 'Friend', 'Other'], @workplace_violence_form.assailantperpetrator),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control", required: true, data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:assailantperpetrator END -->
 <!-- FIELD:other START --><div class="form-group flex-fill<%= '' %>">
@@ -268,7 +268,7 @@
             <%= form.select :incident_disposition,
                   options_for_select(['No Action Taken', 'Arrest', 'Warning', 'Suspension', 'Reprimand', 'Other'], @workplace_violence_form.incident_disposition),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true } %>
+                  { class: "form-control", required: true, data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:incident_disposition END -->
 <!-- FIELD:other_specify START --><div class="form-group flex-fill<%= '' %>">
@@ -306,7 +306,7 @@
             <%= form.select :was_the_problem_corrected_immediately,
                   options_for_select(['Yes', 'No', 'No corrective action required'], @workplace_violence_form.was_the_problem_corrected_immediately),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:was_the_problem_corrected_immediately END -->
 <!-- FIELD:will_inspection_checklists_procedures_andor_training_have_to_be_modified_to_prevent_recurrence START --><div class="form-group flex-fill<%= '' %>">
