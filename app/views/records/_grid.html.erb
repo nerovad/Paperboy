@@ -6,7 +6,9 @@
             editable (optional, defaults to the viewer's grant),
             title + toolbar (optional; when given, the title, toolbar and Edit
             button share one row above the grid — rendered here so the Edit
-            button stays inside the records-edit controller) %>
+            button stays inside the records-edit controller),
+            exportable (optional; shows an Export button that opens the
+            records-export modal, which the caller renders around the grid) %>
 <% edit_path = local_assigns.fetch(:edit_path, nil) %>
 <% editable = local_assigns.fetch(:editable) { can_edit_record_table?(table) } %>
 <% title = local_assigns.fetch(:title, nil) %>
@@ -23,6 +25,10 @@
       <h1 class="records-title"><%= title %></h1>
       <div class="records-bar__toolbar"><%= local_assigns[:toolbar] %></div>
       <div class="records-bar__actions">
+        <% if local_assigns[:exportable] %>
+          <button type="button" class="btn secondary"
+                  data-action="records-export#open">Export</button>
+        <% end %>
         <% if editable && rows.any? %>
           <button type="button" class="btn"
                   data-records-edit-target="modeButton"

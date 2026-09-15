@@ -358,6 +358,12 @@ Rails.application.routes.draw do
   get '/records', to: 'records#index', as: :records
   get '/records/:slug', to: 'records_table#show', as: :records_table
   patch '/records/:slug', to: 'records_table#bulk_update'
+  # Scheduled CSV exports of a grid view, managed from the grid's Export modal.
+  scope '/records/:slug', as: :records_table do
+    resources :export_schedules, only: %i[create destroy], controller: 'record_export_schedules' do
+      patch :toggle, on: :member
+    end
+  end
 
   resources :pcard_inventory, only: %i[index new create edit update] do
     collection do

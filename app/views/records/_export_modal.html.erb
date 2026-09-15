@@ -1,0 +1,114 @@
+<%# Export dialog for a Records grid: download the view on screen now, or have
+    it emailed as a CSV on a schedule (see ScheduledRecordExport). Both use the
+    current search, column filters, sort and columns. The owner's schedules for
+    this table are listed underneath with Pause/Resume and Delete.
+    locals: table, rows, view_params, schedules %>
+<div class="pb-modal-backdrop" hidden
+     data-records-export-target="backdrop"
+     data-action="click->records-export#backdropClick">
+  <div class="pb-modal pb-modal--lg" role="dialog" aria-modal="true" aria-labelledby="records-export-title">
+    <div class="pb-modal__header">
+      <h3 id="records-export-title">Export <%= table.label %></h3>
+      <button type="button" class="pb-modal__close" data-action="records-export#close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="pb-modal__body">
+      <section class="records-export__section">
+        <h4 class="records-export__heading">Download now</h4>
+        <p class="records-export__hint">
+          A CSV of the <%= pluralize(rows.size, 'row') %> and the columns on screen, using the
+          current search, filters and sort.
+        </p>
+        <%= link_to 'Download CSV', records_table_path(table.slug, view_params.merge(format: :csv)),
+                    class: 'btn pdf', data: { turbo: false } %>
+      </section>
+
+      <section class="records-export__section">
+        <h4 class="records-export__heading">Email on a schedule</h4>
+        <p class="records-export__hint">
+          Saves this view (<%= ScheduledRecordExport.describe_view(table, view_params) %>)
+          and emails you a CSV of its current rows each time it runs.
+        </p>
+
+        <%= form_with url: records_table_export_schedules_path(table.slug), method: :post, local: true,
+                      class: 'records-export__form' do |f| %>
+          <% view_params.each do |key, value| %>
+            <% Array(value).each do |item| %>
+              <%= hidden_field_tag(value.is_a?(Array) ? "view[#{key}][]" : "view[#{key}]", item, id: nil) %>
+            <% end %>
+          <% end %>
+
+          <div class="records-export__fields">
+            <div class="form-group">
+              <%= label_tag 'schedule_frequency', 'Frequency', class: 'form-label' %>
+              <%= select_tag 'schedule[frequency]',
+                    options_for_select(RecurringSchedule::FREQUENCIES.map { |key, label| [label, key] }, 'weekly'),
+                    id: 'schedule_frequency', class: 'form-control', required: true,
+                    data: { records_export_target: 'frequency', action: 'change->records-export#frequencyChanged' } %>
+            </div>
+
+            <div class="form-group" data-records-export-target="weeklyField">
+              <%= label_tag 'schedule_day_of_week', 'Day of week', class: 'form-label' %>
+              <%= select_tag 'schedule[day_of_week]',
+                    options_for_select(Date::DAYNAMES.each_with_index.to_a, 1),
+                    id: 'schedule_day_of_week', class: 'form-control' %>
+            </div>
+
+            <div class="form-group" data-records-export-target="monthlyField" hidden>
+              <%= label_tag 'schedule_day_of_month', 'Day of month', class: 'form-label' %>
+              <%= number_field_tag 'schedule[day_of_month]', 1, min: 1, max: 31,
+                    id: 'schedule_day_of_month', class: 'form-control' %>
+            </div>
+
+            <div class="form-group">
+              <%= label_tag 'schedule_time_of_day', 'Time (Pacific)', class: 'form-label' %>
+              <%= time_field_tag 'schedule[time_of_day]', '07:00',
+                    id: 'schedule_time_of_day', class: 'form-control', required: true %>
+            </div>
+          </div>
+          <small class="help-text">Monthly exports set for a day a month doesn't have run on its last day.</small>
+
+          <div class="pb-modal__actions">
+            <button type="button" class="btn" data-action="records-export#close">Cancel</button>
+            <%= f.submit 'Schedule export', class: 'btn approve' %>
+          </div>
+        <% end %>
+      </section>
+
+      <% if schedules.any? %>
+        <section class="records-export__section">
+          <h4 class="records-export__heading">Your scheduled exports</h4>
+          <ul class="records-export__schedules">
+            <% schedules.each do |schedule| %>
+              <li class="records-export__schedule">
+                <div class="records-export__schedule-info">
+                  <strong><%= schedule.schedule_description %></strong>
+                  <span class="badge <%= schedule.enabled? ? 'is-approved' : 'is-cancelled' %>">
+                    <%= schedule.enabled? ? 'Active' : 'Paused' %>
+                  </span>
+                  <div class="records-export__hint"><%= schedule.view_description %></div>
+                  <% if schedule.enabled? && schedule.next_run_at %>
+                    <div class="records-export__hint">Next: <%= format_pst(schedule.next_run_at) %></div>
+                  <% end %>
+                </div>
+
+                <div class="records-export__schedule-actions">
+                  <% verb = schedule.enabled? ? 'Pause' : 'Resume' %>
+                  <%= button_to verb, toggle_records_table_export_schedule_path(table.slug, schedule),
+                        method: :patch, form_class: 'records-export__inline-form',
+                        class: "btn compact #{schedule.enabled? ? 'warning' : 'approve'}" %>
+                  <%= button_to 'Delete', records_table_export_schedule_path(table.slug, schedule),
+                        method: :delete, form_class: 'records-export__inline-form',
+                        class: 'btn deny compact',
+                        data: { confirm_title: 'Delete scheduled export',
+                                turbo_confirm: 'Stop and delete this scheduled export?',
+                                confirm_label: 'Delete' } %>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        </section>
+      <% end %>
+    </div>
+  </div>
+</div>

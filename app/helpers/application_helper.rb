@@ -2,6 +2,9 @@
 
 # app/helpers/application_helper.rb
 module ApplicationHelper
+  # can_access_record_table? / can_edit_record_table?
+  include RecordTableAccess
+
   def syntax_highlight(source, language: nil, filename: nil)
     lexer = Rouge::Lexer.find_fancy(language || filename, source) || Rouge::Lexers::PlainText
     formatter = Rouge::Formatters::HTML.new(css_class: 'highlight')
@@ -85,29 +88,6 @@ module ApplicationHelper
   # grant from the ACL "Records Access" section.
   def records_portal_tables
     RegistryTable.all.select { |table| can_access_record_table?(table) }
-  end
-
-  # The record_view grant is keyed by slug and so covers every Records table,
-  # including the form-backed ones that declare neither a group permission nor
-  # a dropdown key — without it those tables are reachable by system admins
-  # alone, no matter what an admin ticks in the ACL.
-  def can_access_record_table?(table)
-    return true if system_admin?
-    return true if table.permission.present? && current_user_group_names.include?(table.permission)
-    return true if current_user_record_view_permission_keys.include?(table.slug)
-
-    table.dropdown_key.present? && current_user_dropdown_permissions.include?(table.dropdown_key)
-  end
-
-  # Whether the current user may edit a Records table's rows inline. Editing is
-  # a grant of its own — being able to open a grid never implies being able to
-  # rewrite it — so a viewer sees a read-only table until an admin ticks the
-  # table in the ACL "Records Editing" section. System admins bypass, matching
-  # every other permission gate.
-  def can_edit_record_table?(table)
-    return false unless can_access_record_table?(table)
-
-    system_admin? || current_user_record_edit_permission_keys.include?(table.slug)
   end
 
   # Landing path for the Records pillar, or nil when the user may open no table.

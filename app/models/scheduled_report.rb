@@ -2,11 +2,7 @@
 
 # app/models/scheduled_report.rb
 class ScheduledReport < ApplicationRecord
-  FREQUENCIES = {
-    'daily' => 'Every day',
-    'weekly' => 'Weekly',
-    'monthly' => 'Monthly'
-  }.freeze
+  include RecurringSchedule
 
   DATE_RANGE_TYPES = {
     'last_7_days' => 'Last 7 days',
@@ -22,26 +18,10 @@ class ScheduledReport < ApplicationRecord
     'pdf' => 'PDF'
   }.freeze
 
-  # Validations
-  validates :employee_id, presence: true
+  # Validations (the schedule's own live in RecurringSchedule)
   validates :form_type, presence: true
   validates :format, presence: true, inclusion: { in: FORMATS.keys }
-  validates :frequency, presence: true, inclusion: { in: FREQUENCIES.keys }
-  validates :time_of_day, presence: true, format: { with: /\A\d{2}:\d{2}\z/, message: 'must be in HH:MM format' }
   validates :date_range_type, presence: true, inclusion: { in: DATE_RANGE_TYPES.keys }
-
-  validates :day_of_week, inclusion: { in: 0..6 }, if: -> { frequency == 'weekly' }
-  validates :day_of_month, inclusion: { in: 1..31 }, if: -> { frequency == 'monthly' }
-
-  # Scopes
-  scope :enabled, -> { where(enabled: true) }
-  scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
-  scope :due, -> { enabled.where('next_run_at <= ?', Time.current) }
-
-  # Associations
-  def employee
-    Employee.find_by(employee_id: employee_id)
-  end
 
   def form_template
     Forms::Template.all.find { |t| t.class_name.tableize == form_type }
@@ -73,45 +53,6 @@ class ScheduledReport < ApplicationRecord
     end
   end
 
-  # Schedule calculation
-  def calculate_next_run
-    base_time = Time.current.in_time_zone('Pacific Time (US & Canada)')
-    hour, minute = time_of_day.split(':').map(&:to_i)
-
-    next_run = case frequency
-               when 'daily'
-                 base_time.change(hour: hour, min: minute, sec: 0)
-               when 'weekly'
-                 # Find next occurrence of day_of_week
-                 days_until = (day_of_week - base_time.wday) % 7
-                 days_until = 7 if days_until.zero? && base_time.hour >= hour
-                 (base_time + days_until.days).change(hour: hour, min: minute, sec: 0)
-               when 'monthly'
-                 # Next occurrence of day_of_month
-                 target_date = base_time.change(day: [day_of_month, base_time.end_of_month.day].min)
-                 target_date = target_date.next_month if target_date <= base_time
-                 target_date.change(hour: hour, min: minute, sec: 0)
-               end
-
-    # If calculated time is in the past, add one period
-    if next_run <= base_time
-      next_run = case frequency
-                 when 'daily'
-                   next_run + 1.day
-                 when 'weekly'
-                   next_run + 1.week
-                 when 'monthly'
-                   next_run + 1.month
-                 end
-    end
-
-    next_run
-  end
-
-  def update_next_run!
-    update(next_run_at: calculate_next_run)
-  end
-
   # Execute the report
   def execute!
     start_date, end_date = calculate_date_range
@@ -130,10 +71,6 @@ class ScheduledReport < ApplicationRecord
   end
 
   # Display helpers
-  def frequency_label
-    FREQUENCIES[frequency]
-  end
-
   def date_range_label
     DATE_RANGE_TYPES[date_range_type]
   end
@@ -143,16 +80,6 @@ class ScheduledReport < ApplicationRecord
   end
 
   def schedule_description
-    desc = case frequency
-           when 'daily'
-             "Every day at #{time_of_day}"
-           when 'weekly'
-             day_name = Date::DAYNAMES[day_of_week]
-             "Every #{day_name} at #{time_of_day}"
-           when 'monthly'
-             "Every month on day #{day_of_month} at #{time_of_day}"
-           end
-
-    "#{desc} (#{date_range_label})"
+    "#{timing_description} (#{date_range_label})"
   end
 end

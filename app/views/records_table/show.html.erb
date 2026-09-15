@@ -1,9 +1,12 @@
-<div class="records-screen records-screen--grid">
+<div class="records-screen records-screen--grid" data-controller="records-export">
   <%= render "shared/work_tabs", active: :records %>
 
   <% toolbar = render 'records/toolbar', path: records_table_path(@table.slug), page: @page,
                       columns: @columns, filter_options: @filter_options %>
 
   <%= render 'records/grid', table: @table, page: @page, columns: @columns, rows: @records,
-             title: @table.label, toolbar: toolbar %>
+             title: @table.label, toolbar: toolbar, exportable: true %>
+
+  <%= render 'records/export_modal', table: @table, rows: @records,
+             view_params: @view_params, schedules: @export_schedules %>
 </div>

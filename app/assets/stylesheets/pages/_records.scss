@@ -440,3 +440,64 @@
 
 // The Review-changes dialog uses the shared .pb-modal system; see
 // components/modals.
+
+/* ---- Export dialog contents (shell is the shared .pb-modal) ---- */
+
+.records-export__section + .records-export__section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid $border-faint;
+}
+
+.records-export__heading {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.records-export__hint {
+  margin: 0 0 10px;
+  color: $text-muted;
+  font-size: 0.875rem;
+}
+
+.records-export__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 12px;
+
+  .form-group {
+    min-width: 0;
+    margin: 0;
+
+    &[hidden] { display: none; }
+  }
+}
+
+.records-export__schedules {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.records-export__schedule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 0;
+
+  & + & { border-top: 1px solid $border-faint; }
+
+  .records-export__hint { margin: 2px 0 0; }
+}
+
+.records-export__schedule-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.records-export__inline-form {
+  display: inline;
+  margin: 0;
+}
