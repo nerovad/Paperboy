@@ -9,6 +9,7 @@ ruby '~> 4.0'
 gem 'minitest'
 gem 'minitest-mock'
 gem 'rails', '~> 8.1.3'
+gem 'smb_shortcut', git: 'git@gsa-gitea:BSS/smb_shortcut.git'
 
 # Asset pipeline: Sprockets serves and digests; dartsass-rails compiles SCSS
 # with Dart Sass (sass-embedded). Do not reintroduce sass-rails/sassc-rails --

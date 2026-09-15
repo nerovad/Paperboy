@@ -1,3 +1,9 @@
+GIT
+  remote: git@gsa-gitea:BSS/smb_shortcut.git
+  revision: 03f3b9bbffa08c91b7ab7296bcfe0def9fb41d0e
+  specs:
+    smb_shortcut (0.1.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -566,6 +572,7 @@ DEPENDENCIES
   selenium-webdriver
   sidekiq
   sidekiq-cron
+  smb_shortcut!
   solid_cable
   solid_cache
   solid_queue
