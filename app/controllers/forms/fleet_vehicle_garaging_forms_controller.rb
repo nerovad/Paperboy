@@ -71,11 +71,11 @@ module Forms
 
       if @fleet_vehicle_garaging_form.save
         # ROUTING_BLOCK_START
-      # Multi-step approval routing (1 steps)
-      # Delegates to TrackableStatus#start_approval!, which picks the first
-      # step whose condition matches the submitted record.
-      @fleet_vehicle_garaging_form.start_approval!
-      redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
+        # Multi-step approval routing (1 steps)
+        # Delegates to TrackableStatus#start_approval!, which picks the first
+        # step whose condition matches the submitted record.
+        @fleet_vehicle_garaging_form.start_approval!
+        redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
       # ROUTING_BLOCK_END
       else
         # Rebuild options on failure (same as in new)
