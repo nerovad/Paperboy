@@ -226,6 +226,102 @@ module Aim
       refute_includes response.body, 'new_vendor_rule'
     end
 
+    # Plan step 2.1. A claim used to count merely by existing, so a second
+    # reviewer opening someone else's invoice got the whole action strip.
+    test 'an invoice claimed by someone else renders read only' do
+      folder = create_action_needed_invoice('INV-6', payload: { 'InvoiceNumber' => 'INV-60' },
+                                                     vendor_rule: {})
+      write_claim(folder, 'other.staff@example.com', name: 'Dana Reyes')
+
+      get :show, params: { id: 'INV-6', queue: 'action_needed' }
+
+      assert_response :success
+      assert_includes response.body, 'Dana Reyes claimed this invoice'
+      assert_select 'input[type=submit][value=?]', 'Save Changes', false
+      assert_select 'input[type=submit][value=?]', 'Unclaim', false
+      assert_select 'a', text: 'Return to Queue'
+    end
+
+    test 'the reviewer holding the claim resumes it freely' do
+      folder = create_action_needed_invoice('INV-7', payload: { 'InvoiceNumber' => 'INV-70' },
+                                                     vendor_rule: {})
+      write_claim(folder, 'AIM.Staff@Example.com')
+
+      get :show, params: { id: 'INV-7', queue: 'action_needed' }
+
+      assert_response :success
+      assert_select 'input[type=submit][value=?]', 'Save Changes'
+      refute_includes response.body, 'Read only'
+      assert_equal 'AIM.Staff@Example.com', JSON.parse(File.read(claim_path(folder)))['user']
+    end
+
+    test 'an unclaimed invoice is claimed for the signed-in reviewer' do
+      folder = create_action_needed_invoice('INV-8', payload: { 'InvoiceNumber' => 'INV-80' },
+                                                     vendor_rule: {})
+
+      get :show, params: { id: 'INV-8', queue: 'action_needed' }
+
+      assert_response :success
+      assert_equal 'aim.staff@example.com', JSON.parse(File.read(claim_path(folder)))['user']
+      assert_select 'input[type=submit][value=?]', 'Save Changes'
+    end
+
+    test 'a foreign claim refuses a posted save' do
+      folder = create_action_needed_invoice('INV-9', payload: { 'InvoiceNumber' => 'INV-90' },
+                                                     vendor_rule: {})
+      write_claim(folder, 'other.staff@example.com')
+
+      patch :update, params: { id: 'INV-9', queue: 'action_needed', commit: 'Save Changes',
+                               metadata: { 'InvoiceNumber' => 'REWRITTEN' } }
+
+      assert_redirected_to aim_invoices_path(queue: 'action_needed')
+      assert_match(/view only/, flash[:alert])
+      payload = JSON.parse(File.read(File.join(folder, 'INV-9_READY_FOR_SQL.json')))
+      assert_equal 'INV-90', payload['InvoiceNumber']
+    end
+
+    test 'a foreign claim cannot be released by someone else' do
+      folder = create_action_needed_invoice('INV-10', payload: { 'InvoiceNumber' => 'INV-100' },
+                                                      vendor_rule: {})
+      write_claim(folder, 'other.staff@example.com')
+
+      patch :update, params: { id: 'INV-10', queue: 'action_needed', commit: 'Unclaim' }
+
+      assert_redirected_to aim_invoices_path(queue: 'action_needed')
+      assert_path_exists claim_path(folder)
+    end
+
+    test 'a foreign claim refuses an AI retry' do
+      folder = create_action_needed_invoice('INV-11', payload: { 'InvoiceNumber' => 'INV-110' },
+                                                      vendor_rule: {})
+      write_claim(folder, 'other.staff@example.com')
+
+      post :retry, params: { id: 'INV-11', queue: 'action_needed' }
+
+      assert_redirected_to aim_invoices_path(queue: 'action_needed')
+      assert_path_exists folder
+    end
+
+    test 'the queue offers view only for an invoice someone else holds' do
+      own = create_action_needed_invoice('INV-12', payload: { 'InvoiceNumber' => 'INV-120' },
+                                                   vendor_rule: {})
+      other = create_action_needed_invoice('INV-13', payload: { 'InvoiceNumber' => 'INV-130' },
+                                                     vendor_rule: {})
+      # Mixed case on our own claim: the queue and the review page have to
+      # agree on who a claimant is, and the pfa work provider already ignores
+      # case, so this row must read Resume Review rather than View Only.
+      write_claim(own, 'AIM.Staff@Example.com')
+      write_claim(other, 'other.staff@example.com', name: 'Dana Reyes')
+
+      get :index, params: { queue: 'action_needed' }
+
+      assert_response :success
+      assert_select 'tr.is-locked', 1
+      assert_select 'a', text: 'View Only'
+      assert_select 'a', text: 'Resume Review'
+      assert_includes response.body, 'Claimed by Dana Reyes'
+    end
+
     private
 
     def create_action_needed_invoice(invoice_id, payload:, vendor_rule:)
@@ -236,6 +332,17 @@ module Aim
                  JSON.pretty_generate(vendor_rule))
       File.write(File.join(folder_path, "#{invoice_id}_READY_FOR_SQL.json"),
                  JSON.pretty_generate(payload))
+      folder_path
+    end
+
+    def write_claim(folder_path, email, name: nil)
+      claim = { 'user' => email, 'timestamp' => Time.zone.now.to_i }
+      claim['name'] = name if name
+      File.write(claim_path(folder_path), JSON.pretty_generate(claim))
+    end
+
+    def claim_path(folder_path)
+      File.join(folder_path, '.claim.json')
     end
 
     def create_vendor_review_invoice(invoice_id, metadata:, learn_data: {})

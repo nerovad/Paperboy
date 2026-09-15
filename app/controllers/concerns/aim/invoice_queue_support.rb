@@ -45,7 +45,7 @@ module Aim
         reviewable: @queue != 'ai_queue',
         claimed_by: claimed_by,
         claimed_by_name: claimed_by_name,
-        is_locked: claimed_by.present? && claimed_by != current_user_email
+        is_locked: claimed_by.present? && !own_claim?(claimed_by)
       }
     end
 

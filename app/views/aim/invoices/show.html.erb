@@ -14,11 +14,18 @@
       <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
       <div>
         <strong>Read only — changes to this invoice cannot be saved.</strong>
-        <p>
-          The queue folder could not be written to. Unless this invoice was already claimed, no one
-          has it reserved and someone else may open it at the same time. Review actions are hidden
-          until the queue share is writable again.
-        </p>
+        <% if @claimed_by_other %>
+          <p>
+            <%= @claim_holder %> claimed this invoice and is reviewing it now. Review actions are
+            hidden until it is unclaimed, so two reviewers cannot save over one another.
+          </p>
+        <% else %>
+          <p>
+            The queue folder could not be written to. Unless this invoice was already claimed, no one
+            has it reserved and someone else may open it at the same time. Review actions are hidden
+            until the queue share is writable again.
+          </p>
+        <% end %>
       </div>
     </div>
   <% end %>

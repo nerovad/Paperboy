@@ -7,23 +7,51 @@ module Aim
     # The queue lives on a mounted share that can come back read-only, vanish
     # or fill up. Those failures are expected operating conditions, not bugs,
     # so callers handle them rather than letting a stack trace reach staff.
-    WRITE_FAILURES = [Errno::EACCES, Errno::EPERM, Errno::EROFS, Errno::ENOSPC].freeze
+    # ENOENT belongs with them: when two reviewers hold the same invoice open
+    # and one of them moves it, the other's write lands in a folder that is no
+    # longer there, and the loser of that race gets the queue back rather than
+    # a 500.
+    WRITE_FAILURES = [Errno::EACCES, Errno::EPERM, Errno::EROFS, Errno::ENOSPC, Errno::ENOENT].freeze
 
     private
 
+    # True only when this invoice is ours to work: either it was unclaimed and
+    # we just claimed it, or the claim already on it is our own. A claim used
+    # to count merely by existing, which handed a second reviewer the full
+    # action strip on someone else's invoice. Plan step 2.1.
+    #
     # Returns false when the claim could not be recorded, which leaves the
     # invoice unreserved — the review page goes read-only rather than offering
     # actions whose writes would fail too.
     def claim_invoice
-      claim_path = File.join(@folder_path, '.claim.json')
-      return true if File.exist?(claim_path)
+      owner, = claim_details_for(@folder_path)
+      return own_claim?(owner) if owner.present?
 
       claim = { user: current_user_email, name: current_user_name, timestamp: Time.zone.now.to_i }
-      File.write(claim_path, claim.to_json)
+      File.write(File.join(@folder_path, '.claim.json'), claim.to_json)
       true
     rescue *WRITE_FAILURES => e
       Rails.logger.error "AIM could not claim #{@invoice_id.inspect} in #{@queue}: #{e.class}: #{e.message}"
       false
+    end
+
+    # Addresses are compared without case because that is how the pfa work
+    # provider compares them, and a queue that says "Review Invoice" while the
+    # review page says "read only" is worse than either answer on its own.
+    def own_claim?(owner)
+      owner.present? && owner.to_s.casecmp?(current_user_email.to_s)
+    end
+
+    def claimed_by_other?(folder_path)
+      owner, = claim_details_for(folder_path)
+      owner.present? && !own_claim?(owner)
+    end
+
+    # Names whoever is holding the claim, for a banner or an alert. Falls back
+    # to the mailbox so a queue never has to show a full address.
+    def claimant_label_for(folder_path)
+      owner, name = claim_details_for(folder_path)
+      name.presence || owner.to_s.split('@').first.presence || 'Another reviewer'
     end
 
     def unclaim_invoice(folder_path)
