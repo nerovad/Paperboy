@@ -325,6 +325,27 @@ python3 -m venv ~/.venvs/aim
 ~/.venvs/aim/bin/pip install pytest -r script/python/aim/requirements.txt
 ```
 
+**A gate failure only counts when it is AIM's.** Confirmed by Joshua
+2026-09-15. rubocop and brakeman run over the whole application, so they
+report other teams' work alongside ours -- on 2026-09-15 rubocop was red
+with 81 offences, 75 of them in one sheriff-safety migration and none of
+them AIM's. Those belong to whoever wrote them, and the guardrails put
+them out of reach anyway: fixing one means editing a file outside AIM.
+
+So read each gate result for AIM's own files, and say plainly in the
+handoff which failures are someone else's rather than carrying them as
+though they were a blocked step. For rubocop, scope the run:
+
+```bash
+bundle exec rubocop app/controllers/aim app/controllers/concerns/aim \
+                    app/helpers/aim app/services/aim app/views/aim \
+                    test/controllers/aim test/services/aim test/lib/aim
+```
+
+`bundle exec rake test` is the exception and stays whole-suite: its whole
+purpose is proving an AIM change broke nothing elsewhere, so a test that
+AIM reddens is AIM's no matter which directory it lives in.
+
 **This one is local only, and deliberately so.** `.github/workflows/ci.yml`
 is not changed. Decided 2026-09-08: adding a Python step there would slow
 every Billing, Forms and Print 2 Mail pull request and could fail them over
