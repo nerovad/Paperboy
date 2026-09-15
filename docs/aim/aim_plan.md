@@ -1194,21 +1194,42 @@ Small, surgical, no schema changes. Highest value per line changed.
 merged (`501d5059`).** Baseline: 635 runs, 56 failures, 190 errors
 (serial), plus 61 pytest.
 
-Two things about running the suite here, both found on 2026-09-14:
+Two things about running the suite here, both found on 2026-09-14 and both
+since overtaken by events -- recorded because the first one will recur:
 
-- **`Paperboy_Test` is no longer reachable** -- `bundle exec rake test`
-  aborts with *the server principal "GSAETL" is not able to access the
-  database "Paperboy_Test"*. Run
-  `PAPERBOY_TEST_DATABASE=Paperboy_Test0 PARALLEL_WORKERS=1 bundle exec rake test`,
-  which reproduces the baseline exactly. Not AIM's to fix; see
-  `AGENTS.md`, which already documents the variable.
-- **`origin/master` is ~70 commits ahead of `501d5059`**, and a long run of
-  them are `WIP: Fix ...` test repairs including *minitest mock
-  compatibility* -- the very thing behind the 190 errors. This branch was
-  deliberately cut from the local `501d5059` so the recorded baseline still
-  means something. Merging master into the phase branch is Joshua's call
-  and will move the baseline a long way; do it deliberately, in its own
-  commit, and re-measure.
+- **`Paperboy_Test` refused a connection for a while** -- `bundle exec rake
+  test` aborted with *the server principal "GSAETL" is not able to access
+  the database "Paperboy_Test"*. Working around it with
+  `PAPERBOY_TEST_DATABASE=Paperboy_Test0` succeeded, because the harness
+  creates the base database when it is missing and drops it again after the
+  run. By 2026-09-15 `Paperboy_Test` answered normally and no override was
+  needed. If the suite cannot connect, try the default again before
+  assuming anything is broken.
+- **`origin/master` was 68 commits ahead of `501d5059`**, and a long run of
+  them were `WIP: Fix ...` test repairs. **They fixed the pre-existing red.**
+  `Gemfile.lock` is back on minitest 5.27 and `test/test_helper.rb` carries
+  a `stub` compatibility shim, which is what the 190 errors were. Merged
+  into `master` on 2026-09-15 as `88d5fc8b`, cleanly, with no AIM file
+  touched by the merge.
+
+**The suite is now genuinely green, so the standard changes.** The Open
+Questions note saying "green cannot mean literally green" no longer holds
+for causes 1 and 2. The baseline for Phase 3 is **675 runs, 0 failures, 0
+errors (serial), plus 61 pytest**, and a step that reddens anything at all
+is a step that is not finished.
+
+One caveat: **`bundle exec rubocop` is red on master**, 81 offenses, none
+of them AIM's -- 75 in
+`db/migrate/20260912015519_create_sheriff_safety_reporting_forms_*.rb` and
+the rest in the sheriff-safety and fleet-garaging controllers,
+`config/routes.rb` and a PDF generator. All arrived with the upstream
+commits and all sit outside AIM, so the guardrails put them out of reach.
+Check AIM's own files with a scoped run:
+
+```bash
+bundle exec rubocop app/controllers/aim app/controllers/concerns/aim \
+                    app/helpers/aim app/services/aim test/controllers/aim
+```
 
 - [x] **2.1 Compare the claimant to the signed-in user.** `claim_invoice`
   returns true whenever `.claim.json` merely exists, so a second reviewer
@@ -1574,4 +1595,5 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-10 | — | `939a140f` | Merged master (19 commits: billing, P2M, forms) into the phase branch. Master's own errors rose 160 -> 190 in that window; measured on a clean `origin/master` worktree to confirm none of it is AIM's. Merged branch: 635 runs, 56 fail, 190 error -- six more tests and one fewer failure than master alone |
 | 2026-09-10 | — | (this merge) | **Phase 1 merged to Paperboy master.** New baseline for Phase 2: 635 runs, 56 fail, 190 error (serial), plus 61 pytest |
 | 2026-09-14 | 2.1 | (this commit) | Claims compare their owner; `update`/`retry`/`move_to_action_needed` refuse a foreign claim; `Errno::ENOENT` handled; 642 runs, 56 fail, 190 error -- same red set as the baseline |
-| 2026-09-15 | — | (this merge) | **Phase 2 merged to Paperboy master.** 2.1 was its only step; merged locally on `master`, which is still behind `origin/master` |
+| 2026-09-15 | — | `dca411a5` | **Phase 2 merged to Paperboy master.** 2.1 was its only step |
+| 2026-09-15 | — | `88d5fc8b` | Merged `origin/master` (68 commits) into master. Their minitest repair clears the pre-existing red: **675 runs, 0 fail, 0 error**, plus 61 pytest. New Phase 3 baseline. rubocop is red on 81 non-AIM offenses |
