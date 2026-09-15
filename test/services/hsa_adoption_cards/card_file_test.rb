@@ -79,11 +79,19 @@ module HsaAdoptionCards
       assert_match(/not mounted/, CardFile.status[:message])
       assert_includes CardFile.status[:message], File.join(@mount, 'nope')
       assert_includes CardFile.status[:message], 'Paperboy-wsl2-fstab'
+      assert_includes CardFile.status[:message], '\\\\gsa-scan01\\hsa to a drive letter'
 
       ENV.delete(CardFile::LINUX_ENV)
       refute CardFile.status[:connected]
       assert_match(/not configured/, CardFile.status[:message])
       assert_includes CardFile.status[:message], CardFile::LINUX_ENV
+    end
+
+    test 'the mount message names the whole share and the drive letter behind the mount' do
+      assert_equal '\\\\gsa-scan02\\projects', CardFile.share_root('\\\\gsa-scan02\\projects\\HSA_Adoption_Cards')
+      assert_equal 'A:', CardFile.drive_letter('/mnt/a/HSA_Adoption_Cards')
+      assert_equal 'A:', CardFile.drive_letter('/mnt/a')
+      assert_equal 'a drive letter', CardFile.drive_letter('/srv/scan/cards')
     end
   end
 end

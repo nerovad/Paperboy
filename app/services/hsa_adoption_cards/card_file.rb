@@ -9,7 +9,7 @@ module HsaAdoptionCards
   #
   #   HSA_ADOPT_WINDOWS_BASE_PATH  the root as the database spells it,
   #                                e.g. \\gsa-scan01\hsa\Adoption_Cards
-  #   HSA_ADOPT_LINUX_BASE_PATH    where that root is mounted here, e.g. /mnt/g
+  #   HSA_ADOPT_LINUX_BASE_PATH    where that root is mounted here, e.g. /mnt/a/HSA_Adoption_Cards
   #
   # Only files inside that root are ever served. A path is refused outright
   # for anything other than a .pdf, for any ".." segment, and for resolving
@@ -41,12 +41,26 @@ module HsaAdoptionCards
       unless Dir.exist?(root)
         return { connected: false,
                  message: "The scanned-cards share is not mounted on this server. #{share} needs to be " \
-                          "mounted at #{root}. On a workstation, map the share to G: in Windows and add the " \
-                          "line from LockBox's Paperboy-wsl2-fstab (Arch on bare metal: Paperboy-archlinux-fstab) " \
-                          'to /etc/fstab; the servers use the line in Paperboy-cifs-fstab.' }
+                          "reachable at #{root}. On a WSL workstation, map #{share_root(share)} to #{drive_letter(root)} " \
+                          'in Windows and copy Paperboy-wsl2-fstab from LockBox over /etc/fstab; on Arch, copy ' \
+                          'Paperboy-archlinux-fstab; the servers use Paperboy-cifs-fstab.' }
       end
 
       { connected: true, message: 'Connected.' }
+    end
+
+    # The share a workstation maps is the whole share, not the cards folder
+    # inside it: \\server\share from \\server\share\folder\...
+    def self.share_root(unc)
+      parts = unc.to_s.tr('/', '\\').sub(/\A\\+/, '').split('\\')
+      parts.length >= 2 ? "\\\\#{parts[0]}\\#{parts[1]}" : unc.to_s
+    end
+
+    # /mnt/a/... is the drvfs mount of drive A:, so the letter is the first
+    # segment under /mnt. Anything else gets a neutral phrase.
+    def self.drive_letter(mount)
+      letter = mount.to_s[%r{\A/mnt/([a-z])(?:/|\z)}, 1]
+      letter ? "#{letter.upcase}:" : 'a drive letter'
     end
 
     def initialize(unc_path)
