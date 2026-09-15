@@ -117,7 +117,10 @@ module Forms
         # Auto-create OSHA Report when the safety officer marks the incident as
         # either OSHA recordable or OSHA reportable. The editing user becomes the
         # approver on the spawned OSHA Report.
-        @sheriff_safety_reporting_form.create_osha_report!(approver_id: session.dig(:user, 'employee_id')) if @sheriff_safety_reporting_form.osha_report_required? && @sheriff_safety_reporting_form.osha_report.blank?
+        if @sheriff_safety_reporting_form.osha_report_required? && @sheriff_safety_reporting_form.osha_report.blank?
+          @sheriff_safety_reporting_form.create_osha_report!(approver_id: session.dig(:user,
+                                                                                      'employee_id'))
+        end
 
         redirect_to form_success_path,
                     notice: 'Form updated successfully.',
