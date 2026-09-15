@@ -121,7 +121,7 @@
   <%= form.select :social_media_platform,
         options_for_select(['Instagram', 'Tik Tok', 'Facebook']),
         { include_blank: "Select..." },
-        { class: "form-control" } %>
+        { class: "form-control", data: { controller: "searchable-select" } } %>
 </div>
 <div class="form-group flex-fill">
   <%= form.label :account_username, "Account Username" %>

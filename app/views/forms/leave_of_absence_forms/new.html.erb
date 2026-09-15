@@ -144,7 +144,7 @@
             <%= form.select :pay_status_during_leave,
                   options_for_select(['Full integration with disability benefits up to 100% of base biweekly compensation (Required if receiving disability benefits optional if receiving TTD)', 'Leave bank hours equal to total biweekly scheduled work hours (Required if not receiving disability benefits or if disability benefits waived)', 'Leave without pay (LWOP) equal to total biweekly scheduled work hours (Fully unpaid no leave bank hours may be reported for the duration of the leave)', 'Partial integration with temporary total disability (TTD) benefits (Reported hours must be consistent each pay period)']),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:pay_status_during_leave END -->
 <!-- FIELD:type_of_leave START --><div class="form-group flex-fill<%= '' %>">
@@ -152,7 +152,7 @@
             <%= form.select :type_of_leave,
                   options_for_select(['FMLA', 'Personal', 'Disability']),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:type_of_leave END -->
 <!-- FIELD:reason_for_leave START --><div class="form-group flex-fill<%= '' %>">
@@ -160,7 +160,7 @@
             <%= form.select :reason_for_leave,
                   options_for_select(['Employee Health Condition', 'Disabled by Pregnancy or Childbirth', 'Care for Immediate Family Member', 'Bonding Leave', 'Military Service Leave', 'Emergency Rescue Personnel Leave', 'To assist a child spouse or parent who is a member of the National Guard or Reserves with a qualifying exigency related to active duty or a call of active duty status in support of a contingency operation', 'To care for a child spouse parent or next of kin service member of the United States Armed Forces with serious injury or illness incurred in the line of duty', 'Donor Leave', 'Personal Leave', 'Other']),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'reason_for_leave' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'reason_for_leave' } } %>
           </div>
 <!-- FIELD:reason_for_leave END -->
 <!-- FIELD:work_related_injury START -->          <div class="conditional-field" data-depends-on="reason_for_leave" data-show-values="[&quot;Employee Health Condition&quot;]" style="display: none;">

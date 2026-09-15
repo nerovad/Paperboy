@@ -16,7 +16,7 @@ class RecordsTableController < ApplicationController
     # own vocabulary; unfiltered, they stay canonical.
     @columns = TableColumns.resolve(@page, @layout, context: { org_agency: params[:filter_agency] })
 
-    rows = RecordsSearch.apply(@table, @table.scope, params[:search]).to_a
+    rows = RecordsSearch.apply(@table, @table.scope.to_a, params[:search])
 
     # Dropdown values come from the searched set but before the column filters
     # narrow it, so picking one value doesn't empty every other dropdown.

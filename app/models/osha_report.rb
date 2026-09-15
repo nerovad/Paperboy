@@ -62,8 +62,8 @@ class OshaReport < ApplicationRecord
                  includes: :safety_report,
                  scope: -> { where(status: :approved) }
 
-  registry_column :log_case_number, label: 'Case #', kind: :text, filter: :search
-  registry_column :name, label: 'Employee Name', kind: :text, filter: :search
+  registry_column :log_case_number, label: 'Case #', kind: :text
+  registry_column :name, label: 'Employee Name', kind: :text
   registry_column :job_title, label: 'Job Title', kind: :text, sortable: false
   registry_column :date_of_injury_or_illness, label: 'Date of Injury', kind: :date
   registry_column :what_was_the_employee_doing_just_before_the_incident_occurred,

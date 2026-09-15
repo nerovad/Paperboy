@@ -125,7 +125,7 @@
   <%= form.select :how_many_days,
         options_for_select(['1', '2', '3', '4', '5']),
         { include_blank: "Select..." },
-        { class: "form-control" } %>
+        { class: "form-control", data: { controller: "searchable-select" } } %>
 </div>
         </div>
       </div>

@@ -119,7 +119,7 @@
             <%= form.select :change_or_service_requested,
                   options_for_select(['Increase in Existing Service', 'Decrease in Existing Service', 'New Additional Service', 'New Basic Service', 'Occupancy Change', 'Special Service or Security', 'Maintenance', 'Utilities', 'Housekeeping', 'Grounds'], @notice_of_change_form.change_or_service_requested),
                   { include_blank: "Select..." },
-                  { class: "form-control", required: true, data: { conditional_trigger: 'change_or_service_requested' } } %>
+                  { class: "form-control", required: true, data: { controller: "searchable-select", conditional_trigger: 'change_or_service_requested' } } %>
           </div>
           <div class="conditional-field" data-depends-on="change_or_service_requested" data-show-values="[&quot;Occupancy Change&quot;]" style="<%= ["Occupancy Change"].include?(@notice_of_change_form.change_or_service_requested) ? '' : 'display: none;' %>">
 <div class="form-group flex-fill<%= '' %>">

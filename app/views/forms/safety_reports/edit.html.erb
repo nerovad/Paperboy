@@ -140,7 +140,7 @@
             <%= form.select :report_type,
                   options_for_select(FormLookup.options_for("SafetyReport", "report_type"), @safety_report.report_type),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:report_type END -->
 <!-- FIELD:medical_record_number_for_the_employee START -->          <div class="conditional-field" data-depends-on="bloodborne_pathogen_exposure" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@safety_report.bloodborne_pathogen_exposure) ? '' : 'display: none;' %>">
@@ -237,7 +237,7 @@
             <%= form.select :who_gave_the_dwc1,
                   options_for_select(FormLookup.options_for("SafetyReport", "who_gave_the_dwc1"), @safety_report.who_gave_the_dwc1),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:who_gave_the_dwc1 END -->
 <!-- FIELD:date_last_worked START --><div class="form-group flex-fill<%= '' %>">
@@ -255,7 +255,7 @@
             <%= form.select :missed_full_work_day_,
                   options_for_select(["Yes", "No"], @safety_report.missed_full_work_day_),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'missed_full_work_day_' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'missed_full_work_day_' } } %>
           </div>
 <!-- FIELD:missed_full_work_day_ END -->
 <!-- FIELD:still_off_work START -->          <div class="conditional-field" data-depends-on="missed_full_work_day_" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@safety_report.missed_full_work_day_) ? '' : 'display: none;' %>">
@@ -264,7 +264,7 @@
             <%= form.select :still_off_work,
                   options_for_select(["Yes", "No"], @safety_report.still_off_work),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
           </div>
 <!-- FIELD:still_off_work END -->
@@ -285,7 +285,7 @@
             <%= form.select :location_of_incident,
                   options_for_select(FormLookup.options_for("SafetyReport", "location_of_incident"), @safety_report.location_of_incident),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:location_of_incident END -->
 <!-- FIELD:location_description START --><div class="form-group flex-fill<%= '' %>">
@@ -298,7 +298,7 @@
             <%= form.select :on_employer_premises,
                   options_for_select(["Yes", "No"], @safety_report.on_employer_premises),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:on_employer_premises END -->
 <!-- FIELD:department_where_event_occurred START --><div class="form-group flex-fill<%= '' %>">
@@ -306,7 +306,7 @@
             <%= form.select :department_where_event_occurred,
                   options_for_select(FormLookup.options_for("SafetyReport", "department_where_event_occurred"), @safety_report.department_where_event_occurred),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:department_where_event_occurred END -->
 <!-- FIELD:activity_at_time_of_incident START --><div class="form-group flex-fill<%= '' %>">
@@ -331,7 +331,7 @@
             <%= form.select :bloodborne_pathogen_exposure,
                   options_for_select(["Yes", "No"], @safety_report.bloodborne_pathogen_exposure),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'bloodborne_pathogen_exposure' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'bloodborne_pathogen_exposure' } } %>
           </div>
 <!-- FIELD:bloodborne_pathogen_exposure END -->
 <!-- FIELD:is_the_source_blood_tested START -->          <div class="conditional-field" data-depends-on="bloodborne_pathogen_exposure" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@safety_report.bloodborne_pathogen_exposure) ? '' : 'display: none;' %>">
@@ -340,7 +340,7 @@
             <%= form.select :is_the_source_blood_tested,
                   options_for_select(["Yes", "No"], @safety_report.is_the_source_blood_tested),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'is_the_source_blood_tested' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'is_the_source_blood_tested' } } %>
           </div>
           </div>
 <!-- FIELD:is_the_source_blood_tested END -->
@@ -350,7 +350,7 @@
             <%= form.select :is_the_employees_blood_tested,
                   options_for_select(["Yes", "No"], @safety_report.is_the_employees_blood_tested),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'is_the_employees_blood_tested' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'is_the_employees_blood_tested' } } %>
           </div>
           </div>
 <!-- FIELD:is_the_employees_blood_tested END -->
@@ -398,7 +398,7 @@
             <%= form.select :hospital_name,
                   options_for_select(["Community Memorial Hospital", "St. Johns Regional Medical Center", "Ventura County Medical Center", "Other"], @safety_report.hospital_name),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'hospital_name' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'hospital_name' } } %>
           </div>
 <!-- FIELD:hospital_name END -->
 <!-- FIELD:other_hospital START -->          <div class="conditional-field" data-depends-on="hospital_name" data-show-values="[&quot;Other&quot;]" style="<%= ["Other"].include?(@safety_report.hospital_name) ? '' : 'display: none;' %>">
@@ -413,7 +413,7 @@
             <%= form.select :hospital_address,
                   options_for_select(["1600 North Rose Ave. Oxnard California 93030", "147 N. Brent St. Ventura California 93003", "300 Hillmont Ave. Ventura California 93003"], @safety_report.hospital_address),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:hospital_address END -->
 <!-- FIELD:other_hospital_address START -->          <div class="conditional-field" data-depends-on="hospital_name" data-show-values="[&quot;Other&quot;]" style="<%= ["Other"].include?(@safety_report.hospital_name) ? '' : 'display: none;' %>">
@@ -428,7 +428,7 @@
             <%= form.select :hospital_phone,
                   options_for_select(["805-988-2500", "805-948-5011", "805-652-6000"], @safety_report.hospital_phone),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:hospital_phone END -->
 <!-- FIELD:other_hospital_phone START -->          <div class="conditional-field" data-depends-on="hospital_name" data-show-values="[&quot;Other&quot;]" style="<%= ["Other"].include?(@safety_report.hospital_name) ? '' : 'display: none;' %>">
@@ -453,7 +453,7 @@
             <%= form.select :hospitalized_overnight,
                   options_for_select(["Yes", "No"], @safety_report.hospitalized_overnight),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:hospitalized_overnight END -->
         </div>
@@ -588,7 +588,7 @@
             <%= form.select :unsafe_condition_corrected_immediately,
                   options_for_select(["Yes", "No"], @safety_report.unsafe_condition_corrected_immediately),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_4849_editable } %>
+                  { class: "form-control", disabled: !field_4849_editable, data: { controller: "searchable-select" } } %>
           </div>
         <% end %>
 <!-- FIELD:unsafe_condition_corrected_immediately END -->
@@ -600,7 +600,7 @@
             <%= form.select :checklistprocedurestraining_modified,
                   options_for_select(["Yes", "No"], @safety_report.checklistprocedurestraining_modified),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_4850_editable } %>
+                  { class: "form-control", disabled: !field_4850_editable, data: { controller: "searchable-select" } } %>
           </div>
         <% end %>
 <!-- FIELD:checklistprocedurestraining_modified END -->
@@ -657,7 +657,7 @@
             <%= form.select :osha_recordable,
                   options_for_select(["Yes", "No"], @safety_report.osha_recordable),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_4855_editable } %>
+                  { class: "form-control", disabled: !field_4855_editable, data: { controller: "searchable-select" } } %>
           </div>
         <% end %>
 <!-- FIELD:osha_recordable END -->
@@ -669,7 +669,7 @@
             <%= form.select :osha_reportable,
                   options_for_select(["Yes", "No"], @safety_report.osha_reportable),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_4856_editable } %>
+                  { class: "form-control", disabled: !field_4856_editable, data: { controller: "searchable-select" } } %>
           </div>
         <% end %>
 <!-- FIELD:osha_reportable END -->

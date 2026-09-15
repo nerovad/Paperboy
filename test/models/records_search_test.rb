@@ -4,59 +4,50 @@ require 'test_helper'
 
 class RecordsSearchTest < ActiveSupport::TestCase
   def pcard_table = RegistryTable.find('pcard')
+  def fleet_table = RegistryTable.find('fleet')
 
-  test 'searches only real text columns' do
+  def vehicle(owner:, plate: 'ABC123')
+    form = FleetVehicleGaragingForm.new(name: owner)
+    FleetVehicle.new(license_plate: plate, fleet_vehicle_garaging_form: form)
+  end
+
+  test 'searches stored columns' do
     columns = RecordsSearch.searchable_columns(pcard_table)
 
     assert_includes columns, 'last_name'
     assert_includes columns, 'agency'
   end
 
+  test 'searches derived columns' do
+    # masked_card_number and owner_name are methods, not columns, but they are
+    # cells on the table, so a search has to reach them.
+    assert_includes RecordsSearch.searchable_columns(pcard_table), 'masked_card_number'
+    assert_includes RecordsSearch.searchable_columns(fleet_table), 'owner_name'
+  end
+
   test 'skips encrypted columns' do
-    # card_number is encrypted, so the stored ciphertext can never match a
-    # plaintext query — including it would be a silently useless comparison.
+    # card_number decrypts on read; searching it would let a query probe it.
     assert_not_includes RecordsSearch.searchable_columns(pcard_table), 'card_number'
   end
 
-  test 'skips derived columns that have no SQL counterpart' do
-    # masked_card_number is a method, not a column; matching it would raise.
-    assert_not_includes RecordsSearch.searchable_columns(pcard_table), 'masked_card_number'
+  test 'a blank query keeps every row' do
+    rows = [vehicle(owner: 'Jane Smith'), vehicle(owner: 'Raj Patel')]
+
+    assert_equal rows, RecordsSearch.apply(fleet_table, rows, '   ')
+    assert_equal rows, RecordsSearch.apply(fleet_table, rows, nil)
   end
 
-  test 'skips non-text columns' do
-    columns = RecordsSearch.searchable_columns(pcard_table)
+  test 'matches the fleet Assigned To column' do
+    smith = vehicle(owner: 'Jane Smith')
+    patel = vehicle(owner: 'Raj Patel')
 
-    assert_not_includes columns, 'issued_date'
-    assert_not_includes columns, 'monthly_limit'
+    assert_equal [smith], RecordsSearch.apply(fleet_table, [smith, patel], 'smith')
   end
 
-  test 'a blank query leaves the scope untouched' do
-    table = pcard_table
-    base = table.scope
+  test 'matches case-insensitively across any column' do
+    smith = vehicle(owner: 'Jane Smith', plate: 'XYZ789')
+    patel = vehicle(owner: 'Raj Patel', plate: 'ABC123')
 
-    assert_equal base.to_sql, RecordsSearch.apply(table, base, '   ').to_sql
-    assert_equal base.to_sql, RecordsSearch.apply(table, base, nil).to_sql
-  end
-
-  test 'a query ORs a LIKE across every searchable column' do
-    table = pcard_table
-    sql = RecordsSearch.apply(table, table.scope, 'smith').to_sql
-
-    assert_equal RecordsSearch.searchable_columns(table).size, sql.scan('LIKE').size
-  end
-
-  test 'quotes are bound, not interpolated' do
-    table = pcard_table
-    sql = RecordsSearch.apply(table, table.scope, "o'brien").to_sql
-
-    assert_includes sql, "o''brien"
-  end
-
-  test 'search composes with a table that narrows its own scope' do
-    # The OSHA 300 Log is only the approved reports; searching it must not
-    # widen the table back out to drafts and denials.
-    table = RegistryTable.find('osha-300-log')
-
-    assert_includes RecordsSearch.apply(table, table.scope, 'ladder').to_sql, 'approved'
+    assert_equal [smith], RecordsSearch.apply(fleet_table, [smith, patel], 'xyz')
   end
 end

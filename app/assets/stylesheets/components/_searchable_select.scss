@@ -1,0 +1,77 @@
+@use "base/tokens" as *;
+
+/* Type-to-search single dropdowns (searchable_select_controller.js).
+   The input borrows the select's own classes (form-control, field-readonly,
+   invalid…), so it already looks like every other field; this file only adds
+   the caret, the option list, and hides the original select. */
+
+.searchable-select {
+  position: relative;
+  width: 100%;
+}
+
+/* Still rendered (not display:none) so the browser's required-field bubble
+   has an anchor; it sits at the input's top-left and takes no space. */
+.searchable-select__native {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.searchable-select__input {
+  padding-right: 32px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%236c757d' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 8px;
+  text-overflow: ellipsis;
+
+  &[aria-expanded="true"] {
+    border-color: $brand-navy;
+    outline: none;
+  }
+
+  &:disabled { cursor: not-allowed; }
+}
+
+.searchable-select__list {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  max-height: 260px;
+  margin: 0;
+  padding: 4px 0;
+  overflow-y: auto;
+  list-style: none;
+  background: $surface-base;
+  border: 1px solid $border-color;
+  border-radius: 5px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.searchable-select__option {
+  padding: 8px 10px;
+  color: $text-color;
+  cursor: pointer;
+
+  &[aria-selected="true"] { font-weight: 600; }
+
+  &.is-active {
+    background: $brand-navy;
+    color: $surface-base;
+  }
+}
+
+.searchable-select__empty {
+  padding: 8px 10px;
+  color: $muted;
+  font-style: italic;
+  cursor: default;
+}
