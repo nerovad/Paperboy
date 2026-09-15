@@ -887,18 +887,6 @@
                                <%= 'checked' if field.has_custom_view %>>
                       </div>
 
-                      <div class="field-input" style="flex: 0 0 100px;">
-                        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Repeatable</label>
-                        <input type="checkbox"
-                               class="repeatable-toggle"
-                               name="fields[][repeatable]"
-                               value="1"
-                               style="margin-top: 10px;"
-                               title="Let the filler add more copies of this field (and any fields assigned to it) with a + button"
-                               data-action="change->form-builder#toggleRepeatable"
-                               <%= 'checked' if field.repeatable? %>>
-                      </div>
-
                       <div style="flex: 0 0 auto;">
                         <label style="font-size: 0.9em; color: transparent; display: block; margin-bottom: 5px;">-</label>
                         <button type="button"
@@ -1274,44 +1262,8 @@
                       </div>
                     </div>
 
-                    <!-- Repeatable (section anchor) Options -->
-                    <div class="field-options repeating-section-options" style="margin-top: 10px; padding: 8px; background: #ede7f6; border-radius: 4px; border-left: 3px solid #6f42c1; <%= 'display: none;' unless field.repeatable? %>">
-                      <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
-                        <div>
-                          <label style="font-size: 0.85em; color: #495057; display: block;">Min entries</label>
-                          <input type="number" name="fields[][repeat_min]" class="form-control form-control-sm" min="0" value="<%= field.repeatable? ? field.repeat_min : 1 %>" style="width: 90px;">
-                        </div>
-                        <div>
-                          <label style="font-size: 0.85em; color: #495057; display: block;">Max (0 = &infin;)</label>
-                          <input type="number" name="fields[][repeat_max]" class="form-control form-control-sm" min="0" value="<%= field.repeatable? ? field.repeat_max : 0 %>" style="width: 90px;">
-                        </div>
-                        <div style="flex: 1; min-width: 180px;">
-                          <label style="font-size: 0.85em; color: #495057; display: block;">Add button label</label>
-                          <input type="text" name="fields[][add_label]" class="form-control form-control-sm" value="<%= field.repeatable? ? field.options&.dig('add_label') : '' %>" placeholder="+ Add">
-                        </div>
-                      </div>
-                      <small style="display: block; margin-top: 6px; color: #6c757d; font-size: 0.8em;">
-                        This field repeats with a + button. Add more fields to the same group using their &ldquo;Repeats in section&rdquo; selector.
-                      </small>
-                    </div>
-
-                    <!-- Repeat Group Assignment -->
-                    <%
-                      section_fields_with_index = ordered_fields.each_with_index.select { |f, _| f.repeatable? }
-                      current_section_index = field.repeat_group ? ordered_fields.index { |f| f.field_name == field.repeat_group } : nil
-                    %>
-                    <div class="field-options repeat-group-row" style="margin-top: 10px; <%= 'display: none;' if field.repeatable? %>">
-                      <label style="font-size: 0.85em; color: #495057; margin-right: 6px;">Repeats in section:</label>
-                      <select class="form-control form-control-sm repeat-group-select" name="fields[][repeat_group]"
-                              data-action="change->form-builder#handleRepeatGroupChange"
-                              style="width: auto; min-width: 180px; display: inline-block;">
-                        <option value="">&mdash; Not in a section &mdash;</option>
-                        <% section_fields_with_index.each do |section, section_index| %>
-                          <% next if section.id == field.id %>
-                          <option value="field_<%= section_index %>" <%= 'selected' if current_section_index == section_index %>><%= section.label %></option>
-                        <% end %>
-                      </select>
-                    </div>
+                    <!-- Repeating section: start one, or join one -->
+                    <%= render "form_templates/repeat_settings", field: field, ordered_fields: ordered_fields %>
 
                     <!-- Conditional Answer Options (available for any field type) -->
                     <%
@@ -1654,17 +1606,6 @@
                title="When checked, this field's view HTML will be preserved during form updates">
       </div>
 
-      <div class="field-input" style="flex: 0 0 100px;">
-        <label style="font-size: 0.9em; color: #495057; display: block; margin-bottom: 5px;">Repeatable</label>
-        <input type="checkbox"
-               class="repeatable-toggle"
-               name="fields[][repeatable]"
-               value="1"
-               style="margin-top: 10px;"
-               title="Let the filler add more copies of this field (and any fields assigned to it) with a + button"
-               data-action="change->form-builder#toggleRepeatable">
-      </div>
-
       <div style="flex: 0 0 auto;">
         <label style="font-size: 0.9em; color: transparent; display: block; margin-bottom: 5px;">-</label>
         <button type="button"
@@ -1904,36 +1845,8 @@
       </div>
     </div>
 
-    <!-- Repeating Section Options -->
-    <div class="field-options repeating-section-options" style="margin-top: 10px; padding: 8px; background: #ede7f6; border-radius: 4px; border-left: 3px solid #6f42c1; display: none;">
-      <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
-        <div>
-          <label style="font-size: 0.85em; color: #495057; display: block;">Min entries</label>
-          <input type="number" name="fields[][repeat_min]" class="form-control form-control-sm" min="0" value="1" style="width: 90px;">
-        </div>
-        <div>
-          <label style="font-size: 0.85em; color: #495057; display: block;">Max (0 = &infin;)</label>
-          <input type="number" name="fields[][repeat_max]" class="form-control form-control-sm" min="0" value="0" style="width: 90px;">
-        </div>
-        <div style="flex: 1; min-width: 180px;">
-          <label style="font-size: 0.85em; color: #495057; display: block;">Add button label</label>
-          <input type="text" name="fields[][add_label]" class="form-control form-control-sm" value="" placeholder="+ Add">
-        </div>
-      </div>
-      <small style="display: block; margin-top: 6px; color: #6c757d; font-size: 0.8em;">
-        Assign fields to this section using each field's &ldquo;Repeats in section&rdquo; selector. They repeat together as a group with a + button.
-      </small>
-    </div>
-
-    <!-- Repeat Group Assignment -->
-    <div class="field-options repeat-group-row" style="margin-top: 10px;">
-      <label style="font-size: 0.85em; color: #495057; margin-right: 6px;">Repeats in section:</label>
-      <select class="form-control form-control-sm repeat-group-select" name="fields[][repeat_group]"
-              data-action="change->form-builder#handleRepeatGroupChange"
-              style="width: auto; min-width: 180px; display: inline-block;">
-        <option value="">&mdash; Not in a section &mdash;</option>
-      </select>
-    </div>
+    <!-- Repeating section: start one, or join one -->
+    <%= render "form_templates/repeat_settings" %>
 
     <!-- Conditional Answer Options (available for any field type) -->
     <div class="field-options conditional-answer-options" style="margin-top: 10px; padding: 8px; background: #d4edda; border-radius: 4px; border-left: 3px solid #28a745;">
