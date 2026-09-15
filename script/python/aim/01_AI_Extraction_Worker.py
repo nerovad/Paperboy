@@ -157,10 +157,21 @@ def mark_ai_queue_error(folder_path, folder_name, reason, error=None, pdf_path=N
     except Exception:
         pass
 
-def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False):
-    filename = os.path.basename(pdf_path)
-    name_without_ext, _ = os.path.splitext(filename)
-    processing_id = generate_unique_id(bu_number, filename)
+def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
+                       processing_id=None, original_filename=None):
+    pdf_filename = os.path.basename(pdf_path)
+    name_without_ext, _ = os.path.splitext(pdf_filename)
+
+    # The batch id is minted once, by the watcher, and travels in the job
+    # ticket. Minting a second one here from the filename gave one invoice two
+    # identities -- one naming the AI queue folder, another naming every
+    # folder, ticket, payload and log row after it. Only a path with no ticket,
+    # the reprocess queue, still has to mint. Plan step 3.1.
+    processing_id = processing_id or generate_unique_id(bu_number, pdf_filename)
+
+    # The PDF on disk is named after the batch id, so the submitter's own
+    # filename arrives from the ticket rather than from the path.
+    filename = original_filename or pdf_filename
     
     sidecar = os.path.join(os.path.dirname(pdf_path), f"{name_without_ext}.json")
     bypass_split = False
@@ -632,7 +643,8 @@ def scan_directories():
                 "submitter_name": ticket.get("submitter_name", "Unknown"),
                 "is_urgent": is_urgent,
                 "timestamp": timestamp,
-                "processing_id": ticket.get("processing_id", folder_name)
+                "processing_id": ticket.get("processing_id", folder_name),
+                "original_filename": ticket.get("original_filename")
             }
             
             if is_urgent:
@@ -659,11 +671,13 @@ def scan_directories():
         submitter_name = job["submitter_name"]
         is_urgent = job["is_urgent"]
         processing_id = job["processing_id"]
-        filename = os.path.basename(pdf_path)
-        name_only, _ = os.path.splitext(filename)
+        original_filename = job["original_filename"]
+        filename = original_filename or os.path.basename(pdf_path)
         
         try:
-            process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=is_urgent)
+            process_cpu_hybrid(pdf_path, bu_number, submitter_name,
+                               is_urgent=is_urgent, processing_id=processing_id,
+                               original_filename=original_filename)
             
             # Clean up the AI Queue folder after successful processing (or successful routing)
             if os.path.exists(folder_path):
@@ -671,7 +685,9 @@ def scan_directories():
                 
         except Exception as e:
             print(f"    [!] Critical error processing {filename}: {e}")
-            crash_id = f"ERROR_{bu_number}.{datetime.now().strftime('%Y%m%d_%H%M%S')}.{name_only}"
+            # The error queue is a downstream queue like any other, so the
+            # crash keeps the batch id rather than deriving a third one.
+            crash_id = f"ERROR_{processing_id}"
             write_log(filename, "CPU Test", "ERROR", str(e), bu_number, submitter_name, crash_id, None)
             
             dest_folder = os.path.join(ERROR_QUEUE_DIR, crash_id)

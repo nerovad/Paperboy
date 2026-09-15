@@ -224,10 +224,11 @@ def scan_and_spool():
             dest_folder = os.path.join(AI_QUEUE_DIR, processing_id)
             os.makedirs(dest_folder, exist_ok=True)
             
-            # Handle images
+            # Handle images. The PDF is named after the batch id, not the
+            # source file: the id is minted here, once, and everything
+            # downstream reads it back off the name. Plan step 3.1.
             if is_image:
-                pdf_filename = f"{name_only}.pdf"
-                dest_pdf_path = os.path.join(dest_folder, pdf_filename)
+                dest_pdf_path = os.path.join(dest_folder, f"{processing_id}.pdf")
                 print(f"  [*] Converting image to PDF: {file}")
                 if convert_image_to_pdf(file_path, dest_pdf_path):
                     try:
@@ -240,7 +241,7 @@ def scan_and_spool():
                     continue
             else:
                 # Handle PDF
-                dest_pdf_path = os.path.join(dest_folder, file)
+                dest_pdf_path = os.path.join(dest_folder, f"{processing_id}.pdf")
                 try:
                     source_delete_error = move_or_copy_pdf_to_queue(file_path, dest_pdf_path)
                 except Exception as e:
@@ -257,6 +258,10 @@ def scan_and_spool():
             ticket_path = os.path.join(dest_folder, "job_ticket.json")
             ticket_data = {
                 "processing_id": processing_id,
+                # What the submitter called the file. The PDF no longer carries
+                # it, and it is the only handle a reviewer has on the document
+                # they sent, so the ticket keeps it.
+                "original_filename": file,
                 "bu_number": bu_number,
                 "submitter_name": submitter_name,
                 "is_urgent": is_urgent,

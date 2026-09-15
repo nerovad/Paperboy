@@ -1298,18 +1298,50 @@ bundle exec rubocop app/controllers/aim app/controllers/concerns/aim \
 
 ## Phase 3 — One Identity Per Invoice
 
-- [ ] **3.1 Mint the id once.** The watcher creates `{BU}.{ts}.{name}` and
+- [x] **3.1 Mint the id once.** The watcher creates `{BU}.{ts}.{name}` and
   names the folder that, but drops the PDF under its original filename; the
   AI worker then mints a different id from that filename. Rename the PDF to
   the batch id on spool, and have the worker adopt `job_ticket.json`'s
   `processing_id`. See audit H3.
   *Test:* the id in the AI queue equals the id in every downstream queue.
 
+  Done 2026-09-15. The watcher writes the PDF as `{processing_id}.pdf` (images
+  too, after conversion) and `process_cpu_hybrid` takes the id as an argument,
+  minting only when it is not given one. Three things that came out of it:
+
+  - **The submitter's filename had nowhere left to live.** Renaming the PDF
+    loses it, and `write_log` records it as the `FileName` column -- the only
+    handle a reviewer has on the document they sent. The job ticket now carries
+    `original_filename` and the worker passes it through, so `FileName` still
+    means what it meant. A ticket written before this step has no such key; the
+    worker falls back to the PDF's own name, so a batch already sitting in the
+    queue at deploy time still processes.
+  - **The crash id was a third identity.** The handler built
+    `ERROR_{BU}.{now}.{name}`, so a crash landed under a name that matched
+    neither the batch nor anything downstream. It is now `ERROR_{batch_id}`,
+    which `generate_unique_id` already knew how to strip the prefix off.
+  - **Rails needed nothing.** Every AIM screen finds the PDF as "the first
+    `.pdf` in the folder", never by name, so the rename is invisible to it. The
+    only Ruby change is an `original_filename` label in
+    `Aim::InvoicesHelper::FIELD_LABELS` so the new ticket key renders readably
+    on the AI queue screen.
+
 - [ ] **3.2 Preserve BU and submitter through Retry.** The Rails retry
   action copies only the PDF, so the worker falls back to `BU = "Unknown"`.
   Write the metadata sidecar the reprocess path already knows how to read.
   See audit H2.
   *Test:* a retried invoice keeps its Budget Unit.
+
+  Found in 3.1, and this step's to fix: **the batch splitter loses the identity
+  the same way.** `03_batch_splitter.py` writes `{batch_id}_SPLIT_{invoice}`
+  folders into the reprocess queue with a sidecar carrying `bu` and
+  `submitter`, but no job ticket -- so the worker mints a fresh id, and mints
+  it *before* reading the sidecar, so the new id carries `BU = "Unknown"` even
+  though the BU was sitting in a file beside it. Reading the sidecar before the
+  id is settled is most of the fix; whether a split invoice should keep its
+  parent's id or get a child id is the open question. 3.1 deliberately left the
+  ticketless path minting, and `test_a_batch_with_no_ticket_still_mints_one`
+  pins that, so changing it here is a deliberate edit to a guarded behaviour.
 
 ---
 
@@ -1571,6 +1603,24 @@ layout feeds another system. The target is the same flow through Laserfiche.
   latent: the old share `.bat` files never called the preparer, and anyone
   running from a mapped drive letter would never see it. **Never add a
   relative path or a bare `cd` to a `.bat` here.**
+- **Nothing creates `AIM_SPOOL_STATE_DIR`.** Noted 2026-09-15 in 3.1. The
+  watcher reads it at import and writes spool state into it, but it is not in
+  `MANAGED_DIRECTORIES`, so `bootstrap()` does not create it -- the directory
+  exists on the share already, which is why this has never been seen. A fresh
+  environment would fail at the first spool. One line in `bootstrap` fixes it;
+  out of scope for 3.1, and worth folding into whichever step next touches the
+  watcher's startup.
+- **A P2M test pair collides on the process id, and reddens at random.** Seen
+  2026-09-15 during 3.1's gate.
+  `OmsUploadLedgerTest#oms_number` and `P2mOmsUploadsControllerTest#oms_numbers`
+  both build `5178<Process.pid % 10_000>`, and
+  `OmsUploadLedger#reconcile_imported!` scans `OmsUpload.all` -- so
+  `reconcile_imported!` counted 2 where the test expected 1 and the suite came
+  back 1 failure. Re-running the *same seed* both with and without AIM's diff
+  was green both times, which is what proved it is not ours. Not AIM's to fix
+  (`test/services/p2m/`, `test/controllers/`). **Before treating a red
+  `OmsUploadLedgerTest` as a regression, re-run it -- a different PID makes it
+  pass.**
 - **Laserfiche import mechanism.** Not designed yet, and blocked on IT
   resolving a Laserfiche need. The likely shape is a monitored folder on
   GSA-SCAN02 that LF auto-imports from, but that could change. Noted
@@ -1619,3 +1669,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-14 | 2.1 | (this commit) | Claims compare their owner; `update`/`retry`/`move_to_action_needed` refuse a foreign claim; `Errno::ENOENT` handled; 642 runs, 56 fail, 190 error -- same red set as the baseline |
 | 2026-09-15 | — | `dca411a5` | **Phase 2 merged to Paperboy master.** 2.1 was its only step |
 | 2026-09-15 | — | `88d5fc8b` | Merged `origin/master` (68 commits) into master. Their minitest repair clears the pre-existing red: **675 runs, 0 fail, 0 error**, plus 61 pytest. New Phase 3 baseline. rubocop is red on 81 non-AIM offenses |
+| 2026-09-15 | 3.1 | (this commit) | One id per invoice: the watcher names the PDF after the batch id and the worker adopts the ticket's; ticket keeps `original_filename`; 69 pytest green, 722 runs, 0 fail, 0 error |

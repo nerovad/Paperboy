@@ -13,7 +13,8 @@ module Aim
       'InvoiceDate' => 'Invoice Date',
       'bu_number' => 'Business Unit',
       'submitter_name' => 'Submitter',
-      'processing_id' => 'Processing ID'
+      'processing_id' => 'Processing ID',
+      'original_filename' => 'Original Filename'
     }.freeze
 
     # Vendor Review owns the vendor name itself: the AI-extracted value is shown
