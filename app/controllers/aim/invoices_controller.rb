@@ -108,6 +108,10 @@ module Aim
       new_folder_path = File.join(reprocess_dir, new_folder_name)
       FileUtils.mkdir_p(new_folder_path)
       FileUtils.cp(File.join(@folder_path, pdf_file), File.join(new_folder_path, "#{new_folder_name}.pdf"))
+      # Only the PDF used to make the trip, so the worker had nothing to read
+      # the Budget Unit off and filed the retry under "Unknown". Step 3.2.
+      write_reprocess_sidecar(File.join(new_folder_path, "#{new_folder_name}.json"),
+                              read_metadata(metadata_path_for(@folder_path)))
       move_to_deleted(@folder_path)
 
       redirect_to aim_invoices_path(queue: @queue), notice: 'Document sent back to Reprocess Queue for AI retry.'

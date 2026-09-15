@@ -218,3 +218,87 @@ def test_a_crash_files_under_the_batch_id(ai_worker, queue_tree, monkeypatch):
         "the crash log should record the submitter's filename, not the batch id"
     )
     assert logged[0][1][5] == f"ERROR_{batch_id}"
+
+
+def write_reprocess_batch(queue_tree, name, sidecar=None):
+    """A reprocess-queue folder: a PDF, and the sidecar the retry path writes.
+
+    The reprocess queue has no job ticket -- Rails and the batch splitter both
+    put work here, and neither is the watcher -- so this is the one path that
+    still mints its own id. Plan step 3.2.
+    """
+    folder = queue_tree.add_invoice("AIM_REPROCESS_QUEUE_DIR", name, pdf=False)
+    with open(os.path.join(folder, f"{name}.pdf"), "wb") as handle:
+        handle.write(b"%PDF-1.4 test\n")
+    if sidecar is not None:
+        with open(os.path.join(folder, f"{name}.json"), "w", encoding="utf-8") as handle:
+            json.dump(sidecar, handle)
+    return folder
+
+
+def test_a_retry_sidecar_settles_the_bu_before_the_id_is_minted(ai_worker, queue_tree,
+                                                                monkeypatch):
+    """The minted id embeds the BU, so reading the sidecar afterwards is too late.
+
+    Rails hands the reprocess queue `BU = "Unknown"` because it has no way to
+    say otherwise; the sidecar beside the PDF is where the real one is. Reading
+    it after the mint left the id stamped `Unknown` with the answer sitting in
+    the next file along. Plan step 3.2.
+    """
+    folder = write_reprocess_batch(queue_tree, "INV-3_RETRY_1789",
+                                   {"bu": "4601", "submitter": "Dana Reyes"})
+
+    minted = []
+    monkeypatch.setattr(ai_worker, "generate_unique_id",
+                        lambda bu, name: minted.append(bu) or "minted-id")
+    stop_at_the_pdf(ai_worker, monkeypatch)
+
+    with pytest.raises(Reached):
+        ai_worker.process_cpu_hybrid(
+            os.path.join(folder, "INV-3_RETRY_1789.pdf"), "Unknown", "Internal_Retrying"
+        )
+
+    assert minted == ["4601"], (
+        f"the id should be minted for BU 4601, not {minted}"
+    )
+
+
+def test_a_split_batch_keeps_its_parents_bu(ai_worker, queue_tree, monkeypatch):
+    """`03_batch_splitter.py` writes the same sidecar, and lost the BU the same way."""
+    folder = write_reprocess_batch(
+        queue_tree, "4721.20260915_101500.Scan 001_SPLIT_INV-7",
+        {"bu": "4721", "submitter": "Sam Rivera", "bypass_split": True}
+    )
+
+    minted = []
+    monkeypatch.setattr(ai_worker, "generate_unique_id",
+                        lambda bu, name: minted.append(bu) or "minted-id")
+    stop_at_the_pdf(ai_worker, monkeypatch)
+
+    with pytest.raises(Reached):
+        ai_worker.process_cpu_hybrid(
+            os.path.join(folder, "4721.20260915_101500.Scan 001_SPLIT_INV-7.pdf"),
+            "Unknown", "Internal_Retrying"
+        )
+
+    assert minted == ["4721"]
+
+
+def test_an_unreadable_sidecar_does_not_stop_the_batch(ai_worker, queue_tree,
+                                                       monkeypatch):
+    """A corrupt sidecar costs the BU, not the invoice."""
+    folder = write_reprocess_batch(queue_tree, "INV-4_RETRY_1789")
+    with open(os.path.join(folder, "INV-4_RETRY_1789.json"), "w", encoding="utf-8") as handle:
+        handle.write("{not json")
+
+    minted = []
+    monkeypatch.setattr(ai_worker, "generate_unique_id",
+                        lambda bu, name: minted.append(bu) or "minted-id")
+    stop_at_the_pdf(ai_worker, monkeypatch)
+
+    with pytest.raises(Reached):
+        ai_worker.process_cpu_hybrid(
+            os.path.join(folder, "INV-4_RETRY_1789.pdf"), "Unknown", "Internal_Retrying"
+        )
+
+    assert minted == ["Unknown"]

@@ -1326,7 +1326,7 @@ bundle exec rubocop app/controllers/aim app/controllers/concerns/aim \
     `Aim::InvoicesHelper::FIELD_LABELS` so the new ticket key renders readably
     on the AI queue screen.
 
-- [ ] **3.2 Preserve BU and submitter through Retry.** The Rails retry
+- [x] **3.2 Preserve BU and submitter through Retry.** The Rails retry
   action copies only the PDF, so the worker falls back to `BU = "Unknown"`.
   Write the metadata sidecar the reprocess path already knows how to read.
   See audit H2.
@@ -1342,6 +1342,36 @@ bundle exec rubocop app/controllers/aim app/controllers/concerns/aim \
   parent's id or get a child id is the open question. 3.1 deliberately left the
   ticketless path minting, and `test_a_batch_with_no_ticket_still_mints_one`
   pins that, so changing it here is a deliberate edit to a guarded behaviour.
+
+  Done 2026-09-15, and it was two halves rather than one:
+
+  - **Rails had to write the sidecar at all.** `#retry` copied out the PDF and
+    nothing else. It now writes `{folder}.json` beside the copy, which is the
+    only name the worker's reprocess path looks for.
+  - **The worker had to read it before minting.** Moving the sidecar read above
+    `generate_unique_id` is what makes the BU real, because the minted id
+    embeds it -- the BU had been reaching `write_log` correctly all along while
+    the id said `Unknown`. That half fixes the batch splitter for free: it
+    already wrote the same sidecar, and lost the BU purely to the ordering.
+
+  Three things worth carrying forward:
+
+  - **The Budget Unit has four spellings**, because each queue records it the
+    way its own metadata does -- `BU` in the SQL payload, `bu_number` in a job
+    ticket, `Budget Unit Number` in the Laserfiche XML, and `BudgetUnit`. The
+    worker reads exactly one. `Aim::ReprocessSidecar` is where that table
+    lives; add a spelling there rather than at a call site. `reject_invoice`
+    has its own copy of the same idea (`metadata_param_value`) and was left
+    alone -- it reads posted params, not a metadata file.
+  - **An absent BU is written as absent, never as an empty string.** The worker
+    falls back to `Unknown` on a missing key, and an empty string would beat
+    that fallback and produce an id stamped with nothing at all.
+  - **Vendor Review's "Learn & Retry AI" sidecar is now the same code.** It had
+    its own two-line version that knew only `BU` and `Submitter`, so an invoice
+    reaching it with XML metadata lost the BU exactly as Retry did. Both call
+    `write_reprocess_sidecar` now. The alias learner moves that folder whole
+    into the reprocess queue without renaming, so the sidecar arrives under the
+    name the worker expects and that path needed no change.
 
 ---
 
@@ -1603,6 +1633,15 @@ layout feeds another system. The target is the same flow through Laserfiche.
   latent: the old share `.bat` files never called the preparer, and anyone
   running from a mapped drive letter would never see it. **Never add a
   relative path or a bare `cd` to a `.bat` here.**
+- **A retried invoice does not keep its batch id.** Noted 2026-09-15 in 3.2.
+  Retry names the copy `{id}_RETRY_{epoch}` and the worker mints a fresh id
+  from that, so one document can hold three ids across its life. 3.2 fixed the
+  Budget Unit inside those ids but deliberately did not make the id survive a
+  retry, which is a design question rather than a bug: a retried document is
+  arguably a new processing attempt of the same invoice. **Phase 7 needs an
+  answer**, because the four-field business key is what catches duplicates and
+  the batch id is what a reviewer follows through the queues. The same question
+  applies to a split batch, which today gets `{parent}_SPLIT_{invoice}`.
 - **Nothing creates `AIM_SPOOL_STATE_DIR`.** Noted 2026-09-15 in 3.1. The
   watcher reads it at import and writes spool state into it, but it is not in
   `MANAGED_DIRECTORIES`, so `bootstrap()` does not create it -- the directory
@@ -1610,17 +1649,25 @@ layout feeds another system. The target is the same flow through Laserfiche.
   environment would fail at the first spool. One line in `bootstrap` fixes it;
   out of scope for 3.1, and worth folding into whichever step next touches the
   watcher's startup.
-- **A P2M test pair collides on the process id, and reddens at random.** Seen
-  2026-09-15 during 3.1's gate.
+- **The P2M OMS upload tests leave rows behind, and now fail on their own
+  debris.** Seen 2026-09-15 during 3.1's gate and diagnosed during 3.2's.
   `OmsUploadLedgerTest#oms_number` and `P2mOmsUploadsControllerTest#oms_numbers`
-  both build `5178<Process.pid % 10_000>`, and
-  `OmsUploadLedger#reconcile_imported!` scans `OmsUpload.all` -- so
-  `reconcile_imported!` counted 2 where the test expected 1 and the suite came
-  back 1 failure. Re-running the *same seed* both with and without AIM's diff
-  was green both times, which is what proved it is not ours. Not AIM's to fix
-  (`test/services/p2m/`, `test/controllers/`). **Before treating a red
-  `OmsUploadLedgerTest` as a regression, re-run it -- a different PID makes it
-  pass.**
+  both build their OMS number as `5178<Process.pid % 10_000>`, and both
+  `OmsUploadLedger#reconcile_imported!` and the controller's index scan
+  `OmsUpload.all` rather than only their own rows. That alone made them collide
+  at random. The real problem underneath is that **the rows outlive the test**:
+  on 2026-09-15 `Paperboy_Test` held 82 committed `P2m::OmsUpload` rows from
+  earlier runs that morning, so
+  `P2mOmsUploadsControllerTest#test_shows_active_uploads...` now fails *every*
+  run -- it reconciled `["51780767", "51784884"]` where it expected one id, the
+  second being a leftover with a colliding mailer date.
+
+  Not AIM's to fix: `test/controllers/p2m_oms_uploads_controller_test.rb` and
+  `test/services/p2m/`. **Proved not ours by running the same test with AIM's
+  entire diff stashed -- it fails identically.** Do that before treating either
+  test as an AIM regression. Clearing the debris is
+  `P2m::OmsUpload.delete_all` in the test environment, but the rows are P2M's
+  and the leak is theirs to close.
 - **Laserfiche import mechanism.** Not designed yet, and blocked on IT
   resolving a Laserfiche need. The likely shape is a monitored folder on
   GSA-SCAN02 that LF auto-imports from, but that could change. Noted
@@ -1670,3 +1717,5 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-15 | — | `dca411a5` | **Phase 2 merged to Paperboy master.** 2.1 was its only step |
 | 2026-09-15 | — | `88d5fc8b` | Merged `origin/master` (68 commits) into master. Their minitest repair clears the pre-existing red: **675 runs, 0 fail, 0 error**, plus 61 pytest. New Phase 3 baseline. rubocop is red on 81 non-AIM offenses |
 | 2026-09-15 | 3.1 | (this commit) | One id per invoice: the watcher names the PDF after the batch id and the worker adopts the ticket's; ticket keeps `original_filename`; 69 pytest green, 722 runs, 0 fail, 0 error |
+| 2026-09-15 | — | `b6f9ceed` | **3.1 merged to Paperboy master** by Joshua, ahead of the rest of the phase. Master then moved on three commits (rubocop autocorrect, sheriff-safety gitignore, HSA cards), merged into the phase branch before 3.2 |
+| 2026-09-15 | 3.2 | (this commit) | Retry writes the reprocess sidecar and the worker reads it before minting the id, so a retried or split invoice keeps its Budget Unit; `Aim::ReprocessSidecar` added; **Phase 3 complete**; 72 pytest green, 733 runs, 0 error, 1 pre-existing P2M failure that is red with AIM's diff stashed too |

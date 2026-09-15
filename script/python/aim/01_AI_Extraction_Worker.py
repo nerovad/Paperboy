@@ -162,28 +162,35 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
     pdf_filename = os.path.basename(pdf_path)
     name_without_ext, _ = os.path.splitext(pdf_filename)
 
-    # The batch id is minted once, by the watcher, and travels in the job
-    # ticket. Minting a second one here from the filename gave one invoice two
-    # identities -- one naming the AI queue folder, another naming every
-    # folder, ticket, payload and log row after it. Only a path with no ticket,
-    # the reprocess queue, still has to mint. Plan step 3.1.
-    processing_id = processing_id or generate_unique_id(bu_number, pdf_filename)
-
     # The PDF on disk is named after the batch id, so the submitter's own
     # filename arrives from the ticket rather than from the path.
     filename = original_filename or pdf_filename
-    
+
+    # The sidecar is read first because the id minted below embeds the Budget
+    # Unit. Both callers that put work in the reprocess queue -- the Rails
+    # retry action and the batch splitter -- arrive with BU "Unknown" and the
+    # real one in this file, so reading it afterwards stamped Unknown on the
+    # id with the answer sitting in the next file along. Plan step 3.2.
     sidecar = os.path.join(os.path.dirname(pdf_path), f"{name_without_ext}.json")
     bypass_split = False
     if os.path.exists(sidecar):
         try:
             with open(sidecar, "r", encoding="utf-8") as sf:
                 meta = json.load(sf)
-            bu_number = meta.get("bu", bu_number)
-            submitter_name = meta.get("submitter", submitter_name)
+            # `or`, not a get() default: a sidecar written with a null BU must
+            # fall back the same way a sidecar with no BU at all does.
+            bu_number = meta.get("bu") or bu_number
+            submitter_name = meta.get("submitter") or submitter_name
             bypass_split = meta.get("bypass_split", False)
         except Exception:
             pass
+
+    # The batch id is minted once, by the watcher, and travels in the job
+    # ticket. Minting a second one here from the filename gave one invoice two
+    # identities -- one naming the AI queue folder, another naming every
+    # folder, ticket, payload and log row after it. Only a path with no ticket,
+    # the reprocess queue, still has to mint. Plan step 3.1.
+    processing_id = processing_id or generate_unique_id(bu_number, pdf_filename)
 
     print(f"\n========================================================")
     print(f"[TEST SCRIPT] Processing: {filename}")
