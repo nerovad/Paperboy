@@ -1,0 +1,66 @@
+<%# Repeating-section settings for one form builder field, in one panel: the
+    Repeatable checkbox, the "Repeats in section" selector beside it, and — for
+    a field that starts a section — its min, max and add-button label.
+
+    A field either starts a section (Repeatable) or joins one (Repeats in
+    section), never both, so form_builder_controller#toggleRepeatable shows
+    whichever applies, and #updateSectionDropdowns fills the selector and hides
+    it while the form has no sections to join.
+
+    locals: field (nil for the blank new-field template), ordered_fields (the
+            form's fields in order; nil with field) %>
+<% field = local_assigns[:field] %>
+<% anchor = field&.repeatable? %>
+<div class="field-options repeat-settings">
+  <div class="repeat-settings__row">
+    <label class="repeat-settings__toggle"
+           title="Let the filler add more copies of this field (and any fields assigned to it) with a + button">
+      <input type="checkbox"
+             class="repeatable-toggle"
+             name="fields[][repeatable]"
+             value="1"
+             data-action="change->form-builder#toggleRepeatable"
+             <%= 'checked' if anchor %>>
+      Repeatable section
+    </label>
+
+    <div class="repeat-group-row" style="<%= 'display: none;' if anchor %>">
+      <label class="repeat-settings__label">Repeats in section:</label>
+      <select class="form-control form-control-sm repeat-group-select" name="fields[][repeat_group]"
+              data-action="change->form-builder#handleRepeatGroupChange">
+        <option value="">&mdash; Not in a section &mdash;</option>
+        <% if field %>
+          <% current_section_index = field.repeat_group ? ordered_fields.index { |f| f.field_name == field.repeat_group } : nil %>
+          <% ordered_fields.each_with_index do |section, section_index| %>
+            <% next unless section.repeatable? && section.id != field.id %>
+            <option value="field_<%= section_index %>" <%= 'selected' if current_section_index == section_index %>><%= section.label %></option>
+          <% end %>
+        <% end %>
+      </select>
+    </div>
+  </div>
+
+  <div class="repeating-section-options" style="<%= 'display: none;' unless anchor %>">
+    <div class="repeat-settings__fields">
+      <div>
+        <label class="repeat-settings__label">Min entries</label>
+        <input type="number" name="fields[][repeat_min]" class="form-control form-control-sm" min="0"
+               value="<%= anchor ? field.repeat_min : 1 %>">
+      </div>
+      <div>
+        <label class="repeat-settings__label">Max (0 = &infin;)</label>
+        <input type="number" name="fields[][repeat_max]" class="form-control form-control-sm" min="0"
+               value="<%= anchor ? field.repeat_max : 0 %>">
+      </div>
+      <div class="repeat-settings__add-label">
+        <label class="repeat-settings__label">Add button label</label>
+        <input type="text" name="fields[][add_label]" class="form-control form-control-sm"
+               value="<%= anchor ? field.options&.dig('add_label') : '' %>" placeholder="+ Add">
+      </div>
+    </div>
+    <small class="repeat-settings__hint">
+      This field starts the section. Other fields join it with their &ldquo;Repeats in section&rdquo;
+      selector, and they repeat together as one row with a + button.
+    </small>
+  </div>
+</div>
