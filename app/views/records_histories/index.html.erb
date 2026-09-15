@@ -1,0 +1,76 @@
+<%# Change log for one Records table: every edit, row added and row deleted,
+    newest first, filterable by person, field, kind of change and date. %>
+<% filter_params = request.query_parameters.slice(*RecordsHistoriesController::FILTERS.map(&:to_s)).compact_blank %>
+<div class="records-screen records-changes">
+  <%= render "shared/work_tabs", active: :records %>
+
+  <div class="records-bar">
+    <h1 class="records-title"><%= @table.label %> — Changes</h1>
+    <div class="records-bar__toolbar">
+      <div class="records-toolbar">
+        <form action="<%= records_table_changes_path(@table.slug) %>" method="get" class="filter-form"
+              data-controller="auto-submit" data-turbo="false">
+          <div class="filter-controls">
+            <div class="filter-group">
+              <label for="changed_by">Changed by</label>
+              <%= select_tag :changed_by, options_for_select([['Anyone', '']] + @people, params[:changed_by]),
+                    class: 'filter-select', data: { action: 'change->auto-submit#submit' } %>
+            </div>
+
+            <div class="filter-group">
+              <label for="column_name">Field</label>
+              <%= select_tag :column_name,
+                    options_for_select([['Any field', '']] +
+                                       @column_names.map { |name| [@table.columns.find { |c| c.name.to_s == name }&.label || name.humanize, name] },
+                                       params[:column_name]),
+                    class: 'filter-select', data: { action: 'change->auto-submit#submit' } %>
+            </div>
+
+            <div class="filter-group">
+              <label for="change">Change</label>
+              <%= select_tag :change,
+                    options_for_select([['Any', '']] + RecordEdit::ACTION_LABELS.map { |key, label| [label, key] }, params[:change]),
+                    class: 'filter-select', data: { action: 'change->auto-submit#submit' } %>
+            </div>
+
+            <div class="filter-group">
+              <label for="from">From</label>
+              <%= date_field_tag :from, params[:from], class: 'filter-select',
+                    data: { action: 'change->auto-submit#submit' } %>
+            </div>
+
+            <div class="filter-group">
+              <label for="to">To</label>
+              <%= date_field_tag :to, params[:to], class: 'filter-select',
+                    data: { action: 'change->auto-submit#submit' } %>
+            </div>
+
+            <% if filter_params.any? %>
+              <%= link_to 'Clear', records_table_changes_path(@table.slug), class: 'btn clear-filters', data: { turbo: false } %>
+            <% end %>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="records-bar__actions">
+      <%= link_to 'Download CSV', records_table_changes_path(@table.slug, filter_params.merge(format: :csv)),
+                  class: 'btn pdf', data: { turbo: false } %>
+      <%= link_to 'Back to table', records_table_path(@table.slug), class: 'btn secondary' %>
+    </div>
+  </div>
+
+  <div class="records-changes__log">
+    <%= render 'submissions/edit_timeline', entries: @entries, item_id: "records-#{@table.slug}-changes",
+               row_labels: @row_labels,
+               empty_message: filter_params.any? ? 'No changes match these filters.' : 'No changes have been recorded for this table yet.' %>
+  </div>
+
+  <% if @pagy.pages > 1 %>
+    <div class="pagination-wrapper">
+      <%== @pagy.series_nav %>
+      <p class="pagination-info">
+        Showing changes <%= @pagy.from %>–<%= @pagy.to %> of <%= @pagy.count %>
+      </p>
+    </div>
+  <% end %>
+</div>

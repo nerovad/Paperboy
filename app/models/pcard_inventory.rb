@@ -2,6 +2,11 @@
 
 class PcardInventory < ApplicationRecord
   include Registry
+  include AuditableEdits
+
+  # Every edit, and the row being added or deleted, lands in its Records
+  # history -- from the grid, its own edit screen or ingestion alike.
+  audit_record_lifecycle!
 
   belongs_to :pcard_request_form, optional: true
 
@@ -20,7 +25,8 @@ class PcardInventory < ApplicationRecord
 
   # Records table definition — surfaced as the "records:pcard" page.
   registry_table slug: 'pcard', label: 'P-Cards', permission: 'pcard_admin',
-                 dropdown_key: 'pcard_inventory', route: :pcard_inventory_index_path
+                 dropdown_key: 'pcard_inventory', route: :pcard_inventory_index_path,
+                 row_label: :full_name
 
   registry_column :last_name, label: 'Last Name', kind: :text, filter: :search
   registry_column :first_name, label: 'First Name', kind: :text

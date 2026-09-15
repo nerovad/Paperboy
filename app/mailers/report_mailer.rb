@@ -63,6 +63,45 @@ class ReportMailer < ApplicationMailer
     )
   end
 
+  # A scheduled Records grid export. `csv` is the file's contents; a view that
+  # matches no rows still sends, headers only, so the owner can tell "nothing
+  # matched this week" from "the schedule stopped".
+  def record_export_ready(employee, schedule, csv, row_count)
+    @employee = employee
+    @schedule = schedule
+    @row_count = row_count
+    @filename = RecordsCsv.filename(schedule.table)
+
+    attachments[@filename] = { mime_type: 'text/csv', content: csv }
+
+    mail(
+      to: employee.email,
+      subject: "#{schedule.table_label} export (#{row_count} #{'row'.pluralize(row_count)})"
+    )
+  end
+
+  # The schedule's owner can no longer open its table, so it was paused.
+  def record_export_paused(employee, schedule)
+    @employee = employee
+    @schedule = schedule
+
+    mail(
+      to: employee.email,
+      subject: "Scheduled export paused - #{schedule.table_label}"
+    )
+  end
+
+  def record_export_failed(employee, schedule, error_message)
+    @employee = employee
+    @schedule = schedule
+    @error_message = error_message
+
+    mail(
+      to: employee.email,
+      subject: "Scheduled export failed - #{schedule.table_label}"
+    )
+  end
+
   def report_generation_failed(employee, form_type, error_message)
     @employee = employee
     @form_type = form_type.humanize

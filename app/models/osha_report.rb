@@ -60,7 +60,8 @@ class OshaReport < ApplicationRecord
   registry_table slug: 'osha-300-log', label: 'OSHA 300 Log',
                  dropdown_key: 'osha_log',
                  includes: :safety_report,
-                 scope: -> { where(status: :approved) }
+                 scope: -> { where(status: :approved) },
+                 row_label: :log_case_number
 
   registry_column :log_case_number, label: 'Case #', kind: :text
   registry_column :name, label: 'Employee Name', kind: :text

@@ -6,12 +6,16 @@
             editable (optional, defaults to the viewer's grant),
             title + toolbar (optional; when given, the title, toolbar and Edit
             button share one row above the grid — rendered here so the Edit
-            button stays inside the records-edit controller) %>
+            button stays inside the records-edit controller),
+            exportable (optional; shows an Export button that opens the
+            records-export modal, which the caller renders around the grid).
+            Viewers with the edit grant also get the table's change log and a
+            History button per row (see RecordsHistoriesController). %>
 <% edit_path = local_assigns.fetch(:edit_path, nil) %>
 <% editable = local_assigns.fetch(:editable) { can_edit_record_table?(table) } %>
 <% title = local_assigns.fetch(:title, nil) %>
 <div class="records-page"
-     data-controller="column-customizer records-edit"
+     data-controller="column-customizer records-edit history-modal"
      data-column-customizer-page-value="<%= page %>"
      data-column-customizer-save-url-value="<%= settings_table_layout_path %>"
      data-column-customizer-catalog-value="{}"
@@ -23,6 +27,13 @@
       <h1 class="records-title"><%= title %></h1>
       <div class="records-bar__toolbar"><%= local_assigns[:toolbar] %></div>
       <div class="records-bar__actions">
+        <% if editable %>
+          <%= link_to 'Changes', records_table_changes_path(table.slug), class: 'btn status-history' %>
+        <% end %>
+        <% if local_assigns[:exportable] %>
+          <button type="button" class="btn secondary"
+                  data-action="records-export#open">Export</button>
+        <% end %>
         <% if editable && rows.any? %>
           <button type="button" class="btn"
                   data-records-edit-target="modeButton"
@@ -69,6 +80,13 @@
               <% end %>
               <td class="records-actions-col">
                 <% if edit_path %><%= link_to 'Edit', edit_path.call(row), class: 'btn edit compact' %><% end %>
+                <% if editable %>
+                  <button type="button" class="btn status-history compact"
+                          data-action="history-modal#open"
+                          data-history-url="<%= records_table_row_history_path(table.slug, row.id) %>"
+                          data-history-label="History"
+                          data-record-title="<%= table.row_label(row) %>">History</button>
+                <% end %>
               </td>
             </tr>
           <% end %>
@@ -111,4 +129,5 @@
   </div>
 
   <%= render 'shared/column_customizer', page: page, columns: columns, employee_column: true %>
+  <%= render 'shared/history_modal' if editable %>
 </div>

@@ -370,6 +370,16 @@ Rails.application.routes.draw do
   get '/records', to: 'records#index', as: :records
   get '/records/:slug', to: 'records_table#show', as: :records_table
   patch '/records/:slug', to: 'records_table#bulk_update'
+  # Scheduled CSV exports of a grid view, managed from the grid's Export modal.
+  scope '/records/:slug', as: :records_table do
+    # Change history: the whole table's log, and one row's fragment for the
+    # grid's History modal. Both need the table's edit grant.
+    get 'changes', to: 'records_histories#index', as: :changes
+    get 'rows/:id/history', to: 'records_histories#row', as: :row_history
+    resources :export_schedules, only: %i[create destroy], controller: 'record_export_schedules' do
+      patch :toggle, on: :member
+    end
+  end
 
   resources :pcard_inventory, only: %i[index new create edit update] do
     collection do

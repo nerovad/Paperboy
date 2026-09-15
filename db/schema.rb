@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_14_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_15_130000) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -999,6 +999,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_14_170000) do
   end
 
   create_table "record_edits", force: :cascade do |t|
+    t.string "action", limit: 10, default: "update", null: false
     t.string "changed_by_id"
     t.string "changed_by_name"
     t.string "column_name", null: false
@@ -1009,6 +1010,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_14_170000) do
     t.string "record_type", null: false
     t.string "table_slug", null: false
     t.index ["created_at"], name: "index_record_edits_on_created_at"
+    t.index ["record_type", "created_at"], name: "index_record_edits_on_record_type_and_created_at"
     t.index ["record_type", "record_id"], name: "index_record_edits_on_record_type_and_record_id"
   end
 
@@ -1102,6 +1104,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_14_170000) do
     t.text "filters", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "scheduled_record_exports", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "day_of_month"
+    t.integer "day_of_week"
+    t.string "employee_id", null: false
+    t.boolean "enabled", default: true, null: false
+    t.string "frequency", null: false
+    t.datetime "last_run_at"
+    t.text "layout"
+    t.datetime "next_run_at"
+    t.string "table_slug", limit: 100, null: false
+    t.string "time_of_day", null: false
+    t.datetime "updated_at", null: false
+    t.text "view_params"
+    t.index ["employee_id", "table_slug"], name: "index_scheduled_record_exports_on_employee_id_and_table_slug"
+    t.index ["enabled", "next_run_at"], name: "index_scheduled_record_exports_on_enabled_and_next_run_at"
   end
 
   create_table "scheduled_reports", force: :cascade do |t|

@@ -73,6 +73,13 @@ module Forms
     def count = model.count
     def scope = model.all
 
+    # A submission is named by its reference (LOA-1042) in the table's history.
+    def row_label(record)
+      Forms::Reference.reference_for(record).presence || "##{record.id}"
+    rescue StandardError
+      "##{record.id}"
+    end
+
     # Derived columns: an ID, each visible form field (in form order), an optional
     # status badge, and the created timestamp.
     def columns

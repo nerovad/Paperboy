@@ -1,15 +1,19 @@
-<%# Field-level edit history for one submission. Locals: entries
+<%# Field-level edit history for one submission or Records row. Locals: entries
     (Forms::EditTrail::Entry, oldest first), item_id. Rendered both inline on a
-    submission's page and into the inbox history modal, so it must stand on its
-    own with no surrounding chrome. %>
+    submission's page and into the history modal, so it must stand on its own
+    with no surrounding chrome.
+    Optional: empty_message; row_labels ({ record_id => label }), which names
+    the row on each entry for a log that spans a whole Records table. %>
 <%# No heading of its own: the modal title names it when it is fetched into the
     history modal, and the section heading does when it is rendered inline. %>
+<% row_labels = local_assigns[:row_labels] %>
 <div class="status-timeline edit-timeline" id="edit-timeline-<%= item_id %>">
   <% if entries.empty? %>
-    <p class="timeline-empty">No edits have been made since this was submitted.</p>
+    <p class="timeline-empty"><%= local_assigns.fetch(:empty_message, 'No edits have been made since this was submitted.') %></p>
   <% else %>
     <div class="timeline-items">
       <% entries.each_with_index do |entry, index| %>
+        <% action = entry.action.presence || 'update' %>
         <div class="timeline-item <%= 'latest' if index == entries.length - 1 %>">
           <div class="timeline-marker">
             <div class="timeline-dot"></div>
@@ -19,6 +23,12 @@
           </div>
           <div class="timeline-content">
             <div class="timeline-meta">
+              <% if action != 'update' %>
+                <span class="badge <%= action == 'create' ? 'is-approved' : 'is-denied' %>"><%= RecordEdit::ACTION_LABELS[action] %></span>
+              <% end %>
+              <% if row_labels %>
+                <span class="edit-row-label"><%= row_labels[entry.record_id] %></span>
+              <% end %>
               <span class="timeline-date"><%= l(entry.at, format: :long) %></span>
               <% if entry.actor_name.present? %>
                 <span class="timeline-by">by <%= entry.actor_name %></span>
@@ -35,9 +45,16 @@
                 <li class="edit-change">
                   <span class="edit-field"><%= change.label %></span>
                   <span class="edit-values">
-                    <span class="edit-old" title="<%= change.old_value %>"><%= change.old_value %></span>
-                    <span class="arrow">&rarr;</span>
-                    <span class="edit-new" title="<%= change.new_value %>"><%= change.new_value %></span>
+                    <% case action %>
+                    <% when 'create' %>
+                      <span class="edit-new" title="<%= change.new_value %>"><%= change.new_value %></span>
+                    <% when 'destroy' %>
+                      <span class="edit-old" title="<%= change.old_value %>"><%= change.old_value %></span>
+                    <% else %>
+                      <span class="edit-old" title="<%= change.old_value %>"><%= change.old_value %></span>
+                      <span class="arrow">&rarr;</span>
+                      <span class="edit-new" title="<%= change.new_value %>"><%= change.new_value %></span>
+                    <% end %>
                   </span>
                 </li>
               <% end %>
