@@ -1215,8 +1215,9 @@ since overtaken by events -- recorded because the first one will recur:
 **The suite is now genuinely green, so the standard changes.** The Open
 Questions note saying "green cannot mean literally green" no longer holds
 for causes 1 and 2. The baseline for Phase 3 is **675 runs, 0 failures, 0
-errors (serial), plus 61 pytest**, and a step that reddens anything at all
-is a step that is not finished.
+errors (serial), plus 61 pytest** -- 673 after the next twelve commits from
+master landed, so treat **zero red**, not the run count, as the standard. A
+step that reddens anything at all is a step that is not finished.
 
 One caveat: **`bundle exec rubocop` is red on master**, 81 offenses, none
 of them AIM's -- 75 in
