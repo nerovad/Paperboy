@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_15_130000) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -999,6 +999,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
   end
 
   create_table "record_edits", force: :cascade do |t|
+    t.string "action", limit: 10, default: "update", null: false
     t.string "changed_by_id"
     t.string "changed_by_name"
     t.string "column_name", null: false
@@ -1009,6 +1010,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
     t.string "record_type", null: false
     t.string "table_slug", null: false
     t.index ["created_at"], name: "index_record_edits_on_created_at"
+    t.index ["record_type", "created_at"], name: "index_record_edits_on_record_type_and_created_at"
     t.index ["record_type", "record_id"], name: "index_record_edits_on_record_type_and_record_id"
   end
 

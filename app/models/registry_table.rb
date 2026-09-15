@@ -62,6 +62,13 @@ class RegistryTable
     model.registry_eager_load ? rel.includes(model.registry_eager_load) : rel
   end
 
+  # What a row is called in the table's history: its declared row_label, or its
+  # id. `record` may be an unsaved stand-in rebuilt from a deleted row's values.
+  def row_label(record)
+    label = model.registry_row_label && record.public_send(model.registry_row_label)
+    label.presence || "##{record.id}"
+  end
+
   def ingest(form)
     model.ingest_from(form)
   end

@@ -64,6 +64,14 @@ class AuditableEditsTest < ActiveSupport::TestCase
     end
   end
 
+  test 'deleting a form takes its trail with it' do
+    @record.update!(job_title: 'Banner refresh')
+
+    assert_difference -> { RecordEdit.count }, -1 do
+      @record.destroy!
+    end
+  end
+
   test 'a form with no registry slug is stamped with its table name' do
     @record.update!(job_title: 'Banner refresh')
 

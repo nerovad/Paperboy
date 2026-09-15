@@ -81,7 +81,8 @@ class RecordsTableController < ApplicationController
   # values are read before assignment: once save! lands, the originals are gone
   # and the audit row is the only place they survive.
   #
-  # A form model audits itself -- AuditableEdits writes the same rows from an
+  # A model that includes AuditableEdits (every form, and the P-Card and Fleet
+  # tables) audits itself -- it writes the same rows from an
   # after_update, attributed to the same Current.user and stamped with the same
   # registry_slug this passes as table.slug -- so capturing again here would
   # enter every grid edit twice in the record's Edit History.

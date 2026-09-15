@@ -12,25 +12,36 @@ module Forms
   # regrouped here. They are stamped a row at a time (RecordEdit.capture sets
   # its own created_at), so a save's rows can land microseconds apart; rows by
   # the same actor inside GROUPING_WINDOW are treated as one save.
+  #
+  # An entry is one save of one row, so a change log spanning a whole Records
+  # table (built with .for_rows) never merges two rows edited in the same
+  # moment, and a row being added or deleted (action `create` / `destroy`)
+  # never merges with an edit made just after or before it.
   class EditTrail
     GROUPING_WINDOW = 5
 
     Change = Struct.new(:column, :label, :old_value, :new_value, keyword_init: true)
-    Entry = Struct.new(:at, :actor_name, :actor_id, :changes, keyword_init: true)
+    Entry = Struct.new(:at, :actor_name, :actor_id, :action, :record_id, :changes, keyword_init: true)
 
     # Oldest save first, so an edit trail rendered next to a status timeline
     # reads in the same direction as it.
     def self.for(record)
-      new(record).entries
+      for_rows(record.class, record.edit_timeline)
     end
 
-    def initialize(record)
-      @record = record
-      @values = Forms::AuditValue.new(model: record.class)
+    # The same, over any RecordEdit rows of one model.
+    def self.for_rows(model, rows)
+      new(model: model, rows: rows).entries
+    end
+
+    def initialize(model:, rows:)
+      @model = model
+      @rows = rows
+      @values = Forms::AuditValue.new(model: model)
     end
 
     def entries
-      group(@record.edit_timeline.to_a.sort_by(&:created_at))
+      group(@rows.to_a.sort_by(&:created_at))
     end
 
     private
@@ -41,7 +52,8 @@ module Forms
           entries.last.changes << change_for(row)
         else
           entries << Entry.new(at: row.created_at, actor_name: row.changed_by_name,
-                               actor_id: row.changed_by_id, changes: [change_for(row)])
+                               actor_id: row.changed_by_id, action: row.action, record_id: row.record_id,
+                               changes: [change_for(row)])
         end
       end
     end
@@ -49,6 +61,7 @@ module Forms
     def same_save?(entry, row)
       return false unless entry
       return false unless entry.actor_id.to_s == row.changed_by_id.to_s
+      return false unless entry.record_id == row.record_id && entry.action == row.action
 
       (row.created_at - entry.at).abs < GROUPING_WINDOW
     end
@@ -63,14 +76,18 @@ module Forms
     end
 
     # The form's own label for the column where it has one, so the trail names a
-    # field the way the form that collects it does; its humanized column name
-    # otherwise.
+    # field the way the form that collects it does; then a Records table's
+    # column header; its humanized column name otherwise.
     def label_for(column)
-      form_field_labels[column].presence || column.humanize
+      form_field_labels[column].presence || registry_column_labels[column].presence || column.humanize
     end
 
     def form_field_labels
-      @form_field_labels ||= Forms::FieldLabels.for(@record.class)
+      @form_field_labels ||= Forms::FieldLabels.for(@model)
+    end
+
+    def registry_column_labels
+      @registry_column_labels ||= Array(@model.try(:registry_columns)).to_h { |col| [col.name.to_s, col.label] }
     end
   end
 end

@@ -278,6 +278,8 @@
   width: 1%;
   text-align: right;
   white-space: nowrap;
+
+  .btn + .btn { margin-left: 4px; }
 }
 
 /* ---- Full-bleed Records screen (replaces the boxed .form-wrapper) ---- */
@@ -402,6 +404,7 @@
 .records-bar__actions {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
 }
 
 .records-title {
@@ -500,4 +503,19 @@
 .records-export__inline-form {
   display: inline;
   margin: 0;
+}
+
+/* ---- Change log (records_histories/index) ---- */
+
+.records-changes__log {
+  margin-top: 16px;
+  padding: 16px 20px;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  background: $form-bg;
+}
+
+.edit-row-label {
+  font-weight: 600;
+  color: $text-color;
 }
