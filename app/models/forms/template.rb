@@ -196,6 +196,14 @@ module Forms
       form_fields.any?(&:repeatable?)
     end
 
+    # The class a form named +name+ is generated as: "Safety Reporting" =>
+    # "SafetyReportingForm". Every new template takes its class from this, so
+    # anything that needs to know a class before the row exists (Duplicate's
+    # rename preview) asks here rather than restating the rule.
+    def self.class_name_for(name)
+      "#{name.to_s.gsub(/[^a-zA-Z0-9\s]/, '').split.map(&:capitalize).join}Form"
+    end
+
     def page_header(page_num)
       return 'Employee Info' if page_num == 1
       return 'Agency Info' if page_num == 2
@@ -209,7 +217,7 @@ module Forms
     def generate_class_name
       return if name.blank?
 
-      self.class_name = "#{name.gsub(/[^a-zA-Z0-9\s]/, '').split.map(&:capitalize).join}Form"
+      self.class_name = self.class.class_name_for(name)
     end
 
     # Upcase/strip any admin-entered prefix so "loa" and "LOA " store as "LOA".

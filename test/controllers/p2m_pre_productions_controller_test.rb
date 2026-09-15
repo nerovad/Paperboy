@@ -66,8 +66,8 @@ class P2mPreProductionsControllerTest < ActionController::TestCase # rubocop:dis
     assert_select 'button[data-staging-method="DELETE"]', text: 'Destroy', count: 1 do |buttons|
       assert_match 'Copy OMS 51780767 to Destroyed', buttons.first['data-confirm-message']
     end
-    assert_select 'button[data-printer-selection-catalog-value]', count: 1 do |buttons|
-      assert_equal catalog.to_json, buttons.first['data-printer-selection-catalog-value']
+    assert_select 'button[data-printer-selection-catalog-value]', count: 2 do |buttons|
+      assert(buttons.all? { |button| button['data-printer-selection-catalog-value'] == catalog.to_json })
     end
     assert_select 'a[data-action="pdf-preview#open"]', text: 'tray-labels.pdf', count: 1
     assert_select '[data-pdf-preview-target="backdrop"]', count: 1
@@ -88,7 +88,7 @@ class P2mPreProductionsControllerTest < ActionController::TestCase # rubocop:dis
       directory: '2026/51780767', oms_number: '51780767', printer: 'Printer One',
       queue: 'Queue A', filenames: ['one.pdf', 'two.pdf']
     }
-    printer_queue.expect :copy, 2, [copy_parameters]
+    printer_queue.expect :copy, 2, [], **copy_parameters
 
     P2m::PrinterCatalog.stub(:new, printer_catalog) do
       P2m::PrinterQueue.stub(:new, printer_queue) do
@@ -149,7 +149,7 @@ class P2mPreProductionsControllerTest < ActionController::TestCase # rubocop:dis
       directory: 'job', oms_number: '51780767', printer: 'Printer One',
       queue: 'Queue A', filenames: ['one.pdf']
     }
-    printer_queue.expect :remove, 1, [parameters]
+    printer_queue.expect :remove, 1, [], **parameters
 
     P2m::PrinterCatalog.stub(:new, printer_catalog) do
       P2m::PrinterQueue.stub(:new, printer_queue) do
@@ -166,7 +166,7 @@ class P2mPreProductionsControllerTest < ActionController::TestCase # rubocop:dis
     sign_in
     destroyer = Minitest::Mock.new
     parameters = { directory: '2026/51780767', oms_number: '51780767' }
-    destroyer.expect :call, { archived: 3, removed: 5 }, [parameters]
+    destroyer.expect :call, { archived: 3, removed: 5 }, [], **parameters
 
     P2m::OmsDestroyer.stub(:new, destroyer) do
       delete :destroy_oms, params: parameters

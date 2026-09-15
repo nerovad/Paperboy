@@ -4,7 +4,7 @@ require 'open3'
 
 class FormTemplatesController < ApplicationController
   before_action -> { require_admin_tab('manage_forms') }
-  before_action :set_form_template, only: %i[show edit update destroy archive unarchive]
+  before_action :set_form_template, only: %i[show edit update destroy archive unarchive duplicate_preview duplicate]
 
   def index
     @form_templates = Forms::Template.includes(:form_fields).order(:name)
@@ -339,10 +339,38 @@ class FormTemplatesController < ApplicationController
     end
   end
 
+  # What Duplicate would copy and rename for the name typed so far. The
+  # dialog asks on open and again as the name changes.
+  def duplicate_preview
+    render json: form_duplicator.preview
+  end
+
+  # Copies the form under a new name, running db:migrate for the copy's table
+  # the way #create does. Answers in JSON so the dialog can show either the
+  # errors or the way to the new form.
+  def duplicate
+    duplicator = form_duplicator
+    return render json: { success: false, errors: duplicator.errors }, status: :unprocessable_entity unless duplicator.valid?
+
+    result = duplicator.call
+    flash[:notice] = ["#{@form_template.name} duplicated as #{result.template.name}.", *result.notes].join(' ')
+    render json: { success: true, redirect: form_template_path(result.template) }
+  rescue StandardError => e
+    Rails.logger.error("Duplicate of #{@form_template.class_name} failed: #{e.class}: #{e.message}")
+    render json: { success: false, errors: ["Nothing was copied: #{e.message}"] }, status: :unprocessable_entity
+  end
+
   private
 
   def set_form_template
     @form_template = Forms::Template.find(params[:id])
+  end
+
+  def form_duplicator
+    Forms::Duplicator.new(source: @form_template,
+                          name: params[:name],
+                          components: Array(params[:components]),
+                          actor_id: session.dig(:user, 'employee_id'))
   end
 
   def run_rails_command(*arguments)

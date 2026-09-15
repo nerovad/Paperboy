@@ -25,7 +25,6 @@ module DataRunnerDependencyHelpers
 
   def wait_for_log!(client, name, dependency, run_id)
     deadline = monotonic_time + timeout_seconds
-    puts "[WAIT] #{name}: waiting for #{dependency} injection"
 
     loop do
       row = latest_dependency_log(client, dependency, run_id)

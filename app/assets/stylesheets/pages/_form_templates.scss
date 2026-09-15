@@ -1132,3 +1132,135 @@
     vertical-align: middle;
   }
 }
+
+/* Duplicate dialog contents (form_templates/_duplicate_modal). The shell is
+   the shared .pb-modal; this only lays out what sits inside its body. */
+.duplicate-form {
+  .help-text {
+    display: block;
+    margin-top: 4px;
+    color: $text-muted;
+    font-size: 0.85rem;
+  }
+
+  &__renames {
+    margin: 12px 0 4px;
+    overflow-x: auto;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    th,
+    td {
+      padding: 6px 8px;
+      border-bottom: 1px solid $border-faint;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    thead th {
+      color: $muted;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    tbody th {
+      color: $label-color;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    code {
+      word-break: break-all;
+    }
+  }
+
+  &__errors {
+    margin: 12px 0;
+    padding: 10px 12px;
+    border: 1px solid $error-border;
+    border-radius: $radius-6;
+    background: $error-bg;
+    color: $error-text;
+    font-size: 0.9rem;
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+  }
+
+  &__heading {
+    margin: 18px 0 8px;
+  }
+
+  &__components {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__component {
+    &.is-unavailable {
+      opacity: 0.55;
+
+      .permission-checkbox {
+        cursor: not-allowed;
+      }
+    }
+
+    .permission-checkbox {
+      align-items: flex-start;
+
+      input[type="checkbox"] {
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      span {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      small {
+        color: $text-muted;
+        font-size: 0.82rem;
+      }
+    }
+  }
+
+  &__always {
+    margin-left: 6px;
+    color: $muted;
+    font-size: 0.78rem;
+    font-style: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  &__items {
+    margin: 4px 0 0 38px;
+    padding: 0;
+    list-style: none;
+    color: $text-muted;
+    font-size: 0.8rem;
+
+    li {
+      padding: 1px 0;
+      word-break: break-all;
+    }
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__footnote {
+    margin-top: 16px;
+  }
+}

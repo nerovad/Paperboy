@@ -1,12 +1,22 @@
 # AI Instructions
 
 - Generated Ruby conforms to `.rubocop.yml`.
-- CI Pipeline requirements:
+- CI Pipeline requirements does not report errors:
   * bundle exec rubocop
   * bundle exec brakeman
   * bundle exec bundle-audit check
   * bundle exec rake test
   * Use 10.135.204.161 when GSASQL16 cannot be resolved
+- Tests use SQL Server, not SQLite. `config/database.yml` accepts
+  `PAPERBOY_TEST_DATABASE` when the default `Paperboy_Test` database is
+  unavailable; for example:
+  `PAPERBOY_TEST_DATABASE=Paperboy_Test0 bundle exec rake test`
+- The configured test database is a scratch base. Rails test setup creates
+  schema-loaded, per-worker databases with a run identifier and worker suffix
+  for parallel tests, then drops them after the run. The test login therefore
+  needs permission to create and drop databases and load the schema.
+- Never point tests at `Paperboy_Dev`, staging, or production data. If
+  `GSASQL16` cannot be resolved, use `10.135.204.161` for `GSABSS_HOST`.
 - Propose git commit message.
   * Prose limited to 72 characters
   * Blank Line

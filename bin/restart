@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+app_root=$(cd "$script_dir/.." && pwd)
+
+cd "$app_root"
+source "$script_dir/stopservers"
+stop_servers
+{
+  bundle check || bundle install
+  bundle exec bin/rails assets:clobber
+  bundle exec bin/rails assets:precompile
+} 2>&1 | tee "$app_root/log/assets.log"
+
+nohup bundle exec bin/rails server -p 3001 </dev/null >"$app_root/log/server.log" 2>&1 &
+nohup bundle exec sidekiq -C config/sidekiq.yml </dev/null >"$app_root/log/sidekick.log" 2>&1 &

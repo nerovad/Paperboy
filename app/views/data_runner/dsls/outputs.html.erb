@@ -1,5 +1,6 @@
 <%= render "data_runner/shared/dsl_header" %>
 <%= render "data_runner/shared/hot_menu" %>
+<% backup_modified_at = @backup_files.filter_map { |file| file.mtime if file.file? rescue nil }.max %>
 <section class="card table-wrap"><table><thead><tr><th>Stage</th><th>File</th><th>Size</th><th>Modified</th></tr></thead><tbody>
   <% @files.each do |file| %>
     <% relative_path = file.relative_path_from(WorkflowPaths::OUTPUT_ROOT) %>
@@ -15,7 +16,7 @@
       <td><%= WorkflowPaths::DOWNLOAD_BACKUP_DIR_NAME %></td>
       <td><%= link_to WorkflowPaths::DOWNLOAD_BACKUP_DIR_NAME, backup_outputs_data_runner_dsl_path(@dsl.slug) %></td>
       <td><%= pluralize(@backup_files.size, "file") %></td>
-      <td><%= l(@backup_files.map(&:mtime).max, format: :short) %></td>
+      <td><%= l(backup_modified_at, format: :short) if backup_modified_at %></td>
     </tr>
   <% end %>
   <% if @files.empty? && @backup_files.empty? %><tr><td colspan="4">No matching workflow outputs.</td></tr><% end %>

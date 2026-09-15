@@ -4,7 +4,7 @@ one:
   employee_id: MyString
   name: MyString
   email: MyString
-  phone: MyString
+  phone: '5555550100'
   agency: MyString
   division: MyString
   department: MyString
@@ -18,7 +18,7 @@ two:
   employee_id: MyString
   name: MyString
   email: MyString
-  phone: MyString
+  phone: '5555550101'
   agency: MyString
   division: MyString
   department: MyString

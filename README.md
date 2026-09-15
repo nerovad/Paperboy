@@ -124,6 +124,31 @@ race the dev server and consume notices the server should have sent. Pass
 `--cron` only when you are deliberately testing a scheduled job. Servers
 never set the variable and keep their schedule.
 
+### Running tests
+
+The test suite uses SQL Server. It is not a SQLite test suite: the models,
+schema, SQL Server adapter behavior, and shared GSABSS connection are all part
+of the tests. The test connection uses `GSABSS_HOST`, `GSABSS_PORT`, and the
+same credentials as the other SQL Server connections.
+
+`config/database.yml` defaults the test database to `Paperboy_Test`. To use a
+temporary replacement database, set `PAPERBOY_TEST_DATABASE` for the command:
+
+```bash
+PAPERBOY_TEST_DATABASE=Paperboy_Test0 bundle exec rake test > output.log 2>&1
+```
+
+The named database must already exist, and the SQL login must be able to create
+and drop databases and load the schema. Tests run in parallel. Rails creates a
+separate schema-loaded database for each worker by appending a random run
+identifier and worker number to the configured base name, then drops those
+worker databases after the run. Do not use a shared development database as
+the test base.
+
+If `GSASQL16` does not resolve from the workstation, set `GSABSS_HOST` to
+`10.135.204.161` in `.env` or for the command. Keep the test database and
+worker databases isolated from development and staging data.
+
 ### Logging in
 
 Entra's callback is `/auth/callback`, which is not registered for

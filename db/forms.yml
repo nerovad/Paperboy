@@ -3052,6 +3052,917 @@ forms:
     restricted_to_type: group
     restricted_to_employee_id: 135272
     restricted_to_group: HCA_Safety_Officers
+- class_name: SheriffSafetyReportingForm
+  name: Sheriff Safety Reporting
+  page_count: 11
+  page_headers:
+  - Report
+  - Supervisor and Witness Info
+  - Incident Dates and Status
+  - Incident Description
+  - Medical Info
+  - Investigation Details
+  - Severity & Root Cause
+  - Corrective Actions
+  - OSHA Info
+  submission_type: approval
+  description: Safety Forms AKA RM75 and RM75i for the Sheriff
+  form_number: SHER-101
+  form_type: Report
+  agency_id: SHF
+  division_id: ''
+  department_id: ''
+  unit_id: ''
+  fields:
+  - field_name: report_type
+    field_type: dropdown
+    label: Report Type
+    page_number: 3
+    position: 0
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Report Type
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: medical_record_number_for_the_employee
+    field_type: number
+    label: Medical record number for the Employee
+    page_number: 3
+    position: 1
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: bloodborne_pathogen_exposure
+  - field_name: impacted_employee
+    field_type: choices_dropdown
+    label: Impacted Employee
+    page_number: 3
+    position: 2
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: last_name
+        join_columns:
+        - first_name
+        join_separator: ", "
+        category_filters:
+        - column: agency
+          value: GSAV
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: impacted_employees_email
+    field_type: email
+    label: Impacted Employee's Email
+    page_number: 3
+    position: 3
+    required: false
+    options:
+      answer_lookup:
+        database: gsabss
+        table: employees
+        match_column: full_name
+        return_column: email
+        return_join_columns: []
+        return_join_separator: " "
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_field: impacted_employee
+  - field_name: impacted_employees_phone
+    field_type: phone
+    label: Impacted Employee's Phone
+    page_number: 3
+    position: 4
+    required: false
+    options:
+      answer_lookup:
+        database: gsabss
+        table: employees
+        match_column: full_name
+        return_column: work_phone
+        return_join_columns: []
+        return_join_separator: " "
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_field: impacted_employee
+  - field_name: impacted_employees_supervisor
+    field_type: text
+    label: Impacted Employee's Supervisor
+    page_number: 4
+    position: 5
+    required: false
+    options:
+      answer_lookup:
+        database: gsabss
+        table: employees
+        match_column: full_name
+        return_column: supervisor_first_name
+        return_join_columns:
+        - supervisor_last_name
+        return_join_separator: " "
+    read_only: none
+    has_custom_view: true
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_field: impacted_employee
+  - field_name: witness_name
+    field_type: text
+    label: Witness Name
+    page_number: 4
+    position: 6
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: witness_phone
+    field_type: phone
+    label: Witness Phone
+    page_number: 4
+    position: 7
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_of_injury_or_illness
+    field_type: date
+    label: Date of Injury or Illness
+    page_number: 5
+    position: 8
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_employer_notified
+    field_type: date
+    label: Date Employer Notified
+    page_number: 5
+    position: 9
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_dwc1_given
+    field_type: date
+    label: Date DWC-1 Given
+    page_number: 5
+    position: 10
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: who_gave_the_dwc1
+    field_type: dropdown
+    label: Who Gave the DWC-1
+    page_number: 5
+    position: 11
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: first_name
+        join_columns:
+        - last_name
+        join_separator: " "
+        category_filters:
+        - column: agency
+          value: HCAV
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_last_worked
+    field_type: date
+    label: Date Last Worked
+    page_number: 5
+    position: 12
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_returned_to_work
+    field_type: date
+    label: Date Returned to Work
+    page_number: 5
+    position: 13
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: missed_full_work_day_
+    field_type: dropdown
+    label: 'Missed Full Work Day? '
+    page_number: 5
+    position: 14
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: still_off_work
+    field_type: dropdown
+    label: Still off Work?
+    page_number: 5
+    position: 15
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: missed_full_work_day_
+  - field_name: specific_injury_and_body_part_affected
+    field_type: text_box
+    label: Specific Injury and Body Part Affected
+    page_number: 6
+    position: 16
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: location_of_incident
+    field_type: dropdown
+    label: Location of Incident
+    page_number: 6
+    position: 17
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: buildings
+        column: occupant_description
+        join_columns:
+        - address
+        join_separator: " "
+        category_filters:
+        - column: site_description
+          value: Clinic
+        - column: site_description
+          value: Office
+        - column: site_description
+          value: Hospital
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: location_description
+    field_type: text_box
+    label: Location Description
+    page_number: 6
+    position: 18
+    required: false
+    options:
+      rows: 3
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: on_employer_premises
+    field_type: dropdown
+    label: On Employer Premises?
+    page_number: 6
+    position: 19
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: department_where_event_occurred
+    field_type: dropdown
+    label: Department Where Event Occurred
+    page_number: 6
+    position: 20
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: departments
+        column: long_name
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: agency_id
+          value: HCA
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: activity_at_time_of_incident
+    field_type: text_box
+    label: Activity at Time of Incident
+    page_number: 6
+    position: 21
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: how_the_injury_occurred
+    field_type: text_box
+    label: How the Injury Occurred
+    page_number: 6
+    position: 22
+    required: false
+    options:
+      rows: 5
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: bloodborne_pathogen_exposure
+    field_type: dropdown
+    label: Bloodborne Pathogen Exposure?
+    page_number: 7
+    position: 23
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: is_the_source_blood_tested
+    field_type: dropdown
+    label: Is the source blood tested?
+    page_number: 7
+    position: 24
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: bloodborne_pathogen_exposure
+  - field_name: is_the_employees_blood_tested
+    field_type: dropdown
+    label: Is the employees blood tested?
+    page_number: 7
+    position: 25
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: bloodborne_pathogen_exposure
+  - field_name: source_patient_medical_number
+    field_type: text
+    label: Source Patient Medical Number
+    page_number: 7
+    position: 26
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: is_the_source_blood_tested
+  - field_name: employee_medical_number
+    field_type: text
+    label: Employee Medical Number
+    page_number: 7
+    position: 27
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: is_the_employees_blood_tested
+  - field_name: physician_name
+    field_type: text
+    label: Physician Name
+    page_number: 7
+    position: 28
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: physician_address
+    field_type: text
+    label: Physician Address
+    page_number: 7
+    position: 29
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: physician_phone
+    field_type: phone
+    label: Physician Phone
+    page_number: 7
+    position: 30
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: hospital_name
+    field_type: dropdown
+    label: Hospital Name
+    page_number: 7
+    position: 31
+    required: false
+    options:
+      values:
+      - Community Memorial Hospital
+      - St. Johns Regional Medical Center
+      - Ventura County Medical Center
+      - Other
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: other_hospital
+    field_type: text
+    label: Other Hospital
+    page_number: 7
+    position: 32
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: hospital_name
+  - field_name: hospital_address
+    field_type: dropdown
+    label: Hospital Address
+    page_number: 7
+    position: 33
+    required: false
+    options:
+      values:
+      - 1600 North Rose Ave. Oxnard California 93030
+      - 147 N. Brent St. Ventura California 93003
+      - 300 Hillmont Ave. Ventura California 93003
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_mappings:
+      Community Memorial Hospital: 147 N. Brent St. Ventura California 93003
+      St. Johns Regional Medical Center: 1600 North Rose Ave. Oxnard California 93030
+      Ventura County Medical Center: 300 Hillmont Ave. Ventura California 93003
+    conditional_answer_field: hospital_name
+  - field_name: other_hospital_address
+    field_type: text
+    label: Other Hospital Address
+    page_number: 7
+    position: 34
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: hospital_name
+  - field_name: hospital_phone
+    field_type: dropdown
+    label: Hospital Phone
+    page_number: 7
+    position: 35
+    required: false
+    options:
+      values:
+      - 805-988-2500
+      - 805-948-5011
+      - 805-652-6000
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_mappings:
+      Community Memorial Hospital: 805-948-5011
+      St. Johns Regional Medical Center: 805-988-2500
+      Ventura County Medical Center: 805-652-6000
+    conditional_answer_field: hospital_name
+  - field_name: other_hospital_phone
+    field_type: phone
+    label: Other Hospital Phone
+    page_number: 7
+    position: 36
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: hospital_name
+  - field_name: hospitalized_overnight
+    field_type: dropdown
+    label: Hospitalized Overnight?
+    page_number: 7
+    position: 37
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: investigator_name
+    field_type: text
+    label: Investigator Name
+    page_number: 8
+    position: 38
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: investigator_title
+    field_type: text
+    label: Investigator Title
+    page_number: 8
+    position: 39
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: investigator_phone
+    field_type: phone
+    label: Investigator Phone
+    page_number: 8
+    position: 40
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: nature_of_incident
+    field_type: choices_dropdown
+    label: Nature of Incident
+    page_number: 8
+    position: 41
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Nature of Incident
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: cause_of_incident
+    field_type: choices_dropdown
+    label: Cause of Incident
+    page_number: 8
+    position: 42
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Cause of Incident
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: root_cause
+    field_type: choices_dropdown
+    label: Root Cause
+    page_number: 9
+    position: 43
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Root Cause
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: assessment_of_future_severity_potential
+    field_type: choices_dropdown
+    label: Assessment of Future Severity Potential
+    page_number: 9
+    position: 44
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Assessment of Future Severity Potential
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: assessment_of_probability_of_recurrence
+    field_type: choices_dropdown
+    label: Assessment of Probability of Recurrence
+    page_number: 9
+    position: 45
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Assessment of Probability of Recurrence
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: unsafe_condition_corrected_immediately
+    field_type: dropdown
+    label: Unsafe condition corrected immediately?
+    page_number: 10
+    position: 46
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: checklistprocedurestraining_modified
+    field_type: dropdown
+    label: Checklist/procedures/training modified?
+    page_number: 10
+    position: 47
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: person_responsible_for_corrective_action
+    field_type: text
+    label: Person Responsible for Corrective Action
+    page_number: 10
+    position: 48
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: title
+    field_type: text
+    label: Title
+    page_number: 10
+    position: 49
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: targeted_completion_date
+    field_type: date
+    label: Targeted Completion Date
+    page_number: 10
+    position: 50
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: actual_completion_date
+    field_type: date
+    label: Actual Completion Date
+    page_number: 10
+    position: 51
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: osha_recordable
+    field_type: dropdown
+    label: OSHA Recordable
+    page_number: 11
+    position: 52
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: osha_reportable
+    field_type: dropdown
+    label: OSHA Reportable
+    page_number: 11
+    position: 53
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
+  - field_name: reportable_injury_codes
+    field_type: choices_dropdown
+    label: Reportable Injury Codes
+    page_number: 11
+    position: 54
+    required: false
+    options:
+      custom_lookup:
+        database: paperboy
+        table: injury_classification_views
+        column: injury_classification_description
+        join_columns: []
+        join_separator: " "
+        category_filters:
+        - column: injury_category_description
+          value: Reportable Injury Codes (OSHA Related)
+        order_column:
+        order_direction: asc
+      values: []
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: true
+    restricted_to_type: group
+    restricted_to_employee_id: 135272
+    restricted_to_group: HCA_Safety_Officers
 - class_name: SocialMediaForm
   name: Social Media
   page_count: 3

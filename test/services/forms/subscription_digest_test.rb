@@ -10,7 +10,7 @@ module Forms
       @employee_id = '8100'
       @record = probation_transfer_requests(:one)
       @since = 1.day.ago
-      @through = Time.current
+      @through = 1.day.from_now
     end
 
     def subscribe(**overrides)

@@ -1,0 +1,26 @@
+<div class="form-header">
+  <%= render "shared/back_button" %>
+  <h1>Sheriff Safety Reporting</h1>
+</div>
+
+<div class="form-wrapper">
+  <div class="form-inner">
+
+  <%= render partial: "shared/readonly_record",
+             locals: { record: @sheriff_safety_reporting_form,
+                       exclude: %w[id created_at updated_at approver_id deny_reason] } %>
+
+  <% if @sheriff_safety_reporting_form.osha_report.present? %>
+    <div class="form-group" style="margin-top: 16px;">
+      <strong>Generated OSHA Report:</strong>
+      <%= link_to "View OSHA Report ##{@sheriff_safety_reporting_form.osha_report.id}", osha_report_path(@sheriff_safety_reporting_form.osha_report) %>
+    </div>
+  <% end %>
+
+  <div class="form-actions" style="margin-top: 16px;">
+    <%= link_to "Edit", edit_sheriff_safety_reporting_form_path(@sheriff_safety_reporting_form), class: "form-btn" %>
+    <%= link_to "Download PDF", pdf_sheriff_safety_reporting_form_path(@sheriff_safety_reporting_form), target: "_blank", class: "form-btn" %>
+    <%= render "shared/change_status", record: @sheriff_safety_reporting_form %>
+  </div>
+  </div>
+</div>

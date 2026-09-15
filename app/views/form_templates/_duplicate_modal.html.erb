@@ -1,0 +1,77 @@
+<%# Duplicate dialog for the form templates index. One copy on the page; each
+    card's Duplicate button opens it for its own template through the
+    form-duplicate controller on the page wrapper, which fills in the rename
+    preview and what each box would copy from duplicate_preview. %>
+<div class="pb-modal-backdrop" data-form-duplicate-target="backdrop" hidden>
+  <div class="pb-modal pb-modal--xl" role="dialog" aria-modal="true" aria-labelledby="duplicate-form-title">
+    <div class="pb-modal__header">
+      <h3 id="duplicate-form-title">Duplicate <span data-form-duplicate-target="sourceName"></span></h3>
+      <button type="button" class="pb-modal__close" data-action="form-duplicate#close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="pb-modal__body duplicate-form">
+      <div class="form-group">
+        <label for="duplicate-form-name">New form name</label>
+        <input type="text" id="duplicate-form-name" class="form-control" autocomplete="off"
+               placeholder="e.g. Sheriff Safety Reporting"
+               data-form-duplicate-target="name"
+               data-action="input->form-duplicate#nameChanged keydown.enter->form-duplicate#submit:prevent">
+        <small class="help-text">
+          The copy needs its own name. Everything copied is renamed to match it: the form, class,
+          table, controller, views, routes and file names.
+        </small>
+      </div>
+
+      <div class="duplicate-form__renames" data-form-duplicate-target="renames" hidden>
+        <table>
+          <thead>
+            <tr><th scope="col"></th><th scope="col">Original</th><th scope="col">Copy</th></tr>
+          </thead>
+          <tbody data-form-duplicate-target="renameRows"></tbody>
+        </table>
+      </div>
+
+      <div class="duplicate-form__errors" role="alert" data-form-duplicate-target="errors" hidden></div>
+
+      <h4 class="duplicate-form__heading">What to copy</h4>
+      <div class="duplicate-form__components">
+        <label class="permission-checkbox duplicate-form__select-all">
+          <input type="checkbox" data-form-duplicate-target="selectAll" data-action="change->form-duplicate#toggleAll">
+          <span><strong>Select all</strong></span>
+        </label>
+
+        <% Forms::Duplicator::Components::ALL.each do |component| %>
+          <div class="duplicate-form__component" data-form-duplicate-target="component"
+               data-key="<%= component.key %>">
+            <label class="permission-checkbox">
+              <input type="checkbox" name="components[]" value="<%= component.key %>"
+                     data-form-duplicate-target="checkbox"
+                     data-requires="<%= component.requires.join(' ') %>"
+                     data-locked="<%= component.locked? %>"
+                     data-action="change->form-duplicate#componentChanged"
+                     <%= 'checked disabled' if component.locked? %>>
+              <span>
+                <strong><%= component.label %></strong>
+                <% if component.locked? %><em class="duplicate-form__always">always</em><% end %>
+                <small><%= component.description %></small>
+              </span>
+            </label>
+            <ul class="duplicate-form__items" data-form-duplicate-target="items" data-key="<%= component.key %>"></ul>
+          </div>
+        <% end %>
+      </div>
+
+      <p class="help-text duplicate-form__footnote">
+        Submissions are never copied, so the copy starts empty. Stylesheets and Stimulus
+        controllers are shared by every form, so the copy keeps using them as they are.
+      </p>
+    </div>
+
+    <div class="pb-modal__actions">
+      <button type="button" class="btn" data-action="form-duplicate#close">Cancel</button>
+      <button type="button" class="btn approve" disabled
+              data-form-duplicate-target="submitButton"
+              data-action="form-duplicate#submit">Duplicate</button>
+    </div>
+  </div>
+</div>
