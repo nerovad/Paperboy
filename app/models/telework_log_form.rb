@@ -3,17 +3,18 @@
 class TeleworkLogForm < ApplicationRecord
   include TrackableStatus
 
+  enum :status, {
+    in_progress: 'in_progress',
+    approved: 'approved',
+    denied: 'denied'
+  }, default: :in_progress
+
   has_many :telework_log_form_hours, dependent: :destroy
   accepts_nested_attributes_for :telework_log_form_hours, allow_destroy: true, reject_if: :all_blank
 
   has_many :telework_log_form_work_performeds, dependent: :destroy
   accepts_nested_attributes_for :telework_log_form_work_performeds, allow_destroy: true, reject_if: :all_blank
 
-  enum :status, {
-    in_progress: 'in_progress',
-    approved: 'approved',
-    denied: 'denied'
-  }, default: :in_progress
   include Reassignable
 
   # Scopes
