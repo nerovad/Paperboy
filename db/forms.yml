@@ -4121,9 +4121,6 @@ forms:
     required: true
     options:
       rows: 3
-      repeatable: true
-      repeat_min: 1
-      repeat_max: 0
     read_only: none
     has_custom_view: false
     visible_to_filler: false
