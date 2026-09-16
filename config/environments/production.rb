@@ -25,11 +25,10 @@ Rails.application.configure do
 
   config.active_support.report_deprecations = false
 
-  # Keep this simple for now and use file_store everywhere
-  config.cache_store = :file_store, Rails.root.join('tmp/cache')
+  config.cache_store = :solid_cache_store
 
-  # Sidekiq for jobs
-  config.active_job.queue_adapter = :sidekiq
+  config.active_job.queue_adapter = :solid_queue
+  config.solid_queue.connects_to = { database: { writing: :queue } }
 
   # You probably want this to be your real host:
   config.action_mailer.default_url_options = { host: 'gsa-forms' }

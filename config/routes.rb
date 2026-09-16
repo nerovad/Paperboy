@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'sidekiq/web'
-
 Rails.application.routes.draw do
   resources :telework_log_forms, controller: 'forms/telework_log_forms' do
     member do
@@ -430,8 +428,6 @@ Rails.application.routes.draw do
       patch :update_org_permissions
     end
   end
-
-  mount Sidekiq::Web => '/sidekiq'
 
   # ============================================================================
   # Reports & Scheduled Reports

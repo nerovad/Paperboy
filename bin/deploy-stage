@@ -27,7 +27,7 @@ git pull origin "$BRANCH"
 echo "==> Installing gems..."
 bundle install --without development test
 
-echo "==> Running migrations..."
+echo "==> Preparing application and Solid adapter databases..."
 # staging isn't in the dotenv-rails group, so load the same env file systemd
 # hands to Puma (EnvironmentFile=.env) before running any rails command.
 set -a; source "$APP_DIR/.env"; set +a
@@ -35,7 +35,7 @@ set -a; source "$APP_DIR/.env"; set +a
 # database, so override it here exactly as paperboy-stage.service does — this
 # is the line that keeps a stage deploy off dev's data.
 export PAPERBOY_DATABASE=Paperboy_Stage
-RAILS_ENV=staging bundle exec rails db:migrate
+RAILS_ENV=staging bundle exec rails db:prepare
 
 # Additive: creates the groups, grants and group memberships from db/acl.yml
 # that are missing here, and never removes anything. Grants for a form stage
@@ -68,13 +68,14 @@ RAILS_ENV=staging bundle exec rails assets:precompile
 # migrates stage. bin/deploy does the same for the prod units.
 echo "==> Syncing systemd units..."
 sync_unit paperboy-stage.service
-sync_unit paperboy-stage-sidekiq.service
+sync_unit paperboy-stage-jobs.service
 sudo systemctl daemon-reload
 
 echo "==> Restarting Puma..."
 sudo systemctl restart paperboy-stage
 
-echo "==> Restarting Sidekiq..."
-sudo systemctl restart paperboy-stage-sidekiq
+echo "==> Restarting Solid Queue..."
+sudo systemctl disable --now paperboy-stage-sidekiq 2>/dev/null || true
+sudo systemctl restart paperboy-stage-jobs
 
 echo "==> Stage deploy complete!"

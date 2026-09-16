@@ -1,6 +1,6 @@
 [Unit]
-Description=Paperboy Sidekiq Worker (Staging)
-After=network.target redis.service
+Description=Paperboy Solid Queue Worker (Staging)
+After=network.target
 
 [Service]
 Type=simple
@@ -15,7 +15,7 @@ Environment=RAILS_ENV=staging
 # so this wins over the value the EnvironmentFile just set.
 Environment=PAPERBOY_DATABASE=Paperboy_Stage
 
-ExecStart=/bin/bash -lc 'bundle exec sidekiq -C config/sidekiq.yml'
+ExecStart=/bin/bash -lc 'bundle exec bin/jobs'
 Restart=always
 RestartSec=5
 

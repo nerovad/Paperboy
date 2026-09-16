@@ -29,7 +29,7 @@ module DataRunner
       redirect_to data_refresh_progress_path(run), alert: "#{data_refresh_app_label} data refresh is already running."
     rescue GroupRefresh::QueueUnavailable => e
       Rails.logger.error("#{data_refresh_app_label} data refresh queue unavailable: #{e.message}")
-      redirect_to data_refresh_form_path, alert: 'The data refresh could not be queued because Redis is unavailable.'
+      redirect_to data_refresh_form_path, alert: 'The data refresh could not be queued because the job queue is unavailable.'
     rescue ActionController::ParameterMissing, ArgumentError, KeyError => e
       Rails.logger.error("#{data_refresh_app_label} data refresh failed: #{e.class}: #{e.message}")
       redirect_to data_refresh_form_path, alert: 'The data refresh could not be started.'

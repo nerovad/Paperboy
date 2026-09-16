@@ -14,4 +14,4 @@ stop_servers
 } 2>&1 | tee "$app_root/log/assets.log"
 
 nohup bundle exec bin/rails server -p 3001 </dev/null >"$app_root/log/server.log" 2>&1 &
-nohup bundle exec sidekiq -C config/sidekiq.yml </dev/null >"$app_root/log/sidekick.log" 2>&1 &
+nohup bundle exec bin/jobs </dev/null >"$app_root/log/jobs.log" 2>&1 &

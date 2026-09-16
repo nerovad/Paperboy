@@ -1,6 +1,6 @@
 [Unit]
-Description=Paperboy Sidekiq Worker (Development)
-After=network.target redis.service
+Description=Paperboy Solid Queue Worker (Development)
+After=network.target
 
 [Service]
 Type=simple
@@ -11,7 +11,7 @@ WorkingDirectory=/home/matthew/gitea/Paperboy
 EnvironmentFile=/home/matthew/gitea/Paperboy/.env
 Environment=RAILS_ENV=development
 
-ExecStart=/bin/bash -lc 'bundle exec sidekiq -C config/sidekiq.yml'
+ExecStart=/bin/bash -lc 'bundle exec bin/jobs'
 Restart=always
 RestartSec=5
 

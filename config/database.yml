@@ -31,20 +31,60 @@ sqlserver: &sqlserver
 
 # Primary connection: Paperboy-specific database for form submissions, etc.
 development:
-  <<: *sqlserver
-  database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Dev") %>
+  primary:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Dev") %>
+  queue:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_QUEUE_DATABASE", "Paperboy_Dev_Queue") %>
+    migrations_paths: db/queue_migrate
+  cache:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_CACHE_DATABASE", "Paperboy_Dev_Cache") %>
+    migrations_paths: db/cache_migrate
+  cable:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_CABLE_DATABASE", "Paperboy_Dev_Cable") %>
+    migrations_paths: db/cable_migrate
 
 test:
-  <<: *sqlserver
-  database: <%= ENV.fetch("PAPERBOY_TEST_DATABASE", "Paperboy_Test") %>
+  primary:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_TEST_DATABASE", "Paperboy_Test") %>
 
 staging:
-  <<: *sqlserver
-  database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Stage") %>
+  primary:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Stage") %>
+  queue:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_QUEUE_DATABASE", "Paperboy_Stage_Queue") %>
+    migrations_paths: db/queue_migrate
+  cache:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_CACHE_DATABASE", "Paperboy_Stage_Cache") %>
+    migrations_paths: db/cache_migrate
+  cable:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_CABLE_DATABASE", "Paperboy_Stage_Cable") %>
+    migrations_paths: db/cable_migrate
 
 production:
-  <<: *sqlserver
-  database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Prod") %>
+  primary:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_DATABASE", "Paperboy_Prod") %>
+  queue:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_QUEUE_DATABASE", "Paperboy_Prod_Queue") %>
+    migrations_paths: db/queue_migrate
+  cache:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_CACHE_DATABASE", "Paperboy_Prod_Cache") %>
+    migrations_paths: db/cache_migrate
+  cable:
+    <<: *sqlserver
+    database: <%= ENV.fetch("PAPERBOY_CABLE_DATABASE", "Paperboy_Prod_Cable") %>
+    migrations_paths: db/cable_migrate
 
 # Shared GSABSS tables (Employees + the org reference tables)
 # Read-only reference data owned by the org, not Paperboy.

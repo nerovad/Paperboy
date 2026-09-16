@@ -14,8 +14,9 @@ Rails 8.0.2
 
 Paperboy is a Ruby on Rails 8.x application for managing internal forms (e.g.,
 Parking Lot Submissions, Probation Transfer Requests, Safety Reporting, etc.)
-with a modernized workflow.  It integrates with Microsoft SQL Server and uses
-Sidekiq for background jobs.
+with a modernized workflow. It integrates with Microsoft SQL Server and uses
+Solid Queue for background jobs, Solid Cache for Rails.cache, and Solid Cable
+for Action Cable.
 
 For the product story / sales pitch, see [docs/PITCH.md](docs/PITCH.md).
 
@@ -45,15 +46,11 @@ ruby -v            # expect 4.0.6
 Do not `apt install ruby-bundler` or `snap install ruby`. Both put a
 second Ruby on `PATH` ahead of mise's and the pin stops meaning anything.
 
-System packages (Ubuntu; see [Redis-compatible queue
-service](#redis-compatible-queue-service) below for the Arch/Valkey
-equivalent):
+System packages (Ubuntu):
 
 ```bash
 sudo apt install build-essential libyaml-dev libffi-dev \
-                 freetds-dev freetds-bin redis-server
-sudo systemctl enable --now redis-server
-redis-cli ping     # expect PONG
+                 freetds-dev freetds-bin
 ```
 
 `freetds-dev` backs the `tiny_tds` gem. Then:
@@ -78,7 +75,9 @@ PAPERBOY_DATABASE=Paperboy_Dev
 ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=
 ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=
 ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=
-REDIS_URL=redis://localhost:6379/0
+PAPERBOY_QUEUE_DATABASE=Paperboy_Dev_Queue
+PAPERBOY_CACHE_DATABASE=Paperboy_Dev_Cache
+PAPERBOY_CABLE_DATABASE=Paperboy_Dev_Cable
 ```
 
 `PAPERBOY_DATABASE` is read in every environment, not just development —
@@ -96,14 +95,14 @@ the area you are working on needs them.
 ### Running it
 
 ```bash
-bin/dev-local            # Puma on :3001 + Sidekiq, one terminal
+bin/dev-local            # Puma on :3001 + Solid Queue, one terminal
 bin/dev-local 3005       # different port
 bin/dev-local --cron     # also run the scheduled jobs
 bin/dev-local --no-jobs  # Puma only
 ```
 
-It preflights `.env`, the port and Redis, prefixes Sidekiq output with
-`[sidekiq]`, and shuts both processes down together on Ctrl-C. If one
+It preflights `.env` and the port, prefixes Solid Queue output with
+`[solid-queue]`, and shuts both processes down together on Ctrl-C. If one
 dies the other is torn down with it.
 
 `bin/dev` still works if you only want Puma with no preflight.
@@ -116,8 +115,8 @@ anything you write is visible to everyone else on dev. Avoid `bin/setup`
 — it runs `db:prepare`, which would migrate the shared database.
 
 **Scheduled jobs are off by default.** `bin/dev-local` sets
-`PAPERBOY_DISABLE_CRON=true`, because the cron schedule loads at Sidekiq
-boot whether or not `-C` is passed. Left on, a workstation runs
+`SOLID_QUEUE_SKIP_RECURRING=true`, because the recurring schedule is loaded by
+the Solid Queue scheduler. Left on, a workstation runs
 `OshaReportableDeadlineJob` hourly against `Paperboy_Dev`, and that job
 writes `reportable_breach_notified_at` as its dedupe stamp — so it would
 race the dev server and consume notices the server should have sent. Pass
@@ -164,40 +163,23 @@ files shadow your SCSS and JS edits until you run `assets:clobber`.
 
 ---
 
-## Redis-compatible queue service
-
-Sidekiq requires a Redis-compatible server on `127.0.0.1:6379`. On
-Arch/Omarchy, install and start Valkey (the supported Redis replacement):
+To run Solid Queue directly during development:
 
 ```bash
-sudo pacman -S valkey
-sudo systemctl enable --now valkey
-valkey-cli ping
+bundle exec bin/jobs
 ```
-
-The health check must return `PONG`. The default application setting is
-`REDIS_URL=redis://localhost:6379/0`; Valkey supports this protocol and URL.
-
-To run Sidekiq directly during development:
-
-```bash
-bundle exec sidekiq -C config/sidekiq.yml
-```
-
-For managed deployments, ensure `valkey.service` is running before the
-`paperboy-*-sidekiq` service starts.
 
 ## Dev deployment systemd - Only PUMA restart
 
 ```bash
 sudo systemctl restart paperboy-dev
 
-# Deploying with git pull, bundle install, pre-compile, puma restart, Sidekiq restart
+# Deploying with git pull, bundle install, pre-compile, puma restart, Solid Queue restart
 bin/deploy-dev
 
 # Check Logs
 sudo journalctl -u paperboy-dev -f
-sudo journalctl -u paperboy-dev-sidekiq -f
+sudo journalctl -u paperboy-dev-jobs -f
 
 # Stop temporarily (e.g. to run rails s manually)
 sudo systemctl stop paperboy-dev
@@ -214,10 +196,10 @@ sudo systemctl start paperboy-dev
 sudo systemctl restart paperboy-stage
 ```
 
-  Restart both (Puma + Sidekiq):
+  Restart both (Puma + Solid Queue):
 
 ```bash
-sudo systemctl restart paperboy-stage paperboy-stage-sidekiq
+sudo systemctl restart paperboy-stage paperboy-stage-jobs
 ```
 
   Full deploy (git pull → bundle → assets:clobber → assets:precompile → restart both):
@@ -241,8 +223,8 @@ bin/deploy-stage some-branch  # deploys a different branch
   dev. The override is set twice, and both are needed:
 
   - `Environment=PAPERBOY_DATABASE=Paperboy_Stage` in
-    config/systemd/paperboy-stage.service and paperboy-stage-sidekiq.service,
-    after the EnvironmentFile line so it wins — this covers Puma and Sidekiq.
+    config/systemd/paperboy-stage.service and paperboy-stage-jobs.service,
+    after the EnvironmentFile line so it wins — this covers Puma and Solid Queue.
   - `export PAPERBOY_DATABASE=Paperboy_Stage` in bin/deploy-stage — this covers
     db:migrate, acl:sync and the asset tasks the script runs.
 
@@ -256,7 +238,7 @@ bin/deploy-stage some-branch  # deploys a different branch
 ```bash
 sudo cp config/systemd/paperboy-stage*.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl restart paperboy-stage paperboy-stage-sidekiq
+sudo systemctl restart paperboy-stage paperboy-stage-jobs
 ```
 
   To confirm which database stage is actually on:
@@ -270,19 +252,19 @@ PAPERBOY_DATABASE=Paperboy_Stage RAILS_ENV=staging bundle exec rails runner \
 
 ```bash
 journalctl -u paperboy-stage -f
-journalctl -u paperboy-stage-sidekiq -f
+journalctl -u paperboy-stage-jobs -f
 ```
 
 ## Production Deployment
 
 On Prod Server: bin/deploy
 
-Puma and Sidekiq are managed by systemd, which means:
+Puma and Solid Queue are managed by systemd, which means:
 
 - They auto-start on server boot
 - They auto-restart if they crash
 - You can check on them anytime with sudo systemctl status paperboy or sudo
-  systemctl status paperboy-sidekiq
+  systemctl status paperboy-jobs
 - Logs go to journald: sudo journalctl -u paperboy -f
 
 ## Rolling back on Production

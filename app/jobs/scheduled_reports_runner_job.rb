@@ -2,7 +2,7 @@
 
 # app/jobs/scheduled_reports_runner_job.rb
 #
-# Polled every minute by sidekiq-cron. Executes every due schedule: form
+# Polled every minute by Solid Queue. Executes every due schedule: form
 # reports (ScheduledReport) and Records grid exports (ScheduledRecordExport).
 class ScheduledReportsRunnerJob < ApplicationJob
   queue_as :default

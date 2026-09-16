@@ -25,9 +25,10 @@ Rails.application.configure do
 
   config.active_support.report_deprecations = false
 
-  config.cache_store = :file_store, Rails.root.join('tmp/cache')
+  config.cache_store = :solid_cache_store
 
-  config.active_job.queue_adapter = :sidekiq
+  config.active_job.queue_adapter = :solid_queue
+  config.solid_queue.connects_to = { database: { writing: :queue } }
 
   config.action_mailer.default_url_options = { host: 'stage-gsa-forms' }
 

@@ -7,7 +7,7 @@ require 'test_helper'
 # TrackableStatus model with fixtures, and it routes by a direct assignee rather
 # than routing steps, so no template lookup is involved.
 class TrackableStatusEditAuditTest < ActiveSupport::TestCase
-  # ActiveJob::TestHelper comes with this and swaps the sidekiq adapter for the
+  # ActiveJob::TestHelper comes with this and swaps the queue adapter for the
   # test one, so the mail a subscription triggers can be asserted on.
   include ActionMailer::TestHelper
 

@@ -1,11 +1,11 @@
 #!/bin/bash
-# Run Paperboy on this workstation: Puma + Sidekiq in one terminal.
+# Run Paperboy on this workstation: Puma + Solid Queue in one terminal.
 #
 # This is NOT a deploy script. bin/deploy-dev pulls master, precompiles assets
 # and restarts systemd units that only exist on the dev server; running it here
 # would reset your branch and leave stale assets shadowing your edits.
 #
-#   bin/dev-local            # Puma on :3001 + Sidekiq, cron schedule off
+#   bin/dev-local            # Puma on :3001 + Solid Queue, schedule off
 #   bin/dev-local 3005       # different port
 #   bin/dev-local --cron     # also run the scheduled jobs (see warning below)
 #   bin/dev-local --no-jobs  # Puma only
@@ -16,12 +16,12 @@ cd "$(dirname "$0")/.."
 PORT="${PORT:-3001}"
 BIND="${BIND:-127.0.0.1}"
 ENABLE_CRON=0
-RUN_SIDEKIQ=1
+RUN_JOBS=1
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --cron)     ENABLE_CRON=1; shift ;;
-    --no-jobs)  RUN_SIDEKIQ=0; shift ;;
+    --no-jobs)  RUN_JOBS=0; shift ;;
     -p|--port)  PORT="$2"; shift 2 ;;
     [0-9]*)     PORT="$1"; shift ;;
     -h|--help)  sed -n '2,10p' "$0"; exit 0 ;;
@@ -41,12 +41,6 @@ if ss -ltn 2>/dev/null | grep -qE "[:.]${PORT}[[:space:]]"; then
   exit 1
 fi
 
-if [[ "$RUN_SIDEKIQ" -eq 1 ]] && ! redis-cli ping >/dev/null 2>&1; then
-  echo "==> Redis is not answering on 127.0.0.1:6379." >&2
-  echo "    sudo systemctl start redis-server" >&2
-  exit 1
-fi
-
 # --- Shutdown --------------------------------------------------------------
 PIDS=()
 
@@ -61,18 +55,16 @@ cleanup() {
 }
 trap cleanup INT TERM EXIT
 
-# --- Sidekiq ---------------------------------------------------------------
-if [[ "$RUN_SIDEKIQ" -eq 1 ]]; then
-  if [[ "$ENABLE_CRON" -eq 1 ]]; then
-    echo "==> Sidekiq cron ENABLED — scheduled jobs will write to the shared"
-    echo "    Paperboy_Dev database, racing the dev server's own Sidekiq."
-  else
-    export PAPERBOY_DISABLE_CRON=true
+# --- Solid Queue -----------------------------------------------------------
+if [[ "$RUN_JOBS" -eq 1 ]]; then
+  if [[ "$ENABLE_CRON" -ne 1 ]]; then
+    export SOLID_QUEUE_CONFIG="$PWD/config/queue.yml"
+    export SOLID_QUEUE_SKIP_RECURRING=true
   fi
 
-  echo "==> Starting Sidekiq..."
-  bundle exec sidekiq -C config/sidekiq.yml \
-    > >(sed -u 's/^/[sidekiq] /') 2>&1 &
+  echo "==> Starting Solid Queue..."
+  bundle exec bin/jobs \
+    > >(sed -u 's/^/[solid-queue] /') 2>&1 &
   PIDS+=($!)
 fi
 

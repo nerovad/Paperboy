@@ -28,7 +28,7 @@ module DataRunner
     rescue GroupRefresh::QueueUnavailable => e
       Rails.logger.error("Data Runner group refresh queue unavailable: #{e.message}")
       redirect_to data_runner_root_path(group: group),
-                  alert: 'The refresh could not be queued because Redis is unavailable.'
+                  alert: 'The refresh could not be queued because the job queue is unavailable.'
     end
   end
 end

@@ -46,7 +46,7 @@ class P2mDataRefreshesControllerTest < ActionController::TestCase
     }
 
     assert_redirected_to p2m_data_refresh_path
-    assert_equal 'The data refresh could not be queued because Redis is unavailable.', flash[:alert]
+    assert_equal 'The data refresh could not be queued because the job queue is unavailable.', flash[:alert]
   ensure
     P2m::DataRefresh.define_singleton_method(:run!, original) if original
   end

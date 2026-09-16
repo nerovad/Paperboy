@@ -64,7 +64,7 @@ class DslGroupRefreshControllerTest < ActionController::TestCase
     post :create, params: { group: 'paperboy' }
 
     assert_redirected_to data_runner_root_path(group: 'paperboy')
-    assert_equal 'The refresh could not be queued because Redis is unavailable.', flash[:alert]
+    assert_equal 'The refresh could not be queued because the job queue is unavailable.', flash[:alert]
   ensure
     DataRunner::GroupRefresh.define_singleton_method(:start!, original) if original
   end

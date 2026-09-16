@@ -123,9 +123,6 @@ GEM
     concurrent-ruby (1.3.8)
     connection_pool (3.0.2)
     crass (1.0.7)
-    cronex (0.15.0)
-      tzinfo
-      unicode (>= 0.4.4.5)
     csv (3.3.5)
     dartsass-rails (0.5.1)
       railties (>= 6.0.0)
@@ -369,10 +366,6 @@ GEM
       prism (>= 1.6.0)
       rbs (>= 4.0.0)
       tsort
-    redis (5.4.1)
-      redis-client (>= 0.22.0)
-    redis-client (0.30.0)
-      connection_pool
     regexp_parser (2.12.0)
     reline (0.7.0)
       io-console (~> 0.5)
@@ -435,17 +428,6 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 4.0)
       websocket (~> 1.0)
-    sidekiq (8.1.6)
-      connection_pool (>= 3.0.0)
-      json (>= 2.16.0)
-      logger (>= 1.7.0)
-      rack (>= 3.2.0)
-      redis-client (>= 0.29.0)
-    sidekiq-cron (2.4.0)
-      cronex (>= 0.13.0)
-      fugit (~> 1.8, >= 1.11.1)
-      globalid (>= 1.0.1)
-      sidekiq (>= 6.5.0)
     snaky_hash (2.0.6)
       hashie (>= 0.1.0, < 6)
       version_gem (>= 1.1.8, < 3)
@@ -498,7 +480,6 @@ GEM
       railties (>= 7.1.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
-    unicode (0.4.4.5)
     unicode-display_width (3.2.0)
       unicode-emoji (~> 4.1)
     unicode-emoji (4.2.0)
@@ -562,7 +543,6 @@ DEPENDENCIES
   puma (>= 5.0)
   rails (~> 8.1.3)
   rake
-  redis
   rexml
   roo
   rouge
@@ -570,8 +550,6 @@ DEPENDENCIES
   rubyzip
   sass-embedded (~> 1.94)
   selenium-webdriver
-  sidekiq
-  sidekiq-cron
   smb_shortcut!
   solid_cable
   solid_cache
