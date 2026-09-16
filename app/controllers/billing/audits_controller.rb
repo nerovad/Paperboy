@@ -8,12 +8,16 @@ module Billing
       @active_billing_period = ActiveBillingPeriod.current
       return unless @active_billing_period
 
-      @billing_type_audits = BillingTypeAudit.new(@active_billing_period).results
-      @audit_groups = Audit.new(@active_billing_period).results
-      @cost_analysis = CostAnalysis.new(@active_billing_period).result
-    rescue ActiveRecord::ActiveRecordError => e
-      Rails.logger.error("Billing audit failed: #{e.class}: #{e.message}")
-      @audit_error = 'The Billing audit could not be loaded.'
+      @audit_errors = []
+      load_audit_section(:billing_type_audits) do
+        BillingTypeAudit.new(@active_billing_period).results
+      end
+      load_audit_section(:audit_groups) do
+        Audit.new(@active_billing_period).results
+      end
+      load_audit_section(:cost_analysis) do
+        CostAnalysis.new(@active_billing_period).result
+      end
     end
 
     def detail
@@ -68,6 +72,15 @@ module Billing
     rescue ActiveRecord::ActiveRecordError => e
       Rails.logger.error("Billing type audit rows failed: #{e.class}: #{e.message}")
       @audit_error = 'The Billing type error rows could not be loaded.'
+    end
+
+    private
+
+    def load_audit_section(name)
+      instance_variable_set("@#{name}", yield)
+    rescue ActiveRecord::ActiveRecordError => e
+      Rails.logger.error("Billing audit #{name} failed: #{e.class}: #{e.message}")
+      @audit_errors << "#{name.to_s.humanize} could not be loaded."
     end
   end
 end
