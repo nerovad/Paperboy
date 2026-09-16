@@ -157,7 +157,6 @@ class CreateSolidAdapterTables < ActiveRecord::Migration[8.1]
       t.binary :payload, limit: 536_870_912, null: false
       t.datetime :created_at, null: false
       t.integer :channel_hash, limit: 8, null: false
-      t.index :channel
       t.index :channel_hash
       t.index :created_at
     end
