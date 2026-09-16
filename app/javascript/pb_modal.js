@@ -19,7 +19,7 @@ const FOCUSABLE =
 
 // Builds the shell and resolves with the value passed to whichever control the
 // user activates. Cancelling — backdrop click, ✕, Escape — resolves false.
-function openDialog({ title, message, buttons }) {
+function openDialog({ title, message, buttons, warnings = [] }) {
   return new Promise((resolve) => {
     const previouslyFocused = document.activeElement;
 
@@ -27,7 +27,7 @@ function openDialog({ title, message, buttons }) {
     backdrop.className = "pb-modal-backdrop";
 
     const panel = document.createElement("div");
-    panel.className = "pb-modal";
+    panel.className = warnings.length ? "pb-modal pb-modal--startup-warning" : "pb-modal";
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-modal", "true");
 
@@ -44,14 +44,34 @@ function openDialog({ title, message, buttons }) {
 
     const body = document.createElement("div");
     body.className = "pb-modal__body";
-    // Split on blank lines so multi-paragraph messages keep their shape.
-    const paragraphs = String(message ?? "").split(/\n{2,}/).filter((p) => p.trim());
-    (paragraphs.length ? paragraphs : [String(message ?? "")]).forEach((text) => {
-      const p = document.createElement("p");
-      p.className = "pb-modal__message";
-      p.textContent = text;
-      body.appendChild(p);
-    });
+    if (warnings.length) {
+      const grid = document.createElement("div");
+      grid.className = "pb-startup-warning-grid";
+      ["Key", "Value", "Error"].forEach((text) => {
+        const heading = document.createElement("div");
+        heading.className = "pb-startup-warning-grid__heading";
+        heading.textContent = text;
+        grid.appendChild(heading);
+      });
+      warnings.forEach(({ key, value, error }) => {
+        [key, value, error].forEach((text) => {
+          const cell = document.createElement("div");
+          cell.className = "pb-startup-warning-grid__cell";
+          cell.textContent = text;
+          grid.appendChild(cell);
+        });
+      });
+      body.appendChild(grid);
+    } else {
+      // Split on blank lines so multi-paragraph messages keep their shape.
+      const paragraphs = String(message ?? "").split(/\n{2,}/).filter((p) => p.trim());
+      (paragraphs.length ? paragraphs : [String(message ?? "")]).forEach((text) => {
+        const p = document.createElement("p");
+        p.className = "pb-modal__message";
+        p.textContent = text;
+        body.appendChild(p);
+      });
+    }
 
     const actions = document.createElement("div");
     actions.className = "pb-modal__actions";
@@ -134,10 +154,11 @@ export function pbConfirm({
 }
 
 // Replaces window.alert. Resolves once the user dismisses it.
-export function pbAlert({ title = "Notice", message = "", buttonLabel = "OK" } = {}) {
+export function pbAlert({ title = "Notice", message = "", buttonLabel = "OK", warnings = [] } = {}) {
   return openDialog({
     title,
     message,
+    warnings,
     buttons: [{ label: buttonLabel, className: "btn approve", value: true }],
   });
 }

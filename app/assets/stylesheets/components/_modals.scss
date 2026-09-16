@@ -68,6 +68,11 @@
   max-height: 90vh;
 }
 
+.pb-modal--startup-warning {
+  width: 760px;
+  max-width: 94vw;
+}
+
 .pb-modal--report-preview {
   width: 94vw;
   max-width: 94vw;
@@ -146,6 +151,46 @@
   margin: 0;
   font-size: 1rem;
   color: $text-color;
+}
+
+/* Startup diagnostics: a compact, stripped grid using the Paperboy sidebar
+   palette so the warning reads as an application status panel. */
+.pb-startup-warning-grid {
+  display: grid;
+  grid-template-columns: minmax(11rem, 1fr) minmax(15rem, 2fr) minmax(11rem, 1fr);
+  overflow: hidden;
+  border-radius: 6px;
+  font-size: 0.9rem;
+
+  &__heading {
+    padding: 9px 10px;
+    background: $sidebar-navy;
+    color: $surface-base;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  &__cell {
+    min-width: 0;
+    padding: 10px;
+    border-bottom: 1px solid $border-faint;
+    overflow-wrap: anywhere;
+  }
+
+  > .pb-startup-warning-grid__cell:nth-child(6n + 4),
+  > .pb-startup-warning-grid__cell:nth-child(6n + 5),
+  > .pb-startup-warning-grid__cell:nth-child(6n + 6) {
+    background: $surface-subtle;
+  }
+
+  > .pb-startup-warning-grid__cell:nth-child(3n + 3) { color: $warning-text; }
+
+  @media (max-width: 620px) {
+    grid-template-columns: minmax(7rem, 0.9fr) minmax(8rem, 1fr) minmax(8rem, 1fr);
+    font-size: 0.8rem;
+  }
 }
 
 .pb-modal__actions {

@@ -18,6 +18,11 @@
   </head>
   <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %> controller-path-<%= controller_path.tr("/", "-") %><%= " has-hero-image" if content_for?(:image) %>">
 
+    <%= tag.div nil, data: {
+      controller: "startup-warning",
+      startup_warnings: StartupConfiguration.warnings.to_json
+    } %>
+
     <% if (badge = environment_badge) %>
       <div class="env-badge <%= badge[:css_class] %>"><%= badge[:label] %></div>
     <% end %>
