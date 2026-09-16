@@ -37,7 +37,9 @@ class P2mOmsUploadsControllerTest < ActionController::TestCase
   end
 
   def mailer_date
-    @mailer_date ||= Date.new(2026, 8, (Process.pid % 28) + 1)
+    # Keep this outside the seeded upload history so the selected range only
+    # contains rows created by this test.
+    @mailer_date ||= Date.new(2099, 1, (Process.pid % 28) + 1)
   end
 
   def oms_numbers
