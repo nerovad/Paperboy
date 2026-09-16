@@ -8,8 +8,8 @@ module Billing
 
     def self.all(root: ReportFile::ROOT)
       ReportFile.all(root: root).group_by { |file| file.path.basename(file.path.extname).to_s }
-                                .map { |name, files| new(name: name, files: files) }
-                                .sort_by(&:name)
+                .map { |name, files| new(name: name, files: files) }
+                .sort_by(&:name)
     end
 
     def initialize(name:, files:)

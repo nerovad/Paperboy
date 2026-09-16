@@ -6,7 +6,7 @@ require 'yaml'
 
 module Billing
   # A fixed grid avoids Prawn's expensive table measurement for large reports.
-  # rubocop:disable Metrics/ClassLength
+  # rubocop:disable-next Metrics/ClassLength
   class PdfReportRenderer
     DATE_FORMAT = '%m/%d/%y'
     ROWS_PER_PAGE = 29
@@ -286,5 +286,4 @@ module Billing
       0
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end

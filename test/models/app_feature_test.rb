@@ -31,7 +31,7 @@ class AppFeatureTest < ActiveSupport::TestCase
 
     assert_equal Coa::Tables::ALL.map { |table| table[:collection] }.sort,
                  AppFeature.for('coa').map { |feature| feature[:key] }
-                                      .reject { |key| lookups.include?(key) }.sort
+                           .reject { |key| lookups.include?(key) }.sort
   end
 
   test 'both Chart of Accounts lookups are grantable' do
