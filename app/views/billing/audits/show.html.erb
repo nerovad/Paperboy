@@ -74,8 +74,8 @@
 
     <% if @cost_analysis %>
     <section class="billing-audit-group" data-controller="billing-audit-sections" aria-labelledby="cost-analysis-title">
-      <h2 id="cost-analysis-title"><button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle" data-action="billing-audit-sections#toggle" aria-expanded="true" aria-controls="cost-analysis-content"><span aria-hidden="true">▾</span>Cost Analysis</button></h2>
-      <div id="cost-analysis-content" data-billing-audit-sections-target="content"><div class="billing-type-audit-table-wrapper">
+      <h2 id="cost-analysis-title"><button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle" data-action="billing-audit-sections#toggle" aria-expanded="false" aria-controls="cost-analysis-content"><span aria-hidden="true">▸</span>Cost Analysis</button></h2>
+      <div id="cost-analysis-content" data-billing-audit-sections-target="content" hidden><div class="billing-type-audit-table-wrapper">
         <% amount_cost_failed = !@cost_analysis.amount_cost_variance.zero? %>
         <table class="billing-type-audit-table billing-summary-audit-table">
           <thead><tr><th scope="col" aria-label="Status"></th><th scope="col">Check</th><th scope="col">Variance</th></tr></thead>
@@ -90,9 +90,10 @@
     <% end %>
 
     <% @audit_groups&.each do |group, results| %>
+      <% collapsed = %i[customer service_provider].include?(group.key.to_sym) %>
       <section class="billing-audit-group" data-controller="billing-audit-sections" aria-labelledby="<%= group.key %>-title">
-        <h2 id="<%= group.key %>-title"><button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle" data-action="billing-audit-sections#toggle" aria-expanded="true" aria-controls="<%= group.key %>-content"><span aria-hidden="true">▾</span><%= group.label %></button></h2>
-        <div id="<%= group.key %>-content" data-billing-audit-sections-target="content"><div class="billing-type-audit-table-wrapper">
+        <h2 id="<%= group.key %>-title"><button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle" data-action="billing-audit-sections#toggle" aria-expanded="<%= !collapsed %>" aria-controls="<%= group.key %>-content"><span aria-hidden="true"><%= collapsed ? '▸' : '▾' %></span><%= group.label %></button></h2>
+        <div id="<%= group.key %>-content" data-billing-audit-sections-target="content"<%= ' hidden' if collapsed %>><div class="billing-type-audit-table-wrapper">
           <table class="billing-type-audit-table billing-summary-audit-table">
             <thead><tr><th scope="col" aria-label="Status"></th><th scope="col">Check</th><th scope="col">Errors</th></tr></thead>
             <tbody>
