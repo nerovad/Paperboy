@@ -14,14 +14,15 @@ class WorkflowOutputs
   OUTPUT_DIRECTORIES = DIRECTORIES - [WorkflowPaths::DOWNLOAD_BACKUP_DIR_NAME]
   EXTENSIONS = %w[.csv .sql .xlsx].freeze
 
-  def initialize(entry, root: WorkflowPaths::OUTPUT_ROOT)
+  def initialize(entry, root: WorkflowPaths::OUTPUT_ROOT, inbox_root: WorkflowPaths::INBOX_DIR)
     @entry = entry
     @root = Pathname(root)
+    @inbox_root = Pathname(inbox_root)
   end
 
   def files
     stems = output_stems
-    output_roots = [@root, Pathname(WorkflowPaths::INBOX_DIR)]
+    output_roots = [@root, @inbox_root]
     output_roots.flat_map do |root|
       directories = root == @root ? OUTPUT_DIRECTORIES : ['.']
       directories.flat_map { |directory| root.glob("#{directory}/**/*") }.select(&:file?).select do |path|

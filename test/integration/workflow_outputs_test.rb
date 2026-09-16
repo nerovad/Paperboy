@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'test_helper'
+require 'tmpdir'
 
 class WorkflowOutputsTest < ActionDispatch::IntegrationTest
   test 'wildcard route preserves workflow output file extensions' do
@@ -14,30 +15,28 @@ class WorkflowOutputsTest < ActionDispatch::IntegrationTest
   end
 
   test 'units only includes files whose stem is exactly units' do
-    created_files = []
-    [
-      Pathname(WorkflowPaths::INBOX_DIR).join('units.xlsx'),
-      Rails.root.join('output/data_runner/02_Normalized', 'units.csv'),
-      Rails.root.join('output/data_runner/03_SQL_MAP', 'units.sql')
-    ].each do |path|
-      next if path.file?
+    Dir.mktmpdir('workflow-outputs-test') do |directory|
+      root = Pathname(directory).join('output')
+      inbox = Pathname(directory).join('inbox')
+      paths = [inbox.join('units.xlsx'), root.join('02_Normalized', 'units.csv'),
+               root.join('03_SQL_MAP', 'units.sql')]
+      paths.each do |path|
+        path.dirname.mkpath
+        path.write('units')
+      end
 
-      path.dirname.mkpath
-      path.write('units')
-      created_files << path
+      entry = DslCatalog.find!('units')
+      names = WorkflowOutputs.new(entry, root: root, inbox_root: inbox).files.map do |file|
+        file.basename.to_s
+      end
+
+      assert_includes names, 'units.xlsx'
+      assert_includes names, 'units.csv'
+      assert_includes names, 'units.sql'
+      assert(names.all? { |name| File.basename(name, '.*').casecmp?('units') })
+      assert_not_includes names, 'sub_units.csv'
+      assert_not_includes names, 'zyzzyva_units.csv'
     end
-
-    entry = DslCatalog.find!('units')
-    names = WorkflowOutputs.new(entry).files.map { |file| file.basename.to_s }
-
-    assert_includes names, 'units.xlsx'
-    assert_includes names, 'units.csv'
-    assert_includes names, 'units.sql'
-    assert(names.all? { |name| File.basename(name, '.*').casecmp?('units') })
-    assert_not_includes names, 'sub_units.csv'
-    assert_not_includes names, 'zyzzyva_units.csv'
-  ensure
-    created_files&.each { |path| path.delete if path.file? }
   end
 
   test 'backup files match timestamped exact DSL stems' do

@@ -127,7 +127,7 @@ module AuditableEdits
     return value if value.nil?
     return value unless self.class.respond_to?(:encrypted_attributes)
 
-    self.class.encrypted_attributes.map(&:to_s).include?(column.to_s) ? REDACTED : value
+    Array(self.class.encrypted_attributes).map(&:to_s).include?(column.to_s) ? REDACTED : value
   end
 
   def edit_actor
