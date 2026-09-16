@@ -8,7 +8,7 @@ class DslOutputsControllerTest < ActionController::TestCase
 
   test 'outputs list includes backup directory link' do
     sign_in
-    backup_path = Rails.root.join('output/data_runner/06_Download_Backup', '2099-01-02-001-employees.xlsx')
+    backup_path = Rails.root.join('output/data_runner/06_Download_Backup', "2099-01-02-#{backup_suffix}-employees.xlsx")
     backup_path.dirname.mkpath
     backup_path.write('backup')
 
@@ -54,11 +54,11 @@ class DslOutputsControllerTest < ActionController::TestCase
 
   test 'backup file preview has close action next to download' do
     sign_in
-    backup_path = Rails.root.join('output/data_runner/06_Download_Backup', '2099-01-02-001-employees.csv')
+    backup_path = Rails.root.join('output/data_runner/06_Download_Backup', "2099-01-02-#{backup_suffix}-employees.csv")
     backup_path.dirname.mkpath
     backup_path.write("id,name\n1,Ada\n")
 
-    get :output, params: { name: 'employees', path: '06_Download_Backup/2099-01-02-001-employees.csv' }
+    get :output, params: { name: 'employees', path: "06_Download_Backup/2099-01-02-#{backup_suffix}-employees.csv" }
 
     assert_response :success
     assert_select '.output-heading .inline-actions a', text: 'Download file'
@@ -68,6 +68,10 @@ class DslOutputsControllerTest < ActionController::TestCase
   end
 
   private
+
+  def backup_suffix
+    format('%03d', Process.pid % 1000)
+  end
 
   def sign_in
     session[:user] = {
