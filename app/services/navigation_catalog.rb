@@ -126,7 +126,7 @@ class NavigationCatalog
   # going anywhere, and the palette navigates.
   def billing_rows
     view.billing_sidebar_items.select { |item| item[:page] }
-                              .map { |item| { label: item[:label], path: item[:path] } }
+        .map { |item| { label: item[:label], path: item[:path] } }
   end
 
   # The two lookups, then every table the grants allow.
@@ -148,7 +148,7 @@ class NavigationCatalog
 
   def feature_rows(app_key)
     FEATURE_LINKS.fetch(app_key, []).select { |link| feature?(app_key, link[:key]) }
-                                    .map { |link| { label: link[:label], path: public_send(link[:route]) } }
+                 .map { |link| { label: link[:label], path: public_send(link[:route]) } }
   end
 
   # Every DSL the viewer is granted, by name, because that is what the Data

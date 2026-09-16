@@ -14,7 +14,7 @@ require_relative '../../../app/services/p2m/paths'
 
 module P2m
   # Scans historical OMS output and safely stages one complete job per run.
-  # rubocop:disable Metrics/ClassLength
+  # rubocop:disable-next Metrics/ClassLength
   class OmsBackfileStager
     OMS_NUMBER = '\\d{8,9}'
     MARKER_PATTERN = /\AMail\.dat_(#{OMS_NUMBER})\.zip\z/i
@@ -273,7 +273,6 @@ module P2m
     def sent_path = data_runner_root.join(Paths::STAGING)
     def processed_path = data_runner_root.join(Paths::PROCESSED)
   end
-  # rubocop:enable Metrics/ClassLength
 end
 
 def options

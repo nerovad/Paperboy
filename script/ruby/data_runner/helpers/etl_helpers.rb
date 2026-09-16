@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Shared helper methods for ETL stage scripts.
-# rubocop:disable Metrics/ModuleLength
+# rubocop:disable-next Metrics/ModuleLength
 module EtlHelpers
   module_function
 
@@ -220,4 +220,3 @@ module EtlHelpers
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength
