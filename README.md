@@ -75,9 +75,6 @@ PAPERBOY_DATABASE=Paperboy_Dev
 ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=
 ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=
 ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=
-PAPERBOY_QUEUE_DATABASE=Paperboy_Dev_Queue
-PAPERBOY_CACHE_DATABASE=Paperboy_Dev_Cache
-PAPERBOY_CABLE_DATABASE=Paperboy_Dev_Cable
 ```
 
 `PAPERBOY_DATABASE` is read in every environment, not just development —
@@ -113,6 +110,10 @@ dies the other is torn down with it.
 the shared SQL Server, so this machine needs network access to it, and
 anything you write is visible to everyone else on dev. Avoid `bin/setup`
 — it runs `db:prepare`, which would migrate the shared database.
+
+Solid Queue, Solid Cache, and Solid Cable store their tables in this same
+primary Paperboy database. The low-volume application does not need separate
+adapter databases.
 
 **Scheduled jobs are off by default.** `bin/dev-local` sets
 `SOLID_QUEUE_SKIP_RECURRING=true`, because the recurring schedule is loaded by
