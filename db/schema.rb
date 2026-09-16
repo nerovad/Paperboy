@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_15_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_15_223047) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -1270,6 +1270,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_130000) do
 
   create_table "telework_log_form_work_performeds", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.integer "hours"
     t.bigint "telework_log_form_id", null: false
     t.datetime "updated_at", null: false
     t.text "work_performed"
