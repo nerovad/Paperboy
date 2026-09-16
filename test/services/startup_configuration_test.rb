@@ -14,18 +14,23 @@ class StartupConfigurationTest < ActiveSupport::TestCase
   test 'reports missing configuration values' do
     warnings = StartupConfiguration.warnings(env: {})
 
-    assert_equal 5, warnings.length
+    assert_equal 8, warnings.length
     assert_includes warnings, { key: 'AIM_ROOT', value: '(undefined)', error: 'is not defined.' }
     assert_includes warnings, { key: 'GSABSS_ROOT', value: '(undefined)', error: 'is not defined.' }
     assert_includes warnings, { key: 'GSABSS_HOST', value: '(undefined)', error: 'is not defined.' }
     assert_includes warnings, { key: 'GSABSS_DATABASE', value: '(undefined)', error: 'is not defined.' }
     assert_includes warnings, { key: 'P2M_DATARUNNER_ROOT', value: '(undefined)', error: 'is not defined.' }
+    assert_includes warnings, { key: 'BILLING_ARCHIVE_ROOT', value: '(undefined)', error: 'is not defined.' }
+    assert_includes warnings, { key: 'DATARUNNER_INBOX', value: '(undefined)', error: 'is not defined.' }
+    assert_includes warnings, { key: 'P2M_ROOT', value: '(undefined)', error: 'is not defined.' }
   end
 
   test 'reports unreachable paths, host, and database' do
     env = {
       'AIM_ROOT' => '/aim', 'GSABSS_ROOT' => '/gsabss',
-      'P2M_DATARUNNER_ROOT' => '/datarunner', 'GSABSS_HOST' => 'sql.example',
+      'P2M_ROOT' => '/p2m', 'P2M_DATARUNNER_ROOT' => '/datarunner',
+      'BILLING_ARCHIVE_ROOT' => '/billing', 'DATARUNNER_INBOX' => '/inbox',
+      'GSABSS_HOST' => 'sql.example',
       'GSABSS_DATABASE' => 'GSABSS'
     }
 
@@ -36,7 +41,7 @@ class StartupConfigurationTest < ActiveSupport::TestCase
       database_checker: -> { false }
     )
 
-    assert_equal 5, warnings.length
+    assert_equal 8, warnings.length
     assert_includes warnings, { key: 'AIM_ROOT', value: '/aim', error: 'is not reachable.' }
     assert_includes warnings, { key: 'GSABSS_HOST', value: 'sql.example', error: 'is not reachable.' }
     assert(warnings.all? { |warning| warning.fetch(:error) == 'is not reachable.' })
@@ -45,7 +50,9 @@ class StartupConfigurationTest < ActiveSupport::TestCase
   test 'returns no warnings for reachable configuration' do
     env = {
       'AIM_ROOT' => '/aim', 'GSABSS_ROOT' => '/gsabss',
-      'P2M_DATARUNNER_ROOT' => '/datarunner', 'GSABSS_HOST' => 'sql.example',
+      'P2M_ROOT' => '/p2m', 'P2M_DATARUNNER_ROOT' => '/datarunner',
+      'BILLING_ARCHIVE_ROOT' => '/billing', 'DATARUNNER_INBOX' => '/inbox',
+      'GSABSS_HOST' => 'sql.example',
       'GSABSS_DATABASE' => 'GSABSS'
     }
 
