@@ -90,6 +90,7 @@ Rails.application.routes.draw do
     root 'dashboard#index'
 
     resource :dashboard, only: :show, controller: :dashboards
+    resource :customer_lookup, only: %i[show create], controller: :customer_lookups
     resource :audit, only: :show, controller: :audits
     get 'audit/cost/:key/rows', to: 'audits#cost_rows', as: :cost_audit_rows
     get 'audit/type/:code/rows', to: 'audits#type_rows', as: :type_audit_rows

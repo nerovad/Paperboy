@@ -12,6 +12,7 @@ module Billing
       { key: 'run_monthly_billing', label: 'Run Billing', operation: 'run', page: true },
       { key: 'billing_audit', label: 'Billing Audit', route: :billing_audit_path, page: true },
       { key: 'view_billing', label: 'View Billing', route: :billing_dashboard_path, page: true },
+      { key: 'customer_lookup', label: 'Customer Lookup', route: :billing_customer_lookup_path, page: true },
       { key: 'print_reports', label: 'Print Billing Reports', operation: 'print', page: true },
       { key: 'view_reports', label: 'View Billing Reports', route: :billing_reports_path, page: true },
       { key: 'email_recipients', label: 'Email Recipient List', route: :billing_email_recipients_path, page: true },

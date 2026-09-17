@@ -32,6 +32,7 @@ class AppFeature
       { key: 'run_monthly_billing', label: 'Run Billing' },
       { key: 'billing_audit',       label: 'Billing Audit' },
       { key: 'view_billing',        label: 'View Billing' },
+      { key: 'customer_lookup',     label: 'Customer Lookup' },
       { key: 'print_reports',       label: 'Print Billing Reports' },
       { key: 'view_reports',        label: 'View Billing Reports' },
       { key: 'email_recipients',    label: 'Email Recipient List' },

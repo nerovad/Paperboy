@@ -1,0 +1,64 @@
+<section class="billing-page customer-lookup-page">
+  <div class="billing-form-header">
+    <h1>Customer Lookup</h1>
+    <p>Find services billed to a budget unit during a date range.</p>
+  </div>
+
+  <section class="customer-lookup-card" aria-labelledby="customer-lookup-search-title">
+    <h2 id="customer-lookup-search-title">Search</h2>
+    <%= form_with url: billing_customer_lookup_path, method: :post,
+                  data: { turbo: false, controller: "date-range",
+                          action: "submit->date-range#validate" } do %>
+      <div class="customer-lookup-fields">
+        <div class="form-group">
+          <%= label_tag "customer_lookup_start_date", "Start Date" %>
+          <%= date_field_tag "customer_lookup[start_date]", @start_date,
+                             id: "customer_lookup_start_date", required: true,
+                             data: { date_range_target: "startDate",
+                                     action: "input->date-range#validateRange" } %>
+        </div>
+        <div class="form-group">
+          <%= label_tag "customer_lookup_end_date", "End Date" %>
+          <%= date_field_tag "customer_lookup[end_date]", @end_date,
+                             id: "customer_lookup_end_date", required: true,
+                             data: { date_range_target: "endDate",
+                                     action: "input->date-range#validateRange" } %>
+        </div>
+        <div class="form-group customer-lookup-unit-field">
+          <%= label_tag "customer_lookup_budget_unit", "Budget Unit" %>
+          <%= search_field_tag "customer_lookup[budget_unit]",
+                               params.dig(:customer_lookup, :budget_unit),
+                               id: "customer_lookup_budget_unit",
+                               placeholder: "Enter a budget unit number…", required: true %>
+        </div>
+      </div>
+      <div class="form-actions"><%= submit_tag "Search", class: "btn approve compact" %></div>
+    <% end %>
+  </section>
+
+  <% if params.dig(:customer_lookup, :budget_unit).present? && @unit.nil? %>
+    <p class="customer-lookup-status">No matching budget units found.</p>
+  <% elsif @unit && @rows.nil? %>
+    <p class="customer-lookup-status">No services found for this budget unit and date range.</p>
+  <% elsif @rows %>
+    <section class="customer-lookup-card customer-lookup-results" aria-labelledby="customer-lookup-results-title">
+      <h2 id="customer-lookup-results-title">Services</h2>
+      <% if @rows.empty? %>
+        <p>No services found for this budget unit and date range.</p>
+      <% else %>
+        <p class="customer-lookup-total"><strong>Total Amount:</strong>
+          <%= number_to_currency(@rows.sum { |row| row[:amount].to_f }) %></p>
+        <div class="customer-lookup-grid-wrap">
+          <table class="customer-lookup-grid">
+            <thead><tr><% Billing::CustomerLookup::COLUMNS.each do |column| %><th><%= column.humanize %></th><% end %></tr></thead>
+            <tbody><% @rows.each do |row| %><tr><% Billing::CustomerLookup::COLUMNS.each do |column| %><td><%= if %w[quantity rate amount].include?(column)
+              number_with_precision(row[column.to_sym], precision: 2)
+            else
+              row[column.to_sym]
+            end %></td><% end %></tr><% end %></tbody>
+          </table>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+</section>
