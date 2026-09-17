@@ -39,7 +39,7 @@
       ['sprogram',  'sprogram',  'nvarchar(10)', 'NOT NULL', nil],
       ['sphase',    'sphase',    'nvarchar(6)',  'NULL',     nil],
       ['stask',     'stask',     'nvarchar(4)',  'NULL',     nil],
-      ['service',   'service',   'nvarchar(15)', 'NOT NULL', nil]
+      ['service',   'service',   'nvarchar(25)', 'NOT NULL', nil]
 
     ],
     database_connections: [
