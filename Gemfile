@@ -76,7 +76,7 @@ gem 'omniauth-entra-id'
 gem 'omniauth-rails_csrf_protection'
 
 # Gemfile
-gem 'dotenv-rails', groups: %i[development test production]
+gem 'dotenv-rails', groups: %i[development test staging production]
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: %i[windows jruby]
