@@ -2,8 +2,8 @@
 
 module Billing
   class CustomerLookup
-    COLUMNS = %w[agency division department unit service date quantity rate amount description
-                 other1 other2 other3].freeze
+    COLUMNS = %w[agency division department unit service date quantity rate amount doc_nmbr
+                 description other1 other2 other3].freeze
 
     def initialize(connection: BillingBase.connection)
       @connection = connection
@@ -13,8 +13,8 @@ module Billing
       raise ArgumentError, 'Invalid date range' if start_date > end_date
 
       sql = <<~SQL.squish
-        SELECT T.[SERVICE], T.[DATE], T.[DESCRIPTION], T.[OTHER1], T.[OTHER2], T.[OTHER3],
-               T.[QUANTITY], T.[RATE], T.[COST]
+        SELECT T.[SERVICE], T.[DATE], T.[DOC_NMBR], T.[DESCRIPTION], T.[OTHER1], T.[OTHER2],
+               T.[OTHER3], T.[QUANTITY], T.[RATE], T.[COST]
         FROM #{tc60_table} T
         WHERE T.[DATE] >= ? AND T.[DATE] < DATEADD(day, 1, ?)
           AND T.[CUNIT] = ?

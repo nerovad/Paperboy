@@ -1,7 +1,6 @@
 <section class="billing-page customer-lookup-page">
   <div class="billing-form-header">
     <h1>Customer Lookup</h1>
-    <p>Find services billed to a budget unit during a date range.</p>
   </div>
 
   <section class="customer-lookup-card" aria-labelledby="customer-lookup-search-title">
@@ -48,15 +47,76 @@
       <% else %>
         <p class="customer-lookup-total"><strong>Total Amount:</strong>
           <%= number_to_currency(@rows.sum { |row| row[:amount].to_f }) %></p>
-        <div class="customer-lookup-grid-wrap">
-          <table class="customer-lookup-grid">
-            <thead><tr><% Billing::CustomerLookup::COLUMNS.each do |column| %><th><%= column.humanize %></th><% end %></tr></thead>
-            <tbody><% @rows.each do |row| %><tr><% Billing::CustomerLookup::COLUMNS.each do |column| %><td><%= if %w[quantity rate amount].include?(column)
-              number_with_precision(row[column.to_sym], precision: 2)
-            else
-              row[column.to_sym]
-            end %></td><% end %></tr><% end %></tbody>
-          </table>
+        <% group_columns = %w[agency division department unit service] %>
+        <% detail_columns = %w[doc_nmbr description date other1 other2 other3 rate quantity amount] %>
+        <% detail_labels = { "doc_nmbr" => "Document#" } %>
+        <% sortable_columns = %w[doc_nmbr date amount] %>
+        <% grouped_rows = @rows.group_by { |row| group_columns.map { |column| row[column.to_sym] } } %>
+        <div class="customer-lookup-grid-wrap" data-controller="customer-lookup-rows">
+          <div class="customer-lookup-grid">
+            <div class="customer-lookup-grid-header" role="row">
+              <div class="customer-lookup-expand-column" role="columnheader" aria-label="Expand rows"></div>
+              <% group_columns.each do |column| %><div role="columnheader"><%= column == "unit" ? "Cunit" : column.humanize %></div><% end %>
+              <div role="columnheader">Amount</div>
+            </div>
+            <% grouped_rows.each_with_index do |(group_key, rows), index| %>
+              <% detail_id = "customer-lookup-details-#{index}" %>
+              <div class="customer-lookup-group">
+                <div class="customer-lookup-summary-row" role="row">
+                  <div class="customer-lookup-expand-column" role="cell">
+                    <button type="button" class="customer-lookup-row-toggle"
+                            data-action="customer-lookup-rows#toggle"
+                            data-detail-id="<%= detail_id %>"
+                            aria-controls="<%= detail_id %>" aria-expanded="false"
+                            aria-label="Show details">
+                      <span aria-hidden="true">▸</span>
+                    </button>
+                  </div>
+                  <% group_key.each do |value| %><div role="cell"><%= value %></div><% end %>
+                  <div class="numeric" role="cell"><%= number_to_currency(rows.sum { |row| row[:amount].to_f }) %></div>
+                </div>
+                <div id="<%= detail_id %>" class="customer-lookup-detail-row" hidden>
+                    <table class="customer-lookup-detail-table">
+                      <thead>
+                        <tr>
+                          <% detail_columns.each do |column| %>
+                            <th>
+                              <% label = detail_labels.fetch(column, column.humanize) %>
+                              <% if sortable_columns.include?(column) %>
+                                <button type="button" class="customer-lookup-sort"
+                                        data-action="customer-lookup-rows#sort"
+                                        data-sort-key="<%= column %>"
+                                        data-sort-direction="none"><%= label %> <span class="customer-lookup-sort-indicator" aria-hidden="true">↕</span></button>
+                              <% else %>
+                                <%= label %>
+                              <% end %>
+                            </th>
+                          <% end %>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% rows.each do |row| %>
+                          <tr>
+                            <% detail_columns.each do |column| %>
+                              <td class="<%= %w[quantity rate amount].include?(column) ? "numeric" : nil %>"
+                                  data-sort-value="<%= row[column.to_sym] %>">
+                                <%= if column == "amount"
+                                  number_to_currency(row[column.to_sym])
+                                elsif %w[quantity rate].include?(column)
+                                  number_with_precision(row[column.to_sym], precision: 2)
+                                else
+                                  row[column.to_sym]
+                                end %>
+                              </td>
+                            <% end %>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                </div>
+              </div>
+            <% end %>
+          </div>
         </div>
       <% end %>
     </section>
