@@ -5,6 +5,20 @@ APP_DIR="/home/matthew/gitea/Paperboy"
 BRANCH="${1:-master}"
 cd "$APP_DIR"
 
+# Installs a unit file unless /etc/systemd/system already symlinks straight at
+# the repo copy, where git pull has updated it already and cp would fail with
+# "are the same file" — aborting the deploy under set -e, after the migrations
+# have run but before anything restarts.
+sync_unit() {
+  local src="$APP_DIR/config/systemd/$1"
+  local dst="/etc/systemd/system/$1"
+  if [ "$(readlink -f "$src")" = "$(readlink -f "$dst")" ]; then
+    echo "    $1 already links to the repo copy"
+  else
+    sudo cp "$src" "$dst"
+  fi
+}
+
 echo "==> Fetching and checking out branch: $BRANCH ..."
 git fetch origin
 git checkout "$BRANCH"
@@ -13,8 +27,7 @@ git pull origin "$BRANCH"
 echo "==> Installing gems (including development/test)..."
 bundle install
 
-# development is in the dotenv-rails group (see Gemfile), so .env is loaded for
-# us here — unlike bin/deploy-stage, which has to source it by hand. .env names
+# dotenv-rails loads .env for every rails command below. .env names
 # Paperboy_Dev, which is also what database.yml defaults development to.
 echo "==> Preparing application and Solid adapter databases..."
 RAILS_ENV=development bundle exec rails db:prepare
@@ -110,6 +123,11 @@ RAILS_ENV=development bundle exec rails assets:clobber
 
 echo "==> Precompiling assets..."
 RAILS_ENV=development bundle exec rails assets:precompile
+
+echo "==> Syncing systemd units..."
+sync_unit paperboy-dev.service
+sync_unit paperboy-dev-sidekiq.service
+sudo systemctl daemon-reload
 
 echo "==> Restarting Puma..."
 sudo systemctl restart paperboy-dev

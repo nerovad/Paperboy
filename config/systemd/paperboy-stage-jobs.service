@@ -8,14 +8,16 @@ User=matthew
 Group=matthew
 WorkingDirectory=/home/matthew/gitea/Paperboy
 
-EnvironmentFile=/home/matthew/gitea/Paperboy/.env
 Environment=RAILS_ENV=staging
+Environment=PATH=/home/matthew/.rbenv/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
 # .env sets PAPERBOY_DATABASE=Paperboy_Dev and is shared with the dev host, so
-# stage names its own database here instead. systemd applies these in order,
-# so this wins over the value the EnvironmentFile just set.
+# stage names its own database here instead.
 Environment=PAPERBOY_DATABASE=Paperboy_Stage
 
-ExecStart=/bin/bash -lc 'bundle exec bin/jobs'
+# dotenv loads .env, not systemd's EnvironmentFile=: it expands ${VAR}
+# references, which EnvironmentFile= passes through as literal text. It never
+# overwrites a variable already set, so the Environment= lines above win.
+ExecStart=/home/matthew/.rbenv/shims/bundle exec dotenv -f /home/matthew/gitea/Paperboy/.env bin/jobs
 Restart=always
 RestartSec=5
 
