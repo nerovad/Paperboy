@@ -126,7 +126,7 @@ RAILS_ENV=development bundle exec rails assets:precompile
 
 echo "==> Syncing systemd units..."
 sync_unit paperboy-dev.service
-sync_unit paperboy-dev-sidekiq.service
+sync_unit paperboy-dev-jobs.service
 sudo systemctl daemon-reload
 
 echo "==> Restarting Puma..."
