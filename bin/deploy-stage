@@ -75,6 +75,7 @@ sudo systemctl restart paperboy-stage
 
 echo "==> Restarting Solid Queue..."
 sudo systemctl disable --now paperboy-stage-sidekiq 2>/dev/null || true
+sudo systemctl enable paperboy-stage-jobs
 sudo systemctl restart paperboy-stage-jobs
 
 echo "==> Stage deploy complete!"

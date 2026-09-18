@@ -134,6 +134,7 @@ sudo systemctl restart paperboy-dev
 
 echo "==> Restarting Solid Queue..."
 sudo systemctl disable --now paperboy-dev-sidekiq 2>/dev/null || true
+sudo systemctl enable paperboy-dev-jobs
 sudo systemctl restart paperboy-dev-jobs
 
 echo "==> Dev deploy complete!"

@@ -66,6 +66,7 @@ echo "==> Restarting Puma..."
 sudo systemctl restart paperboy
 
 echo "==> Restarting Solid Queue..."
+sudo systemctl enable paperboy-jobs
 sudo systemctl restart paperboy-jobs
 
 echo "==> Deploy complete!"
