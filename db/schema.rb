@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_16_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_120000) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -396,6 +396,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_000001) do
     t.boolean "read_only", default: false, null: false
     t.string "root"
     t.datetime "updated_at", null: false
+    t.boolean "watch_enabled", default: false, null: false
+    t.string "watch_path"
     t.index ["key"], name: "index_dam_storage_locations_on_key", unique: true
   end
 

@@ -122,7 +122,17 @@
         <dl class="dam-facts">
           <dt>Kind</dt><dd><%= @location.kind_label %></dd>
           <dt>Key</dt><dd><%= @location.key %></dd>
-          <dt>Root</dt><dd><%= @location.root.presence || "—" %></dd>
+          <dt>Root</dt><dd><%= @location.root.presence || "App storage folder" %></dd>
+          <dt>Files stored in</dt><dd><code><%= @location.storage_path || "—" %></code></dd>
+          <dt>Watch folder</dt>
+          <dd>
+            <% if @location.watch_path.present? %>
+              <code><%= @location.watch_path %></code>
+              <%= @location.watch_enabled? ? "· swept every minute" : "· not being swept" %>
+            <% else %>
+              —
+            <% end %>
+          </dd>
           <dt>Uploads</dt>
           <dd>
             <% if @location.accepts_uploads?(@used_bytes) %>

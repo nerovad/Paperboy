@@ -12,8 +12,8 @@ namespace :dam do
   desc 'Seed the DAM reference data Advanced Search is built from (idempotent)'
   task seed_reference_data: :environment do
     storage = [
-      { key: 'local_disk', label: 'Local disk', kind: 'disk', root: ActiveStorage::Blob.services.fetch(:local).root.to_s,
-        description: 'Active Storage service backing ingested files.', position: 1,
+      { key: 'local_disk', label: 'Local disk', kind: 'disk', position: 1,
+        description: "The app's own Active Storage folder. Give it a root to store files elsewhere.",
         default_for_uploads: true },
       # Read-only from the start: an archive is where things are moved to, not
       # somewhere an ingest form should offer to drop a new upload.
@@ -58,5 +58,15 @@ namespace :dam do
     puts "Metadata fields:   #{created[:fields]} added, #{Dam::MetadataField.count} total."
     puts 'Both now appear as facets in the DAM Advanced Search modal.'
     puts "Uploads default to: #{Dam::StorageLocation.library_default&.label || 'nowhere — no location is accepting uploads'}."
+  end
+
+  desc "Sweep every DAM storage location's watch folder now"
+  task ingest_watch_folders: :environment do
+    Dam::StorageLocation.watching.ordered.each do |location|
+      result = Dam::WatchFolderIngest.new(location).call
+      puts "#{location.label} (#{location.watch_path}): " \
+           "#{result.ingested} ingested, #{result.failed} failed"
+    end
+    puts 'No location is watching a folder.' if Dam::StorageLocation.watching.none?
   end
 end

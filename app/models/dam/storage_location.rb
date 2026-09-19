@@ -8,7 +8,18 @@ module Dam
   # storage, and old masters end up somewhere cheap and slow. So a location is
   # a record with a lifecycle rather than a path prefix, and "is it still
   # taking uploads" is a fact about it, not a guess from its name.
+  #
+  # A disk or share location with a root stores its files there, through an
+  # Active Storage service of its own (see #storage_service_name). One without
+  # a root uses the app's default service. Either may name a watch folder that
+  # Dam::WatchFolderIngest sweeps into it.
+  #
+  # Roots and watch folders are typed into a form, so both are held inside the
+  # folders PAPERBOY_DAM_ROOTS allows. That list is per host, in .env, and is
+  # the one part of this the UI cannot change.
   class StorageLocation < ApplicationRecord
+    include DamStoragePaths
+
     GIGABYTE = 1_073_741_824
 
     # How an adapter reaches it, not where it is.
@@ -37,6 +48,7 @@ module Dam
     # Everywhere an upload could actually land. Read-only is the case `active`
     # cannot express: still readable, still searchable, closed to new bytes.
     scope :uploadable, -> { active.where(read_only: false) }
+    scope :watching, -> { uploadable.where(watch_enabled: true).where.not(watch_path: [nil, '']) }
 
     # Where this person's next upload goes if the ingest form does not say.
     # Their own choice first, then the library default, then whatever will
@@ -90,6 +102,7 @@ module Dam
     def refusal_reason(used = used_bytes)
       return 'disabled' unless active?
       return 'read-only' if read_only?
+      return 'outside the allowed storage folders' if own_storage? && !self.class.allowed_path?(root)
       return 'at capacity' if full?(used)
 
       nil
@@ -131,6 +144,11 @@ module Dam
     # page does it in one action.
     def keep_locations_still_holding_assets
       held = assets.count
+      if held.zero? && holds_own_files?
+        errors.add(:base, "Files moved away from #{label} are still stored in its root. " \
+                          'Keep the location until they are copied off.')
+        throw :abort
+      end
       return if held.zero?
 
       errors.add(:base, "#{label} still holds #{held} #{'asset'.pluralize(held)}. " \

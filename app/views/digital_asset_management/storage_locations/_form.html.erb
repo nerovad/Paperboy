@@ -36,8 +36,45 @@
   <div class="form-group">
     <%= f.label :root, "Root" %>
     <%= f.text_field :root, class: "form-control",
-                     placeholder: "Filesystem path, bucket name or UNC share" %>
+                     placeholder: "Leave blank to use the app's own storage folder" %>
+    <p class="dam-hint">
+      The folder a local disk or network share location stores its files in. Blank means the
+      app's own Active Storage folder, which is where everything went before roots were honoured.
+      It cannot change once files are stored under it. Object storage and cold archive ignore
+      this until an adapter for them exists.
+      <% if Dam::StorageLocation.allowed_roots.any? %>
+        Allowed folders on this server: <code><%= Dam::StorageLocation.allowed_roots.join(", ") %></code>
+        (set by PAPERBOY_DAM_ROOTS).
+      <% end %>
+    </p>
   </div>
+
+  <fieldset class="dam-filter-set">
+    <legend>Watch folder</legend>
+
+    <div class="form-group">
+      <%= f.label :watch_path, "Folder to watch" %>
+      <%= f.text_field :watch_path, class: "form-control",
+                       placeholder: "Leave blank for upload-form ingest only" %>
+      <p class="dam-hint">
+        Anything dropped here is ingested into this location once it has finished copying, and
+        the original is moved into <code>_ingested</code> beside it — or <code>_failed</code>,
+        with the reason on the Jobs screen. It must sit inside the same allowed folders, and
+        apart from any folder the library stores files in.
+      </p>
+    </div>
+
+    <div class="form-group">
+      <label class="dam-checkbox">
+        <%= f.check_box :watch_enabled %>
+        <span>Watch this folder — sweep it every minute</span>
+      </label>
+      <p class="dam-hint">
+        Sweeping stops while the location is disabled, read-only or full; files wait in the
+        folder rather than failing.
+      </p>
+    </div>
+  </fieldset>
 
   <div class="form-group">
     <%= f.label :description %>

@@ -24,6 +24,11 @@ production: &production
     queue: default
     schedule: every hour
     description: Processes reportable OSHA deadlines
+  dam_watch_folders:
+    class: Dam::WatchFolderIngestJob
+    queue: default
+    schedule: every minute
+    description: Ingests files dropped into DAM storage locations' watch folders
 
 staging:
   <<: *production

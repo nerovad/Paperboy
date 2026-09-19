@@ -8,6 +8,8 @@
 /storage/development/
 /storage/staging/
 /storage/production/
+# Default DAM roots and watch folders (PAPERBOY_DAM_ROOTS)
+/storage/dam/
 
 .env
 *.png

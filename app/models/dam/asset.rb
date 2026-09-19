@@ -23,7 +23,10 @@ module Dam
       text/csv
     ].freeze
 
-    has_one_attached :file
+    # Stored through the location's own service when it has a root, and the
+    # app's default service otherwise. Decided when the file is attached, and
+    # remembered on the blob, so moving the asset later leaves the file put.
+    has_one_attached :file, service: ->(asset) { asset.storage_location&.storage_service_name }
 
     belongs_to :storage_location, class_name: 'Dam::StorageLocation', optional: true
 

@@ -130,7 +130,8 @@ module DigitalAssetManagement
     def location_params
       params.require(:storage_location)
             .permit(:key, :label, :kind, :root, :description, :quota_gb,
-                    :active, :read_only, :default_for_uploads, :position)
+                    :active, :read_only, :default_for_uploads, :position,
+                    :watch_path, :watch_enabled)
     end
 
     def require_storage_admin
