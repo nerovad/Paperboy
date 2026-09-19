@@ -32,6 +32,12 @@ bundle install
 echo "==> Preparing application and Solid adapter databases..."
 RAILS_ENV=development bundle exec rails db:prepare
 
+# Each environment keeps uploads under its own storage/ root. Copies the files
+# this database references out of the shared pre-split folder; idempotent.
+# See lib/tasks/storage.rake.
+echo "==> Adopting pre-split Active Storage files..."
+RAILS_ENV=development bundle exec rails storage:adopt_legacy
+
 # Dev is the source of truth for the ACL: groups, their permission grants, the
 # org-level grants and who is in which group. None of it travels between the
 # three databases on its own — Groups, Group_Permissions, org_permissions and

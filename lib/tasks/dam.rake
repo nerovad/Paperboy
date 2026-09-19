@@ -12,7 +12,7 @@ namespace :dam do
   desc 'Seed the DAM reference data Advanced Search is built from (idempotent)'
   task seed_reference_data: :environment do
     storage = [
-      { key: 'local_disk', label: 'Local disk', kind: 'disk', root: Rails.root.join('storage').to_s,
+      { key: 'local_disk', label: 'Local disk', kind: 'disk', root: ActiveStorage::Blob.services.fetch(:local).root.to_s,
         description: 'Active Storage service backing ingested files.', position: 1,
         default_for_uploads: true },
       # Read-only from the start: an archive is where things are moved to, not

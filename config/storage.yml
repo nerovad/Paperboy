@@ -2,9 +2,15 @@ test:
   service: Disk
   root: <%= Rails.root.join("tmp/storage") %>
 
+# One folder per environment. dev, stage and prod run from the same checkout on
+# the same host, so a shared root would let a database copied from prod into
+# stage purge prod's files. PAPERBOY_STORAGE_ROOT moves it off the checkout --
+# onto a larger volume, or apart from a workstation sharing Paperboy_Dev.
+# Files written before the split sit directly in storage/; `bin/rails
+# storage:adopt_legacy` copies the ones this database references.
 local:
   service: Disk
-  root: <%= Rails.root.join("storage") %>
+  root: <%= ENV.fetch("PAPERBOY_STORAGE_ROOT") { Rails.root.join("storage", Rails.env) } %>
 
 # Use bin/rails credentials:edit to set the AWS secrets (as aws:access_key_id|secret_access_key)
 # amazon:

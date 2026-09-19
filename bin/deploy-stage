@@ -36,6 +36,12 @@ echo "==> Preparing application and Solid adapter databases..."
 export PAPERBOY_DATABASE=Paperboy_Stage
 RAILS_ENV=staging bundle exec rails db:prepare
 
+# Each environment keeps uploads under its own storage/ root. Copies the files
+# this database references out of the shared pre-split folder; idempotent.
+# See lib/tasks/storage.rake.
+echo "==> Adopting pre-split Active Storage files..."
+RAILS_ENV=staging bundle exec rails storage:adopt_legacy
+
 # Additive: creates the groups, grants and group memberships from db/acl.yml
 # that are missing here, and never removes anything. Grants for a form stage
 # does not have yet are held back and reported, not applied; so are memberships
