@@ -5,10 +5,10 @@
 # and restarts systemd units that only exist on the dev server; running it here
 # would reset your branch and leave stale assets shadowing your edits.
 #
-#   bin/dev-local            # Puma on :3001 + Solid Queue, schedule off
+#   bin/dev-local            # Puma on :3001 + Solid Queue + Sass, schedule off
 #   bin/dev-local 3005       # different port
 #   bin/dev-local --cron     # also run the scheduled jobs (see warning below)
-#   bin/dev-local --no-jobs  # Puma only
+#   bin/dev-local --no-jobs  # Puma and Sass only
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -54,6 +54,14 @@ cleanup() {
   wait 2>/dev/null || true
 }
 trap cleanup INT TERM EXIT
+
+# --- Dart Sass -------------------------------------------------------------
+# Compiles application.scss into app/assets/builds/application.css, which is
+# what Sprockets serves. Without it a saved .scss changes nothing in a browser.
+echo "==> Starting Dart Sass watcher..."
+bundle exec rails dartsass:watch \
+  > >(sed -u 's/^/[sass] /') 2>&1 &
+PIDS+=($!)
 
 # --- Solid Queue -----------------------------------------------------------
 if [[ "$RUN_JOBS" -eq 1 ]]; then

@@ -92,23 +92,27 @@ the area you are working on needs them.
 ### Running it
 
 ```bash
-bin/dev-local            # Puma on :3001 + Solid Queue, one terminal
+bin/dev-local            # Puma on :3001 + Solid Queue + Dart Sass, one terminal
 bin/dev-local 3005       # different port
 bin/dev-local --cron     # also run the scheduled jobs
-bin/dev-local --no-jobs  # Puma only
+bin/dev-local --no-jobs  # Puma and Sass only
 ```
 
-It preflights `.env` and the port, prefixes Solid Queue output with
-`[solid-queue]`, and shuts both processes down together on Ctrl-C. If one
-dies the other is torn down with it.
+It preflights `.env` and the port, prefixes each process's output with
+`[solid-queue]` or `[sass]`, and shuts them all down together on Ctrl-C. If
+one dies the rest are torn down with it.
 
-`bin/dev` still works if you only want Puma with no preflight.
+`bin/dev` is the same script — it passes its arguments straight through, so
+either name starts the same three processes.
 
 ### Two things to know
 
-**There is no local database.** `development` points at `Paperboy_Dev` on
-the shared SQL Server, so this machine needs network access to it, and
-anything you write is visible to everyone else on dev. Avoid `bin/setup`
+**There is no local database.** `development` connects to whatever
+`PAPERBOY_DATABASE` names on the shared SQL Server, so this machine needs
+network access to it. Point it at a database of your own rather than
+`Paperboy_Dev`, where anything you write is visible to everyone on dev, and
+never at one the test suite uses — `rake test` reloads the schema into
+`PAPERBOY_TEST_DATABASE` and would take your data with it. Avoid `bin/setup`
 — it runs `db:prepare`, which would migrate the shared database.
 
 Solid Queue, Solid Cache, and Solid Cable store their tables in this same
@@ -123,6 +127,10 @@ writes `reportable_breach_notified_at` as its dedupe stamp — so it would
 race the dev server and consume notices the server should have sent. Pass
 `--cron` only when you are deliberately testing a scheduled job. Servers
 never set the variable and keep their schedule.
+
+DAM watch folders are swept by one of those recurring jobs, so a file dropped
+into one on a workstation is only ingested under `--cron`. Without it, sweep
+by hand with `bin/rails dam:ingest_watch_folders`.
 
 ### Running tests
 

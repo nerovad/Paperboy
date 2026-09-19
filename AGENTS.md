@@ -82,8 +82,9 @@ in the list above came back.
 
 ### Working on CSS locally
 
-Run `bin/dev` — it starts `dartsass:watch` alongside the server, so a
-saved `.scss` rebuilds in about 100ms and a browser refresh shows it.
+Run `bin/dev` — it starts `dartsass:watch` alongside the server and Solid
+Queue, so a saved `.scss` rebuilds in about 100ms and a browser refresh
+shows it. `bin/dev-local` is the same script under its own name.
 
 Keep `public/assets` empty on your workstation. sprockets-rails resolves
 `[:manifest, :environment]` -- manifest first -- so a precompiled manifest
