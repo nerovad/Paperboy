@@ -1,21 +1,32 @@
 # frozen_string_literal: true
 
 module Dam
-  # Ingests whatever has been dropped into a storage location's watch folder.
+  # Ingests what is sitting in a storage location's watch folder.
   #
-  # Each file is claimed by renaming it into _processing/ first, so two sweeps
-  # that overlap never ingest the same file twice. It then ends up in
-  # _ingested/ or, with the reason on its Jobs entry, in _failed/. Nothing is
-  # deleted: the original stays beside the library's copy until someone clears
-  # the folder out.
+  # Two modes, because a folder is either a drop box or somebody's library:
+  #
+  # 'move' claims each file by renaming it into _processing, so two sweeps that
+  # overlap cannot both take it, and leaves it in _ingested or — with the
+  # reason on its Jobs entry — _failed. Top level only: a drop box is flat.
+  #
+  # 'leave' reads a tree without disturbing it. Nothing is renamed, so a file
+  # is instead remembered by the digest of its path, and a unique index makes
+  # the second sweep to reach a file lose the race rather than double it. A
+  # share can hold more files than a minute's sweep should touch, so each pass
+  # takes a batch and leaves a cursor for the next one.
   class WatchFolderIngest
     PROCESSING = '_processing'
     INGESTED = '_ingested'
     FAILED = '_failed'
+    OWN_FOLDERS = [PROCESSING, INGESTED, FAILED].freeze
 
     # A file still being copied in keeps changing; one untouched this long is
     # taken to be complete.
     SETTLE_TIME = 1.minute
+
+    # Files read per leave-in-place sweep. Small enough that a minute is never
+    # spent walking, large enough that a share drains in reasonable time.
+    BATCH_SIZE = 100
 
     # Hidden files, Office lock files and the partial files browsers and copy
     # tools write before renaming to the real name.
@@ -23,14 +34,20 @@ module Dam
 
     UPLOADER_NAME = 'Watch folder'
 
-    # What Dam::Asset#apply_file_facts! reads off an upload. A dropped file is
-    # not a form upload, and does not have to pretend to be one.
+    Result = Struct.new(:ingested, :failed, :skipped, keyword_init: true)
+
+    # What Dam::Asset#apply_file_facts! reads off an upload. A file on a share
+    # is not a form upload and does not have to pretend to be one.
     Upload = Data.define(:original_filename, :content_type, :size)
 
-    Result = Struct.new(:ingested, :failed, keyword_init: true)
-
     def self.sweep_all(now: Time.current)
-      Dam::StorageLocation.watching.ordered.map { |location| new(location, now: now).call }
+      Dam::StorageLocation.scanning.ordered.map { |location| for_location(location, now: now).call }
+    end
+
+    # The mode picks the sweep: a drop box empties, a library is only read.
+    def self.for_location(location, now: Time.current)
+      sweeper = location.moves_originals? ? DropBox : InPlace
+      sweeper.new(location, now: now)
     end
 
     def initialize(location, now: Time.current)
@@ -40,82 +57,55 @@ module Dam
     end
 
     def call
-      result = Result.new(ingested: 0, failed: 0)
-      return result unless @folder.directory?
+      @result = Result.new(ingested: 0, failed: 0, skipped: 0)
+      return @result unless @folder.directory?
 
-      settled_files.each do |path|
-        # Checked per file, because the last one ingested may have filled it.
-        # What is left waits in the folder for room, rather than failing.
-        break unless @location.accepts_uploads?
-
-        outcome = ingest(path)
-        result[outcome] += 1 if outcome
-      end
-      result
+      sweep
+      @result
     end
 
     private
 
-    def settled_files
-      @folder.children.sort.select do |path|
-        path.file? && !path.basename.to_s.match?(IGNORED) && path.mtime <= @now - SETTLE_TIME
-      end
+    # A drop box takes what is at its top level; anything in a subfolder there
+    # is somebody organising, not somebody filing.
+    def settled(paths)
+      paths.select { |path| path.file? && settled?(path) }
     end
 
-    def ingest(path)
-      claimed = claim(path)
-      return nil unless claimed
+    def settled?(path)
+      return false if path.basename.to_s.match?(IGNORED)
 
-      asset = build_asset(claimed, path.basename.to_s)
-      return report_failure(claimed, asset.errors.full_messages.to_sentence) unless asset.save
-
-      finish(claimed, INGESTED)
-      record_ingest(asset)
-      :ingested
-    rescue StandardError => e
-      # Also covers a failure after the file has been filed away, which would
-      # otherwise be the one kind of trouble nothing recorded.
-      report_failure(claimed || path, "#{e.class}: #{e.message}")
-    ensure
-      @io&.close
+      path.mtime <= @now - SETTLE_TIME
     end
 
-    # Another sweep got there first when the rename finds nothing to move.
-    def claim(path)
-      destination = unique_path(@folder.join(PROCESSING), path.basename.to_s)
-      File.rename(path, destination)
-      destination
-    rescue Errno::ENOENT
-      nil
-    end
-
-    def build_asset(claimed, filename)
-      @io = File.open(claimed, 'rb')
+    def build_asset(path, filename, source: nil)
+      @io = File.open(path, 'rb')
       content_type = Marcel::MimeType.for(@io, name: filename)
       asset = Dam::Asset.new(storage_location: @location, uploaded_by_name: UPLOADER_NAME)
-      asset.apply_file_facts!(Upload.new(filename, content_type, claimed.size))
+      asset.apply_file_facts!(Upload.new(filename, content_type, path.size))
+      if source
+        asset.source_path = source.to_s
+        asset.source_key = source_key(source)
+      end
       asset.file.attach(io: @io, filename: filename, content_type: content_type)
       asset
     end
 
-    def report_failure(path, reason)
-      @io&.close
-      finish(path, FAILED) if path.exist?
-      job = Dam::Job.enqueue!(job_type: 'ingest', subject: @location, total_items: 1)
-      job.append_log("Could not ingest #{path.basename} from the watch folder: #{reason}")
-      job.update!(status: 'failed', error_message: reason, started_at: @now,
-                  finished_at: Time.current, log: job.log)
-      :failed
-    end
+    def source_key(path) = Digest::SHA256.hexdigest(path.realpath.to_s)
 
-    def finish(claimed, outcome)
-      File.rename(claimed, unique_path(@folder.join(outcome), claimed.basename.to_s))
-    end
+    def describe(error) = "#{error.class}: #{error.message}"
 
     def record_ingest(asset)
       Dam::Job.record!(job_type: 'ingest', actor: nil, subject: asset,
                        log: "Ingested #{asset.filename} (#{asset.display_size}) into " \
-                            "#{@location.label} from its watch folder")
+                            "#{@location.label} from #{@location.watch_path}")
+    end
+
+    def record_refusal(path, reason)
+      job = Dam::Job.enqueue!(job_type: 'ingest', subject: @location, total_items: 1)
+      job.append_log("Could not ingest #{path.basename} from #{@location.watch_path}: #{reason}")
+      job.update!(status: 'failed', error_message: reason, started_at: @now,
+                  finished_at: Time.current, log: job.log)
     end
 
     # Keeps the dropped name, stamping it only when that name is taken, so a

@@ -131,7 +131,7 @@ module DigitalAssetManagement
       params.require(:storage_location)
             .permit(:key, :label, :kind, :root, :description, :quota_gb,
                     :active, :read_only, :default_for_uploads, :position,
-                    :watch_path, :watch_enabled)
+                    :watch_path, :ingest_mode, :accepted_formats)
     end
 
     def require_storage_admin

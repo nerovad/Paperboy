@@ -124,11 +124,13 @@
           <dt>Key</dt><dd><%= @location.key %></dd>
           <dt>Root</dt><dd><%= @location.root.presence || "App storage folder" %></dd>
           <dt>Files stored in</dt><dd><code><%= @location.storage_path || "—" %></code></dd>
-          <dt>Watch folder</dt>
+          <dt>Formats</dt>
+          <dd><%= @location.accepted_format_list.presence&.join(", ") || "Everything" %></dd>
+          <dt>Folder scanned</dt>
           <dd>
             <% if @location.watch_path.present? %>
               <code><%= @location.watch_path %></code>
-              <%= @location.watch_enabled? ? "· swept every minute" : "· not being swept" %>
+              · <%= @location.ingest_mode_label %>
             <% else %>
               —
             <% end %>

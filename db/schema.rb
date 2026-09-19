@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_140000) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -253,6 +253,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_120000) do
     t.integer "height"
     t.datetime "ingested_at"
     t.string "media_type", default: "other", null: false
+    t.string "source_key", limit: 64
+    t.string "source_path"
     t.string "status", default: "active", null: false
     t.bigint "storage_location_id"
     t.string "storage_path"
@@ -265,6 +267,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_120000) do
     t.index ["format"], name: "index_dam_assets_on_format"
     t.index ["media_type"], name: "index_dam_assets_on_media_type"
     t.index ["status"], name: "index_dam_assets_on_status"
+    t.index ["storage_location_id", "source_key"], name: "index_dam_assets_on_location_and_source", unique: true, where: "([source_key] IS NOT NULL)"
     t.index ["storage_location_id"], name: "index_dam_assets_on_storage_location_id"
     t.index ["uploaded_by_id"], name: "index_dam_assets_on_uploaded_by_id"
   end
@@ -384,10 +387,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_120000) do
   end
 
   create_table "dam_storage_locations", force: :cascade do |t|
+    t.string "accepted_formats"
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.boolean "default_for_uploads", default: false, null: false
     t.text "description"
+    t.string "ingest_mode", default: "off", null: false
     t.string "key", null: false
     t.string "kind", default: "disk", null: false
     t.string "label", null: false
@@ -395,8 +400,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_120000) do
     t.bigint "quota_bytes"
     t.boolean "read_only", default: false, null: false
     t.string "root"
+    t.string "scan_cursor"
     t.datetime "updated_at", null: false
-    t.boolean "watch_enabled", default: false, null: false
     t.string "watch_path"
     t.index ["key"], name: "index_dam_storage_locations_on_key", unique: true
   end

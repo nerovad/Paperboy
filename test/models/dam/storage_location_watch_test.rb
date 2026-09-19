@@ -48,21 +48,37 @@ module Dam
       assert_match(/watch folder/, second.errors[:watch_path].to_sentence)
     end
 
-    test 'watching lists only locations open for upload with a folder switched on' do
+    test 'scanning lists only locations open for upload with a folder switched on' do
       watched = create(label: 'Watched', root: @allowed.join('photos').to_s,
-                       watch_path: @allowed.join('drop').to_s, watch_enabled: true)
+                       watch_path: @allowed.join('drop').to_s, ingest_mode: 'move')
       create(label: 'Idle', watch_path: @allowed.join('idle').to_s)
-      create(label: 'Closed', watch_path: @allowed.join('closed').to_s, watch_enabled: true,
+      create(label: 'Closed', watch_path: @allowed.join('closed').to_s, ingest_mode: 'move',
              read_only: true)
 
-      assert_equal [watched.id], Dam::StorageLocation.watching.pluck(:id)
+      assert_equal [watched.id], Dam::StorageLocation.scanning.pluck(:id)
     end
 
-    test 'watching a folder needs the folder' do
-      location = build(watch_enabled: true)
+    test 'scanning a folder needs the folder' do
+      location = build(ingest_mode: 'move')
 
       assert_not location.valid?
-      assert_match(/is needed to watch a folder/, location.errors[:watch_path].to_sentence)
+      assert_match(/is needed to scan a folder/, location.errors[:watch_path].to_sentence)
+    end
+
+    test 'a format list is read whatever the separators and dots' do
+      location = build(accepted_formats: '.jpg, png  MOV,.pdf')
+
+      assert_equal %w[JPG PNG MOV PDF], location.accepted_format_list
+      assert location.accepts_format?('.jpg')
+      assert location.accepts_format?('mov')
+      assert_not location.accepts_format?('doc')
+    end
+
+    test 'a blank format list accepts everything' do
+      location = build(accepted_formats: '  ')
+
+      assert_empty location.accepted_format_list
+      assert location.accepts_format?('anything')
     end
 
     private

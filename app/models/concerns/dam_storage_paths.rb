@@ -13,12 +13,24 @@ module DamStoragePaths
   # the cold archive need an adapter first; until then their root is a note.
   FILESYSTEM_KINDS = %w[disk smb].freeze
 
+  # What a watch folder does with the files it finds. Moving them is right
+  # for a drop folder people file into; leaving them is the only safe way to
+  # read a share somebody else maintains, and the one that can be pointed at
+  # an existing library.
+  INGEST_MODES = {
+    'off' => 'Not scanned',
+    'move' => 'Move originals into the library',
+    'leave' => 'Leave originals where they are'
+  }.freeze
+
   # dam_location_<id>_<digest of root>. The digest pins a name to one root, so
   # a service built for a name stays right for as long as the process lives.
   SERVICE_NAME = /\Adam_location_(\d+)_(\h{12})\z/
 
   included do
-    validates :watch_path, presence: { message: 'is needed to watch a folder' }, if: :watch_enabled?
+    validates :ingest_mode, inclusion: { in: INGEST_MODES.keys }
+    validates :watch_path, presence: { message: 'is needed to scan a folder' },
+                           if: -> { ingest_mode != 'off' }
     validates :watch_path, uniqueness: { case_sensitive: true }, allow_blank: true
     validate :root_is_usable, if: -> { own_storage? && (new_record? || will_save_change_to_root?) }
     validate :watch_path_is_usable, if: -> { watch_path.present? && will_save_change_to_watch_path? }
@@ -62,6 +74,25 @@ module DamStoragePaths
         service.name = name.to_s
       end
     end
+  end
+
+  def ingest_mode_label = INGEST_MODES.fetch(ingest_mode, ingest_mode.to_s.titleize)
+
+  def scanning? = ingest_mode != 'off' && watch_path.present?
+
+  def moves_originals? = ingest_mode == 'move'
+
+  # Formats this location takes, upcased and without dots, as Dam::Asset
+  # stores them. Empty means everything.
+  def accepted_format_list
+    accepted_formats.to_s.split(/[,\s]+/).filter_map { |format| format.delete('.').upcase.presence }
+  end
+
+  def accepts_format?(format)
+    list = accepted_format_list
+    return true if list.empty?
+
+    list.include?(format.to_s.delete('.').upcase)
   end
 
   def filesystem? = FILESYSTEM_KINDS.include?(kind)

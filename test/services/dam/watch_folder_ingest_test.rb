@@ -18,7 +18,7 @@ module Dam
       @location = Dam::StorageLocation.create!(label: 'Photos', kind: 'disk',
                                                root: @allowed.join('photos').to_s,
                                                watch_path: @allowed.join('drop').to_s,
-                                               watch_enabled: true)
+                                               ingest_mode: 'move')
       @drop = Pathname(@location.watch_path)
     end
 
@@ -64,7 +64,7 @@ module Dam
 
       assert_equal 'succeeded', job.status
       assert_equal Dam::Asset.sole, job.subject
-      assert_match(/from its watch folder/, job.log)
+      assert_match(/from #{Regexp.escape(@location.watch_path)}/, job.log)
     end
 
     test 'leaves a file that is still being written, and files it is told to ignore' do
@@ -108,25 +108,9 @@ module Dam
       assert_match(/Status/i, job.error_message)
     end
 
-    test 'sweeps nothing while the location is closed to uploads' do
-      drop('minutes.txt', 'hello')
-      @location.update!(read_only: true)
-
-      assert_equal 0, sweep.ingested
-      assert_predicate @drop.join('minutes.txt'), :file?
-    end
-
-    test 'sweep_all covers every watching location and skips the rest' do
-      drop('minutes.txt', 'hello')
-      Dam::StorageLocation.create!(label: 'Idle', kind: 'disk',
-                                   watch_path: @allowed.join('idle').to_s)
-
-      assert_equal [1], Dam::WatchFolderIngest.sweep_all.map(&:ingested)
-    end
-
     private
 
-    def sweep = Dam::WatchFolderIngest.new(@location.reload).call
+    def sweep = Dam::WatchFolderIngest.for_location(@location.reload).call
 
     # Dropped files are aged past the settle time unless a test is about a
     # file that is still arriving.

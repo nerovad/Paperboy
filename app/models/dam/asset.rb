@@ -42,6 +42,7 @@ module Dam
     validates :media_type, inclusion: { in: MEDIA_TYPES }
     validates :status, inclusion: { in: STATUSES }
     validate :storage_target_accepts_uploads, on: :create
+    validate :storage_target_accepts_format, on: :create
 
     scope :newest_first, -> { order(created_at: :desc) }
     scope :visible, -> { where(status: %w[active processing]) }
@@ -122,6 +123,17 @@ module Dam
       return if reason.nil?
 
       errors.add(:storage_location, "#{storage_location.label} is #{reason} and cannot take new uploads")
+    end
+
+    # A location may state the formats it is for, so a video does not land in
+    # the scanned-documents share. Checked here rather than at each caller, so
+    # the upload form, a watch folder and a console import all agree.
+    def storage_target_accepts_format
+      return if storage_location.blank? || format.blank?
+      return if storage_location.accepts_format?(format)
+
+      errors.add(:file, "#{format} is not one of the formats #{storage_location.label} takes " \
+                        "(#{storage_location.accepted_format_list.join(', ')})")
     end
   end
 end

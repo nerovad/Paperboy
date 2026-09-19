@@ -49,29 +49,42 @@
     </p>
   </div>
 
+  <div class="form-group">
+    <%= f.label :accepted_formats, "Formats accepted" %>
+    <%= f.text_field :accepted_formats, class: "form-control",
+                     placeholder: "Leave blank to accept everything" %>
+    <p class="dam-hint">
+      A comma-separated list — <code>jpg, png, pdf, mov</code>. Blank accepts every format.
+      This applies to uploads as well as to a scanned folder: an upload of a format this
+      location does not take is refused, and a scan passes those files by.
+    </p>
+  </div>
+
   <fieldset class="dam-filter-set">
-    <legend>Watch folder</legend>
+    <legend>Folder ingest</legend>
 
     <div class="form-group">
-      <%= f.label :watch_path, "Folder to watch" %>
+      <%= f.label :watch_path, "Folder to scan" %>
       <%= f.text_field :watch_path, class: "form-control",
                        placeholder: "Leave blank for upload-form ingest only" %>
       <p class="dam-hint">
-        Anything dropped here is ingested into this location once it has finished copying, and
-        the original is moved into <code>_ingested</code> beside it — or <code>_failed</code>,
-        with the reason on the Jobs screen. It must sit inside the same allowed folders, and
-        apart from any folder the library stores files in.
+        Must sit inside the same allowed folders as a root, and apart from any folder the
+        library stores files in.
       </p>
     </div>
 
     <div class="form-group">
-      <label class="dam-checkbox">
-        <%= f.check_box :watch_enabled %>
-        <span>Watch this folder — sweep it every minute</span>
-      </label>
+      <%= f.label :ingest_mode, "What to do with what it finds" %>
+      <%= f.select :ingest_mode,
+                   Dam::StorageLocation::INGEST_MODES.map { |key, label| [label, key] },
+                   {}, class: "form-control" %>
       <p class="dam-hint">
-        Sweeping stops while the location is disabled, read-only or full; files wait in the
-        folder rather than failing.
+        <strong>Move</strong> suits a drop box: a file that has finished copying is ingested
+        and its original moved into <code>_ingested</code> beside it, or <code>_failed</code>
+        with the reason on the Jobs screen. <strong>Leave</strong> suits a share somebody else
+        maintains: subfolders are read too, nothing is moved or renamed, and a file already
+        ingested is passed over on later scans. Either way, scanning stops while the location
+        is disabled, read-only or full.
       </p>
     </div>
   </fieldset>

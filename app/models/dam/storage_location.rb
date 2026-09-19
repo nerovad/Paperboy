@@ -48,7 +48,9 @@ module Dam
     # Everywhere an upload could actually land. Read-only is the case `active`
     # cannot express: still readable, still searchable, closed to new bytes.
     scope :uploadable, -> { active.where(read_only: false) }
-    scope :watching, -> { uploadable.where(watch_enabled: true).where.not(watch_path: [nil, '']) }
+    scope :scanning, lambda {
+      uploadable.where.not(ingest_mode: 'off').where.not(watch_path: [nil, ''])
+    }
 
     # Where this person's next upload goes if the ingest form does not say.
     # Their own choice first, then the library default, then whatever will

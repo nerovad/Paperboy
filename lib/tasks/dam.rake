@@ -60,13 +60,13 @@ namespace :dam do
     puts "Uploads default to: #{Dam::StorageLocation.library_default&.label || 'nowhere — no location is accepting uploads'}."
   end
 
-  desc "Sweep every DAM storage location's watch folder now"
+  desc 'Scan every DAM storage location that has a folder to ingest from'
   task ingest_watch_folders: :environment do
-    Dam::StorageLocation.watching.ordered.each do |location|
-      result = Dam::WatchFolderIngest.new(location).call
-      puts "#{location.label} (#{location.watch_path}): " \
-           "#{result.ingested} ingested, #{result.failed} failed"
+    Dam::StorageLocation.scanning.ordered.each do |location|
+      result = Dam::WatchFolderIngest.for_location(location).call
+      puts "#{location.label} (#{location.watch_path}, #{location.ingest_mode}): " \
+           "#{result.ingested} ingested, #{result.failed} failed, #{result.skipped} already held"
     end
-    puts 'No location is watching a folder.' if Dam::StorageLocation.watching.none?
+    puts 'No location is scanning a folder.' if Dam::StorageLocation.scanning.none?
   end
 end

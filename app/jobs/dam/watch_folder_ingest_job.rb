@@ -10,7 +10,8 @@ module Dam
       Dam::WatchFolderIngest.sweep_all.each do |result|
         next if result.ingested.zero? && result.failed.zero?
 
-        Rails.logger.info("DAM watch folders: #{result.ingested} ingested, #{result.failed} failed")
+        Rails.logger.info("DAM folder ingest: #{result.ingested} ingested, " \
+                          "#{result.failed} failed, #{result.skipped} already held")
       end
     end
   end
