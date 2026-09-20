@@ -65,6 +65,11 @@ module DigitalAssetManagement
       assign_metadata(@asset)
 
       if @asset.save
+        # Every ingest gets its viewable copies, and this one is no exception:
+        # an upload through the form has to reach the builder the same way a
+        # scan or an import does, or it sits on 'pending' for ever with no
+        # proxy and no thumbnail.
+        Dam::BuildDerivativesJob.perform_later(@asset.id)
         # Ingest is a job even though this one runs inline, so the Jobs feed is
         # a complete record of how everything got into the library.
         Dam::Job.record!(job_type: 'ingest', actor: current_user, subject: @asset,
@@ -142,8 +147,6 @@ module DigitalAssetManagement
       asset.uploaded_by_name = dam_actor_name
     end
 
-    def assign_metadata(asset)
-      Dam::MetadataAssignment.apply(asset, params[:metadata])
-    end
+    def assign_metadata(asset) = Dam::MetadataAssignment.apply(asset, params[:metadata])
   end
 end
