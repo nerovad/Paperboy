@@ -96,6 +96,32 @@
         </section>
       <% end %>
 
+      <% if @failure_count.positive? %>
+        <section class="dam-panel">
+          <h2>Could not be ingested</h2>
+          <p class="dam-hint">
+            <%= pluralize(@failure_count, "file") %> the scan could not take. Each is remembered
+            so later scans pass over it rather than failing again.
+          </p>
+          <ul class="dam-list">
+            <% @ingest_failures.each do |failure| %>
+              <li>
+                <code><%= File.basename(failure.source_path.to_s) %></code>
+                <span class="dam-muted">
+                  <%= failure.reason.to_s.truncate(120) %>
+                  · <%= pluralize(failure.attempts, "attempt") %>
+                </span>
+              </li>
+            <% end %>
+          </ul>
+          <% if system_admin? %>
+            <%= button_to "Try these again",
+                          retry_failures_digital_asset_management_storage_location_path(@location),
+                          method: :post, class: "btn" %>
+          <% end %>
+        </section>
+      <% end %>
+
       <section class="dam-panel">
         <h2>Newest here</h2>
         <% if @recent_assets.any? %>
@@ -124,6 +150,8 @@
           <dt>Key</dt><dd><%= @location.key %></dd>
           <dt>Root</dt><dd><%= @location.root.presence || "App storage folder" %></dd>
           <dt>Files stored in</dt><dd><code><%= @location.storage_path || "—" %></code></dd>
+          <dt>Skips</dt>
+          <dd><%= @location.ignore_pattern_list.presence&.join(", ") || "—" %></dd>
           <dt>Formats</dt>
           <dd><%= @location.accepted_format_list.presence&.join(", ") || "Everything" %></dd>
           <dt>Folder scanned</dt>

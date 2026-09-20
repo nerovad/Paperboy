@@ -36,10 +36,31 @@ module DigitalAssetManagementHelper
   end
 
   # The thumbnail for an asset card, or nil when there is nothing to draw.
+  # The built thumbnail first, whatever the media type — a video's poster
+  # frame is a picture even though the video is not — then the stored original
+  # for an image the builder has not reached yet.
   def dam_thumbnail_url(asset)
-    return nil unless asset.image? && asset.file.attached?
+    return url_for(asset.thumbnail) if asset.thumbnail.attached?
+    return url_for(asset.proxy) if asset.proxy.attached?
+    return url_for(asset.file) if asset.image? && asset.file.attached?
 
-    url_for(asset.file)
+    nil
+  end
+
+  # The largest copy worth putting on the detail page.
+  def dam_preview_url(asset)
+    return url_for(asset.proxy) if asset.proxy.attached?
+    return url_for(asset.file) if asset.image? && asset.file.attached?
+
+    dam_thumbnail_url(asset)
+  end
+
+  # Where "Download" goes: a referenced asset's original is streamed from the
+  # share it lives on, a stored one straight off its service.
+  def dam_original_url(asset)
+    return original_digital_asset_management_asset_path(asset) if asset.referenced?
+
+    asset.file.attached? ? url_for(asset.file) : nil
   end
 
   def dam_star_button(subject, favorited:, label: nil)

@@ -18,6 +18,9 @@ Rails.application.routes.draw do
     resources :assets do
       member do
         post :share
+        # A referenced asset's original is on a share, not on a service, so it
+        # cannot be a blob URL. See AssetsController#original.
+        get :original
       end
     end
 
@@ -61,6 +64,9 @@ Rails.application.routes.draw do
         post :make_default
         post :move_assets
         patch :toggle
+        # Forgets what failed to ingest, so the next scan tries those files
+        # again — after whatever was wrong with them has been put right.
+        post :retry_failures
       end
     end
 

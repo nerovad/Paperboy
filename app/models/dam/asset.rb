@@ -9,6 +9,7 @@ module Dam
   # storage, because a grid of 200 thumbnails must not open 200 files.
   class Asset < ApplicationRecord
     include DamDashboardSubject
+    include DamReferencedSource
 
     MEDIA_TYPES = %w[image video document audio other].freeze
     STATUSES = %w[active processing failed archived].freeze
@@ -43,7 +44,6 @@ module Dam
     validates :status, inclusion: { in: STATUSES }
     validate :storage_target_accepts_uploads, on: :create
     validate :storage_target_accepts_format, on: :create
-
     scope :newest_first, -> { order(created_at: :desc) }
     scope :visible, -> { where(status: %w[active processing]) }
     scope :uploaded_by, ->(employee_id) { where(uploaded_by_id: employee_id.to_s) }

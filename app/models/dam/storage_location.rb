@@ -32,6 +32,8 @@ module Dam
 
     has_many :assets, class_name: 'Dam::Asset', dependent: :nullify,
                       foreign_key: :storage_location_id, inverse_of: :storage_location
+    has_many :ingest_failures, class_name: 'Dam::IngestFailure', dependent: :delete_all,
+                               foreign_key: :storage_location_id, inverse_of: :storage_location
 
     validates :key, presence: true, uniqueness: { case_sensitive: false }
     validates :label, presence: true
@@ -51,6 +53,13 @@ module Dam
     scope :scanning, lambda {
       uploadable.where.not(ingest_mode: 'off').where.not(watch_path: [nil, ''])
     }
+
+    # One grouped query for a whole table, rather than a count and a sum per
+    # row. Assets filed nowhere group under nil. Archived ones are counted:
+    # they still occupy the space, which is what the Storage screen asks.
+    def self.asset_counts = Dam::Asset.group(:storage_location_id).count
+
+    def self.used_bytes_by_location = Dam::Asset.group(:storage_location_id).sum(:byte_size)
 
     # Where this person's next upload goes if the ingest form does not say.
     # Their own choice first, then the library default, then whatever will
@@ -74,6 +83,22 @@ module Dam
       options = uploadable.ordered.to_a
       options.unshift(current) if current && options.exclude?(current)
       options
+    end
+
+    # Re-points every asset here at another location, so a place can be drained
+    # before it is retired. This moves the catalogue, not the bytes: the file
+    # stays on whatever service holds it until the storage runner acts on the
+    # job this raises. Recording the intent is the point.
+    def repoint_assets_to(target, actor: nil)
+      moved = assets.count
+      assets.update_all(storage_location_id: target.id, updated_at: Time.current)
+      # The log says plainly what did and did not move, so nobody reads the
+      # entry as "the files are on the archive now".
+      Dam::Job.record!(job_type: 'move', actor: actor, subject: self, count: moved,
+                       log: ["Re-pointed #{moved} #{'asset'.pluralize(moved)} from " \
+                             "#{label} to #{target.label}",
+                             "Catalogue only — moving the files themselves is the storage runner's work."])
+      moved
     end
 
     def to_s = label

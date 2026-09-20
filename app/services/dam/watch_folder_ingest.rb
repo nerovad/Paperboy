@@ -9,11 +9,13 @@ module Dam
   # overlap cannot both take it, and leaves it in _ingested or — with the
   # reason on its Jobs entry — _failed. Top level only: a drop box is flat.
   #
-  # 'leave' reads a tree without disturbing it. Nothing is renamed, so a file
-  # is instead remembered by the digest of its path, and a unique index makes
-  # the second sweep to reach a file lose the race rather than double it. A
-  # share can hold more files than a minute's sweep should touch, so each pass
-  # takes a batch and leaves a cursor for the next one.
+  # 'reference' reads a tree without disturbing it, and without copying it:
+  # the asset records where the file is, and the library holds only the proxy
+  # and thumbnail Dam::DerivativeBuilder makes of it. Nothing is renamed, so a
+  # file is remembered by the digest of its path, and a unique index makes the
+  # second sweep to reach one lose the race rather than double it. A share can
+  # hold more files than a minute's sweep should touch, so each pass takes a
+  # batch and leaves a cursor for the next one.
   class WatchFolderIngest
     PROCESSING = '_processing'
     INGESTED = '_ingested'
@@ -72,28 +74,32 @@ module Dam
       paths.select { |path| path.file? && settled?(path) }
     end
 
+    # An empty file is not a file that has finished arriving, and it is not an
+    # asset either: a filestore of any age collects them, and ingesting one
+    # gives a row nothing can ever draw.
     def settled?(path)
       return false if path.basename.to_s.match?(IGNORED)
+      return false unless path.size.positive?
 
       path.mtime <= @now - SETTLE_TIME
     end
 
-    def build_asset(path, filename, source: nil)
+    def build_asset(path, filename)
       @io = File.open(path, 'rb')
       content_type = Marcel::MimeType.for(@io, name: filename)
       asset = Dam::Asset.new(storage_location: @location, uploaded_by_name: UPLOADER_NAME)
       asset.apply_file_facts!(Upload.new(filename, content_type, path.size))
-      if source
-        asset.source_path = source.to_s
-        asset.source_key = source_key(source)
-      end
       asset.file.attach(io: @io, filename: filename, content_type: content_type)
       asset
     end
 
-    def source_key(path) = Digest::SHA256.hexdigest(path.realpath.to_s)
-
     def describe(error) = "#{error.class}: #{error.message}"
+
+    # Every ingest gets its viewable copies; the work itself waits for a
+    # worker, so a scan is never held up by one large video.
+    def queue_derivatives(asset)
+      Dam::BuildDerivativesJob.perform_later(asset.id)
+    end
 
     def record_ingest(asset)
       Dam::Job.record!(job_type: 'ingest', actor: nil, subject: asset,

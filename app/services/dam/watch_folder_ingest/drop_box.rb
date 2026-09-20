@@ -27,6 +27,7 @@ module Dam
 
         finish(claimed, INGESTED)
         record_ingest(asset)
+        queue_derivatives(asset)
         @result.ingested += 1
       rescue StandardError => e
         # Also covers a failure after the file has been filed away, which would

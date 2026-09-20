@@ -13,14 +13,13 @@ module DamStoragePaths
   # the cold archive need an adapter first; until then their root is a note.
   FILESYSTEM_KINDS = %w[disk smb].freeze
 
-  # What a watch folder does with the files it finds. Moving them is right
-  # for a drop folder people file into; leaving them is the only safe way to
-  # read a share somebody else maintains, and the one that can be pointed at
-  # an existing library.
+  # What a scan does with the files it finds. A drop box is emptied into the
+  # library; a share somebody else maintains is read where it stands, and the
+  # library keeps only a proxy and a thumbnail of each file.
   INGEST_MODES = {
     'off' => 'Not scanned',
     'move' => 'Move originals into the library',
-    'leave' => 'Leave originals where they are'
+    'reference' => 'Read in place — originals are never moved or copied'
   }.freeze
 
   # dam_location_<id>_<digest of root>. The digest pins a name to one root, so
@@ -82,10 +81,33 @@ module DamStoragePaths
 
   def moves_originals? = ingest_mode == 'move'
 
+  def references_originals? = ingest_mode == 'reference'
+
   # Formats this location takes, upcased and without dots, as Dam::Asset
   # stores them. Empty means everything.
   def accepted_format_list
     accepted_formats.to_s.split(/[,\s]+/).filter_map { |format| format.delete('.').upcase.presence }
+  end
+
+  # Filename globs this location passes over. ResourceSpace writes five
+  # previews beside each original, and nobody wants those as assets.
+  def ignore_pattern_list
+    ignore_patterns.to_s.split(',').filter_map { |pattern| pattern.strip.presence }
+  end
+
+  # Whether a path is one this location may read a file from: inside the
+  # folder it scans, and inside the allowed roots. The check a download does
+  # before sending anything.
+  def holds_source?(path)
+    return false if watch_path.blank?
+
+    resolved = self.class.resolve_path(path)
+    self.class.inside?(resolved, self.class.resolve_path(watch_path)) &&
+      self.class.allowed_path?(resolved)
+  end
+
+  def ignored_filename?(filename)
+    ignore_pattern_list.any? { |pattern| File.fnmatch?(pattern, filename.to_s, File::FNM_CASEFOLD) }
   end
 
   def accepts_format?(format)

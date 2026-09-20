@@ -13,7 +13,7 @@ module DigitalAssetManagement
     # reached from a collection or a share too, so gating #show on search
     # would break those for anyone who holds them without it.
     before_action -> { require_app_feature('digital_asset_management', 'search', fallback: digital_asset_management_root_path) }, only: :index
-    before_action :set_asset, only: %i[show edit update destroy share]
+    before_action :set_asset, only: %i[show edit update destroy share original]
     before_action :load_upload_targets, only: %i[new create edit update]
 
     def index
@@ -31,6 +31,19 @@ module DigitalAssetManagement
 
     def new
       @asset = Dam::Asset.new(storage_location_id: dam_upload_target&.id)
+    end
+
+    # The full-resolution file of an asset the library references rather than
+    # holds. Sent from the share it lives on, and only ever from inside the
+    # folder its location scans — the path is on a row anyone who can edit an
+    # asset could have written, so it is never trusted as a path to read.
+    def original
+      path = @asset.original_path
+      refusal = unreadable_reason(path)
+      return redirect_to digital_asset_management_asset_path(@asset), alert: refusal if refusal
+
+      send_file path.to_s, filename: @asset.filename, type: @asset.content_type,
+                           disposition: 'attachment'
     end
 
     def create
@@ -109,6 +122,13 @@ module DigitalAssetManagement
       @asset = Dam::Asset.find(params[:id])
     end
 
+    def unreadable_reason(path)
+      return 'That file is not reachable from here.' if path.blank?
+      return nil if @asset.storage_location&.holds_source?(path)
+
+      'That file is outside the folder this location reads.'
+    end
+
     def asset_params
       params.require(:asset).permit(:title, :description, :storage_location_id, :file)
     end
@@ -122,23 +142,8 @@ module DigitalAssetManagement
       asset.uploaded_by_name = dam_actor_name
     end
 
-    # Metadata arrives as { field_key => value }. A blank value clears the row
-    # rather than storing an empty string, so "is blank" filters stay honest.
     def assign_metadata(asset)
-      submitted = params[:metadata]
-      return if submitted.blank?
-
-      allowed = Dam::MetadataField.active.pluck(:key)
-      submitted.to_unsafe_h.slice(*allowed).each do |key, value|
-        row = asset.metadata_values.find { |candidate| candidate.field_key == key }
-        if value.to_s.strip.blank?
-          row&.mark_for_destruction
-        elsif row
-          row.value = value.to_s.strip
-        else
-          asset.metadata_values.build(field_key: key, value: value.to_s.strip)
-        end
-      end
+      Dam::MetadataAssignment.apply(asset, params[:metadata])
     end
   end
 end

@@ -11,8 +11,8 @@
     </div>
     <div class="dam-page-actions">
       <%= dam_star_button(@asset, favorited: dam_favorite?(@asset), label: "Favorite") %>
-      <% if @asset.file.attached? %>
-        <%= link_to "Download", url_for(@asset.file), class: "btn pdf", download: @asset.filename %>
+      <% if (original = dam_original_url(@asset)) %>
+        <%= link_to "Download", original, class: "btn pdf", download: @asset.filename %>
       <% end %>
       <%= link_to "Edit", edit_digital_asset_management_asset_path(@asset), class: "btn edit" %>
       <%= button_to "Archive", digital_asset_management_asset_path(@asset), method: :delete,
@@ -24,20 +24,30 @@
 
   <div class="dam-detail-layout">
     <section class="dam-panel dam-preview">
-      <% if (thumbnail = dam_thumbnail_url(@asset)) %>
-        <%= image_tag thumbnail, alt: @asset.title, class: "dam-preview-image" %>
-      <% elsif @asset.media_type == "video" && @asset.file.attached? %>
-        <video controls class="dam-preview-image" preload="metadata">
+      <% if @asset.media_type == "video" && @asset.stored? && @asset.file.attached? %>
+        <video controls class="dam-preview-image" preload="metadata"
+               <%= "poster=#{dam_thumbnail_url(@asset)}" if @asset.thumbnail.attached? %>>
           <source src="<%= url_for(@asset.file) %>" type="<%= @asset.content_type %>">
         </video>
-      <% elsif @asset.media_type == "audio" && @asset.file.attached? %>
+      <% elsif @asset.media_type == "audio" && @asset.stored? && @asset.file.attached? %>
         <audio controls class="dam-preview-audio">
           <source src="<%= url_for(@asset.file) %>" type="<%= @asset.content_type %>">
         </audio>
+      <% elsif (preview = dam_preview_url(@asset)) %>
+        <%= image_tag preview, alt: @asset.title, class: "dam-preview-image" %>
+        <% if @asset.referenced? && @asset.media_type == "video" %>
+          <p class="dam-hint">Poster frame — download the original to play it.</p>
+        <% end %>
       <% else %>
         <div class="dam-preview-placeholder">
           <span aria-hidden="true"><%= dam_media_glyph(@asset.media_type) %></span>
-          <p>No inline preview for <%= @asset.format.presence || "this format" %>.</p>
+          <% if @asset.derivative_state == "pending" %>
+            <p>Preview still being made.</p>
+          <% elsif @asset.derivative_state == "failed" %>
+            <p>No preview — it could not be built.</p>
+          <% else %>
+            <p>No inline preview for <%= @asset.format.presence || "this format" %>.</p>
+          <% end %>
         </div>
       <% end %>
 

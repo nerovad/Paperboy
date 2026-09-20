@@ -74,6 +74,19 @@
     </div>
 
     <div class="form-group">
+      <%= f.label :ignore_patterns, "Filenames to skip" %>
+      <%= f.text_field :ignore_patterns, class: "form-control",
+                       placeholder: "*thm_*, *pre_*, *scr_*" %>
+      <p class="dam-hint">
+        Comma-separated filename patterns a scan passes over, for the generated files that sit
+        beside originals. A ResourceSpace filestore wants
+        <code>*col_*, *hpr_*, *lpr_*, *pre_*, *scr_*, *thm_*, *tmp_*</code> — without them its
+        seven preview sizes arrive as assets of their own, which is where most of the files in
+        one of those folders come from.
+      </p>
+    </div>
+
+    <div class="form-group">
       <%= f.label :ingest_mode, "What to do with what it finds" %>
       <%= f.select :ingest_mode,
                    Dam::StorageLocation::INGEST_MODES.map { |key, label| [label, key] },
@@ -81,10 +94,10 @@
       <p class="dam-hint">
         <strong>Move</strong> suits a drop box: a file that has finished copying is ingested
         and its original moved into <code>_ingested</code> beside it, or <code>_failed</code>
-        with the reason on the Jobs screen. <strong>Leave</strong> suits a share somebody else
-        maintains: subfolders are read too, nothing is moved or renamed, and a file already
-        ingested is passed over on later scans. Either way, scanning stops while the location
-        is disabled, read-only or full.
+        with the reason on the Jobs screen. <strong>Read in place</strong> suits a share
+        somebody else maintains: subfolders are read too, nothing is moved, renamed or copied,
+        and the library keeps only a proxy and a thumbnail of each file. Either way, scanning
+        stops while the location is disabled, read-only or full.
       </p>
     </div>
   </fieldset>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_160000) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -246,6 +246,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_140000) do
     t.string "checksum"
     t.string "content_type"
     t.datetime "created_at", null: false
+    t.text "derivative_error"
+    t.string "derivative_state", default: "pending", null: false
     t.text "description"
     t.integer "duration_seconds"
     t.string "filename"
@@ -256,6 +258,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_140000) do
     t.string "source_key", limit: 64
     t.string "source_path"
     t.string "status", default: "active", null: false
+    t.string "storage_kind", default: "stored", null: false
     t.bigint "storage_location_id"
     t.string "storage_path"
     t.string "title", null: false
@@ -301,6 +304,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_140000) do
     t.bigint "favoritable_id", null: false
     t.string "favoritable_type", null: false
     t.index ["employee_id", "favoritable_type", "favoritable_id"], name: "index_dam_favorites_on_employee_and_subject", unique: true
+  end
+
+  create_table "dam_ingest_failures", force: :cascade do |t|
+    t.integer "attempts", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "last_failed_at"
+    t.text "reason"
+    t.string "source_key", limit: 64, null: false
+    t.string "source_path"
+    t.bigint "storage_location_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["storage_location_id", "source_key"], name: "index_dam_ingest_failures_on_location_and_source", unique: true
+    t.index ["storage_location_id"], name: "index_dam_ingest_failures_on_storage_location_id"
   end
 
   create_table "dam_jobs", force: :cascade do |t|
@@ -392,6 +408,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_140000) do
     t.datetime "created_at", null: false
     t.boolean "default_for_uploads", default: false, null: false
     t.text "description"
+    t.string "ignore_patterns"
     t.string "ingest_mode", default: "off", null: false
     t.string "key", null: false
     t.string "kind", default: "disk", null: false
@@ -1492,6 +1509,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_140000) do
   add_foreign_key "dam_collection_assets", "dam_assets", column: "asset_id"
   add_foreign_key "dam_collection_assets", "dam_collections", column: "collection_id"
   add_foreign_key "dam_collections", "dam_collections", column: "parent_id"
+  add_foreign_key "dam_ingest_failures", "dam_storage_locations", column: "storage_location_id"
   add_foreign_key "dam_jobs", "dam_workflows", column: "workflow_id"
   add_foreign_key "dam_metadata_values", "dam_assets", column: "asset_id"
   add_foreign_key "data_runner_group_run_items", "data_runner_group_runs", column: "group_run_id"

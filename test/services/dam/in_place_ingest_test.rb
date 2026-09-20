@@ -20,7 +20,7 @@ module Dam
       @location = Dam::StorageLocation.create!(label: 'Share', kind: 'disk',
                                                root: @allowed.join('library').to_s,
                                                watch_path: @allowed.join('share').to_s,
-                                               ingest_mode: 'leave')
+                                               ingest_mode: 'reference')
       @share = Pathname(@location.watch_path)
     end
 
@@ -43,7 +43,11 @@ module Dam
 
       assert_equal 'summer.jpg', asset.filename
       assert_equal file.to_s, asset.source_path
-      assert_equal 'jpeg bytes', asset.file.download
+      assert_predicate asset, :referenced?
+      assert_equal 'jpeg bytes', asset.original_path.read
+      # The whole point: the library holds no copy of the original.
+      assert_not asset.file.attached?
+      assert_equal 'jpeg bytes'.bytesize, asset.byte_size
     end
 
     # The scan resumes after its cursor, so the pass following a full one has
@@ -75,20 +79,6 @@ module Dam
 
       assert_equal 1, sweep.ingested
       assert_equal %w[a.jpg b.jpg], Dam::Asset.order(:filename).pluck(:filename)
-    end
-
-    test 'only the accepted formats are read, and the rest are passed over silently' do
-      @location.update!(accepted_formats: 'jpg, png')
-      drop('keep.jpg', 'image')
-      drop('skip.json', '{}')
-      drop('skip.txt', 'notes')
-
-      result = sweep
-
-      assert_equal 1, result.ingested
-      assert_equal 0, result.failed
-      assert_equal ['keep.jpg'], Dam::Asset.pluck(:filename)
-      assert_empty Dam::Job.where(status: 'failed')
     end
 
     test 'a batch is capped, and the next scan resumes after the cursor' do

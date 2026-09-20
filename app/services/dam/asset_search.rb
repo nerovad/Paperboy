@@ -39,7 +39,7 @@ module Dam
     end
 
     def results
-      scope = Dam::Asset.visible.includes(:storage_location).with_attached_file
+      scope = Dam::Asset.visible.includes(:storage_location).with_previews
       scope = apply_text(scope)
       scope = apply_facets(scope)
       scope = apply_dates(scope)
