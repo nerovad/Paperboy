@@ -63,6 +63,27 @@ module DigitalAssetManagementHelper
     asset.file.attached? ? url_for(asset.file) : nil
   end
 
+  PREVIEW_STATE_LABELS = { 'ready' => 'ready', 'pending' => 'waiting',
+                           'failed' => 'failed', 'none' => 'no preview possible' }.freeze
+
+  def dam_preview_state_label(state) = PREVIEW_STATE_LABELS.fetch(state, state.to_s)
+
+  # The sentence an administrator can act on. The raw text stays available
+  # under Details, and is the only thing that helps when the sentence does not.
+  def dam_failure_explanation(text) = Dam::FailureExplanation.for(text) || 'No reason was recorded.'
+
+  # Everything the app actually knows, folded away until somebody asks — a
+  # class name and a backtrace line are noise on a page about a library, and
+  # the first thing wanted when the plain sentence is not enough.
+  def dam_failure_details(text, path: nil)
+    return nil if text.blank?
+
+    tag.details(class: 'dam-failure-details') do
+      concat tag.summary('Details')
+      concat tag.pre([path.presence, text].compact.join("\n\n"))
+    end
+  end
+
   def dam_star_button(subject, favorited:, label: nil)
     type = subject.is_a?(Dam::Collection) ? 'collection' : 'asset'
     button_to digital_asset_management_favorites_path,

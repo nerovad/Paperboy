@@ -41,6 +41,8 @@ module DamReferencedSource
     # falls back to while one is still being built.
     scope :with_previews, -> { with_attached_file.with_attached_thumbnail }
 
+    scope :without_previews, -> { where(derivative_state: %w[pending failed]) }
+
     validates :storage_kind, inclusion: { in: STORAGE_KINDS }
     validates :derivative_state, inclusion: { in: DERIVATIVE_STATES }
     validates :source_path, presence: true, if: :referenced?

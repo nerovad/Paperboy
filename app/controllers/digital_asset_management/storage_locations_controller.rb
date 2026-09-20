@@ -11,7 +11,8 @@ module DigitalAssetManagement
   class StorageLocationsController < BaseController
     before_action -> { require_app_feature('digital_asset_management', 'storage', fallback: digital_asset_management_root_path) }
     before_action :set_location,
-                  only: %i[show edit update destroy make_default toggle move_assets retry_failures]
+                  only: %i[show edit update destroy make_default toggle move_assets retry_failures
+                           rebuild_derivatives]
     before_action :require_storage_admin, except: %i[index show]
 
     def index
@@ -27,19 +28,26 @@ module DigitalAssetManagement
     end
 
     def retry_failures
-      forgotten = @location.ingest_failures.count
-      @location.ingest_failures.delete_all
+      forgotten = Dam::LocationDiagnostics.new(@location).forget_ingest_failures!
       redirect_to digital_asset_management_storage_location_path(@location),
                   notice: "#{forgotten} #{'file'.pluralize(forgotten)} will be tried again on the next scan."
     end
 
+    def rebuild_derivatives
+      queued = Dam::LocationDiagnostics.new(@location).rebuild_previews!
+
+      redirect_to digital_asset_management_storage_location_path(@location),
+                  notice: "Queued #{queued} #{'preview'.pluralize(queued)}. " \
+                          'They appear as the jobs run.'
+    end
+
     def show
-      @ingest_failures = @location.ingest_failures.newest_first.limit(10)
-      @failure_count = @location.ingest_failures.count
+      @diagnostics = Dam::LocationDiagnostics.new(@location)
       @asset_count = @location.asset_count
       @used_bytes = @location.used_bytes
       @by_media_type = @location.assets.group(:media_type).count
       @recent_assets = @location.assets.newest_first.limit(8)
+
       # Moving into a read-only archive is a legitimate destination — that is
       # what an archive is for — so targets only have to be active.
       @move_targets = Dam::StorageLocation.active.ordered.where.not(id: @location.id)

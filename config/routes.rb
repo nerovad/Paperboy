@@ -67,6 +67,8 @@ Rails.application.routes.draw do
         # Forgets what failed to ingest, so the next scan tries those files
         # again — after whatever was wrong with them has been put right.
         post :retry_failures
+        # Queues the previews for everything here that has none.
+        post :rebuild_derivatives
       end
     end
 

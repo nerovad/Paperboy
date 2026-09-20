@@ -44,7 +44,8 @@
           <% if @asset.derivative_state == "pending" %>
             <p>Preview still being made.</p>
           <% elsif @asset.derivative_state == "failed" %>
-            <p>No preview — it could not be built.</p>
+            <p><%= dam_failure_explanation(@asset.derivative_error) %></p>
+            <%= dam_failure_details(@asset.derivative_error) %>
           <% else %>
             <p>No inline preview for <%= @asset.format.presence || "this format" %>.</p>
           <% end %>

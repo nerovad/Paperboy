@@ -45,6 +45,10 @@ Metrics/ClassLength:
     - "app/models/forms/template_routing_step.rb"
     - "app/services/forms/inbox_query.rb"
     - "app/services/form_lookup.rb"
+    # Seven REST actions plus five member ones, each a few lines: the length is
+    # the number of things a storage location can be asked to do, not a method
+    # that grew.
+    - "app/controllers/digital_asset_management/storage_locations_controller.rb"
 
 Metrics/MethodLength:
   Max: 44

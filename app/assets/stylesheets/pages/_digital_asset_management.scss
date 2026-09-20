@@ -572,3 +572,43 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+// Diagnostics on a storage location: why a file did not ingest, or why the
+// preview of one that did is missing. The plain sentence carries the page; the
+// raw error is folded away behind Details.
+.dam-state-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+}
+
+.dam-failures li + li {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid $border-color;
+}
+
+.dam-failure-reason {
+  margin: 0.25rem 0 0.35rem;
+}
+
+.dam-failure-details {
+  summary {
+    cursor: pointer;
+    color: $text-muted;
+    font-size: 0.85rem;
+  }
+
+  pre {
+    margin: 0.4rem 0 0;
+    padding: 0.6rem;
+    max-height: 12rem;
+    overflow: auto;
+    background: $neutral-pill-bg;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
