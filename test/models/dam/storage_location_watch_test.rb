@@ -74,6 +74,23 @@ module Dam
       assert_not location.accepts_format?('doc')
     end
 
+    # One letter should not decide whether half a camera's output is
+    # cataloguable.
+    test 'a format list covers the other spellings of the same format' do
+      location = build(accepted_formats: 'jpg, tif, mpg')
+
+      assert location.accepts_format?('jpeg')
+      assert location.accepts_format?('.JPEG')
+      assert location.accepts_format?('tiff')
+      assert location.accepts_format?('mpeg')
+      assert_not location.accepts_format?('png')
+    end
+
+    test 'the list may be written in either spelling' do
+      assert build(accepted_formats: 'jpeg').accepts_format?('jpg')
+      assert build(accepted_formats: 'tiff').accepts_format?('tif')
+    end
+
     test 'a blank format list accepts everything' do
       location = build(accepted_formats: '  ')
 

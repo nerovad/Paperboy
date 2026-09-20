@@ -104,4 +104,23 @@ namespace :dam do
     unresolved.each { |row| puts "  #{row[:ref]}\t#{row[:path]}" }
     puts 'These are paths relative to SYNC_BASE. Check that the share is mounted here.'
   end
+
+  # After installing ImageMagick, ffmpeg or poppler-utils on a host that was
+  # missing them — every asset whose proxy could not be built is queued again.
+  # STATE=failed, pending, or both (the default). ID=12,13 for particular ones.
+  desc 'Queue proxy and thumbnail builds for assets that have none'
+  task rebuild_derivatives: :environment do
+    scope = Dam::Asset.where(derivative_state: ENV.fetch('STATE', 'pending,failed').split(','))
+    scope = scope.where(id: ENV['ID'].split(',')) if ENV['ID'].present?
+
+    queued = 0
+    scope.find_each do |asset|
+      Dam::BuildDerivativesJob.perform_later(asset.id)
+      queued += 1
+    end
+    puts "Queued #{queued} #{'asset'.pluralize(queued)}."
+    counted = Dam::Asset.group(:derivative_state).count
+    puts(counted.map { |state, held| "  #{state}: #{held}" })
+    puts 'Nothing runs until Solid Queue does — check the jobs service on this host.' if queued.positive?
+  end
 end

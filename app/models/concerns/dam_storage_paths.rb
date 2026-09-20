@@ -22,6 +22,14 @@ module DamStoragePaths
     'reference' => 'Read in place — originals are never moved or copied'
   }.freeze
 
+  # Spellings of the same format. Somebody who types "jpg" into the format
+  # list means the .jpeg beside it too, and a library where half the camera
+  # output is refused because of one letter is not a library.
+  FORMAT_ALIASES = {
+    'JPEG' => 'JPG', 'JPE' => 'JPG', 'TIFF' => 'TIF', 'MPEG' => 'MPG',
+    'HTM' => 'HTML', 'AIFF' => 'AIF', 'MIDI' => 'MID'
+  }.freeze
+
   # dam_location_<id>_<digest of root>. The digest pins a name to one root, so
   # a service built for a name stays right for as long as the process lives.
   SERVICE_NAME = /\Adam_location_(\d+)_(\h{12})\z/
@@ -58,6 +66,12 @@ module DamStoragePaths
     end
 
     def inside?(path, root) = path == root || path.start_with?("#{root.chomp('/')}/")
+
+    # One spelling per format, so a list and a filename can be compared.
+    def canonical_format(format)
+      upcased = format.to_s.delete('.').upcase
+      FORMAT_ALIASES.fetch(upcased, upcased)
+    end
 
     def overlap?(one, other) = inside?(one, other) || inside?(other, one)
 
@@ -114,7 +128,8 @@ module DamStoragePaths
     list = accepted_format_list
     return true if list.empty?
 
-    list.include?(format.to_s.delete('.').upcase)
+    list.map { |entry| self.class.canonical_format(entry) }
+        .include?(self.class.canonical_format(format))
   end
 
   def filesystem? = FILESYSTEM_KINDS.include?(kind)
