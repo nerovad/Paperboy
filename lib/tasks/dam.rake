@@ -69,4 +69,39 @@ namespace :dam do
     end
     puts 'No location is scanning a folder.' if Dam::StorageLocation.scanning.none?
   end
+
+  # ResourceSpace holds the catalogue this library is replacing: 14,000
+  # resources whose titles and keywords exist only in its MySQL database, and
+  # whose previews it has already generated. This reads both, and copies no
+  # original anywhere.
+  #
+  #   LOCATION=resourcespace SYNC_BASE=/mnt/i/... DRY_RUN=1 LIMIT=50 \
+  #     bundle exec rails dam:import_resourcespace
+  #
+  # SYNC_BASE is where ResourceSpace's relative file_path values hang off —
+  # its $syncdir, as mounted on this host. Without it only the resources whose
+  # originals sit in the filestore itself can be found.
+  desc 'Import a ResourceSpace library as referenced assets (DRY_RUN=1 to report only)'
+  task import_resourcespace: :environment do
+    location = Dam::StorageLocation.find_by(key: ENV.fetch('LOCATION', 'resourcespace'))
+    abort "No storage location with key #{ENV.fetch('LOCATION', 'resourcespace')}" if location.nil?
+
+    catalog = Dam::ResourceSpace::Catalog.new
+    puts "ResourceSpace: #{catalog.active_count} active resources"
+    puts "Importing into #{location.label} (#{location.ingest_mode})#{' — dry run' if ENV['DRY_RUN']}"
+
+    import = Dam::ResourceSpace::Import.new(
+      location: location, sync_base: ENV.fetch('SYNC_BASE', nil),
+      catalog: catalog, limit: ENV['LIMIT']&.to_i, dry_run: ENV['DRY_RUN'].present?
+    )
+    result = import.call
+    puts result
+
+    unresolved = import.unresolved
+    next if unresolved.empty?
+
+    puts "\nFirst #{unresolved.size} resources whose original could not be found:"
+    unresolved.each { |row| puts "  #{row[:ref]}\t#{row[:path]}" }
+    puts 'These are paths relative to SYNC_BASE. Check that the share is mounted here.'
+  end
 end

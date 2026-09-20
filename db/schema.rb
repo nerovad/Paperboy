@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_20_090000) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -250,6 +250,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_160000) do
     t.string "derivative_state", default: "pending", null: false
     t.text "description"
     t.integer "duration_seconds"
+    t.string "external_ref"
     t.string "filename"
     t.string "format"
     t.integer "height"
@@ -270,6 +271,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_160000) do
     t.index ["format"], name: "index_dam_assets_on_format"
     t.index ["media_type"], name: "index_dam_assets_on_media_type"
     t.index ["status"], name: "index_dam_assets_on_status"
+    t.index ["storage_location_id", "external_ref"], name: "index_dam_assets_on_location_and_external_ref", unique: true, where: "([external_ref] IS NOT NULL)"
     t.index ["storage_location_id", "source_key"], name: "index_dam_assets_on_location_and_source", unique: true, where: "([source_key] IS NOT NULL)"
     t.index ["storage_location_id"], name: "index_dam_assets_on_storage_location_id"
     t.index ["uploaded_by_id"], name: "index_dam_assets_on_uploaded_by_id"

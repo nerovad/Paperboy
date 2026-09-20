@@ -226,6 +226,8 @@ GEM
     msgpack (1.8.3)
     multi_xml (0.9.1)
       bigdecimal (>= 3.1, < 5)
+    mysql2 (0.5.7)
+      bigdecimal
     net-http (0.9.1)
       uri (>= 0.11.1)
     net-imap (0.6.6)
@@ -532,6 +534,7 @@ DEPENDENCIES
   kamal
   minitest
   minitest-mock
+  mysql2
   nokogiri
   omniauth
   omniauth-entra-id

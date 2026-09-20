@@ -5,6 +5,7 @@ require_relative '../config/environment'
 require 'rails/test_help'
 require 'minitest/mock'
 require_relative 'support/isolated_dsl_catalog'
+require_relative 'support/dam/fake_catalog'
 
 # Existing tests use callable objects as stubbed return values (for example,
 # service doubles exposing #call). minitest-mock treats every callable value as

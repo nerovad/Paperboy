@@ -24,6 +24,10 @@ gem 'sprockets-rails'
 gem 'activerecord-sqlserver-adapter'
 gem 'tiny_tds', force_ruby_platform: true
 
+# Read-only, and only for the DAM: ResourceSpace keeps its catalogue in MySQL,
+# and importing from its filestore without it means guessing from filenames.
+gem 'mysql2'
+
 # Use the Puma web server [https://github.com/puma/puma]
 gem 'puma', '>= 5.0'
 
