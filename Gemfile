@@ -24,9 +24,15 @@ gem 'sprockets-rails'
 gem 'activerecord-sqlserver-adapter'
 gem 'tiny_tds', force_ruby_platform: true
 
-# Read-only, and only for the DAM: ResourceSpace keeps its catalogue in MySQL,
-# and importing from its filestore without it means guessing from filenames.
-gem 'mysql2'
+# Read-only, and only for the DAM's ResourceSpace import, which runs on the
+# machine that can reach that MySQL server. The group is optional so no other
+# host has to build the native extension — or install libmysqlclient-dev to
+# get through a deploy. Opt in where it is needed:
+#
+#   bundle config set --local with resourcespace && bundle install
+group :resourcespace, optional: true do
+  gem 'mysql2'
+end
 
 # Use the Puma web server [https://github.com/puma/puma]
 gem 'puma', '>= 5.0'

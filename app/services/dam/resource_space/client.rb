@@ -12,6 +12,17 @@ module Dam
     class Client
       class NotConfigured < StandardError; end
 
+      # mysql2 lives in an optional bundler group, so most hosts never build
+      # it. Required here rather than at boot, which is what lets a server
+      # without it run everything else in the DAM quite happily.
+      def self.load_driver!
+        require 'mysql2'
+      rescue LoadError
+        raise NotConfigured, 'The mysql2 gem is not installed here. It is in the optional ' \
+                             '"resourcespace" bundler group: bundle config set --local with ' \
+                             'resourcespace && bundle install'
+      end
+
       SETTINGS = { host: 'RS_DB_HOST', username: 'RS_DB_USER',
                    password: 'RS_DB_PASSWORD', database: 'RS_DB_NAME' }.freeze
 
@@ -39,6 +50,7 @@ module Dam
         # No reconnect: the option is deprecated in the client, and an import
         # that loses the connection should stop and say so rather than carry
         # on against a session that has quietly restarted.
+        self.class.load_driver!
         @connection ||= Mysql2::Client.new(**self.class.settings)
       end
 
