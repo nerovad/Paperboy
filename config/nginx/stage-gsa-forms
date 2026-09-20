@@ -17,6 +17,12 @@ server {
 
     root /home/matthew/gitea/Paperboy/public;
 
+    # Media uploads. Without this nginx's 1m default rejects anything bigger
+    # mid-upload and closes the connection, which Turbo swallows: the ingest
+    # form just re-renders and no request ever reaches Rails.
+    client_max_body_size 1g;
+    client_body_timeout 300s;
+
     # TLS certs
     ssl_certificate           /etc/ssl/certs/stage-gsa-forms-fullchain.crt;  # leaf + intermediate
     ssl_certificate_key       /etc/ssl/private/stage-gsa-forms.key;          # private key
