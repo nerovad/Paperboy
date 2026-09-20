@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_20_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_20_093000) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -366,10 +366,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_090000) do
     t.string "field_key", null: false
     t.decimal "numeric_value", precision: 18, scale: 4
     t.datetime "updated_at", null: false
-    t.string "value", limit: 450
+    t.text "value"
     t.index ["asset_id", "field_key"], name: "index_dam_metadata_values_on_asset_id_and_field_key", unique: true
     t.index ["asset_id"], name: "index_dam_metadata_values_on_asset_id"
-    t.index ["field_key", "value"], name: "index_dam_metadata_values_on_field_key_and_value"
+    t.index ["field_key"], name: "index_dam_metadata_values_on_field_key"
   end
 
   create_table "dam_recent_views", force: :cascade do |t|

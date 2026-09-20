@@ -95,16 +95,16 @@ module DamStoragePaths
     ignore_patterns.to_s.split(',').filter_map { |pattern| pattern.strip.presence }
   end
 
-  # Whether a path is one this location may read a file from: inside the
-  # folder it scans, and inside the allowed roots. The check a download does
-  # before sending anything.
-  def holds_source?(path)
-    return false if watch_path.blank?
-
-    resolved = self.class.resolve_path(path)
-    self.class.inside?(resolved, self.class.resolve_path(watch_path)) &&
-      self.class.allowed_path?(resolved)
-  end
+  # Whether this location may read a file from a path — the check a download
+  # does before sending anything.
+  #
+  # The boundary is PAPERBOY_DAM_ROOTS, not the folder this location scans: an
+  # imported asset's original often sits somewhere else entirely, the way
+  # ResourceSpace keeps its catalogue in one place and the files it describes
+  # in another. The allowed roots are set per host in .env and cannot be
+  # changed from inside the app, which is what makes them the boundary worth
+  # having; a source_path is a column, and columns are written by code.
+  def holds_source?(path) = self.class.allowed_path?(path)
 
   def ignored_filename?(filename)
     ignore_pattern_list.any? { |pattern| File.fnmatch?(pattern, filename.to_s, File::FNM_CASEFOLD) }
