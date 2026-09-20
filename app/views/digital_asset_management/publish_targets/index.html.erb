@@ -1,0 +1,76 @@
+<%# Publish targets — the accounts and addresses the library can send to. %>
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1>Publish Targets</h1>
+      <p class="dam-page-subtitle">
+        Where a finished asset can be sent: a channel, a page, an account, or an address of your own.
+      </p>
+    </div>
+    <div class="dam-page-actions">
+      <%= link_to "New target", new_digital_asset_management_publish_target_path, class: "btn approve" %>
+    </div>
+  </header>
+
+  <% if @targets.any? %>
+    <table class="dam-table">
+      <thead>
+        <tr>
+          <th>Target</th>
+          <th>Service</th>
+          <th>Takes</th>
+          <th>Published</th>
+          <th>Last published</th>
+          <th>State</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @targets.each do |target| %>
+          <tr>
+            <td>
+              <%= link_to target.label, digital_asset_management_publish_target_path(target) %>
+              <% if target.account_ref.present? %>
+                <p class="dam-muted"><%= target.account_prompt&.dig(:label) || "Account" %>: <%= target.account_ref %></p>
+              <% elsif target.endpoint_url.present? %>
+                <p class="dam-muted"><%= truncate(target.endpoint_url, length: 60) %></p>
+              <% end %>
+            </td>
+            <td><span class="dam-runtime"><%= target.provider_label %></span></td>
+            <td><%= target.media_types.map(&:titleize).to_sentence %></td>
+            <td><%= @counts.fetch(target.id, 0) %></td>
+            <td>
+              <% if (last = @last_published[target.id]) %>
+                <%= time_ago_in_words(last) %> ago
+              <% else %>
+                <span class="dam-muted">Never</span>
+              <% end %>
+            </td>
+            <td>
+              <% if (reason = target.refusal_reason) %>
+                <%= dam_pill("cancelled", reason.titleize) %>
+              <% else %>
+                <%= dam_pill("active", "Ready") %>
+              <% end %>
+            </td>
+            <td class="dam-row-actions">
+              <%= button_to target.enabled? ? "Disable" : "Enable",
+                            toggle_digital_asset_management_publish_target_path(target), method: :patch,
+                            class: "btn compact #{target.enabled? ? 'deny' : 'approve'}" %>
+              <%= link_to "Edit", edit_digital_asset_management_publish_target_path(target), class: "btn edit compact" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="dam-empty">
+      <p>No publish targets yet.</p>
+      <p class="dam-muted">
+        A target is one account on one service — this channel, that page — or a URL of your own with
+        whatever headers it expects.
+      </p>
+      <%= link_to "Add the first one", new_digital_asset_management_publish_target_path, class: "btn approve" %>
+    </div>
+  <% end %>
+</div>

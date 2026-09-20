@@ -1,0 +1,17 @@
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1><%= @target.label %></h1>
+      <p class="dam-page-subtitle"><%= @target.provider_label %></p>
+    </div>
+    <div class="dam-page-actions">
+      <%= link_to "Back", digital_asset_management_publish_target_path(@target), class: "btn" %>
+      <%= button_to "Delete", digital_asset_management_publish_target_path(@target), method: :delete,
+                    class: "btn deny",
+                    form: { data: { turbo_confirm: "Delete #{@target.label}? Only a target that has never published anything can be deleted.",
+                                    confirm_title: "Delete target", confirm_label: "Delete" } } %>
+    </div>
+  </header>
+
+  <%= render "form" %>
+</div>

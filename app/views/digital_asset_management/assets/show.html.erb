@@ -155,6 +155,10 @@
         <% end %>
       </section>
 
+      <% if @publish_targets %>
+        <%= render "digital_asset_management/assets/publish_panel", asset: @asset %>
+      <% end %>
+
       <% if @jobs.any? %>
         <section class="dam-panel">
           <h2>Job history</h2>

@@ -75,6 +75,8 @@ class AppFeature
       { key: 'jobs',        label: 'Jobs' },
       { key: 'workflows',   label: 'Workflows' },
       { key: 'shares',      label: 'My Shares' },
+      { key: 'publish',     label: 'Publish an asset' },
+      { key: 'publish_targets', label: 'Publish Targets (set up and connect)' },
       { key: 'storage',     label: 'Storage' }
     ],
     'aim' => [

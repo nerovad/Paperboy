@@ -2,7 +2,7 @@
 
 module Dam
   # One run of anything the DAM does in the background: an ingest, an export, a
-  # share delivery, or a custom workflow.
+  # share delivery, a publish, or a custom workflow.
   #
   # One table for all four because the Jobs screen is a single status feed and
   # every kind needs the same facts — state, counts, timings, error, who asked.
@@ -10,6 +10,7 @@ module Dam
     JOB_TYPES = {
       'ingest' => 'Ingest',
       'export' => 'Export',
+      'publish' => 'Publish',
       'share' => 'Share',
       'move' => 'Move',
       'workflow' => 'Workflow'

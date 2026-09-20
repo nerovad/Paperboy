@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_20_093000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_20_150000) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -370,6 +370,70 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_093000) do
     t.index ["asset_id", "field_key"], name: "index_dam_metadata_values_on_asset_id_and_field_key", unique: true
     t.index ["asset_id"], name: "index_dam_metadata_values_on_asset_id"
     t.index ["field_key"], name: "index_dam_metadata_values_on_field_key"
+  end
+
+  create_table "dam_publications", force: :cascade do |t|
+    t.bigint "asset_id", null: false
+    t.string "asset_title"
+    t.integer "attempts", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.text "error"
+    t.string "external_id"
+    t.string "external_url"
+    t.datetime "finished_at"
+    t.integer "job_id"
+    t.text "log"
+    t.string "privacy"
+    t.string "provider"
+    t.string "public_token"
+    t.bigint "publish_target_id", null: false
+    t.datetime "queued_at"
+    t.string "requested_by_id"
+    t.string "requested_by_name"
+    t.integer "response_code"
+    t.datetime "started_at"
+    t.string "status", default: "queued", null: false
+    t.string "tags"
+    t.string "target_label"
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.index ["asset_id"], name: "index_dam_publications_on_asset_id"
+    t.index ["created_at"], name: "index_dam_publications_on_created_at"
+    t.index ["public_token"], name: "index_dam_publications_on_public_token", unique: true, where: "([public_token] IS NOT NULL)"
+    t.index ["publish_target_id"], name: "index_dam_publications_on_publish_target_id"
+    t.index ["requested_by_id"], name: "index_dam_publications_on_requested_by_id"
+    t.index ["status"], name: "index_dam_publications_on_status"
+  end
+
+  create_table "dam_publish_targets", force: :cascade do |t|
+    t.string "account_label"
+    t.string "account_ref"
+    t.string "body_style", default: "multipart", null: false
+    t.datetime "connected_at"
+    t.string "connected_by_id"
+    t.string "connected_by_name"
+    t.datetime "created_at", null: false
+    t.string "default_privacy"
+    t.boolean "enabled", default: true, null: false
+    t.string "endpoint_url"
+    t.string "file_field", default: "file", null: false
+    t.text "headers"
+    t.string "http_method", default: "POST", null: false
+    t.string "key", null: false
+    t.string "label", null: false
+    t.datetime "last_published_at"
+    t.text "notes"
+    t.text "oauth_access_token"
+    t.datetime "oauth_expires_at"
+    t.text "oauth_refresh_token"
+    t.string "oauth_scope"
+    t.integer "position", default: 0, null: false
+    t.string "provider", null: false
+    t.datetime "updated_at", null: false
+    t.index ["enabled"], name: "index_dam_publish_targets_on_enabled"
+    t.index ["key"], name: "index_dam_publish_targets_on_key", unique: true
+    t.index ["provider"], name: "index_dam_publish_targets_on_provider"
   end
 
   create_table "dam_recent_views", force: :cascade do |t|
@@ -1514,6 +1578,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_093000) do
   add_foreign_key "dam_ingest_failures", "dam_storage_locations", column: "storage_location_id"
   add_foreign_key "dam_jobs", "dam_workflows", column: "workflow_id"
   add_foreign_key "dam_metadata_values", "dam_assets", column: "asset_id"
+  add_foreign_key "dam_publications", "dam_assets", column: "asset_id"
+  add_foreign_key "dam_publications", "dam_publish_targets", column: "publish_target_id"
   add_foreign_key "data_runner_group_run_items", "data_runner_group_runs", column: "group_run_id"
   add_foreign_key "form_fields", "form_templates"
   add_foreign_key "form_template_copy_recipients", "form_templates"

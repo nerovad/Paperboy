@@ -1,0 +1,86 @@
+<%# Everything the library has published, and how it went. %>
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1>Published</h1>
+      <p class="dam-page-subtitle"><%= pluralize(@pagy.count, "publication") %>.</p>
+    </div>
+  </header>
+
+  <div class="dam-filter-bar">
+    <%= link_to "All", digital_asset_management_publications_path(scope: params[:scope]),
+                class: "btn compact#{' active' if @state_filter.blank?}" %>
+    <% %w[queued running succeeded failed cancelled].each do |state| %>
+      <%= link_to "#{state.titleize} (#{@counts.fetch(state, 0)})",
+                  digital_asset_management_publications_path(state: state, scope: params[:scope]),
+                  class: "btn compact#{' active' if @state_filter == state}" %>
+    <% end %>
+    <span class="dam-filter-divider"></span>
+    <%= link_to "Mine", digital_asset_management_publications_path(state: @state_filter.presence),
+                class: "btn compact#{' active' if @mine}" %>
+    <%= link_to "Everyone", digital_asset_management_publications_path(state: @state_filter.presence, scope: "everyone"),
+                class: "btn compact#{' active' unless @mine}" %>
+  </div>
+
+  <% if @publications.any? %>
+    <table class="dam-table">
+      <thead>
+        <tr>
+          <th>Asset</th>
+          <th>Target</th>
+          <th>Requested</th>
+          <th>By</th>
+          <th>State</th>
+          <th>Where it landed</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @publications.each do |publication| %>
+          <tr>
+            <td>
+              <%= link_to publication.title.presence || publication.asset_title,
+                          digital_asset_management_publication_path(publication) %>
+              <% if publication.asset_title.present? && publication.asset_title != publication.title %>
+                <p class="dam-muted"><%= publication.asset_title %></p>
+              <% end %>
+            </td>
+            <td><%= publication.target_label %><br><span class="dam-muted"><%= publication.provider&.titleize %></span></td>
+            <td><%= publication.created_at.strftime("%b %-d, %Y at %-l:%M %p") %></td>
+            <td><%= publication.requested_by_name.presence || "—" %></td>
+            <td><%= dam_pill(publication.status) %></td>
+            <td>
+              <% if (published = dam_published_url(publication.external_url)) %>
+                <%= link_to "Open", published, target: "_blank", rel: "noopener", class: "btn compact pdf" %>
+              <% elsif publication.failed? %>
+                <span class="dam-muted"><%= truncate(publication.error, length: 60) %></span>
+              <% else %>
+                <span class="dam-muted">—</span>
+              <% end %>
+            </td>
+            <td class="dam-row-actions">
+              <% unless publication.open? %>
+                <%= button_to "Publish again", retry_digital_asset_management_publication_path(publication),
+                              method: :post, class: "btn compact edit" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% if @pagy.pages > 1 %>
+      <div class="pagination-wrapper">
+        <%== @pagy.series_nav %>
+        <p class="pagination-summary">
+          Showing <%= @pagy.from %>–<%= @pagy.to %> of <%= @pagy.count %> publications
+        </p>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="dam-empty">
+      <p>Nothing published<%= " by you" if @mine %> yet.</p>
+      <p class="dam-muted">Publish an asset from its own page, using the Publish panel.</p>
+    </div>
+  <% end %>
+</div>

@@ -27,6 +27,7 @@ module DigitalAssetManagement
       @collections = Dam::Collection.alphabetical
       @jobs = Dam::Job.where(subject: @asset).newest_first.limit(10)
       @shares = Dam::Share.where(subject: @asset).newest_first.limit(10)
+      load_publishing
     end
 
     def new
@@ -122,6 +123,18 @@ module DigitalAssetManagement
     end
 
     private
+
+    # The Publish panel, for whoever holds the grant. Targets are split rather
+    # than filtered: a target that will not take this asset is worth showing
+    # with its reason, or the answer to "why can't I send this to YouTube" is
+    # an empty select.
+    def load_publishing
+      return unless helpers.can_use_app_feature?('digital_asset_management', 'publish')
+
+      targets = Dam::PublishTarget.ordered.to_a
+      @publish_targets, @publish_targets_closed = targets.partition { |target| target.refusal_reason(@asset).nil? }
+      @publications = @asset.publications.newest_first.limit(10)
+    end
 
     def set_asset
       @asset = Dam::Asset.find(params[:id])

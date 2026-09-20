@@ -49,6 +49,19 @@ Metrics/ClassLength:
     # the number of things a storage location can be asked to do, not a method
     # that grew.
     - "app/controllers/digital_asset_management/storage_locations_controller.rb"
+    # Seven REST actions, three member ones and the loaders behind them:
+    # browsing, ingesting, sharing and publishing an asset all live here
+    # because they are all things one asset page offers.
+    - "app/controllers/digital_asset_management/assets_controller.rb"
+    # A table of four OAuth providers and the small ways each of them differs
+    # from the others. The length is how many services publish, not a class
+    # doing several jobs.
+    - "app/services/dam/publishing/oauth.rb"
+    # One test per conversation a publish provider has; splitting them by
+    # count rather than by subject would only make them harder to find.
+    - "test/services/dam/publishing/runner_test.rb"
+    - "test/services/dam/publishing/adapters_test.rb"
+    - "test/controllers/digital_asset_management/publications_controller_test.rb"
 
 Metrics/MethodLength:
   Max: 44

@@ -1,0 +1,112 @@
+<%# The one form for every provider. What a provider asks for differs — a
+    channel wants a category, a page wants its ID, a URL of your own wants
+    headers — so the fields that do not apply are hidden by the
+    publish-target controller rather than written out five times. %>
+<% prompts = Dam::Publishing.provider_keys.index_with { |key| Dam::Publishing.adapter(key).account_prompt } %>
+<% privacies = Dam::Publishing.provider_keys.index_with { |key| Dam::Publishing.adapter(key).privacy_options } %>
+
+<%= form_with model: @target, scope: :publish_target,
+              url: @target.persisted? ? digital_asset_management_publish_target_path(@target)
+                                      : digital_asset_management_publish_targets_path,
+              class: "dam-form", data: { controller: "publish-target",
+                                         publish_target_prompts_value: prompts.to_json,
+                                         publish_target_privacies_value: privacies.to_json } do |f| %>
+  <% if @target.errors.any? %>
+    <div class="dam-errors">
+      <ul>
+        <% @target.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :label, "Name" %>
+    <%= f.text_field :label, class: "form-control", required: true, placeholder: "County YouTube channel" %>
+    <p class="dam-hint">What this target is called on the Publish picker.</p>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :provider, "Service" %>
+    <%= f.select :provider, Dam::Publishing.options_for_select, {}, class: "form-control",
+                 data: { publish_target_target: "provider", action: "change->publish-target#refresh" } %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :key %>
+    <%= f.text_field :key, class: "form-control", placeholder: "Left blank, made from the name" %>
+    <p class="dam-hint">
+      The stable name this target is referred to by. Changing it later does not move anything, but
+      anything outside the app that looks the target up by key will stop finding it.
+    </p>
+  </div>
+
+  <div class="form-group" data-publish-target-target="accountGroup">
+    <%= f.label :account_ref, "Account", data: { publish_target_target: "accountLabel" } %>
+    <%= f.text_field :account_ref, class: "form-control" %>
+    <p class="dam-hint" data-publish-target-target="accountHint"></p>
+  </div>
+
+  <div class="form-group" data-publish-target-target="privacyGroup">
+    <%= f.label :default_privacy, "Default visibility" %>
+    <%= f.select :default_privacy, [], { include_blank: "Ask each time" }, class: "form-control",
+                 data: { publish_target_target: "privacy" } %>
+    <p class="dam-hint">What the Publish form starts on. Whoever publishes can still change it.</p>
+  </div>
+
+  <fieldset class="dam-filter-set" data-publish-target-target="section" data-providers="http">
+    <legend>Endpoint</legend>
+
+    <div class="form-group">
+      <%= f.label :endpoint_url, "Address" %>
+      <%= f.text_field :endpoint_url, class: "form-control", placeholder: "https://intranet.example.org/media/ingest" %>
+      <p class="dam-hint">Where the asset is sent. http:// or https:// only.</p>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :http_method, "Method" %>
+      <%= f.select :http_method, Dam::PublishTarget::HTTP_METHODS, {}, class: "form-control" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :body_style, "What to send" %>
+      <%= f.select :body_style, Dam::PublishTarget::BODY_STYLES.map { |key, label| [label, key] }, {},
+                   class: "form-control" %>
+      <p class="dam-hint">
+        Sending the file posts it as a multipart form. Sending a description posts JSON with a link
+        the far end fetches the file from — which needs PAPERBOY_PUBLIC_BASE_URL set to an address
+        this server can be reached at from outside.
+      </p>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :file_field, "Field name for the file" %>
+      <%= f.text_field :file_field, class: "form-control", placeholder: "file" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :headers, "Headers" %>
+      <%= f.text_area :headers, class: "form-control", rows: 4,
+                      placeholder: "Authorization: Bearer abc123\nX-Source: paperboy" %>
+      <p class="dam-hint">One <code>Name: value</code> per line. Sent with every publish to this target.</p>
+    </div>
+  </fieldset>
+
+  <div class="form-group">
+    <%= f.label :notes %>
+    <%= f.text_area :notes, class: "form-control", rows: 2,
+                    placeholder: "Who owns this account, who to ask when it stops working" %>
+  </div>
+
+  <div class="form-group dam-checkbox">
+    <%= f.check_box :enabled %>
+    <%= f.label :enabled, "Available for publishing" %>
+  </div>
+
+  <div class="dam-form-actions">
+    <%= f.submit @target.persisted? ? "Save target" : "Create target", class: "btn approve" %>
+    <%= link_to "Cancel", @target.persisted? ? digital_asset_management_publish_target_path(@target)
+                                             : digital_asset_management_publish_targets_path, class: "btn" %>
+  </div>
+<% end %>

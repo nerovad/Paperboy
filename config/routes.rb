@@ -72,10 +72,37 @@ Rails.application.routes.draw do
       end
     end
 
+    # Where the library can send a finished asset, and what was sent.
+    resources :publish_targets do
+      member do
+        patch :toggle
+        # Starts the OAuth round trip; the callback below finishes it.
+        post :connect, to: 'publish_connections#create'
+        delete :disconnect
+      end
+    end
+
+    # One callback for every provider, because each has to be registered by
+    # hand against the application. Which target is being connected rides in
+    # the state parameter. GET because that is how a browser comes back.
+    get 'publish_connections/callback', to: 'publish_connections#callback'
+
+    resources :publications, only: %i[index show create] do
+      member do
+        post :retry
+        post :cancel
+      end
+    end
+
     # One endpoint for both stars, since the button is a toggle and the subject
     # may be an asset or a collection.
     post 'favorites', to: 'favorites#toggle', as: :favorites
   end
+
+  # Outside the namespace and outside the sign-in, because the fetcher is
+  # Instagram rather than a person. See DamMediaController: the token is good
+  # only while the publish that minted it is in flight.
+  get 'dam/media/:token', to: 'dam_media#show', as: :dam_public_media
 
   namespace :aim do
     root 'dashboard#home'

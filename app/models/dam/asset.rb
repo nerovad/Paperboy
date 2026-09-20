@@ -35,6 +35,8 @@ module Dam
                                foreign_key: :asset_id, inverse_of: :asset
     has_many :collection_assets, class_name: 'Dam::CollectionAsset', dependent: :destroy,
                                  foreign_key: :asset_id, inverse_of: :asset
+    has_many :publications, class_name: 'Dam::Publication', dependent: :destroy,
+                            foreign_key: :asset_id, inverse_of: :asset
     has_many :collections, through: :collection_assets, source: :collection
 
     accepts_nested_attributes_for :metadata_values, allow_destroy: true

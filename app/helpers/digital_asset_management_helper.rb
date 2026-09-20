@@ -35,6 +35,16 @@ module DigitalAssetManagementHelper
              class: "dam-pill #{STATE_VARIANTS.fetch(state.to_s, 'dam-pill--muted')}")
   end
 
+  # A link a publishing service came back with, or nil when it is not one.
+  # These are strings from somebody else's API, and they end up in an href, so
+  # anything that is not plain http(s) is not offered as a link at all.
+  def dam_published_url(url)
+    parsed = URI.parse(url.to_s)
+    parsed.is_a?(URI::HTTP) && parsed.host.present? ? parsed.to_s : nil
+  rescue URI::InvalidURIError
+    nil
+  end
+
   # The thumbnail for an asset card, or nil when there is nothing to draw.
   # The built thumbnail first, whatever the media type — a video's poster
   # frame is a picture even though the video is not — then the stored original
