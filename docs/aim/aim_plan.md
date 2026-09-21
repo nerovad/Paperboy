@@ -1240,10 +1240,30 @@ since overtaken by events -- recorded because the first one will recur:
   bin/rails db:create && bin/rails db:schema:load
   ```
 
-  `Paperboy_Test0` was created that way and left on `GSASQL16`, so until
-  the default is fixed every suite run is
+  `Paperboy_Test0` was created that way and left on `GSASQL16`, so every
+  suite run is
   `PAPERBOY_TEST_DATABASE=Paperboy_Test0 PARALLEL_WORKERS=1 bundle exec rake test`.
   After a master merge that adds migrations, reload the schema into it.
+
+  **The access grant landed the same day and did not make the default
+  usable.** Joshua granted `CONTROL ON DATABASE::Paperboy_Test` to
+  `GSAETL`, which is the permission the suite needs, and the login can open
+  the database now. The suite still cannot run there, for a different
+  reason: `Paperboy_Test` is **not an empty test database any more**. Its
+  `ar_internal_metadata` says `environment = development`, and it holds
+  real rows -- 288 in `dam_assets` alone. So `db:test:prepare` refused to
+  purge it (`ActiveRecord::EnvironmentMismatchError`, raised by
+  `db:check_protected_environments`), the tables were never cleaned, and
+  111 DAM tests errored on foreign-key conflicts while deleting rows that
+  had children. The same commit is 0 fail, 0 error on `Paperboy_Test0`.
+
+  Making the default work means letting the suite drop and recreate it,
+  which destroys whatever that data is. **That is not AIM's to decide** --
+  it looks like a Digital Asset Management working database that happens
+  to carry the test name. Leave it alone and keep using the scratch base
+  until Joshua says otherwise. Note also that `Paperboy_TestSuite` was
+  created on 2026-09-20 and `GSAETL` has no access to it; if that is the
+  intended replacement, it needs the same `CONTROL` grant.
 - **`origin/master` was 68 commits ahead of `501d5059`**, and a long run of
   them were `WIP: Fix ...` test repairs. **They fixed the pre-existing red.**
   `Gemfile.lock` is back on minitest 5.27 and `test/test_helper.rb` carries
@@ -1738,3 +1758,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-15 | — | `b6f9ceed` | **3.1 merged to Paperboy master** by Joshua, ahead of the rest of the phase. Master then moved on three commits (rubocop autocorrect, sheriff-safety gitignore, HSA cards), merged into the phase branch before 3.2 |
 | 2026-09-15 | 3.2 | (this commit) | Retry writes the reprocess sidecar and the worker reads it before minting the id, so a retried or split invoice keeps its Budget Unit; `Aim::ReprocessSidecar` added; **Phase 3 complete**; 72 pytest green, 733 runs, 0 error, 1 pre-existing P2M failure that is red with AIM's diff stashed too |
 | 2026-09-21 | — | (this commit) | Merged `origin/master` (55 commits: digital asset management, publishing, records export) into the phase branch ahead of merging Phase 3 back. Their `rubocop -A` had rewritten the `Metrics/ClassLength` directive in AIM's controller test into `disable-next`, which this rubocop rejects; restored. `Paperboy_Test` was recreated 2026-09-19 and the `GSAETL` login has no access to it, so the suite ran on `PAPERBOY_TEST_DATABASE=Paperboy_Test0`, created by hand and left in place. **921 runs, 0 fail, 0 error** (serial), 72 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 4 baseline |
+| 2026-09-21 | — | (this commit) | `CONTROL ON DATABASE::Paperboy_Test` granted to `GSAETL`; access restored but the suite still cannot use it, because that database is stamped `development` and holds real DAM rows, so `db:test:prepare` cannot purge it and 111 DAM tests error. Staying on `Paperboy_Test0`, which is 921 runs, 0 fail, 0 error |
