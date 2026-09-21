@@ -28,6 +28,11 @@
 #   --skip-provenance    deploy without checking .env against LockBox.
 #                        Prints a warning. For emergencies, not routine use.
 #
+# Environment:
+#   AIM_DEPLOY_PYTHON    interpreter used to verify that the rendered .env
+#                        parses the way a worker will read it. Needs
+#                        python-dotenv. Default: python3 on PATH.
+#
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -48,7 +53,7 @@ while [ $# -gt 0 ]; do
     --env-file) ENV_FILE="$2"; shift 2 ;;
     --target) TARGET="$2"; shift 2 ;;
     --backup-dir) BACKUP_ROOT="$2"; shift 2 ;;
-    -h|--help) sed -n '2,27p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,34p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -189,6 +194,64 @@ LEAKED="$(grep -E '^[A-Z]' "$RENDERED" | grep -vE '^AIM_' || true)"
 [ -z "$LEAKED" ] && echo "==> Rendered .env: $RENDERED_COUNT AIM_* variables, no others" \
   || die "rendered .env contains non-AIM variables:
 $LEAKED"
+
+# ---------------------------------------------------------------------------
+# Parse guard. The count above proves every AIM_* line was copied. It does not
+# prove the workers can read them, and the two readers disagree: Ruby's dotenv
+# treats a single-quoted value as literal, python-dotenv honours backslash
+# escapes. On 2026-09-21 LockBox carried AIM_WINDOWS_ROOT='E:\', whose value
+# ends in a backslash, so python-dotenv read the closing quote as escaped, ran
+# on into the next line and discarded both that variable and AIM_BASE_DIR.
+# Every Rails screen was fine. pipeline_common refuses to start without
+# AIM_BASE_DIR, so shipping that file would have stopped the whole fleet.
+#
+# So read the rendered file the way the workers will, before it is written.
+# Stripping to the AIM_* subset adds a second hazard this also catches: an
+# AIM_* value interpolating a variable that the subset leaves behind resolves
+# to nothing on the share while looking correct here.
+# ---------------------------------------------------------------------------
+DEPLOY_PYTHON="${AIM_DEPLOY_PYTHON:-python3}"
+command -v "$DEPLOY_PYTHON" >/dev/null 2>&1 || die \
+  "cannot verify the rendered .env: no interpreter named '$DEPLOY_PYTHON'.
+       Set AIM_DEPLOY_PYTHON to a python that has python-dotenv installed."
+
+"$DEPLOY_PYTHON" - "$RENDERED" <<'PYTHON' || die \
+  "refusing to deploy an environment file the workers cannot read."
+import re
+import sys
+
+try:
+    from dotenv import dotenv_values
+except ImportError:
+    sys.exit("  python-dotenv is not installed for this interpreter.\n"
+             "  Set AIM_DEPLOY_PYTHON to the worker venv's python.")
+
+path = sys.argv[1]
+text = open(path, encoding="utf-8").read()
+
+declared = re.findall(r"(?m)^([A-Z][A-Z0-9_]*)=", text)
+parsed = dotenv_values(path)
+missing = [name for name in declared if parsed.get(name) is None]
+
+referenced = set(re.findall(r"\$\{?([A-Z][A-Z0-9_]*)", text))
+dangling = sorted(referenced - set(declared))
+
+if missing:
+    print("  the workers' reader discarded %d of %d variables: %s"
+          % (len(missing), len(declared), ", ".join(missing)), file=sys.stderr)
+    print("  a value ending in a backslash is the usual cause; quote it as"
+          ' "E:\\\\" or leave it unquoted.', file=sys.stderr)
+if dangling:
+    print("  these are interpolated but not defined in the AIM_* subset: %s"
+          % ", ".join(dangling), file=sys.stderr)
+    print("  they resolve to nothing on the share. Spell the value out, or"
+          " name the source variable AIM_*.", file=sys.stderr)
+if missing or dangling:
+    sys.exit(1)
+
+print("==> Rendered .env parses for the workers: %d variables, none discarded"
+      % len(declared))
+PYTHON
 
 if [ "$APPLY" -eq 0 ]; then
   echo "==> Replaced files would be moved into ${BACKUP_ROOT:-$TARGET/_PREVIOUS_SCRIPTS}/$(date '+%Y-%m-%d')"

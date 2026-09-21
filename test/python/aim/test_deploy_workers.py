@@ -6,6 +6,7 @@ be missing AIM_AI_QUEUE_DIR while the repo copy had it. Plan step 0.7.
 import hashlib
 import os
 import subprocess
+import sys
 
 import pytest
 
@@ -38,15 +39,25 @@ def deployment(tmp_path):
     target.mkdir()
 
     def run(*extra):
+        # The script verifies the rendered .env with python-dotenv. Hand it the
+        # interpreter running these tests, which has it; a bare python3 on PATH
+        # generally does not, and the script refuses rather than skip the check.
         return subprocess.run(
             [SCRIPT, "--lockbox", str(lockbox), "--env-file", str(env_file),
              "--target", str(target), *extra],
             capture_output=True, text=True,
+            env={**os.environ, "AIM_DEPLOY_PYTHON": sys.executable},
         )
+
+    def plant(body):
+        """Rewrite both copies, so provenance passes and the parse guard runs."""
+        (lockbox / "Paperboy.env").write_text(body)
+        env_file.write_text(body)
 
     run.lockbox = lockbox
     run.env_file = env_file
     run.target = target
+    run.plant = plant
     return run
 
 
@@ -183,3 +194,42 @@ def test_a_second_deploy_does_not_clobber_the_first_backup(deployment):
     dated = root / datetime.date.today().isoformat() / "pipeline_common.py"
     assert dated.read_text() == "# morning version\n", "the first backup was overwritten"
     assert len(list(root.iterdir())) == 2, "the second deploy should make its own folder"
+
+
+def test_the_deploy_says_the_rendered_env_parses_for_the_workers(deployment):
+    result = deployment()
+
+    assert "parses for the workers" in result.stdout, result.stdout
+
+
+def test_a_value_the_workers_cannot_read_stops_the_deploy(deployment):
+    """A value ending in a backslash. Ruby reads it, python-dotenv does not.
+
+    LockBox carried AIM_WINDOWS_ROOT='E:\\' on 2026-09-21. python-dotenv took
+    the closing quote as escaped, ran into the next line, and discarded both
+    variables. pipeline_common will not start without AIM_BASE_DIR, so the file
+    would have stopped every worker while Rails looked perfectly healthy.
+    """
+    deployment.plant(ENV_BODY + "AIM_WINDOWS_ROOT='E:\\'\nAIM_BASE_DIR='E:\\AIM'\n")
+
+    result = deployment("--apply")
+
+    assert result.returncode != 0, result.stdout
+    assert "AIM_WINDOWS_ROOT" in result.stderr
+    assert "AIM_BASE_DIR" in result.stderr
+    assert not (deployment.target / ".env").exists()
+
+
+def test_an_aim_value_built_from_a_stripped_variable_stops_the_deploy(deployment):
+    """Only AIM_* ships. An AIM_* value built from anything else arrives empty.
+
+    It reads correctly in the repo, where the whole environment is present, and
+    resolves to nothing on the share. Nothing warns.
+    """
+    deployment.plant(ENV_BODY + "AIM_DERIVED=${GSABSS_ROOT}/invoices\n")
+
+    result = deployment("--apply")
+
+    assert result.returncode != 0, result.stdout
+    assert "GSABSS_ROOT" in result.stderr
+    assert not (deployment.target / ".env").exists()
