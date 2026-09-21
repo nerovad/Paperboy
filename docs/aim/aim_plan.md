@@ -525,15 +525,33 @@ AIM_WINDOWS_ROOT="E:\\"
 AIM_WINDOWS_ROOT=E:\
 ```
 
-**Do not run `bin/deploy-aim-workers` until LockBox is fixed.** The share
-copy still has 58 variables and none of the new ones, so the workers are
-running fine today. The fix belongs in LockBox and Joshua owns that repo,
-so it is reported rather than made.
+**Fixed and pushed the same day.** LockBox `019ca7c` quotes it as
+`AIM_WINDOWS_ROOT="E:\\"`, which both readers parse to `E:\` identically,
+and the repo `.env` was refreshed from it. All 135 variables parse in Ruby
+and in Python; all 59 `AIM_*` survive the subset the workers receive. The
+share copy was never written with the bad file, so the fleet never saw it.
 
-The general lesson is wider than one line: the repo `.env` is read by two
-different parsers with different escaping rules, and only the Python one
-fails loudly. After any LockBox refresh, check the AIM subset the way the
-workers will see it:
+**The deploy script now refuses to ship a file the workers cannot read**, so
+this class of fault cannot reach the share again. `bin/deploy-aim-workers`
+already counted the `AIM_*` lines it copied and checked that nothing else
+leaked in; neither proves the file *parses*. It now reads the rendered file
+with `python-dotenv`, exactly as a worker will, and dies on two conditions:
+
+- **a discarded variable** -- the backslash fault above, and anything else
+  the two readers disagree about;
+- **a dangling interpolation** -- an `AIM_*` value referring to a variable
+  the `AIM_*` subset leaves behind. That one is specific to stripping the
+  file down for the share: `AIM_FOO=${GSABSS_ROOT}/x` looks right in the
+  repo and silently resolves to `/x` on GSA-SCAN02.
+
+Both were proved by planting each fault and watching the deploy refuse. The
+interpreter comes from `AIM_DEPLOY_PYTHON`, defaulting to `python3` on PATH;
+point it at the worker venv when the system python lacks `python-dotenv`,
+which the error message says. No path to that venv is written down anywhere
+in the script.
+
+The manual check below is still worth knowing, since it is what the guard
+automates and it works on any file:
 
 ```bash
 grep -E '^AIM_[A-Z0-9_]+=' .env > /tmp/aim.env
@@ -1804,3 +1822,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-21 | — | (this commit) | `CONTROL ON DATABASE::Paperboy_Test` granted to `GSAETL`; access restored but the suite still cannot use it, because that database is stamped `development` and holds real DAM rows, so `db:test:prepare` cannot purge it and 111 DAM tests error. Staying on `Paperboy_Test0`, which is 921 runs, 0 fail, 0 error |
 | 2026-09-21 | — | (this commit) | Default test database restored: `CONTROL` granted to `GSAETL`, then `Paperboy_Test` dropped and recreated clean and stamped `test`. `PARALLEL_WORKERS=1 bundle exec rake test` is **921 runs, 0 fail, 0 error** with no override; `Paperboy_Test0` dropped |
 | 2026-09-21 | — | (this merge) | Merged `origin/master` (`2c45a370`, a `bin/deploy-dev` fix) then **merged Phase 3 to Paperboy master**. Gate green: 921 runs, 0 fail, 0 error (serial), 72 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 4 baseline. Repo `.env` refreshed from LockBox the same day; see the backslash warning under *How configuration reaches the workers* before any worker deploy |
+| 2026-09-21 | — | (this commit) | LockBox `019ca7c` pushed, quoting `AIM_WINDOWS_ROOT` so `python-dotenv` stops discarding it and `AIM_BASE_DIR`; repo `.env` refreshed, 59/59 `AIM_*` parse. `bin/deploy-aim-workers` now reads the rendered file with `python-dotenv` and refuses to deploy a discarded variable or a dangling interpolation, both proved by planted faults |
