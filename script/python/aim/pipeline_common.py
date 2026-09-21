@@ -4,6 +4,7 @@ import subprocess
 import csv
 import json
 import re
+import unicodedata
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from datetime import datetime
@@ -402,15 +403,54 @@ def check_missing_fields(data: InvoiceData) -> list:
     return missing
 
 def _clean_money(v):
+    """One spelling for an amount: an optional sign and exactly two decimals.
+
+    The total is a quarter of the business key, so "100.0", "100.00" and
+    "$100.00" have to reach storage as one string or the same invoice arrives
+    twice. Stripping the currency and padding the decimals already did that
+    much; the sign did not survive:
+
+    * "(100.00)" is how an invoice prints a credit. The brackets were dropped
+      with the dollar sign, so a credit was stored as a charge -- the sign
+      silently inverted, which is worse than either spelling.
+    * "100.00-" is the same amount with a trailing minus. `float` refused it,
+      so the total became empty.
+    * "-0.00" and "0.00" are one amount with two spellings, and therefore two
+      business keys.
+
+    A comma used as the decimal separator ("1.234,56") is refused rather than
+    guessed at: a trailing ",56" cannot be told from a grouping comma without
+    assuming a locale, and assuming one produced 1.23 -- a wrong number,
+    stored silently. Returning None sends the invoice to review instead.
+    """
     if not v:
         return None
-    digits = re.sub(r'[^0-9.\-]', '', str(v))
+
+    text = str(v).strip()
+
+    negative = False
+    bracketed = re.match(r'^\((.*)\)$', text)
+    if bracketed:
+        negative, text = True, bracketed.group(1).strip()
+    if text.endswith('-'):
+        negative, text = True, text[:-1].strip()
+
+    if re.search(r',\d{1,2}$', text):
+        return None
+
+    digits = re.sub(r'[^0-9.\-]', '', text)
     if digits in ('', '-', '.', '-.', '--'):
         return None
     try:
-        return f"{float(digits):.2f}"
+        amount = float(digits)
     except ValueError:
         return None
+
+    if negative:
+        amount = -abs(amount)
+    if amount == 0:
+        amount = 0.0
+    return f"{amount:.2f}"
 
 def _clean_date(v):
     if not v or not str(v).strip():
@@ -690,14 +730,41 @@ def normalize_vendor_name(extracted_name):
     return None, False
 
 def _clean_text_field(v):
+    """Tidy a key field's whitespace without editing what the vendor printed.
+
+    This deleted every character outside [a-zA-Z0-9_\\- ], so INV-2024/001 was
+    stored as INV-2024001 -- a different number to the one on the page, and a
+    different business key. Invoice and order numbers are held as text, passed
+    to SQL as parameters, escaped by the XML writer and written into the PDF's
+    Info dictionary, so none of those need a restricted character set.
+
+    What is removed is what cannot survive a round trip: control codes, and
+    the invisible formatting codes such as a zero-width space that would make
+    two identical-looking numbers compare unequal. Runs of whitespace, a
+    non-breaking space among them, collapse to one space.
+
+    Anything built into a *path* is made safe where the path is built --
+    03_batch_splitter does that from the manifest, which never comes through
+    here -- and not by narrowing the value everyone else stores.
+    """
     if not v:
         return None
-    cleaned = re.sub(r'[^a-zA-Z0-9_\- ]', '', str(v))
-    return cleaned.strip() if cleaned.strip() else None
+    kept = ''.join(
+        c for c in str(v)
+        if c.isspace() or unicodedata.category(c) not in ('Cc', 'Cf')
+    )
+    cleaned = re.sub(r'\s+', ' ', kept).strip()
+    return cleaned if cleaned else None
 
 def sanitize_data(data: InvoiceData):
     if data.vendor_name:
-        data.vendor_name = data.vendor_name.strip().replace("&", "and") or None
+        # The vendor name is a business key field and is stored, indexed and
+        # exported as typed. Rewriting "&" to "and" changed it for 58 of the
+        # ~900 official vendors -- "AT&T MOBILITY" reached Laserfiche as
+        # "ATandT MOBILITY" while the SQL row kept the real name. ElementTree
+        # escapes the ampersand on its own, so nothing downstream needs it
+        # removed.
+        data.vendor_name = data.vendor_name.strip() or None
     data.invoice_total = _clean_money(data.invoice_total)
     data.invoice_date = _clean_date(data.invoice_date)
     data.invoice_number = _clean_text_field(data.invoice_number)

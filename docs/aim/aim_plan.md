@@ -1484,7 +1484,7 @@ bundle exec rubocop app/controllers/aim app/controllers/concerns/aim \
 These are a prerequisite for duplicate detection, because the business key
 is built from these values as strings.
 
-- [ ] **4.1 Stop mangling vendor names.** `sanitize_data` rewrites `&` to
+- [x] **4.1 Stop mangling vendor names.** `sanitize_data` rewrites `&` to
   `and`, which changes the business key for 58 of ~900 official vendors and
   makes what Laserfiche receives disagree with the SQL row. See audit H5.
   *Test:* `AT&T MOBILITY` survives extraction and reaches Laserfiche intact --
@@ -1493,15 +1493,125 @@ is built from these values as strings.
   mangling is `sanitize_data`'s alone and does not come back with the new
   path.
 
-- [ ] **4.2 Stop stripping invoice and order numbers.** `_clean_text_field`
+  Done 2026-09-21. One line: the vendor name is stripped and no longer
+  rewritten. `test/python/aim/test_key_fields.py` covers it, and Phase 4's
+  remaining two steps belong in that same file. Three things worth carrying:
+
+  - **58 of the 904 alias values carry an ampersand**, counted from
+    `vendor_aliases.json` — the audit's number is real, and every one of them
+    is an *official* name, the value the alias table answers with. The
+    mangling therefore hit the canonical name rather than the extracted one:
+    `sanitize_data` never touched `extracted_vendor_name`.
+  - **The divergence was worst on a corrected invoice.** Rails writes the real
+    name into a vendor-review payload, the SQL row keeps it, and
+    `02_sql_worker` then rebuilt the XML from that payload *through*
+    `sanitize_data` — so the row said `AT&T MOBILITY` and the XML said
+    `ATandT MOBILITY`. Nothing else spelled an ampersand out; a repo-wide grep
+    found that one line.
+  - **ElementTree escapes the ampersand itself**, writing `&amp;` and parsing
+    it back to `&`, so the XML never needed the substitution. That is asserted
+    on the written file, not just on the parse.
+
+  Discovered while testing, and not this step's to fix: `get_vendor_aliases`
+  documents a fallback to the local JSON cache when SQL is offline, but its
+  `except Exception` cannot catch a *missing* `AIM_SQL_BILLING_*` variable,
+  because `env()` calls `sys.exit` and `SystemExit` is not an `Exception`. On
+  a configured server that is unreachable the fallback works; with the
+  variable absent the worker exits. That is the guardrails' intended
+  fail-at-startup behaviour, so it is arguably right — but the docstring
+  promises a fallback it does not always give. The test monkeypatches
+  `get_sql_connection` rather than depending on either reading.
+
+- [x] **4.2 Stop stripping invoice and order numbers.** `_clean_text_field`
   removes everything outside `[a-zA-Z0-9_\- ]`, so `INV-2024/001` becomes
   `INV-2024001`. Keep the characters vendors actually use.
   *Test:* punctuation-bearing invoice numbers round-trip unchanged.
 
-- [ ] **4.3 Canonicalise money formatting.** One representation for totals
+  Done 2026-09-21. `_clean_text_field` no longer filters by character class.
+  It now removes only what cannot survive a round trip — control codes and
+  the invisible formatting codes — and collapses runs of whitespace. Every
+  printable character the vendor put on the page is kept. Four things worth
+  carrying:
+
+  - **A deny-list, not a wider allow-list.** "The characters vendors actually
+    use" has no end: `/`, `.`, `#`, `,`, `:`, `(`, `\` and a space all appear
+    in real invoice numbers, and an allow-list is only ever one vendor away
+    from being wrong again. These values are held as text, passed to SQL as
+    parameters, escaped by the XML writer and written into the PDF Info
+    dictionary, so nothing downstream needs a restricted character set.
+  - **The old regex was not a hallucination guard**, which is the reason it
+    looks defensible. `reject_hallucinated_long_strings` is the guard, and it
+    still caps these fields at 50 characters. The regex kept the letters and
+    deleted the punctuation, so `INV #2024-1` came out `INV 2024-1` — junk in,
+    different junk out.
+  - **Invisible characters are the duplicate-detection half of this.** A
+    zero-width space or a non-breaking space makes two numbers that read
+    identically on the page compare unequal, which Phase 7 would see as two
+    invoices. They are removed and normalised respectively, and the test
+    asserts the two forms come out equal rather than asserting a spelling.
+  - **Path safety belongs where the path is built.** The one place a number
+    names a folder is `03_batch_splitter.py`, which cleans the *manifest's*
+    `invoice_number` at that line; the manifest never passes through
+    `_clean_text_field`, so keeping `/` in the stored value cannot reach it.
+    Nothing else in the workers or in AIM's Ruby builds a path from these
+    fields. Do not re-narrow the value to protect a path.
+
+  Left for later, deliberately: **a dash is not normalised.** A vision model
+  can read `INV—1` where the page prints `INV-1`, and an em dash and a hyphen
+  are different business keys. Folding them is a judgement about what the
+  vendor meant rather than a round-trip fix, so it belongs with Phase 7's
+  duplicate matching, not here. `customer_number` is also still never cleaned
+  at all — it is in the pydantic length validator but not in `sanitize_data`,
+  which is correct while it stays out of the business key.
+
+- [x] **4.3 Canonicalise money formatting.** One representation for totals
   everywhere, so `100.0`, `100.00` and `$100.00` cannot produce three
   different business keys.
   *Test:* the three inputs produce one canonical stored value.
+
+  Done 2026-09-21, and the step's own test passed before a line was changed:
+  `_clean_money` already stripped the currency and padded the decimals, so
+  those three spellings did reach `sanitize_data`'s output as `100.00`. The
+  gap was on either side of it, and it took two halves:
+
+  - **The canonical form never reached the row on the corrected path.**
+    `02_sql_worker` sanitised a *copy* of the payload to regenerate the XML
+    and then inserted the payload untouched, so a reviewer typing `$1,234.5`
+    into Rails stored `$1,234.5` and exported `1234.50` — one invoice, two
+    totals, two business keys. The worker now writes the sanitised values
+    back into the payload before inserting. It writes back all five fields
+    `sanitize_data` touches rather than the total alone, because the date
+    splits the same way: `09/21/2026` in the row, `2026-09-21` in the XML.
+  - **A credit was stored as a charge.** `(100.00)` is how an invoice prints
+    one, and the brackets were dropped with the dollar sign, so the sign
+    inverted silently. `100.00-`, the same amount with a trailing minus, was
+    refused by `float` and became empty. Both now keep the sign. This is the
+    most consequential thing in Phase 4: it changed what a number *meant*,
+    not how it was spelled.
+
+  Two smaller ones, both about having a single spelling:
+
+  - `-0.00` and `0.00` were one amount under two keys. Zero is now `0.00`.
+  - **A comma decimal is refused rather than guessed at.** `1.234,56` was
+    quietly stored as `1.23`, because the comma was stripped as a grouping
+    separator and the dot believed. Telling a trailing `,56` from a grouping
+    comma needs a locale nobody has stated, so it returns nothing and the
+    invoice goes to review. `$1,234` is unaffected — a comma followed by
+    three digits is grouping.
+
+  **A behaviour change worth knowing about:** because the sanitised values
+  are written back, a payload value that is not money is now stored as NULL
+  where the raw text used to survive — a total of `n/a` is no longer kept as
+  `n/a`. That is the right direction for a column the business key is built
+  from, but it is a change on the corrected path rather than a pure fix.
+
+  Not touched, and not Phase 4's: **`Subtotal` and `SalesTax` are silently
+  dropped.** `02_sql_worker` passes them to `InvoiceData`, which has no such
+  fields, so pydantic discards them; they are never canonicalised and never
+  reach the XML. They survive in the payload dict and so do reach SQL. They
+  are not part of the business key, which is why this step leaves them alone
+  — see Open Questions. Rails deliberately does not canonicalise either:
+  one rule, in one language, at the gate every payload crosses.
 
 ---
 
@@ -1746,6 +1856,23 @@ layout feeds another system. The target is the same flow through Laserfiche.
   answer**, because the four-field business key is what catches duplicates and
   the batch id is what a reviewer follows through the queues. The same question
   applies to a split batch, which today gets `{parent}_SPLIT_{invoice}`.
+- **`Subtotal` and `SalesTax` are not typed, not canonicalised, and not
+  exported.** Noted 2026-09-21 in 4.3. `02_sql_worker` passes both to
+  `InvoiceData`, which declares neither, so pydantic drops them; they survive
+  only as raw strings in the payload dict, reaching SQL in whatever spelling
+  Rails wrote and never reaching the Laserfiche XML at all. Neither is part of
+  the four-field business key, so Phase 4 left them alone deliberately. Two
+  questions for the fiscal handoff: **does Fiscal need them**, and if so are
+  they money columns like the total, or free text? If they are money, adding
+  them to `InvoiceData` and to `sanitize_data` is a two-line change now that
+  `_clean_money` is right. `Aim_Invoices.Credit Amount` is the same question
+  from the other end.
+- **A credit is now stored with its sign, and nothing downstream reads it
+  yet.** Noted 2026-09-21 in 4.3. `(100.00)` reaches SQL as `-100.00` instead
+  of `100.00`, which is the correct number — but `Credit` is a document type
+  with no queue behaviour of its own (see Decisions), and no rule says what a
+  negative total should do at the approval gate or the fiscal handoff. Worth
+  settling before Phase 9.
 - **Nothing creates `AIM_SPOOL_STATE_DIR`.** Noted 2026-09-15 in 3.1. The
   watcher reads it at import and writes spool state into it, but it is not in
   `MANAGED_DIRECTORIES`, so `bootstrap()` does not create it -- the directory
@@ -1828,3 +1955,6 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-21 | — | (this commit) | Default test database restored: `CONTROL` granted to `GSAETL`, then `Paperboy_Test` dropped and recreated clean and stamped `test`. `PARALLEL_WORKERS=1 bundle exec rake test` is **921 runs, 0 fail, 0 error** with no override; `Paperboy_Test0` dropped |
 | 2026-09-21 | — | (this merge) | Merged `origin/master` (`2c45a370`, a `bin/deploy-dev` fix) then **merged Phase 3 to Paperboy master**. Gate green: 921 runs, 0 fail, 0 error (serial), 72 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 4 baseline. Repo `.env` refreshed from LockBox the same day; see the backslash warning under *How configuration reaches the workers* before any worker deploy |
 | 2026-09-21 | — | (this commit) | LockBox `019ca7c` pushed, quoting `AIM_WINDOWS_ROOT` so `python-dotenv` stops discarding it and `AIM_BASE_DIR`; repo `.env` refreshed, 59/59 `AIM_*` parse. `bin/deploy-aim-workers` now reads the rendered file with `python-dotenv` and refuses to deploy a discarded variable or a dangling interpolation, both proved by planted faults |
+| 2026-09-21 | 4.1 | (this commit) | Vendor names keep their ampersand: `sanitize_data` strips and no longer rewrites, so the SQL row and the Laserfiche XML carry one value. Branch `aim/phase-4-keyfields` cut from master `f6bbc335`. 82 pytest green (6 of the 7 new tests red without the fix), 921 runs, 0 fail, 0 error, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-21 | 4.2 | (this commit) | Invoice and order numbers keep their punctuation: `_clean_text_field` filters control and invisible codes instead of a character class, and collapses whitespace. 107 pytest green (20 of the 25 new tests red without the fix), 921 runs, 0 fail, 0 error, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-21 | 4.3 | (this commit) | One spelling for a total: `_clean_money` keeps an accounting or trailing-minus sign, folds `-0.00`, and refuses a comma decimal rather than storing 1.23; `02_sql_worker` writes the sanitised values back into the payload so the row and the XML agree. **Phase 4 complete**; 130 pytest green (8 of the 23 new tests red without the fix), 921 runs, 0 fail, 0 error, scoped rubocop clean, brakeman's same four non-AIM warnings |

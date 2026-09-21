@@ -139,6 +139,19 @@ def run_sql_worker():
                     document_type=payload.get("DocumentType")
                 )
                 corrected_data = sanitize_data(corrected_data)
+
+                # The row and the XML are written from the same values. Only
+                # the XML was built from the sanitized copy, so a reviewer
+                # typing "$1,234.5" into Rails stored that and exported
+                # "1234.50" -- one invoice, two totals, and two business keys.
+                payload.update({
+                    "VendorName": corrected_data.vendor_name,
+                    "InvoiceNumber": corrected_data.invoice_number,
+                    "InvoiceTotal": corrected_data.invoice_total,
+                    "InvoiceDate": corrected_data.invoice_date,
+                    "OrderNumber": corrected_data.order_number,
+                })
+
                 xml_path = os.path.join(folder_path, f"{processing_id}.xml")
                 generate_laserfiche_xml(corrected_data, payload.get("BU"), payload.get("Submitter"), xml_path, processing_id)
                 print(f"    [✓] Laserfiche XML updated successfully.")
