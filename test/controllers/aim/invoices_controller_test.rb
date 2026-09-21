@@ -4,7 +4,7 @@ require 'test_helper'
 require 'tmpdir'
 
 module Aim
-  # rubocop:disable-next Metrics/ClassLength
+  # rubocop:disable Metrics/ClassLength
   class InvoicesControllerTest < ActionController::TestCase
     tests Aim::InvoicesController
     AIM_ENV = %w[
@@ -13,6 +13,9 @@ module Aim
       AIM_VENDOR_REVIEW_DIR
       AIM_READY_TO_LEARN_DIR
       AIM_ACTION_NEEDED_DIR
+      AIM_LOW_CONFIDENCE_REVIEW_DIR
+      AIM_REPROCESS_QUEUE_DIR
+      AIM_DELETED_DIR
     ].freeze
 
     setup do
@@ -24,10 +27,16 @@ module Aim
       ENV['AIM_VENDOR_REVIEW_DIR'] = 'E:\AIM\_BACK_END\_VENDOR_REVIEW'
       ENV['AIM_READY_TO_LEARN_DIR'] = 'E:\AIM\_BACK_END\_READY_TO_LEARN'
       ENV['AIM_ACTION_NEEDED_DIR'] = 'E:\AIM\_BACK_END\_ACTION_NEEDED'
+      ENV['AIM_LOW_CONFIDENCE_REVIEW_DIR'] = 'E:\AIM\_BACK_END\_LOW_CONFIDENCE_REVIEW'
+      ENV['AIM_REPROCESS_QUEUE_DIR'] = 'E:\AIM\_BACK_END\_REPROCESS_QUEUE'
+      ENV['AIM_DELETED_DIR'] = 'E:\AIM\_BACK_END\_DELETED'
 
       FileUtils.mkdir_p(vendor_review_dir)
       FileUtils.mkdir_p(ready_to_learn_dir)
       FileUtils.mkdir_p(action_needed_dir)
+      FileUtils.mkdir_p(low_confidence_review_dir)
+      FileUtils.mkdir_p(reprocess_dir)
+      FileUtils.mkdir_p(deleted_dir)
 
       # current_user is nil unless the session carries BOTH keys, and a nil
       # current_user fails require_app_access before any AIM code runs. Every
@@ -322,7 +331,82 @@ module Aim
       assert_includes response.body, 'Claimed by Dana Reyes'
     end
 
+    test 'an AI retry carries the budget unit and submitter to the reprocess queue' do
+      create_action_needed_invoice(
+        'INV-14',
+        payload: { 'InvoiceNumber' => 'INV-140', 'BU' => '4601', 'Submitter' => 'Dana Reyes' },
+        vendor_rule: {}
+      )
+
+      post :retry, params: { id: 'INV-14', queue: 'action_needed' }
+
+      sidecar = retry_sidecar_for('INV-14')
+      assert_equal '4601', sidecar['bu']
+      assert_equal 'Dana Reyes', sidecar['submitter']
+    end
+
+    test 'an AI retry reads the budget unit out of Laserfiche XML metadata' do
+      create_low_confidence_invoice('INV-15', fields: { 'Budget Unit Number' => '4721',
+                                                        'Submitted by' => 'Sam Rivera' })
+
+      post :retry, params: { id: 'INV-15', queue: 'low_confidence_review' }
+
+      sidecar = retry_sidecar_for('INV-15')
+      assert_equal '4721', sidecar['bu']
+      assert_equal 'Sam Rivera', sidecar['submitter']
+    end
+
+    test 'an AI retry with no budget unit recorded writes none' do
+      create_action_needed_invoice('INV-16', payload: { 'InvoiceNumber' => 'INV-160' },
+                                             vendor_rule: {})
+
+      post :retry, params: { id: 'INV-16', queue: 'action_needed' }
+
+      sidecar = retry_sidecar_for('INV-16')
+      assert_nil sidecar['bu'], 'an invented Budget Unit is worse than none'
+      assert_nil sidecar['submitter']
+    end
+
+    test 'an AI retry keeps the rest of the metadata alongside the budget unit' do
+      create_action_needed_invoice(
+        'INV-17',
+        payload: { 'InvoiceNumber' => 'INV-170', 'BU' => '4641', 'VendorName' => 'AIRGAS USA LLC' },
+        vendor_rule: {}
+      )
+
+      post :retry, params: { id: 'INV-17', queue: 'action_needed' }
+
+      sidecar = retry_sidecar_for('INV-17')
+      assert_equal 'AIRGAS USA LLC', sidecar['VendorName']
+      assert_equal 'INV-170', sidecar['InvoiceNumber']
+    end
+
     private
+
+    # The retry folder carries a timestamp, so it is found rather than
+    # predicted. Its sidecar has to be named after the PDF beside it, because
+    # that is the only name the worker's reprocess path looks for.
+    def retry_sidecar_for(invoice_id)
+      folder_name = Dir.children(reprocess_dir).find { |name| name.start_with?("#{invoice_id}_RETRY_") }
+      assert folder_name, "no retry folder for #{invoice_id} in #{Dir.children(reprocess_dir)}"
+
+      folder_path = File.join(reprocess_dir, folder_name)
+      assert_path_exists File.join(folder_path, "#{folder_name}.pdf")
+      sidecar_path = File.join(folder_path, "#{folder_name}.json")
+      assert_path_exists sidecar_path
+
+      JSON.parse(File.read(sidecar_path))
+    end
+
+    def create_low_confidence_invoice(invoice_id, fields:)
+      folder_path = File.join(low_confidence_review_dir, invoice_id)
+      FileUtils.mkdir_p(folder_path)
+      File.write(File.join(folder_path, "#{invoice_id}.pdf"), 'pdf')
+      elements = fields.map { |name, value| %(<Field Name="#{name}">#{value}</Field>) }.join
+      File.write(File.join(folder_path, "#{invoice_id}.xml"),
+                 "<ImportSession><Doc><FieldData>#{elements}</FieldData></Doc></ImportSession>")
+      folder_path
+    end
 
     def create_action_needed_invoice(invoice_id, payload:, vendor_rule:)
       folder_path = File.join(action_needed_dir, invoice_id)
@@ -366,5 +450,18 @@ module Aim
     def action_needed_dir
       Aim::InvoiceDirectoryService.instance.path_for('action_needed')
     end
+
+    def low_confidence_review_dir
+      Aim::InvoiceDirectoryService.instance.low_confidence_review_dir
+    end
+
+    def reprocess_dir
+      Aim::InvoiceDirectoryService.instance.reprocess_dir
+    end
+
+    def deleted_dir
+      Aim::InvoiceDirectoryService.instance.deleted_dir
+    end
   end
+  # rubocop:enable Metrics/ClassLength
 end

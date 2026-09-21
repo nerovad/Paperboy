@@ -500,6 +500,48 @@ anyone who can reach `E:\AIM`. The workers need only the `AIM_*` set.
 Extracting the subset in 0.7 stops this recurring; cleaning up the existing
 file is Joshua's call and is not AIM's to do unasked.
 
+**A value ending in a backslash breaks the workers, and Rails will not warn
+you.** Found 2026-09-21, refreshing the repo `.env` after LockBox's ROOT
+consolidation. `Paperboy.env` line 14 reads:
+
+```text
+AIM_WINDOWS_ROOT='E:\'
+```
+
+Ruby's dotenv treats a single-quoted value as literal and reads it fine, so
+every Rails screen is happy. `python-dotenv` treats the backslash as
+escaping the closing quote, so the value runs on and it discards **both**
+that variable and `AIM_BASE_DIR` on the next line. `pipeline_common.py`
+reads `AIM_BASE_DIR` at import and is built to refuse to start without it,
+so the whole worker fleet would fail at startup the moment
+`bin/deploy-aim-workers` ships that file. It is the only line in all 135
+variables with the defect, and it is AIM's own variable.
+
+Two forms parse identically in both languages; the double-quoted one
+matches LockBox's own "Surround variables with double quotes" convention:
+
+```text
+AIM_WINDOWS_ROOT="E:\\"
+AIM_WINDOWS_ROOT=E:\
+```
+
+**Do not run `bin/deploy-aim-workers` until LockBox is fixed.** The share
+copy still has 58 variables and none of the new ones, so the workers are
+running fine today. The fix belongs in LockBox and Joshua owns that repo,
+so it is reported rather than made.
+
+The general lesson is wider than one line: the repo `.env` is read by two
+different parsers with different escaping rules, and only the Python one
+fails loudly. After any LockBox refresh, check the AIM subset the way the
+workers will see it:
+
+```bash
+grep -E '^AIM_[A-Z0-9_]+=' .env > /tmp/aim.env
+~/.venvs/aim/bin/python -c "from dotenv import dotenv_values; d=dotenv_values('/tmp/aim.env'); print(len([k for k,v in d.items() if v is not None]))"
+```
+
+That count must equal `grep -cE '^AIM_' .env`.
+
 ### Budget Units seen in the watch tree
 
 `0000`, `4601`, `4621`, `4641`, `4701`, `4703`, `4721` — four-digit codes.
@@ -1226,6 +1268,45 @@ since overtaken by events -- recorded because the first one will recur:
   run. By 2026-09-15 `Paperboy_Test` answered normally and no override was
   needed. If the suite cannot connect, try the default again before
   assuming anything is broken.
+
+  **It recurred on 2026-09-21, and was fixed properly.** `Paperboy_Test`
+  had been dropped and recreated on 2026-09-19 by another account, so
+  `GSAETL` had no user in the new copy. Two things had to happen, in this
+  order, and the second is the one that is easy to miss:
+
+  1. **Access.** Joshua granted it:
+
+     ```sql
+     USE master;
+     GRANT CONTROL ON DATABASE::Paperboy_Test TO GSAETL;
+     ```
+
+     `CONTROL` rather than `db_owner` membership, because adding a member
+     to a fixed database role requires being in `db_owner` already, and he
+     was not. `CONTROL` is grantable, covers the schema load, and is the
+     only permission that allows the `DROP DATABASE` the purge does.
+
+  2. **Contents.** Access alone left the suite red: the database was
+     stamped `environment = development` and held real rows (288 in
+     `dam_assets`), so `db:test:prepare` refused to purge it and 111 DAM
+     tests errored on foreign-key conflicts. It was dropped and recreated
+     clean, which also made `GSAETL` its owner, so the grant is now
+     belt-and-braces rather than load-bearing.
+
+  Since then the default works with no override:
+  `PARALLEL_WORKERS=1 bundle exec rake test` is 921 runs, 0 fail, 0 error.
+  The `Paperboy_Test0` scratch base was dropped on 2026-09-21.
+
+  **If it happens a third time, read the stamp before assuming it is
+  permissions.** `SELECT value FROM ar_internal_metadata WHERE [key] =
+  'environment'` has to say `test`. A database stamped `development` is
+  refused by `db:check_protected_environments` no matter what rights the
+  login has, and a test database holding real rows is somebody's working
+  data -- ask before wiping it rather than letting the harness do it.
+
+  `Paperboy_TestSuite` was created 2026-09-20 and `GSAETL` still has no
+  access to it. Nothing here uses it.
+
 - **`origin/master` was 68 commits ahead of `501d5059`**, and a long run of
   them were `WIP: Fix ...` test repairs. **They fixed the pre-existing red.**
   `Gemfile.lock` is back on minitest 5.27 and `test/test_helper.rb` carries
@@ -1326,7 +1407,7 @@ bundle exec rubocop app/controllers/aim app/controllers/concerns/aim \
     `Aim::InvoicesHelper::FIELD_LABELS` so the new ticket key renders readably
     on the AI queue screen.
 
-- [ ] **3.2 Preserve BU and submitter through Retry.** The Rails retry
+- [x] **3.2 Preserve BU and submitter through Retry.** The Rails retry
   action copies only the PDF, so the worker falls back to `BU = "Unknown"`.
   Write the metadata sidecar the reprocess path already knows how to read.
   See audit H2.
@@ -1342,6 +1423,36 @@ bundle exec rubocop app/controllers/aim app/controllers/concerns/aim \
   parent's id or get a child id is the open question. 3.1 deliberately left the
   ticketless path minting, and `test_a_batch_with_no_ticket_still_mints_one`
   pins that, so changing it here is a deliberate edit to a guarded behaviour.
+
+  Done 2026-09-15, and it was two halves rather than one:
+
+  - **Rails had to write the sidecar at all.** `#retry` copied out the PDF and
+    nothing else. It now writes `{folder}.json` beside the copy, which is the
+    only name the worker's reprocess path looks for.
+  - **The worker had to read it before minting.** Moving the sidecar read above
+    `generate_unique_id` is what makes the BU real, because the minted id
+    embeds it -- the BU had been reaching `write_log` correctly all along while
+    the id said `Unknown`. That half fixes the batch splitter for free: it
+    already wrote the same sidecar, and lost the BU purely to the ordering.
+
+  Three things worth carrying forward:
+
+  - **The Budget Unit has four spellings**, because each queue records it the
+    way its own metadata does -- `BU` in the SQL payload, `bu_number` in a job
+    ticket, `Budget Unit Number` in the Laserfiche XML, and `BudgetUnit`. The
+    worker reads exactly one. `Aim::ReprocessSidecar` is where that table
+    lives; add a spelling there rather than at a call site. `reject_invoice`
+    has its own copy of the same idea (`metadata_param_value`) and was left
+    alone -- it reads posted params, not a metadata file.
+  - **An absent BU is written as absent, never as an empty string.** The worker
+    falls back to `Unknown` on a missing key, and an empty string would beat
+    that fallback and produce an id stamped with nothing at all.
+  - **Vendor Review's "Learn & Retry AI" sidecar is now the same code.** It had
+    its own two-line version that knew only `BU` and `Submitter`, so an invoice
+    reaching it with XML metadata lost the BU exactly as Retry did. Both call
+    `write_reprocess_sidecar` now. The alias learner moves that folder whole
+    into the reprocess queue without renaming, so the sidecar arrives under the
+    name the worker expects and that path needed no change.
 
 ---
 
@@ -1603,6 +1714,15 @@ layout feeds another system. The target is the same flow through Laserfiche.
   latent: the old share `.bat` files never called the preparer, and anyone
   running from a mapped drive letter would never see it. **Never add a
   relative path or a bare `cd` to a `.bat` here.**
+- **A retried invoice does not keep its batch id.** Noted 2026-09-15 in 3.2.
+  Retry names the copy `{id}_RETRY_{epoch}` and the worker mints a fresh id
+  from that, so one document can hold three ids across its life. 3.2 fixed the
+  Budget Unit inside those ids but deliberately did not make the id survive a
+  retry, which is a design question rather than a bug: a retried document is
+  arguably a new processing attempt of the same invoice. **Phase 7 needs an
+  answer**, because the four-field business key is what catches duplicates and
+  the batch id is what a reviewer follows through the queues. The same question
+  applies to a split batch, which today gets `{parent}_SPLIT_{invoice}`.
 - **Nothing creates `AIM_SPOOL_STATE_DIR`.** Noted 2026-09-15 in 3.1. The
   watcher reads it at import and writes spool state into it, but it is not in
   `MANAGED_DIRECTORIES`, so `bootstrap()` does not create it -- the directory
@@ -1610,17 +1730,25 @@ layout feeds another system. The target is the same flow through Laserfiche.
   environment would fail at the first spool. One line in `bootstrap` fixes it;
   out of scope for 3.1, and worth folding into whichever step next touches the
   watcher's startup.
-- **A P2M test pair collides on the process id, and reddens at random.** Seen
-  2026-09-15 during 3.1's gate.
+- **The P2M OMS upload tests leave rows behind, and now fail on their own
+  debris.** Seen 2026-09-15 during 3.1's gate and diagnosed during 3.2's.
   `OmsUploadLedgerTest#oms_number` and `P2mOmsUploadsControllerTest#oms_numbers`
-  both build `5178<Process.pid % 10_000>`, and
-  `OmsUploadLedger#reconcile_imported!` scans `OmsUpload.all` -- so
-  `reconcile_imported!` counted 2 where the test expected 1 and the suite came
-  back 1 failure. Re-running the *same seed* both with and without AIM's diff
-  was green both times, which is what proved it is not ours. Not AIM's to fix
-  (`test/services/p2m/`, `test/controllers/`). **Before treating a red
-  `OmsUploadLedgerTest` as a regression, re-run it -- a different PID makes it
-  pass.**
+  both build their OMS number as `5178<Process.pid % 10_000>`, and both
+  `OmsUploadLedger#reconcile_imported!` and the controller's index scan
+  `OmsUpload.all` rather than only their own rows. That alone made them collide
+  at random. The real problem underneath is that **the rows outlive the test**:
+  on 2026-09-15 `Paperboy_Test` held 82 committed `P2m::OmsUpload` rows from
+  earlier runs that morning, so
+  `P2mOmsUploadsControllerTest#test_shows_active_uploads...` now fails *every*
+  run -- it reconciled `["51780767", "51784884"]` where it expected one id, the
+  second being a leftover with a colliding mailer date.
+
+  Not AIM's to fix: `test/controllers/p2m_oms_uploads_controller_test.rb` and
+  `test/services/p2m/`. **Proved not ours by running the same test with AIM's
+  entire diff stashed -- it fails identically.** Do that before treating either
+  test as an AIM regression. Clearing the debris is
+  `P2m::OmsUpload.delete_all` in the test environment, but the rows are P2M's
+  and the leak is theirs to close.
 - **Laserfiche import mechanism.** Not designed yet, and blocked on IT
   resolving a Laserfiche need. The likely shape is a monitored folder on
   GSA-SCAN02 that LF auto-imports from, but that could change. Noted
@@ -1670,3 +1798,9 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-15 | — | `dca411a5` | **Phase 2 merged to Paperboy master.** 2.1 was its only step |
 | 2026-09-15 | — | `88d5fc8b` | Merged `origin/master` (68 commits) into master. Their minitest repair clears the pre-existing red: **675 runs, 0 fail, 0 error**, plus 61 pytest. New Phase 3 baseline. rubocop is red on 81 non-AIM offenses |
 | 2026-09-15 | 3.1 | (this commit) | One id per invoice: the watcher names the PDF after the batch id and the worker adopts the ticket's; ticket keeps `original_filename`; 69 pytest green, 722 runs, 0 fail, 0 error |
+| 2026-09-15 | — | `b6f9ceed` | **3.1 merged to Paperboy master** by Joshua, ahead of the rest of the phase. Master then moved on three commits (rubocop autocorrect, sheriff-safety gitignore, HSA cards), merged into the phase branch before 3.2 |
+| 2026-09-15 | 3.2 | (this commit) | Retry writes the reprocess sidecar and the worker reads it before minting the id, so a retried or split invoice keeps its Budget Unit; `Aim::ReprocessSidecar` added; **Phase 3 complete**; 72 pytest green, 733 runs, 0 error, 1 pre-existing P2M failure that is red with AIM's diff stashed too |
+| 2026-09-21 | — | (this commit) | Merged `origin/master` (55 commits: digital asset management, publishing, records export) into the phase branch ahead of merging Phase 3 back. Their `rubocop -A` had rewritten the `Metrics/ClassLength` directive in AIM's controller test into `disable-next`, which this rubocop rejects; restored. `Paperboy_Test` was recreated 2026-09-19 and the `GSAETL` login has no access to it, so the suite ran on `PAPERBOY_TEST_DATABASE=Paperboy_Test0`, created by hand and left in place. **921 runs, 0 fail, 0 error** (serial), 72 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 4 baseline |
+| 2026-09-21 | — | (this commit) | `CONTROL ON DATABASE::Paperboy_Test` granted to `GSAETL`; access restored but the suite still cannot use it, because that database is stamped `development` and holds real DAM rows, so `db:test:prepare` cannot purge it and 111 DAM tests error. Staying on `Paperboy_Test0`, which is 921 runs, 0 fail, 0 error |
+| 2026-09-21 | — | (this commit) | Default test database restored: `CONTROL` granted to `GSAETL`, then `Paperboy_Test` dropped and recreated clean and stamped `test`. `PARALLEL_WORKERS=1 bundle exec rake test` is **921 runs, 0 fail, 0 error** with no override; `Paperboy_Test0` dropped |
+| 2026-09-21 | — | (this merge) | Merged `origin/master` (`2c45a370`, a `bin/deploy-dev` fix) then **merged Phase 3 to Paperboy master**. Gate green: 921 runs, 0 fail, 0 error (serial), 72 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 4 baseline. Repo `.env` refreshed from LockBox the same day; see the backslash warning under *How configuration reaches the workers* before any worker deploy |

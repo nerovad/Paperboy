@@ -117,7 +117,7 @@ module Aim
       if next_action == 'continue_processing'
         write_vendor_review_ready_payload(metadata_path, current_metadata, extracted_name, normalized_name)
       elsif next_action == 'retry_ai'
-        write_vendor_review_reprocess_sidecar(metadata_path, current_metadata)
+        write_reprocess_sidecar(metadata_path, current_metadata)
       end
 
       move_invoice_to(Aim::InvoiceDirectoryService.instance.ready_to_learn_dir, 'Vendor Alias sent to Learner Queue.')
@@ -163,10 +163,11 @@ module Aim
       FileUtils.rm_f(metadata_path) if metadata_path.present? && File.expand_path(metadata_path) != File.expand_path(ready_path)
     end
 
-    def write_vendor_review_reprocess_sidecar(metadata_path, metadata)
-      metadata['bu'] ||= metadata['BU']
-      metadata['submitter'] ||= metadata['Submitter']
-      File.write(metadata_path, JSON.pretty_generate(metadata))
+    # Vendor Review keeps its whole folder and moves it, so its sidecar is the
+    # metadata file already in there; Retry copies out a lone PDF, so its
+    # sidecar is a new file named after that copy. Same contents either way.
+    def write_reprocess_sidecar(sidecar_path, metadata)
+      File.write(sidecar_path, JSON.pretty_generate(Aim::ReprocessSidecar.for(metadata)))
     end
 
     def move_invoice_to(destination_dir, notice)
