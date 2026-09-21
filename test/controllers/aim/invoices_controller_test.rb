@@ -4,7 +4,7 @@ require 'test_helper'
 require 'tmpdir'
 
 module Aim
-  # rubocop:disable-next Metrics/ClassLength
+  # rubocop:disable Metrics/ClassLength
   class InvoicesControllerTest < ActionController::TestCase
     tests Aim::InvoicesController
     AIM_ENV = %w[
@@ -463,4 +463,5 @@ module Aim
       Aim::InvoiceDirectoryService.instance.deleted_dir
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

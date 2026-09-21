@@ -1226,6 +1226,24 @@ since overtaken by events -- recorded because the first one will recur:
   run. By 2026-09-15 `Paperboy_Test` answered normally and no override was
   needed. If the suite cannot connect, try the default again before
   assuming anything is broken.
+
+  **It recurred on 2026-09-21, and differently.** `Paperboy_Test` had been
+  dropped and recreated on 2026-09-19 by someone outside AIM, and `GSAETL`
+  has no access to the new copy -- so retrying the default does not help
+  until whoever owns it grants access again. The override alone no longer
+  works either: `rails/test_help` connects to the base database while
+  loading, before the harness creates anything, so a missing base aborts
+  with `NoDatabaseError`. The base has to exist first:
+
+  ```bash
+  export PAPERBOY_TEST_DATABASE=Paperboy_Test0 RAILS_ENV=test
+  bin/rails db:create && bin/rails db:schema:load
+  ```
+
+  `Paperboy_Test0` was created that way and left on `GSASQL16`, so until
+  the default is fixed every suite run is
+  `PAPERBOY_TEST_DATABASE=Paperboy_Test0 PARALLEL_WORKERS=1 bundle exec rake test`.
+  After a master merge that adds migrations, reload the schema into it.
 - **`origin/master` was 68 commits ahead of `501d5059`**, and a long run of
   them were `WIP: Fix ...` test repairs. **They fixed the pre-existing red.**
   `Gemfile.lock` is back on minitest 5.27 and `test/test_helper.rb` carries
@@ -1719,3 +1737,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-15 | 3.1 | (this commit) | One id per invoice: the watcher names the PDF after the batch id and the worker adopts the ticket's; ticket keeps `original_filename`; 69 pytest green, 722 runs, 0 fail, 0 error |
 | 2026-09-15 | — | `b6f9ceed` | **3.1 merged to Paperboy master** by Joshua, ahead of the rest of the phase. Master then moved on three commits (rubocop autocorrect, sheriff-safety gitignore, HSA cards), merged into the phase branch before 3.2 |
 | 2026-09-15 | 3.2 | (this commit) | Retry writes the reprocess sidecar and the worker reads it before minting the id, so a retried or split invoice keeps its Budget Unit; `Aim::ReprocessSidecar` added; **Phase 3 complete**; 72 pytest green, 733 runs, 0 error, 1 pre-existing P2M failure that is red with AIM's diff stashed too |
+| 2026-09-21 | — | (this commit) | Merged `origin/master` (55 commits: digital asset management, publishing, records export) into the phase branch ahead of merging Phase 3 back. Their `rubocop -A` had rewritten the `Metrics/ClassLength` directive in AIM's controller test into `disable-next`, which this rubocop rejects; restored. `Paperboy_Test` was recreated 2026-09-19 and the `GSAETL` login has no access to it, so the suite ran on `PAPERBOY_TEST_DATABASE=Paperboy_Test0`, created by hand and left in place. **921 runs, 0 fail, 0 error** (serial), 72 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 4 baseline |
