@@ -29,8 +29,12 @@ bundle install
 
 # dotenv-rails loads .env for every rails command below. .env names
 # Paperboy_Dev, which is also what database.yml defaults development to.
+#
+# Rails runs every development db task against the test config as well, which
+# names Paperboy_Test -- a database this box's login cannot open and a deploy
+# has no business touching. SKIP_TEST_DATABASE turns that off.
 echo "==> Preparing application and Solid adapter databases..."
-RAILS_ENV=development bundle exec rails db:prepare
+SKIP_TEST_DATABASE=1 RAILS_ENV=development bundle exec rails db:prepare
 
 # Each environment keeps uploads under its own storage/ root. Copies the files
 # this database references out of the shared pre-split folder; idempotent.
