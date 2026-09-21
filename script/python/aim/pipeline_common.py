@@ -403,15 +403,54 @@ def check_missing_fields(data: InvoiceData) -> list:
     return missing
 
 def _clean_money(v):
+    """One spelling for an amount: an optional sign and exactly two decimals.
+
+    The total is a quarter of the business key, so "100.0", "100.00" and
+    "$100.00" have to reach storage as one string or the same invoice arrives
+    twice. Stripping the currency and padding the decimals already did that
+    much; the sign did not survive:
+
+    * "(100.00)" is how an invoice prints a credit. The brackets were dropped
+      with the dollar sign, so a credit was stored as a charge -- the sign
+      silently inverted, which is worse than either spelling.
+    * "100.00-" is the same amount with a trailing minus. `float` refused it,
+      so the total became empty.
+    * "-0.00" and "0.00" are one amount with two spellings, and therefore two
+      business keys.
+
+    A comma used as the decimal separator ("1.234,56") is refused rather than
+    guessed at: a trailing ",56" cannot be told from a grouping comma without
+    assuming a locale, and assuming one produced 1.23 -- a wrong number,
+    stored silently. Returning None sends the invoice to review instead.
+    """
     if not v:
         return None
-    digits = re.sub(r'[^0-9.\-]', '', str(v))
+
+    text = str(v).strip()
+
+    negative = False
+    bracketed = re.match(r'^\((.*)\)$', text)
+    if bracketed:
+        negative, text = True, bracketed.group(1).strip()
+    if text.endswith('-'):
+        negative, text = True, text[:-1].strip()
+
+    if re.search(r',\d{1,2}$', text):
+        return None
+
+    digits = re.sub(r'[^0-9.\-]', '', text)
     if digits in ('', '-', '.', '-.', '--'):
         return None
     try:
-        return f"{float(digits):.2f}"
+        amount = float(digits)
     except ValueError:
         return None
+
+    if negative:
+        amount = -abs(amount)
+    if amount == 0:
+        amount = 0.0
+    return f"{amount:.2f}"
 
 def _clean_date(v):
     if not v or not str(v).strip():

@@ -9,6 +9,11 @@ records of the same invoice, disagreeing. Plan step 4.1, audit H5.
 `_clean_text_field` did the same to the invoice and order numbers, deleting
 every character outside `[a-zA-Z0-9_\\- ]`, so `INV-2024/001` was stored as
 `INV-2024001`. Plan step 4.2.
+
+The total was canonical only on the path the AI worker writes. A payload
+corrected in Rails was sanitised for the XML and inserted raw, so one invoice
+held two totals; and a credit printed as `(100.00)` lost its brackets with its
+dollar sign and was stored as a charge. Plan step 4.3.
 """
 import json
 import os
@@ -164,13 +169,13 @@ def test_a_number_of_only_whitespace_is_none(pipeline, invoice):
 def test_an_invisible_character_cannot_split_the_key(pipeline, invoice):
     """Two numbers that read the same on the page must compare the same."""
     typed = pipeline.sanitize_data(invoice(invoice_number="INV-2024/001"))
-    scanned = pipeline.sanitize_data(invoice(invoice_number="INV-2024​/001"))
+    scanned = pipeline.sanitize_data(invoice(invoice_number="INV-2024\u200b/001"))
 
     assert scanned.invoice_number == typed.invoice_number
 
 
 def test_a_non_breaking_space_is_stored_as_an_ordinary_space(pipeline, invoice):
-    data = pipeline.sanitize_data(invoice(invoice_number="INV 2024"))
+    data = pipeline.sanitize_data(invoice(invoice_number="INV\u00a02024"))
 
     assert data.invoice_number == "INV 2024"
 
@@ -228,3 +233,109 @@ def test_a_slash_in_a_number_does_not_become_a_folder(pipeline, invoice, queue_t
                        "0000_Smith_3", data)
 
     assert os.listdir(queue_tree.queue("AIM_SQL_QUEUE_DIR")) == ["0000_Smith_3"]
+
+
+# Totals -- step 4.3.
+
+@pytest.fixture
+def sql_worker(import_worker):
+    return import_worker("02_sql_worker")
+
+
+def test_the_three_spellings_of_one_total_agree(pipeline, invoice):
+    """The step's own test: 100.0, 100.00 and $100.00 are one stored value."""
+    stored = {pipeline.sanitize_data(invoice(invoice_total=spelling)).invoice_total
+              for spelling in ("100.0", "100.00", "$100.00")}
+
+    assert stored == {"100.00"}
+
+
+@pytest.mark.parametrize("typed,stored", [
+    ("1,234.56", "1234.56"),
+    ("$ 1,234.5", "1234.50"),
+    ("$1,234", "1234.00"),
+    ("USD 100", "100.00"),
+    ("100", "100.00"),
+])
+def test_a_total_is_stored_one_way(pipeline, invoice, typed, stored):
+    assert pipeline.sanitize_data(invoice(invoice_total=typed)).invoice_total == stored
+
+
+@pytest.mark.parametrize("typed", ["(100.00)", "100.00-", "-100.00", "($100.00)"])
+def test_a_credit_keeps_its_sign(pipeline, invoice, typed):
+    """An invoice prints a credit as brackets or a trailing minus. Dropping
+    either stored a credit as a charge, or lost the amount entirely."""
+    assert pipeline.sanitize_data(invoice(invoice_total=typed)).invoice_total == "-100.00"
+
+
+@pytest.mark.parametrize("typed", ["0.00", "$0.00", "-0.00", "(0.00)", "0"])
+def test_zero_has_one_spelling(pipeline, invoice, typed):
+    assert pipeline.sanitize_data(invoice(invoice_total=typed)).invoice_total == "0.00"
+
+
+@pytest.mark.parametrize("typed", ["1.234,56", "1,50"])
+def test_a_comma_decimal_is_refused_rather_than_guessed(pipeline, invoice, typed):
+    """Reading ",56" as a decimal needs a locale nobody stated, and guessing
+    stored 1.23. An empty total routes the invoice to review instead."""
+    assert pipeline.sanitize_data(invoice(invoice_total=typed)).invoice_total is None
+
+
+@pytest.mark.parametrize("typed", ["n/a", "12-3456", "", "   "])
+def test_something_that_is_not_money_is_not_stored_as_money(pipeline, invoice, typed):
+    assert pipeline.sanitize_data(invoice(invoice_total=typed)).invoice_total is None
+
+
+def test_the_row_and_the_xml_carry_one_set_of_values(sql_worker, queue_tree,
+                                                     monkeypatch):
+    """A reviewer's corrections reach SQL the way they reach Laserfiche.
+
+    Rails writes what the reviewer typed. The worker sanitised a copy for the
+    XML and inserted the payload untouched, so the row said "$1,234.5" and the
+    export said "1234.50".
+    """
+    folder = queue_tree.add_invoice("AIM_SQL_QUEUE_DIR", "INV-9", pdf=True)
+    typed = {"BU": "4641", "Submitter": "Test User", "DocumentType": "INVOICE",
+             "VendorName": OFFICIAL_NAME, "InvoiceNumber": "INV-2024/001",
+             "InvoiceTotal": "$1,234.5", "InvoiceDate": "09/21/2026",
+             "OrderNumber": "PO-2024/7", "InvoiceConcatID": "INV-9"}
+    with open(os.path.join(folder, "INV-9_READY_FOR_SQL.json"), "w",
+              encoding="utf-8") as handle:
+        json.dump(typed, handle)
+
+    inserted = []
+    monkeypatch.setattr(sql_worker, "insert_sql_record",
+                        lambda section, payload: inserted.append(dict(payload)))
+    monkeypatch.setattr(sql_worker, "archive_batch", lambda *args: True)
+
+    sql_worker.run_sql_worker()
+
+    row = inserted[0]
+    fields = xml_fields(os.path.join(os.environ["AIM_PROCESSED_DIR"], "INV-9.xml"))
+
+    assert row["InvoiceTotal"] == "1234.50"
+    assert row["InvoiceDate"] == "2026-09-21"
+    assert fields["Invoice Total"] == row["InvoiceTotal"]
+    assert fields["Invoice Date"] == row["InvoiceDate"]
+    assert fields["Vendor Name"] == row["VendorName"] == OFFICIAL_NAME
+    assert fields["Invoice Number"] == row["InvoiceNumber"] == "INV-2024/001"
+    assert fields["Order Number"] == row["OrderNumber"] == "PO-2024/7"
+
+
+def test_every_insert_of_one_batch_carries_the_same_values(sql_worker, queue_tree,
+                                                           monkeypatch):
+    """Tracking and billing are two tables, one invoice."""
+    folder = queue_tree.add_invoice("AIM_SQL_QUEUE_DIR", "INV-8", pdf=True)
+    with open(os.path.join(folder, "INV-8_READY_FOR_SQL.json"), "w",
+              encoding="utf-8") as handle:
+        json.dump({"BU": "4641", "Submitter": "Test User", "VendorName": OFFICIAL_NAME,
+                   "InvoiceTotal": "(100.00)", "InvoiceConcatID": "INV-8"}, handle)
+
+    inserted = []
+    monkeypatch.setattr(sql_worker, "insert_sql_record",
+                        lambda section, payload: inserted.append(dict(payload)))
+    monkeypatch.setattr(sql_worker, "archive_batch", lambda *args: True)
+
+    sql_worker.run_sql_worker()
+
+    assert len(inserted) == 2, "the batch is inserted into tracking and billing"
+    assert {row["InvoiceTotal"] for row in inserted} == {"-100.00"}
