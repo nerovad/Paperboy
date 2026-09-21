@@ -27,8 +27,14 @@ git pull origin "$BRANCH"
 echo "==> Installing gems..."
 bundle install --without development test
 
-echo "==> Running database migrations..."
-RAILS_ENV=production bundle exec rails db:migrate
+echo "==> Preparing application and Solid adapter databases..."
+RAILS_ENV=production bundle exec rails db:prepare
+
+# Each environment keeps uploads under its own storage/ root. Copies the files
+# this database references out of the shared pre-split folder; idempotent.
+# See lib/tasks/storage.rake.
+echo "==> Adopting pre-split Active Storage files..."
+RAILS_ENV=production bundle exec rails storage:adopt_legacy
 
 # Additive: creates the groups, grants and group memberships from db/acl.yml
 # that are missing here, and never removes anything. Run PRUNE=1 by hand if you
@@ -58,13 +64,15 @@ RAILS_ENV=production bundle exec rails assets:precompile
 
 echo "==> Syncing systemd units..."
 sync_unit paperboy.service
-sync_unit paperboy-sidekiq.service
+sync_unit paperboy-jobs.service
 sudo systemctl daemon-reload
+sudo systemctl disable --now paperboy-sidekiq 2>/dev/null || true
 
 echo "==> Restarting Puma..."
 sudo systemctl restart paperboy
 
-echo "==> Restarting Sidekiq..."
-sudo systemctl restart paperboy-sidekiq
+echo "==> Restarting Solid Queue..."
+sudo systemctl enable paperboy-jobs
+sudo systemctl restart paperboy-jobs
 
 echo "==> Deploy complete!"

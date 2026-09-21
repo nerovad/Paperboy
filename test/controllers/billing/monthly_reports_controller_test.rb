@@ -27,5 +27,27 @@ module Billing
         arguments
       )
     end
+
+    test 'redirects completed billing runs to the audit' do
+      report = MonthlyReport.new(
+        operation: 'run', start_date: '2026-07-01', end_date: '2026-07-31', version: 6
+      )
+      controller = MonthlyReportsController.new
+      controller.instance_variable_set(:@report, report)
+      runner = Minitest::Mock.new
+      runner.expect(:call, nil)
+      redirect = nil
+
+      MonthlyReportRunner.stub(:new, runner) do
+        controller.stub(:billing_audit_path, '/billing/audit') do
+          controller.stub(:redirect_to, ->(path, notice:) { redirect = [path, notice] }) do
+            controller.send(:run_monthly_billing)
+          end
+        end
+      end
+
+      assert_equal ['/billing/audit', 'Monthly billing complete'], redirect
+      runner.verify
+    end
   end
 end

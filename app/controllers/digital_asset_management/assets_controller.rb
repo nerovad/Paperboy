@@ -13,7 +13,7 @@ module DigitalAssetManagement
     # reached from a collection or a share too, so gating #show on search
     # would break those for anyone who holds them without it.
     before_action -> { require_app_feature('digital_asset_management', 'search', fallback: digital_asset_management_root_path) }, only: :index
-    before_action :set_asset, only: %i[show edit update destroy share]
+    before_action :set_asset, only: %i[show edit update destroy share original]
     before_action :load_upload_targets, only: %i[new create edit update]
 
     def index
@@ -27,10 +27,24 @@ module DigitalAssetManagement
       @collections = Dam::Collection.alphabetical
       @jobs = Dam::Job.where(subject: @asset).newest_first.limit(10)
       @shares = Dam::Share.where(subject: @asset).newest_first.limit(10)
+      load_publishing
     end
 
     def new
       @asset = Dam::Asset.new(storage_location_id: dam_upload_target&.id)
+    end
+
+    # The full-resolution file of an asset the library references rather than
+    # holds. Sent from the share it lives on, and only ever from inside the
+    # folder its location scans — the path is on a row anyone who can edit an
+    # asset could have written, so it is never trusted as a path to read.
+    def original
+      path = @asset.original_path
+      refusal = unreadable_reason(path)
+      return redirect_to digital_asset_management_asset_path(@asset), alert: refusal if refusal
+
+      send_file path.to_s, filename: @asset.filename, type: @asset.content_type,
+                           disposition: 'attachment'
     end
 
     def create
@@ -52,6 +66,11 @@ module DigitalAssetManagement
       assign_metadata(@asset)
 
       if @asset.save
+        # Every ingest gets its viewable copies, and this one is no exception:
+        # an upload through the form has to reach the builder the same way a
+        # scan or an import does, or it sits on 'pending' for ever with no
+        # proxy and no thumbnail.
+        Dam::BuildDerivativesJob.perform_later(@asset.id)
         # Ingest is a job even though this one runs inline, so the Jobs feed is
         # a complete record of how everything got into the library.
         Dam::Job.record!(job_type: 'ingest', actor: current_user, subject: @asset,
@@ -105,8 +124,27 @@ module DigitalAssetManagement
 
     private
 
+    # The Publish panel, for whoever holds the grant. Targets are split rather
+    # than filtered: a target that will not take this asset is worth showing
+    # with its reason, or the answer to "why can't I send this to YouTube" is
+    # an empty select.
+    def load_publishing
+      return unless helpers.can_use_app_feature?('digital_asset_management', 'publish')
+
+      targets = Dam::PublishTarget.ordered.to_a
+      @publish_targets, @publish_targets_closed = targets.partition { |target| target.refusal_reason(@asset).nil? }
+      @publications = @asset.publications.newest_first.limit(10)
+    end
+
     def set_asset
       @asset = Dam::Asset.find(params[:id])
+    end
+
+    def unreadable_reason(path)
+      return 'That file is not reachable from here.' if path.blank?
+      return nil if @asset.storage_location&.holds_source?(path)
+
+      'That file is outside the folder this location reads.'
     end
 
     def asset_params
@@ -122,23 +160,6 @@ module DigitalAssetManagement
       asset.uploaded_by_name = dam_actor_name
     end
 
-    # Metadata arrives as { field_key => value }. A blank value clears the row
-    # rather than storing an empty string, so "is blank" filters stay honest.
-    def assign_metadata(asset)
-      submitted = params[:metadata]
-      return if submitted.blank?
-
-      allowed = Dam::MetadataField.active.pluck(:key)
-      submitted.to_unsafe_h.slice(*allowed).each do |key, value|
-        row = asset.metadata_values.find { |candidate| candidate.field_key == key }
-        if value.to_s.strip.blank?
-          row&.mark_for_destruction
-        elsif row
-          row.value = value.to_s.strip
-        else
-          asset.metadata_values.build(field_key: key, value: value.to_s.strip)
-        end
-      end
-    end
+    def assign_metadata(asset) = Dam::MetadataAssignment.apply(asset, params[:metadata])
   end
 end

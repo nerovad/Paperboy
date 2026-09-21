@@ -5,30 +5,27 @@
 # Inbox/Submissions. Tables that declare a `route:` (e.g. P-Cards) are bounced
 # to their own richer screen instead.
 class RecordsTableController < ApplicationController
-  include Filterable
-
   before_action :set_table, only: :show
 
   def show
     @page = @table.page_key
     @layout = UserSetting.for_employee(current_employee_id).layout_for(@page)
-    # Narrowing the grid to one agency lets the org headers use that agency's
-    # own vocabulary; unfiltered, they stay canonical.
-    @columns = TableColumns.resolve(@page, @layout, context: { org_agency: params[:filter_agency] })
+    view = RecordsView.new(@table, layout: @layout, params: params)
 
-    rows = RecordsSearch.apply(@table, @table.scope.to_a, params[:search])
-
-    # Dropdown values come from the searched set but before the column filters
-    # narrow it, so picking one value doesn't empty every other dropdown.
-    @filter_options = collect_filter_options(rows, select_filter_extractors(@columns))
-    rows = apply_column_filters(rows, @columns)
-
-    @default_sort = default_sort_key(@columns)
-    sort_by = params[:sort_by].presence || @default_sort
-    sort_direction = params[:sort_direction] || 'asc'
-    sort_configs = @columns.select(&:sortable?).index_by(&:sort_key).transform_values(&:value)
-
-    @records = sort_collection(rows, sort_by, sort_direction, sort_configs, default_sort: @default_sort)
+    respond_to do |format|
+      format.html do
+        @columns = view.columns
+        @filter_options = view.filter_options
+        @default_sort = view.default_sort
+        @records = view.rows
+        @view_params = ScheduledRecordExport.view_params_from(request.query_parameters)
+        @export_schedules = ScheduledRecordExport.for_employee(current_employee_id)
+                                                 .where(table_slug: @table.slug).order(:created_at)
+      end
+      format.csv do
+        send_data RecordsCsv.generate(view), filename: RecordsCsv.filename(@table), type: 'text/csv'
+      end
+    end
   end
 
   # Finalize a batch of staged inline edits (from the review modal). Every
@@ -58,33 +55,6 @@ class RecordsTableController < ApplicationController
 
   private
 
-  # Extractors for the columns that filter as a dropdown, keyed by filter param.
-  def select_filter_extractors(columns)
-    columns.select { |column| column.filterable? && !column.search_filter? }
-           .to_h { |column| [column.filter_param.to_s, column.value] }
-  end
-
-  # `:select` columns match their dropdown value exactly; `:search` columns
-  # match as a contains, which is what a free-text box implies. Filterable's
-  # shared #apply_filters only matches exactly, so the contains pass lives here
-  # rather than changing behaviour the Inbox and Submissions rely on.
-  def apply_column_filters(rows, columns)
-    search_columns, select_columns = columns.select(&:filterable?).partition(&:search_filter?)
-
-    rows = apply_filters(rows, filter_configs: select_columns.map do |column|
-      { param: column.filter_param, extractor: column.value }
-    end)
-
-    search_columns.each do |column|
-      needle = params[column.filter_param].to_s.strip.downcase
-      next if needle.blank?
-
-      rows = rows.select { |row| column.value.call(row).to_s.downcase.include?(needle) }
-    end
-
-    rows
-  end
-
   # Apply the changes atomically and return { "id::column" => cell_html }. The
   # audit rows are written in the same transaction, so a saved batch and its
   # trail either both land or neither does.
@@ -111,7 +81,8 @@ class RecordsTableController < ApplicationController
   # values are read before assignment: once save! lands, the originals are gone
   # and the audit row is the only place they survive.
   #
-  # A form model audits itself -- AuditableEdits writes the same rows from an
+  # A model that includes AuditableEdits (every form, and the P-Card and Fleet
+  # tables) audits itself -- it writes the same rows from an
   # after_update, attributed to the same Current.user and stamped with the same
   # registry_slug this passes as table.slug -- so capturing again here would
   # enter every grid edit twice in the record's Edit History.

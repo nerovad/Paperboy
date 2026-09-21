@@ -82,8 +82,9 @@ in the list above came back.
 
 ### Working on CSS locally
 
-Run `bin/dev` — it starts `dartsass:watch` alongside the server, so a
-saved `.scss` rebuilds in about 100ms and a browser refresh shows it.
+Run `bin/dev` — it starts `dartsass:watch` alongside the server and Solid
+Queue, so a saved `.scss` rebuilds in about 100ms and a browser refresh
+shows it. `bin/dev-local` is the same script under its own name.
 
 Keep `public/assets` empty on your workstation. sprockets-rails resolves
 `[:manifest, :environment]` -- manifest first -- so a precompiled manifest
@@ -282,3 +283,43 @@ Rules:
   its `LOOKUPS` / `MULTI_VALUE` tables rather than formatting in a view. Every
   lookup crosses to GSABSS and falls back to the raw value, so it must stay
   best-effort.
+
+## Publishing
+
+An asset leaves the library through a **publish target** — one account on one
+service (`Dam::PublishTarget`) — and every sending is a row
+(`Dam::Publication`) that is kept whatever the outcome.
+
+Six providers ship: YouTube, Vimeo, Instagram, Facebook, TikTok, and a custom
+HTTP endpoint with headers typed into the form. Each is an adapter class under
+`app/services/dam/publishing/`, registered in `Dam::Publishing::ADAPTERS`.
+
+Rules:
+
+- **A seventh service is a new adapter and one line in `ADAPTERS`.** Nothing
+  else branches on the provider name: the form, the picker on an asset and the
+  runner all ask the adapter what it takes (`media_types`), what the target
+  form should ask for (`account_prompt`), what visibility choices it offers
+  (`privacy_options`) and whether it signs in with OAuth (`oauth?`).
+- **An adapter never sets a publication's status.** It returns a
+  `Base::Result` or raises `Dam::Publishing::DeliveryFailed`;
+  `Dam::Publishing::Runner` owns the row, the log and the Jobs feed entry.
+- **Nothing publishes inside a request.** `PublicationsController#create`
+  queues `Dam::PublishJob` and returns. The job has no `retry_on`: a retry
+  would put the video up twice, so failures stop and the screen offers a
+  retry that makes a *new* row.
+- **Tokens are encrypted on the target; the client id and secret are not
+  stored at all.** They belong to the installation, so they are per host in
+  `.env` — `PUBLISH_YOUTUBE_CLIENT_ID`, `PUBLISH_VIMEO_CLIENT_ID`,
+  `PUBLISH_META_CLIENT_ID` (Facebook and Instagram share one Meta app),
+  `PUBLISH_TIKTOK_CLIENT_KEY`, each with its `_SECRET`. Every provider comes
+  back to one address,
+  `/digital_asset_management/publish_connections/callback`, which has to be
+  registered with each of them by hand.
+- **Instagram fetches rather than receives**, so it needs
+  `PAPERBOY_PUBLIC_BASE_URL` set to an address this server answers on from
+  outside. A publication in flight mints a single-use token that
+  `DamMediaController` serves that one asset from, and only while the publish
+  is running plus an hour.
+- Publishing an asset is the `publish` feature grant; setting up and
+  connecting targets is `publish_targets`, deliberately separate.

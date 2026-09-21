@@ -1,0 +1,78 @@
+<%# One publication: what was sent, where, and the run log of it going. %>
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1><%= @publication.title %></h1>
+      <p class="dam-page-subtitle">
+        <%= @publication.target_label %> · <%= @publication.provider&.titleize %>
+        <%= dam_pill(@publication.status) %>
+      </p>
+    </div>
+    <div class="dam-page-actions">
+      <% if (published = dam_published_url(@publication.external_url)) %>
+        <%= link_to "Open on #{@publication.provider.to_s.titleize}", published,
+                    target: "_blank", rel: "noopener", class: "btn pdf" %>
+      <% end %>
+      <% if @publication.status == "queued" %>
+        <%= button_to "Cancel", cancel_digital_asset_management_publication_path(@publication),
+                      method: :post, class: "btn deny" %>
+      <% elsif !@publication.open? %>
+        <%= button_to "Publish again", retry_digital_asset_management_publication_path(@publication),
+                      method: :post, class: "btn edit" %>
+      <% end %>
+      <%= link_to "All publications", digital_asset_management_publications_path, class: "btn" %>
+    </div>
+  </header>
+
+  <div class="dam-detail-layout">
+    <section class="dam-panel">
+      <h2>What was sent</h2>
+      <dl class="dam-facts">
+        <dt>Asset</dt>
+        <dd>
+          <% if @publication.asset %>
+            <%= link_to @publication.asset.title, digital_asset_management_asset_path(@publication.asset) %>
+          <% else %>
+            <%= @publication.asset_title.presence || "—" %>
+          <% end %>
+        </dd>
+        <dt>Title</dt><dd><%= @publication.title %></dd>
+        <dt>Description</dt><dd><%= @publication.description.presence || "—" %></dd>
+        <dt>Tags</dt><dd><%= @publication.tag_list.join(", ").presence || "—" %></dd>
+        <dt>Visibility</dt>
+        <dd><%= @publication.publish_target&.privacy_options&.dig(@publication.privacy) || @publication.privacy.presence || "—" %></dd>
+      </dl>
+
+      <% if @publication.error.present? %>
+        <h2>Why it failed</h2>
+        <p class="dam-failure"><%= @publication.error %></p>
+      <% end %>
+
+      <h2>Run log</h2>
+      <% if @publication.log.present? %>
+        <pre class="dam-log"><%= @publication.log %></pre>
+      <% else %>
+        <p class="dam-muted">Nothing logged yet.</p>
+      <% end %>
+    </section>
+
+    <aside class="dam-detail-side">
+      <section class="dam-panel">
+        <h2>This run</h2>
+        <dl class="dam-facts">
+          <dt>Requested</dt><dd><%= @publication.created_at.strftime("%b %-d, %Y at %-l:%M %p") %></dd>
+          <dt>By</dt><dd><%= @publication.requested_by_name.presence || "—" %></dd>
+          <dt>Started</dt><dd><%= @publication.started_at&.strftime("%-l:%M %p") || "—" %></dd>
+          <dt>Finished</dt><dd><%= @publication.finished_at&.strftime("%-l:%M %p") || "—" %></dd>
+          <dt>Took</dt><dd><%= @publication.duration ? "#{@publication.duration}s" : "—" %></dd>
+          <dt>Attempt</dt><dd><%= @publication.attempts %></dd>
+          <dt>Reply</dt><dd><%= @publication.response_code || "—" %></dd>
+          <dt>Their ID</dt><dd><%= @publication.external_id.presence || "—" %></dd>
+          <% if @job %>
+            <dt>Job</dt><dd><%= link_to "##{@job.id}", digital_asset_management_job_path(@job) %></dd>
+          <% end %>
+        </dl>
+      </section>
+    </aside>
+  </div>
+</div>

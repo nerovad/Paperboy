@@ -1,22 +1,10 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
-
-# Dart Sass compiles app/assets/stylesheets/application.scss into
-# app/assets/builds/application.css. That build is what Sprockets serves, so the
-# watcher has to run alongside the server or SCSS edits will not show up.
-watcher = spawn('./bin/rails', 'dartsass:watch')
-
-stop_watcher = lambda do
-  Process.kill('TERM', watcher)
-  Process.wait(watcher)
-rescue Errno::ESRCH, Errno::ECHILD
-  nil
-end
-
-Signal.trap('INT') { stop_watcher.call }
-
-begin
-  system('./bin/rails', 'server', *ARGV)
-ensure
-  stop_watcher.call
-end
+#!/usr/bin/env bash
+# Kept as the name AGENTS.md and muscle memory reach for. The workstation
+# runner is bin/dev-local -- Puma, Solid Queue and the Dart Sass watcher in one
+# terminal -- and every argument here is passed straight to it.
+#
+#   bin/dev              # Puma on :3001 + Solid Queue + Sass
+#   bin/dev 3005         # different port
+#   bin/dev --cron       # also run the recurring schedule
+#   bin/dev --no-jobs    # Puma and Sass only
+exec "$(dirname "$0")/dev-local" "$@"

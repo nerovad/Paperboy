@@ -4120,7 +4120,7 @@ forms:
     position: 1
     required: true
     options:
-      rows: 3
+      rows: 2
       repeatable: true
       repeat_min: 1
       repeat_max: 0
@@ -4135,9 +4135,7 @@ forms:
     position: 2
     required: true
     options:
-      repeatable: true
-      repeat_min: 1
-      repeat_max: 0
+      repeat_group: work_performed
     read_only: none
     has_custom_view: false
     visible_to_filler: false

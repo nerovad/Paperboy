@@ -214,8 +214,13 @@ module Forms
 
     private
 
+    # Derived from the name, unless one was given. The form builder and the
+    # duplicator both leave it blank and want it generated; db/forms.yml names
+    # the real form class, which the name does not always derive to ("Safety
+    # Reporting" gives SafetyReportingForm, but the class is SafetyReport), and
+    # overwriting it filed those templates under a class no form answers to.
     def generate_class_name
-      return if name.blank?
+      return if name.blank? || class_name.present?
 
       self.class_name = self.class.class_name_for(name)
     end

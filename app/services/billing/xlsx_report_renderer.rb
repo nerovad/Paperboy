@@ -4,7 +4,7 @@ require 'axlsx'
 require 'bigdecimal'
 
 module Billing
-  # rubocop:disable Metrics/ClassLength
+  # rubocop:disable-next Metrics/ClassLength
   class XlsxReportRenderer
     DATE_FORMAT = '%m/%d/%y'
     BILLING_LABEL_INDEX = 27
@@ -138,5 +138,4 @@ module Billing
       Date.iso8601(value).strftime(DATE_FORMAT)
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end

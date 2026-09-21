@@ -4,7 +4,7 @@
 require 'date'
 require 'pathname'
 
-# rubocop:disable Metrics/ModuleLength
+# rubocop:disable-next Metrics/ModuleLength
 module DataRunnerTaskHelpers
   module_function
 
@@ -413,4 +413,3 @@ module DataRunnerTaskHelpers
   end
   private_class_method :run_postprocessing
 end
-# rubocop:enable Metrics/ModuleLength

@@ -36,8 +36,71 @@
   <div class="form-group">
     <%= f.label :root, "Root" %>
     <%= f.text_field :root, class: "form-control",
-                     placeholder: "Filesystem path, bucket name or UNC share" %>
+                     placeholder: "Leave blank to use the app's own storage folder" %>
+    <p class="dam-hint">
+      The folder a local disk or network share location stores its files in. Blank means the
+      app's own Active Storage folder, which is where everything went before roots were honoured.
+      It cannot change once files are stored under it. Object storage and cold archive ignore
+      this until an adapter for them exists.
+      <% if Dam::StorageLocation.allowed_roots.any? %>
+        Allowed folders on this server: <code><%= Dam::StorageLocation.allowed_roots.join(", ") %></code>
+        (set by PAPERBOY_DAM_ROOTS).
+      <% end %>
+    </p>
   </div>
+
+  <div class="form-group">
+    <%= f.label :accepted_formats, "Formats accepted" %>
+    <%= f.text_field :accepted_formats, class: "form-control",
+                     placeholder: "Leave blank to accept everything" %>
+    <p class="dam-hint">
+      A comma-separated list — <code>jpg, png, pdf, mov</code>. Blank accepts every format.
+      This applies to uploads as well as to a scanned folder: an upload of a format this
+      location does not take is refused, and a scan passes those files by.
+    </p>
+  </div>
+
+  <fieldset class="dam-filter-set">
+    <legend>Folder ingest</legend>
+
+    <div class="form-group">
+      <%= f.label :watch_path, "Folder to scan" %>
+      <%= f.text_field :watch_path, class: "form-control",
+                       placeholder: "Leave blank for upload-form ingest only" %>
+      <p class="dam-hint">
+        Must sit inside the same allowed folders as a root, and apart from any folder the
+        library stores files in.
+      </p>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :ignore_patterns, "Filenames to skip" %>
+      <%= f.text_field :ignore_patterns, class: "form-control",
+                       placeholder: "*thm_*, *pre_*, *scr_*" %>
+      <p class="dam-hint">
+        Comma-separated filename patterns a scan passes over, for the generated files that sit
+        beside originals. A ResourceSpace filestore wants
+        <code>*col_*, *hpr_*, *lpr_*, *pre_*, *scr_*, *thm_*, *tmp_*</code> — without them its
+        seven preview sizes arrive as assets of their own, which is where most of the files in
+        one of those folders come from.
+      </p>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :ingest_mode, "What to do with what it finds" %>
+      <%= f.select :ingest_mode,
+                   Dam::StorageLocation::INGEST_MODES.map { |key, label| [label, key] },
+                   {}, class: "form-control" %>
+      <p class="dam-hint">
+        <strong>Move</strong> suits a drop box: a file that has finished copying is ingested
+        and its original moved into <code>_ingested</code> beside it, or <code>_failed</code>
+        with the reason on the Jobs screen. <strong>Read in place</strong> suits a share
+        somebody else maintains: subfolders are read too, nothing is moved, renamed or copied,
+        and the library keeps only a proxy and a thumbnail of each file. Either way, scanning
+        stops while the location is disabled, read-only or full.
+      </p>
+    </div>
+  </fieldset>
 
   <div class="form-group">
     <%= f.label :description %>

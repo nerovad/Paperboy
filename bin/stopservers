@@ -15,7 +15,7 @@ find_processes() {
 
     command=$(tr '\0' ' ' < "$process_dir/cmdline" 2>/dev/null) || continue
     if [[ $command == *"bin/rails server"* || $command == puma\ * ||
-          $command == *"/sidekiq "* || $command == sidekiq\ * ]]; then
+          $command == *"bin/jobs"* || $command == *"solid-queue"* ]]; then
       printf '%s\n' "${process_dir##*/}"
     fi
   done

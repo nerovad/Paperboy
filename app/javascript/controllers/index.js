@@ -40,6 +40,7 @@ import TaskSelectionController from "controllers/task_selection_controller"
 import StatusFiltersController from "controllers/status_filters_controller"
 import ColumnCustomizerController from "controllers/column_customizer_controller"
 import RecordsEditController from "controllers/records_edit_controller"
+import RecordsExportController from "controllers/records_export_controller"
 import TagChipsController from "controllers/tag_chips_controller"
 import UrgencyMapController from "controllers/urgency_map_controller"
 import NhtsaVehicleController from "controllers/nhtsa_vehicle_controller"
@@ -75,12 +76,15 @@ import SopModalController from "controllers/sop_modal_controller"
 import DatabaseDslController from "controllers/database_dsl_controller"
 import AppSwitcherController from "controllers/app_switcher_controller"
 import DamSearchController from "controllers/dam_search_controller"
+import PublishTargetController from "controllers/publish_target_controller"
+import PublishFormController from "controllers/publish_form_controller"
 import OrgCascadeController from "controllers/org_cascade_controller"
 import AdvancedSearchController from "controllers/advanced_search_controller"
 import CoaBillingLookupController from "controllers/coa_billing_lookup_controller"
 import CoaBillingStringController from "controllers/coa_billing_string_controller"
 import CoaAccountHierarchyController from "controllers/coa_account_hierarchy_controller"
 import CoaCustomerLookupController from "controllers/coa_customer_lookup_controller"
+import CustomerLookupRowsController from "controllers/customer_lookup_rows_controller"
 import AimOcrController from "controllers/aim_ocr_controller"
 import HsaAdoptionCardsController from "controllers/hsa_adoption_cards_controller"
 import DateRangeController from "controllers/date_range_controller"
@@ -88,6 +92,7 @@ import PdfPreviewController from "controllers/pdf_preview_controller"
 import PrinterSelectionController from "controllers/printer_selection_controller"
 import P2mDataResetController from "controllers/p2m_data_reset_controller"
 import P2mQualityControlController from "controllers/p2m_quality_control_controller"
+import StartupWarningController from "controllers/startup_warning_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -109,6 +114,7 @@ application.register("data-refresh-groups", DataRefreshGroupsController)
 application.register("printer-selection", PrinterSelectionController)
 application.register("p2m-data-reset", P2mDataResetController)
 application.register("p2m-quality-control", P2mQualityControlController)
+application.register("startup-warning", StartupWarningController)
 application.register("coa-account-fields", CoaAccountFieldsController)
 application.register("approve-modal", ApproveModalController)
 application.register("reassign-modal", ReassignModalController)
@@ -123,6 +129,7 @@ application.register("command-palette", CommandPaletteController)
 application.register("tips", TipsController)
 application.register("search-command", SearchCommandController)
 application.register("coa-customer-lookup", CoaCustomerLookupController)
+application.register("customer-lookup-rows", CustomerLookupRowsController)
 application.register("coa-billing-string", CoaBillingStringController)
 application.register("coa-account-hierarchy", CoaAccountHierarchyController)
 application.register("form-builder", FormBuilderController)
@@ -136,6 +143,7 @@ application.register("task-selection", TaskSelectionController)
 application.register("status-filters", StatusFiltersController)
 application.register("column-customizer", ColumnCustomizerController)
 application.register("records-edit", RecordsEditController)
+application.register("records-export", RecordsExportController)
 application.register("tag-chips", TagChipsController)
 application.register("urgency-map", UrgencyMapController)
 application.register("nhtsa-vehicle", NhtsaVehicleController)
@@ -172,6 +180,8 @@ application.register("sop-modal", SopModalController)
 application.register("database-dsl", DatabaseDslController)
 application.register("app-switcher", AppSwitcherController)
 application.register("dam-search", DamSearchController)
+application.register("publish-target", PublishTargetController)
+application.register("publish-form", PublishFormController)
 application.register("org-cascade", OrgCascadeController)
 application.register("advanced-search", AdvancedSearchController)
 application.register("coa-billing-lookup", CoaBillingLookupController)

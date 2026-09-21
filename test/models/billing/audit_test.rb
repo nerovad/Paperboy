@@ -6,6 +6,11 @@ module Billing
   class AuditTest < ActiveSupport::TestCase
     FakePeriod = Data.define(:start_date, :end_date)
 
+    setup do
+      @start_date = '2026-07-01'
+      @end_date = '2026-07-31'
+    end
+
     test 'returns every audit check grouped for display' do
       rows = ActiveRecord::Result.new(
         %w[audit_key failure_count],
@@ -29,8 +34,9 @@ module Billing
       connection = Minitest::Mock.new
       connection.expect(:exec_query, ActiveRecord::Result.empty) do |sql|
         assert_equal 10, sql.scan('SELECT ').length - sql.scan('SELECT 1').length
-        assert_includes sql, "'2026-07-01'"
-        assert_includes sql, "'2026-07-31'"
+        assert_includes sql, start_date
+        assert_includes sql, end_date
+        refute_includes sql, "''#{start_date}''"
         assert_includes sql, 'GSABSS.dbo.tc60_services'
         assert_equal 10, sql.scan('fnTC60PostingRef(T.[TYPE]').length
         true
@@ -49,7 +55,7 @@ module Billing
       connection = Minitest::Mock.new
       connection.expect(:exec_query, rows) do |sql|
         assert_includes sql, 'GROUP BY LTRIM(RTRIM(T.CUNIT))'
-        assert_includes sql, "'2026-07-01'"
+        assert_includes sql, start_date
         assert_includes sql, 'fnTC60PostingRef(T.[TYPE]'
         true
       end
@@ -64,7 +70,9 @@ module Billing
     private
 
     def period
-      FakePeriod.new(start_date: Date.new(2026, 7, 1), end_date: Date.new(2026, 7, 31))
+      FakePeriod.new(start_date: Date.iso8601(start_date), end_date: Date.iso8601(end_date))
     end
+
+    attr_reader :start_date, :end_date
   end
 end

@@ -982,24 +982,23 @@ class FormTemplatesController < ApplicationController
   #   locations_attributes: [:id, :_destroy, :city, { tags: [] }]
   # Injected into the generated *_params permit list. Robust to the media-param
   # injection above having already edited the same permit call.
+  #
+  # A section already in the permit list has its entry rewritten from the
+  # section's current members, not skipped: a field that joins an existing
+  # section would otherwise render in the form and be silently dropped by strong
+  # parameters on submit.
   def inject_section_params(content, form_template)
     lines = form_template.repeating_sections.filter_map do |section|
       assoc = section.section_association_name
-      next if assoc.blank? || content.include?("#{assoc}_attributes:")
+      next if assoc.blank?
 
       members = section.section_members
       next if members.empty?
 
-      syms  = %w[id _destroy] + members.reject(&:choices_dropdown?).map(&:field_name)
-      multi = members.select(&:choices_dropdown?).map { |m| "#{m.field_name}: []" }
-      if multi.any?
-        # Mixed array (symbols + a hash) — rubocop leaves this as bracket syntax.
-        inner = "#{syms.map { |s| ":#{s}" }.join(', ')}, { #{multi.join(', ')} }"
-        "#{assoc}_attributes: [#{inner}]"
-      else
-        # All-symbol array must use %i[...] to stay rubocop-clean.
-        "#{assoc}_attributes: %i[#{syms.join(' ')}]"
-      end
+      entry = section_params_entry(assoc, members)
+      next if replace_section_params_entry(content, "#{assoc}_attributes", entry)
+
+      entry
     end
     return if lines.empty?
 
@@ -1015,6 +1014,42 @@ class FormTemplatesController < ApplicationController
       tail = ::Regexp.last_match(3)
       "#{head}#{args.sub(/\s+\z/, '')},\n#{addition}#{tail}"
     end
+  end
+
+  def section_params_entry(assoc, members)
+    syms  = %w[id _destroy] + members.reject(&:choices_dropdown?).map(&:field_name)
+    multi = members.select(&:choices_dropdown?).map { |m| "#{m.field_name}: []" }
+    if multi.any?
+      # Mixed array (symbols + a hash) — rubocop leaves this as bracket syntax.
+      inner = "#{syms.map { |s| ":#{s}" }.join(', ')}, { #{multi.join(', ')} }"
+      "#{assoc}_attributes: [#{inner}]"
+    else
+      # All-symbol array must use %i[...] to stay rubocop-clean.
+      "#{assoc}_attributes: %i[#{syms.join(' ')}]"
+    end
+  end
+
+  # Swap an existing `key: [...]` / `key: %i[...]` permit entry for `entry`,
+  # matching brackets so a nested `{ tags: [] }` or a list rubocop wrapped onto
+  # several lines is replaced whole. Like sub!, returns nil when the key isn't
+  # there.
+  def replace_section_params_entry(content, key, entry)
+    start = content.index(/(?<!\w)#{Regexp.escape(key)}:/)
+    return unless start
+
+    open = content.index('[', start)
+    return unless open && content[(start + key.length + 1)...open].strip.in?(['', '%i'])
+
+    depth = 0
+    close = (open...content.length).find do |i|
+      depth += 1 if content[i] == '['
+      depth -= 1 if content[i] == ']'
+      depth.zero?
+    end
+    return unless close
+
+    content[start..close] = entry
+    content
   end
 
   def add_media_download_routes(form_template)

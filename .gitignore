@@ -4,6 +4,13 @@
 !/log/.keep
 /public/assets/*
 
+# Active Storage roots, one per environment (config/storage.yml)
+/storage/development/
+/storage/staging/
+/storage/production/
+# Default DAM roots and watch folders (PAPERBOY_DAM_ROOTS)
+/storage/dam/
+
 .env
 *.png
 !app/assets/images/Billing*.png

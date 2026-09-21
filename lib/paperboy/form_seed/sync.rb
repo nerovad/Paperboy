@@ -47,8 +47,14 @@ module Paperboy
           '(CREATE_TEMPLATES=1 to add a bare one)'
       end
 
+      # db/forms.yml carries a form's shape and not its workflow, so an
+      # approval form arrives with no routing — which Forms::Template refuses
+      # to save. Supervisor is what the form builder offers first, and the log
+      # line above already says the routing still needs configuring.
       def create_template(class_name, row)
-        Forms::Template.create!(row.slice(*FormSeed::TEMPLATE_COLUMNS).merge('class_name' => class_name))
+        attributes = row.slice(*FormSeed::TEMPLATE_COLUMNS).merge('class_name' => class_name)
+        attributes['approval_routing_to'] = 'supervisor' if attributes['submission_type'] == 'approval'
+        Forms::Template.create!(attributes)
       end
 
       def fields(template, class_name, rows, dry:, prune:)

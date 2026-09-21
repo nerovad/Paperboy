@@ -4,7 +4,7 @@ require 'test_helper'
 
 module P2m
   class StageDataTest < ActiveSupport::TestCase
-    test 'creates one queued Sidekiq job' do
+    test 'creates one queued job' do
       enqueued = nil
 
       StageDataJob.stub(:perform_later, ->(*arguments) { enqueued = arguments }) do

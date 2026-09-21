@@ -9,6 +9,7 @@ ruby '~> 4.0'
 gem 'minitest'
 gem 'minitest-mock'
 gem 'rails', '~> 8.1.3'
+gem 'smb_shortcut', git: 'git@gsa-gitea:BSS/smb_shortcut.git'
 
 # Asset pipeline: Sprockets serves and digests; dartsass-rails compiles SCSS
 # with Dart Sass (sass-embedded). Do not reintroduce sass-rails/sassc-rails --
@@ -22,6 +23,16 @@ gem 'sprockets-rails'
 # MSSQL (primary database + billing stored procedures)
 gem 'activerecord-sqlserver-adapter'
 gem 'tiny_tds', force_ruby_platform: true
+
+# Read-only, and only for the DAM's ResourceSpace import, which runs on the
+# machine that can reach that MySQL server. The group is optional so no other
+# host has to build the native extension — or install libmysqlclient-dev to
+# get through a deploy. Opt in where it is needed:
+#
+#   bundle config set --local with resourcespace && bundle install
+group :resourcespace, optional: true do
+  gem 'mysql2'
+end
 
 # Use the Puma web server [https://github.com/puma/puma]
 gem 'puma', '>= 5.0'
@@ -38,13 +49,13 @@ gem 'stimulus-rails'
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem 'jbuilder'
 
-# Backend Queuing Manager
-gem 'sidekiq'
+# Database-backed adapters for Active Job, Rails.cache, and Action Cable.
+gem 'solid_cable'
+gem 'solid_cache'
+gem 'solid_queue'
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 gem 'bcrypt', '~> 3.1.7'
-gem 'redis'
-gem 'sidekiq-cron'
 
 # Metabase signed embedding
 gem 'jwt'
@@ -75,15 +86,10 @@ gem 'omniauth-entra-id'
 gem 'omniauth-rails_csrf_protection'
 
 # Gemfile
-gem 'dotenv-rails', groups: %i[development test production]
+gem 'dotenv-rails', groups: %i[development test staging production]
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: %i[windows jruby]
-
-# Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
-gem 'solid_cable', group: %i[development test]
-gem 'solid_cache', group: %i[development test]
-gem 'solid_queue', group: %i[development test]
 
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', require: false

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength
+# rubocop:disable-next Metrics/ClassLength
 class MoveP2mOmsUploadsToGsabss < ActiveRecord::Migration[8.0]
   TABLES = %i[p2m_oms_uploads p2m_oms_upload_files p2m_oms_upload_findings].freeze
 
@@ -143,4 +143,3 @@ class MoveP2mOmsUploadsToGsabss < ActiveRecord::Migration[8.0]
     @gsabss ||= GsabssBase.connection
   end
 end
-# rubocop:enable Metrics/ClassLength

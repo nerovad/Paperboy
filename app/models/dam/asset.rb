@@ -9,6 +9,7 @@ module Dam
   # storage, because a grid of 200 thumbnails must not open 200 files.
   class Asset < ApplicationRecord
     include DamDashboardSubject
+    include DamReferencedSource
 
     MEDIA_TYPES = %w[image video document audio other].freeze
     STATUSES = %w[active processing failed archived].freeze
@@ -23,7 +24,10 @@ module Dam
       text/csv
     ].freeze
 
-    has_one_attached :file
+    # Stored through the location's own service when it has a root, and the
+    # app's default service otherwise. Decided when the file is attached, and
+    # remembered on the blob, so moving the asset later leaves the file put.
+    has_one_attached :file, service: ->(asset) { asset.storage_location&.storage_service_name }
 
     belongs_to :storage_location, class_name: 'Dam::StorageLocation', optional: true
 
@@ -31,6 +35,8 @@ module Dam
                                foreign_key: :asset_id, inverse_of: :asset
     has_many :collection_assets, class_name: 'Dam::CollectionAsset', dependent: :destroy,
                                  foreign_key: :asset_id, inverse_of: :asset
+    has_many :publications, class_name: 'Dam::Publication', dependent: :destroy,
+                            foreign_key: :asset_id, inverse_of: :asset
     has_many :collections, through: :collection_assets, source: :collection
 
     accepts_nested_attributes_for :metadata_values, allow_destroy: true
@@ -39,7 +45,7 @@ module Dam
     validates :media_type, inclusion: { in: MEDIA_TYPES }
     validates :status, inclusion: { in: STATUSES }
     validate :storage_target_accepts_uploads, on: :create
-
+    validate :storage_target_accepts_format, on: :create
     scope :newest_first, -> { order(created_at: :desc) }
     scope :visible, -> { where(status: %w[active processing]) }
     scope :uploaded_by, ->(employee_id) { where(uploaded_by_id: employee_id.to_s) }
@@ -119,6 +125,17 @@ module Dam
       return if reason.nil?
 
       errors.add(:storage_location, "#{storage_location.label} is #{reason} and cannot take new uploads")
+    end
+
+    # A location may state the formats it is for, so a video does not land in
+    # the scanned-documents share. Checked here rather than at each caller, so
+    # the upload form, a watch folder and a console import all agree.
+    def storage_target_accepts_format
+      return if storage_location.blank? || format.blank?
+      return if storage_location.accepts_format?(format)
+
+      errors.add(:file, "#{format} is not one of the formats #{storage_location.label} takes " \
+                        "(#{storage_location.accepted_format_list.join(', ')})")
     end
   end
 end

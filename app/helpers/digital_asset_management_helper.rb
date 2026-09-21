@@ -35,11 +35,63 @@ module DigitalAssetManagementHelper
              class: "dam-pill #{STATE_VARIANTS.fetch(state.to_s, 'dam-pill--muted')}")
   end
 
-  # The thumbnail for an asset card, or nil when there is nothing to draw.
-  def dam_thumbnail_url(asset)
-    return nil unless asset.image? && asset.file.attached?
+  # A link a publishing service came back with, or nil when it is not one.
+  # These are strings from somebody else's API, and they end up in an href, so
+  # anything that is not plain http(s) is not offered as a link at all.
+  def dam_published_url(url)
+    parsed = URI.parse(url.to_s)
+    parsed.is_a?(URI::HTTP) && parsed.host.present? ? parsed.to_s : nil
+  rescue URI::InvalidURIError
+    nil
+  end
 
-    url_for(asset.file)
+  # The thumbnail for an asset card, or nil when there is nothing to draw.
+  # The built thumbnail first, whatever the media type — a video's poster
+  # frame is a picture even though the video is not — then the stored original
+  # for an image the builder has not reached yet.
+  def dam_thumbnail_url(asset)
+    return url_for(asset.thumbnail) if asset.thumbnail.attached?
+    return url_for(asset.proxy) if asset.proxy.attached?
+    return url_for(asset.file) if asset.image? && asset.file.attached?
+
+    nil
+  end
+
+  # The largest copy worth putting on the detail page.
+  def dam_preview_url(asset)
+    return url_for(asset.proxy) if asset.proxy.attached?
+    return url_for(asset.file) if asset.image? && asset.file.attached?
+
+    dam_thumbnail_url(asset)
+  end
+
+  # Where "Download" goes: a referenced asset's original is streamed from the
+  # share it lives on, a stored one straight off its service.
+  def dam_original_url(asset)
+    return original_digital_asset_management_asset_path(asset) if asset.referenced?
+
+    asset.file.attached? ? url_for(asset.file) : nil
+  end
+
+  PREVIEW_STATE_LABELS = { 'ready' => 'ready', 'pending' => 'waiting',
+                           'failed' => 'failed', 'none' => 'no preview possible' }.freeze
+
+  def dam_preview_state_label(state) = PREVIEW_STATE_LABELS.fetch(state, state.to_s)
+
+  # The sentence an administrator can act on. The raw text stays available
+  # under Details, and is the only thing that helps when the sentence does not.
+  def dam_failure_explanation(text) = Dam::FailureExplanation.for(text) || 'No reason was recorded.'
+
+  # Everything the app actually knows, folded away until somebody asks — a
+  # class name and a backtrace line are noise on a page about a library, and
+  # the first thing wanted when the plain sentence is not enough.
+  def dam_failure_details(text, path: nil)
+    return nil if text.blank?
+
+    tag.details(class: 'dam-failure-details') do
+      concat tag.summary('Details')
+      concat tag.pre([path.presence, text].compact.join("\n\n"))
+    end
   end
 
   def dam_star_button(subject, favorited:, label: nil)

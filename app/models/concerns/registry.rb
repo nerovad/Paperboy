@@ -26,6 +26,7 @@ module Registry
     class_attribute :registry_default_scope, instance_accessor: false
     class_attribute :registry_columns, instance_accessor: false, default: []
     class_attribute :registry_source_config, instance_accessor: false
+    class_attribute :registry_row_label, instance_accessor: false
   end
 
   class_methods do
@@ -41,8 +42,10 @@ module Registry
     #                table shows; omit to show every row. Use it when the table
     #                is a view over a subset (e.g. the OSHA 300 Log is only the
     #                approved reports).
+    #   row_label    reader (Symbol) naming one row in the table's change log,
+    #                e.g. :vehicle_number; omit to name rows by id.
     def registry_table(slug:, label:, permission: nil, dropdown_key: nil, route: nil,
-                       includes: nil, scope: nil)
+                       includes: nil, scope: nil, row_label: nil)
       self.registry_slug = slug.to_s
       self.registry_label = label
       self.registry_permission = permission
@@ -50,6 +53,7 @@ module Registry
       self.registry_route = route
       self.registry_eager_load = includes
       self.registry_default_scope = scope
+      self.registry_row_label = row_label
     end
 
     # Declare one column. Call order determines the default column order.

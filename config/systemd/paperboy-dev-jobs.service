@@ -1,0 +1,22 @@
+[Unit]
+Description=Paperboy Solid Queue Worker (Development)
+After=network.target
+
+[Service]
+Type=simple
+User=matthew
+Group=matthew
+WorkingDirectory=/home/matthew/gitea/Paperboy
+
+Environment=RAILS_ENV=development
+Environment=PATH=/home/matthew/.rbenv/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
+
+# dotenv loads .env, not systemd's EnvironmentFile=: it expands ${VAR}
+# references, which EnvironmentFile= passes through as literal text. It never
+# overwrites a variable already set, so the Environment= lines above win.
+ExecStart=/home/matthew/.rbenv/shims/bundle exec dotenv -f /home/matthew/gitea/Paperboy/.env bin/jobs
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

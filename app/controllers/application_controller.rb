@@ -64,43 +64,17 @@ class ApplicationController < ActionController::Base
   end
 
   # Memoized group names (Set) and group IDs (Array) for the current user.
-  # Loaded once per request via a single JOIN query.
+  # Loaded once per request via a single JOIN query (see EmployeePermissions).
   def current_user_group_names
-    load_current_user_groups unless defined?(@_current_user_group_names)
-    @_current_user_group_names
+    session_permissions.current_user_group_names
   end
 
   def current_user_group_ids
-    load_current_user_groups unless defined?(@_current_user_group_ids)
-    @_current_user_group_ids
+    session_permissions.current_user_group_ids
   end
 
   def current_user_org_chain
-    return @_current_user_org_chain if defined?(@_current_user_org_chain)
-
-    employee_id = session.dig(:user, 'employee_id')
-    if employee_id.present?
-      employee = Submitter.resolve(employee_id)
-      unit     = Coa::Unit.resolve_for_employee(employee)
-
-      # agency_id comes straight off the Employee row, normalized to the
-      # three-character id the org tables and org_permissions use — Employees
-      # stores a four-character variant ("HCAV" for "HCA") that matches no ACL
-      # row on its own. The Unit lookup is only used for the deeper FKs — and is
-      # often missing in GSABSS (e.g. unit "C480" exists on Employees but not in
-      # Units), which previously zeroed out the whole chain and skipped every
-      # org-level grant in load_user_permissions.
-      @_current_user_org_chain = {
-        agency_id: Coa::Agency.normalize_id(employee&.agency),
-        division_id: unit&.division_id,
-        department_id: unit&.department_id,
-        unit_id: unit&.unit_id
-      }
-    else
-      @_current_user_org_chain = {}
-    end
-  rescue StandardError
-    @_current_user_org_chain = {}
+    session_permissions.current_user_org_chain
   end
 
   # Whether the parking/badge/key console shows every department or only the
@@ -305,30 +279,10 @@ class ApplicationController < ActionController::Base
     ApplicationRecord.descendants.find { |model_class| model_class.name == class_name.to_s }
   end
 
-  def load_current_user_groups
-    employee_id = session.dig(:user, 'employee_id')
-
-    if employee_id.present?
-      rows = EmployeeGroup.joins(:group)
-                          .where(EmployeeID: employee_id)
-                          .pluck('Groups.Group_Name', 'Employee_Groups.GroupID')
-
-      names = Set.new
-      ids   = []
-      rows.each do |group_name, group_id|
-        names << group_name.downcase
-        ids   << group_id
-      end
-
-      @_current_user_group_names = names
-      @_current_user_group_ids   = ids
-    else
-      @_current_user_group_names = Set.new
-      @_current_user_group_ids   = []
-    end
-  rescue StandardError
-    @_current_user_group_names = Set.new
-    @_current_user_group_ids   = []
+  # The signed-in user's groups and org chain, resolved the same way a
+  # background job resolves them for an employee with no session.
+  def session_permissions
+    @session_permissions ||= EmployeePermissions.new(session.dig(:user, 'employee_id'))
   end
 
   def load_user_permissions(permission_type)

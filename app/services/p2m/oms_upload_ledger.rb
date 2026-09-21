@@ -6,7 +6,7 @@ require 'pathname'
 require_relative 'paths'
 
 module P2m
-  # rubocop:disable Metrics/ClassLength
+  # rubocop:disable-next Metrics/ClassLength
   class OmsUploadLedger
     MARKER_PATTERN = /\AMail\.dat_(\d{8,9})\.zip\z/i
     COMPANION_PATTERN = /\A(\d{8,9})-.+\.csv\z/i
@@ -283,5 +283,4 @@ module P2m
       'other'
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end

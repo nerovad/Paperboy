@@ -572,3 +572,69 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+// Diagnostics on a storage location: why a file did not ingest, or why the
+// preview of one that did is missing. The plain sentence carries the page; the
+// raw error is folded away behind Details.
+.dam-state-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+}
+
+.dam-failures li + li {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid $border-color;
+}
+
+.dam-failure-reason {
+  margin: 0.25rem 0 0.35rem;
+}
+
+.dam-failure-details {
+  summary {
+    cursor: pointer;
+    color: $text-muted;
+    font-size: 0.85rem;
+  }
+
+  pre {
+    margin: 0.4rem 0 0;
+    padding: 0.6rem;
+    max-height: 12rem;
+    overflow: auto;
+    background: $neutral-pill-bg;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+/* --- Publishing -----------------------------------------------------------
+   The target form and the Publish panel on an asset. Spacing only: the
+   buttons are shared .btn, and the panels are the same .dam-panel as
+   everywhere else.
+   -------------------------------------------------------------------------- */
+
+.dam-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.dam-publish-form .form-group { margin-bottom: 10px; }
+
+/* Why a publish failed, in the provider's own words. */
+.dam-failure {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid $form-error-border;
+  border-radius: $radius-6;
+  background: $form-error-bg;
+  color: $form-error-text;
+  word-break: break-word;
+}

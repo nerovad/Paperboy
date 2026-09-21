@@ -59,6 +59,28 @@ class RecordsTableControllerTest < ActionController::TestCase
     assert_response :forbidden
   end
 
+  test 'downloads the grid view as a CSV' do
+    sign_in(groups: [], record_view: %w[fleet], record_edit: [])
+    @controller.define_singleton_method(:current_user_dropdown_permissions) { Set.new }
+
+    get :show, params: { slug: 'fleet', format: :csv }
+
+    assert_response :success
+    assert_equal 'text/csv', response.media_type
+    assert_match(/attachment; filename="fleet-\d{4}-\d{2}-\d{2}\.csv"/, response.headers['Content-Disposition'])
+    assert_equal TableColumns.resolve('records:fleet', TableColumns.default_layout('records:fleet')).map(&:label),
+                 CSV.parse(response.body).first
+  end
+
+  test 'the CSV download is gated like the grid' do
+    sign_in(groups: [], record_edit: [])
+    @controller.define_singleton_method(:current_user_dropdown_permissions) { Set.new }
+
+    get :show, params: { slug: 'fleet', format: :csv }
+
+    assert_redirected_to root_path
+  end
+
   test 'an unknown table is not found' do
     sign_in(groups: %w[system_admins], record_edit: [])
 

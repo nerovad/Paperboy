@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'sidekiq/web'
-
 Rails.application.routes.draw do
   resources :telework_log_forms, controller: 'forms/telework_log_forms' do
     member do
@@ -20,6 +18,9 @@ Rails.application.routes.draw do
     resources :assets do
       member do
         post :share
+        # A referenced asset's original is on a share, not on a service, so it
+        # cannot be a blob URL. See AssetsController#original.
+        get :original
       end
     end
 
@@ -63,6 +64,33 @@ Rails.application.routes.draw do
         post :make_default
         post :move_assets
         patch :toggle
+        # Forgets what failed to ingest, so the next scan tries those files
+        # again — after whatever was wrong with them has been put right.
+        post :retry_failures
+        # Queues the previews for everything here that has none.
+        post :rebuild_derivatives
+      end
+    end
+
+    # Where the library can send a finished asset, and what was sent.
+    resources :publish_targets do
+      member do
+        patch :toggle
+        # Starts the OAuth round trip; the callback below finishes it.
+        post :connect, to: 'publish_connections#create'
+        delete :disconnect
+      end
+    end
+
+    # One callback for every provider, because each has to be registered by
+    # hand against the application. Which target is being connected rides in
+    # the state parameter. GET because that is how a browser comes back.
+    get 'publish_connections/callback', to: 'publish_connections#callback'
+
+    resources :publications, only: %i[index show create] do
+      member do
+        post :retry
+        post :cancel
       end
     end
 
@@ -70,6 +98,11 @@ Rails.application.routes.draw do
     # may be an asset or a collection.
     post 'favorites', to: 'favorites#toggle', as: :favorites
   end
+
+  # Outside the namespace and outside the sign-in, because the fetcher is
+  # Instagram rather than a person. See DamMediaController: the token is good
+  # only while the publish that minted it is in flight.
+  get 'dam/media/:token', to: 'dam_media#show', as: :dam_public_media
 
   namespace :aim do
     root 'dashboard#home'
@@ -92,6 +125,7 @@ Rails.application.routes.draw do
     root 'dashboard#index'
 
     resource :dashboard, only: :show, controller: :dashboards
+    resource :customer_lookup, only: %i[show create], controller: :customer_lookups
     resource :audit, only: :show, controller: :audits
     get 'audit/cost/:key/rows', to: 'audits#cost_rows', as: :cost_audit_rows
     get 'audit/type/:code/rows', to: 'audits#type_rows', as: :type_audit_rows
@@ -370,6 +404,16 @@ Rails.application.routes.draw do
   get '/records', to: 'records#index', as: :records
   get '/records/:slug', to: 'records_table#show', as: :records_table
   patch '/records/:slug', to: 'records_table#bulk_update'
+  # Scheduled CSV exports of a grid view, managed from the grid's Export modal.
+  scope '/records/:slug', as: :records_table do
+    # Change history: the whole table's log, and one row's fragment for the
+    # grid's History modal. Both need the table's edit grant.
+    get 'changes', to: 'records_histories#index', as: :changes
+    get 'rows/:id/history', to: 'records_histories#row', as: :row_history
+    resources :export_schedules, only: %i[create destroy], controller: 'record_export_schedules' do
+      patch :toggle, on: :member
+    end
+  end
 
   resources :pcard_inventory, only: %i[index new create edit update] do
     collection do
@@ -420,8 +464,6 @@ Rails.application.routes.draw do
       patch :update_org_permissions
     end
   end
-
-  mount Sidekiq::Web => '/sidekiq'
 
   # ============================================================================
   # Reports & Scheduled Reports

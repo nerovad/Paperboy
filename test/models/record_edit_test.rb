@@ -24,7 +24,17 @@ class RecordEditTest < ActiveSupport::TestCase
 
     assert_equal 'PcardInventory', edit.record_type
     assert_equal row.id, edit.record_id
-    assert_equal [edit], RecordEdit.for_row(row).to_a
+    # The row's own `create` entries are there too; P-Cards audit their lifecycle.
+    assert_equal [edit], RecordEdit.for_row(row).updates.to_a
+  end
+
+  test 'an entry is a column update unless it says otherwise' do
+    edit = RecordEdit.capture(row: row, table_slug: 'pcard', column_name: 'first_name',
+                              old_value: 'Ada', new_value: 'Grace')
+
+    assert_equal 'update', edit.action
+    assert_not RecordEdit.new(record_type: 'PcardInventory', record_id: 1, table_slug: 'pcard',
+                              column_name: 'first_name', action: 'rename').valid?
   end
 
   test 'capture attributes the edit to the actor' do

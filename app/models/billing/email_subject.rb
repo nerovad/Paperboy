@@ -7,11 +7,10 @@ module Billing
 
     validates :billing_type, :subject_format, presence: true
 
-    # rubocop:disable Style/FormatStringToken
+    # rubocop:disable-next Style/FormatStringToken
     def self.default_format(billing_type)
       "%{fiscal_year}.%{apmon} - #{billing_type}"
     end
-    # rubocop:enable Style/FormatStringToken
 
     def render(active_period)
       format(

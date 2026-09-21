@@ -53,6 +53,14 @@
       <%= link_to "My Shares", digital_asset_management_shares_path,
                   class: "nav-link#{' active' if controller_name == 'shares'}" %>
     <% end %>
+    <% if can_use_app_feature?("digital_asset_management", "publish") %>
+      <%= link_to "Published", digital_asset_management_publications_path,
+                  class: "nav-link#{' active' if controller_name == 'publications'}" %>
+    <% end %>
+    <% if can_use_app_feature?("digital_asset_management", "publish_targets") %>
+      <%= link_to "Publish Targets", digital_asset_management_publish_targets_path,
+                  class: "nav-link#{' active' if %w[publish_targets publish_connections].include?(controller_name)}" %>
+    <% end %>
     <% if can_use_app_feature?("digital_asset_management", "storage") %>
       <%= link_to "Storage", digital_asset_management_storage_locations_path,
                   class: "nav-link#{' active' if controller_name == 'storage_locations'}" %>

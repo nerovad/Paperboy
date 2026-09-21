@@ -1,0 +1,150 @@
+<%# One publish target: what it is, whether it is connected, and what has
+    gone through it. Connecting is the only action here that leaves the app. %>
+<div class="dam-page">
+  <header class="dam-page-header">
+    <div>
+      <h1><%= @target.label %></h1>
+      <p class="dam-page-subtitle">
+        <%= @target.provider_label %> ·
+        takes <%= @target.media_types.map(&:titleize).to_sentence.downcase %>
+        <% if (reason = @target.refusal_reason) %>
+          <%= dam_pill("cancelled", reason.titleize) %>
+        <% else %>
+          <%= dam_pill("active", "Ready") %>
+        <% end %>
+      </p>
+    </div>
+    <div class="dam-page-actions">
+      <%= link_to "Edit", edit_digital_asset_management_publish_target_path(@target), class: "btn edit" %>
+      <%= button_to @target.enabled? ? "Disable" : "Enable",
+                    toggle_digital_asset_management_publish_target_path(@target), method: :patch,
+                    class: "btn #{@target.enabled? ? 'deny' : 'approve'}" %>
+      <%= link_to "All targets", digital_asset_management_publish_targets_path, class: "btn" %>
+    </div>
+  </header>
+
+  <div class="dam-detail-layout">
+    <section class="dam-panel">
+      <h2>Connection</h2>
+
+      <% if @target.oauth? %>
+        <% if @oauth_configured %>
+          <dl class="dam-facts">
+            <dt>Status</dt>
+            <dd>
+              <% if @target.connected? %>
+                Connected<%= " by #{@target.connected_by_name}" if @target.connected_by_name.present? %>
+                <%= "on #{@target.connected_at.strftime('%b %-d, %Y')}" if @target.connected_at %>
+              <% else %>
+                <span class="dam-muted">Not connected yet</span>
+              <% end %>
+            </dd>
+            <% if @target.connected? %>
+              <dt>Access token</dt>
+              <dd>
+                <% if @target.adapter_class.token_lifetime == :permanent %>
+                  Does not expire
+                <% elsif @target.oauth_expires_at.blank? %>
+                  <span class="dam-muted">Unknown</span>
+                <% elsif @target.token_expired? %>
+                  Expired <%= time_ago_in_words(@target.oauth_expires_at) %> ago<%= ", renewed on the next publish" if @target.token_renewable? %>
+                <% else %>
+                  Good for <%= distance_of_time_in_words_to_now(@target.oauth_expires_at) %><%= ", renewed automatically" if @target.token_renewable? %>
+                <% end %>
+              </dd>
+              <dt>Scope</dt><dd><%= @target.oauth_scope.presence || "—" %></dd>
+            <% end %>
+          </dl>
+
+          <div class="dam-form-actions">
+            <%= button_to @target.connected? ? "Reconnect" : "Connect to #{@target.provider_label}",
+                          connect_digital_asset_management_publish_target_path(@target), method: :post,
+                          class: "btn approve" %>
+            <% if @target.connected? %>
+              <%= button_to "Disconnect", disconnect_digital_asset_management_publish_target_path(@target),
+                            method: :delete, class: "btn deny",
+                            form: { data: { turbo_confirm: "Disconnect #{@target.label}? Nothing already published is affected, but nothing more can be published here until it is connected again.",
+                                            confirm_title: "Disconnect target", confirm_label: "Disconnect" } } %>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="dam-muted">
+            <%= @target.provider_label %> has not been set up on this server. Register the application with
+            <%= @target.provider_label %>, then put its id and secret in <code>.env</code> as
+            <% keys = Dam::Publishing::Oauth.env_keys_for(@target.provider) %>
+            <code><%= keys.first %></code> and <code><%= keys.last %></code>, and add
+            <code><%= Dam::Publishing.public_base_url.presence || request.base_url %>/digital_asset_management/publish_connections/callback</code>
+            as an allowed redirect address.
+          </p>
+        <% end %>
+      <% else %>
+        <dl class="dam-facts">
+          <dt>Address</dt><dd><%= @target.endpoint_url.presence || "—" %></dd>
+          <dt>Method</dt><dd><%= @target.http_method %></dd>
+          <dt>Sends</dt><dd><%= Dam::PublishTarget::BODY_STYLES.fetch(@target.body_style, @target.body_style) %></dd>
+          <dt>File field</dt><dd><%= @target.file_field %></dd>
+          <dt>Headers</dt>
+          <dd>
+            <% if @target.header_pairs.any? %>
+              <%# Values are tokens, so the names are listed and the values are not. %>
+              <%= @target.header_pairs.keys.join(", ") %>
+            <% else %>
+              <span class="dam-muted">None</span>
+            <% end %>
+          </dd>
+        </dl>
+      <% end %>
+    </section>
+
+    <aside class="dam-detail-side">
+      <section class="dam-panel">
+        <h2>Details</h2>
+        <dl class="dam-facts">
+          <dt>Key</dt><dd><code><%= @target.key %></code></dd>
+          <% if @target.account_prompt %>
+            <dt><%= @target.account_prompt[:label] %></dt>
+            <dd><%= @target.account_ref.presence || "—" %></dd>
+          <% end %>
+          <dt>Default visibility</dt>
+          <dd><%= @target.privacy_options[@target.default_privacy] || "Ask each time" %></dd>
+          <dt>Last published</dt>
+          <dd><%= @target.last_published_at ? "#{time_ago_in_words(@target.last_published_at)} ago" : "Never" %></dd>
+        </dl>
+        <% if @target.notes.present? %>
+          <p class="dam-muted"><%= simple_format(@target.notes) %></p>
+        <% end %>
+      </section>
+    </aside>
+  </div>
+
+  <section class="dam-panel">
+    <h2>Recent publications</h2>
+    <% if @publications.any? %>
+      <table class="dam-table">
+        <thead>
+          <tr><th>Asset</th><th>When</th><th>By</th><th>State</th><th>Where it landed</th></tr>
+        </thead>
+        <tbody>
+          <% @publications.each do |publication| %>
+            <tr>
+              <td><%= link_to publication.asset_title.presence || "—",
+                              digital_asset_management_publication_path(publication) %></td>
+              <td><%= publication.created_at.strftime("%b %-d, %Y") %></td>
+              <td><%= publication.requested_by_name.presence || "—" %></td>
+              <td><%= dam_pill(publication.status) %></td>
+              <td>
+                <% if (published = dam_published_url(publication.external_url)) %>
+                  <%= link_to truncate(published, length: 40), published, target: "_blank", rel: "noopener" %>
+                <% else %>
+                  <span class="dam-muted"><%= publication.external_id.presence || "—" %></span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="dam-muted">Nothing has been published here yet.</p>
+    <% end %>
+  </section>
+</div>

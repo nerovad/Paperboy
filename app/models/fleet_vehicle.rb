@@ -2,6 +2,11 @@
 
 class FleetVehicle < ApplicationRecord
   include Registry
+  include AuditableEdits
+
+  # Every edit, and the row being added or deleted, lands in its Records
+  # history -- from the grid, the garaging form or the fleet import alike.
+  audit_record_lifecycle!
 
   belongs_to :fleet_vehicle_garaging_form
 
@@ -11,7 +16,8 @@ class FleetVehicle < ApplicationRecord
   # table is a live view over the rows that already exist.
   registry_table slug: 'fleet', label: 'Fleet Vehicles',
                  dropdown_key: 'fleet_inventory',
-                 includes: :fleet_vehicle_garaging_form
+                 includes: :fleet_vehicle_garaging_form,
+                 row_label: :vehicle_label
 
   registry_column :vehicle_number, label: 'Vehicle #', kind: :text
   registry_column :budget_unit, label: 'Budget Unit', kind: :text, filter: :select
@@ -25,6 +31,12 @@ class FleetVehicle < ApplicationRecord
   registry_column :owner_name, label: 'Assigned To', kind: :text
   registry_column :owner_agency, label: 'Agency', kind: :text, filter: :select
   registry_column :status_label, label: 'Status', kind: :status, sortable: false
+
+  # How the vehicle is named in the Records change log: its fleet number, or
+  # its plate for a vehicle that has none yet.
+  def vehicle_label
+    vehicle_number.presence || license_plate
+  end
 
   # --- Owner / status delegated from the parent garaging form ---
 

@@ -97,6 +97,79 @@
       <% end %>
 
       <section class="dam-panel">
+        <h2>Previews</h2>
+        <p class="dam-hint">
+          What the library shows in place of an original: a proxy and a thumbnail, built by
+          ImageMagick, ffmpeg or poppler-utils on this server, or adopted from the share when
+          it already has them.
+        </p>
+
+        <p class="dam-state-row">
+          <% { "ready" => "ok", "pending" => "queued", "failed" => "bad", "none" => "muted" }.each do |state, variant| %>
+            <% count = @diagnostics.preview_counts.fetch(state, 0) %>
+            <%= dam_pill(variant, "#{count} #{dam_preview_state_label(state)}") if count.positive? %>
+          <% end %>
+          <% if @diagnostics.preview_counts.empty? %>
+            <span class="dam-muted">Nothing filed here yet.</span>
+          <% end %>
+        </p>
+
+        <% if @diagnostics.previews_waiting.positive? %>
+          <p class="dam-hint">
+            <%= pluralize(@diagnostics.previews_waiting, "preview") %> waiting on a worker. If this
+            number does not fall, Solid Queue is not running on this server.
+          </p>
+        <% end %>
+
+        <% if @diagnostics.previews_failed.positive? %>
+          <ul class="dam-list dam-failures">
+            <% @diagnostics.preview_failures.each do |asset| %>
+              <li>
+                <%= link_to asset.title, digital_asset_management_asset_path(asset) %>
+                <span class="dam-muted">· <%= asset.format.presence || "no format" %></span>
+                <p class="dam-failure-reason"><%= dam_failure_explanation(asset.derivative_error) %></p>
+                <%= dam_failure_details(asset.derivative_error) %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+
+        <% if system_admin? && @diagnostics.previews_missing.positive? %>
+          <%= button_to "Build the #{pluralize(@diagnostics.previews_missing, 'missing preview')}",
+                        rebuild_derivatives_digital_asset_management_storage_location_path(@location),
+                        method: :post, class: "btn" %>
+        <% end %>
+      </section>
+
+      <% if @diagnostics.ingest_failure_count.positive? %>
+        <section class="dam-panel">
+          <h2>Could not be ingested</h2>
+          <p class="dam-hint">
+            <%= pluralize(@diagnostics.ingest_failure_count, "file") %> the scan could not take.
+            Each is remembered so later scans pass over it rather than failing again.
+          </p>
+          <ul class="dam-list dam-failures">
+            <% @diagnostics.ingest_failures.each do |failure| %>
+              <li>
+                <code><%= File.basename(failure.source_path.to_s) %></code>
+                <span class="dam-muted">
+                  · <%= pluralize(failure.attempts, "attempt") %>
+                  · <%= time_ago_in_words(failure.last_failed_at) %> ago
+                </span>
+                <p class="dam-failure-reason"><%= dam_failure_explanation(failure.reason) %></p>
+                <%= dam_failure_details(failure.reason, path: failure.source_path) %>
+              </li>
+            <% end %>
+          </ul>
+          <% if system_admin? %>
+            <%= button_to "Try these again",
+                          retry_failures_digital_asset_management_storage_location_path(@location),
+                          method: :post, class: "btn" %>
+          <% end %>
+        </section>
+      <% end %>
+
+      <section class="dam-panel">
         <h2>Newest here</h2>
         <% if @recent_assets.any? %>
           <ul class="dam-list">
@@ -122,7 +195,21 @@
         <dl class="dam-facts">
           <dt>Kind</dt><dd><%= @location.kind_label %></dd>
           <dt>Key</dt><dd><%= @location.key %></dd>
-          <dt>Root</dt><dd><%= @location.root.presence || "—" %></dd>
+          <dt>Root</dt><dd><%= @location.root.presence || "App storage folder" %></dd>
+          <dt>Files stored in</dt><dd><code><%= @location.storage_path || "—" %></code></dd>
+          <dt>Skips</dt>
+          <dd><%= @location.ignore_pattern_list.presence&.join(", ") || "—" %></dd>
+          <dt>Formats</dt>
+          <dd><%= @location.accepted_format_list.presence&.join(", ") || "Everything" %></dd>
+          <dt>Folder scanned</dt>
+          <dd>
+            <% if @location.watch_path.present? %>
+              <code><%= @location.watch_path %></code>
+              · <%= @location.ingest_mode_label %>
+            <% else %>
+              —
+            <% end %>
+          </dd>
           <dt>Uploads</dt>
           <dd>
             <% if @location.accepts_uploads?(@used_bytes) %>

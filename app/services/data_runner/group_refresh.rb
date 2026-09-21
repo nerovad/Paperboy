@@ -47,12 +47,12 @@ module DataRunner
     private_class_method def self.enqueue!(run_id)
       GroupRefreshJob.perform_later(run_id)
     rescue StandardError => e
-      raise QueueUnavailable, e.message if redis_connection_error?(e)
+      raise QueueUnavailable, e.message if queue_connection_error?(e)
 
       raise
     end
 
-    private_class_method def self.redis_connection_error?(error)
+    private_class_method def self.queue_connection_error?(error)
       error_chain(error).any?(Errno::ECONNREFUSED)
     end
 

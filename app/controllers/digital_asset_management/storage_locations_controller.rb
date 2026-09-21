@@ -10,17 +10,15 @@ module DigitalAssetManagement
   # system admin rather than merely hidden from the page.
   class StorageLocationsController < BaseController
     before_action -> { require_app_feature('digital_asset_management', 'storage', fallback: digital_asset_management_root_path) }
-    before_action :set_location, only: %i[show edit update destroy make_default toggle move_assets]
+    before_action :set_location,
+                  only: %i[show edit update destroy make_default toggle move_assets retry_failures
+                           rebuild_derivatives]
     before_action :require_storage_admin, except: %i[index show]
 
     def index
       @locations = Dam::StorageLocation.ordered
-      # Two grouped queries for the whole table, rather than a count and a sum
-      # per row. Assets with no location group under nil — see @unplaced_count.
-      # Archived assets are counted: they are still occupying the space, which
-      # is the question this screen answers.
-      @asset_counts = Dam::Asset.group(:storage_location_id).count
-      @used_bytes = Dam::Asset.group(:storage_location_id).sum(:byte_size)
+      @asset_counts = Dam::StorageLocation.asset_counts
+      @used_bytes = Dam::StorageLocation.used_bytes_by_location
       @unplaced_count = @asset_counts[nil].to_i
 
       @upload_targets = Dam::StorageLocation.uploadable.ordered
@@ -29,11 +27,27 @@ module DigitalAssetManagement
       @my_target = dam_upload_target
     end
 
+    def retry_failures
+      forgotten = Dam::LocationDiagnostics.new(@location).forget_ingest_failures!
+      redirect_to digital_asset_management_storage_location_path(@location),
+                  notice: "#{forgotten} #{'file'.pluralize(forgotten)} will be tried again on the next scan."
+    end
+
+    def rebuild_derivatives
+      queued = Dam::LocationDiagnostics.new(@location).rebuild_previews!
+
+      redirect_to digital_asset_management_storage_location_path(@location),
+                  notice: "Queued #{queued} #{'preview'.pluralize(queued)}. " \
+                          'They appear as the jobs run.'
+    end
+
     def show
+      @diagnostics = Dam::LocationDiagnostics.new(@location)
       @asset_count = @location.asset_count
       @used_bytes = @location.used_bytes
       @by_media_type = @location.assets.group(:media_type).count
       @recent_assets = @location.assets.newest_first.limit(8)
+
       # Moving into a read-only archive is a legitimate destination — that is
       # what an archive is for — so targets only have to be active.
       @move_targets = Dam::StorageLocation.active.ordered.where.not(id: @location.id)
@@ -108,14 +122,7 @@ module DigitalAssetManagement
                            alert: 'Choose another location to move these assets to.'
       end
 
-      moved = @location.assets.count
-      @location.assets.update_all(storage_location_id: target.id, updated_at: Time.current)
-      # The log says plainly what did and did not move, so nobody reads the
-      # entry as "the files are on the archive now".
-      Dam::Job.record!(job_type: 'move', actor: current_user, subject: @location, count: moved,
-                       log: ["Re-pointed #{moved} #{'asset'.pluralize(moved)} from " \
-                             "#{@location.label} to #{target.label}",
-                             'Catalogue only — moving the files themselves is the storage runner\'s work.'])
+      moved = @location.repoint_assets_to(target, actor: current_user)
 
       redirect_to digital_asset_management_storage_location_path(@location),
                   notice: "#{moved} #{'asset'.pluralize(moved)} moved to #{target.label}."
@@ -130,7 +137,8 @@ module DigitalAssetManagement
     def location_params
       params.require(:storage_location)
             .permit(:key, :label, :kind, :root, :description, :quota_gb,
-                    :active, :read_only, :default_for_uploads, :position)
+                    :active, :read_only, :default_for_uploads, :position,
+                    :watch_path, :ingest_mode, :accepted_formats, :ignore_patterns)
     end
 
     def require_storage_admin
