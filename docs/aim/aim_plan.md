@@ -1227,43 +1227,44 @@ since overtaken by events -- recorded because the first one will recur:
   needed. If the suite cannot connect, try the default again before
   assuming anything is broken.
 
-  **It recurred on 2026-09-21, and differently.** `Paperboy_Test` had been
-  dropped and recreated on 2026-09-19 by someone outside AIM, and `GSAETL`
-  has no access to the new copy -- so retrying the default does not help
-  until whoever owns it grants access again. The override alone no longer
-  works either: `rails/test_help` connects to the base database while
-  loading, before the harness creates anything, so a missing base aborts
-  with `NoDatabaseError`. The base has to exist first:
+  **It recurred on 2026-09-21, and was fixed properly.** `Paperboy_Test`
+  had been dropped and recreated on 2026-09-19 by another account, so
+  `GSAETL` had no user in the new copy. Two things had to happen, in this
+  order, and the second is the one that is easy to miss:
 
-  ```bash
-  export PAPERBOY_TEST_DATABASE=Paperboy_Test0 RAILS_ENV=test
-  bin/rails db:create && bin/rails db:schema:load
-  ```
+  1. **Access.** Joshua granted it:
 
-  `Paperboy_Test0` was created that way and left on `GSASQL16`, so every
-  suite run is
-  `PAPERBOY_TEST_DATABASE=Paperboy_Test0 PARALLEL_WORKERS=1 bundle exec rake test`.
-  After a master merge that adds migrations, reload the schema into it.
+     ```sql
+     USE master;
+     GRANT CONTROL ON DATABASE::Paperboy_Test TO GSAETL;
+     ```
 
-  **The access grant landed the same day and did not make the default
-  usable.** Joshua granted `CONTROL ON DATABASE::Paperboy_Test` to
-  `GSAETL`, which is the permission the suite needs, and the login can open
-  the database now. The suite still cannot run there, for a different
-  reason: `Paperboy_Test` is **not an empty test database any more**. Its
-  `ar_internal_metadata` says `environment = development`, and it holds
-  real rows -- 288 in `dam_assets` alone. So `db:test:prepare` refused to
-  purge it (`ActiveRecord::EnvironmentMismatchError`, raised by
-  `db:check_protected_environments`), the tables were never cleaned, and
-  111 DAM tests errored on foreign-key conflicts while deleting rows that
-  had children. The same commit is 0 fail, 0 error on `Paperboy_Test0`.
+     `CONTROL` rather than `db_owner` membership, because adding a member
+     to a fixed database role requires being in `db_owner` already, and he
+     was not. `CONTROL` is grantable, covers the schema load, and is the
+     only permission that allows the `DROP DATABASE` the purge does.
 
-  Making the default work means letting the suite drop and recreate it,
-  which destroys whatever that data is. **That is not AIM's to decide** --
-  it looks like a Digital Asset Management working database that happens
-  to carry the test name. Leave it alone and keep using the scratch base
-  until Joshua says otherwise. Note also that `Paperboy_TestSuite` was
-  created on 2026-09-20 and `GSAETL` has no access to it; if that is the
-  intended replacement, it needs the same `CONTROL` grant.
+  2. **Contents.** Access alone left the suite red: the database was
+     stamped `environment = development` and held real rows (288 in
+     `dam_assets`), so `db:test:prepare` refused to purge it and 111 DAM
+     tests errored on foreign-key conflicts. It was dropped and recreated
+     clean, which also made `GSAETL` its owner, so the grant is now
+     belt-and-braces rather than load-bearing.
+
+  Since then the default works with no override:
+  `PARALLEL_WORKERS=1 bundle exec rake test` is 921 runs, 0 fail, 0 error.
+  The `Paperboy_Test0` scratch base was dropped on 2026-09-21.
+
+  **If it happens a third time, read the stamp before assuming it is
+  permissions.** `SELECT value FROM ar_internal_metadata WHERE [key] =
+  'environment'` has to say `test`. A database stamped `development` is
+  refused by `db:check_protected_environments` no matter what rights the
+  login has, and a test database holding real rows is somebody's working
+  data -- ask before wiping it rather than letting the harness do it.
+
+  `Paperboy_TestSuite` was created 2026-09-20 and `GSAETL` still has no
+  access to it. Nothing here uses it.
+
 - **`origin/master` was 68 commits ahead of `501d5059`**, and a long run of
   them were `WIP: Fix ...` test repairs. **They fixed the pre-existing red.**
   `Gemfile.lock` is back on minitest 5.27 and `test/test_helper.rb` carries
@@ -1759,3 +1760,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-15 | 3.2 | (this commit) | Retry writes the reprocess sidecar and the worker reads it before minting the id, so a retried or split invoice keeps its Budget Unit; `Aim::ReprocessSidecar` added; **Phase 3 complete**; 72 pytest green, 733 runs, 0 error, 1 pre-existing P2M failure that is red with AIM's diff stashed too |
 | 2026-09-21 | — | (this commit) | Merged `origin/master` (55 commits: digital asset management, publishing, records export) into the phase branch ahead of merging Phase 3 back. Their `rubocop -A` had rewritten the `Metrics/ClassLength` directive in AIM's controller test into `disable-next`, which this rubocop rejects; restored. `Paperboy_Test` was recreated 2026-09-19 and the `GSAETL` login has no access to it, so the suite ran on `PAPERBOY_TEST_DATABASE=Paperboy_Test0`, created by hand and left in place. **921 runs, 0 fail, 0 error** (serial), 72 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 4 baseline |
 | 2026-09-21 | — | (this commit) | `CONTROL ON DATABASE::Paperboy_Test` granted to `GSAETL`; access restored but the suite still cannot use it, because that database is stamped `development` and holds real DAM rows, so `db:test:prepare` cannot purge it and 111 DAM tests error. Staying on `Paperboy_Test0`, which is 921 runs, 0 fail, 0 error |
+| 2026-09-21 | — | (this commit) | Default test database restored: `CONTROL` granted to `GSAETL`, then `Paperboy_Test` dropped and recreated clean and stamped `test`. `PARALLEL_WORKERS=1 bundle exec rake test` is **921 runs, 0 fail, 0 error** with no override; `Paperboy_Test0` dropped |
