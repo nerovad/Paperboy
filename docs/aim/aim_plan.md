@@ -500,6 +500,48 @@ anyone who can reach `E:\AIM`. The workers need only the `AIM_*` set.
 Extracting the subset in 0.7 stops this recurring; cleaning up the existing
 file is Joshua's call and is not AIM's to do unasked.
 
+**A value ending in a backslash breaks the workers, and Rails will not warn
+you.** Found 2026-09-21, refreshing the repo `.env` after LockBox's ROOT
+consolidation. `Paperboy.env` line 14 reads:
+
+```text
+AIM_WINDOWS_ROOT='E:\'
+```
+
+Ruby's dotenv treats a single-quoted value as literal and reads it fine, so
+every Rails screen is happy. `python-dotenv` treats the backslash as
+escaping the closing quote, so the value runs on and it discards **both**
+that variable and `AIM_BASE_DIR` on the next line. `pipeline_common.py`
+reads `AIM_BASE_DIR` at import and is built to refuse to start without it,
+so the whole worker fleet would fail at startup the moment
+`bin/deploy-aim-workers` ships that file. It is the only line in all 135
+variables with the defect, and it is AIM's own variable.
+
+Two forms parse identically in both languages; the double-quoted one
+matches LockBox's own "Surround variables with double quotes" convention:
+
+```text
+AIM_WINDOWS_ROOT="E:\\"
+AIM_WINDOWS_ROOT=E:\
+```
+
+**Do not run `bin/deploy-aim-workers` until LockBox is fixed.** The share
+copy still has 58 variables and none of the new ones, so the workers are
+running fine today. The fix belongs in LockBox and Joshua owns that repo,
+so it is reported rather than made.
+
+The general lesson is wider than one line: the repo `.env` is read by two
+different parsers with different escaping rules, and only the Python one
+fails loudly. After any LockBox refresh, check the AIM subset the way the
+workers will see it:
+
+```bash
+grep -E '^AIM_[A-Z0-9_]+=' .env > /tmp/aim.env
+~/.venvs/aim/bin/python -c "from dotenv import dotenv_values; d=dotenv_values('/tmp/aim.env'); print(len([k for k,v in d.items() if v is not None]))"
+```
+
+That count must equal `grep -cE '^AIM_' .env`.
+
 ### Budget Units seen in the watch tree
 
 `0000`, `4601`, `4621`, `4641`, `4701`, `4703`, `4721` — four-digit codes.
@@ -1761,3 +1803,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-21 | — | (this commit) | Merged `origin/master` (55 commits: digital asset management, publishing, records export) into the phase branch ahead of merging Phase 3 back. Their `rubocop -A` had rewritten the `Metrics/ClassLength` directive in AIM's controller test into `disable-next`, which this rubocop rejects; restored. `Paperboy_Test` was recreated 2026-09-19 and the `GSAETL` login has no access to it, so the suite ran on `PAPERBOY_TEST_DATABASE=Paperboy_Test0`, created by hand and left in place. **921 runs, 0 fail, 0 error** (serial), 72 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 4 baseline |
 | 2026-09-21 | — | (this commit) | `CONTROL ON DATABASE::Paperboy_Test` granted to `GSAETL`; access restored but the suite still cannot use it, because that database is stamped `development` and holds real DAM rows, so `db:test:prepare` cannot purge it and 111 DAM tests error. Staying on `Paperboy_Test0`, which is 921 runs, 0 fail, 0 error |
 | 2026-09-21 | — | (this commit) | Default test database restored: `CONTROL` granted to `GSAETL`, then `Paperboy_Test` dropped and recreated clean and stamped `test`. `PARALLEL_WORKERS=1 bundle exec rake test` is **921 runs, 0 fail, 0 error** with no override; `Paperboy_Test0` dropped |
+| 2026-09-21 | — | (this merge) | Merged `origin/master` (`2c45a370`, a `bin/deploy-dev` fix) then **merged Phase 3 to Paperboy master**. Gate green: 921 runs, 0 fail, 0 error (serial), 72 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 4 baseline. Repo `.env` refreshed from LockBox the same day; see the backslash warning under *How configuration reaches the workers* before any worker deploy |
