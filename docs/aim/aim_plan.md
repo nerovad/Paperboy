@@ -544,7 +544,12 @@ with `python-dotenv`, exactly as a worker will, and dies on two conditions:
   file down for the share: `AIM_FOO=${GSABSS_ROOT}/x` looks right in the
   repo and silently resolves to `/x` on GSA-SCAN02.
 
-Both were proved by planting each fault and watching the deploy refuse. The
+Both are covered by `test/python/aim/test_deploy_workers.py`, which plants
+each fault and asserts the deploy refuses and writes no `.env`. Adding the
+guard turned that file's existing tests red, which was the guard working:
+they run the script in a subprocess, whose `python3` has no `python-dotenv`.
+They now pass the interpreter running pytest, the way a developer passes the
+worker venv. The
 interpreter comes from `AIM_DEPLOY_PYTHON`, defaulting to `python3` on PATH;
 point it at the worker venv when the system python lacks `python-dotenv`,
 which the error message says. No path to that venv is written down anywhere
