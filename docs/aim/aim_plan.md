@@ -1522,10 +1522,47 @@ is built from these values as strings.
   promises a fallback it does not always give. The test monkeypatches
   `get_sql_connection` rather than depending on either reading.
 
-- [ ] **4.2 Stop stripping invoice and order numbers.** `_clean_text_field`
+- [x] **4.2 Stop stripping invoice and order numbers.** `_clean_text_field`
   removes everything outside `[a-zA-Z0-9_\- ]`, so `INV-2024/001` becomes
   `INV-2024001`. Keep the characters vendors actually use.
   *Test:* punctuation-bearing invoice numbers round-trip unchanged.
+
+  Done 2026-09-21. `_clean_text_field` no longer filters by character class.
+  It now removes only what cannot survive a round trip — control codes and
+  the invisible formatting codes — and collapses runs of whitespace. Every
+  printable character the vendor put on the page is kept. Four things worth
+  carrying:
+
+  - **A deny-list, not a wider allow-list.** "The characters vendors actually
+    use" has no end: `/`, `.`, `#`, `,`, `:`, `(`, `\` and a space all appear
+    in real invoice numbers, and an allow-list is only ever one vendor away
+    from being wrong again. These values are held as text, passed to SQL as
+    parameters, escaped by the XML writer and written into the PDF Info
+    dictionary, so nothing downstream needs a restricted character set.
+  - **The old regex was not a hallucination guard**, which is the reason it
+    looks defensible. `reject_hallucinated_long_strings` is the guard, and it
+    still caps these fields at 50 characters. The regex kept the letters and
+    deleted the punctuation, so `INV #2024-1` came out `INV 2024-1` — junk in,
+    different junk out.
+  - **Invisible characters are the duplicate-detection half of this.** A
+    zero-width space or a non-breaking space makes two numbers that read
+    identically on the page compare unequal, which Phase 7 would see as two
+    invoices. They are removed and normalised respectively, and the test
+    asserts the two forms come out equal rather than asserting a spelling.
+  - **Path safety belongs where the path is built.** The one place a number
+    names a folder is `03_batch_splitter.py`, which cleans the *manifest's*
+    `invoice_number` at that line; the manifest never passes through
+    `_clean_text_field`, so keeping `/` in the stored value cannot reach it.
+    Nothing else in the workers or in AIM's Ruby builds a path from these
+    fields. Do not re-narrow the value to protect a path.
+
+  Left for later, deliberately: **a dash is not normalised.** A vision model
+  can read `INV—1` where the page prints `INV-1`, and an em dash and a hyphen
+  are different business keys. Folding them is a judgement about what the
+  vendor meant rather than a round-trip fix, so it belongs with Phase 7's
+  duplicate matching, not here. `customer_number` is also still never cleaned
+  at all — it is in the pydantic length validator but not in `sanitize_data`,
+  which is correct while it stays out of the business key.
 
 - [ ] **4.3 Canonicalise money formatting.** One representation for totals
   everywhere, so `100.0`, `100.00` and `$100.00` cannot produce three
@@ -1858,3 +1895,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-21 | — | (this merge) | Merged `origin/master` (`2c45a370`, a `bin/deploy-dev` fix) then **merged Phase 3 to Paperboy master**. Gate green: 921 runs, 0 fail, 0 error (serial), 72 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 4 baseline. Repo `.env` refreshed from LockBox the same day; see the backslash warning under *How configuration reaches the workers* before any worker deploy |
 | 2026-09-21 | — | (this commit) | LockBox `019ca7c` pushed, quoting `AIM_WINDOWS_ROOT` so `python-dotenv` stops discarding it and `AIM_BASE_DIR`; repo `.env` refreshed, 59/59 `AIM_*` parse. `bin/deploy-aim-workers` now reads the rendered file with `python-dotenv` and refuses to deploy a discarded variable or a dangling interpolation, both proved by planted faults |
 | 2026-09-21 | 4.1 | (this commit) | Vendor names keep their ampersand: `sanitize_data` strips and no longer rewrites, so the SQL row and the Laserfiche XML carry one value. Branch `aim/phase-4-keyfields` cut from master `f6bbc335`. 82 pytest green (6 of the 7 new tests red without the fix), 921 runs, 0 fail, 0 error, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-21 | 4.2 | (this commit) | Invoice and order numbers keep their punctuation: `_clean_text_field` filters control and invisible codes instead of a character class, and collapses whitespace. 107 pytest green (20 of the 25 new tests red without the fix), 921 runs, 0 fail, 0 error, scoped rubocop clean, brakeman's same four non-AIM warnings |

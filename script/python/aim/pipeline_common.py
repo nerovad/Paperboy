@@ -4,6 +4,7 @@ import subprocess
 import csv
 import json
 import re
+import unicodedata
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from datetime import datetime
@@ -690,10 +691,31 @@ def normalize_vendor_name(extracted_name):
     return None, False
 
 def _clean_text_field(v):
+    """Tidy a key field's whitespace without editing what the vendor printed.
+
+    This deleted every character outside [a-zA-Z0-9_\\- ], so INV-2024/001 was
+    stored as INV-2024001 -- a different number to the one on the page, and a
+    different business key. Invoice and order numbers are held as text, passed
+    to SQL as parameters, escaped by the XML writer and written into the PDF's
+    Info dictionary, so none of those need a restricted character set.
+
+    What is removed is what cannot survive a round trip: control codes, and
+    the invisible formatting codes such as a zero-width space that would make
+    two identical-looking numbers compare unequal. Runs of whitespace, a
+    non-breaking space among them, collapse to one space.
+
+    Anything built into a *path* is made safe where the path is built --
+    03_batch_splitter does that from the manifest, which never comes through
+    here -- and not by narrowing the value everyone else stores.
+    """
     if not v:
         return None
-    cleaned = re.sub(r'[^a-zA-Z0-9_\- ]', '', str(v))
-    return cleaned.strip() if cleaned.strip() else None
+    kept = ''.join(
+        c for c in str(v)
+        if c.isspace() or unicodedata.category(c) not in ('Cc', 'Cf')
+    )
+    cleaned = re.sub(r'\s+', ' ', kept).strip()
+    return cleaned if cleaned else None
 
 def sanitize_data(data: InvoiceData):
     if data.vendor_name:
