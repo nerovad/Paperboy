@@ -25,7 +25,11 @@ git checkout "$BRANCH"
 git pull origin "$BRANCH"
 
 echo "==> Installing gems..."
-bundle install --without development test
+# An environment variable, not --without: that flag is saved to .bundle/config,
+# and this checkout is also the development tree, where the saved exclusion
+# hides the debug gem and every plain bin/rails command fails to boot.
+export BUNDLE_WITHOUT=development:test
+bundle install
 
 echo "==> Preparing application and Solid adapter databases..."
 RAILS_ENV=production bundle exec rails db:prepare
