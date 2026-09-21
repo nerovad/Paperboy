@@ -697,7 +697,13 @@ def _clean_text_field(v):
 
 def sanitize_data(data: InvoiceData):
     if data.vendor_name:
-        data.vendor_name = data.vendor_name.strip().replace("&", "and") or None
+        # The vendor name is a business key field and is stored, indexed and
+        # exported as typed. Rewriting "&" to "and" changed it for 58 of the
+        # ~900 official vendors -- "AT&T MOBILITY" reached Laserfiche as
+        # "ATandT MOBILITY" while the SQL row kept the real name. ElementTree
+        # escapes the ampersand on its own, so nothing downstream needs it
+        # removed.
+        data.vendor_name = data.vendor_name.strip() or None
     data.invoice_total = _clean_money(data.invoice_total)
     data.invoice_date = _clean_date(data.invoice_date)
     data.invoice_number = _clean_text_field(data.invoice_number)
