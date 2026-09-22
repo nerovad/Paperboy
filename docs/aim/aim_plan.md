@@ -639,9 +639,13 @@ Recorded so they are not relitigated.
 - **Document types.** `Invoice`, `Memo`, `Credit`, `Coupon`, `Unknown`. All
   types flow through the same queues. Type dictates terminal behaviour only.
   Type-specific queue bypass is out of scope for now.
-  **Reconfirmed by Joshua 2026-09-22:** these five are the list. The
+  **Reconfirmed by Joshua 2026-09-22, with `Statement` added:** the list is
+  `Invoice`, `Memo`, `Credit`, `Coupon`, `Statement`, `Unknown`. The
   extraction worker's `INVOICE`/`STATEMENT`/`CREDIT`/`UNKNOWN` is
-  incomplete, not a competing decision -- step 5.3a teaches it the five.
+  incomplete, not a competing decision -- step 5.3a teaches it all six.
+  **`Unknown` is temporary.** AIM staff replace it during QA review, and an
+  invoice does not go to a user's queue while it is still `Unknown` -- a
+  rule for the 5.4 state machine.
 - **Duplicate key.** Same invoice number, same vendor, same amount, same
   date. Budget Unit is deliberately excluded, so the same invoice submitted
   under two BUs is caught.
@@ -1759,17 +1763,18 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
   - `action` is `transition` for now; claims and assignments can become
     events of their own when 5.4 or 5.5 needs them.
 
-- [ ] **5.3a Teach the extraction worker the five document types.**
+- [ ] **5.3a Teach the extraction worker the six document types.**
   `01_AI_Extraction_Worker` asks the model for `INVOICE`, `STATEMENT`,
   `CREDIT` or `UNKNOWN` (two prompts, around lines 232 and 315) and sends
   anything but `INVOICE` to review. It must classify `Invoice`, `Memo`,
-  `Credit`, `Coupon` and `Unknown`, and -- per Decisions, "all types flow
-  through the same queues" -- stop rejecting a Memo, Credit or Coupon just
-  for its type. What happens to a `STATEMENT` today needs a home in the
-  five. *Test:* pytest covers the parsing and routing of each type with a
-  stubbed model response. Classification quality cannot be unit-tested:
-  Joshua tests it by hand on GSA-SCAN02 alongside development, after a
-  `bin/deploy-aim-workers`. Must land before 5.4 validates the list.
+  `Credit`, `Coupon`, `Statement` and `Unknown`, and -- per Decisions, "all
+  types flow through the same queues" -- stop rejecting a Memo, Credit,
+  Coupon or Statement just for its type. `Unknown` is what the model says
+  when it cannot tell; AIM staff settle it in QA review. *Test:* pytest
+  covers the parsing and routing of each type with a stubbed model
+  response. Classification quality cannot be unit-tested: Joshua tests it
+  by hand on GSA-SCAN02 alongside development, after a
+  `bin/deploy-aim-workers`. Must land before 5.4 validates the list of six.
 
 - [ ] **5.4 `Aim::Invoice` model and state machine.** States enumerate the
   real queues plus the terminal outcomes. Illegal transitions raise.
@@ -1949,8 +1954,10 @@ layout feeds another system. The target is the same flow through Laserfiche.
   migrations on `gsa-sql22`**~~. Both found 2026-09-22 in 5.1 and both
   dissolved the same day by Joshua's decision to put the tables in the
   Paperboy database on `GSASQL16`, schema `aim`, as `GSAETL`.
-- ~~**Document types disagree.**~~ Settled 2026-09-22 by Joshua: the five
-  in Decisions are right and the worker's list is incomplete. Step 5.3a.
+- ~~**Document types disagree.**~~ Settled 2026-09-22 by Joshua: the
+  Decisions list is right, plus `Statement`, and the worker's list is
+  incomplete. `Unknown` is a temporary type AIM staff resolve in QA review.
+  Step 5.3a.
 - ~~**Which site should show live invoices once state is in the database?**~~
   Settled 2026-09-22 by Joshua: **the workers write `aim.invoices` in
   `Paperboy_Dev` while AIM is in development, and are switched to
