@@ -81,7 +81,7 @@ module Aim
     validates :assignment_source, presence: true, if: :assigned_to?
     validates :actor, presence: true, if: :will_save_change_to_state?
     validate :move_is_one_the_pipeline_makes, if: :state_changed?
-    validate :document_type_is_settled_for_a_user, if: :state_changed?
+    validate :document_type_is_settled_for_a_user, if: -> { state_changed? && persisted? }
 
     after_save :record_transition, if: :saved_change_to_state?
     after_save { self.actor = nil }
@@ -118,6 +118,11 @@ module Aim
 
     # An invoice nobody has typed is not ready for the person who has to act
     # on it: AIM staff settle Unknown in QA review first.
+    #
+    # This is a rule about *moving* an invoice to a user, so it does not apply
+    # to a new row. Aim::QueueSync adopts folders that are already sitting in
+    # the user queue, and refusing to record where an invoice actually is
+    # would lose it rather than protect anyone.
     def document_type_is_settled_for_a_user
       return unless state == 'user_approval'
       return if document_type.present? && document_type != UNSETTLED_DOCUMENT_TYPE

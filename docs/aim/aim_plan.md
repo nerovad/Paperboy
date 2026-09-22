@@ -1850,10 +1850,48 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
   - Nothing writes these states yet. 5.5 has the screens read them, 5.6 has
     the workers write them; until then the pipeline still moves folders.
 
-- [ ] **5.5 Rails reads state from the database.** Queue screens and the
+- [~] **5.5 Rails reads state from the database.** Queue screens and the
   work provider read rows, not directories. Files stay on the share as
   blobs. Dual-run against the folders during this step.
   *Test:* queue counts from the database match the folder counts.
+
+  **Half done 2026-09-22, deliberately.** The counting half is built; the
+  screens still read folders for what they show.
+
+  - **`Aim::QueueSync` builds the rows from the share.** It adopts a folder
+    with no row, records a folder that moved the way the pipeline moves it
+    as that transition, and follows a folder somebody dragged as a `sync`
+    event saying *folder moved outside the pipeline* -- three different
+    things, told apart rather than averaged. It is idempotent, and a row
+    whose folder has gone is counted, never moved: a worker may be part way
+    through a move, and this class never decides an invoice has ended.
+    **This is also the go-live cutover tool** from *Decisions → Database
+    placement*: the rows can be rebuilt from the share at any time.
+  - **The dashboard shows the database's count beside the folder's, and only
+    when they differ.** Silence means they agree. It says nothing at all
+    until something writes rows, and a database it cannot reach is logged
+    and skipped -- the folders are still the truth this step, so AIM's
+    screens must not go down with it.
+  - **Rails' queue list was missing four directories** the state machine
+    names: `pending_vision`, `ready_to_split`, `ready_to_delete` and
+    `error_queue`. All four are real worker queues with variables already in
+    LockBox; `PATH_ENV` simply never listed them.
+  - **Adopting is not moving.** The rule that an untyped invoice may not
+    reach `user_approval` now applies to a *change* of state, not to a new
+    row, so a folder already sitting in the user queue can be recorded where
+    it is. Refusing to write down where an invoice actually is would lose
+    it, not protect anyone.
+
+  **What is left of 5.5, and why it waits.** The queue screens read each
+  invoice's vendor, number and total out of the JSON beside the PDF. The
+  rows do not carry those yet -- the workers start writing them in 5.6 --
+  so switching the screens now would empty them while Joshua is testing.
+  The screens change once 5.6 fills the rows.
+
+  **Nothing schedules the sync yet.** It runs from the console
+  (`Aim::QueueSync.new.call`). Giving it a rake task or an admin button is a
+  shared-config change (`lib/tasks/` or a route), so it goes to Joshua with
+  Phase 6.2's `aim:import_vendors`, which needs the same permission.
 
 - [ ] **5.6 Workers write state to the database.** Each worker records its
   transition instead of implying it by moving a folder.
@@ -2268,3 +2306,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-22 | — | (this commit) | Server prepared for a fresh test round: every back-end queue moved to `_PREVIOUS_TEST_DATA/2026-09-22` (58 items, spool markers included), watch tree left alone. **The worker deploy did not run** -- the permission classifier refused it -- so GSA-SCAN02 still runs the 2026-09-10 scripts |
 | 2026-09-22 | — | (this commit) | **Workers deployed** to `/mnt/a/AIM/_PROGRAM`: 22 files plus a fresh `.env`, replacing 2026-09-10 scripts, so Phases 3-4 and step 5.3a now run on the server. Deploy target resolution fixed to read `${VAR}` references through `python-dotenv`; 162 pytest green |
 | 2026-09-22 | 5.4 | (this commit) | `Aim::Invoice` state machine: 18 states, 56 allowed moves, 258 refused, enforced by both `transition_to!` and a validation. Exhaustive table testing caught `rejected` wrongly marked terminal and `action_needed` pointing at itself. Ruby/Python document type lists tied together by a test. 992 runs, 0 fail, 0 error (serial), 162 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-22 | 5.5 | (this commit) | `Aim::QueueSync` makes the rows say what the share says -- adopting, transitioning, or recording an out-of-band drag as a `sync` event -- and the dashboard shows the database's count beside the folder's when they differ. Four missing queue paths added. The screens still read folders for content until 5.6 fills the rows. 1004 runs, 0 fail, 0 error (serial), 162 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |

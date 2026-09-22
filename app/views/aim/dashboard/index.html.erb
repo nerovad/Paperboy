@@ -14,6 +14,12 @@
           <h2><%= config[:label] %></h2>
           <div class="aim-dashboard-count"><%= @aim_queue_counts.fetch(queue, 0) %></div>
           <p><%= status[:connected] ? config[:description] : 'Queue folder is not connected.' %></p>
+          <%# While the folders and the database run together (plan step 5.5),
+              say so only when they disagree. Silence means they match. %>
+          <% rows = (@aim_queue_row_counts || {})[queue] %>
+          <% if rows && rows != @aim_queue_counts.fetch(queue, 0) %>
+            <p class="aim-dashboard-note"><%= pluralize(rows, 'row') %> in the database</p>
+          <% end %>
         <% end %>
       <% end %>
     </section>

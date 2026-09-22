@@ -40,10 +40,27 @@ module Aim
         @aim_queue_statuses[queue] = aim_queue_directory_status(path)
         @aim_queue_counts[queue] = aim_queue_directory_count(path)
       end
+
+      @aim_queue_row_counts = aim_queue_row_counts
     rescue StandardError => e
       Rails.logger.error "Failed to load AIM queue counts: #{e.message}"
       @aim_queue_statuses = {}
       @aim_queue_counts = {}
+      @aim_queue_row_counts = {}
+    end
+
+    # The database's own answer, shown beside the folder count while the two
+    # run together (plan step 5.5). Empty until something writes rows, so the
+    # screens say nothing at all until there is something to compare -- and a
+    # database that cannot be reached must never take an AIM screen down,
+    # since the folders are still the truth this step.
+    def aim_queue_row_counts
+      return {} unless Aim::Invoice.exists?
+
+      Aim::Invoice.group(:state).count.symbolize_keys
+    rescue StandardError => e
+      Rails.logger.warn "AIM queue row counts unavailable: #{e.message}"
+      {}
     end
 
     def aim_queue_directory_count(path)

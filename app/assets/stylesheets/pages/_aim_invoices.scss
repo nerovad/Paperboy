@@ -243,6 +243,14 @@
   margin: 0;
 }
 
+// Shown only while the folders and the database run together, and only when
+// the two disagree. Plan step 5.5; it goes when 5.7 retires folder-as-state.
+.aim-dashboard-note {
+  font-size: 0.8rem;
+  font-style: italic;
+  margin-top: 6px;
+}
+
 .aim-card-danger {
   border-top-color: $danger;
 }
