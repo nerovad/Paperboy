@@ -24,6 +24,17 @@ Rails.application.routes.draw do
       end
     end
 
+    # The action bar above the library. Its own path rather than a collection
+    # route on assets, where POST assets/bulk/share would read as sharing the
+    # asset with id "bulk". See BulkAssetsController.
+    resource :bulk_assets, only: [] do
+      post :publish
+      post :share
+      post :metadata
+      post :add_to_collection
+      post :archive
+    end
+
     resources :collections do
       # Adding is a collection route so the picker on an asset page can choose
       # which collection to drop it into from a select rather than a URL.

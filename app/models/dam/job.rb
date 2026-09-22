@@ -13,6 +13,7 @@ module Dam
       'publish' => 'Publish',
       'share' => 'Share',
       'move' => 'Move',
+      'metadata' => 'Metadata update',
       'workflow' => 'Workflow'
     }.freeze
 
@@ -53,14 +54,17 @@ module Dam
     end
 
     # Raise a queued job. The runner picks these up; nothing here executes.
-    def self.enqueue!(job_type:, actor: nil, workflow: nil, subject: nil, total_items: 0)
+    #
+    # A run over many assets has no one subject, so it names itself: pass
+    # +label+ ("40 assets") and leave +subject+ nil.
+    def self.enqueue!(job_type:, actor: nil, workflow: nil, subject: nil, total_items: 0, label: nil)
       create!(
         job_type: job_type,
         workflow: workflow,
         subject: subject,
         # Asset carries a title, Collection a name, StorageLocation a label.
         # Never #to_s — on an unadorned model that is the inspect string.
-        subject_label: subject.try(:title) || subject.try(:name) || subject.try(:label),
+        subject_label: label || subject.try(:title) || subject.try(:name) || subject.try(:label),
         status: 'queued',
         total_items: total_items,
         queued_at: Time.current,
@@ -73,8 +77,8 @@ module Dam
     # both finish inside the request, so they never pass through the runner —
     # the row lands complete, and the Jobs feed stays the one place every piece
     # of DAM work shows up whether or not it was ever queued.
-    def self.record!(job_type:, actor:, subject:, count: 1, log: nil)
-      job = enqueue!(job_type: job_type, actor: actor, subject: subject, total_items: count)
+    def self.record!(job_type:, actor:, subject:, count: 1, log: nil, label: nil)
+      job = enqueue!(job_type: job_type, actor: actor, subject: subject, total_items: count, label: label)
       Array(log).each { |line| job.append_log(line) }
       job.update!(status: 'succeeded', processed_items: count, started_at: Time.current,
                   finished_at: Time.current, log: job.log)

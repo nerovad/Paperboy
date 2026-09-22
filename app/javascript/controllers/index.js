@@ -76,6 +76,7 @@ import SopModalController from "controllers/sop_modal_controller"
 import DatabaseDslController from "controllers/database_dsl_controller"
 import AppSwitcherController from "controllers/app_switcher_controller"
 import DamSearchController from "controllers/dam_search_controller"
+import DamSelectionController from "controllers/dam_selection_controller"
 import PublishTargetController from "controllers/publish_target_controller"
 import PublishFormController from "controllers/publish_form_controller"
 import OrgCascadeController from "controllers/org_cascade_controller"
@@ -180,6 +181,7 @@ application.register("sop-modal", SopModalController)
 application.register("database-dsl", DatabaseDslController)
 application.register("app-switcher", AppSwitcherController)
 application.register("dam-search", DamSearchController)
+application.register("dam-selection", DamSelectionController)
 application.register("publish-target", PublishTargetController)
 application.register("publish-form", PublishFormController)
 application.register("org-cascade", OrgCascadeController)

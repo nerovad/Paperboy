@@ -20,6 +20,7 @@ module DigitalAssetManagement
       @pagy, @assets = pagy(:offset, @dam_search.results)
       @favorite_ids = Dam::Favorite.ids_for(employee_id: dam_employee_id, type: 'Dam::Asset')
       @collections = Dam::Collection.alphabetical
+      load_bulk_publishing
     end
 
     def show
@@ -134,6 +135,15 @@ module DigitalAssetManagement
       targets = Dam::PublishTarget.ordered.to_a
       @publish_targets, @publish_targets_closed = targets.partition { |target| target.refusal_reason(@asset).nil? }
       @publications = @asset.publications.newest_first.limit(10)
+    end
+
+    # The bulk Publish picker offers every target that is ready to send at
+    # all; whether each selected asset suits it is decided per asset when the
+    # form is posted. See BulkAssetsController#publish.
+    def load_bulk_publishing
+      return unless helpers.can_use_app_feature?('digital_asset_management', 'publish')
+
+      @bulk_publish_targets = Dam::PublishTarget.enabled.ordered.select { |target| target.refusal_reason.nil? }
     end
 
     def set_asset
