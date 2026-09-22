@@ -65,6 +65,15 @@ def fake_environment(tmp_path, monkeypatch):
     monkeypatch.setenv("AIM_TESSERACT_CMD", str(root / "tesseract"))
     monkeypatch.setenv("AIM_ODBC_DRIVER", "ODBC Driver 17 for SQL Server")
     monkeypatch.setenv("AIM_ODBC_ENCRYPT", "no")
+    # Where the workers write state (plan step 5.6). The server, database and
+    # credentials are read when a connection is opened, not at import, so a
+    # test that never writes needs only the table names.
+    monkeypatch.setenv("AIM_SQL_STATE_TABLE", "aim.invoices")
+    monkeypatch.setenv("AIM_SQL_STATE_EVENTS_TABLE", "aim.invoice_events")
+    monkeypatch.setenv("AIM_SQL_STATE_SERVER", "test-sql-server")
+    monkeypatch.setenv("AIM_SQL_STATE_DATABASE", "Paperboy_Test")
+    monkeypatch.setenv("AIM_SQL_STATE_USER", "test-user")
+    monkeypatch.setenv("AIM_SQL_STATE_PASSWORD", "test-password")
     monkeypatch.setenv("AIM_TEXT_MODEL", "test-text-model")
     monkeypatch.setenv("AIM_VISION_MODEL", "test-vision-model")
     monkeypatch.setenv("AIM_LASERFICHE_INBOX_PATH", r"\AIM\00 INBOX")
@@ -75,7 +84,7 @@ def fake_environment(tmp_path, monkeypatch):
     monkeypatch.setenv("AIM_ENV_FILE", str(env_file))
 
     monkeypatch.syspath_prepend(WORKER_DIR)
-    for module in [m for m in list(sys.modules) if m.startswith("pipeline_common")]:
+    for module in [m for m in list(sys.modules) if m.startswith(("pipeline_common", "state_store"))]:
         del sys.modules[module]
 
     return root

@@ -8,9 +8,14 @@ from datetime import datetime
 from pipeline_common import (
     SQL_QUEUE_DIR, SQL_FAILED_DIR, ACTION_NEEDED_DIR, PROCESSED_DIR,
     READY_TO_DELETE_DIR, DELETED_DIR, VENDOR_REVIEW_DIR,
+
     insert_sql_record, archive_batch, InvoiceData, generate_laserfiche_xml, sanitize_data,
     bootstrap, PAYLOAD_SUFFIX,
 )
+from state_store import record_state
+
+ACTOR = "02_sql_worker"
+
 
 import pyodbc
 
@@ -51,6 +56,7 @@ def move_folder_to_failed(folder_path, folder_name):
         print(f"    [i] SQL queue folder already moved or removed: {folder_path}")
         return
 
+    record_state(folder_name, "sql_failed", ACTOR)
     failed_dest = os.path.join(SQL_FAILED_DIR, folder_name)
     if os.path.exists(failed_dest):
         shutil.rmtree(failed_dest)
@@ -101,6 +107,7 @@ def run_sql_worker():
                     pass
                 
                 # Route folder back to ACTION_NEEDED_DIR for correction
+                record_state(folder_name, "action_needed", ACTOR, "SQL insert could not be mapped")
                 dest_back = os.path.join(ACTION_NEEDED_DIR, folder_name)
                 try:
                     if os.path.exists(dest_back):
@@ -186,6 +193,9 @@ def run_sql_worker():
                 if os.path.exists(xml_src):
                     shutil.move(xml_src, os.path.join(PROCESSED_DIR, f"{processing_id}.xml"))
                 
+                # The invoice is in Laserfiche's hands now: archived is an end.
+                record_state(processing_id, "archived", ACTOR)
+
                 # 5. Clean up subfolders
                 shutil.rmtree(folder_path)
                 
@@ -268,6 +278,7 @@ def run_delete_worker():
                     if os.path.isfile(src_file):
                         shutil.move(src_file, os.path.join(target_dest_dir, file))
                         
+                record_state(folder_name, "deleted", ACTOR)
                 print(f"    [✓] Batch moved to deleted archive: {target_dest_dir}")
                 
                 # Clean up corresponding Action Needed / Vendor Review folders if they still exist

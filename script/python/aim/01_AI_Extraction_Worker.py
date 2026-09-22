@@ -14,6 +14,8 @@ import pytesseract
 
 from pydantic import BaseModel, Field
 
+from state_store import record_state
+
 from pipeline_common import (
     BASE_DIR, PENDING_VISION_DIR, ACTION_NEEDED_DIR, LOG_DIR, TEMP_IMAGE,
     BATCH_SPLIT_DIR, DocumentManifest, is_file_stable,
@@ -25,6 +27,8 @@ from pipeline_common import (
     normalize_document_type,
 )
 from typing import Optional
+
+ACTOR = "01_ai_extraction_worker"
 
 STALE_QUEUE_FOLDER_SECONDS = 300
 AI_QUEUE_ERROR_MARKER = ".ai_queue_error.json"
@@ -285,6 +289,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
             with open(os.path.join(dest_folder, f"{processing_id}.ticket"), "w") as f:
                 f.write("The AI could not tell what kind of document this is, so it was not extracted. "
                         "Set its document type in QA review.")
+            record_state(processing_id, "action_needed", ACTOR, "document type could not be placed")
             write_log(filename, "CPU Test (Phase 1)", "REJECTED_TYPE", f"Document type is {doc_type}", bu_number, submitter_name, processing_id, InvoiceData())
             if os.path.exists(sidecar): os.remove(sidecar)
             return
@@ -319,6 +324,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
                 collapsed_json = re.sub(r'\[\s+([\d,\s]+)\s+\]', lambda m: "[" + ", ".join(x.strip().strip(',') for x in m.group(1).split()) + "]", raw_json)
                 f.write(collapsed_json)
                 
+            record_state(processing_id, "batch_split", ACTOR, "multiple invoices in one file")
             write_log(filename, "CPU Test (Split)", "ROUTED_TO_SPLIT", "Multiple invoices detected", bu_number, submitter_name, processing_id, InvoiceData())
             print(f"  [✓] Routed to _BATCH_SPLIT for human review.")
             return
@@ -458,6 +464,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
             
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
+        record_state(processing_id, "action_needed", ACTOR, "document type could not be placed")
         write_log(filename, "CPU Test", "ACTION_NEEDED", f"Rejected as {master_data.document_type}", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return
@@ -481,6 +488,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         # Add sidecar data for GUI rule entry
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
+        record_state(processing_id, "low_confidence_review", ACTOR, "handwritten financials")
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Handwritten financials detected", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return
@@ -527,6 +535,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         with open(os.path.join(dest_folder, f"{processing_id}_LEARN.json"), "w", encoding="utf-8") as f:
             json.dump(review_data, f, indent=4)
             
+        record_state(processing_id, "vendor_review", ACTOR, "vendor not recognised")
         write_log(filename, "CPU Test", "ROUTED_TO_LEARN", f"Unknown vendor: {master_data.extracted_vendor_name}", bu_number, submitter_name, processing_id, master_data)
         return
 
@@ -553,6 +562,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         # Add sidecar data for GUI rule entry
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
+        record_state(processing_id, "action_needed", ACTOR, f"missing {', '.join(missing)}")
         write_log(filename, "CPU Test", "ACTION_NEEDED", f"Missing: {missing}", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return
@@ -569,6 +579,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         # Add sidecar data for GUI rule entry
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
+        record_state(processing_id, "low_confidence_review", ACTOR, "low confidence read")
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Routed for manual check", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
     else:
@@ -578,6 +589,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
+        record_state(processing_id, "sql_queue", ACTOR)
         write_log(filename, "CPU Test", "SUCCESS", "", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
 
@@ -708,6 +720,7 @@ def scan_directories():
             # The error queue is a downstream queue like any other, so the
             # crash keeps the batch id rather than deriving a third one.
             crash_id = f"ERROR_{processing_id}"
+            record_state(processing_id, "error_queue", ACTOR, str(e))
             write_log(filename, "CPU Test", "ERROR", str(e), bu_number, submitter_name, crash_id, None)
             
             dest_folder = os.path.join(ERROR_QUEUE_DIR, crash_id)

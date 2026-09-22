@@ -6,6 +6,9 @@ import hashlib
 from datetime import datetime
 from PIL import Image
 from pipeline_common import BASE_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR, is_file_stable, bootstrap, env
+from state_store import record_state
+
+ACTOR = "00_ingestion_watcher"
 
 # Wait time to ensure file is fully copied over network
 STABLE_WAIT_TIME = 2
@@ -271,6 +274,10 @@ def scan_and_spool():
                 json.dump(ticket_data, f, indent=4)
 
             mark_spooled(signature, file_path, dest_folder, source_delete_error if is_pdf else None)
+
+            # The invoice exists from here on, so this is the first thing its
+            # history says: spooled into the AI queue, by the watcher.
+            record_state(processing_id, "ai_queue", ACTOR, f"spooled from {file}")
                 
             status_msg = "[URGENT] " if is_urgent else ""
             if is_pdf and source_delete_error:

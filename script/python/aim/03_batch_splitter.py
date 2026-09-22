@@ -5,6 +5,10 @@ import json
 
 # Import shared core FIRST so it auto-installs missing dependencies
 from pipeline_common import BASE_DIR, BATCH_SPLIT_DIR, READY_TO_SPLIT_DIR, SPLIT_FOLDER_NAME, REPROCESS_QUEUE_DIR, ERROR_QUEUE_DIR, bootstrap
+from state_store import record_state
+
+ACTOR = "03_batch_splitter"
+
 
 import fitz
 
@@ -92,6 +96,7 @@ def run_batch_splitter():
                     pass
                 
                 # Route folder back to BATCH_SPLIT_DIR for correction
+                record_state(folder_name, "batch_split", ACTOR, "manifest could not be read")
                 dest_back = os.path.join(BATCH_SPLIT_DIR, folder_name)
                 try:
                     if os.path.exists(dest_back):
@@ -148,6 +153,7 @@ def run_batch_splitter():
                 print(f"    [!] Error splitting batch folder {base_name}: {e}")
                 
                 # Move folder to the technical error queue.
+                record_state(folder_name, "error_queue", ACTOR)
                 error_dest = os.path.join(ERROR_QUEUE_DIR, f"ERROR_{folder_name}")
                 try:
                     if os.path.exists(error_dest):

@@ -1925,10 +1925,49 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
   shared-config change (`lib/tasks/` or a route), so it goes to Joshua with
   Phase 6.2's `aim:import_vendors`, which needs the same permission.
 
-- [ ] **5.6 Workers write state to the database.** Each worker records its
+- [~] **5.6 Workers write state to the database.** Each worker records its
   transition instead of implying it by moving a folder.
   *Test:* a full pipeline run through the fake tree produces the expected
   event sequence.
+
+  **Code done 2026-09-22; not configured and not deployed.** `state_store.py`
+  offers one call, `record_state(batch_id, state, actor, note)`, which writes
+  the invoice row and its event in one transaction. All five workers call it
+  -- 18 places in total: the watcher when an invoice is spooled, the AI
+  worker at each of its eight routings and on a crash, the SQL worker on
+  archive, failure, mapping bounce and deletion, the splitter and the alias
+  learner on theirs. Worth carrying:
+
+  - **A database that is not there does not stop the pipeline.** In this step
+    the folders are still the truth, so refusing to move an invoice over
+    bookkeeping would strand real work. The failure is printed, the move
+    happens, and `Aim::QueueSync` rebuilds the rows afterwards. **That trade
+    reverses in 5.7**, when the row becomes the truth.
+  - **Saying it twice writes nothing.** A worker restarting mid-queue
+    re-reads folders it already recorded; the store compares the state it
+    finds before writing, so one move stays one event.
+  - **Times are written `SYSUTCDATETIME()`**, because Rails reads these
+    columns as UTC. `GETDATE()` would be the server's local time and every
+    timestamp would be seven hours out.
+  - **Table names come from `AIM_SQL_STATE_TABLE` and
+    `AIM_SQL_STATE_EVENTS_TABLE`**, like every other AIM setting, and the
+    connection from the `SQL_STATE` section that `get_sql_connection`
+    already understands.
+  - The sequence test runs a PDF through the watch tree and both workers with
+    the models stubbed, and asserts the history: `ai_queue` by the watcher,
+    then `sql_queue` by the AI worker, under one batch id.
+
+  **What is left, and it needs Joshua:**
+
+  1. **Which login the workers use.** The six new variables --
+     `AIM_SQL_STATE_SERVER`, `_DATABASE`, `_USER`, `_PASSWORD`, `_TABLE`,
+     `_EVENTS_TABLE` -- go to LockBox, and the worker `.env` lives on a share
+     anyone who can reach `E:\AIM` can read. `GSAETL` is the standing
+     choice and reaches everything; a login with rights on the `aim` schema
+     alone would not. **Joshua decides; nothing is written to LockBox until
+     he does.**
+  2. **The deploy.** `bin/deploy-aim-workers --apply`, then restart the
+     workers. Until then the fleet runs the 5.3a code and writes no rows.
 
 - [ ] **5.7 Retire folder-as-state.** Remove `.claim.json`, remove the
   status-by-location inference, remove the Windows shortcuts.
@@ -2339,3 +2378,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-22 | — | (this commit) | **Workers deployed** to `/mnt/a/AIM/_PROGRAM`: 22 files plus a fresh `.env`, replacing 2026-09-10 scripts, so Phases 3-4 and step 5.3a now run on the server. Deploy target resolution fixed to read `${VAR}` references through `python-dotenv`; 162 pytest green |
 | 2026-09-22 | 5.4 | (this commit) | `Aim::Invoice` state machine: 18 states, 56 allowed moves, 258 refused, enforced by both `transition_to!` and a validation. Exhaustive table testing caught `rejected` wrongly marked terminal and `action_needed` pointing at itself. Ruby/Python document type lists tied together by a test. 992 runs, 0 fail, 0 error (serial), 162 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-22 | 5.5 | (this commit) | `Aim::QueueSync` makes the rows say what the share says -- adopting, transitioning, or recording an out-of-band drag as a `sync` event -- and the dashboard shows the database's count beside the folder's when they differ. Four missing queue paths added. The screens still read folders for content until 5.6 fills the rows. 1004 runs, 0 fail, 0 error (serial), 162 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-22 | 5.6 | (this commit) | `state_store.record_state` and 18 call sites across all five workers: every move now says where it came from and who made it. Failure to write never blocks a move while the folders are still the truth. 177 pytest green (5 of the new sequence tests red without the wiring), 1004 runs, 0 fail, 0 error (serial), scoped rubocop clean, brakeman's same four non-AIM warnings. Not configured, not deployed: the login is Joshua's call |
