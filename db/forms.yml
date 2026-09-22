@@ -653,11 +653,36 @@ forms:
     visible_to_filler: false
     restricted_to_type: none
     conditional_answer_field: vehicle_number
+  - field_name: is_this_a_take_home_vehicle
+    field_type: dropdown
+    label: Is this a take home vehicle?
+    page_number: 3
+    position: 4
+    required: true
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: vehicle_assigned_to
+    field_type: text
+    label: Vehicle Assigned to
+    page_number: 3
+    position: 5
+    required: false
+    options: {}
+    read_only: always
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
   - field_name: location
     field_type: dropdown
     label: Location
     page_number: 4
-    position: 4
+    position: 6
     required: false
     options:
       custom_lookup:
@@ -672,14 +697,84 @@ forms:
         category_filters: []
         order_column:
         order_direction: asc
-      repeatable: true
-      repeat_min: 1
-      repeat_max: 2
-      values: []
+      values:
+      - Other
+      values_position: end
     read_only: none
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  - field_name: other_location
+    field_type: text
+    label: Other Location
+    page_number: 4
+    position: 7
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: location
+  - field_name: do_you_have_a_secondary_location
+    field_type: dropdown
+    label: Do you have a secondary location?
+    page_number: 4
+    position: 8
+    required: false
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: secondary_location
+    field_type: dropdown
+    label: Secondary Location
+    page_number: 4
+    position: 9
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: fleet_locations
+        column: Address
+        join_columns:
+        - City
+        - State
+        - Zip
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
+      values:
+      - Other
+      values_position: end
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: do_you_have_a_secondary_location
+  - field_name: other_secondary_location
+    field_type: text
+    label: Other Secondary Location
+    page_number: 4
+    position: 10
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: secondary_location
 - class_name: FormRequestForm
   name: Form Request
   page_count: 7
