@@ -36,8 +36,8 @@ class FleetVehicleGaragingFormPdfGenerator
       pdf.text 'Vehicle Information', size: 14, style: :bold
       pdf.move_down 5
 
-      if submission.fleet_vehicles.any?
-        submission.fleet_vehicles.each_with_index { |vehicle, index| render_vehicle(pdf, vehicle, index) }
+      if submission.vehicle_number.present?
+        render_vehicle(pdf, submission)
       else
         pdf.text 'No vehicle information provided.'
       end
@@ -52,16 +52,15 @@ class FleetVehicleGaragingFormPdfGenerator
     end.render
   end
 
-  def self.render_vehicle(pdf, vehicle, index)
-    pdf.text "Vehicle ##{index + 1}", style: :bold
-    pdf.text "Year: #{vehicle.year}"
-    pdf.text "Make: #{vehicle.make}"
-    pdf.text "Model: #{vehicle.model}"
-    pdf.text "Color: #{vehicle.color}"
-    pdf.text "License Plate: #{vehicle.license_plate}"
-    pdf.text "Take Home Vehicle: #{vehicle.take_home}"
-    pdf.text "Garaging Location: #{vehicle.garaging_location}"
-    secondary = vehicle.secondary_garaging_location
+  def self.render_vehicle(pdf, submission)
+    pdf.text "Vehicle Number: #{submission.vehicle_number}"
+    pdf.text "Year: #{submission.year}"
+    pdf.text "Make: #{submission.make}"
+    pdf.text "Model: #{submission.model}"
+    pdf.text "Vehicle Assigned To: #{submission.vehicle_assigned_to}"
+    pdf.text "Take Home Vehicle: #{submission.is_this_a_take_home_vehicle}"
+    pdf.text "Garaging Location: #{submission.garaging_location}"
+    secondary = submission.secondary_garaging_location
     pdf.text "Secondary Garaging Location: #{secondary}" if secondary.present?
     pdf.move_down 10
   end

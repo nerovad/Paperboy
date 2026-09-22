@@ -160,6 +160,19 @@
                   { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:model END -->
+<!-- FIELD:is_this_a_take_home_vehicle START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :is_this_a_take_home_vehicle, "Is this a take home vehicle?" %>
+            <%= form.select :is_this_a_take_home_vehicle,
+                  options_for_select(["Yes", "No"], @fleet_vehicle_garaging_form.is_this_a_take_home_vehicle),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: true, data: { controller: "searchable-select" } } %>
+          </div>
+<!-- FIELD:is_this_a_take_home_vehicle END -->
+<!-- FIELD:vehicle_assigned_to START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :vehicle_assigned_to, "Vehicle Assigned to" %>
+            <%= form.text_field :vehicle_assigned_to, class: "form-control field-readonly", readonly: true %>
+          </div>
+<!-- FIELD:vehicle_assigned_to END -->
         </div>
       </div>
 
@@ -167,45 +180,46 @@
 <div class="form-page" style="display:none;">
   <h2>Garaging Location</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:location START -->        <div class="form-group repeatable-section" style="flex: 0 0 100%;"
-             data-controller="repeatable-section"
-             data-repeatable-section-min-value="1"
-             data-repeatable-section-max-value="2">
-          <div data-repeatable-section-target="wrapper">
-            <%= form.fields_for :fleet_vehicle_garaging_form_locations do |vf| %>
-              <div class="repeatable-block" data-block-index="<%= vf.index %>">
-          <div class="form-row d-flex flex-wrap">
-                    <div class="form-group flex-fill">
-                      <%= vf.label :location, "Location" %>
-                      <%= vf.select :location, options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "location"), vf.object.location), { include_blank: "Select..." }, { class: "form-control", data: { controller: "searchable-select" } } %>
-                    </div>
+<!-- FIELD:location START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :location, "Location" %>
+            <%= form.select :location,
+                  options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "location"), @fleet_vehicle_garaging_form.location),
+                  { include_blank: "Select..." },
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'location' } } %>
           </div>
-          <div class="repeatable-row-actions">
-            <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove" aria-label="Remove" title="Remove">&minus;</button>
-          </div>
-        </div>
-            <% end %>
-          </div>
-          <template data-repeatable-section-target="template">
-            <%= form.fields_for :fleet_vehicle_garaging_form_locations, FleetVehicleGaragingFormLocation.new, child_index: "NEW_RECORD" do |vf| %>
-              <div class="repeatable-block" data-block-index="NEW_RECORD">
-          <div class="form-row d-flex flex-wrap">
-                    <div class="form-group flex-fill">
-                      <%= vf.label :location, "Location" %>
-                      <%= vf.select :location, options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "location"), vf.object.location), { include_blank: "Select..." }, { class: "form-control", data: { controller: "searchable-select" } } %>
-                    </div>
-          </div>
-          <div class="repeatable-row-actions">
-            <button type="button" class="repeatable-remove-btn" data-action="repeatable-section#remove" aria-label="Remove" title="Remove">&minus;</button>
-          </div>
-        </div>
-            <% end %>
-          </template>
-          <button type="button" class="btn btn-secondary btn-sm add-repeatable-btn"
-                  data-repeatable-section-target="addButton"
-                  data-action="repeatable-section#add">+ Add Location</button>
-        </div>
 <!-- FIELD:location END -->
+<!-- FIELD:other_location START -->          <div class="conditional-field" data-depends-on="location" data-show-values="[&quot;Other&quot;]" style="<%= ["Other"].include?(@fleet_vehicle_garaging_form.location) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :other_location, "Other Location" %>
+            <%= form.text_field :other_location, class: "form-control" %>
+          </div>
+          </div>
+<!-- FIELD:other_location END -->
+<!-- FIELD:do_you_have_a_secondary_location START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :do_you_have_a_secondary_location, "Do you have a secondary location?" %>
+            <%= form.select :do_you_have_a_secondary_location,
+                  options_for_select(["Yes", "No"], @fleet_vehicle_garaging_form.do_you_have_a_secondary_location),
+                  { include_blank: "Select..." },
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'do_you_have_a_secondary_location' } } %>
+          </div>
+<!-- FIELD:do_you_have_a_secondary_location END -->
+<!-- FIELD:secondary_location START -->          <div class="conditional-field" data-depends-on="do_you_have_a_secondary_location" data-show-values="[&quot;Yes&quot;]" style="<%= ["Yes"].include?(@fleet_vehicle_garaging_form.do_you_have_a_secondary_location) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :secondary_location, "Secondary Location" %>
+            <%= form.select :secondary_location,
+                  options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "secondary_location"), @fleet_vehicle_garaging_form.secondary_location),
+                  { include_blank: "Select..." },
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'secondary_location' } } %>
+          </div>
+          </div>
+<!-- FIELD:secondary_location END -->
+<!-- FIELD:other_secondary_location START -->          <div class="conditional-field" data-depends-on="secondary_location" data-show-values="[&quot;Other&quot;]" style="<%= ["Other"].include?(@fleet_vehicle_garaging_form.secondary_location) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :other_secondary_location, "Other Secondary Location" %>
+            <%= form.text_field :other_secondary_location, class: "form-control" %>
+          </div>
+          </div>
+<!-- FIELD:other_secondary_location END -->
         </div>
       </div>
 

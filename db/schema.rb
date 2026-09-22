@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_130100) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -644,23 +644,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_120100) do
     t.text "deny_reason"
     t.string "department"
     t.string "division"
+    t.string "do_you_have_a_secondary_location", limit: 3
     t.string "email"
     t.string "employee_id"
+    t.string "is_this_a_take_home_vehicle", limit: 3
     t.string "location"
+    t.string "make", limit: 50
+    t.string "model", limit: 50
     t.string "name"
+    t.string "other_location", limit: 200
+    t.string "other_secondary_location", limit: 200
     t.string "phone"
+    t.string "secondary_location", limit: 200
     t.string "status", default: "in_progress", null: false
     t.string "unit"
     t.datetime "updated_at", null: false
+    t.string "vehicle_assigned_to"
+    t.string "vehicle_number", limit: 20
+    t.integer "year"
     t.index ["approver_id"], name: "index_fleet_vehicle_garaging_forms_on_approver_id"
     t.index ["employee_id"], name: "index_fleet_vehicle_garaging_forms_on_employee_id"
+    t.index ["vehicle_number"], name: "index_fleet_vehicle_garaging_forms_on_vehicle_number"
   end
 
   create_table "fleet_vehicles", force: :cascade do |t|
+    t.string "agency"
+    t.string "assigned_to"
     t.string "budget_unit", limit: 10
     t.string "color", limit: 20
     t.datetime "created_at", null: false
-    t.bigint "fleet_vehicle_garaging_form_id", null: false
+    t.bigint "fleet_vehicle_garaging_form_id"
     t.string "garaging_location", limit: 200
     t.string "license_plate", limit: 15
     t.string "make", limit: 50
@@ -671,7 +684,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_120100) do
     t.string "vehicle_number", limit: 20
     t.integer "year"
     t.index ["fleet_vehicle_garaging_form_id"], name: "index_fleet_vehicles_on_fleet_vehicle_garaging_form_id"
-    t.index ["vehicle_number"], name: "index_fleet_vehicles_on_vehicle_number"
+    t.index ["vehicle_number"], name: "index_fleet_vehicles_on_vehicle_number", unique: true, where: "([vehicle_number] IS NOT NULL)"
   end
 
   create_table "form_fields", force: :cascade do |t|

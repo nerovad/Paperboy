@@ -2,8 +2,8 @@
 
 # Which Records-table columns may be edited inline. A column is editable only
 # when it maps to a real, stored column on the table's model — which already
-# excludes derived cells (status_label, owner_name, masked_card_number are
-# methods, not columns) — and is not an identity/timestamp column, an encrypted
+# excludes derived cells (status_label and masked_card_number are methods,
+# not columns) — and is not an identity/timestamp column, an encrypted
 # attribute, or a non-scalar display kind. This is the security whitelist the
 # inline-edit endpoint validates against, so nothing outside it can be written.
 module RecordsEditing
