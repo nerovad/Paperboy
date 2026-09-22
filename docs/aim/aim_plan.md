@@ -639,6 +639,9 @@ Recorded so they are not relitigated.
 - **Document types.** `Invoice`, `Memo`, `Credit`, `Coupon`, `Unknown`. All
   types flow through the same queues. Type dictates terminal behaviour only.
   Type-specific queue bypass is out of scope for now.
+  **Reconfirmed by Joshua 2026-09-22:** these five are the list. The
+  extraction worker's `INVOICE`/`STATEMENT`/`CREDIT`/`UNKNOWN` is
+  incomplete, not a competing decision -- step 5.3a teaches it the five.
 - **Duplicate key.** Same invoice number, same vendor, same amount, same
   date. Budget Unit is deliberately excluded, so the same invoice submitted
   under two BUs is caught.
@@ -1720,6 +1723,18 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
   pipeline has never had.
   *Test:* every state transition writes exactly one event.
 
+- [ ] **5.3a Teach the extraction worker the five document types.**
+  `01_AI_Extraction_Worker` asks the model for `INVOICE`, `STATEMENT`,
+  `CREDIT` or `UNKNOWN` (two prompts, around lines 232 and 315) and sends
+  anything but `INVOICE` to review. It must classify `Invoice`, `Memo`,
+  `Credit`, `Coupon` and `Unknown`, and -- per Decisions, "all types flow
+  through the same queues" -- stop rejecting a Memo, Credit or Coupon just
+  for its type. What happens to a `STATEMENT` today needs a home in the
+  five. *Test:* pytest covers the parsing and routing of each type with a
+  stubbed model response. Classification quality cannot be unit-tested:
+  Joshua tests it by hand on GSA-SCAN02 alongside development, after a
+  `bin/deploy-aim-workers`. Must land before 5.4 validates the list.
+
 - [ ] **5.4 `Aim::Invoice` model and state machine.** States enumerate the
   real queues plus the terminal outcomes. Illegal transitions raise.
   *Test:* the full transition table, including every rejection.
@@ -1898,20 +1913,19 @@ layout feeds another system. The target is the same flow through Laserfiche.
   migrations on `gsa-sql22`**~~. Both found 2026-09-22 in 5.1 and both
   dissolved the same day by Joshua's decision to put the tables in the
   Paperboy database on `GSASQL16`, schema `aim`, as `GSAETL`.
-- **Document types disagree.** Found 2026-09-22 in 5.2. Decisions say
-  `Invoice`, `Memo`, `Credit`, `Coupon`, `Unknown`; `01_AI_Extraction_Worker`
-  asks the model for `INVOICE`, `STATEMENT`, `CREDIT` or `UNKNOWN` and
-  routes anything but `INVOICE` to review. `Memo` and `Coupon` are never
-  produced and `STATEMENT` is not in the decided list. Which list is right
-  decides what `aim.invoices.document_type` may hold. **Settle before 5.4.**
-- **Which Paperboy database do the workers write state to?** Raised
-  2026-09-22, for 5.6. There is one worker fleet on GSA-SCAN02 but a
-  Paperboy database per environment (`Paperboy_Dev`, `_Stage`, `_Prod`).
-  `GSA_Scan` was a single database every environment shared; the `aim`
-  schema is not. The workers will need their own `AIM_*` connection
-  variables pointing at one of them -- presumably production -- which
-  leaves the development and staging screens without live worker state.
-  Settle before 5.6.
+- ~~**Document types disagree.**~~ Settled 2026-09-22 by Joshua: the five
+  in Decisions are right and the worker's list is incomplete. Step 5.3a.
+- **Which site should show live invoices once state is in the database?**
+  Raised 2026-09-22, restated the same day. Not about billing: the workers
+  keep writing `Aim_Invoices` and `Aim_Processing_Logs` on `gsa-sql22`, and
+  Phase 5 leaves that alone. This is about `aim.invoices`, which exists once
+  per environment (`Paperboy_Dev`, `_Stage`, `_Prod`). Today dev and
+  production both read the same share, so both see live queues. After 5.5
+  they read their own database, and the one worker fleet can feed only one.
+  (a) production, with dev on seeded data; or (b) `Paperboy_Dev` during
+  development, switched to production at go-live by a LockBox value.
+  Depends on whether real users work AIM queues in production yet.
+  **Joshua to answer; settle before 5.6.**
 - ~~**0.2** Exact worker install folder on the AIM share.~~ Answered
   2026-09-04: `_PROGRAM` (`/mnt/a/_PROGRAM`).
 - ~~**`P2M_PRINTERS` is missing from LockBox.**~~ Resolved 2026-09-08 by
