@@ -29,6 +29,7 @@ class FleetVehicle < ApplicationRecord
   registry_column :color, kind: :text
   registry_column :license_plate, label: 'Plate', kind: :text
   registry_column :garaging_location, label: 'Garaging Location', kind: :text
+  registry_column :secondary_garaging_location, label: 'Secondary Garaging Location', kind: :text
   registry_column :take_home, label: 'Take Home', kind: :text
   registry_column :assigned_to, label: 'Assigned To', kind: :text
 
