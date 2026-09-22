@@ -35,6 +35,11 @@ class FleetVehicleGaragingForm < ApplicationRecord
     end
   end
 
+  # Who the vehicle is to be assigned to: the typed name when "Other" was picked.
+  def assignee
+    assign_to == 'Other' ? other_assignee : assign_to
+  end
+
   # Primary garaging address: the typed one when "Other" was picked.
   def garaging_location
     location == 'Other' ? other_location : location

@@ -141,7 +141,7 @@
             <%= form.select :year,
                   options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "year"), @fleet_vehicle_garaging_form.year),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { controller: "searchable-select" } } %>
+                  { class: "form-control field-readonly", disabled: true, data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:year END -->
 <!-- FIELD:make START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="vehicle_number" data-answer-lookup-form="FleetVehicleGaragingForm" data-answer-lookup-field="make">
@@ -149,7 +149,7 @@
             <%= form.select :make,
                   options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "make"), @fleet_vehicle_garaging_form.make),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { controller: "searchable-select" } } %>
+                  { class: "form-control field-readonly", disabled: true, data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:make END -->
 <!-- FIELD:model START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="vehicle_number" data-answer-lookup-form="FleetVehicleGaragingForm" data-answer-lookup-field="model">
@@ -157,7 +157,7 @@
             <%= form.select :model,
                   options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "model"), @fleet_vehicle_garaging_form.model),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { controller: "searchable-select" } } %>
+                  { class: "form-control field-readonly", disabled: true, data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:model END -->
 <!-- FIELD:vehicle_assigned_to START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="vehicle_number" data-answer-lookup-form="FleetVehicleGaragingForm" data-answer-lookup-field="vehicle_assigned_to">
@@ -165,6 +165,21 @@
             <%= form.text_field :vehicle_assigned_to, class: "form-control field-readonly", readonly: true %>
           </div>
 <!-- FIELD:vehicle_assigned_to END -->
+<!-- FIELD:assign_to START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :assign_to, "Assign To" %>
+            <%= form.select :assign_to,
+                  options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "assign_to"), @fleet_vehicle_garaging_form.assign_to),
+                  { include_blank: "Select..." },
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'assign_to' } } %>
+          </div>
+<!-- FIELD:assign_to END -->
+<!-- FIELD:other_assignee START -->          <div class="conditional-field" data-depends-on="assign_to" data-show-values="[&quot;Other&quot;]" style="<%= ["Other"].include?(@fleet_vehicle_garaging_form.assign_to) ? '' : 'display: none;' %>">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :other_assignee, "Other Assignee" %>
+            <%= form.text_field :other_assignee, class: "form-control" %>
+          </div>
+          </div>
+<!-- FIELD:other_assignee END -->
 <!-- FIELD:is_this_a_take_home_vehicle START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :is_this_a_take_home_vehicle, "Is this a take home vehicle?" %>
             <%= form.select :is_this_a_take_home_vehicle,
@@ -180,6 +195,11 @@
 <div class="form-page" style="display:none;">
   <h2>Garaging Location</h2>
         <div class="form-row d-flex flex-wrap">
+<!-- FIELD:last_known_location START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="vehicle_number" data-answer-lookup-form="FleetVehicleGaragingForm" data-answer-lookup-field="last_known_location">
+  <%= form.label :last_known_location, "Last Known Location" %>
+            <%= form.text_field :last_known_location, class: "form-control field-readonly", readonly: true %>
+          </div>
+<!-- FIELD:last_known_location END -->
 <!-- FIELD:location START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :location, "Location" %>
             <%= form.select :location,

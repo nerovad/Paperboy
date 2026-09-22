@@ -672,11 +672,49 @@ forms:
     visible_to_filler: false
     restricted_to_type: none
     conditional_answer_field: vehicle_number
+  - field_name: assign_to
+    field_type: dropdown
+    label: Assign To
+    page_number: 3
+    position: 5
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: first_name
+        join_columns:
+        - last_name
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
+      values:
+      - Other
+      values_position: end
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: other_assignee
+    field_type: text
+    label: Other Assignee
+    page_number: 3
+    position: 6
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: assign_to
   - field_name: is_this_a_take_home_vehicle
     field_type: dropdown
     label: Is this a take home vehicle?
     page_number: 3
-    position: 5
+    position: 7
     required: true
     options:
       values:
@@ -686,11 +724,30 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  - field_name: last_known_location
+    field_type: text
+    label: Last Known Location
+    page_number: 4
+    position: 8
+    required: false
+    options:
+      answer_lookup:
+        database: paperboy
+        table: fleet_vehicles
+        match_column: vehicle_number
+        return_column: garaging_location
+        return_join_columns: []
+        return_join_separator: " "
+    read_only: always
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_field: vehicle_number
   - field_name: location
     field_type: dropdown
     label: Location
     page_number: 4
-    position: 6
+    position: 9
     required: false
     options:
       custom_lookup:
@@ -716,7 +773,7 @@ forms:
     field_type: text
     label: Other Location
     page_number: 4
-    position: 7
+    position: 10
     required: false
     options: {}
     read_only: none
@@ -730,7 +787,7 @@ forms:
     field_type: dropdown
     label: Do you have a secondary location?
     page_number: 4
-    position: 8
+    position: 11
     required: false
     options:
       values:
@@ -744,7 +801,7 @@ forms:
     field_type: dropdown
     label: Secondary Location
     page_number: 4
-    position: 9
+    position: 12
     required: false
     options:
       custom_lookup:
@@ -773,7 +830,7 @@ forms:
     field_type: text
     label: Other Secondary Location
     page_number: 4
-    position: 10
+    position: 13
     required: false
     options: {}
     read_only: none

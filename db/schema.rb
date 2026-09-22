@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_130100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_220000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -640,6 +640,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_130100) do
   create_table "fleet_vehicle_garaging_forms", force: :cascade do |t|
     t.string "agency"
     t.string "approver_id"
+    t.string "assign_to"
     t.datetime "created_at", null: false
     t.text "deny_reason"
     t.string "department"
@@ -648,10 +649,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_130100) do
     t.string "email"
     t.string "employee_id"
     t.string "is_this_a_take_home_vehicle", limit: 3
+    t.string "last_known_location", limit: 200
     t.string "location"
     t.string "make", limit: 50
     t.string "model", limit: 50
     t.string "name"
+    t.string "other_assignee"
     t.string "other_location", limit: 200
     t.string "other_secondary_location", limit: 200
     t.string "phone"

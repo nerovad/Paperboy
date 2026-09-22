@@ -229,7 +229,8 @@ module Forms
       # Only the baseline fields you asked for
       params.require(:fleet_vehicle_garaging_form).permit(
         :name, :phone, :email, :agency, :division, :department, :unit,
-        :vehicle_number, :year, :make, :model, :vehicle_assigned_to, :is_this_a_take_home_vehicle,
+        :vehicle_number, :year, :make, :model, :vehicle_assigned_to, :assign_to, :other_assignee,
+        :is_this_a_take_home_vehicle, :last_known_location,
         :location, :other_location, :do_you_have_a_secondary_location, :secondary_location,
         :other_secondary_location,
         fleet_vehicle_garaging_form_locations_attributes: %i[id _destroy location]
