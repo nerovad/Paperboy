@@ -21,7 +21,8 @@ class FleetVehicle < ApplicationRecord
                  row_label: :vehicle_label
 
   registry_column :vehicle_number, label: 'Vehicle #', kind: :text
-  registry_column :budget_unit, label: 'Budget Unit', kind: :text, filter: :select
+  registry_column :agency, kind: :text, filter: :select
+  registry_column :budget_unit, label: 'Unit', kind: :text, filter: :select
   registry_column :year, kind: :text
   registry_column :make, kind: :text, filter: :select
   registry_column :model, kind: :text
@@ -30,7 +31,6 @@ class FleetVehicle < ApplicationRecord
   registry_column :garaging_location, label: 'Garaging Location', kind: :text
   registry_column :take_home, label: 'Take Home', kind: :text
   registry_column :assigned_to, label: 'Assigned To', kind: :text
-  registry_column :agency, kind: :text, filter: :select
 
   # How the vehicle is named in the Records change log: its fleet number, or
   # its plate for a vehicle that has none yet.
