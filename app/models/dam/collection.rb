@@ -28,11 +28,14 @@ module Dam
 
     def asset_count = collection_assets.count
 
-    # The first image in the collection, used as its card thumbnail. Falls back
-    # to nothing rather than to a non-image, which would render as a broken
-    # <img> in the grid.
+    # The first asset with a picture to show, used as the card thumbnail: a
+    # built thumbnail first — which a referenced asset or a video has, though
+    # neither has a stored image — then a stored image. Falls back to nothing
+    # rather than to a non-image, which would render as a broken <img>.
     def cover_asset
-      ordered_assets.find { |asset| asset.image? && asset.file.attached? }
+      ordered_assets.with_previews.find do |asset|
+        asset.thumbnail.attached? || (asset.image? && asset.file.attached?)
+      end
     end
 
     # Ancestors nearest-last, for the breadcrumb on a nested collection. Guards

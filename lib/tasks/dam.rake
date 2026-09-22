@@ -70,38 +70,53 @@ namespace :dam do
     puts 'No location is scanning a folder.' if Dam::StorageLocation.scanning.none?
   end
 
-  # ResourceSpace holds the catalogue this library is replacing: 14,000
-  # resources whose titles and keywords exist only in its MySQL database, and
-  # whose previews it has already generated. This reads both, and copies no
-  # original anywhere.
+  # Leaving ResourceSpace is two steps on two servers, so the server the DAM
+  # runs on never has to reach ResourceSpace's database.
   #
-  #   LOCATION=resourcespace SYNC_BASE=/mnt/i/... DRY_RUN=1 LIMIT=50 \
-  #     bundle exec rails dam:import_resourcespace
+  # 1. On the ResourceSpace server (needs the optional resourcespace gem group
+  #    and RS_DB_* in .env) — writes a bundle folder of about 4.5GB:
   #
-  # SYNC_BASE is where ResourceSpace's relative file_path values hang off —
-  # its $syncdir, as mounted on this host. Without it only the resources whose
-  # originals sit in the filestore itself can be found.
-  desc 'Import a ResourceSpace library as referenced assets (DRY_RUN=1 to report only)'
+  #      OUT=/srv/rs-export bundle exec rails dam:export_resourcespace
+  #
+  # 2. Copy that folder to the DAM's server (rsync -a is resumable), then:
+  #
+  #      BUNDLE=/srv/rs-export LOCATION=resourcespace \
+  #      SYNC_BASE=/mnt/i/BUSINESS_SUPPORT/Graphics_Dept/Visual_Assets_Stock_Photos_Vector_Art \
+  #      DRY_RUN=1 bundle exec rails dam:import_resourcespace
+  #
+  # SYNC_BASE is where ResourceSpace's relative file paths hang off, as mounted
+  # on the DAM's server. Originals found there are referenced, not copied; the
+  # ones ResourceSpace kept in its own filestore travel inside the bundle and
+  # are stored in the DAM.
+  desc 'Write a ResourceSpace library to a folder for dam:import_resourcespace (OUT=, LIMIT=)'
+  task export_resourcespace: :environment do
+    out = ENV.fetch('OUT') { abort 'Set OUT to the folder to write the export into.' }
+    progress = ->(stats) { puts "  #{stats.resources} resources so far…" }
+    puts "Exporting ResourceSpace to #{out}"
+    stats = Dam::ResourceSpace::Export.new(out: out, limit: ENV['LIMIT']&.to_i, progress: progress).call
+    puts stats
+    puts "Copy #{out} to the DAM's server and run dam:import_resourcespace there."
+  end
+
+  desc 'Import a ResourceSpace export as DAM assets (BUNDLE=, LOCATION=, SYNC_BASE=, DRY_RUN=1, LIMIT=)'
   task import_resourcespace: :environment do
     location = Dam::StorageLocation.find_by(key: ENV.fetch('LOCATION', 'resourcespace'))
     abort "No storage location with key #{ENV.fetch('LOCATION', 'resourcespace')}" if location.nil?
 
-    catalog = Dam::ResourceSpace::Catalog.new
-    puts "ResourceSpace: #{catalog.active_count} active resources"
-    puts "Importing into #{location.label} (#{location.ingest_mode})#{' — dry run' if ENV['DRY_RUN']}"
+    bundle = Dam::ResourceSpace::Bundle.new(ENV.fetch('BUNDLE') { abort 'Set BUNDLE to the export folder.' })
+    puts "Export of #{bundle.resources.size} resources, written #{bundle.exported_at}"
+    puts "Importing into #{location.label}#{' — dry run' if ENV['DRY_RUN']}"
 
-    import = Dam::ResourceSpace::Import.new(
-      location: location, sync_base: ENV.fetch('SYNC_BASE', nil),
-      catalog: catalog, limit: ENV['LIMIT']&.to_i, dry_run: ENV['DRY_RUN'].present?
-    )
-    result = import.call
-    puts result
+    import = Dam::ResourceSpace::Import.new(location: location, bundle: bundle,
+                                            sync_base: ENV.fetch('SYNC_BASE', nil),
+                                            limit: ENV['LIMIT']&.to_i, dry_run: ENV['DRY_RUN'].present?)
+    puts import.call
 
-    unresolved = import.unresolved
-    next if unresolved.empty?
+    import.failures.first(10).each { |failure| puts "  failed #{failure[:ref]}: #{failure[:error]}" }
+    next if import.unresolved.empty?
 
-    puts "\nFirst #{unresolved.size} resources whose original could not be found:"
-    unresolved.each { |row| puts "  #{row[:ref]}\t#{row[:path]}" }
+    puts "\nFirst #{[import.unresolved.size, 25].min} resources whose original could not be found:"
+    import.unresolved.first(25).each { |row| puts "  #{row[:ref]}\t#{row[:path]}" }
     puts 'These are paths relative to SYNC_BASE. Check that the share is mounted here.'
   end
 

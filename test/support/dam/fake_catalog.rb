@@ -2,13 +2,17 @@
 
 module Dam
   module ResourceSpace
-    # Answers the three questions Dam::ResourceSpace::Import asks, from plain
-    # hashes, so the import can be tested without a MySQL server holding a
-    # copy of somebody's library.
+    # Answers what Dam::ResourceSpace::Export asks of a catalogue, from plain
+    # hashes, so an export can be tested without a MySQL server holding a copy
+    # of somebody's library.
     class FakeCatalog
-      def initialize(resources: [], metadata: {})
+      attr_reader :collections
+
+      def initialize(resources: [], metadata: {}, fields: [], collections: [])
         @resources = resources
         @metadata = metadata
+        @fields = fields
+        @collections = collections
       end
 
       def active_count = @resources.size
@@ -18,6 +22,8 @@ module Dam
       end
 
       def metadata_for(refs) = @metadata.slice(*refs)
+
+      def fields_in_use = @fields
     end
   end
 end

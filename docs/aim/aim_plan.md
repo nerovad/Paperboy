@@ -1693,7 +1693,16 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     there believed AIM's schema migration had run when the `aim` schema did
     not exist. AIM's three were renumbered `20260922094301`-`...03` with
     `git mv`. Round timestamps (`100000`, `110000`) are what collide --
-    other teams pick them too. Use the real clock, to the second.
+    other teams pick them too. Use the clock, to the second.
+  - **And number it after every migration that already exists**, master's
+    included. The first renumber picked `...0943xx`, the real clock, which
+    was *earlier* than DAM's future-dated `...100000`. Loading `schema.rb`
+    then marks every migration version below the file's own version as
+    already run, so AIM's three were recorded as applied and never
+    executed: the `aim` tables would have been missing from every database
+    built from the schema, with nothing reported. Caught by migrating a
+    scratch database after the merge, which ran nothing at all. They are now
+    `20260922100537`-`...39`, above master's latest.
 
   `test/lib/aim/schema_conventions_test.rb` enforces the first two rules
   against `db/schema.rb`: a foreign key naming a table the file never
@@ -2163,3 +2172,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-22 | 5.2 | (this commit) | Schema `aim` and `aim.invoices` created by two migrations; `Aim::Record` and `Aim::Invoice` added. Up/down proved in a scratch database; `schema.rb` diff additive only. `Paperboy_Test` dropped by a development-env `db:drop` and recreated at once. 931 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-22 | 5.3 | (this commit) | `aim.invoice_events` and `Aim::InvoiceEvent`; every state change through the model writes exactly one event, naming its actor, in the same transaction. No DB foreign key: the adapter dumps it without the schema and the resulting `schema.rb` cannot load; `schema_conventions_test` now guards that. 944 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-22 | 5.3a | (this commit) | Six document types, one spelling: `normalize_document_type` at `InvoiceData`'s gate, one prompt both models read, `enum` in both schemas, and only `Unknown` held back for QA review. AIM's migrations renumbered after a version collision with DAM's `20260922100000`. 160 pytest green (24 of the 30 new red without the fix), 944 runs, 0 fail, 0 error (serial), scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-22 | — | (this merge) | Merged `origin/master` (2 commits: DAM stock photos, ResourceSpace import) into the phase branch. `db/schema.rb` conflicted and was regenerated from master's copy plus AIM's migrations rather than hand-merged. AIM's migrations renumbered a second time, above master's latest. 969 runs, 0 fail, 0 error (serial), 160 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
