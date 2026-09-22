@@ -1678,13 +1678,42 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
 - [x] ~~**5.1a Create `AIM_Test` on `gsa-sql22`.**~~ Not needed. The `aim`
   schema is tested in `Paperboy_Test` with everything else.
 
-- [ ] **5.2 Migration: schema `aim` and `aim.invoices`.** One row per
+- [x] **5.2 Migration: schema `aim` and `aim.invoices`.** One row per
   invoice. `batch_id`,
   `business_key`, `budget_unit`, `submitter`, `document_type`, `state`,
   `claimed_by`, `claimed_at`, `assigned_to`, `assignment_source`, vendor
   columns, typed money and date columns, timestamps. Typed properly —
   `decimal` for money, `date` for dates.
   *Test:* migration runs up and down cleanly; model validations covered.
+
+  Done 2026-09-22. Two migrations -- `CreateAimSchema`, then
+  `CreateAimInvoices` -- plus `Aim::Record` (abstract, `table_name_prefix
+  'aim.'`) and `Aim::Invoice`, tested in `test/models/aim/invoice_test.rb`.
+  Worth carrying:
+
+  - **Up and down proved in a scratch database**: `db/schema.rb` loaded,
+    dumped back byte-identical, migrated, rolled back two steps to a dump
+    identical to the original, and migrated again to the same result. The
+    committed `schema.rb` diff is additive only -- `create_schema "aim"`,
+    the table, the version.
+  - **Do not make a scratch database with `RAILS_ENV=development`.** In
+    development, `db:create` and `db:drop` act on the test database too, so
+    dropping the scratch copy dropped `Paperboy_Test` with it. Recreated
+    straight away (`RAILS_ENV=test bin/rails db:create db:schema:load`,
+    stamped `test`, `GSAETL` owner), but next time use `RAILS_ENV=test` with
+    `PAPERBOY_TEST_DATABASE` pointed at the scratch name, which touches
+    nothing else. Never point either at `Paperboy_Dev`.
+  - **`claimed_by` and `assigned_to` are strings**, because a claim today
+    records the user's email and falls back to an employee id
+    (`invoice_file_support.rb`). 5.5 dual-runs against those claims, so the
+    column holds what they hold.
+  - **`document_type` is free text, deliberately.** The Decisions list
+    `Invoice`, `Memo`, `Credit`, `Coupon`, `Unknown`; the extraction worker
+    actually emits `INVOICE`, `STATEMENT`, `CREDIT`, `UNKNOWN`. Validating
+    either list would reject the other. See Open Questions.
+  - **`state` is only required, not enumerated.** Its values are 5.4's.
+  - `Subtotal` and `SalesTax` are not columns. They are still an open
+    question, and adding a nullable column later is cheap.
 
 - [ ] **5.3 Migration: `aim.invoice_events`.** Append-only history. Who did
   what, when, from which state to which. This is the audit trail the
@@ -1869,6 +1898,12 @@ layout feeds another system. The target is the same flow through Laserfiche.
   migrations on `gsa-sql22`**~~. Both found 2026-09-22 in 5.1 and both
   dissolved the same day by Joshua's decision to put the tables in the
   Paperboy database on `GSASQL16`, schema `aim`, as `GSAETL`.
+- **Document types disagree.** Found 2026-09-22 in 5.2. Decisions say
+  `Invoice`, `Memo`, `Credit`, `Coupon`, `Unknown`; `01_AI_Extraction_Worker`
+  asks the model for `INVOICE`, `STATEMENT`, `CREDIT` or `UNKNOWN` and
+  routes anything but `INVOICE` to review. `Memo` and `Coupon` are never
+  produced and `STATEMENT` is not in the decided list. Which list is right
+  decides what `aim.invoices.document_type` may hold. **Settle before 5.4.**
 - **Which Paperboy database do the workers write state to?** Raised
   2026-09-22, for 5.6. There is one worker fleet on GSA-SCAN02 but a
   Paperboy database per environment (`Paperboy_Dev`, `_Stage`, `_Prod`).
@@ -2021,3 +2056,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-21 | — | (this merge) | **Phase 4 merged to Paperboy master.** Master had not moved since the branch was cut from `f6bbc335`, so nothing needed merging in first. Gate green on the merge commit: 921 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 5 baseline. Phase 5 needs Joshua's approval on the migration before 5.1, and the new `aim_*` tables mean a second Rails connection to `GSA_Scan` on `gsa-sql22` |
 | 2026-09-22 | 5.1 | (this commit) | Branch `aim/phase-5-state` cut from `7cfeb98d`; baseline 921 runs, 0 fail, 0 error. Connection shape worked out and the `database.yml` diff proposed to Joshua, not applied. Two blockers found: `aim_invoices` collides with the legacy `Aim_Invoices` in case-insensitive `GSA_Scan`, and `GSAScanCenter` cannot create `AIM_Test` or any table |
 | 2026-09-22 | 5.1 | (this commit) | **5.1 revised by Joshua:** new tables go in the Paperboy database on `GSASQL16`, schema `aim`, as `GSAETL`. Proved in throwaway databases: migrate, dump (`create_schema "aim"`), reload, typed decimal, unique index. Index names must be explicit. No shared config needed; 5.1a dropped; the earlier `database.yml` proposal is withdrawn |
+| 2026-09-22 | 5.2 | (this commit) | Schema `aim` and `aim.invoices` created by two migrations; `Aim::Record` and `Aim::Invoice` added. Up/down proved in a scratch database; `schema.rb` diff additive only. `Paperboy_Test` dropped by a development-env `db:drop` and recreated at once. 931 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
