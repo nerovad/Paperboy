@@ -15,6 +15,8 @@ module Dam
     class AssetBuilder
       Upload = Data.define(:original_filename, :content_type, :size)
 
+      NUMERIC_TITLE = /\A\d+\z/
+
       def initialize(asset, record:, original:, store:, previews:)
         @asset = asset
         @record = record
@@ -52,11 +54,21 @@ module Dam
         @asset.file.attach(io: File.open(@original, 'rb'), filename: filename, content_type: content_type)
       end
 
-      # ResourceSpace's title, else the name the file was uploaded under —
-      # never the hashed name its filestore gave it.
+      # ResourceSpace's title, unless it is a bare number — 882 resources are
+      # titled with their stock-photo id, "1142533480", which says nothing in
+      # a grid — in which case the name the file was uploaded under, tidied
+      # the way the DAM titles any upload. Never the hashed name the filestore
+      # gave it.
       def title
-        @record['title'].presence || @record['original_filename'].presence ||
-          @original.basename(@original.extname).to_s
+        given = @record['title'].to_s.strip
+        return given if given.present? && !given.match?(NUMERIC_TITLE)
+
+        from_filename || given.presence || @original.basename(@original.extname).to_s
+      end
+
+      def from_filename
+        name = @record['original_filename'].to_s
+        name.sub(/\.[^.]+\z/, '').tr('_-', '  ').squish.presence
       end
 
       def attach_previews
