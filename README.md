@@ -22,6 +22,24 @@ For the product story / sales pitch, see [docs/PITCH.md](docs/PITCH.md).
 
 ---
 
+## Versioning
+
+The current release line is controlled by the root [`VERSION`](VERSION) file,
+which contains only `major.minor.patch`, for example `2.0.1`. Update that file
+in the same commit as the change that warrants a version bump:
+
+- major: incompatible API or workflow changes (`3.0.0`)
+- minor: backward-compatible features (`2.1.0`)
+- patch: backward-compatible fixes (`2.0.2`)
+
+After a successful CI run, every push to `master` receives an annotated tag such
+as `v2.0.1-21df93052`, where the suffix is the first nine characters of the
+commit SHA. The application displays the same value in the lower-left corner.
+For packaged deployments that do not include `.git`, set `PAPERBOY_VERSION` to
+the full numeric version and optional commit suffix.
+
+---
+
 ## Local development
 
 Running Paperboy on your own workstation. This is **not** a deployment —

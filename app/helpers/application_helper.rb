@@ -2,6 +2,10 @@
 
 # app/helpers/application_helper.rb
 module ApplicationHelper
+  def paperboy_version
+    Paperboy::Version.tag
+  end
+
   # can_access_record_table? / can_edit_record_table?
   include RecordTableAccess
 
