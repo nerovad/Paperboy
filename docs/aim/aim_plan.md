@@ -64,6 +64,38 @@ When that happens:
 Approval for one shared-config change is **not** approval for the next one.
 Ask every time.
 
+### The standing exception: AIM's own triggers
+
+Granted by Joshua 2026-09-22, after asking what the permission was actually
+for: *"so long as the changes won't hurt anything else or cause issues
+anywhere else, then you can make this change since it sounds like it's just
+an addition."*
+
+AIM can already do its work; what it lacks is somewhere to put the trigger,
+because Rails looks for triggers in fixed shared places. These four may be
+added **without asking each time**:
+
+```text
+lib/tasks/aim_*.rake          a task a person runs
+app/jobs/aim/*_job.rb         a job, for work that runs on a schedule
+config/recurring.yml          one new block, naming an Aim:: job
+config/routes.rb              a new route inside the existing aim namespace
+```
+
+The conditions that make this safe, and that hold every time:
+
+- **New files, AIM-named.** Nothing existing is edited, renamed or removed.
+- **One added block, never a changed one.** In `recurring.yml` and
+  `routes.rb` the addition sits alongside what is there; another team's
+  entries are not touched.
+- **The full suite is green before and after**, as for any other step.
+- **Say what was added** in the step's handoff. The grant removes the wait,
+  not the telling.
+
+Anything else shared -- `database.yml`, an initializer, the Gemfile, an
+existing route, another team's job -- is unchanged by this and still goes
+through *Stop, show the diff, wait*.
+
 ### How shared-config changes must be shaped
 
 - **Additive only.** Add a new table; never `ALTER` an existing one. Add a
