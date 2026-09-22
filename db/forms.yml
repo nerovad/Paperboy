@@ -710,11 +710,30 @@ forms:
     conditional_values:
     - Other
     conditional_field: assign_to
+  - field_name: last_updated
+    field_type: text
+    label: Last Updated
+    page_number: 3
+    position: 7
+    required: false
+    options:
+      answer_lookup:
+        database: paperboy
+        table: fleet_vehicles
+        match_column: vehicle_number
+        return_column: updated_at
+        return_join_columns: []
+        return_join_separator: " "
+    read_only: always
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_field: vehicle_number
   - field_name: is_this_a_take_home_vehicle
     field_type: dropdown
     label: Is this a take home vehicle?
     page_number: 3
-    position: 7
+    position: 8
     required: true
     options:
       values:
@@ -728,7 +747,7 @@ forms:
     field_type: text
     label: Last Known Location
     page_number: 4
-    position: 8
+    position: 9
     required: false
     options:
       answer_lookup:
@@ -747,7 +766,7 @@ forms:
     field_type: dropdown
     label: Location
     page_number: 4
-    position: 9
+    position: 10
     required: false
     options:
       custom_lookup:
@@ -773,7 +792,7 @@ forms:
     field_type: text
     label: Other Location
     page_number: 4
-    position: 10
+    position: 11
     required: false
     options: {}
     read_only: none
@@ -787,7 +806,7 @@ forms:
     field_type: dropdown
     label: Do you have a secondary location?
     page_number: 4
-    position: 11
+    position: 12
     required: false
     options:
       values:
@@ -801,7 +820,7 @@ forms:
     field_type: dropdown
     label: Secondary Location
     page_number: 4
-    position: 12
+    position: 13
     required: false
     options:
       custom_lookup:
@@ -830,7 +849,7 @@ forms:
     field_type: text
     label: Other Secondary Location
     page_number: 4
-    position: 13
+    position: 14
     required: false
     options: {}
     read_only: none
