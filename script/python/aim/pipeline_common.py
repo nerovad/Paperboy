@@ -181,6 +181,46 @@ def bootstrap():
     # the module.
     get_vendor_aliases()
 
+# The kinds of document AIM handles. Every type flows through the same queues;
+# the type decides only what happens at the end. `Unknown` is not a verdict
+# but a placeholder -- what the model says when it cannot tell -- and AIM
+# staff replace it in QA review before the invoice reaches a user's queue.
+# Plan step 5.3a.
+DOCUMENT_TYPES = ("Invoice", "Memo", "Credit", "Coupon", "Statement", "Unknown")
+UNKNOWN_DOCUMENT_TYPE = "Unknown"
+
+# How the models are told the types apart. Both the text pass and the vision
+# pass read this one definition, so the two cannot drift.
+DOCUMENT_TYPE_GUIDE = (
+    "Classify the document_type as exactly one of: "
+    + ", ".join(f"'{name}'" for name in DOCUMENT_TYPES) + ". "
+    "Invoice: a bill for goods or services with an amount due. 'Member Statement' and "
+    "'Customer Receipt' documents from stores such as Home Depot are Invoices. "
+    "Statement: an account summary listing several invoices, payments or a running balance, "
+    "rather than a bill for one purchase. "
+    "Credit: a credit memo, credit note or refund that reduces what is owed. "
+    "Memo: a memo or letter asking for or authorising a payment that is not a vendor's invoice, "
+    "such as a debit memo or an internal payment memo. "
+    "Coupon: a payment coupon or remittance slip sent with a payment, such as the tear-off stub "
+    "of a utility or loan bill. "
+    "Unknown: anything else, such as a letter or a notice, or when you cannot tell."
+)
+
+def normalize_document_type(value):
+    """One spelling for a document type, and `Unknown` for anything else.
+
+    The models were asked for `INVOICE`, `CREDIT` and so on before 5.3a, and
+    a model can answer in any case, so the comparison ignores case. Anything
+    that is not one of the six -- blank, missing, invented -- is `Unknown`,
+    which sends the document to QA review rather than guessing.
+    """
+    if isinstance(value, str):
+        wanted = value.strip().strip("'\"").casefold()
+        for name in DOCUMENT_TYPES:
+            if name.casefold() == wanted:
+                return name
+    return UNKNOWN_DOCUMENT_TYPE
+
 class InvoiceData(BaseModel):
     is_urgent: Optional[bool] = False
     contains_multiple_invoices: Optional[bool] = False
@@ -201,6 +241,14 @@ class InvoiceData(BaseModel):
         if isinstance(v, str) and len(v) > 50:
             return None
         return v
+
+    # Only a value actually given is spelled; a field left at its default
+    # stays None, so merge_vision_fields can still tell "not yet answered"
+    # from "answered Unknown".
+    @field_validator("document_type", mode="before")
+    @classmethod
+    def spell_document_type(cls, v):
+        return normalize_document_type(v)
 
 class ManifestItem(BaseModel):
     vendor_name: Optional[str] = "Unknown"

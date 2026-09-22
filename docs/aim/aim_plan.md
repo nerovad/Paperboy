@@ -1684,6 +1684,16 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     adapter would be a shared initializer; not worth it for one link.
   - **Scratch databases use `RAILS_ENV=test`** with `PAPERBOY_TEST_DATABASE`
     set to the scratch name. See 5.2 for what `development` does instead.
+  - **Check master's migration versions before numbering one.** Found
+    2026-09-22: AIM's `20260922100000_create_aim_schema` collided exactly
+    with DAM's `20260922100000_clear_dates_from_non_date_metadata`, pushed
+    to master the same morning. Two migrations with one version make Rails
+    refuse to migrate at all, so the merge would have stopped every
+    environment; and because DAM's had already run on `Paperboy_Dev`, Rails
+    there believed AIM's schema migration had run when the `aim` schema did
+    not exist. AIM's three were renumbered `20260922094301`-`...03` with
+    `git mv`. Round timestamps (`100000`, `110000`) are what collide --
+    other teams pick them too. Use the real clock, to the second.
 
   `test/lib/aim/schema_conventions_test.rb` enforces the first two rules
   against `db/schema.rb`: a foreign key naming a table the file never
@@ -1763,18 +1773,41 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
   - `action` is `transition` for now; claims and assignments can become
     events of their own when 5.4 or 5.5 needs them.
 
-- [ ] **5.3a Teach the extraction worker the six document types.**
-  `01_AI_Extraction_Worker` asks the model for `INVOICE`, `STATEMENT`,
-  `CREDIT` or `UNKNOWN` (two prompts, around lines 232 and 315) and sends
-  anything but `INVOICE` to review. It must classify `Invoice`, `Memo`,
-  `Credit`, `Coupon`, `Statement` and `Unknown`, and -- per Decisions, "all
-  types flow through the same queues" -- stop rejecting a Memo, Credit,
-  Coupon or Statement just for its type. `Unknown` is what the model says
-  when it cannot tell; AIM staff settle it in QA review. *Test:* pytest
-  covers the parsing and routing of each type with a stubbed model
-  response. Classification quality cannot be unit-tested: Joshua tests it
-  by hand on GSA-SCAN02 alongside development, after a
-  `bin/deploy-aim-workers`. Must land before 5.4 validates the list of six.
+- [x] **5.3a Teach the extraction worker the six document types.**
+  `01_AI_Extraction_Worker` asked the models for `INVOICE`, `STATEMENT`,
+  `CREDIT` or `UNKNOWN` and sent anything but an invoice to review. It now
+  classifies all six, and only `Unknown` stops for QA review.
+
+  Done 2026-09-22. `pipeline_common` owns `DOCUMENT_TYPES`,
+  `DOCUMENT_TYPE_GUIDE` (the wording both prompts use, so the text pass and
+  the vision pass cannot drift) and `normalize_document_type`. Worth
+  carrying:
+
+  - **One gate, one spelling.** `InvoiceData` normalises `document_type` on
+    the way in, so `INVOICE`, `credit` and `'Coupon'` all become the decided
+    spelling and anything off the list becomes `Unknown` rather than being
+    guessed at. A payload written before today still reaches Laserfiche as
+    `Invoice`, which is what `TemplateName` always title-cased it to.
+  - **The models are confined to the six** by an `enum` in both the Phase 1
+    schema and `VISION_SCHEMA`, which is now module level so the tests read
+    the same schema the model is given. The fields stay plain strings, so an
+    off-list answer is spelled rather than raising a hallucination error.
+  - **The vision pass has the last word.** If Phase 1 says `Credit` and the
+    vision pass cannot tell, the invoice goes to review -- unchanged
+    behaviour, now stated.
+  - **Laserfiche has no templates for the new types.** `TemplateName` is the
+    type title-cased, so a Memo now arrives as template `Memo`. `Invoice`
+    and `Unknown` are unchanged. Phase 11 owns the import mechanism; whoever
+    designs it needs templates for all six, or a mapping.
+  - **`Memo` and `Coupon` are described from guesswork.** The wording in
+    `DOCUMENT_TYPE_GUIDE` is a first draft -- a memo as a payment memo or
+    debit memo, a coupon as a remittance slip. Joshua corrects it from the
+    manual testing; it is one constant to edit.
+  - **Nothing in Rails can set a document type yet**, so AIM staff cannot
+    resolve an `Unknown` on screen. The QA review screen needs a type
+    selector -- see Open Questions.
+  - *Not deployed.* `bin/deploy-aim-workers` has not been run; GSA-SCAN02
+    still runs the four-type worker.
 
 - [ ] **5.4 `Aim::Invoice` model and state machine.** States enumerate the
   real queues plus the terminal outcomes. Illegal transitions raise.
@@ -1958,6 +1991,12 @@ layout feeds another system. The target is the same flow through Laserfiche.
   Decisions list is right, plus `Statement`, and the worker's list is
   incomplete. `Unknown` is a temporary type AIM staff resolve in QA review.
   Step 5.3a.
+- **AIM staff cannot set a document type on screen.** Found 2026-09-22 in
+  5.3a. `Unknown` is meant to be resolved in QA review, but nothing in
+  `app/views/aim` edits `document_type` -- the reviewer can only edit the
+  XML by hand. A type selector belongs on the review screen, wherever 5.5
+  rebuilds it. Until then an `Unknown` has no supported way to become an
+  `Invoice`.
 - ~~**Which site should show live invoices once state is in the database?**~~
   Settled 2026-09-22 by Joshua: **the workers write `aim.invoices` in
   `Paperboy_Dev` while AIM is in development, and are switched to
@@ -2123,3 +2162,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-22 | 5.1 | (this commit) | **5.1 revised by Joshua:** new tables go in the Paperboy database on `GSASQL16`, schema `aim`, as `GSAETL`. Proved in throwaway databases: migrate, dump (`create_schema "aim"`), reload, typed decimal, unique index. Index names must be explicit. No shared config needed; 5.1a dropped; the earlier `database.yml` proposal is withdrawn |
 | 2026-09-22 | 5.2 | (this commit) | Schema `aim` and `aim.invoices` created by two migrations; `Aim::Record` and `Aim::Invoice` added. Up/down proved in a scratch database; `schema.rb` diff additive only. `Paperboy_Test` dropped by a development-env `db:drop` and recreated at once. 931 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-22 | 5.3 | (this commit) | `aim.invoice_events` and `Aim::InvoiceEvent`; every state change through the model writes exactly one event, naming its actor, in the same transaction. No DB foreign key: the adapter dumps it without the schema and the resulting `schema.rb` cannot load; `schema_conventions_test` now guards that. 944 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-22 | 5.3a | (this commit) | Six document types, one spelling: `normalize_document_type` at `InvoiceData`'s gate, one prompt both models read, `enum` in both schemas, and only `Unknown` held back for QA review. AIM's migrations renumbered after a version collision with DAM's `20260922100000`. 160 pytest green (24 of the 30 new red without the fix), 944 runs, 0 fail, 0 error (serial), scoped rubocop clean, brakeman's same four non-AIM warnings |

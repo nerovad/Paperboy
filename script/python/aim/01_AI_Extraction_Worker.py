@@ -12,7 +12,7 @@ import fitz
 from PIL import Image
 import pytesseract
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from pipeline_common import (
     BASE_DIR, PENDING_VISION_DIR, ACTION_NEEDED_DIR, LOG_DIR, TEMP_IMAGE,
@@ -21,7 +21,8 @@ from pipeline_common import (
     sanitize_data, generate_laserfiche_xml, pdf_page_to_image,
     normalize_vendor_name, VENDOR_REVIEW_DIR, SQL_QUEUE_DIR, REPROCESS_QUEUE_DIR, LOW_CONFIDENCE_REVIEW_DIR,
     ERROR_QUEUE_DIR, get_rules_for_vendor, get_global_field_aliases,
-    bootstrap, env,
+    bootstrap, env, DOCUMENT_TYPES, DOCUMENT_TYPE_GUIDE, UNKNOWN_DOCUMENT_TYPE,
+    normalize_document_type,
 )
 from typing import Optional
 
@@ -38,8 +39,33 @@ VENDOR_RULE_SUFFIX = "_VENDOR_RULE.json"
 class Phase1Data(BaseModel):
     contains_multiple_invoices: bool
     is_high_confidence: bool
-    document_type: str
+    # The enum constrains what the model may answer; the field itself stays a
+    # plain string so an off-list answer is spelled by normalize_document_type
+    # rather than failing validation as a hallucination.
+    document_type: str = Field(json_schema_extra={"enum": list(DOCUMENT_TYPES)})
     extracted_vendor_name: Optional[str] = None
+
+# The JSON the vision model must return. Module level so the tests can see the
+# same schema the model is given.
+VISION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "document_type": {"type": "string", "enum": list(DOCUMENT_TYPES)},
+        "extracted_vendor_name": {"type": "string"},
+        "invoice_date": {"type": "string"},
+        "invoice_number": {"type": "string"},
+        "invoice_number_label": {"type": "string"},
+        "invoice_total": {"type": "string"},
+        "order_number": {"type": "string"},
+        "customer_number": {"type": "string"},
+        "contains_handwritten_financials": {"type": "boolean"}
+    },
+    "required": [
+        "document_type", "extracted_vendor_name", "invoice_date",
+        "invoice_number", "invoice_number_label", "invoice_total",
+        "order_number", "customer_number", "contains_handwritten_financials"
+    ]
+}
 
 def generate_unique_id(bu_number, filename):
     name_without_ext, _ = os.path.splitext(filename)
@@ -229,7 +255,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
             "- Do NOT set 'contains_multiple_invoices' to true for a multi-page invoice. A document that spans multiple pages, shares the same invoice number across pages, or has page indicators like 'Page X of Y' or 'Page X' is a SINGLE invoice. "
             "- Set 'contains_multiple_invoices' to true ONLY if you find completely distinct invoices with different invoice numbers, different transactions, or different vendors combined in the same file.\n"
             "2. Is this text a clean read? Set 'is_high_confidence' to true if you can clearly identify a vendor name and an invoice number. Set it to false if the text looks like garbage, random letters, or is missing a clear invoice number/vendor (likely due to handwriting or a bad scan).\n"
-            "3. What is the document_type? Choose one of: 'INVOICE', 'STATEMENT', 'CREDIT', or 'UNKNOWN'. If it is a letter, a notice, or anything that is not a bill of sale, choose 'UNKNOWN'. (Exception: 'Member Statement' or 'Customer Receipt' documents from stores like Home Depot should be classified as 'INVOICE').\n"
+            f"3. What is the document_type? {DOCUMENT_TYPE_GUIDE}\n"
             "4. Extract the exact literal vendor name as 'extracted_vendor_name' if you can find it. If it is illegible, leave it null.\n"
             "Return strictly as JSON."
         )
@@ -244,17 +270,21 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         except Exception as e:
             raise RuntimeError(f"Phase 1 AI Hallucination Error: Model failed to return valid JSON. Error: {e}")
         is_high_confidence = p1_data.is_high_confidence
-        doc_type = p1_data.document_type
+        doc_type = normalize_document_type(p1_data.document_type)
         extracted_vendor = p1_data.extracted_vendor_name
         print(f"      - Check complete in {time.time()-start_time:.1f}s. Multiple Invoices = {p1_data.contains_multiple_invoices}, High Confidence = {is_high_confidence}, Type = {doc_type}")
 
-        if doc_type != "INVOICE":
+        # Every known type goes on to extraction; only a document the model
+        # could not place stops here, for AIM staff to type in QA review.
+        # Until 5.3a anything but an invoice stopped here. Plan step 5.3a.
+        if doc_type == UNKNOWN_DOCUMENT_TYPE:
             dest_folder = os.path.join(ACTION_NEEDED_DIR, processing_id)
             os.makedirs(dest_folder, exist_ok=True)
             print(f"  [!] Document Type is {doc_type}. Bypassing Vision Model. Routing to human review.")
             shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
             with open(os.path.join(dest_folder, f"{processing_id}.ticket"), "w") as f:
-                f.write(f"AI rejected this document before Vision extraction because Phase 1 Text OCR determined the Document Type is: {doc_type}.")
+                f.write("The AI could not tell what kind of document this is, so it was not extracted. "
+                        "Set its document type in QA review.")
             write_log(filename, "CPU Test (Phase 1)", "REJECTED_TYPE", f"Document type is {doc_type}", bu_number, submitter_name, processing_id, InvoiceData())
             if os.path.exists(sidecar): os.remove(sidecar)
             return
@@ -312,7 +342,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
     
     tier2_prompt = (
         "Analyze this document image. "
-        "First, determine the document_type. It must be strictly one of: 'INVOICE', 'STATEMENT', 'CREDIT', or 'UNKNOWN'. "
+        f"First, determine the document_type. {DOCUMENT_TYPE_GUIDE} "
         "Extract the exact literal vendor name as 'extracted_vendor_name', invoice_date, invoice_number, invoice_total, and if present order_number, "
         "and customer_number. "
         f"{global_aliases_str} "
@@ -335,25 +365,6 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
     print(f"      - Processing Page 1 visually...")
     start_time = time.time()
     pdf_page_to_image(pdf_path, 0, TEMP_IMAGE)
-    VISION_SCHEMA = {
-        "type": "object",
-        "properties": {
-            "document_type": {"type": "string"},
-            "extracted_vendor_name": {"type": "string"},
-            "invoice_date": {"type": "string"},
-            "invoice_number": {"type": "string"},
-            "invoice_number_label": {"type": "string"},
-            "invoice_total": {"type": "string"},
-            "order_number": {"type": "string"},
-            "customer_number": {"type": "string"},
-            "contains_handwritten_financials": {"type": "boolean"}
-        },
-        "required": [
-            "document_type", "extracted_vendor_name", "invoice_date", 
-            "invoice_number", "invoice_number_label", "invoice_total", 
-            "order_number", "customer_number", "contains_handwritten_financials"
-        ]
-    }
     
     v_response = ollama.chat(
         model=env('AIM_VISION_MODEL'),
@@ -429,19 +440,21 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
     # ---------------------------------------------------------
     print(f"  [>] Phase 3: Validation and Routing...")
     
-    # Check Document Type Reject Path
-    if master_data.document_type not in ["INVOICE"]:
+    # Check Document Type Reject Path. A vision pass that never answered
+    # leaves the field unset, which is as unplaced as an explicit Unknown.
+    master_data.document_type = normalize_document_type(master_data.document_type)
+    if master_data.document_type == UNKNOWN_DOCUMENT_TYPE:
         dest_folder = os.path.join(ACTION_NEEDED_DIR, processing_id)
         os.makedirs(dest_folder, exist_ok=True)
         ticket_path = os.path.join(dest_folder, f"{processing_id}.ticket")
         
-        print(f"      [!] AI rejected document as: {master_data.document_type}. Routing to human review.")
+        print(f"      [!] AI could not place document type. Routing to human review.")
         with open(ticket_path, "w", encoding="utf-8") as f:
-            f.write(f"--- MANUAL ACTION NEEDED (AI REJECTED) ---\n")
+            f.write(f"--- MANUAL ACTION NEEDED (DOCUMENT TYPE UNKNOWN) ---\n")
             f.write(f"File: {processing_id}.pdf\n")
             f.write(f"Document Type: {master_data.document_type}\n\n")
-            f.write(f"The AI rejected this document because it classified it as a '{master_data.document_type}' rather than an 'INVOICE'.\n")
-            f.write(f"Please review the document. If it needs to be processed, update the generated XML file and drop this folder onto the SQL shortcut.")
+            f.write("The AI could not tell what kind of document this is.\n")
+            f.write(f"Please review the document, set its document type, and drop this folder onto the SQL shortcut.")
             
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
