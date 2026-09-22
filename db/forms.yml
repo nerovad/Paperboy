@@ -590,7 +590,7 @@ forms:
         return_join_columns: []
         return_join_separator: " "
       values: []
-    read_only: none
+    read_only: always
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
@@ -619,7 +619,7 @@ forms:
         return_join_columns: []
         return_join_separator: " "
       values: []
-    read_only: none
+    read_only: always
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
@@ -648,7 +648,7 @@ forms:
         return_join_columns: []
         return_join_separator: " "
       values: []
-    read_only: none
+    read_only: always
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
