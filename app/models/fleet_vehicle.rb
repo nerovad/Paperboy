@@ -9,7 +9,7 @@ class FleetVehicle < ApplicationRecord
   audit_record_lifecycle!
 
   # The fleet master: one row per vehicle, loaded by fleet:import_garaging and
-  # edited in place -- from the Records grid, or by an approved garaging form
+  # edited in place -- from the Records grid, or by a submitted garaging form
   # (see #apply_garaging_form!). The link names the last form that did so.
   belongs_to :fleet_vehicle_garaging_form, optional: true
 
@@ -39,9 +39,10 @@ class FleetVehicle < ApplicationRecord
     vehicle_number.presence || license_plate
   end
 
-  # Copies an approved garaging form's answers onto this vehicle. A question
+  # Copies a submitted garaging form's answers onto this vehicle. A question
   # left blank keeps what is on file; answering "No" to a secondary location
-  # clears it. Assigned To is not touched: the form only displays it.
+  # clears it. Assign To replaces Assigned To; Vehicle Assigned To on the form
+  # only displays the current holder and is never copied back.
   def apply_garaging_form!(form)
     secondary = case form.do_you_have_a_secondary_location
                 when 'Yes' then form.secondary_garaging_location
@@ -50,6 +51,7 @@ class FleetVehicle < ApplicationRecord
                 end
 
     update!(
+      assigned_to: form.assignee.presence || assigned_to,
       take_home: form.is_this_a_take_home_vehicle.presence || take_home,
       garaging_location: form.garaging_location.presence || garaging_location,
       secondary_garaging_location: secondary,

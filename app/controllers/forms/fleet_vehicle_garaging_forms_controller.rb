@@ -74,7 +74,11 @@ module Forms
         # Delegates to TrackableStatus#start_approval!, which picks the first
         # step whose condition matches the submitted record.
         @fleet_vehicle_garaging_form.start_approval!
-        redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
+        # The template has no routing steps, so start_approval! leaves the form
+        # in progress. It needs no sign-off -- submitting already updated the
+        # vehicle -- so mark it approved. Routing added later takes over.
+        @fleet_vehicle_garaging_form.approved! if @fleet_vehicle_garaging_form.in_progress?
+        redirect_to form_success_path, notice: 'Form submitted.', allow_other_host: false, status: :see_other
       # ROUTING_BLOCK_END
       else
         # Rebuild options on failure (same as in new)
