@@ -1915,17 +1915,25 @@ layout feeds another system. The target is the same flow through Laserfiche.
   Paperboy database on `GSASQL16`, schema `aim`, as `GSAETL`.
 - ~~**Document types disagree.**~~ Settled 2026-09-22 by Joshua: the five
   in Decisions are right and the worker's list is incomplete. Step 5.3a.
-- **Which site should show live invoices once state is in the database?**
-  Raised 2026-09-22, restated the same day. Not about billing: the workers
-  keep writing `Aim_Invoices` and `Aim_Processing_Logs` on `gsa-sql22`, and
-  Phase 5 leaves that alone. This is about `aim.invoices`, which exists once
-  per environment (`Paperboy_Dev`, `_Stage`, `_Prod`). Today dev and
-  production both read the same share, so both see live queues. After 5.5
-  they read their own database, and the one worker fleet can feed only one.
-  (a) production, with dev on seeded data; or (b) `Paperboy_Dev` during
-  development, switched to production at go-live by a LockBox value.
-  Depends on whether real users work AIM queues in production yet.
-  **Joshua to answer; settle before 5.6.**
+- ~~**Which site should show live invoices once state is in the database?**~~
+  Settled 2026-09-22 by Joshua: **the workers write `aim.invoices` in
+  `Paperboy_Dev` while AIM is in development, and are switched to
+  `Paperboy_Prod` at go-live** -- a LockBox value and a
+  `bin/deploy-aim-workers`, no code. The legacy `gsa-sql22` tables are
+  untouched either way. Consequences, all for 5.6 and go-live:
+  - **Ordering.** The `aim` schema reaches `Paperboy_Dev` through the Phase 5
+    merge and `bin/deploy-dev`'s `db:prepare` -- never a hand migration of
+    the shared dev database. 5.6 comes after that.
+  - **Cutover carries state over.** `Paperboy_Dev` will hold real in-flight
+    invoices. At go-live they are copied to `Paperboy_Prod` or rebuilt from
+    the share folders (5.5's folder reading can do the rebuild). Add to the
+    go-live checklist.
+  - **Credentials on the share.** The workers read `_PROGRAM/.env`, which is
+    readable by anyone who can reach `E:\AIM`. Joshua's standing rule is
+    `GSAETL` wherever possible, but it is the broad shared login; putting it
+    there widens what that share exposes compared with today's
+    `GSAScanCenter`. A login with rights on the `aim` schema alone is the
+    narrower option. **Joshua's call, before 5.6.**
 - ~~**0.2** Exact worker install folder on the AIM share.~~ Answered
   2026-09-04: `_PROGRAM` (`/mnt/a/_PROGRAM`).
 - ~~**`P2M_PRINTERS` is missing from LockBox.**~~ Resolved 2026-09-08 by
