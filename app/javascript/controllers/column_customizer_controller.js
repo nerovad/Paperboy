@@ -118,8 +118,10 @@ export default class extends Controller {
   }
 
   setAddDisabled(disabled) {
+    // Records grids render no add-field row, and a missing target getter throws.
+    if (!this.hasFormSelectTarget) return;
     [this.addButtonTarget, this.formSelectTarget, this.fieldSelectTarget].forEach((el) => {
-      if (el) el.disabled = disabled;
+      el.disabled = disabled;
     });
   }
 

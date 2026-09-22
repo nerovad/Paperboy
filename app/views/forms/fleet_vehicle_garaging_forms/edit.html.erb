@@ -180,6 +180,11 @@
           </div>
           </div>
 <!-- FIELD:other_assignee END -->
+<!-- FIELD:last_updated START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="vehicle_number" data-answer-lookup-form="FleetVehicleGaragingForm" data-answer-lookup-field="last_updated">
+  <%= form.label :last_updated, "Last Updated" %>
+            <%= form.text_field :last_updated, class: "form-control field-readonly", readonly: true %>
+          </div>
+<!-- FIELD:last_updated END -->
 <!-- FIELD:is_this_a_take_home_vehicle START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :is_this_a_take_home_vehicle, "Is this a take home vehicle?" %>
             <%= form.select :is_this_a_take_home_vehicle,
