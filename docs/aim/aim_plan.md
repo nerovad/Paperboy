@@ -1819,9 +1819,36 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
   - *Not deployed.* `bin/deploy-aim-workers` has not been run; GSA-SCAN02
     still runs the four-type worker.
 
-- [ ] **5.4 `Aim::Invoice` model and state machine.** States enumerate the
+- [x] **5.4 `Aim::Invoice` model and state machine.** States enumerate the
   real queues plus the terminal outcomes. Illegal transitions raise.
   *Test:* the full transition table, including every rejection.
+
+  Done 2026-09-22. 18 states -- the 15 queues the pipeline really uses, plus
+  `archived`, `deleted` and `rejected` -- and a `TRANSITIONS` table naming
+  every move. `transition_to!(state, actor:, note:)` raises
+  `Aim::Invoice::IllegalTransition`; the same table is also a validation, so
+  a bare `update` cannot make a move `transition_to!` would refuse. The test
+  drives all 18 states against all 18: 56 moves allowed, **258 refused**.
+  Worth carrying:
+
+  - **The tests found two mistakes in the table as first written**, which is
+    the argument for driving it exhaustively rather than testing a few
+    paths. `rejected` was marked terminal, but the Rejected queue holds an
+    invoice "awaiting archive or follow-up", so it can still be deleted or
+    retried -- only `archived` and `deleted` are ends. And `action_needed`
+    listed itself as a destination, because it shares the review exits.
+  - **`error_queue` is a state**, though no screen shows it: a crashed batch
+    really does land there, and a state machine that cannot express where
+    the pipeline puts things is not modelling the pipeline.
+  - **An invoice with an unsettled type cannot reach `user_approval`**,
+    enforced as a validation, whichever route it takes. It may move
+    anywhere else -- `Unknown` blocks the user's queue, not the pipeline.
+  - **The document types are declared in two languages now**: Python's
+    `DOCUMENT_TYPES` for the workers, `Aim::Invoice::DOCUMENT_TYPES` for
+    Rails. `test/lib/aim/document_types_test.rb` reads the Python file and
+    fails if the two lists disagree, since nothing else would notice.
+  - Nothing writes these states yet. 5.5 has the screens read them, 5.6 has
+    the workers write them; until then the pipeline still moves folders.
 
 - [ ] **5.5 Rails reads state from the database.** Queue screens and the
   work provider read rows, not directories. Files stay on the share as
@@ -2240,3 +2267,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-22 | — | (this merge) | Merged `origin/master` (2 commits: DAM stock photos, ResourceSpace import) into the phase branch. `db/schema.rb` conflicted and was regenerated from master's copy plus AIM's migrations rather than hand-merged. AIM's migrations renumbered a second time, above master's latest. 969 runs, 0 fail, 0 error (serial), 160 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-22 | — | (this commit) | Server prepared for a fresh test round: every back-end queue moved to `_PREVIOUS_TEST_DATA/2026-09-22` (58 items, spool markers included), watch tree left alone. **The worker deploy did not run** -- the permission classifier refused it -- so GSA-SCAN02 still runs the 2026-09-10 scripts |
 | 2026-09-22 | — | (this commit) | **Workers deployed** to `/mnt/a/AIM/_PROGRAM`: 22 files plus a fresh `.env`, replacing 2026-09-10 scripts, so Phases 3-4 and step 5.3a now run on the server. Deploy target resolution fixed to read `${VAR}` references through `python-dotenv`; 162 pytest green |
+| 2026-09-22 | 5.4 | (this commit) | `Aim::Invoice` state machine: 18 states, 56 allowed moves, 258 refused, enforced by both `transition_to!` and a validation. Exhaustive table testing caught `rejected` wrongly marked terminal and `action_needed` pointing at itself. Ruby/Python document type lists tied together by a test. 992 runs, 0 fail, 0 error (serial), 162 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |

@@ -24,11 +24,11 @@ module Aim
     test 'every change of state writes exactly one event' do
       invoice = create_invoice
       invoice.update!(state: 'sql_queue', actor: '01_ai_extraction_worker')
-      invoice.update!(state: 'user_approval', actor: '02_sql_worker')
+      invoice.update!(state: 'archived', actor: '02_sql_worker')
 
       transitions = invoice.events.reload.map { [_1.from_state, _1.to_state] }
 
-      assert_equal [[nil, 'ai_queue'], %w[ai_queue sql_queue], %w[sql_queue user_approval]], transitions
+      assert_equal [[nil, 'ai_queue'], %w[ai_queue sql_queue], %w[sql_queue archived]], transitions
       assert_equal %w[watcher 01_ai_extraction_worker 02_sql_worker], invoice.events.map(&:actor)
     end
 
@@ -53,7 +53,7 @@ module Aim
       invoice.update!(state: 'sql_queue', actor: 'someone@example.test')
 
       assert_nil invoice.actor
-      assert_not invoice.update(state: 'user_approval')
+      assert_not invoice.update(state: 'archived')
     end
 
     test 'an event that fails to write takes the state change with it' do
