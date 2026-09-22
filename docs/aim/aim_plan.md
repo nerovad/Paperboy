@@ -168,8 +168,10 @@ That rules out more than it first appears:
   `pipeline_common.py:227` currently pins `ODBC Driver 17 for SQL Server`
   and `Encrypt=no`. Both are properties of the server being talked to, and
   both are likely to differ on SQL Server 2022.
-- No assumption that Rails and the Python workers share a server, or that
-  AIM's tables live in the same database as Paperboy's.
+- No assumption that Rails and the Python workers share a server. AIM's
+  new tables do share Paperboy's database -- decided 2026-09-22, in their
+  own `aim` schema -- but reach it only through Paperboy's own connection
+  settings, never a literal of their own.
 
 ### Changing LockBox
 
@@ -255,7 +257,8 @@ The promise is not enough. The proof is the test suite:
 
 ### Naming
 
-Everything AIM creates is AIM-branded and namespaced: `aim_*` tables,
+Everything AIM creates is AIM-branded and namespaced: tables in the `aim`
+SQL schema (`aim.invoices`, never `dbo.anything`),
 `Aim::*` models and services, `aim/` view and controller directories. Do not
 create generic, un-namespaced "Paperboy things" on AIM's behalf.
 
@@ -580,13 +583,14 @@ AIM spans both. This is the current state, not a transitional accident.
 | Host | `gsa-sql22` (10.135.204.103) | `GSASQL16` (10.135.204.161) |
 | Port | **58026** — 1433 is closed | 1433 |
 | Database | `GSA_Scan` | `Paperboy_Dev` / `_Test` / `_Prod`, `GSABSS` |
-| Test database | `AIM_Test` (Phase 5) | `Paperboy_Test` |
-| Tables | `Aim_Invoices`, `Aim_Processing_Logs`, `Aim_Vendor_Aliases` | — |
+| Test database | -- | `Paperboy_Test` (also holds the `aim` schema) |
+| Tables | `Aim_Invoices`, `Aim_Processing_Logs`, `Aim_Vendor_Aliases` (legacy) | `aim.*` from Phase 5 |
 | Read by | Python workers, and Rails once connected | Rails |
 
-`AIM_Test` is ours and is where the new `aim_*` tables are tested.
-`Paperboy_Test` is Rails framework plumbing shared by the whole
-application — see step 0.1.
+The new `aim.*` tables are tested like every other Paperboy table: in
+`Paperboy_Test`, and in the per-worker databases a parallel run builds from
+`db/schema.rb`, which carries `create_schema "aim"`. `AIM_Test` was planned
+for the `gsa-sql22` placement and is no longer needed.
 
 `gsa-sql22\gsasql22` is a **named instance on a dynamic port**. 58026 is
 what it answered on, and it can change when SQL Server restarts. Ask the
@@ -684,15 +688,35 @@ Recorded so they are not relitigated.
   Phase 11, not carried alongside the new path.
 - `aimusers` / `GSABSS.dbo.aimusers` is **not** in scope and is not the
   source for BU access.
-- **Database placement (settles step 5.1).** The new AIM tables live in
-  `GSA_Scan` on `gsa-sql22`, alongside the AIM tables that are already
-  there. Not in the Paperboy database. The Python workers already connect
-  to that server, so this removes the cross-server problem rather than
-  creating one.
-- **Two servers, today.** Paperboy's own databases are on `GSASQL16`; the
-  AIM tables are already on `gsa-sql22`. AIM therefore needs a second
-  Rails connection from the start — this is a current requirement, not a
-  future one.
+- **Database placement (settles step 5.1) -- revised by Joshua 2026-09-22.**
+  The new AIM tables live **in the Paperboy database on `GSASQL16`, in a SQL
+  schema named `aim`**: `aim.invoices`, `aim.invoice_events` and so on. They
+  are reached through the connection Paperboy already has, as the shared
+  `GSAETL` login -- "use ETL whenever we can; it is the shared username and
+  password in LockBox that should have access to all resources."
+
+  This replaces the original answer, `GSA_Scan` on `gsa-sql22`, which fell
+  over on two facts found in 5.1: the plan's `aim_invoices` *is* the legacy
+  `Aim_Invoices` in that case-insensitive database, and `GSAScanCenter` can
+  create neither a database nor a table there. On `GSASQL16`, `GSAETL` is
+  `db_owner` of `Paperboy_Dev` and `Paperboy_Test`.
+
+  What it buys: no second Rails connection, so no change to
+  `config/database.yml`, `test_helper.rb` or CI, no new rake tasks, and no
+  new LockBox variables for Rails. Migrations are ordinary `db/migrate`
+  files and `db/schema.rb` is their regenerated output -- both already on
+  the allow-list. The `aim` schema is the AIM branding the Naming guardrail
+  asks for, and keeps the new tables visibly apart from everything else.
+
+  What it costs: the legacy `Aim_*` tables stay on `gsa-sql22`, so until
+  Paperboy migrates, AIM's data spans two servers -- the workers will write
+  a legacy row there and state here, and those cannot share a transaction.
+  Accepted by Joshua; it ends when Paperboy moves to `gsa-sql22` and the
+  schema moves with its database.
+- **Two servers, today.** Paperboy's own databases -- now including the
+  `aim` schema -- are on `GSASQL16`; the legacy `Aim_*` tables are on
+  `gsa-sql22`, where the Python workers write them. Rails does not read the
+  legacy tables, so it still needs no second connection.
 - **Full migration to `gsa-sql22` is planned.** Paperboy will move off
   `GSASQL16` soon. Until then use `GSASQL16` where Paperboy's own data is
   concerned. When the migration happens it must be a LockBox variable
@@ -737,8 +761,8 @@ them.
 
   AIM tests do write scratch fixture rows there (test users, groups and
   sessions, so a controller test can sign in). No AIM production data ever
-  lives in it. **AIM's own tables are tested in `AIM_Test` on `gsa-sql22`,
-  created in Phase 5.**
+  lives in it. **AIM's own Phase 5 tables live here too, in
+  the `aim` schema** -- see *Decisions → Database placement*.
 
   Do not rename `Paperboy_Test` to something AIM-branded. It holds all 113
   migrations' worth of Paperboy tables, and the name comes from shared
@@ -1619,86 +1643,50 @@ is built from these values as strings.
 
 The core restructure. Needs Joshua's approval on the migration before 5.1.
 
-- [x] **5.1 Where the AIM tables live — DECIDED.** `GSA_Scan` on
-  `gsa-sql22`, alongside the AIM tables already there. Not the Paperboy
-  database. This needs a new `aim` connection entry in
-  `config/database.yml`, pointed at `GSA_Scan` in every environment except
-  test, which uses **`AIM_Test`** on the same server.
-  *Shared config — bring Joshua the `database.yml` diff before making it.
-  It must be purely additive: a new key, no edits to the existing anchor
-  or to any current environment.*
+- [x] **5.1 Where the AIM tables live — DECIDED 2026-09-22.** The Paperboy
+  database on `GSASQL16`, in a SQL schema named `aim`, as `GSAETL`. See
+  *Decisions → Database placement* for why this replaced `GSA_Scan` on
+  `gsa-sql22`. No shared config changes.
 
-  **What the connection has to look like — found 2026-09-22, diff proposed
-  to Joshua, not applied.** Four facts shape it, each checked rather than
-  assumed:
+  **Proved 2026-09-22 in throwaway databases on `GSASQL16`** (created and
+  dropped by `GSAETL`): a migration creates schema `aim` and
+  `aim.invoices`; the schema dump writes `create_schema "aim"` ahead of the
+  table, so any database rebuilt from `db/schema.rb` -- the per-worker test
+  databases, CI's container -- gets the schema too; reloading that dump into
+  a fresh database gives a working model with a typed `decimal` and an
+  enforced unique index; and `aim.invoices` sits beside a `dbo.Aim_Invoices`
+  without clashing.
 
-  - **Transactional fixtures open every registered pool, for every test,
-    across the whole suite.** Rails 8.1's `setup_transactional_fixtures`
-    pins each writing pool and `pin_connection!` calls `verify!`, which
-    connects. CI runs with `eager_load` (`config/environments/test.rb`), so
-    an `Aim::Record` with `connects_to` is registered at boot and every
-    Billing, Forms and P2M test would try to reach `gsa-sql22` -- which
-    GitHub's runner cannot. `hsa_adoption_cards/connection.rb` records the
-    same trap. The way out is by name:
-    `use_transactional_tests_for_database :aim, false` in `test_helper.rb`
-    (shared, one line), with AIM's own database tests opting back in.
-  - **It has to be a top-level key, like `gsabss` and `billing`.** Nested
-    inside `development`/`test`/`production` it would need every existing
-    environment rewritten, and `bin/deploy*`'s `db:prepare`, every
-    teammate's `db:test:prepare` and `maintain_test_schema` would all start
-    reaching `gsa-sql22`. A top-level key is in no environment's list, so
-    none of those touch it. Its inner config must be *named* `aim` --
-    `aim: { aim: {...} }` -- because a plain top-level config is named
-    `primary`, like Paperboy's own, and the fixture exclusion above would
-    then switch off Paperboy's transactions too. Verified with
-    `ActiveRecord::DatabaseConfigurations`: the nested form is named `aim`,
-    dumps to `aim_schema.rb`, and is absent from `configs_for(env_name:
-    "test")`. Test gets a second key, `aim_test`, and `Aim::Record` picks
-    between them.
-  - **A named instance needs `dataserver`, not `host` and `port`.** The
-    adapter passes its config straight to `TinyTds::Client`, and
-    `dataserver: 'gsa-sql22\gsasql22'` connected from WSL with no port --
-    FreeTDS asks SQL Browser. That is what keeps 58026 out of every file.
-  - **Its own `AIM_DB_*` variables, read with `ENV[]`.** Never `GSABSS_*`,
-    so moving servers is a LockBox edit. Never `ENV.fetch` without a
-    default, because `database.yml` is rendered at boot for every key --
-    an unset AIM variable there would stop Paperboy starting.
-    `Aim::Record` raises `Aim::MissingConfiguration` at the point of use.
+  **Rules for every AIM migration, from that proof:**
 
-  Because it is a top-level key, `bin/rails db:migrate` never reaches it.
-  AIM's migrations live in `db/aim_migrate/` and run through AIM's own rake
-  tasks. Both paths sit outside the allow-list, so they go to Joshua with
-  the `database.yml` diff.
+  - **Name every index explicitly.** `add_index "aim.invoices", :batch_id`
+    fails with *Incorrect syntax near '.'* -- the default name comes out as
+    `index_aim.invoices_on_batch_id`. Pass `name:
+    "index_aim_invoices_on_batch_id"`, dots replaced by underscores.
+  - **Tables are written schema-qualified**, `"aim.invoices"`, in migrations
+    and in `table_name`. Nothing AIM creates goes in `dbo`.
+  - **The schema is created by its own first migration**, whose `down`
+    drops it, so up-and-down stays clean.
 
-- [ ] **5.1a Create `AIM_Test` on `gsa-sql22`.** An empty database. AIM
-  migrations load into it; the `aim_*` tables are tested against it. This
-  one is ours and is AIM-branded, unlike `Paperboy_Test`.
-  *Test:* AIM model tests run green against it without touching
-  `GSA_Scan`.
+  **Worth knowing if a second database is ever needed:** Rails 8.1's
+  transactional fixtures pin every registered connection pool for every
+  test, and pinning calls `verify!`, which connects. With CI's `eager_load`
+  an extra `connects_to` would make every test in the suite reach that
+  server. `hsa_adoption_cards/connection.rb` records the same trap. The
+  `aim` schema avoids it entirely.
 
-  **Blocked on a DBA -- checked 2026-09-22.** `AIM_Test` does not exist.
-  `GSAScanCenter`, the only AIM login, has no `CREATE ANY DATABASE`, is not
-  `db_owner` of `GSA_Scan`, and cannot `CREATE TABLE` there. So nobody on
-  our side can create `AIM_Test`, and no migration can run in `GSA_Scan`
-  either. See *Open Questions → Rights for AIM's migrations*.
+- [x] ~~**5.1a Create `AIM_Test` on `gsa-sql22`.**~~ Not needed. The `aim`
+  schema is tested in `Paperboy_Test` with everything else.
 
-- [ ] **5.2 Migration: `aim_invoices`.** One row per invoice. `batch_id`,
+- [ ] **5.2 Migration: schema `aim` and `aim.invoices`.** One row per
+  invoice. `batch_id`,
   `business_key`, `budget_unit`, `submitter`, `document_type`, `state`,
   `claimed_by`, `claimed_at`, `assigned_to`, `assignment_source`, vendor
   columns, typed money and date columns, timestamps. Typed properly —
   `decimal` for money, `date` for dates.
   *Test:* migration runs up and down cleanly; model validations covered.
 
-  **The name `aim_invoices` is already taken.** `GSA_Scan` is
-  `SQL_Latin1_General_CP1_CI_AS` -- case-insensitive -- and
-  `OBJECT_ID('dbo.aim_invoices')` returns the id of the legacy
-  `Aim_Invoices`. Checked 2026-09-22. In `GSA_Scan` the migration would
-  fail, or worse, `Aim::Invoice` would silently read and write the legacy
-  table. `AIM_Test` starts empty, so the tests would pass while production
-  broke. The name has to change before this step starts -- see *Open
-  Questions → AIM table names in `GSA_Scan`*.
-
-- [ ] **5.3 Migration: `aim_invoice_events`.** Append-only history. Who did
+- [ ] **5.3 Migration: `aim.invoice_events`.** Append-only history. Who did
   what, when, from which state to which. This is the audit trail the
   pipeline has never had.
   *Test:* every state transition writes exactly one event.
@@ -1725,12 +1713,12 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
 
 ## Phase 6 — Real Vendor Normalization
 
-- [ ] **6.1 Migration: `aim_vendors` and `aim_vendor_aliases`.** Canonical
+- [ ] **6.1 Migration: `aim.vendors` and `aim.vendor_aliases`.** Canonical
   vendors with an id, and many aliases pointing at one vendor. Vendors not
   present in Fiscal's list are flagged provisional.
   *Test:* model and association coverage.
-  **`aim_vendor_aliases` collides with the legacy `Aim_Vendor_Aliases`**,
-  exactly as 5.2's name does. Whatever 5.2 settles applies here.
+  In the `aim` schema -- the name `aim_vendor_aliases` would have been the
+  legacy `Aim_Vendor_Aliases` in `GSA_Scan`. Name the indexes explicitly.
 
 - [ ] **6.2 `aim:import_vendors` rake task.** Loads Fiscal's CSV, reports
   what matched, what is new, and what did not match.
@@ -1877,27 +1865,18 @@ layout feeds another system. The target is the same flow through Laserfiche.
   same 324 tests pass after as before.*
 - ~~**5.1** Paperboy database or `GSA_Scan` for the new AIM tables?~~
   Answered: `GSA_Scan`. See `## Decisions Already Made`.
-- **AIM table names in `GSA_Scan`.** Found 2026-09-22 in 5.1. The database
-  is case-insensitive, so the plan's `aim_invoices` and `aim_vendor_aliases`
-  *are* the legacy `Aim_Invoices` and `Aim_Vendor_Aliases`. `GSA_Scan` is
-  also shared: the five `HSA_Adopt_*` tables live there too, and Rails
-  would add its own `schema_migrations` and `ar_internal_metadata`
-  bookkeeping tables beside them, un-namespaced. **Recommended:** a SQL
-  schema named `aim`, owned by an AIM login whose default schema is `aim`.
-  New tables become `aim.invoices`, `aim.invoice_events` and so on; Rails'
-  bookkeeping lands in `aim` as well; legacy `dbo.Aim_*` stays exactly
-  where it is; and rights can be granted on the schema alone, so AIM's
-  migrations never need `db_owner` over the HSA tables. It needs proving in
-  `AIM_Test` first -- the adapter's handling of a non-`dbo` default schema
-  is untested here. The fallback is plain distinct names in `dbo`.
-  **Joshua's decision; it blocks 5.2.**
-- **Rights for AIM's migrations on `gsa-sql22`.** Found 2026-09-22 in 5.1a.
-  `GSAScanCenter` cannot create a database or a table. Needed from a DBA:
-  `AIM_Test` created; a login that owns it; and in `GSA_Scan`, the right to
-  create AIM's tables (on the `aim` schema, if that is chosen). Whether
-  migrations use a separate login from the one the app and workers run
-  under is part of the same question. **Blocks 5.1a and everything after
-  it.**
+- ~~**AIM table names in `GSA_Scan`**~~ and ~~**rights for AIM's
+  migrations on `gsa-sql22`**~~. Both found 2026-09-22 in 5.1 and both
+  dissolved the same day by Joshua's decision to put the tables in the
+  Paperboy database on `GSASQL16`, schema `aim`, as `GSAETL`.
+- **Which Paperboy database do the workers write state to?** Raised
+  2026-09-22, for 5.6. There is one worker fleet on GSA-SCAN02 but a
+  Paperboy database per environment (`Paperboy_Dev`, `_Stage`, `_Prod`).
+  `GSA_Scan` was a single database every environment shared; the `aim`
+  schema is not. The workers will need their own `AIM_*` connection
+  variables pointing at one of them -- presumably production -- which
+  leaves the development and staging screens without live worker state.
+  Settle before 5.6.
 - ~~**0.2** Exact worker install folder on the AIM share.~~ Answered
   2026-09-04: `_PROGRAM` (`/mnt/a/_PROGRAM`).
 - ~~**`P2M_PRINTERS` is missing from LockBox.**~~ Resolved 2026-09-08 by
@@ -2041,3 +2020,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-21 | 4.3 | (this commit) | One spelling for a total: `_clean_money` keeps an accounting or trailing-minus sign, folds `-0.00`, and refuses a comma decimal rather than storing 1.23; `02_sql_worker` writes the sanitised values back into the payload so the row and the XML agree. **Phase 4 complete**; 130 pytest green (8 of the 23 new tests red without the fix), 921 runs, 0 fail, 0 error, scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-21 | — | (this merge) | **Phase 4 merged to Paperboy master.** Master had not moved since the branch was cut from `f6bbc335`, so nothing needed merging in first. Gate green on the merge commit: 921 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 5 baseline. Phase 5 needs Joshua's approval on the migration before 5.1, and the new `aim_*` tables mean a second Rails connection to `GSA_Scan` on `gsa-sql22` |
 | 2026-09-22 | 5.1 | (this commit) | Branch `aim/phase-5-state` cut from `7cfeb98d`; baseline 921 runs, 0 fail, 0 error. Connection shape worked out and the `database.yml` diff proposed to Joshua, not applied. Two blockers found: `aim_invoices` collides with the legacy `Aim_Invoices` in case-insensitive `GSA_Scan`, and `GSAScanCenter` cannot create `AIM_Test` or any table |
+| 2026-09-22 | 5.1 | (this commit) | **5.1 revised by Joshua:** new tables go in the Paperboy database on `GSASQL16`, schema `aim`, as `GSAETL`. Proved in throwaway databases: migrate, dump (`create_schema "aim"`), reload, typed decimal, unique index. Index names must be explicit. No shared config needed; 5.1a dropped; the earlier `database.yml` proposal is withdrawn |
