@@ -462,11 +462,12 @@ Recorded here so nobody has to rediscover it.
 | What | Value |
 |---|---|
 | AIM share (WSL) | `/mnt/a` — from `A:`, see `LockBox/Paperboy-wsl2-fstab` |
+| Worker install folder | `/mnt/a/AIM/_PROGRAM` — **not** `/mnt/a/_PROGRAM`; corrected 2026-09-22. `bin/deploy-aim-workers` resolves it from `AIM_PROGRAM_DIR` and is unaffected |
 | AIM share (Windows) | `E:\AIM` on GSA-SCAN02 |
-| Worker environment file | `/mnt/a/_PROGRAM/.env` |
+| Worker environment file | `/mnt/a/AIM/_PROGRAM/.env` |
 | Paperboy environment file | repo `.env`, from `LockBox/Paperboy.env` |
-| Queue folders | `/mnt/a/_BACK_END/` |
-| Watch tree | `/mnt/a/Invoices/<BU>/<Submitter>/` |
+| Queue folders | `/mnt/a/AIM/_BACK_END/` |
+| Watch tree | `/mnt/a/AIM/Invoices/<BU>/<Submitter>/` |
 
 `/mnt/gsa-scan02-AIM` and `/mnt/gsa-scan02` are stale mount points and are
 empty. Do not use them.
@@ -1972,6 +1973,63 @@ layout feeds another system. The target is the same flow through Laserfiche.
 
 ---
 
+## Where This Stands On The Server — 2026-09-22
+
+Joshua confirmed AIM is **running nothing on GSA-SCAN02 right now**, and
+asked for the workers to be updated and the back end cleared so he can drop
+fresh invoices and test.
+
+**Done:**
+
+- **Every back-end queue is empty.** The 58 items in `_ACTION_NEEDED`,
+  `_BATCH_SPLIT`, `_LOW_CONFIDENCE_REVIEW`, `_REJECTED`, `_SQL_QUEUE`,
+  `_TEMP`, `_VENDOR_REVIEW` and the 39 `_SPOOL_STATE` markers were **moved,
+  not deleted**, to `/mnt/a/AIM/_BACK_END/_PREVIOUS_TEST_DATA/2026-09-22/`.
+  Clearing the spool markers matters: without it the watcher skips a file it
+  has seen before, so re-dropping the same PDF would do nothing.
+
+**Not done, and the next thing to do:**
+
+- **The deploy has not run.** `/mnt/a/AIM/_PROGRAM` still holds the
+  2026-09-10 scripts, so **none of steps 3.1, 3.2, 4.1, 4.2, 4.3 or 5.3a is
+  running on the server** -- production still mangles ampersands, strips
+  punctuation and drops the sign off a credit. The dry run is clean
+  (provenance matches LockBox `019ca7c`, 22 files, rendered `.env` parses
+  with 59 variables, backups to `_PREVIOUS_SCRIPTS/2026-09-22`). The command
+  is:
+
+  ```bash
+  AIM_DEPLOY_PYTHON=~/.venvs/aim/bin/python LOCKBOX_DIR=~/gitea/LockBox \
+    bin/deploy-aim-workers --apply
+  ```
+
+  **Claude Code's permission classifier refused to run it** on 2026-09-22.
+  Joshua runs it himself, or approves it.
+- **The workers then have to be started on GSA-SCAN02** --
+  `START_ALL_SERVICES.bat`, a Windows-side action. The deploy only copies
+  files and prints a reminder.
+
+**Two decisions Joshua has not made yet:**
+
+- **The processed originals stay for now.** `Invoices/_AI_Processed` (340
+  files, 78M) and `Invoices/_Archive` (408 files, 66M) are last runs'
+  documents. Not cleared -- say whether they should be.
+- **The SQL rows stay for now.** `Aim_Invoices` and `Aim_Processing_Logs` on
+  `gsa-sql22` hold 236 rows each, newest 2026-09-21. `GSAETL` may delete
+  them. Say whether to.
+
+**Worth knowing before testing:**
+
+- **Drop test invoices in `/mnt/a/AIM/Invoices/<BU>/<Submitter>/`.** The
+  watcher prunes any folder whose name starts with `_`, so the 89 PDFs in
+  the `_SAMPLE INVOICES` folders are never ingested -- they are a library,
+  not a queue.
+- **The new `aim.*` tables stay empty this round.** The workers do not write
+  them until 5.6, and the screens still read folders until 5.5. This round
+  tests the pipeline, not the new state tables.
+
+---
+
 ## Open Questions
 
 - **Pre-existing suite failures (found in 0.1).** 213 of 537 tests are red
@@ -2173,3 +2231,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-22 | 5.3 | (this commit) | `aim.invoice_events` and `Aim::InvoiceEvent`; every state change through the model writes exactly one event, naming its actor, in the same transaction. No DB foreign key: the adapter dumps it without the schema and the resulting `schema.rb` cannot load; `schema_conventions_test` now guards that. 944 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-22 | 5.3a | (this commit) | Six document types, one spelling: `normalize_document_type` at `InvoiceData`'s gate, one prompt both models read, `enum` in both schemas, and only `Unknown` held back for QA review. AIM's migrations renumbered after a version collision with DAM's `20260922100000`. 160 pytest green (24 of the 30 new red without the fix), 944 runs, 0 fail, 0 error (serial), scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-22 | — | (this merge) | Merged `origin/master` (2 commits: DAM stock photos, ResourceSpace import) into the phase branch. `db/schema.rb` conflicted and was regenerated from master's copy plus AIM's migrations rather than hand-merged. AIM's migrations renumbered a second time, above master's latest. 969 runs, 0 fail, 0 error (serial), 160 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-22 | — | (this commit) | Server prepared for a fresh test round: every back-end queue moved to `_PREVIOUS_TEST_DATA/2026-09-22` (58 items, spool markers included), watch tree left alone. **The worker deploy did not run** -- the permission classifier refused it -- so GSA-SCAN02 still runs the 2026-09-10 scripts |
