@@ -323,3 +323,32 @@ Rules:
   is running plus an hour.
 - Publishing an asset is the `publish` feature grant; setting up and
   connecting targets is `publish_targets`, deliberately separate.
+
+## DAM access rules
+
+Feature grants decide which DAM *screens* someone reaches. Which *assets*
+they see, and what they may do with each, is decided by access rules
+(ACL > DAM Access Rules): `Dam::AccessRule` names a slice of the library
+(an org window on the asset's `agency_id`…`unit_id`, plus metadata
+conditions) and its grantees (groups, employees, org levels), with
+Download / Share / Publish / Edit flags on top of View. An asset no active
+rule matches is open to everyone; one a rule matches is open only to the
+people a matching rule names. Uploaders and system admins are never
+restricted.
+
+Rules:
+
+- **Every asset lookup in a DAM controller goes through `dam_access`.**
+  Lists use `dam_access.viewable(scope)` or `permitted(scope, :download)`;
+  a single asset uses `find_viewable_asset(id)`, never `Dam::Asset.find`.
+  A capability the page did not offer is refused with
+  `require_asset_capability(asset, :share)`, and views ask `dam_can?`.
+- **Never link an asset's bytes with `url_for(asset.file)`** (or `.proxy`,
+  `.thumbnail`). Stock Active Storage URLs never expire and check nobody.
+  Use `dam_file_path(asset, :thumbnail)` / `dam_thumbnail_url` /
+  `dam_preview_url` / `dam_original_url`, which mint a per-user token
+  (`Dam::FileToken`) served by `DigitalAssetManagement::FilesController`.
+- Feature grants still apply on top: a rule allowing Publish does not open
+  the Publish screen to someone without the `publish` grant.
+- Imported assets are filed under an org from their ResourceSpace text by
+  `Dam::OrgFromMetadata`; `rake dam:file_assets_by_org` backfills.

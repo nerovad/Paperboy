@@ -11,14 +11,18 @@
     </div>
     <div class="dam-page-actions">
       <%= dam_star_button(@asset, favorited: dam_favorite?(@asset), label: "Favorite") %>
-      <% if (original = dam_original_url(@asset)) %>
+      <%# Each button is a capability under the DAM access rules. On an asset
+          no rule covers, everyone who can see it has all of them. %>
+      <% if dam_can?(@asset, :download) && (original = dam_original_url(@asset)) %>
         <%= link_to "Download", original, class: "btn pdf", download: @asset.filename %>
       <% end %>
-      <%= link_to "Edit", edit_digital_asset_management_asset_path(@asset), class: "btn edit" %>
-      <%= button_to "Archive", digital_asset_management_asset_path(@asset), method: :delete,
-                    class: "btn deny",
-                    form: { data: { turbo_confirm: "Archive #{@asset.title}? It stays in the database and in any collections, but drops out of the library.",
-                                    confirm_title: "Archive asset", confirm_label: "Archive" } } %>
+      <% if dam_can?(@asset, :edit) %>
+        <%= link_to "Edit", edit_digital_asset_management_asset_path(@asset), class: "btn edit" %>
+        <%= button_to "Archive", digital_asset_management_asset_path(@asset), method: :delete,
+                      class: "btn deny",
+                      form: { data: { turbo_confirm: "Archive #{@asset.title}? It stays in the database and in any collections, but drops out of the library.",
+                                      confirm_title: "Archive asset", confirm_label: "Archive" } } %>
+      <% end %>
     </div>
   </header>
 
@@ -27,11 +31,11 @@
       <% if @asset.media_type == "video" && @asset.stored? && @asset.file.attached? %>
         <video controls class="dam-preview-image" preload="metadata"
                <%= "poster=#{dam_thumbnail_url(@asset)}" if @asset.thumbnail.attached? %>>
-          <source src="<%= url_for(@asset.file) %>" type="<%= @asset.content_type %>">
+          <source src="<%= dam_file_path(@asset, :file) %>" type="<%= @asset.content_type %>">
         </video>
       <% elsif @asset.media_type == "audio" && @asset.stored? && @asset.file.attached? %>
         <audio controls class="dam-preview-audio">
-          <source src="<%= url_for(@asset.file) %>" type="<%= @asset.content_type %>">
+          <source src="<%= dam_file_path(@asset, :file) %>" type="<%= @asset.content_type %>">
         </audio>
       <% elsif (preview = dam_preview_url(@asset)) %>
         <%= image_tag preview, alt: @asset.title, class: "dam-preview-image" %>
@@ -70,6 +74,7 @@
             <dt>Duration</dt><dd><%= dam_duration(@asset.duration_seconds) %></dd>
           <% end %>
           <dt>Storage</dt><dd><%= @asset.storage_location&.label || "Not set" %></dd>
+          <dt>Organization</dt><dd><%= @asset.org_summary.join(" · ").presence || "Not set" %></dd>
           <dt>Created by</dt><dd><%= @asset.uploaded_by_name.presence || "—" %></dd>
           <dt>Ingested</dt><dd><%= @asset.ingested_at&.strftime("%b %-d, %Y at %-l:%M %p") || "—" %></dd>
         </dl>
@@ -115,6 +120,7 @@
         <% end %>
       </section>
 
+      <% if dam_can?(@asset, :share) %>
       <section class="dam-panel">
         <h2>Share</h2>
         <%= form_with url: share_digital_asset_management_asset_path(@asset), method: :post,
@@ -154,9 +160,14 @@
           </ul>
         <% end %>
       </section>
+      <% end %>
 
       <% if @publish_targets %>
         <%= render "digital_asset_management/assets/publish_panel", asset: @asset %>
+      <% end %>
+
+      <% if system_admin? %>
+        <%= render "digital_asset_management/assets/access_panel", asset: @asset %>
       <% end %>
 
       <% if @jobs.any? %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_120100) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -241,14 +241,52 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_100000) do
     t.string "urgency"
   end
 
+  create_table "dam_access_rule_grantees", force: :cascade do |t|
+    t.string "agency_id"
+    t.datetime "created_at", null: false
+    t.string "department_id"
+    t.string "division_id"
+    t.string "employee_id"
+    t.string "grantee_type", null: false
+    t.integer "group_id"
+    t.bigint "rule_id", null: false
+    t.string "unit_id"
+    t.index ["grantee_type", "employee_id"], name: "index_dam_access_rule_grantees_on_grantee_type_and_employee_id"
+    t.index ["grantee_type", "group_id"], name: "index_dam_access_rule_grantees_on_grantee_type_and_group_id"
+    t.index ["rule_id"], name: "index_dam_access_rule_grantees_on_rule_id"
+  end
+
+  create_table "dam_access_rules", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.string "agency_id"
+    t.boolean "can_download", default: false, null: false
+    t.boolean "can_edit", default: false, null: false
+    t.boolean "can_publish", default: false, null: false
+    t.boolean "can_share", default: false, null: false
+    t.text "conditions"
+    t.datetime "created_at", null: false
+    t.string "created_by_id"
+    t.string "created_by_name"
+    t.string "department_id"
+    t.text "description"
+    t.string "division_id"
+    t.string "name", null: false
+    t.string "unit_id"
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_dam_access_rules_on_active"
+  end
+
   create_table "dam_assets", force: :cascade do |t|
+    t.string "agency_id"
     t.bigint "byte_size"
     t.string "checksum"
     t.string "content_type"
     t.datetime "created_at", null: false
+    t.string "department_id"
     t.text "derivative_error"
     t.string "derivative_state", default: "pending", null: false
     t.text "description"
+    t.string "division_id"
     t.integer "duration_seconds"
     t.string "external_ref"
     t.string "filename"
@@ -263,10 +301,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_100000) do
     t.bigint "storage_location_id"
     t.string "storage_path"
     t.string "title", null: false
+    t.string "unit_id"
     t.datetime "updated_at", null: false
     t.string "uploaded_by_id"
     t.string "uploaded_by_name"
     t.integer "width"
+    t.index ["agency_id"], name: "index_dam_assets_on_agency_id"
     t.index ["created_at"], name: "index_dam_assets_on_created_at"
     t.index ["format"], name: "index_dam_assets_on_format"
     t.index ["media_type"], name: "index_dam_assets_on_media_type"

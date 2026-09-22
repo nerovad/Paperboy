@@ -1,0 +1,85 @@
+<%# Who the rule opens its assets to. Each add is its own small form, and all
+    of them sit outside the rule form, since a grantee is a row of its own.
+
+    Locals: rule  the Dam::AccessRule %>
+<div class="acl-permissions-section dam-access-grantees">
+  <h3>Open to</h3>
+  <p class="acl-subtitle">
+    Anyone named here, through a group, by name, or by where they sit in the
+    organization, sees the assets this rule covers and may do what it allows.
+    Nobody else does.
+  </p>
+
+  <% if rule.grantees.any? %>
+    <table class="submission-table">
+      <tbody>
+        <% rule.grantees.each do |grantee| %>
+          <tr>
+            <td><%= grantee.label(@employee_names) %></td>
+            <td class="actions-column">
+              <%= button_to "Remove", dam_access_rule_grantee_path(rule, grantee), method: :delete,
+                            class: "btn deny compact",
+                            form: { data: { turbo_confirm: "Remove #{grantee.label(@employee_names)} from #{rule.name}?",
+                                            confirm_title: "Remove from rule", confirm_label: "Remove" } } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="dam-muted">
+      Nobody yet. Until someone is added, only system admins and each asset's
+      uploader can see what this rule covers.
+    </p>
+  <% end %>
+
+  <div class="dam-access-grantee-forms">
+    <%= form_with url: dam_access_rule_grantees_path(rule), method: :post, class: "acl-search-form" do %>
+      <%= hidden_field_tag :grantee_type, "group" %>
+      <%= label_tag :group_id, "Add a group" %>
+      <div class="acl-search-row">
+        <%= select_tag :group_id, options_for_select(@groups.map { |group| [group.group_name, group.GroupID] }),
+                       include_blank: "Select a group…", class: "form-control", required: true %>
+        <%= submit_tag "Add group", class: "btn approve", name: nil %>
+      </div>
+    <% end %>
+
+    <%= form_with url: edit_dam_access_rule_path(rule), method: :get, class: "acl-search-form" do %>
+      <%= label_tag :employee_search, "Add a person" %>
+      <div class="acl-search-row">
+        <%= text_field_tag :employee_search, params[:employee_search], class: "form-control acl-search-input",
+                           placeholder: "Search by name or employee ID..." %>
+        <%= submit_tag "Search", class: "btn", name: nil %>
+      </div>
+    <% end %>
+
+    <% if @employee_results.any? %>
+      <table class="submission-table acl-search-results">
+        <tbody>
+          <% @employee_results.each do |employee| %>
+            <tr>
+              <td><%= employee.employee_id %></td>
+              <td><%= employee.first_name %> <%= employee.last_name %></td>
+              <td class="action-buttons">
+                <%= button_to "Add", dam_access_rule_grantees_path(rule),
+                              params: { grantee_type: "employee", employee_id: employee.employee_id },
+                              class: "btn approve compact" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% elsif params[:employee_search].present? %>
+      <p class="acl-no-results">No employees found matching "<%= params[:employee_search] %>".</p>
+    <% end %>
+
+    <%= form_with url: dam_access_rule_grantees_path(rule), method: :post, class: "acl-search-form" do %>
+      <%= hidden_field_tag :grantee_type, "org", id: nil %>
+      <fieldset class="dam-filter-set">
+        <legend>Add everyone in part of the organization</legend>
+        <%= render "shared/org_cascade", labels: { agency: "Everyone with DAM access" } %>
+      </fieldset>
+      <%= submit_tag "Add", class: "btn approve", name: nil %>
+    <% end %>
+  </div>
+</div>

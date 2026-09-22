@@ -56,6 +56,20 @@
     <% end %>
   </div>
 
+  <fieldset class="dam-filter-set">
+    <legend>Organization</legend>
+    <%# The same cascade forms file against. DAM access rules key on these
+        four, so they say who an asset belongs to as well as where. %>
+    <%= render "shared/org_cascade", param_scope: "asset",
+               selected: { agency: @asset.agency_id, division: @asset.division_id,
+                           department: @asset.department_id, unit: @asset.unit_id },
+               labels: { agency: "Not set", division: "Not set", department: "Not set", unit: "Not set" } %>
+    <p class="dam-hint">
+      Access rules can limit who sees assets by organization, so filing an
+      asset here may hide it from people outside it.
+    </p>
+  </fieldset>
+
   <% if @dam_metadata_fields.any? %>
     <fieldset class="dam-filter-set">
       <legend>Custom metadata</legend>

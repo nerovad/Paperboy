@@ -30,7 +30,10 @@ module DigitalAssetManagement
     end
 
     def create
-      asset = Dam::Asset.find(params[:asset_id])
+      asset = find_viewable_asset(params[:asset_id])
+      require_asset_capability(asset, :publish)
+      return if performed?
+
       target = Dam::PublishTarget.find(params[:publish_target_id])
       refusal = target.refusal_reason(asset)
       return redirect_back_to(asset, alert: "#{target.label} cannot take this asset: #{refusal}") if refusal

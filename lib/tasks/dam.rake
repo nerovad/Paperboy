@@ -120,6 +120,20 @@ namespace :dam do
     puts 'These are paths relative to SYNC_BASE. Check that the share is mounted here.'
   end
 
+  # Files assets that have no organization yet under the agency, division,
+  # department and unit their ResourceSpace metadata names, so DAM access
+  # rules on an agency reach them. Run once after deploying access rules;
+  # later imports do it as they go. DRY_RUN=1 reports without saving.
+  desc 'File DAM assets under the org their imported metadata names (DRY_RUN=1)'
+  task file_assets_by_org: :environment do
+    filed, unmatched = Dam::OrgFromMetadata.file_all(dry_run: ENV['DRY_RUN'].present?)
+    puts "#{ENV['DRY_RUN'] ? 'Would file' : 'Filed'} #{filed} assets under an organization."
+    next if unmatched.empty?
+
+    puts 'Agency values that match no agency (set these by hand, or fix the text and run again):'
+    unmatched.sort_by { |_text, count| -count }.each { |text, count| puts "  #{count}\t#{text}" }
+  end
+
   # After installing ImageMagick, ffmpeg or poppler-utils on a host that was
   # missing them — every asset whose proxy could not be built is queued again.
   # STATE=failed, pending, or both (the default). ID=12,13 for particular ones.

@@ -8,7 +8,9 @@ module DigitalAssetManagement
   # with a redirect back to that page and a count of what it did.
   #
   # The grants are the same ones the single-asset versions ask for, plus
-  # Search, since the only way here is the results page.
+  # Search, since the only way here is the results page. The DAM access rules
+  # apply per asset: whatever in the selection the person may not share,
+  # publish or edit is left alone and counted in the message.
   class BulkAssetsController < BaseController
     include QueuesPublications
 
@@ -27,6 +29,8 @@ module DigitalAssetManagement
       return back(alert: "Publish at most #{MAX_PUBLISH} assets at once; #{@selection.label} are selected.") if @selection.count > MAX_PUBLISH
 
       queued, refused = publish_each(target)
+      withheld = @selection.count - @selection.permitted(:publish).count
+      refused['the access rules do not let you publish them'] += withheld if withheld.positive?
       back(**publish_outcome(target, queued, refused))
     end
 
@@ -36,26 +40,31 @@ module DigitalAssetManagement
     def share
       return back(alert: 'Enter at least one recipient.') if params[:recipients].blank?
 
-      shares = @selection.scope.map { |asset| build_share(asset) }
+      shares = @selection.permitted(:share).map { |asset| build_share(asset) }
+      return back(alert: 'The access rules do not let you share any of the selected assets.') if shares.empty?
+
       invalid = shares.find(&:invalid?)
       return back(alert: "Shares could not be created: #{invalid.errors.full_messages.to_sentence}") if invalid
 
       Dam::Share.transaction { shares.each(&:save!) }
       Dam::Job.record!(job_type: 'share', actor: current_user, subject: nil, count: shares.size,
                        label: @selection.label, log: "Shared with #{shares.first.recipient_list.join(', ')}")
-      back(notice: "Shared #{@selection.label}.")
+      back(**with_withheld("Shared #{helpers.pluralize(shares.size, 'asset')}.", shares.size, 'share'))
     end
 
     def metadata
       changes = metadata_changes
       return back(alert: 'Enter a value or tick Clear on at least one field.') if changes.empty?
 
-      job = Dam::Job.enqueue!(job_type: 'metadata', actor: current_user, total_items: @selection.count,
-                              label: @selection.label)
+      ids = @selection.permitted(:edit).pluck(:id)
+      return back(alert: 'The access rules do not let you edit any of the selected assets.') if ids.empty?
+
+      label = helpers.pluralize(ids.size, 'asset')
+      job = Dam::Job.enqueue!(job_type: 'metadata', actor: current_user, total_items: ids.size, label: label)
       job.append_log("Setting #{changes.map { |key, value| "#{key} = #{value.presence || '(cleared)'}" }.join(', ')}")
       job.save
-      Dam::BulkMetadataJob.perform_later(job.id, @selection.ids, changes)
-      back(notice: "Updating metadata on #{@selection.label}. Progress is on the Jobs screen.")
+      Dam::BulkMetadataJob.perform_later(job.id, ids, changes)
+      back(**with_withheld("Updating metadata on #{label}. Progress is on the Jobs screen.", ids.size, 'edit'))
     end
 
     # Already-members are skipped rather than moved to the end, so adding a
@@ -70,21 +79,21 @@ module DigitalAssetManagement
 
     # Archived, as a single asset is, never deleted.
     def archive
-      count = @selection.scope.update_all(status: 'archived', updated_at: Time.current)
-      back(notice: "Archived #{helpers.pluralize(count, 'asset')}.")
+      count = @selection.permitted(:edit).update_all(status: 'archived', updated_at: Time.current)
+      back(**with_withheld("Archived #{helpers.pluralize(count, 'asset')}.", count, 'archive'))
     end
 
     private
 
     def load_selection
-      @selection = Dam::AssetSelection.from_params(params)
+      @selection = Dam::AssetSelection.from_params(params, access: dam_access)
       back(alert: 'Select at least one asset first.') if @selection.empty?
     end
 
     def publish_each(target)
       queued = 0
       refused = Hash.new(0)
-      @selection.scope.find_each do |asset|
+      @selection.permitted(:publish).find_each do |asset|
         reason = target.refusal_reason(asset)
         next refused[reason] += 1 if reason
 
@@ -105,6 +114,15 @@ module DigitalAssetManagement
 
       message = "Publishing #{helpers.pluralize(queued, 'asset')} to #{target.label}."
       refused.any? ? { alert: "#{message} #{skipped}." } : { notice: message }
+    end
+
+    # The flash for an action that did +done+ of the selection. Anything the
+    # access rules held back is said, not silently dropped.
+    def with_withheld(message, done, verb)
+      withheld = @selection.count - done
+      return { notice: message } unless withheld.positive?
+
+      { alert: "#{message} #{helpers.pluralize(withheld, 'asset')} skipped: the access rules do not let you #{verb} them." }
     end
 
     def build_share(asset)

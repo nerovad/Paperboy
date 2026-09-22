@@ -18,11 +18,12 @@ module DigitalAssetManagement
     def index
       @favorite_assets = favorites_of(Dam::Asset)
       @favorite_collections = favorites_of(Dam::Collection)
-      @recent_assets = Dam::RecentView.subjects_for(employee_id: dam_employee_id, type: 'Dam::Asset', limit: SHELF_SIZE)
+      @recent_assets = still_viewable(Dam::RecentView.subjects_for(employee_id: dam_employee_id, type: 'Dam::Asset',
+                                                                   limit: SHELF_SIZE))
       @recent_collections = Dam::RecentView.subjects_for(employee_id: dam_employee_id, type: 'Dam::Collection',
                                                          limit: SHELF_SIZE)
       @open_jobs = Dam::Job.open.newest_first.limit(5)
-      @library_count = Dam::Asset.visible.count
+      @library_count = dam_access.viewable(Dam::Asset.visible).count
     end
 
     private
@@ -33,8 +34,17 @@ module DigitalAssetManagement
       favorites = Dam::Favorite.for_employee(dam_employee_id)
                                .where(favoritable_type: model.name)
                                .newest_first.limit(SHELF_SIZE)
-      subjects = model.where(id: favorites.map(&:favoritable_id)).index_by(&:id)
+      subjects = model.where(id: favorites.map(&:favoritable_id))
+      subjects = dam_access.viewable(subjects) if model == Dam::Asset
+      subjects = subjects.index_by(&:id)
       favorites.filter_map { |favorite| subjects[favorite.favoritable_id] }
+    end
+
+    # A star or a recent view outlives the access that allowed it: a rule
+    # added since hides the asset, so the shelf drops it too.
+    def still_viewable(assets)
+      allowed = dam_access.viewable(Dam::Asset.where(id: assets.map(&:id))).pluck(:id).to_set
+      assets.select { |asset| allowed.include?(asset.id) }
     end
   end
 end

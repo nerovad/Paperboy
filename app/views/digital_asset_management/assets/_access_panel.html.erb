@@ -1,0 +1,32 @@
+<%# Which DAM access rules hold this asset, and who they open it to. Shown to
+    system admins only: they bypass the rules, so without this the page looks
+    the same to them whatever everybody else sees.
+
+    Locals: asset  the Dam::Asset on screen %>
+<% rules = dam_access.restricting_rules(asset) %>
+<section class="dam-panel dam-access-panel">
+  <h2>Access</h2>
+  <% if rules.empty? %>
+    <p class="dam-muted">
+      No access rule covers this asset, so everyone with Digital Asset
+      Management can see it and use every action their grants allow.
+    </p>
+  <% else %>
+    <p class="dam-muted">
+      Only the people these rules name can see this asset. Its uploader and
+      system admins always can.
+    </p>
+    <ul class="dam-list">
+      <% rules.each do |rule| %>
+        <li>
+          <%= link_to rule.name, edit_dam_access_rule_path(rule) %>
+          <span class="dam-muted"><%= rule.capability_labels.join(", ") %></span>
+          <br>
+          <span class="dam-muted">
+            <%= rule.grantees.map(&:label).to_sentence.presence || "Nobody yet" %>
+          </span>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</section>

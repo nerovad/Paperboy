@@ -12,6 +12,7 @@ module Dam
     include DamReferencedSource
 
     MEDIA_TYPES = %w[image video document audio other].freeze
+    ORG_LEVELS = ::FormSearch::ORG_LEVELS
     STATUSES = %w[active processing failed archived].freeze
 
     # Media type inferred from the MIME type's top-level part, with the
@@ -40,6 +41,8 @@ module Dam
     has_many :collections, through: :collection_assets, source: :collection
 
     accepts_nested_attributes_for :metadata_values, allow_destroy: true
+
+    before_validation :normalize_org
 
     validates :title, presence: true
     validates :media_type, inclusion: { in: MEDIA_TYPES }
@@ -107,12 +110,28 @@ module Dam
       "#{width} × #{height}"
     end
 
+    # Where in the county the asset belongs, in words, e.g. ["Agency: General
+    # Services Agency"]. Empty when it has not been filed against any org.
+    def org_summary
+      levels = ORG_LEVELS.to_h { |level| [:"filter_#{level}", self[:"#{level}_id"]] }
+      ::FormSearch.new(levels).summary
+    end
+
     # Custom metadata as a plain hash, for detail views and workflow payloads.
     def metadata_hash
       metadata_values.to_h { |value| [value.field_key, value.display_value] }
     end
 
     private
+
+    # The org cascade posts "" for a level left on "All"; stored as NULL so a
+    # rule on "no agency" and an asset with none agree about what that means.
+    def normalize_org
+      ORG_LEVELS.each do |level|
+        attribute = "#{level}_id"
+        self[attribute] = self[attribute].to_s.strip.presence
+      end
+    end
 
     # Checked at the door rather than only hidden from the picker: a sealed
     # archive or a full share can be reached by a stale form or a re-post, and

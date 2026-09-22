@@ -9,12 +9,14 @@ module DigitalAssetManagement
     def index
       @collections = Dam::Collection.alphabetical
       @favorite_ids = Dam::Favorite.ids_for(employee_id: dam_employee_id, type: 'Dam::Collection')
-      @counts = Dam::CollectionAsset.group(:collection_id).count
+      @counts = Dam::CollectionAsset.where(asset_id: dam_access.viewable.select(:id)).group(:collection_id).count
     end
 
     def show
       record_recent_view(@collection)
-      @assets = @collection.ordered_assets.includes(:storage_location).with_attached_file
+      # A collection is shared furniture; the access rules still decide which
+      # of its assets each person sees in it.
+      @assets = dam_access.viewable(@collection.ordered_assets).includes(:storage_location).with_attached_file
       @favorite_ids = Dam::Favorite.ids_for(employee_id: dam_employee_id, type: 'Dam::Asset')
     end
 
@@ -60,7 +62,7 @@ module DigitalAssetManagement
     # an error — this is reached from a grid where the state may be stale.
     def add_asset
       collection = Dam::Collection.find(params[:collection_id])
-      asset = Dam::Asset.find(params[:asset_id])
+      asset = find_viewable_asset(params[:asset_id])
       Dam::CollectionAsset.create_or_find_by!(collection: collection, asset: asset)
       redirect_back fallback_location: digital_asset_management_collection_path(collection),
                     notice: "Added #{asset.title} to #{collection.name}."

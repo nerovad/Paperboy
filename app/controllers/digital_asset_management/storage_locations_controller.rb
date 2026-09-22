@@ -46,7 +46,7 @@ module DigitalAssetManagement
       @asset_count = @location.asset_count
       @used_bytes = @location.used_bytes
       @by_media_type = @location.assets.group(:media_type).count
-      @recent_assets = @location.assets.newest_first.limit(8)
+      @recent_assets = dam_access.viewable(@location.assets).newest_first.limit(8)
 
       # Moving into a read-only archive is a legitimate destination — that is
       # what an archive is for — so targets only have to be active.

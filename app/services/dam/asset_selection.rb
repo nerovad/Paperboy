@@ -18,20 +18,23 @@ module Dam
   # Dam::AssetSearch.
   #
   # Archived assets are never selected, whichever shape was sent: a bulk
-  # action is always about the library as it is shown.
+  # action is always about the library as it is shown. Nor is anything the
+  # person acting cannot see under the DAM access rules — a hand-built list of
+  # ids is held to the same Dam::Access as the results page.
   class AssetSelection
     # Ids only ever come from one page of cards, so this is generous; it
     # exists to keep a hand-built request under SQL Server's 2,100 parameters.
     MAX_IDS = 1000
 
-    def self.from_params(params)
-      new(asset_ids: params[:asset_ids], select_all: params[:select_all], search: params[:search])
+    def self.from_params(params, access: nil)
+      new(asset_ids: params[:asset_ids], select_all: params[:select_all], search: params[:search], access: access)
     end
 
-    def initialize(asset_ids: nil, select_all: nil, search: nil)
+    def initialize(asset_ids: nil, select_all: nil, search: nil, access: nil)
       @asset_ids = Array(asset_ids).map(&:to_s).grep(/\A\d+\z/).uniq.first(MAX_IDS)
       @select_all = ActiveModel::Type::Boolean.new.cast(select_all)
       @search = search.to_s
+      @access = access
     end
 
     def all? = @select_all
@@ -46,9 +49,14 @@ module Dam
     # arrives as a subquery rather than a list of ids, since "all" may be more
     # ids than SQL Server takes as parameters.
     def scope
-      return Dam::Asset.visible.where(id: search_ids) if all?
+      base = all? ? Dam::Asset.visible.where(id: search_ids) : Dam::Asset.visible.where(id: @asset_ids)
+      @access ? @access.viewable(base) : base
+    end
 
-      Dam::Asset.visible.where(id: @asset_ids)
+    # The part of the selection the person acting may do +capability+ to. The
+    # rest is not an error: the controller reports how many were skipped.
+    def permitted(capability)
+      @access ? @access.permitted(scope, capability) : scope
     end
 
     def ids = scope.pluck(:id)
@@ -60,7 +68,7 @@ module Dam
     # SQL Server refuses ORDER BY inside a subquery, and the preloads mean
     # nothing to one.
     def search_ids
-      Dam::AssetSearch.new(Rack::Utils.parse_nested_query(@search))
+      Dam::AssetSearch.new(Rack::Utils.parse_nested_query(@search), access: @access)
                       .results.unscope(:order, :includes, :preload, :eager_load).select(:id)
     end
   end
