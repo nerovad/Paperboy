@@ -1988,24 +1988,31 @@ fresh invoices and test.
   Clearing the spool markers matters: without it the watcher skips a file it
   has seen before, so re-dropping the same PDF would do nothing.
 
+- **The workers are deployed.** 2026-09-22, 12:16. 22 files and a fresh
+  `.env` (59 `AIM_*`, none discarded) to `/mnt/a/AIM/_PROGRAM`, replacing
+  scripts dated 2026-09-10 -- so steps 3.1, 3.2, 4.1, 4.2, 4.3 and 5.3a are
+  all on the server now, where before none of them were. The 22 replaced
+  files are in `_PREVIOUS_SCRIPTS/2026-09-22`; `vendor_aliases.json` was
+  left alone and still holds its 907 learned aliases.
+
+  Two things the deploy exposed, both fixed on the way:
+
+  - **The target was read with `grep` and came back unresolved.** LockBox's
+    ROOT consolidation made `AIM_LINUX_QUEUE_BASE_PATH` read
+    `${AIM_ROOT}/AIM`, so the deploy aimed at a directory literally named
+    `${AIM_ROOT}`. It now reads values with `python-dotenv`, as the workers
+    do. Two tests cover it; every earlier deploy test passed `--target`
+    explicitly, which is how the resolution went untested.
+  - **A WSL restart drops the mapped drives.** `A:` (`\\gsa-scan02\projects`)
+    showed *Disconnected* in Windows and `/mnt/a` was empty, so the deploy
+    refused -- correctly -- rather than write into an unmounted mount point.
+    Touching the drive from Windows reconnects it (`cmd.exe /c "dir A:\"`),
+    then `sudo mount -a` in a real terminal remounts it. `sudo` cannot
+    prompt inside Claude Code's shell.
+
 **Not done, and the next thing to do:**
 
-- **The deploy has not run.** `/mnt/a/AIM/_PROGRAM` still holds the
-  2026-09-10 scripts, so **none of steps 3.1, 3.2, 4.1, 4.2, 4.3 or 5.3a is
-  running on the server** -- production still mangles ampersands, strips
-  punctuation and drops the sign off a credit. The dry run is clean
-  (provenance matches LockBox `019ca7c`, 22 files, rendered `.env` parses
-  with 59 variables, backups to `_PREVIOUS_SCRIPTS/2026-09-22`). The command
-  is:
-
-  ```bash
-  AIM_DEPLOY_PYTHON=~/.venvs/aim/bin/python LOCKBOX_DIR=~/gitea/LockBox \
-    bin/deploy-aim-workers --apply
-  ```
-
-  **Claude Code's permission classifier refused to run it** on 2026-09-22.
-  Joshua runs it himself, or approves it.
-- **The workers then have to be started on GSA-SCAN02** --
+- **The workers have to be started on GSA-SCAN02** --
   `START_ALL_SERVICES.bat`, a Windows-side action. The deploy only copies
   files and prints a reminder.
 
@@ -2232,3 +2239,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-22 | 5.3a | (this commit) | Six document types, one spelling: `normalize_document_type` at `InvoiceData`'s gate, one prompt both models read, `enum` in both schemas, and only `Unknown` held back for QA review. AIM's migrations renumbered after a version collision with DAM's `20260922100000`. 160 pytest green (24 of the 30 new red without the fix), 944 runs, 0 fail, 0 error (serial), scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-22 | — | (this merge) | Merged `origin/master` (2 commits: DAM stock photos, ResourceSpace import) into the phase branch. `db/schema.rb` conflicted and was regenerated from master's copy plus AIM's migrations rather than hand-merged. AIM's migrations renumbered a second time, above master's latest. 969 runs, 0 fail, 0 error (serial), 160 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-22 | — | (this commit) | Server prepared for a fresh test round: every back-end queue moved to `_PREVIOUS_TEST_DATA/2026-09-22` (58 items, spool markers included), watch tree left alone. **The worker deploy did not run** -- the permission classifier refused it -- so GSA-SCAN02 still runs the 2026-09-10 scripts |
+| 2026-09-22 | — | (this commit) | **Workers deployed** to `/mnt/a/AIM/_PROGRAM`: 22 files plus a fresh `.env`, replacing 2026-09-10 scripts, so Phases 3-4 and step 5.3a now run on the server. Deploy target resolution fixed to read `${VAR}` references through `python-dotenv`; 162 pytest green |
