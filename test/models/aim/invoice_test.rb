@@ -5,7 +5,7 @@ require 'test_helper'
 module Aim
   class InvoiceTest < ActiveSupport::TestCase
     def build(**attributes)
-      Aim::Invoice.new(batch_id: "4601_#{SecureRandom.hex(4)}", state: 'ai_queue', **attributes)
+      Aim::Invoice.new(batch_id: "4601_#{SecureRandom.hex(4)}", state: 'ai_queue', actor: 'watcher', **attributes)
     end
 
     test 'reads its table from the aim schema' do

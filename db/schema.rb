@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_100100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_110000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -56,6 +56,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_100100) do
   create_table "active_storage_variant_records", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
+  end
+
+  create_table "aim.invoice_events", force: :cascade do |t|
+    t.string "action", limit: 50, null: false
+    t.string "actor", null: false
+    t.datetime "created_at", null: false
+    t.string "from_state", limit: 50
+    t.bigint "invoice_id", null: false
+    t.text "note"
+    t.string "to_state", limit: 50
+    t.index ["invoice_id", "created_at"], name: "index_aim_invoice_events_on_invoice_id_and_created_at"
   end
 
   create_table "aim.invoices", force: :cascade do |t|

@@ -1670,6 +1670,20 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     and in `table_name`. Nothing AIM creates goes in `dbo`.
   - **The schema is created by its own first migration**, whose `down`
     drops it, so up-and-down stays clean.
+  - **No database foreign keys on `aim` tables.** Found in 5.3: the
+    adapter's `foreign_keys` builds its definition from the bare table names
+    (`identifier.object`, `PKTABLE_NAME`), so the dump reads
+    `add_foreign_key "invoice_events", "invoices"`. That `schema.rb` fails
+    to load -- *Cannot find the object "invoice_events"* -- which breaks
+    every test database build, for every team and CI. The model holds the
+    link instead (`belongs_to`, `restrict_with_exception`). Fixing the
+    adapter would be a shared initializer; not worth it for one link.
+  - **Scratch databases use `RAILS_ENV=test`** with `PAPERBOY_TEST_DATABASE`
+    set to the scratch name. See 5.2 for what `development` does instead.
+
+  `test/lib/aim/schema_conventions_test.rb` enforces the first two rules
+  against `db/schema.rb`: a foreign key naming a table the file never
+  creates, or an index name with a dot, fails the build.
 
   **Worth knowing if a second database is ever needed:** Rails 8.1's
   transactional fixtures pin every registered connection pool for every
@@ -1718,10 +1732,32 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
   - `Subtotal` and `SalesTax` are not columns. They are still an open
     question, and adding a nullable column later is cheap.
 
-- [ ] **5.3 Migration: `aim.invoice_events`.** Append-only history. Who did
+- [x] **5.3 Migration: `aim.invoice_events`.** Append-only history. Who did
   what, when, from which state to which. This is the audit trail the
   pipeline has never had.
   *Test:* every state transition writes exactly one event.
+
+  Done 2026-09-22. `aim.invoice_events` (`invoice_id`, `action`,
+  `from_state`, `to_state`, `actor`, `note`, `created_at` only) and
+  `Aim::InvoiceEvent`, which is read-only once written. Worth carrying:
+
+  - **The event is written by `Aim::Invoice` itself**, in an `after_save`
+    inside the same transaction, whenever `state` changes -- including the
+    first state on create (`from_state` nil). So any path that changes state
+    through the model writes exactly one event, and a failed event write
+    rolls the state change back (tested).
+  - **The caller names the actor on every change** (`invoice.update!(state:
+    ..., actor: ...)`); a state change without one is invalid, and `actor`
+    is cleared after each save so the next change cannot inherit it.
+    Deliberately not read from `Current.user`: the workers have no session.
+  - **The workers bypass all of this.** They write SQL, not Rails, so in 5.6
+    each worker must insert its own event row in the same transaction as
+    its state change. The model's guarantee covers Paperboy's side only.
+  - **No database foreign key** -- see the rules under 5.1. An invoice with
+    history cannot be deleted (`restrict_with_exception`); events cannot be
+    edited or deleted at all.
+  - `action` is `transition` for now; claims and assignments can become
+    events of their own when 5.4 or 5.5 needs them.
 
 - [ ] **5.3a Teach the extraction worker the five document types.**
   `01_AI_Extraction_Worker` asks the model for `INVOICE`, `STATEMENT`,
@@ -2079,3 +2115,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-22 | 5.1 | (this commit) | Branch `aim/phase-5-state` cut from `7cfeb98d`; baseline 921 runs, 0 fail, 0 error. Connection shape worked out and the `database.yml` diff proposed to Joshua, not applied. Two blockers found: `aim_invoices` collides with the legacy `Aim_Invoices` in case-insensitive `GSA_Scan`, and `GSAScanCenter` cannot create `AIM_Test` or any table |
 | 2026-09-22 | 5.1 | (this commit) | **5.1 revised by Joshua:** new tables go in the Paperboy database on `GSASQL16`, schema `aim`, as `GSAETL`. Proved in throwaway databases: migrate, dump (`create_schema "aim"`), reload, typed decimal, unique index. Index names must be explicit. No shared config needed; 5.1a dropped; the earlier `database.yml` proposal is withdrawn |
 | 2026-09-22 | 5.2 | (this commit) | Schema `aim` and `aim.invoices` created by two migrations; `Aim::Record` and `Aim::Invoice` added. Up/down proved in a scratch database; `schema.rb` diff additive only. `Paperboy_Test` dropped by a development-env `db:drop` and recreated at once. 931 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-22 | 5.3 | (this commit) | `aim.invoice_events` and `Aim::InvoiceEvent`; every state change through the model writes exactly one event, naming its actor, in the same transaction. No DB foreign key: the adapter dumps it without the schema and the resulting `schema.rb` cannot load; `schema_conventions_test` now guards that. 944 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
