@@ -164,6 +164,11 @@
                   { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:model END -->
+<!-- FIELD:vehicle_assigned_to START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="vehicle_number" data-answer-lookup-form="FleetVehicleGaragingForm" data-answer-lookup-field="vehicle_assigned_to">
+  <%= form.label :vehicle_assigned_to, "Vehicle Assigned to" %>
+            <%= form.text_field :vehicle_assigned_to, class: "form-control field-readonly", readonly: true %>
+          </div>
+<!-- FIELD:vehicle_assigned_to END -->
 <!-- FIELD:is_this_a_take_home_vehicle START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :is_this_a_take_home_vehicle, "Is this a take home vehicle?" %>
             <%= form.select :is_this_a_take_home_vehicle,
@@ -172,11 +177,6 @@
                   { class: "form-control", required: true, data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:is_this_a_take_home_vehicle END -->
-<!-- FIELD:vehicle_assigned_to START --><div class="form-group flex-fill<%= '' %>">
-  <%= form.label :vehicle_assigned_to, "Vehicle Assigned to" %>
-            <%= form.text_field :vehicle_assigned_to, class: "form-control field-readonly", readonly: true %>
-          </div>
-<!-- FIELD:vehicle_assigned_to END -->
         </div>
       </div>
 
