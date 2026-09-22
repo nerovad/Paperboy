@@ -63,6 +63,12 @@ class FleetVehicleGaragingForm < ApplicationRecord
     secondary_location == 'Other' ? other_secondary_location : secondary_location
   end
 
+  # When the vehicle's record last changed. Display only: the form's Last
+  # Updated field looks this up from the fleet list and is never stored.
+  def last_updated
+    fleet_vehicle&.updated_at
+  end
+
   # For inbox queue filtering - returns the form type name
   def form_type
     self.class.name.demodulize.titleize

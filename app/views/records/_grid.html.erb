@@ -128,6 +128,7 @@
     </div>
   </div>
 
-  <%= render 'shared/column_customizer', page: page, columns: columns, employee_column: true %>
+  <%= render 'shared/column_customizer', page: page, columns: columns, employee_column: true,
+                                          form_fields: false %>
   <%= render 'shared/history_modal' if editable %>
 </div>
