@@ -14,35 +14,6 @@ module Dam
       # in a review or deletion workflow and has no business in the library.
       ACTIVE = 0
 
-      # The fields worth carrying over, by their ResourceSpace name, mapped to
-      # the key a Dam::MetadataField uses. Title is handled on its own because
-      # it becomes the asset's title rather than a metadata row.
-      TITLE_FIELD = 'title'
-      FIELDS = {
-        'keywords' => 'keywords', 'subject' => 'subject', 'event' => 'event',
-        'caption' => 'caption', 'credit' => 'credit', 'notes' => 'notes',
-        'country' => 'country', 'person' => 'person', 'date' => 'captured_on',
-        'originalfilename' => 'original_filename'
-      }.freeze
-
-      # What those keys look like on the DAM side. Advanced Search builds its
-      # custom-criteria picker from these rows, so an import into a library
-      # that has never heard of "credit" has to add the field before the value
-      # has anywhere to go — Dam::MetadataAssignment drops values for fields
-      # nobody configured, which is right for a form and wrong for an import.
-      DAM_FIELDS = [
-        { key: 'keywords', label: 'Keywords', field_type: 'text' },
-        { key: 'subject', label: 'Subject', field_type: 'text' },
-        { key: 'event', label: 'Event', field_type: 'text' },
-        { key: 'caption', label: 'Caption', field_type: 'text' },
-        { key: 'credit', label: 'Credit', field_type: 'text' },
-        { key: 'notes', label: 'Notes', field_type: 'text' },
-        { key: 'country', label: 'Country', field_type: 'text' },
-        { key: 'person', label: 'Named person(s)', field_type: 'text' },
-        { key: 'captured_on', label: 'Captured on', field_type: 'date' },
-        { key: 'original_filename', label: 'Original filename', field_type: 'text' }
-      ].freeze
-
       def initialize(client = Client.new)
         @client = client
       end
@@ -51,8 +22,8 @@ module Dam
         @client.query("SELECT COUNT(*) AS n FROM resource WHERE archive = #{ACTIVE}").first['n'].to_i
       end
 
-      # Resources in ref order, a page at a time, so an import of 14,000 does
-      # not hold them all in memory and can be resumed where it stopped.
+      # Resources in ref order, a page at a time, so 14,000 of them are never
+      # held at once.
       def resources(after_ref: 0, limit: 500)
         @client.query(<<~SQL, after_ref, limit)
           SELECT ref, title, resource_type, file_extension, file_size, file_path,
@@ -64,19 +35,35 @@ module Dam
         SQL
       end
 
-      # { resource_ref => { field_key => "value, value" } } for the fields in
-      # FIELDS, plus the title under TITLE_FIELD. Multi-value fields (keywords
-      # and the like) come back joined, because that is how the DAM stores a
-      # metadata value and how its filters read one.
+      # Every field that holds a value on at least one live resource, whatever
+      # it is called. Fields nobody ever filled in are left behind: an empty
+      # column on the Advanced Search picker helps nobody.
+      def fields_in_use
+        @client.query(<<~SQL)
+          SELECT f.ref, f.name, f.title, f.type, COUNT(DISTINCT rn.resource) AS resources
+          FROM resource_type_field f
+          JOIN node n ON n.resource_type_field = f.ref
+          JOIN resource_node rn ON rn.node = n.ref
+          JOIN resource r ON r.ref = rn.resource AND r.archive = #{ACTIVE}
+          WHERE n.name <> ''
+          GROUP BY f.ref, f.name, f.title, f.type
+          ORDER BY f.ref
+        SQL
+      end
+
+      # { resource_ref => { field_name => "value, value" } }, every field.
+      # Multi-value fields (keywords and the like) come back joined, because
+      # that is how the DAM stores a metadata value and how its filters read
+      # one.
       def metadata_for(refs)
         return {} if refs.blank?
 
-        rows = @client.query(<<~SQL, refs, [TITLE_FIELD, *FIELDS.keys])
+        rows = @client.query(<<~SQL, refs)
           SELECT rn.resource AS ref, f.name AS field, n.name AS value
           FROM resource_node rn
           JOIN node n ON n.ref = rn.node
           JOIN resource_type_field f ON f.ref = n.resource_type_field
-          WHERE rn.resource IN (%s) AND f.name IN (%s) AND n.name <> ''
+          WHERE rn.resource IN (%s) AND n.name <> ''
           ORDER BY rn.resource, f.ref, n.order_by
         SQL
 
@@ -87,21 +74,21 @@ module Dam
         collected.transform_values { |fields| fields.transform_values { |values| values.uniq.join(', ') } }
       end
 
-      # { resource_ref => [collection name, ...] }, for rebuilding the
-      # groupings people already curated.
-      def collections_for(refs)
-        return {} if refs.blank?
-
-        rows = @client.query(<<~SQL, refs)
-          SELECT cr.resource AS ref, c.name AS name
+      # Every collection with the live resources in it, in the order people
+      # arranged them, and the collection it sits inside.
+      def collections
+        members = @client.query(<<~SQL).group_by { |row| row['collection'].to_i }
+          SELECT cr.collection, cr.resource
           FROM collection_resource cr
-          JOIN collection c ON c.ref = cr.collection
-          WHERE cr.resource IN (%s) AND c.name <> ''
-          ORDER BY c.name
+          JOIN resource r ON r.ref = cr.resource AND r.archive = #{ACTIVE}
+          ORDER BY cr.collection, cr.sortorder, cr.resource
         SQL
 
-        rows.group_by { |row| row['ref'].to_i }
-            .transform_values { |grouped| grouped.map { |row| row['name'].to_s }.uniq }
+        @client.query('SELECT ref, name, description, parent FROM collection ORDER BY ref').map do |row|
+          { 'ref' => row['ref'].to_i, 'name' => row['name'].to_s, 'description' => row['description'].to_s,
+            'parent' => row['parent'].presence&.to_i,
+            'resources' => members.fetch(row['ref'].to_i, []).map { |member| member['resource'].to_i } }
+        end
       end
     end
   end

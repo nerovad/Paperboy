@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_21_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_100000) do
   create_table "Employee_Groups", force: :cascade do |t|
     t.datetime "Assigned_At", precision: nil, default: -> { "getdate()" }
     t.integer "Assigned_By"
@@ -293,9 +293,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_120000) do
     t.string "created_by_id"
     t.string "created_by_name"
     t.text "description"
+    t.string "external_ref"
     t.string "name", null: false
     t.bigint "parent_id"
     t.datetime "updated_at", null: false
+    t.index ["external_ref"], name: "index_dam_collections_on_external_ref", unique: true, where: "([external_ref] IS NOT NULL)"
     t.index ["name"], name: "index_dam_collections_on_name"
     t.index ["parent_id"], name: "index_dam_collections_on_parent_id"
   end

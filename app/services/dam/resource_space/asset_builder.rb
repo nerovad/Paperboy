@@ -2,29 +2,34 @@
 
 module Dam
   module ResourceSpace
-    # Turns one ResourceSpace resource into a referenced asset: its title and
-    # metadata from the catalogue, its original left where it stands, and the
-    # previews it already has adopted rather than rebuilt.
+    # Turns one exported ResourceSpace resource into an asset.
     #
-    # Gives back :adopted or :queued, so the caller can tell how much work the
-    # import saved — and so the assets with nothing to adopt are the only ones
-    # that go near ffmpeg.
+    # An original that lived inside ResourceSpace's own filestore exists
+    # nowhere else, so the DAM stores it — once ResourceSpace goes, that copy is
+    # the only one. An original on the graphics share stays where it is and is
+    # referenced. Either way the previews ResourceSpace already made are
+    # adopted rather than rebuilt.
+    #
+    # Gives back :adopted or :queued, so the import can say how much work it
+    # saved, and so only the assets with nothing to adopt go near ffmpeg.
     class AssetBuilder
-      def initialize(asset, row:, path:, metadata:, entry:)
+      Upload = Data.define(:original_filename, :content_type, :size)
+
+      def initialize(asset, record:, original:, store:, previews:)
         @asset = asset
-        @row = row
-        @path = path
-        @metadata = metadata
-        @entry = entry
+        @record = record
+        @original = original
+        @store = store
+        @previews = previews
       end
 
       def call
-        @asset.apply_reference_facts!(@path)
+        @store ? store_original : @asset.apply_reference_facts!(@original)
         @asset.title = title
-        @asset.description = @metadata['caption'].presence || @metadata['notes'].presence
+        @asset.description = @record['description']
         @asset.uploaded_by_name = Import::UPLOADER_NAME
-        @asset.ingested_at ||= parse_time(@row['creation_date'])
-        Dam::MetadataAssignment.apply(@asset, metadata_values)
+        @asset.ingested_at ||= parse_time(@record['created_at'])
+        Dam::MetadataAssignment.apply(@asset, @record['metadata'])
         @asset.save!
 
         attach_previews
@@ -32,26 +37,31 @@ module Dam
 
       private
 
-      # A title from ResourceSpace, else the original's filename — never the
-      # hashed name, which is what made a filename-only import useless.
+      # Attached once. A second import of the same resource finds the file
+      # already there and leaves it, rather than storing a second copy and
+      # purging the first.
+      def store_original
+        @asset.storage_kind = 'stored'
+        @asset.source_path = nil
+        @asset.source_key = nil
+        return if @asset.file.attached?
+
+        filename = @record['original_filename'].presence || @original.basename.to_s
+        content_type = Marcel::MimeType.for(@original, name: filename)
+        @asset.apply_file_facts!(Upload.new(filename, content_type, @original.size))
+        @asset.file.attach(io: File.open(@original, 'rb'), filename: filename, content_type: content_type)
+      end
+
+      # ResourceSpace's title, else the name the file was uploaded under —
+      # never the hashed name its filestore gave it.
       def title
-        @metadata[Catalog::TITLE_FIELD].presence ||
-          @row['title'].presence ||
-          @metadata['original_filename'].presence ||
-          @path.basename(@path.extname).to_s
+        @record['title'].presence || @record['original_filename'].presence ||
+          @original.basename(@original.extname).to_s
       end
 
-      def metadata_values
-        Catalog::FIELDS.values.index_with { |key| @metadata[key] }.compact_blank
-      end
-
-      # :adopted when a proxy came off the share; :queued when there was
-      # nothing to adopt and the builder will make one.
       def attach_previews
-        return queue_build unless @entry
-
-        attach(:proxy, @entry.proxy)
-        attach(:thumbnail, @entry.thumbnail)
+        attach(:proxy, @previews[:proxy])
+        attach(:thumbnail, @previews[:thumbnail])
         return queue_build unless @asset.proxy.attached?
 
         @asset.update_columns(derivative_state: 'ready', derivative_error: nil)
@@ -59,10 +69,9 @@ module Dam
       end
 
       def attach(name, path)
-        return if path.blank?
+        return if path.blank? || @asset.public_send(name).attached?
 
-        @asset.public_send(name).attach(io: File.open(path, 'rb'),
-                                        filename: "#{@asset.id}-#{name}.jpg",
+        @asset.public_send(name).attach(io: File.open(path, 'rb'), filename: "#{@asset.id}-#{name}.jpg",
                                         content_type: 'image/jpeg')
       end
 
