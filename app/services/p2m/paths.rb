@@ -25,9 +25,31 @@ module P2m
     end
 
     def self.shipping_station_store
-      @shipping_station_store ||= Paperboy::FileStore.for(
-        configured_location(SHIPPING_STATION)
-      )
+      @shipping_station_store ||= store_for(SHIPPING_STATION)
+    end
+
+    def self.staging_store
+      @staging_store ||= store_for(STAGING)
+    end
+
+    def self.printers_store
+      @printers_store ||= store_for(PRINTERS)
+    end
+
+    def self.processed_store
+      @processed_store ||= store_for(PROCESSED)
+    end
+
+    def self.destroyed_store
+      @destroyed_store ||= store_for(DESTROYED)
+    end
+
+    def self.temporary_output_store
+      @temporary_output_store ||= store_for(TEMPORARY_OUTPUT)
+    end
+
+    def self.store_for(value)
+      Paperboy::FileStore.for(configured_location(value))
     end
 
     def self.configured_location(value)

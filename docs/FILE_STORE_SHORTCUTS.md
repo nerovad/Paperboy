@@ -85,6 +85,8 @@ messages must never expose passwords.
 - [ ] Convert P2M path constants and services to use file stores.
 - [ ] Convert DataRunner path consumers and generated DSL locations as needed.
 - [x] Update the shipping-station copy and remove operations.
+- [x] Update P2M staging and printer queue copy/remove operations to use the
+      initial file-store interface.
 - [ ] Update batch shipping-station operations.
 - [x] Expand `StartupConfiguration` to validate local paths and shortcuts.
 - [x] Add initial unit tests for local stores and remote-folder paths.
