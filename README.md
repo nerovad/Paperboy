@@ -34,9 +34,19 @@ in the same commit as the change that warrants a version bump:
 
 After a successful CI run, every push to `master` receives an annotated tag such
 as `v2.0.1-21df93052`, where the suffix is the first nine characters of the
-commit SHA. The application displays the same value in the lower-left corner.
+commit SHA. The application displays the same value centered along the bottom
+of every page.
 For packaged deployments that do not include `.git`, set `PAPERBOY_VERSION` to
 the full numeric version and optional commit suffix.
+
+The manual release command also updates `PAPERBOY_VERSION` in the local `.env`
+when that file exists:
+
+```bash
+bin/tag-master-commit
+```
+
+Set `PAPERBOY_ENV_FILE` to update a different environment file.
 
 ---
 

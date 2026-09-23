@@ -33,6 +33,14 @@ class ApplicationHelperTest < ActionView::TestCase
     yield
   end
 
+  test 'displays PAPERBOY_VERSION without the tag prefix' do
+    ENV['PAPERBOY_VERSION'] = '2.1.0-abcdef123'
+
+    assert_equal '2.1.0-abcdef123', paperboy_version
+  ensure
+    ENV.delete('PAPERBOY_VERSION')
+  end
+
   test 'environment badge labels localhost separately' do
     assert_equal(
       { label: 'LOCALHOST', css_class: 'is-localhost' },
