@@ -1,9 +1,10 @@
 # Shortcut-backed file storage
 
+
 ## Activity
 
 Make DataRunner and Print 2 Mail file I/O work with either ordinary local
-directories or directories represented by Windows `.lnk` files that point to
+directories or directories represented by Windows `.lnk`j files that point to
 SMB shares.
 
 The immediate example is:
@@ -90,6 +91,8 @@ messages must never expose passwords.
 - [ ] Update batch shipping-station operations.
 - [x] Expand `StartupConfiguration` to validate local paths and shortcuts.
 - [x] Add initial unit tests for local stores and remote-folder paths.
+- [x] Add structured SMB directory entries and remote downloads.
+- [x] Convert P2M production-file listing and preview to the file store.
 - [ ] Add tests proving P2M never treats a `.lnk` file as a local directory.
 - [ ] Add the agreed SMB variables to the environment documentation/template.
 - [ ] Run RuboCop, Brakeman, bundle-audit, and the test suite.

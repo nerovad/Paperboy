@@ -1,34 +1,30 @@
 # frozen_string_literal: true
 
-require 'pathname'
 require_relative 'paths'
 
 module P2m
   class ProductionFiles
-    ROOT = Paths::PRINTERS_PATH
     SAFE_COMPONENT = %r{\A[^./\\][^/\\]*\z}
 
-    def initialize(root: ROOT)
-      @root = Pathname.new(root).expand_path
+    def initialize(root: nil)
+      @root = root || Paths.printers_store
+      @root = Paperboy::FileStore.for(@root) unless @root.respond_to?(:directories)
     end
 
     def call
       return [] unless root.directory?
 
-      root.children.select(&:directory?).sort_by { |path| path.basename.to_s.downcase }.flat_map do |printer|
+      root.directories.sort_by(&:downcase).flat_map do |printer|
         queues(printer)
       end
     end
 
     def preview(printer:, queue:, filename:)
       [printer, queue, filename].each { |component| validate_component!(component) }
-      file = root.join(printer, queue, filename)
-      raise ArgumentError, 'file not found' unless file.file?
+      name = File.join(printer, queue, filename)
+      raise ArgumentError, 'file not found' unless root.files(File.join(printer, queue)).include?(filename)
 
-      file = file.realpath
-      raise ArgumentError, 'invalid production file path' unless file.to_s.start_with?("#{root.realpath}/")
-
-      file
+      root.download(name)
     end
 
     private
@@ -36,15 +32,15 @@ module P2m
     attr_reader :root
 
     def queues(printer)
-      printer.children.select(&:directory?).sort_by { |path| path.basename.to_s.downcase }.filter_map do |queue|
-        files = queue.children.select(&:file?).sort_by { |path| path.basename.to_s.downcase }
+      root.directories(printer).sort_by(&:downcase).filter_map do |queue|
+        files = root.files(File.join(printer, queue)).sort_by(&:downcase)
         next if files.empty?
 
         {
-          'printer' => printer.basename.to_s,
-          'queue' => queue.basename.to_s,
-          'files' => files.map { |path| path.basename.to_s },
-          'modified_at' => files.map(&:mtime).max
+          'printer' => printer,
+          'queue' => queue,
+          'files' => files,
+          'modified_at' => files.filter_map { |name| root.mtime(File.join(printer, queue, name)) }.max
         }
       end
     end

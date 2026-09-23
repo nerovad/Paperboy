@@ -3,6 +3,7 @@
 require 'fileutils'
 require 'pathname'
 require 'smb_shortcut'
+require 'tempfile'
 
 module Paperboy
   # Provides a small filesystem-like interface for local directories and
@@ -36,6 +37,21 @@ module Paperboy
         root.children
       end
 
+      def entries(prefix = nil)
+        base = prefix ? child(prefix) : root
+        base.children.map do |path|
+          { name: path.basename.to_s, directory: path.directory? }
+        end
+      end
+
+      def directories(prefix = nil)
+        entries(prefix).select { |entry| entry.fetch(:directory) }.map { |entry| entry.fetch(:name) }
+      end
+
+      def files(prefix = nil)
+        entries(prefix).reject { |entry| entry.fetch(:directory) }.map { |entry| entry.fetch(:name) }
+      end
+
       def exist?(name)
         child(name).file?
       end
@@ -58,6 +74,14 @@ module Paperboy
 
         FileUtils.rm_f(path)
         true
+      end
+
+      def download(name)
+        child(name)
+      end
+
+      def mtime(name)
+        child(name).mtime
       end
 
       private
@@ -95,6 +119,19 @@ module Paperboy
         remote_prefix.empty? ? share.files : share.list(remote_prefix)
       end
 
+      def entries(prefix = nil)
+        path = prefix ? remote_name(prefix) : remote_prefix
+        share.entries(path.empty? ? nil : path)
+      end
+
+      def directories(prefix = nil)
+        entries(prefix).select { |entry| entry.fetch(:directory) }.map { |entry| entry.fetch(:name) }
+      end
+
+      def files(prefix = nil)
+        entries(prefix).reject { |entry| entry.fetch(:directory) }.map { |entry| entry.fetch(:name) }
+      end
+
       def exist?(name)
         share.exist?(remote_name(name))
       end
@@ -122,6 +159,17 @@ module Paperboy
 
         share.delete(remote_name(name))
         true
+      end
+
+      def download(name)
+        temporary = Tempfile.new(['paperboy-smb-file', File.extname(name.to_s)])
+        temporary.close
+        share.get(remote_name(name), temporary.path)
+        temporary.path
+      end
+
+      def mtime(_name)
+        nil
       end
 
       private

@@ -14,6 +14,7 @@ class FileStoreTest < Minitest::Test
       store.copy(source, 'nested/output.txt')
 
       assert store.exist?('nested/output.txt')
+      assert_equal ['nested'], store.directories
       assert store.remove('nested/output.txt')
       refute store.exist?('nested/output.txt')
     end
@@ -59,6 +60,22 @@ class FileStoreTest < Minitest::Test
     end
   end
 
+  def test_shortcut_store_exposes_structured_remote_entries
+    Dir.mktmpdir do |directory|
+      shortcut_path = Pathname.new(directory).join('outputs.lnk').tap { |path| path.write('shortcut') }
+      share = RecordingShare.new
+      store = Paperboy::FileStore.for(
+        shortcut_path,
+        env: { 'SMB_USERNAME' => 'user', 'SMB_PASSWORD' => 'password' },
+        shortcut_class: NestedFakeShortcut,
+        share_class: ->(**_options) { share }
+      )
+
+      assert_equal ['Printer One'], store.directories
+      assert_equal ['finished.pdf'], store.files
+    end
+  end
+
   class FakeShortcut
     def initialize(_path); end
 
@@ -84,6 +101,10 @@ class FileStoreTest < Minitest::Test
 
     def put(source, target)
       calls << [:put, source, target]
+    end
+
+    def entries(_path = nil)
+      [{ name: 'Printer One', directory: true }, { name: 'finished.pdf', directory: false }]
     end
   end
 
