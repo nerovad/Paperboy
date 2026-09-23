@@ -2152,6 +2152,48 @@ upload in Paperboy   -> the person or SHARED queue the uploader picks
   screen, not by trusting the text. Still to ask Joshua how the folders are
   named.
 
+**The GSA lookups, read 2026-09-23** (`\\gsa-scan02\aim\_Lookups\GSA`,
+`/mnt/a/AIM/_Lookups/GSA`). Ten CSVs, about 790 rows, in three layouts: a
+standard template (Vendor, AIM/Fiscal identifiers, Fund, Department,
+Encumbrance Doc, Budget Unit, Object, Activity, Function, Program, Phase,
+Task, Approver Name, often Fusion Queue and Keywords); an older one keyed on
+BDO/PO # with a Fusion Queue column (4703, 4705, Housekeeping); and
+Facilities, with only Vendor, Fund, Object, Program. What the data says about
+the rules table:
+
+- **Files are not BUs.** Business Support covers six (4601, 4621, 4641,
+  4643, 4645, 4661); 4703 covers four; Fleet and Housekeeping two each. A
+  rule carries its own BU; the file it came from is only provenance.
+- **Queue ids are in most files but not all.** 62 and 75 (4703/4705), 92,
+  119, 123, 198, 271, 300, 304 (Business Support), 313, 334, 30
+  (Housekeeping), 254 (Parks). None in 4601, 4621, Fleet or Facilities --
+  those route by something else, or not at all. Resolving an id to a person
+  or queue needs Fusion's own tables.
+- **One vendor, several rules, and the invoice decides which.** Housekeeping
+  lists Vestis three times with a different customer number each
+  (6063764, 6063751, ...) and a different BU or BDO. The AI already
+  extracts `customer_number`, so **a rule may match vendor plus customer
+  number**, and that is more specific than vendor alone.
+- **Sometimes the invoice cannot decide.** 4703 lists 78 vendors more than
+  once, typically the same coding on different BDO lines (`..._1`, `..._2`)
+  with nothing on the invoice to tell them apart. That is a person's choice;
+  the rules table offers the candidates to the router rather than picking.
+- **Keywords are mostly notes to a human**, not match keys: invoice-format
+  reminders, "both shredding and storage", sometimes a customer number or a
+  vendor code. Import the ones that are customer numbers as matches; keep the
+  rest as a note shown to the reviewer.
+- **Vendor codes (`VC000...`) are scattered** -- a Vendor Code column in
+  Housekeeping, the *Fund* column in Fleet and Parks, the Keywords in
+  Business Support. They are Fiscal's vendor ids, and Phase 6's vendor master
+  wants them.
+- **The import must validate, not guess.** Found so far: a person's name as
+  a queue id (`DAVE`, four Security rows, beside a "Notes -Final Approver"
+  column); a shifted row in Housekeeping where a quoted vendor name pushed
+  `INC."` into the queue column and `30` into the BU; eleven blank vendor
+  names in Parks; object codes with their description appended
+  (`2192 TEMP HELP`); duplicated columns. Each becomes a reported row, never
+  a silent guess.
+
 **Needed from Joshua before 8b.1:**
 
 1. The old lookup file, or where it lives -- a few rows show the columns.
