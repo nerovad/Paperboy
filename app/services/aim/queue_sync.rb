@@ -65,6 +65,11 @@ module Aim
                           folder_counts: {}, row_counts: {}, unavailable: [])
 
       SYNCED_STATES.each { |state| sync_state(state, report) }
+      # No queue reachable means AIM is not set up on this host -- a teammate's
+      # machine, a server AIM does not run on. Touch nothing, not even the
+      # database, which may not have the aim schema at all.
+      return report if report.folder_counts.empty?
+
       report.missing = missing_folders(report)
       report.row_counts = Aim::Invoice.group(:state).count.symbolize_keys
 

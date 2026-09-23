@@ -2084,6 +2084,18 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     10 controller tests (8 red without the wiring), 7 model tests, 1 sync
     test.
 
+  - [x] **5.7b(2) The sync runs itself.** 2026-09-23. `Aim::QueueSyncJob`,
+    every ten minutes, in `config/recurring.yml` (under the standing approval
+    for AIM's own triggers: one added block, in `production`, which staging
+    and development inherit). It catches what recording at every move cannot:
+    a folder dragged by hand, a database down for a minute, a worker that
+    crashed between moving a file and writing its row. Logs what it changed,
+    and warns if folders and rows still disagree afterwards.
+    **On a host where AIM is not configured it does nothing at all** -- not
+    even a database query, since that host's database may have no `aim`
+    schema. That matters because the schedule runs wherever Solid Queue
+    does, teammates' machines included.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
@@ -2901,3 +2913,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | 8b.0 | (this commit) | The watch tree routes: named folder = that person, `SHARED` = the BU's shared queue, loose files at the BU root ignored before the unsupported-file rename, no HIGH PRIORITY. README per BU folder. `AIM_SHARED_FOLDER_NAME` on LockBox `aim-config` (`891179b`, local). 209 pytest green (17 of 18 new red without the change) |
 | 2026-09-23 | 5.7a | (this commit) | Workers write the invoice's facts to the row with each move: BU, submitter, owner, type, vendor, numbers, total, date. Unknown facts never overwrite known ones; ill-fitting values dropped; column names only from a whitelist. SQL worker's duplicate branch now records its archive. 227 pytest (18 new, red without the change), 1004 runs, 0 fail, 0 error |
 | 2026-09-23 | 5.7b(1) | (this commit) | Every move made on the queue screens recorded on the row in the reviewer's name; claims mirrored onto the row; Unknown-typed invoices refused before they reach a user; nested rejected folders synced correctly. 1022 runs, 0 fail, 0 error, 227 pytest, scoped rubocop clean |
+| 2026-09-23 | 5.7b(2) | (this commit) | `Aim::QueueSyncJob` every ten minutes via `config/recurring.yml`; a no-op, database included, where AIM is not configured. 1026 runs, 0 fail, 0 error |
