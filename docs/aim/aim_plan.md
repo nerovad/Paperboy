@@ -2234,6 +2234,45 @@ the closest thing to a spec for the old routing:
   HELP` is not an object code. They live in a database `GSAETL` cannot yet
   open.
 
+**Answers and findings, 2026-09-23 (afternoon).**
+
+- **Fusion users map to Paperboy people by employee number.** Fusion's
+  `UserName` is the employee number (`139155`), the same number behind the
+  `ENT\...` Windows logins and GSABSS `Employees.id`. Email does not match at
+  all (0 of 11); employee number matches 9 of 11. The import keys on it.
+  Every GSA match's `unit` is a BU from the lookups, which also confirms 9.1.
+- **Queue corrections from Joshua:** `75 -> 335` (Christopher Stafford).
+  Two problems to settle before import, both raised with Joshua:
+  - **335 Stafford and 334 Salgado are not in GSABSS `Employees`**
+    (employee numbers 139155 and 121550). Paperboy's sign-in requires an
+    `Employees` row, so as things stand neither could log in to see an
+    invoice routed to them.
+  - **198 Charles Dixon is now in another agency** (CSSV, unit 2251), and his
+    Fusion account is disabled. Joshua wrote "Charles should be changed to
+    198"; 198 already is Charles, so what 119 and 123 become is still open.
+- **Team distribution is not used** -- everything is assigned to a specific
+  queue. Out of scope.
+- **The valid coding values are in `bs_purchase_orders` on `gsa-sql22`**, an
+  older database. Joshua wants them brought into AIM's own tables, next to
+  everything else, where they are easier to manage. Read access for `GSAETL`
+  requested; design the table once its shape is visible. Open: is
+  `bs_purchase_orders` still maintained by someone? If so AIM keeps a synced
+  copy; if not, AIM's copy becomes the one people edit.
+
+**Reminders instead of Fusion's aging -- Joshua, 2026-09-23.** Start with
+email:
+
+- **Daily**, when someone has new invoices to process.
+- **Weekly**, for invoices that have gone stale in their queue.
+- **Monthly**, always -- it cannot be turned off.
+- Each person may turn the daily and weekly emails off; never the monthly.
+
+Paperboy already sends a daily digest (`FormSubscriptionDigestJob`, 7am in
+`config/recurring.yml`), and stores per-user preferences (`UserSetting`), so
+this follows existing patterns and uses the standing approval for jobs and
+schedules. Open: what counts as stale -- days since it arrived, or since
+anyone touched it, and how many?
+
 **Needed from Joshua before 8b.1:**
 
 1. The old lookup file, or where it lives -- a few rows show the columns.
