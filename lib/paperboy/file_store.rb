@@ -46,6 +46,10 @@ module Paperboy
         FileUtils.cp(Pathname.new(source), target, preserve: true)
       end
 
+      def mkdir(name = nil)
+        name ? child(name).mkpath : root.mkpath
+      end
+
       # A removal is an action that reports whether a file was removed.
       # rubocop:disable-next Naming/PredicateMethod
       def remove(name)
@@ -88,7 +92,7 @@ module Paperboy
       end
 
       def list
-        share.files
+        remote_prefix.empty? ? share.files : share.list(remote_prefix)
       end
 
       def exist?(name)
@@ -96,7 +100,20 @@ module Paperboy
       end
 
       def copy(source, name)
+        mkdir(File.dirname(name)) unless File.dirname(name) == '.'
         share.put(Pathname.new(source).to_s, remote_name(name))
+      end
+
+      def mkdir(name = nil)
+        return share.mkdir(remote_prefix) if name.nil? && !remote_prefix.empty?
+        return true if name.nil?
+
+        parts = name.to_s.tr('/', '\\').split('\\').reject(&:empty?)
+        parts.each_index do |index|
+          path = parts.first(index + 1).join('\\')
+          share.mkdir(remote_name(path)) unless exist_directory?(remote_name(path))
+        end
+        true
       end
 
       # rubocop:disable-next Naming/PredicateMethod
@@ -130,9 +147,21 @@ module Paperboy
         relative = Pathname.new(name.to_s)
         raise ArgumentError, 'file name must be relative' if relative.absolute? || relative.each_filename.include?('..')
 
-        folder = shortcut.target[UNC_TARGET, 3].to_s
-        parts = [folder, relative.to_s].reject(&:empty?)
+        parts = [remote_prefix, relative.to_s].reject(&:empty?)
         parts.join('\\').tr('/', '\\')
+      end
+
+      def remote_prefix
+        return shortcut.folder.tr('/', '\\') if shortcut.respond_to?(:folder)
+
+        shortcut.target[UNC_TARGET, 3].to_s.tr('/', '\\')
+      end
+
+      def exist_directory?(name)
+        share.list(name)
+        true
+      rescue SmbShortcut::CommandError
+        false
       end
 
       def instantiate(factory, *args, **options)

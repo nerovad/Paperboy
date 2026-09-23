@@ -30,6 +30,7 @@ module P2m
         target = File.join(printer, queue, name)
         next if destination.exist?(target)
 
+        destination.mkdir(File.join(printer, queue))
         destination.copy(source, target)
       end
       selected.length
