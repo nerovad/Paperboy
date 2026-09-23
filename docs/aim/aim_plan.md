@@ -2069,17 +2069,20 @@ assertion.
 - [ ] **9.1 BU access model.** Which users can see which Budget Unit queue,
   through Paperboy's existing groups and ACL. Follows the
   `AuthorizedApprover` pattern rather than reusing that table.
-- [ ] **9.2 The user queues -- two of them.** Decided with Joshua
-  2026-09-23: an invoice asks a person to **approve** a payment; a statement,
-  credit, coupon or memo asks them to **acknowledge** that something
-  happened. Two states, `user_approval` and `user_acknowledgement`, chosen by
-  document type -- which is what Decisions means by "type dictates terminal
-  behaviour only". Deliberately **not** two folders: 5.7 stops reading
-  folders for state, so a second folder would be a distinction built into the
-  filesystem weeks before the filesystem stops carrying it. One folder holds
-  the files; the row says which queue.
+- [ ] **9.2 One user queue, with the document type on the face of it.**
+  Decided with Joshua 2026-09-23, after first considering a second queue for
+  the types that are acknowledged rather than approved: *"we don't need to
+  have 2 types of queues, maybe just a clear tagging of the type of
+  document."* So one `user_approval` state, and the screen shows what kind of
+  document each row is -- an Invoice to approve, a Statement or Credit to
+  note -- with the list filterable by type.
 
-- [ ] **9.2a The original `user_approval` queue problem.** It has never worked: the folder
+  This keeps the state machine as 5.4 built it: no new state, no second
+  folder, and the type stays what Decisions says it is -- something that
+  dictates terminal behaviour, not a separate pipeline. `Unknown` still
+  cannot reach the queue at all, since a row with no type has no tag to show.
+
+- [ ] **9.2a The queue has never worked.** It has never worked: the folder
   does not exist on the share, `user_approval` is missing from
   `BACKEND_QUEUES` so the screen redirects, and no worker reads the
   directory. See audit H1.
