@@ -89,6 +89,7 @@ messages must never expose passwords.
 - [x] Update P2M staging and printer queue copy/remove operations to use the
       initial file-store interface.
 - [ ] Update batch shipping-station operations.
+- [x] Convert P2M Data Reset to recursively list and clear local or SMB stores.
 - [x] Expand `StartupConfiguration` to validate local paths and shortcuts.
 - [x] Add initial unit tests for local stores and remote-folder paths.
 - [x] Add structured SMB directory entries and remote downloads.

@@ -29,6 +29,10 @@ module Paperboy
         root.directory?
       end
 
+      def path
+        root
+      end
+
       def readable?
         root.directory? && root.readable?
       end
@@ -76,6 +80,13 @@ module Paperboy
         true
       end
 
+      def clear(prefix = nil)
+        base = prefix ? child(prefix) : root
+        base.children.each do |path|
+          path.directory? ? FileUtils.rm_rf(path) : FileUtils.rm_f(path)
+        end
+      end
+
       def download(name)
         child(name)
       end
@@ -96,6 +107,7 @@ module Paperboy
       end
     end
 
+    # rubocop:disable-next Metrics/ClassLength
     class Smb
       UNC_TARGET = /\A\\\\([^\\]+)\\([^\\]+)(?:\\(.*))?\z/
 
@@ -109,6 +121,10 @@ module Paperboy
 
       def directory?
         shortcut_path.file?
+      end
+
+      def path
+        shortcut_path
       end
 
       def readable?
@@ -159,6 +175,14 @@ module Paperboy
 
         share.delete(remote_name(name))
         true
+      end
+
+      def clear(prefix = nil)
+        entries(prefix).each do |entry|
+          name = [prefix, entry.fetch(:name)].compact.join('/')
+          entry.fetch(:directory) ? clear(name) : remove(name)
+        end
+        share.rmdir(remote_name(prefix)) if prefix
       end
 
       def download(name)
