@@ -1969,6 +1969,32 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
   2. **The deploy.** `bin/deploy-aim-workers --apply`, then restart the
      workers. Until then the fleet runs the 5.3a code and writes no rows.
 
+- [x] **5.6a What the first night of recording found.** 2026-09-23, after
+  19 invoices ran through the deployed workers overnight.
+
+  - **It works.** 53 events, sequences right, actors named, timestamps in
+    UTC: spooled by the watcher, routed by the AI worker, 15 archived by the
+    SQL worker after reaching SQL, 4 sent to vendor review. GSA-SCAN02 can
+    reach `GSASQL16`, which was the open risk.
+  - **`_USER_APPROVAL` did not exist on the share.** Rails moves a corrected
+    invoice into it and nothing had ever created it, because no worker reads
+    it and `MANAGED_DIRECTORIES` therefore never listed it -- so the move
+    failed on a share the workers otherwise keep in order. Added, with
+    `_SPOOL_STATE`, which had the same gap (noted in Open Questions on
+    2026-09-15 and now closed). **Needs a deploy to take effect.**
+  - **The dashboard's dual-run note had a bug of my own making.** It showed
+    the row count only when the queue had *some* rows, so Low Confidence --
+    5 folders, no rows at all, the starkest disagreement -- said nothing.
+    A missing key now counts as zero.
+  - **Nine folders predated the wiring** (processed at 12:20, before the
+    deploy) and so had no rows. `Aim::QueueSync` adopted them; folders and
+    rows now agree exactly, which is 5.5's test passing against the real
+    share rather than a temp directory.
+  - **Counting shortcuts is not counting invoices.** `_ACTION_NEEDED` looked
+    like it held two items; both were `.lnk` files. The screens were right
+    all along -- they count directories -- but any tool of ours that counts
+    entries has to do the same.
+
 - [ ] **5.7 Retire folder-as-state.** Remove `.claim.json`, remove the
   status-by-location inference, remove the Windows shortcuts.
   *Test:* the suite passes with no code reading a folder to learn status.

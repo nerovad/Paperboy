@@ -57,3 +57,23 @@ def test_bootstrap_is_what_creates_the_directories(fake_environment, monkeypatch
     assert fake_environment.exists(), "bootstrap() should create the queue tree"
     for directory in pipeline_common.MANAGED_DIRECTORIES:
         assert os.path.isdir(directory), f"bootstrap() did not create {directory}"
+
+
+def test_every_queue_the_pipeline_knows_about_is_created(fake_environment, monkeypatch):
+    """Found 2026-09-23: _USER_APPROVAL did not exist on the share at all.
+
+    Rails moves a corrected invoice into it, and nothing had ever created it,
+    so the move failed on a share the workers otherwise keep in order. The
+    spool-state folder was the same: read by the watcher, managed by nobody.
+    A queue the pipeline knows about is a queue it creates.
+    """
+    import pipeline_common
+
+    monkeypatch.setattr(pipeline_common, "setup_shortcuts", lambda: None)
+    monkeypatch.setattr(pipeline_common, "get_vendor_aliases", lambda: None)
+    pipeline_common.bootstrap()
+
+    assert os.path.isdir(pipeline_common.USER_APPROVAL_DIR)
+    assert os.path.isdir(pipeline_common.SPOOL_STATE_DIR)
+    assert pipeline_common.USER_APPROVAL_DIR in pipeline_common.MANAGED_DIRECTORIES
+    assert pipeline_common.SPOOL_STATE_DIR in pipeline_common.MANAGED_DIRECTORIES

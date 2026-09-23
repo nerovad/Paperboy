@@ -5,7 +5,8 @@ import json
 import hashlib
 from datetime import datetime
 from PIL import Image
-from pipeline_common import BASE_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR, is_file_stable, bootstrap, env
+from pipeline_common import (BASE_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR, is_file_stable, bootstrap, env,
+                             SPOOL_STATE_DIR as pipeline_spool_state_dir)
 from state_store import record_state
 
 ACTOR = "00_ingestion_watcher"
@@ -13,7 +14,7 @@ ACTOR = "00_ingestion_watcher"
 # Wait time to ensure file is fully copied over network
 STABLE_WAIT_TIME = 2
 SPOOL_RETRY_SECONDS = 900
-SPOOL_STATE_DIR = env('AIM_SPOOL_STATE_DIR')
+SPOOL_STATE_DIR = pipeline_spool_state_dir
 
 def safe_folder_name(value):
     return "".join(c for c in value if c.isalnum() or c in (" ", "-", "_", ".", "#", "$", "(", ")")).strip()[:140]

@@ -94,6 +94,12 @@ DELETED_DIR = env('AIM_DELETED_DIR')
 # New AI Queue Dir (for Watcher -> Worker spooling)
 AI_QUEUE_DIR = env('AIM_AI_QUEUE_DIR')
 ERROR_QUEUE_DIR = env('AIM_ERROR_QUEUE_DIR')
+# Rails moves a corrected invoice here, and the watcher keeps its spool
+# markers here. No worker writes either, which is why neither was managed --
+# and _USER_APPROVAL did not exist on the share at all, so sending an invoice
+# to it failed. A queue this pipeline knows about is a queue it creates.
+USER_APPROVAL_DIR = env('AIM_USER_APPROVAL_DIR')
+SPOOL_STATE_DIR = env('AIM_SPOOL_STATE_DIR')
 
 # The worker install folder on the AIM share. Bare filenames in the
 # configuration resolve against this, not against wherever this file happens
@@ -157,7 +163,8 @@ MANAGED_DIRECTORIES = [
     SQL_FAILED_DIR, SQL_QUEUE_DIR, BATCH_SPLIT_DIR, READY_TO_SPLIT_DIR,
     VENDOR_REVIEW_DIR, READY_TO_LEARN_DIR, LOW_CONFIDENCE_REVIEW_DIR,
     REPROCESS_QUEUE_DIR, TEMP_DIR, ARCHIVE_DIR, READY_TO_DELETE_DIR,
-    DELETED_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR,
+    DELETED_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR, USER_APPROVAL_DIR,
+    SPOOL_STATE_DIR,
 ]
 
 
