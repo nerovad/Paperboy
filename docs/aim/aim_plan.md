@@ -2320,8 +2320,11 @@ date" and useless now. Not imported.** BU defaults are built fresh.
 - **Amount thresholds are routing, applied after it.** Per BU, "totals over
   $X go to person Y". Resolved as a second pass: find the normal
   destination (vendor rule, else BU default), then the BU's thresholds
-  replace it. Open: does a threshold also override an explicit folder or
-  upload choice, or respect it and flag it?
+  replace it. **Joshua, 2026-09-23: above the threshold an invoice goes to
+  the BU's threshold queue automatically** -- threshold and target set per
+  BU. Read as overriding every other route, explicit folder and upload
+  choices included, since that is what "automatically" is for; the history
+  records both where it would have gone and why it did not.
 - **Split coding is needed.** Joshua has seen invoices that must be charged
   to more than one account but does not know how it is done today. Proposed
   shape: an invoice has one or more **coding lines**, each an amount or
@@ -2329,9 +2332,11 @@ date" and useless now. Not imported.** BU defaults are built fresh.
   to the total before approval. Most invoices have one line. A rule may
   supply a default split for vendors that always split the same way; a user
   edits the lines at approval; every change is an event. `SPLIT` in Fusion's
-  function list is probably the marker used today. **Open, and it decides
-  Phase 11: how does Fiscal receive a split invoice now, and how is it
-  recorded in Fusion?** Ask whoever does it.
+  function list is probably the marker used today. Joshua: a split assigns
+  dollar amounts to **more than one BU**, and how it is done today is not
+  known here. **Blocked on Fiscal**, who Joshua will involve: how a split
+  invoice reaches them now, and how it is recorded. It decides the coding
+  lines' shape and Phase 11's export.
 
 **Reminders instead of Fusion's aging -- Joshua, 2026-09-23.** Start with
 email:
