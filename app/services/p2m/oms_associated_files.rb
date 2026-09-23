@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'pathname'
+require_relative 'paths'
 
 module P2m
   class OmsAssociatedFiles

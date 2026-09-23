@@ -14,7 +14,7 @@ class StartupConfigurationTest < ActiveSupport::TestCase
   test 'reports missing configuration values' do
     warnings = StartupConfiguration.warnings(env: {})
 
-    assert_equal 8, warnings.length
+    assert_equal 14, warnings.length
     assert_includes warnings, { key: 'AIM_ROOT', value: '(undefined)', error: 'is not defined.' }
     assert_includes warnings, { key: 'GSABSS_ROOT', value: '(undefined)', error: 'is not defined.' }
     assert_includes warnings, { key: 'GSABSS_HOST', value: '(undefined)', error: 'is not defined.' }
@@ -29,6 +29,9 @@ class StartupConfigurationTest < ActiveSupport::TestCase
     env = {
       'AIM_ROOT' => '/aim', 'GSABSS_ROOT' => '/gsabss',
       'P2M_ROOT' => '/p2m', 'P2M_DATARUNNER_ROOT' => '/datarunner',
+      'P2M_SHIPPING_STATION' => '00_ShippingStation', 'P2M_STAGING' => '01_Staging',
+      'P2M_TEMPORARY_OUTPUT' => '02_TemporaryOutput', 'P2M_PROCESSED' => '03_Processed',
+      'P2M_DESTROYED' => '04_Destroyed', 'P2M_PRINTERS' => '99_Printers',
       'BILLING_ARCHIVE_ROOT' => '/billing', 'DATARUNNER_INBOX' => '/inbox',
       'GSABSS_HOST' => 'sql.example',
       'GSABSS_DATABASE' => 'GSABSS'
@@ -41,7 +44,7 @@ class StartupConfigurationTest < ActiveSupport::TestCase
       database_checker: -> { false }
     )
 
-    assert_equal 8, warnings.length
+    assert_equal 14, warnings.length
     assert_includes warnings, { key: 'AIM_ROOT', value: '/aim', error: 'is not reachable.' }
     assert_includes warnings, { key: 'GSABSS_HOST', value: 'sql.example', error: 'is not reachable.' }
     assert(warnings.all? { |warning| warning.fetch(:error) == 'is not reachable.' })
@@ -51,6 +54,9 @@ class StartupConfigurationTest < ActiveSupport::TestCase
     env = {
       'AIM_ROOT' => '/aim', 'GSABSS_ROOT' => '/gsabss',
       'P2M_ROOT' => '/p2m', 'P2M_DATARUNNER_ROOT' => '/datarunner',
+      'P2M_SHIPPING_STATION' => '00_ShippingStation', 'P2M_STAGING' => '01_Staging',
+      'P2M_TEMPORARY_OUTPUT' => '02_TemporaryOutput', 'P2M_PROCESSED' => '03_Processed',
+      'P2M_DESTROYED' => '04_Destroyed', 'P2M_PRINTERS' => '99_Printers',
       'BILLING_ARCHIVE_ROOT' => '/billing', 'DATARUNNER_INBOX' => '/inbox',
       'GSABSS_HOST' => 'sql.example',
       'GSABSS_DATABASE' => 'GSABSS'

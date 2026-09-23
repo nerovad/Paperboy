@@ -38,6 +38,17 @@ commit SHA. The application displays the same value in the lower-left corner.
 For packaged deployments that do not include `.git`, set `PAPERBOY_VERSION` to
 the full numeric version and optional commit suffix.
 
+To create the same tag manually after updating `VERSION`, check out the commit
+that should be released and run:
+
+```bash
+bin/tag-master-commit
+```
+
+The script uses `GITHUB_SHA` when CI provides it, otherwise it tags `HEAD`.
+Pass a commit explicitly when needed: `bin/tag-master-commit COMMIT`. It is
+safe to rerun when the tag already exists on the remote.
+
 ---
 
 ## Local development
