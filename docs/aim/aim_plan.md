@@ -2064,6 +2064,53 @@ assertion.
 
 ---
 
+## Phase 8b — Routing And Coding Before The Queue
+
+Raised by Joshua 2026-09-23. **An invoice is not ready for a user until it
+is coded and routed**, and the plan had both in the wrong place: account
+coding sat in Phase 11, after approval, and routing had a column on the row
+(`assigned_to`, `assignment_source`, from 5.2) but nothing to fill it. The
+pipeline order is:
+
+```text
+extract -> normalise vendor -> check duplicates -> code and route -> user queue -> fiscal handoff
+             (Phase 6)          (Phase 7)          (this phase)      (Phase 9)     (Phase 11)
+```
+
+- [ ] **8b.1 The rules table.** One table in SQL, replacing the lookup file
+  PsiGen used. Each rule says *invoices matching this go there, coded thus*:
+  - **matches** a Budget Unit, a vendor, or a vendor within a Budget Unit;
+    the most specific rule wins;
+  - **sends to** a shared BU queue (anyone with that BU sees it), a queue
+    manager (who routes it on to a person), or a named person (only they see
+    it) -- the three uses the old file's queue ids covered;
+  - **codes it** with the chart-of-accounts fields `Aim_Invoices` already
+    carries and nothing fills: `BDO_DO_CT`, `Program_Number`,
+    `Major_Program`, `Fund`, `Object`, `Program`, `Activity`, `Function`,
+    `Phase`, `Department`. Routing and coding share a row because the old
+    file did; split them only if they turn out to vary independently.
+- [ ] **8b.2 Apply the rules before the queue.** Every invoice passing the
+  duplicate check gets its coding and its destination, with
+  `assignment_source = 'rule'`. No match is an explicit outcome, not a
+  silent blank -- which outcome is a question below.
+- [ ] **8b.3 Admin screen for the rules**, with every change to a rule
+  recorded. Assign a whole BU, or one vendor, to a queue or a person.
+- [ ] **8b.4 Queue managers route onward.** A manager reassigning an
+  invoice sets `assignment_source = 'manager'`; the event trail says who.
+
+Supersedes 11.1, which put the coding after approval.
+
+**Needed from Joshua before 8b.1:**
+
+1. The old lookup file, or where it lives -- a few rows show the columns.
+2. What the queue ids meant: which were people, shared queues, managers.
+3. Who maintains the table: Joshua, AIM staff, or Fiscal.
+4. What happens with no match: straight to review, or to the BU's shared
+   queue with the coding blank for the user to fill?
+5. Whether a user may change the coding at approval, as in PsiGen Fusion.
+
+---
+
 ## Phase 9 — User Approval
 
 - [ ] **9.1 BU access model.** Which users can see which Budget Unit queue,
@@ -2141,8 +2188,9 @@ Shape still to be determined with Fiscal. Currently: the invoice reaches
 Docushare, Fiscal assigns check numbers and dates, and a CSV in a fixed
 layout feeds another system. The target is the same flow through Laserfiche.
 
-- [ ] **11.1 Populate the chart-of-accounts columns** from the vendor/BU
-  lookup.
+- [x] ~~**11.1 Populate the chart-of-accounts columns** from the vendor/BU
+  lookup.~~ Moved to Phase 8b on 2026-09-23: coding has to happen before a
+  user approves the invoice, not after.
 - [ ] **11.2 The fiscal export** in the layout Fiscal specifies.
 - [ ] **11.3 Stamp the metadata into the PDF.** Write the invoice's fields as
   custom PDF Info-dictionary keys at handoff, archiving the unstamped original
