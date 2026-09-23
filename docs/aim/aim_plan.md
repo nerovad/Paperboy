@@ -2116,6 +2116,27 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
       before, the review page could not find it at all.
     Claims are still read from `.claim.json`; 5.7c moves them.
 
+  - [ ] **5.7c What 5.7c has to settle first** -- found 2026-09-23, before
+    starting it:
+    - **Two shortcuts are the only way to do their jobs.** Seven `.lnk`
+      files sit in the queues. `MOVE_FOLDERS_HERE_TO_SPLIT` (Batch Split) and
+      `MOVE_FOLDERS_HERE_TO_DELETE` (Action Needed, Low Confidence, Vendor
+      Review) have no equivalent on the screens: there is no action to
+      approve a split or to delete. The plan's "remove the Windows
+      shortcuts" would break splitting and deleting. **The screens need
+      Split and Delete actions first.** A drag onto a shortcut still works
+      meanwhile, but the history can only say `queue_sync` moved it, not who.
+    - **The row has no claimant's name.** The review page's banner says
+      "Dana Reyes claimed this invoice"; `.claim.json` carries the name, the
+      row only `claimed_by`. Reading claims from the row needs the name too --
+      an additive `claimed_by_name` column, or a lookup by email.
+    - **The inbox integration stays on folders.** `Aim::WorkProvider` reads
+      queue folders and `.claim.json`, and it waits on the pfa refactor, which
+      is not on master yet (checked 2026-09-23: master is 31 commits ahead,
+      none of them pfa). It moves in 9.5; until then `.claim.json` cannot be
+      retired outright, only stop being the one the screens read.
+    - `is_urgent` can go from the workers, the payload and the Rails badge.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
