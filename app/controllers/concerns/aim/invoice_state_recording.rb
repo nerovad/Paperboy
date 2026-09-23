@@ -20,10 +20,10 @@ module Aim
       Rails.logger.error "AIM could not record #{@invoice_id.inspect} moving to #{state}: #{e.class}: #{e.message}"
     end
 
-    # Claims are written to the row as well as the folder until 5.7c retires
-    # .claim.json; the folder stays the one that is read until then.
+    # Claims are written to the row, which the screens read, and to the
+    # folder's .claim.json, which the Paperboy inbox still reads until 9.5.
     def mirror_claim(email)
-      Aim::Invoice.find_by(batch_id: @invoice_id)&.claim!(email)
+      Aim::Invoice.find_by(batch_id: @invoice_id)&.claim!(email, name: current_user_name)
     rescue StandardError => e
       Rails.logger.error "AIM could not record the claim on #{@invoice_id.inspect}: #{e.class}: #{e.message}"
     end
@@ -53,7 +53,28 @@ module Aim
     # signed-in user — and the display name rides alongside it so queues never
     # have to show an address. Claims written before the name was recorded
     # return no name and are labelled from the mailbox instead.
+    #
+    # The row is read first (5.7c). The folder's .claim.json answers only when
+    # the row has no claim -- a claim made before rows carried them -- and
+    # stops mattering as those are released.
     def claim_details_for(folder_path)
+      row = claim_row_for(folder_path)
+      return [row.claimed_by, row.claimed_by_name.presence] if row&.claimed_by.present?
+
+      file_claim_details_for(folder_path)
+    end
+
+    def claim_row_for(folder_path)
+      batch_id = File.basename(folder_path.to_s)
+      return @claim_rows[batch_id] if @claim_rows&.key?(batch_id)
+
+      Aim::Invoice.find_by(batch_id: batch_id)
+    rescue StandardError => e
+      Rails.logger.warn "AIM read the claim on #{batch_id.inspect} from its folder: #{e.message}"
+      nil
+    end
+
+    def file_claim_details_for(folder_path)
       claim_path = File.join(folder_path, '.claim.json')
       return [nil, nil] unless File.exist?(claim_path)
 

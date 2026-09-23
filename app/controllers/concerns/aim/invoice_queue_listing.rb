@@ -28,6 +28,8 @@ module Aim
       rows = recorded_invoices
       return list_folders_only(folders) if rows.nil?
 
+      @claim_rows = rows
+
       (rows.keys | folders.keys).each do |batch_id|
         @invoices << listed_invoice(batch_id, folders[batch_id], rows[batch_id])
       end

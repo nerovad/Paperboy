@@ -2163,6 +2163,29 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     **Order:** claims on the row; Delete; the `split` state and the splitter
     fixes; the Split screen; `is_urgent` out; then the shortcuts go.
 
+  - [x] **5.7c(1) Claims are read from the row.** 2026-09-23. A new column,
+    `claimed_by_name` (migration `20260923151741`), so the row can say who
+    holds an invoice by name. The screens read the claim from the row first;
+    the folder's `.claim.json` answers only when the row has none -- a claim
+    made before rows carried them. The file is still written, because the
+    Paperboy inbox reads it until 9.5. The queue list reuses the rows it
+    already loaded rather than querying once per invoice. 4 new tests, all red
+    without the change; 1039 runs, 0 fail, 0 error.
+
+    Two things learned applying the migration:
+    - **Never keep the `schema.rb` that `db:migrate` writes in development.**
+      Migrating `Paperboy_Dev` re-dumps the schema from it, and that database
+      carries other teams' newer migrations -- this time DAM access-rule
+      tables and a version `20260923221136` our branch knows nothing of.
+      Migrate the dev database, then `git checkout db/schema.rb`, and
+      regenerate the schema from a scratch test database.
+    - **At the next master merge, regenerate `schema.rb` from ours.** Master's
+      latest migration (`20260922220000`) is newer than AIM's first three, so
+      loading master's `schema.rb` would mark AIM's as run without running
+      them -- the trap from 2026-09-22. Take our `schema.rb` on conflict, load
+      it into a scratch database, and let master's newer migrations run on
+      top.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
@@ -2983,3 +3006,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | 5.7b(2) | (this commit) | `Aim::QueueSyncJob` every ten minutes via `config/recurring.yml`; a no-op, database included, where AIM is not configured. 1026 runs, 0 fail, 0 error |
 | 2026-09-23 | 5.7b(3) | (this commit) | Queue screens list invoices from the rows, with folders that have no row and rows that have no folder both still shown and flagged; folder listing when the rows are unreadable. Rejected lists invoices, not groups, and opens them. 1035 runs, 0 fail, 0 error |
 | 2026-09-23 | — | (deploy) | **Workers deployed** by Joshua at 15:12: 24 files and a 66-variable `.env`, verified identical to the repo. Carries 5.6b (handwriting), 8b.0 (watch tree, README, SHARED) and 5.7a (facts on the row). Replaced files in `_PREVIOUS_SCRIPTS/2026-09-23_151211`. Workers need a restart on GSA-SCAN02; `SHARED` folders still to be created |
+| 2026-09-23 | 5.7c(1) | (this commit) | Claims read from the row, with the claimant's name in a new `claimed_by_name` column; `.claim.json` still written for the inbox. `Paperboy_Dev` migrated. 1039 runs, 0 fail, 0 error |

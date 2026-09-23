@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_100539) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_151741) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -77,6 +77,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_100539) do
     t.string "business_key", limit: 450
     t.datetime "claimed_at"
     t.string "claimed_by"
+    t.string "claimed_by_name"
     t.datetime "created_at", null: false
     t.string "customer_number", limit: 100
     t.string "document_type", limit: 50

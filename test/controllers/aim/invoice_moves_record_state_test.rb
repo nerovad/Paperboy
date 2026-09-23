@@ -147,6 +147,46 @@ module Aim
       assert_equal REVIEWER, Aim::Invoice.find_by!(batch_id: '4601.I').claimed_by
     end
 
+    test 'opening an invoice records the claimant by name on the row' do
+      session[:user] = session[:user].merge('first_name' => 'Aim', 'last_name' => 'Staff')
+      action_needed_invoice('4601.K')
+
+      get :show, params: { id: '4601.K', queue: 'action_needed' }
+
+      assert_equal 'Aim Staff', Aim::Invoice.find_by!(batch_id: '4601.K').claimed_by_name
+    end
+
+    test 'a claim on the row makes the invoice read only for anyone else, naming them' do
+      action_needed_invoice('4601.L')
+      Aim::Invoice.find_by!(batch_id: '4601.L').claim!('other.staff@example.com', name: 'Dana Reyes')
+
+      get :show, params: { id: '4601.L', queue: 'action_needed' }
+
+      assert_includes response.body, 'Dana Reyes claimed this invoice'
+      assert_select 'input[type=submit][value=?]', 'Save Changes', false
+    end
+
+    test 'the queue list names the claimant from the row' do
+      action_needed_invoice('4601.M')
+      Aim::Invoice.find_by!(batch_id: '4601.M').claim!('other.staff@example.com', name: 'Dana Reyes')
+
+      get :index, params: { queue: 'action_needed' }
+
+      assert_includes response.body, 'Claimed by Dana Reyes'
+      assert_select 'a', text: 'View Only'
+    end
+
+    test 'the row beats a claim file left behind' do
+      folder = action_needed_invoice('4601.N')
+      File.write(File.join(folder, '.claim.json'), { user: 'other.staff@example.com', name: 'Dana Reyes' }.to_json)
+      Aim::Invoice.find_by!(batch_id: '4601.N').claim!(REVIEWER, name: 'Aim Staff')
+
+      get :show, params: { id: '4601.N', queue: 'action_needed' }
+
+      assert_select 'input[type=submit][value=?]', 'Save Changes'
+      assert_not_includes response.body, 'Dana Reyes claimed this invoice'
+    end
+
     test 'unclaiming releases the row too' do
       action_needed_invoice('4601.J')
       get :show, params: { id: '4601.J', queue: 'action_needed' }

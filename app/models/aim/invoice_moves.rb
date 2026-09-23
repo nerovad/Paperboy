@@ -36,15 +36,16 @@ module Aim
       self
     end
 
-    # Claims live on the row as well as in the folder's .claim.json until 5.7c
-    # retires the file. Written past validation and without an event: a claim is
-    # a reservation, not a change to the invoice.
-    def claim!(email)
-      update_columns(claimed_by: email, claimed_at: Time.current, updated_at: Time.current)
+    # Claims live on the row, and the queue screens read them from it. They are
+    # still written to the folder's .claim.json as well, because the Paperboy
+    # inbox reads that until 9.5. Written past validation and without an event:
+    # a claim is a reservation, not a change to the invoice.
+    def claim!(email, name: nil)
+      update_columns(claimed_by: email, claimed_by_name: name, claimed_at: Time.current, updated_at: Time.current)
     end
 
     def release_claim!
-      update_columns(claimed_by: nil, claimed_at: nil, updated_at: Time.current)
+      update_columns(claimed_by: nil, claimed_by_name: nil, claimed_at: nil, updated_at: Time.current)
     end
 
     private
