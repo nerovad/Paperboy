@@ -20,7 +20,7 @@ module AdminToolsHelper
       blurb: 'Build, edit, archive and route form templates.',
       controllers: %w[form_templates form_visibility_grants] },
     { key: 'emulate', label: 'Emulate', route: :new_admin_impersonation_path,
-      blurb: 'Sign in as another employee to see what they see.',
+      blurb: 'Sign in as another employee or contractor to see what they see.',
       controllers: %w[admin/impersonations] }
   ].freeze
 
@@ -30,6 +30,20 @@ module AdminToolsHelper
   def admin_tools_links
     ADMIN_TOOLS.select { |tool| can_view_admin_tool?(tool[:key]) }
                .map { |tool| tool.slice(:key, :label, :blurb).merge(path: public_send(tool[:route])) }
+  end
+
+  # A contractor's entry in the Emulate picker. Inactive and expired accounts
+  # stay listed -- seeing what a locked-out contractor would see is a fair
+  # reason to emulate them -- but are flagged so nobody picks one by mistake.
+  def contractor_emulation_label(contractor)
+    label = "#{contractor.first_name} #{contractor.last_name} (#{contractor.email})"
+    if !contractor.active?
+      "#{label} - inactive"
+    elsif contractor.expired?
+      "#{label} - expired"
+    else
+      label
+    end
   end
 
   def admin_tools_form_templates
