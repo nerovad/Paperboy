@@ -2100,6 +2100,26 @@ extract -> normalise vendor -> check duplicates -> code and route -> user queue 
 
 Supersedes 11.1, which put the coding after approval.
 
+**Status 2026-09-23.** Joshua is copying the current lookups to a folder on
+GSA-SCAN02 for evaluation. There are two groups, **GSA and Sheriff**; GSA
+comes first. The lookups carry **QUEUE ID** numbers that correlate to
+specific accounts. Sheriff has differences Joshua will explain, where vision
+AI might help but earlier testing gave him reservations -- discuss before
+designing anything for Sheriff.
+
+**Scanning, and why there are no per-person folders.** Some users scan with
+a PsiGen control sheet that names the queue id; the move is to folder-based
+scanning, and Joshua's preferred route is remapping scanners to their
+existing shared `/<BU>/<Submitter>/` folders, which maps straight into the
+watcher. Recommended 2026-09-23, pending Joshua's agreement: **no named
+folders for individual recipients.** They would put routing back into the
+filesystem at the front door, just as 5.7 takes it out, and they multiply
+and go stale as people change roles. Instead: the rules table routes by
+default; a queue manager or AIM staff reassigns in the app when one invoice
+needs one person; a coversheet barcode later if batches need it
+(`assignment_source` already allows for it). "Route to the submitter" can be
+a rule option for a BU if some people want their own scans back.
+
 **Needed from Joshua before 8b.1:**
 
 1. The old lookup file, or where it lives -- a few rows show the columns.
