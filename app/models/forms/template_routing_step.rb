@@ -147,26 +147,32 @@ module Forms
     end
 
     # The form field this step's condition checks. Looked up by stable
-    # field_name so it survives form-field rebuilds that renumber ids.
+    # field_name so it survives form-field rebuilds that renumber ids; falls
+    # back to the model's condition-only fields.
     def condition_field
       return nil unless condition_field_name.present?
 
-      form_template.form_fields.find_by(field_name: condition_field_name)
+      form_template.form_fields.find_by(field_name: condition_field_name) ||
+        form_template.routing_condition_fields.find { |f| f.field_name == condition_field_name }
     end
 
     # Evaluates the condition against a submitted form record.
     # Returns true when the step has no condition or the condition matches; false otherwise.
+    # A multi-value answer (an array) "equals" the value when it contains it.
     def matches?(form_record)
       return true unless conditional?
 
       actual = form_record.respond_to?(condition_field_name) ? form_record.public_send(condition_field_name) : nil
+      hit = if actual.is_a?(Array)
+              actual.map(&:to_s).include?(condition_value.to_s)
+            else
+              actual.to_s == condition_value.to_s
+            end
+
       case condition_operator
-      when 'equals'
-        actual.to_s == condition_value.to_s
-      when 'not_equals'
-        actual.to_s != condition_value.to_s
-      else
-        true
+      when 'equals' then hit
+      when 'not_equals' then !hit
+      else true
       end
     end
 

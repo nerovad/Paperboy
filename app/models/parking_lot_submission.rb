@@ -63,6 +63,22 @@ class ParkingLotSubmission < ApplicationRecord
   # Vehicles
   has_many :parking_lot_vehicles, dependent: :destroy
   accepts_nested_attributes_for :parking_lot_vehicles, allow_destroy: true
+
+  # The builder only knows this form as one custom "Vehicles" field, so the
+  # per-vehicle permit types are offered to routing conditions here instead.
+  def self.routing_condition_fields
+    [Forms::RoutingConditionField.new(field_name: 'permit_types',
+                                      label: 'Permit Type (any vehicle)',
+                                      field_type: 'dropdown',
+                                      dropdown_values: ParkingLotVehicle::PERMIT_TYPES)]
+  end
+
+  # Every permit type requested across the submission's vehicles, so a
+  # routing step can run only when, say, any vehicle asks for 'R Lot'.
+  def permit_types
+    parking_lot_vehicles.reject(&:marked_for_destruction?)
+                        .flat_map { |v| Array(v.permit_type) }.compact_blank.uniq
+  end
   # Status enum - provides submitted?, approved?, etc. automatically
 
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
