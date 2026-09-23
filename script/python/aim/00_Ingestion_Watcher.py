@@ -276,9 +276,6 @@ def scan_and_spool():
             # Downstream still calls the folder name the submitter; for the
             # shared queue it is the shared folder's own name.
             submitter_name = route["owner"] or SHARED_FOLDER_NAME
-            # Urgency is gone (8b.0). The field stays False until 5.7 removes
-            # it, because the AI worker and the Rails badge still read it.
-            is_urgent = False
 
             name_only, _ = os.path.splitext(file)
             processing_id = f"{bu_number}.{datetime.now().strftime('%Y%m%d_%H%M%S')}.{name_only}"
@@ -331,7 +328,6 @@ def scan_and_spool():
                 "queue": route["queue"],
                 "owner": route["owner"],
                 "assignment_source": "folder",
-                "is_urgent": is_urgent,
                 "timestamp": datetime.now().isoformat()
             }
             with open(ticket_path, "w", encoding="utf-8") as f:
@@ -350,11 +346,10 @@ def scan_and_spool():
                              assignment_source="folder" if route["owner"] else None,
                          ))
                 
-            status_msg = "[URGENT] " if is_urgent else ""
             if is_pdf and source_delete_error:
-                print(f"  [>] Spooled {status_msg}{file} -> {processing_id} (copied; original could not be deleted)")
+                print(f"  [>] Spooled {file} -> {processing_id} (copied; original could not be deleted)")
             else:
-                print(f"  [>] Spooled {status_msg}{file} -> {processing_id}")
+                print(f"  [>] Spooled {file} -> {processing_id}")
 
 if __name__ == "__main__":
     # Prepare the machine before any work: directories, shortcuts, alias

@@ -131,7 +131,7 @@ def test_nothing_is_urgent_any_more(watcher, watch_tree, monkeypatch):
 
     [ticket] = spool(watcher, monkeypatch)
 
-    assert ticket["is_urgent"] is False
+    assert "is_urgent" not in ticket
 
 
 # ---------------------------------------------------------------------------

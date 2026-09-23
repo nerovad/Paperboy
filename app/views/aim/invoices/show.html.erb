@@ -192,6 +192,11 @@
               <%= form.submit 'Send to Approval',
                               data: { turbo_confirm: 'Route this invoice to User Approval?' },
                               class: 'btn approve' %>
+              <%# What the MOVE_FOLDERS_HERE_TO_SEND_TO_SQL shortcut did from this
+                  queue, and the path that works while user approval is built. %>
+              <%= form.submit 'Send to SQL Queue',
+                              data: { turbo_confirm: 'Save these fields and send this invoice to the SQL queue?' },
+                              class: 'btn approve' %>
             <% elsif @queue == 'low_confidence_review' %>
               <%= form.submit 'Reject',
                               data: { turbo_confirm: 'Reject this invoice and send it to the rejected folder?' },

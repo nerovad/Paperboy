@@ -237,7 +237,6 @@ def normalize_document_type(value):
 HANDWRITTEN_FINANCIAL_FIELDS = ("subtotal", "tax", "total")
 
 class InvoiceData(BaseModel):
-    is_urgent: Optional[bool] = False
     contains_multiple_invoices: Optional[bool] = False
     contains_handwritten_financials: Optional[bool] = False
     # Which money fields are handwritten. None means the model was not asked

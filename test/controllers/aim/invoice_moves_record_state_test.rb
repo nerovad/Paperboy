@@ -200,6 +200,14 @@ module Aim
       assert_equal REVIEWER, invoice.events.last.actor
     end
 
+    test 'action needed offers Send to SQL Queue, as its shortcut did' do
+      action_needed_invoice('4601.R')
+
+      get :show, params: { id: '4601.R', queue: 'action_needed' }
+
+      assert_select 'input[type=submit][value=?][data-turbo-confirm]', 'Send to SQL Queue'
+    end
+
     test 'the review page offers Delete, and asks first' do
       action_needed_invoice('4601.P')
 

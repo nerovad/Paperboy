@@ -206,7 +206,7 @@ def mark_ai_queue_error(folder_path, folder_name, reason, error=None, pdf_path=N
     except Exception:
         pass
 
-def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
+def process_cpu_hybrid(pdf_path, bu_number, submitter_name,
                        processing_id=None, original_filename=None, owner=None):
     pdf_filename = os.path.basename(pdf_path)
     name_without_ext, _ = os.path.splitext(pdf_filename)
@@ -414,7 +414,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
     if vendor_hint:
         tier2_prompt += f"\n\nVENDOR-SPECIFIC RULES FOR THIS INVOICE:\n{vendor_hint}"
 
-    master_data = InvoiceData(is_urgent=is_urgent)
+    master_data = InvoiceData()
     print(f"      - Processing Page 1 visually...")
     start_time = time.time()
     pdf_page_to_image(pdf_path, 0, TEMP_IMAGE)
@@ -668,7 +668,7 @@ def scan_directories():
                 pdf_path = os.path.join(folder_path, pdf_file)
                 if not is_file_stable(pdf_path): continue
                 try:
-                    process_cpu_hybrid(pdf_path, "Unknown", "Internal_Retrying", is_urgent=True)
+                    process_cpu_hybrid(pdf_path, "Unknown", "Internal_Retrying")
                     if os.path.exists(folder_path):
                         shutil.rmtree(folder_path)
                 except Exception as e:
@@ -686,8 +686,9 @@ def scan_directories():
         f for f in os.listdir(AI_QUEUE_DIR) if os.path.isdir(os.path.join(AI_QUEUE_DIR, f))
     )
     
-    urgent_queue = []
-    standard_queue = []
+    # Oldest first. There used to be an urgent queue ahead of this one, fed by
+    # a HIGH PRIORITY folder; urgency was dropped with that folder (8b.0).
+    job_queue = []
     
     # Build queues
     for folder_name in job_folders:
@@ -714,7 +715,6 @@ def scan_directories():
             with open(ticket_path, "r", encoding="utf-8") as f:
                 ticket = json.load(f)
             
-            is_urgent = ticket.get("is_urgent", False)
             timestamp = ticket.get("timestamp", "")
             
             job_data = {
@@ -727,43 +727,33 @@ def scan_directories():
                 "folder_name": folder_name,
                 "bu_number": ticket.get("bu_number", "Unknown"),
                 "submitter_name": ticket.get("submitter_name", "Unknown"),
-                "is_urgent": is_urgent,
                 "timestamp": timestamp,
                 "processing_id": ticket.get("processing_id", folder_name),
                 "original_filename": ticket.get("original_filename"),
                 "owner": ticket.get("owner"),
             }
             
-            if is_urgent:
-                urgent_queue.append(job_data)
-            else:
-                standard_queue.append(job_data)
+            job_queue.append(job_data)
         except Exception as e:
             print(f"    [!] Error reading job ticket {ticket_path}: {e}")
             if folder_age_seconds(folder_path) >= STALE_QUEUE_FOLDER_SECONDS:
                 mark_ai_queue_error(folder_path, folder_name, "AI queue folder has an unreadable job_ticket.json.", error=e, pdf_path=pdf_path)
                 
-    # Sort queues by timestamp (oldest first)
-    urgent_queue.sort(key=lambda x: x["timestamp"])
-    standard_queue.sort(key=lambda x: x["timestamp"])
-    
-    master_queue = urgent_queue + standard_queue
-    
-    # Process queue
-    for job in master_queue:
+    job_queue.sort(key=lambda x: x["timestamp"])
+
+    for job in job_queue:
         pdf_path = job["pdf_path"]
         folder_path = job["folder_path"]
         folder_name = job["folder_name"]
         bu_number = job["bu_number"]
         submitter_name = job["submitter_name"]
-        is_urgent = job["is_urgent"]
         processing_id = job["processing_id"]
         original_filename = job["original_filename"]
         filename = original_filename or os.path.basename(pdf_path)
         
         try:
             process_cpu_hybrid(pdf_path, bu_number, submitter_name,
-                               is_urgent=is_urgent, processing_id=processing_id,
+                               processing_id=processing_id,
                                original_filename=original_filename, owner=job.get("owner"))
             
             # Clean up the AI Queue folder after successful processing (or successful routing)

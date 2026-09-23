@@ -177,14 +177,12 @@ module Aim
       return 'Missing PDF' if pdf_files.empty?
       return 'Missing ticket' if metadata_path.blank?
       return 'Invalid ticket' if metadata['error'].present?
-      return 'Urgent' if ActiveModel::Type::Boolean.new.cast(metadata['is_urgent'])
 
       'Waiting for AI'
     end
 
     def queue_item_status_badge(metadata_path, metadata, pdf_files)
       return 'is-denied' if @queue == 'ai_queue' && (pdf_files.empty? || metadata_path.blank? || metadata['error'].present?)
-      return 'is-in-review' if @queue == 'ai_queue' && ActiveModel::Type::Boolean.new.cast(metadata['is_urgent'])
       return 'is-pending' if @queue == 'ai_queue'
 
       nil

@@ -16,13 +16,12 @@ def ai_worker(import_worker):
     return import_worker("01_AI_Extraction_Worker")
 
 
-def queue_job(queue_tree, folder_name, processing_id, is_urgent=False):
+def queue_job(queue_tree, folder_name, processing_id):
     """An AI-queue folder as the watcher leaves it: a PDF and a job ticket."""
     folder = queue_tree.add_invoice("AIM_AI_QUEUE_DIR", folder_name, pdf=True)
     ticket = {
         "bu_number": "4641",
         "submitter_name": "Test User",
-        "is_urgent": is_urgent,
         "timestamp": processing_id,
         "processing_id": processing_id,
     }
@@ -35,11 +34,11 @@ def test_a_crash_is_marked_against_the_folder_that_crashed(ai_worker, queue_tree
                                                            monkeypatch):
     """The crashing invoice is deliberately not the last one the build loop saw.
 
-    Queues are built in sorted order and processed urgent-first, so INV-1
+    Queues are built in sorted order and processed oldest-first, so INV-1
     crashes while the leaked `folder_name` still holds INV-2. Reading the leak
     files the error against the wrong invoice; reading the job does not.
     """
-    queue_job(queue_tree, "INV-1", "INV-1", is_urgent=True)
+    queue_job(queue_tree, "INV-1", "INV-1")
     queue_job(queue_tree, "INV-2", "INV-2")
 
     def crash_on_first(pdf_path, *args, **kwargs):

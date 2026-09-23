@@ -2252,6 +2252,22 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     5 screen tests with a real PDF (5 red without the change), 2 worker
     tests for the kept id. Needs a deploy for the worker half.
 
+  - [x] **5.7c(5) Action Needed can send to SQL, and urgency is gone.**
+    2026-09-23.
+    - **Action Needed offers Send to SQL Queue**, what its
+      `MOVE_FOLDERS_HERE_TO_SEND_TO_SQL` shortcut did, and the path that works
+      while the user approval queue is still to be built.
+    - **`is_urgent` is removed** from the watcher's ticket, the AI worker (its
+      argument, the urgent queue it sorted ahead of the rest, and the flag a
+      retry used to set), `InvoiceData`, and the Rails "Urgent" badge. Jobs
+      are processed oldest first. A payload or ticket written before this
+      that still carries the key is simply ignored.
+
+  - [ ] **5.7c(6) The shortcuts -- held.** Every job they did now has a
+    button: Delete, Approve Split, Learn Alias, Send to SQL Queue. Joshua is
+    telling staff first, 2026-09-23. Then: stop `setup_shortcuts` creating
+    them, and remove the seven `.lnk` files from the queues on the share.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
@@ -3077,3 +3093,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | 5.7c(2) | (this commit) | **Fix for `238e7bd7`, pushed with a suite that crashed at load time** (`helper_method` in a module a plain test class includes). Declared in the controller; guards and the write-failure handler moved out of it. Gate now checked before committing. 1042 runs, 0 fail, 0 error, rubocop clean |
 | 2026-09-23 | 5.7c(3) | (this commit) | `split` end state; the splitter records the batch as split naming its pieces, reads BU/submitter/owner from the manifest instead of guessing from the file name, and hands the owner to every piece. 1042 runs, 0 fail, 0 error, 232 pytest, rubocop clean |
 | 2026-09-23 | 5.7c(4) | (this commit) | Batch Split screen: Approve Split (checked against the PDF's page count; refused plans re-render with the person's entries and plain errors) and Process as One Invoice (keeps its batch id). Found the old split summary never displayed. 1059 runs, 0 fail, 0 error, 234 pytest, rubocop clean, brakeman unchanged |
+| 2026-09-23 | 5.7c(5) | (this commit) | Action Needed gets Send to SQL Queue; `is_urgent` removed from watcher, AI worker, payload and Rails badge. Shortcuts held until Joshua has told staff. 1060 runs, 0 fail, 0 error, 234 pytest, rubocop clean |
