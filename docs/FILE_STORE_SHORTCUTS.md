@@ -4,7 +4,7 @@
 ## Activity
 
 Make DataRunner and Print 2 Mail file I/O work with either ordinary local
-directories or directories represented by Windows `.lnk`j files that point to
+directories or directories represented by Windows `.lnk` files that point to
 SMB shares.
 
 The immediate example is:
@@ -76,14 +76,15 @@ messages must never expose passwords.
 ## TODO
 
 - [x] Inspect the `~/gitea/smb_shortcut` source repository.
-- [ ] Decide whether the shared abstraction belongs in Paperboy, the gem, or
-      both.
-- [ ] Add a remote-folder accessor to `WindowsShortcut`, if needed.
+- [x] Put the shared abstraction in Paperboy and extend `smb_shortcut` with
+      the SMB-specific operations it needs.
+- [x] Add a remote-folder accessor to `WindowsShortcut`.
 - [x] Define the initial local and SMB file-store interfaces.
 - [x] Add lazy SMB client construction and credential handling.
-- [ ] Identify every DataRunner and P2M configured directory that can use the
-      abstraction.
-- [ ] Convert P2M path constants and services to use file stores.
+- [x] Identify the P2M configured directories and convert their stores and
+      services to use the abstraction.
+- [ ] Convert remaining DataRunner path consumers and generated DSL locations
+      as needed.
 - [ ] Convert DataRunner path consumers and generated DSL locations as needed.
 - [x] Update the shipping-station copy and remove operations.
 - [x] Update P2M staging and printer queue copy/remove operations to use the
@@ -95,8 +96,9 @@ messages must never expose passwords.
 - [x] Add initial unit tests for local stores and remote-folder paths.
 - [x] Add structured SMB directory entries and remote downloads.
 - [x] Convert P2M production-file listing and preview to the file store.
+- [x] Preserve remote directory-entry timestamps for production-file sorting.
 - [ ] Add tests proving P2M never treats a `.lnk` file as a local directory.
-- [ ] Add the agreed SMB variables to the environment documentation/template.
+- [x] Add the agreed SMB variables to the environment documentation/template.
 - [ ] Run RuboCop, Brakeman, bundle-audit, and the test suite.
 
 ## Open questions

@@ -201,8 +201,11 @@ module Paperboy
         temporary.path
       end
 
-      def mtime(_name)
-        nil
+      def mtime(name)
+        relative = Pathname.new(name.to_s)
+        parent = relative.parent.to_s
+        basename = relative.basename.to_s
+        entries(parent == '.' ? nil : parent).find { |entry| entry.fetch(:name) == basename }&.[](:modified_at)
       end
 
       private

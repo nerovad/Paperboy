@@ -76,6 +76,20 @@ class FileStoreTest < Minitest::Test
     end
   end
 
+  def test_shortcut_store_reads_remote_entry_time
+    Dir.mktmpdir do |directory|
+      shortcut_path = Pathname.new(directory).join('outputs.lnk').tap { |path| path.write('shortcut') }
+      store = Paperboy::FileStore.for(
+        shortcut_path,
+        env: { 'SMB_USERNAME' => 'user', 'SMB_PASSWORD' => 'password' },
+        shortcut_class: NestedFakeShortcut,
+        share_class: ->(**_options) { RecordingShare.new }
+      )
+
+      assert_equal Time.utc(2026, 9, 24, 10), store.mtime('finished.pdf')
+    end
+  end
+
   class FakeShortcut
     def initialize(_path); end
 
@@ -104,7 +118,11 @@ class FileStoreTest < Minitest::Test
     end
 
     def entries(_path = nil)
-      [{ name: 'Printer One', directory: true }, { name: 'finished.pdf', directory: false }]
+      timestamp = Time.utc(2026, 9, 24, 10)
+      [
+        { name: 'Printer One', directory: true, modified_at: timestamp },
+        { name: 'finished.pdf', directory: false, modified_at: timestamp }
+      ]
     end
   end
 
