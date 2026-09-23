@@ -2259,6 +2259,53 @@ the closest thing to a spec for the old routing:
   `bs_purchase_orders` still maintained by someone? If so AIM keeps a synced
   copy; if not, AIM's copy becomes the one people edit.
 
+**`bs_purchase_orders` compared with Paperboy's own chart of accounts,
+2026-09-23.** `GSAETL` can now read it. Fusion's GSA lookups point at seven
+tables there: single-column lists `GSA-ActivityCode` (6), `GSA-Function`
+(56), `GSA-Phase` (5), `GSA-Program` (91), `GSA-DepartmentObject` (67),
+`GSA-Object` (181: number, short name, "name and number"), and `GSA-Staff`.
+In Fusion, Object and Activity apply the first match; Department Object and
+Function make the user pick.
+
+**Paperboy's chart of accounts already holds nearly all of it.** GSABSS
+carries the county's full COA, agency-scoped (`Coa::` models: agencies,
+units, funds, objects, activities, functions, phases, programs, major
+programs, tasks), and it is maintained. Measured against agency `GSA`:
+
+| List | Fusion | in COA | not in COA |
+|---|---|---|---|
+| Phase | 5 | 5 | -- |
+| Activity | 6 | 5 | `6340` |
+| Function | 56 | 53 | `0220`, `0250`, `SPLIT` |
+| Program | 91 | 89 | `BUSAIM`, `BSCREATES` |
+| Object | 180 | 176 | `4991`-`4994` |
+
+Every GSA Budget Unit in the lookups is a COA unit too. **So AIM validates
+coding against the COA and does not copy Fusion's value lists**, which is
+what Joshua hoped for. The fifteen values it lacks are a review list, not a
+reason to keep a second copy: `SPLIT` in particular looks like a marker for
+split coding rather than a function. Note that the COA calls the agency `GSA`
+while `Employees.agency` says `GSAV` -- two code systems for one agency, and
+scope (9.1) has to map between them.
+
+**`GSA-Staff` is the part the COA does not have** -- one row per GSA BU:
+Fund (`G001`, `I200`-`I230`, `E400`, `E410`), a roll-up parent BU, the
+budget name, the **Budget Manager**, the **First Approver** and the
+**Accounting Officer**. It gives two things the rules table needs:
+
+- **A BU-level default** -- the rule that applies when no vendor rule does,
+  including the BU's Fund. `GSA-Staff` becomes the BU-level rows of the
+  rules table; the CSV lookups become the vendor-level rows. One table, the
+  most specific rule winning.
+- **What looks like an approval chain**: first approver, budget manager,
+  accounting officer. Whether approval is one step or several is a question
+  for Joshua before Phase 9 designs it.
+
+But it names people as text ("Rob Harris"), with the employee id filled in
+for one BU of eighteen and the Fusion id for none, and some names repeat
+across unrelated BUs. Import them as names to be confirmed and matched to
+employee numbers by a person, not trusted.
+
 **Reminders instead of Fusion's aging -- Joshua, 2026-09-23.** Start with
 email:
 
