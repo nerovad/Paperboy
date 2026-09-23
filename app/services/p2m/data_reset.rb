@@ -104,7 +104,7 @@ module P2m
     end
 
     def file_store(configured_path)
-      return configured_path if configured_path.respond_to?(:entries)
+      return configured_path if configured_path.respond_to?(:copy)
 
       Paperboy::FileStore.for(configured_path)
     end

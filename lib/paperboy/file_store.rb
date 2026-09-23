@@ -87,6 +87,11 @@ module Paperboy
         end
       end
 
+      def rmdir(name)
+        path = child(name)
+        path.rmdir if path.directory? && path.children.empty?
+      end
+
       def download(name)
         child(name)
       end
@@ -183,6 +188,10 @@ module Paperboy
           entry.fetch(:directory) ? clear(name) : remove(name)
         end
         share.rmdir(remote_name(prefix)) if prefix
+      end
+
+      def rmdir(name)
+        share.rmdir(remote_name(name))
       end
 
       def download(name)

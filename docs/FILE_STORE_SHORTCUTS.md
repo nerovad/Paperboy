@@ -90,6 +90,7 @@ messages must never expose passwords.
       initial file-store interface.
 - [ ] Update batch shipping-station operations.
 - [x] Convert P2M Data Reset to recursively list and clear local or SMB stores.
+- [x] Convert P2M destroy archive writes and cleanup operations to file stores.
 - [x] Expand `StartupConfiguration` to validate local paths and shortcuts.
 - [x] Add initial unit tests for local stores and remote-folder paths.
 - [x] Add structured SMB directory entries and remote downloads.
