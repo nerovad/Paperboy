@@ -2178,6 +2178,18 @@ upload in Paperboy   -> the person or SHARED queue the uploader picks
   fiscal staff who handle several BUs, or someone covering. Read GSABSS; never
   copy it.
 
+  **Seeing a BU and receiving its invoices are separate** -- confirmed with
+  Joshua 2026-09-23:
+  - **Scope** (home unit plus granted BUs) decides which shared queues a
+    person sees, and which BU pickers list them as someone to send to.
+  - **Assignment always grants access to that one invoice**, whatever its BU.
+    The rules table may route a BU's invoices, or one vendor's in any BU, to
+    anyone; they then see exactly those invoices and nothing else in that BU.
+  - So: grant the BU as scope when someone should work its shared queue;
+    only assign when they should see just what is routed to them.
+  - Crossing an agency boundary still needs the sender to hold
+    `route_anywhere`; granting scope does not bypass it.
+
 - [ ] **9.1a Capabilities, roles and scope.** Agreed with Joshua 2026-09-23.
   Three layers, reusing Paperboy's ACL rather than inventing a role system:
   - **Capabilities are AIM app features** in `AppFeature::FEATURES['aim']`,
