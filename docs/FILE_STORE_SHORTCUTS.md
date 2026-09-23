@@ -99,7 +99,8 @@ messages must never expose passwords.
 - [x] Preserve remote directory-entry timestamps for production-file sorting.
 - [x] Convert `OmsUploadLedger` staging reads and processed-archive checks to
       the file store, materializing remote datasets only while parsing them.
-- [ ] Add tests proving P2M never treats a `.lnk` file as a local directory.
+- [x] Add startup tests proving P2M never treats a `.lnk` file as a local
+      directory.
 - [x] Add the agreed SMB variables to the environment documentation/template.
 - [ ] Run RuboCop, Brakeman, bundle-audit, and the test suite.
 
