@@ -2137,6 +2137,32 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
       retired outright, only stop being the one the screens read.
     - `is_urgent` can go from the workers, the payload and the Rails badge.
 
+    **Decided with Joshua 2026-09-23:**
+    - **Splitting gets a button, and must make sense.** It never had one in
+      Paperboy -- no branch holds a split action; the earlier way was editing
+      the manifest and dragging the folder onto the shortcut. The Batch Split
+      review page shows the AI's proposed invoices, lets a person correct
+      each one's pages (checked against the PDF's real page count, which
+      `pdf-reader` -- already in the bundle through `prawn-templates` -- can
+      read), add or remove one, and then **Approve Split**; or say **Not a
+      batch -- process as one invoice**, which sends it back through
+      extraction with the split check bypassed.
+    - **Delete gets a button too**, so the `..._TO_DELETE` shortcuts can go.
+    - **`claimed_by_name` goes on the row**, so claims are read from it.
+    - **The inbox stays on folders until the pfa refactor lands**, and the
+      user's AIM queue should eventually appear under **My Work** in
+      Paperboy's inbox (9.5).
+
+    **Found reading the splitter:** it takes the submitter from the batch
+    id's third part, which is the file name, so every split invoice carries
+    the wrong submitter and no owner; and it deletes the batch folder without
+    recording what became of it, leaving the row in `ready_to_split` for
+    ever. The fix is a terminal state, **`split`** -- the batch became the
+    invoices named in its event -- and carrying the owner and BU through.
+
+    **Order:** claims on the row; Delete; the `split` state and the splitter
+    fixes; the Split screen; `is_urgent` out; then the shortcuts go.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
