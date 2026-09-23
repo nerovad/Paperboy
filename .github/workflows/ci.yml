@@ -80,22 +80,4 @@ jobs:
           fetch-depth: 0
 
       - name: Create commit tag
-        run: |
-          base_version="$(tr -d '[:space:]' < VERSION)"
-          if [[ ! "${base_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "VERSION must contain major.minor.patch, got: ${base_version}" >&2
-            exit 1
-          fi
-
-          commit_id="${GITHUB_SHA:0:9}"
-          tag="v${base_version}-${commit_id}"
-
-          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
-            echo "${tag} already exists"
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag --annotate "${tag}" "${GITHUB_SHA}" --message "Paperboy ${tag}"
-          git push origin "${tag}"
+        run: bin/tag-master-commit

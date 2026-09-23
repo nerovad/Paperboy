@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: bin/tag-master-commit [COMMIT]
+
+Create and push the annotated Paperboy version tag for COMMIT. If COMMIT is
+omitted, GITHUB_SHA is used when set; otherwise the current HEAD is tagged.
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if (( $# > 1 )); then
+  usage >&2
+  exit 2
+fi
+
+target="${1:-${GITHUB_SHA:-HEAD}}"
+base_version="$(tr -d '[:space:]' < VERSION)"
+
+if [[ ! "${base_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "VERSION must contain major.minor.patch, got: ${base_version}" >&2
+  exit 1
+fi
+
+commit="$(git rev-parse --verify "${target}^{commit}")"
+commit_id="${commit:0:9}"
+tag="v${base_version}-${commit_id}"
+
+if git show-ref --verify --quiet "refs/tags/${tag}"; then
+  existing_commit="$(git rev-list -n 1 "refs/tags/${tag}^{commit}")"
+  if [[ "${existing_commit}" == "${commit}" ]]; then
+    echo "${tag} already exists locally"
+    exit 0
+  fi
+
+  echo "${tag} already exists locally for ${existing_commit}" >&2
+  exit 1
+fi
+
+if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+  echo "${tag} already exists on origin"
+  exit 0
+fi
+
+if [[ "${GITHUB_ACTIONS:-}" == 'true' ]]; then
+  tagger_name='github-actions[bot]'
+  tagger_email='41898282+github-actions[bot]@users.noreply.github.com'
+else
+  tagger_name="$(git config user.name || true)"
+  tagger_email="$(git config user.email || true)"
+fi
+
+if [[ -z "${tagger_name}" || -z "${tagger_email}" ]]; then
+  echo 'Git user.name and user.email must be configured before tagging' >&2
+  exit 1
+fi
+
+git -c "user.name=${tagger_name}" -c "user.email=${tagger_email}" \
+  tag --annotate "${tag}" "${commit}" --message "Paperboy ${tag}"
+git push origin "${tag}"
+echo "Created and pushed ${tag}"
