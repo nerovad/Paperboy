@@ -2105,11 +2105,34 @@ extract -> normalise vendor -> check duplicates -> code and route -> user queue 
              (Phase 6)          (Phase 7)          (this phase)      (Phase 9)     (Phase 11)
 ```
 
-- [ ] **8b.0 The watch tree routes.** The watcher reads `/<BU>/<Name>/` as
+- [x] **8b.0 The watch tree routes.** The watcher reads `/<BU>/<Name>/` as
   that person, `/<BU>/SHARED/` as the shared queue, ignores loose files at the
   BU root (skipping them before the unsupported-file rename), and drops the
   HIGH PRIORITY folder and the urgent flag. Owner recorded with
   `assignment_source = 'folder'`.
+
+  Done 2026-09-23. `route_for` decides a folder's owner before a single
+  file in it is looked at, so a loose file at the BU root -- the README
+  included -- is skipped ahead of the unsupported-file rename. The job
+  ticket now carries `queue` (`person` or `shared`), `owner` (the folder's
+  name, or none) and `assignment_source = 'folder'`. The shared folder's
+  name is `AIM_SHARED_FOLDER_NAME` (`SHARED`), added on LockBox `aim-config`
+  (`891179b`, local only). Each BU folder gets
+  `README - How to submit invoices.txt` from `BU_FOLDER_README.txt`, shipped
+  with the workers; the watcher places it where missing and never over an
+  edited one.
+
+  - **Folders are named by display name** (`Joshua Gannon`, `Ryan Hill`,
+    `Tryna Huebner` on the share today), which answers the open question and
+    is why the name-to-person mapping on the admin screen matters.
+  - **No HIGH PRIORITY folder existed**, so dropping it stranded nothing.
+    `is_urgent` stays in the ticket, always false, because the AI worker's
+    retry ordering and the Rails "Urgent" badge still read it; 5.7 removes
+    the field when the payload becomes the row.
+  - **The owner is in the ticket, not yet on the row.** `record_state`
+    writes state only; 5.7 carries the ticket's owner into
+    `aim.invoices.assigned_to`.
+  - 18 tests, 17 red without the change.
 
 - [ ] **8b.1 The rules table.** One table in SQL, replacing the lookup file
   PsiGen used. Each rule says *invoices matching this go there, coded thus*:
@@ -2818,3 +2841,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-22 | 5.6 | (this commit) | `state_store.record_state` and 18 call sites across all five workers: every move now says where it came from and who made it. Failure to write never blocks a move while the folders are still the truth. 177 pytest green (5 of the new sequence tests red without the wiring), 1004 runs, 0 fail, 0 error (serial), scoped rubocop clean, brakeman's same four non-AIM warnings. Not configured, not deployed: the login is Joshua's call |
 | 2026-09-23 | — | (this commit) | **Restored the plan.** `89a96f7a` truncated it at the routing note -- a scripted replacement kept the text before the paragraph and dropped everything after, losing Phases 9-11, the server status, Open Questions and this log. Rebuilt from `22ea0c27` and the day's decisions reapplied: SHARED subfolder, no urgency, loose files ignored, upload through Paperboy, capabilities as AIM app features, roles as groups, scope from GSABSS `unit` |
 | 2026-09-23 | 5.6b | (this commit) | Handwriting flag follows the money fields the model names, not a yes/no; signatures and notes no longer send clean invoices to review; latch per field across pages. 191 pytest green (10 of 13 new red without the change); tests now refuse all database connections |
+| 2026-09-23 | 8b.0 | (this commit) | The watch tree routes: named folder = that person, `SHARED` = the BU's shared queue, loose files at the BU root ignored before the unsupported-file rename, no HIGH PRIORITY. README per BU folder. `AIM_SHARED_FOLDER_NAME` on LockBox `aim-config` (`891179b`, local). 209 pytest green (17 of 18 new red without the change) |

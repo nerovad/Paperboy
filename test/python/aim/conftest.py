@@ -75,6 +75,7 @@ def fake_environment(tmp_path, monkeypatch):
 
     monkeypatch.setenv("AIM_PROGRAM_DIR", str(program))
     monkeypatch.setenv("AIM_SPLIT_FOLDER_NAME", "Split_Invoices")
+    monkeypatch.setenv("AIM_SHARED_FOLDER_NAME", "SHARED")
     monkeypatch.setenv("AIM_LOG_FILE_NAME", "pipeline_log.csv")
     monkeypatch.setenv("AIM_ALIAS_DB_FILE", str(program / "vendor_aliases.json"))
     monkeypatch.setenv("AIM_VENDOR_RULES_FILE", str(program / "vendor_rules.json"))

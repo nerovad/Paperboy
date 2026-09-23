@@ -16,6 +16,63 @@ STABLE_WAIT_TIME = 2
 SPOOL_RETRY_SECONDS = 900
 SPOOL_STATE_DIR = pipeline_spool_state_dir
 
+# The subfolder of a Budget Unit that feeds its shared queue, which anyone with
+# that BU can see. Named by configuration, and it must not begin with "_": the
+# walk below skips such folders. Plan step 8b.0.
+SHARED_FOLDER_NAME = env('AIM_SHARED_FOLDER_NAME')
+
+# What each Budget Unit folder says about itself. Shipped beside the workers
+# and copied into a BU folder that has none; never over one that exists, so a
+# README someone has edited is theirs.
+BU_README_NAME = "README - How to submit invoices.txt"
+BU_README_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "BU_FOLDER_README.txt")
+
+
+def route_for(relative_path):
+    """Who a file in the watch tree belongs to, or None when it belongs to nobody.
+
+        <BU>/<Name>/...     that person's queue      (the default)
+        <BU>/SHARED/...     the BU's shared queue
+        <BU>/<file>         nobody -- loose files at the BU root are ignored
+
+    Decided with Joshua 2026-09-23. There is no HIGH PRIORITY folder any more,
+    and no urgency: a folder of that name would simply be someone's name.
+    """
+    if relative_path in ("", "."):
+        return None
+
+    parts = relative_path.split(os.sep)
+    if len(parts) < 2:
+        return None
+
+    bu_number, folder = parts[0], parts[1]
+    if folder.casefold() == SHARED_FOLDER_NAME.casefold():
+        return {"bu_number": bu_number, "owner": None, "queue": "shared"}
+    return {"bu_number": bu_number, "owner": folder, "queue": "person"}
+
+
+def place_bu_readmes():
+    """Give every Budget Unit folder the README that explains its layout."""
+    if not os.path.isfile(BU_README_TEMPLATE):
+        return
+    try:
+        entries = os.listdir(BASE_DIR)
+    except OSError as e:
+        print(f"  [!] Could not list {BASE_DIR} to place READMEs: {e}")
+        return
+
+    for name in entries:
+        folder = os.path.join(BASE_DIR, name)
+        if name.startswith(("_", ".")) or not os.path.isdir(folder):
+            continue
+        readme = os.path.join(folder, BU_README_NAME)
+        if os.path.exists(readme):
+            continue
+        try:
+            shutil.copyfile(BU_README_TEMPLATE, readme)
+        except OSError as e:
+            print(f"  [!] Could not place a README in {folder}: {e}")
+
 def safe_folder_name(value):
     return "".join(c for c in value if c.isalnum() or c in (" ", "-", "_", ".", "#", "$", "(", ")")).strip()[:140]
 
@@ -162,10 +219,20 @@ def convert_image_to_pdf(img_path, pdf_path):
         return False
 
 def scan_and_spool():
+    place_bu_readmes()
+
     for root, dirs, files in os.walk(BASE_DIR):
         # Ignore hidden or internal folders
         dirs[:] = [d for d in dirs if not (d.startswith('_') or d.startswith('.'))]
-        
+
+        # Decide whose the folder is before looking at a single file in it.
+        # A loose file at a BU's root -- the README included -- belongs to
+        # nobody, and must be skipped before the unsupported-file rename
+        # below, or the README is renamed the first time the watcher runs.
+        route = route_for(os.path.relpath(root, BASE_DIR))
+        if route is None:
+            continue
+
         for file in files:
             file_lower = file.lower()
             file_path = os.path.join(root, file)
@@ -205,23 +272,14 @@ def scan_and_spool():
             if not should_retry_failed_spool(signature):
                 continue
                 
-            relative_path = os.path.relpath(root, BASE_DIR)
-            if relative_path == ".":
-                continue
-                
-            parts = relative_path.split(os.sep)
-            bu_number = parts[0] if len(parts) > 0 else "Unknown"
-            submitter_name = parts[1] if len(parts) > 1 else "Unknown"
-            
+            bu_number = route["bu_number"]
+            # Downstream still calls the folder name the submitter; for the
+            # shared queue it is the shared folder's own name.
+            submitter_name = route["owner"] or SHARED_FOLDER_NAME
+            # Urgency is gone (8b.0). The field stays False until 5.7 removes
+            # it, because the AI worker and the Rails badge still read it.
             is_urgent = False
-            # Check if any parent folder is named "HIGH PRIORITY" (case insensitive)
-            if any("HIGH PRIORITY" in part.upper() for part in parts):
-                is_urgent = True
-                
-            # Exclude the priority keyword from the submitter name if they named it exactly that
-            if submitter_name.upper() == "HIGH PRIORITY":
-                submitter_name = parts[2] if len(parts) > 2 else "Unknown"
-                
+
             name_only, _ = os.path.splitext(file)
             processing_id = f"{bu_number}.{datetime.now().strftime('%Y%m%d_%H%M%S')}.{name_only}"
             
@@ -268,6 +326,11 @@ def scan_and_spool():
                 "original_filename": file,
                 "bu_number": bu_number,
                 "submitter_name": submitter_name,
+                # Who owns the invoice, decided by the folder it arrived in:
+                # a named person, or None for the BU's shared queue.
+                "queue": route["queue"],
+                "owner": route["owner"],
+                "assignment_source": "folder",
                 "is_urgent": is_urgent,
                 "timestamp": datetime.now().isoformat()
             }
