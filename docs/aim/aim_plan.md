@@ -2069,12 +2069,43 @@ assertion.
 - [ ] **9.1 BU access model.** Which users can see which Budget Unit queue,
   through Paperboy's existing groups and ACL. Follows the
   `AuthorizedApprover` pattern rather than reusing that table.
-- [ ] **9.2 The `user_approval` queue.** It has never worked: the folder
+- [ ] **9.2 The user queues -- two of them.** Decided with Joshua
+  2026-09-23: an invoice asks a person to **approve** a payment; a statement,
+  credit, coupon or memo asks them to **acknowledge** that something
+  happened. Two states, `user_approval` and `user_acknowledgement`, chosen by
+  document type -- which is what Decisions means by "type dictates terminal
+  behaviour only". Deliberately **not** two folders: 5.7 stops reading
+  folders for state, so a second folder would be a distinction built into the
+  filesystem weeks before the filesystem stops carrying it. One folder holds
+  the files; the row says which queue.
+
+- [ ] **9.2a The original `user_approval` queue problem.** It has never worked: the folder
   does not exist on the share, `user_approval` is missing from
   `BACKEND_QUEUES` so the screen redirects, and no worker reads the
   directory. See audit H1.
 - [ ] **9.3 Approve, edit metadata, add notes.** With the event trail from
   5.3 recording each.
+
+  **Parity with PsiGen Fusion, asked for by Joshua 2026-09-23:** a user at
+  this screen can correct the metadata and write in a notes section, not
+  merely approve or reject. Three things follow, and the last one is a
+  question for Joshua rather than a detail:
+
+  - **The row has to carry the metadata.** Today `aim.invoices` holds state
+    and identity; vendor, number, total and date still live in the JSON
+    beside the PDF. A screen that edits them needs them on the row, with the
+    canonicalisation Phase 4 put in the workers applied to whatever a person
+    types. That is 5.7's work, and this is now a reason it cannot be skipped.
+  - **Every edit is an event.** `aim.invoice_events` already records who did
+    what; an edit becomes an `edit` event naming the field, its old value
+    and its new one, the way `AuditableEdits` does for Paperboy's forms. A
+    note becomes a `note` event, which makes notes attributable and ordered
+    rather than a field two people overwrite.
+  - **Where approval sits in the pipeline is not settled.** Today an invoice
+    goes `sql_queue -> archived`: the SQL row is written and the Laserfiche
+    XML generated with nobody having looked at it. If a user may correct the
+    metadata, that correction has to happen *before* the handoff, or the
+    handoff has to be redone afterwards. See Open Questions.
 - [ ] **9.4 Assignment.** `assigned_to` plus `assignment_source`, so a
   coversheet barcode can populate it later without redesign.
 - [ ] **9.5 Paperboy inbox integration.** Fix `Aim::WorkProvider` so inbox
@@ -2227,6 +2258,15 @@ fresh invoices and test.
   Decisions list is right, plus `Statement`, and the worker's list is
   incomplete. `Unknown` is a temporary type AIM staff resolve in QA review.
   Step 5.3a.
+- **Does approval happen before or after the handoff?** Raised 2026-09-23
+  by Joshua's requirement that a user can edit the metadata at approval, as
+  in PsiGen Fusion. Today the SQL worker writes the billing row and generates
+  the Laserfiche XML as soon as extraction succeeds -- `sql_queue ->
+  archived` -- so nobody has seen the invoice when it reaches Fiscal. Either
+  the user queue moves ahead of that handoff, or an edit after it has to
+  rewrite the SQL row and the Laserfiche document. The first is simpler and
+  matches what approval means; the second keeps today's throughput. **Joshua
+  decides; it shapes Phases 9 and 11.**
 - **AIM staff cannot set a document type on screen.** Found 2026-09-22 in
   5.3a. `Unknown` is meant to be resolved in QA review, but nothing in
   `app/views/aim` edits `document_type` -- the reviewer can only edit the
