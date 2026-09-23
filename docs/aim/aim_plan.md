@@ -2303,8 +2303,35 @@ budget name, the **Budget Manager**, the **First Approver** and the
 
 But it names people as text ("Rob Harris"), with the employee id filled in
 for one BU of eighteen and the Fusion id for none, and some names repeat
-across unrelated BUs. Import them as names to be confirmed and matched to
-employee numbers by a person, not trusted.
+across unrelated BUs. **Joshua, 2026-09-23: it is "years and years out of
+date" and useless now. Not imported.** BU defaults are built fresh.
+
+**Routing decisions, 2026-09-23 (evening).**
+
+- **Every BU has a default route -- required.** Many invoices come from
+  vendors in no lookup, and today each BU has a default queue for them. So a
+  BU-level rule (destination plus default Fund) is mandatory for any BU that
+  receives invoices; the admin screen flags a BU without one; an invoice that
+  still matches nothing goes to AIM staff review with the reason, never
+  nowhere. The first set of defaults is *proposed from the data* -- per BU,
+  the queue most of its lookup rows already use -- for Joshua to confirm, not
+  typed from scratch.
+- **Approval is one step.** Joshua thinks there is no approval chain.
+- **Amount thresholds are routing, applied after it.** Per BU, "totals over
+  $X go to person Y". Resolved as a second pass: find the normal
+  destination (vendor rule, else BU default), then the BU's thresholds
+  replace it. Open: does a threshold also override an explicit folder or
+  upload choice, or respect it and flag it?
+- **Split coding is needed.** Joshua has seen invoices that must be charged
+  to more than one account but does not know how it is done today. Proposed
+  shape: an invoice has one or more **coding lines**, each an amount or
+  percentage with its own Fund/Object/Program/..., and the lines must add up
+  to the total before approval. Most invoices have one line. A rule may
+  supply a default split for vendors that always split the same way; a user
+  edits the lines at approval; every change is an event. `SPLIT` in Fusion's
+  function list is probably the marker used today. **Open, and it decides
+  Phase 11: how does Fiscal receive a split invoice now, and how is it
+  recorded in Fusion?** Ask whoever does it.
 
 **Reminders instead of Fusion's aging -- Joshua, 2026-09-23.** Start with
 email:
