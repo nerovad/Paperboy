@@ -37,6 +37,28 @@ class FileStoreTest < Minitest::Test
     end
   end
 
+  def test_shortcut_store_creates_missing_nested_remote_directories
+    Dir.mktmpdir do |directory|
+      shortcut_path = Pathname.new(directory).join('printers.lnk').tap { |path| path.write('shortcut') }
+      share = DirectoryShare.new
+      store = Paperboy::FileStore.for(
+        shortcut_path,
+        env: { 'SMB_USERNAME' => 'user', 'SMB_PASSWORD' => 'password' },
+        shortcut_class: NestedFakeShortcut,
+        share_class: ->(**_options) { share }
+      )
+
+      store.mkdir('Printer One/Queue A')
+
+      assert_equal [
+        [:list, 'Printers\\Printer One'],
+        [:mkdir, 'Printers\\Printer One'],
+        [:list, 'Printers\\Printer One\\Queue A'],
+        [:mkdir, 'Printers\\Printer One\\Queue A']
+      ], share.calls
+    end
+  end
+
   class FakeShortcut
     def initialize(_path); end
 
@@ -62,6 +84,23 @@ class FileStoreTest < Minitest::Test
 
     def put(source, target)
       calls << [:put, source, target]
+    end
+  end
+
+  class NestedFakeShortcut < FakeShortcut
+    def folder
+      'Printers'
+    end
+  end
+
+  class DirectoryShare < RecordingShare
+    def list(path)
+      calls << [:list, path]
+      raise SmbShortcut::CommandError, 'missing directory'
+    end
+
+    def mkdir(path)
+      calls << [:mkdir, path]
     end
   end
 end
