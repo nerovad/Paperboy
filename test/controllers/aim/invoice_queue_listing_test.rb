@@ -6,7 +6,6 @@ require 'tmpdir'
 module Aim
   # The queue screens list what the rows say is in a queue, and lose nothing
   # the folders hold. Plan step 5.7b.
-  # rubocop:disable Metrics/ClassLength
   class InvoiceQueueListingTest < ActionController::TestCase
     tests Aim::InvoicesController
 
@@ -138,5 +137,4 @@ module Aim
       assert_includes response.body, 'could not be read'
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end
