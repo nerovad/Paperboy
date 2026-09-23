@@ -8,7 +8,7 @@
     Locals:
       group          the Group whose ACL page this is, preselected in the picker
       groups         every group, for the picker
-      subscriptions  all group-held Forms::Subscription rows
+      subscriptions  this group's Forms::Subscription rows
       form_types     [{ class_name:, label: }] catalog
       form_labels    class_name => label
 -%>
@@ -71,14 +71,13 @@
     </div>
   <% end %>
 
-  <h4 class="visibility-grants-heading">Current subscriptions</h4>
+  <h4 class="visibility-grants-heading">Current subscriptions for <%= group.group_name %></h4>
 
   <% if subscriptions.any? %>
     <table class="visibility-grants-table">
       <thead>
         <tr>
           <th scope="col">Form</th>
-          <th scope="col">Group</th>
           <th scope="col">Notify about</th>
           <th scope="col">Delivery</th>
           <th scope="col" class="actions-column">Remove</th>
@@ -93,7 +92,6 @@
                 <span class="grant-class-name"><%= subscription.form_type %></span>
               <% end %>
             </td>
-            <td><%= subscription.group&.group_name || "Group ##{subscription.group_id}" %></td>
             <td>
               <% subscription.event_labels.each do |label| %>
                 <span class="pb-search-chip"><%= label %></span>

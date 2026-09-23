@@ -8,7 +8,7 @@
     Locals:
       group        the Group whose ACL page this is, preselected in the picker
       groups       every group, for the picker
-      grants       all Forms::VisibilityGrant rows
+      grants       this group's Forms::VisibilityGrant rows
       form_types   [{ class_name:, label: }] catalog
       form_labels  class_name => label
 -%>
@@ -72,14 +72,13 @@
     </div>
   <% end %>
 
-  <h4 class="visibility-grants-heading">Current grants</h4>
+  <h4 class="visibility-grants-heading">Current grants for <%= group.group_name %></h4>
 
   <% if grants.any? %>
     <table class="visibility-grants-table">
       <thead>
         <tr>
           <th scope="col">Form</th>
-          <th scope="col">Group</th>
           <th scope="col">Applies to</th>
           <th scope="col">Submissions filed in</th>
           <th scope="col" class="actions-column">Remove</th>
@@ -94,7 +93,6 @@
                 <span class="grant-class-name"><%= grant.form_type %></span>
               <% end %>
             </td>
-            <td><%= grant.group&.group_name || "Group ##{grant.group_id}" %></td>
             <td><span class="grant-badge"><%= grant.applies_to_label %></span></td>
             <td>
               <% if grant.org_scoped? %>
@@ -116,6 +114,6 @@
       </tbody>
     </table>
   <% else %>
-    <p class="acl-subtitle">No visibility grants yet. Everyone sees only their own submissions.</p>
+    <p class="acl-subtitle">No visibility grants yet. Members of this group see only their own submissions.</p>
   <% end %>
 </div>
