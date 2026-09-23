@@ -2160,16 +2160,16 @@ forms:
   name: Parking Permit Application
   page_count: 3
   page_headers:
-  - Vehicle and Parking Info
+  - Test
   submission_type: approval
   description: 'Request for a parking permit for lots on the County of Ventura''s
     campus. '
   form_number: GSA-102
-  form_type: Request
-  agency_id: GSA
-  division_id: '4660'
-  department_id: '4661'
-  unit_id: '4661'
+  form_type: ''
+  agency_id: ''
+  division_id: ''
+  department_id: ''
+  unit_id: ''
   fields:
   - field_name: vehicles
     field_type: text
