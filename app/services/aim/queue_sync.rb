@@ -24,10 +24,10 @@ module Aim
   class QueueSync
     ACTOR = 'queue_sync'
 
-    # Every state that is a folder on the share. `archived` and `deleted` are
-    # deliberately absent: those folders hold finished work in their own layout
-    # and are not a queue to be read back.
-    SYNCED_STATES = (Aim::Invoice::STATES - %w[archived deleted]).freeze
+    # Every state that is a folder on the share. The ends are deliberately
+    # absent: archived and deleted folders hold finished work in their own
+    # layout, and a split batch has no folder left at all.
+    SYNCED_STATES = (Aim::Invoice::STATES - Aim::Invoice::TERMINAL_STATES).freeze
 
     # Queues whose invoices sit one level down. Rails files a rejected invoice
     # under <Submitter>_<BU>/<batch_id>, so the first level there is a group,

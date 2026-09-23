@@ -207,7 +207,7 @@ def mark_ai_queue_error(folder_path, folder_name, reason, error=None, pdf_path=N
         pass
 
 def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
-                       processing_id=None, original_filename=None):
+                       processing_id=None, original_filename=None, owner=None):
     pdf_filename = os.path.basename(pdf_path)
     name_without_ext, _ = os.path.splitext(pdf_filename)
 
@@ -230,6 +230,9 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
             # fall back the same way a sidecar with no BU at all does.
             bu_number = meta.get("bu") or bu_number
             submitter_name = meta.get("submitter") or submitter_name
+            # A split piece carries the batch's owner, so it lands in the same
+            # person's queue the batch was dropped into. Plan step 5.7c.
+            owner = meta.get("owner") or owner
             bypass_split = meta.get("bypass_split", False)
         except Exception:
             pass
@@ -240,6 +243,16 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
     # folder, ticket, payload and log row after it. Only a path with no ticket,
     # the reprocess queue, still has to mint. Plan step 3.1.
     processing_id = processing_id or generate_unique_id(bu_number, pdf_filename)
+
+    # What every routing below records about who the invoice belongs to. The
+    # owner is written again here, not just by the watcher, because a split
+    # piece or a retry reaches this worker without ever passing the watcher.
+    known = {
+        "budget_unit": bu_number,
+        "submitter": submitter_name,
+        "assigned_to": owner,
+        "assignment_source": "folder" if owner else None,
+    }
 
     print(f"\n========================================================")
     print(f"[TEST SCRIPT] Processing: {filename}")
@@ -310,7 +323,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
                         "Set its document type in QA review.")
             record_state(processing_id, "action_needed", ACTOR, "document type could not be placed",
                          fields=invoice_facts(document_type=doc_type, extracted_vendor_name=extracted_vendor,
-                                              budget_unit=bu_number, submitter=submitter_name))
+                                              **known))
             write_log(filename, "CPU Test (Phase 1)", "REJECTED_TYPE", f"Document type is {doc_type}", bu_number, submitter_name, processing_id, InvoiceData())
             if os.path.exists(sidecar): os.remove(sidecar)
             return
@@ -341,13 +354,18 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
             
             manifest_path = os.path.join(dest_folder, f"{processing_id}_MANIFEST.json")
             with open(manifest_path, "w", encoding="utf-8") as f:
-                raw_json = manifest_data.model_dump_json(indent=4)
+                # Who the batch belongs to rides in the manifest, because the
+                # splitter has nothing else to read it from: it used to guess
+                # the submitter from the batch id, which is the file name.
+                manifest = {"bu": bu_number, "submitter": submitter_name, "owner": owner,
+                            **manifest_data.model_dump()}
+                raw_json = json.dumps(manifest, indent=4)
                 collapsed_json = re.sub(r'\[\s+([\d,\s]+)\s+\]', lambda m: "[" + ", ".join(x.strip().strip(',') for x in m.group(1).split()) + "]", raw_json)
                 f.write(collapsed_json)
                 
             record_state(processing_id, "batch_split", ACTOR, "multiple invoices in one file",
                          fields=invoice_facts(document_type=doc_type, extracted_vendor_name=extracted_vendor,
-                                              budget_unit=bu_number, submitter=submitter_name))
+                                              **known))
             write_log(filename, "CPU Test (Split)", "ROUTED_TO_SPLIT", "Multiple invoices detected", bu_number, submitter_name, processing_id, InvoiceData())
             print(f"  [✓] Routed to _BATCH_SPLIT for human review.")
             return
@@ -490,7 +508,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
         record_state(processing_id, "action_needed", ACTOR, "document type could not be placed",
-                     fields=invoice_facts(master_data, budget_unit=bu_number, submitter=submitter_name))
+                     fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "ACTION_NEEDED", f"Rejected as {master_data.document_type}", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return
@@ -516,7 +534,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
         record_state(processing_id, "low_confidence_review", ACTOR, f"handwritten: {handwritten}",
-                     fields=invoice_facts(master_data, budget_unit=bu_number, submitter=submitter_name))
+                     fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Handwritten financials detected", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return
@@ -564,7 +582,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
             json.dump(review_data, f, indent=4)
             
         record_state(processing_id, "vendor_review", ACTOR, "vendor not recognised",
-                     fields=invoice_facts(master_data, budget_unit=bu_number, submitter=submitter_name))
+                     fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "ROUTED_TO_LEARN", f"Unknown vendor: {master_data.extracted_vendor_name}", bu_number, submitter_name, processing_id, master_data)
         return
 
@@ -592,7 +610,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
         record_state(processing_id, "action_needed", ACTOR, f"missing {', '.join(missing)}",
-                     fields=invoice_facts(master_data, budget_unit=bu_number, submitter=submitter_name))
+                     fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "ACTION_NEEDED", f"Missing: {missing}", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return
@@ -610,7 +628,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
         record_state(processing_id, "low_confidence_review", ACTOR, "low confidence read",
-                     fields=invoice_facts(master_data, budget_unit=bu_number, submitter=submitter_name))
+                     fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Routed for manual check", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
     else:
@@ -621,7 +639,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
         record_state(processing_id, "sql_queue", ACTOR,
-                     fields=invoice_facts(master_data, budget_unit=bu_number, submitter=submitter_name))
+                     fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "SUCCESS", "", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
 
@@ -708,7 +726,8 @@ def scan_directories():
                 "is_urgent": is_urgent,
                 "timestamp": timestamp,
                 "processing_id": ticket.get("processing_id", folder_name),
-                "original_filename": ticket.get("original_filename")
+                "original_filename": ticket.get("original_filename"),
+                "owner": ticket.get("owner"),
             }
             
             if is_urgent:
@@ -741,7 +760,7 @@ def scan_directories():
         try:
             process_cpu_hybrid(pdf_path, bu_number, submitter_name,
                                is_urgent=is_urgent, processing_id=processing_id,
-                               original_filename=original_filename)
+                               original_filename=original_filename, owner=job.get("owner"))
             
             # Clean up the AI Queue folder after successful processing (or successful routing)
             if os.path.exists(folder_path):

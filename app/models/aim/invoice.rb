@@ -9,8 +9,9 @@ module Aim
   # change -- +actor+ is cleared after every save, so a later change cannot
   # be credited to someone who did not make it.
   #
-  # The states are the queues the pipeline really uses, plus the two ways an
-  # invoice ends -- archived into Laserfiche, or deleted. Rejection is not an
+  # The states are the queues the pipeline really uses, plus the three ways a
+  # batch ends -- archived into Laserfiche, deleted, or split into the invoices
+  # it turned out to hold (5.7c). Rejection is not an
   # end: the Rejected queue holds an invoice "awaiting archive or follow-up",
   # so it can still be deleted or sent back for another try. Which moves are allowed is declared in TRANSITIONS and
   # enforced on every save, so a move the pipeline cannot make is refused
@@ -28,15 +29,15 @@ module Aim
     UNSETTLED_DOCUMENT_TYPE = 'Unknown'
 
     # Where an invoice can be. Queue names match
-    # InvoiceDirectoryService::PATH_ENV; archived and deleted are ends.
+    # InvoiceDirectoryService::PATH_ENV; archived, deleted and split are ends.
     STATES = %w[
       ai_queue pending_vision batch_split ready_to_split reprocess
       vendor_review ready_to_learn low_confidence_review action_needed
       manual_processing sql_queue sql_failed user_approval error_queue
-      ready_to_delete archived deleted rejected
+      ready_to_delete archived deleted split rejected
     ].freeze
 
-    TERMINAL_STATES = %w[archived deleted].freeze
+    TERMINAL_STATES = %w[archived deleted split].freeze
 
     # Ways out of review, shared by every queue a person works in.
     REVIEW_EXITS = %w[sql_queue user_approval action_needed reprocess rejected ready_to_delete].freeze
@@ -53,7 +54,9 @@ module Aim
       'reprocess' => EXTRACTION_OUTCOMES + %w[rejected ready_to_delete],
       'pending_vision' => %w[sql_queue action_needed low_confidence_review vendor_review],
       'batch_split' => %w[ready_to_split reprocess rejected ready_to_delete],
-      'ready_to_split' => %w[reprocess batch_split error_queue],
+      # A split batch does not go on: its pages become new invoices in the
+      # reprocess queue, and the batch itself ends here.
+      'ready_to_split' => %w[split batch_split error_queue],
       'vendor_review' => %w[ready_to_learn action_needed reprocess rejected ready_to_delete],
       'ready_to_learn' => %w[sql_queue vendor_review reprocess error_queue],
       'low_confidence_review' => REVIEW_EXITS,
@@ -66,7 +69,8 @@ module Aim
       'ready_to_delete' => %w[deleted action_needed],
       'rejected' => %w[ready_to_delete reprocess],
       'archived' => [],
-      'deleted' => []
+      'deleted' => [],
+      'split' => []
     }.freeze
 
     has_many :events, -> { order(:created_at, :id) },

@@ -111,9 +111,15 @@ def run_batch_splitter():
                 print(f"\n[SPLITTER] Processing approved manifest folder for {base_name}...")
                 doc = fitz.open(pdf_path)
 
+                # Who the batch belongs to comes from the manifest, written by
+                # the AI worker and kept by Paperboy when a person approves the
+                # split. The batch id's third part used to stand in for the
+                # submitter, but it is the file name. Plan step 5.7c.
                 parts = base_name.split('.')
-                bu_number = parts[0] if len(parts) > 0 else "Unknown"
-                submitter_name = parts[2] if len(parts) > 2 else "UnknownUser" # Best effort sub-folder mapping
+                bu_number = manifest.get("bu") or (parts[0] if parts else "Unknown")
+                submitter_name = manifest.get("submitter") or "Unknown"
+                owner = manifest.get("owner")
+                split_ids = []
 
                 for idx, inv in enumerate(manifest.get('invoices', [])):
                     pages_raw = inv.get('pages', [])
@@ -141,12 +147,17 @@ def run_batch_splitter():
                     
                     # Create sidecar inside split folder to preserve BU and Submitter
                     with open(os.path.join(split_folder, f"{split_id}.json"), "w", encoding="utf-8") as sf:
-                        json.dump({"bu": bu_number, "submitter": submitter_name, "bypass_split": True}, sf)
+                        json.dump({"bu": bu_number, "submitter": submitter_name, "owner": owner,
+                                   "bypass_split": True}, sf)
+                    split_ids.append(split_id)
 
                     print(f"    [✓] Created split batch: {split_id}")
                 
                 doc.close()
                 shutil.rmtree(folder_path)
+                # The batch ends here; its pages go on as the invoices named.
+                record_state(folder_name, "split", ACTOR,
+                             f"split into {len(split_ids)}: {', '.join(split_ids)}")
                 print(f"    [✓] Splitting complete. Batch folder removed and routed to hidden queue.")
                 
             except Exception as e:

@@ -180,7 +180,9 @@ def test_the_ai_worker_records_what_it_read(facts_run):
     assert facts["sql_queue"]["invoice_total"] == "100.00"
     assert facts["sql_queue"]["invoice_date"] == "2026-09-22"
     assert facts["sql_queue"]["document_type"] == "Invoice"
-    assert "assigned_to" not in facts["sql_queue"], "the AI worker does not know the owner and must not erase it"
+    # The AI worker reads the owner from the job ticket (5.7c), so it records
+    # the same one the watcher did rather than leaving it to chance.
+    assert facts["sql_queue"]["assigned_to"] == "Jane Doe"
 
 
 def test_a_shared_drop_has_no_owner(facts_run):

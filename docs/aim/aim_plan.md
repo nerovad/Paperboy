@@ -2208,6 +2208,25 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     write-failure handler out of the controller, which was over rubocop's
     length limit.
 
+  - [x] **5.7c(3) A split batch keeps its owner and ends as `split`.**
+    2026-09-23. A new end state, `split`, reached from `ready_to_split`: the
+    batch's pages go on as new invoices in the reprocess queue, and the batch
+    itself ends, its event naming the pieces. (`ready_to_split -> reprocess`
+    is gone -- it was the pieces that went there, never the batch. "Process
+    as one invoice" is `batch_split -> reprocess`, still allowed.) The sync
+    skips every end state, since a split batch has no folder left.
+    - **The owner travels with the split**: ticket -> AI worker (new `owner`
+      argument) -> the manifest, which now carries `bu`, `submitter` and
+      `owner` beside the invoices -> the splitter -> each piece's sidecar ->
+      each piece's row, because the AI worker now records the owner itself.
+      A piece or a retry reaches the AI worker without passing the watcher,
+      so that is the only way its row learns who it belongs to.
+    - **The splitter no longer guesses the submitter** from the batch id's
+      third part, the file name. A manifest from before this change says
+      `Unknown`, which is at least not wrong.
+    5 tests with a real three-page PDF (4 red without the change). Needs a
+    deploy.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
@@ -3031,3 +3050,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | 5.7c(1) | (this commit) | Claims read from the row, with the claimant's name in a new `claimed_by_name` column; `.claim.json` still written for the inbox. `Paperboy_Dev` migrated. 1039 runs, 0 fail, 0 error |
 | 2026-09-23 | 5.7c(2) | (this commit) | Delete button on the review page, offered where the state machine allows it and refused elsewhere; archives rather than destroys; recorded in the reviewer's name. 1042 runs, 0 fail, 0 error |
 | 2026-09-23 | 5.7c(2) | (this commit) | **Fix for `238e7bd7`, pushed with a suite that crashed at load time** (`helper_method` in a module a plain test class includes). Declared in the controller; guards and the write-failure handler moved out of it. Gate now checked before committing. 1042 runs, 0 fail, 0 error, rubocop clean |
+| 2026-09-23 | 5.7c(3) | (this commit) | `split` end state; the splitter records the batch as split naming its pieces, reads BU/submitter/owner from the manifest instead of guessing from the file name, and hands the owner to every piece. 1042 runs, 0 fail, 0 error, 232 pytest, rubocop clean |
