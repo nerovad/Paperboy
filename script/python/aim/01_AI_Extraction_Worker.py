@@ -233,6 +233,10 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
             # A split piece carries the batch's owner, so it lands in the same
             # person's queue the batch was dropped into. Plan step 5.7c.
             owner = meta.get("owner") or owner
+            # "Process as one invoice" sends a batch back through extraction as
+            # the same invoice, so it keeps its id and its history continues.
+            # A plain retry supplies none and is minted a new one, as before.
+            processing_id = processing_id or meta.get("processing_id")
             bypass_split = meta.get("bypass_split", False)
         except Exception:
             pass

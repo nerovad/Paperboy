@@ -66,6 +66,11 @@
         <div class="aim-fields">
           <% fields = @metadata.keys.any? ? @metadata.keys : ['BU', 'Submitter', 'VendorName', 'InvoiceTotal', 'InvoiceNumber', 'InvoiceDate', 'Status'] %>
           <% excluded_fields = aim_hidden_fields(@queue) %>
+          <% if @queue == 'batch_split' %>
+            <%# A batch is reviewed as a split, not as one invoice's fields. %>
+            <%= render 'aim/invoices/split_editor' %>
+            <% fields = [] %>
+          <% end %>
           <% if @queue == 'vendor_review' %>
             <% excluded_fields += aim_vendor_review_hidden_fields %>
 
@@ -220,6 +225,21 @@
                              disabled: true,
                              title: 'Future AIM workflow step; not active yet.',
                              class: 'btn ghost aim-placeholder-action' %>
+            <% elsif @queue == 'batch_split' %>
+              <%= form.submit 'Approve Split',
+                              data: {
+                                turbo_confirm: 'Split this PDF into the invoices above? Each goes back through extraction on its own.',
+                                confirm_title: 'Approve split',
+                                confirm_label: 'Approve Split'
+                              },
+                              class: 'btn approve' %>
+              <%= form.submit 'Process as One Invoice',
+                              data: {
+                                turbo_confirm: 'Treat this PDF as a single invoice and send it back through extraction without splitting?',
+                                confirm_title: 'Process as one invoice',
+                                confirm_label: 'Process as One'
+                              },
+                              class: 'btn warning' %>
             <% end %>
 
             <% if deletable_queue? %>

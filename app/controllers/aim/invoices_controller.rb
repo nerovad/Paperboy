@@ -40,17 +40,7 @@ module Aim
       set_invoice_context
       return redirect_to aim_invoices_path(queue: @queue), alert: 'Document not found.' unless @folder_path&.then { Dir.exist?(_1) }
 
-      # Three ways this page saves nothing: someone else holds the claim, the
-      # claim could not be written, or the share has gone read-only. The first
-      # is a different message from the other two, so the banner can say who.
-      @claimed_by_other = claimed_by_other?(@folder_path)
-      @claim_holder = claimant_label_for(@folder_path) if @claimed_by_other
-      @read_only = !claim_invoice || !File.writable?(@folder_path)
-
-      @metadata_path = metadata_path_for(@folder_path)
-      @metadata = read_metadata(@metadata_path)
-      load_vendor_review_context if @queue == 'vendor_review'
-      @ticket_content = ticket_content_for(@folder_path)
+      prepare_review
     end
 
     def update
@@ -80,8 +70,11 @@ module Aim
       when 'Save & Send to Approval', 'Send to Approval'
         send_to_user_approval
       when 'Send to SQL Queue'
-        move_invoice_to(Aim::InvoiceDirectoryService.instance.sql_queue_dir,
-                        'Invoice index verified and routed to SQL Queue.', state: 'sql_queue')
+        send_to_sql_queue
+      when 'Approve Split'
+        approve_split
+      when 'Process as One Invoice'
+        process_as_one_invoice
       else
         redirect_to aim_invoice_path(@invoice_id, queue: @queue), notice: 'Metadata saved.'
       end

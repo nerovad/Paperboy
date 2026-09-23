@@ -2227,6 +2227,31 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     5 tests with a real three-page PDF (4 red without the change). Needs a
     deploy.
 
+  - [x] **5.7c(4) The Batch Split screen.** 2026-09-23. The review page for a
+    batch shows the AI's proposed invoices as rows -- vendor, invoice number,
+    pages written as people write them (`1-3, 5`) -- plus two blank rows for
+    adding one; clearing a row's pages removes it. Two buttons:
+    - **Approve Split** checks the plan (`Aim::SplitPlan`): every page a page
+      of this PDF, counted by `pdf-reader`; every page in exactly one invoice,
+      since a page left out would be lost and a page used twice paid twice;
+      at least two invoices. A refused plan re-renders the page with the
+      person's entries intact and each problem in plain words ("Page 2 is in
+      invoices 1 and 2"), and nothing moves. An accepted one is written into
+      the manifest -- keeping the BU, submitter and owner -- and the batch
+      goes to the splitter.
+    - **Process as One Invoice** sends the batch back through extraction
+      with the split check bypassed and **its own batch id kept** (a new
+      `processing_id` sidecar key the AI worker honours), so its history
+      carries on; a plain retry is still minted a new id, as before.
+    Found on the way: the page's old "AI Suggested Splits" summary had
+    **never displayed** -- it looked for `Invoices` and the manifest writes
+    `invoices` -- so reviewers had been shown raw JSON in a text box. And a
+    blank invoice number would have reached the splitter as `null` and
+    crashed it; blanks are now left out. The review page's setup moved into
+    `prepare_review` so a refused split can re-render it. 12 checker tests,
+    5 screen tests with a real PDF (5 red without the change), 2 worker
+    tests for the kept id. Needs a deploy for the worker half.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
@@ -3051,3 +3076,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | 5.7c(2) | (this commit) | Delete button on the review page, offered where the state machine allows it and refused elsewhere; archives rather than destroys; recorded in the reviewer's name. 1042 runs, 0 fail, 0 error |
 | 2026-09-23 | 5.7c(2) | (this commit) | **Fix for `238e7bd7`, pushed with a suite that crashed at load time** (`helper_method` in a module a plain test class includes). Declared in the controller; guards and the write-failure handler moved out of it. Gate now checked before committing. 1042 runs, 0 fail, 0 error, rubocop clean |
 | 2026-09-23 | 5.7c(3) | (this commit) | `split` end state; the splitter records the batch as split naming its pieces, reads BU/submitter/owner from the manifest instead of guessing from the file name, and hands the owner to every piece. 1042 runs, 0 fail, 0 error, 232 pytest, rubocop clean |
+| 2026-09-23 | 5.7c(4) | (this commit) | Batch Split screen: Approve Split (checked against the PDF's page count; refused plans re-render with the person's entries and plain errors) and Process as One Invoice (keeps its batch id). Found the old split summary never displayed. 1059 runs, 0 fail, 0 error, 234 pytest, rubocop clean, brakeman unchanged |

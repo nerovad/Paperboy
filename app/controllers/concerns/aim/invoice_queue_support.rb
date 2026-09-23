@@ -6,6 +6,7 @@ module Aim
     include Aim::InvoiceFileSupport
     include Aim::InvoiceStateRecording
     include Aim::InvoiceQueueListing
+    include Aim::InvoiceSplitting
     include Aim::InvoiceXmlMetadataSupport
 
     # Written by 01_AI_Extraction_Worker.py alongside the real payload.
@@ -41,6 +42,22 @@ module Aim
         claimed_by_name: claimed_by_name,
         is_locked: claimed_by.present? && !own_claim?(claimed_by)
       }
+    end
+
+    # Everything the review page shows; also what a refused split re-renders.
+    def prepare_review
+      # Three ways this page saves nothing: someone else holds the claim, the
+      # claim could not be written, or the share has gone read-only. The first
+      # is a different message from the other two, so the banner can say who.
+      @claimed_by_other = claimed_by_other?(@folder_path)
+      @claim_holder = claimant_label_for(@folder_path) if @claimed_by_other
+      @read_only = !claim_invoice || !File.writable?(@folder_path)
+
+      @metadata_path = metadata_path_for(@folder_path)
+      @metadata = read_metadata(@metadata_path)
+      load_vendor_review_context if @queue == 'vendor_review'
+      load_split_context if @queue == 'batch_split'
+      @ticket_content = ticket_content_for(@folder_path)
     end
 
     def set_invoice_context

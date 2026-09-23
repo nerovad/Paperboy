@@ -160,3 +160,42 @@ def test_the_manifest_carries_the_bu_submitter_and_owner(ai_worker, queue_tree, 
         manifest = json.load(handle)
     assert (manifest["bu"], manifest["submitter"], manifest["owner"]) == ("4601", "Jane Doe", "Jane Doe")
     assert [invoice["pages"] for invoice in manifest["invoices"]] == [[1, 2], [3]]
+
+
+# ---------------------------------------------------------------------------
+# "Process as one invoice" keeps the batch's identity
+# ---------------------------------------------------------------------------
+
+def reprocess_folder(queue_tree, name, sidecar):
+    folder = os.path.join(queue_tree.queue("AIM_REPROCESS_QUEUE_DIR"), name)
+    os.makedirs(folder)
+    with open(os.path.join(folder, f"{name}.pdf"), "wb") as handle:
+        handle.write(b"%PDF-1.4 test\n")
+    with open(os.path.join(folder, f"{name}.json"), "w", encoding="utf-8") as handle:
+        json.dump(sidecar, handle)
+    return folder
+
+
+def test_a_batch_sent_back_as_one_invoice_keeps_its_id(ai_worker, queue_tree, monkeypatch):
+    reprocess_folder(queue_tree, BATCH, {"bu": "4601", "submitter": "Jane Doe", "owner": "Jane Doe",
+                                         "bypass_split": True, "processing_id": BATCH})
+    minted = []
+    monkeypatch.setattr(ai_worker, "generate_unique_id", lambda *args: minted.append(args) or "MINTED")
+    monkeypatch.setattr(ai_worker.fitz, "open", lambda path: (_ for _ in ()).throw(RuntimeError("stop here")))
+    monkeypatch.setattr(ai_worker, "mark_reprocess_error", lambda *args: None)
+
+    ai_worker.scan_directories()
+
+    assert minted == [], "the batch's own id is kept, not a new one minted"
+
+
+def test_a_plain_retry_is_still_minted_a_new_id(ai_worker, queue_tree, monkeypatch):
+    reprocess_folder(queue_tree, "4601.X_RETRY_1", {"bu": "4601", "submitter": "Jane Doe"})
+    minted = []
+    monkeypatch.setattr(ai_worker, "generate_unique_id", lambda *args: minted.append(args) or "MINTED")
+    monkeypatch.setattr(ai_worker.fitz, "open", lambda path: (_ for _ in ()).throw(RuntimeError("stop here")))
+    monkeypatch.setattr(ai_worker, "mark_reprocess_error", lambda *args: None)
+
+    ai_worker.scan_directories()
+
+    assert len(minted) == 1
