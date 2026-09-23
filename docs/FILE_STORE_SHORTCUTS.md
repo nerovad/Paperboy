@@ -85,6 +85,8 @@ messages must never expose passwords.
       services to use the abstraction.
 - [ ] Convert remaining DataRunner path consumers and generated DSL locations
       as needed.
+- [x] Convert the P2M backfill/scan script's staging and processed-directory
+      checks to the shared file store.
 - [ ] Convert DataRunner path consumers and generated DSL locations as needed.
 - [x] Update the shipping-station copy and remove operations.
 - [x] Update P2M staging and printer queue copy/remove operations to use the

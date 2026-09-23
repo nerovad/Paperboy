@@ -10,6 +10,7 @@ require 'pathname'
 require 'set'
 require 'tempfile'
 require 'time'
+require_relative '../../../lib/paperboy/file_store'
 require_relative '../../../app/services/p2m/paths'
 
 module P2m
@@ -36,6 +37,8 @@ module P2m
     def initialize(source_root:, data_runner_root:, start_date:, end_date:, report_path:)
       @source_root = Pathname.new(source_root).expand_path
       @data_runner_root = Pathname.new(data_runner_root).expand_path
+      @staging_store = Paperboy::FileStore.for(configured_location(Paths::STAGING))
+      @processed_store = Paperboy::FileStore.for(configured_location(Paths::PROCESSED))
       @start_date = Date.iso8601(start_date.to_s)
       @end_date = Date.iso8601(end_date.to_s)
       @report_path = Pathname.new(report_path).expand_path
@@ -56,14 +59,15 @@ module P2m
 
     private
 
-    attr_reader :source_root, :data_runner_root, :start_date, :end_date, :report_path
+    attr_reader :source_root, :data_runner_root, :start_date, :end_date, :report_path,
+                :staging_store, :processed_store
 
     def validate!
       raise ArgumentError, 'start date must be on or before end date' if start_date > end_date
       raise ArgumentError, "source directory not found: #{source_root}" unless source_root.directory?
 
-      FileUtils.mkdir_p(sent_path)
-      FileUtils.mkdir_p(processed_path)
+      staging_store.mkdir
+      processed_store.mkdir
     end
 
     def findings
@@ -188,7 +192,7 @@ module P2m
     end
 
     def status_for(number, markers, missing, duplicates)
-      return ['duplicate OMS number', "OMS number exists in #{Paths::PROCESSED}."] if processed_path.join(number).directory?
+      return ['duplicate OMS number', "OMS number exists in #{Paths::PROCESSED}."] if directory_exists?(processed_store, number)
       return ['duplicate marker', "Found #{markers.length} source markers."] if markers.length > 1
       return ['incomplete', "Missing: #{missing.map { |type| label(type) }.join(', ')}."] if missing.any?
       return ['duplicate input', "Multiple: #{duplicates.map { |type| label(type) }.join(', ')}."] if duplicates.any?
@@ -209,8 +213,9 @@ module P2m
     end
 
     def queued_oms_numbers
-      @queued_oms_numbers ||= sent_path.children.filter_map do |path|
-        match = path.file? && path.basename.to_s.match(MARKER_PATTERN)
+      @queued_oms_numbers ||= staging_store.entries.filter_map do |entry|
+        name = entry.fetch(:name)
+        match = !entry.fetch(:directory) && name.match(MARKER_PATTERN)
         match[1] if match
       end.to_set
     end
@@ -220,8 +225,9 @@ module P2m
     end
 
     def processed_oms_numbers
-      processed_path.children.filter_map do |path|
-        path.basename.to_s if path.directory? && path.basename.to_s.match?(/\A#{OMS_NUMBER}\z/)
+      processed_store.entries.filter_map do |entry|
+        name = entry.fetch(:name)
+        name if entry.fetch(:directory) && name.match?(/\A#{OMS_NUMBER}\z/)
       end.to_set
     end
 
@@ -270,8 +276,16 @@ module P2m
       end
     end
 
-    def sent_path = data_runner_root.join(Paths::STAGING)
-    def processed_path = data_runner_root.join(Paths::PROCESSED)
+    def configured_location(value)
+      path = Pathname.new(value)
+      path.absolute? ? path : data_runner_root.join(path)
+    end
+
+    def directory_exists?(store, name)
+      store.entries(name).any? || store.entries.any? { |entry| entry.fetch(:name) == name.to_s && entry.fetch(:directory) }
+    rescue Errno::ENOENT, SmbShortcut::CommandError
+      false
+    end
   end
 end
 
