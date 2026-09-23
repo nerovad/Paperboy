@@ -12,10 +12,6 @@ module Aim
     VENDOR_RULE_SUFFIX = '_VENDOR_RULE.json'
     PAYLOAD_SUFFIX = '_READY_FOR_SQL.json'
 
-    included do
-      helper_method :deletable_queue?
-    end
-
     private
 
     def set_queue

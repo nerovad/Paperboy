@@ -2196,6 +2196,18 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     sent it. No route change: like every other action on the page it is a
     named submit that `update` dispatches.
 
+    **`238e7bd7` was pushed broken.** It declared `helper_method` inside
+    `Aim::InvoiceQueueSupport`, which a unit test includes into a plain class;
+    `helper_method` does not exist there, so the whole suite died at load
+    time, before any test ran. The command that ran the gate went on to commit
+    and push regardless, because nothing made the commit depend on the
+    result. Fixed in the next commit by declaring it in the controller, and
+    the gate is now checked before anything is committed: the result line
+    must say `0 failures, 0 errors` and rubocop must say `no offenses`. The
+    same fix moved the Send to Approval and Delete guards and the share
+    write-failure handler out of the controller, which was over rubocop's
+    length limit.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
@@ -3018,3 +3030,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | — | (deploy) | **Workers deployed** by Joshua at 15:12: 24 files and a 66-variable `.env`, verified identical to the repo. Carries 5.6b (handwriting), 8b.0 (watch tree, README, SHARED) and 5.7a (facts on the row). Replaced files in `_PREVIOUS_SCRIPTS/2026-09-23_151211`. Workers need a restart on GSA-SCAN02; `SHARED` folders still to be created |
 | 2026-09-23 | 5.7c(1) | (this commit) | Claims read from the row, with the claimant's name in a new `claimed_by_name` column; `.claim.json` still written for the inbox. `Paperboy_Dev` migrated. 1039 runs, 0 fail, 0 error |
 | 2026-09-23 | 5.7c(2) | (this commit) | Delete button on the review page, offered where the state machine allows it and refused elsewhere; archives rather than destroys; recorded in the reviewer's name. 1042 runs, 0 fail, 0 error |
+| 2026-09-23 | 5.7c(2) | (this commit) | **Fix for `238e7bd7`, pushed with a suite that crashed at load time** (`helper_method` in a module a plain test class includes). Declared in the controller; guards and the write-failure handler moved out of it. Gate now checked before committing. 1042 runs, 0 fail, 0 error, rubocop clean |

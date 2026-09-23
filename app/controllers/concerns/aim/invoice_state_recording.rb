@@ -98,6 +98,11 @@ module Aim
     # folder under its BU and submitter: nothing is destroyed outright, and the
     # row says who sent it.
     def delete_invoice
+      unless deletable_queue?
+        return redirect_to aim_invoice_path(@invoice_id, queue: @queue),
+                           alert: 'Invoices cannot be deleted from this queue.'
+      end
+
       move_invoice_to(Aim::InvoiceDirectoryService.instance.ready_to_delete_dir,
                       'Invoice sent for deletion. It is archived to the deleted folder, not destroyed.',
                       state: 'ready_to_delete')
@@ -109,7 +114,15 @@ module Aim
     end
 
     # An invoice nobody has typed is not ready for the person who has to act
-    # on it. Checked before anything moves, so the files stay where they are.
+    # on it, so the type is checked before anything moves.
+    def send_to_user_approval
+      return refuse_unsettled_type if unsettled_document_type?
+
+      move_invoice_to(Aim::InvoiceDirectoryService.instance.user_approval_dir,
+                      'Invoice successfully fixed and routed to User Approval!', state: 'user_approval')
+    end
+
+    # Checked before anything moves, so the files stay where they are.
     def refuse_unsettled_type
       redirect_to aim_invoice_path(@invoice_id, queue: @queue),
                   alert: 'This invoice is still typed Unknown. Set its document type before sending it to a user.'

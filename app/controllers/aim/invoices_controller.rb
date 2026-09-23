@@ -8,6 +8,8 @@ module Aim
   class InvoicesController < BaseController
     include Aim::InvoiceQueueSupport
 
+    helper_method :deletable_queue?
+
     before_action :require_aim_admin
     before_action :set_queue
     # Everything below #show rewrites or moves the invoice folder, so it needs
@@ -70,18 +72,13 @@ module Aim
       when 'Reject'
         reject_invoice
       when 'Delete'
-        return redirect_to aim_invoice_path(@invoice_id, queue: @queue), alert: 'Invoices cannot be deleted from this queue.' unless deletable_queue?
-
         delete_invoice
       when 'Save & Learn Alias', 'Learn Alias', 'Learn & Retry AI'
         send_to_alias_learning(next_action: 'retry_ai', metadata_path: metadata_path)
       when 'Learn & Continue'
         send_to_alias_learning(next_action: 'continue_processing', metadata_path: metadata_path)
       when 'Save & Send to Approval', 'Send to Approval'
-        return refuse_unsettled_type if unsettled_document_type?
-
-        move_invoice_to(Aim::InvoiceDirectoryService.instance.user_approval_dir,
-                        'Invoice successfully fixed and routed to User Approval!', state: 'user_approval')
+        send_to_user_approval
       when 'Send to SQL Queue'
         move_invoice_to(Aim::InvoiceDirectoryService.instance.sql_queue_dir,
                         'Invoice index verified and routed to SQL Queue.', state: 'sql_queue')
@@ -144,16 +141,6 @@ module Aim
 
       redirect_to aim_invoices_path(queue: @queue),
                   alert: "#{claimant_label_for(@folder_path)} has this invoice claimed, so it is view only."
-    end
-
-    # A move or a metadata write can fail partway through, so this promises
-    # nothing about what did or did not happen on disk.
-    def queue_not_writable(error)
-      Rails.logger.error "AIM write failed for #{@invoice_id.inspect} in #{@queue}: #{error.class}: #{error.message}"
-
-      redirect_to aim_invoices_path(queue: @queue),
-                  alert: 'The queue folder could not be written to, so that action did not complete. ' \
-                         'Check the queue share and try again.'
     end
   end
 end

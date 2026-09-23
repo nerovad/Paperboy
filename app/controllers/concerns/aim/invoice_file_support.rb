@@ -15,6 +15,16 @@ module Aim
 
     private
 
+    # A move or a metadata write can fail partway through, so this promises
+    # nothing about what did or did not happen on disk.
+    def queue_not_writable(error)
+      Rails.logger.error "AIM write failed for #{@invoice_id.inspect} in #{@queue}: #{error.class}: #{error.message}"
+
+      redirect_to aim_invoices_path(queue: @queue),
+                  alert: 'The queue folder could not be written to, so that action did not complete. ' \
+                         'Check the queue share and try again.'
+    end
+
     # True only when this invoice is ours to work: either it was unclaimed and
     # we just claimed it, or the claim already on it is our own. A claim used
     # to count merely by existing, which handed a second reviewer the full
