@@ -83,6 +83,8 @@ messages must never expose passwords.
 - [x] Add lazy SMB client construction and credential handling.
 - [x] Identify the P2M configured directories and convert their stores and
       services to use the abstraction.
+- [x] Update the Print 2 Mail DataRunner DSL to pass configured absolute
+      locations, including shortcut paths, to orchestration.
 - [ ] Convert remaining DataRunner path consumers and generated DSL locations
       as needed.
 - [x] Convert the P2M backfill/scan script's staging and processed-directory
