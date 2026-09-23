@@ -192,3 +192,95 @@ def test_times_are_written_in_utc(store):
     written = " ".join(sql for sql, _ in conn.statements)
     assert "SYSUTCDATETIME()" in written
     assert "GETDATE()" not in written
+
+
+# ---------------------------------------------------------------------------
+# Facts on the row (plan step 5.7)
+# ---------------------------------------------------------------------------
+
+def test_facts_come_from_invoice_data_and_the_caller(store, pipeline):
+    data = pipeline.InvoiceData(vendor_name="AT&T MOBILITY", invoice_number="INV-2024/001",
+                                invoice_total="-100.00", invoice_date="2026-09-21", document_type="Credit")
+
+    facts = store.invoice_facts(data, budget_unit="4601", submitter="Jane Doe")
+
+    assert facts == {
+        "vendor_name": "AT&T MOBILITY", "invoice_number": "INV-2024/001",
+        "invoice_total": "-100.00", "invoice_date": "2026-09-21", "document_type": "Credit",
+        "budget_unit": "4601", "submitter": "Jane Doe",
+    }
+
+
+@pytest.mark.parametrize("total", ["n/a", "$100.00", "1,234.56", "12.345"])
+def test_a_total_that_is_not_money_is_left_off(store, total):
+    assert "invoice_total" not in store.invoice_facts(invoice_total=total)
+
+
+@pytest.mark.parametrize("date", ["09/21/2026", "yesterday", "2026-9-1"])
+def test_a_date_that_is_not_a_date_is_left_off(store, date):
+    assert "invoice_date" not in store.invoice_facts(invoice_date=date)
+
+
+def test_blanks_and_unknown_columns_are_left_off(store):
+    facts = store.invoice_facts(vendor_name="  ", submitter=None, state="deleted", batch_id="x", id=1)
+
+    assert facts == {}, "a caller can never name a column the store does not own"
+
+
+def test_a_value_longer_than_its_column_is_cut_to_fit(store):
+    assert len(store.invoice_facts(budget_unit="4601-EXTRA-LONG")["budget_unit"]) == 10
+
+
+def test_a_new_invoice_is_written_with_its_facts(store):
+    conn = FakeConnection(existing_row=None, new_id=42)
+
+    store.record_state("4601.A", "ai_queue", "00_ingestion_watcher",
+                       connection=conn, fields={"budget_unit": "4601", "assigned_to": "Jane Doe"})
+
+    insert_sql, insert_params = conn.statements[1]
+    assert "budget_unit" in insert_sql and "assigned_to" in insert_sql
+    assert insert_params == ("4601.A", "ai_queue", "4601", "Jane Doe")
+
+
+def test_facts_learned_without_a_move_update_the_row_but_add_no_event(store):
+    conn = FakeConnection(existing_row=(7, "ai_queue"))
+
+    store.record_state("4601.A", "ai_queue", "01_ai_extraction_worker",
+                       connection=conn, fields={"vendor_name": "ACME SUPPLY"})
+
+    assert params_of(conn, "UPDATE") == [("ACME SUPPLY", 7)]
+    assert statements_of(conn, "INSERT") == [], "no move happened, so no history"
+
+
+def test_a_move_with_facts_writes_both_and_one_event(store):
+    conn = FakeConnection(existing_row=(7, "ai_queue"))
+
+    store.record_state("4601.A", "sql_queue", "01_ai_extraction_worker",
+                       connection=conn, fields={"invoice_total": "134.69"})
+
+    [update] = statements_of(conn, "UPDATE")
+    assert "invoice_total = ?" in update and "state = ?" in update
+    assert params_of(conn, "UPDATE") == [("134.69", "sql_queue", 7)]
+    assert len(statements_of(conn, "INSERT")) == 1
+
+
+def test_a_fact_the_caller_does_not_know_is_never_erased(store):
+    """The AI worker knows nothing of the owner; it must not blank it."""
+    conn = FakeConnection(existing_row=(7, "ai_queue"))
+
+    store.record_state("4601.A", "sql_queue", "01_ai_extraction_worker",
+                       connection=conn, fields={"vendor_name": "ACME SUPPLY"})
+
+    [update] = statements_of(conn, "UPDATE")
+    assert "assigned_to" not in update
+
+
+def test_a_column_name_never_comes_from_the_caller(store):
+    conn = FakeConnection(existing_row=(7, "ai_queue"))
+
+    store.record_state("4601.A", "ai_queue", "worker", connection=conn,
+                       fields={"state = 'deleted' --": "x", "vendor_name": "ACME"})
+
+    [update] = statements_of(conn, "UPDATE")
+    assert "deleted" not in update
+    assert params_of(conn, "UPDATE") == [("ACME", 7)]

@@ -14,7 +14,7 @@ import pytesseract
 
 from pydantic import BaseModel, Field
 
-from state_store import record_state
+from state_store import record_state, invoice_facts
 
 from pipeline_common import (
     BASE_DIR, PENDING_VISION_DIR, ACTION_NEEDED_DIR, LOG_DIR, TEMP_IMAGE,
@@ -308,7 +308,9 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
             with open(os.path.join(dest_folder, f"{processing_id}.ticket"), "w") as f:
                 f.write("The AI could not tell what kind of document this is, so it was not extracted. "
                         "Set its document type in QA review.")
-            record_state(processing_id, "action_needed", ACTOR, "document type could not be placed")
+            record_state(processing_id, "action_needed", ACTOR, "document type could not be placed",
+                         fields=invoice_facts(document_type=doc_type, extracted_vendor_name=extracted_vendor,
+                                              budget_unit=bu_number, submitter=submitter_name))
             write_log(filename, "CPU Test (Phase 1)", "REJECTED_TYPE", f"Document type is {doc_type}", bu_number, submitter_name, processing_id, InvoiceData())
             if os.path.exists(sidecar): os.remove(sidecar)
             return
@@ -343,7 +345,9 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
                 collapsed_json = re.sub(r'\[\s+([\d,\s]+)\s+\]', lambda m: "[" + ", ".join(x.strip().strip(',') for x in m.group(1).split()) + "]", raw_json)
                 f.write(collapsed_json)
                 
-            record_state(processing_id, "batch_split", ACTOR, "multiple invoices in one file")
+            record_state(processing_id, "batch_split", ACTOR, "multiple invoices in one file",
+                         fields=invoice_facts(document_type=doc_type, extracted_vendor_name=extracted_vendor,
+                                              budget_unit=bu_number, submitter=submitter_name))
             write_log(filename, "CPU Test (Split)", "ROUTED_TO_SPLIT", "Multiple invoices detected", bu_number, submitter_name, processing_id, InvoiceData())
             print(f"  [✓] Routed to _BATCH_SPLIT for human review.")
             return
@@ -485,7 +489,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
             
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
-        record_state(processing_id, "action_needed", ACTOR, "document type could not be placed")
+        record_state(processing_id, "action_needed", ACTOR, "document type could not be placed",
+                     fields=invoice_facts(master_data, budget_unit=bu_number, submitter=submitter_name))
         write_log(filename, "CPU Test", "ACTION_NEEDED", f"Rejected as {master_data.document_type}", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return
@@ -510,7 +515,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         # Add sidecar data for GUI rule entry
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
-        record_state(processing_id, "low_confidence_review", ACTOR, f"handwritten: {handwritten}")
+        record_state(processing_id, "low_confidence_review", ACTOR, f"handwritten: {handwritten}",
+                     fields=invoice_facts(master_data, budget_unit=bu_number, submitter=submitter_name))
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Handwritten financials detected", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return
@@ -557,7 +563,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         with open(os.path.join(dest_folder, f"{processing_id}_LEARN.json"), "w", encoding="utf-8") as f:
             json.dump(review_data, f, indent=4)
             
-        record_state(processing_id, "vendor_review", ACTOR, "vendor not recognised")
+        record_state(processing_id, "vendor_review", ACTOR, "vendor not recognised",
+                     fields=invoice_facts(master_data, budget_unit=bu_number, submitter=submitter_name))
         write_log(filename, "CPU Test", "ROUTED_TO_LEARN", f"Unknown vendor: {master_data.extracted_vendor_name}", bu_number, submitter_name, processing_id, master_data)
         return
 
@@ -584,7 +591,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         # Add sidecar data for GUI rule entry
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
-        record_state(processing_id, "action_needed", ACTOR, f"missing {', '.join(missing)}")
+        record_state(processing_id, "action_needed", ACTOR, f"missing {', '.join(missing)}",
+                     fields=invoice_facts(master_data, budget_unit=bu_number, submitter=submitter_name))
         write_log(filename, "CPU Test", "ACTION_NEEDED", f"Missing: {missing}", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return
@@ -601,7 +609,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         # Add sidecar data for GUI rule entry
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
-        record_state(processing_id, "low_confidence_review", ACTOR, "low confidence read")
+        record_state(processing_id, "low_confidence_review", ACTOR, "low confidence read",
+                     fields=invoice_facts(master_data, budget_unit=bu_number, submitter=submitter_name))
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Routed for manual check", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
     else:
@@ -611,7 +620,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
-        record_state(processing_id, "sql_queue", ACTOR)
+        record_state(processing_id, "sql_queue", ACTOR,
+                     fields=invoice_facts(master_data, budget_unit=bu_number, submitter=submitter_name))
         write_log(filename, "CPU Test", "SUCCESS", "", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
 

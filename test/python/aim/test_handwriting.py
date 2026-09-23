@@ -155,7 +155,7 @@ def run_worker(ai_worker, queue_tree, monkeypatch):
         monkeypatch.setattr(ai_worker, "apply_invoice_number_rules", lambda data: None)
         monkeypatch.setattr(ai_worker, "write_log", lambda *args, **kwargs: None)
         monkeypatch.setattr(ai_worker, "record_state",
-                            lambda batch_id, state, actor, note=None: notes.append((state, note)))
+                            lambda batch_id, state, actor, note=None, **kwargs: notes.append((state, note)))
 
         batch_id = "4601.20260922_122048.Incentive Services_CV62744"
         folder = queue_tree.add_invoice("AIM_AI_QUEUE_DIR", batch_id)

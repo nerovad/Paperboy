@@ -10,6 +10,7 @@ The models, OCR and PDF calls are stubbed; the routing is the workers' own.
 """
 import json
 import os
+import shutil
 
 import pytest
 
@@ -60,9 +61,9 @@ def pipeline_run(watcher, ai_worker, watch_tree, monkeypatch):
 
     def _run(document_type="Invoice", submitter="Jane Doe", bu="4601"):
         monkeypatch.setattr(watcher, "record_state",
-                            lambda batch_id, state, actor, note=None: history.append((batch_id, state, actor)))
+                            lambda batch_id, state, actor, note=None, **kwargs: history.append((batch_id, state, actor)))
         monkeypatch.setattr(ai_worker, "record_state",
-                            lambda batch_id, state, actor, note=None: history.append((batch_id, state, actor)))
+                            lambda batch_id, state, actor, note=None, **kwargs: history.append((batch_id, state, actor)))
         monkeypatch.setattr(watcher, "is_file_stable", lambda *args, **kwargs: True)
 
         folder = os.path.join(watcher.BASE_DIR, bu, submitter)
@@ -134,3 +135,57 @@ def test_every_worker_signs_its_own_moves(pipeline_run):
     history = pipeline_run()
 
     assert all(actor for _, _, actor in history), "a move with no name is not an audit trail"
+
+
+# ---------------------------------------------------------------------------
+# The facts travel with the moves (plan step 5.7)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def facts_run(watcher, ai_worker, watch_tree, monkeypatch, pipeline_run):
+    """The same run, keeping the facts each worker handed to record_state."""
+    facts = []
+
+    def capture(batch_id, state, actor, note=None, **kwargs):
+        facts.append((state, kwargs.get("fields") or {}))
+
+    def _run(**options):
+        pipeline_run(**options)  # installs every stub the run needs
+        monkeypatch.setattr(watcher, "record_state", capture)
+        monkeypatch.setattr(ai_worker, "record_state", capture)
+        for batch in os.listdir(watcher.AI_QUEUE_DIR):
+            shutil.rmtree(os.path.join(watcher.AI_QUEUE_DIR, batch))
+        folder = os.path.join(watcher.BASE_DIR, options.get("bu", "4601"), options.get("submitter", "Jane Doe"))
+        with open(os.path.join(folder, "Scan 002.pdf"), "wb") as handle:
+            handle.write(b"%PDF-1.4 second\n")
+        watcher.scan_and_spool()
+        ai_worker.scan_directories()
+        return facts
+
+    return _run
+
+
+def test_the_watcher_records_who_the_invoice_belongs_to(facts_run):
+    facts = dict(facts_run())
+
+    assert facts["ai_queue"] == {"budget_unit": "4601", "submitter": "Jane Doe",
+                                 "assigned_to": "Jane Doe", "assignment_source": "folder"}
+
+
+def test_the_ai_worker_records_what_it_read(facts_run):
+    facts = dict(facts_run())
+
+    assert facts["sql_queue"]["vendor_name"] == "ACME SUPPLY"
+    assert facts["sql_queue"]["invoice_number"] == "INV-1001"
+    assert facts["sql_queue"]["invoice_total"] == "100.00"
+    assert facts["sql_queue"]["invoice_date"] == "2026-09-22"
+    assert facts["sql_queue"]["document_type"] == "Invoice"
+    assert "assigned_to" not in facts["sql_queue"], "the AI worker does not know the owner and must not erase it"
+
+
+def test_a_shared_drop_has_no_owner(facts_run):
+    facts = dict(facts_run(submitter="SHARED"))
+
+    assert "assigned_to" not in facts["ai_queue"]
+    assert "assignment_source" not in facts["ai_queue"]
+    assert facts["ai_queue"]["budget_unit"] == "4601"

@@ -2027,6 +2027,35 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
   status-by-location inference, remove the Windows shortcuts.
   *Test:* the suite passes with no code reading a folder to learn status.
 
+  Done in three parts, each safe to deploy alone: **(a)** the workers write
+  the invoice's facts onto the row; **(b)** the screens read rows, and claims
+  move onto the row; **(c)** the folder-reading code, the shortcuts and
+  `is_urgent` go. Files stay on the share as the PDFs they are -- what goes is
+  any code that *reads a folder to learn status*.
+
+  - [x] **5.7a The row carries the facts.** 2026-09-23. `record_state` takes
+    `fields`, built by `invoice_facts`: budget unit, submitter, document
+    type, vendor (extracted and normalised), invoice/order/customer numbers,
+    total, date, and the owner (`assigned_to`, `assignment_source`). The
+    watcher writes the BU, submitter and owner at spool; the AI worker writes
+    what it read at every routing; the SQL worker writes the final, corrected
+    values at archive -- the same ones the billing row and the XML were built
+    from. Three rules, each tested:
+    - **A fact the caller does not know is never written**, so the AI
+      worker, which knows nothing of the owner, cannot erase what the watcher
+      recorded.
+    - **A value that does not fit its column is dropped, not sent.** A total
+      that is not money, a date that is not a date: SQL Server refusing one
+      column would refuse the whole write, and with it the state.
+    - **Column names come only from `FIELD_LIMITS`**, never from a caller or
+      a document.
+    Facts learned without a move update the row and add no event.
+    `assigned_to` holds the folder's display name until 8b maps names to
+    people. Found on the way: the SQL worker's **duplicate branch** archived
+    a batch without recording it, so the row would have sat in `sql_queue`
+    for ever; it now records `archived` with the reason. 227 pytest, 18 new
+    and red without the change.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
@@ -2842,3 +2871,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | — | (this commit) | **Restored the plan.** `89a96f7a` truncated it at the routing note -- a scripted replacement kept the text before the paragraph and dropped everything after, losing Phases 9-11, the server status, Open Questions and this log. Rebuilt from `22ea0c27` and the day's decisions reapplied: SHARED subfolder, no urgency, loose files ignored, upload through Paperboy, capabilities as AIM app features, roles as groups, scope from GSABSS `unit` |
 | 2026-09-23 | 5.6b | (this commit) | Handwriting flag follows the money fields the model names, not a yes/no; signatures and notes no longer send clean invoices to review; latch per field across pages. 191 pytest green (10 of 13 new red without the change); tests now refuse all database connections |
 | 2026-09-23 | 8b.0 | (this commit) | The watch tree routes: named folder = that person, `SHARED` = the BU's shared queue, loose files at the BU root ignored before the unsupported-file rename, no HIGH PRIORITY. README per BU folder. `AIM_SHARED_FOLDER_NAME` on LockBox `aim-config` (`891179b`, local). 209 pytest green (17 of 18 new red without the change) |
+| 2026-09-23 | 5.7a | (this commit) | Workers write the invoice's facts to the row with each move: BU, submitter, owner, type, vendor, numbers, total, date. Unknown facts never overwrite known ones; ill-fitting values dropped; column names only from a whitelist. SQL worker's duplicate branch now records its archive. 227 pytest (18 new, red without the change), 1004 runs, 0 fail, 0 error |

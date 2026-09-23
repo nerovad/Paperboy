@@ -12,7 +12,7 @@ from pipeline_common import (
     insert_sql_record, archive_batch, InvoiceData, generate_laserfiche_xml, sanitize_data,
     bootstrap, PAYLOAD_SUFFIX,
 )
-from state_store import record_state
+from state_store import record_state, invoice_facts
 
 ACTOR = "02_sql_worker"
 
@@ -194,7 +194,11 @@ def run_sql_worker():
                     shutil.move(xml_src, os.path.join(PROCESSED_DIR, f"{processing_id}.xml"))
                 
                 # The invoice is in Laserfiche's hands now: archived is an end.
-                record_state(processing_id, "archived", ACTOR)
+                # The row takes the values the billing row and the XML were
+                # written from, corrections made in Paperboy included.
+                record_state(processing_id, "archived", ACTOR,
+                             fields=invoice_facts(corrected_data, budget_unit=payload.get("BU"),
+                                                  submitter=payload.get("Submitter")))
 
                 # 5. Clean up subfolders
                 shutil.rmtree(folder_path)
@@ -225,6 +229,12 @@ def run_sql_worker():
                     if os.path.exists(xml_src):
                         shutil.move(xml_src, os.path.join(PROCESSED_DIR, f"{processing_id}.xml"))
                     shutil.rmtree(folder_path)
+                    # Archived like any other batch, so the row must say so --
+                    # left unrecorded it would sit in sql_queue for ever.
+                    record_state(processing_id, "archived", ACTOR,
+                                 "duplicate billing key: the billing row already existed",
+                                 fields=invoice_facts(corrected_data, budget_unit=payload.get("BU"),
+                                                      submitter=payload.get("Submitter")))
                 else:
                     print(f"    [!] IntegrityError on {json_file}: {e}. Moving to Failed queue.")
                     move_folder_to_failed(folder_path, folder_name)

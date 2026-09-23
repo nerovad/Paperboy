@@ -7,7 +7,7 @@ from datetime import datetime
 from PIL import Image
 from pipeline_common import (BASE_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR, is_file_stable, bootstrap, env,
                              SPOOL_STATE_DIR as pipeline_spool_state_dir)
-from state_store import record_state
+from state_store import record_state, invoice_facts
 
 ACTOR = "00_ingestion_watcher"
 
@@ -341,7 +341,14 @@ def scan_and_spool():
 
             # The invoice exists from here on, so this is the first thing its
             # history says: spooled into the AI queue, by the watcher.
-            record_state(processing_id, "ai_queue", ACTOR, f"spooled from {file}")
+            record_state(processing_id, "ai_queue", ACTOR, f"spooled from {file}",
+                         fields=invoice_facts(
+                             budget_unit=bu_number,
+                             submitter=submitter_name,
+                             # The folder's name, until 8b maps names to people.
+                             assigned_to=route["owner"],
+                             assignment_source="folder" if route["owner"] else None,
+                         ))
                 
             status_msg = "[URGENT] " if is_urgent else ""
             if is_pdf and source_delete_error:
