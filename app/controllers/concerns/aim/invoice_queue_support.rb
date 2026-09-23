@@ -5,6 +5,7 @@ module Aim
     extend ActiveSupport::Concern
     include Aim::InvoiceFileSupport
     include Aim::InvoiceStateRecording
+    include Aim::InvoiceQueueListing
     include Aim::InvoiceXmlMetadataSupport
 
     # Written by 01_AI_Extraction_Worker.py alongside the real payload.
@@ -18,14 +19,6 @@ module Aim
       return if Aim::InvoiceDirectoryService::BACKEND_QUEUES.key?(@queue.to_sym)
 
       redirect_to aim_root_path, alert: 'Unknown AIM queue.'
-    end
-
-    def load_invoices
-      Dir.glob(File.join(@base_path.to_s, '*')).each do |folder_path|
-        next unless File.directory?(folder_path)
-
-        @invoices << invoice_summary(folder_path)
-      end
     end
 
     def invoice_summary(folder_path)
@@ -54,6 +47,19 @@ module Aim
       @invoice_id = safe_invoice_id(params[:id])
       @base_path = Aim::InvoiceDirectoryService.instance.path_for(@queue)
       @folder_path = invoice_folder_path(@base_path, @invoice_id)
+      @folder_path = rejected_folder_path if @queue == 'rejected' && !Dir.exist?(@folder_path.to_s)
+    end
+
+    # Rails files a rejected invoice under <Submitter>_<BU>/<batch_id>, so its
+    # folder is one level below where every other queue keeps them.
+    def rejected_folder_path
+      return if @invoice_id.blank? || @base_path.blank?
+
+      Dir.children(@base_path.to_s).lazy.filter_map do |group|
+        invoice_folder_path(File.join(@base_path.to_s, group), @invoice_id)&.then { Dir.exist?(_1) ? _1 : nil }
+      end.first
+    rescue SystemCallError
+      nil
     end
 
     def metadata_path_for(folder_path)

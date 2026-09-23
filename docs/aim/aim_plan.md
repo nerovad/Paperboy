@@ -2096,6 +2096,26 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     schema. That matters because the schedule runs wherever Solid Queue
     does, teammates' machines included.
 
+  - [x] **5.7b(3) The queue screens list what the rows say.** 2026-09-23.
+    Which invoices a queue shows now comes from `aim.invoices`, not from
+    listing a directory (`Aim::InvoiceQueueListing`). Nothing can drop out
+    of sight in the change:
+    - **A folder with no row is still listed**, with a *Not yet recorded*
+      badge beside its status -- beside, not instead: a claim badge matters
+      more, and the first version of this hid "Claimed by Dana Reyes".
+    - **A row whose folder has gone is listed too**, as *Files not found on
+      the share*, with no review link.
+    - **If the rows cannot be read, the list comes from the folders** and the
+      page says so.
+    - **What each line shows is the folder's metadata first**, the row
+      filling gaps. A reviewer's saved correction lives in the JSON until
+      Phase 9 moves editing onto the row; showing the row first would show a
+      value they had already fixed.
+    - **Rejected lists invoices, not the `<Submitter>_<BU>` groups** it had
+      been listing, and a rejected invoice now opens from its group folder --
+      before, the review page could not find it at all.
+    Claims are still read from `.claim.json`; 5.7c moves them.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
@@ -2914,3 +2934,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | 5.7a | (this commit) | Workers write the invoice's facts to the row with each move: BU, submitter, owner, type, vendor, numbers, total, date. Unknown facts never overwrite known ones; ill-fitting values dropped; column names only from a whitelist. SQL worker's duplicate branch now records its archive. 227 pytest (18 new, red without the change), 1004 runs, 0 fail, 0 error |
 | 2026-09-23 | 5.7b(1) | (this commit) | Every move made on the queue screens recorded on the row in the reviewer's name; claims mirrored onto the row; Unknown-typed invoices refused before they reach a user; nested rejected folders synced correctly. 1022 runs, 0 fail, 0 error, 227 pytest, scoped rubocop clean |
 | 2026-09-23 | 5.7b(2) | (this commit) | `Aim::QueueSyncJob` every ten minutes via `config/recurring.yml`; a no-op, database included, where AIM is not configured. 1026 runs, 0 fail, 0 error |
+| 2026-09-23 | 5.7b(3) | (this commit) | Queue screens list invoices from the rows, with folders that have no row and rows that have no folder both still shown and flagged; folder listing when the rows are unreadable. Rejected lists invoices, not groups, and opens them. 1035 runs, 0 fail, 0 error |
