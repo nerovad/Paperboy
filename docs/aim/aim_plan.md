@@ -2056,6 +2056,34 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     for ever; it now records `archived` with the reason. 227 pytest, 18 new
     and red without the change.
 
+  - [x] **5.7b(1) Every move made on the screens is recorded, in the
+    reviewer's name.** 2026-09-23. Sending to the SQL queue, to a user, to
+    alias learning, back to Action Needed, rejecting, and an AI retry (the
+    original recorded `deleted`, naming its retry folder) all record the move
+    on the row, actor = the signed-in reviewer. `Aim::Invoice#record_move!`
+    is shared with `Aim::QueueSync`: a move the pipeline makes is a
+    transition; anything else is followed and written down as a `sync` event
+    that says why -- never refused, because the file has already moved. A
+    batch with no row is adopted. A database that will not record the move
+    is logged and does not stop it; the sync puts the row right after.
+    - **Claims are mirrored onto the row** (`claimed_by`, `claimed_at`) and
+      released with the folder's; `.claim.json` stays the one that is read
+      until 5.7c.
+    - **An invoice typed `Unknown` cannot be sent to a user**, refused before
+      anything moves. A document type corrected in the metadata grid is taken
+      onto the row first, so the rule judges what the reviewer just set.
+      Rows with no type at all -- adopted before 5.7a -- are let through and
+      the event says so; refusing them would block every older invoice.
+    - **Found and fixed: rejected invoices are nested**,
+      `_REJECTED/<Submitter>_<BU>/<batch_id>`, and 5.5's sync would have
+      adopted the group folder `Jane Doe_4601` as an invoice. It now reads
+      that queue one level down.
+    - The helpers moved into their own modules, `Aim::InvoiceStateRecording`
+      (controller) and `Aim::InvoiceMoves` (model), which is where rubocop's
+      length warnings pointed.
+    10 controller tests (8 red without the wiring), 7 model tests, 1 sync
+    test.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
@@ -2872,3 +2900,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | 5.6b | (this commit) | Handwriting flag follows the money fields the model names, not a yes/no; signatures and notes no longer send clean invoices to review; latch per field across pages. 191 pytest green (10 of 13 new red without the change); tests now refuse all database connections |
 | 2026-09-23 | 8b.0 | (this commit) | The watch tree routes: named folder = that person, `SHARED` = the BU's shared queue, loose files at the BU root ignored before the unsupported-file rename, no HIGH PRIORITY. README per BU folder. `AIM_SHARED_FOLDER_NAME` on LockBox `aim-config` (`891179b`, local). 209 pytest green (17 of 18 new red without the change) |
 | 2026-09-23 | 5.7a | (this commit) | Workers write the invoice's facts to the row with each move: BU, submitter, owner, type, vendor, numbers, total, date. Unknown facts never overwrite known ones; ill-fitting values dropped; column names only from a whitelist. SQL worker's duplicate branch now records its archive. 227 pytest (18 new, red without the change), 1004 runs, 0 fail, 0 error |
+| 2026-09-23 | 5.7b(1) | (this commit) | Every move made on the queue screens recorded on the row in the reviewer's name; claims mirrored onto the row; Unknown-typed invoices refused before they reach a user; nested rejected folders synced correctly. 1022 runs, 0 fail, 0 error, 227 pytest, scoped rubocop clean |

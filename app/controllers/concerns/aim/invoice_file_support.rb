@@ -29,6 +29,7 @@ module Aim
 
       claim = { user: current_user_email, name: current_user_name, timestamp: Time.zone.now.to_i }
       File.write(File.join(@folder_path, '.claim.json'), claim.to_json)
+      mirror_claim(current_user_email)
       true
     rescue *WRITE_FAILURES => e
       Rails.logger.error "AIM could not claim #{@invoice_id.inspect} in #{@queue}: #{e.class}: #{e.message}"
@@ -56,29 +57,7 @@ module Aim
 
     def unclaim_invoice(folder_path)
       FileUtils.rm_f(File.join(folder_path, '.claim.json'))
-    end
-
-    # The email is the claim's identity key — locking compares it against the
-    # signed-in user — and the display name rides alongside it so queues never
-    # have to show an address. Claims written before the name was recorded
-    # return no name and are labelled from the mailbox instead.
-    def claim_details_for(folder_path)
-      claim_path = File.join(folder_path, '.claim.json')
-      return [nil, nil] unless File.exist?(claim_path)
-
-      claim_data = JSON.parse(File.read(claim_path))
-      [claim_data['user'] || claim_data['employee_id'] || 'Someone', claim_data['name'].presence]
-    rescue JSON::ParserError
-      ['Unknown', nil]
-    end
-
-    def current_user_email
-      session.dig(:user, 'email') || session.dig('user', 'email') || 'Unknown User'
-    end
-
-    def current_user_name
-      user = session[:user] || session['user'] || {}
-      [user['first_name'], user['last_name']].compact_blank.join(' ').presence
+      mirror_release
     end
 
     def reject_invoice
@@ -90,6 +69,7 @@ module Aim
 
       FileUtils.mkdir_p(reject_dir)
       FileUtils.mv(@folder_path, File.join(reject_dir, @invoice_id))
+      record_move('rejected')
 
       redirect_to aim_invoices_path(queue: @queue), notice: "Invoice rejected and moved to #{submitter}_#{budget_unit} folder."
     end
@@ -120,7 +100,8 @@ module Aim
         write_reprocess_sidecar(metadata_path, current_metadata)
       end
 
-      move_invoice_to(Aim::InvoiceDirectoryService.instance.ready_to_learn_dir, 'Vendor Alias sent to Learner Queue.')
+      move_invoice_to(Aim::InvoiceDirectoryService.instance.ready_to_learn_dir, 'Vendor Alias sent to Learner Queue.',
+                      state: 'ready_to_learn')
     rescue ArgumentError => e
       redirect_to aim_invoice_path(@invoice_id, queue: @queue), alert: e.message
     rescue Aim::VendorAliasService::AliasStoreError => e
@@ -170,12 +151,13 @@ module Aim
       File.write(sidecar_path, JSON.pretty_generate(Aim::ReprocessSidecar.for(metadata)))
     end
 
-    def move_invoice_to(destination_dir, notice)
+    def move_invoice_to(destination_dir, notice, state:)
       return redirect_to aim_invoice_path(@invoice_id, queue: @queue), alert: 'Destination queue is not configured.' if destination_dir.blank?
 
       unclaim_invoice(@folder_path)
       FileUtils.mkdir_p(destination_dir)
       FileUtils.mv(@folder_path, File.join(destination_dir, @invoice_id))
+      record_move(state)
 
       redirect_to aim_invoices_path(queue: @queue), notice: notice
     end

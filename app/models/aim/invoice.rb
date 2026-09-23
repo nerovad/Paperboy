@@ -16,6 +16,8 @@ module Aim
   # enforced on every save, so a move the pipeline cannot make is refused
   # however it is attempted -- through #transition_to! or a bare #update.
   class Invoice < Record
+    include Aim::InvoiceMoves
+
     # Raised by #transition_to! when the move is not one the pipeline makes.
     class IllegalTransition < StandardError; end
 

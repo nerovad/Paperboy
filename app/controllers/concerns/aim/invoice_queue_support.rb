@@ -4,6 +4,7 @@ module Aim
   module InvoiceQueueSupport
     extend ActiveSupport::Concern
     include Aim::InvoiceFileSupport
+    include Aim::InvoiceStateRecording
     include Aim::InvoiceXmlMetadataSupport
 
     # Written by 01_AI_Extraction_Worker.py alongside the real payload.

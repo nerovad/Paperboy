@@ -29,6 +29,11 @@ module Aim
     # and are not a queue to be read back.
     SYNCED_STATES = (Aim::Invoice::STATES - %w[archived deleted]).freeze
 
+    # Queues whose invoices sit one level down. Rails files a rejected invoice
+    # under <Submitter>_<BU>/<batch_id>, so the first level there is a group,
+    # not an invoice; reading it as one adopted "Jane Doe_4601" as a batch.
+    NESTED_STATES = %w[rejected].freeze
+
     Report = Struct.new(:adopted, :moved, :jumped, :missing, :folder_counts, :row_counts, :unavailable,
                         keyword_init: true) do
       def changed = adopted + moved + jumped
@@ -77,7 +82,7 @@ module Aim
         return
       end
 
-      batch_ids = folder_names(path)
+      batch_ids = NESTED_STATES.include?(state) ? nested_folder_names(path) : folder_names(path)
       report.folder_counts[state.to_sym] = batch_ids.length
       batch_ids.each { |batch_id| sync_folder(batch_id, state, report) }
     end
@@ -89,33 +94,23 @@ module Aim
       []
     end
 
+    def nested_folder_names(path)
+      folder_names(path).flat_map { |group| folder_names(File.join(path, group)) }
+    end
+
     def sync_folder(batch_id, state, report)
       invoice = Aim::Invoice.find_by(batch_id: batch_id)
       return adopt(batch_id, state, report) if invoice.nil?
       return if invoice.state == state
 
-      if invoice.next_states.include?(state)
-        invoice.transition_to!(state, actor: actor, note: 'seen in this queue on the share')
-        report.moved += 1
-      else
-        record_jump(invoice, state)
-        report.jumped += 1
-      end
+      legal = invoice.next_states.include?(state)
+      invoice.record_move!(state, actor: actor, note: legal ? 'seen in this queue on the share' : nil)
+      legal ? report.moved += 1 : report.jumped += 1
     end
 
     def adopt(batch_id, state, report)
       Aim::Invoice.create!(batch_id: batch_id, state: state, actor: actor)
       report.adopted += 1
-    end
-
-    # A folder that moved somewhere the pipeline never moves it. The row has to
-    # follow -- the share is the truth this step -- but it is not a transition,
-    # so it is written past the state machine and the event says what happened.
-    def record_jump(invoice, state)
-      from = invoice.state
-      invoice.update_columns(state: state, updated_at: Time.current)
-      invoice.events.create!(action: 'sync', from_state: from, to_state: state, actor: actor,
-                             note: 'folder moved outside the pipeline')
     end
 
     def missing_folders(report)

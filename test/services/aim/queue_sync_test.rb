@@ -90,7 +90,7 @@ module Aim
 
         event = invoice.events.last
         assert_equal %w[sync sql_queue vendor_review], [event.action, event.from_state, event.to_state]
-        assert_equal 'folder moved outside the pipeline', event.note
+        assert_equal 'moved outside the pipeline', event.note
       end
     end
 
@@ -138,6 +138,20 @@ module Aim
         File.write(File.join(paths[:action_needed], 'notes.txt'), 'not a folder')
 
         assert_equal 1, sync.call.adopted
+      end
+    end
+
+    test 'a rejected invoice is read one level down, under its group' do
+      with_queues(rejected: []) do |sync, paths|
+        group = File.join(paths[:rejected], 'Jane Doe_4601')
+        Dir.mkdir(group)
+        Dir.mkdir(File.join(group, '4601.A'))
+
+        report = sync.call
+
+        assert_equal 1, report.adopted
+        assert_equal 'rejected', Aim::Invoice.find_by(batch_id: '4601.A').state
+        assert_nil Aim::Invoice.find_by(batch_id: 'Jane Doe_4601'), 'a group folder is not an invoice'
       end
     end
 

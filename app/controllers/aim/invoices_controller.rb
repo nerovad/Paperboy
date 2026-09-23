@@ -64,6 +64,7 @@ module Aim
 
       metadata_params = writable_metadata_params
       write_metadata(metadata_path, metadata_params) if metadata_params.present?
+      settle_document_type_from(metadata_params)
 
       case params[:commit]
       when 'Reject'
@@ -73,9 +74,13 @@ module Aim
       when 'Learn & Continue'
         send_to_alias_learning(next_action: 'continue_processing', metadata_path: metadata_path)
       when 'Save & Send to Approval', 'Send to Approval'
-        move_invoice_to(Aim::InvoiceDirectoryService.instance.user_approval_dir, 'Invoice successfully fixed and routed to User Approval!')
+        return refuse_unsettled_type if unsettled_document_type?
+
+        move_invoice_to(Aim::InvoiceDirectoryService.instance.user_approval_dir,
+                        'Invoice successfully fixed and routed to User Approval!', state: 'user_approval')
       when 'Send to SQL Queue'
-        move_invoice_to(Aim::InvoiceDirectoryService.instance.sql_queue_dir, 'Invoice index verified and routed to SQL Queue.')
+        move_invoice_to(Aim::InvoiceDirectoryService.instance.sql_queue_dir,
+                        'Invoice index verified and routed to SQL Queue.', state: 'sql_queue')
       else
         redirect_to aim_invoice_path(@invoice_id, queue: @queue), notice: 'Metadata saved.'
       end
@@ -113,6 +118,7 @@ module Aim
       write_reprocess_sidecar(File.join(new_folder_path, "#{new_folder_name}.json"),
                               read_metadata(metadata_path_for(@folder_path)))
       move_to_deleted(@folder_path)
+      record_move('deleted', note: "sent back for AI retry as #{new_folder_name}")
 
       redirect_to aim_invoices_path(queue: @queue), notice: 'Document sent back to Reprocess Queue for AI retry.'
     end
@@ -121,7 +127,8 @@ module Aim
       set_invoice_context
       return redirect_to aim_invoices_path(queue: @queue), alert: 'Document not found.' unless @folder_path&.then { Dir.exist?(_1) }
 
-      move_invoice_to(Aim::InvoiceDirectoryService.instance.action_needed_dir, 'Moved document to Action Needed Queue.')
+      move_invoice_to(Aim::InvoiceDirectoryService.instance.action_needed_dir, 'Moved document to Action Needed Queue.',
+                      state: 'action_needed')
     end
 
     private
