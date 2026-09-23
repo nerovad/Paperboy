@@ -20,6 +20,10 @@
 # Grantee is an employee or a group. Group membership is expanded at send time
 # rather than stored, so somebody joining the group starts getting mail without
 # the subscription being touched.
+#
+# A member can opt out of a group subscription from their own Settings
+# (Forms::SubscriptionOptOut) without leaving the group, unless the admin marked
+# it +required+. Personal rows are never required: their owner removes them.
 module Forms
   class Subscription < ApplicationRecord
     self.table_name = 'form_subscriptions'
@@ -57,6 +61,10 @@ module Forms
     DAILY_DIGEST = 'daily_digest'
 
     belongs_to :group, foreign_key: :group_id, optional: true
+    has_many :opt_outs, class_name: 'Forms::SubscriptionOptOut', foreign_key: :form_subscription_id,
+                        inverse_of: :subscription, dependent: :delete_all
+
+    before_validation { self.required = false unless grantee_type == 'group' }
 
     validates :form_type, presence: true
     validates :grantee_type, inclusion: { in: GRANTEE_TYPES }
@@ -86,6 +94,11 @@ module Forms
 
     def all_forms? = form_type == ALL_FORMS
 
+    def group? = grantee_type == 'group'
+
+    # Whether a member may stop this subscription mailing them.
+    def opt_out_allowed? = group? && !required?
+
     def form_label(labels = {})
       return ALL_FORMS_LABEL if all_forms?
 
@@ -108,25 +121,47 @@ module Forms
     end
 
     # Every employee id behind a set of subscriptions, groups flattened to their
-    # members. One query for the memberships however many group rows there are.
+    # members less whoever opted out of that row. One query for the memberships
+    # and one for the opt-outs however many group rows there are. Somebody who
+    # opted out of a group row but also subscribes personally is still mailed.
     def self.expand_recipients(subscriptions)
       rows = subscriptions.to_a
-      ids = rows.filter_map { |row| row.employee_id.to_s if row.grantee_type == 'employee' }
+      ids = rows.filter_map { |row| row.employee_id.to_s unless row.group? }
+      group_rows = rows.select(&:group?)
 
-      group_ids = rows.filter_map { |row| row.group_id if row.grantee_type == 'group' }.uniq
-      ids += EmployeeGroup.where(GroupID: group_ids).pluck(:EmployeeID).map(&:to_s) if group_ids.any?
-
-      ids.compact_blank.uniq
+      (ids + opted_in_member_ids(group_rows)).compact_blank.uniq
     end
 
-    # Every subscription that could mail this employee — their own rows plus the
-    # ones held by groups they belong to.
+    def self.opted_in_member_ids(group_rows)
+      return [] if group_rows.empty?
+
+      members = EmployeeGroup.where(GroupID: group_rows.map(&:group_id).uniq)
+                             .pluck(:GroupID, :EmployeeID)
+                             .group_by(&:first)
+                             .transform_values { |pairs| pairs.map { |_group, employee| employee.to_s } }
+      opted_out = SubscriptionOptOut.employee_ids_by_subscription(group_rows.select(&:opt_out_allowed?).map(&:id))
+
+      group_rows.flat_map { |row| members.fetch(row.group_id, []) - opted_out.fetch(row.id, []) }
+    end
+    private_class_method :opted_in_member_ids
+
+    # Group subscriptions reaching this employee through groups they belong to,
+    # whether or not they have opted out of them.
+    def self.reaching_member(employee_id, group_ids = nil)
+      group_ids ||= EmployeeGroup.where(EmployeeID: employee_id.to_s).pluck(:GroupID)
+      where(grantee_type: 'group', group_id: group_ids)
+    end
+
+    # Every subscription that mails this employee — their own rows plus the
+    # ones held by groups they belong to, less the group rows they opted out of.
     def self.for_subscriber(employee_id, group_ids = nil)
       group_ids ||= EmployeeGroup.where(EmployeeID: employee_id.to_s).pluck(:GroupID)
-      employee_scope = where(grantee_type: 'employee', employee_id: employee_id.to_s)
+      employee_scope = for_employee(employee_id)
       return employee_scope if group_ids.blank?
 
-      employee_scope.or(where(grantee_type: 'group', group_id: group_ids))
+      opted_out = SubscriptionOptOut.where(employee_id: employee_id.to_s).select(:form_subscription_id)
+      group_scope = reaching_member(employee_id, group_ids)
+      employee_scope.or(group_scope.where(required: true)).or(group_scope.where.not(id: opted_out))
     end
 
     # Class names a set of subscriptions covers, with "all forms" expanded.
