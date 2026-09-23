@@ -2000,6 +2000,29 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     all along -- they count directories -- but any tool of ours that counts
     entries has to do the same.
 
+- [x] **5.6b Only a handwritten money amount goes to a person.** Found in
+  testing 2026-09-23 on Incentive Services CV62744: every amount printed, an
+  "OK to pay" and a signature beside them, and the invoice sent to Low
+  Confidence as handwritten. Worse than one wasted review: the handwriting
+  check returns before the vendor and missing-field checks, so the invoice's
+  real problem -- no vendor name -- was never reported; and the flag latched
+  across pages, so any document with a signature page was always flagged.
+
+  The vision model no longer answers "is there handwriting?". It names which
+  of `subtotal`, `tax` and `total` are handwritten
+  (`handwritten_financial_fields`, confined by an enum), the prompt says in
+  terms that signatures, initials, approval notes, dates and handwritten
+  invoice or PO numbers do not count, and `InvoiceData` derives the flag from
+  that list -- an empty list cannot raise it. The latch is now per money field,
+  the union of every page. The ticket and the history name the fields. A
+  payload written before the change, with no list, reads as it always did.
+
+  13 tests (10 red without the change) drive the worker's real routing with
+  the model stubbed, the CV62744 case among them. The pytest harness now
+  refuses every database connection outright, since workers that record
+  state would otherwise reach for SQL Server from a test. Needs a deploy;
+  Joshua judges it on real documents.
+
 - [ ] **5.7 Retire folder-as-state.** Remove `.claim.json`, remove the
   status-by-location inference, remove the Windows shortcuts.
   *Test:* the suite passes with no code reading a folder to learn status.
@@ -2794,3 +2817,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-22 | 5.5 | (this commit) | `Aim::QueueSync` makes the rows say what the share says -- adopting, transitioning, or recording an out-of-band drag as a `sync` event -- and the dashboard shows the database's count beside the folder's when they differ. Four missing queue paths added. The screens still read folders for content until 5.6 fills the rows. 1004 runs, 0 fail, 0 error (serial), 162 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-22 | 5.6 | (this commit) | `state_store.record_state` and 18 call sites across all five workers: every move now says where it came from and who made it. Failure to write never blocks a move while the folders are still the truth. 177 pytest green (5 of the new sequence tests red without the wiring), 1004 runs, 0 fail, 0 error (serial), scoped rubocop clean, brakeman's same four non-AIM warnings. Not configured, not deployed: the login is Joshua's call |
 | 2026-09-23 | — | (this commit) | **Restored the plan.** `89a96f7a` truncated it at the routing note -- a scripted replacement kept the text before the paragraph and dropped everything after, losing Phases 9-11, the server status, Open Questions and this log. Rebuilt from `22ea0c27` and the day's decisions reapplied: SHARED subfolder, no urgency, loose files ignored, upload through Paperboy, capabilities as AIM app features, roles as groups, scope from GSABSS `unit` |
+| 2026-09-23 | 5.6b | (this commit) | Handwriting flag follows the money fields the model names, not a yes/no; signatures and notes no longer send clean invoices to review; latch per field across pages. 191 pytest green (10 of 13 new red without the change); tests now refuse all database connections |

@@ -24,7 +24,7 @@ from pipeline_common import (
     normalize_vendor_name, VENDOR_REVIEW_DIR, SQL_QUEUE_DIR, REPROCESS_QUEUE_DIR, LOW_CONFIDENCE_REVIEW_DIR,
     ERROR_QUEUE_DIR, get_rules_for_vendor, get_global_field_aliases,
     bootstrap, env, DOCUMENT_TYPES, DOCUMENT_TYPE_GUIDE, UNKNOWN_DOCUMENT_TYPE,
-    normalize_document_type,
+    normalize_document_type, HANDWRITTEN_FINANCIAL_FIELDS,
 )
 from typing import Optional
 
@@ -62,12 +62,17 @@ VISION_SCHEMA = {
         "invoice_total": {"type": "string"},
         "order_number": {"type": "string"},
         "customer_number": {"type": "string"},
-        "contains_handwritten_financials": {"type": "boolean"}
+        # Which money fields are handwritten, not whether there is any
+        # handwriting at all. See HANDWRITTEN_FINANCIAL_FIELDS.
+        "handwritten_financial_fields": {
+            "type": "array",
+            "items": {"type": "string", "enum": list(HANDWRITTEN_FINANCIAL_FIELDS)}
+        }
     },
     "required": [
         "document_type", "extracted_vendor_name", "invoice_date",
         "invoice_number", "invoice_number_label", "invoice_total",
-        "order_number", "customer_number", "contains_handwritten_financials"
+        "order_number", "customer_number", "handwritten_financial_fields"
     ]
 }
 
@@ -123,12 +128,26 @@ def mark_reprocess_error(folder_path, folder_name, pdf_path, error):
 # `contains_handwritten_financials` defaults to False rather than None, so the
 # blank-filling rule never copied it and the routing check below it had never
 # once fired. Step 1.5.
+#
+# Since 2026-09-23 the latch is per money field: each pass names which of
+# subtotal, tax and total are handwritten, and the answer is the union of every
+# pass. A signature page no longer raises the flag for the whole document,
+# because it names no money field; a handwritten total on page 4 still does.
 STICKY_TRUE_FIELDS = ("contains_handwritten_financials",)
+UNION_FIELDS = ("handwritten_financial_fields",)
 
 def merge_vision_fields(master_data, vision_data):
     """Merge one vision pass into the running answer."""
     for field in InvoiceData.model_fields:
         value = getattr(vision_data, field)
+
+        if field in UNION_FIELDS:
+            if value is not None:
+                seen = set(getattr(master_data, field) or []) | set(value)
+                setattr(master_data, field, [f for f in HANDWRITTEN_FINANCIAL_FIELDS if f in seen])
+                master_data.contains_handwritten_financials = bool(seen) or bool(
+                    master_data.contains_handwritten_financials)
+            continue
 
         if field in STICKY_TRUE_FIELDS:
             if value:
@@ -358,7 +377,9 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         "leading zeros. Set invoice_number_label to the exact label text next to the number you chose, and treat a "
         "'LAR PO' or 'PO' number as order_number. "
         "2. If you see multiple values that map to invoice_total, and one is $0.00, IGNORE the $0.00 value and extract the non-zero amount. "
-        "3. Determine if the invoice total is handwritten. If the total is written by hand (pen, pencil, marker), set 'contains_handwritten_financials' to true. Ignore pre-printed or typed invoice numbers — only look at the financial amounts. "
+        "3. List in 'handwritten_financial_fields' which of the money amounts -- 'subtotal', 'tax', 'total' -- are written by hand (pen, pencil, marker) rather than printed or typed. "
+        "Signatures, initials, approval notes such as 'OK to pay', handwritten dates and handwritten invoice or PO numbers are NOT money amounts: they do not belong in the list. "
+        "If every amount is printed, return an empty list, even when the page carries a signature or a note. "
         "4. HOW TO INTERPRET VENDOR RULES: Vendor rules are written by human users in plain English to help you locate values on the page. Treat them as helpful visual hints. However, you MUST still strictly obey the requested JSON schema. Do NOT invent new JSON keys based on user rules, and do NOT delete or omit standard JSON keys just because a user tells you to 'ignore' a visual label on the document. "
         "5. DO NOT dump raw unstructured text or multiple lines into any field. If a value is too long or you are unsure, leave it blank."
         "Return strictly as JSON."
@@ -475,11 +496,12 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         os.makedirs(dest_folder, exist_ok=True)
         ticket_path = os.path.join(dest_folder, f"{processing_id}.ticket")
         
-        print(f"      [!] AI detected handwritten financial amounts. Routing to human review.")
+        handwritten = ", ".join(master_data.handwritten_financial_fields or []) or "subtotal, tax, or total"
+        print(f"      [!] AI detected handwritten financial amounts ({handwritten}). Routing to human review.")
         with open(ticket_path, "w", encoding="utf-8") as f:
             f.write(f"--- MANUAL ACTION NEEDED (HANDWRITTEN FINANCIALS) ---\n")
             f.write(f"File: {processing_id}.pdf\n\n")
-            f.write(f"The AI detected handwritten financial amounts (subtotal, tax, or total). These must be manually verified to ensure accuracy.\n")
+            f.write(f"The AI found these amounts written by hand: {handwritten}. They must be verified by a person.\n")
             f.write(f"Please review the document, verify the values in the XML file, and drop this folder onto the SQL shortcut.")
             
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
@@ -488,7 +510,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         # Add sidecar data for GUI rule entry
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
-        record_state(processing_id, "low_confidence_review", ACTOR, "handwritten financials")
+        record_state(processing_id, "low_confidence_review", ACTOR, f"handwritten: {handwritten}")
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Handwritten financials detected", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return

@@ -42,6 +42,23 @@ def no_real_environment(monkeypatch):
         monkeypatch.delenv(name, raising=False)
 
 
+@pytest.fixture(autouse=True)
+def no_database(monkeypatch):
+    """Refuse every database connection, so "no SQL" is enforced, not hoped.
+
+    Since 5.6 the workers write state as they route, so a test that drives a
+    worker reaches for SQL Server. On a machine with an ODBC driver that would
+    try a real connection and could hang; here it fails at once, and
+    record_state -- built to survive an unreachable database -- carries on.
+    """
+    import pyodbc
+
+    def refuse(*args, **kwargs):
+        raise pyodbc.OperationalError("tests never open a database connection")
+
+    monkeypatch.setattr(pyodbc, "connect", refuse)
+
+
 @pytest.fixture
 def fake_environment(tmp_path, monkeypatch):
     """A complete AIM configuration pointing at a temp directory.

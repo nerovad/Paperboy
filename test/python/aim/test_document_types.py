@@ -148,6 +148,8 @@ def run_worker(ai_worker, queue_tree, monkeypatch):
         monkeypatch.setattr(ai_worker, "get_global_field_aliases", lambda: "")
         monkeypatch.setattr(ai_worker, "apply_invoice_number_rules", lambda data: None)
         monkeypatch.setattr(ai_worker, "write_log", lambda *args, **kwargs: None)
+        # Never reach for a database: record_state would try to connect.
+        monkeypatch.setattr(ai_worker, "record_state", lambda *args, **kwargs: True)
 
         batch_id = "4601.20260922_120000.scan-[AB12]"
         folder = queue_tree.add_invoice("AIM_AI_QUEUE_DIR", batch_id)

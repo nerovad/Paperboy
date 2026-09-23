@@ -20,7 +20,7 @@ import pyodbc
 from dotenv import load_dotenv
 from thefuzz import fuzz, process
 from PIL import Image, ImageDraw
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional
 from dateutil import parser as dateparser
 
@@ -228,10 +228,21 @@ def normalize_document_type(value):
                 return name
     return UNKNOWN_DOCUMENT_TYPE
 
+# The money fields whose being handwritten sends an invoice to a person.
+# Anything else written by hand -- a signature, initials, "OK to pay", a date
+# or a PO number in pen -- does not, because every amount AIM needs can still
+# be read. Asking the model "is there handwriting?" flagged invoices whose
+# totals were printed perfectly clearly, and stopped them before vendor and
+# missing-field checks ever ran. Found in testing 2026-09-23.
+HANDWRITTEN_FINANCIAL_FIELDS = ("subtotal", "tax", "total")
+
 class InvoiceData(BaseModel):
     is_urgent: Optional[bool] = False
     contains_multiple_invoices: Optional[bool] = False
     contains_handwritten_financials: Optional[bool] = False
+    # Which money fields are handwritten. None means the model was not asked
+    # (an older payload); an empty list means it looked and found none.
+    handwritten_financial_fields: Optional[list[str]] = None
     document_type: Optional[str] = None
     extracted_vendor_name: Optional[str] = None
     vendor_name: Optional[str] = None # Normalized Vendor
@@ -256,6 +267,24 @@ class InvoiceData(BaseModel):
     @classmethod
     def spell_document_type(cls, v):
         return normalize_document_type(v)
+
+    @field_validator("handwritten_financial_fields", mode="before")
+    @classmethod
+    def keep_only_money_fields(cls, v):
+        if v is None:
+            return None
+        named = {str(field).strip().lower() for field in v if field is not None}
+        return [field for field in HANDWRITTEN_FINANCIAL_FIELDS if field in named]
+
+    # When the model has named the handwritten money fields, the flag follows
+    # the list and nothing else: an empty list cannot raise it, whatever the
+    # model thought of the signature. With no list at all, the flag is left as
+    # given, so a payload written before this change reads as it always did.
+    @model_validator(mode="after")
+    def flag_follows_the_fields(self):
+        if self.handwritten_financial_fields is not None:
+            self.contains_handwritten_financials = bool(self.handwritten_financial_fields)
+        return self
 
 class ManifestItem(BaseModel):
     vendor_name: Optional[str] = "Unknown"
