@@ -2178,10 +2178,9 @@ the rules table:
   once, typically the same coding on different BDO lines (`..._1`, `..._2`)
   with nothing on the invoice to tell them apart. That is a person's choice;
   the rules table offers the candidates to the router rather than picking.
-- **Keywords are mostly notes to a human**, not match keys: invoice-format
-  reminders, "both shredding and storage", sometimes a customer number or a
-  vendor code. Import the ones that are customer numbers as matches; keep the
-  rest as a note shown to the reviewer.
+- **Keywords are not to be trusted.** Joshua, 2026-09-23: they were an OCR
+  aid and many are likely out of date. Not match keys; at most carried over
+  as a note for a person to read.
 - **Vendor codes (`VC000...`) are scattered** -- a Vendor Code column in
   Housekeeping, the *Fund* column in Fleet and Parks, the Keywords in
   Business Support. They are Fiscal's vendor ids, and Phase 6's vendor master
@@ -2193,6 +2192,47 @@ the rules table:
   names in Parks; object codes with their description appended
   (`2192 TEMP HELP`); duplicated columns. Each becomes a reported row, never
   a silent guess.
+
+**Fusion's own database, read 2026-09-23** (`Fusion01` on `gsa-sql22`,
+read-only for `GSAETL` with `db_datareader` and `VIEW DEFINITION`). It is
+the closest thing to a spec for the old routing:
+
+- **A queue id is a Fusion user id.** Every user owns exactly one queue (120
+  users, 120 queues), so the lookups' queue ids name people:
+
+  | id | Fusion user | notes |
+  |---|---|---|
+  | 30 | Squires, Patrick | GSA H&G/Security |
+  | 62 | Gagnon, Tonya | supervisor of GSA Maintenance -- all 291 rows of 4703 |
+  | 92 | Payne, Sean | GSA H&G/Security |
+  | 198 | Dixon, Charles | **disabled** -- ten Business Support rows |
+  | 254 | Cooper, Jeri | GSA Parks |
+  | 271 | Barley, David | GSA H&G/Security |
+  | 300 | Martinez, Mark | GSA Business Support |
+  | 304 | Howard, Gary | supervisor, GSA Business Support |
+  | 313 | Bertrand, Brianna | GSA H&G/Security |
+  | 334 | Salgado, Marcos | |
+  | 75, 119, 123 | **no such user** | all of 4705, and rows in Business Support and Security |
+
+  So the routing already points at people who have left or been disabled.
+  The import has to map Fusion ids to Paperboy people (Fusion `Users` carries
+  `EmailAddress` and `UserName`, which match GSABSS) and report every id that
+  maps to nobody.
+- **Teams carry a supervisor, a distribution setting and an aging rule.**
+  GSA Business Support (supervisor Steve Nelles, 24 h), GSA Maintenance
+  (Tonya Gagnon, 48 h), Sheriff AP (Katie Morgan-Peters, 72 h), GSA Fleet
+  (Jorge Bonilla, 168 h), GSA Parks, GSA H&G/Security (Arturo Huizar), and
+  others. The aging rule looks like escalation after an invoice sits too
+  long -- a requirement the plan did not have. Ask Joshua what it does in
+  practice.
+- **Fusion's lookups are lists of valid values, not the routing.** Per
+  document type (`GSA_AP`, `Parks_AP`, `Facilities_AP`, `Fleet_AP`,
+  `Sheriff_AP`, `HCA_AP`, `PH_AP`, and RMA types), they query `GSA-Object`,
+  `GSA-ActivityCode`, `GSA-DepartmentObject`, `GSA-Function`, `GSA-Phase`
+  and `GSA-Program` through a connection named *GSA AP Codes*. Those lists
+  are what the rules import should validate coding against -- `2192 TEMP
+  HELP` is not an object code. They live in a database `GSAETL` cannot yet
+  open.
 
 **Needed from Joshua before 8b.1:**
 
