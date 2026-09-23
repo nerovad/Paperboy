@@ -69,6 +69,10 @@ module Aim
       case params[:commit]
       when 'Reject'
         reject_invoice
+      when 'Delete'
+        return redirect_to aim_invoice_path(@invoice_id, queue: @queue), alert: 'Invoices cannot be deleted from this queue.' unless deletable_queue?
+
+        delete_invoice
       when 'Save & Learn Alias', 'Learn Alias', 'Learn & Retry AI'
         send_to_alias_learning(next_action: 'retry_ai', metadata_path: metadata_path)
       when 'Learn & Continue'

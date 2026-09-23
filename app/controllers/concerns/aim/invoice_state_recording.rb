@@ -93,6 +93,21 @@ module Aim
       [user['first_name'], user['last_name']].compact_blank.join(' ').presence
     end
 
+    # Replaces the MOVE_FOLDERS_HERE_TO_DELETE shortcuts (5.7c). The folder goes
+    # to the delete queue, and the SQL worker archives it into the deleted
+    # folder under its BU and submitter: nothing is destroyed outright, and the
+    # row says who sent it.
+    def delete_invoice
+      move_invoice_to(Aim::InvoiceDirectoryService.instance.ready_to_delete_dir,
+                      'Invoice sent for deletion. It is archived to the deleted folder, not destroyed.',
+                      state: 'ready_to_delete')
+    end
+
+    # Only where the pipeline allows it, so the button and the rules agree.
+    def deletable_queue?
+      Aim::Invoice::TRANSITIONS.fetch(@queue.to_s, []).include?('ready_to_delete')
+    end
+
     # An invoice nobody has typed is not ready for the person who has to act
     # on it. Checked before anything moves, so the files stay where they are.
     def refuse_unsettled_type

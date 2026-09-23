@@ -76,6 +76,7 @@ module Aim
     def ready_to_learn_dir = path_for!(:ready_to_learn)
     def reprocess_dir = path_for!(:reprocess)
     def deleted_dir = path_for!(:deleted)
+    def ready_to_delete_dir = path_for!(:ready_to_delete)
 
     def to_windows_path(linux_path)
       return if linux_path.blank?

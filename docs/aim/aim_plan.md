@@ -2186,6 +2186,16 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
       it into a scratch database, and let master's newer migrations run on
       top.
 
+  - [x] **5.7c(2) A Delete button.** 2026-09-23. Replaces the three
+    `MOVE_FOLDERS_HERE_TO_DELETE` shortcuts. Offered on the review page
+    wherever the state machine allows a move to `ready_to_delete`, so the
+    button and the rules cannot disagree; refused anywhere else, the SQL
+    queue included. It asks first, with the shared modal, and sends the
+    folder to the delete queue, where the SQL worker archives it under its BU
+    and submitter -- nothing is destroyed outright -- and the row records who
+    sent it. No route change: like every other action on the page it is a
+    named submit that `update` dispatches.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
@@ -3007,3 +3017,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | 5.7b(3) | (this commit) | Queue screens list invoices from the rows, with folders that have no row and rows that have no folder both still shown and flagged; folder listing when the rows are unreadable. Rejected lists invoices, not groups, and opens them. 1035 runs, 0 fail, 0 error |
 | 2026-09-23 | — | (deploy) | **Workers deployed** by Joshua at 15:12: 24 files and a 66-variable `.env`, verified identical to the repo. Carries 5.6b (handwriting), 8b.0 (watch tree, README, SHARED) and 5.7a (facts on the row). Replaced files in `_PREVIOUS_SCRIPTS/2026-09-23_151211`. Workers need a restart on GSA-SCAN02; `SHARED` folders still to be created |
 | 2026-09-23 | 5.7c(1) | (this commit) | Claims read from the row, with the claimant's name in a new `claimed_by_name` column; `.claim.json` still written for the inbox. `Paperboy_Dev` migrated. 1039 runs, 0 fail, 0 error |
+| 2026-09-23 | 5.7c(2) | (this commit) | Delete button on the review page, offered where the state machine allows it and refused elsewhere; archives rather than destroys; recorded in the reviewer's name. 1042 runs, 0 fail, 0 error |

@@ -18,7 +18,8 @@ module Aim
       'AIM_USER_APPROVAL_DIR' => '_USER_APPROVAL',
       'AIM_REJECTED_DIR' => '_REJECTED',
       'AIM_REPROCESS_QUEUE_DIR' => '_REPROCESS_QUEUE',
-      'AIM_DELETED_DIR' => '_DELETED'
+      'AIM_DELETED_DIR' => '_DELETED',
+      'AIM_READY_TO_DELETE_DIR' => '_READY_TO_DELETE'
     }.freeze
     AIM_ENV = (%w[AIM_WINDOWS_QUEUE_BASE_PATH AIM_LINUX_QUEUE_BASE_PATH] + QUEUES.keys).freeze
     REVIEWER = 'aim.staff@example.com'
@@ -185,6 +186,38 @@ module Aim
 
       assert_select 'input[type=submit][value=?]', 'Save Changes'
       assert_not_includes response.body, 'Dana Reyes claimed this invoice'
+    end
+
+    test 'delete sends the folder to the delete queue and records who did it' do
+      folder = action_needed_invoice('4601.O')
+
+      patch :update, params: { id: '4601.O', queue: 'action_needed', commit: 'Delete' }
+
+      assert_not Dir.exist?(folder)
+      assert Dir.exist?(File.join(@tmpdir, '_BACK_END', '_READY_TO_DELETE', '4601.O'))
+      invoice = Aim::Invoice.find_by!(batch_id: '4601.O')
+      assert_equal 'ready_to_delete', invoice.state
+      assert_equal REVIEWER, invoice.events.last.actor
+    end
+
+    test 'the review page offers Delete, and asks first' do
+      action_needed_invoice('4601.P')
+
+      get :show, params: { id: '4601.P', queue: 'action_needed' }
+
+      assert_select 'input[type=submit][value=?][data-turbo-confirm][data-confirm-label=?]', 'Delete', 'Delete'
+    end
+
+    test 'delete is refused where the pipeline does not allow it' do
+      folder = File.join(@tmpdir, '_BACK_END', '_SQL_QUEUE', '4601.Q')
+      FileUtils.mkdir_p(folder)
+      File.write(File.join(folder, '4601.Q.pdf'), 'pdf')
+
+      @controller.stub(:set_queue, -> { @controller.instance_variable_set(:@queue, 'sql_queue') }) do
+        patch :update, params: { id: '4601.Q', queue: 'sql_queue', commit: 'Delete' }
+      end
+
+      assert Dir.exist?(folder), 'an invoice in the SQL queue is on its way to Laserfiche, not deletable'
     end
 
     test 'unclaiming releases the row too' do

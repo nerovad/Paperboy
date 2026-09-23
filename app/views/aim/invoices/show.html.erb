@@ -222,6 +222,16 @@
                              class: 'btn ghost aim-placeholder-action' %>
             <% end %>
 
+            <% if deletable_queue? %>
+              <%= form.submit 'Delete',
+                              data: {
+                                turbo_confirm: 'Send this invoice for deletion? It is archived to the deleted folder, not destroyed.',
+                                confirm_title: 'Delete invoice',
+                                confirm_label: 'Delete'
+                              },
+                              class: 'btn deny' %>
+            <% end %>
+
             <%= link_to 'Retry AI Processing',
                         retry_aim_invoice_path(@invoice_id, queue: @queue),
                         data: {
