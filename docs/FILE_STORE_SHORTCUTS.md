@@ -95,6 +95,8 @@ messages must never expose passwords.
       the shared store.
 - [x] Route DataRunner stage reset and orchestration-stage verification through
       the shared store, including shortcut-backed output roots.
+- [x] Confirm batch shipping-station moves reuse the FileStore-backed per-OMS
+      endpoint with bounded concurrency and individual failure reporting.
 - [x] Centralize temporary remote-download cleanup behind the shared store.
 - [x] Remove failed SMB download temporary files before re-raising errors.
 - [x] Clean up SMB temporary files after production-file previews.
@@ -102,11 +104,9 @@ messages must never expose passwords.
       as needed.
 - [x] Convert the P2M backfill/scan script's staging and processed-directory
       checks to the shared file store.
-- [ ] Convert DataRunner path consumers and generated DSL locations as needed.
 - [x] Update the shipping-station copy and remove operations.
 - [x] Update P2M staging and printer queue copy/remove operations to use the
       initial file-store interface.
-- [ ] Update batch shipping-station operations.
 - [x] Convert P2M Data Reset to recursively list and clear local or SMB stores.
 - [x] Convert P2M destroy archive writes and cleanup operations to file stores.
 - [x] Expand `StartupConfiguration` to validate local paths and shortcuts.
