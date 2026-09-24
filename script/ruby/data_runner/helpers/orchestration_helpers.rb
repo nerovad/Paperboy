@@ -280,12 +280,13 @@ module DataRunnerTaskHelpers
 
   def stage_orchestration_inputs(orchestration)
     output_store = Paperboy::FileStore.for(orchestration.fetch(:output_dir))
+    download_store, relative_prefix = workflow_stage_store(WorkflowPaths::DOWNLOAD_DIR)
+    download_store.mkdir(relative_prefix)
     orchestration_children(orchestration).each do |child_name, child_cfg|
       local = child_local!(child_name, child_cfg)
-      target = File.join(WorkflowPaths::DOWNLOAD_DIR, local)
-      FileUtils.mkdir_p(File.dirname(target))
-      output_store.with_download(local) { |source| FileUtils.cp(source, target) }
-      puts "[STAGE] #{child_name}: #{output_store.path.join(local)} -> #{target}"
+      target = [relative_prefix, local].compact.join('/')
+      output_store.with_download(local) { |source| download_store.copy(source, target) }
+      puts "[STAGE] #{child_name}: #{output_store.path.join(local)} -> #{download_store.path.join(target)}"
     end
   end
   private_class_method :stage_orchestration_inputs

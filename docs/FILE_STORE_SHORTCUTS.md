@@ -109,6 +109,8 @@ boundary:
       the shared store.
 - [x] Route DataRunner stage reset and orchestration-stage verification through
       the shared store, including shortcut-backed output roots.
+- [x] Route orchestration child-input staging through the resolved download
+      stage store.
 - [x] Confirm batch shipping-station moves reuse the FileStore-backed per-OMS
       endpoint with bounded concurrency and individual failure reporting.
 - [x] Centralize temporary remote-download cleanup behind the shared store.
