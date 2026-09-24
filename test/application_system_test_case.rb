@@ -9,4 +9,11 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     server = Capybara.current_session.server
     { host: server.host, port: server.port }
   end
+
+  def visit(*args, **options)
+    super
+    return unless page.has_css?('.pb-modal--startup-warning', wait: 5)
+
+    page.find('.pb-modal--startup-warning button', text: 'Continue').click
+  end
 end
