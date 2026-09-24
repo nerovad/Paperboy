@@ -3,6 +3,7 @@
 # Stage-by-stage orchestration support for control-only DataRunner DSL entries.
 require 'date'
 require 'pathname'
+require_relative '../../../../lib/paperboy/file_store'
 
 # rubocop:disable-next Metrics/ModuleLength
 module DataRunnerTaskHelpers
@@ -138,21 +139,22 @@ module DataRunnerTaskHelpers
     match = entry.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
     return unless match
 
-    processed = File.absolute_path(orchestration.fetch(:processed_path).to_s,
-                                   orchestration.fetch(:root_path))
-    archive = File.join(processed, match[1])
-    raise "duplicate OMS number: archive already exists: #{archive}" if Dir.exist?(archive)
+    processed = Paperboy::FileStore.for(orchestration.fetch(:processed_path))
+    archive = processed.path.join(match[1])
+    raise "duplicate OMS number: archive already exists: #{archive}" if processed.directory?(match[1])
   end
   private_class_method :ensure_queue_entry_not_processed!
 
   def next_queue_entry(queue)
     path = queue.fetch(:path)
-    raise "orchestration queue directory not found: #{path}" unless Dir.exist?(path)
+    store = Paperboy::FileStore.for(path)
+    raise "orchestration queue directory not found: #{path}" unless store.directory?
 
     target_oms = ENV.fetch('DATARUNNER_QUEUE_OMS', nil)
-    Dir.children(path).sort.find do |entry|
+    store.entries.sort_by { |file| file.fetch(:name) }.find do |file|
+      entry = file.fetch(:name)
       matches_target = target_oms.nil? || entry.match?(/\AMail\.dat_#{Regexp.escape(target_oms)}\.zip\z/i)
-      File.file?(File.join(path, entry)) && queue.fetch(:pattern).match?(entry) && matches_target
+      !file.fetch(:directory) && queue.fetch(:pattern).match?(entry) && matches_target
     end
   end
   private_class_method :next_queue_entry
@@ -377,8 +379,8 @@ module DataRunnerTaskHelpers
     match = entry&.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
     return unless match
 
-    marker = Pathname.new(queue.fetch(:path)).join(entry)
-    P2m::OmsUpload.find_by(oms_number: match[1], mailer_date: marker.mtime.to_date)
+    marker_store = Paperboy::FileStore.for(queue.fetch(:path))
+    P2m::OmsUpload.find_by(oms_number: match[1], mailer_date: marker_store.mtime(entry)&.to_date)
   end
   private_class_method :orchestration_upload
 

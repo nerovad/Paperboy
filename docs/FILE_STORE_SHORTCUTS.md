@@ -85,6 +85,8 @@ messages must never expose passwords.
       services to use the abstraction.
 - [x] Update the Print 2 Mail DataRunner DSL to pass configured absolute
       locations, including shortcut paths, to orchestration.
+- [x] Route DataRunner queue discovery, marker timestamps, and duplicate
+      archive checks through the shared file-store abstraction.
 - [ ] Convert remaining DataRunner path consumers and generated DSL locations
       as needed.
 - [x] Convert the P2M backfill/scan script's staging and processed-directory

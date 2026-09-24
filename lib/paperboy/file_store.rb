@@ -25,8 +25,8 @@ module Paperboy
         @root = Pathname.new(root).expand_path
       end
 
-      def directory?
-        root.directory?
+      def directory?(name = nil)
+        name ? child(name).directory? : root.directory?
       end
 
       def path
@@ -124,8 +124,10 @@ module Paperboy
         @share_class = share_class
       end
 
-      def directory?
-        shortcut_path.file?
+      def directory?(name = nil)
+        return shortcut_path.file? if name.nil?
+
+        exist_directory?(remote_name(name))
       end
 
       def path
