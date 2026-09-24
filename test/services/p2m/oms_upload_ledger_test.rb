@@ -74,13 +74,14 @@ module P2m
           ledger = OmsUploadLedger.new(staging_path: staging, processed_path: processed)
           upload = ledger.staged!(oms_number: oms_number, actor: 'operator@example.com')
 
-          ledger.stub(:imported_dataset_at, completed_at) do
+          imported_at = ->(number) { number.to_s == oms_number ? completed_at : nil }
+          ledger.stub(:imported_dataset_at, imported_at) do
             assert_equal 1, ledger.reconcile_imported!
           end
           assert_equal 'completed', upload.reload.status
           assert_equal 'imported', upload.import_status
           assert_equal 'archived', upload.archive_status
-          ledger.stub(:imported_dataset_at, completed_at) do
+          ledger.stub(:imported_dataset_at, imported_at) do
             assert_equal 0, ledger.reconcile_imported!
           end
         end
