@@ -11,6 +11,31 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["zone", "input", "list"]
 
+  // A PDF dropped just outside the box would make the browser open it and
+  // leave the page, losing the form. Anywhere on the page, a drop does nothing
+  // unless it lands on the box.
+  connect() {
+    this.guard = (event) => {
+      if (this.zoneTarget.contains(event.target)) return
+      event.preventDefault()
+    }
+    window.addEventListener("dragover", this.guard)
+    window.addEventListener("drop", this.guard)
+  }
+
+  disconnect() {
+    window.removeEventListener("dragover", this.guard)
+    window.removeEventListener("drop", this.guard)
+  }
+
+  // Enter or Space on the focused box opens the file chooser.
+  key(event) {
+    if (event.key !== "Enter" && event.key !== " ") return
+    if (event.target !== this.zoneTarget) return
+    event.preventDefault()
+    this.inputTarget.click()
+  }
+
   over(event) {
     event.preventDefault()
     this.zoneTarget.classList.add("is-over")
@@ -18,6 +43,7 @@ export default class extends Controller {
 
   leave(event) {
     event.preventDefault()
+    if (event.relatedTarget && this.zoneTarget.contains(event.relatedTarget)) return
     this.zoneTarget.classList.remove("is-over")
   }
 

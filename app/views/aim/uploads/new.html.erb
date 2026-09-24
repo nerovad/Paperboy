@@ -14,8 +14,9 @@
           <div class="aim-field">
             <%= form.label :files, 'PDF files' %>
             <%# Drop files here, or click to choose. Dropped files land in the input below. %>
-            <div class="aim-dropzone" data-aim-dropzone-target="zone"
-                 data-action="dragover->aim-dropzone#over dragenter->aim-dropzone#over dragleave->aim-dropzone#leave drop->aim-dropzone#drop click->aim-dropzone#choose">
+            <div class="aim-dropzone" data-aim-dropzone-target="zone" tabindex="0" role="button"
+                 aria-label="Drop PDFs here, or press Enter to choose files"
+                 data-action="dragover->aim-dropzone#over dragenter->aim-dropzone#over dragleave->aim-dropzone#leave drop->aim-dropzone#drop click->aim-dropzone#choose keydown->aim-dropzone#key">
               <p class="aim-dropzone__hint">Drag PDFs here, or</p>
               <%= form.file_field :files, multiple: true, accept: 'application/pdf,.pdf', required: true,
                                           data: { aim_dropzone_target: 'input', action: 'change->aim-dropzone#list' } %>
