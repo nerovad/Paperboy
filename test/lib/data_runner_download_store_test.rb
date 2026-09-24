@@ -34,6 +34,20 @@ class DataRunnerDownloadStoreTest < ActiveSupport::TestCase
     assert_equal ['01_Download/data.csv'], remote.copies.map(&:last)
   end
 
+  test 'writes and backs up files through a shortcut-backed store' do
+    remote = RemoteStore.new
+    store = Paperboy::FileStore.stub(:for, remote) do
+      DataRunnerDownloadStore.new(root: Pathname('/data/output.lnk'))
+    end
+
+    store.write('data.csv', 'output')
+    backup = store.backup_existing('data.csv')
+
+    assert_match(/\A\d{4}-\d{2}-\d{2}-001-data\.csv\z/, backup)
+    assert_includes remote.copies.map(&:last), '01_Download/data.csv'
+    assert_includes remote.copies.map(&:last), "06_Download_Backup/#{backup}"
+  end
+
   test 'removes a shortcut-backed workspace after a failure' do
     remote = RemoteStore.new
     store = Paperboy::FileStore.stub(:for, remote) do
@@ -66,6 +80,14 @@ class DataRunnerDownloadStoreTest < ActiveSupport::TestCase
 
     def entries(_prefix = nil)
       []
+    end
+
+    def exist?(_name)
+      true
+    end
+
+    def with_download(_name)
+      yield Pathname('/tmp/remote-download.csv')
     end
   end
 end

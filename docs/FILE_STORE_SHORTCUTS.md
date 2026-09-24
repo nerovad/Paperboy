@@ -87,7 +87,7 @@ boundary:
    local workspace.
 4. [x] Publish child-process outputs back to the configured store and clean up the
    workspace on success, failure, and interruption.
-5. Add strategy-specific tests, then rerun the full SQL Server test suite.
+5. [x] Add strategy-specific tests; rerun the full SQL Server test suite.
 
 - [x] Inspect the `~/gitea/smb_shortcut` source repository.
 - [x] Put the shared abstraction in Paperboy and extend `smb_shortcut` with
