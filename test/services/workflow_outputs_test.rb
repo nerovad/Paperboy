@@ -15,7 +15,9 @@ class WorkflowOutputsServiceTest < ActiveSupport::TestCase
       files = outputs.files
 
       assert_equal ['02_Normalized/employees.csv'], files.map(&:relative_path)
-      assert_equal files.first, outputs.find!('02_Normalized/employees.csv')
+      found = outputs.find!('02_Normalized/employees.csv')
+      assert_equal files.first.relative_path, found.relative_path
+      assert_equal files.first.mtime, found.mtime
       assert_equal 'employees.csv', files.first.basename.to_s
     end
   end
