@@ -799,11 +799,31 @@
   color: $error-text;
 }
 
-.aim-owner-choice label {
-  margin-right: 1rem;
+// Whose queue: the three choices on one line, the person picker on its own
+// full-width line beneath them, so the Choices dropdown has room to open.
+.aim-owner-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+}
+
+.aim-owner-choice legend {
+  flex-basis: 100%;
+}
+
+.aim-owner-choice > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
 }
 
 .aim-owner-picker {
-  margin-top: 0.5rem;
-  max-width: 28rem;
+  flex-basis: 100%;
+  max-width: 32rem;
+}
+
+.aim-upload-panel {
+  max-width: 56rem;
 }

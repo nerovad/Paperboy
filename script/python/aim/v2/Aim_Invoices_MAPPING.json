@@ -10,5 +10,8 @@
   "Submitter": "[User Name]",
   "Subtotal": "Subtotal",
   "ProcessedTimestamp": "ProcessedTimestamp",
-  "Status": "[Invoice Status]"
+  "Status": "[Invoice Status]",
+  "BatchID": "BatchID",
+  "Source": "Source",
+  "ApprovedBy": "[Approved By]"
 }

@@ -2496,6 +2496,25 @@ intake; split children are `{parent}_SPLIT_{n}`.
   stays), the folder-reading concerns, `.claim.json`, all `*_DIR` variables
   except the five above (they stay in LockBox until v1 is retired).
 
+**Billing (2026-09-24).** We bill for every invoice added, whatever becomes
+of it. The worker upserts one row per invoice in `[GSA_Scan].[dbo].[Aim_Invoices]`,
+keyed by `BatchID`, whenever `aim.invoices.state` differs from `billed_state`:
+inserted at intake, updated with the read values after extraction, with the
+approved values and `[Approved By]` at export, and `[Invoice Status]` follows
+every state (Received, Processing, Action Needed, Needs Split, Ready for
+Approval, Approved, Exported, Failed, Rejected, Deleted, Split). `[Source]` is
+`AIM`. A failed write is retried next cycle and never holds up the pipeline.
+Open: a split parent keeps a row marked Split and each piece gets its own, so
+billing must decide whether Split rows are charged.
+
+**TODO (Joshua, 2026-09-24):**
+- Drag-and-drop on the upload page does not work yet.
+- Link queue names to people: store the employee id (`assigned_employee_id`)
+  beside the name; the picker and upload save it; folder names matched to an
+  employee by name within the BU once, the rest flagged.
+- The BU field on upload: select from chart-of-accounts units (filterable) or
+  type one.
+
 **Cutover**: v2 runs from `_PROGRAM2` against the same Paperboy_Dev database
 while v1 drains. Joshua drops test PDFs; when v2 has taken a batch from drop
 to billing row and Laserfiche XML, v1's services stop, its queue folders are

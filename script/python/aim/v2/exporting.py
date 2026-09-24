@@ -33,8 +33,19 @@ def day(value):
     return value.strftime("%Y-%m-%d") if hasattr(value, "strftime") else str(value)
 
 
-def billing_payload(row):
-    """The v1 payload shape, from the row."""
+# What the billing table's [Invoice Status] says for each state. We bill for
+# every invoice that arrives, whatever becomes of it, so the row is written at
+# intake and kept current: this is how the status reaches it.
+BILLING_STATUS = {
+    "received": "Received", "extracting": "Processing", "needs_review": "Action Needed",
+    "needs_split": "Needs Split", "ready_for_approval": "Ready for Approval",
+    "approved": "Approved", "exporting": "Approved", "exported": "Exported",
+    "failed": "Failed", "rejected": "Rejected", "deleted": "Deleted", "split": "Split",
+}
+
+
+def billing_payload(row, approved_by=None):
+    """The billing row's values, from the invoice row."""
     return {
         "FileName": row.get("source_filename") or f"{row['batch_id']}.pdf",
         "Submitter": row.get("submitter"),
@@ -48,7 +59,10 @@ def billing_payload(row):
         "Subtotal": money(row.get("subtotal")),
         "SalesTax": money(row.get("sales_tax")),
         "ExtractedMetadata": row.get("extracted"),
-        "Status": "SUCCESS",
+        "Status": BILLING_STATUS.get(row.get("state"), row.get("state")),
+        "BatchID": row["batch_id"],
+        "Source": "AIM",
+        "ApprovedBy": approved_by,
         "ErrorMessage": None,
         "ProcessedTimestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "InvoiceConcatID": row["batch_id"],
@@ -63,29 +77,39 @@ def load_mapping(settings):
         return json.load(handle)
 
 
-def insert_billing_row(settings, payload):
-    """v1's insert_sql_record, for the billing table."""
+def quoted(column):
+    return column if column.startswith("[") else f"[{column}]"
+
+
+def billing_columns(settings, payload):
     mapping = load_mapping(settings)
-    columns, values = [], []
-    for script_key, sql_column in mapping.items():
-        if script_key in payload:
-            if sql_column == "InvoiceConcatID":
-                continue  # computed by the database
-            columns.append(sql_column)
-            values.append(payload[script_key])
-    if not columns:
-        raise SqlMappingError(
-            f"no column of {settings.billing_table} matched the payload; mapping expects "
-            f"{sorted(mapping.keys())}, the payload carries {sorted(payload.keys())}")
-    placeholders = ", ".join("?" for _ in columns)
-    query = f"INSERT INTO {settings.billing_table} ({', '.join(columns)}) VALUES ({placeholders})"
+    pairs = [(quoted(column), payload[key]) for key, column in mapping.items()
+             if key in payload and column != "InvoiceConcatID"]
+    if not any(column == "[BatchID]" for column, _ in pairs):
+        raise SqlMappingError(f"the billing mapping must map BatchID; it maps {sorted(mapping.keys())}")
+    return pairs
+
+
+def upsert_billing_row(settings, payload):
+    """Write the invoice's one billing row: update it by BatchID, or insert it."""
+    pairs = billing_columns(settings, payload)
+    table = settings.billing_table
     conn = pyodbc.connect(settings.connection_string("billing"))
     try:
         cursor = conn.cursor()
-        cursor.execute(query, values)
+        sets = ", ".join(f"{column} = ?" for column, _ in pairs)
+        cursor.execute(f"UPDATE {table} SET {sets} WHERE [BatchID] = ?",
+                       *[value for _, value in pairs], payload["BatchID"])
+        if cursor.rowcount == 0:
+            columns = ", ".join(column for column, _ in pairs)
+            marks = ", ".join("?" for _ in pairs)
+            cursor.execute(f"INSERT INTO {table} ({columns}) VALUES ({marks})", *[value for _, value in pairs])
         conn.commit()
     finally:
         conn.close()
+
+
+insert_billing_row = upsert_billing_row  # the name the worker was built with
 
 
 def write_laserfiche_xml(row, settings, xml_path):
@@ -138,9 +162,11 @@ def export_invoice(row, settings, db, insert=insert_billing_row):
     if not os.path.exists(pdf_path):
         raise FileNotFoundError(f"the PDF is not in the store: {pdf_path}")
 
-    note = "billing row inserted"
+    # The billing row takes the approved values now; the status follows on
+    # the next billing sync, once the row reads exported.
+    note = "billing row updated with the approved values"
     try:
-        insert(settings, billing_payload(row))
+        insert(settings, billing_payload(row, approved_by=db.approved_by(row["id"])))
     except pyodbc.IntegrityError as e:
         if any(code in str(e) for code in DUPLICATE_CODES):
             note = "duplicate billing key: the billing row already existed"

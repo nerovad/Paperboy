@@ -164,6 +164,31 @@ class Db:
                 int(lease_seconds), invoice_id)
             conn.commit()
 
+    def billing_pending(self, limit=50):
+        """Rows whose billing row does not yet show their current state."""
+        with self.connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT TOP {int(limit)} * FROM {self.invoices} "
+                           "WHERE billed_state IS NULL OR billed_state <> state ORDER BY id")
+            return [_row(cursor, record) for record in cursor.fetchall()]
+
+    def mark_billed(self, invoice_id, state):
+        """Record that billing shows `state`, unless the row has moved on since."""
+        with self.connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"UPDATE {self.invoices} SET billed_state = ? WHERE id = ? AND state = ?",
+                           state, invoice_id, state)
+            conn.commit()
+
+    def approved_by(self, invoice_id):
+        """Who approved the invoice: the actor of its last move to approved."""
+        with self.connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT TOP 1 actor FROM {self.events} WHERE invoice_id = ? AND to_state = 'approved' "
+                           "ORDER BY created_at DESC, id DESC", invoice_id)
+            record = cursor.fetchone()
+            return record[0] if record else None
+
     def transition(self, invoice_id, from_state, to_state, note=None, fields=None,
                    command="keep", stamp=(), actor=ACTOR):
         """Move a row to `to_state`, write its facts and its event together.

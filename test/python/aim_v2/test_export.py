@@ -47,7 +47,10 @@ def test_the_billing_row_carries_the_reviewed_values(exporting, fake_db):
 
     assert worker.run_once() == 1
 
-    [payload] = inserted
+    # The export writes the approved values; the billing sync that ends the
+    # cycle then brings the status up to Exported.
+    payload = inserted[0]
+    assert inserted[-1]["Status"] == "Exported"
     assert payload["VendorName"] == "ACME SUPPLY"
     assert payload["InvoiceNumber"] == "INV-1001"
     assert payload["InvoiceTotal"] == "134.69"
@@ -55,7 +58,8 @@ def test_the_billing_row_carries_the_reviewed_values(exporting, fake_db):
     assert payload["Subtotal"] == "125.00"
     assert payload["SalesTax"] == "9.69"
     assert (payload["BU"], payload["Submitter"], payload["FileName"]) == ("4601", "Jane Doe", "Scan 001.pdf")
-    assert payload["Status"] == "SUCCESS"
+    assert payload["Status"] == "Approved"
+    assert payload["BatchID"] == BATCH
     assert payload["InvoiceConcatID"] == BATCH
 
 

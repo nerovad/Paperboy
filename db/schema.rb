@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_100002) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_100003) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -74,6 +74,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_100002) do
     t.string "assignment_source", limit: 50
     t.integer "attempt", default: 0, null: false
     t.string "batch_id", limit: 255, null: false
+    t.string "billed_state", limit: 40
     t.string "budget_unit", limit: 10
     t.string "business_key", limit: 450
     t.datetime "claimed_at"

@@ -131,6 +131,19 @@ class FakeDb:
     def _now(self):
         return datetime.now()
 
+    # billing
+    def billing_pending(self, limit=50):
+        return [dict(row) for row in self.rows.values() if row.get("billed_state") != row["state"]][:limit]
+
+    def mark_billed(self, invoice_id, state):
+        row = self.rows.get(invoice_id)
+        if row and row["state"] == state:
+            row["billed_state"] = state
+
+    def approved_by(self, invoice_id):
+        moves = [e for e in self.events if e["invoice_id"] == invoice_id and e["to_state"] == "approved"]
+        return moves[-1]["actor"] if moves else None
+
     # reading
     def get(self, invoice_id):
         row = self.rows.get(invoice_id)

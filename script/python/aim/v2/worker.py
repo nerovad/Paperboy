@@ -23,7 +23,7 @@ from store import ACTOR, Db
 from intake import Intake
 from extraction import EXTRACTION_ERROR, extract
 from splitting import SPLIT_ERROR, split_batch
-from exporting import EXPORT_ERROR, export_invoice, insert_billing_row
+from exporting import billing_payload, EXPORT_ERROR, export_invoice, insert_billing_row
 from vendors import field_alias_text
 
 LEASE_SECONDS = 900
@@ -71,9 +71,32 @@ class Worker:
         while True:
             row = self.db.claim_next(self.name, LEASE_SECONDS)
             if row is None:
-                return done
+                break
             self.dispatch(row)
             done += 1
+        self.sync_billing()
+        return done
+
+    def sync_billing(self):
+        """Bring each billing row up to its invoice's state.
+
+        We bill for every invoice that arrives, whatever becomes of it, so the
+        row is inserted at intake and updated as the invoice moves -- the
+        worker's moves and the screens' (approve, reject, delete) alike. A
+        billing row that cannot be written is retried next cycle; it never
+        holds up the pipeline.
+        """
+        try:
+            pending = self.db.billing_pending()
+        except Exception as e:
+            print(f"  [!] Billing sync could not read the rows: {e}")
+            return
+        for row in pending:
+            try:
+                self.billing_insert(self.settings, billing_payload(row, approved_by=self.db.approved_by(row["id"])))
+                self.db.mark_billed(row["id"], row["state"])
+            except Exception as e:
+                print(f"  [!] Billing row for {row['batch_id']} not written: {e}")
 
     def run_forever(self):
         print("======================================================================")
