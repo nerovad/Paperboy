@@ -795,6 +795,14 @@
   text-align: left;
 }
 
+.aim-dropzone__file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.25rem 0;
+}
+
 .aim-dropzone__refused {
   color: $error-text;
 }

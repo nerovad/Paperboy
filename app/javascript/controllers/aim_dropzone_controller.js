@@ -76,9 +76,19 @@ export default class extends Controller {
     if (!this.hasListTarget) return
     const files = Array.from(this.inputTarget.files || [])
     this.listTarget.innerHTML = ""
-    files.forEach((file) => {
+    files.forEach((file, index) => {
       const item = document.createElement("li")
-      item.textContent = `${file.name} (${this.size(file.size)})`
+      item.className = "aim-dropzone__file"
+      const name = document.createElement("span")
+      name.textContent = `${file.name} (${this.size(file.size)})`
+      const remove = document.createElement("button")
+      remove.type = "button"
+      remove.className = "btn deny compact"
+      remove.textContent = "Remove"
+      remove.setAttribute("aria-label", `Remove ${file.name}`)
+      remove.dataset.index = index
+      remove.dataset.action = "aim-dropzone#remove"
+      item.append(name, remove)
       this.listTarget.appendChild(item)
     })
     if (typeof refused === "number" && refused > 0) {
@@ -87,6 +97,20 @@ export default class extends Controller {
       item.textContent = `${refused} file${refused === 1 ? " was" : "s were"} not added: only PDFs can be uploaded.`
       this.listTarget.appendChild(item)
     }
+  }
+
+  // Take one file back out before uploading. A file input's list cannot be
+  // edited in place, so it is rebuilt without that file.
+  remove(event) {
+    event.preventDefault()
+    event.stopPropagation()
+    const skip = Number(event.currentTarget.dataset.index)
+    const transfer = new DataTransfer()
+    Array.from(this.inputTarget.files || []).forEach((file, index) => {
+      if (index !== skip) transfer.items.add(file)
+    })
+    this.inputTarget.files = transfer.files
+    this.list()
   }
 
   isPdf(file) {
