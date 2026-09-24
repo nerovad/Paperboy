@@ -16,6 +16,15 @@
   padding: 24px;
 }
 
+/* Every AIM page but the review page scrolls inside its own area, and ends
+   with room taller than the footer mascot (84px, fixed 10px from the
+   bottom), so a long queue or file list scrolls clear of it rather than
+   running underneath. The review page keeps its own fixed layout. */
+.aim-page:not(.aim-review-page) {
+  overflow-y: auto;
+  padding-bottom: 120px;
+}
+
 /* The bottom padding clears the fixed "Powered by GSA" badge, which sits
    bottom-right at z-index 900 and would otherwise cover the action row. */
 .aim-review-page {
@@ -299,11 +308,16 @@
   background: $slate-action;
   border-radius: 999px;
   color: $surface-base;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   min-width: 24px;
   padding: 3px 7px;
   text-align: center;
+  /* A fixed box, so the "…" placeholder and the number are the same size and
+     the menu does not shift when the counts arrive. */
+  box-sizing: border-box;
+  height: 20px;
+  line-height: 14px;
 }
 
 .aim-sidebar .sidebar-count.danger {
@@ -698,3 +712,214 @@
   }
 }
 
+
+/* AIM v2: the reason filters above Needs Review, the inline forms on the
+   vendor screens, the history under the fields, and the upload form. Layout
+   only: the buttons keep their shared system. */
+.aim-reason-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aim-inline-form {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+}
+
+.aim-inline-form input[type="text"],
+.aim-inline-form textarea {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.aim-rules-form textarea {
+  flex-basis: 100%;
+}
+
+.aim-history ul {
+  font-size: 0.8rem;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.aim-history li {
+  margin: 4px 0;
+}
+
+.aim-upload-panel {
+  max-width: 640px;
+  padding: 18px;
+}
+
+.aim-upload-form fieldset {
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 0;
+}
+
+// Ready for Approval: Billing Audit's collapsible groups (its CSS turns the
+// arrow). The name takes the width, the count sits at the right.
+.aim-owner-group__name {
+  flex: 1;
+  text-align: left;
+  font-weight: inherit;
+}
+
+.aim-owner-group .aim-count-pill {
+  text-transform: none;
+}
+
+// Search box above a queue.
+.aim-queue-search {
+  max-width: 36rem;
+}
+
+.aim-queue-search input {
+  width: 100%;
+}
+
+.aim-queue-search__empty {
+  margin: 0.5rem 0 0;
+}
+
+.aim-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.aim-owner-choice__picker {
+  flex-basis: 100%;
+}
+
+.aim-person-picker {
+  flex-basis: 100%;
+  max-width: 32rem;
+}
+
+// The upload form's drop area. Dropped files land in the file input inside it.
+.aim-dropzone {
+  border: 2px dashed $neutral-border-subtle;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  background: $surface-panel;
+}
+
+.aim-dropzone.is-over {
+  border-style: solid;
+  background: $surface-subtle;
+}
+
+.aim-dropzone__hint {
+  margin: 0 0 0.5rem;
+  color: $text-muted;
+}
+
+.aim-dropzone__list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  text-align: left;
+}
+
+.aim-dropzone__file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.25rem 0;
+}
+
+.aim-dropzone__refused {
+  color: $error-text;
+}
+
+// Whose queue: the three choices on one line, the person picker on its own
+// full-width line beneath them, so the Choices dropdown has room to open.
+.aim-owner-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+}
+
+.aim-owner-choice legend {
+  flex-basis: 100%;
+}
+
+.aim-owner-choice > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.aim-owner-picker {
+  flex-basis: 100%;
+  max-width: 32rem;
+}
+
+// The page and panel must not clip the person picker's dropdown.
+.aim-upload-panel,
+.aim-upload-panel .aim-fields,
+.aim-upload-panel .aim-owner-choice {
+  overflow: visible;
+}
+
+.aim-upload-panel {
+  max-width: 56rem;
+}
+
+.aim-owner-choice > label {
+  white-space: nowrap;
+}
+
+// Upload: room under the Upload button, and under the page so the footer
+// artwork never sits on the form.
+.aim-upload-page .aim-form-actions {
+  padding: 1rem 1.25rem 1.5rem;
+}
+
+// Room between the queue choice and the Upload bar.
+.aim-upload-panel .aim-owner-choice {
+  margin-bottom: 1.25rem;
+}
+
+.aim-claim-form {
+  display: inline-block;
+  margin-left: 0.5rem;
+}
+
+// Moving several at once: a checkbox column and the Move selected bar.
+.aim-select-cell {
+  width: 4.5rem;
+  text-align: center;
+}
+
+.aim-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.aim-bulk-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.aim-restore-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}

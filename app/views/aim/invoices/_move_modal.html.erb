@@ -1,0 +1,29 @@
+<%# The Move dialog for a queue page: one modal, opened for the invoice whose
+    Move button was pressed (aim_move_modal_controller sets the form's action
+    and title). The person is found the way the COA employee lookup finds one, by employee id. %>
+<div class="pb-modal-backdrop" data-aim-move-modal-target="backdrop" hidden>
+  <div class="pb-modal pb-modal--dropdown" role="dialog" aria-modal="true" aria-labelledby="aim-move-title">
+    <div class="pb-modal__header">
+      <h3 id="aim-move-title" data-aim-move-modal-target="title">Move invoice</h3>
+      <button type="button" class="pb-modal__close" data-action="aim-move-modal#close" aria-label="Close">✕</button>
+    </div>
+    <div class="pb-modal__body">
+      <%# The action is set per invoice when the dialog opens, so the form carries
+          the session's token rather than one bound to this placeholder URL. %>
+      <%= form_with url: '#', method: :patch, authenticity_token: form_authenticity_token,
+                    data: { aim_move_modal_target: 'form', turbo: false } do |form| %>
+        <div data-aim-move-modal-target="ids"></div>
+        <fieldset class="form-group aim-owner-choice">
+          <legend>Move to</legend>
+          <label><%= radio_button_tag :destination, 'person', true %> A person</label>
+          <label><%= radio_button_tag :destination, 'shared' %> The invoice's budget unit shared queue</label>
+          <%= render 'aim/shared/person_picker', name: :owner, label: 'Move to' %>
+        </fieldset>
+        <div class="pb-modal__actions">
+          <button type="button" class="btn" data-action="aim-move-modal#close">Cancel</button>
+          <button type="submit" class="btn reassign">Move</button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

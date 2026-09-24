@@ -1,0 +1,27 @@
+<div class="aim-page" data-controller="aim-queue-filter">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">My Queue</h1>
+      <p class="aim-page-subtitle">Invoices ready for you. Review and approve them, send one back, or move it to someone else.</p>
+    </div>
+    <div class="aim-page-actions">
+      <%= link_to 'Upload Invoices', new_aim_upload_path, class: 'btn approve' %>
+      <span class="aim-count-pill"><%= pluralize(@invoices.size, 'invoice') %></span>
+    </div>
+  </header>
+
+  <% if @employee_id.nil? %>
+    <section class="aim-panel aim-empty-state"><p>Your account has no employee id, so no queue can be yours.</p></section>
+  <% elsif @invoices.empty? %>
+    <section class="aim-panel aim-empty-state"><p>Nothing is waiting for you.</p></section>
+  <% else %>
+    <%= render 'aim/invoices/search_box' %>
+    <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path(queue: @queue) %>">
+        <%= render 'aim/invoices/bulk_bar' %>
+      <section class="aim-panel aim-queue-panel">
+        <%= render 'aim/invoices/rows', invoices: @invoices, movable: true %>
+      </section>
+      <%= render 'aim/invoices/move_modal' %>
+    </div>
+  <% end %>
+</div>

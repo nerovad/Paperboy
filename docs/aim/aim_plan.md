@@ -2286,6 +2286,241 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     Queue on the Paperboy review page instead of the SQL shortcut. A test
     proves `bootstrap()` leaves no `.lnk` behind.
 
+- [x] **5.8 A batch folder reaches its queue whole, or not at all.** Found
+  2026-09-24, after the merge, from two screens Joshua sent: the alias learner
+  reporting `[Errno 13] Permission denied` on `vendor_aliases.json`, and the
+  SQL worker printing "Skipping ... no payload" every five seconds for a
+  CV62744 retry. Both are Windows refusing a file another program had open.
+  The retry's SQL-queue folder had been built in place -- XML, then the PDF,
+  then the payload -- and the PDF move failed after the copy landed, so the
+  folder sat there with no payload, the original stayed in `_REPROCESS_QUEUE`
+  marked as failed, and a ticket went to `_ERROR_QUEUE`. Four fixes:
+  - **`QueueDrop`** (`pipeline_common.py`): every routing in the AI worker
+    assembles its folder under `_TEMP/_staging/<id>` -- ticket, XML, sidecars,
+    the PDF (copied) and the SQL payload (`write_log` takes `payload_dir`) --
+    and moves the finished folder into its queue as one step. The original PDF
+    is removed afterwards; a refusal is reported, not fatal. A source folder
+    that will not delete is marked `.ai_routed.json` and retired on a later
+    pass, so it is neither reprocessed as a second invoice nor filed as a crash
+    of an invoice that routed fine (both queue loops had that hole).
+  - **Send to SQL Queue writes the payload first** (`InvoiceSqlPayload`):
+    Low Confidence Review folders carry only the XML, so the button used to
+    move a folder the SQL worker could never process. The payload is now built
+    from the reviewed XML the way Vendor Review builds its own; Action Needed
+    folders, whose payload the page edits directly, send it as it is. An
+    invoice with no vendor name or invoice number is refused with the reason,
+    and nothing moves.
+  - **The SQL worker reports a payload-less folder once**, and after ten
+    minutes moves it to `_SQL_FAILED` with a `.ticket` saying why, recorded on
+    the row as `sql_failed`.
+  - **`write_json_file`**: the alias cache is written to a temp file and
+    swapped in with `os.replace`, retried through a brief lock. Both alias
+    writers use it. The learner's failure had done no harm -- the next sync
+    copied the alias back from SQL -- but a reader could see a truncated file.
+  Cleanup on the share: the half-built `_SQL_QUEUE` folder and the
+  `_ERROR_QUEUE` ticket deleted, the row recorded `deleted`; the original in
+  `_REPROCESS_QUEUE` keeps its failed marker until the fixed workers are
+  deployed, then Joshua clears it. 12 new tests (pytest 247, 3 new Rails).
+
+---
+
+## AIM v2 — The Row-First Rebuild (one phase)
+
+**Decided with Joshua 2026-09-24.** Branch `aim/v2-row-first`, cut from
+`aim/phase-5-state` after Phase 5 merged. Built in one pass, then debugged,
+rather than in numbered steps. Phases 6–11 fold into it: every one of them
+is easier on rows than on folders.
+
+**Why.** Joshua asked whether the design was right. Two reviews, mine and an
+independent one that read the code cold, said the same: the filesystem is
+being used as both the database and the message bus, and that is the root of
+every fix in 5.7–5.8 -- half-built folders, Windows locks on moves, sidecar
+formats that disagree, a state machine whose refusals are advisory because
+the files must never be blocked, and a mirror plus a reconciler to keep rows
+and folders in step. Phase 5 built the row, the events and the model the
+rebuild stands on; the folder-moving glue is what goes.
+
+**What stays untouched.** The AI extraction (Ollama + Tesseract, both
+prompts, `DOCUMENT_TYPE_GUIDE`, `InvoiceData`, the vision merge, per-field
+handwriting, the sanitisers), vendor alias and rule training, the drop tree
+`Invoices/<BU>/<Name|SHARED>/`, the Laserfiche XML and billing outputs, the
+`env()` discipline, the deploy provenance check, the pytest harness rules.
+
+### The contract
+
+Everything below is what the worker and the Rails side are built against.
+A change here is a change to both.
+
+**State lives on `aim.invoices`, only.** Folders are storage, never status.
+
+**States** (`Aim::Invoice::STATES`):
+`received, extracting, needs_review, needs_split, ready_for_approval,
+approved, exporting, exported, failed, rejected, deleted, split`.
+Terminal: `exported, rejected, deleted, split`.
+
+Transitions:
+- `received` → `extracting`, `rejected`, `deleted`
+- `extracting` → `needs_review`, `needs_split`, `ready_for_approval`, `failed`, `received` (lease expired)
+- `needs_review` → `ready_for_approval`, `approved`, `received` (retry AI), `needs_split`, `rejected`, `deleted`
+- `needs_split` → `split`, `received` (process as one), `rejected`, `deleted`
+- `ready_for_approval` → `approved`, `needs_review` (send back), `rejected`, `deleted`
+- `approved` → `exporting`, `needs_review`
+- `exporting` → `exported`, `failed`
+- `failed` → `received` (retry AI), `approved` (retry export), `needs_review`, `rejected`, `deleted`
+
+`review_reason` says why a person is needed: `unknown_type, unknown_vendor,
+missing_fields, low_confidence, handwritten, extraction_error, export_error`.
+`review_note` carries the detail (the missing fields, the handwritten
+fields, the error). The old review queues become one queue filtered by
+reason.
+
+**Commands.** `command` is what the worker does next: `extract`, `split`,
+`export`, or NULL. Intake sets `extract`; the screens set the rest. The
+worker claims a row with one atomic statement (`UPDATE TOP(1) ... OUTPUT`
+where `command IS NOT NULL AND (lease_until IS NULL OR lease_until < now)`),
+holds a lease (`lease_owner`, `lease_until`, 15 minutes, renewed while
+working), and clears `command` and the lease when done, whatever the
+outcome. `attempt` counts extractions.
+
+**New columns on `aim.invoices`** (migration, additive; existing columns
+stay): `command` string(20); `attempt` int not null default 0;
+`lease_owner` string(100); `lease_until` datetime; `review_reason`
+string(40); `review_note` text; `notes` text (reviewer's); `parent_id`
+bigint indexed (split child → parent); `source_filename` string(260);
+`source_path` string(1000); `content_hash` string(64) indexed;
+`page_count` int; `subtotal` decimal(15,2); `sales_tax` decimal(15,2);
+`extracted` text (JSON: the last `InvoiceData`); `manifest` text (JSON: the
+split manifest, `{"invoices": [{"vendor_name", "invoice_number", "pages"}]}`);
+`split_check` bit not null default 1 (0 = process as one invoice);
+`high_confidence` bit; `exported_at` datetime. Existing rows' states are
+mapped in the migration (ai_queue/pending_vision/reprocess → received,
+batch_split/ready_to_split → needs_split, the review queues and error/failed
+queues → needs_review, user_approval → ready_for_approval, sql_queue →
+approved, archived → exported; deleted/split/rejected keep their names).
+
+**New tables** (schema `aim`, no DB foreign keys, explicit index names):
+- `aim.vendor_aliases`: `extracted_name` string(255) unique index
+  (`index_aim_vendor_aliases_on_extracted_name`), `normalized_name`
+  string(255) not null, `learned_by` string(255), `note` string(500),
+  timestamps. Seeded from `vendor_aliases.json` by `rake aim:v2:seed_aliases`.
+- `aim.vendor_rules`: `vendor_name` string(255) unique index
+  (`index_aim_vendor_rules_on_vendor_name`), `rules` text not null,
+  `updated_by` string(255), timestamps. Seeded from `vendor_rules.json` by
+  `rake aim:v2:seed_rules`.
+The worker reads both tables at each extraction. `field_aliases.json` (the
+global prompt hint) stays a file in the v2 program folder.
+
+**Folders.** Four, plus the drop tree:
+- `AIM_BASE_DIR` -- the drop tree, unchanged (`route_for` and the BU README stay).
+- `AIM_STORE_DIR` = `E:\AIM\_BACK_END\_STORE` -- `_STORE/<batch_id>/<batch_id>.pdf`.
+  The PDF lands here at intake and never moves. Split children get their own
+  `_STORE/<child_id>/`. The XML written at export is kept here too.
+- `AIM_PROCESSED_DIR` -- the Laserfiche import folder: PDF + XML, flat, at export.
+- `AIM_ARCHIVE_DIR` -- `/<BU>/<Submitter>/<YYYY-MM-DD>/<id>/` copy at export.
+- `AIM_DELETED_DIR` and `AIM_REJECTED_DIR` -- a copy of the PDF on delete
+  (`/<id>/`) and on reject (`/<Submitter>_<BU>/<id>.pdf`), for the people
+  who look there today.
+No queue folders, no sidecars, no markers, no `.claim.json`.
+`AIM_V2_PROGRAM_DIR` = `E:\AIM\_PROGRAM2` is where the v2 worker deploys
+(`bin/deploy-aim-workers --v2`), beside v1, so the old pipeline keeps running
+until cutover. LockBox `aim-config` `bab50fc` adds both variables.
+
+**Batch id** unchanged: `{BU}.{YYYYMMDD_HHMMSS}.{name}-[HASH]`, minted once at
+intake; split children are `{parent}_SPLIT_{n}`.
+
+**The worker** (`script/python/aim/v2/`, one process, `Run_AIM_Worker.bat`):
+- *Intake*, every few seconds: for each stable file under
+  `<BU>/<Name|SHARED>/` (images converted to PDF), hash it, mint the id, move
+  it to `_STORE/<id>/<id>.pdf`, insert the row (`received`, `command =
+  extract`, `budget_unit`, `submitter` = the folder name, `assigned_to` =
+  the person's folder or NULL for SHARED, `assignment_source = folder`,
+  `source_filename`, `source_path`, `content_hash`, `page_count`) and its
+  event. Loose files at the BU root are ignored; the README is placed.
+- *Jobs*: claim one row; by command:
+  - `extract`: → `extracting`; run the extraction core (a function: PDF path,
+    aliases, rules, `split_check` in; a result out). Outcome `split` → save
+    `manifest`, → `needs_split`. Outcome `review` → fields, `review_reason`,
+    `review_note`, → `needs_review`. Outcome `clean` → fields, →
+    `ready_for_approval`. An exception → `failed`, `extraction_error`, the
+    message in `review_note`. Always: `extracted`, `high_confidence`,
+    `document_type`, `attempt + 1`.
+  - `split`: read `manifest`, cut the PDF with fitz into
+    `_STORE/<child>/`, insert one child row per invoice (`received`, `command
+    = extract`, `parent_id`, `split_check = 0`, BU/submitter/owner copied),
+    parent → `split` with the children named in the event.
+  - `export`: → `exporting`; insert the billing row (`Aim_Invoices_MAPPING`,
+    values from the row's columns -- the reviewer's corrections included);
+    write the Laserfiche XML from the row; copy PDF + XML to
+    `AIM_PROCESSED_DIR`; copy to the archive tree; → `exported`,
+    `exported_at`. A duplicate billing key → `exported` with the note.
+    Anything else → `failed`, `export_error`.
+- Every state change writes an event (`transition`, actor
+  `aim_worker`), in the same transaction as the row update.
+- Reads aliases and rules from the tables; `normalize_vendor_name` unchanged
+  in logic, fed from the table.
+- Environment: the `AIM_SQL_STATE_*` connection (Paperboy DB) for rows,
+  `AIM_SQL_BILLING_*` for the billing insert, the model and Tesseract
+  variables, the five folders above, `AIM_LOG_DIR`. Nothing else. Same
+  `env()` discipline: a missing variable stops the worker at start.
+
+**The Rails side** (rows only):
+- Queues are filters on `state`: Received, Needs Review (with a
+  `review_reason` filter), Needs Split, Ready for Approval, In Flight
+  (`approved`, `exporting`), Failed, Exported, Rejected, Deleted. Dashboard
+  counts come from the same queries.
+- The review page shows the PDF from `_STORE` and the row's fields in a
+  grid, editable per queue; `notes` is free text.
+- Actions: **Save**; **Send to Approval** (`needs_review` →
+  `ready_for_approval`; refused while `document_type` is Unknown or vendor
+  or invoice number is blank); **Approve** (→ `approved`, `command = export`;
+  from Needs Review or Ready for Approval); **Send Back** (`ready_for_approval`
+  → `needs_review`); **Retry AI** (→ `received`, `command = extract`);
+  **Approve Split** (`Aim::SplitPlan` validates; `manifest` saved; `command
+  = split`); **Process as One Invoice** (`split_check = 0`, → `received`,
+  `command = extract`); **Reject** (→ `rejected`, PDF copied to
+  `_REJECTED/<Submitter>_<BU>/`); **Delete** (→ `deleted`, PDF copied to
+  `_DELETED/<id>/`); **Learn Alias** (upsert `aim.vendor_aliases`, set
+  `vendor_name`, then Retry AI or Send to Approval as chosen); **Retry
+  Export** (`failed` → `approved`, `command = export`).
+- Every action is `transition_to!`, so an illegal move is refused with a
+  message, not recorded as a sync.
+- Claims stay on the row (`claim!`, `release_claim!`); the queue lists show
+  who holds what.
+- **Upload**: a page and a button that takes one or more PDFs, a BU
+  (defaulting to the user's `Employees.unit`) and an owner (self, a person,
+  or SHARED), and does exactly what intake does: store + row.
+- **Vendor aliases** and **vendor rules**: list, add, edit, remove.
+- `Aim::WorkProvider` (Paperboy's inbox) reads rows.
+- Removed: `Aim::QueueSync` and its job and `recurring.yml` block,
+  `InvoiceDirectoryService`'s queue readers (path translation for the store
+  stays), the folder-reading concerns, `.claim.json`, all `*_DIR` variables
+  except the five above (they stay in LockBox until v1 is retired).
+
+**Billing (2026-09-24).** We bill for every invoice added, whatever becomes
+of it. The worker upserts one row per invoice in `[GSA_Scan].[dbo].[Aim_Invoices]`,
+keyed by `BatchID`, whenever `aim.invoices.state` differs from `billed_state`:
+inserted at intake, updated with the read values after extraction, with the
+approved values and `[Approved By]` at export, and `[Invoice Status]` follows
+every state (Received, Processing, Action Needed, Needs Split, Ready for
+Approval, Approved, Exported, Failed, Rejected, Deleted, Split). `[Source]` is
+`AIM`. A failed write is retried next cycle and never holds up the pipeline.
+Open: a split parent keeps a row marked Split and each piece gets its own, so
+billing must decide whether Split rows are charged.
+
+**TODO (Joshua, 2026-09-24):**
+- Drag-and-drop on the upload page does not work yet.
+- Link queue names to people: store the employee id (`assigned_employee_id`)
+  beside the name; the picker and upload save it; folder names matched to an
+  employee by name within the BU once, the rest flagged.
+- The BU field on upload: select from chart-of-accounts units (filterable) or
+  type one.
+
+**Cutover**: v2 runs from `_PROGRAM2` against the same Paperboy_Dev database
+while v1 drains. Joshua drops test PDFs; when v2 has taken a batch from drop
+to billing row and Laserfiche XML, v1's services stop, its queue folders are
+emptied into `_PREVIOUS_TEST_DATA`, and `_PROGRAM` moves to
+`_PREVIOUS_SCRIPTS`.
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
@@ -3114,3 +3349,6 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | 5.7c(5) | (this commit) | Action Needed gets Send to SQL Queue; `is_urgent` removed from watcher, AI worker, payload and Rails badge. Shortcuts held until Joshua has told staff. 1060 runs, 0 fail, 0 error, 234 pytest, rubocop clean |
 | 2026-09-24 | 5.7c(6) | (this commit) | Shortcuts retired: the workers no longer plant them, `pywin32` dropped, the seven `.lnk` files deleted from the share, ticket notes point to the Send to SQL Queue button. Released early because no staff use AIM yet |
 | 2026-09-24 | — | (this merge) | **Phase 5 merged to Paperboy master.** First merged the latest master (`e8933a5c`, 35 commits, none touching AIM code) into the branch. Only `db/schema.rb` conflicted. Master's copy already held the first three `aim` tables (another team dumped it from the shared dev DB in `21df9052`), so the resolution is master's file plus `claimed_by_name` at version `2026_09_23_151741`. It was rebuilt in a scratch DB and checked by a fresh load: nothing pending. Loading master's schema alone marks our `100537`-`39` migrations as run, which is why the version order matters. Master's newer RuboCop flagged 5 AIM offenses, now fixed. Gate on the merge: 1122 runs, 0 fail, 0 error, 235 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings, bundle-audit clean, zeitwerk clean |
+| 2026-09-24 | 5.8 | (this commit) | Batch folders placed in their queue whole (`QueueDrop`), Send to SQL Queue writes the payload from the reviewed XML and refuses a blank vendor or invoice number, the SQL worker fails a payload-less folder after ten minutes instead of skipping it for ever, the alias cache is swapped in atomically. 1125 runs, 0 fail, 0 error, 247 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-24 | v2 | (this commit) | **AIM v2 built in one pass** on `aim/v2-row-first`, from the contract above, by two builders working in parallel. Python: `script/python/aim/v2` (one worker: intake, extract, split, export; atomic row claim with a lease; events in the same transaction), 50 tests; `bin/deploy-aim-workers --v2` targets `_PROGRAM2`. Rails: migrations `20260924100000`–`100002` (v2 columns with the v1→v2 state mapping, `aim.vendor_aliases`, `aim.vendor_rules`), `Aim::Invoice` v2 state machine, queues as row queries, review actions via `transition_to!`, upload, alias and rule screens, `aim:v2:seed_aliases`/`seed_rules`; `QueueSync`, the folder concerns and `.claim.json` removed. Decisions beyond the contract: `split_error` reason; the Needs Review queue keeps the label *Action Needed* (the shared navigation catalog asserts it); Finished holds `exported` and `split`; Send to Approval and Approve need a set type, vendor and invoice number; the store keeps its PDF on reject and delete, copies go to the old folders; upload is gated by AIM access with BU from the user's unit. Gate on the combined tree: 1098 runs, 0 fail, 0 error, 297 pytest, scoped rubocop clean, brakeman 4 (none AIM), zeitwerk clean, `--v2` dry run 17 files. Not yet run on the server |
+| 2026-09-24 | — | (this merge) | **AIM v2 merged to Paperboy master**, Joshua's decision after testing it live. Since the one-pass build: billing written at intake and kept current by `BatchID`; owners are employees (`assigned_employee_id`) found with a COA-style search limited to AIM users; My Queue (ready only) and Shared Queues (by BU; interim rule: staff all BUs, others their own unit); owners work their own ready invoices; a working lock that lapses 90 s after the page stops checking in, and Claim moves an invoice to your queue; a reason for Reject, Delete and Send Back, and staff Restore from Rejected/Deleted, kept in Notes and history; multi-move by checkbox; queue search; lazy counts; grouped sidebar; upload open to anyone signed in, drag-and-drop. Master merged in first (only the Phase 5 merge commit). Gate: 1138 runs, 1 failure (P2M `OmsUploadLedgerTest`, fails on clean master too), 304 pytest, AIM rubocop clean, brakeman's same 4, bundle-audit and zeitwerk clean. v1 still on the share until cut over |

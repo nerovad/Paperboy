@@ -1,0 +1,56 @@
+<div class="aim-page aim-upload-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Upload Invoices</h1>
+      <p class="aim-page-subtitle">Drop PDFs straight into AIM. The AI reads them, then they appear in a queue.</p>
+    </div>
+  </header>
+
+  <section class="aim-panel aim-upload-panel">
+    <%= form_with url: aim_uploads_path, method: :post, multipart: true, local: true, class: 'aim-upload-form',
+                  data: { controller: 'aim-dropzone' } do |form| %>
+      <div class="aim-fields">
+        <div class="aim-field-row">
+          <div class="aim-field">
+            <%= form.label :files, 'PDF files' %>
+            <%# Drop files here, or click to choose. Dropped files land in the input below. %>
+            <div class="aim-dropzone" data-aim-dropzone-target="zone" tabindex="0" role="button"
+                 aria-label="Drop PDFs here, or press Enter to choose files"
+                 data-action="dragover->aim-dropzone#over dragenter->aim-dropzone#over dragleave->aim-dropzone#leave drop->aim-dropzone#drop click->aim-dropzone#choose keydown->aim-dropzone#key">
+              <p class="aim-dropzone__hint">Drag PDFs here, or</p>
+              <%= form.file_field :files, multiple: true, accept: 'application/pdf,.pdf', required: true,
+                                          data: { aim_dropzone_target: 'input', action: 'change->aim-dropzone#list' } %>
+              <ul class="aim-dropzone__list" data-aim-dropzone-target="list" aria-live="polite"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="aim-field-row">
+          <div class="aim-field">
+            <%= form.label :budget_unit, 'Budget unit' %>
+            <%= form.text_field :budget_unit, value: @budget_unit, pattern: '\d{4}', maxlength: 4,
+                                              placeholder: '4601', required: true %>
+          </div>
+        </div>
+
+        <fieldset class="aim-field aim-owner-choice" data-controller="aim-owner-choice">
+          <legend>Whose queue</legend>
+          <% if @has_queue %>
+            <label><%= radio_button_tag :owner, 'self', true, data: { action: 'aim-owner-choice#update' } %> Mine</label>
+          <% end %>
+          <label><%= radio_button_tag :owner, 'shared', false, data: { action: 'aim-owner-choice#update' } %> The budget unit's shared queue</label>
+          <label><%= radio_button_tag :owner, 'person', !@has_queue, data: { action: 'aim-owner-choice#update' } %> Someone else</label>
+          <div class="aim-owner-choice__picker" data-aim-owner-choice-target="picker">
+            <%= render 'aim/shared/person_picker', name: :owner_employee_id, label: 'Whose queue' %>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="aim-form-actions">
+        <div class="aim-action-group">
+          <%= form.submit 'Upload', class: 'btn approve' %>
+        </div>
+      </div>
+    <% end %>
+  </section>
+</div>

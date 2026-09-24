@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
 module Aim
-  # Base controller for the Automated Invoice Management app. Every Automated Invoice Management controller should
-  # inherit from this so the ACL gate below is applied consistently.
+  # Base controller for the Automated Invoice Management app. Every AIM
+  # controller inherits from this so the ACL gate below is applied
+  # consistently.
   class BaseController < ApplicationController
     before_action :require_app_access
-    before_action :load_aim_sidebar_counts
 
     private
 
     # The sidebar app switcher only *hides* apps the user cannot reach, so
-    # this is the real gate: without it Automated Invoice Management would stay reachable by
-    # typing the URL. Access is granted per group or org level under
-    # ACL > Applications; system admins bypass it.
+    # this is the real gate: without it AIM would stay reachable by typing the
+    # URL. Access is granted per group or org level under ACL > Applications;
+    # system admins bypass it.
     #
     # The signed-in check matters: a global (all-org-nil) application grant
     # applies to everyone, so the grant alone would let a signed-out visitor
@@ -31,49 +31,31 @@ module Aim
       redirect_to aim_root_path, alert: 'You do not have access to AIM processing queues.'
     end
 
-    def load_aim_sidebar_counts
-      @aim_queue_statuses = {}
-      @aim_queue_counts = {}
+    # Anyone signed in to Paperboy, whether or not they hold the AIM app: the
+    # screens that let people hand an invoice to someone's queue.
+    def require_signed_in
+      return if current_user.present?
 
-      Aim::InvoiceDirectoryService::BACKEND_QUEUES.each_key do |queue|
-        path = Aim::InvoiceDirectoryService.instance.path_for(queue)
-        @aim_queue_statuses[queue] = aim_queue_directory_status(path)
-        @aim_queue_counts[queue] = aim_queue_directory_count(path)
-      end
-
-      @aim_queue_row_counts = aim_queue_row_counts
-    rescue StandardError => e
-      Rails.logger.error "Failed to load AIM queue counts: #{e.message}"
-      @aim_queue_statuses = {}
-      @aim_queue_counts = {}
-      @aim_queue_row_counts = {}
+      redirect_to root_path, alert: 'Sign in to Paperboy first.'
     end
 
-    # The database's own answer, shown beside the folder count while the two
-    # run together (plan step 5.5). Empty until something writes rows, so the
-    # screens say nothing at all until there is something to compare -- and a
-    # database that cannot be reached must never take an AIM screen down,
-    # since the folders are still the truth this step.
-    def aim_queue_row_counts
-      return {} unless Aim::Invoice.exists?
-
-      Aim::Invoice.group(:state).count.symbolize_keys
-    rescue StandardError => e
-      Rails.logger.warn "AIM queue row counts unavailable: #{e.message}"
-      {}
+    def current_user_email
+      session.dig(:user, 'email') || session.dig('user', 'email') || 'Unknown User'
     end
 
-    def aim_queue_directory_count(path)
-      return 0 if path.blank? || !Dir.exist?(path.to_s)
-
-      Dir.glob(File.join(path.to_s, '*')).count { |file_path| File.directory?(file_path) }
+    def current_user_name
+      user = session[:user] || session['user'] || {}
+      [user['first_name'], user['last_name']].compact_blank.join(' ').presence
     end
 
-    def aim_queue_directory_status(path)
-      return { connected: false, path: nil, message: 'Path is not configured.' } if path.blank?
-      return { connected: false, path: path.to_s, message: 'Queue folder is not reachable.' } unless Dir.exist?(path.to_s)
+    def current_user_employee_id
+      user = session[:user] || session['user'] || {}
+      user['employee_id'].presence&.to_i
+    end
 
-      { connected: true, path: path.to_s, message: 'Connected.' }
+    def current_user_unit
+      user = session[:user] || session['user'] || {}
+      user['unit'].presence
     end
   end
 end

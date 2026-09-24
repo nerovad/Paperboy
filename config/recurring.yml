@@ -29,11 +29,6 @@ production: &production
     queue: default
     schedule: every minute
     description: Ingests files dropped into DAM storage locations' watch folders
-  aim_queue_sync:
-    class: Aim::QueueSyncJob
-    queue: default
-    schedule: every 10 minutes
-    description: Keeps AIM's invoice rows in step with its queue folders on the share
 
 staging:
   <<: *production

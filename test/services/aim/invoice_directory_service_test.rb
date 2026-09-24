@@ -3,12 +3,10 @@
 require 'test_helper'
 
 module Aim
+  # Where AIM's files are, as this server sees them. AIM v2: no queue folders,
+  # only the store and the places a copy goes at the end.
   class InvoiceDirectoryServiceTest < ActiveSupport::TestCase
-    # These tests never read the real environment. Every variable they care
-    # about is set here and restored in teardown, so a developer who has not
-    # pulled LockBox still gets a green run.
-    MANAGED = (InvoiceDirectoryService::PATH_ENV.values +
-               %w[AIM_LINUX_QUEUE_BASE_PATH AIM_WINDOWS_QUEUE_BASE_PATH]).freeze
+    MANAGED = (InvoiceDirectoryService::PATH_ENV.values + %w[AIM_LINUX_QUEUE_BASE_PATH AIM_WINDOWS_QUEUE_BASE_PATH]).freeze
 
     setup do
       @old_env = MANAGED.to_h { |key| [key, ENV.fetch(key, nil)] }
@@ -22,56 +20,39 @@ module Aim
       @old_env.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
     end
 
-    test 'every queue resolves its own configured directory' do
+    test 'every folder resolves its own configured directory, translated' do
       InvoiceDirectoryService::PATH_ENV.each_value.with_index do |variable, index|
-        ENV[variable] = "E:\\AIM\\_BACK_END\\_Q#{index}"
+        ENV[variable] = "E:\\AIM\\_BACK_END\\_F#{index}"
       end
 
-      InvoiceDirectoryService::PATH_ENV.each_value.with_index do |_variable, index|
-        expected = "/mnt/aim-test/_BACK_END/_Q#{index}"
-        queue = InvoiceDirectoryService::PATH_ENV.keys[index]
-        assert_equal expected, @service.path_for(queue)
-      end
-    end
-
-    # audit M3: path_for and the matching *_dir reader used to disagree, so
-    # the sidebar reported "not configured" while writes still succeeded
-    # against a guessed folder.
-    test 'path_for and the matching reader agree for every queue' do
-      InvoiceDirectoryService::PATH_ENV.each_value.with_index do |variable, index|
-        ENV[variable] = "E:\\AIM\\_BACK_END\\_Q#{index}"
-      end
-
-      readers = {
-        ai_queue: :ai_queue_dir, action_needed: :action_needed_dir,
-        vendor_review: :vendor_review_dir, manual_processing: :manual_processing_dir,
-        batch_split: :batch_split_dir, low_confidence_review: :low_confidence_review_dir,
-        sql_queue: :sql_queue_dir, sql_failed: :sql_failed_dir,
-        user_approval: :user_approval_dir, rejected: :rejected_dir,
-        ready_to_learn: :ready_to_learn_dir, reprocess: :reprocess_dir,
-        deleted: :deleted_dir
-      }
-
-      readers.each do |queue, reader|
-        assert_equal @service.path_for(queue), @service.public_send(reader),
-                     "path_for(#{queue.inspect}) and ##{reader} disagree"
+      InvoiceDirectoryService::PATH_ENV.each_key.with_index do |key, index|
+        assert_equal "/mnt/aim-test/_BACK_END/_F#{index}", @service.path_for(key)
+        assert_equal "/mnt/aim-test/_BACK_END/_F#{index}", @service.path_for!(key)
       end
     end
 
-    test 'a missing variable raises an error naming the variable' do
-      error = assert_raises(MissingConfiguration) { @service.rejected_dir }
-      assert_includes error.message, 'AIM_REJECTED_DIR'
+    test 'a folder that is not configured is nil leniently and an error strictly' do
+      assert_nil @service.path_for(:store)
+      error = assert_raises(Aim::MissingConfiguration) { @service.store_dir }
+      assert_match(/AIM_STORE_DIR/, error.message)
     end
 
-    test 'a missing variable never guesses a folder' do
-      # The old code fell back to <base>/_REJECTED, which is how invoices
-      # ended up somewhere nobody was watching.
-      assert_nil @service.path_for(:rejected)
+    test 'a name that is not a folder is refused' do
+      assert_nil @service.path_for(:sql_queue)
+      assert_raises(Aim::MissingConfiguration) { @service.path_for!(:sql_queue) }
     end
 
-    test 'path_for returns nil for an unknown queue and the strict reader raises' do
-      assert_nil @service.path_for(:not_a_queue)
-      assert_raises(MissingConfiguration) { @service.path_for!(:not_a_queue) }
+    test 'paths translate both ways' do
+      assert_equal '/mnt/aim-test/_BACK_END/_STORE', @service.translate_path('E:\AIM\_BACK_END\_STORE')
+      assert_equal 'E:\AIM\_BACK_END\_STORE', @service.to_windows_path('/mnt/aim-test/_BACK_END/_STORE')
+    end
+
+    test 'an invoice knows its store folder and pdf' do
+      ENV['AIM_STORE_DIR'] = 'E:\AIM\_BACK_END\_STORE'
+      invoice = Aim::Invoice.new(batch_id: '4601.X', state: 'received')
+
+      assert_equal '/mnt/aim-test/_BACK_END/_STORE/4601.X', invoice.store_dir
+      assert_equal '/mnt/aim-test/_BACK_END/_STORE/4601.X/4601.X.pdf', invoice.pdf_path
     end
   end
 end

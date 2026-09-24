@@ -1,0 +1,68 @@
+<div class="aim-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Vendor Aliases</h1>
+      <p class="aim-page-subtitle">Every spelling the AI has read, and the official vendor it means. The worker matches against these on every extraction.</p>
+    </div>
+    <span class="aim-count-pill"><%= pluralize(@aliases.length, 'alias') %></span>
+  </header>
+
+  <section class="aim-panel aim-vendor-panel">
+    <%= form_with url: aim_vendor_aliases_path, method: :post, local: true, class: 'aim-inline-form' do |form| %>
+      <%= form.text_field :extracted_name, placeholder: 'As the AI reads it', required: true, autocomplete: 'off' %>
+      <%= form.text_field :normalized_name, placeholder: 'Official vendor name', required: true, autocomplete: 'off',
+                                            list: 'aim-official-names' %>
+      <%= form.text_field :note, placeholder: 'Note (optional)', autocomplete: 'off' %>
+      <%= form.submit 'Add Alias', class: 'btn approve compact' %>
+    <% end %>
+    <datalist id="aim-official-names">
+      <% @aliases.map(&:normalized_name).uniq.each do |name| %>
+        <option value="<%= name %>"></option>
+      <% end %>
+    </datalist>
+
+    <%= form_with url: aim_vendor_aliases_path, method: :get, local: true, class: 'aim-inline-form' do |form| %>
+      <%= form.text_field :q, value: @filter, placeholder: 'Filter', autocomplete: 'off' %>
+      <%= form.submit 'Filter', class: 'btn compact' %>
+    <% end %>
+  </section>
+
+  <% if @aliases.empty? %>
+    <section class="aim-panel aim-empty-state"><p>No aliases yet.</p></section>
+  <% else %>
+    <section class="aim-panel aim-queue-panel">
+      <table class="submission-table aim-queue-table">
+        <thead>
+          <tr>
+            <th>As read</th>
+            <th>Official name</th>
+            <th>Note</th>
+            <th>Learned by</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @aliases.each do |row| %>
+            <tr>
+              <td class="is-strong"><%= row.extracted_name %></td>
+              <td>
+                <%= form_with url: aim_vendor_alias_path(row), method: :patch, local: true, class: 'aim-inline-form' do |form| %>
+                  <%= form.text_field :normalized_name, value: row.normalized_name, required: true, autocomplete: 'off' %>
+                  <%= form.hidden_field :note, value: row.note %>
+                  <%= form.submit 'Save', class: 'btn secondary compact' %>
+                <% end %>
+              </td>
+              <td><%= row.note %></td>
+              <td><%= row.learned_by %></td>
+              <td class="action-buttons">
+                <%= button_to 'Remove', aim_vendor_alias_path(row), method: :delete,
+                              data: { turbo_confirm: "Remove the alias for #{row.extracted_name}?", confirm_label: 'Remove' },
+                              class: 'btn deny compact' %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  <% end %>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_151741) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_100004) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -70,28 +70,73 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_151741) do
   end
 
   create_table "aim.invoices", force: :cascade do |t|
+    t.integer "assigned_employee_id"
     t.string "assigned_to"
     t.string "assignment_source", limit: 50
+    t.integer "attempt", default: 0, null: false
     t.string "batch_id", limit: 255, null: false
+    t.string "billed_state", limit: 40
     t.string "budget_unit", limit: 10
     t.string "business_key", limit: 450
     t.datetime "claimed_at"
     t.string "claimed_by"
     t.string "claimed_by_name"
+    t.string "command", limit: 20
+    t.string "content_hash", limit: 64
     t.datetime "created_at", null: false
     t.string "customer_number", limit: 100
     t.string "document_type", limit: 50
+    t.datetime "exported_at"
+    t.text "extracted"
     t.string "extracted_vendor_name"
+    t.boolean "high_confidence"
     t.date "invoice_date"
     t.string "invoice_number", limit: 100
     t.decimal "invoice_total", precision: 15, scale: 2
+    t.string "lease_owner", limit: 100
+    t.datetime "lease_until"
+    t.text "manifest"
+    t.text "notes"
     t.string "order_number", limit: 100
+    t.integer "page_count"
+    t.bigint "parent_id"
+    t.text "review_note"
+    t.string "review_reason", limit: 40
+    t.decimal "sales_tax", precision: 15, scale: 2
+    t.string "source_filename", limit: 260
+    t.string "source_path", limit: 1000
+    t.boolean "split_check", default: true, null: false
     t.string "state", limit: 50, null: false
     t.string "submitter"
+    t.decimal "subtotal", precision: 15, scale: 2
     t.datetime "updated_at", null: false
     t.string "vendor_name"
+    t.index ["assigned_employee_id"], name: "index_aim_invoices_on_assigned_employee_id"
     t.index ["batch_id"], name: "index_aim_invoices_on_batch_id", unique: true
+    t.index ["command", "lease_until"], name: "index_aim_invoices_on_command_and_lease_until"
+    t.index ["content_hash"], name: "index_aim_invoices_on_content_hash"
+    t.index ["parent_id"], name: "index_aim_invoices_on_parent_id"
     t.index ["state", "budget_unit"], name: "index_aim_invoices_on_state_and_budget_unit"
+  end
+
+  create_table "aim.vendor_aliases", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "extracted_name", limit: 255, null: false
+    t.string "learned_by", limit: 255
+    t.string "normalized_name", limit: 255, null: false
+    t.string "note", limit: 500
+    t.datetime "updated_at", null: false
+    t.index ["extracted_name"], name: "index_aim_vendor_aliases_on_extracted_name", unique: true
+    t.index ["normalized_name"], name: "index_aim_vendor_aliases_on_normalized_name"
+  end
+
+  create_table "aim.vendor_rules", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "rules", null: false
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.string "vendor_name", limit: 255, null: false
+    t.index ["vendor_name"], name: "index_aim_vendor_rules_on_vendor_name", unique: true
   end
 
   create_table "authorization_fos", force: :cascade do |t|

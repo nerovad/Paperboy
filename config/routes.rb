@@ -124,12 +124,26 @@ Rails.application.routes.draw do
     get 'dashboard', to: 'dashboard#index', as: :dashboard
 
     resources :invoices, only: %i[index show update], constraints: { id: %r{[^/]+} } do
+      collection do
+        patch :reassign_many
+      end
       member do
         get :pdf
-        post :retry
-        post :move_to_action_needed
+        patch :reassign
+        patch :lock
+        post :unlock
+        post :claim
+        post :restore
       end
     end
+    get 'my_queue', to: 'my_queue#index', as: :my_queue
+    get 'shared_queues', to: 'shared_queues#index', as: :shared_queues
+    get 'people', to: 'people#index', as: :people
+    get 'counts', to: 'counts#show', as: :counts
+    get 'admin', to: 'admin#index', as: :admin
+    resources :uploads, only: %i[new create]
+    resources :vendor_aliases, only: %i[index create update destroy]
+    resources :vendor_rules, only: %i[index create update destroy]
   end
 
   namespace :production do

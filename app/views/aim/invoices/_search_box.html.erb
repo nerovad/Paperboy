@@ -1,0 +1,8 @@
+<%# Search the queue on this page as you type (aim_queue_filter_controller). %>
+<div class="aim-queue-search">
+  <%= search_field_tag :queue_search, nil,
+                       placeholder: 'Search person, invoice #, vendor, BU, submitter, total…',
+                       autocomplete: 'off', aria: { label: 'Search this queue' },
+                       data: { aim_queue_filter_target: 'input', action: 'input->aim-queue-filter#filter' } %>
+  <p class="aim-queue-search__empty" data-aim-queue-filter-target="empty" hidden>Nothing in this queue matches.</p>
+</div>

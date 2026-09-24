@@ -1,11 +1,30 @@
+<%# The review page, over the row. AIM v2: the fields are the invoice's
+    columns, the PDF is read from the store, and every button is a move of
+    the row's state. %>
+<% state = @invoice.state %>
+<% viewer_email = session.dig(:user, 'email') || session.dig('user', 'email') %>
+<%# While you work the invoice, the page keeps its working lock (aim-presence). %>
 <div class="aim-page aim-review-page"
-     data-controller="aim-ocr"
-     data-aim-ocr-pdf-url-value="<%= pdf_aim_invoice_path(@invoice_id, queue: @queue) %>">
+     data-controller="aim-ocr<%= ' aim-presence' unless @read_only %>"
+     data-aim-ocr-pdf-url-value="<%= pdf_aim_invoice_path(@invoice.batch_id, queue: @queue) %>"
+     <% unless @read_only %>
+       data-aim-presence-lock-url-value="<%= lock_aim_invoice_path(@invoice.batch_id, queue: @queue) %>"
+       data-aim-presence-unlock-url-value="<%= unlock_aim_invoice_path(@invoice.batch_id, queue: @queue) %>"
+     <% end %>>
   <header class="aim-page-header">
     <div class="aim-review-heading">
-      <%= link_to 'Back to Queue', aim_invoices_path(queue: @queue), class: 'aim-kicker' %>
-      <h1 class="aim-page-title"><%= @invoice_id %></h1>
-      <span class="aim-page-subtitle"><%= aim_queue_label(@queue) %> review</span>
+      <%= link_to 'Back to Queue', (aim_queue_access? ? aim_invoices_path(queue: @queue) : aim_my_queue_path), class: 'aim-kicker' %>
+      <h1 class="aim-page-title"><%= @invoice.batch_id %></h1>
+      <span class="aim-page-subtitle"><%= aim_state_label(state) %></span>
+      <% if @invoice.review_reason.present? %>
+        <span class="badge is-denied"><%= aim_review_reason_label(@invoice.review_reason) %></span>
+      <% end %>
+      <%# Working a shared-queue invoice locks it only while you are in it; Claim moves it to your queue. %>
+      <% if @claimable && !@read_only %>
+        <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
+                      class: 'btn take-back compact', form_class: 'aim-claim-form',
+                      data: { turbo: false, turbo_confirm: 'Move this invoice to your queue?' } %>
+      <% end %>
     </div>
   </header>
 
@@ -13,18 +32,29 @@
     <div class="aim-readonly-banner" role="alert">
       <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
       <div>
-        <strong>Read only — changes to this invoice cannot be saved.</strong>
+        <strong>Read only</strong>
         <% if @claimed_by_other %>
-          <p>
-            <%= @claim_holder %> claimed this invoice and is reviewing it now. Review actions are
-            hidden until it is unclaimed, so two reviewers cannot save over one another.
-          </p>
+          <p><%= @claim_holder %> is working on this invoice right now. You can read it; the actions come back when they leave it.</p>
+        <% elsif @invoice.terminal? %>
+          <p>This invoice is finished (<%= aim_state_label(state).downcase %>) and cannot be changed.</p>
         <% else %>
-          <p>
-            The queue folder could not be written to. Unless this invoice was already claimed, no one
-            has it reserved and someone else may open it at the same time. Review actions are hidden
-            until the queue share is writable again.
-          </p>
+          <p>This invoice is in <%= aim_owner_label(@invoice.assigned_to.presence || "#{@invoice.budget_unit} shared") %>.
+             <%= 'Claim it to move it to your queue and work it.' if @claimable %></p>
+        <% end %>
+        <% if @invoice.restorable? && aim_queue_access? %>
+          <%= form_with url: restore_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post, local: true,
+                        class: 'aim-restore-form', data: { controller: 'aim-reason', turbo: false } do %>
+            <button type="button" class="btn take-back compact" data-action="aim-reason#open"
+                    data-commit="Restore to Action Needed" data-title="Restore to Action Needed">Restore to Action Needed</button>
+            <button type="button" class="btn take-back compact" data-action="aim-reason#open"
+                    data-commit="Restore to Ready for Approval" data-title="Restore to Ready for Approval">Restore to Ready for Approval</button>
+            <%= render 'reason_modal' %>
+          <% end %>
+        <% end %>
+        <% if @claimable && !@claimed_by_other %>
+          <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
+                        class: 'btn take-back compact',
+                        data: { turbo: false, turbo_confirm: 'Move this invoice to your queue?' } %>
         <% end %>
       </div>
     </div>
@@ -36,237 +66,192 @@
         <h2 class="aim-panel-title">Document Preview</h2>
       </div>
 
-      <div class="aim-pdf-shell" data-pdf-url="<%= pdf_aim_invoice_path(@invoice_id, queue: @queue) %>">
-        <iframe class="aim-pdf-frame"
-                src="<%= "#{pdf_aim_invoice_path(@invoice_id, queue: @queue)}#zoom=page-fit" %>"
-                title="Invoice PDF preview"></iframe>
+      <% if @pdf_present %>
+        <div class="aim-pdf-shell" data-pdf-url="<%= pdf_aim_invoice_path(@invoice.batch_id, queue: @queue) %>">
+          <iframe class="aim-pdf-frame"
+                  src="<%= "#{pdf_aim_invoice_path(@invoice.batch_id, queue: @queue)}#zoom=page-fit" %>"
+                  title="Invoice PDF preview"></iframe>
 
-        <div id="aim-ocr-canvas-viewer" class="aim-pdf-canvas-viewer">
-          <div id="loading-indicator" class="aim-ocr-status">Loading OCR pages...</div>
+          <div id="aim-ocr-canvas-viewer" class="aim-pdf-canvas-viewer">
+            <div id="loading-indicator" class="aim-ocr-status">Loading OCR pages...</div>
+          </div>
         </div>
-      </div>
+      <% else %>
+        <div class="aim-empty-state">
+          <p>The PDF is not in the store.</p>
+        </div>
+      <% end %>
     </section>
 
-    <%= form_with url: aim_invoice_path(@invoice_id, queue: @queue),
+    <%= form_with url: aim_invoice_path(@invoice.batch_id, queue: @queue),
                   method: :patch,
                   local: true,
-                  class: 'aim-panel aim-metadata-form' do |form| %>
+                  class: 'aim-panel aim-metadata-form', data: { controller: 'aim-reason' } do |form| %>
       <div class="aim-panel-header">
-        <h2 class="aim-panel-title">Metadata Extraction</h2>
+        <h2 class="aim-panel-title">Invoice</h2>
       </div>
 
       <div class="aim-form-scroll">
-        <% if ['action_needed', 'low_confidence_review'].include?(@queue) && @ticket_content.present? %>
+        <% if @invoice.review_note.present? %>
           <section class="aim-ticket">
-            <h3>AI Failure Ticket</h3>
-            <pre><%= @ticket_content %></pre>
+            <h3><%= aim_review_reason_label(@invoice.review_reason.presence || 'note') %></h3>
+            <pre><%= @invoice.review_note %></pre>
           </section>
         <% end %>
 
         <div class="aim-fields">
-          <% fields = @metadata.keys.any? ? @metadata.keys : ['BU', 'Submitter', 'VendorName', 'InvoiceTotal', 'InvoiceNumber', 'InvoiceDate', 'Status'] %>
-          <% excluded_fields = aim_hidden_fields(@queue) %>
-          <% if @queue == 'batch_split' %>
-            <%# A batch is reviewed as a split, not as one invoice's fields. %>
+          <% if state == 'needs_split' %>
             <%= render 'aim/invoices/split_editor' %>
-            <% fields = [] %>
-          <% end %>
-          <% if @queue == 'vendor_review' %>
-            <% excluded_fields += aim_vendor_review_hidden_fields %>
-
-            <div class="aim-field-row">
-              <div class="aim-field">
-                <%= label_tag 'aim_extracted_vendor_name', 'AI-Extracted Vendor Name' %>
-                <%= text_field_tag 'aim_extracted_vendor_name',
-                                   @extracted_vendor_name.presence || 'Unknown vendor',
-                                   readonly: true,
-                                   class: 'aim-readonly-field' %>
-              </div>
-            </div>
-          <% end %>
-
-          <% fields.each do |key| %>
-            <% next if excluded_fields.include?(key) %>
-            <% field_readonly = aim_readonly_field?(@queue, key) %>
-
-            <div class="aim-field-row">
-              <div class="aim-field">
-                <%= form.label "metadata[#{key}]", aim_metadata_label(key) %>
-
-                <% if @metadata[key].is_a?(Array) && key == 'Invoices' %>
-                  <div class="aim-split-summary">
-                    <p>AI Suggested Splits</p>
-                    <ul>
-                      <% @metadata[key].each_with_index do |split, index| %>
-                        <li>
-                          <strong>Invoice <%= index + 1 %>:</strong>
-                          Pages <%= Array(split['pages']).join(', ') %>
-                          <br>
-                          <span>Vendor: <%= split['vendor_name'] || 'Unknown' %>, Invoice: <%= split['invoice_number'] || 'N/A' %></span>
-                        </li>
-                      <% end %>
-                    </ul>
-                    <div class="aim-review-note">Visual splitting will be added in the next AIM integration phase.</div>
-                  </div>
-                <% else %>
-                  <%= form.text_field "metadata[#{key}]",
-                                      value: (@metadata[key].is_a?(Hash) || @metadata[key].is_a?(Array) ? @metadata[key].to_json : @metadata[key]),
-                                      readonly: field_readonly,
-                                      class: ('aim-readonly-field' if field_readonly) %>
-                <% end %>
-              </div>
-
-              <%# OCR writes into the field, so it is pointless on a locked one. %>
-              <% unless field_readonly || (@metadata[key].is_a?(Array) && key == 'Invoices') %>
-                <button type="button"
-                        class="btn secondary compact btn-ocr"
-                        data-ocr-target-name="metadata[<%= key %>]">OCR</button>
-              <% end %>
-            </div>
-          <% end %>
-
-          <% if @queue == 'vendor_review' %>
-            <% selected_vendor_name = @metadata['NormalizedVendor'].presence %>
-            <% official_vendor_options = @official_vendor_names.to_a.compact %>
-            <% if selected_vendor_name.present? && official_vendor_options.exclude?(selected_vendor_name) %>
-              <% official_vendor_options << selected_vendor_name %>
-            <% end %>
-            <% official_vendor_option_tags = [['Select official vendor', '']] %>
-            <% official_vendor_options.each do |vendor_name| %>
-              <% official_vendor_option_tags << [vendor_name, vendor_name] %>
-            <% end %>
-
-            <section class="aim-vendor-review">
-              <div class="aim-vendor-review-fields">
+          <% else %>
+            <% if @invoice.extracted_vendor_name.present? %>
+              <div class="aim-field-row">
                 <div class="aim-field">
-                  <%= form.label 'metadata[NormalizedVendor]', 'Match to Official Vendor Name' %>
-                  <%= select_tag(
-                    'metadata[NormalizedVendor]',
-                    options_for_select(official_vendor_option_tags, selected_vendor_name),
-                    id: 'aim-official-vendor-select',
-                    class: 'aim-vendor-select',
-                    data: { aim_vendor_select: true }
-                  ) %>
+                  <%= label_tag 'aim_extracted_vendor_name', aim_field_label('extracted_vendor_name') %>
+                  <%= text_field_tag 'aim_extracted_vendor_name', @invoice.extracted_vendor_name,
+                                     readonly: true, class: 'aim-readonly-field' %>
                 </div>
+              </div>
+            <% end %>
 
-                <div class="aim-field-row">
-                  <div class="aim-field">
-                    <%= label_tag 'normalized_vendor_new', 'New Official Vendor Name' %>
-                    <%= text_field_tag 'normalized_vendor_new',
-                                       nil,
-                                       autocomplete: 'off',
-                                       placeholder: 'Type only when adding a new official vendor' %>
-                  </div>
-
+            <% Aim::Invoice::EDITABLE_FIELDS.each do |field| %>
+              <div class="aim-field-row">
+                <div class="aim-field">
+                  <%= form.label "invoice[#{field}]", aim_field_label(field) %>
+                  <% if field == 'document_type' %>
+                    <%= form.select "invoice[#{field}]",
+                                    options_for_select(Aim::Invoice::DOCUMENT_TYPES, @invoice.document_type),
+                                    { include_blank: 'Not set' }, disabled: @read_only %>
+                  <% elsif field == 'notes' %>
+                    <%= form.text_area "invoice[#{field}]", value: @invoice.notes, rows: 3, disabled: @read_only %>
+                  <% else %>
+                    <%= form.text_field "invoice[#{field}]",
+                                        value: @invoice.public_send(field),
+                                        disabled: @read_only %>
+                  <% end %>
+                </div>
+                <% unless @read_only || %w[document_type notes].include?(field) %>
                   <button type="button"
                           class="btn secondary compact btn-ocr"
-                          data-ocr-target-name="normalized_vendor_new">OCR</button>
-                </div>
-
-                <div class="aim-vendor-alias-preview">
-                  <span><%= @extracted_vendor_name.presence || 'Unknown vendor' %></span>
-                  <span>maps to</span>
-                  <span>the selected or new official vendor</span>
-                </div>
+                          data-ocr-target-name="invoice[<%= field %>]">OCR</button>
+                <% end %>
               </div>
-            </section>
+            <% end %>
+
+            <% if @invoice.review_reason == 'unknown_vendor' && !@read_only %>
+              <section class="aim-vendor-review">
+                <div class="aim-vendor-review-fields">
+                  <div class="aim-field">
+                    <%= label_tag 'normalized_vendor', 'Match to Official Vendor Name' %>
+                    <%= select_tag 'normalized_vendor',
+                                   options_for_select([['Select official vendor', '']] + @official_vendor_names.map { |name| [name, name] }, @invoice.vendor_name),
+                                   id: 'aim-official-vendor-select', class: 'aim-vendor-select' %>
+                  </div>
+                  <div class="aim-field-row">
+                    <div class="aim-field">
+                      <%= label_tag 'normalized_vendor_new', 'New Official Vendor Name' %>
+                      <%= text_field_tag 'normalized_vendor_new', nil, autocomplete: 'off',
+                                         placeholder: 'Type only when adding a new official vendor' %>
+                    </div>
+                    <button type="button" class="btn secondary compact btn-ocr" data-ocr-target-name="normalized_vendor_new">OCR</button>
+                  </div>
+                  <div class="aim-vendor-alias-preview">
+                    <span><%= @invoice.extracted_vendor_name.presence || 'Unknown vendor' %></span>
+                    <span>maps to</span>
+                    <span>the selected or new official vendor</span>
+                  </div>
+                </div>
+              </section>
+            <% end %>
           <% end %>
         </div>
+
+        <% if @events.present? %>
+          <section class="aim-ticket aim-history">
+            <h3>History</h3>
+            <ul>
+              <% @events.each do |event| %>
+                <li>
+                  <%= event.created_at.strftime('%m/%d/%y %H:%M') %>
+                  <%= event.from_state.present? ? "#{aim_state_label(event.from_state)} → " : '' %><%= aim_state_label(event.to_state) %>
+                  by <%= event.actor %><%= " — #{event.note}" if event.note.present? %>
+                </li>
+              <% end %>
+            </ul>
+          </section>
+        <% end %>
       </div>
 
       <div class="aim-form-actions">
         <% if @read_only %>
-          <%# Nothing here can be saved, so offer the only action that works. %>
           <div class="aim-action-group">
-            <%= link_to 'Return to Queue', aim_invoices_path(queue: @queue), class: 'btn' %>
+            <%= link_to 'Return to Queue', (aim_queue_access? ? aim_invoices_path(queue: @queue) : aim_my_queue_path), class: 'btn' %>
           </div>
         <% else %>
           <div class="aim-action-group aim-review-action-strip">
-            <%= form.submit 'Unclaim', class: 'btn ghost' %>
-            <%= form.submit 'Save Changes', class: 'btn secondary' %>
+            <% unless state == 'needs_split' %>
+              <%= form.submit 'Save Changes', class: 'btn secondary' %>
+            <% end %>
 
-            <% if @queue == 'action_needed' %>
-              <%= form.submit 'Reject',
-                              data: { turbo_confirm: 'Reject this invoice and send it to the rejected folder?' },
-                              class: 'btn deny' %>
+            <% if state == 'needs_review' %>
+              <% if @invoice.review_reason == 'unknown_vendor' %>
+                <%= form.submit 'Learn & Retry AI',
+                                data: { turbo_confirm: 'Save this alias and send the document back through AI extraction?' },
+                                class: 'btn warning' %>
+                <%= form.submit 'Learn & Send to Approval',
+                                data: { turbo_confirm: 'Save this alias and send the invoice for approval?' },
+                                class: 'btn approve' %>
+              <% end %>
               <%= form.submit 'Send to Approval',
-                              data: { turbo_confirm: 'Route this invoice to User Approval?' },
+                              data: { turbo_confirm: 'Send this invoice to its owner for approval?' },
                               class: 'btn approve' %>
-              <%# What the MOVE_FOLDERS_HERE_TO_SEND_TO_SQL shortcut did from this
-                  queue, and the path that works while user approval is built. %>
-              <%= form.submit 'Send to SQL Queue',
-                              data: { turbo_confirm: 'Save these fields and send this invoice to the SQL queue?' },
+              <%= form.submit 'Approve',
+                              data: { turbo_confirm: 'Approve this invoice now and send it to billing and Laserfiche?' },
                               class: 'btn approve' %>
-            <% elsif @queue == 'low_confidence_review' %>
-              <%= form.submit 'Reject',
-                              data: { turbo_confirm: 'Reject this invoice and send it to the rejected folder?' },
-                              class: 'btn deny' %>
-              <%= form.submit 'Send to SQL Queue',
-                              data: { turbo_confirm: 'Save these XML index fields and send this folder to the SQL queue?' },
-                              class: 'btn approve' %>
-            <% elsif @queue == 'vendor_review' %>
-              <%= form.submit 'Learn & Continue',
-                              data: {
-                                turbo_confirm: 'Save this alias and continue without rerunning AI vision?'
-                              },
-                              class: 'btn approve' %>
-              <%= form.submit 'Learn & Retry AI',
-                              data: {
-                                turbo_confirm: 'Save this alias and send the document back through AI vision?'
-                              },
+              <%= form.submit 'Retry AI',
+                              data: { turbo_confirm: 'Send this document back through AI extraction?' },
                               class: 'btn warning' %>
-              <%= button_tag 'Check Duplicates *',
-                             type: 'button',
-                             disabled: true,
-                             title: 'Future AIM workflow step; not active yet.',
-                             class: 'btn ghost aim-placeholder-action' %>
-              <%= button_tag 'Run Vendor/BU Lookup *',
-                             type: 'button',
-                             disabled: true,
-                             title: 'Future AIM workflow step; not active yet.',
-                             class: 'btn ghost aim-placeholder-action' %>
-              <%= button_tag 'Send to Manual Processing *',
-                             type: 'button',
-                             disabled: true,
-                             title: 'Future AIM workflow step; not active yet.',
-                             class: 'btn ghost aim-placeholder-action' %>
-            <% elsif @queue == 'batch_split' %>
+            <% elsif state == 'ready_for_approval' %>
+              <%= form.submit 'Approve',
+                              data: { turbo_confirm: 'Approve this invoice and send it to billing and Laserfiche?' },
+                              class: 'btn approve' %>
+              <button type="button" class="btn warning" data-action="aim-reason#open"
+                      data-commit="Send Back" data-title="Send back to AIM review">Send Back</button>
+            <% elsif state == 'needs_split' %>
               <%= form.submit 'Approve Split',
                               data: {
-                                turbo_confirm: 'Split this PDF into the invoices above? Each goes back through extraction on its own.',
+                                turbo_confirm: 'Split this PDF into the invoices above? Each goes through extraction on its own.',
                                 confirm_title: 'Approve split',
                                 confirm_label: 'Approve Split'
                               },
                               class: 'btn approve' %>
               <%= form.submit 'Process as One Invoice',
                               data: {
-                                turbo_confirm: 'Treat this PDF as a single invoice and send it back through extraction without splitting?',
+                                turbo_confirm: 'Treat this PDF as a single invoice and send it through extraction without splitting?',
                                 confirm_title: 'Process as one invoice',
                                 confirm_label: 'Process as One'
                               },
                               class: 'btn warning' %>
+            <% elsif state == 'failed' %>
+              <%= form.submit 'Retry AI',
+                              data: { turbo_confirm: 'Send this document back through AI extraction?' },
+                              class: 'btn warning' %>
+              <%= form.submit 'Retry Export',
+                              data: { turbo_confirm: 'Try the export to billing and Laserfiche again?' },
+                              class: 'btn approve' %>
             <% end %>
 
-            <% if deletable_queue? %>
-              <%= form.submit 'Delete',
-                              data: {
-                                turbo_confirm: 'Send this invoice for deletion? It is archived to the deleted folder, not destroyed.',
-                                confirm_title: 'Delete invoice',
-                                confirm_label: 'Delete'
-                              },
-                              class: 'btn deny' %>
+            <% if @invoice.can_move_to?('rejected') %>
+              <button type="button" class="btn deny" data-action="aim-reason#open"
+                      data-commit="Reject" data-title="Reject invoice">Reject</button>
             <% end %>
-
-            <%= link_to 'Retry AI Processing',
-                        retry_aim_invoice_path(@invoice_id, queue: @queue),
-                        data: {
-                          turbo_method: :post,
-                          turbo_confirm: 'Send this original document back to the Reprocess Queue?'
-                        },
-                        class: 'btn warning' %>
+            <% if @invoice.can_move_to?('deleted') && aim_queue_access? %>
+              <button type="button" class="btn deny" data-action="aim-reason#open"
+                      data-commit="Delete" data-title="Delete invoice">Delete</button>
+            <% end %>
           </div>
         <% end %>
       </div>
+      <%= render 'reason_modal' unless @read_only %>
     <% end %>
   </div>
 </div>

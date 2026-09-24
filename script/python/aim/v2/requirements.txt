@@ -1,0 +1,10 @@
+# AIM v2 worker dependencies. Installed by deployment, never on import.
+ollama
+pydantic
+pymupdf
+pillow
+pytesseract
+pyodbc
+python-dateutil
+python-dotenv
+thefuzz

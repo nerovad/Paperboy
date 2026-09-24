@@ -51,12 +51,12 @@ def archive_or_raise(processing_id, payload, folder_path):
         "left in place; nothing was deleted."
     )
 
-def move_folder_to_failed(folder_path, folder_name):
+def move_folder_to_failed(folder_path, folder_name, note=None):
     if not os.path.exists(folder_path):
         print(f"    [i] SQL queue folder already moved or removed: {folder_path}")
         return
 
-    record_state(folder_name, "sql_failed", ACTOR)
+    record_state(folder_name, "sql_failed", ACTOR, note)
     failed_dest = os.path.join(SQL_FAILED_DIR, folder_name)
     if os.path.exists(failed_dest):
         shutil.rmtree(failed_dest)
@@ -66,6 +66,43 @@ def move_folder_to_failed(folder_path, folder_name):
         print(f"    [!] Moved folder to SQL failed queue: {failed_dest}")
     except FileNotFoundError:
         print(f"    [i] SQL queue folder disappeared before it could be moved to failed: {folder_path}")
+
+# How long a folder may sit in the SQL queue without a payload before it is
+# failed. Since 2026-09-24 the AI worker places a folder in the queue only once
+# it is complete, and the review screens write the payload before they move a
+# folder, so a folder without one is not "still being written": it is a
+# leftover, as the half-built CV62744 folder was, which this worker skipped
+# every five seconds for a day. It is reported once, and after this long it is
+# moved to the failed queue with a note, where a person can see it.
+INCOMPLETE_BATCH_SECONDS = 600
+_incomplete_reported = set()
+
+def handle_incomplete_batch(folder_path, folder_name):
+    try:
+        age = time.time() - os.path.getmtime(folder_path)
+    except OSError:
+        return
+    minutes = INCOMPLETE_BATCH_SECONDS // 60
+    if age < INCOMPLETE_BATCH_SECONDS:
+        if folder_name not in _incomplete_reported:
+            _incomplete_reported.add(folder_name)
+            print(f"    [i] {folder_name} has no *{PAYLOAD_SUFFIX} payload. "
+                  f"It goes to the failed queue if it still has none after {minutes} minutes.")
+        return
+
+    note = f"no *{PAYLOAD_SUFFIX} payload after {minutes} minutes"
+    print(f"    [!] {folder_name}: {note}. Moving to the failed queue.")
+    try:
+        with open(os.path.join(folder_path, f"{folder_name}.ticket"), "w", encoding="utf-8") as f:
+            f.write("--- MANUAL ACTION NEEDED (NO SQL PAYLOAD) ---\n")
+            f.write(f"Folder: {folder_name}\n\n")
+            f.write(f"This folder reached the SQL queue without a *{PAYLOAD_SUFFIX} payload, so nothing could be inserted.\n")
+            f.write("A folder arrives like this when a worker or a person moved it before it was complete.\n")
+            f.write("Check the PDF and XML, then send the invoice through review again if it is still needed.\n")
+    except OSError:
+        pass
+    _incomplete_reported.discard(folder_name)
+    move_folder_to_failed(folder_path, folder_name, note)
 
 def run_sql_worker():
     if not os.path.exists(SQL_QUEUE_DIR):
@@ -82,11 +119,9 @@ def run_sql_worker():
                 continue
 
             if json_file is None:
-                # The AI worker creates the folder, XML and PDF before the
-                # payload, so a folder without one is either still being
-                # written or is missing it. Leave it where it is either way --
-                # this loop must never delete a batch it could not read.
-                print(f"    [i] Skipping {folder_name}: no *{PAYLOAD_SUFFIX} payload in the folder.")
+                # Never delete a batch that could not be read: it is reported,
+                # and failed only after it has had time to complete.
+                handle_incomplete_batch(folder_path, folder_name)
                 continue
 
             filepath = os.path.join(folder_path, json_file)

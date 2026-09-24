@@ -3,81 +3,61 @@
 require 'singleton'
 
 module Aim
+  # Where AIM's files are, as this server sees them. AIM v2 has no queue
+  # folders: the PDF lands in the store at intake and never moves, and the
+  # other folders are where a copy goes at the end -- the Laserfiche import
+  # folder, the archive, the deleted and rejected folders -- plus the drop
+  # tree people put scans in and the worker install folder the seed tasks
+  # read from.
+  #
+  # Every path comes from a LockBox variable, written the Windows way, and is
+  # translated to this server's mount. Nothing is guessed: a folder that is
+  # not configured is nil from #path_for and an error from #path_for!.
   class InvoiceDirectoryService
     include Singleton
 
-    BACKEND_QUEUES = {
-      ai_queue: { label: 'AI Queue', description: 'Spooled invoices waiting for AI extraction.', css_class: 'aim-card-neutral' },
-      action_needed: { label: 'Action Needed', description: 'Invoices missing critical extraction data.', css_class: 'aim-card-danger' },
-      vendor_review: { label: 'Vendor Review', description: 'Unknown vendors requiring normalization.', css_class: 'aim-card-warning' },
-      manual_processing: { label: 'Manual Processing', description: 'Invoices needing full manual entry.', css_class: 'aim-card-warning' },
-      batch_split: { label: 'Batch Split', description: 'PDFs containing multiple invoices to split.', css_class: 'aim-card-info' },
-      low_confidence_review: { label: 'Low Confidence Review', description: 'Invoices routed for manual review.', css_class: 'aim-card-warning' },
-      sql_failed: { label: 'SQL Failed', description: 'Invoices that failed downstream SQL processing.', css_class: 'aim-card-danger' },
-      rejected: { label: 'Rejected', description: 'Rejected invoices awaiting archive or follow-up.', css_class: 'aim-card-neutral' }
-    }.freeze
+    # The screens' queues, under the name the command palette
+    # (NavigationCatalog) has always asked this service for. They are the
+    # invoice rows' queues now; see Aim::InvoiceQueues.
+    BACKEND_QUEUES = Aim::Invoice::QUEUES
 
     PATH_ENV = {
-      ai_queue: 'AIM_AI_QUEUE_DIR',
-      action_needed: 'AIM_ACTION_NEEDED_DIR',
-      vendor_review: 'AIM_VENDOR_REVIEW_DIR',
-      manual_processing: 'AIM_MANUAL_PROCESSING_DIR',
-      batch_split: 'AIM_BATCH_SPLIT_DIR',
-      low_confidence_review: 'AIM_LOW_CONFIDENCE_REVIEW_DIR',
-      sql_queue: 'AIM_SQL_QUEUE_DIR',
-      sql_failed: 'AIM_SQL_FAILED_DIR',
-      user_approval: 'AIM_USER_APPROVAL_DIR',
-      rejected: 'AIM_REJECTED_DIR',
-      ready_to_learn: 'AIM_READY_TO_LEARN_DIR',
-      reprocess: 'AIM_REPROCESS_QUEUE_DIR',
-      # Queues the workers use that no screen lists. Aim::Invoice has a state
-      # for each, so Aim::QueueSync needs their paths to see what is in them.
-      pending_vision: 'AIM_PENDING_VISION_DIR',
-      ready_to_split: 'AIM_READY_TO_SPLIT_DIR',
-      ready_to_delete: 'AIM_READY_TO_DELETE_DIR',
-      error_queue: 'AIM_ERROR_QUEUE_DIR',
+      store: 'AIM_STORE_DIR',
+      processed: 'AIM_PROCESSED_DIR',
+      archive: 'AIM_ARCHIVE_DIR',
       deleted: 'AIM_DELETED_DIR',
-      gsa_fiscal: 'AIM_GSA_FISCAL_DIR',
-      vcfms_hold: 'AIM_VCFMS_HOLD_DIR'
+      rejected: 'AIM_REJECTED_DIR',
+      drop: 'AIM_BASE_DIR',
+      program: 'AIM_PROGRAM_DIR'
     }.freeze
 
-    # Lenient reader. Returns nil when the queue is not configured, so the
-    # sidebar can report "not configured" instead of raising. Never guesses.
-    def path_for(queue)
-      env_name = PATH_ENV[queue.to_s.to_sym]
+    # Lenient reader: nil when the folder is not configured.
+    def path_for(key)
+      env_name = PATH_ENV[key.to_s.to_sym]
       return unless env_name
 
       translated_env(env_name)
     end
 
-    # Strict reader. Raises MissingConfiguration naming the variable. Every
-    # *_dir reader below uses this, so any code about to touch a queue fails
-    # loudly rather than writing to a guessed folder.
-    def path_for!(queue)
-      env_name = PATH_ENV[queue.to_s.to_sym]
-      raise MissingConfiguration, "#{queue} is not an AIM queue." if env_name.nil?
+    # Strict reader. Raises MissingConfiguration naming the variable, so code
+    # about to write a file fails loudly rather than writing to a guess.
+    def path_for!(key)
+      env_name = PATH_ENV[key.to_s.to_sym]
+      raise MissingConfiguration, "#{key} is not an AIM folder." if env_name.nil?
 
       path = translated_env(env_name)
-      raise MissingConfiguration.for(env_name, "AIM #{queue} queue") if path.blank?
+      raise MissingConfiguration.for(env_name, "The AIM #{key} folder") if path.blank?
 
       path
     end
 
-    def ai_queue_dir = path_for!(:ai_queue)
-    def action_needed_dir = path_for!(:action_needed)
-    def vendor_review_dir = path_for!(:vendor_review)
-    def manual_processing_dir = path_for!(:manual_processing)
-    def batch_split_dir = path_for!(:batch_split)
-    def low_confidence_review_dir = path_for!(:low_confidence_review)
-    def sql_queue_dir = path_for!(:sql_queue)
-    def sql_failed_dir = path_for!(:sql_failed)
-    def user_approval_dir = path_for!(:user_approval)
-    def rejected_dir = path_for!(:rejected)
-    def ready_to_learn_dir = path_for!(:ready_to_learn)
-    def reprocess_dir = path_for!(:reprocess)
+    def store_dir = path_for!(:store)
+    def processed_dir = path_for!(:processed)
+    def archive_dir = path_for!(:archive)
     def deleted_dir = path_for!(:deleted)
-    def ready_to_delete_dir = path_for!(:ready_to_delete)
-    def ready_to_split_dir = path_for!(:ready_to_split)
+    def rejected_dir = path_for!(:rejected)
+    def drop_dir = path_for!(:drop)
+    def program_dir = path_for!(:program)
 
     def to_windows_path(linux_path)
       return if linux_path.blank?
@@ -89,12 +69,6 @@ module Aim
       linux_path.to_s.gsub(linux_base, windows_base).tr('/', '\\')
     end
 
-    private
-
-    def translated_env(name)
-      translate_path(ENV.fetch(name, nil))
-    end
-
     def translate_path(path)
       return if path.blank?
 
@@ -103,6 +77,12 @@ module Aim
       return path.to_s.tr('\\', '/') if linux_base.blank? || windows_base.blank?
 
       path.to_s.gsub(windows_base, linux_base).tr('\\', '/')
+    end
+
+    private
+
+    def translated_env(name)
+      translate_path(ENV.fetch(name, nil))
     end
   end
 end

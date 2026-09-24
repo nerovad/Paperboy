@@ -4,7 +4,7 @@ require 'test_helper'
 
 module Aim
   class InvoiceEventTest < ActiveSupport::TestCase
-    def create_invoice(state: 'ai_queue', actor: 'watcher')
+    def create_invoice(state: 'received', actor: 'watcher')
       Aim::Invoice.create!(batch_id: "4601_#{SecureRandom.hex(4)}", state: state, actor: actor)
     end
 
@@ -17,19 +17,19 @@ module Aim
 
       assert_equal 1, invoice.events.count
       event = invoice.events.first
-      assert_equal ['transition', nil, 'ai_queue', 'watcher'],
+      assert_equal ['transition', nil, 'received', 'watcher'],
                    [event.action, event.from_state, event.to_state, event.actor]
     end
 
     test 'every change of state writes exactly one event' do
       invoice = create_invoice
-      invoice.update!(state: 'sql_queue', actor: '01_ai_extraction_worker')
-      invoice.update!(state: 'archived', actor: '02_sql_worker')
+      invoice.update!(state: 'extracting', actor: 'aim_worker')
+      invoice.update!(state: 'needs_review', actor: 'aim_worker')
 
       transitions = invoice.events.reload.map { [_1.from_state, _1.to_state] }
 
-      assert_equal [[nil, 'ai_queue'], %w[ai_queue sql_queue], %w[sql_queue archived]], transitions
-      assert_equal %w[watcher 01_ai_extraction_worker 02_sql_worker], invoice.events.map(&:actor)
+      assert_equal [[nil, 'received'], %w[received extracting], %w[extracting needs_review]], transitions
+      assert_equal %w[watcher aim_worker aim_worker], invoice.events.map(&:actor)
     end
 
     test 'a save that leaves the state alone writes nothing' do
@@ -43,17 +43,17 @@ module Aim
     test 'a change of state must say who made it' do
       invoice = create_invoice
 
-      assert_not invoice.update(state: 'sql_queue')
+      assert_not invoice.update(state: 'extracting')
       assert_includes invoice.errors[:actor], "can't be blank"
       assert_equal 1, invoice.events.count
     end
 
     test 'the actor is not carried over to the next change' do
       invoice = create_invoice
-      invoice.update!(state: 'sql_queue', actor: 'someone@example.test')
+      invoice.update!(state: 'extracting', actor: 'someone@example.test')
 
       assert_nil invoice.actor
-      assert_not invoice.update(state: 'archived')
+      assert_not invoice.update(state: 'failed')
     end
 
     test 'an event that fails to write takes the state change with it' do
@@ -61,9 +61,9 @@ module Aim
       failing = ->(*) { raise ActiveRecord::RecordInvalid }
 
       invoice.events.stub(:create!, failing) do
-        assert_raises(ActiveRecord::RecordInvalid) { invoice.update!(state: 'sql_queue', actor: 'x') }
+        assert_raises(ActiveRecord::RecordInvalid) { invoice.update!(state: 'extracting', actor: 'x') }
       end
-      assert_equal 'ai_queue', invoice.reload.state
+      assert_equal 'received', invoice.reload.state
       assert_equal 1, invoice.events.count
     end
 

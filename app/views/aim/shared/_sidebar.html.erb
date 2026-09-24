@@ -1,26 +1,72 @@
 <%# app/views/aim/shared/_sidebar.html.erb
-    Sidebar for the Automated Invoice Management app. The app switcher header is shared with
-    every other app; everything below it is this app's own navigation. %>
-<div class="sidebar aim-sidebar">
+    Sidebar for Automated Invoice Management, grouped the way Production's is:
+    AIM, Queues, Vendors, Admin. AIM is open by default and the rest closed;
+    the group holding the current page is always open. A group you open or
+    close yourself stays that way from page to page until you come back to
+    the AIM main page (aim_sidebar_controller). The counts are filled in after the
+    page draws (aim_counts_controller). %>
+<% current = if controller_name == "invoices" then "queues"
+              elsif %w[vendor_aliases vendor_rules].include?(controller_name) then "vendors"
+              elsif controller_name == "admin" then "admin"
+              else "aim"
+              end %>
+<% in_queues = current == "queues" %>
+<div class="sidebar aim-sidebar" data-controller="aim-counts aim-sidebar" data-aim-counts-url-value="<%= aim_counts_path %>"
+     data-aim-sidebar-reset-value="<%= controller_name == 'dashboard' && action_name == 'home' %>">
   <%= render "shared/app_switcher" %>
 
   <nav class="aim-links">
-    <% if can_use_app_feature?("aim", "dashboard") %>
-      <%= link_to "Dashboard", aim_dashboard_path,
-                  class: "nav-link#{' active' if current_page?(aim_dashboard_path)}" %>
-    <% end %>
-
-    <% if aim_queue_access? %>
-      <div class="sidebar-section-label">Processing Queues</div>
-      <% Aim::InvoiceDirectoryService::BACKEND_QUEUES.each do |queue, config| %>
-        <% queue_path = aim_invoices_path(queue: queue) %>
-        <%= link_to queue_path, class: "nav-link#{' active' if current_page?(queue_path)}" do %>
-          <span><%= config[:label] %></span>
-          <span class="sidebar-count <%= config[:css_class].delete_prefix('aim-card-') %>">
-            <%= @aim_queue_counts.fetch(queue, 0) %>
-          </span>
+    <details class="nav-group" <%= "open" %> data-aim-sidebar-target="group" data-key="aim"
+             data-default-open="true" data-current="<%= current == "aim" %>">
+      <summary><span class="nav-group-label">AIM</span></summary>
+      <% if can_use_app_feature?("aim", "dashboard") %>
+        <%= link_to "Dashboard", aim_dashboard_path,
+                    class: "nav-link#{' active' if current_page?(aim_dashboard_path)}" %>
+      <% end %>
+      <% if aim_has_queue? %>
+        <%= link_to aim_my_queue_path, class: "nav-link#{' active' if current_page?(aim_my_queue_path)}" do %>
+          <span>My Queue</span>
+          <span class="sidebar-count warning" data-aim-count="my_queue" data-hide-zero hidden></span>
         <% end %>
       <% end %>
+      <% if aim_has_queue? %>
+        <%= link_to aim_shared_queues_path, class: "nav-link#{' active' if current_page?(aim_shared_queues_path)}" do %>
+          <span>Shared Queues</span>
+          <span class="sidebar-count neutral" data-aim-count="shared_queues" data-hide-zero hidden></span>
+        <% end %>
+      <% end %>
+      <%= link_to "Upload Invoices", new_aim_upload_path,
+                  class: "nav-link#{' active' if current_page?(new_aim_upload_path)}" %>
+    </details>
+
+    <% if aim_queue_access? %>
+      <details class="nav-group" <%= "open" if current == "queues" %> data-aim-sidebar-target="group" data-key="queues"
+             data-default-open="false" data-current="<%= current == "queues" %>">
+        <summary><span class="nav-group-label">Queues</span></summary>
+        <% Aim::Invoice::QUEUES.each do |queue, config| %>
+          <% queue_path = aim_invoices_path(queue: queue) %>
+          <%= link_to queue_path, class: "nav-link#{' active' if in_queues && params[:queue].to_s == queue}" do %>
+            <span><%= config[:label] %></span>
+            <span class="sidebar-count <%= config[:css_class].delete_prefix('aim-card-') %>" data-aim-count="<%= queue %>">…</span>
+          <% end %>
+        <% end %>
+      </details>
+
+      <details class="nav-group" <%= "open" if current == "vendors" %> data-aim-sidebar-target="group" data-key="vendors"
+             data-default-open="false" data-current="<%= current == "vendors" %>">
+        <summary><span class="nav-group-label">Vendors</span></summary>
+        <%= link_to "Vendor Aliases", aim_vendor_aliases_path,
+                    class: "nav-link#{' active' if current_page?(aim_vendor_aliases_path)}" %>
+        <%= link_to "Vendor Rules", aim_vendor_rules_path,
+                    class: "nav-link#{' active' if current_page?(aim_vendor_rules_path)}" %>
+      </details>
+
+      <details class="nav-group" <%= "open" if current == "admin" %> data-aim-sidebar-target="group" data-key="admin"
+             data-default-open="false" data-current="<%= current == "admin" %>">
+        <summary><span class="nav-group-label">Admin</span></summary>
+        <%= link_to "Users & Queues", aim_admin_path,
+                    class: "nav-link#{' active' if current_page?(aim_admin_path)}" %>
+      </details>
     <% end %>
   </nav>
 </div>

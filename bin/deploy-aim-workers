@@ -27,6 +27,9 @@
 #                        (default: <target>/_PREVIOUS_SCRIPTS)
 #   --skip-provenance    deploy without checking .env against LockBox.
 #                        Prints a warning. For emergencies, not routine use.
+#   --v2                 deploy the v2 worker (script/python/aim/v2) to
+#                        AIM_V2_PROGRAM_DIR instead of the v1 workers to
+#                        AIM_PROGRAM_DIR. Everything else is the same.
 #
 # Environment:
 #   AIM_DEPLOY_PYTHON    interpreter used to verify that the rendered .env
@@ -39,6 +42,7 @@ APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE_DIR="$APP_DIR/script/python/aim"
 
 APPLY=0
+V2=0
 SKIP_PROVENANCE=0
 LOCKBOX="${LOCKBOX_DIR:-}"
 ENV_FILE="$APP_DIR/.env"
@@ -48,17 +52,26 @@ BACKUP_ROOT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --apply) APPLY=1; shift ;;
+    --v2) V2=1; shift ;;
     --skip-provenance) SKIP_PROVENANCE=1; shift ;;
     --lockbox) LOCKBOX="$2"; shift 2 ;;
     --env-file) ENV_FILE="$2"; shift 2 ;;
     --target) TARGET="$2"; shift 2 ;;
     --backup-dir) BACKUP_ROOT="$2"; shift 2 ;;
-    -h|--help) sed -n '2,34p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,37p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
 
 die() { echo "ERROR: $*" >&2; exit 1; }
+
+# The v2 worker is one folder beside the v1 pipeline, deployed to its own
+# place so the old workers keep running until cutover.
+PROGRAM_VAR="AIM_PROGRAM_DIR"
+if [ "$V2" -eq 1 ]; then
+  SOURCE_DIR="$APP_DIR/script/python/aim/v2"
+  PROGRAM_VAR="AIM_V2_PROGRAM_DIR"
+fi
 
 [ -f "$ENV_FILE" ] || die "environment file not found: $ENV_FILE"
 [ -d "$SOURCE_DIR" ] || die "worker source not found: $SOURCE_DIR"
@@ -126,10 +139,10 @@ PYTHON
 }
 
 if [ -z "$TARGET" ]; then
-  program_dir="$(env_value AIM_PROGRAM_DIR)"
+  program_dir="$(env_value "$PROGRAM_VAR")"
   windows_base="$(env_value AIM_WINDOWS_QUEUE_BASE_PATH)"
   linux_base="$(env_value AIM_LINUX_QUEUE_BASE_PATH)"
-  [ -n "$program_dir" ] || die "AIM_PROGRAM_DIR is not set in $ENV_FILE"
+  [ -n "$program_dir" ] || die "$PROGRAM_VAR is not set in $ENV_FILE"
   [ -n "$windows_base" ] || die "AIM_WINDOWS_QUEUE_BASE_PATH is not set in $ENV_FILE"
   [ -n "$linux_base" ] || die "AIM_LINUX_QUEUE_BASE_PATH is not set in $ENV_FILE"
   # Normalise to forward slashes *before* the prefix swap: a backslash in a
@@ -141,7 +154,7 @@ if [ -z "$TARGET" ]; then
   [ "$TARGET" != "$program_dir" ] \
     || die "could not translate $program_dir to a local path.
        AIM_WINDOWS_QUEUE_BASE_PATH ($windows_base) is not a prefix of
-       AIM_PROGRAM_DIR, so the share location is unknown. Pass --target."
+       $PROGRAM_VAR, so the share location is unknown. Pass --target."
 fi
 
 echo "==> Source: $SOURCE_DIR"

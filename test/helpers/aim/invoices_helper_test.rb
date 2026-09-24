@@ -36,46 +36,51 @@ module Aim
       assert_nil aim_invoice_date(nil)
     end
 
-    test 'prefers the extracted invoice number as the row reference' do
-      invoice = { metadata: { 'InvoiceNumber' => '12286377' },
-                  name: '4641.20260814_074337.Invoice-[V20F]' }
-
-      assert_equal '12286377', aim_invoice_reference(invoice)
+    def invoice(**attributes)
+      Aim::Invoice.new(batch_id: '4641.20260814_074337.Invoice-[V20F]', state: 'needs_review', **attributes)
     end
 
-    test 'reports a missing invoice number rather than substituting an identifier' do
-      # The folder's "-[V20F]" code is not an invoice number and reads exactly
-      # like one, so it must never be shown in this column.
-      invoice = { metadata: {}, name: '4641.20260814_074337.Invoice-[V20F]' }
-
-      assert_nil aim_invoice_reference(invoice)
+    test 'formats a typed total and a typed date' do
+      assert_equal '$1,234.50', aim_currency(BigDecimal('1234.50'))
+      assert_equal '08/12/26', aim_invoice_date(Date.new(2026, 8, 12))
     end
 
     test 'labels a claimant by name and never by email address' do
-      named = { claimed_by_name: 'Ryan Hill', claimed_by: 'ryan.hill@vcgsa.org' }
-      legacy = { claimed_by: 'ryan.hill@vcgsa.org' }
+      named = invoice(claimed_by_name: 'Ryan Hill', claimed_by: 'ryan.hill@vcgsa.org')
+      legacy = invoice(claimed_by: 'ryan.hill@vcgsa.org')
 
       assert_equal 'Ryan Hill', aim_claimant_label(named)
       assert_equal 'Ryan Hill', aim_claimant_label(legacy)
-      assert_equal 'Someone', aim_claimant_label({})
+      assert_equal 'Someone', aim_claimant_label(invoice)
     end
 
-    test 'badges an invoice claimed by someone else with their name' do
-      invoice = { claimed_by: 'ryan.hill@vcgsa.org', claimed_by_name: 'Ryan Hill', metadata: {} }
+    test 'badges an invoice someone else has open with their name' do
+      row = invoice(claimed_by: 'ryan.hill@vcgsa.org', claimed_by_name: 'Ryan Hill', claimed_at: Time.current)
 
-      assert_equal ['is-in-review', 'Claimed by Ryan Hill'], aim_status_badge(invoice, 'me@vcgsa.org')
+      assert_equal ['is-in-review', 'Open by Ryan Hill'], aim_status_badge(row, 'me@vcgsa.org')
     end
 
-    test 'badges the current user as the claimant' do
-      invoice = { claimed_by: 'me@vcgsa.org', metadata: {} }
+    test 'badges an invoice the current user has open' do
+      row = invoice(claimed_by: 'me@vcgsa.org', claimed_at: Time.current)
 
-      assert_equal ['is-in-review', 'Claimed by You'], aim_status_badge(invoice, 'me@vcgsa.org')
+      assert_equal ['is-in-review', 'Open by you'], aim_status_badge(row, 'me@vcgsa.org')
     end
 
-    test 'badges an unclaimed invoice with its pipeline status' do
-      invoice = { metadata: { 'Status' => 'Vendor Review' } }
+    test 'a lapsed lock is no badge' do
+      row = invoice(claimed_by: 'ryan.hill@vcgsa.org', claimed_at: 10.minutes.ago, review_reason: 'unknown_vendor')
 
-      assert_equal ['is-approved', 'Vendor Review'], aim_status_badge(invoice, 'me@vcgsa.org')
+      assert_equal ['is-denied', 'Unknown vendor'], aim_status_badge(row, 'me@vcgsa.org')
+    end
+
+    test 'badges an unclaimed invoice with why it needs a person, or its state' do
+      assert_equal ['is-denied', 'Unknown vendor'], aim_status_badge(invoice(review_reason: 'unknown_vendor'), 'me@vcgsa.org')
+      assert_equal ['is-approved', 'Ready for approval'], aim_status_badge(invoice(state: 'ready_for_approval'), 'me@vcgsa.org')
+    end
+
+    test 'queues and reasons have labels' do
+      assert_equal 'Action Needed', aim_queue_label('needs_review')
+      assert_equal 'Handwritten amounts', aim_review_reason_label('handwritten')
+      assert_equal 'Vendor Name', aim_field_label('vendor_name')
     end
   end
 end
