@@ -76,6 +76,20 @@ class FileStoreTest < Minitest::Test # rubocop:disable Metrics/ClassLength
     end
   end
 
+  def test_local_store_walks_nested_files_with_relative_names
+    Dir.mktmpdir do |directory|
+      root = Pathname.new(directory)
+      root.join('Printer One/finished.pdf').tap do |path|
+        path.dirname.mkpath
+        path.write('output')
+      end
+      store = Paperboy::FileStore.for(root)
+      names = store.walk.map { |entry| entry.fetch(:name) }
+
+      assert_equal ['Printer One/finished.pdf'], names
+    end
+  end
+
   def test_shortcut_store_reads_remote_entry_time
     Dir.mktmpdir do |directory|
       shortcut_path = Pathname.new(directory).join('outputs.lnk').tap { |path| path.write('shortcut') }

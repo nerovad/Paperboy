@@ -56,6 +56,13 @@ module Paperboy
         entries(prefix).reject { |entry| entry.fetch(:directory) }.map { |entry| entry.fetch(:name) }
       end
 
+      def walk(prefix = nil)
+        entries(prefix).flat_map do |entry|
+          name = [prefix, entry.fetch(:name)].compact.join('/')
+          entry.fetch(:directory) ? walk(name) : [entry.merge(name: name)]
+        end
+      end
+
       def exist?(name)
         child(name).file?
       end
@@ -159,6 +166,13 @@ module Paperboy
 
       def files(prefix = nil)
         entries(prefix).reject { |entry| entry.fetch(:directory) }.map { |entry| entry.fetch(:name) }
+      end
+
+      def walk(prefix = nil)
+        entries(prefix).flat_map do |entry|
+          name = [prefix, entry.fetch(:name)].compact.join('/')
+          entry.fetch(:directory) ? walk(name) : [entry.merge(name: name)]
+        end
       end
 
       def exist?(name)

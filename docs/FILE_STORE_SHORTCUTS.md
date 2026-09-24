@@ -112,6 +112,7 @@ messages must never expose passwords.
 - [x] Expand `StartupConfiguration` to validate local paths and shortcuts.
 - [x] Add initial unit tests for local stores and remote-folder paths.
 - [x] Add structured SMB directory entries and remote downloads.
+- [x] Add recursive relative-entry walking for local and SMB stores.
 - [x] Convert P2M production-file listing and preview to the file store.
 - [x] Preserve remote directory-entry timestamps for production-file sorting.
 - [x] Convert `OmsUploadLedger` staging reads and processed-archive checks to
