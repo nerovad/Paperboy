@@ -2,16 +2,20 @@
 
 ## Overview
 
-`config/data_runner/dsl/oms.rb` defines `Oms`, a control-only Data Runner DSL
+`config/data_runner/dsl/print_2_mail_billing_data/oms.rb` defines `Oms`, a
+control-only Data Runner DSL
 that coordinates three related datasets produced by an Output Management
 System (OMS) print job. It does not define a source schema or database table
 of its own. Instead, it selects one print job from a file-system queue,
 preprocesses that job into normalized CSV inputs, runs three child DSLs, and
-archives the source files after successful database injection.
+archives the source files after successful database injection. Paperboy also
+records each staged OMS job in the `p2m_oms_uploads` ledger so validation,
+import, archive, and failure state can be shown in the OMS Status screen.
 
 The orchestrator belongs to the `print_2_mail_billing_data` group and is
 enabled for both manual and scheduled execution. Its schedule frequency is
-daily.
+daily. Manual refreshes can select individual queued OMS numbers through the
+Print 2 Mail refresh screen; scheduled refreshes drain the queue.
 
 ## Configuration
 
@@ -20,13 +24,14 @@ The DSL establishes the following directory contract:
 | Configuration key | Resolved path | Purpose |
 | --- | --- | --- |
 | `root_path` | `$P2M_DATARUNNER_ROOT` | Parent for orchestration directories |
-| `sent_path` | `$P2M_DATARUNNER_ROOT/00_SentToUSPS` | Complete-job queue |
-| `output_path` | `$P2M_DATARUNNER_ROOT/01_TemporaryOutput` | Preprocessed CSV output |
-| `processed_path` | `$P2M_DATARUNNER_ROOT/02_Processed` | Per-OMS archive after injection |
+| `sent_path` | `$P2M_DATARUNNER_ROOT/$P2M_STAGING` | Complete-job queue |
+| `output_path` | `$P2M_DATARUNNER_ROOT/$P2M_TEMPORARY_OUTPUT` | Preprocessed CSV output |
+| `processed_path` | `$P2M_DATARUNNER_ROOT/$P2M_PROCESSED` | Per-OMS archive after injection |
 
-The three relative paths are resolved against `root_path` by the shared
-orchestration helper. The symbolic queue path, `:sent_path`, resolves to the
-absolute sent directory in the same way.
+`P2m::Paths` resolves relative locations against `P2M_DATARUNNER_ROOT` and
+leaves absolute locations unchanged. The orchestration helper resolves the
+same configuration for Data Runner. The symbolic queue path, `:sent_path`,
+resolves to the absolute staging directory.
 
 ## Queue contract
 
@@ -47,8 +52,10 @@ Mail.dat_123456789.zip
 Directory names, partial matches, OMS numbers shorter than eight digits,
 and files with additional suffixes are not queue entries.
 
-Queue entries are sorted lexicographically. A refresh processes the first
-entry and repeats until no matching marker remains. Processing is serial;
+Queue entries are sorted lexicographically. A scheduled refresh processes the
+first entry and repeats until no matching marker remains. A manual refresh can
+set `DATARUNNER_QUEUE_OMS` to target one marker, and the refresh UI creates
+one Data Runner group-run item per selected OMS number. Processing is serial;
 only one OMS number is active during a queue iteration.
 
 The marker is a control file. The preprocessor does not extract or read the
@@ -57,8 +64,8 @@ and finds corresponding source files in the same queued-job directory.
 
 ## Recognized source files
 
-For the selected OMS number, preprocessing recognizes these basenames in
-`00_SentToUSPS`:
+For the selected OMS number, preprocessing recognizes these basenames directly
+in the configured staging directory:
 
 | Dataset | Input pattern | Multiplicity |
 | --- | --- | --- |
@@ -66,8 +73,11 @@ For the selected OMS number, preprocessing recognizes these basenames in
 | Dailypresorts | `Presort Fields Export_<OMS number>.txt` | Zero or one |
 | Moveresults | `MoveResults_<OMS number>.txt` | Zero or one |
 
-Matching is anchored and case-insensitive. Only regular files directly
-inside `sent_path` are considered; preprocessing is not recursive.
+Matching is anchored and case-insensitive. Only regular files directly inside
+the staging directory are considered; preprocessing is not recursive. The
+staging ledger additionally tracks production PDFs and postal reports as
+associated original files, but those files are not converted into child CSV
+outputs.
 
 Multiple companion files are valid. They are read in filename order and
 combined into one CSV. Every companion file must have the same header.
@@ -93,7 +103,8 @@ SENT_PATH OUTPUT_PATH
 
 The script performs the following work:
 
-1. Selects the lexicographically first marker in `SENT_PATH`.
+1. Selects the lexicographically first marker in `SENT_PATH`, or the marker
+   named by `DATARUNNER_QUEUE_OMS`.
 2. Extracts its OMS number.
 3. Classifies matching files directly inside `SENT_PATH`.
 4. Validates completeness, row identity, and companion headers.
@@ -149,17 +160,22 @@ preprocessed CSV into Data Runner's `01_Download` stage using the child's
 
 ## Refresh lifecycle
 
-The intended operational entry point is:
+The command-level operational entry point is:
 
 ```sh
 bundle exec rake 'DataRunner:refresh[Oms]'
 ```
 
+The Paperboy Print 2 Mail refresh screen uses the same Data Runner service and
+queues a background group run. It previews queued markers as `OMS <number>`
+entries, supports selecting a subset, and reconstructs pending OMS entries on
+restart. The underlying job sets `DATARUNNER_QUEUE_OMS` for each selected OMS.
+
 For every queued marker, refresh runs this lifecycle:
 
 ```text
 Find next marker
-  -> reject the OMS number when 02_Processed/<OMS number> already exists
+  -> reject the OMS number when the processed archive already exists
   -> preprocess selected OMS inputs
   -> verify all three temporary CSV files
   -> copy CSV files into output/data_runner/01_Download
@@ -196,30 +212,33 @@ SENT_PATH OUTPUT_PATH PROCESSED_PATH
 After all child injections succeed, it creates this archive directory:
 
 ```text
-$P2M_DATARUNNER_ROOT/02_Processed/<OMS number>/
+<configured processed path>/<OMS number>/
 ```
 
 It moves every original staged file for the selected OMS number into that
 directory without rewriting its contents. An existing OMS archive is a
 hard failure. It then removes the three temporary CSV outputs.
 
-Moving the marker out of `00_SentToUSPS` acknowledges the queue entry. The
+Moving the marker out of the configured staging directory acknowledges the
+queue entry. The
 queue-drain helper verifies this by checking that the same entry is no longer
 first in the queue after the lifecycle finishes.
 
 ## Failure and restart behavior
 
 Failures before postprocessing leave the queue marker in place, so a later
-refresh selects the job again. Source and diagnostic files also remain
-available for investigation. Temporary outputs may exist, but preprocessing
-removes the three known output names before rebuilding them on the next run.
+refresh selects the job again. The OMS ledger records validation, import, or
+archive failure details when the tracked stages are running. Source and
+diagnostic files also remain available for investigation. Temporary outputs
+may exist, but preprocessing removes the three known output names before
+rebuilding them on the next run.
 
 All three child inserts share one transaction. Any child failure rolls back
-the unit and leaves the complete queued job unchanged. Each table rejects an
-existing `omsnumber` and `maildate` pair inside that transaction. A failure
-after commit but before archival is therefore safe to retry: the duplicate
-check prevents a second insertion and the staged originals remain available
-for investigation.
+the unit and leaves the complete queued job unchanged. Each child table
+rejects an existing `omsnumber` during injection. A failure after commit but
+before archival is recorded as an archive failure; the staged originals remain
+available for investigation, while a retry is prevented by the existing
+database rows and the processed-archive checks.
 
 Duplicate detection uses the OMS number as its boundary. Staging rejects an
 OMS number already represented by an archive or an upload whose import has
@@ -228,7 +247,7 @@ table rejects an existing `omsnumber` inside the shared SQL transaction.
 
 ## Operational requirements
 
-- Stage the complete job in `00_SentToUSPS`, including all companion files,
+- Stage the complete job in the configured staging directory, including all companion files,
   Presort and MoveResults exports, postal reports, and the Mail.dat marker.
 - Do not mix source files for different active jobs unless each basename
   contains the correct OMS number and each marker has a complete input set.
@@ -238,9 +257,8 @@ table rejects an existing `omsnumber` inside the shared SQL transaction.
 - Ensure all companion files for an OMS number have identical headers.
 - Do not manually remove a marker to acknowledge a job before successful
   injection and postprocessing.
-- Before historical backfill, check whether the OMS number already exists in
-  `02_Processed` and whether the OMS number and mailer date exist in the
-  billing tables.
+- Before staging historical files, use the backfile report and check whether
+  the OMS number already exists in the processed archive or the OMS ledger.
 
 ## Important implementation characteristics
 
@@ -259,12 +277,17 @@ table rejects an existing `omsnumber` inside the shared SQL transaction.
 
 ## Related implementation files
 
-- `config/data_runner/dsl/oms.rb`
-- `config/data_runner/dsl/companions.rb`
-- `config/data_runner/dsl/dailypresorts.rb`
-- `config/data_runner/dsl/moveresults.rb`
+- `config/data_runner/dsl/print_2_mail_billing_data/oms.rb`
+- `config/data_runner/dsl/print_2_mail_billing_data/companions.rb`
+- `config/data_runner/dsl/print_2_mail_billing_data/dailypresorts.rb`
+- `config/data_runner/dsl/print_2_mail_billing_data/moveresults.rb`
 - `script/ruby/data_runner/helpers/orchestration_helpers.rb`
 - `script/ruby/data_runner/orchestration/preprocess/oms.rb`
 - `script/ruby/data_runner/orchestration/postprocess/oms.rb`
 - `script/ruby/data_runner/constants/workflow.rb`
 - `script/ruby/data_runner/constants/workflow_paths.rb`
+- `app/services/p2m/paths.rb`
+- `app/services/p2m/oms_upload_ledger.rb`
+- `app/services/p2m/data_refresh.rb`
+- `app/jobs/data_runner/group_refresh_job.rb`
+- `script/ruby/p2m/print_and_inserting_done.rb`
