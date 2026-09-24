@@ -131,6 +131,7 @@ Rails.application.routes.draw do
     end
     get 'my_queue', to: 'my_queue#index', as: :my_queue
     get 'people', to: 'people#index', as: :people
+    get 'counts', to: 'counts#show', as: :counts
     get 'admin', to: 'admin#index', as: :admin
     resources :uploads, only: %i[new create]
     resources :vendor_aliases, only: %i[index create update destroy]

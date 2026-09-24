@@ -1,19 +1,25 @@
-<div class="aim-page">
+<div class="aim-page" data-controller="aim-queue-filter">
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">My Queue</h1>
-      <p class="aim-page-subtitle">Invoices assigned to you. Review and approve them here, or move one to someone else.</p>
+      <p class="aim-page-subtitle">Invoices ready for you. Review and approve them, send one back, or move it to someone else.</p>
     </div>
-    <span class="aim-count-pill"><%= pluralize(@groups.sum { |_, rows| rows.size }, 'invoice') %></span>
+    <div class="aim-page-actions">
+      <%= link_to 'Upload Invoices', new_aim_upload_path, class: 'btn approve' %>
+      <span class="aim-count-pill"><%= pluralize(@invoices.size, 'invoice') %></span>
+    </div>
   </header>
 
   <% if @employee_id.nil? %>
     <section class="aim-panel aim-empty-state"><p>Your account has no employee id, so no queue can be yours.</p></section>
-  <% elsif @groups.empty? %>
+  <% elsif @invoices.empty? %>
     <section class="aim-panel aim-empty-state"><p>Nothing is waiting for you.</p></section>
   <% else %>
+    <%= render 'aim/invoices/search_box' %>
     <div data-controller="aim-move-modal">
-      <%= render 'aim/invoices/owner_groups', groups: @groups, movable: true, open: true %>
+      <section class="aim-panel aim-queue-panel">
+        <%= render 'aim/invoices/rows', invoices: @invoices, movable: true %>
+      </section>
       <%= render 'aim/invoices/move_modal' %>
     </div>
   <% end %>

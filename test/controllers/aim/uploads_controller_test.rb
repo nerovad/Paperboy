@@ -108,5 +108,19 @@ module Aim
       assert_select '[data-controller=aim-person-search] input[type=hidden][name=owner_employee_id]'
       assert_select '[data-controller=aim-dropzone] input[type=file][multiple]'
     end
+
+    test 'someone else with nobody picked is refused, not sent to the shared queue' do
+      post :create, params: { budget_unit: '4601', owner: 'person', owner_employee_id: '', files: [pdf('a.pdf')] }
+
+      assert_match(/Choose the person/, flash[:alert])
+      assert_equal 0, Aim::Invoice.count
+    end
+
+    test 'someone with no queue of their own starts on someone else, and has no Mine' do
+      Aim::Users.stub(:all, Employee.none) { get :new }
+
+      assert_select 'input[type=radio][name=owner][value=self]', 0
+      assert_select 'input[type=radio][name=owner][value=person][checked]'
+    end
   end
 end

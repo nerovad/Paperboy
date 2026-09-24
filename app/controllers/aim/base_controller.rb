@@ -6,7 +6,6 @@ module Aim
   # consistently.
   class BaseController < ApplicationController
     before_action :require_app_access
-    before_action :load_aim_sidebar_counts
 
     private
 
@@ -32,15 +31,12 @@ module Aim
       redirect_to aim_root_path, alert: 'You do not have access to AIM processing queues.'
     end
 
-    # One query: the sidebar and the dashboard count rows, which are the
-    # truth. A database that cannot be reached must never take an AIM screen
-    # down, so the counts go blank rather than raising.
-    def load_aim_sidebar_counts
-      @aim_queue_counts = Aim::Invoice.queue_counts
-      @aim_my_queue_count = Aim::Invoice.owned_by(current_user_employee_id).in_queue('ready_for_approval').count if current_user_employee_id
-    rescue StandardError => e
-      Rails.logger.error "Failed to load AIM queue counts: #{e.message}"
-      @aim_queue_counts = {}
+    # Anyone signed in to Paperboy, whether or not they hold the AIM app: the
+    # screens that let people hand an invoice to someone's queue.
+    def require_signed_in
+      return if current_user.present?
+
+      redirect_to root_path, alert: 'Sign in to Paperboy first.'
     end
 
     def current_user_email

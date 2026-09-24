@@ -6,6 +6,9 @@ module Aim
   # labelled "Last, First (id)" with the unit beside it. AIM's own endpoint,
   # so AIM's access rules apply rather than COA's.
   class PeopleController < BaseController
+    skip_before_action :require_app_access
+    before_action :require_signed_in
+
     SEARCH_LIMIT = 20
 
     def index

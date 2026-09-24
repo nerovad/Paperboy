@@ -6,10 +6,12 @@ module Aim
   # it; the PDF is read from the store and never moved.
   class InvoicesController < BaseController
     include Aim::InvoiceActions
+    include Aim::InvoiceAccess
 
-    before_action :require_aim_admin
+    before_action :require_aim_admin, only: :index
     before_action :set_queue
     before_action :set_invoice, only: %i[show update pdf reassign]
+    before_action :require_staff_or_owner, only: %i[show update pdf reassign]
     # Everything #update does changes the invoice, so it needs the claim. The
     # queue list already offers a second reviewer nothing but View Only; this
     # is what makes that true of a posted form as well.
@@ -34,9 +36,9 @@ module Aim
       owner = params[:destination] == 'shared' ? Aim::Invoice::SHARED_QUEUE : params[:owner]
       moved = @invoice.reassign!(owner, actor: current_user_email)
       notice = moved ? "Moved to #{helpers.aim_owner_label(@invoice.queue_owner)}." : 'The invoice was already there.'
-      redirect_back_or_to aim_invoices_path(queue: @queue), notice: notice
+      redirect_back_or_to home_queue_path, notice: notice
     rescue Aim::Invoice::IllegalTransition, ActiveRecord::RecordInvalid => e
-      redirect_back_or_to aim_invoices_path(queue: @queue), alert: e.message
+      redirect_back_or_to home_queue_path, alert: e.message
     end
 
     def show

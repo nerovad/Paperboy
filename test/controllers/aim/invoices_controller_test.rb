@@ -367,5 +367,72 @@ module Aim
       assert_match(/finished/, flash[:alert])
       assert_nil row.reload.assigned_to
     end
+
+    # ---------------------------------------------------------------
+    # Owners who are not AIM staff
+    # ---------------------------------------------------------------
+
+    def as_owner_not_staff
+      session[:user] = session[:user].merge('employee_id' => 7)
+      @controller.define_singleton_method(:current_user_group_names) { Set[] }
+      @controller.helpers.define_singleton_method(:aim_queue_access?) { false }
+      @controller.helpers.define_singleton_method(:can_access_app?) { |*| true }
+    end
+
+    test 'an owner who is not staff may open and approve their own ready invoice' do
+      row = invoice('4601.W1', state: 'ready_for_approval', assigned_to: 'Jane Doe', assigned_employee_id: 7,
+                               assignment_source: 'folder')
+      as_owner_not_staff
+
+      get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
+      assert_response :success
+      assert_select 'input[type=submit][value=Delete]', 0, 'deleting is for AIM staff'
+
+      act(row, 'Approve', queue: 'ready_for_approval')
+      assert_equal 'approved', row.state
+      assert_redirected_to aim_my_queue_path
+    end
+
+    test "an owner cannot open someone else's invoice, or one that is not ready yet" do
+      theirs = invoice('4601.W2', state: 'ready_for_approval', assigned_to: 'Sam Lee', assigned_employee_id: 8,
+                                  assignment_source: 'folder')
+      early = invoice('4601.W3', state: 'needs_review', assigned_to: 'Jane Doe', assigned_employee_id: 7,
+                                 assignment_source: 'folder')
+      as_owner_not_staff
+
+      [theirs, early].each do |row|
+        get :show, params: { id: row.batch_id, queue: row.queue }
+        assert_redirected_to aim_my_queue_path
+      end
+    end
+
+    test 'an owner who is not staff has only the owner actions' do
+      row = invoice('4601.W4', state: 'ready_for_approval', assigned_to: 'Jane Doe', assigned_employee_id: 7,
+                               assignment_source: 'folder')
+      as_owner_not_staff
+
+      act(row, 'Delete', queue: 'ready_for_approval')
+
+      assert_equal 'ready_for_approval', row.state
+      assert_redirected_to aim_my_queue_path
+    end
+
+    test 'the queue lists stay AIM staff only' do
+      as_owner_not_staff
+
+      get :index, params: { queue: 'ready_for_approval' }
+
+      assert_redirected_to aim_root_path
+    end
+
+    test 'queue rows carry what the search looks through' do
+      invoice('4601.S1', state: 'ready_for_approval', pdf: false, vendor_name: 'House Sanitary Supply',
+                         invoice_number: 'OP-41664_FM-28844')
+
+      get :index, params: { queue: 'ready_for_approval' }
+
+      assert_select 'input[data-aim-queue-filter-target=input]'
+      assert_select 'tr[data-aim-queue-filter-target=row][data-search*=?]', 'House Sanitary Supply OP-41664_FM-28844'
+    end
   end
 end

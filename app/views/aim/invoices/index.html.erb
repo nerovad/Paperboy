@@ -1,4 +1,4 @@
-<div class="aim-page">
+<div class="aim-page" data-controller="aim-queue-filter">
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title"><%= aim_queue_label(@queue) %></h1>
@@ -7,6 +7,8 @@
 
     <span class="aim-count-pill"><%= pluralize(@invoices.length, 'invoice') %></span>
   </header>
+
+  <%= render 'aim/invoices/search_box' %>
 
   <% if @queue == 'needs_review' && @reason_counts.present? %>
     <nav class="aim-reason-filters" aria-label="Filter by reason">

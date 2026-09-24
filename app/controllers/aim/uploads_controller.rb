@@ -6,10 +6,15 @@ module Aim
   # row is inserted. Anyone who holds the AIM app may upload; the BU defaults
   # to their own unit. AIM v2.
   class UploadsController < BaseController
+    skip_before_action :require_app_access
+    before_action :require_signed_in
+
     PDF_TYPES = %w[application/pdf application/x-pdf].freeze
 
     def new
       @budget_unit = current_user_unit
+      # Someone with no queue of their own uploads to someone else's.
+      @has_queue = current_user_employee_id.present? && Aim::Users.all.exists?(id: current_user_employee_id)
     end
 
     def create
@@ -18,6 +23,7 @@ module Aim
       return refuse('Enter the four-digit budget unit.') unless budget_unit.match?(/\A\d{4}\z/)
       return refuse('Choose at least one PDF.') if files.empty?
       return refuse('Only PDF files can be uploaded.') unless files.all? { |file| pdf?(file) }
+      return refuse('Choose the person whose queue it goes to.') if params[:owner] == 'person' && owner_employee_id.nil?
 
       stored = files.map { |file| store(file, budget_unit) }
       redirect_to aim_invoices_path(queue: 'received'),

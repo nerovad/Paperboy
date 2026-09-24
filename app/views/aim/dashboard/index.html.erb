@@ -8,11 +8,11 @@
   </header>
 
   <% if aim_queue_access? %>
-    <section class="aim-dashboard-grid">
+    <section class="aim-dashboard-grid" data-controller="aim-counts" data-aim-counts-url-value="<%= aim_counts_path %>">
       <% @dashboard_queues.each do |queue, config| %>
         <%= link_to aim_invoices_path(queue: queue), class: "aim-dashboard-card #{config[:css_class]}" do %>
           <h2><%= config[:label] %></h2>
-          <div class="aim-dashboard-count"><%= @aim_queue_counts.fetch(queue, 0) %></div>
+          <div class="aim-dashboard-count" data-aim-count="<%= queue %>">…</div>
           <p><%= config[:description] %></p>
           <% if queue == 'needs_review' && @review_reasons.present? %>
             <p class="aim-dashboard-note">

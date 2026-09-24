@@ -90,6 +90,9 @@ import AimOcrController from "controllers/aim_ocr_controller"
 import AimMoveModalController from "controllers/aim_move_modal_controller"
 import AimDropzoneController from "controllers/aim_dropzone_controller"
 import AimPersonSearchController from "controllers/aim_person_search_controller"
+import AimCountsController from "controllers/aim_counts_controller"
+import AimQueueFilterController from "controllers/aim_queue_filter_controller"
+import AimOwnerChoiceController from "controllers/aim_owner_choice_controller"
 import HsaAdoptionCardsController from "controllers/hsa_adoption_cards_controller"
 import DateRangeController from "controllers/date_range_controller"
 import PdfPreviewController from "controllers/pdf_preview_controller"
@@ -194,4 +197,7 @@ application.register("aim-ocr", AimOcrController)
 application.register("aim-move-modal", AimMoveModalController)
 application.register("aim-dropzone", AimDropzoneController)
 application.register("aim-person-search", AimPersonSearchController)
+application.register("aim-counts", AimCountsController)
+application.register("aim-queue-filter", AimQueueFilterController)
+application.register("aim-owner-choice", AimOwnerChoiceController)
 application.register("hsa-adoption-cards", HsaAdoptionCardsController)

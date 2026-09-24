@@ -8,7 +8,7 @@
      data-aim-ocr-pdf-url-value="<%= pdf_aim_invoice_path(@invoice.batch_id, queue: @queue) %>">
   <header class="aim-page-header">
     <div class="aim-review-heading">
-      <%= link_to 'Back to Queue', aim_invoices_path(queue: @queue), class: 'aim-kicker' %>
+      <%= link_to 'Back to Queue', (aim_queue_access? ? aim_invoices_path(queue: @queue) : aim_my_queue_path), class: 'aim-kicker' %>
       <h1 class="aim-page-title"><%= @invoice.batch_id %></h1>
       <span class="aim-page-subtitle"><%= aim_state_label(state) %></span>
       <% if @invoice.review_reason.present? %>
@@ -155,7 +155,7 @@
       <div class="aim-form-actions">
         <% if @read_only %>
           <div class="aim-action-group">
-            <%= link_to 'Return to Queue', aim_invoices_path(queue: @queue), class: 'btn' %>
+            <%= link_to 'Return to Queue', (aim_queue_access? ? aim_invoices_path(queue: @queue) : aim_my_queue_path), class: 'btn' %>
           </div>
         <% else %>
           <div class="aim-action-group aim-review-action-strip">
@@ -219,7 +219,7 @@
                                       confirm_title: 'Reject invoice', confirm_label: 'Reject' },
                               class: 'btn deny' %>
             <% end %>
-            <% if @invoice.can_move_to?('deleted') %>
+            <% if @invoice.can_move_to?('deleted') && aim_queue_access? %>
               <%= form.submit 'Delete',
                               data: { turbo_confirm: 'Delete this invoice? A copy is kept in the deleted folder.',
                                       confirm_title: 'Delete invoice', confirm_label: 'Delete' },
