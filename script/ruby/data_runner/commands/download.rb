@@ -110,6 +110,7 @@ end
 # -------------------------------------------------------------------------- }}}
 # {{{ Run a configured Ruby source script.
 
+# rubocop:disable-next Metrics/PerceivedComplexity
 def run_source_script?(name, target, src)
   script_path, args = script_config(src)
 
@@ -133,7 +134,12 @@ def run_source_script?(name, target, src)
   puts "[SCRIPT] #{name}: ruby #{script_path} #{args.join(' ')}"
   verify_target = script_verifies_target?(src)
   backup_existing_download(name, target) if verify_target
-  success = system(RbConfig.ruby, full_path, *args)
+  success = false
+  DOWNLOAD_STORE.with_workspace do |workspace|
+    environment = workspace ? { 'DATARUNNER_OUTPUT_ROOT' => workspace.to_s } : {}
+    success = system(environment, RbConfig.ruby, full_path, *args)
+    success &&= DOWNLOAD_STORE.publish_workspace_file(workspace, File.basename(target)) if workspace && verify_target
+  end
   unless success
     puts "[FAIL] #{name}: script failed #{script_path}"
     return false
@@ -150,6 +156,18 @@ def run_source_script?(name, target, src)
     puts "[OK] #{name}: #{script_path}"
   end
   true
+end
+
+def run_replicate?(name, target)
+  command = File.join(__dir__, 'from_sql.rb')
+  backup_existing_download(name, target)
+  success = false
+  DOWNLOAD_STORE.with_workspace do |workspace|
+    environment = workspace ? { 'DATARUNNER_OUTPUT_ROOT' => workspace.to_s } : {}
+    success = system(environment, RbConfig.ruby, command, name)
+    success &&= DOWNLOAD_STORE.publish_workspace_file(workspace, File.basename(target)) if workspace
+  end
+  success
 end
 
 # -------------------------------------------------------------------------- }}}
@@ -234,9 +252,7 @@ selected_entries.each do |name, cfg|
     run_source_script?(name, target, src) ? stats.ok! : stats.fail!
 
   when :replicate
-    command = File.join(__dir__, 'from_sql.rb')
-    backup_existing_download(name, target)
-    system(RbConfig.ruby, command, name) ? stats.ok! : stats.fail!
+    run_replicate?(name, target) ? stats.ok! : stats.fail!
 
   when :http
     url_s = (url || '').to_s.strip

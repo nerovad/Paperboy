@@ -2,6 +2,7 @@
 
 require 'pathname'
 require 'tempfile'
+require 'tmpdir'
 require_relative '../../../../lib/paperboy/file_store'
 require_relative '../constants/workflow_paths'
 
@@ -9,7 +10,8 @@ require_relative '../constants/workflow_paths'
 class DataRunnerDownloadStore
   def initialize(root: WorkflowPaths::OUTPUT_ROOT)
     root = Pathname(root)
-    if root.extname.casecmp?('.lnk')
+    @shortcut_backed = root.extname.casecmp?('.lnk')
+    if @shortcut_backed
       @download_store = Paperboy::FileStore.for(root)
       @backup_store = @download_store
       @download_prefix = WorkflowPaths::DOWNLOAD_DIR_NAME
@@ -20,6 +22,10 @@ class DataRunnerDownloadStore
       @download_prefix = nil
       @backup_prefix = nil
     end
+  end
+
+  def shortcut_backed?
+    @shortcut_backed
   end
 
   def target_exists?(name)
@@ -75,6 +81,25 @@ class DataRunnerDownloadStore
 
   def display_path(name)
     @download_store.path.join(relative_name(name))
+  end
+
+  def with_workspace
+    return yield unless shortcut_backed?
+
+    Dir.mktmpdir('paperboy-download-workspace') do |directory|
+      workspace = Pathname.new(directory)
+      workspace.join(WorkflowPaths::DOWNLOAD_DIR_NAME).mkpath
+      workspace.join(WorkflowPaths::DOWNLOAD_BACKUP_DIR_NAME).mkpath
+      yield workspace
+    end
+  end
+
+  def publish_workspace_file(workspace, name)
+    source = Pathname(workspace).join(WorkflowPaths::DOWNLOAD_DIR_NAME, name)
+    return unless source.file?
+
+    copy(source, name)
+    source
   end
 
   private
