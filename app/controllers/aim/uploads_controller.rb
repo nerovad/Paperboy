@@ -14,7 +14,7 @@ module Aim
     def new
       @budget_unit = current_user_unit
       # Someone with no queue of their own uploads to someone else's.
-      @has_queue = current_user_employee_id.present? && Aim::Users.all.exists?(id: current_user_employee_id)
+      @has_queue = helpers.aim_has_queue?
     end
 
     def create
@@ -24,9 +24,10 @@ module Aim
       return refuse('Choose at least one PDF.') if files.empty?
       return refuse('Only PDF files can be uploaded.') unless files.all? { |file| pdf?(file) }
       return refuse('Choose the person whose queue it goes to.') if params[:owner] == 'person' && owner_employee_id.nil?
+      return refuse('That person does not work AIM, so they have no queue.') if outsider_chosen?
 
       stored = files.map { |file| store(file, budget_unit) }
-      redirect_to aim_invoices_path(queue: 'received'),
+      redirect_to new_aim_upload_path,
                   notice: "#{pluralize(stored.size, 'invoice')} uploaded. The AI reads them next."
     rescue Aim::MissingConfiguration, SystemCallError, ActiveRecord::RecordInvalid => e
       Rails.logger.error "AIM upload failed: #{e.class}: #{e.message}"
@@ -61,6 +62,8 @@ module Aim
                              else current_user_employee_id
                              end
     end
+
+    def outsider_chosen? = params[:owner] == 'person' && !Aim::Users.member?(owner_employee_id)
 
     def pdf?(file)
       PDF_TYPES.include?(file.content_type.to_s.downcase) || File.extname(file.original_filename.to_s).casecmp?('.pdf')

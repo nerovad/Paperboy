@@ -15,7 +15,7 @@
         <%= link_to "Dashboard", aim_dashboard_path,
                     class: "nav-link#{' active' if current_page?(aim_dashboard_path)}" %>
       <% end %>
-      <% if can_access_app?("aim") %>
+      <% if aim_has_queue? %>
         <%= link_to aim_my_queue_path, class: "nav-link#{' active' if current_page?(aim_my_queue_path)}" do %>
           <span>My Queue</span>
           <span class="sidebar-count warning" data-aim-count="my_queue" data-hide-zero hidden></span>

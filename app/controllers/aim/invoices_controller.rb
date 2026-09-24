@@ -34,6 +34,8 @@ module Aim
     # Move an invoice to another person's queue, or to SHARED.
     def reassign
       owner = params[:destination] == 'shared' ? Aim::Invoice::SHARED_QUEUE : params[:owner]
+      return refuse_outsider if outsider?(owner)
+
       moved = @invoice.reassign!(owner, actor: current_user_email)
       notice = moved ? "Moved to #{helpers.aim_owner_label(@invoice.queue_owner)}." : 'The invoice was already there.'
       redirect_back_or_to home_queue_path, notice: notice

@@ -868,3 +868,13 @@
 .aim-owner-choice > label {
   white-space: nowrap;
 }
+
+// Upload: room under the Upload button, and under the page so the footer
+// artwork never sits on the form.
+.aim-upload-page .aim-form-actions {
+  padding: 1rem 1.25rem 1.5rem;
+}
+
+.aim-upload-page {
+  padding-bottom: 7rem;
+}

@@ -42,7 +42,7 @@ module Aim
     test 'uploading stores the pdf and inserts the row as intake would' do
       post :create, params: { budget_unit: '4601', owner: 'self', files: [pdf('Scan 001.pdf')] }
 
-      assert_redirected_to aim_invoices_path(queue: 'received')
+      assert_redirected_to new_aim_upload_path, 'stays on the upload page, which everyone can reach'
       row = Aim::Invoice.sole
       assert_match(/\A4601\.\d{8}_\d{6}\.Scan 001-\[[A-Z0-9]{4}\]\z/, row.batch_id)
       assert_equal %w[received extract], [row.state, row.command]
@@ -65,7 +65,9 @@ module Aim
     test 'a person picked by employee id owns it' do
       employee = Employee.order(:id).first || skip('no employee to test with')
 
-      post :create, params: { budget_unit: '4601', owner: 'person', owner_employee_id: employee.id, files: [pdf('a.pdf')] }
+      Aim::Users.stub(:member?, true) do
+        post :create, params: { budget_unit: '4601', owner: 'person', owner_employee_id: employee.id, files: [pdf('a.pdf')] }
+      end
 
       row = Aim::Invoice.sole
       assert_equal [employee.id, "#{employee.first_name} #{employee.last_name}".squish],
@@ -117,10 +119,20 @@ module Aim
     end
 
     test 'someone with no queue of their own starts on someone else, and has no Mine' do
-      Aim::Users.stub(:all, Employee.none) { get :new }
+      @controller.define_singleton_method(:current_user_group_names) { Set[] }
+      Aim::Users.stub(:member?, false) { get :new }
 
       assert_select 'input[type=radio][name=owner][value=self]', 0
       assert_select 'input[type=radio][name=owner][value=person][checked]'
+    end
+
+    test 'an invoice cannot be sent to someone who does not work AIM' do
+      Aim::Users.stub(:member?, false) do
+        post :create, params: { budget_unit: '4601', owner: 'person', owner_employee_id: '12345', files: [pdf('a.pdf')] }
+      end
+
+      assert_match(/does not work AIM/, flash[:alert])
+      assert_equal 0, Aim::Invoice.count
     end
   end
 end

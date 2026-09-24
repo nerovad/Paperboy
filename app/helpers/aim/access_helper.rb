@@ -16,6 +16,15 @@ module Aim
     # behind it. The aim_admin/aim_staff groups predate the ACL section and
     # keep working; the grant under ACL > Application Features is the way to
     # hand out queue access without adding someone to those groups.
+    # Whether the signed-in person has a queue of their own: AIM staff, or one
+    # of the people who work AIM. Everyone else sees only Upload.
+    def aim_has_queue?
+      return true if aim_queue_access?
+
+      employee_id = (session[:user] || session['user'] || {})['employee_id']
+      Aim::Users.member?(employee_id)
+    end
+
     def aim_queue_access?
       aim_admin? || can_use_app_feature?('aim', 'processing_queues')
     end

@@ -343,7 +343,9 @@ module Aim
       employee = Employee.order(:id).first || skip('no employee to test with')
       row = invoice('4601.O5', state: 'ready_for_approval', pdf: false)
 
-      patch :reassign, params: { id: row.batch_id, queue: 'ready_for_approval', destination: 'person', owner: employee.id }
+      Aim::Users.stub(:member?, true) do
+        patch :reassign, params: { id: row.batch_id, queue: 'ready_for_approval', destination: 'person', owner: employee.id }
+      end
 
       assert_redirected_to aim_invoices_path(queue: 'ready_for_approval')
       assert_equal employee.id, row.reload.assigned_employee_id

@@ -19,6 +19,13 @@ module Aim
       Employee.where(id: ids).order(:last_name, :first_name)
     end
 
+    # Whether this employee has a queue: is one of the people who work AIM.
+    def member?(employee_id)
+      employee_id.present? && all.exists?(id: employee_id)
+    rescue ActiveRecord::ActiveRecordError
+      false
+    end
+
     # Display names, as a queue is named after a person: "First Last".
     def names
       all.map { |employee| "#{employee.first_name} #{employee.last_name}".squish }.compact_blank.uniq

@@ -23,6 +23,15 @@ module Aim
 
     def home_queue_path = helpers.aim_queue_access? ? aim_invoices_path(queue: @queue) : aim_my_queue_path
 
+    # A queue belongs to someone who works AIM; nobody else has one.
+    def outsider?(owner)
+      !@invoice.terminal? && owner != Aim::Invoice::SHARED_QUEUE && !Aim::Users.member?(owner)
+    end
+
+    def refuse_outsider
+      redirect_back_or_to home_queue_path, alert: 'That person does not work AIM, so they have no queue.'
+    end
+
     def deny_owner
       redirect_to aim_my_queue_path, alert: 'That invoice is not in your queue.'
     end
