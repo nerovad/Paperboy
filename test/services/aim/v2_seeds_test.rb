@@ -7,7 +7,7 @@ module Aim
   # The v1 JSON files go into the v2 tables once; running the seed again
   # changes nothing already there.
   class V2SeedsTest < ActiveSupport::TestCase
-    AIM_ENV = %w[AIM_WINDOWS_QUEUE_BASE_PATH AIM_LINUX_QUEUE_BASE_PATH AIM_PROGRAM_DIR].freeze
+    AIM_ENV = %w[AIM_WINDOWS_QUEUE_BASE_PATH AIM_LINUX_QUEUE_BASE_PATH AIM_PROGRAM_DIR AIM_STORE_DIR].freeze
 
     setup do
       @tmpdir = Dir.mktmpdir
@@ -15,6 +15,7 @@ module Aim
       ENV['AIM_WINDOWS_QUEUE_BASE_PATH'] = 'E:\AIM'
       ENV['AIM_LINUX_QUEUE_BASE_PATH'] = @tmpdir
       ENV['AIM_PROGRAM_DIR'] = 'E:\AIM\_WORKERS'
+      ENV['AIM_STORE_DIR'] = 'E:\AIM\_BACK_END\_STORE'
       FileUtils.mkdir_p(File.join(@tmpdir, '_WORKERS'))
     end
 
@@ -53,6 +54,37 @@ module Aim
 
       assert Rake::Task.task_defined?('aim:v2:seed_aliases')
       assert Rake::Task.task_defined?('aim:v2:seed_rules')
+    end
+
+    test 'the PDFs of rows v1 left open are copied into the store' do
+      backend = File.join(@tmpdir, '_BACK_END')
+      FileUtils.mkdir_p(File.join(backend, '_VENDOR_REVIEW', '4641.A-[X1Y2]'))
+      File.write(File.join(backend, '_VENDOR_REVIEW', '4641.A-[X1Y2]', '4641.A-[X1Y2].pdf'), 'pdf a')
+      FileUtils.mkdir_p(File.join(backend, '_REJECTED', 'Jane_4641', '4641.B'))
+      File.write(File.join(backend, '_REJECTED', 'Jane_4641', '4641.B', '4641.B.pdf'), 'pdf b')
+      Aim::Invoice.create!(batch_id: '4641.A-[X1Y2]', state: 'needs_review', actor: 'test')
+      Aim::Invoice.create!(batch_id: '4641.B', state: 'needs_review', actor: 'test')
+      Aim::Invoice.create!(batch_id: '4641.C', state: 'needs_review', actor: 'test')
+      Aim::Invoice.create!(batch_id: '4641.D', state: 'exported', actor: 'test')
+
+      assert_equal [2, 1], Aim::V2Seeds.adopt_v1_pdfs(backend)
+
+      assert_equal 'pdf a', File.read(File.join(@tmpdir, '_BACK_END', '_STORE', '4641.A-[X1Y2]', '4641.A-[X1Y2].pdf'))
+      assert_equal 'pdf b', File.read(File.join(@tmpdir, '_BACK_END', '_STORE', '4641.B', '4641.B.pdf'))
+      assert File.exist?(File.join(backend, '_VENDOR_REVIEW', '4641.A-[X1Y2]', '4641.A-[X1Y2].pdf')), 'v1 keeps its copy'
+      assert_equal [0, 1], Aim::V2Seeds.adopt_v1_pdfs(backend), 'running it again changes nothing'
+    end
+
+    test 'rows v1 left open are closed as deleted, newer rows and finished rows untouched' do
+      old = Aim::Invoice.create!(batch_id: '4641.E', state: 'needs_review', actor: 'test')
+      done = Aim::Invoice.create!(batch_id: '4641.F', state: 'exported', actor: 'test')
+      Aim::Invoice.where(id: [old.id, done.id]).update_all(created_at: 2.days.ago)
+      fresh = Aim::Invoice.create!(batch_id: '4641.G', state: 'received', actor: 'test')
+
+      assert_equal 1, Aim::V2Seeds.clear_v1_leftovers(1.day.ago, actor: 'staff@example.com')
+
+      assert_equal(%w[deleted exported received], [old, done, fresh].map { |i| i.reload.state })
+      assert_equal 'staff@example.com', old.events.last.actor
     end
   end
 end

@@ -24,5 +24,19 @@ namespace :aim do
       added, kept = Aim::V2Seeds.seed_rules(path)
       puts "aim.vendor_rules: #{added} added, #{kept} already present, from #{path}"
     end
+
+    desc 'Copy the PDFs of rows v1 left open from its queue folders into the v2 store'
+    task adopt_v1_pdfs: :environment do
+      backend = ENV['AIM_V1_BACKEND_DIR'].presence || File.join(ENV.fetch('AIM_LINUX_QUEUE_BASE_PATH'), '_BACK_END')
+      adopted, missing = Aim::V2Seeds.adopt_v1_pdfs(backend)
+      puts "store: #{adopted} PDFs adopted from #{backend}, #{missing} rows still without one"
+    end
+
+    desc 'Close rows v1 left open as deleted (BEFORE=<time>, ACTOR=<email>)'
+    task clear_v1_leftovers: :environment do
+      before = Time.zone.parse(ENV.fetch('BEFORE'))
+      closed = Aim::V2Seeds.clear_v1_leftovers(before, actor: ENV.fetch('ACTOR'))
+      puts "closed #{closed} rows created before #{before}"
+    end
   end
 end
