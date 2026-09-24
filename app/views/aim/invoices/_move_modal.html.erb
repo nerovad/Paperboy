@@ -8,7 +8,10 @@
       <button type="button" class="pb-modal__close" data-action="aim-move-modal#close" aria-label="Close">✕</button>
     </div>
     <div class="pb-modal__body">
-      <%= form_with url: '#', method: :patch, data: { aim_move_modal_target: 'form', turbo: false } do |form| %>
+      <%# The action is set per invoice when the dialog opens, so the form carries
+          the session's token rather than one bound to this placeholder URL. %>
+      <%= form_with url: '#', method: :patch, authenticity_token: form_authenticity_token,
+                    data: { aim_move_modal_target: 'form', turbo: false } do |form| %>
         <div class="form-group" data-controller="choices">
           <%= form.label :owner, 'Move to' %>
           <%= form.select :owner,
