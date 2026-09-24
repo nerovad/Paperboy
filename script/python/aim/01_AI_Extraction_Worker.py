@@ -25,6 +25,7 @@ from pipeline_common import (
     ERROR_QUEUE_DIR, get_rules_for_vendor, get_global_field_aliases,
     bootstrap, env, DOCUMENT_TYPES, DOCUMENT_TYPE_GUIDE, UNKNOWN_DOCUMENT_TYPE,
     normalize_document_type, HANDWRITTEN_FINANCIAL_FIELDS,
+    QueueDrop, discard_file, retire_queue_folder, ROUTED_MARKER,
 )
 from typing import Optional
 
@@ -318,18 +319,18 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name,
         # could not place stops here, for AIM staff to type in QA review.
         # Until 5.3a anything but an invoice stopped here. Plan step 5.3a.
         if doc_type == UNKNOWN_DOCUMENT_TYPE:
-            dest_folder = os.path.join(ACTION_NEEDED_DIR, processing_id)
-            os.makedirs(dest_folder, exist_ok=True)
             print(f"  [!] Document Type is {doc_type}. Bypassing Vision Model. Routing to human review.")
-            shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
-            with open(os.path.join(dest_folder, f"{processing_id}.ticket"), "w") as f:
+            drop = QueueDrop(ACTION_NEEDED_DIR, processing_id)
+            drop.take_pdf(pdf_path)
+            with open(drop.path(f"{processing_id}.ticket"), "w") as f:
                 f.write("The AI could not tell what kind of document this is, so it was not extracted. "
                         "Set its document type in QA review.")
+            drop.publish()
             record_state(processing_id, "action_needed", ACTOR, "document type could not be placed",
                          fields=invoice_facts(document_type=doc_type, extracted_vendor_name=extracted_vendor,
                                               **known))
             write_log(filename, "CPU Test (Phase 1)", "REJECTED_TYPE", f"Document type is {doc_type}", bu_number, submitter_name, processing_id, InvoiceData())
-            if os.path.exists(sidecar): os.remove(sidecar)
+            discard_file(sidecar)
             return
 
         if p1_data.contains_multiple_invoices:
@@ -352,11 +353,10 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name,
             except Exception as e:
                 raise RuntimeError(f"Split Manifest AI Hallucination Error: Model failed to return valid JSON. Error: {e}")
             
-            dest_folder = os.path.join(BATCH_SPLIT_DIR, processing_id)
-            os.makedirs(dest_folder, exist_ok=True)
-            shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
-            
-            manifest_path = os.path.join(dest_folder, f"{processing_id}_MANIFEST.json")
+            drop = QueueDrop(BATCH_SPLIT_DIR, processing_id)
+            drop.take_pdf(pdf_path)
+
+            manifest_path = drop.path(f"{processing_id}_MANIFEST.json")
             with open(manifest_path, "w", encoding="utf-8") as f:
                 # Who the batch belongs to rides in the manifest, because the
                 # splitter has nothing else to read it from: it used to guess
@@ -366,7 +366,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name,
                 raw_json = json.dumps(manifest, indent=4)
                 collapsed_json = re.sub(r'\[\s+([\d,\s]+)\s+\]', lambda m: "[" + ", ".join(x.strip().strip(',') for x in m.group(1).split()) + "]", raw_json)
                 f.write(collapsed_json)
-                
+            drop.publish()
+
             record_state(processing_id, "batch_split", ACTOR, "multiple invoices in one file",
                          fields=invoice_facts(document_type=doc_type, extracted_vendor_name=extracted_vendor,
                                               **known))
@@ -497,50 +498,43 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name,
     # leaves the field unset, which is as unplaced as an explicit Unknown.
     master_data.document_type = normalize_document_type(master_data.document_type)
     if master_data.document_type == UNKNOWN_DOCUMENT_TYPE:
-        dest_folder = os.path.join(ACTION_NEEDED_DIR, processing_id)
-        os.makedirs(dest_folder, exist_ok=True)
-        ticket_path = os.path.join(dest_folder, f"{processing_id}.ticket")
-        
         print(f"      [!] AI could not place document type. Routing to human review.")
-        with open(ticket_path, "w", encoding="utf-8") as f:
+        drop = QueueDrop(ACTION_NEEDED_DIR, processing_id)
+        with open(drop.path(f"{processing_id}.ticket"), "w", encoding="utf-8") as f:
             f.write(f"--- MANUAL ACTION NEEDED (DOCUMENT TYPE UNKNOWN) ---\n")
             f.write(f"File: {processing_id}.pdf\n")
             f.write(f"Document Type: {master_data.document_type}\n\n")
             f.write("The AI could not tell what kind of document this is.\n")
             f.write(f"Please review the document, set its document type, then use Send to SQL Queue on its Paperboy review page.")
-            
-        generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
-        shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
+        generate_laserfiche_xml(master_data, bu_number, submitter_name, drop.path(f"{processing_id}.xml"), processing_id)
+        drop.take_pdf(pdf_path)
+        write_log(filename, "CPU Test", "ACTION_NEEDED", f"Rejected as {master_data.document_type}", bu_number, submitter_name, processing_id, master_data,
+                  payload_dir=drop.staging)
+        drop.publish()
         record_state(processing_id, "action_needed", ACTOR, "document type could not be placed",
                      fields=invoice_facts(master_data, **known))
-        write_log(filename, "CPU Test", "ACTION_NEEDED", f"Rejected as {master_data.document_type}", bu_number, submitter_name, processing_id, master_data)
-        if os.path.exists(sidecar): os.remove(sidecar)
+        discard_file(sidecar)
         return
 
     # Check Handwritten Financials Reject Path
     if getattr(master_data, 'contains_handwritten_financials', False):
-        dest_folder = os.path.join(LOW_CONFIDENCE_REVIEW_DIR, processing_id)
-        os.makedirs(dest_folder, exist_ok=True)
-        ticket_path = os.path.join(dest_folder, f"{processing_id}.ticket")
-        
         handwritten = ", ".join(master_data.handwritten_financial_fields or []) or "subtotal, tax, or total"
         print(f"      [!] AI detected handwritten financial amounts ({handwritten}). Routing to human review.")
-        with open(ticket_path, "w", encoding="utf-8") as f:
+        drop = QueueDrop(LOW_CONFIDENCE_REVIEW_DIR, processing_id)
+        with open(drop.path(f"{processing_id}.ticket"), "w", encoding="utf-8") as f:
             f.write(f"--- MANUAL ACTION NEEDED (HANDWRITTEN FINANCIALS) ---\n")
             f.write(f"File: {processing_id}.pdf\n\n")
             f.write(f"The AI found these amounts written by hand: {handwritten}. They must be verified by a person.\n")
             f.write(f"Please review the document, verify the values, then use Send to SQL Queue on its Paperboy review page.")
-            
-        generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
-        shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
-        
+        generate_laserfiche_xml(master_data, bu_number, submitter_name, drop.path(f"{processing_id}.xml"), processing_id)
+        drop.take_pdf(pdf_path)
         # Add sidecar data for GUI rule entry
-        write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
-            
+        write_vendor_rule_sidecar(drop.staging, processing_id, master_data)
+        drop.publish()
         record_state(processing_id, "low_confidence_review", ACTOR, f"handwritten: {handwritten}",
                      fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Handwritten financials detected", bu_number, submitter_name, processing_id, master_data)
-        if os.path.exists(sidecar): os.remove(sidecar)
+        discard_file(sidecar)
         return
 
     # Vendor Normalization
@@ -549,9 +543,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name,
         master_data.vendor_name = normalized_name
     elif master_data.extracted_vendor_name:
         print(f"      [!] Unknown Vendor: '{master_data.extracted_vendor_name}'. Routing to Vendor Review.")
-        dest_folder = os.path.join(VENDOR_REVIEW_DIR, processing_id)
-        os.makedirs(dest_folder, exist_ok=True)
-        shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
+        drop = QueueDrop(VENDOR_REVIEW_DIR, processing_id)
+        drop.take_pdf(pdf_path)
 
         review_payload = {
             "FileName": filename,
@@ -573,18 +566,19 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name,
             "ErrorMessage": f"Unknown vendor: {master_data.extracted_vendor_name}",
             "InvoiceConcatID": processing_id
         }
-        with open(os.path.join(dest_folder, f"{processing_id}.json"), "w", encoding="utf-8") as sf:
+        with open(drop.path(f"{processing_id}.json"), "w", encoding="utf-8") as sf:
             json.dump(review_payload, sf, indent=4)
 
-        generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
-        
+        generate_laserfiche_xml(master_data, bu_number, submitter_name, drop.path(f"{processing_id}.xml"), processing_id)
+
         review_data = {
             "extracted_name": master_data.extracted_vendor_name,
             "suggested_normalized_name": ""
         }
-        with open(os.path.join(dest_folder, f"{processing_id}_LEARN.json"), "w", encoding="utf-8") as f:
+        with open(drop.path(f"{processing_id}_LEARN.json"), "w", encoding="utf-8") as f:
             json.dump(review_data, f, indent=4)
-            
+        drop.publish()
+
         record_state(processing_id, "vendor_review", ACTOR, "vendor not recognised",
                      fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "ROUTED_TO_LEARN", f"Unknown vendor: {master_data.extracted_vendor_name}", bu_number, submitter_name, processing_id, master_data)
@@ -593,12 +587,9 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name,
     # Missing Fields Check
     missing = check_missing_fields(master_data)
     if missing:
-        dest_folder = os.path.join(ACTION_NEEDED_DIR, processing_id)
-        os.makedirs(dest_folder, exist_ok=True)
-        ticket_path = os.path.join(dest_folder, f"{processing_id}.ticket")
         print(f"      [!] Vision Model failed to find: {missing}. Routing to human review.")
-        
-        with open(ticket_path, "w", encoding="utf-8") as f:
+        drop = QueueDrop(ACTION_NEEDED_DIR, processing_id)
+        with open(drop.path(f"{processing_id}.ticket"), "w", encoding="utf-8") as f:
             f.write(f"--- MANUAL ACTION NEEDED ---\n")
             f.write(f"File: {processing_id}.pdf\n")
             f.write(f"Document Type: {master_data.document_type}\n\n")
@@ -606,47 +597,46 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name,
             for m in missing:
                 f.write(f"- {m}\n")
             f.write("\nPlease update the associated XML file with this information before importing into Laserfiche.")
-        
-        generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
-        shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
-        
+
+        generate_laserfiche_xml(master_data, bu_number, submitter_name, drop.path(f"{processing_id}.xml"), processing_id)
+        drop.take_pdf(pdf_path)
         # Add sidecar data for GUI rule entry
-        write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
-            
+        write_vendor_rule_sidecar(drop.staging, processing_id, master_data)
+        write_log(filename, "CPU Test", "ACTION_NEEDED", f"Missing: {missing}", bu_number, submitter_name, processing_id, master_data,
+                  payload_dir=drop.staging)
+        drop.publish()
         record_state(processing_id, "action_needed", ACTOR, f"missing {', '.join(missing)}",
                      fields=invoice_facts(master_data, **known))
-        write_log(filename, "CPU Test", "ACTION_NEEDED", f"Missing: {missing}", bu_number, submitter_name, processing_id, master_data)
-        if os.path.exists(sidecar): os.remove(sidecar)
+        discard_file(sidecar)
         return
 
     # Success Routing
     if not is_high_confidence:
-        dest_folder = os.path.join(LOW_CONFIDENCE_REVIEW_DIR, processing_id)
-        os.makedirs(dest_folder, exist_ok=True)
         print(f"  [?] Extracted, but Low Confidence. Routing to Low Confidence Review.")
-        
-        generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
-        shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
-        
+        drop = QueueDrop(LOW_CONFIDENCE_REVIEW_DIR, processing_id)
+        generate_laserfiche_xml(master_data, bu_number, submitter_name, drop.path(f"{processing_id}.xml"), processing_id)
+        drop.take_pdf(pdf_path)
         # Add sidecar data for GUI rule entry
-        write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
-            
+        write_vendor_rule_sidecar(drop.staging, processing_id, master_data)
+        drop.publish()
         record_state(processing_id, "low_confidence_review", ACTOR, "low confidence read",
                      fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Routed for manual check", bu_number, submitter_name, processing_id, master_data)
-        if os.path.exists(sidecar): os.remove(sidecar)
+        discard_file(sidecar)
     else:
-        dest_folder = os.path.join(SQL_QUEUE_DIR, processing_id)
-        os.makedirs(dest_folder, exist_ok=True)
         print(f"  [✓] Fully Extracted! Routing to SQL Queue.")
-        
-        generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
-        shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
+        # The payload the SQL worker inserts is written beside the XML and PDF
+        # before the folder appears in the queue, so the queue never holds a
+        # folder the worker would skip. Found 2026-09-24.
+        drop = QueueDrop(SQL_QUEUE_DIR, processing_id)
+        generate_laserfiche_xml(master_data, bu_number, submitter_name, drop.path(f"{processing_id}.xml"), processing_id)
+        drop.take_pdf(pdf_path)
+        write_log(filename, "CPU Test", "SUCCESS", "", bu_number, submitter_name, processing_id, master_data,
+                  payload_dir=drop.staging)
+        drop.publish()
         record_state(processing_id, "sql_queue", ACTOR,
                      fields=invoice_facts(master_data, **known))
-        write_log(filename, "CPU Test", "SUCCESS", "", bu_number, submitter_name, processing_id, master_data)
-        if os.path.exists(sidecar): os.remove(sidecar)
-
+        discard_file(sidecar)
 def scan_directories():
     from pipeline_common import REPROCESS_QUEUE_DIR, AI_QUEUE_DIR
     
@@ -656,6 +646,9 @@ def scan_directories():
             folder_path = os.path.join(REPROCESS_QUEUE_DIR, folder_name)
             if os.path.isdir(folder_path):
                 if os.path.exists(os.path.join(folder_path, REPROCESS_ERROR_MARKER)):
+                    continue
+                if os.path.exists(os.path.join(folder_path, ROUTED_MARKER)):
+                    retire_queue_folder(folder_path)
                     continue
 
                 pdf_files = [f for f in os.listdir(folder_path) if f.lower().endswith(".pdf")]
@@ -669,11 +662,13 @@ def scan_directories():
                 if not is_file_stable(pdf_path): continue
                 try:
                     process_cpu_hybrid(pdf_path, "Unknown", "Internal_Retrying")
-                    if os.path.exists(folder_path):
-                        shutil.rmtree(folder_path)
                 except Exception as e:
                     print(f"    [!] Error in reprocess queue: {e}")
                     mark_reprocess_error(folder_path, folder_name, pdf_path, e)
+                    continue
+                # Routed. Only now does the source folder go; one Windows will
+                # not release is marked and retired on a later pass.
+                retire_queue_folder(folder_path)
 
     # 2. Main AI Queue (Managed by Watcher)
     if not os.path.exists(AI_QUEUE_DIR):
@@ -694,6 +689,9 @@ def scan_directories():
     for folder_name in job_folders:
         folder_path = os.path.join(AI_QUEUE_DIR, folder_name)
         if os.path.exists(os.path.join(folder_path, AI_QUEUE_ERROR_MARKER)):
+            continue
+        if os.path.exists(os.path.join(folder_path, ROUTED_MARKER)):
+            retire_queue_folder(folder_path)
             continue
 
         ticket_path = os.path.join(folder_path, "job_ticket.json")
@@ -755,11 +753,6 @@ def scan_directories():
             process_cpu_hybrid(pdf_path, bu_number, submitter_name,
                                processing_id=processing_id,
                                original_filename=original_filename, owner=job.get("owner"))
-            
-            # Clean up the AI Queue folder after successful processing (or successful routing)
-            if os.path.exists(folder_path):
-                shutil.rmtree(folder_path)
-                
         except Exception as e:
             print(f"    [!] Critical error processing {filename}: {e}")
             # The error queue is a downstream queue like any other, so the
@@ -796,6 +789,11 @@ def scan_directories():
                     shutil.rmtree(folder_path)
                 except Exception:
                     pass
+        else:
+            # Routed. Only now does the queue folder go. A folder Windows will
+            # not release is marked and retired on a later pass -- it used to
+            # be filed as a crash of an invoice that had routed fine.
+            retire_queue_folder(folder_path)
 
 if __name__ == "__main__":
     # Prepare the machine before any work: directories and the alias sync.

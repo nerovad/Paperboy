@@ -2286,6 +2286,42 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
     Queue on the Paperboy review page instead of the SQL shortcut. A test
     proves `bootstrap()` leaves no `.lnk` behind.
 
+- [x] **5.8 A batch folder reaches its queue whole, or not at all.** Found
+  2026-09-24, after the merge, from two screens Joshua sent: the alias learner
+  reporting `[Errno 13] Permission denied` on `vendor_aliases.json`, and the
+  SQL worker printing "Skipping ... no payload" every five seconds for a
+  CV62744 retry. Both are Windows refusing a file another program had open.
+  The retry's SQL-queue folder had been built in place -- XML, then the PDF,
+  then the payload -- and the PDF move failed after the copy landed, so the
+  folder sat there with no payload, the original stayed in `_REPROCESS_QUEUE`
+  marked as failed, and a ticket went to `_ERROR_QUEUE`. Four fixes:
+  - **`QueueDrop`** (`pipeline_common.py`): every routing in the AI worker
+    assembles its folder under `_TEMP/_staging/<id>` -- ticket, XML, sidecars,
+    the PDF (copied) and the SQL payload (`write_log` takes `payload_dir`) --
+    and moves the finished folder into its queue as one step. The original PDF
+    is removed afterwards; a refusal is reported, not fatal. A source folder
+    that will not delete is marked `.ai_routed.json` and retired on a later
+    pass, so it is neither reprocessed as a second invoice nor filed as a crash
+    of an invoice that routed fine (both queue loops had that hole).
+  - **Send to SQL Queue writes the payload first** (`InvoiceSqlPayload`):
+    Low Confidence Review folders carry only the XML, so the button used to
+    move a folder the SQL worker could never process. The payload is now built
+    from the reviewed XML the way Vendor Review builds its own; Action Needed
+    folders, whose payload the page edits directly, send it as it is. An
+    invoice with no vendor name or invoice number is refused with the reason,
+    and nothing moves.
+  - **The SQL worker reports a payload-less folder once**, and after ten
+    minutes moves it to `_SQL_FAILED` with a `.ticket` saying why, recorded on
+    the row as `sql_failed`.
+  - **`write_json_file`**: the alias cache is written to a temp file and
+    swapped in with `os.replace`, retried through a brief lock. Both alias
+    writers use it. The learner's failure had done no harm -- the next sync
+    copied the alias back from SQL -- but a reader could see a truncated file.
+  Cleanup on the share: the half-built `_SQL_QUEUE` folder and the
+  `_ERROR_QUEUE` ticket deleted, the row recorded `deleted`; the original in
+  `_REPROCESS_QUEUE` keeps its failed marker until the fixed workers are
+  deployed, then Joshua clears it. 12 new tests (pytest 247, 3 new Rails).
+
 ---
 
 ## Phase 6 — Real Vendor Normalization
@@ -3114,3 +3150,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | 5.7c(5) | (this commit) | Action Needed gets Send to SQL Queue; `is_urgent` removed from watcher, AI worker, payload and Rails badge. Shortcuts held until Joshua has told staff. 1060 runs, 0 fail, 0 error, 234 pytest, rubocop clean |
 | 2026-09-24 | 5.7c(6) | (this commit) | Shortcuts retired: the workers no longer plant them, `pywin32` dropped, the seven `.lnk` files deleted from the share, ticket notes point to the Send to SQL Queue button. Released early because no staff use AIM yet |
 | 2026-09-24 | — | (this merge) | **Phase 5 merged to Paperboy master.** First merged the latest master (`e8933a5c`, 35 commits, none touching AIM code) into the branch. Only `db/schema.rb` conflicted. Master's copy already held the first three `aim` tables (another team dumped it from the shared dev DB in `21df9052`), so the resolution is master's file plus `claimed_by_name` at version `2026_09_23_151741`. It was rebuilt in a scratch DB and checked by a fresh load: nothing pending. Loading master's schema alone marks our `100537`-`39` migrations as run, which is why the version order matters. Master's newer RuboCop flagged 5 AIM offenses, now fixed. Gate on the merge: 1122 runs, 0 fail, 0 error, 235 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings, bundle-audit clean, zeitwerk clean |
+| 2026-09-24 | 5.8 | (this commit) | Batch folders placed in their queue whole (`QueueDrop`), Send to SQL Queue writes the payload from the reviewed XML and refuses a blank vendor or invoice number, the SQL worker fails a payload-less folder after ten minutes instead of skipping it for ever, the alias cache is swapped in atomically. 1125 runs, 0 fail, 0 error, 247 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |

@@ -7,6 +7,7 @@ module Aim
     include Aim::InvoiceStateRecording
     include Aim::InvoiceQueueListing
     include Aim::InvoiceSplitting
+    include Aim::InvoiceSqlPayload
     include Aim::InvoiceXmlMetadataSupport
 
     # Written by 01_AI_Extraction_Worker.py alongside the real payload.

@@ -122,11 +122,6 @@ module Aim
                       'Invoice successfully fixed and routed to User Approval!', state: 'user_approval')
     end
 
-    def send_to_sql_queue
-      move_invoice_to(Aim::InvoiceDirectoryService.instance.sql_queue_dir,
-                      'Invoice index verified and routed to SQL Queue.', state: 'sql_queue')
-    end
-
     # Checked before anything moves, so the files stay where they are.
     def refuse_unsettled_type
       redirect_to aim_invoice_path(@invoice_id, queue: @queue),

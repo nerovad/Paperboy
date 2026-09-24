@@ -1,4 +1,6 @@
 import os
+import shutil
+import time
 import sys
 import subprocess
 import csv
@@ -349,7 +351,128 @@ def insert_sql_record(section, data_dict):
     conn.commit()
     conn.close()
 
-def write_log(filename, stage, status, details, bu_number, submitter_name, processing_id, data=None):
+
+def write_json_file(path, data, attempts=5, wait=0.5):
+    """Write JSON so a reader never sees a half-written file, and ride out a
+    brief Windows lock.
+
+    The alias cache was written in place with open(..., 'w'), which truncates
+    the file before the new text lands: a worker reading it at that moment got
+    an empty or partial file. And Python reports another process holding the
+    file open as "[Errno 13] Permission denied" -- the alias learner hit that
+    on 2026-09-23. The text goes to a temporary file beside the target and is
+    swapped in with os.replace, which is atomic on one volume. The swap is
+    retried a few times, and the last failure raises so the caller can say so.
+    """
+    temp_path = f"{path}.tmp-{os.getpid()}"
+    with open(temp_path, "w", encoding="utf-8") as handle:
+        json.dump(data, handle, indent=4)
+    try:
+        for attempt in range(1, attempts + 1):
+            try:
+                os.replace(temp_path, path)
+                return
+            except PermissionError:
+                if attempt == attempts:
+                    raise
+                time.sleep(wait)
+    finally:
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+
+def discard_file(path):
+    """Remove a file that has served its purpose.
+
+    One already gone is fine; one Windows will not release is reported and
+    left, because the work it belonged to is done either way.
+    """
+    try:
+        os.remove(path)
+    except FileNotFoundError:
+        pass
+    except OSError as e:
+        print(f"    [!] Could not remove {path}: {e}")
+
+# A batch folder is placed in its queue whole, or not at all.
+#
+# Found 2026-09-23 on CV62744: the AI worker built the folder directly in the
+# SQL queue -- XML first, then the PDF, then the payload -- and Windows refused
+# to move the PDF because something had it open. The copy had landed, the
+# payload never followed, and the SQL worker skipped the half-built folder
+# every five seconds for a day. Now everything is written under _TEMP first and
+# the finished folder is moved into its queue as one step, so a queue never
+# holds a folder that is missing anything. Failing to delete the original PDF
+# afterwards is reported, not fatal: the invoice has already arrived.
+STAGING_DIR_NAME = "_staging"
+
+class QueueDrop:
+    def __init__(self, queue_dir, processing_id):
+        self.queue_dir = queue_dir
+        self.processing_id = processing_id
+        self.staging = os.path.join(TEMP_DIR, STAGING_DIR_NAME, processing_id)
+        if os.path.exists(self.staging):
+            shutil.rmtree(self.staging)
+        os.makedirs(self.staging)
+        self._pdf_source = None
+
+    @property
+    def destination(self):
+        return os.path.join(self.queue_dir, self.processing_id)
+
+    def path(self, name):
+        """Where a file of the batch is written while the folder is assembled."""
+        return os.path.join(self.staging, name)
+
+    def take_pdf(self, pdf_path):
+        """Copy the PDF in under the batch id. The original goes once the folder is placed."""
+        shutil.copy2(pdf_path, self.path(f"{self.processing_id}.pdf"))
+        self._pdf_source = pdf_path
+
+    def publish(self):
+        """Place the finished folder in its queue, then let go of the original PDF."""
+        os.makedirs(self.queue_dir, exist_ok=True)
+        if os.path.isdir(self.destination):
+            # A folder of that name is already there -- a retry that kept its
+            # id. Its files are replaced one by one rather than losing them.
+            for name in os.listdir(self.staging):
+                shutil.move(self.path(name), os.path.join(self.destination, name))
+            shutil.rmtree(self.staging, ignore_errors=True)
+        else:
+            shutil.move(self.staging, self.destination)
+        if self._pdf_source and os.path.exists(self._pdf_source):
+            try:
+                os.remove(self._pdf_source)
+            except OSError as e:
+                print(f"    [!] Could not remove the original PDF after routing {self.processing_id}: {e}. "
+                      "The invoice has already reached its queue.")
+        return self.destination
+
+# Left in a queue folder whose invoice has been routed but whose files Windows
+# would not let go of. The folder is skipped from then on and removed on a
+# later pass. Without it the leftover would be processed again as a second
+# invoice, or the failed removal filed as a crash of an invoice that was fine.
+ROUTED_MARKER = ".ai_routed.json"
+
+def retire_queue_folder(folder_path):
+    """Remove a queue folder whose invoice has been routed. False if it lingers."""
+    if not os.path.exists(folder_path):
+        return True
+    try:
+        shutil.rmtree(folder_path)
+        return True
+    except OSError as e:
+        print(f"    [!] Could not remove {folder_path} after routing: {e}. It is marked and retried later.")
+        try:
+            with open(os.path.join(folder_path, ROUTED_MARKER), "w", encoding="utf-8") as marker:
+                json.dump({"routed": True, "error": str(e), "timestamp": datetime.now().isoformat()}, marker, indent=4)
+        except OSError:
+            pass
+        return False
+
+def write_log(filename, stage, status, details, bu_number, submitter_name, processing_id, data=None, payload_dir=None):
     # Local CSV Logging
     file_exists = os.path.isfile(LOG_FILE)
     try:
@@ -379,8 +502,12 @@ def write_log(filename, stage, status, details, bu_number, submitter_name, proce
         "InvoiceConcatID": processing_id
     }
     
+    # The AI worker assembles a batch folder out of sight and hands the place
+    # it is assembling in as payload_dir, so the payload is in the folder
+    # before the folder is in the queue. Without it the payload goes straight
+    # to the queue folder, as it always did.
     if status == "SUCCESS":
-        folder_path = os.path.join(SQL_QUEUE_DIR, processing_id)
+        folder_path = payload_dir or os.path.join(SQL_QUEUE_DIR, processing_id)
         os.makedirs(folder_path, exist_ok=True)
         queue_path = os.path.join(folder_path, f"{processing_id}{PAYLOAD_SUFFIX}")
         try:
@@ -389,7 +516,7 @@ def write_log(filename, stage, status, details, bu_number, submitter_name, proce
         except Exception as e:
             print(f"    [!] Failed to write to SQL Queue: {e}")
     elif status == "ACTION_NEEDED":
-        folder_path = os.path.join(ACTION_NEEDED_DIR, processing_id)
+        folder_path = payload_dir or os.path.join(ACTION_NEEDED_DIR, processing_id)
         os.makedirs(folder_path, exist_ok=True)
         manual_fix_path = os.path.join(folder_path, f"{processing_id}{PAYLOAD_SUFFIX}")
         try:
@@ -603,8 +730,7 @@ def get_vendor_aliases():
                 
         if cache_update_needed:
             try:
-                with open(ALIAS_DB_FILE, 'w', encoding='utf-8') as f:
-                    json.dump(local_aliases, f, indent=4)
+                write_json_file(ALIAS_DB_FILE, local_aliases)
                 print("    [✓] Synced missing aliases from SQL to local JSON cache.")
             except Exception as ex:
                 print(f"    [!] Failed to save updated local JSON cache: {ex}")
@@ -641,8 +767,7 @@ def save_new_vendor_alias(extracted_name, normalized_name, notes="Learned alias"
             
     local_aliases[extracted_name] = normalized_name
     try:
-        with open(ALIAS_DB_FILE, 'w', encoding='utf-8') as f:
-            json.dump(local_aliases, f, indent=4)
+        write_json_file(ALIAS_DB_FILE, local_aliases)
     except Exception as e:
         print(f"    [!] Failed to update local cache: {e}")
 

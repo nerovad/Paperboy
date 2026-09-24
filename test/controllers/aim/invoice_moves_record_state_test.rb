@@ -14,6 +14,7 @@ module Aim
 
     QUEUES = {
       'AIM_ACTION_NEEDED_DIR' => '_ACTION_NEEDED',
+      'AIM_LOW_CONFIDENCE_REVIEW_DIR' => '_LOW_CONFIDENCE_REVIEW',
       'AIM_SQL_QUEUE_DIR' => '_SQL_QUEUE',
       'AIM_USER_APPROVAL_DIR' => '_USER_APPROVAL',
       'AIM_REJECTED_DIR' => '_REJECTED',
@@ -48,7 +49,8 @@ module Aim
       FileUtils.mkdir_p(folder)
       File.write(File.join(folder, "#{batch_id}.pdf"), 'pdf')
       File.write(File.join(folder, "#{batch_id}_READY_FOR_SQL.json"),
-                 JSON.pretty_generate('InvoiceNumber' => 'INV-1', 'BU' => '4601', 'Submitter' => 'Jane Doe'))
+                 JSON.pretty_generate('VendorName' => 'ACME', 'InvoiceNumber' => 'INV-1', 'BU' => '4601',
+                                      'Submitter' => 'Jane Doe'))
       if row
         Aim::Invoice.create!(batch_id: batch_id, state: 'action_needed', document_type: document_type,
                              actor: '01_ai_extraction_worker')
@@ -58,6 +60,21 @@ module Aim
 
     def last_event(batch_id)
       Aim::Invoice.find_by!(batch_id: batch_id).events.last
+    end
+
+    # As the AI worker leaves one: the PDF and the XML, and no SQL payload.
+    def low_confidence_invoice(batch_id, vendor: 'ACME')
+      folder = File.join(@tmpdir, '_BACK_END', '_LOW_CONFIDENCE_REVIEW', batch_id)
+      FileUtils.mkdir_p(folder)
+      File.write(File.join(folder, "#{batch_id}.pdf"), 'pdf')
+      fields = { 'Budget Unit Number' => '4601', 'Submitted by' => 'Jane Doe', 'Vendor Name' => vendor,
+                 'Invoice Number' => 'INV-9', 'Invoice Total' => '134.69', 'Invoice Date' => '2026-06-22' }
+      xml = fields.map { |name, value| %(<Field Name="#{name}">#{value}</Field>) }.join
+      File.write(File.join(folder, "#{batch_id}.xml"),
+                 "<ImportSession><Doc><DocFile>#{batch_id}.pdf</DocFile><FieldData>#{xml}</FieldData></Doc></ImportSession>")
+      Aim::Invoice.create!(batch_id: batch_id, state: 'low_confidence_review', document_type: 'Invoice',
+                           actor: '01_ai_extraction_worker')
+      folder
     end
 
     test 'sending an invoice to the SQL queue records the move in the reviewer\'s name' do
@@ -235,6 +252,38 @@ module Aim
       patch :update, params: { id: '4601.J', queue: 'action_needed', commit: 'Unclaim' }
 
       assert_nil Aim::Invoice.find_by!(batch_id: '4601.J').claimed_by
+    end
+
+    test 'low confidence review writes the SQL payload from the reviewed XML before it moves' do
+      low_confidence_invoice('4601.S')
+
+      patch :update, params: { id: '4601.S', queue: 'low_confidence_review', commit: 'Send to SQL Queue' }
+
+      moved = File.join(@tmpdir, '_BACK_END', '_SQL_QUEUE', '4601.S')
+      payload = JSON.parse(File.read(File.join(moved, '4601.S_READY_FOR_SQL.json')))
+      assert_equal ['ACME', 'INV-9', '4601', 'Jane Doe', '134.69', 'SUCCESS'],
+                   payload.values_at('VendorName', 'InvoiceNumber', 'BU', 'Submitter', 'InvoiceTotal', 'Status')
+      assert_equal 'sql_queue', Aim::Invoice.find_by!(batch_id: '4601.S').state
+    end
+
+    test 'an invoice with no vendor name is not sent to SQL, and nothing moves' do
+      folder = low_confidence_invoice('4601.T', vendor: '')
+
+      patch :update, params: { id: '4601.T', queue: 'low_confidence_review', commit: 'Send to SQL Queue' }
+
+      assert_match(/still needs a vendor name/, flash[:alert])
+      assert Dir.exist?(folder)
+      assert_not File.exist?(File.join(folder, '4601.T_READY_FOR_SQL.json'))
+      assert_equal 'low_confidence_review', Aim::Invoice.find_by!(batch_id: '4601.T').state
+    end
+
+    test 'a payload the review page already edited is sent as it is' do
+      folder = action_needed_invoice('4601.U')
+      before = File.read(File.join(folder, '4601.U_READY_FOR_SQL.json'))
+
+      patch :update, params: { id: '4601.U', queue: 'action_needed', commit: 'Send to SQL Queue' }
+
+      assert_equal before, File.read(File.join(@tmpdir, '_BACK_END', '_SQL_QUEUE', '4601.U', '4601.U_READY_FOR_SQL.json'))
     end
   end
 end
