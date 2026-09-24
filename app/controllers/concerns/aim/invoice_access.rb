@@ -23,21 +23,30 @@ module Aim
 
     def mine? = @invoice.assigned_employee_id.present? && @invoice.assigned_employee_id == current_user_employee_id
 
+    # In the shared queue of a BU you cover.
+    def shared_to_me?
+      return false unless @invoice.assigned_employee_id.nil?
+
+      units = Aim::Users.shared_budget_units(current_user_employee_id, staff: staff?)
+      units.nil? || units.include?(@invoice.budget_unit)
+    end
+
     def editor?
       return false if @invoice.terminal?
-      return mine? || (staff? && @invoice.assigned_employee_id.nil?) if @invoice.state == 'ready_for_approval'
+      return mine? || shared_to_me? if @invoice.state == 'ready_for_approval'
 
       staff?
     end
 
-    # Staff looking at someone else's Ready for Approval invoice may take it.
+    # A ready invoice that is not yours may be claimed from a shared queue you
+    # cover, or by AIM staff from anyone's.
     def claimable?
-      staff? && @invoice.state == 'ready_for_approval' && !mine?
+      @invoice.state == 'ready_for_approval' && !mine? && (staff? || shared_to_me?)
     end
 
     def require_staff_or_owner
       return if staff?
-      return deny_owner unless @invoice.state == 'ready_for_approval' && mine?
+      return deny_owner unless @invoice.state == 'ready_for_approval' && (mine? || shared_to_me?)
       return if action_name != 'update' || OWNER_ACTIONS.include?(params[:commit].to_s)
 
       deny_owner

@@ -25,11 +25,15 @@ module Aim
       'Retry Export' => :retry_export
     }.freeze
 
+    # These ask why, and the reason is kept: in Notes, and on the history.
+    REASON_ACTIONS = { 'Reject' => 'Rejected', 'Delete' => 'Deleted', 'Send Back' => 'Sent back' }.freeze
+
     private
 
     def perform(commit)
       action = ACTIONS[commit.to_s]
       return redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), alert: 'Unknown action.' if action.nil?
+      return refuse_without_reason(commit) if REASON_ACTIONS.key?(commit.to_s) && reason.blank?
 
       send(action)
     end
@@ -55,7 +59,8 @@ module Aim
     end
 
     def send_back
-      @invoice.transition_to!('needs_review', actor: current_user_email, note: params[:note].presence)
+      @invoice.transition_to!('needs_review', actor: current_user_email, note: "reason: #{reason}",
+                                              notes: notes_with('Sent back'))
       finish('Invoice sent back to AIM review.')
     end
 
@@ -94,13 +99,15 @@ module Aim
       folder = File.join(Aim::InvoiceDirectoryService.instance.rejected_dir,
                          "#{@invoice.submitter.presence || 'Unknown'}_#{@invoice.budget_unit.presence || 'Unknown'}")
       copied = keep_copy(folder)
-      @invoice.transition_to!('rejected', actor: current_user_email, note: copied ? "copy in #{File.basename(folder)}" : 'no PDF to copy')
+      @invoice.transition_to!('rejected', actor: current_user_email, notes: notes_with('Rejected'),
+                                          note: "reason: #{reason}; #{copied ? "copy in #{File.basename(folder)}" : 'no PDF to copy'}")
       finish('Invoice rejected. A copy is in the rejected folder for the submitter.')
     end
 
     def delete_invoice
       copied = keep_copy(File.join(Aim::InvoiceDirectoryService.instance.deleted_dir, @invoice.batch_id))
-      @invoice.transition_to!('deleted', actor: current_user_email, note: copied ? 'copy kept in the deleted folder' : 'no PDF to copy')
+      @invoice.transition_to!('deleted', actor: current_user_email, notes: notes_with('Deleted'),
+                                         note: "reason: #{reason}; #{copied ? 'copy kept in the deleted folder' : 'no PDF to copy'}")
       finish('Invoice deleted. A copy is kept in the deleted folder.')
     end
 
@@ -125,6 +132,18 @@ module Aim
     def refuse_unready
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue),
                   alert: "This invoice still needs #{@invoice.missing_for_a_user.to_sentence}. Fill that in first. Nothing has moved."
+    end
+
+    def reason = params[:reason].to_s.squish
+
+    def refuse_without_reason(commit)
+      redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), alert: "#{commit} needs a reason."
+    end
+
+    # The invoice's notes with one line added: when, what, who, and why.
+    def notes_with(verb)
+      line = "#{Time.zone.now.strftime('%Y-%m-%d %H:%M')} #{verb} by #{current_user_name || current_user_email}: #{reason}"
+      [@invoice.notes.presence, line].compact.join("\n")
     end
 
     # The invoice has left this person's hands.

@@ -133,6 +133,7 @@ Rails.application.routes.draw do
       end
     end
     get 'my_queue', to: 'my_queue#index', as: :my_queue
+    get 'shared_queues', to: 'shared_queues#index', as: :shared_queues
     get 'people', to: 'people#index', as: :people
     get 'counts', to: 'counts#show', as: :counts
     get 'admin', to: 'admin#index', as: :admin

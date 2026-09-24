@@ -26,6 +26,19 @@ module Aim
       false
     end
 
+    # The budget units whose shared queues this person works. Until the Admin
+    # page assigns BUs to people, it is their own unit from GSABSS; AIM staff
+    # see every BU (nil means all). The one place the rule lives, so Admin
+    # replaces it here.
+    def shared_budget_units(employee_id, staff:)
+      return nil if staff
+
+      unit = Employee.where(id: employee_id).pick(:unit) if employee_id.present?
+      [unit.presence].compact
+    rescue ActiveRecord::ActiveRecordError
+      []
+    end
+
     # Display names, as a queue is named after a person: "First Last".
     def names
       all.map { |employee| "#{employee.first_name} #{employee.last_name}".squish }.compact_blank.uniq

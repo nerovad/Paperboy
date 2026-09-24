@@ -76,7 +76,7 @@
     <%= form_with url: aim_invoice_path(@invoice.batch_id, queue: @queue),
                   method: :patch,
                   local: true,
-                  class: 'aim-panel aim-metadata-form' do |form| %>
+                  class: 'aim-panel aim-metadata-form', data: { controller: 'aim-reason' } do |form| %>
       <div class="aim-panel-header">
         <h2 class="aim-panel-title">Invoice</h2>
       </div>
@@ -204,9 +204,8 @@
               <%= form.submit 'Approve',
                               data: { turbo_confirm: 'Approve this invoice and send it to billing and Laserfiche?' },
                               class: 'btn approve' %>
-              <%= form.submit 'Send Back',
-                              data: { turbo_confirm: 'Send this invoice back to AIM review?' },
-                              class: 'btn warning' %>
+              <button type="button" class="btn warning" data-action="aim-reason#open"
+                      data-commit="Send Back" data-title="Send back to AIM review">Send Back</button>
             <% elsif state == 'needs_split' %>
               <%= form.submit 'Approve Split',
                               data: {
@@ -232,20 +231,17 @@
             <% end %>
 
             <% if @invoice.can_move_to?('rejected') %>
-              <%= form.submit 'Reject',
-                              data: { turbo_confirm: 'Reject this invoice and put a copy in the rejected folder for the submitter?',
-                                      confirm_title: 'Reject invoice', confirm_label: 'Reject' },
-                              class: 'btn deny' %>
+              <button type="button" class="btn deny" data-action="aim-reason#open"
+                      data-commit="Reject" data-title="Reject invoice">Reject</button>
             <% end %>
             <% if @invoice.can_move_to?('deleted') && aim_queue_access? %>
-              <%= form.submit 'Delete',
-                              data: { turbo_confirm: 'Delete this invoice? A copy is kept in the deleted folder.',
-                                      confirm_title: 'Delete invoice', confirm_label: 'Delete' },
-                              class: 'btn deny' %>
+              <button type="button" class="btn deny" data-action="aim-reason#open"
+                      data-commit="Delete" data-title="Delete invoice">Delete</button>
             <% end %>
           </div>
         <% end %>
       </div>
+      <%= render 'reason_modal' unless @read_only %>
     <% end %>
   </div>
 </div>

@@ -13,6 +13,11 @@ module Aim
 
     included do
       scope :owned_by, ->(employee_id) { where(assigned_employee_id: employee_id) }
+      # Ready invoices in the shared queues of these BUs (nil: every BU).
+      scope :shared_for, lambda { |budget_units|
+        scope = in_queue('ready_for_approval').where(assigned_employee_id: nil)
+        budget_units.nil? ? scope : scope.where(budget_unit: budget_units)
+      }
     end
 
     class_methods do

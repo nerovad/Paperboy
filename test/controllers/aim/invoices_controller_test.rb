@@ -99,7 +99,7 @@ module Aim
       assert_response :success
       assert_equal [REVIEWER, 'Aim Staff'], [row.reload.claimed_by, row.claimed_by_name]
       assert_select 'input[type=submit][value=?]', 'Send to Approval'
-      assert_select 'input[type=submit][value=?][data-turbo-confirm]', 'Delete'
+      assert_select 'button[data-action=?][data-commit=?]', 'aim-reason#open', 'Delete'
     end
 
     test 'an invoice someone else holds is read only' do
@@ -244,10 +244,29 @@ module Aim
     test 'send back returns an invoice to AIM review' do
       row = invoice('4601.O', state: 'ready_for_approval', pdf: false)
 
-      act(row, 'Send Back', note: 'wrong PO')
+      act(row, 'Send Back', reason: 'wrong PO')
 
       assert_equal 'needs_review', row.state
-      assert_equal 'wrong PO', row.events.last.note
+      assert_equal 'reason: wrong PO', row.events.last.note
+      assert_match(/Sent back by Aim Staff: wrong PO\z/, row.notes)
+    end
+
+    test 'reject, delete and send back need a reason, and nothing moves without one' do
+      row = invoice('4601.O9', state: 'ready_for_approval', pdf: false)
+
+      act(row, 'Reject', reason: '  ')
+
+      assert_equal 'ready_for_approval', row.state
+      assert_match(/needs a reason/, flash[:alert])
+    end
+
+    test 'the reason is added to what the notes already say' do
+      row = invoice('4601.O8', notes: 'Called the vendor.')
+
+      act(row, 'Reject', reason: 'duplicate of INV-1')
+
+      assert_match(/\ACalled the vendor.\n\d{4}-\d{2}-\d{2} \d{2}:\d{2} Rejected by Aim Staff: duplicate of INV-1\z/, row.notes)
+      assert_match(/\Areason: duplicate of INV-1; /, row.events.last.note)
     end
 
     test 'retry ai asks the worker to extract again' do
@@ -280,7 +299,7 @@ module Aim
     test 'reject keeps a copy for the submitter and ends the invoice' do
       row = invoice('4601.S')
 
-      act(row, 'Reject')
+      act(row, 'Reject', reason: 'not ours')
 
       assert_equal 'rejected', row.state
       assert File.exist?(File.join(@tmpdir, '_BACK_END', '_SENT_BACK', 'Jane Doe_4601', '4601.S.pdf'))
@@ -290,7 +309,7 @@ module Aim
     test 'delete keeps a copy and ends the invoice' do
       row = invoice('4601.T')
 
-      act(row, 'Delete')
+      act(row, 'Delete', reason: 'test upload')
 
       assert_equal 'deleted', row.state
       assert File.exist?(File.join(@tmpdir, 'Invoices', '_GONE', '4601.T', '4601.T.pdf'))
@@ -461,7 +480,7 @@ module Aim
                                assignment_source: 'folder')
       as_owner_not_staff
 
-      act(row, 'Delete', queue: 'ready_for_approval')
+      act(row, 'Delete', queue: 'ready_for_approval', reason: 'x')
 
       assert_equal 'ready_for_approval', row.state
       assert_redirected_to aim_my_queue_path
@@ -483,6 +502,28 @@ module Aim
 
       assert_select 'input[data-aim-queue-filter-target=input]'
       assert_select 'tr[data-aim-queue-filter-target=row][data-search*=?]', 'House Sanitary Supply OP-41664_FM-28844'
+    end
+
+    # ---------------------------------------------------------------
+    # Shared queues
+    # ---------------------------------------------------------------
+
+    test "a shared-queue invoice in someone's own BU is theirs to work and claim, not staff only" do
+      employee = Employee.where.not(unit: [nil, '']).order(:id).first || skip('no employee with a unit to test with')
+      row = invoice('4601.SQ1', state: 'ready_for_approval', budget_unit: employee.unit)
+      other = invoice('4601.SQ2', state: 'ready_for_approval', budget_unit: employee.unit == '9999' ? '9998' : '9999')
+      as_owner_not_staff
+      session[:user] = session[:user].merge('employee_id' => employee.id)
+
+      get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
+      assert_response :success
+      assert_equal REVIEWER, row.reload.claimed_by, 'working it takes the lock'
+
+      get :show, params: { id: other.batch_id, queue: 'ready_for_approval' }
+      assert_redirected_to aim_my_queue_path, "another BU's shared queue is not theirs"
+
+      post :claim, params: { id: row.batch_id, queue: 'ready_for_approval' }
+      assert_equal employee.id, row.reload.assigned_employee_id
     end
   end
 end

@@ -28,7 +28,7 @@ module Aim
     end
 
     def claim
-      return redirect_to(aim_invoice_path(@invoice.batch_id, queue: @queue), alert: 'Only AIM staff claim invoices.') unless claimable?
+      return redirect_to(aim_invoice_path(@invoice.batch_id, queue: @queue), alert: 'This invoice cannot be claimed.') unless claimable?
 
       @invoice.reassign!(current_user_employee_id, actor: current_user_email)
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), notice: 'Claimed. It is in your queue now.'

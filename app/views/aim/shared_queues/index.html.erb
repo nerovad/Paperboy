@@ -1,0 +1,25 @@
+<div class="aim-page" data-controller="aim-queue-filter">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Shared Queues</h1>
+      <p class="aim-page-subtitle">
+        Ready invoices nobody owns yet, for
+        <%= @budget_units.nil? ? 'every budget unit' : "budget unit#{'s' if @budget_units.size > 1} #{@budget_units.to_sentence}" %>.
+        Open one to work it, or Claim it to move it into your queue.
+      </p>
+    </div>
+    <span class="aim-count-pill"><%= pluralize(@groups.sum { |_, rows| rows.size }, 'invoice') %></span>
+  </header>
+
+  <% if @budget_units&.empty? %>
+    <section class="aim-panel aim-empty-state"><p>No budget unit is set for you, so there is no shared queue to show.</p></section>
+  <% elsif @groups.empty? %>
+    <section class="aim-panel aim-empty-state"><p>The shared queues are empty.</p></section>
+  <% else %>
+    <%= render 'aim/invoices/search_box' %>
+    <div data-controller="aim-move-modal">
+      <%= render 'aim/invoices/owner_groups', groups: @groups, movable: true %>
+      <%= render 'aim/invoices/move_modal' %>
+    </div>
+  <% end %>
+</div>
