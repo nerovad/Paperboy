@@ -42,6 +42,10 @@ module Aim
     # What the worker does next. NULL means nothing.
     COMMANDS = %w[extract split export].freeze
 
+    # A rejected or deleted invoice is finished, but AIM staff may bring one
+    # back, with a reason: to Action Needed, or straight to its owner.
+    RESTORE_STATES = %w[needs_review ready_for_approval].freeze
+
     TRANSITIONS = {
       'received' => %w[extracting rejected deleted],
       'extracting' => %w[needs_review needs_split ready_for_approval failed received],
@@ -52,8 +56,8 @@ module Aim
       'exporting' => %w[exported failed],
       'failed' => %w[received approved needs_review rejected deleted],
       'exported' => [],
-      'rejected' => [],
-      'deleted' => [],
+      'rejected' => RESTORE_STATES,
+      'deleted' => RESTORE_STATES,
       'split' => []
     }.freeze
 

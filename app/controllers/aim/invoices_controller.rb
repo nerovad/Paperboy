@@ -9,11 +9,12 @@ module Aim
     include Aim::InvoiceAccess
     include Aim::InvoiceLocking
     include Aim::InvoiceBulkMoves
+    include Aim::InvoiceRestore
 
     before_action :require_aim_admin, only: :index
     before_action :set_queue
-    before_action :set_invoice, only: %i[show update pdf reassign lock unlock claim]
-    before_action :require_staff_or_owner, only: %i[show update pdf reassign lock unlock claim]
+    before_action :set_invoice, only: %i[show update pdf reassign lock unlock claim restore]
+    before_action :require_staff_or_owner, only: %i[show update pdf reassign lock unlock claim restore]
     # Everything #update does changes the invoice, so it needs the claim. The
     # queue list already offers a second reviewer nothing but View Only; this
     # is what makes that true of a posted form as well.

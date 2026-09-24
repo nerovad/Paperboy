@@ -561,5 +561,43 @@ module Aim
       assert_nil mine.reload.assigned_employee_id
       assert_equal 8, theirs.reload.assigned_employee_id
     end
+
+    # ---------------------------------------------------------------
+    # Restoring
+    # ---------------------------------------------------------------
+
+    test 'staff restore a rejected invoice to action needed, with the reason kept' do
+      row = invoice('4601.RS1', state: 'rejected', pdf: false)
+
+      get :show, params: { id: row.batch_id, queue: 'rejected' }
+      assert_select 'form[action=?] button[data-commit=?]', restore_aim_invoice_path(row.batch_id, queue: 'rejected'),
+                    'Restore to Action Needed'
+
+      post :restore, params: { id: row.batch_id, queue: 'rejected', commit: 'Restore to Action Needed', reason: 'rejected by mistake' }
+
+      assert_equal 'needs_review', row.reload.state
+      assert_match(/Restored from rejected by Aim Staff: rejected by mistake\z/, row.notes)
+      assert_equal 'restored from rejected; reason: rejected by mistake', row.events.last.note
+    end
+
+    test 'a deleted invoice can go straight back to its owner' do
+      row = invoice('4601.RS2', state: 'deleted', pdf: false)
+
+      post :restore, params: { id: row.batch_id, queue: 'deleted', commit: 'Restore to Ready for Approval', reason: 'still owed' }
+
+      assert_equal 'ready_for_approval', row.reload.state
+    end
+
+    test 'restoring needs a reason, and only staff restore' do
+      row = invoice('4601.RS3', state: 'deleted', pdf: false)
+
+      post :restore, params: { id: row.batch_id, queue: 'deleted', commit: 'Restore to Action Needed', reason: '' }
+      assert_equal 'deleted', row.reload.state
+      assert_match(/needs a reason/, flash[:alert])
+
+      as_owner_not_staff
+      post :restore, params: { id: row.batch_id, queue: 'deleted', commit: 'Restore to Action Needed', reason: 'x' }
+      assert_equal 'deleted', row.reload.state
+    end
   end
 end

@@ -44,6 +44,9 @@ module Aim
     # is something else: it moves it to your queue (Aim::InvoiceAssignment).
     LOCK_SECONDS = 90
 
+    # A rejected or deleted invoice AIM staff may bring back (Aim::Invoice::RESTORE_STATES).
+    def restorable? = %w[rejected deleted].include?(state)
+
     def claim!(email, name: nil)
       update_columns(claimed_by: email, claimed_by_name: name, claimed_at: Time.current, updated_at: Time.current)
     end

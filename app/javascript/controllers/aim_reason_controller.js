@@ -21,6 +21,8 @@ export default class extends Controller {
     this.titleTarget.textContent = trigger.dataset.title || trigger.dataset.commit
     this.submitTarget.value = trigger.dataset.commit
     this.submitTarget.textContent = trigger.dataset.commit
+    this.submitTarget.classList.toggle("deny", !trigger.dataset.commit.startsWith("Restore"))
+    this.submitTarget.classList.toggle("approve", trigger.dataset.commit.startsWith("Restore"))
     this.reasonTarget.disabled = false
     this.reasonTarget.required = true
     this.reasonTarget.value = ""

@@ -41,6 +41,16 @@
           <p>This invoice is in <%= aim_owner_label(@invoice.assigned_to.presence || "#{@invoice.budget_unit} shared") %>.
              <%= 'Claim it to move it to your queue and work it.' if @claimable %></p>
         <% end %>
+        <% if @invoice.restorable? && aim_queue_access? %>
+          <%= form_with url: restore_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post, local: true,
+                        class: 'aim-restore-form', data: { controller: 'aim-reason', turbo: false } do %>
+            <button type="button" class="btn take-back compact" data-action="aim-reason#open"
+                    data-commit="Restore to Action Needed" data-title="Restore to Action Needed">Restore to Action Needed</button>
+            <button type="button" class="btn take-back compact" data-action="aim-reason#open"
+                    data-commit="Restore to Ready for Approval" data-title="Restore to Ready for Approval">Restore to Ready for Approval</button>
+            <%= render 'reason_modal' %>
+          <% end %>
+        <% end %>
         <% if @claimable && !@claimed_by_other %>
           <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
                         class: 'btn take-back compact',

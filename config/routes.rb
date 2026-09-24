@@ -133,6 +133,7 @@ Rails.application.routes.draw do
         patch :lock
         post :unlock
         post :claim
+        post :restore
       end
     end
     get 'my_queue', to: 'my_queue#index', as: :my_queue

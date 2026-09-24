@@ -28,9 +28,12 @@ module Aim
       end
     end
 
-    test 'a finished invoice goes nowhere' do
-      Aim::Invoice::TERMINAL_STATES.each do |state|
+    test 'a finished invoice goes nowhere, except that a rejected or deleted one can be restored' do
+      (Aim::Invoice::TERMINAL_STATES - %w[rejected deleted]).each do |state|
         assert_empty Aim::Invoice::TRANSITIONS.fetch(state), "#{state} should be an end"
+      end
+      %w[rejected deleted].each do |state|
+        assert_equal %w[needs_review ready_for_approval], Aim::Invoice::TRANSITIONS.fetch(state)
       end
     end
 
