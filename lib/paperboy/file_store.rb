@@ -100,6 +100,8 @@ module Paperboy
         yield download(name)
       end
 
+      def cleanup_download(_path); end
+
       def mtime(name)
         child(name).mtime
       end
@@ -204,13 +206,17 @@ module Paperboy
         temporary = Tempfile.new(['paperboy-smb-file', File.extname(name.to_s)])
         temporary.close
         share.get(remote_name(name), temporary.path)
-        temporary.path
+        Pathname.new(temporary.path)
       end
 
       def with_download(name)
         path = download(name)
         yield path
       ensure
+        cleanup_download(path)
+      end
+
+      def cleanup_download(path)
         FileUtils.rm_f(path) if path
       end
 

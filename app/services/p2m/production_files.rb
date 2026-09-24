@@ -27,6 +27,10 @@ module P2m
       root.download(name)
     end
 
+    def cleanup_preview(path)
+      root.cleanup_download(path)
+    end
+
     private
 
     attr_reader :root
