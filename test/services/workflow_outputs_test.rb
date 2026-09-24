@@ -3,7 +3,7 @@
 require 'test_helper'
 require_relative '../../app/services/workflow_outputs'
 
-class WorkflowOutputsTest < ActiveSupport::TestCase
+class WorkflowOutputsServiceTest < ActiveSupport::TestCase
   Entry = Data.define(:slug, :output_name)
 
   test 'lists and finds files from a shortcut-backed output root' do
