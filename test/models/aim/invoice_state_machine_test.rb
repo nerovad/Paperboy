@@ -6,7 +6,7 @@ module Aim
   # The whole transition table, in both directions: every move the pipeline
   # makes is allowed, and every one of the several hundred it does not make is
   # refused. Plan step 5.4.
-  # rubocop:disable Metrics/ClassLength
+  # rubocop:disable-next Metrics/ClassLength
   class InvoiceStateMachineTest < ActiveSupport::TestCase
     def create_invoice(state:, document_type: 'Invoice')
       Aim::Invoice.create!(batch_id: "4601_#{SecureRandom.hex(4)}", state: state,
@@ -204,5 +204,4 @@ module Aim
       assert_equal %w[archived sql_failed action_needed], create_invoice(state: 'sql_queue').next_states
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end

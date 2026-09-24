@@ -7,7 +7,7 @@ module Aim
   # The database has to say what the share says. Until the workers write their
   # own rows in 5.6, this is the only thing that makes that true -- and at
   # go-live it is what carries the in-flight invoices over. Plan step 5.5.
-  # rubocop:disable Metrics/ClassLength
+  # rubocop:disable-next Metrics/ClassLength
   class QueueSyncTest < ActiveSupport::TestCase
     DirectoryService = Struct.new(:paths) do
       def path_for(queue) = paths[queue.to_sym]
@@ -169,5 +169,4 @@ module Aim
       assert_respond_to service, :path_for
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end

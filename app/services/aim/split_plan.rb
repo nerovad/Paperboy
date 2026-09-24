@@ -32,9 +32,8 @@ module Aim
 
     # "1-3, 5" from [1, 2, 3, 5].
     def self.page_text(pages)
-      pages.sort.uniq.slice_when { |a, b| b != a + 1 }
-                     .map { |run| run.size > 1 ? "#{run.first}-#{run.last}" : run.first.to_s }
-                     .join(', ')
+      runs = pages.sort.uniq.slice_when { |a, b| b != a + 1 }
+      runs.map { |run| run.size > 1 ? "#{run.first}-#{run.last}" : run.first.to_s }.join(', ')
     end
 
     # The splitter accepts numbers and "a-b" strings, so a manifest may hold

@@ -8,7 +8,7 @@ module Aim
   # invoice's row, in their name, and a claim is kept there too. The files still
   # move -- the workers find their work by folder -- but the row now says where
   # the invoice went and who sent it. Plan step 5.7b.
-  # rubocop:disable Metrics/ClassLength
+  # rubocop:disable-next Metrics/ClassLength
   class InvoiceMovesRecordStateTest < ActionController::TestCase
     tests Aim::InvoicesController
 
@@ -237,5 +237,4 @@ module Aim
       assert_nil Aim::Invoice.find_by!(batch_id: '4601.J').claimed_by
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end
