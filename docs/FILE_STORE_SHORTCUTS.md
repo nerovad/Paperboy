@@ -91,6 +91,8 @@ messages must never expose passwords.
       publish output, and archive/remove files through the shared store.
 - [x] Preserve absolute shortcut-backed paths when resolving DataRunner SOP
       references.
+- [x] Route DataRunner orchestration output verification and staging through
+      the shared store.
 - [ ] Convert remaining DataRunner path consumers and generated DSL locations
       as needed.
 - [x] Convert the P2M backfill/scan script's staging and processed-directory

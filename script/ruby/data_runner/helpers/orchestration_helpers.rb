@@ -267,10 +267,10 @@ module DataRunnerTaskHelpers
   private_class_method :child_local!
 
   def verify_orchestration_outputs!(orchestration)
+    output_store = Paperboy::FileStore.for(orchestration.fetch(:output_dir))
     missing = orchestration_children(orchestration).filter_map do |child_name, child_cfg|
       local = child_local!(child_name, child_cfg)
-      path = File.join(orchestration.fetch(:output_dir), local)
-      "#{child_name}: #{path}" unless File.file?(path)
+      "#{child_name}: #{output_store.path.join(local)}" unless output_store.exist?(local)
     end
     return if missing.empty?
 
@@ -279,13 +279,15 @@ module DataRunnerTaskHelpers
   private_class_method :verify_orchestration_outputs!
 
   def stage_orchestration_inputs(orchestration)
+    output_store = Paperboy::FileStore.for(orchestration.fetch(:output_dir))
     orchestration_children(orchestration).each do |child_name, child_cfg|
       local = child_local!(child_name, child_cfg)
-      source = File.join(orchestration.fetch(:output_dir), local)
+      source = output_store.download(local)
       target = File.join(WorkflowPaths::DOWNLOAD_DIR, local)
       FileUtils.mkdir_p(File.dirname(target))
       FileUtils.cp(source, target)
-      puts "[STAGE] #{child_name}: #{source} -> #{target}"
+      FileUtils.rm_f(source) if source.to_s.start_with?('/tmp/paperboy-smb-file-')
+      puts "[STAGE] #{child_name}: #{output_store.path.join(local)} -> #{target}"
     end
   end
   private_class_method :stage_orchestration_inputs
