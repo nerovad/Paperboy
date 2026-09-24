@@ -1,6 +1,7 @@
 <%# app/views/aim/shared/_sidebar.html.erb
     Sidebar for the Automated Invoice Management app. The app switcher header is shared with
-    every other app; everything below it is this app's own navigation. %>
+    every other app; everything below it is this app's own navigation. AIM v2: the queues
+    are the invoice rows' states, counted from the database. %>
 <div class="sidebar aim-sidebar">
   <%= render "shared/app_switcher" %>
 
@@ -10,9 +11,12 @@
                   class: "nav-link#{' active' if current_page?(aim_dashboard_path)}" %>
     <% end %>
 
+    <%= link_to "Upload Invoices", new_aim_upload_path,
+                class: "nav-link#{' active' if current_page?(new_aim_upload_path)}" %>
+
     <% if aim_queue_access? %>
-      <div class="sidebar-section-label">Processing Queues</div>
-      <% Aim::InvoiceDirectoryService::BACKEND_QUEUES.each do |queue, config| %>
+      <div class="sidebar-section-label">Queues</div>
+      <% Aim::Invoice::QUEUES.each do |queue, config| %>
         <% queue_path = aim_invoices_path(queue: queue) %>
         <%= link_to queue_path, class: "nav-link#{' active' if current_page?(queue_path)}" do %>
           <span><%= config[:label] %></span>
@@ -21,6 +25,12 @@
           </span>
         <% end %>
       <% end %>
+
+      <div class="sidebar-section-label">Vendors</div>
+      <%= link_to "Vendor Aliases", aim_vendor_aliases_path,
+                  class: "nav-link#{' active' if current_page?(aim_vendor_aliases_path)}" %>
+      <%= link_to "Vendor Rules", aim_vendor_rules_path,
+                  class: "nav-link#{' active' if current_page?(aim_vendor_rules_path)}" %>
     <% end %>
   </nav>
 </div>

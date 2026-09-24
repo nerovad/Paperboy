@@ -698,3 +698,53 @@
   }
 }
 
+
+/* AIM v2: the reason filters above Needs Review, the inline forms on the
+   vendor screens, the history under the fields, and the upload form. Layout
+   only: the buttons keep their shared system. */
+.aim-reason-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aim-inline-form {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+}
+
+.aim-inline-form input[type="text"],
+.aim-inline-form textarea {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.aim-rules-form textarea {
+  flex-basis: 100%;
+}
+
+.aim-history ul {
+  font-size: 0.8rem;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.aim-history li {
+  margin: 4px 0;
+}
+
+.aim-upload-panel {
+  max-width: 640px;
+  padding: 18px;
+}
+
+.aim-upload-form fieldset {
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 0;
+}

@@ -11,7 +11,11 @@ module Aim
     def home; end
 
     def index
-      @dashboard_queues = Aim::InvoiceDirectoryService::BACKEND_QUEUES
+      @dashboard_queues = Aim::Invoice::QUEUES
+      @review_reasons = Aim::Invoice.in_queue('needs_review').group(:review_reason).count
+    rescue StandardError => e
+      Rails.logger.error "AIM dashboard could not read the invoices: #{e.message}"
+      @review_reasons = {}
     end
   end
 end

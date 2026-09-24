@@ -5,7 +5,7 @@ require 'test_helper'
 module Aim
   class InvoiceTest < ActiveSupport::TestCase
     def build(**attributes)
-      Aim::Invoice.new(batch_id: "4601_#{SecureRandom.hex(4)}", state: 'ai_queue', actor: 'watcher', **attributes)
+      Aim::Invoice.new(batch_id: "4601_#{SecureRandom.hex(4)}", state: 'received', actor: 'watcher', **attributes)
     end
 
     test 'reads its table from the aim schema' do
@@ -36,7 +36,7 @@ module Aim
       first = build.tap(&:save!)
 
       assert_raises(ActiveRecord::RecordNotUnique) do
-        Aim::Invoice.insert_all!([{ batch_id: first.batch_id, state: 'ai_queue' }])
+        Aim::Invoice.insert_all!([{ batch_id: first.batch_id, state: 'received' }])
       end
     end
 

@@ -126,10 +126,11 @@ Rails.application.routes.draw do
     resources :invoices, only: %i[index show update], constraints: { id: %r{[^/]+} } do
       member do
         get :pdf
-        post :retry
-        post :move_to_action_needed
       end
     end
+    resources :uploads, only: %i[new create]
+    resources :vendor_aliases, only: %i[index create update destroy]
+    resources :vendor_rules, only: %i[index create update destroy]
   end
 
   namespace :production do

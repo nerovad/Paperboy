@@ -1,56 +1,27 @@
 <div class="aim-page">
   <header class="aim-page-header">
     <div>
-      <h1 class="aim-page-title"><%= aim_queue_label(@queue) %> Queue</h1>
-      <p class="aim-page-subtitle"><%= aim_queue_description(@queue) || 'Invoices routed here by the Scan Center pipeline.' %></p>
+      <h1 class="aim-page-title"><%= aim_queue_label(@queue) %></h1>
+      <p class="aim-page-subtitle"><%= aim_queue_description(@queue) %></p>
     </div>
 
     <span class="aim-count-pill"><%= pluralize(@invoices.length, 'invoice') %></span>
   </header>
 
-  <% if @rows_unavailable %>
-    <p class="flash alert">The invoice database could not be read, so this list comes straight from the queue folders.</p>
+  <% if @queue == 'needs_review' && @reason_counts.present? %>
+    <nav class="aim-reason-filters" aria-label="Filter by reason">
+      <%= link_to "All (#{@reason_counts.values.sum})", aim_invoices_path(queue: @queue),
+                  class: "btn compact#{@review_reason.blank? ? ' active' : ' ghost'}" %>
+      <% @reason_counts.sort_by { |reason, _| reason.to_s }.each do |reason, count| %>
+        <%= link_to "#{aim_review_reason_label(reason)} (#{count})", aim_invoices_path(queue: @queue, review_reason: reason),
+                    class: "btn compact#{@review_reason == reason ? ' active' : ' ghost'}" %>
+      <% end %>
+    </nav>
   <% end %>
 
-  <% if !@queue_connected %>
+  <% if @invoices.empty? %>
     <section class="aim-panel aim-empty-state">
-      <p><%= @queue_status[:message] %></p>
-      <% if @queue_status[:path].present? %>
-        <p><code><%= @queue_status[:path] %></code></p>
-      <% end %>
-    </section>
-  <% elsif @invoices.empty? %>
-    <section class="aim-panel aim-empty-state">
-      <p>This queue is connected and currently empty.</p>
-      <p>Invoices routed here by the AIM preprocessor will appear automatically.</p>
-    </section>
-  <% elsif @queue == 'ai_queue' %>
-    <section class="aim-panel aim-queue-panel">
-      <table class="submission-table aim-queue-table">
-        <thead>
-          <tr>
-            <th>Job Folder</th>
-            <th>PDF File</th>
-            <th>Business Unit</th>
-            <th>Submitter</th>
-            <th>Processing ID</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @invoices.each do |invoice| %>
-            <% badge_class, badge_text = aim_status_badge(invoice, nil) %>
-            <tr>
-              <td class="is-strong"><%= invoice[:name] %></td>
-              <td><%= invoice[:pdf_file].presence || 'Missing' %></td>
-              <td><%= aim_metadata_value(invoice[:metadata], 'bu_number') || 'Unknown' %></td>
-              <td><%= aim_metadata_value(invoice[:metadata], 'submitter_name') || 'Unknown' %></td>
-              <td><%= aim_metadata_value(invoice[:metadata], 'processing_id') || invoice[:name] %></td>
-              <td><span class="badge <%= badge_class %>"><%= badge_text %></span></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
+      <p>Nothing is in this queue.</p>
     </section>
   <% else %>
     <section class="aim-panel aim-queue-panel">
@@ -60,46 +31,41 @@
             <th>Action</th>
             <th>Vendor</th>
             <th>Invoice #</th>
-            <th>Business Unit</th>
+            <th>Type</th>
+            <th>Budget Unit</th>
             <th>Submitter</th>
+            <th>Owner</th>
             <th>Date</th>
             <th>Total</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody>
-          <% current_user_email = session.dig(:user, 'email') || session.dig('user', 'email') %>
+          <% viewer = session.dig(:user, 'email') || session.dig('user', 'email') %>
           <% @invoices.each do |invoice| %>
-            <% badge_class, badge_text = aim_status_badge(invoice, current_user_email) %>
-            <%# The full pipeline folder name is the InvoiceConcatID written to SQL. It is too long for a column, so it rides on the row as a tooltip. %>
-            <tr class="<%= 'is-locked' if invoice[:is_locked] %>" title="<%= invoice[:name] %>">
+            <% badge_class, badge_text = aim_status_badge(invoice, viewer) %>
+            <% locked = invoice.claimed_by_other?(viewer) %>
+            <%# The batch id names the row in billing. It is too long for a column, so it rides on the row as a tooltip. %>
+            <tr class="<%= 'is-locked' if locked %>" title="<%= invoice.batch_id %>">
               <td class="action-buttons">
-                <% if invoice[:path].blank? %>
-                  <span class="aim-muted">Files missing</span>
-                <% elsif invoice[:is_locked] %>
-                  <%= link_to 'View Only',
-                              aim_invoice_path(invoice[:id], queue: @queue),
-                              data: { turbo: false },
-                              class: 'btn secondary compact' %>
+                <% if locked || invoice.terminal? %>
+                  <%= link_to 'View', aim_invoice_path(invoice.batch_id, queue: @queue),
+                              data: { turbo: false }, class: 'btn secondary compact' %>
                 <% else %>
-                  <%= link_to invoice[:claimed_by] ? 'Resume Review' : 'Review Invoice',
-                              aim_invoice_path(invoice[:id], queue: @queue),
-                              data: { turbo: false },
-                              class: 'btn approve compact' %>
+                  <%= link_to invoice.held_by?(viewer) ? 'Resume Review' : 'Review Invoice',
+                              aim_invoice_path(invoice.batch_id, queue: @queue),
+                              data: { turbo: false }, class: 'btn approve compact' %>
                 <% end %>
               </td>
-              <td class="is-strong"><%= aim_metadata_value(invoice[:metadata], 'VendorName', 'Vendor Name') || 'N/A' %></td>
-              <td><%= aim_invoice_reference(invoice) || 'N/A' %></td>
-              <td><%= aim_metadata_value(invoice[:metadata], 'BU', 'BudgetUnit', 'Budget Unit Number') || 'N/A' %></td>
-              <td><%= aim_metadata_value(invoice[:metadata], 'Submitter', 'Submitted by') || 'N/A' %></td>
-              <td><%= aim_invoice_date(aim_metadata_value(invoice[:metadata], 'InvoiceDate', 'Invoice Date')) || 'N/A' %></td>
-              <td class="aim-total"><%= aim_currency(aim_metadata_value(invoice[:metadata], 'InvoiceTotal', 'Invoice Total')) || 'N/A' %></td>
-              <td>
-                <span class="badge <%= badge_class %>"><%= badge_text %></span>
-                <% if invoice[:recorded] == false %>
-                  <span class="badge is-pending" title="On the share, not yet in the invoice database. The sync records it within minutes.">Not yet recorded</span>
-                <% end %>
-              </td>
+              <td class="is-strong"><%= invoice.vendor_name.presence || invoice.extracted_vendor_name.presence || 'N/A' %></td>
+              <td><%= invoice.invoice_number.presence || 'N/A' %></td>
+              <td><%= invoice.document_type.presence || 'N/A' %></td>
+              <td><%= invoice.budget_unit.presence || 'N/A' %></td>
+              <td><%= invoice.submitter.presence || 'N/A' %></td>
+              <td><%= invoice.assigned_to.presence || 'Shared' %></td>
+              <td><%= aim_invoice_date(invoice.invoice_date) || 'N/A' %></td>
+              <td class="aim-total"><%= aim_currency(invoice.invoice_total) || 'N/A' %></td>
+              <td><span class="badge <%= badge_class %>"><%= badge_text %></span></td>
             </tr>
           <% end %>
         </tbody>

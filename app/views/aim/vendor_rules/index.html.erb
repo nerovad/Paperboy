@@ -1,0 +1,53 @@
+<div class="aim-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Vendor Rules</h1>
+      <p class="aim-page-subtitle">Plain-English hints the AI is given for a vendor, one per line: where the invoice number sits, which total to take.</p>
+    </div>
+    <span class="aim-count-pill"><%= pluralize(@rules.length, 'vendor') %></span>
+  </header>
+
+  <section class="aim-panel aim-vendor-panel">
+    <%= form_with url: aim_vendor_rules_path, method: :post, local: true, class: 'aim-inline-form aim-rules-form' do |form| %>
+      <%= form.text_field :vendor_name, placeholder: 'Official vendor name', required: true, autocomplete: 'off' %>
+      <%= form.text_area :rules, placeholder: 'One rule per line', rows: 3, required: true %>
+      <%= form.submit 'Add Rules', class: 'btn approve compact' %>
+    <% end %>
+  </section>
+
+  <% if @rules.empty? %>
+    <section class="aim-panel aim-empty-state"><p>No vendor rules yet.</p></section>
+  <% else %>
+    <section class="aim-panel aim-queue-panel">
+      <table class="submission-table aim-queue-table">
+        <thead>
+          <tr>
+            <th>Vendor</th>
+            <th>Rules</th>
+            <th>Updated by</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @rules.each do |rule| %>
+            <tr>
+              <td class="is-strong"><%= rule.vendor_name %></td>
+              <td>
+                <%= form_with url: aim_vendor_rule_path(rule), method: :patch, local: true, class: 'aim-inline-form aim-rules-form' do |form| %>
+                  <%= form.text_area :rules, value: rule.rules, rows: [rule.rule_lines.size, 2].max, required: true %>
+                  <%= form.submit 'Save', class: 'btn secondary compact' %>
+                <% end %>
+              </td>
+              <td><%= rule.updated_by %></td>
+              <td class="action-buttons">
+                <%= button_to 'Remove', aim_vendor_rule_path(rule), method: :delete,
+                              data: { turbo_confirm: "Remove the rules for #{rule.vendor_name}?", confirm_label: 'Remove' },
+                              class: 'btn deny compact' %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  <% end %>
+</div>

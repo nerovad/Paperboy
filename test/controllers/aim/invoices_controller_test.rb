@@ -2,465 +2,318 @@
 
 require 'test_helper'
 require 'tmpdir'
+require 'prawn'
 
 module Aim
+  # The queues and the review page over rows. Every button is a move of the
+  # row's state; a move the pipeline does not make is refused with a message;
+  # the PDF is read from the store and never moved. AIM v2.
   # rubocop:disable-next Metrics/ClassLength
   class InvoicesControllerTest < ActionController::TestCase
     tests Aim::InvoicesController
-    AIM_ENV = %w[
-      AIM_WINDOWS_QUEUE_BASE_PATH
-      AIM_LINUX_QUEUE_BASE_PATH
-      AIM_VENDOR_REVIEW_DIR
-      AIM_READY_TO_LEARN_DIR
-      AIM_ACTION_NEEDED_DIR
-      AIM_LOW_CONFIDENCE_REVIEW_DIR
-      AIM_REPROCESS_QUEUE_DIR
-      AIM_DELETED_DIR
-    ].freeze
+
+    FOLDERS = {
+      'AIM_STORE_DIR' => '_BACK_END\\_STORE',
+      'AIM_DELETED_DIR' => 'Invoices\\_GONE',
+      'AIM_REJECTED_DIR' => '_BACK_END\\_SENT_BACK'
+    }.freeze
+    AIM_ENV = (%w[AIM_WINDOWS_QUEUE_BASE_PATH AIM_LINUX_QUEUE_BASE_PATH] + FOLDERS.keys).freeze
+    REVIEWER = 'aim.staff@example.com'
 
     setup do
       @tmpdir = Dir.mktmpdir
       @old_env = AIM_ENV.to_h { |key| [key, ENV.fetch(key, nil)] }
-
       ENV['AIM_WINDOWS_QUEUE_BASE_PATH'] = 'E:\AIM'
       ENV['AIM_LINUX_QUEUE_BASE_PATH'] = @tmpdir
-      ENV['AIM_VENDOR_REVIEW_DIR'] = 'E:\AIM\_BACK_END\_VENDOR_REVIEW'
-      ENV['AIM_READY_TO_LEARN_DIR'] = 'E:\AIM\_BACK_END\_READY_TO_LEARN'
-      ENV['AIM_ACTION_NEEDED_DIR'] = 'E:\AIM\_BACK_END\_ACTION_NEEDED'
-      ENV['AIM_LOW_CONFIDENCE_REVIEW_DIR'] = 'E:\AIM\_BACK_END\_LOW_CONFIDENCE_REVIEW'
-      ENV['AIM_REPROCESS_QUEUE_DIR'] = 'E:\AIM\_BACK_END\_REPROCESS_QUEUE'
-      ENV['AIM_DELETED_DIR'] = 'E:\AIM\_BACK_END\_DELETED'
+      FOLDERS.each { |variable, folder| ENV[variable] = "E:\\AIM\\#{folder}" }
+      FileUtils.mkdir_p(File.join(@tmpdir, '_BACK_END', '_STORE'))
 
-      FileUtils.mkdir_p(vendor_review_dir)
-      FileUtils.mkdir_p(ready_to_learn_dir)
-      FileUtils.mkdir_p(action_needed_dir)
-      FileUtils.mkdir_p(low_confidence_review_dir)
-      FileUtils.mkdir_p(reprocess_dir)
-      FileUtils.mkdir_p(deleted_dir)
-
-      # current_user is nil unless the session carries BOTH keys, and a nil
-      # current_user fails require_app_access before any AIM code runs. Every
-      # test in this file used to 302 to / for want of the employee_id.
-      session[:user] = { 'email' => 'aim.staff@example.com', 'employee_id' => 42 }
+      session[:user] = { 'email' => REVIEWER, 'employee_id' => 42, 'first_name' => 'Aim', 'last_name' => 'Staff' }
       @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
     end
 
     teardown do
-      @old_env.each do |key, value|
-        value.nil? ? ENV.delete(key) : ENV[key] = value
-      end
+      @old_env.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
       FileUtils.remove_entry(@tmpdir) if @tmpdir && Dir.exist?(@tmpdir)
     end
 
-    test 'vendor review renders official vendor choices and OCR controls' do
-      create_vendor_review_invoice(
-        'INV-1',
-        metadata: { 'VendorName' => 'AIRGAS USA LLC' },
-        learn_data: { 'extracted_name' => 'AIRGAS USA LLC' }
-      )
-
-      Aim::VendorAliasService.stub(:official_names, ['AIRGAS USA, LLC']) do
-        get :show, params: { id: 'INV-1', queue: 'vendor_review' }
+    def invoice(batch_id, state: 'needs_review', pdf: true, pages: 1, **attributes)
+      if pdf
+        folder = File.join(@tmpdir, '_BACK_END', '_STORE', batch_id)
+        FileUtils.mkdir_p(folder)
+        Prawn::Document.generate(File.join(folder, "#{batch_id}.pdf")) do |doc|
+          pages.times { |index| doc.start_new_page unless index.zero? }
+        end
       end
+      defaults = { document_type: 'Invoice', vendor_name: 'ACME', invoice_number: 'INV-1', budget_unit: '4601',
+                   submitter: 'Jane Doe', page_count: pages }
+      Aim::Invoice.create!(batch_id: batch_id, state: state, actor: 'aim_worker', **defaults.merge(attributes))
+    end
+
+    def act(row, commit, queue: row.queue, **params)
+      patch :update, params: { id: row.batch_id, queue: queue, commit: commit, **params }
+      row.reload
+    end
+
+    # ---------------------------------------------------------------
+    # Queues
+    # ---------------------------------------------------------------
+
+    test 'a queue lists the rows in its states, newest first' do
+      older = invoice('4601.A', state: 'approved', pdf: false)
+      newer = invoice('4601.B', state: 'exporting', pdf: false)
+      invoice('4601.C', state: 'needs_review', pdf: false)
+
+      get :index, params: { queue: 'in_flight' }
 
       assert_response :success
-      assert_select 'input[name=?][readonly=?]', 'aim_extracted_vendor_name', 'readonly'
-      assert_select 'select[name=?][data-aim-vendor-select=?]', 'metadata[NormalizedVendor]', 'true'
-      assert_select 'input[name=?]', 'normalized_vendor_new'
-      refute_includes response.body, 'data-ocr-target-name="metadata[VendorName]"'
-      assert_select 'button.btn-ocr[data-ocr-target-name=?]', 'normalized_vendor_new'
-      assert_select 'input[type=submit][value=?]', 'Learn & Continue'
-      assert_select 'input[type=submit][value=?]', 'Learn & Retry AI'
-      assert_select 'button[disabled]', text: 'Check Duplicates *'
-      assert_select 'option[value=?]', 'AIRGAS USA, LLC'
-      assert_includes response.body, 'AIRGAS USA LLC'
+      assert_equal [newer.batch_id, older.batch_id], @controller.instance_variable_get(:@invoices).map(&:batch_id)
     end
 
-    test 'vendor review hides pipeline plumbing fields from the metadata grid' do
-      create_vendor_review_invoice(
-        'INV-4',
-        metadata: {
-          'BU' => '4601',
-          'InvoiceNumber' => 'INV-40',
-          'ExtractedMetadata' => '{"vendor_name":"AIR GAS"}',
-          'Status' => 'Vendor Review',
-          'ErrorMessage' => 'Unknown vendor: AIR GAS',
-          'InvoiceConcatID' => 'INV-4'
-        }
-      )
+    test 'needs review can be filtered by reason' do
+      invoice('4601.D', review_reason: 'unknown_vendor', pdf: false)
+      invoice('4601.E', review_reason: 'handwritten', pdf: false)
 
-      Aim::VendorAliasService.stub(:official_names, []) do
-        get :show, params: { id: 'INV-4', queue: 'vendor_review' }
-      end
+      get :index, params: { queue: 'needs_review', review_reason: 'handwritten' }
+
+      assert_equal ['4601.E'], @controller.instance_variable_get(:@invoices).map(&:batch_id)
+      assert_equal({ 'unknown_vendor' => 1, 'handwritten' => 1 }, @controller.instance_variable_get(:@reason_counts))
+    end
+
+    test 'an unknown queue goes home' do
+      get :index, params: { queue: 'sql_queue' }
+
+      assert_redirected_to aim_root_path
+    end
+
+    # ---------------------------------------------------------------
+    # The review page
+    # ---------------------------------------------------------------
+
+    test 'opening an invoice claims it on the row, by name' do
+      row = invoice('4601.F')
+
+      get :show, params: { id: row.batch_id, queue: 'needs_review' }
 
       assert_response :success
-      assert_select 'input[name=?]', 'metadata[InvoiceNumber]'
-      Aim::InvoicesHelper::VENDOR_REVIEW_HIDDEN_FIELDS.each do |field|
-        next if field == 'NormalizedVendor'
-
-        assert_select 'input[name=?]', "metadata[#{field}]", false, "#{field} must not render as an editable input"
-      end
+      assert_equal [REVIEWER, 'Aim Staff'], [row.reload.claimed_by, row.claimed_by_name]
+      assert_select 'input[type=submit][value=?]', 'Send to Approval'
+      assert_select 'input[type=submit][value=?][data-turbo-confirm]', 'Delete'
     end
 
-    test 'vendor review ignores protected fields posted back by the form' do
-      create_vendor_review_invoice(
-        'INV-5',
-        metadata: {
-          'BU' => '4601',
-          'Status' => 'Vendor Review',
-          'ErrorMessage' => 'Unknown vendor: AIR GAS',
-          'InvoiceConcatID' => 'INV-5',
-          'ExtractedMetadata' => '{"vendor_name":"AIR GAS"}',
-          'VendorName' => 'AIR GAS'
-        }
-      )
+    test 'an invoice someone else holds is read only' do
+      row = invoice('4601.G', claimed_by: 'other@example.com', claimed_at: Time.current, claimed_by_name: 'Dana Reyes')
 
-      patch :update, params: {
-        id: 'INV-5',
-        queue: 'vendor_review',
-        commit: 'Save Changes',
-        metadata: {
-          'BU' => '4602',
-          'Status' => 'TAMPERED',
-          'ErrorMessage' => 'TAMPERED',
-          'InvoiceConcatID' => 'TAMPERED',
-          'ExtractedMetadata' => 'TAMPERED',
-          'VendorName' => 'TAMPERED VENDOR'
-        }
-      }
-
-      metadata = JSON.parse(File.read(File.join(vendor_review_dir, 'INV-5', 'INV-5.json')))
-      assert_equal '4602', metadata['BU'], 'ordinary metadata should still be writable'
-      assert_equal 'Vendor Review', metadata['Status']
-      assert_equal 'Unknown vendor: AIR GAS', metadata['ErrorMessage']
-      assert_equal 'INV-5', metadata['InvoiceConcatID']
-      assert_equal '{"vendor_name":"AIR GAS"}', metadata['ExtractedMetadata']
-      assert_equal 'AIR GAS', metadata['VendorName']
-    end
-
-    test 'learn and continue writes SQL-ready payload and routes to ready to learn' do
-      create_vendor_review_invoice(
-        'INV-2',
-        metadata: {
-          'FileName' => 'source.pdf',
-          'Submitter' => 'Test User',
-          'BU' => '4621',
-          'VendorName' => 'AIR GAS',
-          'InvoiceNumber' => 'INV-20',
-          'InvoiceTotal' => '42.50',
-          'InvoiceDate' => '2026-08-05'
-        }
-      )
-
-      learned_aliases = []
-      Aim::VendorAliasService.stub(:learn!, ->(**kwargs) { learned_aliases << kwargs }) do
-        patch :update, params: {
-          id: 'INV-2',
-          queue: 'vendor_review',
-          commit: 'Learn & Continue',
-          metadata: {
-            'VendorName' => 'TAMPERED VENDOR',
-            'NormalizedVendor' => 'AIRGAS USA, LLC',
-            'InvoiceTotal' => '42.50'
-          }
-        }
-      end
-
-      assert_redirected_to aim_invoices_path(queue: 'vendor_review')
-      assert_equal(
-        {
-          extracted_name: 'AIR GAS',
-          normalized_name: 'AIRGAS USA, LLC',
-          learned_by: 'aim.staff@example.com'
-        },
-        learned_aliases.first
-      )
-
-      moved_folder = File.join(ready_to_learn_dir, 'INV-2')
-      assert Dir.exist?(moved_folder)
-      learn_data = JSON.parse(File.read(File.join(moved_folder, 'INV-2_LEARN.json')))
-      assert_equal 'AIR GAS', learn_data['extracted_name']
-      assert_equal 'AIRGAS USA, LLC', learn_data['suggested_normalized_name']
-      assert_equal 'continue_processing', learn_data['next_action']
-
-      ready_payload = JSON.parse(File.read(File.join(moved_folder, 'INV-2_READY_FOR_SQL.json')))
-      assert_equal 'AIRGAS USA, LLC', ready_payload['VendorName']
-      assert_equal 'INV-20', ready_payload['InvoiceNumber']
-      assert_equal '42.50', ready_payload['InvoiceTotal']
-      assert_equal 'SUCCESS', ready_payload['Status']
-      refute File.exist?(File.join(moved_folder, 'INV-2.json'))
-    end
-
-    test 'learn alias prefers a new official vendor name when entered' do
-      create_vendor_review_invoice(
-        'INV-3',
-        metadata: { 'BU' => '4601', 'Submitter' => 'Test User', 'VendorName' => 'TEAM PLAY' }
-      )
-
-      learned_aliases = []
-      Aim::VendorAliasService.stub(:learn!, ->(**kwargs) { learned_aliases << kwargs }) do
-        patch :update, params: {
-          id: 'INV-3',
-          queue: 'vendor_review',
-          commit: 'Learn & Retry AI',
-          normalized_vendor_new: 'Team Play Events',
-          metadata: {
-            'VendorName' => 'TEAM PLAY',
-            'NormalizedVendor' => 'Wrong Existing Vendor'
-          }
-        }
-      end
-
-      assert_redirected_to aim_invoices_path(queue: 'vendor_review')
-      assert_equal 'Team Play Events', learned_aliases.first[:normalized_name]
-      moved_folder = File.join(ready_to_learn_dir, 'INV-3')
-      learn_data = JSON.parse(File.read(File.join(moved_folder, 'INV-3_LEARN.json')))
-      assert_equal 'retry_ai', learn_data['next_action']
-      retry_sidecar = JSON.parse(File.read(File.join(moved_folder, 'INV-3.json')))
-      assert_equal '4601', retry_sidecar['bu']
-      assert_equal 'Test User', retry_sidecar['submitter']
-    end
-
-    test 'action needed renders the payload, not the vendor-rule sidecar' do
-      create_action_needed_invoice(
-        'INV-5',
-        payload: { 'VendorName' => 'AIRGAS USA, LLC', 'InvoiceNumber' => 'INV-50' },
-        vendor_rule: { 'vendor_name' => 'AIRGAS USA, LLC', 'new_vendor_rule' => '' }
-      )
-
-      get :show, params: { id: 'INV-5', queue: 'action_needed' }
-
-      assert_response :success
-      assert_includes response.body, 'INV-50'
-      refute_includes response.body, 'new_vendor_rule'
-    end
-
-    # Plan step 2.1. A claim used to count merely by existing, so a second
-    # reviewer opening someone else's invoice got the whole action strip.
-    test 'an invoice claimed by someone else renders read only' do
-      folder = create_action_needed_invoice('INV-6', payload: { 'InvoiceNumber' => 'INV-60' },
-                                                     vendor_rule: {})
-      write_claim(folder, 'other.staff@example.com', name: 'Dana Reyes')
-
-      get :show, params: { id: 'INV-6', queue: 'action_needed' }
+      get :show, params: { id: row.batch_id, queue: 'needs_review' }
 
       assert_response :success
       assert_includes response.body, 'Dana Reyes claimed this invoice'
-      assert_select 'input[type=submit][value=?]', 'Save Changes', false
-      assert_select 'input[type=submit][value=?]', 'Unclaim', false
-      assert_select 'a', text: 'Return to Queue'
-    end
+      assert_select 'input[type=submit][value=?]', 'Send to Approval', count: 0
 
-    test 'the reviewer holding the claim resumes it freely' do
-      folder = create_action_needed_invoice('INV-7', payload: { 'InvoiceNumber' => 'INV-70' },
-                                                     vendor_rule: {})
-      write_claim(folder, 'AIM.Staff@Example.com')
-
-      get :show, params: { id: 'INV-7', queue: 'action_needed' }
-
-      assert_response :success
-      assert_select 'input[type=submit][value=?]', 'Save Changes'
-      refute_includes response.body, 'Read only'
-      assert_equal 'AIM.Staff@Example.com', JSON.parse(File.read(claim_path(folder)))['user']
-    end
-
-    test 'an unclaimed invoice is claimed for the signed-in reviewer' do
-      folder = create_action_needed_invoice('INV-8', payload: { 'InvoiceNumber' => 'INV-80' },
-                                                     vendor_rule: {})
-
-      get :show, params: { id: 'INV-8', queue: 'action_needed' }
-
-      assert_response :success
-      assert_equal 'aim.staff@example.com', JSON.parse(File.read(claim_path(folder)))['user']
-      assert_select 'input[type=submit][value=?]', 'Save Changes'
-    end
-
-    test 'a foreign claim refuses a posted save' do
-      folder = create_action_needed_invoice('INV-9', payload: { 'InvoiceNumber' => 'INV-90' },
-                                                     vendor_rule: {})
-      write_claim(folder, 'other.staff@example.com')
-
-      patch :update, params: { id: 'INV-9', queue: 'action_needed', commit: 'Save Changes',
-                               metadata: { 'InvoiceNumber' => 'REWRITTEN' } }
-
-      assert_redirected_to aim_invoices_path(queue: 'action_needed')
+      patch :update, params: { id: row.batch_id, queue: 'needs_review', commit: 'Save Changes' }
+      assert_redirected_to aim_invoices_path(queue: 'needs_review')
       assert_match(/view only/, flash[:alert])
-      payload = JSON.parse(File.read(File.join(folder, 'INV-9_READY_FOR_SQL.json')))
-      assert_equal 'INV-90', payload['InvoiceNumber']
     end
 
-    test 'a foreign claim cannot be released by someone else' do
-      folder = create_action_needed_invoice('INV-10', payload: { 'InvoiceNumber' => 'INV-100' },
-                                                      vendor_rule: {})
-      write_claim(folder, 'other.staff@example.com')
+    test 'a finished invoice is shown, not claimed' do
+      row = invoice('4601.H', state: 'exported', pdf: false)
 
-      patch :update, params: { id: 'INV-10', queue: 'action_needed', commit: 'Unclaim' }
-
-      assert_redirected_to aim_invoices_path(queue: 'action_needed')
-      assert_path_exists claim_path(folder)
-    end
-
-    test 'a foreign claim refuses an AI retry' do
-      folder = create_action_needed_invoice('INV-11', payload: { 'InvoiceNumber' => 'INV-110' },
-                                                      vendor_rule: {})
-      write_claim(folder, 'other.staff@example.com')
-
-      post :retry, params: { id: 'INV-11', queue: 'action_needed' }
-
-      assert_redirected_to aim_invoices_path(queue: 'action_needed')
-      assert_path_exists folder
-    end
-
-    test 'the queue offers view only for an invoice someone else holds' do
-      own = create_action_needed_invoice('INV-12', payload: { 'InvoiceNumber' => 'INV-120' },
-                                                   vendor_rule: {})
-      other = create_action_needed_invoice('INV-13', payload: { 'InvoiceNumber' => 'INV-130' },
-                                                     vendor_rule: {})
-      # Mixed case on our own claim: the queue and the review page have to
-      # agree on who a claimant is, and the pfa work provider already ignores
-      # case, so this row must read Resume Review rather than View Only.
-      write_claim(own, 'AIM.Staff@Example.com')
-      write_claim(other, 'other.staff@example.com', name: 'Dana Reyes')
-
-      get :index, params: { queue: 'action_needed' }
+      get :show, params: { id: row.batch_id, queue: 'exported' }
 
       assert_response :success
-      assert_select 'tr.is-locked', 1
-      assert_select 'a', text: 'View Only'
-      assert_select 'a', text: 'Resume Review'
-      assert_includes response.body, 'Claimed by Dana Reyes'
+      assert_nil row.reload.claimed_by
     end
 
-    test 'an AI retry carries the budget unit and submitter to the reprocess queue' do
-      create_action_needed_invoice(
-        'INV-14',
-        payload: { 'InvoiceNumber' => 'INV-140', 'BU' => '4601', 'Submitter' => 'Dana Reyes' },
-        vendor_rule: {}
-      )
+    test 'the pdf is served from the store' do
+      row = invoice('4601.I')
 
-      post :retry, params: { id: 'INV-14', queue: 'action_needed' }
+      get :pdf, params: { id: row.batch_id, queue: 'needs_review' }
 
-      sidecar = retry_sidecar_for('INV-14')
-      assert_equal '4601', sidecar['bu']
-      assert_equal 'Dana Reyes', sidecar['submitter']
+      assert_response :success
+      assert_equal 'application/pdf', response.media_type
     end
 
-    test 'an AI retry reads the budget unit out of Laserfiche XML metadata' do
-      create_low_confidence_invoice('INV-15', fields: { 'Budget Unit Number' => '4721',
-                                                        'Submitted by' => 'Sam Rivera' })
+    test 'a missing pdf is not found' do
+      row = invoice('4601.J', pdf: false)
 
-      post :retry, params: { id: 'INV-15', queue: 'low_confidence_review' }
+      get :pdf, params: { id: row.batch_id, queue: 'needs_review' }
 
-      sidecar = retry_sidecar_for('INV-15')
-      assert_equal '4721', sidecar['bu']
-      assert_equal 'Sam Rivera', sidecar['submitter']
+      assert_response :not_found
     end
 
-    test 'an AI retry with no budget unit recorded writes none' do
-      create_action_needed_invoice('INV-16', payload: { 'InvoiceNumber' => 'INV-160' },
-                                             vendor_rule: {})
+    test 'an unknown invoice goes back to the queue' do
+      get :show, params: { id: 'nope', queue: 'needs_review' }
 
-      post :retry, params: { id: 'INV-16', queue: 'action_needed' }
-
-      sidecar = retry_sidecar_for('INV-16')
-      assert_nil sidecar['bu'], 'an invented Budget Unit is worse than none'
-      assert_nil sidecar['submitter']
+      assert_redirected_to aim_invoices_path(queue: 'needs_review')
     end
 
-    test 'an AI retry keeps the rest of the metadata alongside the budget unit' do
-      create_action_needed_invoice(
-        'INV-17',
-        payload: { 'InvoiceNumber' => 'INV-170', 'BU' => '4641', 'VendorName' => 'AIRGAS USA LLC' },
-        vendor_rule: {}
-      )
+    # ---------------------------------------------------------------
+    # Actions
+    # ---------------------------------------------------------------
 
-      post :retry, params: { id: 'INV-17', queue: 'action_needed' }
+    test 'save writes the reviewed fields and notes to the row' do
+      row = invoice('4601.K', pdf: false)
 
-      sidecar = retry_sidecar_for('INV-17')
-      assert_equal 'AIRGAS USA LLC', sidecar['VendorName']
-      assert_equal 'INV-170', sidecar['InvoiceNumber']
+      act(row, 'Save Changes', invoice: { vendor_name: ' AT&T MOBILITY ', invoice_total: '1234.50',
+                                          invoice_date: '2026-06-22', notes: 'checked', document_type: 'Credit' })
+
+      assert_equal 'AT&T MOBILITY', row.vendor_name
+      assert_equal BigDecimal('1234.50'), row.invoice_total
+      assert_equal Date.new(2026, 6, 22), row.invoice_date
+      assert_equal %w[checked Credit], [row.notes, row.document_type]
+      assert_equal 'needs_review', row.state
     end
 
-    private
+    test 'send to approval moves the row and releases the claim' do
+      row = invoice('4601.L', review_reason: 'missing_fields', claimed_by: REVIEWER, claimed_at: Time.current)
 
-    # The retry folder carries a timestamp, so it is found rather than
-    # predicted. Its sidecar has to be named after the PDF beside it, because
-    # that is the only name the worker's reprocess path looks for.
-    def retry_sidecar_for(invoice_id)
-      folder_name = Dir.children(reprocess_dir).find { |name| name.start_with?("#{invoice_id}_RETRY_") }
-      assert folder_name, "no retry folder for #{invoice_id} in #{Dir.children(reprocess_dir)}"
+      act(row, 'Send to Approval')
 
-      folder_path = File.join(reprocess_dir, folder_name)
-      assert_path_exists File.join(folder_path, "#{folder_name}.pdf")
-      sidecar_path = File.join(folder_path, "#{folder_name}.json")
-      assert_path_exists sidecar_path
-
-      JSON.parse(File.read(sidecar_path))
+      assert_equal 'ready_for_approval', row.state
+      assert_nil row.review_reason
+      assert_nil row.claimed_by
+      assert_equal REVIEWER, row.events.last.actor
     end
 
-    def create_low_confidence_invoice(invoice_id, fields:)
-      folder_path = File.join(low_confidence_review_dir, invoice_id)
-      FileUtils.mkdir_p(folder_path)
-      File.write(File.join(folder_path, "#{invoice_id}.pdf"), 'pdf')
-      elements = fields.map { |name, value| %(<Field Name="#{name}">#{value}</Field>) }.join
-      File.write(File.join(folder_path, "#{invoice_id}.xml"),
-                 "<ImportSession><Doc><FieldData>#{elements}</FieldData></Doc></ImportSession>")
-      folder_path
+    test 'an invoice missing its vendor is not sent for approval, and nothing moves' do
+      row = invoice('4601.M', vendor_name: nil, pdf: false)
+
+      act(row, 'Send to Approval')
+
+      assert_equal 'needs_review', row.state
+      assert_match(/still needs a vendor name/, flash[:alert])
     end
 
-    def create_action_needed_invoice(invoice_id, payload:, vendor_rule:)
-      folder_path = File.join(action_needed_dir, invoice_id)
-      FileUtils.mkdir_p(folder_path)
-      File.write(File.join(folder_path, "#{invoice_id}.pdf"), 'pdf')
-      File.write(File.join(folder_path, "#{invoice_id}_VENDOR_RULE.json"),
-                 JSON.pretty_generate(vendor_rule))
-      File.write(File.join(folder_path, "#{invoice_id}_READY_FOR_SQL.json"),
-                 JSON.pretty_generate(payload))
-      folder_path
+    test 'approve asks the worker to export' do
+      row = invoice('4601.N', state: 'ready_for_approval', pdf: false)
+
+      act(row, 'Approve')
+
+      assert_equal %w[approved export], [row.state, row.command]
     end
 
-    def write_claim(folder_path, email, name: nil)
-      claim = { 'user' => email, 'timestamp' => Time.zone.now.to_i }
-      claim['name'] = name if name
-      File.write(claim_path(folder_path), JSON.pretty_generate(claim))
+    test 'send back returns an invoice to AIM review' do
+      row = invoice('4601.O', state: 'ready_for_approval', pdf: false)
+
+      act(row, 'Send Back', note: 'wrong PO')
+
+      assert_equal 'needs_review', row.state
+      assert_equal 'wrong PO', row.events.last.note
     end
 
-    def claim_path(folder_path)
-      File.join(folder_path, '.claim.json')
+    test 'retry ai asks the worker to extract again' do
+      row = invoice('4601.P', state: 'failed', review_reason: 'extraction_error', pdf: false)
+
+      act(row, 'Retry AI')
+
+      assert_equal %w[received extract], [row.state, row.command]
+      assert_nil row.review_reason
     end
 
-    def create_vendor_review_invoice(invoice_id, metadata:, learn_data: {})
-      folder_path = File.join(vendor_review_dir, invoice_id)
-      FileUtils.mkdir_p(folder_path)
-      File.write(File.join(folder_path, "#{invoice_id}.pdf"), 'pdf')
-      File.write(File.join(folder_path, "#{invoice_id}.json"), JSON.pretty_generate(metadata))
-      return if learn_data.empty?
+    test 'retry export asks the worker to export again' do
+      row = invoice('4601.Q', state: 'failed', pdf: false)
 
-      File.write(File.join(folder_path, "#{invoice_id}_LEARN.json"), JSON.pretty_generate(learn_data))
+      act(row, 'Retry Export')
+
+      assert_equal %w[approved export], [row.state, row.command]
     end
 
-    def vendor_review_dir
-      Aim::InvoiceDirectoryService.instance.vendor_review_dir
+    test 'a move the pipeline does not make is refused with its reason' do
+      row = invoice('4601.R', state: 'ready_for_approval', pdf: false)
+
+      act(row, 'Retry AI')
+
+      assert_equal 'ready_for_approval', row.state
+      assert_redirected_to aim_invoice_path(row.batch_id, queue: 'ready_for_approval')
+      assert_match(/cannot move from ready_for_approval to received/, flash[:alert])
     end
 
-    def ready_to_learn_dir
-      Aim::InvoiceDirectoryService.instance.ready_to_learn_dir
+    test 'reject keeps a copy for the submitter and ends the invoice' do
+      row = invoice('4601.S')
+
+      act(row, 'Reject')
+
+      assert_equal 'rejected', row.state
+      assert File.exist?(File.join(@tmpdir, '_BACK_END', '_SENT_BACK', 'Jane Doe_4601', '4601.S.pdf'))
+      assert File.exist?(row.pdf_path), 'the store keeps its copy'
     end
 
-    def action_needed_dir
-      Aim::InvoiceDirectoryService.instance.path_for('action_needed')
+    test 'delete keeps a copy and ends the invoice' do
+      row = invoice('4601.T')
+
+      act(row, 'Delete')
+
+      assert_equal 'deleted', row.state
+      assert File.exist?(File.join(@tmpdir, 'Invoices', '_GONE', '4601.T', '4601.T.pdf'))
     end
 
-    def low_confidence_review_dir
-      Aim::InvoiceDirectoryService.instance.low_confidence_review_dir
+    test 'learning an alias records it and sets the vendor before the next step' do
+      row = invoice('4601.U', review_reason: 'unknown_vendor', vendor_name: nil, extracted_vendor_name: 'AIRGAS USA LLC', pdf: false)
+
+      act(row, 'Learn & Send to Approval', normalized_vendor_new: 'Airgas')
+
+      assert_equal 'Airgas', row.vendor_name
+      assert_equal 'ready_for_approval', row.state
+      assert_equal 'Airgas', Aim::VendorAlias.find_by(extracted_name: 'AIRGAS USA LLC').normalized_name
     end
 
-    def reprocess_dir
-      Aim::InvoiceDirectoryService.instance.reprocess_dir
+    test 'unclaim releases the row' do
+      row = invoice('4601.V', claimed_by: REVIEWER, claimed_at: Time.current, pdf: false)
+
+      act(row, 'Unclaim')
+
+      assert_nil row.claimed_by
     end
 
-    def deleted_dir
-      Aim::InvoiceDirectoryService.instance.deleted_dir
+    # ---------------------------------------------------------------
+    # Splits
+    # ---------------------------------------------------------------
+
+    def split_params(*rows)
+      rows.each_with_index.to_h do |(vendor, number, pages), index|
+        [index.to_s, { vendor_name: vendor, invoice_number: number, pages_text: pages }]
+      end
+    end
+
+    test 'the split page shows the proposed invoices' do
+      row = invoice('4601.W', state: 'needs_split', pages: 3,
+                              manifest: { 'invoices' => [{ 'vendor_name' => 'ACME', 'invoice_number' => 'INV-1', 'pages' => [1, 2] },
+                                                         { 'vendor_name' => 'ACME', 'invoice_number' => 'INV-2', 'pages' => [3] }] }.to_json)
+
+      get :show, params: { id: row.batch_id, queue: 'needs_split' }
+
+      assert_response :success
+      assert_select 'input[name=?][value=?]', 'split[0][pages_text]', '1-2'
+      assert_select 'input[type=submit][value=?]', 'Approve Split'
+    end
+
+    test 'an approved split saves the manifest and asks the worker to cut' do
+      row = invoice('4601.X', state: 'needs_split', pages: 3, manifest: { 'bu' => '4601', 'invoices' => [] }.to_json)
+
+      act(row, 'Approve Split', split: split_params(%w[ACME INV-1 1], %w[ACME INV-2 2-3]))
+
+      assert_equal %w[needs_split split], [row.state, row.command]
+      assert_equal [[1], [2, 3]], row.manifest_data['invoices'].pluck('pages')
+      assert_equal '4601', row.manifest_data['bu']
+    end
+
+    test 'a split that does not make sense is refused, keeping what was typed' do
+      row = invoice('4601.Y', state: 'needs_split', pages: 3)
+
+      act(row, 'Approve Split', split: split_params(%w[ACME INV-1 1-2], %w[ACME INV-2 2-3]))
+
+      assert_response :unprocessable_content
+      assert_includes response.body, 'Page 2 is in invoices 1 and 2'
+      assert_nil row.command
+    end
+
+    test 'process as one invoice sends it back through extraction unsplit' do
+      row = invoice('4601.Z', state: 'needs_split', pdf: false)
+
+      act(row, 'Process as One Invoice')
+
+      assert_equal %w[received extract], [row.state, row.command]
+      assert_not row.split_check
     end
   end
 end
