@@ -16,7 +16,8 @@
     <section class="aim-panel aim-empty-state"><p>Nothing is waiting for you.</p></section>
   <% else %>
     <%= render 'aim/invoices/search_box' %>
-    <div data-controller="aim-move-modal">
+    <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path(queue: @queue) %>">
+        <%= render 'aim/invoices/bulk_bar' %>
       <section class="aim-panel aim-queue-panel">
         <%= render 'aim/invoices/rows', invoices: @invoices, movable: true %>
       </section>

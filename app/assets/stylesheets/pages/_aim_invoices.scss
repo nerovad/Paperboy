@@ -892,3 +892,15 @@
   display: inline-block;
   margin-left: 0.5rem;
 }
+
+// Moving several at once: a checkbox column and the Move selected bar.
+.aim-select-cell {
+  width: 2rem;
+  text-align: center;
+}
+
+.aim-bulk-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}

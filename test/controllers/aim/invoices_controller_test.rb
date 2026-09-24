@@ -525,5 +525,40 @@ module Aim
       post :claim, params: { id: row.batch_id, queue: 'ready_for_approval' }
       assert_equal employee.id, row.reload.assigned_employee_id
     end
+
+    # ---------------------------------------------------------------
+    # Moving several at once
+    # ---------------------------------------------------------------
+
+    test 'ticked invoices move together, and the queue pages offer the checkboxes' do
+      a = invoice('4601.B1', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
+                             assignment_source: 'folder')
+      b = invoice('4601.B2', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
+                             assignment_source: 'folder')
+
+      get :index, params: { queue: 'ready_for_approval' }
+      assert_select 'input[type=checkbox][data-aim-move-modal-target=check]', 2
+      assert_select 'button[data-action=?]', 'aim-move-modal#openMany'
+
+      patch :reassign_many, params: { queue: 'ready_for_approval', ids: [a.batch_id, b.batch_id], destination: 'shared' }
+
+      assert_match(/Moved 2 invoices/, flash[:notice])
+      assert_nil a.reload.assigned_employee_id
+      assert_nil b.reload.assigned_employee_id
+    end
+
+    test 'a bulk move skips what you could not move one by one' do
+      mine = invoice('4601.B3', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
+                                assignment_source: 'folder')
+      theirs = invoice('4601.B4', state: 'ready_for_approval', pdf: false, assigned_to: 'Sam Lee', assigned_employee_id: 8,
+                                  assignment_source: 'folder')
+      as_owner_not_staff
+
+      patch :reassign_many, params: { queue: 'ready_for_approval', ids: [mine.batch_id, theirs.batch_id], destination: 'shared' }
+
+      assert_match(/Moved 1 invoice\. 1 invoice could not be moved by you/, flash[:notice])
+      assert_nil mine.reload.assigned_employee_id
+      assert_equal 8, theirs.reload.assigned_employee_id
+    end
   end
 end

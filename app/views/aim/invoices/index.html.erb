@@ -28,7 +28,8 @@
   <% else %>
     <% if @groups %>
       <%# People's queues, and one shared queue per BU: collapsed until opened. %>
-      <div data-controller="aim-move-modal">
+      <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path(queue: @queue) %>">
+        <%= render 'aim/invoices/bulk_bar' %>
         <%= render 'owner_groups', groups: @groups.map { |(_, name), invoices| [name, invoices] }, movable: true %>
         <%= render 'move_modal' %>
       </div>

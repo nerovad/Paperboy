@@ -12,6 +12,7 @@
           the session's token rather than one bound to this placeholder URL. %>
       <%= form_with url: '#', method: :patch, authenticity_token: form_authenticity_token,
                     data: { aim_move_modal_target: 'form', turbo: false } do |form| %>
+        <div data-aim-move-modal-target="ids"></div>
         <fieldset class="form-group aim-owner-choice">
           <legend>Move to</legend>
           <label><%= radio_button_tag :destination, 'person', true %> A person</label>

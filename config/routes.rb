@@ -124,6 +124,9 @@ Rails.application.routes.draw do
     get 'dashboard', to: 'dashboard#index', as: :dashboard
 
     resources :invoices, only: %i[index show update], constraints: { id: %r{[^/]+} } do
+      collection do
+        patch :reassign_many
+      end
       member do
         get :pdf
         patch :reassign

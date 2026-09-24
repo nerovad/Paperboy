@@ -8,6 +8,7 @@ module Aim
     include Aim::InvoiceActions
     include Aim::InvoiceAccess
     include Aim::InvoiceLocking
+    include Aim::InvoiceBulkMoves
 
     before_action :require_aim_admin, only: :index
     before_action :set_queue

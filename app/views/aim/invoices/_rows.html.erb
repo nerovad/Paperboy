@@ -1,9 +1,14 @@
-<%# One queue table. With `movable`, each row offers Move to: another person's
-    queue of the same BU, or the shared queue (Ready for Approval). %>
+<%# One queue table. With `movable`, each row has a checkbox for moving
+    several at once and its own Move button (aim_move_modal_controller). %>
 <% viewer = session.dig(:user, 'email') || session.dig('user', 'email') %>
 <table class="submission-table aim-queue-table aim-queue-table--review">
   <thead>
     <tr>
+      <% if movable %>
+        <th class="aim-select-cell">
+          <input type="checkbox" aria-label="Select all shown" data-action="aim-move-modal#selectAll">
+        </th>
+      <% end %>
       <th>Action</th>
       <th>Vendor</th>
       <th>Invoice #</th>
@@ -28,6 +33,12 @@
                    invoice.batch_id].compact.join(' ') %>
       <tr class="<%= 'is-locked' if locked %>" title="<%= invoice.batch_id %>"
           data-aim-queue-filter-target="row" data-search="<%= search %>">
+        <% if movable %>
+          <td class="aim-select-cell">
+            <input type="checkbox" value="<%= invoice.batch_id %>" aria-label="Select <%= invoice.invoice_number.presence || invoice.batch_id %>"
+                   data-aim-move-modal-target="check" data-action="aim-move-modal#count">
+          </td>
+        <% end %>
         <td class="action-buttons">
           <% if locked || invoice.terminal? %>
             <%= link_to 'View', aim_invoice_path(invoice.batch_id, queue: @queue),
