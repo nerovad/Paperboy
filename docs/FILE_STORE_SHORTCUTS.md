@@ -75,6 +75,20 @@ messages must never expose passwords.
 
 ## TODO
 
+### DataRunner download-stage refactor
+
+The remaining download-stage work is intentionally split at the child-process
+boundary:
+
+1. Add a download-store adapter that maps the configured download and backup
+   stages to local stores or one shortcut-backed store.
+2. Route manual, copy, HTTP, and backup operations through that adapter.
+3. Materialize shortcut-backed inputs into a temporary local workspace for
+   `script` and `replicate` strategies.
+4. Publish child-process outputs back to the configured store and clean up the
+   workspace on success, failure, and interruption.
+5. Add strategy-specific tests, then rerun the full SQL Server test suite.
+
 - [x] Inspect the `~/gitea/smb_shortcut` source repository.
 - [x] Put the shared abstraction in Paperboy and extend `smb_shortcut` with
       the SMB-specific operations it needs.
