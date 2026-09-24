@@ -87,6 +87,8 @@ messages must never expose passwords.
       locations, including shortcut paths, to orchestration.
 - [x] Route DataRunner queue discovery, marker timestamps, and duplicate
       archive checks through the shared file-store abstraction.
+- [x] Update the OMS preprocess and postprocess scripts to materialize input,
+      publish output, and archive/remove files through the shared store.
 - [ ] Convert remaining DataRunner path consumers and generated DSL locations
       as needed.
 - [x] Convert the P2M backfill/scan script's staging and processed-directory

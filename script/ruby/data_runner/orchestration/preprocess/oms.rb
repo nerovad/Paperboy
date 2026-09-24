@@ -7,6 +7,7 @@ require 'fileutils'
 require 'pathname'
 require 'tempfile'
 require 'time'
+require_relative '../../../../../lib/paperboy/file_store'
 
 # Assemble the files exported by OMS into one consistently named set per
 # eight- or nine-digit OMS number selected by a Mail.dat marker.
@@ -36,10 +37,11 @@ TSV_OPTIONS = { col_sep: "\t", encoding: 'UTF-16LE:UTF-8', liberal_parsing: true
 def paths
   raise "usage: #{$PROGRAM_NAME} SENT_PATH OUTPUT_PATH" unless ARGV.length == 2
 
-  ARGV.map { |value| Pathname.new(value).expand_path }
+  sent_path, output_path = ARGV
+  [Paperboy::FileStore.for(sent_path), Paperboy::FileStore.for(output_path)]
 end
 
-def selected_oms_number(sent_dir)
+def selected_marker_name(sent_dir)
   target = ENV.fetch('DATARUNNER_QUEUE_OMS', nil)
   marker = sent_dir.children.select(&:file?).sort.find do |path|
     match = path.basename.to_s.match(MARKER_PATTERN)
@@ -47,7 +49,11 @@ def selected_oms_number(sent_dir)
   end
   raise "no Mail.dat OMS marker found in #{sent_dir}" unless marker
 
-  marker.basename.to_s.match(MARKER_PATTERN)[1]
+  marker.basename.to_s
+end
+
+def selected_oms_number(sent_dir)
+  selected_marker_name(sent_dir).match(MARKER_PATTERN)[1]
 end
 
 def classified_inputs(dir, selected_number)
@@ -192,27 +198,49 @@ def build_outputs(output_dir, grouped_inputs, mail_date)
 end
 
 def main
-  sent_dir, output_dir = paths
-  raise "sent directory not found: #{sent_dir}" unless sent_dir.directory?
+  sent_store, output_store = paths
+  raise "sent directory not found: #{sent_store.path}" unless sent_store.directory?
 
-  oms_number = selected_oms_number(sent_dir)
-  marker = sent_dir.children.find { |path| path.basename.to_s.match?(MARKER_PATTERN) }
-  mail_date = marker.mtime.to_date.iso8601
-  grouped_inputs = classified_inputs(sent_dir, oms_number)
-  raise "no OMS input files found for #{oms_number} in #{sent_dir}" if grouped_inputs.empty?
+  with_materialized_store(sent_store) do |sent_dir|
+    marker_name = selected_marker_name(sent_dir)
+    oms_number = marker_name.match(MARKER_PATTERN)[1]
+    mail_date = sent_store.mtime(marker_name).to_date.iso8601
+    grouped_inputs = classified_inputs(sent_dir, oms_number)
+    raise "no OMS input files found for #{oms_number} in #{sent_dir}" if grouped_inputs.empty?
 
-  inputs = grouped_inputs.fetch(oms_number)
-  missing = inputs.select { |_type, files| files.empty? }.keys
-  raise "#{oms_number} is incomplete: missing #{missing.join(', ')}" if missing.any?
+    inputs = grouped_inputs.fetch(oms_number)
+    missing = inputs.select { |_type, files| files.empty? }.keys
+    raise "#{oms_number} is incomplete: missing #{missing.join(', ')}" if missing.any?
 
-  validate_single_inputs!(oms_number, inputs)
-  validate_dataset!(oms_number, inputs)
+    validate_single_inputs!(oms_number, inputs)
+    validate_dataset!(oms_number, inputs)
 
-  OUTPUT_FILES.each { |name| FileUtils.rm_f(output_dir.join(name)) }
-  written = build_outputs(output_dir, grouped_inputs, mail_date)
-  written.each do |output, inputs|
-    names = inputs.map { |path| path.basename.to_s }.join(', ')
-    puts "[OK] #{names} -> #{output}"
+    Dir.mktmpdir('paperboy-orchestration-output') do |directory|
+      output_dir = Pathname.new(directory)
+      output_store.mkdir
+      OUTPUT_FILES.each { |name| output_store.remove(name) }
+      written = build_outputs(output_dir, grouped_inputs, mail_date)
+      written.each do |output, inputs|
+        output_store.copy(output, output.basename.to_s)
+        names = inputs.map { |path| path.basename.to_s }.join(', ')
+        puts "[OK] #{names} -> #{output_store.path.join(output.basename)}"
+      end
+    end
+  end
+end
+
+def with_materialized_store(store)
+  Dir.mktmpdir('paperboy-orchestration') do |directory|
+    materialized = Pathname.new(directory)
+    store.entries.each do |entry|
+      next if entry.fetch(:directory)
+
+      source = store.download(entry.fetch(:name))
+      target = materialized.join(entry.fetch(:name))
+      FileUtils.cp(source, target)
+      FileUtils.rm_f(source) if source.to_s.start_with?('/tmp/paperboy-smb-file-')
+    end
+    yield materialized
   end
 end
 
