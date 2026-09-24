@@ -402,7 +402,8 @@ module Aim
       assert_select 'section.aim-owner-group', 2
       assert_select 'section.aim-owner-group button[aria-expanded=false]', 2, 'the groups start collapsed'
       assert_select 'section.aim-owner-group .aim-count-pill', text: '2 invoices'
-      assert_select 'button.aim-move-button', 3
+      assert_select 'input[type=checkbox][data-aim-move-modal-target=check]', 3
+      assert_select 'button.aim-move-button', 0, 'one way to move: tick, then Move selected'
       assert_select '[data-controller=aim-person-search] input[type=hidden][name=owner]'
     end
 
