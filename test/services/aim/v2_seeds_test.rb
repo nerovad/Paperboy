@@ -86,5 +86,19 @@ module Aim
       assert_equal(%w[deleted exported received], [old, done, fresh].map { |i| i.reload.state })
       assert_equal 'staff@example.com', old.events.last.actor
     end
+
+    test 'finished rows from before the cutover are purged with their events; open rows stay' do
+      gone = Aim::Invoice.create!(batch_id: '4641.H', state: 'exported', actor: 'test')
+      open = Aim::Invoice.create!(batch_id: '4641.I', state: 'needs_review', actor: 'test')
+      Aim::Invoice.where(id: [gone.id, open.id]).update_all(created_at: 2.days.ago)
+      fresh = Aim::Invoice.create!(batch_id: '4641.J', state: 'deleted', actor: 'test')
+
+      assert_equal [1, 1], Aim::V2Seeds.purge_before(1.day.ago)
+
+      assert_nil Aim::Invoice.find_by(id: gone.id)
+      assert_empty Aim::InvoiceEvent.where(invoice_id: gone.id)
+      assert Aim::Invoice.exists?(open.id)
+      assert Aim::Invoice.exists?(fresh.id)
+    end
   end
 end

@@ -110,6 +110,15 @@ module Aim
       closed
     end
 
+    # Test data from before the cutover goes altogether: finished rows created
+    # before `before`, with their events. An open row is never purged.
+    def purge_before(before)
+      rows = Aim::Invoice.where(created_at: ...before).where(state: Aim::Invoice::TERMINAL_STATES)
+      ids = rows.pluck(:id)
+      events = Aim::InvoiceEvent.where(invoice_id: ids).delete_all
+      [rows.delete_all, events]
+    end
+
     def pdf_in(folder)
       return unless File.directory?(folder)
 

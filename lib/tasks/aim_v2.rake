@@ -38,5 +38,12 @@ namespace :aim do
       closed = Aim::V2Seeds.clear_v1_leftovers(before, actor: ENV.fetch('ACTOR'))
       puts "closed #{closed} rows created before #{before}"
     end
+
+    desc 'Purge finished rows created before BEFORE=<time>, with their events'
+    task purge_before: :environment do
+      before = Time.zone.parse(ENV.fetch('BEFORE'))
+      rows, events = Aim::V2Seeds.purge_before(before)
+      puts "purged #{rows} finished rows and #{events} events created before #{before}"
+    end
   end
 end
