@@ -824,6 +824,18 @@
   max-width: 32rem;
 }
 
+// The page and panel must not clip the person picker's dropdown.
+.aim-upload-page,
+.aim-upload-panel,
+.aim-upload-panel .aim-fields,
+.aim-upload-panel .aim-owner-choice {
+  overflow: visible;
+}
+
 .aim-upload-panel {
   max-width: 56rem;
+}
+
+.aim-owner-choice > label {
+  white-space: nowrap;
 }
