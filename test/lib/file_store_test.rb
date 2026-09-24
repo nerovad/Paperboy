@@ -4,7 +4,7 @@ require 'minitest/autorun'
 require 'tmpdir'
 require_relative '../../lib/paperboy/file_store'
 
-class FileStoreTest < Minitest::Test
+class FileStoreTest < Minitest::Test # rubocop:disable Metrics/ClassLength
   def test_local_store_copies_and_removes_files
     Dir.mktmpdir do |directory|
       root = Pathname.new(directory).join('destination')
@@ -105,6 +105,22 @@ class FileStoreTest < Minitest::Test
     end
   end
 
+  def test_failed_shortcut_download_removes_temporary_file
+    Dir.mktmpdir do |directory|
+      shortcut_path = Pathname.new(directory).join('outputs.lnk').tap { |path| path.write('shortcut') }
+      share = FailingDownloadShare.new
+      store = Paperboy::FileStore.for(
+        shortcut_path,
+        env: { 'SMB_USERNAME' => 'user', 'SMB_PASSWORD' => 'password' },
+        shortcut_class: NestedFakeShortcut,
+        share_class: ->(**_options) { share }
+      )
+
+      assert_raises(StandardError) { store.download('finished.pdf') }
+      refute_path_exists share.path
+    end
+  end
+
   class FakeShortcut
     def initialize(_path); end
 
@@ -165,4 +181,13 @@ class FileStoreTest < Minitest::Test
       ['finished.pdf']
     end
   end
-end
+
+  class FailingDownloadShare
+    attr_reader :path
+
+    def get(_remote, path)
+      @path = path
+      raise StandardError, 'download failed'
+    end
+  end
+end # rubocop:enable Metrics/ClassLength

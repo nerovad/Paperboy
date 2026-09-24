@@ -207,6 +207,9 @@ module Paperboy
         temporary.close
         share.get(remote_name(name), temporary.path)
         Pathname.new(temporary.path)
+      rescue StandardError
+        FileUtils.rm_f(temporary.path) if temporary
+        raise
       end
 
       def with_download(name)
