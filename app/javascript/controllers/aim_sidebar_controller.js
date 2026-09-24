@@ -1,41 +1,54 @@
 import { Controller } from "@hotwired/stimulus"
 
-// AIM's sidebar groups are all open unless you close one. A group you close
-// stays closed as you move between AIM pages, and the AIM main page opens
-// them all again. Kept per browser tab (sessionStorage); if storage is not
-// available the groups simply stay open.
-const KEY = "aim-sidebar-closed"
+// AIM's sidebar groups. AIM is open by default and the others closed; the
+// group holding the current page is always open. A group you open or close
+// yourself stays that way as you move between AIM pages, and the AIM main
+// page puts them all back to the defaults. Kept per browser tab
+// (sessionStorage); without storage, the defaults simply apply.
+const KEY = "aim-sidebar-groups"
 
 export default class extends Controller {
   static targets = ["group"]
   static values = { reset: Boolean }
 
   connect() {
-    if (this.resetValue) this.save([])
-    const closed = this.load()
+    if (this.resetValue) this.save({})
+    const chosen = this.load()
     this.groupTargets.forEach((group) => {
-      group.open = !closed.includes(group.dataset.key)
-      group.addEventListener("toggle", () => this.remember())
+      const key = group.dataset.key
+      if (group.dataset.current === "true") {
+        group.open = true
+      } else if (key in chosen) {
+        group.open = chosen[key]
+      } else {
+        group.open = group.dataset.defaultOpen === "true"
+      }
+      group.addEventListener("toggle", () => this.remember(group))
     })
   }
 
-  remember() {
-    this.save(this.groupTargets.filter((group) => !group.open).map((group) => group.dataset.key))
+  remember(group) {
+    // The current page's group is always open, so opening it is no choice.
+    if (group.dataset.current === "true") return
+    const chosen = this.load()
+    chosen[group.dataset.key] = group.open
+    this.save(chosen)
   }
 
   load() {
     try {
-      return JSON.parse(sessionStorage.getItem(KEY) || "[]")
+      const value = JSON.parse(sessionStorage.getItem(KEY) || "{}")
+      return value && typeof value === "object" && !Array.isArray(value) ? value : {}
     } catch {
-      return []
+      return {}
     }
   }
 
-  save(keys) {
+  save(chosen) {
     try {
-      sessionStorage.setItem(KEY, JSON.stringify(keys))
+      sessionStorage.setItem(KEY, JSON.stringify(chosen))
     } catch {
-      // Storage refused (private mode, blocked): the groups just stay open.
+      // Storage refused (private mode, blocked): the defaults apply.
     }
   }
 }
