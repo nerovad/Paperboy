@@ -111,6 +111,8 @@ boundary:
       the shared store, including shortcut-backed output roots.
 - [x] Route orchestration child-input staging through the resolved download
       stage store.
+- [x] Route the USPS download helper's output write through the download
+      store adapter.
 - [x] Confirm batch shipping-station moves reuse the FileStore-backed per-OMS
       endpoint with bounded concurrency and individual failure reporting.
 - [x] Centralize temporary remote-download cleanup behind the shared store.
