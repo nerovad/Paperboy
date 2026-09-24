@@ -3,6 +3,9 @@
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 require 'rails/test_help'
+
+Rails.application.routes.default_url_options[:host] = 'www.example.com'
+
 require 'minitest/mock'
 require_relative 'support/isolated_dsl_catalog'
 require_relative 'support/dam/fake_catalog'
