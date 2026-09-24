@@ -25,9 +25,10 @@
     </section>
   <% else %>
     <% if @groups %>
-      <%# People's queues: one group per owner, opened by default, with the count in the heading. %>
+      <%# People's queues: one group per owner, collapsed until opened, with the count in the heading. %>
+      <div data-controller="aim-move-modal">
       <% @groups.each do |owner, invoices| %>
-        <details class="aim-owner-group" open>
+        <details class="aim-owner-group">
           <summary>
             <span class="aim-owner-group__name"><%= owner == Aim::Invoice::SHARED_QUEUE ? 'Shared queue' : owner %></span>
             <span class="aim-count-pill"><%= pluralize(invoices.size, 'invoice') %></span>
@@ -37,6 +38,8 @@
           </section>
         </details>
       <% end %>
+      <%= render 'move_modal', choices: @move_choices %>
+      </div>
     <% else %>
       <section class="aim-panel aim-queue-panel">
         <%= render 'rows', invoices: @invoices, movable: false %>

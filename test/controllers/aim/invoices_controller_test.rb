@@ -326,13 +326,15 @@ module Aim
       invoice('4601.O2', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assignment_source: 'folder')
       invoice('4601.O3', state: 'ready_for_approval', pdf: false)
 
-      get :index, params: { queue: 'ready_for_approval' }
+      Aim::Users.stub(:names, []) { get :index, params: { queue: 'ready_for_approval' } }
 
       assert_response :success
       assert_equal ['Jane Doe', 'SHARED'], @controller.instance_variable_get(:@groups).map(&:first)
-      assert_select 'details.aim-owner-group', 2
+      assert_select 'details.aim-owner-group:not([open])', 2, 'the groups start collapsed'
       assert_select 'details.aim-owner-group:first-of-type summary', /Jane Doe.*2 invoices/m
-      assert_select 'form.aim-move-form', 3
+      assert_select 'button.aim-move-button', 3
+      assert_equal ['Jane Doe', 'SHARED'], @controller.instance_variable_get(:@move_choices)
+      assert_select 'form[data-aim-move-modal-target=form] select[name=owner] option:not([value=""])', 2
     end
 
     test 'the move-to choices are the person folders of the BU, current holders, and shared' do
@@ -341,10 +343,11 @@ module Aim
       File.write(File.join(@tmpdir, 'Invoices', '4601', 'README.txt'), 'not a person')
       invoice('4601.O4', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assignment_source: 'folder')
 
-      get :index, params: { queue: 'ready_for_approval' }
+      Aim::Users.stub(:names, ['Ana Ruiz', 'jane doe']) { get :index, params: { queue: 'ready_for_approval' } }
 
-      assert_equal({ '4601' => ['Jane Doe', 'Sam Lee', 'SHARED'] }, @controller.instance_variable_get(:@owner_choices))
-      assert_select 'form.aim-move-form select option', 2, "the invoice's own queue is not offered"
+      assert_equal({ '4601' => ['Ana Ruiz', 'Jane Doe', 'Sam Lee', 'SHARED'] },
+                   @controller.instance_variable_get(:@owner_choices), 'AIM users, folders, holders, shared; no duplicates')
+      assert_equal ['Ana Ruiz', 'Jane Doe', 'Sam Lee', 'SHARED'], @controller.instance_variable_get(:@move_choices)
     end
 
     test 'moving an invoice to another queue records it and returns to the queue' do

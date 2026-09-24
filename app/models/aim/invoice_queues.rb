@@ -46,9 +46,12 @@ module Aim
       # under the BU in the drop tree, anyone already holding one of its
       # invoices, and SHARED. A drop tree that cannot be read just shortens
       # the list.
-      def queue_owners_for(budget_unit)
+      def queue_owners_for(budget_unit, extra: [])
         from_rows = where(budget_unit: budget_unit).where.not(assigned_to: [nil, '']).distinct.pluck(:assigned_to)
-        names = (folder_owners_for(budget_unit) + from_rows + [Aim::Invoice::SHARED_QUEUE]).map(&:squish).compact_blank
+        # Folders and holders first, so a name already on an invoice keeps its
+        # spelling when the same person is also listed among the AIM users.
+        names = (folder_owners_for(budget_unit) + from_rows + Array(extra) + [Aim::Invoice::SHARED_QUEUE])
+                .map(&:squish).compact_blank
         names.uniq(&:downcase).sort_by { |name| [name == Aim::Invoice::SHARED_QUEUE ? 1 : 0, name.downcase] }
       end
 

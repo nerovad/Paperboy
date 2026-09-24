@@ -7,12 +7,20 @@
   </header>
 
   <section class="aim-panel aim-upload-panel">
-    <%= form_with url: aim_uploads_path, method: :post, multipart: true, local: true, class: 'aim-upload-form' do |form| %>
+    <%= form_with url: aim_uploads_path, method: :post, multipart: true, local: true, class: 'aim-upload-form',
+                  data: { controller: 'aim-dropzone' } do |form| %>
       <div class="aim-fields">
         <div class="aim-field-row">
           <div class="aim-field">
             <%= form.label :files, 'PDF files' %>
-            <%= form.file_field :files, multiple: true, accept: 'application/pdf,.pdf', required: true %>
+            <%# Drop files here, or click to choose. Dropped files land in the input below. %>
+            <div class="aim-dropzone" data-aim-dropzone-target="zone"
+                 data-action="dragover->aim-dropzone#over dragenter->aim-dropzone#over dragleave->aim-dropzone#leave drop->aim-dropzone#drop click->aim-dropzone#choose">
+              <p class="aim-dropzone__hint">Drag PDFs here, or</p>
+              <%= form.file_field :files, multiple: true, accept: 'application/pdf,.pdf', required: true,
+                                          data: { aim_dropzone_target: 'input', action: 'change->aim-dropzone#list' } %>
+              <ul class="aim-dropzone__list" data-aim-dropzone-target="list" aria-live="polite"></ul>
+            </div>
           </div>
         </div>
 
@@ -24,12 +32,16 @@
           </div>
         </div>
 
-        <fieldset class="aim-field">
+        <fieldset class="aim-field aim-owner-choice">
           <legend>Whose queue</legend>
           <label><%= radio_button_tag :owner, 'self', true %> Mine</label>
           <label><%= radio_button_tag :owner, 'shared' %> The budget unit's shared queue</label>
           <label><%= radio_button_tag :owner, 'person' %> Someone else:</label>
-          <%= text_field_tag :owner_name, nil, placeholder: 'Their name as on their folder', autocomplete: 'off' %>
+          <div class="aim-owner-picker" data-controller="choices">
+            <%= select_tag :owner_name, options_for_select(@aim_users), include_blank: 'Type a name…',
+                                        data: { choices_target: 'select', placeholder: 'Type a name…' },
+                                        aria: { label: 'Whose queue' } %>
+          </div>
         </fieldset>
       </div>
 

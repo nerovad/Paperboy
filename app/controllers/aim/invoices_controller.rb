@@ -108,7 +108,12 @@ module Aim
     def group_by_owner
       @groups = @invoices.group_by(&:queue_owner)
                          .sort_by { |owner, _| [owner == Aim::Invoice::SHARED_QUEUE ? 1 : 0, owner.downcase] }
-      @owner_choices = @invoices.map(&:budget_unit).uniq.to_h { |bu| [bu, Aim::Invoice.queue_owners_for(bu)] }
+      users = Aim::Users.names
+      @owner_choices = @invoices.map(&:budget_unit).uniq.to_h do |bu|
+        [bu, Aim::Invoice.queue_owners_for(bu, extra: users)]
+      end
+      @move_choices = @owner_choices.values.flatten.uniq(&:downcase)
+                                    .sort_by { |name| [name == Aim::Invoice::SHARED_QUEUE ? 1 : 0, name.downcase] }
     end
 
     # The store, then the invoice's folder, then its PDF, and nothing from the

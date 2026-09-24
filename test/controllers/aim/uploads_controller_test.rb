@@ -96,5 +96,13 @@ module Aim
       assert_match(/could not be stored/, flash[:alert])
       assert_equal 0, Aim::Invoice.count
     end
+
+    test 'someone else is chosen from the people who work AIM' do
+      Aim::Users.stub(:names, ['Dana Reyes', 'Sam Lee']) { get :new }
+
+      assert_select 'select[name=owner_name] option[value=?]', 'Dana Reyes'
+      assert_select 'select[name=owner_name] option[value=?]', 'Sam Lee'
+      assert_select '[data-controller=aim-dropzone] input[type=file][multiple]'
+    end
   end
 end

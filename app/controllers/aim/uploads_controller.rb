@@ -10,6 +10,7 @@ module Aim
 
     def new
       @budget_unit = current_user_unit
+      @aim_users = Aim::Users.names
     end
 
     def create

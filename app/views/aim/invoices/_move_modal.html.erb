@@ -1,0 +1,26 @@
+<%# The Move dialog for a queue page: one modal, opened for the invoice whose
+    Move button was pressed (aim_move_modal_controller sets the form's action
+    and title). `choices` lists every queue an invoice may go to. %>
+<div class="pb-modal-backdrop" data-aim-move-modal-target="backdrop" hidden>
+  <div class="pb-modal" role="dialog" aria-modal="true" aria-labelledby="aim-move-title">
+    <div class="pb-modal__header">
+      <h3 id="aim-move-title" data-aim-move-modal-target="title">Move invoice</h3>
+      <button type="button" class="pb-modal__close" data-action="aim-move-modal#close" aria-label="Close">✕</button>
+    </div>
+    <div class="pb-modal__body">
+      <%= form_with url: '#', method: :patch, data: { aim_move_modal_target: 'form', turbo: false } do |form| %>
+        <div class="form-group" data-controller="choices">
+          <%= form.label :owner, 'Move to' %>
+          <%= form.select :owner,
+                          options_for_select(choices.map { |name| [name == Aim::Invoice::SHARED_QUEUE ? 'The shared queue' : name, name] }),
+                          {}, class: 'form-control', required: true,
+                              data: { choices_target: 'select', placeholder: 'Type a name…', aim_move_modal_target: 'owner' } %>
+        </div>
+        <div class="pb-modal__actions">
+          <button type="button" class="btn" data-action="aim-move-modal#close">Cancel</button>
+          <button type="submit" class="btn reassign">Move</button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

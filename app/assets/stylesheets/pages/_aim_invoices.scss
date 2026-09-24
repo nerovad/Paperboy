@@ -768,13 +768,42 @@
   font-size: 1.05rem;
 }
 
-// The Move-to control on a queue row: the select and its button side by side.
-.aim-move-form {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+// The upload form's drop area. Dropped files land in the file input inside it.
+.aim-dropzone {
+  border: 2px dashed $neutral-border-subtle;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  background: $surface-panel;
 }
 
-.aim-move-form select {
-  max-width: 12rem;
+.aim-dropzone.is-over {
+  border-style: solid;
+  background: $surface-subtle;
+}
+
+.aim-dropzone__hint {
+  margin: 0 0 0.5rem;
+  color: $text-muted;
+}
+
+.aim-dropzone__list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  text-align: left;
+}
+
+.aim-dropzone__refused {
+  color: $error-text;
+}
+
+.aim-owner-choice label {
+  margin-right: 1rem;
+}
+
+.aim-owner-picker {
+  margin-top: 0.5rem;
+  max-width: 28rem;
 }
