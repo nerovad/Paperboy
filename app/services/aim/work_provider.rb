@@ -45,14 +45,14 @@ module Aim
         source_id: invoice.batch_id,
         reference: invoice.invoice_number.presence || invoice.batch_id,
         title: Aim::Invoice::QUEUES.dig(queue, :label) || queue.humanize,
-        assignee_employee_id: invoice.claimed_by,
+        assignee_employee_id: invoice.assigned_employee_id,
         status: invoice.state,
         status_category: queue == 'ready_for_approval' ? :in_review : :pending,
         created_at: invoice.created_at,
         updated_at: invoice.updated_at,
         path: "/aim/invoices/#{ERB::Util.url_encode(invoice.batch_id)}?queue=#{queue}",
-        actions: invoice.claimed_by.present? ? %i[open release] : %i[open claim],
-        metadata: { queue: queue, claimed_by: invoice.claimed_by, vendor_name: invoice.vendor_name,
+        actions: invoice.lock_fresh? ? %i[open release] : %i[open claim],
+        metadata: { queue: queue, claimed_by: (invoice.claimed_by if invoice.lock_fresh?), vendor_name: invoice.vendor_name,
                     budget_unit: invoice.budget_unit, assigned_to: invoice.assigned_to },
         source: invoice
       )

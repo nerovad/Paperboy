@@ -33,7 +33,7 @@
             <%= link_to 'View', aim_invoice_path(invoice.batch_id, queue: @queue),
                         data: { turbo: false }, class: 'btn secondary compact' %>
           <% else %>
-            <%= link_to invoice.held_by?(viewer) ? 'Resume Review' : 'Review Invoice',
+            <%= link_to invoice.held_by?(viewer) ? 'Resume Review' : 'Open',
                         aim_invoice_path(invoice.batch_id, queue: @queue),
                         data: { turbo: false }, class: 'btn approve compact' %>
           <% end %>

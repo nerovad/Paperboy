@@ -127,6 +127,9 @@ Rails.application.routes.draw do
       member do
         get :pdf
         patch :reassign
+        patch :lock
+        post :unlock
+        post :claim
       end
     end
     get 'my_queue', to: 'my_queue#index', as: :my_queue

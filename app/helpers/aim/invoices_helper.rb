@@ -115,8 +115,8 @@ module Aim
     end
 
     def aim_status_badge(invoice, current_user_email)
-      return ['is-in-review', 'Claimed by You'] if invoice.held_by?(current_user_email)
-      return ['is-in-review', "Claimed by #{aim_claimant_label(invoice)}"] if invoice.claimed_by.present?
+      return ['is-in-review', 'Open by you'] if invoice.held_by?(current_user_email)
+      return ['is-in-review', "Open by #{aim_claimant_label(invoice)}"] if invoice.claimed_by_other?(current_user_email)
       return ['is-denied', aim_review_reason_label(invoice.review_reason)] if invoice.review_reason.present?
 
       ['is-approved', aim_state_label(invoice.state)]

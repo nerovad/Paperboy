@@ -7,15 +7,16 @@ module Aim
   class InvoicesController < BaseController
     include Aim::InvoiceActions
     include Aim::InvoiceAccess
+    include Aim::InvoiceLocking
 
     before_action :require_aim_admin, only: :index
     before_action :set_queue
-    before_action :set_invoice, only: %i[show update pdf reassign]
-    before_action :require_staff_or_owner, only: %i[show update pdf reassign]
+    before_action :set_invoice, only: %i[show update pdf reassign lock unlock claim]
+    before_action :require_staff_or_owner, only: %i[show update pdf reassign lock unlock claim]
     # Everything #update does changes the invoice, so it needs the claim. The
     # queue list already offers a second reviewer nothing but View Only; this
     # is what makes that true of a posted form as well.
-    before_action :require_own_claim, only: :update
+    before_action :require_editor, only: :update
 
     def index
       @review_reason = params[:review_reason].presence if @queue == 'needs_review'
@@ -86,19 +87,15 @@ module Aim
       redirect_to aim_invoices_path(queue: @queue), alert: 'Invoice not found.'
     end
 
-    def require_own_claim
-      return unless @invoice.claimed_by_other?(current_user_email)
-
-      redirect_to aim_invoices_path(queue: @queue),
-                  alert: "#{helpers.aim_claimant_label(@invoice)} has this invoice claimed, so it is view only."
-    end
-
-    # Opening a review page claims the invoice, unless someone else holds it.
-    # A finished invoice is shown as it is, and never claimed.
+    # Opening a review page takes the working lock only when you may work the
+    # invoice and nobody else is in it; otherwise it is read only. Looking
+    # never locks anything.
     def prepare_review
       @claimed_by_other = @invoice.claimed_by_other?(current_user_email)
-      @invoice.claim!(current_user_email, name: current_user_name) unless @claimed_by_other || @invoice.terminal?
-      @read_only = @claimed_by_other || @invoice.terminal?
+      @editor = editor?
+      @invoice.claim!(current_user_email, name: current_user_name) if @editor && !@claimed_by_other
+      @read_only = !@editor || @claimed_by_other
+      @claimable = claimable?
       @claim_holder = helpers.aim_claimant_label(@invoice)
       @pdf_present = pdf_present?
       @events = @invoice.events.to_a

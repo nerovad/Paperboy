@@ -54,16 +54,22 @@ module Aim
       assert_equal 'Someone', aim_claimant_label(invoice)
     end
 
-    test 'badges an invoice claimed by someone else with their name' do
-      row = invoice(claimed_by: 'ryan.hill@vcgsa.org', claimed_by_name: 'Ryan Hill')
+    test 'badges an invoice someone else has open with their name' do
+      row = invoice(claimed_by: 'ryan.hill@vcgsa.org', claimed_by_name: 'Ryan Hill', claimed_at: Time.current)
 
-      assert_equal ['is-in-review', 'Claimed by Ryan Hill'], aim_status_badge(row, 'me@vcgsa.org')
+      assert_equal ['is-in-review', 'Open by Ryan Hill'], aim_status_badge(row, 'me@vcgsa.org')
     end
 
-    test 'badges the current user as the claimant' do
-      row = invoice(claimed_by: 'me@vcgsa.org')
+    test 'badges an invoice the current user has open' do
+      row = invoice(claimed_by: 'me@vcgsa.org', claimed_at: Time.current)
 
-      assert_equal ['is-in-review', 'Claimed by You'], aim_status_badge(row, 'me@vcgsa.org')
+      assert_equal ['is-in-review', 'Open by you'], aim_status_badge(row, 'me@vcgsa.org')
+    end
+
+    test 'a lapsed lock is no badge' do
+      row = invoice(claimed_by: 'ryan.hill@vcgsa.org', claimed_at: 10.minutes.ago, review_reason: 'unknown_vendor')
+
+      assert_equal ['is-denied', 'Unknown vendor'], aim_status_badge(row, 'me@vcgsa.org')
     end
 
     test 'badges an unclaimed invoice with why it needs a person, or its state' do

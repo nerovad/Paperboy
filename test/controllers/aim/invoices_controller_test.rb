@@ -108,12 +108,60 @@ module Aim
       get :show, params: { id: row.batch_id, queue: 'needs_review' }
 
       assert_response :success
-      assert_includes response.body, 'Dana Reyes claimed this invoice'
+      assert_includes response.body, 'Dana Reyes is working on this invoice right now'
       assert_select 'input[type=submit][value=?]', 'Send to Approval', count: 0
+      assert_select '[data-controller~=aim-presence]', 0, 'a reader keeps no lock'
 
       patch :update, params: { id: row.batch_id, queue: 'needs_review', commit: 'Save Changes' }
-      assert_redirected_to aim_invoices_path(queue: 'needs_review')
-      assert_match(/view only/, flash[:alert])
+      assert_redirected_to aim_invoice_path(row.batch_id, queue: 'needs_review')
+      assert_match(/is working on this invoice/, flash[:alert])
+    end
+
+    test 'a lock whose page stopped checking in has lapsed' do
+      row = invoice('4601.G2', claimed_by: 'other@example.com', claimed_at: 5.minutes.ago, claimed_by_name: 'Dana Reyes')
+
+      get :show, params: { id: row.batch_id, queue: 'needs_review' }
+
+      assert_equal REVIEWER, row.reload.claimed_by, 'the stale lock gives way'
+      assert_select '[data-controller~=aim-presence]'
+    end
+
+    test "staff looking at someone else's ready invoice read it, lock nothing, and may claim it" do
+      employee = Employee.order(:id).first || skip('no employee to test with')
+      session[:user] = session[:user].merge('employee_id' => employee.id)
+      row = invoice('4601.K1', state: 'ready_for_approval', assigned_to: 'Sam Lee', assigned_employee_id: employee.id + 1,
+                               assignment_source: 'folder')
+
+      get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
+
+      assert_nil row.reload.claimed_by, 'looking never locks'
+      assert_select 'input[type=submit][value=Approve]', 0
+      assert_select 'form[action=?]', claim_aim_invoice_path(row.batch_id, queue: 'ready_for_approval')
+
+      Aim::Users.stub(:member?, true) { post :claim, params: { id: row.batch_id, queue: 'ready_for_approval' } }
+      assert_equal employee.id, row.reload.assigned_employee_id, 'Claim moves it to your queue'
+    end
+
+    test 'the page checks in to keep its lock, and lets go when left' do
+      row = invoice('4601.K2')
+      row.claim!(REVIEWER, name: 'Aim Staff')
+      row.update_columns(claimed_at: 60.seconds.ago)
+
+      patch :lock, params: { id: row.batch_id, queue: 'needs_review' }
+      assert_response :no_content
+      assert_operator row.reload.claimed_at, :>, 5.seconds.ago
+
+      post :unlock, params: { id: row.batch_id, queue: 'needs_review' }
+      assert_nil row.reload.claimed_by
+    end
+
+    test 'checking in on an invoice someone else is working is refused' do
+      row = invoice('4601.K3', claimed_by: 'other@example.com', claimed_at: Time.current, claimed_by_name: 'Dana Reyes')
+
+      patch :lock, params: { id: row.batch_id, queue: 'needs_review' }
+
+      assert_response :conflict
+      assert_equal 'other@example.com', row.reload.claimed_by
     end
 
     test 'a finished invoice is shown, not claimed' do

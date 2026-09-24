@@ -36,8 +36,14 @@ module Aim
       {}
     end
 
-    # Claims are a reservation, not a change to the invoice: written past
-    # validation and without an event.
+    # The working lock: whoever has the review page open to work the invoice.
+    # It is held only while their page keeps checking in (aim_presence), so
+    # it lifts on its own LOCK_SECONDS after they leave -- a closed laptop can
+    # never leave an invoice stuck. Written past validation and without an
+    # event: it is presence, not a change to the invoice. Claiming an invoice
+    # is something else: it moves it to your queue (Aim::InvoiceAssignment).
+    LOCK_SECONDS = 90
+
     def claim!(email, name: nil)
       update_columns(claimed_by: email, claimed_by_name: name, claimed_at: Time.current, updated_at: Time.current)
     end
@@ -46,9 +52,11 @@ module Aim
       update_columns(claimed_by: nil, claimed_by_name: nil, claimed_at: nil, updated_at: Time.current)
     end
 
-    # Named apart from the claimed_by? attribute predicate Active Record defines.
-    def held_by?(email) = claimed_by.present? && claimed_by.to_s.casecmp?(email.to_s)
+    def lock_fresh? = claimed_by.present? && claimed_at.present? && claimed_at > LOCK_SECONDS.seconds.ago
 
-    def claimed_by_other?(email) = claimed_by.present? && !held_by?(email)
+    # Named apart from the claimed_by? attribute predicate Active Record defines.
+    def held_by?(email) = lock_fresh? && claimed_by.to_s.casecmp?(email.to_s)
+
+    def claimed_by_other?(email) = lock_fresh? && !claimed_by.to_s.casecmp?(email.to_s)
   end
 end

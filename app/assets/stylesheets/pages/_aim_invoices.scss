@@ -16,6 +16,15 @@
   padding: 24px;
 }
 
+/* Every AIM page but the review page scrolls inside its own area, and ends
+   with room taller than the footer mascot (84px, fixed 10px from the
+   bottom), so a long queue or file list scrolls clear of it rather than
+   running underneath. The review page keeps its own fixed layout. */
+.aim-page:not(.aim-review-page) {
+  overflow-y: auto;
+  padding-bottom: 120px;
+}
+
 /* The bottom padding clears the fixed "Powered by GSA" badge, which sits
    bottom-right at z-index 900 and would otherwise cover the action row. */
 .aim-review-page {
@@ -854,7 +863,6 @@
 }
 
 // The page and panel must not clip the person picker's dropdown.
-.aim-upload-page,
 .aim-upload-panel,
 .aim-upload-panel .aim-fields,
 .aim-upload-panel .aim-owner-choice {
@@ -875,6 +883,12 @@
   padding: 1rem 1.25rem 1.5rem;
 }
 
-.aim-upload-page {
-  padding-bottom: 7rem;
+// Room between the queue choice and the Upload bar.
+.aim-upload-panel .aim-owner-choice {
+  margin-bottom: 1.25rem;
+}
+
+.aim-claim-form {
+  display: inline-block;
+  margin-left: 0.5rem;
 }

@@ -3,9 +3,14 @@
     the row's state. %>
 <% state = @invoice.state %>
 <% viewer_email = session.dig(:user, 'email') || session.dig('user', 'email') %>
+<%# While you work the invoice, the page keeps its working lock (aim-presence). %>
 <div class="aim-page aim-review-page"
-     data-controller="aim-ocr"
-     data-aim-ocr-pdf-url-value="<%= pdf_aim_invoice_path(@invoice.batch_id, queue: @queue) %>">
+     data-controller="aim-ocr<%= ' aim-presence' unless @read_only %>"
+     data-aim-ocr-pdf-url-value="<%= pdf_aim_invoice_path(@invoice.batch_id, queue: @queue) %>"
+     <% unless @read_only %>
+       data-aim-presence-lock-url-value="<%= lock_aim_invoice_path(@invoice.batch_id, queue: @queue) %>"
+       data-aim-presence-unlock-url-value="<%= unlock_aim_invoice_path(@invoice.batch_id, queue: @queue) %>"
+     <% end %>>
   <header class="aim-page-header">
     <div class="aim-review-heading">
       <%= link_to 'Back to Queue', (aim_queue_access? ? aim_invoices_path(queue: @queue) : aim_my_queue_path), class: 'aim-kicker' %>
@@ -14,6 +19,12 @@
       <% if @invoice.review_reason.present? %>
         <span class="badge is-denied"><%= aim_review_reason_label(@invoice.review_reason) %></span>
       <% end %>
+      <%# Working a shared-queue invoice locks it only while you are in it; Claim moves it to your queue. %>
+      <% if @claimable && !@read_only %>
+        <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
+                      class: 'btn take-back compact', form_class: 'aim-claim-form',
+                      data: { turbo: false, turbo_confirm: 'Move this invoice to your queue?' } %>
+      <% end %>
     </div>
   </header>
 
@@ -21,11 +32,19 @@
     <div class="aim-readonly-banner" role="alert">
       <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
       <div>
-        <strong>Read only — changes to this invoice cannot be saved.</strong>
+        <strong>Read only</strong>
         <% if @claimed_by_other %>
-          <p><%= @claim_holder %> claimed this invoice and is reviewing it now. Review actions are hidden until it is unclaimed.</p>
-        <% else %>
+          <p><%= @claim_holder %> is working on this invoice right now. You can read it; the actions come back when they leave it.</p>
+        <% elsif @invoice.terminal? %>
           <p>This invoice is finished (<%= aim_state_label(state).downcase %>) and cannot be changed.</p>
+        <% else %>
+          <p>This invoice is in <%= aim_owner_label(@invoice.assigned_to.presence || "#{@invoice.budget_unit} shared") %>.
+             <%= 'Claim it to move it to your queue and work it.' if @claimable %></p>
+        <% end %>
+        <% if @claimable && !@claimed_by_other %>
+          <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
+                        class: 'btn take-back compact',
+                        data: { turbo: false, turbo_confirm: 'Move this invoice to your queue?' } %>
         <% end %>
       </div>
     </div>
@@ -159,7 +178,6 @@
           </div>
         <% else %>
           <div class="aim-action-group aim-review-action-strip">
-            <%= form.submit 'Unclaim', class: 'btn ghost' %>
             <% unless state == 'needs_split' %>
               <%= form.submit 'Save Changes', class: 'btn secondary' %>
             <% end %>

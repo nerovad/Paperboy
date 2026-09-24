@@ -1,27 +1,59 @@
 # frozen_string_literal: true
 
 module Aim
-  # AIM staff work every invoice. Anyone else works only the invoices in
-  # their own queue that are ready for them, and only with an owner's
-  # actions: save, approve, send back, reject, move.
+  # Who may look at an invoice and who may work it.
+  #
+  # Looking: AIM staff see every invoice; anyone else sees the invoices in
+  # their own queue that are ready for them.
+  #
+  # Working: in Ready for Approval, the owner works their own invoice and AIM
+  # staff work the shared queue's; someone else's is read only, with a Claim
+  # button for staff that moves it to their queue. Before that -- Action
+  # Needed, Needs Split, Failed -- AIM staff work any invoice. Whoever works
+  # an invoice holds its working lock while their page is open, and anyone
+  # else opening it meanwhile reads it only.
   module InvoiceAccess
     extend ActiveSupport::Concern
 
-    OWNER_ACTIONS = ['Save Changes', 'Approve', 'Send Back', 'Reject', 'Unclaim'].freeze
+    OWNER_ACTIONS = ['Save Changes', 'Approve', 'Send Back', 'Reject'].freeze
 
     private
 
+    def staff? = helpers.aim_queue_access?
+
+    def mine? = @invoice.assigned_employee_id.present? && @invoice.assigned_employee_id == current_user_employee_id
+
+    def editor?
+      return false if @invoice.terminal?
+      return mine? || (staff? && @invoice.assigned_employee_id.nil?) if @invoice.state == 'ready_for_approval'
+
+      staff?
+    end
+
+    # Staff looking at someone else's Ready for Approval invoice may take it.
+    def claimable?
+      staff? && @invoice.state == 'ready_for_approval' && !mine?
+    end
+
     def require_staff_or_owner
-      return if helpers.aim_queue_access?
-      return deny_owner unless @invoice.state == 'ready_for_approval' &&
-                               @invoice.assigned_employee_id.present? &&
-                               @invoice.assigned_employee_id == current_user_employee_id
+      return if staff?
+      return deny_owner unless @invoice.state == 'ready_for_approval' && mine?
       return if action_name != 'update' || OWNER_ACTIONS.include?(params[:commit].to_s)
 
       deny_owner
     end
 
-    def home_queue_path = helpers.aim_queue_access? ? aim_invoices_path(queue: @queue) : aim_my_queue_path
+    # Changing the invoice needs the right to work it, and nobody else in it.
+    def require_editor
+      return if editor? && !@invoice.claimed_by_other?(current_user_email)
+
+      message = if @invoice.claimed_by_other?(current_user_email)
+                  "#{helpers.aim_claimant_label(@invoice)} is working on this invoice, so it is read only."
+                else
+                  'This invoice is not yours to change. Claim it first.'
+                end
+      redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), alert: message
+    end
 
     # A queue belongs to someone who works AIM; nobody else has one.
     def outsider?(owner)
@@ -31,6 +63,8 @@ module Aim
     def refuse_outsider
       redirect_back_or_to home_queue_path, alert: 'That person does not work AIM, so they have no queue.'
     end
+
+    def home_queue_path = staff? ? aim_invoices_path(queue: @queue) : aim_my_queue_path
 
     def deny_owner
       redirect_to aim_my_queue_path, alert: 'That invoice is not in your queue.'
