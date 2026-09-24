@@ -3,13 +3,14 @@
 <% backup_modified_at = @backup_files.filter_map { |file| file.mtime if file.file? rescue nil }.max %>
 <section class="card table-wrap"><table><thead><tr><th>Stage</th><th>File</th><th>Size</th><th>Modified</th></tr></thead><tbody>
   <% @files.each do |file| %>
-    <% next unless file.file? %>
+    <% metadata = file.stat rescue nil %>
+    <% next unless metadata %>
     <% relative_path = file.relative_path_from(WorkflowPaths::OUTPUT_ROOT) %>
     <tr>
       <td><%= relative_path.each_filename.first %></td>
       <td><%= link_to file.basename, output_data_runner_dsl_path(@dsl.slug, path: relative_path) %></td>
-      <td><%= number_to_human_size(file.size) %></td>
-      <td><%= l(file.mtime, format: :short) %></td>
+      <td><%= number_to_human_size(metadata.size) %></td>
+      <td><%= l(metadata.mtime, format: :short) %></td>
     </tr>
   <% end %>
   <% if @backup_files.any? %>
