@@ -116,6 +116,8 @@ messages must never expose passwords.
 - [x] Extend `smb_shortcut` directory entries with remote file sizes.
 - [x] Update the DataRunner output browser to list and preview files from a
       shortcut-backed output root, cleaning up materialized previews.
+- [x] Route shortcut-backed DataRunner SOP reference listings through
+      `FileStore` with remote file metadata.
 - [x] Convert P2M production-file listing and preview to the file store.
 - [x] Preserve remote directory-entry timestamps for production-file sorting.
 - [x] Convert `OmsUploadLedger` staging reads and processed-archive checks to
