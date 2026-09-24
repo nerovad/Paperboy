@@ -32,6 +32,7 @@ module Dam
         @asset.uploaded_by_name = Import::UPLOADER_NAME
         @asset.ingested_at ||= parse_time(@record['created_at'])
         Dam::MetadataAssignment.apply(@asset, @record['metadata'])
+        Dam::OrgFromMetadata.apply(@asset)
         @asset.save!
 
         attach_previews

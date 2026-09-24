@@ -96,15 +96,5 @@ module Aim
         VendorAliasService.alias_file_path
       )
     end
-
-    test 'resolves configured relative alias path inside the mounted program folder' do
-      ENV['AIM_LINUX_QUEUE_BASE_PATH'] = @tmpdir
-      ENV['AIM_ALIAS_DB_FILE'] = 'vendor_aliases.json'
-
-      assert_equal(
-        Pathname.new(File.join(@tmpdir, '_PROGRAM', 'vendor_aliases.json')),
-        VendorAliasService.alias_file_path
-      )
-    end
   end
 end

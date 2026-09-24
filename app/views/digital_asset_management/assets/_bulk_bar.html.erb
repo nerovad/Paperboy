@@ -1,0 +1,46 @@
+<%# The action bar above the library grid. Selection is kept by
+    dam_selection_controller.js: ticking cards selects those, "Select all"
+    selects every asset the search matches, across every page. The actions
+    open the dialogs in _bulk_modals and post to BulkAssetsController. %>
+<div class="dam-bulk-bar" role="region" aria-label="Bulk actions">
+  <div class="dam-bulk-selection">
+    <label class="dam-bulk-page-toggle">
+      <input type="checkbox" data-dam-selection-target="pageToggle"
+             data-action="dam-selection#togglePage" aria-label="Select every asset on this page">
+      Select page
+    </label>
+    <span class="dam-bulk-count" data-dam-selection-target="count" aria-live="polite">No assets selected</span>
+    <button type="button" class="btn ghost compact" hidden
+            data-dam-selection-target="allOffer" data-action="dam-selection#selectAll">
+      Select all <%= number_with_delimiter(@pagy.count) %> matching
+    </button>
+    <button type="button" class="btn clear-filters compact" hidden
+            data-dam-selection-target="clear" data-action="dam-selection#clear">
+      Clear selection
+    </button>
+  </div>
+
+  <div class="dam-bulk-actions">
+    <% if @bulk_publish_targets %>
+      <button type="button" class="btn approve compact" disabled
+              data-dam-selection-target="action" data-action="dam-selection#open"
+              data-dam-selection-modal-param="publish">Publish</button>
+    <% end %>
+    <button type="button" class="btn info compact" disabled
+            data-dam-selection-target="action" data-action="dam-selection#open"
+            data-dam-selection-modal-param="share">Share</button>
+    <% if @dam_metadata_fields.any? %>
+      <button type="button" class="btn edit compact" disabled
+              data-dam-selection-target="action" data-action="dam-selection#open"
+              data-dam-selection-modal-param="metadata">Edit metadata</button>
+    <% end %>
+    <% if can_use_app_feature?("digital_asset_management", "collections") && @collections.any? %>
+      <button type="button" class="btn secondary compact" disabled
+              data-dam-selection-target="action" data-action="dam-selection#open"
+              data-dam-selection-modal-param="collection">Add to collection</button>
+    <% end %>
+    <button type="button" class="btn deny compact" disabled
+            data-dam-selection-target="action" data-action="dam-selection#open"
+            data-dam-selection-modal-param="archive">Archive</button>
+  </div>
+</div>

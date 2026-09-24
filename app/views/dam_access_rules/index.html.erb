@@ -1,0 +1,146 @@
+<div class="form-header">
+  <h1>DAM Access Rules</h1>
+</div>
+
+<div class="form-wrapper acl-management dam-access-rules">
+  <div class="acl-header">
+    <p class="acl-subtitle">
+      Decide who sees which assets in Digital Asset Management, and what they
+      may do with them. An asset no rule covers is open to everyone who holds
+      the app, as it always has been. Once a rule covers an asset, only the
+      people that rule names can see it, and only for the actions it allows.
+      When several rules cover one asset, a person gets everything any of
+      their rules allows. Uploaders always keep their own assets, and system
+      admins see everything.
+    </p>
+    <div class="dam-access-rules-header-actions">
+      <%= link_to "Back to ACL", acl_index_path, class: "btn" %>
+      <%= link_to "+ New Rule", new_dam_access_rule_path, class: "btn approve" %>
+    </div>
+  </div>
+
+  <div class="acl-permissions-section">
+    <h3>Rules</h3>
+    <% if @rules.any? %>
+      <table class="submission-table dam-access-rules-table">
+        <thead>
+          <tr>
+            <th scope="col">Rule</th>
+            <th scope="col">Assets</th>
+            <th scope="col">Open to</th>
+            <th scope="col">Allows</th>
+            <th scope="col" class="actions-column"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @rules.each do |rule| %>
+            <tr class="<%= "is-inactive" unless rule.active? %>">
+              <td>
+                <strong><%= link_to rule.name, edit_dam_access_rule_path(rule) %></strong>
+                <% unless rule.active? %><span class="grant-badge">Off</span><% end %>
+                <% if rule.broken?(@fields) %>
+                  <span class="grant-badge is-warning" title="A condition no longer matches its field. The rule still hides assets, but opens them to nobody.">Needs attention</span>
+                <% end %>
+                <% if rule.description.present? %><br><span class="dam-muted"><%= rule.description %></span><% end %>
+              </td>
+              <td>
+                <% rule.asset_summary(@fields).each do |chip| %>
+                  <span class="pb-search-chip"><%= chip %></span>
+                <% end %>
+                <br><span class="dam-muted"><%= pluralize(@restricted_counts[rule.id], "asset") %> in the library</span>
+              </td>
+              <td>
+                <% if rule.grantees.any? %>
+                  <%= rule.grantees.map(&:label).to_sentence %>
+                <% else %>
+                  <span class="dam-muted">Nobody yet: only admins and uploaders</span>
+                <% end %>
+              </td>
+              <td><%= rule.capability_labels.join(", ") %></td>
+              <td class="actions-column">
+                <%= link_to "Edit", edit_dam_access_rule_path(rule), class: "btn edit compact" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="acl-subtitle">No rules yet. Everyone with Digital Asset Management sees the whole library.</p>
+    <% end %>
+  </div>
+
+  <div class="acl-permissions-section">
+    <h3>Check access</h3>
+    <p class="acl-subtitle">
+      See what the rules decide for one person or one asset before anyone finds
+      out the hard way.
+    </p>
+
+    <div class="dam-access-checks">
+      <%= form_with url: dam_access_rules_path, method: :get, class: "acl-search-form" do %>
+        <%= label_tag :check_employee, "Employee ID" %>
+        <div class="acl-search-row">
+          <%= text_field_tag :check_employee, params[:check_employee], class: "form-control acl-search-input",
+                             inputmode: "numeric" %>
+          <%= submit_tag "Check person", class: "btn approve", name: nil %>
+        </div>
+      <% end %>
+
+      <%= form_with url: dam_access_rules_path, method: :get, class: "acl-search-form" do %>
+        <%= label_tag :check_asset, "Asset ID" %>
+        <div class="acl-search-row">
+          <%= text_field_tag :check_asset, params[:check_asset], class: "form-control acl-search-input",
+                             inputmode: "numeric" %>
+          <%= submit_tag "Check asset", class: "btn approve", name: nil %>
+        </div>
+      <% end %>
+    </div>
+
+    <% if (check = @employee_check) %>
+      <div class="dam-access-result">
+        <h4><%= check[:name].presence || "Employee #{check[:id]}" %></h4>
+        <% if check[:admin] %>
+          <p>A system admin: sees every asset, whatever the rules say.</p>
+        <% else %>
+          <p>
+            Sees <strong><%= number_with_delimiter(check[:viewable]) %></strong>
+            of <%= number_with_delimiter(check[:library]) %> assets in the library.
+          </p>
+          <% if check[:rules].any? %>
+            <ul class="dam-list">
+              <% check[:rules].each do |rule| %>
+                <li><%= link_to rule.name, edit_dam_access_rule_path(rule) %>
+                  <span class="dam-muted"><%= rule.capability_labels.join(", ") %></span></li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="dam-muted">No rule names them, so they see only assets no rule covers, plus their own uploads.</p>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if (check = @asset_check) %>
+      <div class="dam-access-result">
+        <% if check[:asset].nil? %>
+          <p>No asset has ID <%= check[:id] %>.</p>
+        <% else %>
+          <h4><%= link_to check[:asset].title, digital_asset_management_asset_path(check[:asset]) %></h4>
+          <% if check[:rules].empty? %>
+            <p class="dam-muted">No rule covers it: everyone with Digital Asset Management sees it.</p>
+          <% else %>
+            <ul class="dam-list">
+              <% check[:rules].each do |rule| %>
+                <li>
+                  <%= link_to rule.name, edit_dam_access_rule_path(rule) %>:
+                  <%= rule.grantees.map(&:label).to_sentence.presence || "nobody yet" %>
+                  <span class="dam-muted">(<%= rule.capability_labels.join(", ") %>)</span>
+                </li>
+              <% end %>
+            </ul>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

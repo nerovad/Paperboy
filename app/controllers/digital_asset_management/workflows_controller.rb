@@ -56,6 +56,9 @@ module DigitalAssetManagement
       return redirect_to(digital_asset_management_workflow_path(@workflow), alert: 'That workflow is disabled.') unless @workflow.enabled?
 
       subject = resolve_subject
+      missing = params[:subject_type] == 'asset' && subject.nil?
+      return redirect_to(digital_asset_management_workflow_path(@workflow), alert: 'That asset was not found.') if missing
+
       job = Dam::Job.enqueue!(job_type: 'workflow', actor: current_user, workflow: @workflow, subject: subject,
                               total_items: subject.try(:asset_count) || 1)
       job.append_log("Queued #{@workflow.name} (#{@workflow.runtime_label})")
@@ -84,10 +87,12 @@ module DigitalAssetManagement
     end
 
     # A run may be aimed at one asset, one collection, or nothing (the whole
-    # library). Anything unrecognised runs unscoped rather than 404s.
+    # library). Anything unrecognised runs unscoped rather than 404s — except
+    # an asset the access rules hide, which #run refuses: falling through to
+    # the whole library would be a far bigger run than was asked for.
     def resolve_subject
       case params[:subject_type]
-      when 'asset' then Dam::Asset.find_by(id: params[:subject_id])
+      when 'asset' then dam_access.viewable.find_by(id: params[:subject_id])
       when 'collection' then Dam::Collection.find_by(id: params[:subject_id])
       end
     end

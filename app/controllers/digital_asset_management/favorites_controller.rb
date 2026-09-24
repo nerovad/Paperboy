@@ -13,7 +13,7 @@ module DigitalAssetManagement
       model = SUBJECTS[params[:subject_type].to_s]
       return redirect_back(fallback_location: digital_asset_management_dashboard_path, alert: 'Unknown item.') if model.nil?
 
-      subject = model.find(params[:subject_id])
+      subject = model == Dam::Asset ? find_viewable_asset(params[:subject_id]) : model.find(params[:subject_id])
       starred = Dam::Favorite.toggle!(employee_id: dam_employee_id, subject: subject).present?
 
       redirect_back fallback_location: digital_asset_management_dashboard_path,

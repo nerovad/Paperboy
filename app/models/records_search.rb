@@ -2,9 +2,9 @@
 
 # Free-text search across a Records table (see Registry). The query is matched
 # against the value of every column the table declares -- the same reader the
-# grid renders (`row.public_send(name)`) -- so derived cells such as a fleet
-# vehicle's "Assigned To" (owner_name, read through the garaging form) or a
-# status label are searchable alongside the stored columns.
+# grid renders (`row.public_send(name)`) -- so derived cells such as a P-Card's
+# masked card number or a status label are searchable alongside the stored
+# columns.
 #
 # Matching happens in Ruby over rows that are already loaded, because derived
 # cells have no SQL counterpart to put in a WHERE. The records grid loads its

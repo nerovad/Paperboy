@@ -32,8 +32,10 @@ module Dam
     # built thumbnail first — which a referenced asset or a video has, though
     # neither has a stored image — then a stored image. Falls back to nothing
     # rather than to a non-image, which would render as a broken <img>.
-    def cover_asset
-      ordered_assets.with_previews.find do |asset|
+    # Given a Dam::Access, only an asset that person may see can be the cover.
+    def cover_asset(access = nil)
+      candidates = access ? access.viewable(ordered_assets) : ordered_assets
+      candidates.with_previews.find do |asset|
         asset.thumbnail.attached? || (asset.image? && asset.file.attached?)
       end
     end

@@ -9,7 +9,12 @@ ruby '~> 4.0'
 gem 'minitest'
 gem 'minitest-mock'
 gem 'rails', '~> 8.1.3'
-gem 'smb_shortcut', git: 'git@gsa-gitea:BSS/smb_shortcut.git'
+# Active Support 8.1 passes JSON decoder options positionally; JSON 3.0
+# removed that calling convention and breaks every cookie-backed session.
+gem 'json', '< 3.0'
+source 'http://gsa-gitea:3000/api/packages/BSS/rubygems' do
+  gem 'smb_shortcut', '1.0.5'
+end
 
 # Asset pipeline: Sprockets serves and digests; dartsass-rails compiles SCSS
 # with Dart Sass (sass-embedded). Do not reintroduce sass-rails/sassc-rails --

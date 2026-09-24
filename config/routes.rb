@@ -24,6 +24,17 @@ Rails.application.routes.draw do
       end
     end
 
+    # The action bar above the library. Its own path rather than a collection
+    # route on assets, where POST assets/bulk/share would read as sharing the
+    # asset with id "bulk". See BulkAssetsController.
+    resource :bulk_assets, only: [] do
+      post :publish
+      post :share
+      post :metadata
+      post :add_to_collection
+      post :archive
+    end
+
     resources :collections do
       # Adding is a collection route so the picker on an asset page can choose
       # which collection to drop it into from a select rather than a URL.
@@ -97,6 +108,10 @@ Rails.application.routes.draw do
     # One endpoint for both stars, since the button is a toggle and the subject
     # may be an asset or a collection.
     post 'favorites', to: 'favorites#toggle', as: :favorites
+
+    # Every image, video and stored download in the DAM, through a signed
+    # token rather than a standing Active Storage URL. See FilesController.
+    get 'files/:token', to: 'files#show', as: :file
   end
 
   # Outside the namespace and outside the sign-in, because the fetcher is
@@ -446,6 +461,12 @@ Rails.application.routes.draw do
   resources :critical_information_locations,
             only: %i[new create destroy],
             path: 'authorization_console/critical_information/locations'
+
+  # ACL > DAM Access Rules. Listed under acl/ in the address bar because
+  # that is where they are managed, but a resource of their own.
+  resources :dam_access_rules, path: 'acl/dam_access_rules', except: :show do
+    resources :grantees, controller: 'dam_access_rule_grantees', only: %i[create destroy]
+  end
 
   resources :acl, only: %i[index show new create edit update destroy] do
     member do

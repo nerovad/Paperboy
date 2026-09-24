@@ -5,12 +5,6 @@ module Forms
   class ParkingLotSubmissionsController < Forms::BaseController
     before_action :set_parking_lot_submission, only: %i[show pdf approve deny]
 
-    # Permit types offered on each vehicle row. 'R Lot' is restricted to MB3
-    # union members and is filtered out of the dropdown for everyone else.
-    PERMIT_TYPES = ['Carpool', 'Courier', 'Grand Jury Parking', 'Loading Docks',
-                    'Maintenance', 'R Lot', 'Traffic Circle', 'Other'].freeze
-    MB3_ONLY_PERMIT_TYPES = ['R Lot'].freeze
-
     def new
       @parking_lot_submission = ParkingLotSubmission.new
       @parking_lot_submission.parking_lot_vehicles.build
@@ -154,14 +148,15 @@ module Forms
 
     # Non-MB3 submitters never see the MB3-only options in the dropdown.
     def permit_type_options(is_mb3)
-      is_mb3 ? PERMIT_TYPES : PERMIT_TYPES - MB3_ONLY_PERMIT_TYPES
+      types = ParkingLotVehicle::PERMIT_TYPES
+      is_mb3 ? types : types - ParkingLotVehicle::MB3_ONLY_PERMIT_TYPES
     end
 
     # The dropdown is filtered client-side, so re-check the submitted values
     # server-side before saving.
     def mb3_only_permit_types_requested?
       @parking_lot_submission.parking_lot_vehicles.any? do |vehicle|
-        Array(vehicle.permit_type).intersect?(MB3_ONLY_PERMIT_TYPES)
+        Array(vehicle.permit_type).intersect?(ParkingLotVehicle::MB3_ONLY_PERMIT_TYPES)
       end
     end
 

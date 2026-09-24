@@ -1,0 +1,16 @@
+<div class="form-header">
+  <h1>New DAM Access Rule</h1>
+</div>
+
+<div class="form-wrapper acl-management dam-access-rules">
+  <div class="acl-header">
+    <p class="acl-subtitle">
+      Describe the assets first. Once it is saved you choose who the rule opens
+      them to. Until then, only system admins and each asset's uploader can see
+      them.
+    </p>
+    <%= link_to "Back to rules", dam_access_rules_path, class: "btn" %>
+  </div>
+
+  <%= render "form", rule: @rule %>
+</div>

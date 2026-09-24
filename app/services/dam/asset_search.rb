@@ -8,7 +8,11 @@ module Dam
   # decides what a DAM search means, a search is always reproducible from its
   # URL, and a saved search is just these params.
   #
-  #   Dam::AssetSearch.new(params).results
+  #   Dam::AssetSearch.new(params, access: dam_access).results
+  #
+  # +access+ (a Dam::Access) keeps the results to what the person searching
+  # may see under the DAM access rules. Leave it out only where nobody is
+  # looking — a job re-running a search on the system's behalf.
   #
   # Custom metadata criteria arrive as a nested hash keyed by row index, since
   # the modal lets you add as many as you like:
@@ -33,13 +37,13 @@ module Dam
 
     attr_reader :params
 
-    def initialize(params = {})
-      raw = params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params.to_h
-      @params = raw.with_indifferent_access
+    def initialize(params = {}, access: nil)
+      @params = (params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params.to_h).with_indifferent_access
+      @access = access || Dam::Access.new(admin: true)
     end
 
     def results
-      scope = Dam::Asset.visible.includes(:storage_location).with_previews
+      scope = @access.viewable(Dam::Asset.visible).includes(:storage_location).with_previews
       scope = apply_text(scope)
       scope = apply_facets(scope)
       scope = apply_dates(scope)

@@ -50,27 +50,36 @@ module DigitalAssetManagementHelper
   # frame is a picture even though the video is not — then the stored original
   # for an image the builder has not reached yet.
   def dam_thumbnail_url(asset)
-    return url_for(asset.thumbnail) if asset.thumbnail.attached?
-    return url_for(asset.proxy) if asset.proxy.attached?
-    return url_for(asset.file) if asset.image? && asset.file.attached?
+    return dam_file_path(asset, :thumbnail) if asset.thumbnail.attached?
+    return dam_file_path(asset, :proxy) if asset.proxy.attached?
+    return dam_file_path(asset, :file) if asset.image? && asset.file.attached?
 
     nil
   end
 
   # The largest copy worth putting on the detail page.
   def dam_preview_url(asset)
-    return url_for(asset.proxy) if asset.proxy.attached?
-    return url_for(asset.file) if asset.image? && asset.file.attached?
+    return dam_file_path(asset, :proxy) if asset.proxy.attached?
+    return dam_file_path(asset, :file) if asset.image? && asset.file.attached?
 
     dam_thumbnail_url(asset)
   end
 
   # Where "Download" goes: a referenced asset's original is streamed from the
-  # share it lives on, a stored one straight off its service.
+  # share it lives on, a stored one straight off its service. Callers check
+  # the access rules' Download first; this only builds the link.
   def dam_original_url(asset)
     return original_digital_asset_management_asset_path(asset) if asset.referenced?
 
-    asset.file.attached? ? url_for(asset.file) : nil
+    asset.file.attached? ? dam_file_path(asset, :file, disposition: 'attachment') : nil
+  end
+
+  # One copy of an asset's bytes, through a token only the signed-in person
+  # can spend. Never url_for(asset.file): that URL never expires and asks
+  # nobody who is fetching it. See Dam::FileToken.
+  def dam_file_path(asset, variant, disposition: 'inline')
+    token = Dam::FileToken.generate(asset, variant, employee_id: current_user&.employee_id, disposition: disposition)
+    digital_asset_management_file_path(token)
   end
 
   PREVIEW_STATE_LABELS = { 'ready' => 'ready', 'pending' => 'waiting',

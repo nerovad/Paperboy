@@ -7,8 +7,7 @@ class RecordsSearchTest < ActiveSupport::TestCase
   def fleet_table = RegistryTable.find('fleet')
 
   def vehicle(owner:, plate: 'ABC123')
-    form = FleetVehicleGaragingForm.new(name: owner)
-    FleetVehicle.new(license_plate: plate, fleet_vehicle_garaging_form: form)
+    FleetVehicle.new(license_plate: plate, assigned_to: owner)
   end
 
   test 'searches stored columns' do
@@ -19,10 +18,9 @@ class RecordsSearchTest < ActiveSupport::TestCase
   end
 
   test 'searches derived columns' do
-    # masked_card_number and owner_name are methods, not columns, but they are
-    # cells on the table, so a search has to reach them.
+    # masked_card_number is a method, not a column, but it is a cell on the
+    # table, so a search has to reach it.
     assert_includes RecordsSearch.searchable_columns(pcard_table), 'masked_card_number'
-    assert_includes RecordsSearch.searchable_columns(fleet_table), 'owner_name'
   end
 
   test 'skips encrypted columns' do

@@ -1,6 +1,8 @@
 <%# The search results page. Everything the sidebar box and the Advanced Search
     modal submit lands here; with no params at all it is simply the library. %>
-<div class="dam-page">
+<div class="dam-page" data-controller="dam-selection"
+     data-dam-selection-total-value="<%= @pagy.count %>"
+     data-dam-selection-search-value="<%= request.query_parameters.except("page").to_query %>">
   <header class="dam-page-header">
     <div>
       <h1><%= @dam_search.any? ? "Search results" : "Library" %></h1>
@@ -24,10 +26,12 @@
   <% end %>
 
   <% if @assets.any? %>
+    <%= render "digital_asset_management/assets/bulk_bar" %>
+
     <div class="dam-grid">
       <% @assets.each do |asset| %>
         <%= render "digital_asset_management/assets/asset_card",
-                   asset: asset, favorited: @favorite_ids.include?(asset.id) %>
+                   asset: asset, favorited: @favorite_ids.include?(asset.id), selectable: true %>
       <% end %>
     </div>
 
@@ -39,6 +43,8 @@
         </p>
       </div>
     <% end %>
+
+    <%= render "digital_asset_management/assets/bulk_modals" %>
   <% else %>
     <p class="dam-empty">
       <% if @dam_search.any? %>

@@ -3,6 +3,12 @@
 class ParkingLotVehicle < ApplicationRecord
   belongs_to :parking_lot_submission
 
+  # Permit types offered on each vehicle row. 'R Lot' is restricted to MB3
+  # union members and is filtered out of the dropdown for everyone else.
+  PERMIT_TYPES = ['Carpool', 'Courier', 'Grand Jury Parking', 'Loading Docks',
+                  'Maintenance', 'R Lot', 'Traffic Circle', 'Other'].freeze
+  MB3_ONLY_PERMIT_TYPES = ['R Lot'].freeze
+
   serialize :permit_type, coder: JSON, type: Array
   serialize :carpool_participants, coder: JSON, type: Array
 

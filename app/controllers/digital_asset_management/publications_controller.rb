@@ -10,6 +10,7 @@ module DigitalAssetManagement
   class PublicationsController < BaseController
     before_action -> { require_app_feature('digital_asset_management', 'publish', fallback: digital_asset_management_root_path) }
     include Pagy::Method
+    include QueuesPublications
 
     before_action :set_publication, only: %i[show retry cancel]
 
@@ -29,15 +30,18 @@ module DigitalAssetManagement
     end
 
     def create
-      asset = Dam::Asset.find(params[:asset_id])
+      asset = find_viewable_asset(params[:asset_id])
+      require_asset_capability(asset, :publish)
+      return if performed?
+
       target = Dam::PublishTarget.find(params[:publish_target_id])
       refusal = target.refusal_reason(asset)
       return redirect_back_to(asset, alert: "#{target.label} cannot take this asset: #{refusal}") if refusal
 
-      publication = build_publication(asset, target)
+      publication = build_publication(asset, target, title: params[:title], description: params[:description])
       return redirect_back_to(asset, alert: publication.errors.full_messages.to_sentence) unless publication.save
 
-      queue(publication)
+      queue_publication(publication)
       redirect_back_to(asset, notice: "Publishing #{asset.title} to #{target.label}.")
     end
 
@@ -49,7 +53,7 @@ module DigitalAssetManagement
       again = @publication.duplicate_for_retry(actor: current_user)
       return redirect_to(digital_asset_management_publication_path(@publication), alert: again.errors.full_messages.to_sentence) unless again.save
 
-      queue(again)
+      queue_publication(again)
       redirect_to digital_asset_management_publication_path(again), notice: 'Publishing again.'
     end
 
@@ -68,28 +72,6 @@ module DigitalAssetManagement
 
     def set_publication
       @publication = Dam::Publication.find(params[:id])
-    end
-
-    def build_publication(asset, target)
-      publication = Dam::Publication.new(
-        asset: asset, publish_target: target, status: 'queued',
-        title: params[:title].presence || asset.title,
-        description: params[:description].presence || asset.description,
-        privacy: params[:privacy].presence || target.default_privacy.presence || target.adapter_class.default_privacy,
-        requested_by_id: dam_employee_id, requested_by_name: dam_actor_name
-      )
-      publication.tag_list = params[:tags].to_s.split(',')
-      publication
-    end
-
-    # Every piece of DAM work shows up in the Jobs feed whether or not anyone
-    # was watching the screen that started it.
-    def queue(publication)
-      job = Dam::Job.enqueue!(job_type: 'publish', actor: current_user, subject: publication.asset, total_items: 1)
-      job.append_log("Queued for #{publication.target_label}")
-      job.save
-      publication.update_columns(job_id: job.id, updated_at: Time.current)
-      Dam::PublishJob.perform_later(publication.id)
     end
 
     def redirect_back_to(asset, **flash)

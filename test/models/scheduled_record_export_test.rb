@@ -28,7 +28,7 @@ class ScheduledRecordExportTest < ActiveSupport::TestCase
     export = schedule(view_params: { 'search' => 'smith', 'filter_make' => 'Ford',
                                      'filter_budget_unit' => %w[1100 1200] })
 
-    assert_equal 'Search "smith" · Make: Ford · Budget Unit: 1100, 1200', export.view_description
+    assert_equal 'Search "smith" · Make: Ford · Unit: 1100, 1200', export.view_description
     assert_equal 'All rows', schedule(view_params: {}).view_description
   end
 

@@ -14,12 +14,16 @@ module DigitalAssetManagement
     # would break those for anyone who holds them without it.
     before_action -> { require_app_feature('digital_asset_management', 'search', fallback: digital_asset_management_root_path) }, only: :index
     before_action :set_asset, only: %i[show edit update destroy share original]
+    # Seeing an asset is not leave to change it. Archive counts as an edit:
+    # it takes the asset out of the library for everybody.
+    before_action -> { require_asset_capability(@asset, :edit) }, only: %i[edit update destroy]
     before_action :load_upload_targets, only: %i[new create edit update]
 
     def index
       @pagy, @assets = pagy(:offset, @dam_search.results)
       @favorite_ids = Dam::Favorite.ids_for(employee_id: dam_employee_id, type: 'Dam::Asset')
       @collections = Dam::Collection.alphabetical
+      load_bulk_publishing
     end
 
     def show
@@ -39,6 +43,9 @@ module DigitalAssetManagement
     # folder its location scans — the path is on a row anyone who can edit an
     # asset could have written, so it is never trusted as a path to read.
     def original
+      require_asset_capability(@asset, :download)
+      return if performed?
+
       path = @asset.original_path
       refusal = unreadable_reason(path)
       return redirect_to digital_asset_management_asset_path(@asset), alert: refusal if refusal
@@ -103,6 +110,9 @@ module DigitalAssetManagement
     end
 
     def share
+      require_asset_capability(@asset, :share)
+      return if performed?
+
       share = Dam::Share.new(
         subject: @asset,
         permission: params[:permission].presence || 'view',
@@ -130,14 +140,24 @@ module DigitalAssetManagement
     # an empty select.
     def load_publishing
       return unless helpers.can_use_app_feature?('digital_asset_management', 'publish')
+      return unless dam_can?(@asset, :publish)
 
       targets = Dam::PublishTarget.ordered.to_a
       @publish_targets, @publish_targets_closed = targets.partition { |target| target.refusal_reason(@asset).nil? }
       @publications = @asset.publications.newest_first.limit(10)
     end
 
+    # The bulk Publish picker offers every target that is ready to send at
+    # all; whether each selected asset suits it is decided per asset when the
+    # form is posted. See BulkAssetsController#publish.
+    def load_bulk_publishing
+      return unless helpers.can_use_app_feature?('digital_asset_management', 'publish')
+
+      @bulk_publish_targets = Dam::PublishTarget.enabled.ordered.select { |target| target.refusal_reason.nil? }
+    end
+
     def set_asset
-      @asset = Dam::Asset.find(params[:id])
+      @asset = find_viewable_asset(params[:id])
     end
 
     def unreadable_reason(path)
@@ -148,7 +168,8 @@ module DigitalAssetManagement
     end
 
     def asset_params
-      params.require(:asset).permit(:title, :description, :storage_location_id, :file)
+      params.require(:asset).permit(:title, :description, :storage_location_id, :file,
+                                    :agency_id, :division_id, :department_id, :unit_id)
     end
 
     def load_upload_targets

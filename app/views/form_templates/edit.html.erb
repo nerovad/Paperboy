@@ -8,6 +8,7 @@
       dropdown_values: field.dropdown_values
     }
   end
+  form_fields_for_conditions += @form_template.routing_condition_fields.map(&:to_h)
 
   # [label, step_number] pairs for the "bind email to step" dropdown.
   routing_step_choices = @form_template.routing_steps.ordered.map do |s|

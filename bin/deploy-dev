@@ -27,6 +27,52 @@ git pull origin "$BRANCH"
 echo "==> Installing gems (including development/test)..."
 bundle install
 
+# Runs the suite before anything on this box changes: a red run stops the
+# deploy ahead of the migrations, the ACL push and the restart.
+#
+# .env names a PAPERBOY_TEST_DATABASE this box's login cannot open, so the
+# suite gets a scratch base of its own, created on first use and kept for the
+# next deploy. It only anchors the run -- test_helper.rb creates and drops a
+# schema-loaded database per worker beside it. Never point it at Paperboy_Dev:
+# the suite loads the schema into its target. dotenv never overrides a
+# variable already set, so this name wins over the one in .env.
+#
+# The default name carries the SQL login, because a base another login created
+# is one this login cannot open: on 2026-09-22 GSAETL created a shared
+# Paperboy_DeployTest first, and every later deploy here died on "not able to
+# access the database". A named base that exists but will not open aborts here,
+# with the owner, rather than inside rake test.
+#
+#   NO_TESTS=1                  skip the suite
+#   DEPLOY_TEST_DATABASE=name   use a different scratch base
+if [ -n "$NO_TESTS" ]; then
+  echo "==> Skipping test suite (NO_TESTS set)"
+else
+  echo "==> Ensuring scratch test database exists..."
+  DEPLOY_TEST_DATABASE="$(
+    set -o pipefail
+    DEPLOY_TEST_DATABASE="$DEPLOY_TEST_DATABASE" RAILS_ENV=development bundle exec rails runner '
+      conn = ActiveRecord::Base.connection
+      name = ENV["DEPLOY_TEST_DATABASE"].presence ||
+             "Paperboy_DeployTest_#{conn.select_value("SELECT SUSER_SNAME()").gsub(/\W+/, "_")}"
+      conn.execute(<<~SQL)
+        IF DB_ID(#{conn.quote(name)}) IS NULL
+          CREATE DATABASE #{conn.quote_table_name(name)} COLLATE SQL_Latin1_General_CP1_CI_AS
+      SQL
+      unless conn.select_value("SELECT HAS_DBACCESS(#{conn.quote(name)})") == 1
+        owner = conn.select_value("SELECT SUSER_SNAME(owner_sid) FROM sys.databases WHERE name = #{conn.quote(name)}")
+        abort "!!! #{name} exists but is owned by #{owner}, and this login cannot open it.\n" \
+              "!!! Set DEPLOY_TEST_DATABASE to another name, or have #{owner} drop it."
+      end
+      puts name
+    ' | tail -n1
+  )"
+  echo "    using $DEPLOY_TEST_DATABASE"
+
+  echo "==> Running test suite..."
+  PAPERBOY_TEST_DATABASE="$DEPLOY_TEST_DATABASE" bundle exec rake test
+fi
+
 # dotenv-rails loads .env for every rails command below. .env names
 # Paperboy_Dev, which is also what database.yml defaults development to.
 #

@@ -1,0 +1,105 @@
+<%# The rule itself: which assets and what its grantees may do with them.
+    The metadata rows are Advanced Search's own (shared/_metadata_filter_row
+    driven by dam_search_controller.js), so a condition means exactly what the
+    same filter means in the library.
+
+    Locals: rule  the Dam::AccessRule %>
+<%= form_with model: rule, scope: :rule,
+              url: rule.persisted? ? dam_access_rule_path(rule) : dam_access_rules_path,
+              class: "dam-access-rule-form",
+              data: { controller: "dam-search",
+                      "dam-search-fields-value": @dam_metadata_fields.map { |field|
+                        { key: field.key, label: field.label, type: field.field_type,
+                          operators: field.operators, choices: field.choices }
+                      }.to_json } do |f| %>
+  <% if rule.errors.any? %>
+    <div class="dam-errors">
+      <ul>
+        <% rule.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="acl-permissions-section">
+    <h3>Rule</h3>
+    <div class="form-group">
+      <%= f.label :name %>
+      <%= f.text_field :name, class: "form-control", required: true,
+                       placeholder: "e.g. General Services Agency internal media" %>
+    </div>
+    <div class="form-group">
+      <%= f.label :description %>
+      <%= f.text_area :description, class: "form-control", rows: 2 %>
+    </div>
+    <label class="permission-checkbox">
+      <%= f.check_box :active %>
+      <span>On. Switch a rule off to lift it without losing it.</span>
+    </label>
+  </div>
+
+  <div class="acl-permissions-section">
+    <h3>Which assets</h3>
+    <p class="acl-subtitle">
+      An asset is covered when it matches <strong>everything</strong> set here.
+      Set at least one: a rule over the whole library would hide it from
+      everyone else.
+    </p>
+
+    <fieldset class="dam-filter-set">
+      <legend>Filed under</legend>
+      <%= render "shared/org_cascade", param_scope: "rule",
+                 selected: { agency: rule.agency_id, division: rule.division_id,
+                             department: rule.department_id, unit: rule.unit_id } %>
+    </fieldset>
+
+    <fieldset class="dam-filter-set">
+      <legend>Custom metadata</legend>
+      <% if @dam_metadata_fields.any? %>
+        <div class="dam-meta-rows" data-dam-search-target="metaRows">
+          <% rule.metadata_filters.each_with_index do |filter, index| %>
+            <%= render "digital_asset_management/shared/metadata_filter_row", index: index, filter: filter %>
+          <% end %>
+        </div>
+        <button type="button" class="btn compact" data-action="dam-search#addFilter">
+          + Add metadata condition
+        </button>
+      <% else %>
+        <p class="dam-hint">No custom metadata fields are defined, so rules can only narrow by organization.</p>
+      <% end %>
+    </fieldset>
+  </div>
+
+  <div class="acl-permissions-section">
+    <h3>What its people may do</h3>
+    <p class="acl-subtitle">
+      Viewing is what the rule is for, so it is always included. Everything else
+      is ticked separately. These sit on top of ACL &gt; Application Features: a
+      rule allowing Publish does not give someone the Publish screen.
+    </p>
+    <div class="permissions-grid">
+      <label class="permission-checkbox">
+        <%= check_box_tag :can_view, "1", true, disabled: true %>
+        <span>View</span>
+      </label>
+      <% Dam::AccessRule::CAPABILITY_LABELS.each do |capability, label| %>
+        <label class="permission-checkbox">
+          <%= f.check_box :"can_#{capability}" %>
+          <span><%= label %></span>
+        </label>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= link_to "Cancel", dam_access_rules_path, class: "btn" %>
+    <%= f.submit rule.persisted? ? "Save rule" : "Create rule", class: "btn approve" %>
+  </div>
+
+  <%# Cloned by dam-search#addFilter; kept out of the rows so a blank
+      condition is never submitted. %>
+  <template data-dam-search-target="rowTemplate">
+    <%= render "digital_asset_management/shared/metadata_filter_row", index: "__INDEX__", filter: nil %>
+  </template>
+<% end %>

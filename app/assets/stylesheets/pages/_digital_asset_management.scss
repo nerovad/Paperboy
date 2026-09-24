@@ -10,7 +10,6 @@
 
 .dam-page {
   padding: 24px 28px 48px;
-  max-width: 1400px;
 }
 
 .dam-page-header {
@@ -111,6 +110,7 @@
 }
 
 .dam-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: $surface-base;
@@ -192,6 +192,106 @@
 .dam-star-form { display: inline; }
 
 .dam-star.is-starred { color: $amber-accent; }
+
+/* --- Selection and the bulk action bar ------------------------------------ */
+
+/* Stays in reach while scrolling a long grid, since the selection is made
+   down there and acted on up here. */
+.dam-bulk-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: $surface-base;
+  border: 1px solid $neutral-border-light;
+  border-radius: $radius-12;
+  box-shadow: $shadow-soft;
+}
+
+.dam-bulk-selection,
+.dam-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dam-bulk-page-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-weight: 600;
+  color: $text-strong;
+  cursor: pointer;
+}
+
+.dam-bulk-count {
+  color: $text-muted;
+  font-size: 0.9rem;
+}
+
+.dam-card-select {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  display: flex;
+  padding: 5px;
+  margin: 0;
+  background: $surface-base;
+  border-radius: $radius-6;
+  box-shadow: $shadow-soft;
+  cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+  }
+}
+
+.dam-card.is-selected {
+  border-color: $blue-action;
+  box-shadow: 0 0 0 2px $blue-action;
+}
+
+.dam-bulk-fields {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dam-bulk-field {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(0, 2fr) auto;
+  align-items: center;
+  gap: 10px;
+
+  label { margin: 0; }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr auto;
+
+    .form-control { grid-column: 1 / -1; }
+  }
+}
+
+.dam-bulk-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: $text-muted;
+  white-space: nowrap;
+}
 
 /* --- Asset detail --------------------------------------------------------- */
 

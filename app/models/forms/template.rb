@@ -178,6 +178,16 @@ module Forms
       class_name.underscore.pluralize
     end
 
+    # Condition-only fields the form's model offers on top of its builder
+    # fields (see Forms::RoutingConditionField).
+    def routing_condition_fields
+      model = class_name.to_s.safe_constantize
+      return [] unless model.is_a?(Class) && model < ApplicationRecord
+      return [] unless model.respond_to?(:routing_condition_fields)
+
+      model.routing_condition_fields
+    end
+
     def file_name
       class_name.underscore
     end

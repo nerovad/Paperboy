@@ -8,29 +8,31 @@ class FleetVehicle < ApplicationRecord
   # history -- from the grid, the garaging form or the fleet import alike.
   audit_record_lifecycle!
 
-  belongs_to :fleet_vehicle_garaging_form
+  # The fleet master: one row per vehicle, loaded by fleet:import_garaging and
+  # edited in place -- from the Records grid, or by a submitted garaging form
+  # (see #apply_garaging_form!). The link names the last form that did so.
+  belongs_to :fleet_vehicle_garaging_form, optional: true
 
   # Records table definition — surfaced as the "records:fleet" page and served
-  # by the generic records grid (no bespoke route). Vehicles are created via
-  # the garaging form's nested attributes, so there is no registry_fed_by; this
-  # table is a live view over the rows that already exist.
+  # by the generic records grid (no bespoke route). Garaging forms update rows
+  # rather than add them, so there is no registry_fed_by.
   registry_table slug: 'fleet', label: 'Fleet Vehicles',
                  dropdown_key: 'fleet_inventory',
-                 includes: :fleet_vehicle_garaging_form,
                  row_label: :vehicle_label
 
   registry_column :vehicle_number, label: 'Vehicle #', kind: :text
-  registry_column :budget_unit, label: 'Budget Unit', kind: :text, filter: :select
+  registry_column :agency, kind: :text, filter: :select
+  registry_column :budget_unit, label: 'Unit', kind: :text, filter: :select
   registry_column :year, kind: :text
   registry_column :make, kind: :text, filter: :select
   registry_column :model, kind: :text
   registry_column :color, kind: :text
   registry_column :license_plate, label: 'Plate', kind: :text
   registry_column :garaging_location, label: 'Garaging Location', kind: :text
+  registry_column :secondary_garaging_location, label: 'Secondary Garaging Location', kind: :text
   registry_column :take_home, label: 'Take Home', kind: :text
-  registry_column :owner_name, label: 'Assigned To', kind: :text
-  registry_column :owner_agency, label: 'Agency', kind: :text, filter: :select
-  registry_column :status_label, label: 'Status', kind: :status, sortable: false
+  registry_column :assigned_to, label: 'Assigned To', kind: :text
+  registry_column :updated_at, label: 'Last Updated', kind: :datetime
 
   # How the vehicle is named in the Records change log: its fleet number, or
   # its plate for a vehicle that has none yet.
@@ -38,28 +40,23 @@ class FleetVehicle < ApplicationRecord
     vehicle_number.presence || license_plate
   end
 
-  # --- Owner / status delegated from the parent garaging form ---
+  # Copies a submitted garaging form's answers onto this vehicle. A question
+  # left blank keeps what is on file; answering "No" to a secondary location
+  # clears it. Assign To replaces Assigned To; Vehicle Assigned To on the form
+  # only displays the current holder and is never copied back.
+  def apply_garaging_form!(form)
+    secondary = case form.do_you_have_a_secondary_location
+                when 'Yes' then form.secondary_garaging_location
+                when 'No' then nil
+                else secondary_garaging_location
+                end
 
-  def owner_name
-    fleet_vehicle_garaging_form&.name
-  end
-
-  def owner_agency
-    fleet_vehicle_garaging_form&.agency
-  end
-
-  # Human label for the parent submission's approval status.
-  def status_label
-    fleet_vehicle_garaging_form&.status.to_s.tr('_', ' ').titleize.presence || '—'
-  end
-
-  # Badge category for the Records "Status" column (drives the badge color).
-  def status_badge_category
-    case fleet_vehicle_garaging_form&.status
-    when 'approved' then :approved
-    when 'denied' then :denied
-    when 'step_1_pending' then :in_review
-    else :pending
-    end
+    update!(
+      assigned_to: form.assignee.presence || assigned_to,
+      take_home: form.is_this_a_take_home_vehicle.presence || take_home,
+      garaging_location: form.garaging_location.presence || garaging_location,
+      secondary_garaging_location: secondary,
+      fleet_vehicle_garaging_form: form
+    )
   end
 end

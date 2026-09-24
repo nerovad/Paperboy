@@ -64,6 +64,24 @@ module DigitalAssetManagement
       assert_match(%r{youtube\.com/watch\?v=abc}, response.body)
     end
 
+    test 'the library carries the bulk action bar, with Publish only for the publish grant' do
+      Dam::PublishTarget.create!(label: 'County YouTube', provider: 'youtube', oauth_access_token: 'token')
+      sign_in(features: %w[digital_asset_management:search digital_asset_management:publish])
+
+      get :index, params: { q: 'board' }
+
+      assert_response :success
+      assert_match(/data-controller="dam-selection"/, response.body)
+      assert_match(/data-dam-selection-search-value="q=board"/, response.body)
+      assert_match(/value="#{@asset.id}"[^>]*data-dam-selection-target="checkbox"/, response.body)
+      assert_match(/data-dam-selection-modal-param="publish"/, response.body)
+      assert_match(/data-modal="share"/, response.body)
+
+      sign_in(features: %w[digital_asset_management:search])
+      get :index
+      assert_no_match(/data-dam-selection-modal-param="publish"/, response.body)
+    end
+
     private
 
     def build_asset(media_type: 'video')
@@ -83,6 +101,8 @@ module DigitalAssetManagement
       feature_keys = features.to_set
       applications = Set['digital_asset_management']
       @controller.define_singleton_method(:current_user_group_names) { Set.new }
+      @controller.define_singleton_method(:current_user_group_ids) { [] }
+      @controller.define_singleton_method(:current_user_org_chain) { {} }
       @controller.define_singleton_method(:current_user_feature_permission_keys) { feature_keys }
       @controller.define_singleton_method(:current_user_application_permission_keys) { applications }
       @controller.define_singleton_method(:current_user_dropdown_permissions) { Set.new }

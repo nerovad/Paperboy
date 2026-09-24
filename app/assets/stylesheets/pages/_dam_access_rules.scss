@@ -1,0 +1,57 @@
+/* Pages: ACL > DAM Access Rules */
+@use "base/tokens" as *;
+
+.dam-access-rules {
+  .dam-access-rules-header-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .dam-access-rules-table {
+    tr.is-inactive td { opacity: 0.6; }
+  }
+
+  .grant-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: $neutral-pill-bg;
+    color: $text-muted;
+    font-size: 0.8rem;
+    white-space: nowrap;
+
+    &.is-warning {
+      background: $warning-bg;
+      color: $warning-text;
+    }
+  }
+
+  .pb-search-chip {
+    display: inline-block;
+    margin: 0 4px 4px 0;
+  }
+
+  .dam-access-checks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 16px;
+  }
+
+  .dam-access-result {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border: 1px solid $border-color;
+    border-radius: $radius-6;
+    background: $surface-muted;
+  }
+
+  .dam-access-grantee-forms {
+    display: grid;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .dam-filter-set { margin-bottom: 16px; }
+}

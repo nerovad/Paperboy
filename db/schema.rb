@@ -279,14 +279,52 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_151741) do
     t.string "urgency"
   end
 
+  create_table "dam_access_rule_grantees", force: :cascade do |t|
+    t.string "agency_id"
+    t.datetime "created_at", null: false
+    t.string "department_id"
+    t.string "division_id"
+    t.string "employee_id"
+    t.string "grantee_type", null: false
+    t.integer "group_id"
+    t.bigint "rule_id", null: false
+    t.string "unit_id"
+    t.index ["grantee_type", "employee_id"], name: "index_dam_access_rule_grantees_on_grantee_type_and_employee_id"
+    t.index ["grantee_type", "group_id"], name: "index_dam_access_rule_grantees_on_grantee_type_and_group_id"
+    t.index ["rule_id"], name: "index_dam_access_rule_grantees_on_rule_id"
+  end
+
+  create_table "dam_access_rules", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.string "agency_id"
+    t.boolean "can_download", default: false, null: false
+    t.boolean "can_edit", default: false, null: false
+    t.boolean "can_publish", default: false, null: false
+    t.boolean "can_share", default: false, null: false
+    t.text "conditions"
+    t.datetime "created_at", null: false
+    t.string "created_by_id"
+    t.string "created_by_name"
+    t.string "department_id"
+    t.text "description"
+    t.string "division_id"
+    t.string "name", null: false
+    t.string "unit_id"
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_dam_access_rules_on_active"
+  end
+
   create_table "dam_assets", force: :cascade do |t|
+    t.string "agency_id"
     t.bigint "byte_size"
     t.string "checksum"
     t.string "content_type"
     t.datetime "created_at", null: false
+    t.string "department_id"
     t.text "derivative_error"
     t.string "derivative_state", default: "pending", null: false
     t.text "description"
+    t.string "division_id"
     t.integer "duration_seconds"
     t.string "external_ref"
     t.string "filename"
@@ -301,10 +339,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_151741) do
     t.bigint "storage_location_id"
     t.string "storage_path"
     t.string "title", null: false
+    t.string "unit_id"
     t.datetime "updated_at", null: false
     t.string "uploaded_by_id"
     t.string "uploaded_by_name"
     t.integer "width"
+    t.index ["agency_id"], name: "index_dam_assets_on_agency_id"
     t.index ["created_at"], name: "index_dam_assets_on_created_at"
     t.index ["format"], name: "index_dam_assets_on_format"
     t.index ["media_type"], name: "index_dam_assets_on_media_type"
@@ -601,27 +641,43 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_151741) do
   create_table "fleet_vehicle_garaging_forms", force: :cascade do |t|
     t.string "agency"
     t.string "approver_id"
+    t.string "assign_to"
     t.datetime "created_at", null: false
     t.text "deny_reason"
     t.string "department"
     t.string "division"
+    t.string "do_you_have_a_secondary_location", limit: 3
     t.string "email"
     t.string "employee_id"
+    t.string "is_this_a_take_home_vehicle", limit: 3
+    t.string "last_known_location", limit: 200
     t.string "location"
+    t.string "make", limit: 50
+    t.string "model", limit: 50
     t.string "name"
+    t.string "other_assignee"
+    t.string "other_location", limit: 200
+    t.string "other_secondary_location", limit: 200
     t.string "phone"
+    t.string "secondary_location", limit: 200
     t.string "status", default: "in_progress", null: false
     t.string "unit"
     t.datetime "updated_at", null: false
+    t.string "vehicle_assigned_to"
+    t.string "vehicle_number", limit: 20
+    t.integer "year"
     t.index ["approver_id"], name: "index_fleet_vehicle_garaging_forms_on_approver_id"
     t.index ["employee_id"], name: "index_fleet_vehicle_garaging_forms_on_employee_id"
+    t.index ["vehicle_number"], name: "index_fleet_vehicle_garaging_forms_on_vehicle_number"
   end
 
   create_table "fleet_vehicles", force: :cascade do |t|
+    t.string "agency"
+    t.string "assigned_to"
     t.string "budget_unit", limit: 10
     t.string "color", limit: 20
     t.datetime "created_at", null: false
-    t.bigint "fleet_vehicle_garaging_form_id", null: false
+    t.bigint "fleet_vehicle_garaging_form_id"
     t.string "garaging_location", limit: 200
     t.string "license_plate", limit: 15
     t.string "make", limit: 50
@@ -632,7 +688,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_151741) do
     t.string "vehicle_number", limit: 20
     t.integer "year"
     t.index ["fleet_vehicle_garaging_form_id"], name: "index_fleet_vehicles_on_fleet_vehicle_garaging_form_id"
-    t.index ["vehicle_number"], name: "index_fleet_vehicles_on_vehicle_number"
+    t.index ["vehicle_number"], name: "index_fleet_vehicles_on_vehicle_number", unique: true, where: "([vehicle_number] IS NOT NULL)"
   end
 
   create_table "form_fields", force: :cascade do |t|

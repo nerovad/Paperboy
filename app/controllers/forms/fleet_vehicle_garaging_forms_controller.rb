@@ -7,7 +7,6 @@ module Forms
 
     def new
       @fleet_vehicle_garaging_form = FleetVehicleGaragingForm.new
-      @fleet_vehicle_garaging_form.fleet_vehicles.build if @fleet_vehicle_garaging_form.fleet_vehicles.empty?
 
       employee_id = session.dig(:user, 'employee_id').to_s
       @employee   = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
@@ -75,7 +74,11 @@ module Forms
         # Delegates to TrackableStatus#start_approval!, which picks the first
         # step whose condition matches the submitted record.
         @fleet_vehicle_garaging_form.start_approval!
-        redirect_to form_success_path, notice: 'Form submitted and routed for approval.', allow_other_host: false, status: :see_other
+        # The template has no routing steps, so start_approval! leaves the form
+        # in progress. It needs no sign-off -- submitting already updated the
+        # vehicle -- so mark it approved. Routing added later takes over.
+        @fleet_vehicle_garaging_form.approved! if @fleet_vehicle_garaging_form.in_progress?
+        redirect_to form_success_path, notice: 'Form submitted.', allow_other_host: false, status: :see_other
       # ROUTING_BLOCK_END
       else
         # Rebuild options on failure (same as in new)
@@ -120,7 +123,6 @@ module Forms
 
     def edit
       # Edit form - rebuild options same as new
-      @fleet_vehicle_garaging_form.fleet_vehicles.build if @fleet_vehicle_garaging_form.fleet_vehicles.empty?
       setup_form_options
     end
 
@@ -230,19 +232,11 @@ module Forms
     def fleet_vehicle_garaging_form_params
       # Only the baseline fields you asked for
       params.require(:fleet_vehicle_garaging_form).permit(
-        :name, :phone, :email, :agency, :division, :department, :unit, :location,
-        fleet_vehicles_attributes: %i[
-          id
-          year
-          make
-          model
-          color
-          license_plate
-          take_home
-          garaging_location
-          secondary_garaging_location
-          _destroy
-        ],
+        :name, :phone, :email, :agency, :division, :department, :unit,
+        :vehicle_number, :year, :make, :model, :vehicle_assigned_to, :assign_to, :other_assignee,
+        :is_this_a_take_home_vehicle, :last_known_location,
+        :location, :other_location, :do_you_have_a_secondary_location, :secondary_location,
+        :other_secondary_location,
         fleet_vehicle_garaging_form_locations_attributes: %i[id _destroy location]
       )
     end

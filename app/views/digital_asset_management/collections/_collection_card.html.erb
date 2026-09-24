@@ -5,7 +5,7 @@
   starred = dam_favorite?(collection) if starred.nil?
   counts = local_assigns[:counts]
   count = counts ? counts.fetch(collection.id, 0) : collection.asset_count
-  cover = collection.cover_asset
+  cover = collection.cover_asset(dam_access)
 %>
 <article class="dam-card dam-card--collection">
   <%= link_to digital_asset_management_collection_path(collection), class: "dam-card-thumb" do %>

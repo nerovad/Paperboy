@@ -120,6 +120,8 @@ module DigitalAssetManagement
       feature_keys = features.to_set
       applications = Set['digital_asset_management']
       @controller.define_singleton_method(:current_user_group_names) { Set.new }
+      @controller.define_singleton_method(:current_user_group_ids) { [] }
+      @controller.define_singleton_method(:current_user_org_chain) { {} }
       @controller.define_singleton_method(:current_user_feature_permission_keys) { feature_keys }
       @controller.define_singleton_method(:current_user_application_permission_keys) { applications }
       @controller.define_singleton_method(:current_user_dropdown_permissions) { Set.new }

@@ -231,8 +231,8 @@ class AclController < ApplicationController
     @submission_action_keys = Array(by_type[Forms::SubmissionPolicy::PERMISSION_TYPE]).to_set(&:last)
     load_submission_form_catalog
     @groups = Group.order(:group_name)
-    @visibility_grants = all_visibility_grants
-    @form_subscriptions = all_form_subscriptions
+    @visibility_grants = group_visibility_grants
+    @form_subscriptions = group_form_subscriptions
 
     # If no permissions exist yet for this group, pre-check default public items
     return unless @current_permissions.empty?
@@ -444,25 +444,22 @@ class AclController < ApplicationController
     @submission_form_labels = @submission_forms.to_h { |form| [form[:class_name], form[:label]] }
   end
 
-  # Every group grant, listed the way the standalone screen listed them: the
-  # picker above can name any group, so the table has to show any group too.
-  def all_visibility_grants
-    Forms::VisibilityGrant.for_group(Group.pluck(:GroupID))
+  # This group's grants only. Listing every group's rows here made one group's
+  # grant look like it belonged to whichever page it was viewed from, and its
+  # Remove button deleted the other group's row. A grant added for another
+  # group from the picker redirects to that group's page, where it is listed.
+  def group_visibility_grants
+    Forms::VisibilityGrant.for_group(@group.GroupID)
                           .includes(:group)
-                          .sort_by do |grant|
-      [grant.form_label(@submission_form_labels).to_s.downcase, grant.group&.group_name.to_s.downcase]
-    end
+                          .sort_by { |grant| grant.form_label(@submission_form_labels).to_s.downcase }
   end
 
-  # Group-held subscriptions only. Personal ones belong to their owner and are
-  # managed from that person's Settings page, not from here.
-  def all_form_subscriptions
-    Forms::Subscription.for_group(Group.pluck(:GroupID))
+  # This group's subscriptions only, for the same reason. Personal ones belong
+  # to their owner and are managed from that person's Settings page.
+  def group_form_subscriptions
+    Forms::Subscription.for_group(@group.GroupID)
                        .includes(:group)
-                       .sort_by do |subscription|
-      [subscription.form_label(@submission_form_labels).to_s.downcase,
-       subscription.group&.group_name.to_s.downcase]
-    end
+                       .sort_by { |subscription| subscription.form_label(@submission_form_labels).to_s.downcase }
   end
 
   # Only keys this screen actually offers, so a hand-posted form can't invent a

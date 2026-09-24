@@ -162,6 +162,23 @@ groups:
     key: change_status:CriticalInformationReporting
   - type: submission_action
     key: edit:CriticalInformationReporting
+- name: Critical_Info_Directors
+  description: This is a group for the directors in the Agency who want some oversight
+    into the CIR forms. They get emailed for every Critical Information Reporting
+    form being submitted. They will not get emails about edits or status changes.
+  permissions:
+  - type: dropdown
+    key: help
+  - type: dropdown
+    key: inbox
+  - type: dropdown
+    key: settings
+  - type: dropdown
+    key: submissions
+  - type: form
+    key: '17'
+    class: CriticalInformationReporting
+    label: Critical Information Reporting
 - name: Critical_Info_Email_List
   description: A list of users that get emailed for every Critical Information Reporting
     form
@@ -9914,6 +9931,10 @@ memberships:
   employee_id: 137716
 - group: Critical_Info_Admins
   employee_id: 138482
+- group: Critical_Info_Directors
+  employee_id: 137716
+- group: Critical_Info_Directors
+  employee_id: 138482
 - group: Critical_Info_Email_List
   employee_id: 117064
 - group: Critical_Info_Email_List
@@ -9976,6 +9997,8 @@ memberships:
   employee_id: 126183
 - group: Super_User
   employee_id: 106663
+- group: System_Admins
+  employee_id: 126566
 - group: System_Admins
   employee_id: 135272
 - group: System_Admins
