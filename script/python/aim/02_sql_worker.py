@@ -307,8 +307,8 @@ def run_delete_worker():
                 print(f"    [!] Deletion / Archiving failed for {folder_name}: {e}")
 
 if __name__ == "__main__":
-    # Prepare the machine before any work: directories, shortcuts, alias
-    # sync. Import alone does none of it.
+    # Prepare the machine before any work: directories and the alias sync.
+    # Import alone does none of it.
     bootstrap()
 
     print(f"Monitoring '{SQL_QUEUE_DIR}' (SQL WORKER) for ready invoices and deletions...")

@@ -352,8 +352,8 @@ def scan_and_spool():
                 print(f"  [>] Spooled {file} -> {processing_id}")
 
 if __name__ == "__main__":
-    # Prepare the machine before any work: directories, shortcuts, alias
-    # sync. Import alone does none of it.
+    # Prepare the machine before any work: directories and the alias sync.
+    # Import alone does none of it.
     bootstrap()
 
     print("======================================================================")

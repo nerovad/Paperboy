@@ -507,7 +507,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name,
             f.write(f"File: {processing_id}.pdf\n")
             f.write(f"Document Type: {master_data.document_type}\n\n")
             f.write("The AI could not tell what kind of document this is.\n")
-            f.write(f"Please review the document, set its document type, and drop this folder onto the SQL shortcut.")
+            f.write(f"Please review the document, set its document type, then use Send to SQL Queue on its Paperboy review page.")
             
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
@@ -529,7 +529,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name,
             f.write(f"--- MANUAL ACTION NEEDED (HANDWRITTEN FINANCIALS) ---\n")
             f.write(f"File: {processing_id}.pdf\n\n")
             f.write(f"The AI found these amounts written by hand: {handwritten}. They must be verified by a person.\n")
-            f.write(f"Please review the document, verify the values in the XML file, and drop this folder onto the SQL shortcut.")
+            f.write(f"Please review the document, verify the values, then use Send to SQL Queue on its Paperboy review page.")
             
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
@@ -798,8 +798,8 @@ def scan_directories():
                     pass
 
 if __name__ == "__main__":
-    # Prepare the machine before any work: directories, shortcuts, alias
-    # sync. Import alone does none of it.
+    # Prepare the machine before any work: directories and the alias sync.
+    # Import alone does none of it.
     bootstrap()
 
     from pipeline_common import AI_QUEUE_DIR

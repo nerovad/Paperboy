@@ -175,8 +175,8 @@ def run_batch_splitter():
                     print(f"    [!] Failed to route crashed split batch: {ex}")
 
 if __name__ == "__main__":
-    # Prepare the machine before any work: directories, shortcuts, alias
-    # sync. Import alone does none of it.
+    # Prepare the machine before any work: directories and the alias sync.
+    # Import alone does none of it.
     bootstrap()
 
     print(f"Monitoring '{READY_TO_SPLIT_DIR}' (BATCH SPLITTER) for approved manifests...")

@@ -128,36 +128,6 @@ VENDOR_RULES_FILE = vendor_rules_cfg if os.path.isabs(vendor_rules_cfg) else os.
 field_aliases_cfg = env('AIM_FIELD_ALIASES_FILE')
 FIELD_ALIASES_FILE = field_aliases_cfg if os.path.isabs(field_aliases_cfg) else os.path.join(PROGRAM_DIR, field_aliases_cfg)
 
-def create_windows_shortcut(target_path, shortcut_path):
-    """Create a Windows .lnk shortcut to a folder/file."""
-    try:
-        from win32com.client import Dispatch
-        shell = Dispatch('WScript.Shell')
-        shortcut = shell.CreateShortCut(shortcut_path)
-        shortcut.TargetPath = target_path
-        shortcut.save()
-    except Exception as e:
-        print(f"    [!] Failed to create shortcut: {e}")
-
-# Create convenience shortcuts for the human review processes
-def setup_shortcuts():
-    shortcuts = [
-        # Batch Split
-        (READY_TO_SPLIT_DIR, os.path.join(BATCH_SPLIT_DIR, "MOVE_FOLDERS_HERE_TO_SPLIT.lnk")),
-        # Vendor Review
-        (READY_TO_LEARN_DIR, os.path.join(VENDOR_REVIEW_DIR, "MOVE_FOLDERS_HERE_TO_LEARN_ALIAS.lnk")),
-        (READY_TO_DELETE_DIR, os.path.join(VENDOR_REVIEW_DIR, "MOVE_FOLDERS_HERE_TO_DELETE.lnk")),
-        # Action Needed
-        (SQL_QUEUE_DIR, os.path.join(ACTION_NEEDED_DIR, "MOVE_FOLDERS_HERE_TO_SEND_TO_SQL.lnk")),
-        (READY_TO_DELETE_DIR, os.path.join(ACTION_NEEDED_DIR, "MOVE_FOLDERS_HERE_TO_DELETE.lnk")),
-        # Low Confidence Review
-        (SQL_QUEUE_DIR, os.path.join(LOW_CONFIDENCE_REVIEW_DIR, "MOVE_FOLDERS_HERE_TO_SEND_TO_SQL.lnk")),
-        (READY_TO_DELETE_DIR, os.path.join(LOW_CONFIDENCE_REVIEW_DIR, "MOVE_FOLDERS_HERE_TO_DELETE.lnk")),
-    ]
-    for target, path in shortcuts:
-        if not os.path.exists(path):
-            create_windows_shortcut(target, path)
-
 MANAGED_DIRECTORIES = [
     PROCESSED_DIR, PENDING_VISION_DIR, ACTION_NEEDED_DIR, LOG_DIR,
     SQL_FAILED_DIR, SQL_QUEUE_DIR, BATCH_SPLIT_DIR, READY_TO_SPLIT_DIR,
@@ -174,14 +144,13 @@ def bootstrap():
     Every side effect the pipeline needs lives here, and nothing calls it on
     import. Each worker calls it from its own __main__. Keeping import pure
     is what makes the pipeline testable: a test can import this module
-    against a temp environment without creating a directory, planting a
-    shortcut, or touching the network.
+    against a temp environment without creating a directory or touching the
+    network.
     """
     for folder in MANAGED_DIRECTORIES:
         os.makedirs(folder, exist_ok=True)
 
     pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
-    setup_shortcuts()
 
     # Bi-directional vendor alias sync against SQL. This opens a database
     # connection, so it must never happen merely because someone imported

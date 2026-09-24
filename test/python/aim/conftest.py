@@ -5,9 +5,8 @@ Three rules this harness enforces, from the plan's Guardrails:
 * **Tests never read the real environment.** An autouse fixture strips every
   AIM_* variable before each test, so a developer's real `.env` -- or a
   workstation that has never pulled LockBox -- cannot change a result.
-* **No Windows, no Ollama, no SQL.** Nothing here loads a model, opens a
-  database connection or plants a `.lnk`. Those stay manual checks on
-  GSA-SCAN02.
+* **No Ollama, no SQL.** Nothing here loads a model or opens a database
+  connection. Those stay manual checks on GSA-SCAN02.
 * **No hardcoded paths.** Every directory comes from `tmp_path`.
 """
 import importlib

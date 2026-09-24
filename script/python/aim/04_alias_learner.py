@@ -153,8 +153,8 @@ def run_alias_learner():
                     print(f"    [!] Failed to route crashed batch: {ex}")
 
 if __name__ == "__main__":
-    # Prepare the machine before any work: directories, shortcuts, alias
-    # sync. Import alone does none of it.
+    # Prepare the machine before any work: directories and the alias sync.
+    # Import alone does none of it.
     bootstrap()
 
     print(f"Monitoring '{READY_TO_LEARN_DIR}' (ALIAS LEARNER) for approved vendor aliases...")

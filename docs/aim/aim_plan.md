@@ -2263,10 +2263,16 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
       are processed oldest first. A payload or ticket written before this
       that still carries the key is simply ignored.
 
-  - [ ] **5.7c(6) The shortcuts -- held.** Every job they did now has a
-    button: Delete, Approve Split, Learn Alias, Send to SQL Queue. Joshua is
-    telling staff first, 2026-09-23. Then: stop `setup_shortcuts` creating
-    them, and remove the seven `.lnk` files from the queues on the share.
+  - [x] **5.7c(6) The shortcuts are gone.** Every job they did now has a
+    button: Delete, Approve Split, Learn Alias, Send to SQL Queue. Held
+    briefly to tell staff, then released 2026-09-24: no staff use AIM yet,
+    only Joshua while building it. `setup_shortcuts` and
+    `create_windows_shortcut` are removed from `pipeline_common.py`, so
+    `bootstrap()` plants nothing; `pywin32` leaves `requirements.txt`, as it
+    had no other use. The seven `.lnk` files were deleted from the share
+    the same day. The AI worker's `.ticket` notes now say to use Send to SQL
+    Queue on the Paperboy review page instead of the SQL shortcut. A test
+    proves `bootstrap()` leaves no `.lnk` behind.
 
 ---
 
@@ -3094,3 +3100,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | 5.7c(3) | (this commit) | `split` end state; the splitter records the batch as split naming its pieces, reads BU/submitter/owner from the manifest instead of guessing from the file name, and hands the owner to every piece. 1042 runs, 0 fail, 0 error, 232 pytest, rubocop clean |
 | 2026-09-23 | 5.7c(4) | (this commit) | Batch Split screen: Approve Split (checked against the PDF's page count; refused plans re-render with the person's entries and plain errors) and Process as One Invoice (keeps its batch id). Found the old split summary never displayed. 1059 runs, 0 fail, 0 error, 234 pytest, rubocop clean, brakeman unchanged |
 | 2026-09-23 | 5.7c(5) | (this commit) | Action Needed gets Send to SQL Queue; `is_urgent` removed from watcher, AI worker, payload and Rails badge. Shortcuts held until Joshua has told staff. 1060 runs, 0 fail, 0 error, 234 pytest, rubocop clean |
+| 2026-09-24 | 5.7c(6) | (this commit) | Shortcuts retired: the workers no longer plant them, `pywin32` dropped, the seven `.lnk` files deleted from the share, ticket notes point to the Send to SQL Queue button. Released early because no staff use AIM yet |
