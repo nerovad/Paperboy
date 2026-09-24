@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'test_helper'
+require 'tmpdir'
 require_relative '../../app/services/workflow_outputs'
 
 class WorkflowOutputsServiceTest < ActiveSupport::TestCase
@@ -22,7 +23,28 @@ class WorkflowOutputsServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test 'cleans up a materialized remote output file' do
+    store = RemoteStore.new
+    entry = Entry.new(slug: 'employees', output_name: 'employees.csv')
+
+    Paperboy::FileStore.stub(:for, store) do
+      file = WorkflowOutputs.new(entry, root: Pathname('/data/output.lnk'))
+                            .find!('02_Normalized/employees.csv')
+      path = file.local_path
+
+      assert_path_exists path
+      file.cleanup
+      assert_equal [path], store.cleaned_paths
+    end
+  end
+
   class RemoteStore
+    attr_reader :cleaned_paths
+
+    def initialize
+      @cleaned_paths = []
+    end
+
     def walk(prefix = nil)
       entries = {
         nil => [{ name: '02_Normalized/employees.csv', modified_at: Time.utc(2026, 9, 24) },
@@ -30,6 +52,16 @@ class WorkflowOutputsServiceTest < ActiveSupport::TestCase
         '06_Download_Backup' => []
       }
       entries.fetch(prefix)
+    end
+
+    def download(_name)
+      path = Pathname(Dir.mktmpdir('workflow-output-test')).join('output')
+      path.write('output')
+      path
+    end
+
+    def cleanup_download(path)
+      @cleaned_paths << path
     end
   end
 end
