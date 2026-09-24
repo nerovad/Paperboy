@@ -31,11 +31,12 @@ module Aim
 
     # Move an invoice to another person's queue, or to SHARED.
     def reassign
-      moved = @invoice.reassign!(params[:owner], actor: current_user_email)
+      owner = params[:destination] == 'shared' ? Aim::Invoice::SHARED_QUEUE : params[:owner]
+      moved = @invoice.reassign!(owner, actor: current_user_email)
       notice = moved ? "Moved to #{helpers.aim_owner_label(@invoice.queue_owner)}." : 'The invoice was already there.'
-      redirect_to aim_invoices_path(queue: @queue), notice: notice
+      redirect_back_or_to aim_invoices_path(queue: @queue), notice: notice
     rescue Aim::Invoice::IllegalTransition, ActiveRecord::RecordInvalid => e
-      redirect_to aim_invoices_path(queue: @queue), alert: e.message
+      redirect_back_or_to aim_invoices_path(queue: @queue), alert: e.message
     end
 
     def show
@@ -106,14 +107,15 @@ module Aim
     # Ready for Approval is people's queues: one group per owner, the shared
     # queue last, each with the queues an invoice of that BU can move to.
     def group_by_owner
-      @groups = @invoices.group_by(&:queue_owner)
-                         .sort_by { |owner, _| [owner == Aim::Invoice::SHARED_QUEUE ? 1 : 0, owner.downcase] }
-      users = Aim::Users.names
-      @owner_choices = @invoices.map(&:budget_unit).uniq.to_h do |bu|
-        [bu, Aim::Invoice.queue_owners_for(bu, extra: users)]
-      end
-      @move_choices = @owner_choices.values.flatten.uniq(&:downcase)
-                                    .sort_by { |name| [name == Aim::Invoice::SHARED_QUEUE ? 1 : 0, name.downcase] }
+      @groups = @invoices.group_by { |invoice| owner_group(invoice) }
+                         .sort_by { |(shared, name), _| [shared ? 1 : 0, name.downcase] }
+    end
+
+    # One group per person, and one shared queue per BU.
+    def owner_group(invoice)
+      return [true, "#{invoice.budget_unit} shared queue"] if invoice.assigned_employee_id.nil?
+
+      [false, invoice.assigned_to.presence || "Employee #{invoice.assigned_employee_id}"]
     end
 
     # The store, then the invoice's folder, then its PDF, and nothing from the

@@ -749,23 +749,25 @@
   padding: 0;
 }
 
-// Ready for Approval: one collapsible group per person's queue.
-.aim-owner-group {
-  margin-bottom: 1rem;
+// Ready for Approval and My Queue: Billing Audit's collapsible groups. The
+// caret turns when a group is open.
+.aim-owner-group__caret {
+  display: inline-block;
+  transition: transform 0.15s ease;
 }
 
-.aim-owner-group > summary {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  padding: 0.5rem 0;
-  font-weight: 600;
-  list-style: revert;
+.aim-owner-group [aria-expanded="true"] .aim-owner-group__caret {
+  transform: rotate(90deg);
 }
 
 .aim-owner-group__name {
-  font-size: 1.05rem;
+  flex: 1;
+  text-align: left;
+}
+
+.aim-person-picker {
+  flex-basis: 100%;
+  max-width: 32rem;
 }
 
 // The upload form's drop area. Dropped files land in the file input inside it.

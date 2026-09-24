@@ -42,28 +42,6 @@ module Aim
         QUEUES.find { |_, queue| queue[:states].include?(state.to_s) }&.first
       end
 
-      # The queues an invoice of this BU can be moved to: the person folders
-      # under the BU in the drop tree, anyone already holding one of its
-      # invoices, and SHARED. A drop tree that cannot be read just shortens
-      # the list.
-      def queue_owners_for(budget_unit, extra: [])
-        from_rows = where(budget_unit: budget_unit).where.not(assigned_to: [nil, '']).distinct.pluck(:assigned_to)
-        # Folders and holders first, so a name already on an invoice keeps its
-        # spelling when the same person is also listed among the AIM users.
-        names = (folder_owners_for(budget_unit) + from_rows + Array(extra) + [Aim::Invoice::SHARED_QUEUE])
-                .map(&:squish).compact_blank
-        names.uniq(&:downcase).sort_by { |name| [name == Aim::Invoice::SHARED_QUEUE ? 1 : 0, name.downcase] }
-      end
-
-      def folder_owners_for(budget_unit)
-        bu_dir = File.join(Aim::InvoiceDirectoryService.instance.drop_dir, budget_unit.to_s)
-        return [] unless budget_unit.present? && File.directory?(bu_dir)
-
-        Dir.children(bu_dir).select { |name| File.directory?(File.join(bu_dir, name)) && !name.start_with?('_', '.') }
-      rescue Aim::MissingConfiguration, SystemCallError
-        []
-      end
-
       # How many invoices each queue holds, for the sidebar and the dashboard.
       def queue_counts
         by_state = group(:state).count

@@ -1,0 +1,20 @@
+<div class="aim-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">My Queue</h1>
+      <p class="aim-page-subtitle">Invoices assigned to you. Review and approve them here, or move one to someone else.</p>
+    </div>
+    <span class="aim-count-pill"><%= pluralize(@groups.sum { |_, rows| rows.size }, 'invoice') %></span>
+  </header>
+
+  <% if @employee_id.nil? %>
+    <section class="aim-panel aim-empty-state"><p>Your account has no employee id, so no queue can be yours.</p></section>
+  <% elsif @groups.empty? %>
+    <section class="aim-panel aim-empty-state"><p>Nothing is waiting for you.</p></section>
+  <% else %>
+    <div data-controller="aim-move-modal">
+      <%= render 'aim/invoices/owner_groups', groups: @groups, movable: true, open: true %>
+      <%= render 'aim/invoices/move_modal' %>
+    </div>
+  <% end %>
+</div>

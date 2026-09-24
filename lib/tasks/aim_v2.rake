@@ -39,6 +39,13 @@ namespace :aim do
       puts "closed #{closed} rows created before #{before}"
     end
 
+    desc 'Link open invoices owned by a name to the employee of that name'
+    task link_owners: :environment do
+      linked, unmatched = Aim::V2Seeds.link_owners
+      puts "linked #{linked} invoices to employees"
+      unmatched.each { |name, count| puts "  no single employee named #{name.inspect} (#{count} invoices)" }
+    end
+
     desc 'Purge finished rows created before BEFORE=<time>, with their events'
     task purge_before: :environment do
       before = Time.zone.parse(ENV.fetch('BEFORE'))

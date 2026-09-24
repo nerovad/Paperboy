@@ -1,0 +1,22 @@
+<%# Collapsible groups in the Billing Audit style: a gradient header that
+    opens and closes its table (billing-audit-sections). `groups` is
+    [[heading, invoices], ...]; groups start collapsed unless `open`. %>
+<% groups.each_with_index do |(heading, invoices), index| %>
+  <% content_id = "aim-group-#{index}" %>
+  <section class="billing-audit-group aim-owner-group" data-controller="billing-audit-sections">
+    <h2>
+      <button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle"
+              data-action="billing-audit-sections#toggle" aria-expanded="<%= local_assigns[:open] ? 'true' : 'false' %>"
+              aria-controls="<%= content_id %>">
+        <span aria-hidden="true" class="aim-owner-group__caret">▸</span>
+        <span class="aim-owner-group__name"><%= heading %></span>
+        <span class="aim-count-pill"><%= pluralize(invoices.size, 'invoice') %></span>
+      </button>
+    </h2>
+    <div id="<%= content_id %>" data-billing-audit-sections-target="content" <%= 'hidden' unless local_assigns[:open] %>>
+      <div class="billing-type-audit-table-wrapper">
+        <%= render 'aim/invoices/rows', invoices: invoices, movable: movable %>
+      </div>
+    </div>
+  </section>
+<% end %>

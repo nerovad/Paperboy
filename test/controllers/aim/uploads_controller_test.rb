@@ -46,8 +46,9 @@ module Aim
       row = Aim::Invoice.sole
       assert_match(/\A4601\.\d{8}_\d{6}\.Scan 001-\[[A-Z0-9]{4}\]\z/, row.batch_id)
       assert_equal %w[received extract], [row.state, row.command]
-      assert_equal ['4601', 'Jane Doe', 'Jane Doe', 'upload', 'Scan 001.pdf'],
-                   [row.budget_unit, row.submitter, row.assigned_to, row.assignment_source, row.source_filename]
+      assert_equal ['4601', 'Jane Doe', 'upload', 'Scan 001.pdf'],
+                   [row.budget_unit, row.submitter, row.assignment_source, row.source_filename]
+      assert_equal 42, row.assigned_employee_id, "the uploader's own queue, by employee id"
       assert File.exist?(File.join(@tmpdir, '_BACK_END', '_STORE', row.batch_id, "#{row.batch_id}.pdf"))
       assert_equal 64, row.content_hash.length
       assert_equal 'jane@example.com', row.events.first.actor
@@ -61,10 +62,14 @@ module Aim
       assert_nil row.assignment_source
     end
 
-    test 'a named person owns it' do
-      post :create, params: { budget_unit: '4601', owner: 'person', owner_name: ' Dana Reyes ', files: [pdf('a.pdf')] }
+    test 'a person picked by employee id owns it' do
+      employee = Employee.order(:id).first || skip('no employee to test with')
 
-      assert_equal 'Dana Reyes', Aim::Invoice.sole.assigned_to
+      post :create, params: { budget_unit: '4601', owner: 'person', owner_employee_id: employee.id, files: [pdf('a.pdf')] }
+
+      row = Aim::Invoice.sole
+      assert_equal [employee.id, "#{employee.first_name} #{employee.last_name}".squish],
+                   [row.assigned_employee_id, row.assigned_to]
     end
 
     test 'several files become several invoices' do
@@ -97,11 +102,10 @@ module Aim
       assert_equal 0, Aim::Invoice.count
     end
 
-    test 'someone else is chosen from the people who work AIM' do
-      Aim::Users.stub(:names, ['Dana Reyes', 'Sam Lee']) { get :new }
+    test 'someone else is found with the employee search' do
+      get :new
 
-      assert_select 'select[name=owner_name] option[value=?]', 'Dana Reyes'
-      assert_select 'select[name=owner_name] option[value=?]', 'Sam Lee'
+      assert_select '[data-controller=aim-person-search] input[type=hidden][name=owner_employee_id]'
       assert_select '[data-controller=aim-dropzone] input[type=file][multiple]'
     end
   end

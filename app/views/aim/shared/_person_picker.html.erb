@@ -1,0 +1,13 @@
+<%# A person, found the way the Chart of Accounts employee lookup finds one:
+    type a name or employee id, pick "Last, First (id) — Unit". The employee
+    id goes in the hidden field `name`, so a queue belongs to a real account. %>
+<div class="aim-person-picker coa-customer-search" data-controller="aim-person-search"
+     data-aim-person-search-url-value="<%= aim_people_path %>">
+  <%= search_field_tag "#{name}_search", nil,
+                       placeholder: 'Search first name, last name, or employee ID…', autocomplete: 'off',
+                       aria: { label: local_assigns.fetch(:label, 'Person') },
+                       data: { aim_person_search_target: 'input',
+                               action: 'input->aim-person-search#search keydown->aim-person-search#keydown' } %>
+  <%= hidden_field_tag name, nil, data: { aim_person_search_target: 'value' } %>
+  <div class="coa-customer-results" role="listbox" data-aim-person-search-target="results" hidden></div>
+</div>

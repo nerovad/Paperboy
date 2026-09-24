@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_100003) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_100004) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -70,6 +70,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_100003) do
   end
 
   create_table "aim.invoices", force: :cascade do |t|
+    t.integer "assigned_employee_id"
     t.string "assigned_to"
     t.string "assignment_source", limit: 50
     t.integer "attempt", default: 0, null: false
@@ -110,6 +111,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_100003) do
     t.decimal "subtotal", precision: 15, scale: 2
     t.datetime "updated_at", null: false
     t.string "vendor_name"
+    t.index ["assigned_employee_id"], name: "index_aim_invoices_on_assigned_employee_id"
     t.index ["batch_id"], name: "index_aim_invoices_on_batch_id", unique: true
     t.index ["command", "lease_until"], name: "index_aim_invoices_on_command_and_lease_until"
     t.index ["content_hash"], name: "index_aim_invoices_on_content_hash"

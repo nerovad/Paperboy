@@ -1,36 +1,56 @@
 <%# app/views/aim/shared/_sidebar.html.erb
-    Sidebar for the Automated Invoice Management app. The app switcher header is shared with
-    every other app; everything below it is this app's own navigation. AIM v2: the queues
-    are the invoice rows' states, counted from the database. %>
+    Sidebar for Automated Invoice Management, grouped the way Production's is:
+    AIM (open by default), Queues, Vendors, Admin. A group also opens when the
+    current page is in it. The queues are counted from the invoice rows. %>
+<% queue_paths = Aim::Invoice::QUEUES.keys.map { |queue| aim_invoices_path(queue: queue) } %>
+<% vendor_paths = [aim_vendor_aliases_path, aim_vendor_rules_path] %>
 <div class="sidebar aim-sidebar">
   <%= render "shared/app_switcher" %>
 
   <nav class="aim-links">
-    <% if can_use_app_feature?("aim", "dashboard") %>
-      <%= link_to "Dashboard", aim_dashboard_path,
-                  class: "nav-link#{' active' if current_page?(aim_dashboard_path)}" %>
-    <% end %>
-
-    <%= link_to "Upload Invoices", new_aim_upload_path,
-                class: "nav-link#{' active' if current_page?(new_aim_upload_path)}" %>
-
-    <% if aim_queue_access? %>
-      <div class="sidebar-section-label">Queues</div>
-      <% Aim::Invoice::QUEUES.each do |queue, config| %>
-        <% queue_path = aim_invoices_path(queue: queue) %>
-        <%= link_to queue_path, class: "nav-link#{' active' if current_page?(queue_path)}" do %>
-          <span><%= config[:label] %></span>
-          <span class="sidebar-count <%= config[:css_class].delete_prefix('aim-card-') %>">
-            <%= @aim_queue_counts.fetch(queue, 0) %>
-          </span>
+    <details class="nav-group" open>
+      <summary><span class="nav-group-label">AIM</span></summary>
+      <% if can_use_app_feature?("aim", "dashboard") %>
+        <%= link_to "Dashboard", aim_dashboard_path,
+                    class: "nav-link#{' active' if current_page?(aim_dashboard_path)}" %>
+      <% end %>
+      <%= link_to aim_my_queue_path, class: "nav-link#{' active' if current_page?(aim_my_queue_path)}" do %>
+        <span>My Queue</span>
+        <% if @aim_my_queue_count.to_i.positive? %>
+          <span class="sidebar-count warning"><%= @aim_my_queue_count %></span>
         <% end %>
       <% end %>
+      <%= link_to "Upload Invoices", new_aim_upload_path,
+                  class: "nav-link#{' active' if current_page?(new_aim_upload_path)}" %>
+    </details>
 
-      <div class="sidebar-section-label">Vendors</div>
-      <%= link_to "Vendor Aliases", aim_vendor_aliases_path,
-                  class: "nav-link#{' active' if current_page?(aim_vendor_aliases_path)}" %>
-      <%= link_to "Vendor Rules", aim_vendor_rules_path,
-                  class: "nav-link#{' active' if current_page?(aim_vendor_rules_path)}" %>
+    <% if aim_queue_access? %>
+      <details class="nav-group" <%= "open" if queue_paths.any? { |path| current_page?(path) } %>>
+        <summary><span class="nav-group-label">Queues</span></summary>
+        <% Aim::Invoice::QUEUES.each do |queue, config| %>
+          <% queue_path = aim_invoices_path(queue: queue) %>
+          <%= link_to queue_path, class: "nav-link#{' active' if current_page?(queue_path)}" do %>
+            <span><%= config[:label] %></span>
+            <span class="sidebar-count <%= config[:css_class].delete_prefix('aim-card-') %>">
+              <%= @aim_queue_counts.fetch(queue, 0) %>
+            </span>
+          <% end %>
+        <% end %>
+      </details>
+
+      <details class="nav-group" <%= "open" if vendor_paths.any? { |path| current_page?(path) } %>>
+        <summary><span class="nav-group-label">Vendors</span></summary>
+        <%= link_to "Vendor Aliases", aim_vendor_aliases_path,
+                    class: "nav-link#{' active' if current_page?(aim_vendor_aliases_path)}" %>
+        <%= link_to "Vendor Rules", aim_vendor_rules_path,
+                    class: "nav-link#{' active' if current_page?(aim_vendor_rules_path)}" %>
+      </details>
+
+      <details class="nav-group" <%= "open" if current_page?(aim_admin_path) %>>
+        <summary><span class="nav-group-label">Admin</span></summary>
+        <%= link_to "Users & Queues", aim_admin_path,
+                    class: "nav-link#{' active' if current_page?(aim_admin_path)}" %>
+      </details>
     <% end %>
   </nav>
 </div>

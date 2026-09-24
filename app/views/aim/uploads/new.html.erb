@@ -38,11 +38,7 @@
           <label><%= radio_button_tag :owner, 'self', true %> Mine</label>
           <label><%= radio_button_tag :owner, 'shared' %> The budget unit's shared queue</label>
           <label><%= radio_button_tag :owner, 'person' %> Someone else:</label>
-          <div class="aim-owner-picker" data-controller="choices">
-            <%= select_tag :owner_name, options_for_select(@aim_users), include_blank: 'Type a name…',
-                                        data: { choices_target: 'select', placeholder: 'Type a name…' },
-                                        aria: { label: 'Whose queue' } %>
-          </div>
+          <%= render 'aim/shared/person_picker', name: :owner_employee_id, label: 'Whose queue' %>
         </fieldset>
       </div>
 

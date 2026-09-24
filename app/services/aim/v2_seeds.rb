@@ -119,6 +119,33 @@ module Aim
       [rows.delete_all, events]
     end
 
+    # Queues named before owners were people: give each open invoice whose
+    # assigned_to is exactly one employee's "First Last" that employee's id.
+    # A name that matches nobody, or more than one person, is left and listed.
+    def link_owners
+      linked = 0
+      unmatched = Hash.new(0)
+      Aim::Invoice.where(assigned_employee_id: nil).where.not(assigned_to: [nil, ''])
+                  .where.not(state: Aim::Invoice::TERMINAL_STATES).find_each do |invoice|
+        employee = employee_named(invoice.assigned_to)
+        if employee
+          invoice.update_columns(assigned_employee_id: employee.id, assigned_to: "#{employee.first_name} #{employee.last_name}".squish)
+          linked += 1
+        else
+          unmatched[invoice.assigned_to] += 1
+        end
+      end
+      [linked, unmatched]
+    end
+
+    def employee_named(name)
+      first, last = name.to_s.squish.split(' ', 2)
+      return if last.blank?
+
+      found = Employee.where('LOWER(first_name) = ? AND LOWER(last_name) = ?', first.downcase, last.downcase).limit(2).to_a
+      found.one? ? found.first : nil
+    end
+
     def pdf_in(folder)
       return unless File.directory?(folder)
 

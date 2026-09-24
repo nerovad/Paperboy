@@ -22,8 +22,10 @@ module Aim
 
     # +io+ is anything that responds to #read (an uploaded file). The
     # submitter is the person who brought it; the owner is whose queue it goes
-    # to, nil for the BU's shared queue.
+    # to, nil for the BU's shared queue: a name, or { name:, employee_id: }.
     def store(io, original_filename:, budget_unit:, submitter:, owner:, actor:, source: 'upload', source_path: nil)
+      owner_employee_id = owner.is_a?(Hash) ? owner[:employee_id] : nil
+      owner = owner[:name] if owner.is_a?(Hash)
       batch_id = mint_batch_id(budget_unit, original_filename)
       folder = File.join(@directory_service.store_dir, batch_id)
       pdf_path = File.join(folder, "#{batch_id}.pdf")
@@ -35,7 +37,8 @@ module Aim
       invoice = Aim::Invoice.create!(
         batch_id: batch_id, state: 'received', command: 'extract', actor: actor,
         budget_unit: budget_unit, submitter: submitter,
-        assigned_to: owner.presence, assignment_source: (source if owner.present?),
+        assigned_to: owner.presence, assigned_employee_id: owner_employee_id,
+        assignment_source: (source if owner.present? || owner_employee_id),
         source_filename: original_filename.to_s.first(260), source_path: source_path&.first(1000),
         content_hash: Digest::SHA256.hexdigest(bytes), page_count: page_count(bytes)
       )

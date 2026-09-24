@@ -37,6 +37,7 @@ module Aim
     # down, so the counts go blank rather than raising.
     def load_aim_sidebar_counts
       @aim_queue_counts = Aim::Invoice.queue_counts
+      @aim_my_queue_count = Aim::Invoice.owned_by(current_user_employee_id).in_queue('ready_for_approval').count if current_user_employee_id
     rescue StandardError => e
       Rails.logger.error "Failed to load AIM queue counts: #{e.message}"
       @aim_queue_counts = {}
@@ -49,6 +50,11 @@ module Aim
     def current_user_name
       user = session[:user] || session['user'] || {}
       [user['first_name'], user['last_name']].compact_blank.join(' ').presence
+    end
+
+    def current_user_employee_id
+      user = session[:user] || session['user'] || {}
+      user['employee_id'].presence&.to_i
     end
 
     def current_user_unit

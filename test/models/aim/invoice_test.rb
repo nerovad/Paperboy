@@ -75,36 +75,52 @@ module Aim
     # People's queues
     # ---------------------------------------------------------------
 
-    test 'an invoice is in the shared queue until a person holds it' do
-      assert_equal 'SHARED', build.queue_owner
-      assert_equal 'Jane Doe', build(assigned_to: 'Jane Doe', assignment_source: 'folder').queue_owner
+    def person
+      Employee.order(:id).first || skip('no employee to test with')
     end
 
-    test 'moving an invoice to another queue is recorded, and back to shared clears the owner' do
-      invoice = build(assigned_to: 'Jane Doe', assignment_source: 'folder').tap(&:save!)
+    def name_of(employee) = "#{employee.first_name} #{employee.last_name}".squish
 
-      assert invoice.reassign!('Sam Lee', actor: 'staff@example.com')
-      assert_equal ['Sam Lee', 'reassigned'], [invoice.assigned_to, invoice.assignment_source]
+    test 'an invoice is in the shared queue until a person holds it' do
+      assert_equal 'SHARED', build.queue_owner
+      assert_predicate build, :shared_queue?
+    end
+
+    test 'moving an invoice to a person records who, and back to shared clears the owner' do
+      employee = person
+      invoice = build(budget_unit: '4601').tap(&:save!)
+
+      assert invoice.reassign!(employee.id.to_s, actor: 'staff@example.com')
+      assert_equal [employee.id, name_of(employee), 'reassigned'],
+                   [invoice.assigned_employee_id, invoice.assigned_to, invoice.assignment_source]
       event = invoice.events.last
-      assert_equal ['assignment', 'staff@example.com', 'moved from Jane Doe to Sam Lee'], [event.action, event.actor, event.note]
+      assert_equal ['assignment', 'staff@example.com', "moved from SHARED to #{name_of(employee)}"],
+                   [event.action, event.actor, event.note]
 
-      assert invoice.reassign!('shared', actor: 'staff@example.com')
-      assert_nil invoice.assigned_to
-      assert_equal 'moved from Sam Lee to SHARED', invoice.events.last.note
+      assert invoice.reassign!('SHARED', actor: 'staff@example.com')
+      assert_nil invoice.assigned_employee_id
+      assert_equal "moved from #{name_of(employee)} to the 4601 shared queue", invoice.events.last.note
     end
 
     test 'moving an invoice to the queue it is already in changes nothing' do
-      invoice = build(assigned_to: 'Jane Doe', assignment_source: 'folder').tap(&:save!)
+      employee = person
+      invoice = build.tap(&:save!)
+      invoice.reassign!(employee.id, actor: 'staff@example.com')
 
-      assert_not invoice.reassign!(' jane doe ', actor: 'staff@example.com')
-      assert_not invoice.reassign!('Jane Doe', actor: 'staff@example.com')
-      assert_equal 1, invoice.events.count
+      assert_not invoice.reassign!(employee.id, actor: 'staff@example.com')
+      assert_equal 2, invoice.events.count
+    end
+
+    test 'an owner who is not a person is refused' do
+      invoice = build.tap(&:save!)
+
+      assert_raises(ActiveRecord::RecordInvalid) { invoice.reassign!('999999999', actor: 'staff@example.com') }
     end
 
     test 'a finished invoice cannot be moved to another queue' do
       invoice = build(state: 'exported').tap(&:save!)
 
-      assert_raises(Aim::Invoice::IllegalTransition) { invoice.reassign!('Sam Lee', actor: 'staff@example.com') }
+      assert_raises(Aim::Invoice::IllegalTransition) { invoice.reassign!('SHARED', actor: 'staff@example.com') }
     end
   end
 end

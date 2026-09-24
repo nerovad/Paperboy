@@ -321,44 +321,42 @@ module Aim
     # People's queues
     # ---------------------------------------------------------------
 
-    test 'ready for approval is grouped by owner, with a count, the shared queue last' do
-      invoice('4601.O1', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assignment_source: 'folder')
-      invoice('4601.O2', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assignment_source: 'folder')
+    test 'ready for approval is grouped by person, one shared queue per BU last, collapsed' do
+      invoice('4601.O1', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
+                         assignment_source: 'folder')
+      invoice('4601.O2', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
+                         assignment_source: 'folder')
       invoice('4601.O3', state: 'ready_for_approval', pdf: false)
 
-      Aim::Users.stub(:names, []) { get :index, params: { queue: 'ready_for_approval' } }
+      get :index, params: { queue: 'ready_for_approval' }
 
       assert_response :success
-      assert_equal ['Jane Doe', 'SHARED'], @controller.instance_variable_get(:@groups).map(&:first)
-      assert_select 'details.aim-owner-group:not([open])', 2, 'the groups start collapsed'
-      assert_select 'details.aim-owner-group:first-of-type summary', /Jane Doe.*2 invoices/m
+      assert_equal(['Jane Doe', '4601 shared queue'], @controller.instance_variable_get(:@groups).map { |key, _| key.last })
+      assert_select 'section.aim-owner-group', 2
+      assert_select 'section.aim-owner-group button[aria-expanded=false]', 2, 'the groups start collapsed'
+      assert_select 'section.aim-owner-group .aim-count-pill', text: '2 invoices'
       assert_select 'button.aim-move-button', 3
-      assert_equal ['Jane Doe', 'SHARED'], @controller.instance_variable_get(:@move_choices)
-      assert_select 'form[data-aim-move-modal-target=form] select[name=owner] option:not([value=""])', 2
+      assert_select '[data-controller=aim-person-search] input[type=hidden][name=owner]'
     end
 
-    test 'the move-to choices are the person folders of the BU, current holders, and shared' do
-      FileUtils.mkdir_p(File.join(@tmpdir, 'Invoices', '4601', 'Sam Lee'))
-      FileUtils.mkdir_p(File.join(@tmpdir, 'Invoices', '4601', '_Archive'))
-      File.write(File.join(@tmpdir, 'Invoices', '4601', 'README.txt'), 'not a person')
-      invoice('4601.O4', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assignment_source: 'folder')
+    test 'moving an invoice to a person records it and returns to the queue' do
+      employee = Employee.order(:id).first || skip('no employee to test with')
+      row = invoice('4601.O5', state: 'ready_for_approval', pdf: false)
 
-      Aim::Users.stub(:names, ['Ana Ruiz', 'jane doe']) { get :index, params: { queue: 'ready_for_approval' } }
-
-      assert_equal({ '4601' => ['Ana Ruiz', 'Jane Doe', 'Sam Lee', 'SHARED'] },
-                   @controller.instance_variable_get(:@owner_choices), 'AIM users, folders, holders, shared; no duplicates')
-      assert_equal ['Ana Ruiz', 'Jane Doe', 'Sam Lee', 'SHARED'], @controller.instance_variable_get(:@move_choices)
-    end
-
-    test 'moving an invoice to another queue records it and returns to the queue' do
-      row = invoice('4601.O5', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assignment_source: 'folder')
-
-      patch :reassign, params: { id: row.batch_id, queue: 'ready_for_approval', owner: 'Sam Lee' }
+      patch :reassign, params: { id: row.batch_id, queue: 'ready_for_approval', destination: 'person', owner: employee.id }
 
       assert_redirected_to aim_invoices_path(queue: 'ready_for_approval')
-      assert_match(/Moved to Sam Lee's queue/, flash[:notice])
-      assert_equal 'Sam Lee', row.reload.assigned_to
+      assert_equal employee.id, row.reload.assigned_employee_id
       assert_equal REVIEWER, row.events.last.actor
+    end
+
+    test 'moving an invoice to the shared queue clears its owner' do
+      row = invoice('4601.O7', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
+                               assignment_source: 'folder')
+
+      patch :reassign, params: { id: row.batch_id, queue: 'ready_for_approval', destination: 'shared', owner: '' }
+
+      assert_nil row.reload.assigned_employee_id
     end
 
     test 'a finished invoice is not moved' do

@@ -10,7 +10,6 @@ module Aim
 
     def new
       @budget_unit = current_user_unit
-      @aim_users = Aim::Users.names
     end
 
     def create
@@ -33,8 +32,8 @@ module Aim
     def store(file, budget_unit)
       Aim::Intake.new.store(file,
                             original_filename: file.original_filename, budget_unit: budget_unit,
-                            submitter: submitter_name, owner: owner_name, actor: current_user_email,
-                            source: 'upload').invoice
+                            submitter: submitter_name, owner: { name: owner_name, employee_id: owner_employee_id },
+                            actor: current_user_email, source: 'upload').invoice
     end
 
     def submitter_name = current_user_name || current_user_email
@@ -42,11 +41,19 @@ module Aim
     # Whose queue the invoice goes to: the uploader's, a named person's, or
     # nobody's (the BU's shared queue).
     def owner_name
-      case params[:owner].to_s
-      when 'shared' then nil
-      when 'person' then params[:owner_name].to_s.squish.presence
-      else submitter_name
-      end
+      return if owner_employee_id.nil?
+
+      Aim::Invoice.employee_name(owner_employee_id) || (submitter_name if owner_employee_id == current_user_employee_id)
+    end
+
+    # The owner as a person: the uploader, someone picked the way Emulate picks
+    # (an employee id), or nobody -- the BU's shared queue.
+    def owner_employee_id
+      @owner_employee_id ||= case params[:owner].to_s
+                             when 'shared' then nil
+                             when 'person' then params[:owner_employee_id].presence&.to_i
+                             else current_user_employee_id
+                             end
     end
 
     def pdf?(file)
