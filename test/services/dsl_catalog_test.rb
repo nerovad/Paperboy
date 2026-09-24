@@ -108,4 +108,22 @@ class DslCatalogTest < ActiveSupport::TestCase
     expected = Pathname.new(ENV.fetch('P2M_DATARUNNER_ROOT')).join(ENV.fetch('P2M_STAGING'))
     assert_equal expected, entry.sop_reference_path
   end
+
+  test 'preserves an absolute shortcut-backed orchestration path' do
+    location = Pathname.new('/mnt/o/Outputs/DataRunner/00_ShippingStation.lnk')
+    entry = DslCatalog::Entry.new(
+      key: 'Shortcut', slug: 'shortcut', path: nil,
+      config: {
+        group: { name: 'print_2_mail_billing_data' },
+        orchestration: {
+          root_path: '/mnt/o/Outputs/DataRunner',
+          sent_path: location.to_s,
+          queue: { path: :sent_path }
+        },
+        sop: { shared: :p2m_billing, reference_path: :downloaded_file }
+      }
+    )
+
+    assert_equal location, entry.sop_reference_path
+  end
 end

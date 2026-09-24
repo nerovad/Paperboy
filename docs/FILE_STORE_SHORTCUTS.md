@@ -89,6 +89,8 @@ messages must never expose passwords.
       archive checks through the shared file-store abstraction.
 - [x] Update the OMS preprocess and postprocess scripts to materialize input,
       publish output, and archive/remove files through the shared store.
+- [x] Preserve absolute shortcut-backed paths when resolving DataRunner SOP
+      references.
 - [ ] Convert remaining DataRunner path consumers and generated DSL locations
       as needed.
 - [x] Convert the P2M backfill/scan script's staging and processed-directory
