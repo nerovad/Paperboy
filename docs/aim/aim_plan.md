@@ -2023,9 +2023,17 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
   state would otherwise reach for SQL Server from a test. Needs a deploy;
   Joshua judges it on real documents.
 
-- [ ] **5.7 Retire folder-as-state.** Remove `.claim.json`, remove the
+- [x] **5.7 Retire folder-as-state.** Remove `.claim.json`, remove the
   status-by-location inference, remove the Windows shortcuts.
   *Test:* the suite passes with no code reading a folder to learn status.
+
+  **Done 2026-09-24, with two things carried to 9.5.** The screens take
+  status and claims from the row, and the shortcuts and `is_urgent` are
+  gone. Still reading folders, on purpose: `Aim::QueueSync` compares folders
+  with rows to find disagreements, and the queue list shows a folder with no
+  row as "Not yet recorded" rather than hiding it. Carried to 9.5:
+  `Aim::WorkProvider` (Paperboy's inbox) still reads queue folders and
+  `.claim.json`, so the file is still written beside the row's claim.
 
   Done in three parts, each safe to deploy alone: **(a)** the workers write
   the invoice's facts onto the row; **(b)** the screens read rows, and claims
@@ -2116,7 +2124,7 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
       before, the review page could not find it at all.
     Claims are still read from `.claim.json`; 5.7c moves them.
 
-  - [ ] **5.7c What 5.7c has to settle first** -- found 2026-09-23, before
+  - [x] **5.7c What 5.7c has to settle first** -- found 2026-09-23, before
     starting it:
     - **Two shortcuts are the only way to do their jobs.** Seven `.lnk`
       files sit in the queues. `MOVE_FOLDERS_HERE_TO_SPLIT` (Batch Split) and
@@ -2135,6 +2143,10 @@ The core restructure. Needs Joshua's approval on the migration before 5.1.
       is not on master yet (checked 2026-09-23: master is 31 commits ahead,
       none of them pfa). It moves in 9.5; until then `.claim.json` cannot be
       retired outright, only stop being the one the screens read.
+      *Corrected 2026-09-24:* the pfa work-provider framework was already on
+      master (`4abd4417`, "Introduce reusable PFA work providers"), and
+      `Aim::WorkProvider` is built on it. Nothing blocks 9.5; it is simply
+      not done yet.
     - `is_urgent` can go from the workers, the payload and the Rails badge.
 
     **Decided with Joshua 2026-09-23:**
@@ -3101,3 +3113,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-23 | 5.7c(4) | (this commit) | Batch Split screen: Approve Split (checked against the PDF's page count; refused plans re-render with the person's entries and plain errors) and Process as One Invoice (keeps its batch id). Found the old split summary never displayed. 1059 runs, 0 fail, 0 error, 234 pytest, rubocop clean, brakeman unchanged |
 | 2026-09-23 | 5.7c(5) | (this commit) | Action Needed gets Send to SQL Queue; `is_urgent` removed from watcher, AI worker, payload and Rails badge. Shortcuts held until Joshua has told staff. 1060 runs, 0 fail, 0 error, 234 pytest, rubocop clean |
 | 2026-09-24 | 5.7c(6) | (this commit) | Shortcuts retired: the workers no longer plant them, `pywin32` dropped, the seven `.lnk` files deleted from the share, ticket notes point to the Send to SQL Queue button. Released early because no staff use AIM yet |
+| 2026-09-24 | — | (this merge) | **Phase 5 merged to Paperboy master.** First merged the latest master (`e8933a5c`, 35 commits, none touching AIM code) into the branch. Only `db/schema.rb` conflicted. Master's copy already held the first three `aim` tables (another team dumped it from the shared dev DB in `21df9052`), so the resolution is master's file plus `claimed_by_name` at version `2026_09_23_151741`. It was rebuilt in a scratch DB and checked by a fresh load: nothing pending. Loading master's schema alone marks our `100537`-`39` migrations as run, which is why the version order matters. Master's newer RuboCop flagged 5 AIM offenses, now fixed. Gate on the merge: 1122 runs, 0 fail, 0 error, 235 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings, bundle-audit clean, zeitwerk clean |
