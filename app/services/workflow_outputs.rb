@@ -23,7 +23,7 @@ class WorkflowOutputs
     end
 
     def size
-      metadata.fetch(:size, 0)
+      metadata[:size]
     end
 
     def mtime
