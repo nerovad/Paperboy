@@ -187,13 +187,13 @@ module P2m
     end
 
     def materialize(name)
-      source = Pathname.new(staging_store.download(name).to_s)
       target = @materialized_directory.join(name)
       target.dirname.mkpath
-      FileUtils.cp(source, target, preserve: true)
+      staging_store.with_download(name) do |source|
+        FileUtils.cp(source, target, preserve: true)
+      end
       modified_at = staging_store.mtime(name)
       FileUtils.touch(target, mtime: modified_at) if modified_at
-      FileUtils.rm_f(source) if source.to_s.start_with?('/tmp/paperboy-smb-file-')
       target
     end
 

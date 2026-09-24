@@ -235,10 +235,10 @@ def with_materialized_store(store)
     store.entries.each do |entry|
       next if entry.fetch(:directory)
 
-      source = store.download(entry.fetch(:name))
-      target = materialized.join(entry.fetch(:name))
-      FileUtils.cp(source, target)
-      FileUtils.rm_f(source) if source.to_s.start_with?('/tmp/paperboy-smb-file-')
+      store.with_download(entry.fetch(:name)) do |source|
+        target = materialized.join(entry.fetch(:name))
+        FileUtils.cp(source, target)
+      end
     end
     yield materialized
   end

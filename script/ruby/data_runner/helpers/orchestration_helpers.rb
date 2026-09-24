@@ -282,11 +282,9 @@ module DataRunnerTaskHelpers
     output_store = Paperboy::FileStore.for(orchestration.fetch(:output_dir))
     orchestration_children(orchestration).each do |child_name, child_cfg|
       local = child_local!(child_name, child_cfg)
-      source = output_store.download(local)
       target = File.join(WorkflowPaths::DOWNLOAD_DIR, local)
       FileUtils.mkdir_p(File.dirname(target))
-      FileUtils.cp(source, target)
-      FileUtils.rm_f(source) if source.to_s.start_with?('/tmp/paperboy-smb-file-')
+      output_store.with_download(local) { |source| FileUtils.cp(source, target) }
       puts "[STAGE] #{child_name}: #{output_store.path.join(local)} -> #{target}"
     end
   end

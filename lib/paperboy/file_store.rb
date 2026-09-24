@@ -96,6 +96,10 @@ module Paperboy
         child(name)
       end
 
+      def with_download(name)
+        yield download(name)
+      end
+
       def mtime(name)
         child(name).mtime
       end
@@ -201,6 +205,13 @@ module Paperboy
         temporary.close
         share.get(remote_name(name), temporary.path)
         temporary.path
+      end
+
+      def with_download(name)
+        path = download(name)
+        yield path
+      ensure
+        FileUtils.rm_f(path) if path
       end
 
       def mtime(name)

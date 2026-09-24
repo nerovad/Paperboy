@@ -93,6 +93,7 @@ messages must never expose passwords.
       references.
 - [x] Route DataRunner orchestration output verification and staging through
       the shared store.
+- [x] Centralize temporary remote-download cleanup behind the shared store.
 - [ ] Convert remaining DataRunner path consumers and generated DSL locations
       as needed.
 - [x] Convert the P2M backfill/scan script's staging and processed-directory

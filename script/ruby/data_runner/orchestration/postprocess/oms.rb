@@ -35,9 +35,9 @@ end
 
 def archive_file(source, source_store, destination_store, archive_name)
   source_name = source.fetch(:name)
-  downloaded = source_store.download(source_name)
-  destination_store.copy(downloaded, archive_name)
-  FileUtils.rm_f(downloaded) if downloaded.to_s.start_with?('/tmp/paperboy-smb-file-')
+  source_store.with_download(source_name) do |downloaded|
+    destination_store.copy(downloaded, archive_name)
+  end
   source_store.remove(source_name)
   puts "[OK] Archived #{source_name} -> #{archive_name}"
 end
