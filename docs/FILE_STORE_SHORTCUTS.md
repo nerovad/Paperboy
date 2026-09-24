@@ -93,6 +93,8 @@ messages must never expose passwords.
       references.
 - [x] Route DataRunner orchestration output verification and staging through
       the shared store.
+- [x] Route DataRunner stage reset and orchestration-stage verification through
+      the shared store, including shortcut-backed output roots.
 - [x] Centralize temporary remote-download cleanup behind the shared store.
 - [x] Remove failed SMB download temporary files before re-raising errors.
 - [x] Clean up SMB temporary files after production-file previews.

@@ -291,12 +291,13 @@ module DataRunnerTaskHelpers
   private_class_method :stage_orchestration_inputs
 
   def verify_child_stage_files!(orchestration, stage_dir, extension: nil, skip_replication: false)
+    store, relative_prefix = workflow_stage_store(stage_dir)
     missing = orchestration_children(orchestration).filter_map do |child_name, child_cfg|
       next if skip_replication && EtlHelpers.source_strategy(child_cfg) == :replicate
 
       filename = extension ? "#{EtlHelpers.base_for(child_cfg)}#{extension}" : EtlHelpers.output_for(child_cfg)
-      path = File.join(stage_dir, filename)
-      "#{child_name}: #{path}" unless File.file?(path)
+      target = [relative_prefix, filename].compact.join('/')
+      "#{child_name}: #{stage_dir}/#{filename}" unless store.exist?(target)
     end
     return if missing.empty?
 

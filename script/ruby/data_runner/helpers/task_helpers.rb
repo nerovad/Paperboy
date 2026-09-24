@@ -4,6 +4,7 @@ require 'English'
 require 'fileutils'
 require_relative '../log/data_runner_logger'
 require_relative '../constants/workflow_paths'
+require_relative '../../../../lib/paperboy/file_store'
 
 # Shared support for DataRunner Rake task arguments, stage execution, and cleanup.
 module DataRunnerTaskHelpers
@@ -116,12 +117,14 @@ module DataRunnerTaskHelpers
     require_relative '../constants/workflow_paths'
 
     EtlHelpers.selected_dsl_entries(DSL_MAP, [selector]).each do |name, cfg|
-      selected_stage_paths(cfg).each do |path|
-        if File.exist?(path)
-          FileUtils.rm_f(path)
-          puts "[OK] #{name}: removed #{path}"
+      selected_stage_paths(cfg).each do |stage_dir, filename|
+        store, relative_prefix = workflow_stage_store(stage_dir)
+        target = [relative_prefix, filename].compact.join('/')
+        if store.exist?(target)
+          store.remove(target)
+          puts "[OK] #{name}: removed #{stage_dir}/#{filename}"
         else
-          puts "[SKIP] #{name}: missing #{path}"
+          puts "[SKIP] #{name}: missing #{stage_dir}/#{filename}"
         end
       end
     end
@@ -132,10 +135,10 @@ module DataRunnerTaskHelpers
     output = EtlHelpers.output_for(cfg)
     base = EtlHelpers.base_for(cfg)
     [
-      File.join(WorkflowPaths::NORMALIZED_DIR, output),
-      File.join(WorkflowPaths::SQL_MAP_DIR, "#{base}.sql"),
-      File.join(WorkflowPaths::SQL_SCHEMA_DIR, "#{base}.sql"),
-      File.join(WorkflowPaths::APPLIED_DIR, output)
+      [WorkflowPaths::NORMALIZED_DIR, output],
+      [WorkflowPaths::SQL_MAP_DIR, "#{base}.sql"],
+      [WorkflowPaths::SQL_SCHEMA_DIR, "#{base}.sql"],
+      [WorkflowPaths::APPLIED_DIR, output]
     ]
   end
   private_class_method :selected_stage_paths
@@ -144,15 +147,15 @@ module DataRunnerTaskHelpers
     require_relative '../constants/workflow_paths'
 
     staged_dir_names.each do |dirname|
-      path = WorkflowPaths::OUTPUT_ROOT.join(dirname)
       display_path = File.join('output/data_runner', dirname)
+      store, relative_prefix = workflow_stage_store(WorkflowPaths::OUTPUT_ROOT.join(dirname))
 
-      unless Dir.exist?(path)
+      unless store.directory?(relative_prefix)
         puts "[SKIP] Missing #{display_path}"
         next
       end
 
-      Dir.children(path).each { |entry| FileUtils.rm_rf(path.join(entry)) }
+      store.clear(relative_prefix)
       puts "[OK] Cleared #{display_path}"
     end
   end
@@ -167,6 +170,15 @@ module DataRunnerTaskHelpers
     ]
   end
   private_class_method :staged_dir_names
+
+  def workflow_stage_store(stage_dir)
+    root = Pathname(WorkflowPaths::OUTPUT_ROOT)
+    stage = Pathname(stage_dir)
+    return [Paperboy::FileStore.for(root), stage.relative_path_from(root).to_s] if root.extname.casecmp?('.lnk')
+
+    [Paperboy::FileStore.for(stage), nil]
+  end
+  private_class_method :workflow_stage_store
 end
 
 require_relative 'orchestration_helpers'
