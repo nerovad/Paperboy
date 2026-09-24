@@ -748,3 +748,33 @@
   gap: 8px 16px;
   padding: 0;
 }
+
+// Ready for Approval: one collapsible group per person's queue.
+.aim-owner-group {
+  margin-bottom: 1rem;
+}
+
+.aim-owner-group > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  font-weight: 600;
+  list-style: revert;
+}
+
+.aim-owner-group__name {
+  font-size: 1.05rem;
+}
+
+// The Move-to control on a queue row: the select and its button side by side.
+.aim-move-form {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.aim-move-form select {
+  max-width: 12rem;
+}

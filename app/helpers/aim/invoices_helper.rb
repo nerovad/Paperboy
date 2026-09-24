@@ -121,5 +121,10 @@ module Aim
 
       ['is-approved', aim_state_label(invoice.state)]
     end
+
+    # A queue owner for a heading or a notice.
+    def aim_owner_label(owner)
+      owner.to_s == Aim::Invoice::SHARED_QUEUE ? 'the shared queue' : "#{owner}'s queue"
+    end
   end
 end

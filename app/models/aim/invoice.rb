@@ -16,6 +16,7 @@ module Aim
   class Invoice < Record
     include Aim::InvoiceQueues
     include Aim::InvoiceCommands
+    include Aim::InvoiceAssignment
 
     # Raised by #transition_to! when the move is not one the pipeline makes.
     class IllegalTransition < StandardError; end

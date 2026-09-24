@@ -24,52 +24,23 @@
       <p>Nothing is in this queue.</p>
     </section>
   <% else %>
-    <section class="aim-panel aim-queue-panel">
-      <table class="submission-table aim-queue-table aim-queue-table--review">
-        <thead>
-          <tr>
-            <th>Action</th>
-            <th>Vendor</th>
-            <th>Invoice #</th>
-            <th>Type</th>
-            <th>Budget Unit</th>
-            <th>Submitter</th>
-            <th>Owner</th>
-            <th>Date</th>
-            <th>Total</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% viewer = session.dig(:user, 'email') || session.dig('user', 'email') %>
-          <% @invoices.each do |invoice| %>
-            <% badge_class, badge_text = aim_status_badge(invoice, viewer) %>
-            <% locked = invoice.claimed_by_other?(viewer) %>
-            <%# The batch id names the row in billing. It is too long for a column, so it rides on the row as a tooltip. %>
-            <tr class="<%= 'is-locked' if locked %>" title="<%= invoice.batch_id %>">
-              <td class="action-buttons">
-                <% if locked || invoice.terminal? %>
-                  <%= link_to 'View', aim_invoice_path(invoice.batch_id, queue: @queue),
-                              data: { turbo: false }, class: 'btn secondary compact' %>
-                <% else %>
-                  <%= link_to invoice.held_by?(viewer) ? 'Resume Review' : 'Review Invoice',
-                              aim_invoice_path(invoice.batch_id, queue: @queue),
-                              data: { turbo: false }, class: 'btn approve compact' %>
-                <% end %>
-              </td>
-              <td class="is-strong"><%= invoice.vendor_name.presence || invoice.extracted_vendor_name.presence || 'N/A' %></td>
-              <td><%= invoice.invoice_number.presence || 'N/A' %></td>
-              <td><%= invoice.document_type.presence || 'N/A' %></td>
-              <td><%= invoice.budget_unit.presence || 'N/A' %></td>
-              <td><%= invoice.submitter.presence || 'N/A' %></td>
-              <td><%= invoice.assigned_to.presence || 'Shared' %></td>
-              <td><%= aim_invoice_date(invoice.invoice_date) || 'N/A' %></td>
-              <td class="aim-total"><%= aim_currency(invoice.invoice_total) || 'N/A' %></td>
-              <td><span class="badge <%= badge_class %>"><%= badge_text %></span></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </section>
+    <% if @groups %>
+      <%# People's queues: one group per owner, opened by default, with the count in the heading. %>
+      <% @groups.each do |owner, invoices| %>
+        <details class="aim-owner-group" open>
+          <summary>
+            <span class="aim-owner-group__name"><%= owner == Aim::Invoice::SHARED_QUEUE ? 'Shared queue' : owner %></span>
+            <span class="aim-count-pill"><%= pluralize(invoices.size, 'invoice') %></span>
+          </summary>
+          <section class="aim-panel aim-queue-panel">
+            <%= render 'rows', invoices: invoices, movable: true %>
+          </section>
+        </details>
+      <% end %>
+    <% else %>
+      <section class="aim-panel aim-queue-panel">
+        <%= render 'rows', invoices: @invoices, movable: false %>
+      </section>
+    <% end %>
   <% end %>
 </div>

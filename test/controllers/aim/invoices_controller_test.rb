@@ -13,6 +13,7 @@ module Aim
     tests Aim::InvoicesController
 
     FOLDERS = {
+      'AIM_BASE_DIR' => 'Invoices',
       'AIM_STORE_DIR' => '_BACK_END\\_STORE',
       'AIM_DELETED_DIR' => 'Invoices\\_GONE',
       'AIM_REJECTED_DIR' => '_BACK_END\\_SENT_BACK'
@@ -314,6 +315,56 @@ module Aim
 
       assert_equal %w[received extract], [row.state, row.command]
       assert_not row.split_check
+    end
+
+    # ---------------------------------------------------------------
+    # People's queues
+    # ---------------------------------------------------------------
+
+    test 'ready for approval is grouped by owner, with a count, the shared queue last' do
+      invoice('4601.O1', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assignment_source: 'folder')
+      invoice('4601.O2', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assignment_source: 'folder')
+      invoice('4601.O3', state: 'ready_for_approval', pdf: false)
+
+      get :index, params: { queue: 'ready_for_approval' }
+
+      assert_response :success
+      assert_equal ['Jane Doe', 'SHARED'], @controller.instance_variable_get(:@groups).map(&:first)
+      assert_select 'details.aim-owner-group', 2
+      assert_select 'details.aim-owner-group:first-of-type summary', /Jane Doe.*2 invoices/m
+      assert_select 'form.aim-move-form', 3
+    end
+
+    test 'the move-to choices are the person folders of the BU, current holders, and shared' do
+      FileUtils.mkdir_p(File.join(@tmpdir, 'Invoices', '4601', 'Sam Lee'))
+      FileUtils.mkdir_p(File.join(@tmpdir, 'Invoices', '4601', '_Archive'))
+      File.write(File.join(@tmpdir, 'Invoices', '4601', 'README.txt'), 'not a person')
+      invoice('4601.O4', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assignment_source: 'folder')
+
+      get :index, params: { queue: 'ready_for_approval' }
+
+      assert_equal({ '4601' => ['Jane Doe', 'Sam Lee', 'SHARED'] }, @controller.instance_variable_get(:@owner_choices))
+      assert_select 'form.aim-move-form select option', 2, "the invoice's own queue is not offered"
+    end
+
+    test 'moving an invoice to another queue records it and returns to the queue' do
+      row = invoice('4601.O5', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assignment_source: 'folder')
+
+      patch :reassign, params: { id: row.batch_id, queue: 'ready_for_approval', owner: 'Sam Lee' }
+
+      assert_redirected_to aim_invoices_path(queue: 'ready_for_approval')
+      assert_match(/Moved to Sam Lee's queue/, flash[:notice])
+      assert_equal 'Sam Lee', row.reload.assigned_to
+      assert_equal REVIEWER, row.events.last.actor
+    end
+
+    test 'a finished invoice is not moved' do
+      row = invoice('4601.O6', state: 'exported', pdf: false)
+
+      patch :reassign, params: { id: row.batch_id, queue: 'exported', owner: 'Sam Lee' }
+
+      assert_match(/finished/, flash[:alert])
+      assert_nil row.reload.assigned_to
     end
   end
 end

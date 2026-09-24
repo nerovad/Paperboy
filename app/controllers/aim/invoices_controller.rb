@@ -9,7 +9,7 @@ module Aim
 
     before_action :require_aim_admin
     before_action :set_queue
-    before_action :set_invoice, only: %i[show update pdf]
+    before_action :set_invoice, only: %i[show update pdf reassign]
     # Everything #update does changes the invoice, so it needs the claim. The
     # queue list already offers a second reviewer nothing but View Only; this
     # is what makes that true of a posted form as well.
@@ -21,11 +21,21 @@ module Aim
       scope = scope.where(review_reason: @review_reason) if @review_reason
       @invoices = scope.to_a
       @reason_counts = @queue == 'needs_review' ? Aim::Invoice.in_queue(@queue).group(:review_reason).count : {}
+      group_by_owner if @queue == 'ready_for_approval'
     rescue ActiveRecord::ActiveRecordError => e
       Rails.logger.error "AIM could not list the #{@queue} queue: #{e.message}"
       @invoices = []
       @reason_counts = {}
       flash.now[:alert] = 'The invoice database could not be read.'
+    end
+
+    # Move an invoice to another person's queue, or to SHARED.
+    def reassign
+      moved = @invoice.reassign!(params[:owner], actor: current_user_email)
+      notice = moved ? "Moved to #{helpers.aim_owner_label(@invoice.queue_owner)}." : 'The invoice was already there.'
+      redirect_to aim_invoices_path(queue: @queue), notice: notice
+    rescue Aim::Invoice::IllegalTransition, ActiveRecord::RecordInvalid => e
+      redirect_to aim_invoices_path(queue: @queue), alert: e.message
     end
 
     def show
@@ -92,6 +102,14 @@ module Aim
     end
 
     def pdf_present? = stored_pdf_path.present?
+
+    # Ready for Approval is people's queues: one group per owner, the shared
+    # queue last, each with the queues an invoice of that BU can move to.
+    def group_by_owner
+      @groups = @invoices.group_by(&:queue_owner)
+                         .sort_by { |owner, _| [owner == Aim::Invoice::SHARED_QUEUE ? 1 : 0, owner.downcase] }
+      @owner_choices = @invoices.map(&:budget_unit).uniq.to_h { |bu| [bu, Aim::Invoice.queue_owners_for(bu)] }
+    end
 
     # The store, then the invoice's folder, then its PDF, and nothing from the
     # row may name a file outside the store: the batch id has to be one path

@@ -70,5 +70,41 @@ module Aim
       assert_equal 'AT&T MOBILITY', invoice.vendor_name
       assert_equal 'INV-2024/001', invoice.invoice_number
     end
+
+    # ---------------------------------------------------------------
+    # People's queues
+    # ---------------------------------------------------------------
+
+    test 'an invoice is in the shared queue until a person holds it' do
+      assert_equal 'SHARED', build.queue_owner
+      assert_equal 'Jane Doe', build(assigned_to: 'Jane Doe', assignment_source: 'folder').queue_owner
+    end
+
+    test 'moving an invoice to another queue is recorded, and back to shared clears the owner' do
+      invoice = build(assigned_to: 'Jane Doe', assignment_source: 'folder').tap(&:save!)
+
+      assert invoice.reassign!('Sam Lee', actor: 'staff@example.com')
+      assert_equal ['Sam Lee', 'reassigned'], [invoice.assigned_to, invoice.assignment_source]
+      event = invoice.events.last
+      assert_equal ['assignment', 'staff@example.com', 'moved from Jane Doe to Sam Lee'], [event.action, event.actor, event.note]
+
+      assert invoice.reassign!('shared', actor: 'staff@example.com')
+      assert_nil invoice.assigned_to
+      assert_equal 'moved from Sam Lee to SHARED', invoice.events.last.note
+    end
+
+    test 'moving an invoice to the queue it is already in changes nothing' do
+      invoice = build(assigned_to: 'Jane Doe', assignment_source: 'folder').tap(&:save!)
+
+      assert_not invoice.reassign!(' jane doe ', actor: 'staff@example.com')
+      assert_not invoice.reassign!('Jane Doe', actor: 'staff@example.com')
+      assert_equal 1, invoice.events.count
+    end
+
+    test 'a finished invoice cannot be moved to another queue' do
+      invoice = build(state: 'exported').tap(&:save!)
+
+      assert_raises(Aim::Invoice::IllegalTransition) { invoice.reassign!('Sam Lee', actor: 'staff@example.com') }
+    end
   end
 end
