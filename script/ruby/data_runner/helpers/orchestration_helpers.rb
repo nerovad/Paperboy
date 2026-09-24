@@ -139,7 +139,7 @@ module DataRunnerTaskHelpers
     match = entry.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
     return unless match
 
-    processed = Paperboy::FileStore.for(orchestration.fetch(:processed_path))
+    processed = orchestration_store(orchestration, :processed_path)
     archive = processed.path.join(match[1])
     raise "duplicate OMS number: archive already exists: #{archive}" if processed.directory?(match[1])
   end
@@ -397,6 +397,14 @@ module DataRunnerTaskHelpers
     end
   end
   private_class_method :mark_files_archived
+
+  def orchestration_store(orchestration, key)
+    location = File.absolute_path(
+      orchestration.fetch(key).to_s, orchestration.fetch(:root_path)
+    )
+    Paperboy::FileStore.for(location)
+  end
+  private_class_method :orchestration_store
 
   def run_atomic_inject(orchestration)
     children = orchestration_children(orchestration).map(&:first)
