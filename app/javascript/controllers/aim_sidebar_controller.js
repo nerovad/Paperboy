@@ -27,9 +27,10 @@ export default class extends Controller {
     })
   }
 
+  // Every open and close you make is kept -- the current page's group too.
+  // Skipping that one left an older "open" in storage, which reopened the
+  // group on the next page after you had just closed it.
   remember(group) {
-    // The current page's group is always open, so opening it is no choice.
-    if (group.dataset.current === "true") return
     const chosen = this.load()
     chosen[group.dataset.key] = group.open
     this.save(chosen)
