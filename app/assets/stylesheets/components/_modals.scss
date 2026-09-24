@@ -400,3 +400,10 @@
   &--pending { color: $warning-text; }
   &--acknowledged { color: $success-text; font-weight: 600; }
 }
+
+// A modal whose body holds a dropdown (a Choices select) that must open past
+// the body's edge rather than be clipped by its scroll box.
+.pb-modal--dropdown,
+.pb-modal--dropdown .pb-modal__body {
+  overflow: visible;
+}
