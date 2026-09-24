@@ -308,11 +308,16 @@
   background: $slate-action;
   border-radius: 999px;
   color: $surface-base;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   min-width: 24px;
   padding: 3px 7px;
   text-align: center;
+  /* A fixed box, so the "…" placeholder and the number are the same size and
+     the menu does not shift when the counts arrive. */
+  box-sizing: border-box;
+  height: 20px;
+  line-height: 14px;
 }
 
 .aim-sidebar .sidebar-count.danger {
