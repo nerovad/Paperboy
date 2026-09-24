@@ -3,6 +3,7 @@
 <% backup_modified_at = @backup_files.filter_map { |file| file.mtime if file.file? rescue nil }.max %>
 <section class="card table-wrap"><table><thead><tr><th>Stage</th><th>File</th><th>Size</th><th>Modified</th></tr></thead><tbody>
   <% @files.each do |file| %>
+    <% next unless file.file? %>
     <% relative_path = file.relative_path_from(WorkflowPaths::OUTPUT_ROOT) %>
     <tr>
       <td><%= relative_path.each_filename.first %></td>
