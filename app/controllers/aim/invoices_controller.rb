@@ -8,6 +8,8 @@ module Aim
   class InvoicesController < BaseController
     include Aim::InvoiceQueueSupport
 
+    helper_method :deletable_queue?
+
     before_action :require_aim_admin
     before_action :set_queue
     # Everything below #show rewrites or moves the invoice folder, so it needs
@@ -38,17 +40,7 @@ module Aim
       set_invoice_context
       return redirect_to aim_invoices_path(queue: @queue), alert: 'Document not found.' unless @folder_path&.then { Dir.exist?(_1) }
 
-      # Three ways this page saves nothing: someone else holds the claim, the
-      # claim could not be written, or the share has gone read-only. The first
-      # is a different message from the other two, so the banner can say who.
-      @claimed_by_other = claimed_by_other?(@folder_path)
-      @claim_holder = claimant_label_for(@folder_path) if @claimed_by_other
-      @read_only = !claim_invoice || !File.writable?(@folder_path)
-
-      @metadata_path = metadata_path_for(@folder_path)
-      @metadata = read_metadata(@metadata_path)
-      load_vendor_review_context if @queue == 'vendor_review'
-      @ticket_content = ticket_content_for(@folder_path)
+      prepare_review
     end
 
     def update
@@ -64,18 +56,25 @@ module Aim
 
       metadata_params = writable_metadata_params
       write_metadata(metadata_path, metadata_params) if metadata_params.present?
+      settle_document_type_from(metadata_params)
 
       case params[:commit]
       when 'Reject'
         reject_invoice
+      when 'Delete'
+        delete_invoice
       when 'Save & Learn Alias', 'Learn Alias', 'Learn & Retry AI'
         send_to_alias_learning(next_action: 'retry_ai', metadata_path: metadata_path)
       when 'Learn & Continue'
         send_to_alias_learning(next_action: 'continue_processing', metadata_path: metadata_path)
       when 'Save & Send to Approval', 'Send to Approval'
-        move_invoice_to(Aim::InvoiceDirectoryService.instance.user_approval_dir, 'Invoice successfully fixed and routed to User Approval!')
+        send_to_user_approval
       when 'Send to SQL Queue'
-        move_invoice_to(Aim::InvoiceDirectoryService.instance.sql_queue_dir, 'Invoice index verified and routed to SQL Queue.')
+        send_to_sql_queue
+      when 'Approve Split'
+        approve_split
+      when 'Process as One Invoice'
+        process_as_one_invoice
       else
         redirect_to aim_invoice_path(@invoice_id, queue: @queue), notice: 'Metadata saved.'
       end
@@ -113,6 +112,7 @@ module Aim
       write_reprocess_sidecar(File.join(new_folder_path, "#{new_folder_name}.json"),
                               read_metadata(metadata_path_for(@folder_path)))
       move_to_deleted(@folder_path)
+      record_move('deleted', note: "sent back for AI retry as #{new_folder_name}")
 
       redirect_to aim_invoices_path(queue: @queue), notice: 'Document sent back to Reprocess Queue for AI retry.'
     end
@@ -121,7 +121,8 @@ module Aim
       set_invoice_context
       return redirect_to aim_invoices_path(queue: @queue), alert: 'Document not found.' unless @folder_path&.then { Dir.exist?(_1) }
 
-      move_invoice_to(Aim::InvoiceDirectoryService.instance.action_needed_dir, 'Moved document to Action Needed Queue.')
+      move_invoice_to(Aim::InvoiceDirectoryService.instance.action_needed_dir, 'Moved document to Action Needed Queue.',
+                      state: 'action_needed')
     end
 
     private
@@ -133,16 +134,6 @@ module Aim
 
       redirect_to aim_invoices_path(queue: @queue),
                   alert: "#{claimant_label_for(@folder_path)} has this invoice claimed, so it is view only."
-    end
-
-    # A move or a metadata write can fail partway through, so this promises
-    # nothing about what did or did not happen on disk.
-    def queue_not_writable(error)
-      Rails.logger.error "AIM write failed for #{@invoice_id.inspect} in #{@queue}: #{error.class}: #{error.message}"
-
-      redirect_to aim_invoices_path(queue: @queue),
-                  alert: 'The queue folder could not be written to, so that action did not complete. ' \
-                         'Check the queue share and try again.'
     end
   end
 end

@@ -4,6 +4,9 @@ module Aim
   module InvoiceQueueSupport
     extend ActiveSupport::Concern
     include Aim::InvoiceFileSupport
+    include Aim::InvoiceStateRecording
+    include Aim::InvoiceQueueListing
+    include Aim::InvoiceSplitting
     include Aim::InvoiceXmlMetadataSupport
 
     # Written by 01_AI_Extraction_Worker.py alongside the real payload.
@@ -17,14 +20,6 @@ module Aim
       return if Aim::InvoiceDirectoryService::BACKEND_QUEUES.key?(@queue.to_sym)
 
       redirect_to aim_root_path, alert: 'Unknown AIM queue.'
-    end
-
-    def load_invoices
-      Dir.glob(File.join(@base_path.to_s, '*')).each do |folder_path|
-        next unless File.directory?(folder_path)
-
-        @invoices << invoice_summary(folder_path)
-      end
     end
 
     def invoice_summary(folder_path)
@@ -49,10 +44,39 @@ module Aim
       }
     end
 
+    # Everything the review page shows; also what a refused split re-renders.
+    def prepare_review
+      # Three ways this page saves nothing: someone else holds the claim, the
+      # claim could not be written, or the share has gone read-only. The first
+      # is a different message from the other two, so the banner can say who.
+      @claimed_by_other = claimed_by_other?(@folder_path)
+      @claim_holder = claimant_label_for(@folder_path) if @claimed_by_other
+      @read_only = !claim_invoice || !File.writable?(@folder_path)
+
+      @metadata_path = metadata_path_for(@folder_path)
+      @metadata = read_metadata(@metadata_path)
+      load_vendor_review_context if @queue == 'vendor_review'
+      load_split_context if @queue == 'batch_split'
+      @ticket_content = ticket_content_for(@folder_path)
+    end
+
     def set_invoice_context
       @invoice_id = safe_invoice_id(params[:id])
       @base_path = Aim::InvoiceDirectoryService.instance.path_for(@queue)
       @folder_path = invoice_folder_path(@base_path, @invoice_id)
+      @folder_path = rejected_folder_path if @queue == 'rejected' && !Dir.exist?(@folder_path.to_s)
+    end
+
+    # Rails files a rejected invoice under <Submitter>_<BU>/<batch_id>, so its
+    # folder is one level below where every other queue keeps them.
+    def rejected_folder_path
+      return if @invoice_id.blank? || @base_path.blank?
+
+      Dir.children(@base_path.to_s).lazy.filter_map do |group|
+        invoice_folder_path(File.join(@base_path.to_s, group), @invoice_id)&.then { Dir.exist?(_1) ? _1 : nil }
+      end.first
+    rescue SystemCallError
+      nil
     end
 
     def metadata_path_for(folder_path)
@@ -153,14 +177,12 @@ module Aim
       return 'Missing PDF' if pdf_files.empty?
       return 'Missing ticket' if metadata_path.blank?
       return 'Invalid ticket' if metadata['error'].present?
-      return 'Urgent' if ActiveModel::Type::Boolean.new.cast(metadata['is_urgent'])
 
       'Waiting for AI'
     end
 
     def queue_item_status_badge(metadata_path, metadata, pdf_files)
       return 'is-denied' if @queue == 'ai_queue' && (pdf_files.empty? || metadata_path.blank? || metadata['error'].present?)
-      return 'is-in-review' if @queue == 'ai_queue' && ActiveModel::Type::Boolean.new.cast(metadata['is_urgent'])
       return 'is-pending' if @queue == 'ai_queue'
 
       nil

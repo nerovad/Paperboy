@@ -243,6 +243,14 @@
   margin: 0;
 }
 
+// Shown only while the folders and the database run together, and only when
+// the two disagree. Plan step 5.5; it goes when 5.7 retires folder-as-state.
+.aim-dashboard-note {
+  font-size: 0.8rem;
+  font-style: italic;
+  margin-top: 6px;
+}
+
 .aim-card-danger {
   border-top-color: $danger;
 }
@@ -645,3 +653,48 @@
     min-height: 70vh;
   }
 }
+
+// The Batch Split review (plan step 5.7c): a table of proposed invoices, one
+// row each, with their pages written as people write them.
+.aim-split-editor {
+  margin-bottom: 16px;
+
+  h3 {
+    color: $text-strong;
+    font-size: 1rem;
+    margin: 0 0 6px;
+  }
+}
+
+.aim-split-help {
+  color: $text-muted;
+  font-size: 0.9rem;
+  margin: 0 0 10px;
+}
+
+.aim-split-errors {
+  border-left: 4px solid $danger;
+  margin: 0 0 10px;
+  padding: 6px 10px;
+
+  ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+}
+
+.aim-split-table {
+  border-collapse: collapse;
+  width: 100%;
+
+  th,
+  td {
+    padding: 4px 6px;
+    text-align: left;
+  }
+
+  input {
+    width: 100%;
+  }
+}
+

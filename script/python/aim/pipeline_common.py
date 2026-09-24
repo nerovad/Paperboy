@@ -20,7 +20,7 @@ import pyodbc
 from dotenv import load_dotenv
 from thefuzz import fuzz, process
 from PIL import Image, ImageDraw
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional
 from dateutil import parser as dateparser
 
@@ -94,6 +94,12 @@ DELETED_DIR = env('AIM_DELETED_DIR')
 # New AI Queue Dir (for Watcher -> Worker spooling)
 AI_QUEUE_DIR = env('AIM_AI_QUEUE_DIR')
 ERROR_QUEUE_DIR = env('AIM_ERROR_QUEUE_DIR')
+# Rails moves a corrected invoice here, and the watcher keeps its spool
+# markers here. No worker writes either, which is why neither was managed --
+# and _USER_APPROVAL did not exist on the share at all, so sending an invoice
+# to it failed. A queue this pipeline knows about is a queue it creates.
+USER_APPROVAL_DIR = env('AIM_USER_APPROVAL_DIR')
+SPOOL_STATE_DIR = env('AIM_SPOOL_STATE_DIR')
 
 # The worker install folder on the AIM share. Bare filenames in the
 # configuration resolve against this, not against wherever this file happens
@@ -122,42 +128,13 @@ VENDOR_RULES_FILE = vendor_rules_cfg if os.path.isabs(vendor_rules_cfg) else os.
 field_aliases_cfg = env('AIM_FIELD_ALIASES_FILE')
 FIELD_ALIASES_FILE = field_aliases_cfg if os.path.isabs(field_aliases_cfg) else os.path.join(PROGRAM_DIR, field_aliases_cfg)
 
-def create_windows_shortcut(target_path, shortcut_path):
-    """Create a Windows .lnk shortcut to a folder/file."""
-    try:
-        from win32com.client import Dispatch
-        shell = Dispatch('WScript.Shell')
-        shortcut = shell.CreateShortCut(shortcut_path)
-        shortcut.TargetPath = target_path
-        shortcut.save()
-    except Exception as e:
-        print(f"    [!] Failed to create shortcut: {e}")
-
-# Create convenience shortcuts for the human review processes
-def setup_shortcuts():
-    shortcuts = [
-        # Batch Split
-        (READY_TO_SPLIT_DIR, os.path.join(BATCH_SPLIT_DIR, "MOVE_FOLDERS_HERE_TO_SPLIT.lnk")),
-        # Vendor Review
-        (READY_TO_LEARN_DIR, os.path.join(VENDOR_REVIEW_DIR, "MOVE_FOLDERS_HERE_TO_LEARN_ALIAS.lnk")),
-        (READY_TO_DELETE_DIR, os.path.join(VENDOR_REVIEW_DIR, "MOVE_FOLDERS_HERE_TO_DELETE.lnk")),
-        # Action Needed
-        (SQL_QUEUE_DIR, os.path.join(ACTION_NEEDED_DIR, "MOVE_FOLDERS_HERE_TO_SEND_TO_SQL.lnk")),
-        (READY_TO_DELETE_DIR, os.path.join(ACTION_NEEDED_DIR, "MOVE_FOLDERS_HERE_TO_DELETE.lnk")),
-        # Low Confidence Review
-        (SQL_QUEUE_DIR, os.path.join(LOW_CONFIDENCE_REVIEW_DIR, "MOVE_FOLDERS_HERE_TO_SEND_TO_SQL.lnk")),
-        (READY_TO_DELETE_DIR, os.path.join(LOW_CONFIDENCE_REVIEW_DIR, "MOVE_FOLDERS_HERE_TO_DELETE.lnk")),
-    ]
-    for target, path in shortcuts:
-        if not os.path.exists(path):
-            create_windows_shortcut(target, path)
-
 MANAGED_DIRECTORIES = [
     PROCESSED_DIR, PENDING_VISION_DIR, ACTION_NEEDED_DIR, LOG_DIR,
     SQL_FAILED_DIR, SQL_QUEUE_DIR, BATCH_SPLIT_DIR, READY_TO_SPLIT_DIR,
     VENDOR_REVIEW_DIR, READY_TO_LEARN_DIR, LOW_CONFIDENCE_REVIEW_DIR,
     REPROCESS_QUEUE_DIR, TEMP_DIR, ARCHIVE_DIR, READY_TO_DELETE_DIR,
-    DELETED_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR,
+    DELETED_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR, USER_APPROVAL_DIR,
+    SPOOL_STATE_DIR,
 ]
 
 
@@ -167,24 +144,73 @@ def bootstrap():
     Every side effect the pipeline needs lives here, and nothing calls it on
     import. Each worker calls it from its own __main__. Keeping import pure
     is what makes the pipeline testable: a test can import this module
-    against a temp environment without creating a directory, planting a
-    shortcut, or touching the network.
+    against a temp environment without creating a directory or touching the
+    network.
     """
     for folder in MANAGED_DIRECTORIES:
         os.makedirs(folder, exist_ok=True)
 
     pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
-    setup_shortcuts()
 
     # Bi-directional vendor alias sync against SQL. This opens a database
     # connection, so it must never happen merely because someone imported
     # the module.
     get_vendor_aliases()
 
+# The kinds of document AIM handles. Every type flows through the same queues;
+# the type decides only what happens at the end. `Unknown` is not a verdict
+# but a placeholder -- what the model says when it cannot tell -- and AIM
+# staff replace it in QA review before the invoice reaches a user's queue.
+# Plan step 5.3a.
+DOCUMENT_TYPES = ("Invoice", "Memo", "Credit", "Coupon", "Statement", "Unknown")
+UNKNOWN_DOCUMENT_TYPE = "Unknown"
+
+# How the models are told the types apart. Both the text pass and the vision
+# pass read this one definition, so the two cannot drift.
+DOCUMENT_TYPE_GUIDE = (
+    "Classify the document_type as exactly one of: "
+    + ", ".join(f"'{name}'" for name in DOCUMENT_TYPES) + ". "
+    "Invoice: a bill for goods or services with an amount due. 'Member Statement' and "
+    "'Customer Receipt' documents from stores such as Home Depot are Invoices. "
+    "Statement: an account summary listing several invoices, payments or a running balance, "
+    "rather than a bill for one purchase. "
+    "Credit: a credit memo, credit note or refund that reduces what is owed. "
+    "Memo: a memo or letter asking for or authorising a payment that is not a vendor's invoice, "
+    "such as a debit memo or an internal payment memo. "
+    "Coupon: a payment coupon or remittance slip sent with a payment, such as the tear-off stub "
+    "of a utility or loan bill. "
+    "Unknown: anything else, such as a letter or a notice, or when you cannot tell."
+)
+
+def normalize_document_type(value):
+    """One spelling for a document type, and `Unknown` for anything else.
+
+    The models were asked for `INVOICE`, `CREDIT` and so on before 5.3a, and
+    a model can answer in any case, so the comparison ignores case. Anything
+    that is not one of the six -- blank, missing, invented -- is `Unknown`,
+    which sends the document to QA review rather than guessing.
+    """
+    if isinstance(value, str):
+        wanted = value.strip().strip("'\"").casefold()
+        for name in DOCUMENT_TYPES:
+            if name.casefold() == wanted:
+                return name
+    return UNKNOWN_DOCUMENT_TYPE
+
+# The money fields whose being handwritten sends an invoice to a person.
+# Anything else written by hand -- a signature, initials, "OK to pay", a date
+# or a PO number in pen -- does not, because every amount AIM needs can still
+# be read. Asking the model "is there handwriting?" flagged invoices whose
+# totals were printed perfectly clearly, and stopped them before vendor and
+# missing-field checks ever ran. Found in testing 2026-09-23.
+HANDWRITTEN_FINANCIAL_FIELDS = ("subtotal", "tax", "total")
+
 class InvoiceData(BaseModel):
-    is_urgent: Optional[bool] = False
     contains_multiple_invoices: Optional[bool] = False
     contains_handwritten_financials: Optional[bool] = False
+    # Which money fields are handwritten. None means the model was not asked
+    # (an older payload); an empty list means it looked and found none.
+    handwritten_financial_fields: Optional[list[str]] = None
     document_type: Optional[str] = None
     extracted_vendor_name: Optional[str] = None
     vendor_name: Optional[str] = None # Normalized Vendor
@@ -201,6 +227,32 @@ class InvoiceData(BaseModel):
         if isinstance(v, str) and len(v) > 50:
             return None
         return v
+
+    # Only a value actually given is spelled; a field left at its default
+    # stays None, so merge_vision_fields can still tell "not yet answered"
+    # from "answered Unknown".
+    @field_validator("document_type", mode="before")
+    @classmethod
+    def spell_document_type(cls, v):
+        return normalize_document_type(v)
+
+    @field_validator("handwritten_financial_fields", mode="before")
+    @classmethod
+    def keep_only_money_fields(cls, v):
+        if v is None:
+            return None
+        named = {str(field).strip().lower() for field in v if field is not None}
+        return [field for field in HANDWRITTEN_FINANCIAL_FIELDS if field in named]
+
+    # When the model has named the handwritten money fields, the flag follows
+    # the list and nothing else: an empty list cannot raise it, whatever the
+    # model thought of the signature. With no list at all, the flag is left as
+    # given, so a payload written before this change reads as it always did.
+    @model_validator(mode="after")
+    def flag_follows_the_fields(self):
+        if self.handwritten_financial_fields is not None:
+            self.contains_handwritten_financials = bool(self.handwritten_financial_fields)
+        return self
 
 class ManifestItem(BaseModel):
     vendor_name: Optional[str] = "Unknown"

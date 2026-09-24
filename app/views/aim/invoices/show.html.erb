@@ -66,6 +66,11 @@
         <div class="aim-fields">
           <% fields = @metadata.keys.any? ? @metadata.keys : ['BU', 'Submitter', 'VendorName', 'InvoiceTotal', 'InvoiceNumber', 'InvoiceDate', 'Status'] %>
           <% excluded_fields = aim_hidden_fields(@queue) %>
+          <% if @queue == 'batch_split' %>
+            <%# A batch is reviewed as a split, not as one invoice's fields. %>
+            <%= render 'aim/invoices/split_editor' %>
+            <% fields = [] %>
+          <% end %>
           <% if @queue == 'vendor_review' %>
             <% excluded_fields += aim_vendor_review_hidden_fields %>
 
@@ -187,6 +192,11 @@
               <%= form.submit 'Send to Approval',
                               data: { turbo_confirm: 'Route this invoice to User Approval?' },
                               class: 'btn approve' %>
+              <%# What the MOVE_FOLDERS_HERE_TO_SEND_TO_SQL shortcut did from this
+                  queue, and the path that works while user approval is built. %>
+              <%= form.submit 'Send to SQL Queue',
+                              data: { turbo_confirm: 'Save these fields and send this invoice to the SQL queue?' },
+                              class: 'btn approve' %>
             <% elsif @queue == 'low_confidence_review' %>
               <%= form.submit 'Reject',
                               data: { turbo_confirm: 'Reject this invoice and send it to the rejected folder?' },
@@ -220,6 +230,31 @@
                              disabled: true,
                              title: 'Future AIM workflow step; not active yet.',
                              class: 'btn ghost aim-placeholder-action' %>
+            <% elsif @queue == 'batch_split' %>
+              <%= form.submit 'Approve Split',
+                              data: {
+                                turbo_confirm: 'Split this PDF into the invoices above? Each goes back through extraction on its own.',
+                                confirm_title: 'Approve split',
+                                confirm_label: 'Approve Split'
+                              },
+                              class: 'btn approve' %>
+              <%= form.submit 'Process as One Invoice',
+                              data: {
+                                turbo_confirm: 'Treat this PDF as a single invoice and send it back through extraction without splitting?',
+                                confirm_title: 'Process as one invoice',
+                                confirm_label: 'Process as One'
+                              },
+                              class: 'btn warning' %>
+            <% end %>
+
+            <% if deletable_queue? %>
+              <%= form.submit 'Delete',
+                              data: {
+                                turbo_confirm: 'Send this invoice for deletion? It is archived to the deleted folder, not destroyed.',
+                                confirm_title: 'Delete invoice',
+                                confirm_label: 'Delete'
+                              },
+                              class: 'btn deny' %>
             <% end %>
 
             <%= link_to 'Retry AI Processing',

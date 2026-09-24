@@ -12,7 +12,9 @@ import fitz
 from PIL import Image
 import pytesseract
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from state_store import record_state, invoice_facts
 
 from pipeline_common import (
     BASE_DIR, PENDING_VISION_DIR, ACTION_NEEDED_DIR, LOG_DIR, TEMP_IMAGE,
@@ -21,9 +23,12 @@ from pipeline_common import (
     sanitize_data, generate_laserfiche_xml, pdf_page_to_image,
     normalize_vendor_name, VENDOR_REVIEW_DIR, SQL_QUEUE_DIR, REPROCESS_QUEUE_DIR, LOW_CONFIDENCE_REVIEW_DIR,
     ERROR_QUEUE_DIR, get_rules_for_vendor, get_global_field_aliases,
-    bootstrap, env,
+    bootstrap, env, DOCUMENT_TYPES, DOCUMENT_TYPE_GUIDE, UNKNOWN_DOCUMENT_TYPE,
+    normalize_document_type, HANDWRITTEN_FINANCIAL_FIELDS,
 )
 from typing import Optional
+
+ACTOR = "01_ai_extraction_worker"
 
 STALE_QUEUE_FOLDER_SECONDS = 300
 AI_QUEUE_ERROR_MARKER = ".ai_queue_error.json"
@@ -38,8 +43,38 @@ VENDOR_RULE_SUFFIX = "_VENDOR_RULE.json"
 class Phase1Data(BaseModel):
     contains_multiple_invoices: bool
     is_high_confidence: bool
-    document_type: str
+    # The enum constrains what the model may answer; the field itself stays a
+    # plain string so an off-list answer is spelled by normalize_document_type
+    # rather than failing validation as a hallucination.
+    document_type: str = Field(json_schema_extra={"enum": list(DOCUMENT_TYPES)})
     extracted_vendor_name: Optional[str] = None
+
+# The JSON the vision model must return. Module level so the tests can see the
+# same schema the model is given.
+VISION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "document_type": {"type": "string", "enum": list(DOCUMENT_TYPES)},
+        "extracted_vendor_name": {"type": "string"},
+        "invoice_date": {"type": "string"},
+        "invoice_number": {"type": "string"},
+        "invoice_number_label": {"type": "string"},
+        "invoice_total": {"type": "string"},
+        "order_number": {"type": "string"},
+        "customer_number": {"type": "string"},
+        # Which money fields are handwritten, not whether there is any
+        # handwriting at all. See HANDWRITTEN_FINANCIAL_FIELDS.
+        "handwritten_financial_fields": {
+            "type": "array",
+            "items": {"type": "string", "enum": list(HANDWRITTEN_FINANCIAL_FIELDS)}
+        }
+    },
+    "required": [
+        "document_type", "extracted_vendor_name", "invoice_date",
+        "invoice_number", "invoice_number_label", "invoice_total",
+        "order_number", "customer_number", "handwritten_financial_fields"
+    ]
+}
 
 def generate_unique_id(bu_number, filename):
     name_without_ext, _ = os.path.splitext(filename)
@@ -93,12 +128,26 @@ def mark_reprocess_error(folder_path, folder_name, pdf_path, error):
 # `contains_handwritten_financials` defaults to False rather than None, so the
 # blank-filling rule never copied it and the routing check below it had never
 # once fired. Step 1.5.
+#
+# Since 2026-09-23 the latch is per money field: each pass names which of
+# subtotal, tax and total are handwritten, and the answer is the union of every
+# pass. A signature page no longer raises the flag for the whole document,
+# because it names no money field; a handwritten total on page 4 still does.
 STICKY_TRUE_FIELDS = ("contains_handwritten_financials",)
+UNION_FIELDS = ("handwritten_financial_fields",)
 
 def merge_vision_fields(master_data, vision_data):
     """Merge one vision pass into the running answer."""
     for field in InvoiceData.model_fields:
         value = getattr(vision_data, field)
+
+        if field in UNION_FIELDS:
+            if value is not None:
+                seen = set(getattr(master_data, field) or []) | set(value)
+                setattr(master_data, field, [f for f in HANDWRITTEN_FINANCIAL_FIELDS if f in seen])
+                master_data.contains_handwritten_financials = bool(seen) or bool(
+                    master_data.contains_handwritten_financials)
+            continue
 
         if field in STICKY_TRUE_FIELDS:
             if value:
@@ -157,8 +206,8 @@ def mark_ai_queue_error(folder_path, folder_name, reason, error=None, pdf_path=N
     except Exception:
         pass
 
-def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
-                       processing_id=None, original_filename=None):
+def process_cpu_hybrid(pdf_path, bu_number, submitter_name,
+                       processing_id=None, original_filename=None, owner=None):
     pdf_filename = os.path.basename(pdf_path)
     name_without_ext, _ = os.path.splitext(pdf_filename)
 
@@ -181,6 +230,13 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
             # fall back the same way a sidecar with no BU at all does.
             bu_number = meta.get("bu") or bu_number
             submitter_name = meta.get("submitter") or submitter_name
+            # A split piece carries the batch's owner, so it lands in the same
+            # person's queue the batch was dropped into. Plan step 5.7c.
+            owner = meta.get("owner") or owner
+            # "Process as one invoice" sends a batch back through extraction as
+            # the same invoice, so it keeps its id and its history continues.
+            # A plain retry supplies none and is minted a new one, as before.
+            processing_id = processing_id or meta.get("processing_id")
             bypass_split = meta.get("bypass_split", False)
         except Exception:
             pass
@@ -191,6 +247,16 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
     # folder, ticket, payload and log row after it. Only a path with no ticket,
     # the reprocess queue, still has to mint. Plan step 3.1.
     processing_id = processing_id or generate_unique_id(bu_number, pdf_filename)
+
+    # What every routing below records about who the invoice belongs to. The
+    # owner is written again here, not just by the watcher, because a split
+    # piece or a retry reaches this worker without ever passing the watcher.
+    known = {
+        "budget_unit": bu_number,
+        "submitter": submitter_name,
+        "assigned_to": owner,
+        "assignment_source": "folder" if owner else None,
+    }
 
     print(f"\n========================================================")
     print(f"[TEST SCRIPT] Processing: {filename}")
@@ -229,7 +295,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
             "- Do NOT set 'contains_multiple_invoices' to true for a multi-page invoice. A document that spans multiple pages, shares the same invoice number across pages, or has page indicators like 'Page X of Y' or 'Page X' is a SINGLE invoice. "
             "- Set 'contains_multiple_invoices' to true ONLY if you find completely distinct invoices with different invoice numbers, different transactions, or different vendors combined in the same file.\n"
             "2. Is this text a clean read? Set 'is_high_confidence' to true if you can clearly identify a vendor name and an invoice number. Set it to false if the text looks like garbage, random letters, or is missing a clear invoice number/vendor (likely due to handwriting or a bad scan).\n"
-            "3. What is the document_type? Choose one of: 'INVOICE', 'STATEMENT', 'CREDIT', or 'UNKNOWN'. If it is a letter, a notice, or anything that is not a bill of sale, choose 'UNKNOWN'. (Exception: 'Member Statement' or 'Customer Receipt' documents from stores like Home Depot should be classified as 'INVOICE').\n"
+            f"3. What is the document_type? {DOCUMENT_TYPE_GUIDE}\n"
             "4. Extract the exact literal vendor name as 'extracted_vendor_name' if you can find it. If it is illegible, leave it null.\n"
             "Return strictly as JSON."
         )
@@ -244,17 +310,24 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         except Exception as e:
             raise RuntimeError(f"Phase 1 AI Hallucination Error: Model failed to return valid JSON. Error: {e}")
         is_high_confidence = p1_data.is_high_confidence
-        doc_type = p1_data.document_type
+        doc_type = normalize_document_type(p1_data.document_type)
         extracted_vendor = p1_data.extracted_vendor_name
         print(f"      - Check complete in {time.time()-start_time:.1f}s. Multiple Invoices = {p1_data.contains_multiple_invoices}, High Confidence = {is_high_confidence}, Type = {doc_type}")
 
-        if doc_type != "INVOICE":
+        # Every known type goes on to extraction; only a document the model
+        # could not place stops here, for AIM staff to type in QA review.
+        # Until 5.3a anything but an invoice stopped here. Plan step 5.3a.
+        if doc_type == UNKNOWN_DOCUMENT_TYPE:
             dest_folder = os.path.join(ACTION_NEEDED_DIR, processing_id)
             os.makedirs(dest_folder, exist_ok=True)
             print(f"  [!] Document Type is {doc_type}. Bypassing Vision Model. Routing to human review.")
             shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
             with open(os.path.join(dest_folder, f"{processing_id}.ticket"), "w") as f:
-                f.write(f"AI rejected this document before Vision extraction because Phase 1 Text OCR determined the Document Type is: {doc_type}.")
+                f.write("The AI could not tell what kind of document this is, so it was not extracted. "
+                        "Set its document type in QA review.")
+            record_state(processing_id, "action_needed", ACTOR, "document type could not be placed",
+                         fields=invoice_facts(document_type=doc_type, extracted_vendor_name=extracted_vendor,
+                                              **known))
             write_log(filename, "CPU Test (Phase 1)", "REJECTED_TYPE", f"Document type is {doc_type}", bu_number, submitter_name, processing_id, InvoiceData())
             if os.path.exists(sidecar): os.remove(sidecar)
             return
@@ -285,10 +358,18 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
             
             manifest_path = os.path.join(dest_folder, f"{processing_id}_MANIFEST.json")
             with open(manifest_path, "w", encoding="utf-8") as f:
-                raw_json = manifest_data.model_dump_json(indent=4)
+                # Who the batch belongs to rides in the manifest, because the
+                # splitter has nothing else to read it from: it used to guess
+                # the submitter from the batch id, which is the file name.
+                manifest = {"bu": bu_number, "submitter": submitter_name, "owner": owner,
+                            **manifest_data.model_dump()}
+                raw_json = json.dumps(manifest, indent=4)
                 collapsed_json = re.sub(r'\[\s+([\d,\s]+)\s+\]', lambda m: "[" + ", ".join(x.strip().strip(',') for x in m.group(1).split()) + "]", raw_json)
                 f.write(collapsed_json)
                 
+            record_state(processing_id, "batch_split", ACTOR, "multiple invoices in one file",
+                         fields=invoice_facts(document_type=doc_type, extracted_vendor_name=extracted_vendor,
+                                              **known))
             write_log(filename, "CPU Test (Split)", "ROUTED_TO_SPLIT", "Multiple invoices detected", bu_number, submitter_name, processing_id, InvoiceData())
             print(f"  [✓] Routed to _BATCH_SPLIT for human review.")
             return
@@ -312,7 +393,7 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
     
     tier2_prompt = (
         "Analyze this document image. "
-        "First, determine the document_type. It must be strictly one of: 'INVOICE', 'STATEMENT', 'CREDIT', or 'UNKNOWN'. "
+        f"First, determine the document_type. {DOCUMENT_TYPE_GUIDE} "
         "Extract the exact literal vendor name as 'extracted_vendor_name', invoice_date, invoice_number, invoice_total, and if present order_number, "
         "and customer_number. "
         f"{global_aliases_str} "
@@ -322,7 +403,9 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         "leading zeros. Set invoice_number_label to the exact label text next to the number you chose, and treat a "
         "'LAR PO' or 'PO' number as order_number. "
         "2. If you see multiple values that map to invoice_total, and one is $0.00, IGNORE the $0.00 value and extract the non-zero amount. "
-        "3. Determine if the invoice total is handwritten. If the total is written by hand (pen, pencil, marker), set 'contains_handwritten_financials' to true. Ignore pre-printed or typed invoice numbers — only look at the financial amounts. "
+        "3. List in 'handwritten_financial_fields' which of the money amounts -- 'subtotal', 'tax', 'total' -- are written by hand (pen, pencil, marker) rather than printed or typed. "
+        "Signatures, initials, approval notes such as 'OK to pay', handwritten dates and handwritten invoice or PO numbers are NOT money amounts: they do not belong in the list. "
+        "If every amount is printed, return an empty list, even when the page carries a signature or a note. "
         "4. HOW TO INTERPRET VENDOR RULES: Vendor rules are written by human users in plain English to help you locate values on the page. Treat them as helpful visual hints. However, you MUST still strictly obey the requested JSON schema. Do NOT invent new JSON keys based on user rules, and do NOT delete or omit standard JSON keys just because a user tells you to 'ignore' a visual label on the document. "
         "5. DO NOT dump raw unstructured text or multiple lines into any field. If a value is too long or you are unsure, leave it blank."
         "Return strictly as JSON."
@@ -331,29 +414,10 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
     if vendor_hint:
         tier2_prompt += f"\n\nVENDOR-SPECIFIC RULES FOR THIS INVOICE:\n{vendor_hint}"
 
-    master_data = InvoiceData(is_urgent=is_urgent)
+    master_data = InvoiceData()
     print(f"      - Processing Page 1 visually...")
     start_time = time.time()
     pdf_page_to_image(pdf_path, 0, TEMP_IMAGE)
-    VISION_SCHEMA = {
-        "type": "object",
-        "properties": {
-            "document_type": {"type": "string"},
-            "extracted_vendor_name": {"type": "string"},
-            "invoice_date": {"type": "string"},
-            "invoice_number": {"type": "string"},
-            "invoice_number_label": {"type": "string"},
-            "invoice_total": {"type": "string"},
-            "order_number": {"type": "string"},
-            "customer_number": {"type": "string"},
-            "contains_handwritten_financials": {"type": "boolean"}
-        },
-        "required": [
-            "document_type", "extracted_vendor_name", "invoice_date", 
-            "invoice_number", "invoice_number_label", "invoice_total", 
-            "order_number", "customer_number", "contains_handwritten_financials"
-        ]
-    }
     
     v_response = ollama.chat(
         model=env('AIM_VISION_MODEL'),
@@ -429,22 +493,26 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
     # ---------------------------------------------------------
     print(f"  [>] Phase 3: Validation and Routing...")
     
-    # Check Document Type Reject Path
-    if master_data.document_type not in ["INVOICE"]:
+    # Check Document Type Reject Path. A vision pass that never answered
+    # leaves the field unset, which is as unplaced as an explicit Unknown.
+    master_data.document_type = normalize_document_type(master_data.document_type)
+    if master_data.document_type == UNKNOWN_DOCUMENT_TYPE:
         dest_folder = os.path.join(ACTION_NEEDED_DIR, processing_id)
         os.makedirs(dest_folder, exist_ok=True)
         ticket_path = os.path.join(dest_folder, f"{processing_id}.ticket")
         
-        print(f"      [!] AI rejected document as: {master_data.document_type}. Routing to human review.")
+        print(f"      [!] AI could not place document type. Routing to human review.")
         with open(ticket_path, "w", encoding="utf-8") as f:
-            f.write(f"--- MANUAL ACTION NEEDED (AI REJECTED) ---\n")
+            f.write(f"--- MANUAL ACTION NEEDED (DOCUMENT TYPE UNKNOWN) ---\n")
             f.write(f"File: {processing_id}.pdf\n")
             f.write(f"Document Type: {master_data.document_type}\n\n")
-            f.write(f"The AI rejected this document because it classified it as a '{master_data.document_type}' rather than an 'INVOICE'.\n")
-            f.write(f"Please review the document. If it needs to be processed, update the generated XML file and drop this folder onto the SQL shortcut.")
+            f.write("The AI could not tell what kind of document this is.\n")
+            f.write(f"Please review the document, set its document type, then use Send to SQL Queue on its Paperboy review page.")
             
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
+        record_state(processing_id, "action_needed", ACTOR, "document type could not be placed",
+                     fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "ACTION_NEEDED", f"Rejected as {master_data.document_type}", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return
@@ -455,12 +523,13 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         os.makedirs(dest_folder, exist_ok=True)
         ticket_path = os.path.join(dest_folder, f"{processing_id}.ticket")
         
-        print(f"      [!] AI detected handwritten financial amounts. Routing to human review.")
+        handwritten = ", ".join(master_data.handwritten_financial_fields or []) or "subtotal, tax, or total"
+        print(f"      [!] AI detected handwritten financial amounts ({handwritten}). Routing to human review.")
         with open(ticket_path, "w", encoding="utf-8") as f:
             f.write(f"--- MANUAL ACTION NEEDED (HANDWRITTEN FINANCIALS) ---\n")
             f.write(f"File: {processing_id}.pdf\n\n")
-            f.write(f"The AI detected handwritten financial amounts (subtotal, tax, or total). These must be manually verified to ensure accuracy.\n")
-            f.write(f"Please review the document, verify the values in the XML file, and drop this folder onto the SQL shortcut.")
+            f.write(f"The AI found these amounts written by hand: {handwritten}. They must be verified by a person.\n")
+            f.write(f"Please review the document, verify the values, then use Send to SQL Queue on its Paperboy review page.")
             
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
@@ -468,6 +537,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         # Add sidecar data for GUI rule entry
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
+        record_state(processing_id, "low_confidence_review", ACTOR, f"handwritten: {handwritten}",
+                     fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Handwritten financials detected", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return
@@ -514,6 +585,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         with open(os.path.join(dest_folder, f"{processing_id}_LEARN.json"), "w", encoding="utf-8") as f:
             json.dump(review_data, f, indent=4)
             
+        record_state(processing_id, "vendor_review", ACTOR, "vendor not recognised",
+                     fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "ROUTED_TO_LEARN", f"Unknown vendor: {master_data.extracted_vendor_name}", bu_number, submitter_name, processing_id, master_data)
         return
 
@@ -540,6 +613,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         # Add sidecar data for GUI rule entry
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
+        record_state(processing_id, "action_needed", ACTOR, f"missing {', '.join(missing)}",
+                     fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "ACTION_NEEDED", f"Missing: {missing}", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
         return
@@ -556,6 +631,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         # Add sidecar data for GUI rule entry
         write_vendor_rule_sidecar(dest_folder, processing_id, master_data)
             
+        record_state(processing_id, "low_confidence_review", ACTOR, "low confidence read",
+                     fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "LOW_CONFIDENCE", "Routed for manual check", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
     else:
@@ -565,6 +642,8 @@ def process_cpu_hybrid(pdf_path, bu_number, submitter_name, is_urgent=False,
         
         generate_laserfiche_xml(master_data, bu_number, submitter_name, os.path.join(dest_folder, f"{processing_id}.xml"), processing_id)
         shutil.move(pdf_path, os.path.join(dest_folder, f"{processing_id}.pdf"))
+        record_state(processing_id, "sql_queue", ACTOR,
+                     fields=invoice_facts(master_data, **known))
         write_log(filename, "CPU Test", "SUCCESS", "", bu_number, submitter_name, processing_id, master_data)
         if os.path.exists(sidecar): os.remove(sidecar)
 
@@ -589,7 +668,7 @@ def scan_directories():
                 pdf_path = os.path.join(folder_path, pdf_file)
                 if not is_file_stable(pdf_path): continue
                 try:
-                    process_cpu_hybrid(pdf_path, "Unknown", "Internal_Retrying", is_urgent=True)
+                    process_cpu_hybrid(pdf_path, "Unknown", "Internal_Retrying")
                     if os.path.exists(folder_path):
                         shutil.rmtree(folder_path)
                 except Exception as e:
@@ -607,8 +686,9 @@ def scan_directories():
         f for f in os.listdir(AI_QUEUE_DIR) if os.path.isdir(os.path.join(AI_QUEUE_DIR, f))
     )
     
-    urgent_queue = []
-    standard_queue = []
+    # Oldest first. There used to be an urgent queue ahead of this one, fed by
+    # a HIGH PRIORITY folder; urgency was dropped with that folder (8b.0).
+    job_queue = []
     
     # Build queues
     for folder_name in job_folders:
@@ -635,7 +715,6 @@ def scan_directories():
             with open(ticket_path, "r", encoding="utf-8") as f:
                 ticket = json.load(f)
             
-            is_urgent = ticket.get("is_urgent", False)
             timestamp = ticket.get("timestamp", "")
             
             job_data = {
@@ -648,43 +727,34 @@ def scan_directories():
                 "folder_name": folder_name,
                 "bu_number": ticket.get("bu_number", "Unknown"),
                 "submitter_name": ticket.get("submitter_name", "Unknown"),
-                "is_urgent": is_urgent,
                 "timestamp": timestamp,
                 "processing_id": ticket.get("processing_id", folder_name),
-                "original_filename": ticket.get("original_filename")
+                "original_filename": ticket.get("original_filename"),
+                "owner": ticket.get("owner"),
             }
             
-            if is_urgent:
-                urgent_queue.append(job_data)
-            else:
-                standard_queue.append(job_data)
+            job_queue.append(job_data)
         except Exception as e:
             print(f"    [!] Error reading job ticket {ticket_path}: {e}")
             if folder_age_seconds(folder_path) >= STALE_QUEUE_FOLDER_SECONDS:
                 mark_ai_queue_error(folder_path, folder_name, "AI queue folder has an unreadable job_ticket.json.", error=e, pdf_path=pdf_path)
                 
-    # Sort queues by timestamp (oldest first)
-    urgent_queue.sort(key=lambda x: x["timestamp"])
-    standard_queue.sort(key=lambda x: x["timestamp"])
-    
-    master_queue = urgent_queue + standard_queue
-    
-    # Process queue
-    for job in master_queue:
+    job_queue.sort(key=lambda x: x["timestamp"])
+
+    for job in job_queue:
         pdf_path = job["pdf_path"]
         folder_path = job["folder_path"]
         folder_name = job["folder_name"]
         bu_number = job["bu_number"]
         submitter_name = job["submitter_name"]
-        is_urgent = job["is_urgent"]
         processing_id = job["processing_id"]
         original_filename = job["original_filename"]
         filename = original_filename or os.path.basename(pdf_path)
         
         try:
             process_cpu_hybrid(pdf_path, bu_number, submitter_name,
-                               is_urgent=is_urgent, processing_id=processing_id,
-                               original_filename=original_filename)
+                               processing_id=processing_id,
+                               original_filename=original_filename, owner=job.get("owner"))
             
             # Clean up the AI Queue folder after successful processing (or successful routing)
             if os.path.exists(folder_path):
@@ -695,6 +765,7 @@ def scan_directories():
             # The error queue is a downstream queue like any other, so the
             # crash keeps the batch id rather than deriving a third one.
             crash_id = f"ERROR_{processing_id}"
+            record_state(processing_id, "error_queue", ACTOR, str(e))
             write_log(filename, "CPU Test", "ERROR", str(e), bu_number, submitter_name, crash_id, None)
             
             dest_folder = os.path.join(ERROR_QUEUE_DIR, crash_id)
@@ -727,8 +798,8 @@ def scan_directories():
                     pass
 
 if __name__ == "__main__":
-    # Prepare the machine before any work: directories, shortcuts, alias
-    # sync. Import alone does none of it.
+    # Prepare the machine before any work: directories and the alias sync.
+    # Import alone does none of it.
     bootstrap()
 
     from pipeline_common import AI_QUEUE_DIR

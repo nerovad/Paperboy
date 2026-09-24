@@ -63,6 +63,14 @@ die() { echo "ERROR: $*" >&2; exit 1; }
 [ -f "$ENV_FILE" ] || die "environment file not found: $ENV_FILE"
 [ -d "$SOURCE_DIR" ] || die "worker source not found: $SOURCE_DIR"
 
+# The interpreter that reads the env file the way a worker will. Needed twice:
+# to resolve the deploy target below, and to prove the rendered file parses
+# before it is written.
+DEPLOY_PYTHON="${AIM_DEPLOY_PYTHON:-python3}"
+command -v "$DEPLOY_PYTHON" >/dev/null 2>&1 || die \
+  "cannot read the environment file: no interpreter named '$DEPLOY_PYTHON'.
+       Set AIM_DEPLOY_PYTHON to a python that has python-dotenv installed."
+
 # ---------------------------------------------------------------------------
 # Provenance. The repo .env is meant to be a copy of LockBox/Paperboy.env.
 # Nothing enforces that, so a hand-edited repo copy would send the workers a
@@ -94,16 +102,27 @@ fi
 # Where to deploy. AIM_PROGRAM_DIR is a Windows path; translate it to this
 # machine's mount the same way Rails does. No path is written literally here.
 # ---------------------------------------------------------------------------
-# Read one variable out of the env file. Deliberately parsed, not sourced:
-# sourcing executes whatever the file contains, and Paperboy's .env holds
-# values that are not valid shell.
+# Read one variable out of the env file, the way a worker reads it.
+#
+# Deliberately not sourced: sourcing executes whatever the file contains, and
+# Paperboy's .env holds values that are not valid shell. Deliberately not
+# grepped either, which is what this used to do -- on 2026-09-22 LockBox's
+# ROOT consolidation made AIM_LINUX_QUEUE_BASE_PATH read ${AIM_ROOT}/AIM, and
+# a grep hands back that text unresolved, so the deploy aimed at a directory
+# literally named '${AIM_ROOT}' and stopped. python-dotenv resolves the
+# reference exactly as pipeline_common will on the share.
 env_value() {
-  local name="$1" line
-  line="$(grep -m1 -E "^${name}=" "$ENV_FILE" || true)"
-  line="${line#*=}"
-  line="${line%\'}"; line="${line#\'}"
-  line="${line%\"}"; line="${line#\"}"
-  printf '%s' "$line"
+  "$DEPLOY_PYTHON" - "$ENV_FILE" "$1" <<'PYTHON'
+import sys
+
+try:
+    from dotenv import dotenv_values
+except ModuleNotFoundError:
+    sys.exit("python-dotenv is not installed for this interpreter.\n"
+             "Set AIM_DEPLOY_PYTHON to the worker venv's python.")
+
+sys.stdout.write(dotenv_values(sys.argv[1]).get(sys.argv[2]) or "")
+PYTHON
 }
 
 if [ -z "$TARGET" ]; then
@@ -210,11 +229,6 @@ $LEAKED"
 # AIM_* value interpolating a variable that the subset leaves behind resolves
 # to nothing on the share while looking correct here.
 # ---------------------------------------------------------------------------
-DEPLOY_PYTHON="${AIM_DEPLOY_PYTHON:-python3}"
-command -v "$DEPLOY_PYTHON" >/dev/null 2>&1 || die \
-  "cannot verify the rendered .env: no interpreter named '$DEPLOY_PYTHON'.
-       Set AIM_DEPLOY_PYTHON to a python that has python-dotenv installed."
-
 "$DEPLOY_PYTHON" - "$RENDERED" <<'PYTHON' || die \
   "refusing to deploy an environment file the workers cannot read."
 import re

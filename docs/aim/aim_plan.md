@@ -64,6 +64,43 @@ When that happens:
 Approval for one shared-config change is **not** approval for the next one.
 Ask every time.
 
+### The standing exception: AIM's own triggers
+
+Granted by Joshua 2026-09-22, after asking what the permission was actually
+for: *"so long as the changes won't hurt anything else or cause issues
+anywhere else, then you can make this change since it sounds like it's just
+an addition."*
+
+AIM can already do its work; what it lacks is somewhere to put the trigger,
+because Rails looks for triggers in fixed shared places. These four may be
+added **without asking each time**:
+
+```text
+lib/tasks/aim_*.rake          a task a person runs
+app/jobs/aim/*_job.rb         a job, for work that runs on a schedule
+config/recurring.yml          one new block, naming an Aim:: job
+config/routes.rb              a new route inside the existing aim namespace
+app/models/app_feature.rb     new entries inside AIM's own 'aim' block
+```
+
+The last line was added by Joshua on 2026-09-23 -- *"yes, so long as it
+doesn't break anything else"* -- so AIM's capabilities (Phase 9) can be
+declared in the catalog every other app uses.
+
+The conditions that make this safe, and that hold every time:
+
+- **New files, AIM-named.** Nothing existing is edited, renamed or removed.
+- **One added block, never a changed one.** In `recurring.yml` and
+  `routes.rb` the addition sits alongside what is there; another team's
+  entries are not touched.
+- **The full suite is green before and after**, as for any other step.
+- **Say what was added** in the step's handoff. The grant removes the wait,
+  not the telling.
+
+Anything else shared -- `database.yml`, an initializer, the Gemfile, an
+existing route, another team's job -- is unchanged by this and still goes
+through *Stop, show the diff, wait*.
+
 ### How shared-config changes must be shaped
 
 - **Additive only.** Add a new table; never `ALTER` an existing one. Add a
@@ -168,8 +205,10 @@ That rules out more than it first appears:
   `pipeline_common.py:227` currently pins `ODBC Driver 17 for SQL Server`
   and `Encrypt=no`. Both are properties of the server being talked to, and
   both are likely to differ on SQL Server 2022.
-- No assumption that Rails and the Python workers share a server, or that
-  AIM's tables live in the same database as Paperboy's.
+- No assumption that Rails and the Python workers share a server. AIM's
+  new tables do share Paperboy's database -- decided 2026-09-22, in their
+  own `aim` schema -- but reach it only through Paperboy's own connection
+  settings, never a literal of their own.
 
 ### Changing LockBox
 
@@ -255,7 +294,8 @@ The promise is not enough. The proof is the test suite:
 
 ### Naming
 
-Everything AIM creates is AIM-branded and namespaced: `aim_*` tables,
+Everything AIM creates is AIM-branded and namespaced: tables in the `aim`
+SQL schema (`aim.invoices`, never `dbo.anything`),
 `Aim::*` models and services, `aim/` view and controller directories. Do not
 create generic, un-namespaced "Paperboy things" on AIM's behalf.
 
@@ -459,11 +499,12 @@ Recorded here so nobody has to rediscover it.
 | What | Value |
 |---|---|
 | AIM share (WSL) | `/mnt/a` — from `A:`, see `LockBox/Paperboy-wsl2-fstab` |
+| Worker install folder | `/mnt/a/AIM/_PROGRAM` — **not** `/mnt/a/_PROGRAM`; corrected 2026-09-22. `bin/deploy-aim-workers` resolves it from `AIM_PROGRAM_DIR` and is unaffected |
 | AIM share (Windows) | `E:\AIM` on GSA-SCAN02 |
-| Worker environment file | `/mnt/a/_PROGRAM/.env` |
+| Worker environment file | `/mnt/a/AIM/_PROGRAM/.env` |
 | Paperboy environment file | repo `.env`, from `LockBox/Paperboy.env` |
-| Queue folders | `/mnt/a/_BACK_END/` |
-| Watch tree | `/mnt/a/Invoices/<BU>/<Submitter>/` |
+| Queue folders | `/mnt/a/AIM/_BACK_END/` |
+| Watch tree | `/mnt/a/AIM/Invoices/<BU>/<Submitter>/` |
 
 `/mnt/gsa-scan02-AIM` and `/mnt/gsa-scan02` are stale mount points and are
 empty. Do not use them.
@@ -580,13 +621,14 @@ AIM spans both. This is the current state, not a transitional accident.
 | Host | `gsa-sql22` (10.135.204.103) | `GSASQL16` (10.135.204.161) |
 | Port | **58026** — 1433 is closed | 1433 |
 | Database | `GSA_Scan` | `Paperboy_Dev` / `_Test` / `_Prod`, `GSABSS` |
-| Test database | `AIM_Test` (Phase 5) | `Paperboy_Test` |
-| Tables | `Aim_Invoices`, `Aim_Processing_Logs`, `Aim_Vendor_Aliases` | — |
+| Test database | -- | `Paperboy_Test` (also holds the `aim` schema) |
+| Tables | `Aim_Invoices`, `Aim_Processing_Logs`, `Aim_Vendor_Aliases` (legacy) | `aim.*` from Phase 5 |
 | Read by | Python workers, and Rails once connected | Rails |
 
-`AIM_Test` is ours and is where the new `aim_*` tables are tested.
-`Paperboy_Test` is Rails framework plumbing shared by the whole
-application — see step 0.1.
+The new `aim.*` tables are tested like every other Paperboy table: in
+`Paperboy_Test`, and in the per-worker databases a parallel run builds from
+`db/schema.rb`, which carries `create_schema "aim"`. `AIM_Test` was planned
+for the `gsa-sql22` placement and is no longer needed.
 
 `gsa-sql22\gsasql22` is a **named instance on a dynamic port**. 58026 is
 what it answered on, and it can change when SQL Server restarts. Ask the
@@ -635,6 +677,13 @@ Recorded so they are not relitigated.
 - **Document types.** `Invoice`, `Memo`, `Credit`, `Coupon`, `Unknown`. All
   types flow through the same queues. Type dictates terminal behaviour only.
   Type-specific queue bypass is out of scope for now.
+  **Reconfirmed by Joshua 2026-09-22, with `Statement` added:** the list is
+  `Invoice`, `Memo`, `Credit`, `Coupon`, `Statement`, `Unknown`. The
+  extraction worker's `INVOICE`/`STATEMENT`/`CREDIT`/`UNKNOWN` is
+  incomplete, not a competing decision -- step 5.3a teaches it all six.
+  **`Unknown` is temporary.** AIM staff replace it during QA review, and an
+  invoice does not go to a user's queue while it is still `Unknown` -- a
+  rule for the 5.4 state machine.
 - **Duplicate key.** Same invoice number, same vendor, same amount, same
   date. Budget Unit is deliberately excluded, so the same invoice submitted
   under two BUs is caught.
@@ -684,15 +733,35 @@ Recorded so they are not relitigated.
   Phase 11, not carried alongside the new path.
 - `aimusers` / `GSABSS.dbo.aimusers` is **not** in scope and is not the
   source for BU access.
-- **Database placement (settles step 5.1).** The new AIM tables live in
-  `GSA_Scan` on `gsa-sql22`, alongside the AIM tables that are already
-  there. Not in the Paperboy database. The Python workers already connect
-  to that server, so this removes the cross-server problem rather than
-  creating one.
-- **Two servers, today.** Paperboy's own databases are on `GSASQL16`; the
-  AIM tables are already on `gsa-sql22`. AIM therefore needs a second
-  Rails connection from the start — this is a current requirement, not a
-  future one.
+- **Database placement (settles step 5.1) -- revised by Joshua 2026-09-22.**
+  The new AIM tables live **in the Paperboy database on `GSASQL16`, in a SQL
+  schema named `aim`**: `aim.invoices`, `aim.invoice_events` and so on. They
+  are reached through the connection Paperboy already has, as the shared
+  `GSAETL` login -- "use ETL whenever we can; it is the shared username and
+  password in LockBox that should have access to all resources."
+
+  This replaces the original answer, `GSA_Scan` on `gsa-sql22`, which fell
+  over on two facts found in 5.1: the plan's `aim_invoices` *is* the legacy
+  `Aim_Invoices` in that case-insensitive database, and `GSAScanCenter` can
+  create neither a database nor a table there. On `GSASQL16`, `GSAETL` is
+  `db_owner` of `Paperboy_Dev` and `Paperboy_Test`.
+
+  What it buys: no second Rails connection, so no change to
+  `config/database.yml`, `test_helper.rb` or CI, no new rake tasks, and no
+  new LockBox variables for Rails. Migrations are ordinary `db/migrate`
+  files and `db/schema.rb` is their regenerated output -- both already on
+  the allow-list. The `aim` schema is the AIM branding the Naming guardrail
+  asks for, and keeps the new tables visibly apart from everything else.
+
+  What it costs: the legacy `Aim_*` tables stay on `gsa-sql22`, so until
+  Paperboy migrates, AIM's data spans two servers -- the workers will write
+  a legacy row there and state here, and those cannot share a transaction.
+  Accepted by Joshua; it ends when Paperboy moves to `gsa-sql22` and the
+  schema moves with its database.
+- **Two servers, today.** Paperboy's own databases -- now including the
+  `aim` schema -- are on `GSASQL16`; the legacy `Aim_*` tables are on
+  `gsa-sql22`, where the Python workers write them. Rails does not read the
+  legacy tables, so it still needs no second connection.
 - **Full migration to `gsa-sql22` is planned.** Paperboy will move off
   `GSASQL16` soon. Until then use `GSASQL16` where Paperboy's own data is
   concerned. When the migration happens it must be a LockBox variable
@@ -737,8 +806,8 @@ them.
 
   AIM tests do write scratch fixture rows there (test users, groups and
   sessions, so a controller test can sign in). No AIM production data ever
-  lives in it. **AIM's own tables are tested in `AIM_Test` on `gsa-sql22`,
-  created in Phase 5.**
+  lives in it. **AIM's own Phase 5 tables live here too, in
+  the `aim` schema** -- see *Decisions → Database placement*.
 
   Do not rename `Paperboy_Test` to something AIM-branded. It holds all 113
   migrations' worth of Paperboy tables, and the name comes from shared
@@ -1619,59 +1688,614 @@ is built from these values as strings.
 
 The core restructure. Needs Joshua's approval on the migration before 5.1.
 
-- [x] **5.1 Where the AIM tables live — DECIDED.** `GSA_Scan` on
-  `gsa-sql22`, alongside the AIM tables already there. Not the Paperboy
-  database. This needs a new `aim` connection entry in
-  `config/database.yml`, pointed at `GSA_Scan` in every environment except
-  test, which uses **`AIM_Test`** on the same server.
-  *Shared config — bring Joshua the `database.yml` diff before making it.
-  It must be purely additive: a new key, no edits to the existing anchor
-  or to any current environment.*
+- [x] **5.1 Where the AIM tables live — DECIDED 2026-09-22.** The Paperboy
+  database on `GSASQL16`, in a SQL schema named `aim`, as `GSAETL`. See
+  *Decisions → Database placement* for why this replaced `GSA_Scan` on
+  `gsa-sql22`. No shared config changes.
 
-- [ ] **5.1a Create `AIM_Test` on `gsa-sql22`.** An empty database. AIM
-  migrations load into it; the `aim_*` tables are tested against it. This
-  one is ours and is AIM-branded, unlike `Paperboy_Test`.
-  *Test:* AIM model tests run green against it without touching
-  `GSA_Scan`.
+  **Proved 2026-09-22 in throwaway databases on `GSASQL16`** (created and
+  dropped by `GSAETL`): a migration creates schema `aim` and
+  `aim.invoices`; the schema dump writes `create_schema "aim"` ahead of the
+  table, so any database rebuilt from `db/schema.rb` -- the per-worker test
+  databases, CI's container -- gets the schema too; reloading that dump into
+  a fresh database gives a working model with a typed `decimal` and an
+  enforced unique index; and `aim.invoices` sits beside a `dbo.Aim_Invoices`
+  without clashing.
 
-- [ ] **5.2 Migration: `aim_invoices`.** One row per invoice. `batch_id`,
+  **Rules for every AIM migration, from that proof:**
+
+  - **Name every index explicitly.** `add_index "aim.invoices", :batch_id`
+    fails with *Incorrect syntax near '.'* -- the default name comes out as
+    `index_aim.invoices_on_batch_id`. Pass `name:
+    "index_aim_invoices_on_batch_id"`, dots replaced by underscores.
+  - **Tables are written schema-qualified**, `"aim.invoices"`, in migrations
+    and in `table_name`. Nothing AIM creates goes in `dbo`.
+  - **The schema is created by its own first migration**, whose `down`
+    drops it, so up-and-down stays clean.
+  - **No database foreign keys on `aim` tables.** Found in 5.3: the
+    adapter's `foreign_keys` builds its definition from the bare table names
+    (`identifier.object`, `PKTABLE_NAME`), so the dump reads
+    `add_foreign_key "invoice_events", "invoices"`. That `schema.rb` fails
+    to load -- *Cannot find the object "invoice_events"* -- which breaks
+    every test database build, for every team and CI. The model holds the
+    link instead (`belongs_to`, `restrict_with_exception`). Fixing the
+    adapter would be a shared initializer; not worth it for one link.
+  - **Scratch databases use `RAILS_ENV=test`** with `PAPERBOY_TEST_DATABASE`
+    set to the scratch name. See 5.2 for what `development` does instead.
+  - **Check master's migration versions before numbering one.** Found
+    2026-09-22: AIM's `20260922100000_create_aim_schema` collided exactly
+    with DAM's `20260922100000_clear_dates_from_non_date_metadata`, pushed
+    to master the same morning. Two migrations with one version make Rails
+    refuse to migrate at all, so the merge would have stopped every
+    environment; and because DAM's had already run on `Paperboy_Dev`, Rails
+    there believed AIM's schema migration had run when the `aim` schema did
+    not exist. AIM's three were renumbered `20260922094301`-`...03` with
+    `git mv`. Round timestamps (`100000`, `110000`) are what collide --
+    other teams pick them too. Use the clock, to the second.
+  - **And number it after every migration that already exists**, master's
+    included. The first renumber picked `...0943xx`, the real clock, which
+    was *earlier* than DAM's future-dated `...100000`. Loading `schema.rb`
+    then marks every migration version below the file's own version as
+    already run, so AIM's three were recorded as applied and never
+    executed: the `aim` tables would have been missing from every database
+    built from the schema, with nothing reported. Caught by migrating a
+    scratch database after the merge, which ran nothing at all. They are now
+    `20260922100537`-`...39`, above master's latest.
+
+  `test/lib/aim/schema_conventions_test.rb` enforces the first two rules
+  against `db/schema.rb`: a foreign key naming a table the file never
+  creates, or an index name with a dot, fails the build.
+
+  **Worth knowing if a second database is ever needed:** Rails 8.1's
+  transactional fixtures pin every registered connection pool for every
+  test, and pinning calls `verify!`, which connects. With CI's `eager_load`
+  an extra `connects_to` would make every test in the suite reach that
+  server. `hsa_adoption_cards/connection.rb` records the same trap. The
+  `aim` schema avoids it entirely.
+
+- [x] ~~**5.1a Create `AIM_Test` on `gsa-sql22`.**~~ Not needed. The `aim`
+  schema is tested in `Paperboy_Test` with everything else.
+
+- [x] **5.2 Migration: schema `aim` and `aim.invoices`.** One row per
+  invoice. `batch_id`,
   `business_key`, `budget_unit`, `submitter`, `document_type`, `state`,
   `claimed_by`, `claimed_at`, `assigned_to`, `assignment_source`, vendor
   columns, typed money and date columns, timestamps. Typed properly —
   `decimal` for money, `date` for dates.
   *Test:* migration runs up and down cleanly; model validations covered.
 
-- [ ] **5.3 Migration: `aim_invoice_events`.** Append-only history. Who did
+  Done 2026-09-22. Two migrations -- `CreateAimSchema`, then
+  `CreateAimInvoices` -- plus `Aim::Record` (abstract, `table_name_prefix
+  'aim.'`) and `Aim::Invoice`, tested in `test/models/aim/invoice_test.rb`.
+  Worth carrying:
+
+  - **Up and down proved in a scratch database**: `db/schema.rb` loaded,
+    dumped back byte-identical, migrated, rolled back two steps to a dump
+    identical to the original, and migrated again to the same result. The
+    committed `schema.rb` diff is additive only -- `create_schema "aim"`,
+    the table, the version.
+  - **Do not make a scratch database with `RAILS_ENV=development`.** In
+    development, `db:create` and `db:drop` act on the test database too, so
+    dropping the scratch copy dropped `Paperboy_Test` with it. Recreated
+    straight away (`RAILS_ENV=test bin/rails db:create db:schema:load`,
+    stamped `test`, `GSAETL` owner), but next time use `RAILS_ENV=test` with
+    `PAPERBOY_TEST_DATABASE` pointed at the scratch name, which touches
+    nothing else. Never point either at `Paperboy_Dev`.
+  - **`claimed_by` and `assigned_to` are strings**, because a claim today
+    records the user's email and falls back to an employee id
+    (`invoice_file_support.rb`). 5.5 dual-runs against those claims, so the
+    column holds what they hold.
+  - **`document_type` is free text, deliberately.** The Decisions list
+    `Invoice`, `Memo`, `Credit`, `Coupon`, `Unknown`; the extraction worker
+    actually emits `INVOICE`, `STATEMENT`, `CREDIT`, `UNKNOWN`. Validating
+    either list would reject the other. See Open Questions.
+  - **`state` is only required, not enumerated.** Its values are 5.4's.
+  - `Subtotal` and `SalesTax` are not columns. They are still an open
+    question, and adding a nullable column later is cheap.
+
+- [x] **5.3 Migration: `aim.invoice_events`.** Append-only history. Who did
   what, when, from which state to which. This is the audit trail the
   pipeline has never had.
   *Test:* every state transition writes exactly one event.
 
-- [ ] **5.4 `Aim::Invoice` model and state machine.** States enumerate the
+  Done 2026-09-22. `aim.invoice_events` (`invoice_id`, `action`,
+  `from_state`, `to_state`, `actor`, `note`, `created_at` only) and
+  `Aim::InvoiceEvent`, which is read-only once written. Worth carrying:
+
+  - **The event is written by `Aim::Invoice` itself**, in an `after_save`
+    inside the same transaction, whenever `state` changes -- including the
+    first state on create (`from_state` nil). So any path that changes state
+    through the model writes exactly one event, and a failed event write
+    rolls the state change back (tested).
+  - **The caller names the actor on every change** (`invoice.update!(state:
+    ..., actor: ...)`); a state change without one is invalid, and `actor`
+    is cleared after each save so the next change cannot inherit it.
+    Deliberately not read from `Current.user`: the workers have no session.
+  - **The workers bypass all of this.** They write SQL, not Rails, so in 5.6
+    each worker must insert its own event row in the same transaction as
+    its state change. The model's guarantee covers Paperboy's side only.
+  - **No database foreign key** -- see the rules under 5.1. An invoice with
+    history cannot be deleted (`restrict_with_exception`); events cannot be
+    edited or deleted at all.
+  - `action` is `transition` for now; claims and assignments can become
+    events of their own when 5.4 or 5.5 needs them.
+
+- [x] **5.3a Teach the extraction worker the six document types.**
+  `01_AI_Extraction_Worker` asked the models for `INVOICE`, `STATEMENT`,
+  `CREDIT` or `UNKNOWN` and sent anything but an invoice to review. It now
+  classifies all six, and only `Unknown` stops for QA review.
+
+  Done 2026-09-22. `pipeline_common` owns `DOCUMENT_TYPES`,
+  `DOCUMENT_TYPE_GUIDE` (the wording both prompts use, so the text pass and
+  the vision pass cannot drift) and `normalize_document_type`. Worth
+  carrying:
+
+  - **One gate, one spelling.** `InvoiceData` normalises `document_type` on
+    the way in, so `INVOICE`, `credit` and `'Coupon'` all become the decided
+    spelling and anything off the list becomes `Unknown` rather than being
+    guessed at. A payload written before today still reaches Laserfiche as
+    `Invoice`, which is what `TemplateName` always title-cased it to.
+  - **The models are confined to the six** by an `enum` in both the Phase 1
+    schema and `VISION_SCHEMA`, which is now module level so the tests read
+    the same schema the model is given. The fields stay plain strings, so an
+    off-list answer is spelled rather than raising a hallucination error.
+  - **The vision pass has the last word.** If Phase 1 says `Credit` and the
+    vision pass cannot tell, the invoice goes to review -- unchanged
+    behaviour, now stated.
+  - **Laserfiche has no templates for the new types.** `TemplateName` is the
+    type title-cased, so a Memo now arrives as template `Memo`. `Invoice`
+    and `Unknown` are unchanged. Phase 11 owns the import mechanism; whoever
+    designs it needs templates for all six, or a mapping.
+  - **`Memo` and `Coupon` are described from guesswork.** The wording in
+    `DOCUMENT_TYPE_GUIDE` is a first draft -- a memo as a payment memo or
+    debit memo, a coupon as a remittance slip. Joshua corrects it from the
+    manual testing; it is one constant to edit.
+  - **Nothing in Rails can set a document type yet**, so AIM staff cannot
+    resolve an `Unknown` on screen. The QA review screen needs a type
+    selector -- see Open Questions.
+  - *Not deployed.* `bin/deploy-aim-workers` has not been run; GSA-SCAN02
+    still runs the four-type worker.
+
+- [x] **5.4 `Aim::Invoice` model and state machine.** States enumerate the
   real queues plus the terminal outcomes. Illegal transitions raise.
   *Test:* the full transition table, including every rejection.
 
-- [ ] **5.5 Rails reads state from the database.** Queue screens and the
+  Done 2026-09-22. 18 states -- the 15 queues the pipeline really uses, plus
+  `archived`, `deleted` and `rejected` -- and a `TRANSITIONS` table naming
+  every move. `transition_to!(state, actor:, note:)` raises
+  `Aim::Invoice::IllegalTransition`; the same table is also a validation, so
+  a bare `update` cannot make a move `transition_to!` would refuse. The test
+  drives all 18 states against all 18: 56 moves allowed, **258 refused**.
+  Worth carrying:
+
+  - **The tests found two mistakes in the table as first written**, which is
+    the argument for driving it exhaustively rather than testing a few
+    paths. `rejected` was marked terminal, but the Rejected queue holds an
+    invoice "awaiting archive or follow-up", so it can still be deleted or
+    retried -- only `archived` and `deleted` are ends. And `action_needed`
+    listed itself as a destination, because it shares the review exits.
+  - **`error_queue` is a state**, though no screen shows it: a crashed batch
+    really does land there, and a state machine that cannot express where
+    the pipeline puts things is not modelling the pipeline.
+  - **An invoice with an unsettled type cannot reach `user_approval`**,
+    enforced as a validation, whichever route it takes. It may move
+    anywhere else -- `Unknown` blocks the user's queue, not the pipeline.
+  - **The document types are declared in two languages now**: Python's
+    `DOCUMENT_TYPES` for the workers, `Aim::Invoice::DOCUMENT_TYPES` for
+    Rails. `test/lib/aim/document_types_test.rb` reads the Python file and
+    fails if the two lists disagree, since nothing else would notice.
+  - Nothing writes these states yet. 5.5 has the screens read them, 5.6 has
+    the workers write them; until then the pipeline still moves folders.
+
+- [~] **5.5 Rails reads state from the database.** Queue screens and the
   work provider read rows, not directories. Files stay on the share as
   blobs. Dual-run against the folders during this step.
   *Test:* queue counts from the database match the folder counts.
 
-- [ ] **5.6 Workers write state to the database.** Each worker records its
+  **Half done 2026-09-22, deliberately.** The counting half is built; the
+  screens still read folders for what they show.
+
+  - **`Aim::QueueSync` builds the rows from the share.** It adopts a folder
+    with no row, records a folder that moved the way the pipeline moves it
+    as that transition, and follows a folder somebody dragged as a `sync`
+    event saying *folder moved outside the pipeline* -- three different
+    things, told apart rather than averaged. It is idempotent, and a row
+    whose folder has gone is counted, never moved: a worker may be part way
+    through a move, and this class never decides an invoice has ended.
+    **This is also the go-live cutover tool** from *Decisions → Database
+    placement*: the rows can be rebuilt from the share at any time.
+  - **The dashboard shows the database's count beside the folder's, and only
+    when they differ.** Silence means they agree. It says nothing at all
+    until something writes rows, and a database it cannot reach is logged
+    and skipped -- the folders are still the truth this step, so AIM's
+    screens must not go down with it.
+  - **Rails' queue list was missing four directories** the state machine
+    names: `pending_vision`, `ready_to_split`, `ready_to_delete` and
+    `error_queue`. All four are real worker queues with variables already in
+    LockBox; `PATH_ENV` simply never listed them.
+  - **Adopting is not moving.** The rule that an untyped invoice may not
+    reach `user_approval` now applies to a *change* of state, not to a new
+    row, so a folder already sitting in the user queue can be recorded where
+    it is. Refusing to write down where an invoice actually is would lose
+    it, not protect anyone.
+
+  **What is left of 5.5, and why it waits.** The queue screens read each
+  invoice's vendor, number and total out of the JSON beside the PDF. The
+  rows do not carry those yet -- the workers start writing them in 5.6 --
+  so switching the screens now would empty them while Joshua is testing.
+  The screens change once 5.6 fills the rows.
+
+  **Nothing schedules the sync yet.** It runs from the console
+  (`Aim::QueueSync.new.call`). Giving it a rake task or an admin button is a
+  shared-config change (`lib/tasks/` or a route), so it goes to Joshua with
+  Phase 6.2's `aim:import_vendors`, which needs the same permission.
+
+- [~] **5.6 Workers write state to the database.** Each worker records its
   transition instead of implying it by moving a folder.
   *Test:* a full pipeline run through the fake tree produces the expected
   event sequence.
 
-- [ ] **5.7 Retire folder-as-state.** Remove `.claim.json`, remove the
+  **Code done 2026-09-22; not configured and not deployed.** `state_store.py`
+  offers one call, `record_state(batch_id, state, actor, note)`, which writes
+  the invoice row and its event in one transaction. All five workers call it
+  -- 18 places in total: the watcher when an invoice is spooled, the AI
+  worker at each of its eight routings and on a crash, the SQL worker on
+  archive, failure, mapping bounce and deletion, the splitter and the alias
+  learner on theirs. Worth carrying:
+
+  - **A database that is not there does not stop the pipeline.** In this step
+    the folders are still the truth, so refusing to move an invoice over
+    bookkeeping would strand real work. The failure is printed, the move
+    happens, and `Aim::QueueSync` rebuilds the rows afterwards. **That trade
+    reverses in 5.7**, when the row becomes the truth.
+  - **Saying it twice writes nothing.** A worker restarting mid-queue
+    re-reads folders it already recorded; the store compares the state it
+    finds before writing, so one move stays one event.
+  - **Times are written `SYSUTCDATETIME()`**, because Rails reads these
+    columns as UTC. `GETDATE()` would be the server's local time and every
+    timestamp would be seven hours out.
+  - **Table names come from `AIM_SQL_STATE_TABLE` and
+    `AIM_SQL_STATE_EVENTS_TABLE`**, like every other AIM setting, and the
+    connection from the `SQL_STATE` section that `get_sql_connection`
+    already understands.
+  - The sequence test runs a PDF through the watch tree and both workers with
+    the models stubbed, and asserts the history: `ai_queue` by the watcher,
+    then `sql_queue` by the AI worker, under one batch id.
+
+  **What is left, and it needs Joshua:**
+
+  1. **Which login the workers use.** The six new variables --
+     `AIM_SQL_STATE_SERVER`, `_DATABASE`, `_USER`, `_PASSWORD`, `_TABLE`,
+     `_EVENTS_TABLE` -- go to LockBox, and the worker `.env` lives on a share
+     anyone who can reach `E:\AIM` can read. `GSAETL` is the standing
+     choice and reaches everything; a login with rights on the `aim` schema
+     alone would not. **Joshua decides; nothing is written to LockBox until
+     he does.**
+  2. **The deploy.** `bin/deploy-aim-workers --apply`, then restart the
+     workers. Until then the fleet runs the 5.3a code and writes no rows.
+
+- [x] **5.6a What the first night of recording found.** 2026-09-23, after
+  19 invoices ran through the deployed workers overnight.
+
+  - **It works.** 53 events, sequences right, actors named, timestamps in
+    UTC: spooled by the watcher, routed by the AI worker, 15 archived by the
+    SQL worker after reaching SQL, 4 sent to vendor review. GSA-SCAN02 can
+    reach `GSASQL16`, which was the open risk.
+  - **`_USER_APPROVAL` did not exist on the share.** Rails moves a corrected
+    invoice into it and nothing had ever created it, because no worker reads
+    it and `MANAGED_DIRECTORIES` therefore never listed it -- so the move
+    failed on a share the workers otherwise keep in order. Added, with
+    `_SPOOL_STATE`, which had the same gap (noted in Open Questions on
+    2026-09-15 and now closed). **Needs a deploy to take effect.**
+  - **The dashboard's dual-run note had a bug of my own making.** It showed
+    the row count only when the queue had *some* rows, so Low Confidence --
+    5 folders, no rows at all, the starkest disagreement -- said nothing.
+    A missing key now counts as zero.
+  - **Nine folders predated the wiring** (processed at 12:20, before the
+    deploy) and so had no rows. `Aim::QueueSync` adopted them; folders and
+    rows now agree exactly, which is 5.5's test passing against the real
+    share rather than a temp directory.
+  - **Counting shortcuts is not counting invoices.** `_ACTION_NEEDED` looked
+    like it held two items; both were `.lnk` files. The screens were right
+    all along -- they count directories -- but any tool of ours that counts
+    entries has to do the same.
+
+- [x] **5.6b Only a handwritten money amount goes to a person.** Found in
+  testing 2026-09-23 on Incentive Services CV62744: every amount printed, an
+  "OK to pay" and a signature beside them, and the invoice sent to Low
+  Confidence as handwritten. Worse than one wasted review: the handwriting
+  check returns before the vendor and missing-field checks, so the invoice's
+  real problem -- no vendor name -- was never reported; and the flag latched
+  across pages, so any document with a signature page was always flagged.
+
+  The vision model no longer answers "is there handwriting?". It names which
+  of `subtotal`, `tax` and `total` are handwritten
+  (`handwritten_financial_fields`, confined by an enum), the prompt says in
+  terms that signatures, initials, approval notes, dates and handwritten
+  invoice or PO numbers do not count, and `InvoiceData` derives the flag from
+  that list -- an empty list cannot raise it. The latch is now per money field,
+  the union of every page. The ticket and the history name the fields. A
+  payload written before the change, with no list, reads as it always did.
+
+  13 tests (10 red without the change) drive the worker's real routing with
+  the model stubbed, the CV62744 case among them. The pytest harness now
+  refuses every database connection outright, since workers that record
+  state would otherwise reach for SQL Server from a test. Needs a deploy;
+  Joshua judges it on real documents.
+
+- [x] **5.7 Retire folder-as-state.** Remove `.claim.json`, remove the
   status-by-location inference, remove the Windows shortcuts.
   *Test:* the suite passes with no code reading a folder to learn status.
+
+  **Done 2026-09-24, with two things carried to 9.5.** The screens take
+  status and claims from the row, and the shortcuts and `is_urgent` are
+  gone. Still reading folders, on purpose: `Aim::QueueSync` compares folders
+  with rows to find disagreements, and the queue list shows a folder with no
+  row as "Not yet recorded" rather than hiding it. Carried to 9.5:
+  `Aim::WorkProvider` (Paperboy's inbox) still reads queue folders and
+  `.claim.json`, so the file is still written beside the row's claim.
+
+  Done in three parts, each safe to deploy alone: **(a)** the workers write
+  the invoice's facts onto the row; **(b)** the screens read rows, and claims
+  move onto the row; **(c)** the folder-reading code, the shortcuts and
+  `is_urgent` go. Files stay on the share as the PDFs they are -- what goes is
+  any code that *reads a folder to learn status*.
+
+  - [x] **5.7a The row carries the facts.** 2026-09-23. `record_state` takes
+    `fields`, built by `invoice_facts`: budget unit, submitter, document
+    type, vendor (extracted and normalised), invoice/order/customer numbers,
+    total, date, and the owner (`assigned_to`, `assignment_source`). The
+    watcher writes the BU, submitter and owner at spool; the AI worker writes
+    what it read at every routing; the SQL worker writes the final, corrected
+    values at archive -- the same ones the billing row and the XML were built
+    from. Three rules, each tested:
+    - **A fact the caller does not know is never written**, so the AI
+      worker, which knows nothing of the owner, cannot erase what the watcher
+      recorded.
+    - **A value that does not fit its column is dropped, not sent.** A total
+      that is not money, a date that is not a date: SQL Server refusing one
+      column would refuse the whole write, and with it the state.
+    - **Column names come only from `FIELD_LIMITS`**, never from a caller or
+      a document.
+    Facts learned without a move update the row and add no event.
+    `assigned_to` holds the folder's display name until 8b maps names to
+    people. Found on the way: the SQL worker's **duplicate branch** archived
+    a batch without recording it, so the row would have sat in `sql_queue`
+    for ever; it now records `archived` with the reason. 227 pytest, 18 new
+    and red without the change.
+
+  - [x] **5.7b(1) Every move made on the screens is recorded, in the
+    reviewer's name.** 2026-09-23. Sending to the SQL queue, to a user, to
+    alias learning, back to Action Needed, rejecting, and an AI retry (the
+    original recorded `deleted`, naming its retry folder) all record the move
+    on the row, actor = the signed-in reviewer. `Aim::Invoice#record_move!`
+    is shared with `Aim::QueueSync`: a move the pipeline makes is a
+    transition; anything else is followed and written down as a `sync` event
+    that says why -- never refused, because the file has already moved. A
+    batch with no row is adopted. A database that will not record the move
+    is logged and does not stop it; the sync puts the row right after.
+    - **Claims are mirrored onto the row** (`claimed_by`, `claimed_at`) and
+      released with the folder's; `.claim.json` stays the one that is read
+      until 5.7c.
+    - **An invoice typed `Unknown` cannot be sent to a user**, refused before
+      anything moves. A document type corrected in the metadata grid is taken
+      onto the row first, so the rule judges what the reviewer just set.
+      Rows with no type at all -- adopted before 5.7a -- are let through and
+      the event says so; refusing them would block every older invoice.
+    - **Found and fixed: rejected invoices are nested**,
+      `_REJECTED/<Submitter>_<BU>/<batch_id>`, and 5.5's sync would have
+      adopted the group folder `Jane Doe_4601` as an invoice. It now reads
+      that queue one level down.
+    - The helpers moved into their own modules, `Aim::InvoiceStateRecording`
+      (controller) and `Aim::InvoiceMoves` (model), which is where rubocop's
+      length warnings pointed.
+    10 controller tests (8 red without the wiring), 7 model tests, 1 sync
+    test.
+
+  - [x] **5.7b(2) The sync runs itself.** 2026-09-23. `Aim::QueueSyncJob`,
+    every ten minutes, in `config/recurring.yml` (under the standing approval
+    for AIM's own triggers: one added block, in `production`, which staging
+    and development inherit). It catches what recording at every move cannot:
+    a folder dragged by hand, a database down for a minute, a worker that
+    crashed between moving a file and writing its row. Logs what it changed,
+    and warns if folders and rows still disagree afterwards.
+    **On a host where AIM is not configured it does nothing at all** -- not
+    even a database query, since that host's database may have no `aim`
+    schema. That matters because the schedule runs wherever Solid Queue
+    does, teammates' machines included.
+
+  - [x] **5.7b(3) The queue screens list what the rows say.** 2026-09-23.
+    Which invoices a queue shows now comes from `aim.invoices`, not from
+    listing a directory (`Aim::InvoiceQueueListing`). Nothing can drop out
+    of sight in the change:
+    - **A folder with no row is still listed**, with a *Not yet recorded*
+      badge beside its status -- beside, not instead: a claim badge matters
+      more, and the first version of this hid "Claimed by Dana Reyes".
+    - **A row whose folder has gone is listed too**, as *Files not found on
+      the share*, with no review link.
+    - **If the rows cannot be read, the list comes from the folders** and the
+      page says so.
+    - **What each line shows is the folder's metadata first**, the row
+      filling gaps. A reviewer's saved correction lives in the JSON until
+      Phase 9 moves editing onto the row; showing the row first would show a
+      value they had already fixed.
+    - **Rejected lists invoices, not the `<Submitter>_<BU>` groups** it had
+      been listing, and a rejected invoice now opens from its group folder --
+      before, the review page could not find it at all.
+    Claims are still read from `.claim.json`; 5.7c moves them.
+
+  - [x] **5.7c What 5.7c has to settle first** -- found 2026-09-23, before
+    starting it:
+    - **Two shortcuts are the only way to do their jobs.** Seven `.lnk`
+      files sit in the queues. `MOVE_FOLDERS_HERE_TO_SPLIT` (Batch Split) and
+      `MOVE_FOLDERS_HERE_TO_DELETE` (Action Needed, Low Confidence, Vendor
+      Review) have no equivalent on the screens: there is no action to
+      approve a split or to delete. The plan's "remove the Windows
+      shortcuts" would break splitting and deleting. **The screens need
+      Split and Delete actions first.** A drag onto a shortcut still works
+      meanwhile, but the history can only say `queue_sync` moved it, not who.
+    - **The row has no claimant's name.** The review page's banner says
+      "Dana Reyes claimed this invoice"; `.claim.json` carries the name, the
+      row only `claimed_by`. Reading claims from the row needs the name too --
+      an additive `claimed_by_name` column, or a lookup by email.
+    - **The inbox integration stays on folders.** `Aim::WorkProvider` reads
+      queue folders and `.claim.json`, and it waits on the pfa refactor, which
+      is not on master yet (checked 2026-09-23: master is 31 commits ahead,
+      none of them pfa). It moves in 9.5; until then `.claim.json` cannot be
+      retired outright, only stop being the one the screens read.
+      *Corrected 2026-09-24:* the pfa work-provider framework was already on
+      master (`4abd4417`, "Introduce reusable PFA work providers"), and
+      `Aim::WorkProvider` is built on it. Nothing blocks 9.5; it is simply
+      not done yet.
+    - `is_urgent` can go from the workers, the payload and the Rails badge.
+
+    **Decided with Joshua 2026-09-23:**
+    - **Splitting gets a button, and must make sense.** It never had one in
+      Paperboy -- no branch holds a split action; the earlier way was editing
+      the manifest and dragging the folder onto the shortcut. The Batch Split
+      review page shows the AI's proposed invoices, lets a person correct
+      each one's pages (checked against the PDF's real page count, which
+      `pdf-reader` -- already in the bundle through `prawn-templates` -- can
+      read), add or remove one, and then **Approve Split**; or say **Not a
+      batch -- process as one invoice**, which sends it back through
+      extraction with the split check bypassed.
+    - **Delete gets a button too**, so the `..._TO_DELETE` shortcuts can go.
+    - **`claimed_by_name` goes on the row**, so claims are read from it.
+    - **The inbox stays on folders until the pfa refactor lands**, and the
+      user's AIM queue should eventually appear under **My Work** in
+      Paperboy's inbox (9.5).
+
+    **Found reading the splitter:** it takes the submitter from the batch
+    id's third part, which is the file name, so every split invoice carries
+    the wrong submitter and no owner; and it deletes the batch folder without
+    recording what became of it, leaving the row in `ready_to_split` for
+    ever. The fix is a terminal state, **`split`** -- the batch became the
+    invoices named in its event -- and carrying the owner and BU through.
+
+    **Order:** claims on the row; Delete; the `split` state and the splitter
+    fixes; the Split screen; `is_urgent` out; then the shortcuts go.
+
+  - [x] **5.7c(1) Claims are read from the row.** 2026-09-23. A new column,
+    `claimed_by_name` (migration `20260923151741`), so the row can say who
+    holds an invoice by name. The screens read the claim from the row first;
+    the folder's `.claim.json` answers only when the row has none -- a claim
+    made before rows carried them. The file is still written, because the
+    Paperboy inbox reads it until 9.5. The queue list reuses the rows it
+    already loaded rather than querying once per invoice. 4 new tests, all red
+    without the change; 1039 runs, 0 fail, 0 error.
+
+    Two things learned applying the migration:
+    - **Never keep the `schema.rb` that `db:migrate` writes in development.**
+      Migrating `Paperboy_Dev` re-dumps the schema from it, and that database
+      carries other teams' newer migrations -- this time DAM access-rule
+      tables and a version `20260923221136` our branch knows nothing of.
+      Migrate the dev database, then `git checkout db/schema.rb`, and
+      regenerate the schema from a scratch test database.
+    - **At the next master merge, regenerate `schema.rb` from ours.** Master's
+      latest migration (`20260922220000`) is newer than AIM's first three, so
+      loading master's `schema.rb` would mark AIM's as run without running
+      them -- the trap from 2026-09-22. Take our `schema.rb` on conflict, load
+      it into a scratch database, and let master's newer migrations run on
+      top.
+
+  - [x] **5.7c(2) A Delete button.** 2026-09-23. Replaces the three
+    `MOVE_FOLDERS_HERE_TO_DELETE` shortcuts. Offered on the review page
+    wherever the state machine allows a move to `ready_to_delete`, so the
+    button and the rules cannot disagree; refused anywhere else, the SQL
+    queue included. It asks first, with the shared modal, and sends the
+    folder to the delete queue, where the SQL worker archives it under its BU
+    and submitter -- nothing is destroyed outright -- and the row records who
+    sent it. No route change: like every other action on the page it is a
+    named submit that `update` dispatches.
+
+    **`238e7bd7` was pushed broken.** It declared `helper_method` inside
+    `Aim::InvoiceQueueSupport`, which a unit test includes into a plain class;
+    `helper_method` does not exist there, so the whole suite died at load
+    time, before any test ran. The command that ran the gate went on to commit
+    and push regardless, because nothing made the commit depend on the
+    result. Fixed in the next commit by declaring it in the controller, and
+    the gate is now checked before anything is committed: the result line
+    must say `0 failures, 0 errors` and rubocop must say `no offenses`. The
+    same fix moved the Send to Approval and Delete guards and the share
+    write-failure handler out of the controller, which was over rubocop's
+    length limit.
+
+  - [x] **5.7c(3) A split batch keeps its owner and ends as `split`.**
+    2026-09-23. A new end state, `split`, reached from `ready_to_split`: the
+    batch's pages go on as new invoices in the reprocess queue, and the batch
+    itself ends, its event naming the pieces. (`ready_to_split -> reprocess`
+    is gone -- it was the pieces that went there, never the batch. "Process
+    as one invoice" is `batch_split -> reprocess`, still allowed.) The sync
+    skips every end state, since a split batch has no folder left.
+    - **The owner travels with the split**: ticket -> AI worker (new `owner`
+      argument) -> the manifest, which now carries `bu`, `submitter` and
+      `owner` beside the invoices -> the splitter -> each piece's sidecar ->
+      each piece's row, because the AI worker now records the owner itself.
+      A piece or a retry reaches the AI worker without passing the watcher,
+      so that is the only way its row learns who it belongs to.
+    - **The splitter no longer guesses the submitter** from the batch id's
+      third part, the file name. A manifest from before this change says
+      `Unknown`, which is at least not wrong.
+    5 tests with a real three-page PDF (4 red without the change). Needs a
+    deploy.
+
+  - [x] **5.7c(4) The Batch Split screen.** 2026-09-23. The review page for a
+    batch shows the AI's proposed invoices as rows -- vendor, invoice number,
+    pages written as people write them (`1-3, 5`) -- plus two blank rows for
+    adding one; clearing a row's pages removes it. Two buttons:
+    - **Approve Split** checks the plan (`Aim::SplitPlan`): every page a page
+      of this PDF, counted by `pdf-reader`; every page in exactly one invoice,
+      since a page left out would be lost and a page used twice paid twice;
+      at least two invoices. A refused plan re-renders the page with the
+      person's entries intact and each problem in plain words ("Page 2 is in
+      invoices 1 and 2"), and nothing moves. An accepted one is written into
+      the manifest -- keeping the BU, submitter and owner -- and the batch
+      goes to the splitter.
+    - **Process as One Invoice** sends the batch back through extraction
+      with the split check bypassed and **its own batch id kept** (a new
+      `processing_id` sidecar key the AI worker honours), so its history
+      carries on; a plain retry is still minted a new id, as before.
+    Found on the way: the page's old "AI Suggested Splits" summary had
+    **never displayed** -- it looked for `Invoices` and the manifest writes
+    `invoices` -- so reviewers had been shown raw JSON in a text box. And a
+    blank invoice number would have reached the splitter as `null` and
+    crashed it; blanks are now left out. The review page's setup moved into
+    `prepare_review` so a refused split can re-render it. 12 checker tests,
+    5 screen tests with a real PDF (5 red without the change), 2 worker
+    tests for the kept id. Needs a deploy for the worker half.
+
+  - [x] **5.7c(5) Action Needed can send to SQL, and urgency is gone.**
+    2026-09-23.
+    - **Action Needed offers Send to SQL Queue**, what its
+      `MOVE_FOLDERS_HERE_TO_SEND_TO_SQL` shortcut did, and the path that works
+      while the user approval queue is still to be built.
+    - **`is_urgent` is removed** from the watcher's ticket, the AI worker (its
+      argument, the urgent queue it sorted ahead of the rest, and the flag a
+      retry used to set), `InvoiceData`, and the Rails "Urgent" badge. Jobs
+      are processed oldest first. A payload or ticket written before this
+      that still carries the key is simply ignored.
+
+  - [x] **5.7c(6) The shortcuts are gone.** Every job they did now has a
+    button: Delete, Approve Split, Learn Alias, Send to SQL Queue. Held
+    briefly to tell staff, then released 2026-09-24: no staff use AIM yet,
+    only Joshua while building it. `setup_shortcuts` and
+    `create_windows_shortcut` are removed from `pipeline_common.py`, so
+    `bootstrap()` plants nothing; `pywin32` leaves `requirements.txt`, as it
+    had no other use. The seven `.lnk` files were deleted from the share
+    the same day. The AI worker's `.ticket` notes now say to use Send to SQL
+    Queue on the Paperboy review page instead of the SQL shortcut. A test
+    proves `bootstrap()` leaves no `.lnk` behind.
 
 ---
 
 ## Phase 6 — Real Vendor Normalization
 
-- [ ] **6.1 Migration: `aim_vendors` and `aim_vendor_aliases`.** Canonical
+- [ ] **6.1 Migration: `aim.vendors` and `aim.vendor_aliases`.** Canonical
   vendors with an id, and many aliases pointing at one vendor. Vendors not
   present in Fiscal's list are flagged provisional.
   *Test:* model and association coverage.
+  In the `aim` schema -- the name `aim_vendor_aliases` would have been the
+  legacy `Aim_Vendor_Aliases` in `GSA_Scan`. Name the indexes explicitly.
 
 - [ ] **6.2 `aim:import_vendors` rake task.** Loads Fiscal's CSV, reports
   what matched, what is new, and what did not match.
@@ -1727,19 +2351,415 @@ assertion.
 
 ---
 
+## Phase 8b — Routing And Coding Before The Queue
+
+Raised by Joshua 2026-09-23. **An invoice is not ready for a user until it
+is coded and routed**, and the plan had both in the wrong place: account
+coding sat in Phase 11, after approval, and routing had a column on the row
+(`assigned_to`, `assignment_source`, from 5.2) but nothing to fill it. The
+pipeline order is:
+
+```text
+extract -> normalise vendor -> check duplicates -> code and route -> user queue -> fiscal handoff
+             (Phase 6)          (Phase 7)          (this phase)      (Phase 9)     (Phase 11)
+```
+
+- [x] **8b.0 The watch tree routes.** The watcher reads `/<BU>/<Name>/` as
+  that person, `/<BU>/SHARED/` as the shared queue, ignores loose files at the
+  BU root (skipping them before the unsupported-file rename), and drops the
+  HIGH PRIORITY folder and the urgent flag. Owner recorded with
+  `assignment_source = 'folder'`.
+
+  Done 2026-09-23. `route_for` decides a folder's owner before a single
+  file in it is looked at, so a loose file at the BU root -- the README
+  included -- is skipped ahead of the unsupported-file rename. The job
+  ticket now carries `queue` (`person` or `shared`), `owner` (the folder's
+  name, or none) and `assignment_source = 'folder'`. The shared folder's
+  name is `AIM_SHARED_FOLDER_NAME` (`SHARED`), added on LockBox `aim-config`
+  (`891179b`, local only). Each BU folder gets
+  `README - How to submit invoices.txt` from `BU_FOLDER_README.txt`, shipped
+  with the workers; the watcher places it where missing and never over an
+  edited one.
+
+  - **Folders are named by display name** (`Joshua Gannon`, `Ryan Hill`,
+    `Tryna Huebner` on the share today), which answers the open question and
+    is why the name-to-person mapping on the admin screen matters.
+  - **No HIGH PRIORITY folder existed**, so dropping it stranded nothing.
+    `is_urgent` stays in the ticket, always false, because the AI worker's
+    retry ordering and the Rails "Urgent" badge still read it; 5.7 removes
+    the field when the payload becomes the row.
+  - **The owner is in the ticket, not yet on the row.** `record_state`
+    writes state only; 5.7 carries the ticket's owner into
+    `aim.invoices.assigned_to`.
+  - 18 tests, 17 red without the change.
+
+- [ ] **8b.1 The rules table.** One table in SQL, replacing the lookup file
+  PsiGen used. Each rule says *invoices matching this go there, coded thus*:
+  - **matches** a Budget Unit, a vendor, or a vendor within a Budget Unit;
+    the most specific rule wins;
+  - **sends to** a shared BU queue (anyone with that BU sees it), a queue
+    manager (who routes it on to a person), or a named person (only they see
+    it) -- the three uses the old file's queue ids covered;
+  - **codes it** with the chart-of-accounts fields `Aim_Invoices` already
+    carries and nothing fills: `BDO_DO_CT`, `Program_Number`,
+    `Major_Program`, `Fund`, `Object`, `Program`, `Activity`, `Function`,
+    `Phase`, `Department`. Routing and coding share a row because the old
+    file did; split them only if they turn out to vary independently.
+- [ ] **8b.2 Apply the rules before the queue.** Every invoice passing the
+  duplicate check gets its coding and its destination, with
+  `assignment_source = 'rule'`. No match is an explicit outcome, not a
+  silent blank -- which outcome is a question below.
+- [ ] **8b.3 Admin screen for the rules**, with every change to a rule
+  recorded. Assign a whole BU, or one vendor, to a queue or a person.
+- [ ] **8b.4 Queue managers route onward.** A manager reassigning an
+  invoice sets `assignment_source = 'manager'`; the event trail says who.
+
+Supersedes 11.1, which put the coding after approval.
+
+**Status 2026-09-23.** Joshua is copying the current lookups to a folder on
+GSA-SCAN02 for evaluation. There are two groups, **GSA and Sheriff**; GSA
+comes first. The lookups carry **QUEUE ID** numbers that correlate to
+specific accounts. Sheriff has differences Joshua will explain, where vision
+AI might help but earlier testing gave him reservations -- discuss before
+designing anything for Sheriff.
+
+**How an invoice gets an owner -- agreed with Joshua 2026-09-23.** Some
+users scan with a PsiGen control sheet naming the queue id; the move is to
+folder-based scanning, with scanners remapped to their BU folders on the
+share.
+
+```text
+/<BU>/<Name>/        -> that person's queue       the default
+/<BU>/SHARED/        -> the BU's shared queue     the rules table routes it
+/<BU>/<loose file>   -> ignored                    each BU folder has a README
+upload in Paperboy   -> the person or SHARED queue the uploader picks
+```
+
+- **The named subfolder is the person's queue.** Corrected the same day,
+  after a first reading took it for the submitter only.
+- **No HIGH PRIORITY folder, and no urgency at all.** Dropped by Joshua.
+- **`SHARED` is a subfolder, not the BU root**, so a BU folder is a clean
+  list of people plus one shared queue. Its name comes from a setting (like
+  `AIM_SPLIT_FOLDER_NAME`), and it must not start with `_`, which the watcher
+  prunes.
+- **Loose files at the BU root are ignored**, and each BU folder carries a
+  README explaining the layout. The watcher must skip the root *before* its
+  unsupported-file check, which today renames anything not a PDF or image to
+  `UNSUPPORTED_FILETYPE_...` -- otherwise it renames the README.
+- **An explicit choice at import wins.** A named folder or an upload pick
+  says who owns the invoice, and the rules table does not override it. The
+  rules table routes only what arrives through `SHARED`, and it **codes
+  everything**, however it arrived. Vendor lookup runs for all of them.
+- **Why keep a shared queue:** coverage, so one person's absence does not
+  stall their invoices; and a safe landing, so a folder name matching nobody
+  lands where people look, flagged, rather than in a queue nobody watches.
+- **Folder name to person** is resolved through a mapping on the rules admin
+  screen, not by trusting the text. Still to ask Joshua how the folders are
+  named.
+
+**The GSA lookups, read 2026-09-23** (`\\gsa-scan02\aim\_Lookups\GSA`,
+`/mnt/a/AIM/_Lookups/GSA`). Ten CSVs, about 790 rows, in three layouts: a
+standard template (Vendor, AIM/Fiscal identifiers, Fund, Department,
+Encumbrance Doc, Budget Unit, Object, Activity, Function, Program, Phase,
+Task, Approver Name, often Fusion Queue and Keywords); an older one keyed on
+BDO/PO # with a Fusion Queue column (4703, 4705, Housekeeping); and
+Facilities, with only Vendor, Fund, Object, Program. What the data says about
+the rules table:
+
+- **Files are not BUs.** Business Support covers six (4601, 4621, 4641,
+  4643, 4645, 4661); 4703 covers four; Fleet and Housekeeping two each. A
+  rule carries its own BU; the file it came from is only provenance.
+- **Queue ids are in most files but not all.** 62 and 75 (4703/4705), 92,
+  119, 123, 198, 271, 300, 304 (Business Support), 313, 334, 30
+  (Housekeeping), 254 (Parks). None in 4601, 4621, Fleet or Facilities --
+  those route by something else, or not at all. Resolving an id to a person
+  or queue needs Fusion's own tables.
+- **One vendor, several rules, and the invoice decides which.** Housekeeping
+  lists Vestis three times with a different customer number each
+  (6063764, 6063751, ...) and a different BU or BDO. The AI already
+  extracts `customer_number`, so **a rule may match vendor plus customer
+  number**, and that is more specific than vendor alone.
+- **Sometimes the invoice cannot decide.** 4703 lists 78 vendors more than
+  once, typically the same coding on different BDO lines (`..._1`, `..._2`)
+  with nothing on the invoice to tell them apart. That is a person's choice;
+  the rules table offers the candidates to the router rather than picking.
+- **Keywords are not to be trusted.** Joshua, 2026-09-23: they were an OCR
+  aid and many are likely out of date. Not match keys; at most carried over
+  as a note for a person to read.
+- **Vendor codes (`VC000...`) are scattered** -- a Vendor Code column in
+  Housekeeping, the *Fund* column in Fleet and Parks, the Keywords in
+  Business Support. They are Fiscal's vendor ids, and Phase 6's vendor master
+  wants them.
+- **The import must validate, not guess.** Found so far: a person's name as
+  a queue id (`DAVE`, four Security rows, beside a "Notes -Final Approver"
+  column); a shifted row in Housekeeping where a quoted vendor name pushed
+  `INC."` into the queue column and `30` into the BU; eleven blank vendor
+  names in Parks; object codes with their description appended
+  (`2192 TEMP HELP`); duplicated columns. Each becomes a reported row, never
+  a silent guess.
+
+**Fusion's own database, read 2026-09-23** (`Fusion01` on `gsa-sql22`,
+read-only for `GSAETL` with `db_datareader` and `VIEW DEFINITION`). It is
+the closest thing to a spec for the old routing:
+
+- **A queue id is a Fusion user id.** Every user owns exactly one queue (120
+  users, 120 queues), so the lookups' queue ids name people:
+
+  | id | Fusion user | notes |
+  |---|---|---|
+  | 30 | Squires, Patrick | GSA H&G/Security |
+  | 62 | Gagnon, Tonya | supervisor of GSA Maintenance -- all 291 rows of 4703 |
+  | 92 | Payne, Sean | GSA H&G/Security |
+  | 198 | Dixon, Charles | **disabled** -- ten Business Support rows |
+  | 254 | Cooper, Jeri | GSA Parks |
+  | 271 | Barley, David | GSA H&G/Security |
+  | 300 | Martinez, Mark | GSA Business Support |
+  | 304 | Howard, Gary | supervisor, GSA Business Support |
+  | 313 | Bertrand, Brianna | GSA H&G/Security |
+  | 334 | Salgado, Marcos | |
+  | 75, 119, 123 | **no such user** | all of 4705, and rows in Business Support and Security |
+
+  So the routing already points at people who have left or been disabled.
+  The import has to map Fusion ids to Paperboy people (Fusion `Users` carries
+  `EmailAddress` and `UserName`, which match GSABSS) and report every id that
+  maps to nobody.
+- **Teams carry a supervisor, a distribution setting and an aging rule.**
+  GSA Business Support (supervisor Steve Nelles, 24 h), GSA Maintenance
+  (Tonya Gagnon, 48 h), Sheriff AP (Katie Morgan-Peters, 72 h), GSA Fleet
+  (Jorge Bonilla, 168 h), GSA Parks, GSA H&G/Security (Arturo Huizar), and
+  others. The aging rule looks like escalation after an invoice sits too
+  long -- a requirement the plan did not have. Ask Joshua what it does in
+  practice.
+- **Fusion's lookups are lists of valid values, not the routing.** Per
+  document type (`GSA_AP`, `Parks_AP`, `Facilities_AP`, `Fleet_AP`,
+  `Sheriff_AP`, `HCA_AP`, `PH_AP`, and RMA types), they query `GSA-Object`,
+  `GSA-ActivityCode`, `GSA-DepartmentObject`, `GSA-Function`, `GSA-Phase`
+  and `GSA-Program` through a connection named *GSA AP Codes*. Those lists
+  are what the rules import should validate coding against -- `2192 TEMP
+  HELP` is not an object code. They live in a database `GSAETL` cannot yet
+  open.
+
+**Answers and findings, 2026-09-23 (afternoon).**
+
+- **Fusion users map to Paperboy people by employee number.** Fusion's
+  `UserName` is the employee number (`139155`), the same number behind the
+  `ENT\...` Windows logins and GSABSS `Employees.id`. Email does not match at
+  all (0 of 11); employee number matches 9 of 11. The import keys on it.
+  Every GSA match's `unit` is a BU from the lookups, which also confirms 9.1.
+- **Queue corrections from Joshua:** `75 -> 335` (Christopher Stafford).
+  Two problems to settle before import, both raised with Joshua:
+  - **335 Stafford and 334 Salgado are not in GSABSS `Employees`**
+    (employee numbers 139155 and 121550). Paperboy's sign-in requires an
+    `Employees` row, so as things stand neither could log in to see an
+    invoice routed to them.
+  - **198 Charles Dixon is now in another agency** (CSSV, unit 2251), and his
+    Fusion account is disabled. Joshua wrote "Charles should be changed to
+    198"; 198 already is Charles, so what 119 and 123 become is still open.
+- **Team distribution is not used** -- everything is assigned to a specific
+  queue. Out of scope.
+- **The valid coding values are in `bs_purchase_orders` on `gsa-sql22`**, an
+  older database. Joshua wants them brought into AIM's own tables, next to
+  everything else, where they are easier to manage. Read access for `GSAETL`
+  requested; design the table once its shape is visible. Open: is
+  `bs_purchase_orders` still maintained by someone? If so AIM keeps a synced
+  copy; if not, AIM's copy becomes the one people edit.
+
+**`bs_purchase_orders` compared with Paperboy's own chart of accounts,
+2026-09-23.** `GSAETL` can now read it. Fusion's GSA lookups point at seven
+tables there: single-column lists `GSA-ActivityCode` (6), `GSA-Function`
+(56), `GSA-Phase` (5), `GSA-Program` (91), `GSA-DepartmentObject` (67),
+`GSA-Object` (181: number, short name, "name and number"), and `GSA-Staff`.
+In Fusion, Object and Activity apply the first match; Department Object and
+Function make the user pick.
+
+**Paperboy's chart of accounts already holds nearly all of it.** GSABSS
+carries the county's full COA, agency-scoped (`Coa::` models: agencies,
+units, funds, objects, activities, functions, phases, programs, major
+programs, tasks), and it is maintained. Measured against agency `GSA`:
+
+| List | Fusion | in COA | not in COA |
+|---|---|---|---|
+| Phase | 5 | 5 | -- |
+| Activity | 6 | 5 | `6340` |
+| Function | 56 | 53 | `0220`, `0250`, `SPLIT` |
+| Program | 91 | 89 | `BUSAIM`, `BSCREATES` |
+| Object | 180 | 176 | `4991`-`4994` |
+
+Every GSA Budget Unit in the lookups is a COA unit too. **So AIM validates
+coding against the COA and does not copy Fusion's value lists**, which is
+what Joshua hoped for. The fifteen values it lacks are a review list, not a
+reason to keep a second copy: `SPLIT` in particular looks like a marker for
+split coding rather than a function. Note that the COA calls the agency `GSA`
+while `Employees.agency` says `GSAV` -- two code systems for one agency, and
+scope (9.1) has to map between them.
+
+**`GSA-Staff` is the part the COA does not have** -- one row per GSA BU:
+Fund (`G001`, `I200`-`I230`, `E400`, `E410`), a roll-up parent BU, the
+budget name, the **Budget Manager**, the **First Approver** and the
+**Accounting Officer**. It gives two things the rules table needs:
+
+- **A BU-level default** -- the rule that applies when no vendor rule does,
+  including the BU's Fund. `GSA-Staff` becomes the BU-level rows of the
+  rules table; the CSV lookups become the vendor-level rows. One table, the
+  most specific rule winning.
+- **What looks like an approval chain**: first approver, budget manager,
+  accounting officer. Whether approval is one step or several is a question
+  for Joshua before Phase 9 designs it.
+
+But it names people as text ("Rob Harris"), with the employee id filled in
+for one BU of eighteen and the Fusion id for none, and some names repeat
+across unrelated BUs. **Joshua, 2026-09-23: it is "years and years out of
+date" and useless now. Not imported.** BU defaults are built fresh.
+
+**Routing decisions, 2026-09-23 (evening).**
+
+- **Every BU has a default route -- required.** Many invoices come from
+  vendors in no lookup, and today each BU has a default queue for them. So a
+  BU-level rule (destination plus default Fund) is mandatory for any BU that
+  receives invoices; the admin screen flags a BU without one; an invoice that
+  still matches nothing goes to AIM staff review with the reason, never
+  nowhere. The first set of defaults is *proposed from the data* -- per BU,
+  the queue most of its lookup rows already use -- for Joshua to confirm, not
+  typed from scratch.
+- **Approval is one step.** Joshua thinks there is no approval chain.
+- **Amount thresholds are routing, applied after it.** Per BU, "totals over
+  $X go to person Y". Resolved as a second pass: find the normal
+  destination (vendor rule, else BU default), then the BU's thresholds
+  replace it. **Joshua, 2026-09-23: above the threshold an invoice goes to
+  the BU's threshold queue automatically** -- threshold and target set per
+  BU. Read as overriding every other route, explicit folder and upload
+  choices included, since that is what "automatically" is for; the history
+  records both where it would have gone and why it did not.
+- **Split coding is needed.** Joshua has seen invoices that must be charged
+  to more than one account but does not know how it is done today. Proposed
+  shape: an invoice has one or more **coding lines**, each an amount or
+  percentage with its own Fund/Object/Program/..., and the lines must add up
+  to the total before approval. Most invoices have one line. A rule may
+  supply a default split for vendors that always split the same way; a user
+  edits the lines at approval; every change is an event. `SPLIT` in Fusion's
+  function list is probably the marker used today. Joshua: a split assigns
+  dollar amounts to **more than one BU**, and how it is done today is not
+  known here. **Blocked on Fiscal**, who Joshua will involve: how a split
+  invoice reaches them now, and how it is recorded. It decides the coding
+  lines' shape and Phase 11's export.
+
+**Reminders instead of Fusion's aging -- Joshua, 2026-09-23.** Start with
+email:
+
+- **Daily**, when someone has new invoices to process.
+- **Weekly**, for invoices that have gone stale in their queue.
+- **Monthly**, always -- it cannot be turned off.
+- Each person may turn the daily and weekly emails off; never the monthly.
+
+Paperboy already sends a daily digest (`FormSubscriptionDigestJob`, 7am in
+`config/recurring.yml`), and stores per-user preferences (`UserSetting`), so
+this follows existing patterns and uses the standing approval for jobs and
+schedules. Open: what counts as stale -- days since it arrived, or since
+anyone touched it, and how many?
+
+**Needed from Joshua before 8b.1:**
+
+1. The old lookup file, or where it lives -- a few rows show the columns.
+2. What the queue ids meant: which were people, shared queues, managers.
+3. Who maintains the table: Joshua, AIM staff, or Fiscal.
+4. What happens with no match: straight to review, or to the BU's shared
+   queue with the coding blank for the user to fill?
+5. Whether a user may change the coding at approval, as in PsiGen Fusion.
+
+---
+
 ## Phase 9 — User Approval
 
 - [ ] **9.1 BU access model.** Which users can see which Budget Unit queue,
   through Paperboy's existing groups and ACL. Follows the
   `AuthorizedApprover` pattern rather than reusing that table.
-- [ ] **9.2 The `user_approval` queue.** It has never worked: the folder
+
+  **Scope comes from GSABSS, found 2026-09-23.** Sign-in matches the SSO
+  account to an `Employees` row, and its `unit` column *is* the four-digit
+  Budget Unit (4601, 4641 and 4721 carry 37, 22 and 35 employees); `agency`
+  is the agency code (`SHFV`, `HSAV`, ...). GSABSS follows HR, so a transfer
+  moves someone's scope with no upkeep. A person's scope is **their home unit
+  from GSABSS, plus any extra BUs granted on the AIM admin screen** -- for
+  fiscal staff who handle several BUs, or someone covering. Read GSABSS; never
+  copy it.
+
+  **Seeing a BU and receiving its invoices are separate** -- confirmed with
+  Joshua 2026-09-23:
+  - **Scope** (home unit plus granted BUs) decides which shared queues a
+    person sees, and which BU pickers list them as someone to send to.
+  - **Assignment always grants access to that one invoice**, whatever its BU.
+    The rules table may route a BU's invoices, or one vendor's in any BU, to
+    anyone; they then see exactly those invoices and nothing else in that BU.
+  - So: grant the BU as scope when someone should work its shared queue;
+    only assign when they should see just what is routed to them.
+  - Crossing an agency boundary still needs the sender to hold
+    `route_anywhere`; granting scope does not bypass it.
+
+- [ ] **9.1a Capabilities, roles and scope.** Agreed with Joshua 2026-09-23.
+  Three layers, reusing Paperboy's ACL rather than inventing a role system:
+  - **Capabilities are AIM app features** in `AppFeature::FEATURES['aim']`,
+    granted under ACL -> Application Features and checked with
+    `can_use_app_feature?`: `approve`, `upload`, `route_within_bu`,
+    `route_within_agency`, `route_anywhere` (admin), `manage_rules`. The
+    routing ones are tiered; a higher one includes the lower.
+  - **Roles are ordinary Paperboy groups** with a bundle of capabilities
+    ticked -- AIM Approver, AIM Router (the old queue manager), AIM BU
+    Manager, AIM Admin -- made in the ACL screen, with no code. Individual
+    ticks cover the unusual cases.
+  - **Scope says which BUs** (9.1). A capability means nothing until it is
+    scoped: "route within BU" needs to know whose BU.
+- [ ] **9.2 One user queue, with the document type on the face of it.**
+  Decided with Joshua 2026-09-23, after first considering a second queue for
+  the types that are acknowledged rather than approved: *"we don't need to
+  have 2 types of queues, maybe just a clear tagging of the type of
+  document."* So one `user_approval` state, and the screen shows what kind of
+  document each row is -- an Invoice to approve, a Statement or Credit to
+  note -- with the list filterable by type.
+
+  This keeps the state machine as 5.4 built it: no new state, no second
+  folder, and the type stays what Decisions says it is -- something that
+  dictates terminal behaviour, not a separate pipeline. `Unknown` still
+  cannot reach the queue at all, since a row with no type has no tag to show.
+
+- [ ] **9.2a The queue has never worked.** It has never worked: the folder
   does not exist on the share, `user_approval` is missing from
   `BACKEND_QUEUES` so the screen redirects, and no worker reads the
   directory. See audit H1.
 - [ ] **9.3 Approve, edit metadata, add notes.** With the event trail from
   5.3 recording each.
+
+  **Parity with PsiGen Fusion, asked for by Joshua 2026-09-23:** a user at
+  this screen can correct the metadata and write in a notes section, not
+  merely approve or reject. Three things follow, and the last one is a
+  question for Joshua rather than a detail:
+
+  - **The row has to carry the metadata.** Today `aim.invoices` holds state
+    and identity; vendor, number, total and date still live in the JSON
+    beside the PDF. A screen that edits them needs them on the row, with the
+    canonicalisation Phase 4 put in the workers applied to whatever a person
+    types. That is 5.7's work, and this is now a reason it cannot be skipped.
+  - **Every edit is an event.** `aim.invoice_events` already records who did
+    what; an edit becomes an `edit` event naming the field, its old value
+    and its new one, the way `AuditableEdits` does for Paperboy's forms. A
+    note becomes a `note` event, which makes notes attributable and ordered
+    rather than a field two people overwrite.
+  - **Where approval sits in the pipeline is not settled.** Today an invoice
+    goes `sql_queue -> archived`: the SQL row is written and the Laserfiche
+    XML generated with nobody having looked at it. If a user may correct the
+    metadata, that correction has to happen *before* the handoff, or the
+    handoff has to be redone afterwards. See Open Questions.
 - [ ] **9.4 Assignment.** `assigned_to` plus `assignment_source`, so a
   coversheet barcode can populate it later without redesign.
+- [ ] **9.4a Upload through Paperboy.** Joshua 2026-09-23: *"a VERY VERY
+  handy addition."* Drag and drop an invoice and send it to your own queue, a
+  colleague's, or a SHARED queue. The picker lists what your scope and routing
+  tier allow: the BUs you may send into, and within each its people plus its
+  SHARED queue. It enters the **same intake as the watcher**, so batch ids,
+  duplicate detection, image conversion and history behave identically; the
+  difference is that the owner is a real Paperboy account rather than a folder
+  name. The history records who uploaded it and who it went to, with
+  `assignment_source = 'upload'`.
+
 - [ ] **9.5 Paperboy inbox integration.** Fix `Aim::WorkProvider` so inbox
   exposure matches the screens' own access gate, and stop putting an email
   address in `assignee_employee_id`.
@@ -1770,8 +2790,9 @@ Shape still to be determined with Fiscal. Currently: the invoice reaches
 Docushare, Fiscal assigns check numbers and dates, and a CSV in a fixed
 layout feeds another system. The target is the same flow through Laserfiche.
 
-- [ ] **11.1 Populate the chart-of-accounts columns** from the vendor/BU
-  lookup.
+- [x] ~~**11.1 Populate the chart-of-accounts columns** from the vendor/BU
+  lookup.~~ Moved to Phase 8b on 2026-09-23: coding has to happen before a
+  user approves the invoice, not after.
 - [ ] **11.2 The fiscal export** in the layout Fiscal specifies.
 - [ ] **11.3 Stamp the metadata into the PDF.** Write the invoice's fields as
   custom PDF Info-dictionary keys at handoff, archiving the unstamped original
@@ -1798,6 +2819,70 @@ layout feeds another system. The target is the same flow through Laserfiche.
 
 ---
 
+## Where This Stands On The Server — 2026-09-22
+
+Joshua confirmed AIM is **running nothing on GSA-SCAN02 right now**, and
+asked for the workers to be updated and the back end cleared so he can drop
+fresh invoices and test.
+
+**Done:**
+
+- **Every back-end queue is empty.** The 58 items in `_ACTION_NEEDED`,
+  `_BATCH_SPLIT`, `_LOW_CONFIDENCE_REVIEW`, `_REJECTED`, `_SQL_QUEUE`,
+  `_TEMP`, `_VENDOR_REVIEW` and the 39 `_SPOOL_STATE` markers were **moved,
+  not deleted**, to `/mnt/a/AIM/_BACK_END/_PREVIOUS_TEST_DATA/2026-09-22/`.
+  Clearing the spool markers matters: without it the watcher skips a file it
+  has seen before, so re-dropping the same PDF would do nothing.
+
+- **The workers are deployed.** 2026-09-22, 12:16. 22 files and a fresh
+  `.env` (59 `AIM_*`, none discarded) to `/mnt/a/AIM/_PROGRAM`, replacing
+  scripts dated 2026-09-10 -- so steps 3.1, 3.2, 4.1, 4.2, 4.3 and 5.3a are
+  all on the server now, where before none of them were. The 22 replaced
+  files are in `_PREVIOUS_SCRIPTS/2026-09-22`; `vendor_aliases.json` was
+  left alone and still holds its 907 learned aliases.
+
+  Two things the deploy exposed, both fixed on the way:
+
+  - **The target was read with `grep` and came back unresolved.** LockBox's
+    ROOT consolidation made `AIM_LINUX_QUEUE_BASE_PATH` read
+    `${AIM_ROOT}/AIM`, so the deploy aimed at a directory literally named
+    `${AIM_ROOT}`. It now reads values with `python-dotenv`, as the workers
+    do. Two tests cover it; every earlier deploy test passed `--target`
+    explicitly, which is how the resolution went untested.
+  - **A WSL restart drops the mapped drives.** `A:` (`\\gsa-scan02\projects`)
+    showed *Disconnected* in Windows and `/mnt/a` was empty, so the deploy
+    refused -- correctly -- rather than write into an unmounted mount point.
+    Touching the drive from Windows reconnects it (`cmd.exe /c "dir A:\"`),
+    then `sudo mount -a` in a real terminal remounts it. `sudo` cannot
+    prompt inside Claude Code's shell.
+
+**Not done, and the next thing to do:**
+
+- **The workers have to be started on GSA-SCAN02** --
+  `START_ALL_SERVICES.bat`, a Windows-side action. The deploy only copies
+  files and prints a reminder.
+
+**Two decisions Joshua has not made yet:**
+
+- **The processed originals stay for now.** `Invoices/_AI_Processed` (340
+  files, 78M) and `Invoices/_Archive` (408 files, 66M) are last runs'
+  documents. Not cleared -- say whether they should be.
+- **The SQL rows stay for now.** `Aim_Invoices` and `Aim_Processing_Logs` on
+  `gsa-sql22` hold 236 rows each, newest 2026-09-21. `GSAETL` may delete
+  them. Say whether to.
+
+**Worth knowing before testing:**
+
+- **Drop test invoices in `/mnt/a/AIM/Invoices/<BU>/<Submitter>/`.** The
+  watcher prunes any folder whose name starts with `_`, so the 89 PDFs in
+  the `_SAMPLE INVOICES` folders are never ingested -- they are a library,
+  not a queue.
+- **The new `aim.*` tables stay empty this round.** The workers do not write
+  them until 5.6, and the screens still read folders until 5.5. This round
+  tests the pipeline, not the new state tables.
+
+---
+
 ## Open Questions
 
 - **Pre-existing suite failures (found in 0.1).** 213 of 537 tests are red
@@ -1816,7 +2901,50 @@ layout feeds another system. The target is the same flow through Laserfiche.
   Until 1 and 2 are settled, "the suite is green before and after" cannot
   mean literally green. The workable standard is: *serial run, and the
   same 324 tests pass after as before.*
-- **5.1** Paperboy database or `GSA_Scan` for the new AIM tables?
+- ~~**5.1** Paperboy database or `GSA_Scan` for the new AIM tables?~~
+  Answered: `GSA_Scan`. See `## Decisions Already Made`.
+- ~~**AIM table names in `GSA_Scan`**~~ and ~~**rights for AIM's
+  migrations on `gsa-sql22`**~~. Both found 2026-09-22 in 5.1 and both
+  dissolved the same day by Joshua's decision to put the tables in the
+  Paperboy database on `GSASQL16`, schema `aim`, as `GSAETL`.
+- ~~**Document types disagree.**~~ Settled 2026-09-22 by Joshua: the
+  Decisions list is right, plus `Statement`, and the worker's list is
+  incomplete. `Unknown` is a temporary type AIM staff resolve in QA review.
+  Step 5.3a.
+- **Does approval happen before or after the handoff?** Raised 2026-09-23
+  by Joshua's requirement that a user can edit the metadata at approval, as
+  in PsiGen Fusion. Today the SQL worker writes the billing row and generates
+  the Laserfiche XML as soon as extraction succeeds -- `sql_queue ->
+  archived` -- so nobody has seen the invoice when it reaches Fiscal. Either
+  the user queue moves ahead of that handoff, or an edit after it has to
+  rewrite the SQL row and the Laserfiche document. The first is simpler and
+  matches what approval means; the second keeps today's throughput. **Joshua
+  decides; it shapes Phases 9 and 11.**
+- **AIM staff cannot set a document type on screen.** Found 2026-09-22 in
+  5.3a. `Unknown` is meant to be resolved in QA review, but nothing in
+  `app/views/aim` edits `document_type` -- the reviewer can only edit the
+  XML by hand. A type selector belongs on the review screen, wherever 5.5
+  rebuilds it. Until then an `Unknown` has no supported way to become an
+  `Invoice`.
+- ~~**Which site should show live invoices once state is in the database?**~~
+  Settled 2026-09-22 by Joshua: **the workers write `aim.invoices` in
+  `Paperboy_Dev` while AIM is in development, and are switched to
+  `Paperboy_Prod` at go-live** -- a LockBox value and a
+  `bin/deploy-aim-workers`, no code. The legacy `gsa-sql22` tables are
+  untouched either way. Consequences, all for 5.6 and go-live:
+  - **Ordering.** The `aim` schema reaches `Paperboy_Dev` through the Phase 5
+    merge and `bin/deploy-dev`'s `db:prepare` -- never a hand migration of
+    the shared dev database. 5.6 comes after that.
+  - **Cutover carries state over.** `Paperboy_Dev` will hold real in-flight
+    invoices. At go-live they are copied to `Paperboy_Prod` or rebuilt from
+    the share folders (5.5's folder reading can do the rebuild). Add to the
+    go-live checklist.
+  - **Credentials on the share.** The workers read `_PROGRAM/.env`, which is
+    readable by anyone who can reach `E:\AIM`. Joshua's standing rule is
+    `GSAETL` wherever possible, but it is the broad shared login; putting it
+    there widens what that share exposes compared with today's
+    `GSAScanCenter`. A login with rights on the `aim` schema alone is the
+    narrower option. **Joshua's call, before 5.6.**
 - ~~**0.2** Exact worker install folder on the AIM share.~~ Answered
   2026-09-04: `_PROGRAM` (`/mnt/a/_PROGRAM`).
 - ~~**`P2M_PRINTERS` is missing from LockBox.**~~ Resolved 2026-09-08 by
@@ -1959,3 +3087,30 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-21 | 4.2 | (this commit) | Invoice and order numbers keep their punctuation: `_clean_text_field` filters control and invisible codes instead of a character class, and collapses whitespace. 107 pytest green (20 of the 25 new tests red without the fix), 921 runs, 0 fail, 0 error, scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-21 | 4.3 | (this commit) | One spelling for a total: `_clean_money` keeps an accounting or trailing-minus sign, folds `-0.00`, and refuses a comma decimal rather than storing 1.23; `02_sql_worker` writes the sanitised values back into the payload so the row and the XML agree. **Phase 4 complete**; 130 pytest green (8 of the 23 new tests red without the fix), 921 runs, 0 fail, 0 error, scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-21 | — | (this merge) | **Phase 4 merged to Paperboy master.** Master had not moved since the branch was cut from `f6bbc335`, so nothing needed merging in first. Gate green on the merge commit: 921 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings. New Phase 5 baseline. Phase 5 needs Joshua's approval on the migration before 5.1, and the new `aim_*` tables mean a second Rails connection to `GSA_Scan` on `gsa-sql22` |
+| 2026-09-22 | 5.1 | (this commit) | Branch `aim/phase-5-state` cut from `7cfeb98d`; baseline 921 runs, 0 fail, 0 error. Connection shape worked out and the `database.yml` diff proposed to Joshua, not applied. Two blockers found: `aim_invoices` collides with the legacy `Aim_Invoices` in case-insensitive `GSA_Scan`, and `GSAScanCenter` cannot create `AIM_Test` or any table |
+| 2026-09-22 | 5.1 | (this commit) | **5.1 revised by Joshua:** new tables go in the Paperboy database on `GSASQL16`, schema `aim`, as `GSAETL`. Proved in throwaway databases: migrate, dump (`create_schema "aim"`), reload, typed decimal, unique index. Index names must be explicit. No shared config needed; 5.1a dropped; the earlier `database.yml` proposal is withdrawn |
+| 2026-09-22 | 5.2 | (this commit) | Schema `aim` and `aim.invoices` created by two migrations; `Aim::Record` and `Aim::Invoice` added. Up/down proved in a scratch database; `schema.rb` diff additive only. `Paperboy_Test` dropped by a development-env `db:drop` and recreated at once. 931 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-22 | 5.3 | (this commit) | `aim.invoice_events` and `Aim::InvoiceEvent`; every state change through the model writes exactly one event, naming its actor, in the same transaction. No DB foreign key: the adapter dumps it without the schema and the resulting `schema.rb` cannot load; `schema_conventions_test` now guards that. 944 runs, 0 fail, 0 error (serial), 130 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-22 | 5.3a | (this commit) | Six document types, one spelling: `normalize_document_type` at `InvoiceData`'s gate, one prompt both models read, `enum` in both schemas, and only `Unknown` held back for QA review. AIM's migrations renumbered after a version collision with DAM's `20260922100000`. 160 pytest green (24 of the 30 new red without the fix), 944 runs, 0 fail, 0 error (serial), scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-22 | — | (this merge) | Merged `origin/master` (2 commits: DAM stock photos, ResourceSpace import) into the phase branch. `db/schema.rb` conflicted and was regenerated from master's copy plus AIM's migrations rather than hand-merged. AIM's migrations renumbered a second time, above master's latest. 969 runs, 0 fail, 0 error (serial), 160 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-22 | — | (this commit) | Server prepared for a fresh test round: every back-end queue moved to `_PREVIOUS_TEST_DATA/2026-09-22` (58 items, spool markers included), watch tree left alone. **The worker deploy did not run** -- the permission classifier refused it -- so GSA-SCAN02 still runs the 2026-09-10 scripts |
+| 2026-09-22 | — | (this commit) | **Workers deployed** to `/mnt/a/AIM/_PROGRAM`: 22 files plus a fresh `.env`, replacing 2026-09-10 scripts, so Phases 3-4 and step 5.3a now run on the server. Deploy target resolution fixed to read `${VAR}` references through `python-dotenv`; 162 pytest green |
+| 2026-09-22 | 5.4 | (this commit) | `Aim::Invoice` state machine: 18 states, 56 allowed moves, 258 refused, enforced by both `transition_to!` and a validation. Exhaustive table testing caught `rejected` wrongly marked terminal and `action_needed` pointing at itself. Ruby/Python document type lists tied together by a test. 992 runs, 0 fail, 0 error (serial), 162 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-22 | 5.5 | (this commit) | `Aim::QueueSync` makes the rows say what the share says -- adopting, transitioning, or recording an out-of-band drag as a `sync` event -- and the dashboard shows the database's count beside the folder's when they differ. Four missing queue paths added. The screens still read folders for content until 5.6 fills the rows. 1004 runs, 0 fail, 0 error (serial), 162 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
+| 2026-09-22 | 5.6 | (this commit) | `state_store.record_state` and 18 call sites across all five workers: every move now says where it came from and who made it. Failure to write never blocks a move while the folders are still the truth. 177 pytest green (5 of the new sequence tests red without the wiring), 1004 runs, 0 fail, 0 error (serial), scoped rubocop clean, brakeman's same four non-AIM warnings. Not configured, not deployed: the login is Joshua's call |
+| 2026-09-23 | — | (this commit) | **Restored the plan.** `89a96f7a` truncated it at the routing note -- a scripted replacement kept the text before the paragraph and dropped everything after, losing Phases 9-11, the server status, Open Questions and this log. Rebuilt from `22ea0c27` and the day's decisions reapplied: SHARED subfolder, no urgency, loose files ignored, upload through Paperboy, capabilities as AIM app features, roles as groups, scope from GSABSS `unit` |
+| 2026-09-23 | 5.6b | (this commit) | Handwriting flag follows the money fields the model names, not a yes/no; signatures and notes no longer send clean invoices to review; latch per field across pages. 191 pytest green (10 of 13 new red without the change); tests now refuse all database connections |
+| 2026-09-23 | 8b.0 | (this commit) | The watch tree routes: named folder = that person, `SHARED` = the BU's shared queue, loose files at the BU root ignored before the unsupported-file rename, no HIGH PRIORITY. README per BU folder. `AIM_SHARED_FOLDER_NAME` on LockBox `aim-config` (`891179b`, local). 209 pytest green (17 of 18 new red without the change) |
+| 2026-09-23 | 5.7a | (this commit) | Workers write the invoice's facts to the row with each move: BU, submitter, owner, type, vendor, numbers, total, date. Unknown facts never overwrite known ones; ill-fitting values dropped; column names only from a whitelist. SQL worker's duplicate branch now records its archive. 227 pytest (18 new, red without the change), 1004 runs, 0 fail, 0 error |
+| 2026-09-23 | 5.7b(1) | (this commit) | Every move made on the queue screens recorded on the row in the reviewer's name; claims mirrored onto the row; Unknown-typed invoices refused before they reach a user; nested rejected folders synced correctly. 1022 runs, 0 fail, 0 error, 227 pytest, scoped rubocop clean |
+| 2026-09-23 | 5.7b(2) | (this commit) | `Aim::QueueSyncJob` every ten minutes via `config/recurring.yml`; a no-op, database included, where AIM is not configured. 1026 runs, 0 fail, 0 error |
+| 2026-09-23 | 5.7b(3) | (this commit) | Queue screens list invoices from the rows, with folders that have no row and rows that have no folder both still shown and flagged; folder listing when the rows are unreadable. Rejected lists invoices, not groups, and opens them. 1035 runs, 0 fail, 0 error |
+| 2026-09-23 | — | (deploy) | **Workers deployed** by Joshua at 15:12: 24 files and a 66-variable `.env`, verified identical to the repo. Carries 5.6b (handwriting), 8b.0 (watch tree, README, SHARED) and 5.7a (facts on the row). Replaced files in `_PREVIOUS_SCRIPTS/2026-09-23_151211`. Workers need a restart on GSA-SCAN02; `SHARED` folders still to be created |
+| 2026-09-23 | 5.7c(1) | (this commit) | Claims read from the row, with the claimant's name in a new `claimed_by_name` column; `.claim.json` still written for the inbox. `Paperboy_Dev` migrated. 1039 runs, 0 fail, 0 error |
+| 2026-09-23 | 5.7c(2) | (this commit) | Delete button on the review page, offered where the state machine allows it and refused elsewhere; archives rather than destroys; recorded in the reviewer's name. 1042 runs, 0 fail, 0 error |
+| 2026-09-23 | 5.7c(2) | (this commit) | **Fix for `238e7bd7`, pushed with a suite that crashed at load time** (`helper_method` in a module a plain test class includes). Declared in the controller; guards and the write-failure handler moved out of it. Gate now checked before committing. 1042 runs, 0 fail, 0 error, rubocop clean |
+| 2026-09-23 | 5.7c(3) | (this commit) | `split` end state; the splitter records the batch as split naming its pieces, reads BU/submitter/owner from the manifest instead of guessing from the file name, and hands the owner to every piece. 1042 runs, 0 fail, 0 error, 232 pytest, rubocop clean |
+| 2026-09-23 | 5.7c(4) | (this commit) | Batch Split screen: Approve Split (checked against the PDF's page count; refused plans re-render with the person's entries and plain errors) and Process as One Invoice (keeps its batch id). Found the old split summary never displayed. 1059 runs, 0 fail, 0 error, 234 pytest, rubocop clean, brakeman unchanged |
+| 2026-09-23 | 5.7c(5) | (this commit) | Action Needed gets Send to SQL Queue; `is_urgent` removed from watcher, AI worker, payload and Rails badge. Shortcuts held until Joshua has told staff. 1060 runs, 0 fail, 0 error, 234 pytest, rubocop clean |
+| 2026-09-24 | 5.7c(6) | (this commit) | Shortcuts retired: the workers no longer plant them, `pywin32` dropped, the seven `.lnk` files deleted from the share, ticket notes point to the Send to SQL Queue button. Released early because no staff use AIM yet |
+| 2026-09-24 | — | (this merge) | **Phase 5 merged to Paperboy master.** First merged the latest master (`e8933a5c`, 35 commits, none touching AIM code) into the branch. Only `db/schema.rb` conflicted. Master's copy already held the first three `aim` tables (another team dumped it from the shared dev DB in `21df9052`), so the resolution is master's file plus `claimed_by_name` at version `2026_09_23_151741`. It was rebuilt in a scratch DB and checked by a fresh load: nothing pending. Loading master's schema alone marks our `100537`-`39` migrations as run, which is why the version order matters. Master's newer RuboCop flagged 5 AIM offenses, now fixed. Gate on the merge: 1122 runs, 0 fail, 0 error, 235 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings, bundle-audit clean, zeitwerk clean |

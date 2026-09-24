@@ -118,7 +118,7 @@ def test_a_converted_image_is_also_named_after_the_batch_id(watcher, watch_tree,
     assert read_ticket(folder)["original_filename"] == "Fax page.png"
 
 
-def queue_job(queue_tree, batch_id, original_filename, is_urgent=False):
+def queue_job(queue_tree, batch_id, original_filename):
     """An AI-queue folder as the fixed watcher leaves it."""
     folder = queue_tree.add_invoice("AIM_AI_QUEUE_DIR", batch_id, pdf=True)
     ticket = {
@@ -126,7 +126,6 @@ def queue_job(queue_tree, batch_id, original_filename, is_urgent=False):
         "original_filename": original_filename,
         "bu_number": "4641",
         "submitter_name": "Test User",
-        "is_urgent": is_urgent,
         "timestamp": batch_id,
     }
     with open(os.path.join(folder, "job_ticket.json"), "w", encoding="utf-8") as handle:

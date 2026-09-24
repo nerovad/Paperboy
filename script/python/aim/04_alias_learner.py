@@ -10,9 +10,14 @@ from pipeline_common import (
     ERROR_QUEUE_DIR,
     REPROCESS_QUEUE_DIR,
     SQL_QUEUE_DIR,
+
     save_new_vendor_alias,
     bootstrap,
 )
+from state_store import record_state
+
+ACTOR = "04_alias_learner"
+
 
 NEXT_ACTION_CONTINUE = "continue_processing"
 NEXT_ACTION_RETRY_AI = "retry_ai"
@@ -80,6 +85,7 @@ def run_alias_learner():
                     pass
                 
                 # Route folder back to VENDOR_REVIEW_DIR for correction
+                record_state(folder_name, "vendor_review", ACTOR, "alias rule could not be read")
                 dest_back = os.path.join(VENDOR_REVIEW_DIR, folder_name)
                 try:
                     if os.path.exists(dest_back):
@@ -127,6 +133,9 @@ def run_alias_learner():
                 # Remove the _LEARN.json file from the folder before moving so it doesn't clutter
                 os.remove(learn_path)
 
+                record_state(folder_name,
+                             "sql_queue" if destination_dir == SQL_QUEUE_DIR else "reprocess",
+                             ACTOR, f"vendor alias learned, routed to {destination_label}")
                 move_folder(folder_path, destination_dir, folder_name)
                 print(f"    [✓] Alias saved. Batch folder routed to {destination_label}.")
                 
@@ -144,8 +153,8 @@ def run_alias_learner():
                     print(f"    [!] Failed to route crashed batch: {ex}")
 
 if __name__ == "__main__":
-    # Prepare the machine before any work: directories, shortcuts, alias
-    # sync. Import alone does none of it.
+    # Prepare the machine before any work: directories and the alias sync.
+    # Import alone does none of it.
     bootstrap()
 
     print(f"Monitoring '{READY_TO_LEARN_DIR}' (ALIAS LEARNER) for approved vendor aliases...")

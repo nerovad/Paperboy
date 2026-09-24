@@ -30,6 +30,12 @@ module Aim
       rejected: 'AIM_REJECTED_DIR',
       ready_to_learn: 'AIM_READY_TO_LEARN_DIR',
       reprocess: 'AIM_REPROCESS_QUEUE_DIR',
+      # Queues the workers use that no screen lists. Aim::Invoice has a state
+      # for each, so Aim::QueueSync needs their paths to see what is in them.
+      pending_vision: 'AIM_PENDING_VISION_DIR',
+      ready_to_split: 'AIM_READY_TO_SPLIT_DIR',
+      ready_to_delete: 'AIM_READY_TO_DELETE_DIR',
+      error_queue: 'AIM_ERROR_QUEUE_DIR',
       deleted: 'AIM_DELETED_DIR',
       gsa_fiscal: 'AIM_GSA_FISCAL_DIR',
       vcfms_hold: 'AIM_VCFMS_HOLD_DIR'
@@ -70,6 +76,8 @@ module Aim
     def ready_to_learn_dir = path_for!(:ready_to_learn)
     def reprocess_dir = path_for!(:reprocess)
     def deleted_dir = path_for!(:deleted)
+    def ready_to_delete_dir = path_for!(:ready_to_delete)
+    def ready_to_split_dir = path_for!(:ready_to_split)
 
     def to_windows_path(linux_path)
       return if linux_path.blank?

@@ -233,3 +233,62 @@ def test_an_aim_value_built_from_a_stripped_variable_stops_the_deploy(deployment
     assert result.returncode != 0, result.stdout
     assert "GSABSS_ROOT" in result.stderr
     assert not (deployment.target / ".env").exists()
+
+
+# ---------------------------------------------------------------------------
+# Resolving the target. Every test above passes --target, which is how the
+# deploy came to aim at a directory literally named '${AIM_ROOT}' on
+# 2026-09-22: LockBox's ROOT consolidation made AIM_LINUX_QUEUE_BASE_PATH
+# read ${AIM_ROOT}/AIM, and the script read its values with grep, which hands
+# back the reference unresolved. The workers read the same file with
+# python-dotenv, which resolves it, so the deploy now does too.
+# ---------------------------------------------------------------------------
+
+INTERPOLATED_ENV_BODY = """# a fake Paperboy environment, ROOT-consolidated
+AIM_ROOT={root}
+AIM_PROGRAM_DIR='E:\\AIM\\_PROGRAM'
+AIM_WINDOWS_QUEUE_BASE_PATH='E:\\AIM'
+AIM_LINUX_QUEUE_BASE_PATH=${{AIM_ROOT}}/AIM
+AIM_AI_QUEUE_DIR='E:\\AIM\\_BACK_END\\_AI_QUEUE'
+"""
+
+
+@pytest.fixture
+def interpolated_deployment(tmp_path):
+    """A deployment whose target must be resolved from an interpolated value."""
+    root = tmp_path / "share"
+    target = root / "AIM" / "_PROGRAM"
+    target.mkdir(parents=True)
+
+    body = INTERPOLATED_ENV_BODY.format(root=root)
+    lockbox = tmp_path / "LockBox"
+    lockbox.mkdir()
+    (lockbox / "Paperboy.env").write_text(body)
+    env_file = tmp_path / ".env"
+    env_file.write_text(body)
+
+    def run(*extra):
+        return subprocess.run(
+            [SCRIPT, "--lockbox", str(lockbox), "--env-file", str(env_file), *extra],
+            capture_output=True, text=True,
+            env={**os.environ, "AIM_DEPLOY_PYTHON": sys.executable},
+        )
+
+    run.target = target
+    return run
+
+
+def test_the_target_resolves_an_interpolated_base_path(interpolated_deployment):
+    result = interpolated_deployment()
+
+    assert result.returncode == 0, result.stderr
+    assert f"==> Target: {interpolated_deployment.target}" in result.stdout
+    assert "${AIM_ROOT}" not in result.stdout
+
+
+def test_an_interpolated_target_is_deployed_to(interpolated_deployment):
+    result = interpolated_deployment("--apply")
+
+    assert result.returncode == 0, result.stderr
+    assert (interpolated_deployment.target / "pipeline_common.py").is_file()
+    assert (interpolated_deployment.target / ".env").is_file()
