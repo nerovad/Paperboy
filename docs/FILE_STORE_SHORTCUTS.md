@@ -113,6 +113,8 @@ messages must never expose passwords.
 - [x] Add initial unit tests for local stores and remote-folder paths.
 - [x] Add structured SMB directory entries and remote downloads.
 - [x] Add recursive relative-entry walking for local and SMB stores.
+- [x] Update the DataRunner output browser to list and preview files from a
+      shortcut-backed output root, cleaning up materialized previews.
 - [x] Convert P2M production-file listing and preview to the file store.
 - [x] Preserve remote directory-entry timestamps for production-file sorting.
 - [x] Convert `OmsUploadLedger` staging reads and processed-archive checks to
