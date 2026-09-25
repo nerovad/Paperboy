@@ -250,7 +250,22 @@
 .p2m-qc-table {
   min-width: 900px;
 
-  th, td { white-space: nowrap; }
+  th,
+  td { white-space: nowrap; }
+
+  thead th {
+    height: 2.75rem;
+    color: $surface-base;
+
+    &:nth-child(1) { background: linear-gradient(135deg, $sidebar-navy, $brand-navy); }
+    &:nth-child(2) { background: linear-gradient(135deg, $brand-navy, $blue-action); }
+    &:nth-child(3) { background: linear-gradient(135deg, $blue-action, $green-teal); }
+    &:nth-child(4) { background: linear-gradient(135deg, $green-teal, $green-teal-hover); }
+    &:nth-child(5) { background: linear-gradient(135deg, $green-teal-hover, $slate-action); }
+    &:nth-child(6) { background: linear-gradient(135deg, $slate-action, $sidebar-navy); }
+    &:nth-child(7) { background: linear-gradient(135deg, $sidebar-navy, $brand-navy-hover); }
+    &:nth-child(8) { background: linear-gradient(135deg, $brand-navy-hover, $green-teal); }
+  }
 }
 
 .p2m-qc-job-table {

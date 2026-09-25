@@ -1,7 +1,9 @@
 <% upload = @details.fetch(:upload) %>
 <div class="p2m-qc-details">
   <table class="submission-table p2m-qc-summary-table">
-    <thead><tr><th>Printed</th><th>Mailed</th><th>UAA</th></tr></thead>
+    <thead>
+      <tr><th>Printed</th><th>Mailed</th><th>UAA</th></tr>
+    </thead>
     <tbody><tr>
       <td><%= upload&.input_record_count || "Missing" %></td>
       <td><%= upload&.mailed_record_count || "Missing" %></td>
@@ -9,7 +11,16 @@
     </tr></tbody>
   </table>
   <table class="submission-table p2m-qc-table p2m-qc-database-table">
-    <thead><tr><th aria-label="Expand"></th><th>Source</th><th>Companions</th><th>Daily Presorts</th><th>Move Results</th><th>QC</th></tr></thead>
+    <thead>
+      <tr>
+        <th aria-label="Expand"></th>
+        <th>Source</th>
+        <th>Companions</th>
+        <th>Daily Presorts</th>
+        <th>Move Results</th>
+        <th>QC</th>
+      </tr>
+    </thead>
     <tbody>
       <% @details.fetch(:databases).each do |database, result| %>
         <% detail_id = "p2m-qc-#{@details.fetch(:oms_number)}-#{database}-jobs" %>
@@ -23,7 +34,18 @@
         </tr>
         <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden><td colspan="6">
           <table class="submission-table p2m-qc-job-table">
-            <thead><tr><th>JOB #</th><th>Companions</th><th>Daily Presorts</th><th>Move Results</th><th>Printed</th><th>Mailed</th><th>UAA</th><th>QC</th></tr></thead>
+            <thead>
+              <tr>
+                <th>JOB #</th>
+                <th>Companions</th>
+                <th>Daily Presorts</th>
+                <th>Move Results</th>
+                <th>Printed</th>
+                <th>Mailed</th>
+                <th>UAA</th>
+                <th>QC</th>
+              </tr>
+            </thead>
             <tbody>
               <% result.fetch(:jobs).each do |job| %><tr><td><%= job.fetch(:job_number) %></td>
                 <% job.fetch(:sources).each do |source| %><td><%= source[:row_count] || "Missing" %></td><% end %>
