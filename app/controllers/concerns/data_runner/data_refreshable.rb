@@ -51,6 +51,9 @@ module DataRunner
 
     def log
       @output = TaskRunner.output!(@run.run_id)
+    rescue ActiveRecord::RecordNotFound
+      @output = "Refresh log is unavailable for run #{@run.run_id}. " \
+                'The temporary log file may have been removed after the server restarted.'
     end
 
     private
