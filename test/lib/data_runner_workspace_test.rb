@@ -37,6 +37,24 @@ class DataRunnerWorkspaceTest < ActiveSupport::TestCase
     assert_empty store.copies
   end
 
+  test 'cleans up when a child exits early' do
+    store = RemoteStore.new
+    workspace_path = nil
+
+    Paperboy::FileStore.stub(:for, store) do
+      workspace = DataRunnerWorkspace.new(root: Pathname('/data/output.lnk'))
+
+      assert_raises(SystemExit) do
+        workspace.run do |environment|
+          workspace_path = environment.fetch('DATARUNNER_OUTPUT_ROOT')
+          raise SystemExit
+        end
+      end
+    end
+
+    refute_path_exists workspace_path
+  end
+
   class RemoteStore
     attr_reader :copies
 
