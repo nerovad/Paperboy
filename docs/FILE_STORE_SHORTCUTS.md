@@ -113,6 +113,8 @@ boundary:
       stage store.
 - [x] Route the USPS download helper's output write through the download
       store adapter.
+- [x] Run the oversized-download XML staging workspace locally when needed and
+      publish its CSV output through the download store.
 - [x] Confirm batch shipping-station moves reuse the FileStore-backed per-OMS
       endpoint with bounded concurrency and individual failure reporting.
 - [x] Centralize temporary remote-download cleanup behind the shared store.
