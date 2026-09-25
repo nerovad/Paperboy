@@ -112,7 +112,8 @@ export default class extends Controller {
         : response.ok ? button.dataset.stagingAction : `${button.dataset.stagingAction} failed`
       await pbAlert({
         title,
-        message: `${result.message || `The staging request failed (${response.status}).`} ` +
+        message: `${result.message || `OMS ${button.dataset.omsNumber}: ` +
+          `The staging request failed (${response.status}).`} ` +
           `Elapsed time: ${duration} seconds.`
       })
     } catch (_error) {
@@ -120,7 +121,8 @@ export default class extends Controller {
       this.stopStagingProgress(progress, timer)
       await pbAlert({
         title: `${button.dataset.stagingAction} failed`,
-        message: `The staging request could not be completed. Elapsed time: ${duration} seconds.`
+        message: `OMS ${button.dataset.omsNumber}: The staging request could not be ` +
+          `completed. Elapsed time: ${duration} seconds.`
       })
     } finally {
       button.disabled = false

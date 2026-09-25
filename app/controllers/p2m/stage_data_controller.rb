@@ -81,20 +81,31 @@ module P2m
       count = OmsShippingStation.new.copy(**staging_parameters)
       render json: { message: "#{count} Mail.dat file copied to #{Paths::SHIPPING_STATION}." }
     rescue ArgumentError, RuntimeError => e
-      render json: { message: e.message }, status: :unprocessable_content
+      render_shipping_error(e, :unprocessable_content)
+    rescue StandardError => e
+      Rails.logger.error("P2M shipping station failed for OMS #{params[:oms_number]}: #{e.full_message}")
+      render_shipping_error(e, :internal_server_error)
     end
 
     def remove_from_shipping_station
       count = OmsShippingStation.new.remove(**staging_parameters)
       render json: { message: "#{count} Mail.dat file removed from #{Paths::SHIPPING_STATION}." }
     rescue ArgumentError, RuntimeError => e
-      render json: { message: e.message }, status: :unprocessable_content
+      render_shipping_error(e, :unprocessable_content)
+    rescue StandardError => e
+      Rails.logger.error("P2M shipping station removal failed for OMS #{params[:oms_number]}: #{e.full_message}")
+      render_shipping_error(e, :internal_server_error)
     end
 
     private
 
     def staging_parameters
       params.permit(:directory, :oms_number).to_h.symbolize_keys
+    end
+
+    def render_shipping_error(error, status)
+      oms_number = params[:oms_number].presence || 'unknown'
+      render json: { message: "OMS #{oms_number}: #{error.message}" }, status: status
     end
 
     def validate_staging_source!
