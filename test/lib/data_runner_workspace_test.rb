@@ -6,9 +6,9 @@ require Rails.root.join('script/ruby/data_runner/helpers/workspace')
 class DataRunnerWorkspaceTest < ActiveSupport::TestCase
   test 'materializes remote stages and publishes successful outputs' do
     store = RemoteStore.new
-    workspace = DataRunnerWorkspace.new(root: Pathname('/data/output.lnk'))
 
     Paperboy::FileStore.stub(:for, store) do
+      workspace = DataRunnerWorkspace.new(root: Pathname('/data/output.lnk'))
       result = workspace.run('EXAMPLE' => '1') do |environment|
         assert_path_exists environment.fetch('DATARUNNER_OUTPUT_ROOT')
         local_root = Pathname(environment.fetch('DATARUNNER_OUTPUT_ROOT'))
@@ -25,9 +25,9 @@ class DataRunnerWorkspaceTest < ActiveSupport::TestCase
 
   test 'does not publish failed child stages' do
     store = RemoteStore.new
-    workspace = DataRunnerWorkspace.new(root: Pathname('/data/output.lnk'))
 
     Paperboy::FileStore.stub(:for, store) do
+      workspace = DataRunnerWorkspace.new(root: Pathname('/data/output.lnk'))
       workspace.run do |environment|
         Pathname(environment.fetch('DATARUNNER_OUTPUT_ROOT')).join('02_Normalized/output.csv').write('output')
         false

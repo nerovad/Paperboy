@@ -124,8 +124,8 @@ boundary:
 - [x] Centralize temporary remote-download cleanup behind the shared store.
 - [x] Remove failed SMB download temporary files before re-raising errors.
 - [x] Clean up SMB temporary files after production-file previews.
-- [ ] Convert remaining DataRunner path consumers and generated DSL locations
-      as needed.
+- [x] Convert remaining runtime DataRunner path consumers through the shared
+      stage workspace; generated DSL files remain repository-local by design.
 - [x] Convert the P2M backfill/scan script's staging and processed-directory
       checks to the shared file store.
 - [x] Update the shipping-station copy and remove operations.
