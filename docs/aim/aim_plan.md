@@ -878,6 +878,26 @@ Recorded so they are not relitigated.
     as received.
   - **Fiscal stamp.** When Fiscal archives, every page, bottom left: the
     check number and the date processed.
+  - **Roles** (Joshua, 2026-09-25). Four, plus Fiscal; no Superuser, which
+    "BU Admin over many BUs" or Staff already covers.
+    - **User** (approver): their own queue and their BUs' shared queues;
+      open, edit, approve, send back; claim from a shared queue; move within
+      their BUs; share their own queue; set their own Out of office.
+    - **BU Admin** (Fusion's supervisor), only in the BUs they administer:
+      all a User does, plus see every queue in those BUs and move invoices
+      between people there; add people to AIM with those BUs only; set the
+      BU's label and default owner; set Out of office for their people. A BU
+      Admin removes only their own BUs from someone who also has others, and
+      removes the person only when no other BU remains. BU Admins do not
+      **approve** others' invoices -- they move or claim them; standing in
+      is Cover, so the history shows whose invoice it was. They do not
+      appoint BU Admins.
+    - **AIM Staff** (the processing team): every BU, before approval --
+      Action Needed, splits, review, Retry, Restore, vendor aliases and
+      rules. Not people management. One person may be Staff and BU Admin.
+    - **AIM Admin**: everything, including appointing Staff and BU Admins
+      and managing BUs.
+    - **Fiscal** (item f): the Fiscal queue, after approval.
   - **A Fiscal stage sits between approval and the archive.** Laserfiche,
     or whatever replaces it, is the last step, after Fiscal, not the step
     after approval.
@@ -2701,17 +2721,37 @@ Branch `aim/a-user-admin`, cut from master `3b4a2eb5`. One step, one commit.
   arrive with their steps: BUs (a.2), sharing and Out of office (a.4), the
   queue and Remove (a.1). Each person reaches their own sharing and Out of
   office from My Queue.
-- [ ] **a.1c Import from Fusion** (proposed 2026-09-25, to confirm). Add
-  Fusion's enabled users to `aim.members` by employee number (`UserName` =
-  GSABSS id), listing everyone who matches nobody. **GSA's teams only for
-  now** (Joshua, 2026-09-25): Business Support, Maintenance, Fleet, Parks,
-  H&G/Security. Fusion's teams may suggest BU coverage for a.2, confirmed by
-  Joshua, never copied blind. Fusion is on `gsa-sql22`, which WSL reaches
-  only through a second relay while the VPN blocks it.
-- [ ] **a.2 BU coverage.** Table `aim.user_budget_units`: BUs granted beyond
-  the person's home unit, which is read from GSABSS, never copied (9.1).
-  `shared_budget_units` reads it; staff still get every BU. Edited on the
-  Admin screen.
+- [x] **a.1c Import from Fusion.** `docs/aim/fusion_gsa_users.csv`: Fusion's
+  40 enabled GSA users (GSA teams, F&M Admin, and System Team members whose
+  GSABSS agency is `GSAV`), matched by employee number (`UserName` = GSABSS
+  id), with their Fusion team and Fusion roles. `bin/rails
+  aim:v2:import_members` adds them (again at go-live, on Prod); ids with no
+  GSABSS employee are skipped and listed. Imported to `Paperboy_Dev`
+  2026-09-25: 40 added. Left out: Stafford (139155) and Salgado (121550),
+  not in GSABSS; Delgado (Sheriff), Gaynor (not in GSABSS), the built-in
+  accounts, and 66 disabled accounts, none of them current GSA staff.
+  Fusion's `UserGroups` are empty and no directory groups are mapped, so
+  `Users` is the whole list. Fusion's roles are **suggestions** for a.2, never
+  granted by the import: app admins (Gannon, Howard, Nelles, Huebner, Smith)
+  for Staff or Admin; supervisors (Gagnon -> Maintenance, Bonilla -> Fleet,
+  Nelles -> Business Support, Arellano, Johnson, Kunsemiller, Huebner,
+  Howard) for BU Admin of their team's BUs.
+- [ ] **a.2 Roles and BU scope** (replaces "BU coverage" and absorbs a.6;
+  roles decided 2026-09-25, see `## Decisions Already Made`). Table
+  `aim.user_budget_units`: each person's BUs, and whether they are BU Admin
+  of each. The home unit is read from GSABSS, never copied (9.1). Staff and
+  Admin as roles; `shared_budget_units` and every access check read these.
+  The profile page (a.1b) arrives here with its Roles and BUs section, and
+  the Fusion suggestions above are offered there for one-click confirmation.
+  **Inactive, not deleted** (Joshua, 2026-09-25): someone who leaves is
+  marked inactive (`aim.members` gains `deactivated_at`, `deactivated_by`,
+  and a reason). An inactive person is out of the picker and the queues, but
+  their record, BUs and history stay, and one click brings them back. Their
+  invoices are moved first, as for removal. A BU Admin deactivates someone
+  whose BUs are all theirs; otherwise they take away only their own BUs. AIM
+  Admins deactivate anyone. Users & Queues flags anyone GSABSS no longer
+  lists as an active employee, so leavers surface on their own. **Delete**
+  stays for AIM Admins only, for mistakes: today's Remove becomes it.
 - [ ] **a.3 Budget units.** Table `aim.budget_units`, one row per BU AIM
   handles: a **label** -- the name GSA calls the BU (Joshua, 2026-09-25: GSA
   worked by group names, as Fusion's teams and DocuShare's folder titles
@@ -2735,10 +2775,14 @@ Branch `aim/a-user-admin`, cut from master `3b4a2eb5`. One step, one commit.
   AIM user, goes to the BU's shared queue with a review reason. BU README
   updated. **Deploy note:** rename the share's person folders to
   `<id> <name>` first; name-only folders stop linking at once.
-- [ ] **a.6 Capabilities** (9.1a): AIM app features under ACL -- `approve`,
-  `upload`, `route_within_bu`, `route_within_agency`, `route_anywhere`,
-  `manage_rules`, and `fiscal` (item f) -- bundled into ordinary Paperboy
-  groups as roles. Scope (the BUs) gives a capability its reach.
+- [ ] **a.6 Capabilities** (9.1a), now the mechanism under a.2's roles:
+  AIM app features under ACL -- `approve`, `upload`, `route_within_bu`,
+  `manage_users`, `manage_rules`, `process` (Staff's pre-approval work) and
+  `fiscal` (item f) -- that each role bundles. Scope (the BUs) gives a
+  capability its reach. Built with a.2 where a.2 needs it; the rest here.
+
+**Order from here:** a.2 (roles, BU scope, profile page), a.3 (budget units
+and labels), a.4 (sharing and Out of office), a.5 (ID folders), a.6.
 
 **Still to decide.** The COA calls the agency `GSA` while `Employees.agency`
 says `GSAV`; scope must map them. Stafford (335) and Salgado (334) are not in
@@ -3551,6 +3595,13 @@ end so the reasoning stays findable.
   `C:\Windows`. `_prepare_aim_environment.bat` uses `pushd`, and the
   launchers call python with `"%~dp0<script>.py"`. v2's launcher does the
   same. **Never add a relative path or a bare `cd` to a `.bat` here.**
+- **AIM's own test database, `Paperboy_Test_AIM`** (created 2026-09-25). Two
+  full runs on the shared `Paperboy_Test` collapsed into hundreds of pool
+  timeouts and "Database 'Paperboy_Test' is in transition": another run on
+  the same database, or the relay restarted mid-run. Run the gate with
+  `PAPERBOY_TEST_DATABASE=Paperboy_Test_AIM` and do not restart the relay or
+  run other tests while it runs. Through the WSL relay the suite takes about
+  7 minutes.
 - **Pull LockBox before assuming a missing variable is a bug.** A variable
   fetched at module load aborts the whole suite when absent
   (`P2M_PRINTERS`, 2026-09-08).
@@ -3650,3 +3701,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-24 | — | (this edit) | Plan brought up to date with v2 on master: `## Where AIM Stands`, the contract marked as built, `## Next — After v2` (items a–h: user admin, lookups and routing, vendors, duplicates, approval polish, fiscal, observability, cutover), Open Questions tagged by item, the pre-v2 phases kept under `## Earlier Roadmap` |
 | 2026-09-25 | a | (this commit) | Decisions for item a recorded with Joshua: staff see every BU, admins grant, removal refused while a person has invoices, groups and the Admin list both count for now, queue access View / Pull / Cover with Out of office, person folders linked by employee ID (hard switch). Item a split into steps a.1-a.6 on branch `aim/a-user-admin`. Approval stamp added to item e; item f rewritten as the Fiscal stage (queue, check numbers, bulk export, archive with a fiscal stamp, storage last: Laserfiche or DAM) |
 | 2026-09-25 | a.1 | (this commit) | `aim.members` and `Aim::Member`; Users & Queues lists everyone who works AIM (Admin list, AIM group, or both) with open-invoice counts; add by an all-employee search; each name opens that person's queue with Move, and Remove once it is empty; removal refused while they own open invoices; AIM staff kept out (`aim_user_admin?`). `aim:v2:seed_members`. Return to Queue now goes back to the page the invoice was opened from. Suite run through the WSL relay: 1153 runs, 1 failure (the known P2M `OmsUploadLedgerTest`), 0 errors; scoped rubocop clean, brakeman's same four non-AIM warnings, bundle-audit clean |
+| 2026-09-25 | a.1c | (this commit) | 40 Fusion GSA users in `docs/aim/fusion_gsa_users.csv` and `aim:v2:import_members`; imported to `Paperboy_Dev` (40 added). Roles settled: User, BU Admin, AIM Staff, AIM Admin, Fiscal; item a reordered so a.2 is roles and BU scope with the profile page |

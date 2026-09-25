@@ -38,6 +38,19 @@ module Aim
       assert_equal [employee.id], Aim::Member.pluck(:employee_id)
     end
 
+    test 'importing a CSV adds known employees once and skips unknown ids' do
+      employee = Employee.order(:id).first
+      skip 'no employee to test with' if employee.nil?
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, 'users.csv')
+        File.write(path, "employee_id,name\n#{employee.id},Someone\n999999999,Nobody\n,Blank\n")
+
+        assert_equal [1, 0, [999_999_999]], Aim::Member.import_csv!(path, added_by: 'test')
+        assert_equal [0, 1, [999_999_999]], Aim::Member.import_csv!(path, added_by: 'test')
+        assert_equal [employee.id], Aim::Member.pluck(:employee_id)
+      end
+    end
+
     test 'a group without the grant gives nobody' do
       employee = Employee.order(:id).first
       skip 'no employee to test with' if employee.nil?

@@ -45,6 +45,14 @@ namespace :aim do
       puts "aim.members: #{added} added from the AIM groups"
     end
 
+    desc 'Add the people in a CSV of employee ids to the AIM users list (item a.1c)'
+    task import_members: :environment do
+      path = ENV['AIM_SEED_FILE'].presence || Rails.root.join('docs/aim/fusion_gsa_users.csv').to_s
+      added, kept, unknown = Aim::Member.import_csv!(path, added_by: 'aim:v2:import_members')
+      puts "aim.members: #{added} added, #{kept} already present, from #{path}"
+      puts "  not in GSABSS, skipped: #{unknown.join(', ')}" if unknown.any?
+    end
+
     desc 'Link open invoices owned by a name to the employee of that name'
     task link_owners: :environment do
       linked, unmatched = Aim::V2Seeds.link_owners

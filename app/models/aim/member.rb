@@ -27,6 +27,19 @@ module Aim
       missing.size
     end
 
+    # Adds everyone in a CSV with an employee_id column (item a.1c; the Fusion
+    # GSA users are docs/aim/fusion_gsa_users.csv). Safe to run again: people
+    # already on the list are left alone. Returns [added, kept, unknown], the
+    # last being ids with no GSABSS employee, which are never added.
+    def self.import_csv!(path, added_by:)
+      ids = CSV.read(path, headers: true).filter_map { |row| row['employee_id'].to_s[/\A\d+\z/]&.to_i }.uniq
+      known = Employee.where(id: ids).pluck(:id).to_set
+      existing = where(employee_id: ids).pluck(:employee_id).to_set
+      added = ids.select { |id| known.include?(id) && !existing.include?(id) }
+      added.each { |id| create!(employee_id: id, added_by: added_by) }
+      [added.size, existing.size, ids.reject { |id| known.include?(id) }]
+    end
+
     def employee
       @employee ||= Employee.find_by(id: employee_id)
     end
