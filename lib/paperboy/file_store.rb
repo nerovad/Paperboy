@@ -272,10 +272,15 @@ module Paperboy
       end
 
       def remote_prefix
-        folder = shortcut.folder if shortcut.respond_to?(:folder)
+        current_shortcut = shortcut
+        folder = current_shortcut.folder if current_shortcut.respond_to?(:folder)
         return folder.to_s.tr('/', '\\') unless folder.nil?
 
-        shortcut.target[UNC_TARGET, 3].to_s.tr('/', '\\')
+        target = current_shortcut&.target.to_s
+        prefix = target[UNC_TARGET, 3]
+        return prefix.to_s.tr('/', '\\') if prefix
+
+        raise Error, "Shortcut does not contain a usable UNC target: #{shortcut_path}"
       end
 
       def exist_directory?(name)
