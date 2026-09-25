@@ -1247,3 +1247,15 @@
   color: $text-muted;
   margin: 6px 14px;
 }
+
+.aim-bu-add {
+  margin: 0 0 8px 16px;
+  overflow: visible;
+  position: relative;
+  z-index: 2;
+}
+
+.aim-bu-group,
+.aim-bu-group > div {
+  overflow: visible;
+}

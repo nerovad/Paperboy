@@ -30,6 +30,16 @@
           </button>
         </h2>
         <div id="<%= bu_id %>" data-billing-audit-sections-target="content" hidden>
+          <% manages = aim_managed_units.nil? || aim_managed_units.include?(section.unit) %>
+          <% if manages %>
+            <%= form_with url: aim_members_path, method: :post, local: true, class: 'aim-inline-form aim-bu-add' do %>
+              <%= hidden_field_tag :budget_unit, section.unit, id: nil %>
+              <strong>Add a person to <%= section.unit %></strong>
+              <%= render 'aim/shared/person_picker', name: :employee_id, label: "Add a person to #{section.unit}",
+                                                     url: aim_admin_employees_path %>
+              <button type="submit" class="btn approve compact">Add</button>
+            <% end %>
+          <% end %>
           <% groups = [["#{section.unit} shared queue", section.shared, nil]] +
                       section.people.map { |person| [person.name, person.invoices, person.employee_id] } %>
           <% groups.each_with_index do |(heading, invoices, employee_id), inner| %>
@@ -43,7 +53,7 @@
                   <strong><%= heading %></strong>
                   <span class="aim-count-pill"><%= pluralize(invoices.size, 'invoice') %></span>
                 </button>
-                <% if employee_id && aim_user_admin? %>
+                <% if employee_id && manages %>
                   <%= link_to 'Profile', aim_member_path(employee_id), class: 'aim-bu-person__profile' %>
                 <% end %>
               </h3>

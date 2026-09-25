@@ -38,6 +38,13 @@ module Aim
       redirect_to aim_root_path, alert: 'Only AIM admins manage AIM users.'
     end
 
+    # Managing people: AIM admins everywhere, BU Admins in their own BUs.
+    def require_people_manager
+      return if helpers.aim_manages_people?
+
+      redirect_to aim_root_path, alert: 'Only AIM admins and BU Admins manage AIM users.'
+    end
+
     # Anyone signed in to Paperboy, whether or not they hold the AIM app: the
     # screens that let people hand an invoice to someone's queue.
     def require_signed_in

@@ -8,7 +8,11 @@
         <% @roles.each do |role| %><span class="badge is-scheduled"><%= role %></span><% end %>
       </p>
     </div>
-    <%= link_to 'Back to Users & Queues', aim_admin_path, class: 'btn compact' %>
+    <% if aim_user_admin? %>
+      <%= link_to 'Back to Users & Queues', aim_admin_path, class: 'btn compact' %>
+    <% else %>
+      <%= link_to 'Back to My BUs', aim_budget_units_path, class: 'btn compact' %>
+    <% end %>
   </header>
 
   <%= render 'roles', name: name %>
@@ -32,7 +36,7 @@
     <% end %>
   </div>
 
-  <% if @member %>
+  <% if @member && aim_user_admin? %>
     <%# Delete: a small button, a pop-up that either explains what is in the way
         or asks for the employee ID, then a last "cannot be undone" check. %>
     <div class="aim-profile-delete" data-controller="aim-reason">

@@ -2,6 +2,9 @@
     comes from GSABSS and cannot be taken away; the rest are granted here.
     AIM Admin and AIM Staff are groups, managed under ACL. %>
 <% labels = @unit_options.to_h(&:reverse) %>
+<%# AIM admins change everything; a BU Admin adds and takes away their own BUs only. %>
+<% full = aim_managed_units.nil? %>
+<% mine = ->(unit) { full || aim_managed_units.include?(unit) } %>
 <% rows = @budget_units.index_by(&:budget_unit) %>
 <% extra = @budget_units.reject { |row| row.budget_unit == @home_unit } %>
 <h2 class="aim-profile-heading" id="roles">Roles &amp; budget units</h2>
@@ -22,7 +25,8 @@
           <td><%= if home_row&.hidden then 'Hidden' elsif home_row&.bu_admin then 'BU Admin' else 'User' end %></td>
           <td class="aim-people-table__actions">
             <div class="aim-profile-roles__buttons">
-              <% if home_row&.hidden %>
+              <% if !full %>
+              <% elsif home_row&.hidden %>
                 <%= button_to 'Show', aim_member_budget_unit_path(@employee_id, home_row), method: :patch,
                               params: { hidden: '0' }, class: 'btn compact' %>
               <% else %>
@@ -49,12 +53,16 @@
           <td><%= row.bu_admin ? 'BU Admin' : 'User' %></td>
           <td class="aim-people-table__actions">
             <div class="aim-profile-roles__buttons">
-              <%= button_to row.bu_admin ? 'Remove BU Admin' : 'Make BU Admin',
-                            aim_member_budget_unit_path(@employee_id, row), method: :patch,
-                            params: { bu_admin: row.bu_admin ? '0' : '1' }, class: 'btn compact' %>
-              <%= button_to 'Take away', aim_member_budget_unit_path(@employee_id, row), method: :delete,
-                            data: { turbo_confirm: "Take #{row.budget_unit} away from #{name}?", confirm_label: 'Take away' },
-                            class: 'btn deny compact' %>
+              <% if full %>
+                <%= button_to row.bu_admin ? 'Remove BU Admin' : 'Make BU Admin',
+                              aim_member_budget_unit_path(@employee_id, row), method: :patch,
+                              params: { bu_admin: row.bu_admin ? '0' : '1' }, class: 'btn compact' %>
+              <% end %>
+              <% if full || (mine.call(row.budget_unit) && !row.bu_admin) %>
+                <%= button_to 'Take away', aim_member_budget_unit_path(@employee_id, row), method: :delete,
+                              data: { turbo_confirm: "Take #{row.budget_unit} away from #{name}?", confirm_label: 'Take away' },
+                              class: 'btn deny compact' %>
+              <% end %>
             </div>
           </td>
         </tr>
@@ -67,9 +75,11 @@
 
   <%= form_with url: aim_member_budget_units_path(@employee_id), method: :post, local: true, class: 'aim-inline-form' do %>
     <% taken = [@home_unit, *extra.map(&:budget_unit)] %>
-    <%= select_tag :budget_unit, options_for_select(@unit_options.reject { |_, unit| taken.include?(unit) }),
+    <%= select_tag :budget_unit, options_for_select(@unit_options.reject { |_, unit| taken.include?(unit) || !mine.call(unit) }),
                    include_blank: 'Add a budget unit…', aria: { label: 'Budget unit to add' } %>
-    <label><%= check_box_tag :bu_admin, '1', false %> as BU Admin</label>
+    <% if full %>
+      <label><%= check_box_tag :bu_admin, '1', false %> as BU Admin</label>
+    <% end %>
     <button type="submit" class="btn approve compact">Add</button>
   <% end %>
 </section>

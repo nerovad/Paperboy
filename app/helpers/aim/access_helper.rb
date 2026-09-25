@@ -52,6 +52,21 @@ module Aim
       @aim_bu_admin_units ||= Aim::Users.administered_budget_units(aim_session_employee_id)
     end
 
+    # The budget units whose people this person manages: every one (nil) for
+    # AIM Admins, the ones they are BU Admin of otherwise. Staff manage no
+    # people as Staff (roles, 2026-09-25); Approver mode manages none.
+    def aim_managed_units
+      return [] if aim_approver_mode?
+      return nil if aim_user_admin?
+
+      @aim_managed_units ||= Aim::Users.administered_budget_units(aim_session_employee_id)
+    end
+
+    def aim_manages_people?
+      units = aim_managed_units
+      units.nil? || units.any?
+    end
+
     def aim_bu_page?
       units = aim_bu_admin_units
       units.nil? || units.any?

@@ -78,6 +78,25 @@ module Aim
       assert_equal 0, Aim::UserBudgetUnit.count
     end
 
+    test 'a BU Admin adds and takes away only their own BUs, and appoints no BU Admins' do
+      as_groups
+      session[:user] = session[:user].merge('employee_id' => 7)
+      Aim::UserBudgetUnit.create!(employee_id: 7, budget_unit: '4703', bu_admin: true)
+
+      post :create, params: { member_id: @employee.id, budget_unit: '4703', bu_admin: '1' }
+      row = Aim::UserBudgetUnit.find_by!(employee_id: @employee.id, budget_unit: '4703')
+      assert_not row.bu_admin
+
+      post :create, params: { member_id: @employee.id, budget_unit: '4601' }
+      assert_nil Aim::UserBudgetUnit.find_by(employee_id: @employee.id, budget_unit: '4601')
+
+      patch :update, params: { member_id: @employee.id, id: row.id, bu_admin: '1' }
+      assert_not row.reload.bu_admin
+
+      delete :destroy, params: { member_id: @employee.id, id: row.id }
+      assert_nil Aim::UserBudgetUnit.find_by(id: row.id)
+    end
+
     test 'roles name AIM Admin, AIM Staff and BU Admin, or User' do
       assert_equal ['User'], Aim::Users.roles_of(@employee.id)
 
