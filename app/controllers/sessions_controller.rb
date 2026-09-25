@@ -2,6 +2,9 @@
 
 # app/controllers/sessions_controller.rb
 class SessionsController < ApplicationController
+  # Signing in and out can't require being signed in.
+  skip_before_action :require_sign_in
+
   # NEW: OAuth/Entra ID login
   def create_oauth
     auth = request.env['omniauth.auth']
@@ -40,9 +43,7 @@ class SessionsController < ApplicationController
     }
 
     Rails.logger.info "Session set for employee_id: #{employee.employee_id}"
-    Rails.logger.info 'Redirecting to root_path'
-
-    redirect_to root_path
+    redirect_to after_sign_in_path
   end
 
   # OLD: Keep this for admin impersonation/testing

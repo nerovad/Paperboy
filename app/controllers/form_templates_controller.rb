@@ -34,6 +34,9 @@ class FormTemplatesController < ApplicationController
       # Save workflow email steps
       save_email_steps(@form_template)
 
+      # Save the wording of the form's notification emails
+      save_form_emails(@form_template)
+
       # Sync statuses (user-configured + auto-generated from routing steps)
       sync_statuses(@form_template)
 
@@ -189,6 +192,7 @@ class FormTemplatesController < ApplicationController
     @employees = fetch_employees
     @fields_by_page = @form_template.form_fields.ordered.group_by(&:page_number)
     @existing_tags = Forms::Template.all_tags
+    @email_field_names = email_field_names(@form_template)
   end
 
   def update
@@ -213,6 +217,9 @@ class FormTemplatesController < ApplicationController
 
       # Rebuild workflow email steps when they changed
       rebuild_email_steps(@form_template) if email_steps_changed
+
+      # Save the wording of the form's notification emails
+      save_form_emails(@form_template)
 
       # Rebuild field records when fields changed (this is data, not code).
       rebuild_form_fields if fields_changed
@@ -265,6 +272,7 @@ class FormTemplatesController < ApplicationController
             []
           end
           load_org_scope_chain
+          @email_field_names = email_field_names(@form_template)
           render :edit, status: :unprocessable_entity
         end
       end
@@ -1327,13 +1335,48 @@ class FormTemplatesController < ApplicationController
         group_id: row[:recipient_type] == 'group' ? row[:group_id].presence : nil,
         custom_email: row[:recipient_type] == 'custom_email' ? row[:custom_email].presence : nil,
         recipient_field_name: row[:recipient_type] == 'form_field' ? row[:recipient_field_name].presence : nil,
-        subject: row[:subject].presence,
-        body: row[:body].presence,
         attach_pdf: row[:attach_pdf] == '1',
         attach_media: row[:attach_media] == '1',
         position: index
       )
     end
+  end
+
+  # The four notification emails (Forms::TemplateEmail). A part left blank, or
+  # still reading exactly as the default, is stored as nil so the form keeps
+  # following the default; an email with nothing of its own left is deleted.
+  def save_form_emails(form_template)
+    return unless params[:form_emails].respond_to?(:each_pair)
+
+    Forms::TemplateEmail::KINDS.each do |kind|
+      row = params[:form_emails][kind]
+      next if row.nil?
+
+      subject = own_email_text(row[:subject], Forms::TemplateEmail.default_subject(kind))
+      body = own_email_text(row[:body], Forms::TemplateEmail.default_body(kind))
+      email = form_template.emails.find_or_initialize_by(kind: kind)
+
+      if subject.nil? && body.nil?
+        email.destroy! if email.persisted?
+      else
+        email.update!(subject: subject, body: body)
+      end
+    end
+  end
+
+  # Columns a {{field.*}} placeholder can read -- the model's own, so a
+  # hand-coded form without builder fields lists its columns too (see
+  # FormEmailRenderer#field_value).
+  def email_field_names(form_template)
+    model = application_record_class_named(form_template.class_name)
+    return model.column_names - %w[id created_at updated_at] if model
+
+    form_template.form_fields.ordered.map(&:field_name).compact
+  end
+
+  def own_email_text(value, default)
+    text = value.to_s.gsub("\r\n", "\n").strip
+    text.presence unless text == default.strip
   end
 
   def rebuild_email_steps(form_template)
@@ -1353,8 +1396,6 @@ class FormTemplatesController < ApplicationController
         group_id: e.group_id,
         custom_email: e.custom_email,
         recipient_field_name: e.recipient_field_name,
-        subject: e.subject,
-        body: e.body,
         attach_pdf: e.attach_pdf,
         attach_media: e.attach_media
       }
@@ -1371,8 +1412,6 @@ class FormTemplatesController < ApplicationController
         group_id: r[:recipient_type] == 'group' ? r[:group_id]&.to_i.presence : nil,
         custom_email: r[:recipient_type] == 'custom_email' ? r[:custom_email].presence : nil,
         recipient_field_name: r[:recipient_type] == 'form_field' ? r[:recipient_field_name].presence : nil,
-        subject: r[:subject].presence,
-        body: r[:body].presence,
         attach_pdf: r[:attach_pdf] == '1',
         attach_media: r[:attach_media] == '1'
       }

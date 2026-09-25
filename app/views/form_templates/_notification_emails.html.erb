@@ -1,0 +1,57 @@
+<%# Email Content: the wording of this form's four notification emails
+    (Forms::TemplateEmail). No recipients here — email rules above, inbox
+    notifications in Settings and form subscriptions in Settings and on the ACL
+    page decide who is told; all of them send the text written here.
+
+    Each box shows what is sent today, the default until someone changes it.
+    Text still matching the default is saved as "use the default", and an
+    emptied box goes back to it.
+
+    Locals:
+      form_template  the Forms::Template being edited
+      field_names    columns a {{field.*}} placeholder can read
+-%>
+<div class="form-group notification-emails" style="margin-top: 24px;">
+  <label>Email Content</label>
+  <small class="form-text notification-emails__help">
+    What this form's emails say, whoever receives them. Placeholders are filled in from the
+    submission: <code>{{reference}}</code>, <code>{{link}}</code> (a button that opens the
+    submission), <code>{{url}}</code>, <code>{{form_name}}</code>, <code>{{submitter_name}}</code>,
+    <code>{{submitter_email}}</code>, <code>{{submitted_at}}</code>, <code>{{status_label}}</code>,
+    <code>{{deny_reason}}</code>, <code>{{recipient_first_name}}</code> ("there" when an email
+    rule sends to several people),
+    <code>{{from_status}}</code>, <code>{{to_status}}</code>, <code>{{changed_by}}</code>,
+    <code>{{approval_step}}</code> (Awaiting Approval only), <code>{{changes}}</code> (Field
+    Edited only) and <code>{{field.column_name}}</code> for any field on the form. Clear a box to
+    go back to the default.
+    <% if field_names.any? %>
+      <br>Field placeholders: <%= field_names.map { |n| "{{field.#{n}}}" }.join(", ") %>
+    <% end %>
+  </small>
+
+  <% emails = form_template.emails.index_by(&:kind) %>
+  <% Forms::TemplateEmail::KINDS.each do |kind| %>
+    <% email = emails[kind] || Forms::TemplateEmail.new(form_template: form_template, kind: kind) %>
+    <details class="notification-emails__item">
+      <summary>
+        <strong><%= email.label %></strong>
+        <% if email.subject.present? || email.body.present? %>
+          <span class="notification-emails__badge">Customized</span>
+        <% end %>
+      </summary>
+      <p class="notification-emails__description"><%= email.description %></p>
+
+      <label for="form_emails_<%= kind %>_subject" class="notification-emails__field-label">Subject</label>
+      <input type="text" id="form_emails_<%= kind %>_subject"
+             name="form_emails[<%= kind %>][subject]"
+             class="form-control form-control-sm"
+             value="<%= email.effective_subject %>">
+
+      <label for="form_emails_<%= kind %>_body" class="notification-emails__field-label">Body</label>
+      <textarea id="form_emails_<%= kind %>_body"
+                name="form_emails[<%= kind %>][body]"
+                class="form-control form-control-sm"
+                rows="12"><%= email.effective_body %></textarea>
+    </details>
+  <% end %>
+</div>

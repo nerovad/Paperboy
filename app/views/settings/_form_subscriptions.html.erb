@@ -1,6 +1,7 @@
 <%# Personal form subscriptions — the same table the ACL page manages for
     groups, from the other end. Rendered outside the settings form: a
-    subscription is its own row, and HTML has no nested forms.
+    subscription is its own row, and HTML has no nested forms. Sits inside
+    the Email Notifications section as its Form Activity sub-section.
 
     Locals:
       subscriptions        this user's own Forms::Subscription rows
@@ -9,8 +10,8 @@
       form_types     [{ class_name:, label: }] catalog
       form_labels    class_name => label
 -%>
-<section class="settings-section">
-  <h2>Form Activity Notifications</h2>
+<div class="settings-subsection">
+  <h3>Form Activity</h3>
   <p class="settings-description">
     Follow a form and get emailed when something happens to it — a new
     submission, an edit to any field, or a status change. Edit notifications
@@ -88,7 +89,7 @@
   <% end %>
 
   <% if group_subscriptions.any? %>
-    <h3>From your groups</h3>
+    <h4>From your groups</h4>
     <p class="settings-description">
       An administrator subscribed a group you belong to. You can opt out of
       any of these without leaving the group; your access is unaffected.
@@ -135,4 +136,4 @@
       </tbody>
     </table>
   <% end %>
-</section>
+</div>

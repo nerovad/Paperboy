@@ -3,6 +3,9 @@
   <head>
     <title>📰 Paperboy - Ventura</title>
     <%= csrf_meta_tags %>
+    <%# Signed-in pages stay out of Turbo's snapshot cache, so Back after
+        signing out asks the server again rather than redrawing them. %>
+    <% if current_user %><meta name="turbo-cache-control" content="no-cache"><% end %>
     <%= csp_meta_tag %>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#b71c1c">

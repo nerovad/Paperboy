@@ -4,6 +4,12 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
   before_action :set_current_user
+  # Every page needs a signed-in user unless its controller says otherwise with
+  # skip_before_action — the sign-in flows, the landing page, and the one
+  # token-served media endpoint. Pages used to opt in one by one, and most
+  # never did: a Teams "View in Paperboy" link opened an incident for anyone.
+  before_action :require_sign_in
+  before_action :prevent_caching_signed_in_pages
   helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain,
                 :auth_console_admin?, :pcard_admin?, :current_user_dropdown_permissions,
                 :current_user_form_permission_keys, :current_user_application_permission_keys,
@@ -294,5 +300,35 @@ class ApplicationController < ActionController::Base
 
   def set_current_user
     Current.user = session[:user]
+  end
+
+  # Signed out: remember the page asked for, so signing in lands back on it,
+  # and send the visitor to a page with a Login button. A form post is sent
+  # there too, but not remembered — it can't be replayed. Anything but a page
+  # (JSON, a Turbo frame, a download) just gets a 401.
+  def require_sign_in
+    return if current_user
+    return head(:unauthorized) unless request.format.html? && !turbo_frame_request?
+
+    session[:return_to] = request.fullpath if request.get? || request.head?
+    redirect_to signed_out_landing_path, alert: 'Please sign in to continue.'
+  end
+
+  # Where require_sign_in sends a signed-out visitor. An app with its own
+  # sign-in panel (Data Runner) overrides it.
+  def signed_out_landing_path = root_path
+
+  # A signed-in page must not outlive the session: without this, Back after
+  # signing out redraws the Inbox from the browser's cache. The Turbo half of
+  # the same rule is the turbo-cache-control meta tag in the layout.
+  def prevent_caching_signed_in_pages
+    response.headers['Cache-Control'] = 'no-store' if current_user
+  end
+
+  # Where to go once signed in: the page require_sign_in remembered, if it is
+  # a path on this site, else home. Read once, then forgotten.
+  def after_sign_in_path(return_to = session.delete(:return_to))
+    path = return_to.to_s
+    path.start_with?('/') && !path.start_with?('//') ? path : root_path
   end
 end

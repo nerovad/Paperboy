@@ -64,15 +64,16 @@ module Forms
       status = @source.statuses.create!(name: 'Step 1 Pending', key: 'step_1_pending', category: 'pending',
                                         auto_generated: true)
       @source.routing_steps.create!(step_number: 1, routing_type: 'supervisor', form_template_status_id: status.id)
-      @source.email_steps.create!(trigger_event: 'submit', recipient_type: 'submitter',
-                                  subject: 'Your Dup Probe was received')
+      @source.email_steps.create!(trigger_event: 'submit', recipient_type: 'submitter')
+      @source.emails.create!(kind: 'new_submission', subject: 'Your Dup Probe was received')
       @source.update!(submission_type: 'approval')
 
       copy = duplicator.call.template
 
       step = copy.routing_steps.sole
       assert_equal copy.statuses.find_by!(key: 'step_1_pending').id, step.form_template_status_id
-      assert_equal 'Your Dup Probe Copy was received', copy.email_steps.sole.subject
+      assert_equal 'submitter', copy.email_steps.sole.recipient_type
+      assert_equal 'Your Dup Probe Copy was received', copy.emails.sole.subject
       assert_equal %w[view_pdf edit], copy.enabled_inbox_buttons
     end
 

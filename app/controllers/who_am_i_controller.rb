@@ -4,6 +4,10 @@
 # dialog's turbo-frame, so it renders without a layout — the layout carries
 # the dialog, and the dialog carries a frame of the same name.
 class WhoAmIController < ApplicationController
+  # Fetched into a dialog, and answers a signed-out visitor with its own 403
+  # rather than a redirect to a page.
+  skip_before_action :require_sign_in
+
   layout false
 
   def show

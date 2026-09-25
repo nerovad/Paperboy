@@ -36,14 +36,17 @@ class SubmissionHistoriesController < ApplicationController
   # The record being asked about, or nil with the response already sent.
   #
   # Restricted to models that actually keep the history being asked for, so the
-  # type param can't be used to render an arbitrary record. `editable` adds the
-  # policy check Forms::BaseController applies to editing itself: an edit trail
-  # says who changed what, which is the same right the Edit button grants.
+  # type param can't be used to render an arbitrary record. Either history
+  # needs the viewer to be allowed to open the submission at all
+  # (Forms::SubmissionAccess). `editable` adds the policy check
+  # Forms::BaseController applies to editing itself: an edit trail says who
+  # changed what, which is the same right the Edit button grants.
   def history_subject(concern, editable: false)
     klass = application_record_class_named(params[:type])
     return head :not_found unless klass.is_a?(Class) && klass < ApplicationRecord && klass.include?(concern)
 
     record = klass.find(params[:id])
+    return head :forbidden unless helpers.can_view_submission?(record)
     return head :forbidden if editable && !helpers.can_edit_submission?(record)
 
     record

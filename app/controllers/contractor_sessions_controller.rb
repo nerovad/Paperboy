@@ -7,15 +7,18 @@
 # current_user / permission / routing consumer treats them identically. A
 # session[:contractor] marker records the identity source.
 class ContractorSessionsController < ApplicationController
+  skip_before_action :require_sign_in
+
   def new; end
 
   def create
     contractor = Contractor.find_by('LOWER(email) = ?', params[:email].to_s.strip.downcase)
 
     if contractor&.login_allowed? && contractor.authenticate(params[:password])
+      return_to = session[:return_to]
       reset_session # guard against session fixation
       set_contractor_session(contractor)
-      redirect_to root_path, notice: 'Signed in.'
+      redirect_to after_sign_in_path(return_to), notice: 'Signed in.'
     elsif contractor && !contractor.login_allowed?
       redirect_to contractor_login_path, alert: login_blocked_message(contractor)
     else
