@@ -1337,3 +1337,14 @@
   border-color: $warning-border;
   color: $warning-text;
 }
+
+// Shared queue On/Off: one width, so the column lines up; a BU Admin's is a
+// greyed-out On that cannot be pressed.
+.aim-shared-switch {
+  min-width: 3.25rem;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+}

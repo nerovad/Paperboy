@@ -11,16 +11,17 @@
               data-action="billing-audit-sections#toggle" aria-expanded="false" aria-controls="<%= bu_id %>">
         <span aria-hidden="true">▾</span>
         <strong class="aim-owner-group__name"><%= section.label %></strong>
-        <% if people_tools %>
-          <strong class="aim-count-pill"><%= pluralize(section.people.size, 'person') %></strong>
-        <% end %>
-        <strong class="aim-count-pill"><%= pluralize(section.invoice_count, 'invoice') %></strong>
+        <%# Warnings first, left of the counts. %>
         <% if people_tools && !section.administered? %>
           <strong class="aim-count-pill aim-count-pill--warn">No BU Admin</strong>
         <% end %>
         <% if people_tools && !section.covered? %>
           <strong class="aim-count-pill aim-count-pill--warn" title="Its unowned invoices wait for an AIM Admin">Nobody on the shared queue</strong>
         <% end %>
+        <% if people_tools %>
+          <strong class="aim-count-pill"><%= pluralize(section.people.size, 'person') %></strong>
+        <% end %>
+        <strong class="aim-count-pill"><%= pluralize(section.invoice_count, 'invoice') %></strong>
       </button>
     </h2>
     <div id="<%= bu_id %>" data-billing-audit-sections-target="content" hidden>
