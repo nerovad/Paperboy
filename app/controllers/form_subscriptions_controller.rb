@@ -58,7 +58,7 @@ class FormSubscriptionsController < ApplicationController
   def current_employee_id = session.dig(:user, 'employee_id').to_s
 
   def subscription_attributes
-    permitted = params.permit(:form_type, :group_id, :delivery_mode, events: [])
+    permitted = params.permit(:form_type, :group_id, :delivery_mode, :required, events: [])
 
     base = {
       form_type: permitted[:form_type].to_s,
@@ -66,7 +66,8 @@ class FormSubscriptionsController < ApplicationController
     }.merge(event_flags(Array(permitted[:events]).map(&:to_s)))
 
     if permitted[:group_id].present?
-      base.merge(grantee_type: 'group', group_id: permitted[:group_id])
+      base.merge(grantee_type: 'group', group_id: permitted[:group_id],
+                 required: ActiveModel::Type::Boolean.new.cast(permitted[:required]) || false)
     else
       base.merge(grantee_type: 'employee', employee_id: current_employee_id)
     end

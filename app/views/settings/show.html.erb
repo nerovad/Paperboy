@@ -32,6 +32,8 @@
 
   <%= render "settings/form_subscriptions",
              subscriptions: @form_subscriptions,
+             group_subscriptions: @group_subscriptions,
+             opted_out_ids: @opted_out_subscription_ids,
              form_types: @subscription_form_types,
              form_labels: @subscription_form_labels %>
 </div>

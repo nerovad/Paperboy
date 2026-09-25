@@ -8,7 +8,8 @@
     Locals:
       group          the Group whose ACL page this is, preselected in the picker
       groups         every group, for the picker
-      subscriptions  this group's Forms::Subscription rows
+      subscriptions  this group's Forms::Subscription rows, opt_outs preloaded
+      opt_out_names  employee id => name, for everyone who opted out
       form_types     [{ class_name:, label: }] catalog
       form_labels    class_name => label
 -%>
@@ -20,7 +21,9 @@
     form or for every form at once. Choose <strong>each change</strong> to be
     mailed as things happen, or <strong>one daily digest</strong> to get a
     single summary the next morning. Edit notifications list exactly which
-    fields changed and what they changed from. This is separate from
+    fields changed and what they changed from. Members see the subscription in
+    their own Settings and can opt themselves out there, without leaving the
+    group, unless you mark it <strong>required</strong>. This is separate from
     visibility above: subscribing does not grant anyone sight of a form they
     could not already open.
   </p>
@@ -66,6 +69,14 @@
       <% end %>
     </fieldset>
 
+    <label class="settings-toggle">
+      <%= check_box_tag :required, "1", false, id: "acl_subscription_required" %>
+      <span class="settings-label">
+        <strong>Required</strong>
+        <small>Members cannot opt out of this from their Settings.</small>
+      </span>
+    </label>
+
     <div class="form-actions">
       <%= submit_tag "Add Subscription", class: "btn approve" %>
     </div>
@@ -80,6 +91,7 @@
           <th scope="col">Form</th>
           <th scope="col">Notify about</th>
           <th scope="col">Delivery</th>
+          <th scope="col">Opted out</th>
           <th scope="col" class="actions-column">Remove</th>
         </tr>
       </thead>
@@ -98,6 +110,16 @@
               <% end %>
             </td>
             <td><span class="grant-badge"><%= subscription.delivery_mode_label %></span></td>
+            <td>
+              <% if subscription.required? %>
+                <span class="grant-badge">Required</span>
+              <% elsif subscription.opt_outs.empty? %>
+                None
+              <% else %>
+                <% names = subscription.opt_outs.map { |opt_out| opt_out_names.fetch(opt_out.employee_id.to_s, "Employee ##{opt_out.employee_id}") }.sort %>
+                <%= pluralize(names.size, "member") %>: <%= names.to_sentence %>
+              <% end %>
+            </td>
             <td class="actions-column">
               <%= button_to "Remove", form_subscription_path(subscription), method: :delete,
                     class: "btn deny compact",

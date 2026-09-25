@@ -791,6 +791,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_100004) do
     t.index ["submission_type", "submission_id"], name: "index_form_submission_copies_on_submission"
   end
 
+  create_table "form_subscription_opt_outs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "employee_id", null: false
+    t.bigint "form_subscription_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id"], name: "index_form_subscription_opt_outs_on_employee_id"
+    t.index ["form_subscription_id", "employee_id"], name: "index_form_subscription_opt_outs_on_member", unique: true
+  end
+
   create_table "form_subscriptions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "delivery_mode", default: "immediate", null: false
@@ -801,6 +810,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_100004) do
     t.boolean "notify_created", default: false, null: false
     t.boolean "notify_edited", default: false, null: false
     t.boolean "notify_status_changed", default: false, null: false
+    t.boolean "required", default: false, null: false
     t.datetime "updated_at", null: false
     t.index ["delivery_mode"], name: "index_form_subscriptions_on_delivery_mode"
     t.index ["form_type", "grantee_type", "employee_id", "group_id"], name: "index_form_subscriptions_on_target", unique: true
@@ -1723,6 +1733,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_100004) do
   add_foreign_key "dam_publications", "dam_publish_targets", column: "publish_target_id"
   add_foreign_key "data_runner_group_run_items", "data_runner_group_runs", column: "group_run_id"
   add_foreign_key "form_fields", "form_templates"
+  add_foreign_key "form_subscription_opt_outs", "form_subscriptions", on_delete: :cascade
   add_foreign_key "form_template_copy_recipients", "form_templates"
   add_foreign_key "form_template_email_steps", "form_templates"
   add_foreign_key "form_template_routing_steps", "form_template_statuses"

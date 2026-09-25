@@ -568,7 +568,10 @@ Rails.application.routes.draw do
 
   # Rows behind the ACL group page's Submission Visibility section.
   resources :form_visibility_grants, only: %i[create destroy]
-  resources :form_subscriptions, only: %i[create destroy]
+  resources :form_subscriptions, only: %i[create destroy] do
+    # A member stepping out of (and back into) one group subscription's mail.
+    resource :opt_out, only: %i[create destroy], controller: 'form_subscription_opt_outs'
+  end
   resources :away_periods, only: %i[create destroy]
 
   # ============================================================================
