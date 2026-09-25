@@ -1,0 +1,21 @@
+<%# Admin / Approver mode, for AIM Admins and Staff only (item a.2). Approver
+    mode shows and allows what a User has; "Start here" makes the current mode
+    the one they start in. %>
+<% if aim_real_queue_access? %>
+  <% default = Aim::UserPreference.start_mode_for(aim_session_employee_id) %>
+  <div class="aim-mode-switch" role="group" aria-label="Mode">
+    <div class="aim-mode-switch__buttons">
+      <% { 'admin' => 'Admin', 'approver' => 'Approver' }.each do |mode, label| %>
+        <%= button_to label, aim_mode_path, method: :patch, params: { mode: mode },
+                      class: "aim-mode-switch__button#{' is-active' if aim_mode == mode}",
+                      aria: { pressed: aim_mode == mode } %>
+      <% end %>
+    </div>
+    <% if default == aim_mode %>
+      <span class="aim-mode-switch__note">You start in this mode</span>
+    <% else %>
+      <%= button_to 'Start in this mode', aim_mode_path, method: :patch, params: { mode: aim_mode, default: '1' },
+                    class: 'aim-mode-switch__link' %>
+    <% end %>
+  </div>
+<% end %>

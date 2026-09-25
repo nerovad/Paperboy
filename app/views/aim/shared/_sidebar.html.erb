@@ -15,6 +15,8 @@
      data-aim-sidebar-reset-value="<%= controller_name == 'dashboard' && action_name == 'home' %>">
   <%= render "shared/app_switcher" %>
 
+  <%= render "aim/shared/mode_switch" %>
+
   <nav class="aim-links">
     <details class="nav-group" <%= "open" %> data-aim-sidebar-target="group" data-key="aim"
              data-default-open="true" data-current="<%= current == "aim" %>">

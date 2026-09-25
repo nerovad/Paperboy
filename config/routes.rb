@@ -140,6 +140,7 @@ Rails.application.routes.draw do
     get 'shared_queues', to: 'shared_queues#index', as: :shared_queues
     get 'people', to: 'people#index', as: :people
     get 'counts', to: 'counts#show', as: :counts
+    patch 'mode', to: 'modes#update', as: :mode
     get 'admin', to: 'admin#index', as: :admin
     get 'admin/employees', to: 'members#employees', as: :admin_employees
     resources :members, only: %i[create show destroy], path: 'admin/users' do

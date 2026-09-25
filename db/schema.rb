@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_100002) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_100003) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -137,6 +137,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_100002) do
     t.datetime "updated_at", null: false
     t.index ["budget_unit"], name: "index_aim_user_budget_units_on_budget_unit"
     t.index ["employee_id", "budget_unit"], name: "index_aim_user_budget_units_on_person_and_bu", unique: true
+  end
+
+  create_table "aim.user_preferences", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "employee_id", null: false
+    t.string "start_mode", limit: 20, default: "admin", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id"], name: "index_aim_user_preferences_on_employee_id", unique: true
   end
 
   create_table "aim.vendor_aliases", force: :cascade do |t|

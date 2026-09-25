@@ -51,6 +51,28 @@ module Aim
       self
     end
 
+    # Move the invoice to another budget unit's shared queue. That changes its
+    # budget unit, which is what billing charges, so the event says so; the
+    # billing row takes the new BU when the worker next writes it (decided
+    # 2026-09-25). Returns the invoice, or nil when it was already there.
+    def move_to_unit!(unit, actor:)
+      raise Aim::Invoice::IllegalTransition, "#{batch_id} is finished and cannot be moved to another queue." if terminal?
+
+      target = unit.to_s.strip
+      raise ActiveRecord::RecordInvalid.new(self), 'Pick a budget unit.' if target.blank?
+      return if target == budget_unit.to_s && shared_queue?
+
+      was_unit = budget_unit
+      was = queue_owner
+      transaction do
+        update!(budget_unit: target, assigned_employee_id: nil, assigned_to: nil, assignment_source: nil)
+        events.create!(action: 'assignment', from_state: state, to_state: state, actor: actor,
+                       note: "moved from #{was == SHARED_QUEUE ? "the #{was_unit} shared queue" : was} " \
+                             "to the #{target} shared queue; budget unit changed from #{was_unit.presence || 'none'} to #{target}")
+      end
+      self
+    end
+
     private
 
     def resolve_owner(owner)

@@ -1140,3 +1140,61 @@
 .aim-profile-roles tr.is-hidden-unit td {
   color: $text-muted;
 }
+
+// Admin / Approver mode switch at the top of the AIM sidebar: a two-way
+// segmented control on the sidebar's green.
+.aim-mode-switch {
+  margin: 8px 12px 12px;
+}
+
+.aim-mode-switch__buttons {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+  display: flex;
+  padding: 3px;
+
+  form {
+    flex: 1;
+  }
+}
+
+.aim-mode-switch__button {
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 5px 0;
+  width: 100%;
+
+  &.is-active {
+    background: $surface-base;
+    color: $brand-navy;
+  }
+}
+
+.aim-mode-switch__note,
+.aim-mode-switch__link {
+  color: rgba(255, 255, 255, 0.75);
+  display: block;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.aim-mode-switch__link {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  width: 100%;
+}
+
+.aim-owner-choice__note {
+  color: $text-muted;
+  font-size: 0.85em;
+  margin: 6px 0 0;
+}
