@@ -1,16 +1,19 @@
 <% name = @employee ? "#{@employee.first_name} #{@employee.last_name}".squish : "Employee #{@employee_id}" %>
-<div class="aim-page">
+<div class="aim-page aim-profile-page">
   <header class="aim-page-header">
     <div>
-      <h1 class="aim-page-title"><%= name %>'s queue</h1>
+      <h1 class="aim-page-title"><%= name %></h1>
       <p class="aim-page-subtitle">
-        Employee <%= @employee_id %><%= " · Unit #{@employee.unit}" if @employee&.unit.present? %>.
-        <%= 'No longer in GSABSS. ' unless @employee %>The open invoices <%= name %> owns. Move them to another person or to their budget unit's shared queue.
+        Employee <%= @employee_id %><%= ' · No longer in GSABSS.' unless @employee %>
+        <% @roles.each do |role| %><span class="badge is-scheduled"><%= role %></span><% end %>
       </p>
     </div>
-    <span class="aim-count-pill"><%= pluralize(@invoices.length, 'invoice') %></span>
+    <%= link_to 'Back to Users & Queues', aim_admin_path, class: 'btn compact' %>
   </header>
 
+  <%= render 'roles', name: name %>
+
+  <h2 class="aim-profile-heading" id="queue">Queue <span class="aim-count-pill"><%= pluralize(@invoices.length, 'open invoice') %></span></h2>
   <% if @invoices.empty? %>
     <section class="aim-panel aim-empty-state">
       <p><%= name %> owns no open invoices now.</p>
@@ -43,6 +46,4 @@
       <% end %>
     <% end %>
   </section>
-
-  <p><%= link_to 'Back to Users & Queues', aim_admin_path, class: 'btn compact' %></p>
 </div>

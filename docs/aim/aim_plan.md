@@ -2743,6 +2743,16 @@ Branch `aim/a-user-admin`, cut from master `3b4a2eb5`. One step, one commit.
   Admin as roles; `shared_budget_units` and every access check read these.
   The profile page (a.1b) arrives here with its Roles and BUs section, and
   the Fusion suggestions above are offered there for one-click confirmation.
+  **Built so far (a.2 part 1):** `aim.user_budget_units` and
+  `Aim::UserBudgetUnit`; the profile page (`/aim/admin/users/<id>`) with
+  Roles & budget units -- home unit from GSABSS with Make BU Admin, added
+  BUs from GSA's active COA units with a BU Admin toggle and Take away --
+  then Queue and Delete. `shared_budget_units` reads the added BUs;
+  `administered_budget_units` and `roles_of` added. AIM admins only.
+  **Still to do in a.2:** BU Admins acting within their BUs (see every queue
+  there, move, add people with those BUs only, edit those BUs on profiles);
+  a Role column on the list and By BU showing added BUs; the Fusion
+  suggestions; Deactivate.
   **Inactive, not deleted** (Joshua, 2026-09-25): someone who leaves is
   marked inactive (`aim.members` gains `deactivated_at`, `deactivated_by`,
   and a reason). An inactive person is out of the picker and the queues, but
@@ -3703,3 +3713,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-25 | a.1 | (this commit) | `aim.members` and `Aim::Member`; Users & Queues lists everyone who works AIM (Admin list, AIM group, or both) with open-invoice counts; add by an all-employee search; each name opens that person's queue with Move, and Remove once it is empty; removal refused while they own open invoices; AIM staff kept out (`aim_user_admin?`). `aim:v2:seed_members`. Return to Queue now goes back to the page the invoice was opened from. Suite run through the WSL relay: 1153 runs, 1 failure (the known P2M `OmsUploadLedgerTest`), 0 errors; scoped rubocop clean, brakeman's same four non-AIM warnings, bundle-audit clean |
 | 2026-09-25 | a.1c | (this commit) | 40 Fusion GSA users in `docs/aim/fusion_gsa_users.csv` and `aim:v2:import_members`; imported to `Paperboy_Dev` (40 added). Roles settled: User, BU Admin, AIM Staff, AIM Admin, Fiscal; item a reordered so a.2 is roles and BU scope with the profile page |
 | 2026-09-25 | a.1 | (this commit) | Users & Queues redesigned from Joshua's testing: List and By BU views (remembered), one line per person, an Actions menu per row (one open at a time, closed by a click elsewhere or Escape: `aim_actions_menu_controller`, registered in `app/javascript/controllers/index.js` with Joshua's approval), search, unit and flag filters, sortable columns, pinned headings. People GSABSS no longer lists are shown and flagged, and their queue still opens. Delete needs the employee ID typed and a confirmation, checked by the server. 1159 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four non-AIM warnings; scoped rubocop clean |
+| 2026-09-25 | a.2 (1) | (this commit) | `aim.user_budget_units`; a person's profile sets their BUs and BU Admin flags; shared queues follow the added BUs; roles named on the profile; Edit profile in the Actions menu. `schema.rb` again carried another team's uncommitted `textbook_and_tuition_reimbursement_forms` from the shared dev database; removed from the commit, as Joshua approved. 1164 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |

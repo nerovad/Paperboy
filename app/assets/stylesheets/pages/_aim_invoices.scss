@@ -1100,3 +1100,23 @@
     margin: 0 0 6px;
   }
 }
+
+// A person's profile: Roles & budget units, Queue, Delete.
+.aim-profile-heading {
+  align-items: center;
+  display: flex;
+  font-size: 1.05rem;
+  gap: 8px;
+  margin: 20px 0 8px;
+}
+
+.aim-profile-page .aim-page-subtitle .badge {
+  margin-left: 6px;
+}
+
+.aim-profile-note {
+  color: $text-muted;
+  font-size: 0.85em;
+  margin: 0;
+  padding: 0 14px 12px;
+}

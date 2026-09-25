@@ -37,6 +37,10 @@ module Aim
       return redirect_to(aim_admin_path, alert: 'That person does not work AIM.') unless @member || Aim::Users.member?(@employee_id)
 
       @invoices = Aim::Member.open_invoices_of(@employee_id).newest_first.to_a
+      @home_unit = @employee&.unit.presence
+      @budget_units = Aim::UserBudgetUnit.for_person(@employee_id).order(:budget_unit).to_a
+      @unit_options = Aim::UserBudgetUnit.unit_options
+      @roles = Aim::Users.roles_of(@employee_id)
     end
 
     def destroy

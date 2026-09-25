@@ -142,7 +142,9 @@ Rails.application.routes.draw do
     get 'counts', to: 'counts#show', as: :counts
     get 'admin', to: 'admin#index', as: :admin
     get 'admin/employees', to: 'members#employees', as: :admin_employees
-    resources :members, only: %i[create show destroy], path: 'admin/users'
+    resources :members, only: %i[create show destroy], path: 'admin/users' do
+      resources :budget_units, only: %i[create update destroy], controller: 'member_budget_units'
+    end
     resources :uploads, only: %i[new create]
     resources :vendor_aliases, only: %i[index create update destroy]
     resources :vendor_rules, only: %i[index create update destroy]

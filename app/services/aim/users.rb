@@ -34,15 +34,39 @@ module Aim
       false
     end
 
-    # The budget units whose shared queues this person works. Until the Admin
-    # page assigns BUs to people, it is their own unit from GSABSS; AIM staff
-    # see every BU (nil means all). The one place the rule lives, so Admin
-    # replaces it here.
+    # The budget units whose shared queues this person works: their own unit
+    # from GSABSS plus the BUs granted on their profile (item a.2). AIM staff
+    # see every BU (nil means all). The one place the rule lives.
     def shared_budget_units(employee_id, staff:)
       return nil if staff
+      return [] if employee_id.blank?
 
-      unit = Employee.where(id: employee_id).pick(:unit) if employee_id.present?
-      [unit.presence].compact
+      home = Employee.where(id: employee_id).pick(:unit).presence
+      ([home] + Aim::UserBudgetUnit.for_person(employee_id).pluck(:budget_unit)).compact.uniq
+    rescue ActiveRecord::ActiveRecordError
+      []
+    end
+
+    # What a person is in AIM, for their profile and the Users & Queues list
+    # (roles decided 2026-09-25): AIM Admin and AIM Staff come from the groups,
+    # BU Admin from their BUs, and everyone on the list is a User.
+    def roles_of(employee_id)
+      groups = Group.where(GroupID: EmployeeGroup.where(EmployeeID: employee_id).select(:GroupID))
+                    .pluck(:Group_Name).map(&:downcase)
+      roles = []
+      roles << 'AIM Admin' if groups.intersect?(%w[system_admins aim_admin])
+      roles << 'AIM Staff' if groups.include?('aim_staff')
+      roles << 'BU Admin' if administered_budget_units(employee_id).any?
+      roles.presence || ['User']
+    rescue ActiveRecord::ActiveRecordError
+      ['User']
+    end
+
+    # The BUs this person is BU Admin of.
+    def administered_budget_units(employee_id)
+      return [] if employee_id.blank?
+
+      Aim::UserBudgetUnit.for_person(employee_id).administered.pluck(:budget_unit)
     rescue ActiveRecord::ActiveRecordError
       []
     end
