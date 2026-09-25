@@ -189,6 +189,10 @@ class FileStoreTest < Minitest::Test # rubocop:disable Metrics/ClassLength
   end
 
   class NestedFakeShortcut < FakeShortcut
+    def target
+      '\\\\server\\share\\Printers'
+    end
+
     def folder
       'Printers'
     end
