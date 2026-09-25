@@ -10,6 +10,9 @@ class ProbationTransferRequestsControllerTest < ActionController::TestCase
     session[:user] = { 'employee_id' => 1, 'email' => 'employee@example.com',
                        'first_name' => 'Test', 'last_name' => 'User' }
     @probation_transfer_request = probation_transfer_requests(:one)
+    # A submission opens only for people the app shows it to (Forms::SubmissionAccess);
+    # here, its submitter.
+    @probation_transfer_request.update_columns(employee_id: '1')
   end
 
   test 'should get index' do
