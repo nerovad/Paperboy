@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aim
-  # Switches an AIM Admin or Staff member between Admin mode and Approver mode
+  # Switches an AIM Admin between Admin mode and Approver mode
   # for this session, and optionally makes the choice the mode they start in.
   class ModesController < BaseController
     def update

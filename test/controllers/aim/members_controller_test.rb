@@ -76,8 +76,8 @@ module Aim
       assert_equal [@employee.id], response.parsed_body.pluck('value')
     end
 
-    test 'AIM staff do not manage users' do
-      as_groups 'aim_staff'
+    test 'someone who is not an AIM Admin does not manage users' do
+      as_groups
 
       post :create, params: { employee_id: @employee.id }
 

@@ -5,17 +5,17 @@ require 'test_helper'
 module Aim
   # Moving an invoice to another budget unit's shared queue (item a.2): it
   # changes the invoice's BU, so the mover must cover that BU unless they are
-  # AIM Staff or an Admin.
+  # an AIM Admin.
   class InvoiceUnitMovesTest < ActionController::TestCase
     tests Aim::InvoicesController
 
     setup do
       session[:user] = { 'email' => 'mover@example.com', 'employee_id' => 7 }
-      @controller.define_singleton_method(:current_user_group_names) { Set['aim_staff'] }
+      @controller.define_singleton_method(:current_user_group_names) { Set['aim_admin'] }
       @controller.helpers.define_singleton_method(:can_access_app?) { |*| true }
     end
 
-    test 'staff move an invoice to another BU shared queue, and the history says the BU changed' do
+    test 'AIM Admins move an invoice to another BU shared queue, and the history says the BU changed' do
       row = invoice('U-1', budget_unit: '4641', assigned_employee_id: 7, assigned_to: 'Jane Doe', assignment_source: 'folder')
 
       patch :reassign, params: { id: row.batch_id, destination: 'other_unit', budget_unit: '4601' }

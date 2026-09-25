@@ -1,6 +1,6 @@
 <%# A person's budget units and their role in each (item a.2). The home unit
     comes from GSABSS and cannot be taken away; the rest are granted here.
-    AIM Admin and AIM Staff are groups, managed under ACL. %>
+    AIM Admin is the aim_admin group, set in ACL. %>
 <% labels = @unit_options.to_h(&:reverse) %>
 <%# AIM admins change everything; a BU Admin adds and takes away their own BUs only. %>
 <% full = aim_managed_units.nil? %>

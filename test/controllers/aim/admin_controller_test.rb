@@ -16,7 +16,7 @@ module Aim
       added, grouped = two_employees
       as_groups 'aim_admin'
       Aim::Member.create!(employee_id: added.id)
-      group = Group.create!(Group_Name: 'aim_staff')
+      group = Group.create!(Group_Name: 'aim_admin')
       EmployeeGroup.create!(GroupID: group.GroupID, EmployeeID: grouped.id)
 
       get :index
@@ -24,9 +24,9 @@ module Aim
       assert_response :success
       assert_includes response.body, added.last_name
       assert_includes response.body, grouped.last_name
-      assert_includes response.body, 'In AIM through a group'
+      assert_includes response.body, 'AIM Admin through the aim_admin group'
       assert_select 'th', text: /Role/
-      assert_includes response.body, 'AIM Staff'
+      assert_includes response.body, 'AIM Admin'
     end
 
     test 'the By BU view groups people under their unit, and the choice is remembered' do
@@ -65,8 +65,8 @@ module Aim
       assert_includes response.body, 'Not in GSABSS'
     end
 
-    test 'AIM staff are sent away' do
-      as_groups 'aim_staff'
+    test 'someone who is not an AIM Admin is sent away' do
+      as_groups
 
       get :index
 

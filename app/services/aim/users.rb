@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
 module Aim
-  # The people an invoice can be handed to: everyone who can work the AIM
-  # queues. That is the people added on the Admin screen (Aim::Member) and,
-  # until the switchover ends, the aim_admin, aim_staff and system_admins
-  # groups, which predate the ACL section, plus every group granted AIM's
-  # Processing Queues feature under ACL. Employees live in GSABSS and the
-  # groups in Paperboy, so the two are joined by id here rather than in SQL.
+  # The people an invoice can be handed to: everyone who works AIM. That is
+  # the people on the AIM list (Aim::Member) and the AIM Admins, who are the
+  # aim_admin group in ACL (one role, decided 2026-09-25: AIM Admin comes from
+  # ACL, everything else from AIM's own settings). System admins reach AIM as
+  # admins but have no queue unless they are on the list. Employees live in
+  # GSABSS and the groups in Paperboy, so the two are joined by id here.
   module Users
-    GROUPS = %w[system_admins aim_admin aim_staff].freeze
-    FEATURE = AppFeature.permission_key('aim', 'processing_queues')
+    GROUPS = %w[aim_admin].freeze
 
     module_function
 
@@ -18,13 +17,11 @@ module Aim
       Employee.where(id: ids).order(:last_name, :first_name)
     end
 
-    # The people who are AIM users through a group rather than the Admin
-    # screen. Shown on the Admin screen during the switchover, so it is clear
-    # why removing someone there does not end their access.
+    # The AIM Admins: members of the aim_admin group in ACL. Shown on the
+    # Admin screen, so it is clear why deleting one there does not end their
+    # access -- that is changed in ACL.
     def group_employee_ids
-      group_ids = Group.where(Group_Name: GROUPS).pluck(:GroupID) +
-                  GroupPermission.where(Permission_Key: FEATURE).pluck(:GroupID)
-      EmployeeGroup.where(GroupID: group_ids.uniq).pluck(:EmployeeID).uniq
+      EmployeeGroup.where(GroupID: Group.where(Group_Name: GROUPS).select(:GroupID)).pluck(:EmployeeID).uniq
     end
 
     # Whether this employee has a queue: is one of the people who work AIM.
@@ -50,8 +47,8 @@ module Aim
     end
 
     # What a person is in AIM, for their profile and the Users & Queues list
-    # (roles decided 2026-09-25): AIM Admin and AIM Staff come from the groups,
-    # BU Admin from their BUs, and everyone on the list is a User.
+    # (roles decided 2026-09-25): AIM Admin comes from ACL (aim_admin, or
+    # system_admins), BU Admin from their BUs, and everyone else is a User.
     def roles_of(employee_id) = roles_by_person([employee_id]).fetch(employee_id.to_i)
 
     # The same for many people at once: { employee_id => [roles] }.
@@ -69,7 +66,6 @@ module Aim
     def role_names(groups, bu_admin)
       roles = []
       roles << 'AIM Admin' if groups.intersect?(%w[system_admins aim_admin])
-      roles << 'AIM Staff' if groups.include?('aim_staff')
       roles << 'BU Admin' if bu_admin
       roles.presence || ['User']
     end

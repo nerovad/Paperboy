@@ -3,16 +3,19 @@
 require 'test_helper'
 
 module Aim
-  # Who an invoice can be handed to: the AIM groups and the ACL grant.
+  # Who an invoice can be handed to: the AIM list and the aim_admin group.
   class UsersTest < ActiveSupport::TestCase
-    test 'members of the AIM groups and of groups granted the queues are AIM users, once each' do
+    test 'the aim_admin group are AIM users, and old queue grants and other groups are not' do
       employee = Employee.order(:id).first
       skip 'no employee to test with' if employee.nil?
-      staff = Group.create!(Group_Name: 'aim_staff')
+      admins = Group.create!(Group_Name: 'aim_admin')
       granted = Group.create!(Group_Name: 'fleet_clerks')
-      GroupPermission.create!(GroupID: granted.GroupID, Permission_Type: 'feature', Permission_Key: Aim::Users::FEATURE)
-      EmployeeGroup.create!(GroupID: staff.GroupID, EmployeeID: employee.id)
-      EmployeeGroup.create!(GroupID: granted.GroupID, EmployeeID: employee.id)
+      GroupPermission.create!(GroupID: granted.GroupID, Permission_Type: 'feature',
+                              Permission_Key: AppFeature.permission_key('aim', 'processing_queues'))
+      staff = Group.create!(Group_Name: 'aim_staff')
+      EmployeeGroup.create!(GroupID: admins.GroupID, EmployeeID: employee.id)
+      other = Employee.where.not(id: employee.id).order(:id).first
+      [granted, staff].each { |g| EmployeeGroup.create!(GroupID: g.GroupID, EmployeeID: other.id) } if other
 
       assert_equal [employee.id], Aim::Users.all.map(&:id)
       assert_equal ["#{employee.first_name} #{employee.last_name}".squish], Aim::Users.names
@@ -30,8 +33,8 @@ module Aim
     test 'seeding from the groups adds each group member once' do
       employee = Employee.order(:id).first
       skip 'no employee to test with' if employee.nil?
-      staff = Group.create!(Group_Name: 'aim_staff')
-      EmployeeGroup.create!(GroupID: staff.GroupID, EmployeeID: employee.id)
+      admins = Group.create!(Group_Name: 'aim_admin')
+      EmployeeGroup.create!(GroupID: admins.GroupID, EmployeeID: employee.id)
 
       assert_equal 1, Aim::Member.seed_from_groups!(added_by: 'test')
       assert_equal 0, Aim::Member.seed_from_groups!(added_by: 'test')

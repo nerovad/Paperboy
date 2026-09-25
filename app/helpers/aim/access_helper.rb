@@ -8,7 +8,7 @@ module Aim
   # other app — where no AIM controller is running — so they are a helper now
   # and the base controller reaches them through +helpers+ like everything else.
   #
-  # Admin / Approver mode (item a.2): an AIM Admin or Staff member can switch
+  # Admin / Approver mode (item a.2): an AIM Admin can switch
   # to Approver mode, in which every check below answers as it would for a
   # User. The switch is in the session; the mode they start in is theirs to
   # set (Aim::UserPreference). The aim_real_* checks ignore the mode, for the
@@ -27,14 +27,13 @@ module Aim
       Aim::Users.member?(aim_session_employee_id)
     end
 
-    # Who manages AIM's people: aim_admin and system admins, not aim_staff
-    # (decided 2026-09-25). Staff work every invoice; admins decide who works.
-    def aim_user_admin?
-      (current_user_group_names & %w[system_admins aim_admin]).any? && !aim_approver_mode?
-    end
+    # Who manages AIM's people. One role since 2026-09-25: the AIM Admins,
+    # who also process invoices, so this is aim_queue_access? by another name.
+    def aim_user_admin? = aim_queue_access?
 
     # Who sees the Pipeline, Vendors and the Dashboard, and works every BU:
-    # AIM Admins and AIM Staff, by group (roles decided 2026-09-25). The
+    # the AIM Admins, the aim_admin group in ACL (plus system admins, who
+    # reach everything in Paperboy). One role, decided 2026-09-25. The
     # Processing Queues and Dashboard features under ACL no longer grant this:
     # they had been given to whole departments at org level, which made every
     # User there staff. Capabilities return deliberately in step a.6.
@@ -43,7 +42,7 @@ module Aim
     end
 
     # The budget units this person oversees on the BU page: every one (nil)
-    # for AIM Admins and Staff, the ones they are BU Admin of otherwise, and
+    # for AIM Admins, the ones they are BU Admin of otherwise, and
     # none in Approver mode, which hides admin tools of every kind.
     def aim_bu_admin_units
       return [] if aim_approver_mode?
@@ -53,8 +52,8 @@ module Aim
     end
 
     # The budget units whose people this person manages: every one (nil) for
-    # AIM Admins, the ones they are BU Admin of otherwise. Staff manage no
-    # people as Staff (roles, 2026-09-25); Approver mode manages none.
+    # AIM Admins, the ones they are BU Admin of otherwise; none in Approver
+    # mode.
     def aim_managed_units
       return [] if aim_approver_mode?
       return nil if aim_user_admin?
@@ -73,7 +72,7 @@ module Aim
     end
 
     # The budget units whose shared queues this person may move an invoice to:
-    # Staff and Admins any (nil), everyone else the BUs they cover.
+    # AIM Admins any (nil), everyone else the BUs they cover.
     def aim_move_units
       return nil if aim_queue_access?
 
@@ -90,7 +89,7 @@ module Aim
     end
 
     def aim_real_admin?
-      (current_user_group_names & %w[system_admins aim_admin aim_staff]).any?
+      (current_user_group_names & %w[system_admins aim_admin]).any?
     end
 
     def aim_real_queue_access? = aim_real_admin?

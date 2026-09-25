@@ -3,7 +3,7 @@
 module Aim
   # The BU page (item a.2): budget unit -> its shared queue and each person ->
   # their invoices, collapsible, in the Ready for Approval style. "My BUs" for a
-  # BU Admin, their BUs only; "By BU" for AIM Admins and Staff, every GSA BU.
+  # BU Admin, their BUs only; "By BU" for AIM Admins, every GSA BU.
   # In queue by default, with the pipeline a tab away.
   class BudgetUnitsController < BaseController
     include Aim::StageTabs

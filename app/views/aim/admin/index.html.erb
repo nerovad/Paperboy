@@ -32,7 +32,7 @@
       <%= select_tag :role, options_for_select(Aim::AdminController::ROLES, @filters['role']),
                      include_blank: 'All roles', aria: { label: 'Role' } %>
       <label><%= check_box_tag :has_open, '1', @filters['has_open'] == '1' %> Has invoices</label>
-      <label><%= check_box_tag :via_group, '1', @filters['via_group'] == '1' %> AIM group</label>
+      <label><%= check_box_tag :via_group, '1', @filters['via_group'] == '1' %> Admin through ACL</label>
       <label><%= check_box_tag :missing, '1', @filters['missing'] == '1' %> Not in GSABSS</label>
       <button type="submit" class="btn compact">Apply</button>
       <% if @filters.any? %>

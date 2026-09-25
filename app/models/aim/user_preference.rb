@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aim
-  # Per-person AIM settings. Today only the mode an AIM Admin or Staff member
+  # Per-person AIM settings. Today only the mode an AIM Admin
   # starts in: 'admin' (everything their groups allow) or 'approver' (AIM as a
   # User sees it). See Aim::AccessHelper#aim_approver_mode?.
   class UserPreference < Record

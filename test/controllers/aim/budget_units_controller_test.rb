@@ -3,7 +3,7 @@
 require 'test_helper'
 
 module Aim
-  # The BU page (item a.2): My BUs for a BU Admin, By BU for Staff and Admins.
+  # The BU page (item a.2): My BUs for a BU Admin, By BU for AIM Admins.
   class BudgetUnitsControllerTest < ActionController::TestCase
     tests Aim::BudgetUnitsController
 
@@ -34,8 +34,8 @@ module Aim
       assert_not_includes response.body, 'INV-ELSEWHERE'
     end
 
-    test 'Staff see every BU, as By BU' do
-      as_groups 'aim_staff'
+    test 'AIM Admins see every BU, as By BU' do
+      as_groups 'aim_admin'
       invoice('B-XX', budget_unit: '4601', invoice_number: 'INV-ELSEWHERE')
 
       get :index
@@ -44,11 +44,11 @@ module Aim
       assert_includes response.body, 'INV-ELSEWHERE'
     end
 
-    test 'someone who is no BU Admin is sent away, and so is Staff in Approver mode' do
+    test 'someone who is no BU Admin is sent away, and so is an AIM Admin in Approver mode' do
       get :index
       assert_redirected_to aim_root_path
 
-      as_groups 'aim_staff'
+      as_groups 'aim_admin'
       session[:aim_mode] = 'approver'
       get :index
       assert_redirected_to aim_root_path

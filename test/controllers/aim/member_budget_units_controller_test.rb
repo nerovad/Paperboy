@@ -69,8 +69,8 @@ module Aim
       assert_nil Aim::UserBudgetUnit.find_by(id: row.id)
     end
 
-    test 'AIM staff do not change budget units' do
-      as_groups 'aim_staff'
+    test 'someone who is not an AIM Admin or BU Admin does not change budget units' do
+      as_groups
 
       post :create, params: { member_id: @employee.id, budget_unit: '9999' }
 
@@ -97,14 +97,14 @@ module Aim
       assert_nil Aim::UserBudgetUnit.find_by(id: row.id)
     end
 
-    test 'roles name AIM Admin, AIM Staff and BU Admin, or User' do
+    test 'roles name AIM Admin and BU Admin, or User' do
       assert_equal ['User'], Aim::Users.roles_of(@employee.id)
 
       Aim::UserBudgetUnit.create!(employee_id: @employee.id, budget_unit: '9999', bu_admin: true)
-      staff = Group.create!(Group_Name: 'aim_staff')
-      EmployeeGroup.create!(GroupID: staff.GroupID, EmployeeID: @employee.id)
+      admins = Group.create!(Group_Name: 'aim_admin')
+      EmployeeGroup.create!(GroupID: admins.GroupID, EmployeeID: @employee.id)
 
-      assert_equal ['AIM Staff', 'BU Admin'], Aim::Users.roles_of(@employee.id)
+      assert_equal ['AIM Admin', 'BU Admin'], Aim::Users.roles_of(@employee.id)
     end
 
     private

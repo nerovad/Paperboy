@@ -878,6 +878,16 @@ Recorded so they are not relitigated.
     as received.
   - **Fiscal stamp.** When Fiscal archives, every page, bottom left: the
     check number and the date processed.
+  - **One admin role, from ACL** (Joshua, 2026-09-25, later the same day,
+    replacing the four roles below). AIM Staff and AIM Admin are merged: AIM
+    processing staff also manage people in Fusion today, so nothing separated
+    them. **AIM Admin** is the `aim_admin` group in ACL (plus system admins,
+    who reach all of Paperboy) and does everything: processing, people, BUs,
+    settings. Everything else comes from AIM's own settings: who works AIM
+    (the AIM list), BU Admin and BUs (profiles), later Out of office. The
+    `aim_staff` group and the old Processing Queues grants count for nothing.
+    AIM users are the AIM list plus the `aim_admin` group; system admins have
+    no queue unless listed. Where the list below says Staff, read AIM Admin.
   - **Roles** (Joshua, 2026-09-25). Four, plus Fiscal; no Superuser, which
     "BU Admin over many BUs" or Staff already covers.
     - **User** (approver): their own queue and their BUs' shared queues;
@@ -3746,3 +3756,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-25 | a.2 (5) | (this commit) | AIM Staff and Admin are the `aim_admin`, `aim_staff` and `system_admins` groups only. The Processing Queues and Dashboard features no longer grant staff access: org-level grants to 4601 and 4643 had made every User there staff (found emulating Tina Arellano: Pipeline, Vendors, Dashboard, the mode switch and every BU's shared queue). The Dashboard follows the same rule. 1177 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a.2 (6) | (this commit) | The BU page: My BUs for a BU Admin, By BU for Staff and Admins -- each BU's shared queue and people, collapsible, with the queue/pipeline tabs (now a shared concern and partial) and Move. BU Admins open, claim and move invoices in their BUs, moving to a person only if that person covers the BU; they still cannot approve others' invoices. Hidden in Approver mode. 1182 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a.2 (7) | (this commit) | BU Admins manage people in their BUs: add someone with one of their BUs from My BUs, open the profiles of people in those BUs, add or take away those BUs only. Appointing BU Admins, hiding units, taking a BU from another BU Admin of it and deleting stay with AIM admins (`aim_managed_units`). 1187 runs, 0 failures, 0 errors (the P2M test passed this run, so it is intermittent); brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (8) | (this commit) | One admin role: AIM Admin is the `aim_admin` group in ACL (plus system admins); AIM Staff is folded into it, and the Staff switch built earlier the same day was withdrawn before commit. AIM users are the AIM list plus `aim_admin`; `system_admins`, `aim_staff` and the Processing Queues grant groups no longer add anyone. The list's group tag reads ACL. Gary Howard and Matthew Davoren added to `aim_admin` in ACL by Joshua. 1187 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |

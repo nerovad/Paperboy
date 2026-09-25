@@ -50,7 +50,7 @@ module Aim
     end
 
     test 'an admin opens the queue of someone who works AIM through a group' do
-      group = Group.create!(Group_Name: 'aim_staff')
+      group = Group.create!(Group_Name: 'aim_admin')
       EmployeeGroup.create!(GroupID: group.GroupID, EmployeeID: @employee.id)
       Aim::Invoice.create!(actor: 'test', batch_id: 'B-GRP', state: 'ready_for_approval', assigned_employee_id: @employee.id,
                            invoice_number: 'INV-99')
@@ -59,7 +59,7 @@ module Aim
 
       assert_response :success
       assert_includes response.body, 'INV-99'
-      assert_includes response.body, 'AIM Staff'
+      assert_includes response.body, 'AIM Admin'
       assert_select 'button', text: 'Delete from AIM', count: 0
       assert_equal "/aim/admin/users/#{@employee.id}", session[:aim_queue_page], 'an invoice opened here returns here'
     end

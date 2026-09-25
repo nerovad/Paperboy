@@ -17,7 +17,7 @@
         <td>
           <%= link_to person.name, aim_member_path(person.employee_id), class: 'aim-people-table__name' %>
           <span class="aim-people-table__id"><%= person.employee_id %></span>
-          <% if person.via_group %><span class="badge is-pending" title="In AIM through an AIM group, under ACL">AIM group</span><% end %>
+          <% if person.via_group %><span class="badge is-pending" title="AIM Admin through the aim_admin group, set in ACL">ACL</span><% end %>
           <% if person.missing %><span class="badge is-denied">Not in GSABSS</span><% end %>
         </td>
         <td><%= person.unit_label %></td>
@@ -41,7 +41,7 @@
                             aim_member_path(person.employee_id, anchor: 'delete'),
                             class: ('aim-actions-menu__danger' if person.open.zero?) %>
               <% else %>
-                <span class="aim-actions-menu__note">In AIM through a group; change it under ACL</span>
+                <span class="aim-actions-menu__note">AIM Admin through the aim_admin group; change it in ACL</span>
               <% end %>
             </div>
           </details>

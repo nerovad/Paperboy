@@ -11,7 +11,7 @@ module Aim
 
     VIEWS = %w[list bu].freeze
     SORTS = %w[name unit role open].freeze
-    ROLES = ['AIM Admin', 'AIM Staff', 'BU Admin', 'User'].freeze
+    ROLES = ['AIM Admin', 'BU Admin', 'User'].freeze
 
     Person = Struct.new(:employee_id, :first_name, :last_name, :unit, :unit_name, :member, :via_group, :open,
                         :missing, :roles, keyword_init: true) do

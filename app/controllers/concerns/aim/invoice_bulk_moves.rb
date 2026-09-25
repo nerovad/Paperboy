@@ -105,7 +105,7 @@ module Aim
       redirect_back_or_to aim_my_queue_path, notice: notice
     end
 
-    # What the single Move allows: AIM staff move any open invoice, a BU
+    # What the single Move allows: AIM Admins move any open invoice, a BU
     # Admin any in their BUs; anyone else their own ready invoices and those in
     # shared queues they cover.
     def movable_by_me?
