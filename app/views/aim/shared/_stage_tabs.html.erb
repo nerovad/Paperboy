@@ -1,5 +1,6 @@
 <%# In queue / In pipeline tabs, the search box, and (in the pipeline) a tick
-    box per stage. `path` builds this page's URL from extra params. Pairs with
+    box per stage. `path` builds this page's URL from extra params; `keep` is
+    params the stage form must carry, since a GET form drops its URL's. Pairs with
     Aim::StageTabs, which sets @tab, @stages and @stage_counts. %>
 <div class="aim-people-toolbar">
   <nav class="aim-people-toolbar__views" aria-label="Invoices">
@@ -15,6 +16,9 @@
 <% if @tab == 'pipeline' %>
   <%= form_with url: path.call, method: :get, local: true, class: 'aim-people-toolbar__filters aim-stage-filters' do %>
     <%= hidden_field_tag :tab, 'pipeline' %>
+    <% local_assigns.fetch(:keep, {}).compact.each do |key, value| %>
+      <%= hidden_field_tag key, value, id: nil %>
+    <% end %>
     <% pipeline_stages.each do |stage| %>
       <label>
         <%= check_box_tag 'stages[]', stage, @stages.include?(stage), id: "stage-#{stage}" %>

@@ -65,6 +65,19 @@ module Aim
       assert_includes response.body, 'Not in GSABSS'
     end
 
+    test 'filters by agency, read from the COA' do
+      employee = Employee.where('agency LIKE ?', 'GSA%').order(:id).first || skip('no GSA employee')
+      as_groups 'aim_admin'
+      Aim::Member.create!(employee_id: employee.id)
+
+      get :index, params: { view: 'list', agency: 'GSA' }
+      assert_includes response.body, employee.last_name
+      assert_select 'select[name=agency] option[value=GSA]'
+
+      get :index, params: { view: 'list', agency: 'SHF' }
+      assert_not_includes response.body, ">#{employee.last_name}, "
+    end
+
     test 'inactive people are hidden unless asked for' do
       employee = Employee.order(:id).first || skip('no employee to test with')
       as_groups 'aim_admin'

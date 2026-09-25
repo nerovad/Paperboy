@@ -10,7 +10,17 @@
     <span class="aim-count-pill"><%= pluralize(@units.size, 'budget unit') %></span>
   </header>
 
-  <%= render 'aim/shared/stage_tabs', path: ->(**opts) { aim_budget_units_path(**opts) },
+  <% if @agencies.size > 1 %>
+    <%= form_with url: aim_budget_units_path, method: :get, local: true, class: 'aim-people-toolbar__filters aim-agency-filter' do %>
+      <%= hidden_field_tag :tab, @tab %>
+      <%= select_tag :agency, options_for_select(@agencies.map { |a| [@coa.agency_label(a), a] }, @agency), aria: { label: 'Agency' } %>
+      <button type="submit" class="btn compact">Show</button>
+    <% end %>
+  <% elsif @agency %>
+    <p class="aim-agency-note"><%= @coa.agency_label(@agency) %></p>
+  <% end %>
+
+  <%= render 'aim/shared/stage_tabs', path: ->(**opts) { aim_budget_units_path(agency: @agency, **opts) }, keep: { agency: @agency },
                                       placeholder: 'Search person, vendor, invoice #, BU, total…' %>
 
   <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path %>">

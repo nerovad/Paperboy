@@ -11,12 +11,5 @@ module Aim
 
     scope :for_person, ->(employee_id) { where(employee_id: employee_id) }
     scope :administered, -> { where(bu_admin: true, hidden: false) }
-
-    # The units AIM offers when granting a BU: GSA's active ones, as
-    # [["4641 · Document Management", "4641"], ...].
-    def self.unit_options
-      Coa::Unit.where(agency_id: 'GSA', active: true).order(:unit_id).pluck(:unit_id, :long_name)
-               .map { |unit, name| ["#{unit} · #{name.to_s.titleize}", unit] }
-    end
   end
 end

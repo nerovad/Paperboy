@@ -89,11 +89,10 @@ module Aim
       Aim::Users.shared_budget_units(aim_session_employee_id, staff: false)
     end
 
-    # [label, unit] choices for the Move dialog's "another budget unit".
+    # The Move dialog's "another budget unit" choices, grouped by agency, from
+    # the Chart of Accounts.
     def aim_move_unit_options
-      allowed = aim_move_units
-      options = Aim::UserBudgetUnit.unit_options
-      allowed.nil? ? options : options.select { |_, unit| allowed.include?(unit) }
+      Aim::Units.new.grouped_options(only: aim_move_units)
     rescue ActiveRecord::ActiveRecordError
       []
     end

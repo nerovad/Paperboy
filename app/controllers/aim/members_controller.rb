@@ -53,7 +53,7 @@ module Aim
       @invoices = invoices_for_tab(Aim::Invoice.where(assigned_employee_id: @employee_id))
       @home_unit = @employee&.unit.presence
       @budget_units = Aim::UserBudgetUnit.for_person(@employee_id).order(:budget_unit).to_a
-      @unit_options = Aim::UserBudgetUnit.unit_options
+      @units = Aim::Units.new
       @roles = Aim::Users.roles_of(@employee_id)
     end
 

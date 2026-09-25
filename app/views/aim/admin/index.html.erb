@@ -27,6 +27,8 @@
 
     <%= form_with url: aim_admin_path, method: :get, local: true, class: 'aim-people-toolbar__filters' do %>
       <%= hidden_field_tag :sort, @sort %>
+      <%= select_tag :agency, options_for_select(@agencies, @filters['agency']),
+                     include_blank: 'All agencies', aria: { label: 'Agency' } %>
       <%= select_tag :unit, options_for_select(@units, @filters['unit']),
                      include_blank: 'All units', aria: { label: 'Unit' } %>
       <%= select_tag :role, options_for_select(Aim::AdminController::ROLES, @filters['role']),

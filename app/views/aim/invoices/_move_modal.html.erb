@@ -26,7 +26,7 @@
           </div>
           <% if unit_options.any? %>
             <div class="aim-owner-choice__picker" data-aim-owner-choice-target="unit" hidden>
-              <%= select_tag :budget_unit, options_for_select(unit_options), include_blank: 'Pick a budget unit…',
+              <%= select_tag :budget_unit, grouped_options_for_select(unit_options), include_blank: 'Pick a budget unit…',
                              aria: { label: 'Budget unit' } %>
               <p class="aim-owner-choice__note">This changes the invoice's budget unit, and so the BU that billing charges.</p>
             </div>

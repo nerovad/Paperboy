@@ -16,23 +16,33 @@ module Aim
     end
 
     def index
-      units = helpers.aim_bu_admin_units
-      return redirect_to(aim_root_path, alert: 'You are not a BU Admin.') if units == []
+      mine = helpers.aim_bu_admin_units
+      return redirect_to(aim_root_path, alert: 'You are not a BU Admin.') if mine == []
 
-      labels = Aim::UserBudgetUnit.unit_options.to_h(&:reverse)
-      @units = (units || labels.keys).sort
+      @coa = Aim::Units.new
+      choose_agency(mine)
       invoices = invoices_for_tab(Aim::Invoice.where(budget_unit: @units)).group_by(&:budget_unit)
       people = people_by_unit
-      @sections = @units.map { |unit| section(unit, labels, people.fetch(unit, {}), invoices.fetch(unit, [])) }
+      @sections = @units.map { |unit| section(unit, people.fetch(unit, {}), invoices.fetch(unit, [])) }
     end
 
     private
 
-    def section(unit, labels, people, invoices)
+    # One agency at a time, from the COA. AIM Admins start on their own agency;
+    # a BU Admin sees their BUs, by agency only when those span more than one.
+    def choose_agency(mine)
+      in_scope = mine || @coa.all.map(&:unit)
+      @agencies = in_scope.map { |unit| @coa.agency_of(unit) }.compact.uniq.sort
+      own = Coa::Agency.normalize_id(Employee.where(id: current_user_employee_id).pick(:agency))
+      @agency = [params[:agency], own, @agencies.first].find { |agency| @agencies.include?(agency) }
+      @units = in_scope.select { |unit| @agency.nil? || @coa.agency_of(unit) == @agency || @coa.agency_of(unit).nil? }.sort
+    end
+
+    def section(unit, people, invoices)
       owned = invoices.group_by(&:assigned_employee_id)
       # Anyone who owns an invoice here is listed, even without the BU.
       (owned.keys.compact - people.keys).each { |id| people[id] = owned[id].first.assigned_to.presence || "Employee #{id}" }
-      Section.new(unit: unit, label: labels.fetch(unit, unit), shared: owned.fetch(nil, []),
+      Section.new(unit: unit, label: @coa.label(unit), shared: owned.fetch(nil, []),
                   people: people.sort_by { |_, name| name.downcase }.map do |id, name|
                     Person.new(employee_id: id, name: name, invoices: owned.fetch(id, []))
                   end)

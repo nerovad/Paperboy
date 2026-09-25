@@ -13,8 +13,9 @@ module Aim
       staff = helpers.aim_queue_access?
       @budget_units = Aim::Users.shared_budget_units(current_user_employee_id, staff: staff)
       invoices = Aim::Invoice.shared_for(@budget_units).newest_first.to_a
+      coa = Aim::Units.new
       @groups = invoices.group_by(&:budget_unit).sort_by { |bu, _| bu.to_s }
-                        .map { |bu, rows| ["#{bu.presence || 'No BU'} shared queue", rows] }
+                        .map { |bu, rows| ["#{coa.label(bu)} shared queue", rows] }
     end
   end
 end

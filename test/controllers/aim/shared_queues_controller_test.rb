@@ -27,7 +27,9 @@ module Aim
       Aim::Users.stub(:shared_budget_units, %w[4601 4641]) { get :index }
 
       assert_response :success
-      assert_equal(['4601 shared queue', '4641 shared queue'], @controller.instance_variable_get(:@groups).map(&:first))
+      coa = Aim::Units.new
+      assert_equal(["#{coa.label('4601')} shared queue", "#{coa.label('4641')} shared queue"],
+                   @controller.instance_variable_get(:@groups).map(&:first))
       assert_equal(%w[4641.SQ2], @controller.instance_variable_get(:@groups).last.last.map(&:batch_id))
     end
 
