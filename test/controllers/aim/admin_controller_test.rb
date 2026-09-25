@@ -65,6 +65,16 @@ module Aim
       assert_includes response.body, 'Not in GSABSS'
     end
 
+    test 'warns about active BUs with no BU Admin' do
+      employee = Employee.where.not(unit: [nil, '']).order(:id).first || skip('no employee with a unit')
+      as_groups 'aim_admin'
+      Aim::Member.create!(employee_id: employee.id)
+
+      get :index
+
+      assert_select '.aim-alert--warn', text: /no BU Admin/
+    end
+
     test 'filters by agency, read from the COA' do
       employee = Employee.where('agency LIKE ?', 'GSA%').order(:id).first || skip('no GSA employee')
       as_groups 'aim_admin'

@@ -62,5 +62,22 @@ module Aim
 
       assert_empty Aim::Users.all
     end
+
+    test 'an active BU with people but no BU Admin is reported, until someone administers it' do
+      employee = Employee.where.not(unit: [nil, '']).order(:id).first || skip('no employee with a unit')
+      Aim::Member.create!(employee_id: employee.id)
+
+      assert_includes Aim::Users.units_without_admin, employee.unit
+
+      Aim::UserBudgetUnit.create!(employee_id: employee.id, budget_unit: employee.unit, bu_admin: true)
+      assert_not_includes Aim::Users.units_without_admin, employee.unit
+    end
+
+    test 'deactivated people do not make a BU active' do
+      employee = Employee.where.not(unit: [nil, '']).order(:id).first || skip('no employee with a unit')
+      Aim::Member.create!(employee_id: employee.id, deactivated_at: Time.current)
+
+      assert_not_includes Aim::Users.units_without_admin, employee.unit
+    end
   end
 end

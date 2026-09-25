@@ -1317,3 +1317,23 @@
   background: $warning-border-soft;
   color: $warning-text;
 }
+
+// A standing warning at the top of an admin page: active BUs with no BU Admin.
+.aim-alert {
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+
+  a {
+    color: $brand-navy;
+    font-weight: 600;
+  }
+}
+
+.aim-alert--warn {
+  background: $warning-border-soft;
+  border-color: $warning-border;
+  color: $warning-text;
+}

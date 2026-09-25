@@ -10,6 +10,8 @@
     <span class="aim-count-pill"><%= pluralize(@units.size, 'budget unit') %></span>
   </header>
 
+  <%= render 'aim/shared/units_without_admin' %>
+
   <% if @agencies.size > 1 %>
     <%= form_with url: aim_budget_units_path, method: :get, local: true, class: 'aim-people-toolbar__filters aim-agency-filter' do %>
       <%= hidden_field_tag :tab, @tab %>
@@ -28,7 +30,7 @@
 
     <% @sections.each_with_index do |section, index| %>
       <% bu_id = "aim-bu-#{index}" %>
-      <section class="billing-audit-group aim-owner-group aim-bu-group" data-controller="billing-audit-sections"
+      <section id="bu-<%= section.unit %>" class="billing-audit-group aim-owner-group aim-bu-group" data-controller="billing-audit-sections"
                data-aim-queue-filter-target="group" data-search="<%= section.label %>">
         <h2>
           <button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle"
@@ -37,6 +39,9 @@
             <strong class="aim-owner-group__name"><%= section.label %></strong>
             <strong class="aim-count-pill"><%= pluralize(section.people.size, 'person') %></strong>
             <strong class="aim-count-pill"><%= pluralize(section.invoice_count, 'invoice') %></strong>
+            <% unless section.administered? %>
+              <strong class="aim-count-pill aim-count-pill--warn">No BU Admin</strong>
+            <% end %>
             <% unless section.covered? %>
               <strong class="aim-count-pill aim-count-pill--warn" title="Its unowned invoices wait for an AIM Admin">Nobody on the shared queue</strong>
             <% end %>

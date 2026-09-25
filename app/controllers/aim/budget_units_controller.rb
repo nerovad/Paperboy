@@ -18,6 +18,7 @@ module Aim
     Section = Struct.new(:unit, :label, :shared, :people, keyword_init: true) do
       def invoice_count = shared.size + people.sum { |person| person.invoices.size }
       def covered? = people.any?(&:shared_queue?)
+      def administered? = people.any? { |person| person.row&.bu_admin && !person.row.hidden }
     end
 
     def index

@@ -1,0 +1,13 @@
+<%# Active BUs with no BU Admin (Aim::Users.units_without_admin), for AIM
+    Admins: every BU with people in it should have one. Not enforced. %>
+<% if aim_user_admin? %>
+  <% gaps = Aim::Users.units_without_admin %>
+  <% if gaps.any? %>
+    <% coa = Aim::Units.new %>
+    <div class="aim-alert aim-alert--warn" role="status">
+      <strong><%= pluralize(gaps.size, 'budget unit') %> <%= gaps.size == 1 ? 'has' : 'have' %> people but no BU Admin:</strong>
+      <%= safe_join(gaps.map { |unit| link_to(coa.label(unit), aim_budget_units_path(agency: coa.agency_of(unit), anchor: "bu-#{unit}")) }, ', ') %>.
+      Make someone BU Admin on their profile.
+    </div>
+  <% end %>
+<% end %>

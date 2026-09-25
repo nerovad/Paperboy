@@ -7,6 +7,8 @@
     <span class="aim-count-pill"><%= pluralize(@people.length, 'person') %></span>
   </header>
 
+  <%= render 'aim/shared/units_without_admin' %>
+
   <section class="aim-panel aim-admin-add-panel">
     <%= form_with url: aim_members_path, method: :post, local: true, class: 'aim-inline-form' do |form| %>
       <strong class="aim-admin-add-panel__label">Add a person</strong>

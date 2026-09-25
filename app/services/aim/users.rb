@@ -84,6 +84,21 @@ module Aim
       roles.presence || ['User']
     end
 
+    # Active BUs with no BU Admin: BUs at least one active AIM user works in
+    # (home unit unless hidden, or granted) that nobody administers. Every such
+    # BU should have one (Joshua, 2026-09-25); not enforced, only shown.
+    def units_without_admin
+      people = all.pluck(:id, :unit)
+      rows = Aim::UserBudgetUnit.where(employee_id: people.map(&:first)).pluck(:employee_id, :budget_unit, :hidden, :bu_admin)
+      hidden = rows.select { |row| row[2] }.to_set { |row| row.first(2) }
+      worked = people.filter_map { |id, unit| unit.presence unless hidden.include?([id, unit]) }
+      worked += rows.reject { |row| row[2] }.map { |row| row[1] }
+      administered = rows.select { |row| row[3] && !row[2] }.map { |row| row[1] }
+      (worked.uniq - administered).sort
+    rescue ActiveRecord::ActiveRecordError
+      []
+    end
+
     # The BUs this person is BU Admin of.
     def administered_budget_units(employee_id)
       return [] if employee_id.blank?
