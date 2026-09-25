@@ -39,6 +39,12 @@ namespace :aim do
       puts "closed #{closed} rows created before #{before}"
     end
 
+    desc 'Add everyone who works AIM through a group to the Admin screen list (item a.1)'
+    task seed_members: :environment do
+      added = Aim::Member.seed_from_groups!(added_by: 'aim:v2:seed_members')
+      puts "aim.members: #{added} added from the AIM groups"
+    end
+
     desc 'Link open invoices owned by a name to the employee of that name'
     task link_owners: :environment do
       linked, unmatched = Aim::V2Seeds.link_owners

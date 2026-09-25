@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_100004) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_100000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -117,6 +117,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_100004) do
     t.index ["content_hash"], name: "index_aim_invoices_on_content_hash"
     t.index ["parent_id"], name: "index_aim_invoices_on_parent_id"
     t.index ["state", "budget_unit"], name: "index_aim_invoices_on_state_and_budget_unit"
+  end
+
+  create_table "aim.members", force: :cascade do |t|
+    t.string "added_by", limit: 255
+    t.datetime "created_at", null: false
+    t.integer "employee_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employee_id"], name: "index_aim_members_on_employee_id", unique: true
   end
 
   create_table "aim.vendor_aliases", force: :cascade do |t|

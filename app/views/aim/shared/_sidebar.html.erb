@@ -7,7 +7,7 @@
     page draws (aim_counts_controller). %>
 <% current = if controller_name == "invoices" then "queues"
               elsif %w[vendor_aliases vendor_rules].include?(controller_name) then "vendors"
-              elsif controller_name == "admin" then "admin"
+              elsif %w[admin members].include?(controller_name) then "admin"
               else "aim"
               end %>
 <% in_queues = current == "queues" %>
@@ -61,12 +61,14 @@
                     class: "nav-link#{' active' if current_page?(aim_vendor_rules_path)}" %>
       </details>
 
-      <details class="nav-group" <%= "open" if current == "admin" %> data-aim-sidebar-target="group" data-key="admin"
-             data-default-open="false" data-current="<%= current == "admin" %>">
-        <summary><span class="nav-group-label">Admin</span></summary>
-        <%= link_to "Users & Queues", aim_admin_path,
-                    class: "nav-link#{' active' if current_page?(aim_admin_path)}" %>
-      </details>
+      <% if aim_user_admin? %>
+        <details class="nav-group" <%= "open" if current == "admin" %> data-aim-sidebar-target="group" data-key="admin"
+                 data-default-open="false" data-current="<%= current == "admin" %>">
+          <summary><span class="nav-group-label">Admin</span></summary>
+          <%= link_to "Users & Queues", aim_admin_path,
+                      class: "nav-link#{' active' if current == 'admin'}" %>
+        </details>
+      <% end %>
     <% end %>
   </nav>
 </div>

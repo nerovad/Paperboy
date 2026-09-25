@@ -2,10 +2,11 @@
 
 module Aim
   # The people an invoice can be handed to: everyone who can work the AIM
-  # queues. That is the aim_admin, aim_staff and system_admins groups, which
-  # predate the ACL section, plus every group granted AIM's Processing Queues
-  # feature under ACL. Employees live in GSABSS and the groups in Paperboy,
-  # so the two are joined by id here rather than in SQL.
+  # queues. That is the people added on the Admin screen (Aim::Member) and,
+  # until the switchover ends, the aim_admin, aim_staff and system_admins
+  # groups, which predate the ACL section, plus every group granted AIM's
+  # Processing Queues feature under ACL. Employees live in GSABSS and the
+  # groups in Paperboy, so the two are joined by id here rather than in SQL.
   module Users
     GROUPS = %w[system_admins aim_admin aim_staff].freeze
     FEATURE = AppFeature.permission_key('aim', 'processing_queues')
@@ -13,10 +14,17 @@ module Aim
     module_function
 
     def all
+      ids = (group_employee_ids + Aim::Member.pluck(:employee_id)).uniq
+      Employee.where(id: ids).order(:last_name, :first_name)
+    end
+
+    # The people who are AIM users through a group rather than the Admin
+    # screen. Shown on the Admin screen during the switchover, so it is clear
+    # why removing someone there does not end their access.
+    def group_employee_ids
       group_ids = Group.where(Group_Name: GROUPS).pluck(:GroupID) +
                   GroupPermission.where(Permission_Key: FEATURE).pluck(:GroupID)
-      ids = EmployeeGroup.where(GroupID: group_ids.uniq).pluck(:EmployeeID).uniq
-      Employee.where(id: ids).order(:last_name, :first_name)
+      EmployeeGroup.where(GroupID: group_ids.uniq).pluck(:EmployeeID).uniq
     end
 
     # Whether this employee has a queue: is one of the people who work AIM.

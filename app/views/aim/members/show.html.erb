@@ -1,0 +1,42 @@
+<% name = "#{@employee.first_name} #{@employee.last_name}".squish %>
+<div class="aim-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title"><%= name %>'s queue</h1>
+      <p class="aim-page-subtitle">
+        Employee <%= @employee.id %><%= " · Unit #{@employee.unit}" if @employee.unit.present? %>.
+        The open invoices <%= @employee.first_name %> owns. Move them to another person or to their budget unit's shared queue.
+      </p>
+    </div>
+    <span class="aim-count-pill"><%= pluralize(@invoices.length, 'invoice') %></span>
+  </header>
+
+  <% if @invoices.empty? %>
+    <section class="aim-panel aim-empty-state">
+      <p><%= name %> owns no open invoices now.</p>
+    </section>
+  <% else %>
+    <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path %>">
+      <%= render 'aim/invoices/bulk_bar' %>
+      <section class="aim-panel aim-queue-panel">
+        <%= render 'aim/invoices/rows', invoices: @invoices, movable: true %>
+      </section>
+      <%= render 'aim/invoices/move_modal' %>
+    </div>
+  <% end %>
+
+  <section class="aim-panel aim-empty-state">
+    <% if @member.nil? %>
+      <p><%= name %> works AIM through an AIM group. To end that, remove them from the group under ACL.</p>
+    <% elsif @invoices.any? %>
+      <p>To remove <%= name %> from AIM, move every invoice above first.</p>
+    <% else %>
+      <%= button_to "Remove #{name} from AIM", aim_member_path(@employee.id), method: :delete,
+                    data: { turbo_confirm: "Remove #{name} from AIM?", confirm_title: 'Remove from AIM',
+                            confirm_label: 'Remove' },
+                    class: 'btn deny' %>
+    <% end %>
+  </section>
+
+  <p><%= link_to 'Back to Users & Queues', aim_admin_path, class: 'btn compact' %></p>
+</div>

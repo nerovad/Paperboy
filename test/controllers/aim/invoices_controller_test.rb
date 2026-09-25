@@ -102,6 +102,15 @@ module Aim
       assert_select 'button[data-action=?][data-commit=?]', 'aim-reason#open', 'Delete'
     end
 
+    test 'Return to Queue goes back to the queue page the invoice was opened from' do
+      row = invoice('4601.R')
+      session[:aim_queue_page] = '/aim/admin/users/300'
+
+      get :show, params: { id: row.batch_id }
+
+      assert_select 'a[href=?]', '/aim/admin/users/300', text: 'Back to Queue'
+    end
+
     test 'an invoice someone else holds is read only' do
       row = invoice('4601.G', claimed_by: 'other@example.com', claimed_at: Time.current, claimed_by_name: 'Dana Reyes')
 

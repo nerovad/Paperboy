@@ -6,6 +6,8 @@ module Aim
   # (Claim moves one into your queue). Which BUs you cover is
   # Aim::Users.shared_budget_units until the Admin page sets it.
   class SharedQueuesController < BaseController
+    before_action :remember_queue_page, only: :index
+
     def index
       @queue = 'ready_for_approval'
       staff = helpers.aim_queue_access?

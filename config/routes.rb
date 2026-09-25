@@ -141,6 +141,8 @@ Rails.application.routes.draw do
     get 'people', to: 'people#index', as: :people
     get 'counts', to: 'counts#show', as: :counts
     get 'admin', to: 'admin#index', as: :admin
+    get 'admin/employees', to: 'members#employees', as: :admin_employees
+    resources :members, only: %i[create show destroy], path: 'admin/users'
     resources :uploads, only: %i[new create]
     resources :vendor_aliases, only: %i[index create update destroy]
     resources :vendor_rules, only: %i[index create update destroy]

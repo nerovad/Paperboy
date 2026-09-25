@@ -25,6 +25,12 @@ module Aim
       Aim::Users.member?(employee_id)
     end
 
+    # Who manages AIM's people: aim_admin and system admins, not aim_staff
+    # (decided 2026-09-25). Staff work every invoice; admins decide who works.
+    def aim_user_admin?
+      (current_user_group_names & %w[system_admins aim_admin]).any?
+    end
+
     def aim_queue_access?
       aim_admin? || can_use_app_feature?('aim', 'processing_queues')
     end

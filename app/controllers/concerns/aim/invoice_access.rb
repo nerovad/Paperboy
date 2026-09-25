@@ -73,7 +73,7 @@ module Aim
       redirect_back_or_to home_queue_path, alert: 'That person does not work AIM, so they have no queue.'
     end
 
-    def home_queue_path = staff? ? aim_invoices_path(queue: @queue) : aim_my_queue_path
+    def home_queue_path = queue_return_path
 
     def deny_owner
       redirect_to aim_my_queue_path, alert: 'That invoice is not in your queue.'

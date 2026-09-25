@@ -11,7 +11,7 @@ module Aim
     include Aim::InvoiceBulkMoves
     include Aim::InvoiceRestore
 
-    before_action :require_aim_admin, only: :index
+    before_action :require_aim_admin, :remember_queue_page, only: :index
     before_action :set_queue
     before_action :set_invoice, only: %i[show update pdf reassign lock unlock claim restore]
     before_action :require_staff_or_owner, only: %i[show update pdf reassign lock unlock claim restore]

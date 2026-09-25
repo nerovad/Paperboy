@@ -923,3 +923,11 @@
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
+
+// Users & Queues: the Add a person picker's dropdown floats over the list
+// below it, so its panel neither clips it nor paints under the next panel.
+.aim-admin-add-panel {
+  overflow: visible;
+  position: relative;
+  z-index: 2;
+}

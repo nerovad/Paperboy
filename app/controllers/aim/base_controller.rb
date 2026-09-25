@@ -31,6 +31,13 @@ module Aim
       redirect_to aim_root_path, alert: 'You do not have access to AIM processing queues.'
     end
 
+    # Managing who works AIM: aim_admin and system admins only.
+    def require_aim_user_admin
+      return if helpers.aim_user_admin?
+
+      redirect_to aim_root_path, alert: 'Only AIM admins manage AIM users.'
+    end
+
     # Anyone signed in to Paperboy, whether or not they hold the AIM app: the
     # screens that let people hand an invoice to someone's queue.
     def require_signed_in
@@ -38,6 +45,21 @@ module Aim
 
       redirect_to root_path, alert: 'Sign in to Paperboy first.'
     end
+
+    # The queue page an invoice was opened from -- a numbered queue, My Queue,
+    # a shared queue, or a person's queue on the Admin screen -- so Return to
+    # Queue and the redirect after a review action go back there.
+    def remember_queue_page
+      session[:aim_queue_page] = request.fullpath
+    end
+
+    def queue_return_path
+      remembered = session[:aim_queue_page].to_s
+      return remembered if remembered.start_with?('/aim/')
+
+      helpers.aim_queue_access? ? aim_invoices_path(queue: @queue) : aim_my_queue_path
+    end
+    helper_method :queue_return_path
 
     def current_user_email
       session.dig(:user, 'email') || session.dig('user', 'email') || 'Unknown User'
