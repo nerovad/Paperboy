@@ -327,6 +327,81 @@ PDF paired with a sidecar.
 
 ---
 
+## Where AIM Stands — 2026-09-24 (v2 on master)
+
+Read this first. The phases below are history; this is the system as it
+runs today. AIM v2 was merged to Paperboy master on 2026-09-24
+(`5efd5edd`). The contract it was built to, as built, is under
+`## AIM v2 — The Row-First Rebuild` -> `### The contract`.
+
+**The shape.** One Python worker (`script/python/aim/v2/`) runs from
+`E:\AIM\_PROGRAM2` on GSA-SCAN02. Every invoice is one row in
+`aim.invoices` (Paperboy database on `GSASQL16`, `Paperboy_Dev` until
+go-live), and every change of state is one row in `aim.invoice_events`, in
+the same transaction. The PDF lands once in `_BACK_END\_STORE\<batch_id>\`
+and never moves. Folders are storage, never status. The worker claims work
+from the rows with one atomic statement and a 15-minute lease.
+
+**Billing.** We bill for every invoice added, whatever becomes of it. The
+worker upserts one row per invoice in `[GSA_Scan].[dbo].[Aim_Invoices]`,
+keyed by `BatchID`: inserted when the invoice arrives, updated with what the
+AI read, updated again with the approved values and `[Approved By]` at
+export. `[Invoice Status]` follows every state, including Rejected and
+Deleted. `billed_state` on the row is what billing last showed.
+
+**Queues** are queries on `state`: Waiting for AI, Action Needed (one queue,
+filtered by `review_reason`), Needs Split, Ready for Approval, Exporting,
+Failed, Finished, Rejected, Deleted. Counts load after the page draws.
+
+**Owners are people.** `assigned_employee_id` is the GSABSS employee id,
+with `assigned_to` holding the name. The person picker searches the way the
+COA Employee Lookup does, limited to AIM users. Drops in the watch tree
+still arrive with only the folder's name; `aim:v2:link_owners` matches names
+to employees once.
+
+- **My Queue**: your Ready for Approval invoices. Anyone with a queue sees it.
+- **Shared Queues**: ready invoices nobody owns, one group per BU. Interim
+  rule, in `Aim::Users.shared_budget_units`: AIM staff see every BU, everyone
+  else their own unit.
+- **AIM users** today are the `aim_admin`, `aim_staff` and `System_Admins`
+  groups plus any group granted AIM's Processing Queues feature
+  (`Aim::Users`). The Admin page will replace this.
+- **Who may work what.** AIM staff look at everything and work every invoice
+  before approval. In Ready for Approval, the owner works their own and
+  anyone covering the BU works the shared queue's. Someone else's is read
+  only, with **Claim**, which moves it to your queue.
+- **The working lock** is held while the review page is open and checking
+  in every 30 s; it lapses 90 s after the last check-in. Looking never
+  locks. Others see "X is working on this invoice".
+- **Reject, Delete and Send Back ask why.** The reason goes into Notes and
+  the history. AIM staff can **Restore** a rejected or deleted invoice to
+  Action Needed or Ready for Approval, with a reason.
+- **Moving** is by checkbox: tick one or several, then Move selected.
+- **Upload** is open to anyone signed in to Paperboy, with drag and drop.
+  Someone with no queue of their own uploads to someone else's.
+- **Vendor aliases and rules** are tables (`aim.vendor_aliases`,
+  `aim.vendor_rules`) with screens under Vendors. The worker reads them at
+  every extraction.
+- **Sidebar**: AIM open by default; the group holding the current page is
+  open; your own opens and closes are kept until the AIM main page.
+
+**Cutover tasks** (`lib/tasks/aim_v2.rake`): `seed_aliases`, `seed_rules`
+(run, 908 aliases and 1 rule), `adopt_v1_pdfs`, `clear_v1_leftovers`,
+`purge_before` (run), `link_owners` (run, 23 linked).
+
+**On the server.** v2 is deployed to `_PROGRAM2` with `bin/deploy-aim-workers
+--v2` and running. v1 (`_PROGRAM`, the `_BACK_END` queue folders) is still on
+the share, stopped, to be retired (see `## Next` item h). **LockBox**:
+`aim-config` merged to master (`ef7c980`); it adds the state database
+variables, `AIM_SHARED_FOLDER_NAME`, `AIM_STORE_DIR` and
+`AIM_V2_PROGRAM_DIR`.
+
+**What is missing** is mostly two things: managing who works AIM and which
+BUs they cover, and the lookups that code and route an invoice before it
+reaches a person. See `## Next — After v2`.
+
+---
+
 ## How We Work
 
 Every step below is a self-contained unit of work:
@@ -1686,6 +1761,8 @@ is built from these values as strings.
 
 ## Phase 5 — Move State Off The Filesystem
 
+*Superseded 2026-09-24 by AIM v2, which replaced the folder retrofit below. Kept as history.*
+
 The core restructure. Needs Joshua's approval on the migration before 5.1.
 
 - [x] **5.1 Where the AIM tables live — DECIDED 2026-09-22.** The Paperboy
@@ -2348,15 +2425,17 @@ handwriting, the sanitisers), vendor alias and rule training, the drop tree
 
 ### The contract
 
-Everything below is what the worker and the Rails side are built against.
-A change here is a change to both.
+*As built, updated 2026-09-24 after the merge to master.* Everything below
+is what the worker and the Rails side are built against. A change here is a
+change to both.
 
 **State lives on `aim.invoices`, only.** Folders are storage, never status.
 
 **States** (`Aim::Invoice::STATES`):
 `received, extracting, needs_review, needs_split, ready_for_approval,
 approved, exporting, exported, failed, rejected, deleted, split`.
-Terminal: `exported, rejected, deleted, split`.
+Terminal: `exported, rejected, deleted, split` -- but AIM staff may
+restore a rejected or deleted invoice (below).
 
 Transitions:
 - `received` → `extracting`, `rejected`, `deleted`
@@ -2367,9 +2446,11 @@ Transitions:
 - `approved` → `exporting`, `needs_review`
 - `exporting` → `exported`, `failed`
 - `failed` → `received` (retry AI), `approved` (retry export), `needs_review`, `rejected`, `deleted`
+- `rejected`, `deleted` → `needs_review`, `ready_for_approval` (Restore, AIM staff, with a reason)
 
 `review_reason` says why a person is needed: `unknown_type, unknown_vendor,
-missing_fields, low_confidence, handwritten, extraction_error, export_error`.
+missing_fields, low_confidence, handwritten, extraction_error, split_error,
+export_error`.
 `review_note` carries the detail (the missing fields, the handwritten
 fields, the error). The old review queues become one queue filtered by
 reason.
@@ -2392,7 +2473,10 @@ bigint indexed (split child → parent); `source_filename` string(260);
 `extracted` text (JSON: the last `InvoiceData`); `manifest` text (JSON: the
 split manifest, `{"invoices": [{"vendor_name", "invoice_number", "pages"}]}`);
 `split_check` bit not null default 1 (0 = process as one invoice);
-`high_confidence` bit; `exported_at` datetime. Existing rows' states are
+`high_confidence` bit; `exported_at` datetime. Added after the build:
+`billed_state` string(40) (what billing last showed, `20260924100003`) and
+`assigned_employee_id` int indexed (the owner as a person,
+`20260924100004`). Existing rows' states are
 mapped in the migration (ai_queue/pending_vision/reprocess → received,
 batch_split/ready_to_split → needs_split, the review queues and error/failed
 queues → needs_review, user_approval → ready_for_approval, sql_queue →
@@ -2430,12 +2514,16 @@ intake; split children are `{parent}_SPLIT_{n}`.
 
 **The worker** (`script/python/aim/v2/`, one process, `Run_AIM_Worker.bat`):
 - *Intake*, every few seconds: for each stable file under
-  `<BU>/<Name|SHARED>/` (images converted to PDF), hash it, mint the id, move
-  it to `_STORE/<id>/<id>.pdf`, insert the row (`received`, `command =
+  `<BU>/<Name|SHARED>/` (images converted to PDF), hash it, mint the id, copy
+  it to `_STORE/<id>/<id>.pdf` and then remove the original (one Windows will
+  not release is recognised later by `content_hash` + `source_path`), insert
+  the row (`received`, `command =
   extract`, `budget_unit`, `submitter` = the folder name, `assigned_to` =
   the person's folder or NULL for SHARED, `assignment_source = folder`,
   `source_filename`, `source_path`, `content_hash`, `page_count`) and its
   event. Loose files at the BU root are ignored; the README is placed.
+  Intake sets no `assigned_employee_id`: a folder is a name until the Admin
+  page links folders to people.
 - *Jobs*: claim one row; by command:
   - `extract`: → `extracting`; run the extraction core (a function: PDF path,
     aliases, rules, `split_check` in; a result out). Outcome `split` → save
@@ -2448,14 +2536,20 @@ intake; split children are `{parent}_SPLIT_{n}`.
     `_STORE/<child>/`, insert one child row per invoice (`received`, `command
     = extract`, `parent_id`, `split_check = 0`, BU/submitter/owner copied),
     parent → `split` with the children named in the event.
-  - `export`: → `exporting`; insert the billing row (`Aim_Invoices_MAPPING`,
-    values from the row's columns -- the reviewer's corrections included);
+  - `export`: → `exporting`; update the billing row with the approved
+    values and `[Approved By]` (`Aim_Invoices_MAPPING`, from the row's
+    columns -- the reviewer's corrections included);
     write the Laserfiche XML from the row; copy PDF + XML to
     `AIM_PROCESSED_DIR`; copy to the archive tree; → `exported`,
     `exported_at`. A duplicate billing key → `exported` with the note.
     Anything else → `failed`, `export_error`.
 - Every state change writes an event (`transition`, actor
   `aim_worker`), in the same transaction as the row update.
+- *Billing sync*, at the end of every cycle: each row whose `state` differs
+  from `billed_state` gets its billing row upserted by `BatchID` (screen
+  moves included), then `billed_state` is set. A failed write is retried
+  next cycle.
+- A failed `split` command is `failed` with `split_error`.
 - Reads aliases and rules from the tables; `normalize_vendor_name` unchanged
   in logic, fed from the table.
 - Environment: the `AIM_SQL_STATE_*` connection (Paperboy DB) for rows,
@@ -2463,38 +2557,49 @@ intake; split children are `{parent}_SPLIT_{n}`.
   variables, the five folders above, `AIM_LOG_DIR`. Nothing else. Same
   `env()` discipline: a missing variable stops the worker at start.
 
-**The Rails side** (rows only):
-- Queues are filters on `state`: Received, Needs Review (with a
-  `review_reason` filter), Needs Split, Ready for Approval, In Flight
-  (`approved`, `exporting`), Failed, Exported, Rejected, Deleted. Dashboard
-  counts come from the same queries.
-- The review page shows the PDF from `_STORE` and the row's fields in a
-  grid, editable per queue; `notes` is free text.
-- Actions: **Save**; **Send to Approval** (`needs_review` →
-  `ready_for_approval`; refused while `document_type` is Unknown or vendor
-  or invoice number is blank); **Approve** (→ `approved`, `command = export`;
-  from Needs Review or Ready for Approval); **Send Back** (`ready_for_approval`
-  → `needs_review`); **Retry AI** (→ `received`, `command = extract`);
-  **Approve Split** (`Aim::SplitPlan` validates; `manifest` saved; `command
-  = split`); **Process as One Invoice** (`split_check = 0`, → `received`,
-  `command = extract`); **Reject** (→ `rejected`, PDF copied to
-  `_REJECTED/<Submitter>_<BU>/`); **Delete** (→ `deleted`, PDF copied to
-  `_DELETED/<id>/`); **Learn Alias** (upsert `aim.vendor_aliases`, set
-  `vendor_name`, then Retry AI or Send to Approval as chosen); **Retry
-  Export** (`failed` → `approved`, `command = export`).
-- Every action is `transition_to!`, so an illegal move is refused with a
-  message, not recorded as a sync.
-- Claims stay on the row (`claim!`, `release_claim!`); the queue lists show
-  who holds what.
-- **Upload**: a page and a button that takes one or more PDFs, a BU
-  (defaulting to the user's `Employees.unit`) and an owner (self, a person,
-  or SHARED), and does exactly what intake does: store + row.
+**The Rails side, as built** (rows only):
+- **Queues** are filters on `state` (`Aim::InvoiceQueues::QUEUES`): Waiting
+  for AI (`received`, `extracting`), Action Needed (`needs_review`, filter by
+  `review_reason`), Needs Split, Ready for Approval (grouped by person, one
+  shared queue per BU), Exporting (`approved`, `exporting`), Failed,
+  Finished (`exported`, `split`), Rejected, Deleted. Each has a search box.
+  The queue lists are AIM staff only.
+- **My Queue** (`/aim/my_queue`): your own Ready for Approval invoices.
+  **Shared Queues** (`/aim/shared_queues`): ready, unowned invoices of the
+  BUs you cover. **Admin** (`/aim/admin`): placeholder.
+- **The review page** shows the PDF from `_STORE` and the row's editable
+  fields (`Aim::Invoice::EDITABLE_FIELDS`, `notes` included).
+- **Who may look and work** (`Aim::InvoiceAccess`): AIM staff look at every
+  invoice and work any before approval. In Ready for Approval the owner
+  works their own and anyone covering the BU works a shared one; others read
+  only. A non-staff owner has Save Changes, Approve, Send Back and Reject.
+- **Actions** (`Aim::InvoiceActions`): Save Changes; Send to Approval and
+  Approve (both refused unless the document type is set and vendor and
+  invoice number are present); Send Back; Retry AI; Approve Split
+  (`Aim::SplitPlan`, `command = split`); Process as One Invoice; Reject and
+  Delete (a copy of the PDF to `_REJECTED/<Submitter>_<BU>/` or
+  `_DELETED/<id>/`; the store keeps its copy); Learn & Retry AI, Learn &
+  Send to Approval (upsert `aim.vendor_aliases`); Retry Export. **Reject,
+  Delete and Send Back need a reason**, written to Notes and the event.
+  **Restore** (`Aim::InvoiceRestore`, AIM staff) with a reason.
+- Every action is `transition_to!`; an illegal move is refused with a message.
+- **The working lock** (`claimed_by`, `claimed_at`): taken when someone who
+  may work the invoice opens it, kept by `aim_presence` checking in every
+  30 s (`PATCH lock`), released on leaving (`POST unlock`), lapsing
+  `LOCK_SECONDS` (90) after the last check-in. **Claim** (`POST claim`) is
+  not the lock: it moves the invoice into your queue.
+- **Moving** (`PATCH reassign_many`): checkboxes on the lists, Move selected;
+  each invoice checked as a single move would be. Owners must be AIM users.
+- **Upload** (`/aim/uploads/new`): anyone signed in; PDFs by drag and drop or
+  chooser; BU (default the uploader's unit); Mine, the BU shared queue, or
+  someone else (an AIM user). Same result as intake: store + row.
 - **Vendor aliases** and **vendor rules**: list, add, edit, remove.
-- `Aim::WorkProvider` (Paperboy's inbox) reads rows.
+- `Aim::WorkProvider` (Paperboy's inbox) reads rows; the assignee is
+  `assigned_employee_id`, and a claim shows only while the lock is fresh.
 - Removed: `Aim::QueueSync` and its job and `recurring.yml` block,
   `InvoiceDirectoryService`'s queue readers (path translation for the store
-  stays), the folder-reading concerns, `.claim.json`, all `*_DIR` variables
-  except the five above (they stay in LockBox until v1 is retired).
+  stays), the folder-reading concerns, `.claim.json`, the Unclaim button.
+  The v1 `*_DIR` variables stay in LockBox until v1 is retired.
 
 **Billing (2026-09-24).** We bill for every invoice added, whatever becomes
 of it. The worker upserts one row per invoice in `[GSA_Scan].[dbo].[Aim_Invoices]`,
@@ -2507,23 +2612,193 @@ Approval, Approved, Exported, Failed, Rejected, Deleted, Split). `[Source]` is
 Open: a split parent keeps a row marked Split and each piece gets its own, so
 billing must decide whether Split rows are charged.
 
-**TODO (Joshua, 2026-09-24):**
-- Drag-and-drop on the upload page does not work yet.
-- Link queue names to people: store the employee id (`assigned_employee_id`)
-  beside the name; the picker and upload save it; folder names matched to an
-  employee by name within the BU once, the rest flagged.
-- The BU field on upload: select from chart-of-accounts units (filterable) or
-  type one.
+**Done since the build (2026-09-24):** drag and drop on upload; owners
+linked to people (`assigned_employee_id`). **Still open:** the BU field on
+upload as a COA unit picker -- see `## Next` item h.
 
-**Cutover**: v2 runs from `_PROGRAM2` against the same Paperboy_Dev database
-while v1 drains. Joshua drops test PDFs; when v2 has taken a batch from drop
-to billing row and Laserfiche XML, v1's services stop, its queue folders are
-emptied into `_PREVIOUS_TEST_DATA`, and `_PROGRAM` moves to
-`_PREVIOUS_SCRIPTS`.
+**Cutover**: v2 runs from `_PROGRAM2` against the same Paperboy_Dev database.
+v1's services are stopped; retiring it (queue folders into
+`_PREVIOUS_TEST_DATA`, `_PROGRAM` into `_PREVIOUS_SCRIPTS`, the v1 scripts
+out of the repo) is `## Next` item h.
 
 ---
 
-## Phase 6 — Real Vendor Normalization
+## Next — After v2
+
+In priority order. Each item says its goal, what already exists, what to
+build, and what is still to decide. The pre-v2 phases are kept below as
+reference; where they are still right, they are folded in here.
+
+### a. AIM user administration (Admin -> Users & Queues)
+
+**Goal.** Who works AIM, which BUs each person covers, and each BU's shared
+queue, managed on one screen instead of by group membership and guesses.
+
+**Exists.** Only the placeholder at `/aim/admin`. Membership is
+`Aim::Users` (three groups plus the Processing Queues grant); BU coverage is
+`Aim::Users.shared_budget_units` (staff: all; others: their GSABSS unit).
+Both are one-method stand-ins meant to be replaced here.
+
+**Build.**
+- AIM users: add and remove people (by employee, the same search as the
+  picker), replacing the group-based list.
+- BU coverage per person: home unit from GSABSS plus granted BUs (9.1: read
+  GSABSS, never copy it). Replaces `shared_budget_units`.
+- Per-BU shared queue: who covers it, and its default owner or router.
+- Folder-to-person links: map each watch-tree folder name to an employee, so
+  a new drop gets `assigned_employee_id` at intake. Names that match nobody
+  are flagged and land in the BU's shared queue.
+- Capabilities (9.1a): AIM app features under ACL -- `approve`, `upload`,
+  `route_within_bu`, `route_within_agency`, `route_anywhere`,
+  `manage_rules` -- bundled into ordinary Paperboy groups as roles. Scope
+  (the BUs) gives a capability its reach.
+
+**Decide.** Whether AIM staff remain "see every BU" or get explicit
+coverage too. Who may grant coverage. What happens to invoices of a person
+removed from AIM (their queue goes to the BU shared queue?). The COA calls
+the agency `GSA` while `Employees.agency` says `GSAV`; scope must map them.
+Stafford (335) and Salgado (334) are not in GSABSS `Employees`, so they
+cannot sign in today.
+
+### b. Lookups and routing before the queue (was 8b)
+
+**Goal.** An invoice reaches a person already coded and routed:
+`extract -> vendor -> duplicates -> code and route -> queue -> fiscal`.
+
+**Exists.** The owner columns and the Move/Claim flow. The GSA lookup CSVs
+are read and analysed (`/mnt/a/AIM/_Lookups/GSA`, about 790 rows, three
+layouts). Fusion's queue ids are Fusion user ids, and Fusion `UserName` is
+the employee number (9 of 11 match GSABSS). `bs_purchase_orders` is readable
+by `GSAETL`. Paperboy's COA covers about 97% of Fusion's value lists
+(fifteen values missing, `SPLIT` among them). Details and data findings are
+in `### Phase 8b` below.
+
+**Build.**
+- The rules table in the `aim` schema: match a BU, a vendor, a vendor within
+  a BU, or vendor plus customer number; most specific wins; each rule sends
+  to a person or a BU's shared queue and codes the COA fields
+  (`BDO_DO_CT`, Fund, Object, Program, Activity, Function, Phase,
+  Department, ...), validated against the COA.
+- An import of the GSA CSVs that validates and reports every bad row, and
+  maps Fusion ids to employees by employee number.
+- **A default route per BU** (required), proposed from the data for Joshua
+  to confirm; an invoice matching nothing goes to AIM staff review with the
+  reason.
+- **Amount thresholds per BU**: over $X goes to the BU's threshold queue,
+  automatically, overriding other routes; the history says why.
+- Apply the rules in the worker after extraction (`assignment_source =
+  'rule'`), and an admin screen for the rules with every change recorded.
+- The PO lookup: bring what is still needed from `bs_purchase_orders` into
+  AIM's own tables.
+
+**Decide.** Who maintains the rules (Joshua, AIM staff, Fiscal). Whether a
+user may change the coding at approval. 119 and 123 (no Fusion user) and
+198 (Dixon, now another agency). Sheriff lookups (Joshua to explain first).
+Split coding across BUs -- blocked on Fiscal. Whether
+`bs_purchase_orders` is still maintained (synced copy, or ours becomes the
+master).
+
+### c. Vendor normalization in v2 (was 6)
+
+**Goal.** One canonical vendor per real vendor, with aliases pointing at it.
+
+**Exists.** `aim.vendor_aliases` (908 seeded) and `aim.vendor_rules`, their
+screens, and Learn Alias on the review page. The worker's match cascade is
+unchanged from v1.
+
+**Build.** Canonical vendors with ids (Fiscal's vendor codes, the `VC000...`
+values scattered through the lookups), aliases linked to a vendor rather than
+to a name, collapse the known duplicate groups, fuzzy match suggestions on
+the review page, a merge/rename/delete screen, and an audit of alias changes.
+Decide whether AI auto-learning stays on.
+
+### d. Duplicate prevention (was 7)
+
+**Goal.** The same invoice is not paid twice.
+
+**Exists.** `content_hash` (SHA-256 of the file) and `business_key` columns;
+intake already recognises a file it has taken. Nothing blocks a duplicate
+invoice today.
+
+**Build.** An exact file match flagged at intake; the four-field business
+key persisted and indexed (placeholders excluded); a hard block at approval
+on an exact match and a warning, with the other invoice shown, when vendor
+and number match but amount or date differ.
+
+### e. User approval polish (was 9)
+
+**Goal.** Parity with Fusion for the person approving, and nothing sitting
+unseen.
+
+**Exists.** My Queue, Shared Queues, field editing and Notes, the history,
+the working lock, Claim, reasons, Restore.
+
+**Build.**
+- Reminder emails: **daily** when someone has new invoices, **weekly** for
+  stale ones, **monthly** always; each person may turn off daily and weekly,
+  never monthly. Follows `FormSubscriptionDigestJob` and `UserSetting`.
+- Notes as attributable entries (who and when) rather than one text field,
+  and field edits recorded as `edit` events.
+- Paperboy's inbox / My Work: `Aim::WorkProvider` already reads rows; make
+  its exposure match the screens' access rules.
+- The document type on the face of the queue, filterable (9.2).
+
+**Decide.** What counts as stale (days since arrival or since anyone
+touched it, and how many).
+
+### f. Fiscal handoff (was 11) -- blocked on Fiscal
+
+**Goal.** Approved invoices reach Fiscal the way Fiscal needs them.
+
+**Exists.** Export writes the billing row, the Laserfiche XML and the PDF to
+`_AI_Processed`, and archives a copy.
+
+**Build, once Fiscal answers.** The fiscal export in their layout; stamping
+the metadata into the PDF Info dictionary and retiring the XML (11.3, 11.4);
+split coding lines if Fiscal needs them. The Laserfiche import mechanism is
+still blocked on IT.
+
+### g. Observability (was 10)
+
+**Goal.** Knowing the worker is healthy without watching its window.
+
+**Build.** Worker logging to timestamped files under `AIM_LOG_DIR` (read but
+unused today); a heartbeat row or file the dashboard shows (last cycle, last
+error); a count of rows stuck with a command and an expired lease; failed
+billing writes surfaced rather than only printed.
+
+### h. Cutover and cleanup
+
+- **Retire v1**: stop and archive `_PROGRAM` into `_PREVIOUS_SCRIPTS`, the
+  old `_BACK_END` queue folders into `_PREVIOUS_TEST_DATA`, and, once
+  nothing uses them, `script/python/aim/*.py` and `test/python/aim`
+  (v1) from the repo, and the v1 `*_DIR` variables from LockBox.
+- The CV62744 retry still in `_REPROCESS_QUEUE` with v1's failed marker:
+  drop it into a BU folder for v2, or delete it.
+- Go-live: switch the worker and screens from `Paperboy_Dev` to
+  `Paperboy_Prod` (a LockBox value and a deploy), carrying in-flight rows
+  over.
+- `GSAETL` in `_PROGRAM2\.env` on a share many can read: a login with rights
+  on the `aim` schema alone is the narrower option. Joshua's call.
+- **P2M `OmsUploadLedgerTest`** fails on clean master (rows left behind in
+  the test database). Not AIM's; tell its owner.
+- **Credits** (negative totals): what they do at approval and at the fiscal
+  handoff.
+- **Split parents in billing**: the parent row stays, marked Split, and each
+  piece gets its own row. Is Split charged?
+- **Upload BU field**: a COA unit picker, filterable, select or type.
+- **Drag and drop**: robustness across browsers.
+
+---
+
+## Earlier Roadmap (pre-v2), kept for reference
+
+Written before v2. The live plan is `## Next — After v2` above; these keep
+the reasoning, the data findings and the decisions it cites.
+
+---
+
+### Phase 6 — Real Vendor Normalization
 
 - [ ] **6.1 Migration: `aim.vendors` and `aim.vendor_aliases`.** Canonical
   vendors with an id, and many aliases pointing at one vendor. Vendors not
@@ -2552,7 +2827,7 @@ emptied into `_PREVIOUS_TEST_DATA`, and `_PROGRAM` moves to
 
 ---
 
-## Phase 7 — Duplicate Prevention
+### Phase 7 — Duplicate Prevention
 
 - [ ] **7.1 Persist `business_key` and index it.** A filtered unique index
   that excludes placeholder rows, so an invoice missing its number is not
@@ -2566,7 +2841,7 @@ emptied into `_PREVIOUS_TEST_DATA`, and `_PROGRAM` moves to
 
 ---
 
-## Phase 8 — Close The Dead-End Queues
+### Phase 8 — Close The Dead-End Queues
 
 Each of these retires a Windows file-share shortcut.
 
@@ -2586,7 +2861,7 @@ assertion.
 
 ---
 
-## Phase 8b — Routing And Coding Before The Queue
+### Phase 8b — Routing And Coding Before The Queue
 
 Raised by Joshua 2026-09-23. **An invoice is not ready for a user until it
 is coded and routed**, and the plan had both in the wrong place: account
@@ -2903,7 +3178,7 @@ anyone touched it, and how many?
 
 ---
 
-## Phase 9 — User Approval
+### Phase 9 — User Approval
 
 - [ ] **9.1 BU access model.** Which users can see which Budget Unit queue,
   through Paperboy's existing groups and ACL. Follows the
@@ -3004,7 +3279,7 @@ subclasses `Pfa::Work::Provider`.
 
 ---
 
-## Phase 10 — Observability
+### Phase 10 — Observability
 
 - [ ] **10.1 Logging in every worker.** Only the AI extraction worker logs
   today.
@@ -3019,7 +3294,7 @@ subclasses `Pfa::Work::Provider`.
 
 ---
 
-## Phase 11 — Fiscal Handoff
+### Phase 11 — Fiscal Handoff
 
 Shape still to be determined with Fiscal. Currently: the invoice reaches
 Docushare, Fiscal assigns check numbers and dates, and a CSV in a fixed
@@ -3054,226 +3329,83 @@ layout feeds another system. The target is the same flow through Laserfiche.
 
 ---
 
-## Where This Stands On The Server — 2026-09-22
+## On The Server
 
-Joshua confirmed AIM is **running nothing on GSA-SCAN02 right now**, and
-asked for the workers to be updated and the back end cleared so he can drop
-fresh invoices and test.
+Superseded. The current server state is in `## Where AIM Stands — 2026-09-24
+(v2 on master)`. Until 2026-09-24 this section recorded v1 on `_PROGRAM`: the
+2026-09-22 deploy, the back end cleared into
+`_BACK_END/_PREVIOUS_TEST_DATA/2026-09-22/`, and that `Invoices/_AI_Processed`
+and `Invoices/_Archive` were kept. Those two folders are still where v2
+writes and archives. Two lessons from it still hold:
 
-**Done:**
-
-- **Every back-end queue is empty.** The 58 items in `_ACTION_NEEDED`,
-  `_BATCH_SPLIT`, `_LOW_CONFIDENCE_REVIEW`, `_REJECTED`, `_SQL_QUEUE`,
-  `_TEMP`, `_VENDOR_REVIEW` and the 39 `_SPOOL_STATE` markers were **moved,
-  not deleted**, to `/mnt/a/AIM/_BACK_END/_PREVIOUS_TEST_DATA/2026-09-22/`.
-  Clearing the spool markers matters: without it the watcher skips a file it
-  has seen before, so re-dropping the same PDF would do nothing.
-
-- **The workers are deployed.** 2026-09-22, 12:16. 22 files and a fresh
-  `.env` (59 `AIM_*`, none discarded) to `/mnt/a/AIM/_PROGRAM`, replacing
-  scripts dated 2026-09-10 -- so steps 3.1, 3.2, 4.1, 4.2, 4.3 and 5.3a are
-  all on the server now, where before none of them were. The 22 replaced
-  files are in `_PREVIOUS_SCRIPTS/2026-09-22`; `vendor_aliases.json` was
-  left alone and still holds its 907 learned aliases.
-
-  Two things the deploy exposed, both fixed on the way:
-
-  - **The target was read with `grep` and came back unresolved.** LockBox's
-    ROOT consolidation made `AIM_LINUX_QUEUE_BASE_PATH` read
-    `${AIM_ROOT}/AIM`, so the deploy aimed at a directory literally named
-    `${AIM_ROOT}`. It now reads values with `python-dotenv`, as the workers
-    do. Two tests cover it; every earlier deploy test passed `--target`
-    explicitly, which is how the resolution went untested.
-  - **A WSL restart drops the mapped drives.** `A:` (`\\gsa-scan02\projects`)
-    showed *Disconnected* in Windows and `/mnt/a` was empty, so the deploy
-    refused -- correctly -- rather than write into an unmounted mount point.
-    Touching the drive from Windows reconnects it (`cmd.exe /c "dir A:\"`),
-    then `sudo mount -a` in a real terminal remounts it. `sudo` cannot
-    prompt inside Claude Code's shell.
-
-**Not done, and the next thing to do:**
-
-- **The workers have to be started on GSA-SCAN02** --
-  `START_ALL_SERVICES.bat`, a Windows-side action. The deploy only copies
-  files and prints a reminder.
-
-**Two decisions Joshua has not made yet:**
-
-- **The processed originals stay for now.** `Invoices/_AI_Processed` (340
-  files, 78M) and `Invoices/_Archive` (408 files, 66M) are last runs'
-  documents. Not cleared -- say whether they should be.
-- **The SQL rows stay for now.** `Aim_Invoices` and `Aim_Processing_Logs` on
-  `gsa-sql22` hold 236 rows each, newest 2026-09-21. `GSAETL` may delete
-  them. Say whether to.
-
-**Worth knowing before testing:**
-
-- **Drop test invoices in `/mnt/a/AIM/Invoices/<BU>/<Submitter>/`.** The
-  watcher prunes any folder whose name starts with `_`, so the 89 PDFs in
-  the `_SAMPLE INVOICES` folders are never ingested -- they are a library,
-  not a queue.
-- **The new `aim.*` tables stay empty this round.** The workers do not write
-  them until 5.6, and the screens still read folders until 5.5. This round
-  tests the pipeline, not the new state tables.
+- **A WSL restart drops the mapped drives.** Touch the drive from Windows
+  (`cmd.exe /c "dir A:\"`), then `sudo mount -a` in a real terminal. The
+  deploy refuses an unmounted target rather than write into it.
+- **The deploy reads `.env` with `python-dotenv`**, as the workers do, so
+  `${AIM_ROOT}` references resolve.
 
 ---
 
 ## Open Questions
 
-- **Pre-existing suite failures (found in 0.1).** 213 of 537 tests are red
-  on a clean master checkout, none of it AIM's doing. Three causes, all
-  outside AIM and so all needing Joshua's decision before anyone touches
-  them:
-  1. **98 errors: `undefined method 'stub'`.** `Gemfile.lock` pins
-     minitest 6.0.6, which removed `minitest/mock`; the tests calling
-     `SomeClass.stub` have nothing providing it. Fixing it means adding a
-     gem — shared config, needs approval.
-  2. **Parallel runs are unusable.** Fixture teardown truncates
-     FK-referenced tables and SQL Server refuses. Needs `delete` instead
-     of `truncate`, or FKs dropped around teardown.
-  3. **`DslGroupUpdaterTest` mutates real config files** in
-     `config/data_runner/dsl/`.
-  Until 1 and 2 are settled, "the suite is green before and after" cannot
-  mean literally green. The workable standard is: *serial run, and the
-  same 324 tests pass after as before.*
-- ~~**5.1** Paperboy database or `GSA_Scan` for the new AIM tables?~~
-  Answered: `GSA_Scan`. See `## Decisions Already Made`.
-- ~~**AIM table names in `GSA_Scan`**~~ and ~~**rights for AIM's
-  migrations on `gsa-sql22`**~~. Both found 2026-09-22 in 5.1 and both
-  dissolved the same day by Joshua's decision to put the tables in the
-  Paperboy database on `GSASQL16`, schema `aim`, as `GSAETL`.
-- ~~**Document types disagree.**~~ Settled 2026-09-22 by Joshua: the
-  Decisions list is right, plus `Statement`, and the worker's list is
-  incomplete. `Unknown` is a temporary type AIM staff resolve in QA review.
-  Step 5.3a.
-- **Does approval happen before or after the handoff?** Raised 2026-09-23
-  by Joshua's requirement that a user can edit the metadata at approval, as
-  in PsiGen Fusion. Today the SQL worker writes the billing row and generates
-  the Laserfiche XML as soon as extraction succeeds -- `sql_queue ->
-  archived` -- so nobody has seen the invoice when it reaches Fiscal. Either
-  the user queue moves ahead of that handoff, or an edit after it has to
-  rewrite the SQL row and the Laserfiche document. The first is simpler and
-  matches what approval means; the second keeps today's throughput. **Joshua
-  decides; it shapes Phases 9 and 11.**
-- **AIM staff cannot set a document type on screen.** Found 2026-09-22 in
-  5.3a. `Unknown` is meant to be resolved in QA review, but nothing in
-  `app/views/aim` edits `document_type` -- the reviewer can only edit the
-  XML by hand. A type selector belongs on the review screen, wherever 5.5
-  rebuilds it. Until then an `Unknown` has no supported way to become an
-  `Invoice`.
-- ~~**Which site should show live invoices once state is in the database?**~~
-  Settled 2026-09-22 by Joshua: **the workers write `aim.invoices` in
-  `Paperboy_Dev` while AIM is in development, and are switched to
-  `Paperboy_Prod` at go-live** -- a LockBox value and a
-  `bin/deploy-aim-workers`, no code. The legacy `gsa-sql22` tables are
-  untouched either way. Consequences, all for 5.6 and go-live:
-  - **Ordering.** The `aim` schema reaches `Paperboy_Dev` through the Phase 5
-    merge and `bin/deploy-dev`'s `db:prepare` -- never a hand migration of
-    the shared dev database. 5.6 comes after that.
-  - **Cutover carries state over.** `Paperboy_Dev` will hold real in-flight
-    invoices. At go-live they are copied to `Paperboy_Prod` or rebuilt from
-    the share folders (5.5's folder reading can do the rebuild). Add to the
-    go-live checklist.
-  - **Credentials on the share.** The workers read `_PROGRAM/.env`, which is
-    readable by anyone who can reach `E:\AIM`. Joshua's standing rule is
-    `GSAETL` wherever possible, but it is the broad shared login; putting it
-    there widens what that share exposes compared with today's
-    `GSAScanCenter`. A login with rights on the `aim` schema alone is the
-    narrower option. **Joshua's call, before 5.6.**
-- ~~**0.2** Exact worker install folder on the AIM share.~~ Answered
-  2026-09-04: `_PROGRAM` (`/mnt/a/_PROGRAM`).
-- ~~**`P2M_PRINTERS` is missing from LockBox.**~~ Resolved 2026-09-08 by
-  someone on the P2M side: LockBox master gained `P2M_PRINTERS=99_Printers`
-  (`292b3a8`) and `P2M_DESTROYED=04_Destroyed` (`da5d6da`). The local
-  stopgap has been removed and the baseline is unchanged with the real
-  value. Worth remembering as a live example of the boot-vs-use rule in
-  `## Guardrails`: `app/services/p2m/paths.rb:13` fetches at *module load*,
-  so one absent variable aborted the whole suite — Billing, Forms and AIM
-  included — which is exactly what that rule exists to prevent. **Pull
-  LockBox before assuming a missing variable is a bug.**
-- ~~**Python tests in CI.**~~ Settled 2026-09-08: **not** wired into
-  `.github/workflows/ci.yml`. The pytest command is a local gate step
-  instead -- see `## How We Work -> The CI gate` for the reasoning and the
-  fallback if it ever needs revisiting.
-- **CI's push trigger has never fired.** `.github/workflows/ci.yml` runs on
-  `push: branches: [main]`, but this repository's default branch is
-  `master`, so only `pull_request` ever runs CI. Not AIM's to fix, and no
-  change made -- but worth knowing before trusting "CI is green on master".
-- **The workers run from a UNC path, so nothing may assume a working
-  directory.** They are launched from `\\gsa-scan02\aim\_PROGRAM\`, and
-  `cd /d` refuses to make a UNC path the working directory — cmd falls back
-  to `C:\Windows`. On 2026-09-08 that made every worker fail with
-  `python: can't open file 'C:\Windows\00_Ingestion_Watcher.py'`. Fixed by
-  using `pushd` (which maps a temporary drive letter for UNC) in
-  `_prepare_aim_environment.bat`, and by invoking python with
-  `"%~dp0<script>.py"` so the working directory stops mattering. The bug was
-  latent: the old share `.bat` files never called the preparer, and anyone
-  running from a mapped drive letter would never see it. **Never add a
-  relative path or a bare `cd` to a `.bat` here.**
-- **A retried invoice does not keep its batch id.** Noted 2026-09-15 in 3.2.
-  Retry names the copy `{id}_RETRY_{epoch}` and the worker mints a fresh id
-  from that, so one document can hold three ids across its life. 3.2 fixed the
-  Budget Unit inside those ids but deliberately did not make the id survive a
-  retry, which is a design question rather than a bug: a retried document is
-  arguably a new processing attempt of the same invoice. **Phase 7 needs an
-  answer**, because the four-field business key is what catches duplicates and
-  the batch id is what a reviewer follows through the queues. The same question
-  applies to a split batch, which today gets `{parent}_SPLIT_{invoice}`.
-- **`Subtotal` and `SalesTax` are not typed, not canonicalised, and not
-  exported.** Noted 2026-09-21 in 4.3. `02_sql_worker` passes both to
-  `InvoiceData`, which declares neither, so pydantic drops them; they survive
-  only as raw strings in the payload dict, reaching SQL in whatever spelling
-  Rails wrote and never reaching the Laserfiche XML at all. Neither is part of
-  the four-field business key, so Phase 4 left them alone deliberately. Two
-  questions for the fiscal handoff: **does Fiscal need them**, and if so are
-  they money columns like the total, or free text? If they are money, adding
-  them to `InvoiceData` and to `sanitize_data` is a two-line change now that
-  `_clean_money` is right. `Aim_Invoices.Credit Amount` is the same question
-  from the other end.
-- **A credit is now stored with its sign, and nothing downstream reads it
-  yet.** Noted 2026-09-21 in 4.3. `(100.00)` reaches SQL as `-100.00` instead
-  of `100.00`, which is the correct number — but `Credit` is a document type
-  with no queue behaviour of its own (see Decisions), and no rule says what a
-  negative total should do at the approval gate or the fiscal handoff. Worth
-  settling before Phase 9.
-- **Nothing creates `AIM_SPOOL_STATE_DIR`.** Noted 2026-09-15 in 3.1. The
-  watcher reads it at import and writes spool state into it, but it is not in
-  `MANAGED_DIRECTORIES`, so `bootstrap()` does not create it -- the directory
-  exists on the share already, which is why this has never been seen. A fresh
-  environment would fail at the first spool. One line in `bootstrap` fixes it;
-  out of scope for 3.1, and worth folding into whichever step next touches the
-  watcher's startup.
-- **The P2M OMS upload tests leave rows behind, and now fail on their own
-  debris.** Seen 2026-09-15 during 3.1's gate and diagnosed during 3.2's.
-  `OmsUploadLedgerTest#oms_number` and `P2mOmsUploadsControllerTest#oms_numbers`
-  both build their OMS number as `5178<Process.pid % 10_000>`, and both
-  `OmsUploadLedger#reconcile_imported!` and the controller's index scan
-  `OmsUpload.all` rather than only their own rows. That alone made them collide
-  at random. The real problem underneath is that **the rows outlive the test**:
-  on 2026-09-15 `Paperboy_Test` held 82 committed `P2m::OmsUpload` rows from
-  earlier runs that morning, so
-  `P2mOmsUploadsControllerTest#test_shows_active_uploads...` now fails *every*
-  run -- it reconciled `["51780767", "51784884"]` where it expected one id, the
-  second being a leftover with a colliding mailer date.
+Tagged by the `## Next` item they belong to. Answered ones are listed at the
+end so the reasoning stays findable.
 
-  Not AIM's to fix: `test/controllers/p2m_oms_uploads_controller_test.rb` and
-  `test/services/p2m/`. **Proved not ours by running the same test with AIM's
-  entire diff stashed -- it fails identically.** Do that before treating either
-  test as an AIM regression. Clearing the debris is
-  `P2m::OmsUpload.delete_all` in the test environment, but the rows are P2M's
-  and the leak is theirs to close.
-- **Laserfiche import mechanism.** Not designed yet, and blocked on IT
-  resolving a Laserfiche need. The likely shape is a monitored folder on
-  GSA-SCAN02 that LF auto-imports from, but that could change. Noted
-  2026-09-08.
-  `AIM_LASERFICHE_INBOX_PATH` is still added in 0.2, pinned to today's
-  literal `\AIM\00 INBOX\`, precisely so that settling this later is a
-  LockBox value change and not a code change. Do not design the Laserfiche
-  handoff around the current value.
-- **11** Final field layout Fiscal needs, and whether the existing
-  `Aim_Invoices` approval columns stay authoritative or the new tables do.
-- Whether the existing 207 rows in `Aim_Invoices` and `Aim_Processing_Logs`
-  are worth migrating or can be left as history.
+- **[a] Credentials on the share.** The worker's `.env` in `_PROGRAM2` holds
+  `GSAETL`, the broad shared login, on a share many people can read. A login
+  with rights on the `aim` schema alone is narrower. Joshua's call.
+- **[b] Routing inputs from Joshua.** Who maintains the rules; whether a user
+  may change coding at approval; what 119 and 123 become and how 198 (Dixon,
+  now CSSV) is handled; Sheriff's lookups; whether `bs_purchase_orders` is
+  still maintained.
+- **[b][f] Split coding across BUs.** Blocked on Fiscal: how a split invoice
+  reaches them today and how it is recorded.
+- **[d] A retried or split invoice and duplicates.** v2 keeps the batch id on
+  Retry AI (the same row goes back to `received`), which settles the retry
+  half. A split piece is `{parent}_SPLIT_{n}`, a new invoice; the business
+  key, not the id, is what catches duplicates.
+- **[e] What counts as stale** for the weekly reminder.
+- **[f] What Fiscal needs.** The final field layout; whether `Subtotal`,
+  `SalesTax` and `Credit Amount` matter (v2 stores subtotal and sales tax as
+  money columns and sends them to billing); whether `Aim_Invoices`' approval
+  columns stay authoritative.
+- **[f] Laserfiche import mechanism.** Blocked on IT. The likely shape is a
+  monitored folder on GSA-SCAN02; `AIM_LASERFICHE_INBOX_PATH` keeps it a
+  LockBox value, so do not design around today's literal.
+- **[h] Credits** (negative totals): no rule yet for approval or handoff.
+- **[h] Split parents in billing**: charged or not.
+- **[h] The legacy rows** in `Aim_Invoices` and `Aim_Processing_Logs` from
+  before v2 (about 236 each, newest 2026-09-21): keep as history, or clear.
+- **[h] P2M OMS upload tests leave rows behind.** `OmsUploadLedgerTest` fails
+  on clean master. `OmsUpload.all` is scanned instead of the test's own
+  rows. Not AIM's; prove it with a clean master checkout before treating it
+  as an AIM regression.
+- **CI's push trigger has never fired.** `.github/workflows/ci.yml` runs on
+  `push: branches: [main]`; this repository's default branch is `master`.
+  Not AIM's to fix.
+- **The workers run from a UNC path, so nothing may assume a working
+  directory.** `cd /d` refuses a UNC path and cmd falls back to
+  `C:\Windows`. `_prepare_aim_environment.bat` uses `pushd`, and the
+  launchers call python with `"%~dp0<script>.py"`. v2's launcher does the
+  same. **Never add a relative path or a bare `cd` to a `.bat` here.**
+- **Pull LockBox before assuming a missing variable is a bug.** A variable
+  fetched at module load aborts the whole suite when absent
+  (`P2M_PRINTERS`, 2026-09-08).
+
+**Answered:**
+- ~~Pre-existing suite failures (0.1)~~: the suite is green on master except
+  the P2M test above.
+- ~~Where the AIM tables live~~: Paperboy database on `GSASQL16`, schema
+  `aim`, as `GSAETL` (5.1).
+- ~~Document types~~: Invoice, Memo, Credit, Coupon, Statement, Unknown
+  (5.3a); staff set the type on the review page in v2.
+- ~~Approval before or after the handoff~~: before. In v2 nothing is exported
+  until someone approves.
+- ~~Which site shows live invoices~~: `Paperboy_Dev` in development,
+  `Paperboy_Prod` at go-live (item h).
+- ~~Worker install folder~~: `_PROGRAM` for v1, `_PROGRAM2` for v2.
+- ~~Python tests in CI~~: a local gate step, not wired into CI.
+- ~~Nothing creates `AIM_SPOOL_STATE_DIR`~~: v1 only; v2 has no spool state.
 
 ---
 
@@ -3352,3 +3484,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-24 | 5.8 | (this commit) | Batch folders placed in their queue whole (`QueueDrop`), Send to SQL Queue writes the payload from the reviewed XML and refuses a blank vendor or invoice number, the SQL worker fails a payload-less folder after ten minutes instead of skipping it for ever, the alias cache is swapped in atomically. 1125 runs, 0 fail, 0 error, 247 pytest, scoped rubocop clean, brakeman's same four non-AIM warnings |
 | 2026-09-24 | v2 | (this commit) | **AIM v2 built in one pass** on `aim/v2-row-first`, from the contract above, by two builders working in parallel. Python: `script/python/aim/v2` (one worker: intake, extract, split, export; atomic row claim with a lease; events in the same transaction), 50 tests; `bin/deploy-aim-workers --v2` targets `_PROGRAM2`. Rails: migrations `20260924100000`–`100002` (v2 columns with the v1→v2 state mapping, `aim.vendor_aliases`, `aim.vendor_rules`), `Aim::Invoice` v2 state machine, queues as row queries, review actions via `transition_to!`, upload, alias and rule screens, `aim:v2:seed_aliases`/`seed_rules`; `QueueSync`, the folder concerns and `.claim.json` removed. Decisions beyond the contract: `split_error` reason; the Needs Review queue keeps the label *Action Needed* (the shared navigation catalog asserts it); Finished holds `exported` and `split`; Send to Approval and Approve need a set type, vendor and invoice number; the store keeps its PDF on reject and delete, copies go to the old folders; upload is gated by AIM access with BU from the user's unit. Gate on the combined tree: 1098 runs, 0 fail, 0 error, 297 pytest, scoped rubocop clean, brakeman 4 (none AIM), zeitwerk clean, `--v2` dry run 17 files. Not yet run on the server |
 | 2026-09-24 | — | (this merge) | **AIM v2 merged to Paperboy master**, Joshua's decision after testing it live. Since the one-pass build: billing written at intake and kept current by `BatchID`; owners are employees (`assigned_employee_id`) found with a COA-style search limited to AIM users; My Queue (ready only) and Shared Queues (by BU; interim rule: staff all BUs, others their own unit); owners work their own ready invoices; a working lock that lapses 90 s after the page stops checking in, and Claim moves an invoice to your queue; a reason for Reject, Delete and Send Back, and staff Restore from Rejected/Deleted, kept in Notes and history; multi-move by checkbox; queue search; lazy counts; grouped sidebar; upload open to anyone signed in, drag-and-drop. Master merged in first (only the Phase 5 merge commit). Gate: 1138 runs, 1 failure (P2M `OmsUploadLedgerTest`, fails on clean master too), 304 pytest, AIM rubocop clean, brakeman's same 4, bundle-audit and zeitwerk clean. v1 still on the share until cut over |
+| 2026-09-24 | — | (this edit) | Plan brought up to date with v2 on master: `## Where AIM Stands`, the contract marked as built, `## Next — After v2` (items a–h: user admin, lookups and routing, vendors, duplicates, approval polish, fiscal, observability, cutover), Open Questions tagged by item, the pre-v2 phases kept under `## Earlier Roadmap` |
