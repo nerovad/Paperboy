@@ -15,20 +15,24 @@ module Aim
 
       row = Aim::UserBudgetUnit.find_or_initialize_by(employee_id: @employee_id, budget_unit: unit)
       row.bu_admin = true if params[:bu_admin] == '1'
+      row.hidden = true if params[:hidden] == '1' && unit == home_unit
       row.granted_by = current_user_email
       row.save!
-      back(notice: "#{unit} added#{' as BU Admin' if row.bu_admin}.")
+      back(notice: "#{unit}: #{describe(row)}.")
     end
 
+    # BU Admin on or off, or (home unit only) hidden or shown. Hiding clears
+    # BU Admin: they see nothing there. A home unit row with neither goes.
     def update
       row = Aim::UserBudgetUnit.for_person(@employee_id).find(params[:id])
-      admin = params[:bu_admin] == '1'
-      if !admin && row.budget_unit == home_unit
-        row.destroy!
+      if params.key?(:hidden)
+        hidden = params[:hidden] == '1' && row.budget_unit == home_unit
+        row.assign_attributes(hidden: hidden, bu_admin: hidden ? false : row.bu_admin)
       else
-        row.update!(bu_admin: admin, granted_by: current_user_email)
+        row.bu_admin = params[:bu_admin] == '1'
       end
-      back(notice: "#{row.budget_unit}: #{admin ? 'now BU Admin' : 'no longer BU Admin'}.")
+      settle(row)
+      back(notice: "#{row.budget_unit}: #{describe(row)}.")
     end
 
     def destroy
@@ -47,6 +51,21 @@ module Aim
     end
 
     def home_unit = Employee.where(id: @employee_id).pick(:unit).presence
+
+    # A home unit row that is neither BU Admin nor hidden says nothing.
+    def settle(row)
+      if row.budget_unit == home_unit && !row.bu_admin && !row.hidden
+        row.destroy!
+      else
+        row.update!(granted_by: current_user_email)
+      end
+    end
+
+    def describe(row)
+      return 'hidden' if row.hidden
+
+      row.bu_admin ? 'BU Admin' : 'User'
+    end
 
     def back(**flash_message)
       redirect_to aim_member_path(@employee_id, anchor: 'roles'), **flash_message

@@ -5,7 +5,7 @@
     <tr>
       <th><%= aim_admin_sort_link 'Name', 'name' %></th>
       <th><%= aim_admin_sort_link 'Unit', 'unit' %></th>
-      <th>Added through</th>
+      <th><%= aim_admin_sort_link 'Role', 'role' %></th>
       <th class="aim-people-table__open"><%= aim_admin_sort_link 'Open invoices', 'open' %></th>
       <th class="aim-people-table__actions" aria-label="Actions"></th>
     </tr>
@@ -17,13 +17,11 @@
         <td>
           <%= link_to person.name, aim_member_path(person.employee_id), class: 'aim-people-table__name' %>
           <span class="aim-people-table__id"><%= person.employee_id %></span>
+          <% if person.via_group %><span class="badge is-pending" title="In AIM through an AIM group, under ACL">AIM group</span><% end %>
           <% if person.missing %><span class="badge is-denied">Not in GSABSS</span><% end %>
         </td>
         <td><%= person.unit_label %></td>
-        <td>
-          <% if person.member %>Admin list<% end %>
-          <% if person.via_group %><span class="badge is-pending">AIM group</span><% end %>
-        </td>
+        <td><%= person.roles.join(', ') %></td>
         <td class="aim-people-table__open">
           <% if person.open.positive? %>
             <%= link_to person.open, aim_member_path(person.employee_id), class: 'aim-count-pill' %>

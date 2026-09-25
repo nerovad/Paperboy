@@ -10,19 +10,20 @@ module Aim
     before_action :require_aim_user_admin
 
     VIEWS = %w[list bu].freeze
-    SORTS = %w[name unit open].freeze
+    SORTS = %w[name unit role open].freeze
+    ROLES = ['AIM Admin', 'AIM Staff', 'BU Admin', 'User'].freeze
 
     Person = Struct.new(:employee_id, :first_name, :last_name, :unit, :unit_name, :member, :via_group, :open,
-                        :missing, keyword_init: true) do
+                        :missing, :roles, keyword_init: true) do
       def name = missing ? "Employee #{employee_id}" : "#{last_name}, #{first_name}"
       def unit_label = [unit, unit_name&.titleize].compact_blank.join(' · ').presence || 'No unit'
-      def search_text = [name, first_name, employee_id, unit, unit_name, ('group' if via_group)].compact.join(' ')
+      def search_text = [name, first_name, employee_id, unit, unit_name, *roles].compact.join(' ')
     end
 
     def index
       @view = choose_view
       @sort = SORTS.include?(params[:sort]) ? params[:sort] : 'name'
-      @filters = params.permit(:unit, :has_open, :via_group, :missing).to_h.compact_blank
+      @filters = params.permit(:unit, :role, :has_open, :via_group, :missing).to_h.compact_blank
       @people = filtered(sorted(all_people))
       @units = all_people.select(&:unit).map { |person| [person.unit_label, person.unit] }.uniq.sort_by(&:last)
       @groups = @people.group_by(&:unit_label).sort_by { |label, _| label } if @view == 'bu'
@@ -51,14 +52,15 @@ module Aim
         employees = Employee.where(id: ids).index_by(&:id)
         unit_names = Coa::Unit.where(unit_id: employees.values.map(&:unit).compact.uniq).pluck(:unit_id, :long_name).to_h
         open = open_counts(ids)
-        ids.map { |id| person(id, employees[id], members[id], via_groups.include?(id), open, unit_names) }
+        roles = Aim::Users.roles_by_person(ids)
+        ids.map { |id| person(id, employees[id], members[id], via_groups.include?(id), open, unit_names, roles[id]) }
       end
     end
 
-    def person(id, employee, member, via_group, open, unit_names)
+    def person(id, employee, member, via_group, open, unit_names, roles)
       Person.new(employee_id: id, first_name: employee&.first_name, last_name: employee&.last_name,
                  unit: employee&.unit.presence, unit_name: unit_names[employee&.unit], member: member,
-                 via_group: via_group, open: open.fetch(id, 0), missing: employee.nil?)
+                 via_group: via_group, open: open.fetch(id, 0), missing: employee.nil?, roles: roles)
     end
 
     def open_counts(ids)
@@ -70,6 +72,7 @@ module Aim
     def sorted(list)
       case @sort
       when 'unit' then list.sort_by { |p| [p.unit.to_s, p.name.downcase] }
+      when 'role' then list.sort_by { |p| [ROLES.index(p.roles.first).to_i, p.name.downcase] }
       when 'open' then list.sort_by { |p| [-p.open, p.name.downcase] }
       else list.sort_by { |p| p.name.downcase }
       end
@@ -77,6 +80,7 @@ module Aim
 
     def filtered(list)
       list = list.select { |p| p.unit == params[:unit] } if params[:unit].present?
+      list = list.select { |p| p.roles.include?(params[:role]) } if params[:role].present?
       list = list.select { |p| p.open.positive? } if params[:has_open] == '1'
       list = list.select(&:via_group) if params[:via_group] == '1'
       list = list.select(&:missing) if params[:missing] == '1'

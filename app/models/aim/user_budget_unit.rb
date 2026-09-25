@@ -10,7 +10,7 @@ module Aim
     before_validation { self.budget_unit = budget_unit.to_s.strip }
 
     scope :for_person, ->(employee_id) { where(employee_id: employee_id) }
-    scope :administered, -> { where(bu_admin: true) }
+    scope :administered, -> { where(bu_admin: true, hidden: false) }
 
     # The units AIM offers when granting a BU: GSA's active ones, as
     # [["4641 · Document Management", "4641"], ...].

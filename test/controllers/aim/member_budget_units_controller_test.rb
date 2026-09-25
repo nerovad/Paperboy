@@ -37,6 +37,28 @@ module Aim
       assert_equal [@employee.unit], Aim::Users.shared_budget_units(@employee.id, staff: false)
     end
 
+    test 'hiding the home unit takes it out of their BUs, and showing it brings it back' do
+      post :create, params: { member_id: @employee.id, budget_unit: @employee.unit, bu_admin: '1' }
+      row = Aim::UserBudgetUnit.find_by!(employee_id: @employee.id, budget_unit: @employee.unit)
+
+      patch :update, params: { member_id: @employee.id, id: row.id, hidden: '1' }
+      assert row.reload.hidden
+      assert_not row.bu_admin, 'hiding clears BU Admin'
+      assert_empty Aim::Users.shared_budget_units(@employee.id, staff: false)
+
+      patch :update, params: { member_id: @employee.id, id: row.id, hidden: '0' }
+      assert_nil Aim::UserBudgetUnit.find_by(id: row.id)
+      assert_equal [@employee.unit], Aim::Users.shared_budget_units(@employee.id, staff: false)
+    end
+
+    test 'only a home unit can be hidden' do
+      row = Aim::UserBudgetUnit.create!(employee_id: @employee.id, budget_unit: '9999')
+
+      patch :update, params: { member_id: @employee.id, id: row.id, hidden: '1' }
+
+      assert_not row.reload.hidden
+    end
+
     test 'toggles BU Admin on an added unit and takes it away' do
       row = Aim::UserBudgetUnit.create!(employee_id: @employee.id, budget_unit: '9999')
 

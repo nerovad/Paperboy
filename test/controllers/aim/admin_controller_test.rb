@@ -25,6 +25,8 @@ module Aim
       assert_includes response.body, added.last_name
       assert_includes response.body, grouped.last_name
       assert_includes response.body, 'In AIM through a group'
+      assert_select 'th', text: /Role/
+      assert_includes response.body, 'AIM Staff'
     end
 
     test 'the By BU view groups people under their unit, and the choice is remembered' do

@@ -13,11 +13,13 @@
       <%= form_with url: '#', method: :patch, authenticity_token: form_authenticity_token,
                     data: { aim_move_modal_target: 'form', turbo: false } do |form| %>
         <div data-aim-move-modal-target="ids"></div>
-        <fieldset class="form-group aim-owner-choice">
+        <fieldset class="form-group aim-owner-choice" data-controller="aim-owner-choice">
           <legend>Move to</legend>
-          <label><%= radio_button_tag :destination, 'person', true %> A person</label>
-          <label><%= radio_button_tag :destination, 'shared' %> The invoice's budget unit shared queue</label>
-          <%= render 'aim/shared/person_picker', name: :owner, label: 'Move to' %>
+          <label><%= radio_button_tag :destination, 'person', true, data: { action: 'aim-owner-choice#update' } %> A person</label>
+          <label><%= radio_button_tag :destination, 'shared', false, data: { action: 'aim-owner-choice#update' } %> The invoice's budget unit shared queue</label>
+          <div class="aim-owner-choice__picker" data-aim-owner-choice-target="picker">
+            <%= render 'aim/shared/person_picker', name: :owner, label: 'Move to' %>
+          </div>
         </fieldset>
         <div class="pb-modal__actions">
           <button type="button" class="btn" data-action="aim-move-modal#close">Cancel</button>

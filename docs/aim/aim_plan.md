@@ -2753,6 +2753,20 @@ Branch `aim/a-user-admin`, cut from master `3b4a2eb5`. One step, one commit.
   there, move, add people with those BUs only, edit those BUs on profiles);
   a Role column on the list and By BU showing added BUs; the Fusion
   suggestions; Deactivate.
+  **Also decided 2026-09-25, from Joshua's testing:**
+  - **A home unit can be hidden** (`hidden` on its row): the person sees
+    nothing in it until it is shown again; it is never taken away. Hiding
+    clears BU Admin. Built.
+  - **Admin / Approver mode.** AIM Admins and Staff switch, from the top of
+    the sidebar, to Approver mode, in which AIM treats them as a User: My
+    Queue, Shared Queues and Upload only, with the checks as well as the menus
+    following. Each picks their starting mode on their profile (an AIM
+    table). To build.
+  - **Move to another BU's shared queue** changes the invoice's budget unit,
+    and so what billing charges: a third Move choice with a BU list, the
+    history saying the BU changed, billing following. A User moves to BUs
+    they cover, a BU Admin between theirs, Staff and Admins anywhere. To
+    build.
   **Inactive, not deleted** (Joshua, 2026-09-25): someone who leaves is
   marked inactive (`aim.members` gains `deactivated_at`, `deactivated_by`,
   and a reason). An inactive person is out of the picker and the queues, but
@@ -3721,3 +3735,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-25 | a.1 | (this commit) | Users & Queues redesigned from Joshua's testing: List and By BU views (remembered), one line per person, an Actions menu per row (one open at a time, closed by a click elsewhere or Escape: `aim_actions_menu_controller`, registered in `app/javascript/controllers/index.js` with Joshua's approval), search, unit and flag filters, sortable columns, pinned headings. People GSABSS no longer lists are shown and flagged, and their queue still opens. Delete needs the employee ID typed and a confirmation, checked by the server. 1159 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four non-AIM warnings; scoped rubocop clean |
 | 2026-09-25 | a.2 (1) | (this commit) | `aim.user_budget_units`; a person's profile sets their BUs and BU Admin flags; shared queues follow the added BUs; roles named on the profile; Edit profile in the Actions menu. `schema.rb` again carried another team's uncommitted `textbook_and_tuition_reimbursement_forms` from the shared dev database; removed from the commit, as Joshua approved. 1164 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a.2 (2) | (this commit) | From Joshua's testing: a person's invoices split into In queue (Ready for Approval) and In pipeline (the other stages, per-stage filters, finished ones only on request, searchable); the Roles panel keeps its shape and shows each BU's role instead of how it was added; Delete is a small button whose pop-up explains what blocks it or asks for the employee ID, then a last confirmation; sidebar group Queues renamed Pipeline; activity view added to item g. 1165 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (3) | (this commit) | Role column (sortable, filterable) replaces Added through on Users & Queues; a home unit can be hidden and shown (`hidden` on `aim.user_budget_units`); the Move dialog shows the person search only when moving to a person. `schema.rb` cleared of the other team's table again. 1167 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |

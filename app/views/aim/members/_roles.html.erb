@@ -17,17 +17,29 @@
     <tbody>
       <% if @home_unit %>
         <% home_row = rows[@home_unit] %>
-        <tr>
+        <tr class="<%= 'is-hidden-unit' if home_row&.hidden %>">
           <td class="is-strong"><%= labels.fetch(@home_unit, @home_unit) %></td>
-          <td><%= home_row&.bu_admin ? 'BU Admin' : 'User' %></td>
+          <td><%= if home_row&.hidden then 'Hidden' elsif home_row&.bu_admin then 'BU Admin' else 'User' end %></td>
           <td class="aim-people-table__actions">
-            <% if home_row&.bu_admin %>
-              <%= button_to 'Remove BU Admin', aim_member_budget_unit_path(@employee_id, home_row), method: :patch,
-                            params: { bu_admin: '0' }, class: 'btn compact' %>
-            <% else %>
-              <%= button_to 'Make BU Admin', aim_member_budget_units_path(@employee_id), method: :post,
-                            params: { budget_unit: @home_unit, bu_admin: '1' }, class: 'btn compact' %>
-            <% end %>
+            <div class="aim-profile-roles__buttons">
+              <% if home_row&.hidden %>
+                <%= button_to 'Show', aim_member_budget_unit_path(@employee_id, home_row), method: :patch,
+                              params: { hidden: '0' }, class: 'btn compact' %>
+              <% else %>
+                <% if home_row&.bu_admin %>
+                  <%= button_to 'Remove BU Admin', aim_member_budget_unit_path(@employee_id, home_row), method: :patch,
+                                params: { bu_admin: '0' }, class: 'btn compact' %>
+                <% else %>
+                  <%= button_to 'Make BU Admin', aim_member_budget_units_path(@employee_id), method: :post,
+                                params: { budget_unit: @home_unit, bu_admin: '1' }, class: 'btn compact' %>
+                <% end %>
+                <%= button_to 'Hide', home_row ? aim_member_budget_unit_path(@employee_id, home_row) : aim_member_budget_units_path(@employee_id),
+                              method: home_row ? :patch : :post, params: { budget_unit: @home_unit, hidden: '1' },
+                              data: { turbo_confirm: "Hide #{@home_unit} from #{name}? They will see nothing in it until it is shown again.",
+                                      confirm_label: 'Hide' },
+                              class: 'btn compact', title: 'Their home unit, from GSABSS: it cannot be taken away, only hidden' %>
+              <% end %>
+            </div>
           </td>
         </tr>
       <% end %>

@@ -35,14 +35,16 @@ module Aim
     end
 
     # The budget units whose shared queues this person works: their own unit
-    # from GSABSS plus the BUs granted on their profile (item a.2). AIM staff
+    # from GSABSS, unless hidden, plus the BUs granted on their profile (a.2). AIM staff
     # see every BU (nil means all). The one place the rule lives.
     def shared_budget_units(employee_id, staff:)
       return nil if staff
       return [] if employee_id.blank?
 
       home = Employee.where(id: employee_id).pick(:unit).presence
-      ([home] + Aim::UserBudgetUnit.for_person(employee_id).pluck(:budget_unit)).compact.uniq
+      rows = Aim::UserBudgetUnit.for_person(employee_id).pluck(:budget_unit, :hidden)
+      hidden = rows.select(&:last).map(&:first)
+      ([home] + rows.map(&:first)).compact.uniq - hidden
     rescue ActiveRecord::ActiveRecordError
       []
     end
@@ -50,16 +52,26 @@ module Aim
     # What a person is in AIM, for their profile and the Users & Queues list
     # (roles decided 2026-09-25): AIM Admin and AIM Staff come from the groups,
     # BU Admin from their BUs, and everyone on the list is a User.
-    def roles_of(employee_id)
-      groups = Group.where(GroupID: EmployeeGroup.where(EmployeeID: employee_id).select(:GroupID))
-                    .pluck(:Group_Name).map(&:downcase)
+    def roles_of(employee_id) = roles_by_person([employee_id]).fetch(employee_id.to_i)
+
+    # The same for many people at once: { employee_id => [roles] }.
+    def roles_by_person(employee_ids)
+      ids = employee_ids.map(&:to_i)
+      names = Group.pluck(:GroupID, :Group_Name).to_h { |id, name| [id, name.to_s.downcase] }
+      groups = EmployeeGroup.where(EmployeeID: ids).pluck(:EmployeeID, :GroupID)
+                            .group_by(&:first).transform_values { |pairs| pairs.map { |_, id| names[id] } }
+      admins = Aim::UserBudgetUnit.where(employee_id: ids).administered.distinct.pluck(:employee_id).to_set
+      ids.index_with { |id| role_names(groups.fetch(id, []), admins.include?(id)) }
+    rescue ActiveRecord::ActiveRecordError
+      ids.index_with { ['User'] }
+    end
+
+    def role_names(groups, bu_admin)
       roles = []
       roles << 'AIM Admin' if groups.intersect?(%w[system_admins aim_admin])
       roles << 'AIM Staff' if groups.include?('aim_staff')
-      roles << 'BU Admin' if administered_budget_units(employee_id).any?
+      roles << 'BU Admin' if bu_admin
       roles.presence || ['User']
-    rescue ActiveRecord::ActiveRecordError
-      ['User']
     end
 
     # The BUs this person is BU Admin of.

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_100001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_100002) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -133,6 +133,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_100001) do
     t.datetime "created_at", null: false
     t.integer "employee_id", null: false
     t.string "granted_by", limit: 255
+    t.boolean "hidden", default: false, null: false
     t.datetime "updated_at", null: false
     t.index ["budget_unit"], name: "index_aim_user_budget_units_on_budget_unit"
     t.index ["employee_id", "budget_unit"], name: "index_aim_user_budget_units_on_person_and_bu", unique: true
