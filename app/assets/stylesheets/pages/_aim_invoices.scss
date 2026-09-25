@@ -931,3 +931,172 @@
   position: relative;
   z-index: 2;
 }
+
+// Users & Queues: one line per person, headings pinned while the list
+// scrolls, and everything done to a person in one Actions menu.
+.aim-admin-add-panel__label {
+  color: $text-strong;
+  white-space: nowrap;
+}
+
+.aim-people-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0 12px;
+}
+
+.aim-people-toolbar .aim-queue-search {
+  flex: 1 1 260px;
+  margin: 0;
+}
+
+.aim-people-toolbar__views {
+  display: flex;
+  gap: 4px;
+}
+
+.aim-people-toolbar__filters {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  label {
+    align-items: center;
+    display: inline-flex;
+    gap: 4px;
+    white-space: nowrap;
+  }
+}
+
+.aim-people-panel {
+  max-height: calc(100vh - 20rem);
+  overflow: auto;
+}
+
+.aim-people-table {
+  overflow: visible;
+
+  th,
+  td {
+    padding: 8px 14px;
+  }
+
+  thead th {
+    background: $surface-panel;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  tr.is-missing td {
+    background: $surface-subtle;
+  }
+}
+
+.aim-people-table__name,
+.aim-sort-link {
+  color: $brand-navy;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    color: $brand-navy-hover;
+    text-decoration: underline;
+  }
+}
+
+.aim-people-table__id {
+  color: $text-muted;
+  font-size: 0.85em;
+  margin-left: 6px;
+}
+
+.aim-people-table__open {
+  text-align: center;
+}
+
+.aim-people-table__zero {
+  color: $text-muted;
+}
+
+.aim-people-table__actions {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+}
+
+// A native <details> dropdown: no script, and it opens over the rows below.
+.aim-actions-menu {
+  display: inline-block;
+  position: relative;
+
+  > summary {
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+}
+
+.aim-actions-menu__list {
+  background: $surface-base;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  min-width: 13rem;
+  padding: 4px 0;
+  position: absolute;
+  right: 0;
+  text-align: left;
+  top: calc(100% + 4px);
+  z-index: 5;
+
+  > a,
+  form button {
+    background: none;
+    border: 0;
+    color: $text-color;
+    cursor: pointer;
+    display: block;
+    font: inherit;
+    padding: 8px 14px;
+    text-align: left;
+    text-decoration: none;
+    width: 100%;
+
+    &:hover {
+      background: $surface-hover;
+    }
+  }
+
+  .aim-actions-menu__danger {
+    color: $danger-dark;
+  }
+}
+
+.aim-actions-menu__note {
+  color: $text-muted;
+  display: block;
+  font-size: 0.85em;
+  padding: 8px 14px;
+  white-space: normal;
+}
+
+// A person's page: the delete, set apart at the bottom.
+.aim-delete-panel {
+  border-color: $red-alert-border;
+  margin-top: 16px;
+  padding: 14px;
+
+  h2 {
+    color: $danger-dark;
+    font-size: 1rem;
+    margin: 0 0 6px;
+  }
+}

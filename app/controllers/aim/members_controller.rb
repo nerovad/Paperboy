@@ -29,11 +29,14 @@ module Aim
     # employee id, so it opens for people who are AIM users through a group
     # as well as those on the Admin list.
     def show
-      @employee = Employee.find_by(id: params[:id].to_i)
-      return redirect_to(aim_admin_path, alert: 'That person does not work AIM.') unless @employee && Aim::Users.member?(@employee.id)
+      @employee_id = params[:id].to_i
+      @employee = Employee.find_by(id: @employee_id)
+      @member = Aim::Member.find_by(employee_id: @employee_id)
+      # A list entry GSABSS no longer knows still opens, so a leaver's
+      # invoices can be moved.
+      return redirect_to(aim_admin_path, alert: 'That person does not work AIM.') unless @member || Aim::Users.member?(@employee_id)
 
-      @member = Aim::Member.find_by(employee_id: @employee.id)
-      @invoices = Aim::Member.open_invoices_of(@employee.id).newest_first.to_a
+      @invoices = Aim::Member.open_invoices_of(@employee_id).newest_first.to_a
     end
 
     def destroy
@@ -42,6 +45,13 @@ module Aim
       if member.open_invoices.exists?
         return redirect_to(aim_member_path(member.employee_id),
                            alert: "#{name} still has invoices. Move them to another person or a shared queue first.")
+      end
+
+      # The second of two confirmations, checked here so it cannot be skipped:
+      # the person's employee id, typed. The first is the page's pop-up.
+      if params[:confirm_employee_id].to_s.strip != member.employee_id.to_s
+        return redirect_to(aim_member_path(member.employee_id, anchor: 'delete'),
+                           alert: "Type #{name}'s employee ID to confirm the delete.")
       end
 
       member.destroy!

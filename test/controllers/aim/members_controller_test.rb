@@ -39,14 +39,24 @@ module Aim
       assert_equal 0, Aim::Member.count
     end
 
-    test 'a person with no open invoices is removed' do
+    test 'a person with no open invoices is deleted once their employee id is typed' do
       member = Aim::Member.create!(employee_id: @employee.id)
       Aim::Invoice.create!(actor: 'test', batch_id: 'B-DONE', state: 'exported', assigned_employee_id: @employee.id)
 
-      delete :destroy, params: { id: @employee.id }
+      delete :destroy, params: { id: @employee.id, confirm_employee_id: " #{@employee.id} " }
 
       assert_redirected_to aim_admin_path
       assert_nil Aim::Member.find_by(id: member.id)
+    end
+
+    test 'a delete without the typed employee id is refused' do
+      member = Aim::Member.create!(employee_id: @employee.id)
+
+      delete :destroy, params: { id: @employee.id }
+      assert_match(/Type .* employee ID/, flash[:alert])
+
+      delete :destroy, params: { id: @employee.id, confirm_employee_id: '1' }
+      assert Aim::Member.exists?(member.id)
     end
 
     test 'a person who still owns invoices is not removed' do
@@ -87,6 +97,15 @@ module Aim
       assert_includes response.body, 'INV-99'
       assert_includes response.body, 'through an AIM group'
       assert_equal "/aim/admin/users/#{@employee.id}", session[:aim_queue_page], 'an invoice opened here returns here'
+    end
+
+    test "a leaver's queue still opens, so their invoices can be moved" do
+      Aim::Member.create!(employee_id: 999_999_999)
+
+      get :show, params: { id: 999_999_999 }
+
+      assert_response :success
+      assert_includes response.body, 'No longer in GSABSS'
     end
 
     test 'the queue of someone who does not work AIM is refused' do

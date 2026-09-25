@@ -1,11 +1,11 @@
-<% name = "#{@employee.first_name} #{@employee.last_name}".squish %>
+<% name = @employee ? "#{@employee.first_name} #{@employee.last_name}".squish : "Employee #{@employee_id}" %>
 <div class="aim-page">
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title"><%= name %>'s queue</h1>
       <p class="aim-page-subtitle">
-        Employee <%= @employee.id %><%= " · Unit #{@employee.unit}" if @employee.unit.present? %>.
-        The open invoices <%= @employee.first_name %> owns. Move them to another person or to their budget unit's shared queue.
+        Employee <%= @employee_id %><%= " · Unit #{@employee.unit}" if @employee&.unit.present? %>.
+        <%= 'No longer in GSABSS. ' unless @employee %>The open invoices <%= name %> owns. Move them to another person or to their budget unit's shared queue.
       </p>
     </div>
     <span class="aim-count-pill"><%= pluralize(@invoices.length, 'invoice') %></span>
@@ -25,16 +25,22 @@
     </div>
   <% end %>
 
-  <section class="aim-panel aim-empty-state">
+  <section class="aim-panel aim-delete-panel" id="delete">
+    <h2>Delete from AIM</h2>
     <% if @member.nil? %>
       <p><%= name %> works AIM through an AIM group. To end that, remove them from the group under ACL.</p>
     <% elsif @invoices.any? %>
-      <p>To remove <%= name %> from AIM, move every invoice above first.</p>
+      <p>To delete <%= name %> from AIM, move every invoice above first.</p>
     <% else %>
-      <%= button_to "Remove #{name} from AIM", aim_member_path(@employee.id), method: :delete,
-                    data: { turbo_confirm: "Remove #{name} from AIM?", confirm_title: 'Remove from AIM',
-                            confirm_label: 'Remove' },
-                    class: 'btn deny' %>
+      <p>Deleting takes <%= name %> off the AIM list for good. Their history stays. To confirm, type their employee ID.</p>
+      <%= form_with url: aim_member_path(@employee_id), method: :delete, local: true, class: 'aim-inline-form',
+                    data: { turbo_confirm: "Delete #{name} from AIM? This cannot be undone.",
+                            confirm_title: 'Delete from AIM', confirm_label: 'Yes, delete' } do %>
+        <%= text_field_tag :confirm_employee_id, nil, placeholder: "Employee ID #{@employee_id}", autocomplete: 'off',
+                           required: true, pattern: Regexp.escape(@employee_id.to_s),
+                           aria: { label: "Type #{@employee_id} to confirm" } %>
+        <button type="submit" class="btn deny">Delete from AIM</button>
+      <% end %>
     <% end %>
   </section>
 

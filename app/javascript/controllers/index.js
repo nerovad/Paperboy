@@ -96,6 +96,7 @@ import AimOwnerChoiceController from "controllers/aim_owner_choice_controller"
 import AimPresenceController from "controllers/aim_presence_controller"
 import AimReasonController from "controllers/aim_reason_controller"
 import AimSidebarController from "controllers/aim_sidebar_controller"
+import AimActionsMenuController from "controllers/aim_actions_menu_controller"
 import HsaAdoptionCardsController from "controllers/hsa_adoption_cards_controller"
 import DateRangeController from "controllers/date_range_controller"
 import PdfPreviewController from "controllers/pdf_preview_controller"
@@ -206,4 +207,5 @@ application.register("aim-owner-choice", AimOwnerChoiceController)
 application.register("aim-presence", AimPresenceController)
 application.register("aim-reason", AimReasonController)
 application.register("aim-sidebar", AimSidebarController)
+application.register("aim-actions-menu", AimActionsMenuController)
 application.register("hsa-adoption-cards", HsaAdoptionCardsController)
