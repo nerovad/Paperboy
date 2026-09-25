@@ -3626,6 +3626,11 @@ end so the reasoning stays findable.
   2026-09-25, when AIM stopped reading them. Harmless now; Joshua to remove
   them on the ACL screen. Steve Nelles had the Pipeline only through
   `Super_User`'s grant: add him to `aim_staff` if he should keep it.
+- **[a] ACL's AIM application grant now only shows AIM in the app switcher.**
+  AIM's front door asks only for a Paperboy sign-in (2026-09-25); the AIM
+  account decides the rest. Joshua to grant the AIM application once at the
+  top of ACL, so everyone sees it, and remove the old grants to departments
+  4601, 4643, 4645 and unit 4641.
 - **[b] A unit's agency on the invoice.** AIM's BU lists and labels come from
   the COA (`Aim::Units`, 2026-09-25), but an invoice stores only its unit
   number, and three unit numbers belong to more than one agency in the COA.
@@ -3767,3 +3772,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-25 | a.2 (8) | (this commit) | One admin role: AIM Admin is the `aim_admin` group in ACL (plus system admins); AIM Staff is folded into it, and the Staff switch built earlier the same day was withdrawn before commit. AIM users are the AIM list plus `aim_admin`; `system_admins`, `aim_staff` and the Processing Queues grant groups no longer add anyone. The list's group tag reads ACL. Gary Howard and Matthew Davoren added to `aim_admin` in ACL by Joshua. 1187 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a.2 (9) | (this commit) | Deactivate (reason, who, when; out of the picker and queues; Reactivate; BU Admins only for people whose BUs are all theirs; Users & Queues hides inactive unless asked). Fusion's team and roles kept on `aim.members`; the import makes each Fusion supervisor BU Admin of their team's BU (the BU most of the team's people are in) and lists app admins for ACL -- applied rather than suggested, Joshua's call. Run on `Paperboy_Dev`: Nelles 4641, Gagnon 4703, Bonilla 4551 and 4571. **a.2 complete.** 1193 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a | (this commit) | Agencies and BUs from the Chart of Accounts (`Aim::Units`): every BU list and label reads the COA, grouped by agency, with names tidied (`4601 · GSA Administration`); the agencies offered are those of the people on the AIM list (GSABSS `GSAV` is COA `GSA`). Agency filter on Users & Queues and the BU page (starting on your own agency); Shared Queues headings use the COA names. 1198 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a | (this commit) | AIM's front door needs only a Paperboy sign-in; the AIM account decides the rest (found emulating Tonya Gagnon, 4703, whose department held no ACL grant). Everything under AIM in the sidebar is personal: Shared Queues and its count show your own BUs, AIM Admins included; an admin's By BU moved into Pipeline. 1202 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |

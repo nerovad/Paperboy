@@ -5,7 +5,7 @@
     close yourself stays that way from page to page until you come back to
     the AIM main page (aim_sidebar_controller). The counts are filled in after the
     page draws (aim_counts_controller). %>
-<% current = if controller_name == "invoices" then "queues"
+<% current = if controller_name == "invoices" || (controller_name == "budget_units" && aim_queue_access?) then "queues"
               elsif %w[vendor_aliases vendor_rules].include?(controller_name) then "vendors"
               elsif %w[admin members].include?(controller_name) then "admin"
               else "aim"
@@ -37,8 +37,9 @@
           <span class="sidebar-count neutral" data-aim-count="shared_queues" data-hide-zero hidden></span>
         <% end %>
       <% end %>
-      <% if aim_bu_page? %>
-        <%= link_to (aim_queue_access? ? "By BU" : "My BUs"), aim_budget_units_path,
+      <%# Everything under AIM is personal; an admin's By BU sits in Pipeline. %>
+      <% if aim_bu_page? && !aim_queue_access? %>
+        <%= link_to "My BUs", aim_budget_units_path,
                     class: "nav-link#{' active' if current_page?(aim_budget_units_path)}" %>
       <% end %>
       <%= link_to "Upload Invoices", new_aim_upload_path,
@@ -56,6 +57,8 @@
             <span class="sidebar-count <%= config[:css_class].delete_prefix('aim-card-') %>" data-aim-count="<%= queue %>">…</span>
           <% end %>
         <% end %>
+        <%= link_to "By BU", aim_budget_units_path,
+                    class: "nav-link#{' active' if current_page?(aim_budget_units_path)}" %>
       </details>
 
       <details class="nav-group" <%= "open" if current == "vendors" %> data-aim-sidebar-target="group" data-key="vendors"

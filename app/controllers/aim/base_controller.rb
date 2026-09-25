@@ -9,18 +9,16 @@ module Aim
 
     private
 
-    # The sidebar app switcher only *hides* apps the user cannot reach, so
-    # this is the real gate: without it AIM would stay reachable by typing the
-    # URL. Access is granted per group or org level under ACL > Applications;
-    # system admins bypass it.
-    #
-    # The signed-in check matters: a global (all-org-nil) application grant
-    # applies to everyone, so the grant alone would let a signed-out visitor
-    # through.
+    # AIM's front door asks only that someone is signed in to Paperboy (Joshua,
+    # 2026-09-25): their AIM account decides the rest. Not on the AIM list, they
+    # get Upload, which is open to everyone signed in anyway; on it, their queue
+    # and their BUs' shared queues; BU Admins and AIM Admins more. Every screen
+    # behind this door checks the account itself. The ACL application grant for
+    # AIM now only decides whether AIM shows in Paperboy's app switcher.
     def require_app_access
-      return if current_user.present? && helpers.can_access_app?('aim')
+      return if current_user.present?
 
-      redirect_to root_path, alert: 'You do not have access to Automated Invoice Management.'
+      redirect_to root_path, alert: 'Sign in to Paperboy first.'
     end
 
     # Who may reach the processing queues lives in Aim::AccessHelper, so the
