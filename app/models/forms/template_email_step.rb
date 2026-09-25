@@ -2,7 +2,8 @@
 
 # Configurable workflow email attached to a form template. Fires on submission
 # or on the approval/denial of a routing step (or the form's final outcome) and
-# sends a templated email with optional PDF / media attachments.
+# sends the form's matching email (see #email_kind) with optional PDF / media
+# attachments.
 #
 # Modeled on FormTemplateCopyRecipient — same builder/save plumbing — but this
 # actually delivers email (via FormWorkflowMailer) rather than recording a copy.
@@ -65,12 +66,10 @@ module Forms
       []
     end
 
-    def render_subject(submission)
-      FormEmailRenderer.render(subject, submission)
-    end
-
-    def render_body(submission)
-      FormEmailRenderer.render(body, submission)
+    # Which of the form's emails (Forms::TemplateEmail) this rule sends. A rule
+    # picks recipients and timing only; the form owns the wording.
+    def email_kind
+      trigger_event == 'submit' ? 'new_submission' : 'status_changed'
     end
 
     # --- Builder display helpers ---

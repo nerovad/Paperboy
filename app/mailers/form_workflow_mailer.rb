@@ -3,7 +3,8 @@
 # Delivers a single configurable workflow email defined by a Forms::TemplateEmailStep.
 # Invoked (via deliver_later) from TrackableStatus when a form is submitted or a
 # routing step is approved/denied. Loads everything by id so async delivery sees
-# committed data.
+# committed data. The rule decides who and when; the wording is the form's own
+# New Submission or Status Changed email (Forms::TemplateEmail).
 class FormWorkflowMailer < ApplicationMailer
   def notify(email_step_id, submission_class, submission_id)
     email_step = Forms::TemplateEmailStep.find_by(id: email_step_id)
@@ -18,11 +19,9 @@ class FormWorkflowMailer < ApplicationMailer
     add_pdf_attachment(email_step, submission)   if email_step.attach_pdf
     add_media_attachments(submission)            if email_step.attach_media
 
-    @body_html = email_step.render_body(submission)
-    subject = email_step.render_subject(submission).presence ||
-              "#{FormEmailRenderer.form_name(submission)} notification"
-
-    mail(to: recipients, subject: subject)
+    email = Forms::TemplateEmail.for(submission, email_step.email_kind)
+    @body_html = email.render_body(submission)
+    mail(to: recipients, subject: email.render_subject(submission))
   end
 
   private

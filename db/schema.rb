@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_100004) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_100000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -831,7 +831,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_100004) do
   create_table "form_template_email_steps", force: :cascade do |t|
     t.boolean "attach_media", default: false, null: false
     t.boolean "attach_pdf", default: false, null: false
-    t.text "body"
     t.datetime "created_at", null: false
     t.string "custom_email"
     t.integer "employee_id"
@@ -841,10 +840,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_100004) do
     t.string "recipient_field_name"
     t.string "recipient_type", null: false
     t.integer "routing_step_number"
-    t.string "subject"
     t.string "trigger_event", default: "submit", null: false
     t.datetime "updated_at", null: false
     t.index ["form_template_id"], name: "index_form_template_email_steps_on_form_template_id"
+  end
+
+  create_table "form_template_emails", force: :cascade do |t|
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.bigint "form_template_id", null: false
+    t.string "kind", null: false
+    t.string "subject"
+    t.datetime "updated_at", null: false
+    t.index ["form_template_id", "kind"], name: "index_form_template_emails_on_form_template_id_and_kind", unique: true
   end
 
   create_table "form_template_routing_steps", force: :cascade do |t|
@@ -1736,6 +1744,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_100004) do
   add_foreign_key "form_subscription_opt_outs", "form_subscriptions", on_delete: :cascade
   add_foreign_key "form_template_copy_recipients", "form_templates"
   add_foreign_key "form_template_email_steps", "form_templates"
+  add_foreign_key "form_template_emails", "form_templates"
   add_foreign_key "form_template_routing_steps", "form_template_statuses"
   add_foreign_key "form_template_routing_steps", "form_templates"
   add_foreign_key "form_template_statuses", "form_templates"

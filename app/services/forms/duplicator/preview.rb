@@ -80,7 +80,8 @@ module Forms
 
       def workflow_items
         list = tally([[@source.statuses.count, 'status'], [@source.routing_steps.count, 'routing step'],
-                      [@source.email_steps.count, 'workflow email'], [@source.copy_recipients.count, 'copy recipient']])
+                      [@source.email_steps.count, 'workflow email'], [@source.emails.count, 'customized email'],
+                      [@source.copy_recipients.count, 'copy recipient']])
         buttons = @source.enabled_inbox_buttons
         buttons.any? ? list << "Inbox buttons: #{buttons.join(', ')}" : list
       end

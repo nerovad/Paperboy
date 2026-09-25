@@ -104,6 +104,8 @@ module Forms
                                                              foreign_key: :form_template_id, dependent: :destroy
     has_many :email_steps, -> { order(:position, :id) }, class_name: 'Forms::TemplateEmailStep',
                                                          foreign_key: :form_template_id, dependent: :destroy
+    has_many :emails, class_name: 'Forms::TemplateEmail', foreign_key: :form_template_id,
+                      inverse_of: :form_template, dependent: :destroy
     accepts_nested_attributes_for :routing_steps, allow_destroy: true, reject_if: :all_blank
     accepts_nested_attributes_for :statuses, allow_destroy: true, reject_if: :all_blank
 
