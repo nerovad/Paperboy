@@ -1259,3 +1259,32 @@
 .aim-bu-group > div {
   overflow: visible;
 }
+
+// A profile's bottom row: Deactivate and Delete, small, to the right.
+.aim-profile-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+
+  .aim-profile-delete {
+    margin-top: 0;
+  }
+
+  .pb-modal textarea {
+    width: 100%;
+  }
+}
+
+.aim-profile-inactive {
+  align-items: center;
+  background: $surface-subtle;
+  border-color: $warning-border;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+}
+

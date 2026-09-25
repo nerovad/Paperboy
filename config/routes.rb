@@ -145,6 +145,10 @@ Rails.application.routes.draw do
     get 'admin', to: 'admin#index', as: :admin
     get 'admin/employees', to: 'members#employees', as: :admin_employees
     resources :members, only: %i[create show destroy], path: 'admin/users' do
+      member do
+        patch :deactivate, to: 'member_statuses#deactivate'
+        patch :reactivate, to: 'member_statuses#reactivate'
+      end
       resources :budget_units, only: %i[create update destroy], controller: 'member_budget_units'
     end
     resources :uploads, only: %i[new create]

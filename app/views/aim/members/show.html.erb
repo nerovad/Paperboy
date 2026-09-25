@@ -15,6 +15,19 @@
     <% end %>
   </header>
 
+  <% if @member && !@member.active? %>
+    <section class="aim-panel aim-profile-inactive">
+      <div>
+        <strong>Inactive</strong> since <%= l(@member.deactivated_at.to_date, format: :long) %>
+        <%= "by #{@member.deactivated_by}" if @member.deactivated_by.present? %>.
+        <%= @member.deactivation_reason %>
+      </div>
+      <% if aim_manages_all_units_of?(@employee_id) %>
+        <%= button_to 'Reactivate', reactivate_aim_member_path(@employee_id), method: :patch, class: 'btn approve compact' %>
+      <% end %>
+    </section>
+  <% end %>
+
   <%= render 'roles', name: name %>
 
   <h2 class="aim-profile-heading" id="queue">Invoices</h2>
@@ -36,6 +49,10 @@
     <% end %>
   </div>
 
+  <div class="aim-profile-actions">
+  <% if @member&.active? && aim_manages_all_units_of?(@employee_id) %>
+    <%= render 'status', name: name %>
+  <% end %>
   <% if @member && aim_user_admin? %>
     <%# Delete: a small button, a pop-up that either explains what is in the way
         or asks for the employee ID, then a last "cannot be undone" check. %>
@@ -82,4 +99,5 @@
       </div>
     </div>
   <% end %>
+  </div>
 </div>

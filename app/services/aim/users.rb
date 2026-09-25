@@ -13,7 +13,7 @@ module Aim
     module_function
 
     def all
-      ids = (group_employee_ids + Aim::Member.pluck(:employee_id)).uniq
+      ids = (group_employee_ids + Aim::Member.active.pluck(:employee_id)).uniq
       Employee.where(id: ids).order(:last_name, :first_name)
     end
 

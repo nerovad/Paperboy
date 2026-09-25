@@ -65,6 +65,18 @@ module Aim
       assert_includes response.body, 'Not in GSABSS'
     end
 
+    test 'inactive people are hidden unless asked for' do
+      employee = Employee.order(:id).first || skip('no employee to test with')
+      as_groups 'aim_admin'
+      Aim::Member.create!(employee_id: employee.id, deactivated_at: Time.current)
+
+      get :index, params: { view: 'list' }
+      assert_not_includes response.body, ">#{employee.last_name}, "
+
+      get :index, params: { view: 'list', inactive: '1' }
+      assert_includes response.body, 'Inactive'
+    end
+
     test 'someone who is not an AIM Admin is sent away' do
       as_groups
 

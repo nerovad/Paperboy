@@ -51,6 +51,12 @@ namespace :aim do
       added, kept, unknown = Aim::Member.import_csv!(path, added_by: 'aim:v2:import_members')
       puts "aim.members: #{added} added, #{kept} already present, from #{path}"
       puts "  not in GSABSS, skipped: #{unknown.join(', ')}" if unknown.any?
+
+      made, app_admins = Aim::Member.apply_fusion_roles!(granted_by: 'aim:v2:import_members')
+      puts "BU Admin from Fusion supervisors: #{made.size} set"
+      made.each { |id, unit| puts "  #{id} is BU Admin of #{unit}" }
+      admins_elsewhere = app_admins - Aim::Users.group_employee_ids
+      puts "Fusion app admins not in aim_admin (add in ACL if they should be AIM Admins): #{admins_elsewhere.join(', ')}" if admins_elsewhere.any?
     end
 
     desc 'Link open invoices owned by a name to the employee of that name'

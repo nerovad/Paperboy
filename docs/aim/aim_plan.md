@@ -2746,7 +2746,7 @@ Branch `aim/a-user-admin`, cut from master `3b4a2eb5`. One step, one commit.
   for Staff or Admin; supervisors (Gagnon -> Maintenance, Bonilla -> Fleet,
   Nelles -> Business Support, Arellano, Johnson, Kunsemiller, Huebner,
   Howard) for BU Admin of their team's BUs.
-- [ ] **a.2 Roles and BU scope** (replaces "BU coverage" and absorbs a.6;
+- [x] **a.2 Roles and BU scope** (replaces "BU coverage" and absorbs a.6;
   roles decided 2026-09-25, see `## Decisions Already Made`). Table
   `aim.user_budget_units`: each person's BUs, and whether they are BU Admin
   of each. The home unit is read from GSABSS, never copied (9.1). Staff and
@@ -2759,10 +2759,14 @@ Branch `aim/a-user-admin`, cut from master `3b4a2eb5`. One step, one commit.
   BUs from GSA's active COA units with a BU Admin toggle and Take away --
   then Queue and Delete. `shared_budget_units` reads the added BUs;
   `administered_budget_units` and `roles_of` added. AIM admins only.
-  **Still to do in a.2:** BU Admins acting within their BUs (see every queue
-  there, move, add people with those BUs only, edit those BUs on profiles);
-  a Role column on the list and By BU showing added BUs; the Fusion
-  suggestions; Deactivate.
+  **a.2 complete, 2026-09-25.** Built beyond part 1: BU Admins working their
+  BUs (the BU page, moves, adding people, their BUs on profiles), the Role
+  column, hiding a home unit, Admin / Approver mode, moves to another BU's
+  shared queue, one admin role from ACL, Deactivate, and Fusion's roles
+  applied by the import (supervisors become BU Admin of their team's BU; app
+  admins are listed for ACL). Fusion's plain supervisor flag, with no team
+  named, sets nothing: Arellano, Johnson, Kunsemiller, Huebner and Howard
+  are for Joshua to set by hand or to map to their home units.
   **Also decided 2026-09-25, from Joshua's testing:**
   - **A home unit can be hidden** (`hidden` on its row): the person sees
     nothing in it until it is shown again; it is never taken away. Hiding
@@ -3757,3 +3761,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-25 | a.2 (6) | (this commit) | The BU page: My BUs for a BU Admin, By BU for Staff and Admins -- each BU's shared queue and people, collapsible, with the queue/pipeline tabs (now a shared concern and partial) and Move. BU Admins open, claim and move invoices in their BUs, moving to a person only if that person covers the BU; they still cannot approve others' invoices. Hidden in Approver mode. 1182 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a.2 (7) | (this commit) | BU Admins manage people in their BUs: add someone with one of their BUs from My BUs, open the profiles of people in those BUs, add or take away those BUs only. Appointing BU Admins, hiding units, taking a BU from another BU Admin of it and deleting stay with AIM admins (`aim_managed_units`). 1187 runs, 0 failures, 0 errors (the P2M test passed this run, so it is intermittent); brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a.2 (8) | (this commit) | One admin role: AIM Admin is the `aim_admin` group in ACL (plus system admins); AIM Staff is folded into it, and the Staff switch built earlier the same day was withdrawn before commit. AIM users are the AIM list plus `aim_admin`; `system_admins`, `aim_staff` and the Processing Queues grant groups no longer add anyone. The list's group tag reads ACL. Gary Howard and Matthew Davoren added to `aim_admin` in ACL by Joshua. 1187 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (9) | (this commit) | Deactivate (reason, who, when; out of the picker and queues; Reactivate; BU Admins only for people whose BUs are all theirs; Users & Queues hides inactive unless asked). Fusion's team and roles kept on `aim.members`; the import makes each Fusion supervisor BU Admin of their team's BU (the BU most of the team's people are in) and lists app admins for ACL -- applied rather than suggested, Joshua's call. Run on `Paperboy_Dev`: Nelles 4641, Gagnon 4703, Bonilla 4551 and 4571. **a.2 complete.** 1193 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |

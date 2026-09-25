@@ -61,6 +61,16 @@ module Aim
       @aim_managed_units ||= Aim::Users.administered_budget_units(aim_session_employee_id)
     end
 
+    # Every BU this person works is one the current user manages: what a BU
+    # Admin needs before deactivating someone.
+    def aim_manages_all_units_of?(employee_id)
+      units = aim_managed_units
+      return true if units.nil?
+
+      theirs = Aim::Users.shared_budget_units(employee_id, staff: false)
+      theirs.any? && (theirs - units).empty?
+    end
+
     def aim_manages_people?
       units = aim_managed_units
       units.nil? || units.any?

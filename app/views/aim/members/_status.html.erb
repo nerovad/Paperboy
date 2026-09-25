@@ -1,0 +1,41 @@
+<%# Deactivate, beside Delete: for someone who left. A pop-up asks why; the
+    reason is kept with who did it and when (item a.2). %>
+<div class="aim-profile-status" data-controller="aim-reason">
+  <button type="button" class="btn compact" data-action="aim-reason#open"
+          data-title="Deactivate <%= name %>" data-commit="Deactivate">Deactivate</button>
+
+  <div class="pb-modal-backdrop" data-aim-reason-target="backdrop" hidden>
+    <div class="pb-modal" role="dialog" aria-modal="true" aria-labelledby="aim-deactivate-title">
+      <div class="pb-modal__header">
+        <h3 id="aim-deactivate-title" data-aim-reason-target="title">Deactivate</h3>
+        <button type="button" class="pb-modal__close" data-action="aim-reason#close" aria-label="Close">✕</button>
+      </div>
+      <% if @open_count.positive? %>
+        <div class="pb-modal__body">
+          <p class="pb-modal__message">
+            <%= name %> still owns <%= pluralize(@open_count, 'open invoice') %>. Move them to another person or a
+            shared queue first, then deactivate.
+          </p>
+          <input type="hidden" data-aim-reason-target="reason" disabled>
+          <div class="pb-modal__actions">
+            <button type="button" class="btn" data-action="aim-reason#close">Close</button>
+            <button type="button" class="btn" data-aim-reason-target="submit" hidden>Deactivate</button>
+          </div>
+        </div>
+      <% else %>
+        <%= form_with url: deactivate_aim_member_path(@employee_id), method: :patch, local: true, class: 'pb-modal__body' do %>
+          <p class="pb-modal__message">
+            <%= name %> drops out of the picker and the queues. Their record, budget units and history stay, and they
+            can be reactivated. Why?
+          </p>
+          <%= text_area_tag :reason, nil, rows: 3, disabled: true, placeholder: 'For example: left the county, moved to another agency',
+                            aria: { label: 'Reason' }, data: { aim_reason_target: 'reason' } %>
+          <div class="pb-modal__actions">
+            <button type="button" class="btn" data-action="aim-reason#close">Cancel</button>
+            <button type="submit" class="btn" data-aim-reason-target="submit">Deactivate</button>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>

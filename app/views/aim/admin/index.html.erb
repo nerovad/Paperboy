@@ -34,6 +34,7 @@
       <label><%= check_box_tag :has_open, '1', @filters['has_open'] == '1' %> Has invoices</label>
       <label><%= check_box_tag :via_group, '1', @filters['via_group'] == '1' %> Admin through ACL</label>
       <label><%= check_box_tag :missing, '1', @filters['missing'] == '1' %> Not in GSABSS</label>
+      <label><%= check_box_tag :inactive, '1', @filters['inactive'] == '1' %> Show inactive</label>
       <button type="submit" class="btn compact">Apply</button>
       <% if @filters.any? %>
         <%= link_to 'Clear', aim_admin_path(sort: @sort), class: 'btn compact clear-filters' %>

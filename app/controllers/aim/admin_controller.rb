@@ -14,7 +14,7 @@ module Aim
     ROLES = ['AIM Admin', 'BU Admin', 'User'].freeze
 
     Person = Struct.new(:employee_id, :first_name, :last_name, :unit, :unit_name, :member, :via_group, :open,
-                        :missing, :roles, keyword_init: true) do
+                        :missing, :roles, :inactive, keyword_init: true) do
       def name = missing ? "Employee #{employee_id}" : "#{last_name}, #{first_name}"
       def unit_label = [unit, unit_name&.titleize].compact_blank.join(' · ').presence || 'No unit'
       def search_text = [name, first_name, employee_id, unit, unit_name, *roles].compact.join(' ')
@@ -23,7 +23,7 @@ module Aim
     def index
       @view = choose_view
       @sort = SORTS.include?(params[:sort]) ? params[:sort] : 'name'
-      @filters = params.permit(:unit, :role, :has_open, :via_group, :missing).to_h.compact_blank
+      @filters = params.permit(:unit, :role, :has_open, :via_group, :missing, :inactive).to_h.compact_blank
       @people = filtered(sorted(all_people))
       @units = all_people.select(&:unit).map { |person| [person.unit_label, person.unit] }.uniq.sort_by(&:last)
       @groups = @people.group_by(&:unit_label).sort_by { |label, _| label } if @view == 'bu'
@@ -60,7 +60,8 @@ module Aim
     def person(id, employee, member, via_group, open, unit_names, roles)
       Person.new(employee_id: id, first_name: employee&.first_name, last_name: employee&.last_name,
                  unit: employee&.unit.presence, unit_name: unit_names[employee&.unit], member: member,
-                 via_group: via_group, open: open.fetch(id, 0), missing: employee.nil?, roles: roles)
+                 via_group: via_group, open: open.fetch(id, 0), missing: employee.nil?, roles: roles,
+                 inactive: member.present? && !member.active? && !via_group)
     end
 
     def open_counts(ids)
@@ -84,6 +85,7 @@ module Aim
       list = list.select { |p| p.open.positive? } if params[:has_open] == '1'
       list = list.select(&:via_group) if params[:via_group] == '1'
       list = list.select(&:missing) if params[:missing] == '1'
+      list = list.reject(&:inactive) unless params[:inactive] == '1'
       list
     end
   end

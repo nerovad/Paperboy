@@ -13,12 +13,13 @@
   <tbody>
     <% people.each do |person| %>
       <tr data-aim-queue-filter-target="row" data-search="<%= person.search_text %>"
-          class="<%= 'is-missing' if person.missing %>">
+          class="<%= 'is-missing' if person.missing || person.inactive %>">
         <td>
           <%= link_to person.name, aim_member_path(person.employee_id), class: 'aim-people-table__name' %>
           <span class="aim-people-table__id"><%= person.employee_id %></span>
           <% if person.via_group %><span class="badge is-pending" title="AIM Admin through the aim_admin group, set in ACL">ACL</span><% end %>
           <% if person.missing %><span class="badge is-denied">Not in GSABSS</span><% end %>
+          <% if person.inactive %><span class="badge is-cancelled">Inactive</span><% end %>
         </td>
         <td><%= person.unit_label %></td>
         <td><%= person.roles.join(', ') %></td>
