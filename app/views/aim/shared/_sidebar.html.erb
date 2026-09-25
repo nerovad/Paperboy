@@ -1,6 +1,6 @@
 <%# app/views/aim/shared/_sidebar.html.erb
     Sidebar for Automated Invoice Management, grouped the way Production's is:
-    AIM, Queues, Vendors, Admin. AIM is open by default and the rest closed;
+    AIM, Pipeline, Vendors, Admin. AIM is open by default and the rest closed;
     the group holding the current page is always open. A group you open or
     close yourself stays that way from page to page until you come back to
     the AIM main page (aim_sidebar_controller). The counts are filled in after the
@@ -42,7 +42,7 @@
     <% if aim_queue_access? %>
       <details class="nav-group" <%= "open" if current == "queues" %> data-aim-sidebar-target="group" data-key="queues"
              data-default-open="false" data-current="<%= current == "queues" %>">
-        <summary><span class="nav-group-label">Queues</span></summary>
+        <summary><span class="nav-group-label">Pipeline</span></summary>
         <% Aim::Invoice::QUEUES.each do |queue, config| %>
           <% queue_path = aim_invoices_path(queue: queue) %>
           <%= link_to queue_path, class: "nav-link#{' active' if in_queues && params[:queue].to_s == queue}" do %>

@@ -1,17 +1,16 @@
-<%# A person's budget units and where they are BU Admin (item a.2). The home
-    unit comes from GSABSS; the rest are granted here. AIM Admin and AIM Staff
-    are groups, managed under ACL. %>
+<%# A person's budget units and their role in each (item a.2). The home unit
+    comes from GSABSS and cannot be taken away; the rest are granted here.
+    AIM Admin and AIM Staff are groups, managed under ACL. %>
 <% labels = @unit_options.to_h(&:reverse) %>
 <% rows = @budget_units.index_by(&:budget_unit) %>
 <% extra = @budget_units.reject { |row| row.budget_unit == @home_unit } %>
 <h2 class="aim-profile-heading" id="roles">Roles &amp; budget units</h2>
-<section class="aim-panel aim-queue-panel">
+<section class="aim-panel aim-profile-roles">
   <table class="submission-table aim-queue-table aim-people-table">
     <thead>
       <tr>
         <th>Budget unit</th>
-        <th>How</th>
-        <th>BU Admin</th>
+        <th>Role</th>
         <th class="aim-people-table__actions" aria-label="Actions"></th>
       </tr>
     </thead>
@@ -20,38 +19,36 @@
         <% home_row = rows[@home_unit] %>
         <tr>
           <td class="is-strong"><%= labels.fetch(@home_unit, @home_unit) %></td>
-          <td>Home unit, from GSABSS</td>
-          <td>
+          <td><%= home_row&.bu_admin ? 'BU Admin' : 'User' %></td>
+          <td class="aim-people-table__actions">
             <% if home_row&.bu_admin %>
-              <%= button_to 'BU Admin ✓', aim_member_budget_unit_path(@employee_id, home_row), method: :patch,
-                            params: { bu_admin: '0' }, class: 'btn compact active',
-                            title: "Stop #{name} being BU Admin of #{@home_unit}" %>
+              <%= button_to 'Remove BU Admin', aim_member_budget_unit_path(@employee_id, home_row), method: :patch,
+                            params: { bu_admin: '0' }, class: 'btn compact' %>
             <% else %>
               <%= button_to 'Make BU Admin', aim_member_budget_units_path(@employee_id), method: :post,
-                            params: { budget_unit: @home_unit, bu_admin: '1' }, class: 'btn compact ghost' %>
+                            params: { budget_unit: @home_unit, bu_admin: '1' }, class: 'btn compact' %>
             <% end %>
           </td>
-          <td></td>
         </tr>
       <% end %>
       <% extra.each do |row| %>
         <tr>
           <td class="is-strong"><%= labels.fetch(row.budget_unit, row.budget_unit) %></td>
-          <td>Added<%= " by #{row.granted_by}" if row.granted_by.present? %></td>
-          <td>
-            <%= button_to row.bu_admin ? 'BU Admin ✓' : 'Make BU Admin', aim_member_budget_unit_path(@employee_id, row),
-                          method: :patch, params: { bu_admin: row.bu_admin ? '0' : '1' },
-                          class: "btn compact #{row.bu_admin ? 'active' : 'ghost'}" %>
-          </td>
+          <td><%= row.bu_admin ? 'BU Admin' : 'User' %></td>
           <td class="aim-people-table__actions">
-            <%= button_to 'Take away', aim_member_budget_unit_path(@employee_id, row), method: :delete,
-                          data: { turbo_confirm: "Take #{row.budget_unit} away from #{name}?", confirm_label: 'Take away' },
-                          class: 'btn deny compact' %>
+            <div class="aim-profile-roles__buttons">
+              <%= button_to row.bu_admin ? 'Remove BU Admin' : 'Make BU Admin',
+                            aim_member_budget_unit_path(@employee_id, row), method: :patch,
+                            params: { bu_admin: row.bu_admin ? '0' : '1' }, class: 'btn compact' %>
+              <%= button_to 'Take away', aim_member_budget_unit_path(@employee_id, row), method: :delete,
+                            data: { turbo_confirm: "Take #{row.budget_unit} away from #{name}?", confirm_label: 'Take away' },
+                            class: 'btn deny compact' %>
+            </div>
           </td>
         </tr>
       <% end %>
       <% if @home_unit.nil? && extra.empty? %>
-        <tr><td colspan="4">No budget units yet.</td></tr>
+        <tr><td colspan="3">No budget units yet.</td></tr>
       <% end %>
     </tbody>
   </table>
@@ -63,5 +60,4 @@
     <label><%= check_box_tag :bu_admin, '1', false %> as BU Admin</label>
     <button type="submit" class="btn approve compact">Add</button>
   <% end %>
-  <p class="aim-profile-note">AIM Admin and AIM Staff are the <code>aim_admin</code> and <code>aim_staff</code> groups, set under ACL.</p>
 </section>

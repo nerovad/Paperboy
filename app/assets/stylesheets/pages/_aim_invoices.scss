@@ -1088,19 +1088,6 @@
   white-space: normal;
 }
 
-// A person's page: the delete, set apart at the bottom.
-.aim-delete-panel {
-  border-color: $red-alert-border;
-  margin-top: 16px;
-  padding: 14px;
-
-  h2 {
-    color: $danger-dark;
-    font-size: 1rem;
-    margin: 0 0 6px;
-  }
-}
-
 // A person's profile: Roles & budget units, Queue, Delete.
 .aim-profile-heading {
   align-items: center;
@@ -1119,4 +1106,33 @@
   font-size: 0.85em;
   margin: 0;
   padding: 0 14px 12px;
+}
+
+// The roles panel keeps its shape: no scroll box, no collapsing.
+.aim-profile-roles {
+  overflow: visible;
+
+  .aim-people-table {
+    box-shadow: none;
+  }
+}
+
+.aim-profile-roles__buttons {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.aim-stage-filters {
+  margin: 0 0 12px;
+}
+
+// Delete sits small at the bottom right; its pop-up does the explaining.
+.aim-profile-delete {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+
+  .pb-modal input[type="text"] {
+    width: 100%;
+  }
 }

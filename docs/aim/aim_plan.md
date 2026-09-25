@@ -2970,6 +2970,12 @@ limit invoices to Fiscal, but another team's, so it needs their agreement).
 
 **Goal.** Knowing the worker is healthy without watching its window.
 
+**Activity view** (asked by Joshua 2026-09-25): what was done, by whom,
+when -- across all invoices, filterable by person, action, BU and date, and
+as an Activity tab on each person's profile. `aim.invoice_events` already
+holds every move with its actor; admin changes (people added or deleted, BUs
+and BU Admin granted) need recording too, in the same shape.
+
 **Build.** Worker logging to timestamped files under `AIM_LOG_DIR` (read but
 unused today); a heartbeat row or file the dashboard shows (last cycle, last
 error); a count of rows stuck with a command and an expired lease; failed
@@ -3714,3 +3720,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-25 | a.1c | (this commit) | 40 Fusion GSA users in `docs/aim/fusion_gsa_users.csv` and `aim:v2:import_members`; imported to `Paperboy_Dev` (40 added). Roles settled: User, BU Admin, AIM Staff, AIM Admin, Fiscal; item a reordered so a.2 is roles and BU scope with the profile page |
 | 2026-09-25 | a.1 | (this commit) | Users & Queues redesigned from Joshua's testing: List and By BU views (remembered), one line per person, an Actions menu per row (one open at a time, closed by a click elsewhere or Escape: `aim_actions_menu_controller`, registered in `app/javascript/controllers/index.js` with Joshua's approval), search, unit and flag filters, sortable columns, pinned headings. People GSABSS no longer lists are shown and flagged, and their queue still opens. Delete needs the employee ID typed and a confirmation, checked by the server. 1159 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four non-AIM warnings; scoped rubocop clean |
 | 2026-09-25 | a.2 (1) | (this commit) | `aim.user_budget_units`; a person's profile sets their BUs and BU Admin flags; shared queues follow the added BUs; roles named on the profile; Edit profile in the Actions menu. `schema.rb` again carried another team's uncommitted `textbook_and_tuition_reimbursement_forms` from the shared dev database; removed from the commit, as Joshua approved. 1164 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (2) | (this commit) | From Joshua's testing: a person's invoices split into In queue (Ready for Approval) and In pipeline (the other stages, per-stage filters, finished ones only on request, searchable); the Roles panel keeps its shape and shows each BU's role instead of how it was added; Delete is a small button whose pop-up explains what blocks it or asks for the employee ID, then a last confirmation; sidebar group Queues renamed Pipeline; activity view added to item g. 1165 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |

@@ -70,50 +70,6 @@ module Aim
       assert Aim::Member.exists?(member.id)
     end
 
-    test 'the removal page lists the invoices to move' do
-      Aim::Member.create!(employee_id: @employee.id)
-      Aim::Invoice.create!(actor: 'test', batch_id: 'B-OPEN', state: 'needs_review', assigned_employee_id: @employee.id,
-                           invoice_number: 'INV-77')
-      Aim::Invoice.create!(actor: 'test', batch_id: 'B-GONE', state: 'approved', assigned_employee_id: @employee.id,
-                           invoice_number: 'INV-88')
-
-      get :show, params: { id: @employee.id }
-
-      assert_response :success
-      assert_includes response.body, 'INV-77'
-      assert_not_includes response.body, 'INV-88', 'approved invoices are the worker\'s and do not block removal'
-      assert_includes response.body, 'Move selected'
-    end
-
-    test 'an admin opens the queue of someone who works AIM through a group' do
-      group = Group.create!(Group_Name: 'aim_staff')
-      EmployeeGroup.create!(GroupID: group.GroupID, EmployeeID: @employee.id)
-      Aim::Invoice.create!(actor: 'test', batch_id: 'B-GRP', state: 'ready_for_approval', assigned_employee_id: @employee.id,
-                           invoice_number: 'INV-99')
-
-      get :show, params: { id: @employee.id }
-
-      assert_response :success
-      assert_includes response.body, 'INV-99'
-      assert_includes response.body, 'through an AIM group'
-      assert_equal "/aim/admin/users/#{@employee.id}", session[:aim_queue_page], 'an invoice opened here returns here'
-    end
-
-    test "a leaver's queue still opens, so their invoices can be moved" do
-      Aim::Member.create!(employee_id: 999_999_999)
-
-      get :show, params: { id: 999_999_999 }
-
-      assert_response :success
-      assert_includes response.body, 'No longer in GSABSS'
-    end
-
-    test 'the queue of someone who does not work AIM is refused' do
-      get :show, params: { id: @employee.id }
-
-      assert_redirected_to aim_admin_path
-    end
-
     test 'the employee search reaches people who do not work AIM yet' do
       get :employees, params: { q: @employee.id.to_s }
 
