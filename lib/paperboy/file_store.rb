@@ -272,7 +272,8 @@ module Paperboy
       end
 
       def remote_prefix
-        return shortcut.folder.tr('/', '\\') if shortcut.respond_to?(:folder)
+        folder = shortcut.folder if shortcut.respond_to?(:folder)
+        return folder.to_s.tr('/', '\\') unless folder.nil?
 
         shortcut.target[UNC_TARGET, 3].to_s.tr('/', '\\')
       end

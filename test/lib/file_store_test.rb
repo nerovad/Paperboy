@@ -38,6 +38,23 @@ class FileStoreTest < Minitest::Test # rubocop:disable Metrics/ClassLength
     end
   end
 
+  def test_shortcut_store_falls_back_when_shortcut_folder_is_nil
+    Dir.mktmpdir do |directory|
+      shortcut_path = Pathname.new(directory).join('shipping.lnk').tap { |path| path.write('shortcut') }
+      share = RecordingShare.new
+      store = Paperboy::FileStore.for(
+        shortcut_path,
+        env: { 'SMB_USERNAME' => 'user', 'SMB_PASSWORD' => 'password' },
+        shortcut_class: NilFolderShortcut,
+        share_class: ->(**_options) { share }
+      )
+
+      store.copy('/tmp/source.zip', 'Mail.dat_50000001.zip')
+
+      assert_equal [[:put, '/tmp/source.zip', 'Shipping\\Mail.dat_50000001.zip']], share.calls
+    end
+  end
+
   def test_shortcut_store_creates_missing_nested_remote_directories
     Dir.mktmpdir do |directory|
       shortcut_path = Pathname.new(directory).join('printers.lnk').tap { |path| path.write('shortcut') }
@@ -174,6 +191,12 @@ class FileStoreTest < Minitest::Test # rubocop:disable Metrics/ClassLength
   class NestedFakeShortcut < FakeShortcut
     def folder
       'Printers'
+    end
+  end
+
+  class NilFolderShortcut < FakeShortcut
+    def folder
+      nil
     end
   end
 
