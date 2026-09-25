@@ -1298,3 +1298,22 @@
   font-weight: 600;
   margin: 0 0 8px;
 }
+
+.aim-profile-switch__note {
+  color: $text-muted;
+  font-size: 0.85em;
+}
+
+.aim-bu-person__shared {
+  align-items: center;
+  color: $text-muted;
+  display: inline-flex;
+  font-size: 0.85rem;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.aim-count-pill--warn {
+  background: $warning-border-soft;
+  color: $warning-text;
+}

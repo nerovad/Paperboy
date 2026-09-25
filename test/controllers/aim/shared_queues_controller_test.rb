@@ -44,7 +44,7 @@ module Aim
     test "an AIM Admin's Shared Queues are their own BUs, not every BU" do
       session[:user] = (session[:user] || {}).merge('employee_id' => 7)
       @controller.define_singleton_method(:current_user_group_names) { Set['aim_admin'] }
-      Aim::UserBudgetUnit.create!(employee_id: 7, budget_unit: '4641')
+      Aim::UserBudgetUnit.create!(employee_id: 7, budget_unit: '4641', shared_queue: true)
       row('4641.SQ7', '4641')
       row('4621.SQ8', '4621')
 

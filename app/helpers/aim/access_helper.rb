@@ -67,7 +67,7 @@ module Aim
       units = aim_managed_units
       return true if units.nil?
 
-      theirs = Aim::Users.shared_budget_units(employee_id, staff: false)
+      theirs = Aim::Users.budget_units_of(employee_id)
       theirs.any? && (theirs - units).empty?
     end
 
@@ -82,11 +82,11 @@ module Aim
     end
 
     # The budget units whose shared queues this person may move an invoice to:
-    # AIM Admins any (nil), everyone else the BUs they cover.
+    # AIM Admins any (nil), everyone else the BUs they work in.
     def aim_move_units
       return nil if aim_queue_access?
 
-      Aim::Users.shared_budget_units(aim_session_employee_id, staff: false)
+      Aim::Users.budget_units_of(aim_session_employee_id)
     end
 
     # The Move dialog's "another budget unit" choices, grouped by agency, from

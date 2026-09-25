@@ -518,12 +518,17 @@ module Aim
     # Shared queues
     # ---------------------------------------------------------------
 
-    test "a shared-queue invoice in someone's own BU is theirs to work and claim, not staff only" do
+    test 'a shared-queue invoice in a BU whose shared queue someone has switched on is theirs to work and claim' do
       employee = Employee.where.not(unit: [nil, '']).order(:id).first || skip('no employee with a unit to test with')
       row = invoice('4601.SQ1', state: 'ready_for_approval', budget_unit: employee.unit)
       other = invoice('4601.SQ2', state: 'ready_for_approval', budget_unit: employee.unit == '9999' ? '9998' : '9999')
       as_owner_not_staff
       session[:user] = session[:user].merge('employee_id' => employee.id)
+
+      get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
+      assert_redirected_to aim_my_queue_path, 'the home unit alone does not open its shared queue'
+
+      Aim::UserBudgetUnit.create!(employee_id: employee.id, budget_unit: employee.unit, shared_queue: true)
 
       get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
       assert_response :success

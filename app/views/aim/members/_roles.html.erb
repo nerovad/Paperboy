@@ -13,6 +13,7 @@
       <tr>
         <th>Budget unit</th>
         <th>Role</th>
+        <th title="Whether they pick up this BU's unowned invoices">Shared queue</th>
         <th class="aim-people-table__actions" aria-label="Actions"></th>
       </tr>
     </thead>
@@ -22,6 +23,7 @@
         <tr class="<%= 'is-hidden-unit' if home_row&.hidden %>">
           <td class="is-strong"><%= @units.label(@home_unit) %></td>
           <td><%= if home_row&.hidden then 'Hidden' elsif home_row&.bu_admin then 'BU Admin' else 'User' end %></td>
+          <td><%= render 'shared_queue_cell', employee_id: @employee_id, unit: @home_unit, row: home_row, can_change: mine.call(@home_unit) %></td>
           <td class="aim-people-table__actions">
             <div class="aim-profile-roles__buttons">
               <% if !full %>
@@ -50,6 +52,7 @@
         <tr>
           <td class="is-strong"><%= @units.label(row.budget_unit) %></td>
           <td><%= row.bu_admin ? 'BU Admin' : 'User' %></td>
+          <td><%= render 'shared_queue_cell', employee_id: @employee_id, unit: row.budget_unit, row: row, can_change: mine.call(row.budget_unit) %></td>
           <td class="aim-people-table__actions">
             <div class="aim-profile-roles__buttons">
               <% if full %>
@@ -67,7 +70,7 @@
         </tr>
       <% end %>
       <% if @home_unit.nil? && extra.empty? %>
-        <tr><td colspan="3">No budget units yet.</td></tr>
+        <tr><td colspan="4">No budget units yet.</td></tr>
       <% end %>
     </tbody>
   </table>

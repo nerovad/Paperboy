@@ -27,14 +27,14 @@ module Aim
     end
 
     test 'the home unit counts without a row, and a row for it only carries BU Admin' do
-      assert_equal [@employee.unit], Aim::Users.shared_budget_units(@employee.id, staff: false)
+      assert_equal [@employee.unit], Aim::Users.budget_units_of(@employee.id)
 
       post :create, params: { member_id: @employee.id, budget_unit: @employee.unit, bu_admin: '1' }
       row = Aim::UserBudgetUnit.find_by!(employee_id: @employee.id, budget_unit: @employee.unit)
       patch :update, params: { member_id: @employee.id, id: row.id, bu_admin: '0' }
 
       assert_nil Aim::UserBudgetUnit.find_by(id: row.id), 'clearing BU Admin on the home unit drops its row'
-      assert_equal [@employee.unit], Aim::Users.shared_budget_units(@employee.id, staff: false)
+      assert_equal [@employee.unit], Aim::Users.budget_units_of(@employee.id)
     end
 
     test 'hiding the home unit takes it out of their BUs, and showing it brings it back' do
@@ -44,11 +44,11 @@ module Aim
       patch :update, params: { member_id: @employee.id, id: row.id, hidden: '1' }
       assert row.reload.hidden
       assert_not row.bu_admin, 'hiding clears BU Admin'
-      assert_empty Aim::Users.shared_budget_units(@employee.id, staff: false)
+      assert_empty Aim::Users.budget_units_of(@employee.id)
 
       patch :update, params: { member_id: @employee.id, id: row.id, hidden: '0' }
       assert_nil Aim::UserBudgetUnit.find_by(id: row.id)
-      assert_equal [@employee.unit], Aim::Users.shared_budget_units(@employee.id, staff: false)
+      assert_equal [@employee.unit], Aim::Users.budget_units_of(@employee.id)
     end
 
     test 'only a home unit can be hidden' do
@@ -57,6 +57,26 @@ module Aim
       patch :update, params: { member_id: @employee.id, id: row.id, hidden: '1' }
 
       assert_not row.reload.hidden
+    end
+
+    test "a BU's shared queue is off until switched on, BU Admins always have it, and a BU Admin switches it for their BUs" do
+      assert_empty Aim::Users.shared_budget_units(@employee.id, staff: false), 'off by default, home unit too'
+
+      post :create, params: { member_id: @employee.id, budget_unit: @employee.unit, shared_queue: '1' }
+      assert_equal [@employee.unit], Aim::Users.shared_budget_units(@employee.id, staff: false)
+
+      as_groups
+      session[:user] = session[:user].merge('employee_id' => 7)
+      Aim::UserBudgetUnit.create!(employee_id: 7, budget_unit: '4703', bu_admin: true)
+      assert_equal ['4703'], Aim::Users.shared_budget_units(7, staff: false), 'a BU Admin always has it'
+      theirs = Aim::UserBudgetUnit.create!(employee_id: @employee.id, budget_unit: '4703')
+      home = Aim::UserBudgetUnit.find_by!(employee_id: @employee.id, budget_unit: @employee.unit)
+
+      patch :update, params: { member_id: @employee.id, id: theirs.id, shared_queue: '1' }
+      assert theirs.reload.shared_queue
+
+      patch :update, params: { member_id: @employee.id, id: home.id, shared_queue: '0' }
+      assert home.reload.shared_queue, 'not their BU to change' unless @employee.unit == '4703'
     end
 
     test 'toggles BU Admin on an added unit and takes it away' do

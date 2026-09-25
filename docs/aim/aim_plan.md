@@ -2790,6 +2790,15 @@ Branch `aim/a-user-admin`, cut from master `3b4a2eb5`. One step, one commit.
   Admins deactivate anyone. Users & Queues flags anyone GSABSS no longer
   lists as an active employee, so leavers surface on their own. **Delete**
   stays for AIM Admins only, for mistakes: today's Remove becomes it.
+- **Shared queue switch (the first half of a.3, 2026-09-25).** A person picks
+  up a BU's shared queue -- its unowned ready invoices, which they may open
+  and approve -- only once it is switched on for them (`shared_queue` on
+  `aim.user_budget_units`), home unit included; a BU Admin of the BU always
+  has it. AIM Admins switch it for anyone, BU Admins for their own BUs, on the
+  profile or the BU page; the BU page flags a BU nobody covers.
+  `Aim::Users.budget_units_of` (the BUs someone works in: moves, profiles,
+  BU Admin rules) is now apart from `shared_budget_units` (the queues they
+  pick up from).
 - [ ] **a.3 Budget units.** Table `aim.budget_units`, one row per BU AIM
   handles: a **label** -- the name GSA calls the BU (Joshua, 2026-09-25: GSA
   worked by group names, as Fusion's teams and DocuShare's folder titles
@@ -3773,3 +3782,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-25 | a.2 (9) | (this commit) | Deactivate (reason, who, when; out of the picker and queues; Reactivate; BU Admins only for people whose BUs are all theirs; Users & Queues hides inactive unless asked). Fusion's team and roles kept on `aim.members`; the import makes each Fusion supervisor BU Admin of their team's BU (the BU most of the team's people are in) and lists app admins for ACL -- applied rather than suggested, Joshua's call. Run on `Paperboy_Dev`: Nelles 4641, Gagnon 4703, Bonilla 4551 and 4571. **a.2 complete.** 1193 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a | (this commit) | Agencies and BUs from the Chart of Accounts (`Aim::Units`): every BU list and label reads the COA, grouped by agency, with names tidied (`4601 · GSA Administration`); the agencies offered are those of the people on the AIM list (GSABSS `GSAV` is COA `GSA`). Agency filter on Users & Queues and the BU page (starting on your own agency); Shared Queues headings use the COA names. 1198 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a | (this commit) | AIM's front door needs only a Paperboy sign-in; the AIM account decides the rest (found emulating Tonya Gagnon, 4703, whose department held no ACL grant). Everything under AIM in the sidebar is personal: Shared Queues and its count show your own BUs, AIM Admins included; an admin's By BU moved into Pipeline. 1202 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.3 (1) | (this commit) | Shared queue switch per person per BU, off by default, always on for that BU's BU Admins; set by AIM Admins anywhere and BU Admins in their BUs, from profiles and the BU page, which flags BUs nobody covers. Works-in and shared-queue BUs separated. 1203 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |

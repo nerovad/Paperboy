@@ -31,17 +31,31 @@ module Aim
       false
     end
 
-    # The budget units whose shared queues this person works: their own unit
-    # from GSABSS, unless hidden, plus the BUs granted on their profile (a.2). AIM staff
-    # see every BU (nil means all). The one place the rule lives.
-    def shared_budget_units(employee_id, staff:)
-      return nil if staff
+    # The budget units this person works in: their own unit from GSABSS,
+    # unless hidden, plus the BUs granted on their profile (a.2). What moves,
+    # profiles and BU Admins go by.
+    def budget_units_of(employee_id)
       return [] if employee_id.blank?
 
       home = Employee.where(id: employee_id).pick(:unit).presence
       rows = Aim::UserBudgetUnit.for_person(employee_id).pluck(:budget_unit, :hidden)
       hidden = rows.select(&:last).map(&:first)
       ([home] + rows.map(&:first)).compact.uniq - hidden
+    rescue ActiveRecord::ActiveRecordError
+      []
+    end
+
+    # The budget units whose shared queues this person picks up from -- whose
+    # unowned ready invoices they may open and approve: the BUs where their
+    # shared queue is switched on, and those they are BU Admin of. Off unless
+    # switched on, home unit included (Joshua, 2026-09-25). `staff` (AIM
+    # Admins, when a caller wants their reach) means every BU: nil.
+    def shared_budget_units(employee_id, staff:)
+      return nil if staff
+      return [] if employee_id.blank?
+
+      Aim::UserBudgetUnit.for_person(employee_id).where(hidden: false)
+                         .where('shared_queue = ? OR bu_admin = ?', true, true).pluck(:budget_unit).uniq
     rescue ActiveRecord::ActiveRecordError
       []
     end

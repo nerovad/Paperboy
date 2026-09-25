@@ -102,7 +102,7 @@ module Aim
 
     def in_my_units?
       units = helpers.aim_managed_units
-      units.nil? || Aim::Users.shared_budget_units(@employee_id, staff: false).intersect?(units)
+      units.nil? || Aim::Users.budget_units_of(@employee_id).intersect?(units)
     end
 
     # Their home unit needs no row; any other BU does.

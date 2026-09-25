@@ -68,7 +68,7 @@ module Aim
     def target_in_unit?(owner)
       return true if staff? || owner == Aim::Invoice::SHARED_QUEUE || mine? || shared_to_me?
 
-      Aim::Users.shared_budget_units(owner, staff: false).include?(@invoice.budget_unit)
+      Aim::Users.budget_units_of(owner).include?(@invoice.budget_unit)
     end
 
     def refuse_out_of_unit

@@ -37,6 +37,9 @@
             <strong class="aim-owner-group__name"><%= section.label %></strong>
             <strong class="aim-count-pill"><%= pluralize(section.people.size, 'person') %></strong>
             <strong class="aim-count-pill"><%= pluralize(section.invoice_count, 'invoice') %></strong>
+            <% unless section.covered? %>
+              <strong class="aim-count-pill aim-count-pill--warn" title="Its unowned invoices wait for an AIM Admin">Nobody on the shared queue</strong>
+            <% end %>
           </button>
         </h2>
         <div id="<%= bu_id %>" data-billing-audit-sections-target="content" hidden>
@@ -51,8 +54,9 @@
             <% end %>
           <% end %>
           <% groups = [["#{section.unit} shared queue", section.shared, nil]] +
-                      section.people.map { |person| [person.name, person.invoices, person.employee_id] } %>
-          <% groups.each_with_index do |(heading, invoices, employee_id), inner| %>
+                      section.people.map { |person| [person.name, person.invoices, person] } %>
+          <% groups.each_with_index do |(heading, invoices, person), inner| %>
+            <% employee_id = person&.employee_id %>
             <% content_id = "#{bu_id}-#{inner}" %>
             <section class="aim-bu-person" data-controller="billing-audit-sections"
                      data-aim-queue-filter-target="group" data-search="<%= heading %> <%= section.label %>">
@@ -63,6 +67,13 @@
                   <strong><%= heading %></strong>
                   <span class="aim-count-pill"><%= pluralize(invoices.size, 'invoice') %></span>
                 </button>
+                <% if person %>
+                  <span class="aim-bu-person__shared">
+                    Shared queue:
+                    <%= render 'aim/members/shared_queue_cell', employee_id: employee_id, unit: section.unit,
+                                                                  row: person.row, can_change: manages %>
+                  </span>
+                <% end %>
                 <% if employee_id && manages %>
                   <%= link_to 'Profile', aim_member_path(employee_id), class: 'aim-bu-person__profile' %>
                 <% end %>
