@@ -5,6 +5,21 @@ require 'tmpdir'
 require_relative '../../script/ruby/p2m/print_and_inserting_done'
 
 class P2mPrintAndInsertingDoneScanTest < Minitest::Test
+  def test_scan_excludes_the_datarunner_tree_before_searching
+    stager = P2m::OmsBackfileStager.allocate
+    stager.instance_variable_set(:@data_runner_root, Pathname.new('/outputs/DataRunner'))
+    stager.instance_variable_set(:@start_date, Date.new(2026, 9, 1))
+    stager.instance_variable_set(:@end_date, Date.new(2026, 9, 30))
+
+    command = stager.send(:fd_command)
+
+    excludes = command.each_cons(2).filter_map do |name, value|
+      value if name == '--exclude'
+    end
+    assert_includes excludes, 'FinalOutput'
+    assert_includes excludes, 'DataRunner'
+  end
+
   def test_scan_only_reports_only_oms_numbers_not_staged_or_uploaded
     Dir.mktmpdir do |directory|
       source = Pathname.new(directory).join('Outputs')

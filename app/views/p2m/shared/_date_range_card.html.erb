@@ -3,6 +3,7 @@
 
   <%= form_with(url: url, method: method,
                 data: { turbo: false, controller: "date-range",
+                        date_range_cancel_url: p2m_search_cancel_path,
                         action: "submit->date-range#submit reset->date-range#reset" }) do %>
     <div class="p2m-stage-date-fields">
       <div class="form-group">
@@ -24,7 +25,8 @@
     <div class="form-actions">
       <%= submit_tag "Confirm", class: "btn approve compact" %>
       <%= button_tag "Reset", type: :reset, class: "btn warning compact" %>
-      <%= link_to "Cancel", p2m_root_path, class: "btn compact" %>
+      <%= link_to "Cancel", p2m_root_path, class: "btn compact",
+                  data: { action: "click->date-range#cancel" } %>
     </div>
 
     <div class="p2m-date-range-progress" data-date-range-target="progress" hidden>

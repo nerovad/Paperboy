@@ -15,7 +15,8 @@ module P2m
 
     def create
       validate_date_range!
-      @report = PrintAndInsertingDone.scan(start_date: @start_date, end_date: @end_date)
+      @report = PrintAndInsertingDone.scan(start_date: @start_date, end_date: @end_date,
+                                           cancellation_token: params[:search_token])
       render :show
     rescue ArgumentError
       @report = nil

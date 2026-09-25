@@ -11,6 +11,7 @@ require 'set'
 require 'tempfile'
 require 'time'
 require_relative '../../../lib/paperboy/file_store'
+require_relative '../../../lib/paperboy/search_cancellation'
 require_relative '../../../app/services/p2m/paths'
 
 module P2m
@@ -34,7 +35,7 @@ module P2m
     ].freeze
     REQUIRED_INPUTS = INPUT_PATTERNS.keys.freeze
 
-    def initialize(source_root:, data_runner_root:, start_date:, end_date:, report_path:)
+    def initialize(source_root:, data_runner_root:, start_date:, end_date:, report_path:, cancellation_token: nil)
       @source_root = Pathname.new(source_root).expand_path
       @data_runner_root = Pathname.new(data_runner_root).expand_path
       @staging_store = Paperboy::FileStore.for(configured_location(Paths::STAGING))
@@ -42,6 +43,7 @@ module P2m
       @start_date = Date.iso8601(start_date.to_s)
       @end_date = Date.iso8601(end_date.to_s)
       @report_path = Pathname.new(report_path).expand_path
+      @cancellation_token = cancellation_token
     end
 
     def call(stage: true)
@@ -60,7 +62,7 @@ module P2m
     private
 
     attr_reader :source_root, :data_runner_root, :start_date, :end_date, :report_path,
-                :staging_store, :processed_store
+                :staging_store, :processed_store, :cancellation_token
 
     def validate!
       raise ArgumentError, 'start date must be on or before end date' if start_date > end_date
@@ -99,7 +101,7 @@ module P2m
     end
 
     def markers
-      output, error, status = Open3.capture3(*fd_command)
+      output, error, status = run_command(*fd_command)
       raise "Mail.dat search failed: #{error.strip}" unless status.success?
 
       output.split("\0").filter_map do |name|
@@ -114,6 +116,7 @@ module P2m
         '--exclude', 'FinalOutput',
         '--changed-within', start_date.iso8601,
         '--changed-before', (end_date + 1).iso8601,
+        '--exclude', data_runner_root.basename.to_s,
         "^Mail\\.dat_#{OMS_NUMBER}\\.zip$", source_root.to_s
       ]
     end
@@ -154,12 +157,36 @@ module P2m
     def directory_files(directory)
       @directory_files ||= {}
       @directory_files[directory.to_s] ||= begin
-        output, error, status = Open3.capture3(
+        output, error, status = run_command(
           fd_binary, '--no-ignore', '--max-depth', '1', '--type', 'f', '--print0', '.', directory.to_s
         )
         raise "File search failed in #{directory}: #{error.strip}" unless status.success?
 
         output.split("\0").map { |name| Pathname.new(name) }
+      end
+    end
+
+    def run_command(*command)
+      return Open3.capture3(*command) unless cancellation_token
+
+      Open3.popen2e(*command) do |input, stream, waiter|
+        input.close
+        reader = Thread.new { stream.read }
+        cancelled = false
+        while waiter.alive?
+          if Paperboy::SearchCancellation.cancelled?(cancellation_token)
+            Process.kill('TERM', waiter.pid)
+            cancelled = true
+            break
+          end
+          sleep 0.1
+        end
+        status = waiter.value
+        raise Paperboy::SearchCancellation::Cancelled if cancelled
+
+        [reader.value, '', status]
+      ensure
+        reader&.join
       end
     end
 
@@ -301,6 +328,7 @@ def options
     parser.on('--end-date DATE') { |value| values[:end_date] = value }
     parser.on('--report PATH') { |value| values[:report_path] = value }
     parser.on('--scan-only') { values[:scan_only] = true }
+    parser.on('--cancel-token TOKEN') { |value| values[:cancellation_token] = value }
   end.parse!
   values[:report_path] ||= File.join(values[:data_runner_root], 'p2m_oms_backfill_report.json')
   values

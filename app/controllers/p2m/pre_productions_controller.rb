@@ -10,7 +10,8 @@ module P2m
     def show
       validate_date_range!
       if params[:pre_production]
-        @report = PrintAndInsertingDone.scan(start_date: @start_date, end_date: @end_date)
+        @report = PrintAndInsertingDone.scan(start_date: @start_date, end_date: @end_date,
+                                             cancellation_token: params[:search_token])
         @printer_queues = PrinterCatalog.new.call
       end
     rescue ArgumentError
