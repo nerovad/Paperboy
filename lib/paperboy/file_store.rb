@@ -182,6 +182,9 @@ module Paperboy
       def copy(source, name)
         mkdir(File.dirname(name)) unless File.dirname(name) == '.'
         share.put(Pathname.new(source).to_s, remote_name(name))
+        return if exist?(name)
+
+        raise Error, "SMB copy did not create destination: #{name}"
       end
 
       def mkdir(name = nil)

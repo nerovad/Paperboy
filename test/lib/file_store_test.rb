@@ -34,7 +34,10 @@ class FileStoreTest < Minitest::Test # rubocop:disable Metrics/ClassLength
       assert_equal 0, share.calls.length
       store.copy('/tmp/source.zip', 'Mail.dat_50000001.zip')
 
-      assert_equal [[:put, '/tmp/source.zip', 'Shipping\\Mail.dat_50000001.zip']], share.calls
+      assert_equal [
+        [:put, '/tmp/source.zip', 'Shipping\\Mail.dat_50000001.zip'],
+        [:exist, 'Shipping\\Mail.dat_50000001.zip']
+      ], share.calls
     end
   end
 
@@ -51,7 +54,10 @@ class FileStoreTest < Minitest::Test # rubocop:disable Metrics/ClassLength
 
       store.copy('/tmp/source.zip', 'Mail.dat_50000001.zip')
 
-      assert_equal [[:put, '/tmp/source.zip', 'Shipping\\Mail.dat_50000001.zip']], share.calls
+      assert_equal [
+        [:put, '/tmp/source.zip', 'Shipping\\Mail.dat_50000001.zip'],
+        [:exist, 'Shipping\\Mail.dat_50000001.zip']
+      ], share.calls
     end
   end
 
@@ -177,6 +183,11 @@ class FileStoreTest < Minitest::Test # rubocop:disable Metrics/ClassLength
 
     def put(source, target)
       calls << [:put, source, target]
+    end
+
+    def exist?(target)
+      calls << [:exist, target]
+      true
     end
 
     def entries(_path = nil)
