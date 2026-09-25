@@ -2,6 +2,8 @@
 
 module P2m
   class ProductionsController < ApplicationController
+    include InlineFileResponse
+
     before_action -> { require_app_feature('p2m', 'stage_data', fallback: p2m_root_path) }
     after_action :cleanup_preview
 
@@ -17,10 +19,7 @@ module P2m
       @production_files = ProductionFiles.new
       file = @production_files.preview(**preview_parameters)
       @preview_file = file
-      send_data File.binread(file),
-                filename: file.basename.to_s,
-                type: Rack::Mime.mime_type(file.extname, 'application/octet-stream'),
-                disposition: 'inline'
+      send_inline_file(file)
     rescue ArgumentError, ActionController::ParameterMissing => e
       render plain: e.message, status: :unprocessable_content
     end

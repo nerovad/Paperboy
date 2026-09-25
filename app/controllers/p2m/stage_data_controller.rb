@@ -2,6 +2,8 @@
 
 module P2m
   class StageDataController < ApplicationController
+    include InlineFileResponse
+
     include DateRange
 
     before_action -> { require_app_feature('p2m', 'stage_data', fallback: p2m_root_path) }
@@ -34,7 +36,7 @@ module P2m
 
     def print_tray_labels
       file = OmsAssociatedFiles.new.tray_labels(**staging_parameters)
-      send_file file, filename: file.basename.to_s, type: 'application/pdf', disposition: 'inline'
+      send_inline_file(file)
     rescue ArgumentError, ActionController::ParameterMissing => e
       render plain: e.message, status: :unprocessable_content
     end
@@ -43,9 +45,7 @@ module P2m
       file = OmsAssociatedFiles.new.preview(
         **staging_parameters, filename: params.require(:filename)
       )
-      send_file file, filename: file.basename.to_s,
-                      type: Rack::Mime.mime_type(file.extname, 'application/octet-stream'),
-                      disposition: 'inline'
+      send_inline_file(file)
     rescue ArgumentError, ActionController::ParameterMissing => e
       render plain: e.message, status: :unprocessable_content
     end
