@@ -37,6 +37,10 @@
           <span class="sidebar-count neutral" data-aim-count="shared_queues" data-hide-zero hidden></span>
         <% end %>
       <% end %>
+      <% if aim_bu_page? %>
+        <%= link_to (aim_queue_access? ? "By BU" : "My BUs"), aim_budget_units_path,
+                    class: "nav-link#{' active' if current_page?(aim_budget_units_path)}" %>
+      <% end %>
       <%= link_to "Upload Invoices", new_aim_upload_path,
                   class: "nav-link#{' active' if current_page?(new_aim_upload_path)}" %>
     </details>

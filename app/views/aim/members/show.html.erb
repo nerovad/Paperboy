@@ -15,30 +15,7 @@
 
   <h2 class="aim-profile-heading" id="queue">Invoices</h2>
   <div data-controller="aim-queue-filter">
-    <div class="aim-people-toolbar">
-      <nav class="aim-people-toolbar__views" aria-label="Invoices">
-        <%= link_to "In queue (#{@stage_counts['ready_for_approval']})", aim_member_path(@employee_id, anchor: 'queue'),
-                    class: "btn compact #{@tab == 'queue' ? 'active' : 'ghost'}" %>
-        <%= link_to "In pipeline (#{@stage_counts.except('ready_for_approval').values.sum})",
-                    aim_member_path(@employee_id, tab: 'pipeline', anchor: 'queue'),
-                    class: "btn compact #{@tab == 'pipeline' ? 'active' : 'ghost'}" %>
-      </nav>
-      <%= render 'aim/invoices/search_box', placeholder: 'Search vendor, invoice #, BU, total…', empty: 'Nothing here matches.' %>
-    </div>
-
-    <% if @tab == 'pipeline' %>
-      <%= form_with url: aim_member_path(@employee_id, anchor: 'queue'), method: :get, local: true,
-                    class: 'aim-people-toolbar__filters aim-stage-filters' do %>
-        <%= hidden_field_tag :tab, 'pipeline' %>
-        <% Aim::MembersController::PIPELINE_STAGES.each do |stage| %>
-          <label>
-            <%= check_box_tag 'stages[]', stage, @stages.include?(stage), id: "stage-#{stage}" %>
-            <%= aim_queue_label(stage) %> (<%= @stage_counts[stage] %>)
-          </label>
-        <% end %>
-        <button type="submit" class="btn compact">Apply</button>
-      <% end %>
-    <% end %>
+    <%= render 'aim/shared/stage_tabs', path: ->(**opts) { aim_member_path(@employee_id, anchor: 'queue', **opts) } %>
 
     <% if @invoices.empty? %>
       <section class="aim-panel aim-empty-state">

@@ -1,0 +1,67 @@
+<% title = aim_queue_access? ? 'By BU' : 'My BUs' %>
+<div class="aim-page aim-bu-page" data-controller="aim-queue-filter">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title"><%= title %></h1>
+      <p class="aim-page-subtitle">
+        Each budget unit's shared queue and people, and their invoices. Open a BU, then a person; tick invoices to move them.
+      </p>
+    </div>
+    <span class="aim-count-pill"><%= pluralize(@units.size, 'budget unit') %></span>
+  </header>
+
+  <%= render 'aim/shared/stage_tabs', path: ->(**opts) { aim_budget_units_path(**opts) },
+                                      placeholder: 'Search person, vendor, invoice #, BU, total…' %>
+
+  <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path %>">
+    <%= render 'aim/invoices/bulk_bar' %>
+
+    <% @sections.each_with_index do |section, index| %>
+      <% bu_id = "aim-bu-#{index}" %>
+      <section class="billing-audit-group aim-owner-group aim-bu-group" data-controller="billing-audit-sections"
+               data-aim-queue-filter-target="group" data-search="<%= section.label %>">
+        <h2>
+          <button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle"
+                  data-action="billing-audit-sections#toggle" aria-expanded="false" aria-controls="<%= bu_id %>">
+            <span aria-hidden="true">▾</span>
+            <strong class="aim-owner-group__name"><%= section.label %></strong>
+            <strong class="aim-count-pill"><%= pluralize(section.people.size, 'person') %></strong>
+            <strong class="aim-count-pill"><%= pluralize(section.invoice_count, 'invoice') %></strong>
+          </button>
+        </h2>
+        <div id="<%= bu_id %>" data-billing-audit-sections-target="content" hidden>
+          <% groups = [["#{section.unit} shared queue", section.shared, nil]] +
+                      section.people.map { |person| [person.name, person.invoices, person.employee_id] } %>
+          <% groups.each_with_index do |(heading, invoices, employee_id), inner| %>
+            <% content_id = "#{bu_id}-#{inner}" %>
+            <section class="aim-bu-person" data-controller="billing-audit-sections"
+                     data-aim-queue-filter-target="group" data-search="<%= heading %> <%= section.label %>">
+              <h3>
+                <button type="button" class="aim-bu-person__toggle" data-billing-audit-sections-target="toggle"
+                        data-action="billing-audit-sections#toggle" aria-expanded="false" aria-controls="<%= content_id %>">
+                  <span aria-hidden="true">▾</span>
+                  <strong><%= heading %></strong>
+                  <span class="aim-count-pill"><%= pluralize(invoices.size, 'invoice') %></span>
+                </button>
+                <% if employee_id && aim_user_admin? %>
+                  <%= link_to 'Profile', aim_member_path(employee_id), class: 'aim-bu-person__profile' %>
+                <% end %>
+              </h3>
+              <div id="<%= content_id %>" data-billing-audit-sections-target="content" hidden>
+                <% if invoices.empty? %>
+                  <p class="aim-bu-person__empty">Nothing here.</p>
+                <% else %>
+                  <div class="billing-type-audit-table-wrapper">
+                    <%= render 'aim/invoices/rows', invoices: invoices, movable: true %>
+                  </div>
+                <% end %>
+              </div>
+            </section>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+
+    <%= render 'aim/invoices/move_modal' %>
+  </div>
+</div>

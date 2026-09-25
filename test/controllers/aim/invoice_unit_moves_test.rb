@@ -59,6 +59,33 @@ module Aim
       assert_equal '4641', row.reload.budget_unit
     end
 
+    test 'a BU Admin moves an invoice in their BU only to someone who covers it' do
+      as_user
+      Aim::UserBudgetUnit.create!(employee_id: 7, budget_unit: '4641', bu_admin: true)
+      insider, outsider = Employee.order(:id).limit(2).to_a
+      skip 'need two employees' if outsider.nil?
+      [insider, outsider].each { |e| Aim::Member.create!(employee_id: e.id) }
+      Aim::UserBudgetUnit.create!(employee_id: insider.id, budget_unit: '4641')
+      row = invoice('U-6', budget_unit: '4641', assigned_employee_id: 99, assigned_to: 'Someone Else',
+                           assignment_source: 'folder')
+
+      patch :reassign, params: { id: row.batch_id, destination: 'person', owner: outsider.id }
+      assert_match(/does not cover 4641/, flash[:alert]) unless Aim::Users.shared_budget_units(outsider.id, staff: false).include?('4641')
+
+      patch :reassign, params: { id: row.batch_id, destination: 'person', owner: insider.id }
+      assert_equal insider.id, row.reload.assigned_employee_id
+    end
+
+    test "a BU Admin may claim but not approve someone else's invoice" do
+      as_user
+      Aim::UserBudgetUnit.create!(employee_id: 7, budget_unit: '4641', bu_admin: true)
+      row = invoice('U-7', budget_unit: '4641', assigned_employee_id: 99, assigned_to: 'Someone Else',
+                           assignment_source: 'folder')
+
+      patch :update, params: { id: row.batch_id, commit: 'Approve' }
+      assert_equal 'ready_for_approval', row.reload.state
+    end
+
     private
 
     def invoice(batch_id, **attributes)

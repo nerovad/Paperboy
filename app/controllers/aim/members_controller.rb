@@ -6,6 +6,8 @@ module Aim
   # removed: their queue lists them with the Move tools, and removal works
   # once they are gone.
   class MembersController < BaseController
+    include Aim::StageTabs
+
     before_action :require_aim_user_admin
     before_action :remember_queue_page, only: :show
 
@@ -37,7 +39,7 @@ module Aim
       return redirect_to(aim_admin_path, alert: 'That person does not work AIM.') unless @member || Aim::Users.member?(@employee_id)
 
       @open_count = Aim::Member.open_invoices_of(@employee_id).count
-      load_invoices
+      @invoices = invoices_for_tab(Aim::Invoice.where(assigned_employee_id: @employee_id))
       @home_unit = @employee&.unit.presence
       @budget_units = Aim::UserBudgetUnit.for_person(@employee_id).order(:budget_unit).to_a
       @unit_options = Aim::UserBudgetUnit.unit_options
@@ -63,10 +65,6 @@ module Aim
       redirect_to aim_admin_path, notice: removed_notice(member, name)
     end
 
-    # The pipeline stages a person's invoices can be in besides their queue.
-    PIPELINE_STAGES = (Aim::Invoice::QUEUES.keys - ['ready_for_approval']).freeze
-    FINISHED_STAGES = %w[exported rejected deleted].freeze
-
     # Every employee, for adding someone: the picker's search, not limited
     # to AIM users the way Aim::PeopleController is.
     def employees
@@ -81,19 +79,6 @@ module Aim
     end
 
     private
-
-    # Their queue (Ready for Approval) and everything else they own across the
-    # pipeline, filtered by stage. Finished, rejected and deleted invoices are
-    # left out unless asked for.
-    def load_invoices
-      owned = Aim::Invoice.where(assigned_employee_id: @employee_id)
-      @tab = params[:tab] == 'pipeline' ? 'pipeline' : 'queue'
-      @stages = Array(params[:stages]).presence&.intersection(PIPELINE_STAGES) || (PIPELINE_STAGES - FINISHED_STAGES)
-      by_state = owned.group(:state).count
-      @stage_counts = Aim::Invoice::QUEUES.transform_values { |queue| queue[:states].sum { |state| by_state.fetch(state, 0) } }
-      states = @tab == 'queue' ? %w[ready_for_approval] : @stages.flat_map { |stage| Aim::Invoice::QUEUES[stage][:states] }
-      @invoices = owned.where(state: states).newest_first.to_a
-    end
 
     def matching(query)
       return Employee.where(id: query) if query.match?(/\A\d+\z/)

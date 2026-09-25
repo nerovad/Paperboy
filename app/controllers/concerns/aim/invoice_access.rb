@@ -3,8 +3,8 @@
 module Aim
   # Who may look at an invoice and who may work it.
   #
-  # Looking: AIM staff see every invoice; anyone else sees the invoices in
-  # their own queue that are ready for them.
+  # Looking: AIM staff see every invoice; a BU Admin every invoice in their
+  # BUs; anyone else the invoices in their own queue that are ready for them.
   #
   # Working: in Ready for Approval, the owner works their own invoice and AIM
   # staff work the shared queue's; someone else's is read only, with a Claim
@@ -16,6 +16,9 @@ module Aim
     extend ActiveSupport::Concern
 
     OWNER_ACTIONS = ['Save Changes', 'Approve', 'Send Back', 'Reject'].freeze
+    # What a BU Admin may do to someone else's invoice in their BUs: look,
+    # move and claim -- never approve it (decided 2026-09-25).
+    BU_ADMIN_ACTIONS = %w[show pdf reassign claim].freeze
 
     private
 
@@ -31,6 +34,12 @@ module Aim
       units.nil? || units.include?(@invoice.budget_unit)
     end
 
+    # The invoice is in a BU this person is BU Admin of.
+    def bu_admin_here?
+      units = helpers.aim_bu_admin_units
+      units.present? && units.include?(@invoice.budget_unit)
+    end
+
     def editor?
       return false if @invoice.terminal?
       return mine? || shared_to_me? if @invoice.state == 'ready_for_approval'
@@ -41,11 +50,12 @@ module Aim
     # A ready invoice that is not yours may be claimed from a shared queue you
     # cover, or by AIM staff from anyone's.
     def claimable?
-      @invoice.state == 'ready_for_approval' && !mine? && (staff? || shared_to_me?)
+      @invoice.state == 'ready_for_approval' && !mine? && (staff? || shared_to_me? || bu_admin_here?)
     end
 
     def require_staff_or_owner
       return if staff?
+      return if bu_admin_here? && BU_ADMIN_ACTIONS.include?(action_name)
       return deny_owner unless @invoice.state == 'ready_for_approval' && (mine? || shared_to_me?)
       return if action_name != 'update' || OWNER_ACTIONS.include?(params[:commit].to_s)
 

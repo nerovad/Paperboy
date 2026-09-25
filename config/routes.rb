@@ -138,6 +138,7 @@ Rails.application.routes.draw do
     end
     get 'my_queue', to: 'my_queue#index', as: :my_queue
     get 'shared_queues', to: 'shared_queues#index', as: :shared_queues
+    get 'budget_units', to: 'budget_units#index', as: :budget_units
     get 'people', to: 'people#index', as: :people
     get 'counts', to: 'counts#show', as: :counts
     patch 'mode', to: 'modes#update', as: :mode

@@ -42,6 +42,21 @@ module Aim
       aim_real_queue_access? && !aim_approver_mode?
     end
 
+    # The budget units this person oversees on the BU page: every one (nil)
+    # for AIM Admins and Staff, the ones they are BU Admin of otherwise, and
+    # none in Approver mode, which hides admin tools of every kind.
+    def aim_bu_admin_units
+      return [] if aim_approver_mode?
+      return nil if aim_queue_access?
+
+      @aim_bu_admin_units ||= Aim::Users.administered_budget_units(aim_session_employee_id)
+    end
+
+    def aim_bu_page?
+      units = aim_bu_admin_units
+      units.nil? || units.any?
+    end
+
     # The budget units whose shared queues this person may move an invoice to:
     # Staff and Admins any (nil), everyone else the BUs they cover.
     def aim_move_units

@@ -17,6 +17,7 @@ module Aim
 
       owner = params[:destination] == 'shared' ? Aim::Invoice::SHARED_QUEUE : params[:owner]
       return refuse_outsider if outsider?(owner)
+      return refuse_out_of_unit unless target_in_unit?(owner)
 
       moved = @invoice.reassign!(owner, actor: current_user_email)
       notice = moved ? "Moved to #{helpers.aim_owner_label(@invoice.queue_owner)}." : 'The invoice was already there.'
@@ -33,7 +34,11 @@ module Aim
         return redirect_back_or_to(aim_my_queue_path, alert: 'That person does not work AIM, so they have no queue.')
       end
 
-      moved, skipped = move_each(Array(params[:ids]).map(&:to_s).uniq) { |invoice| invoice.reassign!(owner, actor: current_user_email) }
+      moved, skipped = move_each(Array(params[:ids]).map(&:to_s).uniq) do |invoice|
+        raise Aim::Invoice::IllegalTransition, 'outside the BU' unless target_in_unit?(owner)
+
+        invoice.reassign!(owner, actor: current_user_email)
+      end
       report_moves(moved, skipped)
     end
 
@@ -56,6 +61,18 @@ module Aim
 
       moved, skipped = move_each(Array(params[:ids]).map(&:to_s).uniq) { |invoice| invoice.move_to_unit!(unit, actor: current_user_email) }
       report_moves(moved, skipped)
+    end
+
+    # A BU Admin moving someone else's invoice keeps it inside the BU: the
+    # person it goes to must cover the invoice's budget unit.
+    def target_in_unit?(owner)
+      return true if staff? || owner == Aim::Invoice::SHARED_QUEUE || mine? || shared_to_me?
+
+      Aim::Users.shared_budget_units(owner, staff: false).include?(@invoice.budget_unit)
+    end
+
+    def refuse_out_of_unit
+      redirect_back_or_to home_queue_path, alert: "That person does not cover #{@invoice.budget_unit}, so it cannot go to them."
     end
 
     def unit_allowed?(unit)
@@ -88,11 +105,12 @@ module Aim
       redirect_back_or_to aim_my_queue_path, notice: notice
     end
 
-    # What the single Move allows: AIM staff move any open invoice; anyone
-    # else their own ready invoices and those in shared queues they cover.
+    # What the single Move allows: AIM staff move any open invoice, a BU
+    # Admin any in their BUs; anyone else their own ready invoices and those in
+    # shared queues they cover.
     def movable_by_me?
       return false if @invoice.terminal?
-      return true if staff?
+      return true if staff? || bu_admin_here?
 
       @invoice.state == 'ready_for_approval' && (mine? || shared_to_me?)
     end
