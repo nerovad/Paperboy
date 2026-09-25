@@ -12,6 +12,8 @@
 # asset, and nothing else here is reachable. An unknown, spent or expired
 # token is a plain 404 — saying which it was would be a way of testing them.
 class DamMediaController < ApplicationController
+  skip_before_action :require_sign_in
+
   def show
     publication = Dam::Publication.find_by(public_token: params[:token])
     return head :not_found unless publication&.public_link_live?

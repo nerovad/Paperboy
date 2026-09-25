@@ -8,7 +8,7 @@ require 'test_helper'
 # must come back when the search is loaded.
 class SavedSearchesControllerTest < ActionController::TestCase
   setup do
-    session[:user] = { 'employee_id' => 102_989 }
+    session[:user] = { 'employee_id' => 102_989, 'email' => 'maria.acosta@example.com' }
   end
 
   test 'keeps every filter the page sent, including layout-dependent ones' do

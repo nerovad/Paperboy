@@ -11,7 +11,7 @@ class SubmissionsEmployeeFilterTest < ActionController::TestCase
   REPORT = '204455'
 
   setup do
-    session[:user] = { 'employee_id' => ME.to_i }
+    session[:user] = { 'employee_id' => ME.to_i, 'email' => 'maria.acosta@example.com' }
     @controller.define_singleton_method(:inbox_count) { 0 }
     @controller.define_singleton_method(:current_user_group_ids) { [] }
   end

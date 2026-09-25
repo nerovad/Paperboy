@@ -12,6 +12,10 @@
 # The layout only renders the frame for somebody who may use the palette, but
 # the frame's URL is a URL like any other, so the grant is checked here too.
 class CommandPaletteController < ApplicationController
+  # Fetched into a dialog, and answers a signed-out visitor with its own 403
+  # rather than a redirect to a page.
+  skip_before_action :require_sign_in
+
   layout false
 
   def show
