@@ -33,10 +33,11 @@ module Aim
       (current_user_group_names & %w[system_admins aim_admin]).any? && !aim_approver_mode?
     end
 
-    # Who sees the Pipeline section of the sidebar, and the screens behind it.
-    # The aim_admin/aim_staff groups predate the ACL section and keep working;
-    # the grant under ACL > Application Features is the way to hand out queue
-    # access without adding someone to those groups.
+    # Who sees the Pipeline, Vendors and the Dashboard, and works every BU:
+    # AIM Admins and AIM Staff, by group (roles decided 2026-09-25). The
+    # Processing Queues and Dashboard features under ACL no longer grant this:
+    # they had been given to whole departments at org level, which made every
+    # User there staff. Capabilities return deliberately in step a.6.
     def aim_queue_access?
       aim_real_queue_access? && !aim_approver_mode?
     end
@@ -62,9 +63,7 @@ module Aim
       (current_user_group_names & %w[system_admins aim_admin aim_staff]).any?
     end
 
-    def aim_real_queue_access?
-      aim_real_admin? || can_use_app_feature?('aim', 'processing_queues')
-    end
+    def aim_real_queue_access? = aim_real_admin?
 
     # Only someone with more than a User's reach has a mode to switch.
     def aim_approver_mode?

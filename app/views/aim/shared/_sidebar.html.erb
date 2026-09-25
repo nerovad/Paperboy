@@ -21,7 +21,7 @@
     <details class="nav-group" <%= "open" %> data-aim-sidebar-target="group" data-key="aim"
              data-default-open="true" data-current="<%= current == "aim" %>">
       <summary><span class="nav-group-label">AIM</span></summary>
-      <% if can_use_app_feature?("aim", "dashboard") %>
+      <% if aim_queue_access? %>
         <%= link_to "Dashboard", aim_dashboard_path,
                     class: "nav-link#{' active' if current_page?(aim_dashboard_path)}" %>
       <% end %>

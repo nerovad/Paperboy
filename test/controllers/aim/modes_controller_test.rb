@@ -47,6 +47,15 @@ module Aim
       assert_nil session[:aim_mode]
     end
 
+    test 'the old Processing Queues feature grant alone makes nobody staff' do
+      as_groups
+      @controller.helpers.define_singleton_method(:can_use_app_feature?) { |*| true }
+
+      assert_not @controller.helpers.aim_queue_access?
+      assert_not @controller.helpers.aim_real_queue_access?, 'so no mode switch either'
+      assert_equal [], Aim::Users.shared_budget_units(nil, staff: @controller.helpers.aim_queue_access?)
+    end
+
     test 'the mode someone starts in is their saved default' do
       Aim::UserPreference.create!(employee_id: 42, start_mode: 'approver')
 

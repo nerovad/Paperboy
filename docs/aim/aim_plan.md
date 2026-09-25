@@ -3606,6 +3606,12 @@ end so the reasoning stays findable.
 - **[a] Out of office through `AwayPeriod`.** Proposed 2026-09-25: read
   Paperboy's existing away periods rather than add an AIM switch. Confirm
   with Joshua at step a.4.
+- **[a] Old org-level AIM grants in ACL.** `aim:processing_queues` and
+  `aim:dashboard` are granted to all of departments 4601 and 4643 (org
+  permissions 1453, 1454, 1544, 1545). They made every User there staff until
+  2026-09-25, when AIM stopped reading them. Harmless now; Joshua to remove
+  them on the ACL screen. Steve Nelles had the Pipeline only through
+  `Super_User`'s grant: add him to `aim_staff` if he should keep it.
 - **[f] Laserfiche import mechanism.** Blocked on IT. The likely shape is a
   monitored folder on GSA-SCAN02; `AIM_LASERFICHE_INBOX_PATH` keeps it a
   LockBox value, so do not design around today's literal.
@@ -3737,3 +3743,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-25 | a.2 (2) | (this commit) | From Joshua's testing: a person's invoices split into In queue (Ready for Approval) and In pipeline (the other stages, per-stage filters, finished ones only on request, searchable); the Roles panel keeps its shape and shows each BU's role instead of how it was added; Delete is a small button whose pop-up explains what blocks it or asks for the employee ID, then a last confirmation; sidebar group Queues renamed Pipeline; activity view added to item g. 1165 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a.2 (3) | (this commit) | Role column (sortable, filterable) replaces Added through on Users & Queues; a home unit can be hidden and shown (`hidden` on `aim.user_budget_units`); the Move dialog shows the person search only when moving to a person. `schema.rb` cleared of the other team's table again. 1167 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a.2 (4) | (this commit) | Admin / Approver mode: a switch at the top of the sidebar for AIM Admins and Staff; Approver mode answers every access check as for a User; the start mode is saved in `aim.user_preferences`. Move to another BU's shared queue: changes the invoice's budget unit, recorded in the history, limited to BUs the mover covers (Staff and Admins any). `schema.rb` cleared of the other team's table again. 1176 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (5) | (this commit) | AIM Staff and Admin are the `aim_admin`, `aim_staff` and `system_admins` groups only. The Processing Queues and Dashboard features no longer grant staff access: org-level grants to 4601 and 4643 had made every User there staff (found emulating Tina Arellano: Pipeline, Vendors, Dashboard, the mode switch and every BU's shared queue). The Dashboard follows the same rule. 1177 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
