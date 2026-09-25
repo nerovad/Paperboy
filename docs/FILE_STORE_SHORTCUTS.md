@@ -149,7 +149,11 @@ boundary:
 - [x] Add startup tests proving P2M never treats a `.lnk` file as a local
       directory.
 - [x] Add the agreed SMB variables to the environment documentation/template.
-- [ ] Run RuboCop, Brakeman, bundle-audit, and the test suite.
+- [x] Run RuboCop, Brakeman, bundle-audit, and the test suite.
+
+The final suite completed with 1030 runs, 3645 assertions, and no failures or
+errors. Brakeman reported zero errors, bundle-audit found no vulnerabilities,
+and full RuboCop still reports eight pre-existing unrelated offenses.
 
 ## Open questions
 
