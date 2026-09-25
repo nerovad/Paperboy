@@ -396,6 +396,16 @@ the share, stopped, to be retired (see `## Next` item h). **LockBox**:
 variables, `AIM_SHARED_FOLDER_NAME`, `AIM_STORE_DIR` and
 `AIM_V2_PROGRAM_DIR`.
 
+**Update 2026-09-25 (branch `aim/a-user-admin`, pushed, not merged).** Item a
+is mostly built: the AIM list and Users & Queues; profiles with BUs, BU
+Admin, the shared queue switch, Deactivate; one admin role, the `aim_admin`
+group in ACL; BU Admins managing their BUs from My BUs; Admin / Approver
+mode; BUs and agencies from the COA; AIM open to anyone signed in (the
+account decides the rest; AIM granted globally in ACL on dev). Left in a:
+BU labels and default owners (a.3), sharing and Out of office (a.4), person
+folders by employee id (a.5). Open question for a.3: does a BU's default
+owner receive its unassigned drops, or only back up routing (item b)?
+
 **What is missing** is mostly two things: managing who works AIM and which
 BUs they cover, and the lookups that code and route an invoice before it
 reaches a person. See `## Next — After v2`.
@@ -3818,3 +3828,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-25 | a.3 (1) | (this commit) | Shared queue switch per person per BU, off by default, always on for that BU's BU Admins; set by AIM Admins anywhere and BU Admins in their BUs, from profiles and the BU page, which flags BUs nobody covers. Works-in and shared-queue BUs separated. 1203 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a.3 (2) | (this commit) | Every BU with people should have a BU Admin (Joshua): not enforced, but Users & Queues and By BU warn AIM Admins of each active BU with none (`Aim::Users.units_without_admin`), and By BU tags it. BU Admins always have their BUs' shared queues. On `Paperboy_Dev` ten BUs lack one. 1206 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a | (this commit) | Ready for Approval grouped BU -> shared queue and each person -> invoices, the same sections as By BU (`Aim::BuSections`, `aim/shared/_bu_sections`). Upload's budget unit is a searchable list of every agency's active COA units, and the server refuses anything else. The AIM application granted globally in ACL on dev by Joshua (10 global grants: AIM plus the 9 before). New to-do items i (email and coversheet intake) and j (demo mode). 1206 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a | (this commit) | End of day: BU warnings placed before the counts; a BU Admin's shared queue shows a greyed On. `Where AIM Stands` updated. 1206 runs, 0 failures, 0 errors; brakeman's same four. Branch `aim/a-user-admin` pushed for Joshua; not merged. Worked through a WSL-to-Windows relay (`~/vpn-workaround`) while the VPN blocks WSL; the suite ran on `PAPERBOY_TEST_DATABASE=Paperboy_Test_AIM`. |
