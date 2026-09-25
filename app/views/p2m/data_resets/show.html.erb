@@ -129,6 +129,10 @@
       <div class="p2m-batch-actions">
         <button type="button" class="btn deny" data-p2m-data-reset-target="button"
                 data-action="p2m-data-reset#reset">Reset Data</button>
+        <div class="p2m-batch-progress" data-p2m-data-reset-target="progress" hidden>
+          <progress data-reset-progress-bar max="1" value="0"></progress>
+          <span data-reset-progress-label aria-live="polite"></span>
+        </div>
       </div>
     <% end %>
   </section>

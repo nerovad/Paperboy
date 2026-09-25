@@ -207,7 +207,13 @@ module Paperboy
       def clear(prefix = nil)
         entries(prefix).each do |entry|
           name = [prefix, entry.fetch(:name)].compact.join('/')
-          entry.fetch(:directory) ? clear(name) : remove(name)
+          if entry.fetch(:directory) && share.respond_to?(:deltree)
+            share.deltree(remote_name(name))
+          elsif entry.fetch(:directory)
+            clear(name)
+          else
+            remove(name)
+          end
         end
         share.rmdir(remote_name(prefix)) if prefix
       end

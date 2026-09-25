@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { pbAlert, pbConfirm } from "pb_modal"
 
 export default class extends Controller {
-  static targets = ["button"]
+  static targets = ["button", "progress"]
   static values = { url: String }
 
   async reset() {
@@ -16,19 +16,27 @@ export default class extends Controller {
     this.buttonTarget.disabled = true
     const failures = []
     const rows = Array.from(this.element.querySelectorAll("[data-p2m-reset-row]"))
+    const startedAt = performance.now()
+    const timer = this.startProgress(startedAt, rows.length)
 
-    for (const row of rows) {
-      try {
-        const response = await this.removeTarget(row.dataset.resetTarget)
-        if (!response.ok) {
-          failures.push(`${row.dataset.resetTarget}: ${response.message}`)
-          continue
+    try {
+      for (const [index, row] of rows.entries()) {
+        try {
+          const response = await this.removeTarget(row.dataset.resetTarget)
+          if (!response.ok) {
+            failures.push(`${row.dataset.resetTarget}: ${response.message}`)
+            continue
+          }
+          document.getElementById(row.dataset.detailId)?.remove()
+          row.remove()
+        } catch (_error) {
+          failures.push(`${row.dataset.resetTarget}: request failed`)
         }
-        document.getElementById(row.dataset.detailId)?.remove()
-        row.remove()
-      } catch (_error) {
-        failures.push(`${row.dataset.resetTarget}: request failed`)
+        this.updateProgress(startedAt, index + 1, rows.length)
       }
+    } finally {
+      window.clearInterval(timer)
+      this.progressTarget.hidden = true
     }
 
     if (failures.length) {
@@ -42,6 +50,21 @@ export default class extends Controller {
     })
   }
 
+  startProgress(startedAt, total) {
+    this.progressTarget.hidden = false
+    this.updateProgress(startedAt, 0, total)
+    return window.setInterval(() => this.updateProgress(startedAt, 0, total), 100)
+  }
+
+  updateProgress(startedAt, completed, total) {
+    const elapsed = ((performance.now() - startedAt) / 1000).toFixed(1)
+    const bar = this.progressTarget.querySelector("[data-reset-progress-bar]")
+    bar.max = total || 1
+    bar.value = completed
+    this.progressTarget.querySelector("[data-reset-progress-label]").textContent =
+      `${completed} of ${total} reset targets completed · ${elapsed} seconds elapsed`
+  }
+
   async removeTarget(target) {
     const response = await fetch(this.urlValue, {
       method: "POST",
@@ -52,7 +75,7 @@ export default class extends Controller {
       },
       body: new URLSearchParams({ target }).toString()
     })
-    const result = await response.json()
+    const result = await response.json().catch(() => ({}))
     return { ok: response.ok, message: result.message || `Reset failed (${response.status}).` }
   }
 }

@@ -76,7 +76,7 @@ module P2m
       items = removable_files(store)
       store.clear
       result(label, 'Files removed', items)
-    rescue SystemCallError, ArgumentError => e
+    rescue SystemCallError, ArgumentError, SmbShortcut::CommandError => e
       result(label, 'Error', [e.message], error: true)
     end
 

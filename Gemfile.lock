@@ -1,7 +1,7 @@
 GEM
   remote: http://gsa-gitea:3000/api/packages/BSS/rubygems/
   specs:
-    smb_shortcut (1.1.2)
+    smb_shortcut (1.1.3)
 
 GEM
   remote: https://rubygems.org/
@@ -553,7 +553,7 @@ DEPENDENCIES
   rubyzip
   sass-embedded (~> 1.94)
   selenium-webdriver
-  smb_shortcut (= 1.1.2)!
+  smb_shortcut (= 1.1.3)!
   solid_cable
   solid_cache
   solid_queue
