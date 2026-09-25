@@ -5,8 +5,10 @@ require 'fileutils'
 require_relative '../log/data_runner_logger'
 require_relative '../constants/workflow_paths'
 require_relative '../../../../lib/paperboy/file_store'
+require_relative 'workspace'
 
 # Shared support for DataRunner Rake task arguments, stage execution, and cleanup.
+# rubocop:disable-next Metrics/ModuleLength
 module DataRunnerTaskHelpers
   module_function
 
@@ -79,7 +81,10 @@ module DataRunnerTaskHelpers
   end
 
   def execute_stage(script_path, args, environment)
-    success = system(environment, 'ruby', Rails.root.join(script_path).to_s, *args)
+    workspace = DataRunnerWorkspace.new
+    success = workspace.run(environment) do |child_environment|
+      system(child_environment, 'ruby', Rails.root.join(script_path).to_s, *args)
+    end
     { success: success, exit_status: $CHILD_STATUS&.exitstatus }
   end
   private_class_method :execute_stage

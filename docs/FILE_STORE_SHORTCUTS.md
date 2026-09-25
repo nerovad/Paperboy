@@ -117,6 +117,8 @@ boundary:
       publish its CSV output through the download store.
 - [x] Route the warehousing downloader's generated CSV through the download
       store adapter.
+- [x] Add a shared local workspace boundary for DataRunner child stages and
+      publish successful shortcut-backed stage outputs through `FileStore`.
 - [x] Confirm batch shipping-station moves reuse the FileStore-backed per-OMS
       endpoint with bounded concurrency and individual failure reporting.
 - [x] Centralize temporary remote-download cleanup behind the shared store.
