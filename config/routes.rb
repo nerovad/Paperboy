@@ -1,6 +1,14 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  resources :textbook_and_tuition_reimbursement_forms, controller: 'forms/textbook_and_tuition_reimbursement_forms' do
+    member do
+      get :pdf
+      patch :approve
+      patch :deny
+      patch :update_status
+    end
+  end
   resources :telework_log_forms, controller: 'forms/telework_log_forms' do
     member do
       get :pdf

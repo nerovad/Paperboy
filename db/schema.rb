@@ -1677,6 +1677,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_100004) do
     t.index ["employee_id"], name: "index_telework_log_forms_on_employee_id"
   end
 
+  create_table "textbook_and_tuition_reimbursement_forms", force: :cascade do |t|
+    t.string "agency"
+    t.string "approver_id"
+    t.datetime "created_at", null: false
+    t.text "deny_reason"
+    t.string "department"
+    t.string "division"
+    t.string "email"
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "status", default: "in_progress", null: false
+    t.string "unit"
+    t.datetime "updated_at", null: false
+    t.index ["approver_id"], name: "index_textbook_and_tuition_reimbursement_forms_on_approver_id"
+    t.index ["employee_id"], name: "index_textbook_and_tuition_reimbursement_forms_on_employee_id"
+  end
+
   create_table "user_settings", force: :cascade do |t|
     t.text "column_prefs"
     t.datetime "created_at", null: false
