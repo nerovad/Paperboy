@@ -26,11 +26,11 @@
       <p>Nothing is in this queue.</p>
     </section>
   <% else %>
-    <% if @groups %>
-      <%# People's queues, and one shared queue per BU: collapsed until opened. %>
+    <% if @sections %>
+      <%# BU, then its shared queue and each person, then invoices: collapsed until opened. %>
       <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path(queue: @queue) %>">
         <%= render 'aim/invoices/bulk_bar' %>
-        <%= render 'owner_groups', groups: @groups.map { |(_, name), invoices| [name, invoices] }, movable: true %>
+        <%= render 'aim/shared/bu_sections', sections: @sections, people_tools: false %>
         <%= render 'move_modal' %>
       </div>
     <% else %>

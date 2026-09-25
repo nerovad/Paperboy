@@ -28,8 +28,10 @@
         <div class="aim-field-row">
           <div class="aim-field">
             <%= form.label :budget_unit, 'Budget unit' %>
-            <%= form.text_field :budget_unit, value: @budget_unit, pattern: '\d{4}', maxlength: 4,
-                                              placeholder: '4601', required: true %>
+            <%# Every agency's active units from the COA: no typos, no invented BUs. %>
+            <%= form.select :budget_unit, grouped_options_for_select(@units.grouped_options, @budget_unit),
+                            { include_blank: 'Pick a budget unit…' },
+                            { required: true, class: 'form-control', data: { controller: 'searchable-select' } } %>
           </div>
         </div>
 

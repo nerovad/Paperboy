@@ -3042,6 +3042,39 @@ billing writes surfaced rather than only printed.
 
 ---
 
+### i. More ways in: email and coversheet (asked by Joshua 2026-09-25)
+
+**Goal.** Invoices reach the right queue however they are sent. Most are sent
+by someone other than the approver.
+
+**Exists.** Upload in Paperboy (anyone signed in; the BU from the COA, every
+agency; the person picked), and the hot folder (`<BU>\<person folder>`, the
+person by employee id after a.5).
+
+**Build.** An AIM mailbox the worker reads, the recipient from the subject or
+a code; a printable coversheet whose barcode names the person and BU, read
+at intake (the decision already made: assignment is source-agnostic, so a
+coversheet sets it without redesign). The history records the channel and
+the sender.
+
+### j. Demo mode (asked by Joshua 2026-09-25)
+
+**Goal.** Show and try AIM -- upload, review, approve -- without anything
+real happening: for training, for testing, and for demos to other agencies.
+
+**To think through.**
+- *Isolation.* Demo invoices flagged as such (a column on `aim.invoices`, or
+  a demo BU), never mixed into real queues, counts or By BU.
+- *No side effects.* No billing rows in `Aim_Invoices` (no charges), no
+  export to `_AI_Processed` or Laserfiche, no emails; the approval stamp is
+  drawn but marked DEMO.
+- *No AI cost.* Canned extractions for a set of sample PDFs, so the worker's
+  AI is not called.
+- *Who sees it.* A Demo switch like Admin / Approver mode, or demo users;
+  a banner on every page while it is on.
+- *Reset.* One button clears the demo invoices and reloads the samples.
+- *For sales.* Sample vendors and BUs that name no real county data.
+
 ## Earlier Roadmap (pre-v2), kept for reference
 
 Written before v2. The live plan is `## Next — After v2` above; these keep
@@ -3784,3 +3817,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-25 | a | (this commit) | AIM's front door needs only a Paperboy sign-in; the AIM account decides the rest (found emulating Tonya Gagnon, 4703, whose department held no ACL grant). Everything under AIM in the sidebar is personal: Shared Queues and its count show your own BUs, AIM Admins included; an admin's By BU moved into Pipeline. 1202 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a.3 (1) | (this commit) | Shared queue switch per person per BU, off by default, always on for that BU's BU Admins; set by AIM Admins anywhere and BU Admins in their BUs, from profiles and the BU page, which flags BUs nobody covers. Works-in and shared-queue BUs separated. 1203 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a.3 (2) | (this commit) | Every BU with people should have a BU Admin (Joshua): not enforced, but Users & Queues and By BU warn AIM Admins of each active BU with none (`Aim::Users.units_without_admin`), and By BU tags it. BU Admins always have their BUs' shared queues. On `Paperboy_Dev` ten BUs lack one. 1206 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a | (this commit) | Ready for Approval grouped BU -> shared queue and each person -> invoices, the same sections as By BU (`Aim::BuSections`, `aim/shared/_bu_sections`). Upload's budget unit is a searchable list of every agency's active COA units, and the server refuses anything else. The AIM application granted globally in ACL on dev by Joshua (10 global grants: AIM plus the 9 before). New to-do items i (email and coversheet intake) and j (demo mode). 1206 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |

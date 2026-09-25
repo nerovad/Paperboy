@@ -3,8 +3,10 @@
 module Aim
   # Drop invoices in from Paperboy instead of the share. Does exactly what the
   # worker's intake does for a dropped file: the PDF goes to the store and one
-  # row is inserted. Anyone who holds the AIM app may upload; the BU defaults
-  # to their own unit. AIM v2.
+  # row is inserted. Anyone signed in may upload, usually for someone else;
+  # the BU is picked from the Chart of Accounts, every agency's, since GSA
+  # sometimes processes another agency's invoices, and defaults to their own
+  # unit. AIM v2.
   class UploadsController < BaseController
     skip_before_action :require_app_access
     before_action :require_signed_in
@@ -13,6 +15,7 @@ module Aim
 
     def new
       @budget_unit = current_user_unit
+      @units = Aim::Units.new(every_agency: true)
       # Someone with no queue of their own uploads to someone else's.
       @has_queue = helpers.aim_has_queue?
     end
@@ -20,7 +23,7 @@ module Aim
     def create
       budget_unit = params[:budget_unit].to_s.strip
       files = Array(params[:files]).reject(&:blank?)
-      return refuse('Enter the four-digit budget unit.') unless budget_unit.match?(/\A\d{4}\z/)
+      return refuse('Pick the budget unit from the list.') unless Aim::Units.new(every_agency: true).valid?(budget_unit)
       return refuse('Choose at least one PDF.') if files.empty?
       return refuse('Only PDF files can be uploaded.') unless files.all? { |file| pdf?(file) }
       return refuse('Choose the person whose queue it goes to.') if params[:owner] == 'person' && owner_employee_id.nil?

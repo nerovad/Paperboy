@@ -39,15 +39,24 @@ module Aim
 
     FALLBACK_AGENCIES = %w[GSA].freeze
 
-    # The agencies AIM serves: those of the people who work AIM.
+    # every_agency: true offers the whole COA -- Upload, where GSA sometimes
+    # processes another agency's invoices (Joshua, 2026-09-25).
+    def initialize(every_agency: false)
+      @every_agency = every_agency
+    end
+
+    # The agencies AIM serves: those of the people who work AIM, or every
+    # agency with an active unit.
     def agencies
-      @agencies ||= begin
-        codes = Employee.where(id: Aim::Users.all.select(:id)).distinct.pluck(:agency)
-        found = codes.filter_map { |code| Coa::Agency.normalize_id(code) }.uniq.sort
-        found.presence || FALLBACK_AGENCIES
-      rescue ActiveRecord::ActiveRecordError
-        FALLBACK_AGENCIES
-      end
+      @agencies ||= @every_agency ? Coa::Unit.where(active: true).distinct.order(:agency_id).pluck(:agency_id) : served_agencies
+    end
+
+    def served_agencies
+      codes = Employee.where(id: Aim::Users.all.select(:id)).distinct.pluck(:agency)
+      found = codes.filter_map { |code| Coa::Agency.normalize_id(code) }.uniq.sort
+      found.presence || FALLBACK_AGENCIES
+    rescue ActiveRecord::ActiveRecordError
+      FALLBACK_AGENCIES
     end
 
     # { "GSA" => "General Services Agency", ... }
@@ -57,6 +66,9 @@ module Aim
     end
 
     def agency_label(agency) = [agency, agency_names[agency]].compact.join(' · ')
+
+    # Whether a unit is an active unit of an agency offered here.
+    def valid?(unit) = by_unit.key?(unit.to_s)
 
     # Active COA units of the agencies AIM serves, in agency then unit order.
     def all

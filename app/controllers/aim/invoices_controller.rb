@@ -26,7 +26,8 @@ module Aim
       scope = scope.where(review_reason: @review_reason) if @review_reason
       @invoices = scope.to_a
       @reason_counts = @queue == 'needs_review' ? Aim::Invoice.in_queue(@queue).group(:review_reason).count : {}
-      group_by_owner if @queue == 'ready_for_approval'
+      # Budget unit -> shared queue and each person -> invoices, as on By BU.
+      @sections = Aim::BuSections.build(@invoices, coa: Aim::Units.new) if @queue == 'ready_for_approval'
     rescue ActiveRecord::ActiveRecordError => e
       Rails.logger.error "AIM could not list the #{@queue} queue: #{e.message}"
       @invoices = []
@@ -97,18 +98,6 @@ module Aim
 
     # Ready for Approval is people's queues: one group per owner, the shared
     # queue last, each with the queues an invoice of that BU can move to.
-    def group_by_owner
-      @groups = @invoices.group_by { |invoice| owner_group(invoice) }
-                         .sort_by { |(shared, name), _| [shared ? 1 : 0, name.downcase] }
-    end
-
-    # One group per person, and one shared queue per BU.
-    def owner_group(invoice)
-      return [true, "#{invoice.budget_unit} shared queue"] if invoice.assigned_employee_id.nil?
-
-      [false, invoice.assigned_to.presence || "Employee #{invoice.assigned_employee_id}"]
-    end
-
     # The store, then the invoice's folder, then its PDF, and nothing from the
     # row may name a file outside the store: the batch id has to be one path
     # component, and the resolved path has to stay under the store.

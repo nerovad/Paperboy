@@ -28,75 +28,7 @@
   <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path %>">
     <%= render 'aim/invoices/bulk_bar' %>
 
-    <% @sections.each_with_index do |section, index| %>
-      <% bu_id = "aim-bu-#{index}" %>
-      <section id="bu-<%= section.unit %>" class="billing-audit-group aim-owner-group aim-bu-group" data-controller="billing-audit-sections"
-               data-aim-queue-filter-target="group" data-search="<%= section.label %>">
-        <h2>
-          <button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle"
-                  data-action="billing-audit-sections#toggle" aria-expanded="false" aria-controls="<%= bu_id %>">
-            <span aria-hidden="true">▾</span>
-            <strong class="aim-owner-group__name"><%= section.label %></strong>
-            <strong class="aim-count-pill"><%= pluralize(section.people.size, 'person') %></strong>
-            <strong class="aim-count-pill"><%= pluralize(section.invoice_count, 'invoice') %></strong>
-            <% unless section.administered? %>
-              <strong class="aim-count-pill aim-count-pill--warn">No BU Admin</strong>
-            <% end %>
-            <% unless section.covered? %>
-              <strong class="aim-count-pill aim-count-pill--warn" title="Its unowned invoices wait for an AIM Admin">Nobody on the shared queue</strong>
-            <% end %>
-          </button>
-        </h2>
-        <div id="<%= bu_id %>" data-billing-audit-sections-target="content" hidden>
-          <% manages = aim_managed_units.nil? || aim_managed_units.include?(section.unit) %>
-          <% if manages %>
-            <%= form_with url: aim_members_path, method: :post, local: true, class: 'aim-inline-form aim-bu-add' do %>
-              <%= hidden_field_tag :budget_unit, section.unit, id: nil %>
-              <strong>Add a person to <%= section.unit %></strong>
-              <%= render 'aim/shared/person_picker', name: :employee_id, label: "Add a person to #{section.unit}",
-                                                     url: aim_admin_employees_path %>
-              <button type="submit" class="btn approve compact">Add</button>
-            <% end %>
-          <% end %>
-          <% groups = [["#{section.unit} shared queue", section.shared, nil]] +
-                      section.people.map { |person| [person.name, person.invoices, person] } %>
-          <% groups.each_with_index do |(heading, invoices, person), inner| %>
-            <% employee_id = person&.employee_id %>
-            <% content_id = "#{bu_id}-#{inner}" %>
-            <section class="aim-bu-person" data-controller="billing-audit-sections"
-                     data-aim-queue-filter-target="group" data-search="<%= heading %> <%= section.label %>">
-              <h3>
-                <button type="button" class="aim-bu-person__toggle" data-billing-audit-sections-target="toggle"
-                        data-action="billing-audit-sections#toggle" aria-expanded="false" aria-controls="<%= content_id %>">
-                  <span aria-hidden="true">▾</span>
-                  <strong><%= heading %></strong>
-                  <span class="aim-count-pill"><%= pluralize(invoices.size, 'invoice') %></span>
-                </button>
-                <% if person %>
-                  <span class="aim-bu-person__shared">
-                    Shared queue:
-                    <%= render 'aim/members/shared_queue_cell', employee_id: employee_id, unit: section.unit,
-                                                                  row: person.row, can_change: manages %>
-                  </span>
-                <% end %>
-                <% if employee_id && manages %>
-                  <%= link_to 'Profile', aim_member_path(employee_id), class: 'aim-bu-person__profile' %>
-                <% end %>
-              </h3>
-              <div id="<%= content_id %>" data-billing-audit-sections-target="content" hidden>
-                <% if invoices.empty? %>
-                  <p class="aim-bu-person__empty">Nothing here.</p>
-                <% else %>
-                  <div class="billing-type-audit-table-wrapper">
-                    <%= render 'aim/invoices/rows', invoices: invoices, movable: true %>
-                  </div>
-                <% end %>
-              </div>
-            </section>
-          <% end %>
-        </div>
-      </section>
-    <% end %>
+    <%= render 'aim/shared/bu_sections', sections: @sections, people_tools: true %>
 
     <%= render 'aim/invoices/move_modal' %>
   </div>

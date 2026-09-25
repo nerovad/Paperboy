@@ -397,7 +397,7 @@ module Aim
     # People's queues
     # ---------------------------------------------------------------
 
-    test 'ready for approval is grouped by person, one shared queue per BU last, collapsed' do
+    test 'ready for approval is grouped by BU, then its shared queue and each person, collapsed' do
       invoice('4601.O1', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
                          assignment_source: 'folder')
       invoice('4601.O2', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
@@ -407,10 +407,16 @@ module Aim
       get :index, params: { queue: 'ready_for_approval' }
 
       assert_response :success
-      assert_equal(['Jane Doe', '4601 shared queue'], @controller.instance_variable_get(:@groups).map { |key, _| key.last })
-      assert_select 'section.aim-owner-group', 2
-      assert_select 'section.aim-owner-group button[aria-expanded=false]', 2, 'the groups start collapsed'
-      assert_select 'section.aim-owner-group .aim-count-pill', text: '2 invoices'
+      sections = @controller.instance_variable_get(:@sections)
+      assert_equal ['4601'], sections.map(&:unit)
+      assert_equal ['Jane Doe'], sections.first.people.map(&:name)
+      assert_equal 1, sections.first.shared.size
+      assert_select 'section.aim-bu-group', 1
+      assert_select 'section.aim-bu-group .aim-count-pill', text: '3 invoices'
+      assert_select 'section.aim-bu-person', 2, 'the shared queue, then Jane Doe'
+      assert_select 'section.aim-bu-person .aim-count-pill', text: '2 invoices'
+      assert_select 'section.aim-bu-group > h2 button[aria-expanded=false]', 1, 'the groups start collapsed'
+      assert_select '.aim-bu-person__shared', 0, 'no people tools in the Pipeline'
       assert_select 'input[type=checkbox][data-aim-move-modal-target=check]', 3
       assert_select 'button.aim-move-button', 0, 'one way to move: tick, then Move selected'
       assert_select '[data-controller=aim-person-search] input[type=hidden][name=owner]'

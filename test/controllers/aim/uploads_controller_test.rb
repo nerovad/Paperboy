@@ -36,7 +36,7 @@ module Aim
       get :new
 
       assert_response :success
-      assert_select 'input[name=budget_unit][value=?]', '4601'
+      assert_select 'select[name=budget_unit] option[selected][value=?]', '4601'
     end
 
     test 'uploading stores the pdf and inserts the row as intake would' do
@@ -84,6 +84,9 @@ module Aim
       post :create, params: { budget_unit: '46', files: [pdf('a.pdf')] }
       assert_redirected_to new_aim_upload_path
       assert_match(/budget unit/, flash[:alert])
+
+      post :create, params: { budget_unit: '9999', files: [pdf('a.pdf')] }
+      assert_match(/budget unit/, flash[:alert], 'four digits that are not a COA unit are refused too')
 
       post :create, params: { budget_unit: '4601' }
       assert_match(/at least one PDF/, flash[:alert])
