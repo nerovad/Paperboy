@@ -122,12 +122,12 @@ module DataRunnerTaskHelpers
     target_oms = ENV.fetch('DATARUNNER_QUEUE_OMS', nil)
     while (entry = next_queue_entry(orchestration.fetch(:queue)))
       ensure_queue_entry_not_processed!(orchestration, entry)
-      puts "[QUEUE] Processing #{entry}"
+      puts "[QUEUE] Processing #{queue_entry_name(entry)}"
       run_orchestration_stages(selector, %i[download to_csv use_dsl inject])
       processed += 1
       next unless next_queue_entry(orchestration.fetch(:queue)) == entry
 
-      raise "orchestration queue item was not removed: #{entry}"
+      raise "orchestration queue item was not removed: #{queue_entry_name(entry)}"
     end
     raise "OMS #{target_oms} is not present in the orchestration queue" if target_oms && processed.zero?
 
@@ -136,7 +136,7 @@ module DataRunnerTaskHelpers
   private_class_method :drain_orchestration_queue
 
   def ensure_queue_entry_not_processed!(orchestration, entry)
-    match = entry.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
+    match = queue_entry_name(entry).match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
     return unless match
 
     processed = orchestration_store(orchestration, :processed_path)
@@ -144,6 +144,11 @@ module DataRunnerTaskHelpers
     raise "duplicate OMS number: archive already exists: #{archive}" if processed.directory?(match[1])
   end
   private_class_method :ensure_queue_entry_not_processed!
+
+  def queue_entry_name(entry)
+    entry.is_a?(Hash) ? entry.fetch(:name) : entry.to_s
+  end
+  private_class_method :queue_entry_name
 
   def next_queue_entry(queue)
     path = queue.fetch(:path)
@@ -378,11 +383,12 @@ module DataRunnerTaskHelpers
   def orchestration_upload(orchestration)
     queue = orchestration[:queue]
     entry = queue && next_queue_entry(queue)
-    match = entry&.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
+    name = entry && queue_entry_name(entry)
+    match = name&.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
     return unless match
 
     marker_store = Paperboy::FileStore.for(queue.fetch(:path))
-    P2m::OmsUpload.find_by(oms_number: match[1], mailer_date: marker_store.mtime(entry)&.to_date)
+    P2m::OmsUpload.find_by(oms_number: match[1], mailer_date: marker_store.mtime(name)&.to_date)
   end
   private_class_method :orchestration_upload
 

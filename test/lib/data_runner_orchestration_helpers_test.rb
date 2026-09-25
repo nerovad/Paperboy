@@ -77,4 +77,20 @@ class DataRunnerOrchestrationHelpersTest < ActiveSupport::TestCase
       assert_match 'duplicate OMS number', error.message
     end
   end
+
+  test 'accepts structured file store entries for queued OMS checks' do
+    Dir.mktmpdir do |directory|
+      FileUtils.mkdir_p(File.join(directory, '02_Processed/50506986'))
+      orchestration = { root_path: directory, processed_path: '02_Processed' }
+      entry = { name: 'Mail.dat_50506986.zip', directory: false }
+
+      error = assert_raises(RuntimeError) do
+        DataRunnerTaskHelpers.send(
+          :ensure_queue_entry_not_processed!, orchestration, entry
+        )
+      end
+
+      assert_match 'duplicate OMS number', error.message
+    end
+  end
 end
