@@ -9,7 +9,9 @@
     <h2 id="p2m-qc-title">OMS Quality Control</h2>
     <div class="table-wrap p2m-qc-grid">
       <table class="submission-table p2m-qc-table p2m-qc-oms-table">
-        <thead><tr><th aria-label="Expand"></th><th>OMS #</th><th>Date</th></tr></thead>
+        <thead>
+          <tr><th aria-label="Expand"></th><th>OMS #</th><th>Date</th></tr>
+        </thead>
         <tbody>
           <% @oms_rows.each_with_index do |row, index| %>
             <% oms_number = row.fetch('omsnumber').to_s %>

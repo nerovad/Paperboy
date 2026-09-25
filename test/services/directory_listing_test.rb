@@ -38,4 +38,26 @@ class DirectoryListingTest < ActiveSupport::TestCase
       assert_equal 8, entries.first.size
     end
   end
+
+  test 'lists a file beneath a shortcut-backed reference' do
+    Dir.mktmpdir do |directory|
+      shortcut = Pathname.new(directory).join('outputs.lnk').tap { |path| path.write('shortcut') }
+      store = Object.new
+      store.define_singleton_method(:entries) do |prefix = nil|
+        if prefix == '01_Download'
+          [{ name: 'agencies.xlsx', directory: false, size: 8,
+             modified_at: Time.utc(2026, 9, 24) }]
+        else
+          [{ name: '01_Download', directory: true, modified_at: Time.utc(2026, 9, 24) }]
+        end
+      end
+
+      Paperboy::FileStore.stub(:for, store) do
+        entries = DirectoryListing.new("#{shortcut}/01_Download/agencies.xlsx").call
+
+        assert_equal ['agencies.xlsx'], entries.map(&:name)
+        assert_equal 8, entries.first.size
+      end
+    end
+  end
 end

@@ -2,19 +2,20 @@
 # frozen_string_literal: true
 
 require 'date'
-require 'fileutils'
 require 'net/http'
 require 'pathname'
 require 'uri'
 
 require_relative '../commands/dsl_map'
 require_relative '../helpers/etl_helpers'
-require_relative '../constants/workflow_paths'
+require_relative '../helpers/download_store'
 
 ROOT = Pathname.new(__dir__).join('../../../..').expand_path
 CFG = DSL_MAP.fetch('USPS')
-DOWNLOAD_DIR = Pathname.new(WorkflowPaths::DOWNLOAD_DIR)
-OUTPUT_PATH = DOWNLOAD_DIR.join(EtlHelpers.source_local(CFG).to_s)
+OUTPUT_NAME = EtlHelpers.source_local(CFG).to_s
+DOWNLOAD_STORE = DataRunnerDownloadStore.new
+DOWNLOAD_STORE.prepare!
+OUTPUT_PATH = DOWNLOAD_STORE.display_path(OUTPUT_NAME)
 
 REQUIRED_ENV = %w[
   DATARUNNER_USPS_PASSWORD
@@ -183,7 +184,6 @@ request_specs.each.with_index(1) do |spec, index|
   raise "USPS request #{index} failed: HTTP #{response.code}" unless response.is_a?(Net::HTTPSuccess)
 end
 
-FileUtils.mkdir_p(DOWNLOAD_DIR)
-File.binwrite(OUTPUT_PATH, response.body)
+DOWNLOAD_STORE.write(OUTPUT_NAME, response.body)
 
 puts "[OK] USPS postage downloaded -> #{OUTPUT_PATH}"

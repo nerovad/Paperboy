@@ -27,7 +27,9 @@
     <% end %>
     <% if can_use_app_feature?('p2m', 'data_reset') %>
       <%= link_to "Data Reset", p2m_data_reset_path,
-                  class: "nav-link#{' active' if current_page?(p2m_data_reset_path)}" %>
+                  class: "nav-link#{' active' if current_page?(p2m_data_reset_path)}",
+                  data: { controller: "navigation-progress",
+                          action: "click->navigation-progress#start" } %>
     <% end %>
   </nav>
 </div>

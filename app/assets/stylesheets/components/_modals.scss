@@ -129,6 +129,23 @@
   border-radius: 8px;
 }
 
+.pb-pdf-preview__progress {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) auto;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: .75rem;
+  color: $muted;
+
+  &[hidden] { display: none; }
+
+  progress {
+    width: 100%;
+    height: .75rem;
+    accent-color: $green-teal;
+  }
+}
+
 .dsl-sop {
   ol { padding-left: 1.5rem; }
 

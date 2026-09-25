@@ -5,9 +5,12 @@ require 'csv'
 require 'fileutils'
 require 'pathname'
 require 'rexml/document'
+require 'tempfile'
+require 'tmpdir'
 
 require_relative '../commands/dsl_map'
 require_relative '../helpers/etl_helpers'
+require_relative '../helpers/download_store'
 require_relative '../constants/workflow_paths'
 
 ROOT = Pathname.new(__dir__).join('../../../..').expand_path
@@ -15,8 +18,18 @@ DATA_RUNNER_ROOT = Pathname.new(__dir__).parent.expand_path
 CFG = DSL_MAP.fetch('Oversized')
 SRC = EtlHelpers.source(CFG)
 XML_CFG = CFG.fetch(:xml, {})
-DOWNLOAD_DIR = Pathname.new(WorkflowPaths::DOWNLOAD_DIR)
-OUTPUT_PATH = DOWNLOAD_DIR.join(EtlHelpers.source_local(CFG).to_s)
+OUTPUT_NAME = EtlHelpers.source_local(CFG).to_s
+DOWNLOAD_STORE = DataRunnerDownloadStore.new
+DOWNLOAD_STORE.prepare!
+DOWNLOAD_DIR = if DOWNLOAD_STORE.shortcut_backed?
+                 Pathname.new(Dir.mktmpdir('paperboy-oversized-inputs'))
+               else
+                 Pathname.new(WorkflowPaths::DOWNLOAD_DIR)
+               end
+OUTPUT_PATH = DOWNLOAD_STORE.display_path(OUTPUT_NAME)
+at_exit do
+  FileUtils.remove_entry(DOWNLOAD_DIR.to_s) if DOWNLOAD_STORE.shortcut_backed? && DOWNLOAD_DIR.directory?
+end
 DEFAULT_BU_FILE = DATA_RUNNER_ROOT.join('download/oversized.csv').expand_path
 OUTPUT_HEADER = %w[Date ProfileType BU Length Width Type FilePath FileName].freeze
 XML_DIR = Pathname.new(ENV.fetch('GSABSS_ROOT')).join(
@@ -162,12 +175,13 @@ def scan_rows(paths, bu_map)
        .map { |scan| build_scan_record(scan, bu_map) }
 end
 
-def write_csv(path, rows)
-  FileUtils.mkdir_p(path.dirname)
-
-  CSV.open(path, 'w') do |out|
-    out << OUTPUT_HEADER
-    rows.each { |row| out << row }
+def write_csv(rows)
+  Tempfile.create(['paperboy-oversized', '.csv']) do |file|
+    CSV.open(file.path, 'w') do |out|
+      out << OUTPUT_HEADER
+      rows.each { |row| out << row }
+    end
+    DOWNLOAD_STORE.write(OUTPUT_NAME, File.binread(file.path))
   end
 end
 
@@ -187,7 +201,7 @@ inputs = input_paths
 raise 'no XML input files found' if inputs.empty?
 
 rows = scan_rows(inputs, load_business_units(bu_file))
-write_csv(OUTPUT_PATH, rows)
+write_csv(rows)
 cleanup_download_xml_files(inputs)
 
 puts "[OK] #{inputs.map(&:basename).join(', ')} -> #{OUTPUT_PATH}"

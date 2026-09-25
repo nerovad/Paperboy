@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 module DataRunner
+  # rubocop:disable-next Metrics/ClassLength
   class DslsController < ApplicationController
     before_action :require_login, except: :index
     before_action :set_dsl, except: %i[index new create] + DataRunner::ApplicationController::GROUP_ACTIONS
+    after_action :cleanup_output_file, only: :output
 
     # Filtered rather than the whole catalog: a DSL the ACL withholds should
     # not be listed here any more than it is in the sidebar.
@@ -112,10 +114,19 @@ module DataRunner
     def output
       outputs = WorkflowOutputs.new(@dsl)
       file = outputs.find!(params[:path])
-      return send_file(file, filename: file.basename.to_s, disposition: :attachment) if params[:download] == '1'
+      @output_file = file
+      local_path = file.respond_to?(:local_path) ? file.local_path : file
+      return send_file(local_path, filename: file.basename.to_s, disposition: :attachment) if params[:download] == '1'
 
-      @backup_output = outputs.backup_files.include?(file)
-      @output = WorkflowOutputPresenter.new(file, header_row: @dsl.config.dig(:to_csv, :header_row))
+      @backup_output = outputs.backup_files.any? do |backup|
+        if backup.respond_to?(:relative_path)
+          backup.relative_path == file.relative_path
+        else
+          backup == file
+        end
+      end
+      @output = WorkflowOutputPresenter.new(local_path, header_row: @dsl.config.dig(:to_csv, :header_row))
+      @output_relative_path = file.respond_to?(:relative_path) ? file.relative_path : file.relative_path_from(WorkflowPaths::OUTPUT_ROOT)
       render :output, formats: [:html]
     end
 
@@ -124,6 +135,10 @@ module DataRunner
     def set_dsl
       @dsl = DslCatalog.find!(params[:name])
       @active_group_run = GroupRun.active.find_by(group_name: @dsl.group) if @dsl.group
+    end
+
+    def cleanup_output_file
+      @output_file&.cleanup if @output_file.respond_to?(:cleanup)
     end
   end
 end

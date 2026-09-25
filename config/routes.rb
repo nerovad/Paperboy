@@ -223,6 +223,7 @@ Rails.application.routes.draw do
       post :move_to_shipping_station
       delete :remove_from_shipping_station
     end
+    post 'search/cancel', to: 'searches#cancel', as: :search_cancel
     get 'oms_status', to: 'oms_uploads#index', as: :oms_status
     resource :data_refresh, only: %i[show update] do
       post :restart

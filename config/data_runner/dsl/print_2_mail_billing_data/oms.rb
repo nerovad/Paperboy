@@ -28,10 +28,10 @@ require app_root.join('app/services/p2m/paths').to_s
       reference_path: :downloaded_file
     },
     orchestration: {
-      root_path: '/mnt/o/Outputs/DataRunner',
-      sent_path: P2m::Paths::STAGING,
-      output_path: P2m::Paths::TEMPORARY_OUTPUT,
-      processed_path: P2m::Paths::PROCESSED,
+      root_path: P2m::Paths::DATA_RUNNER_ROOT.to_s,
+      sent_path: P2m::Paths.configured_location(P2m::Paths::STAGING).to_s,
+      output_path: P2m::Paths.configured_location(P2m::Paths::TEMPORARY_OUTPUT).to_s,
+      processed_path: P2m::Paths.configured_location(P2m::Paths::PROCESSED).to_s,
       queue: {
         path: :sent_path,
         pattern: /\AMail\.dat_\d{8,9}\.zip\z/i

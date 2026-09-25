@@ -1,11 +1,11 @@
-# OMS Historical Backfile Findings and Recommendations
+# OMS Historical Backfile Findings and Staging
 
 ## Purpose
 
 This document records the files found under the parent of
-`$P2M_DATARUNNER_ROOT` that appear to
-be eligible for OMS preprocessing on or after July 1, 2026, and recommends a
-safe way to process them exactly once through Data Runner.
+`$P2M_DATARUNNER_ROOT` that appeared eligible for OMS preprocessing on or
+after July 1, 2026, and describes the implemented safe staging workflow for
+processing them exactly once through Data Runner.
 
 The `$P2M_DATARUNNER_ROOT` subtree was excluded from the historical
 scan.
@@ -88,64 +88,101 @@ changing its completeness requirements. The five incomplete jobs require
 source-file recovery or an explicit business decision to permit partial OMS
 imports.
 
-## Recommended backfile design
+## Implemented backfile staging
 
-Keep the existing OMS orchestration root at `$P2M_DATARUNNER_ROOT`. Do not
-point it at the variable's parent directory, because the preprocessor expects
-a flat staging directory while the historical inputs are spread across
-multiple output and archive directories.
+The OMS orchestration root remains `$P2M_DATARUNNER_ROOT`. Historical source
+files are discovered below its parent, while the normal OMS queue continues to
+use the configured `P2M_STAGING` location. The staging and processed locations
+are resolved by `P2m::Paths`, so they may be relative to the Data Runner root
+or absolute FileStore/SMB locations.
 
-Add a one-time historical backfile staging command with the following
-behavior:
+`script/ruby/p2m/print_and_inserting_done.rb` implements the one-job-at-a-time
+backfile stager. Its behavior is:
 
-1. Recursively scan the parent of `$P2M_DATARUNNER_ROOT`, excluding the
+1. Recursively scan the configured source root, excluding the
    DataRunner subtree.
 2. Apply the filename and cutoff criteria documented above.
-3. Reject or report jobs that do not contain all required input categories.
-4. Before staging an OMS number, check for
-   `$P2M_DATARUNNER_ROOT/02_Processed/<OMS number>`.
-5. Skip the job when that processed directory already exists.
-6. Copy the recognized inputs for one OMS number into the DataRunner root.
-7. Copy its `Mail.dat_<OMS number>.zip` marker into
-   `DataRunner/00_SentToUSPS` last.
-8. Let the existing queue drain and postprocessor complete before staging a
-   conflicting job.
+3. Write a JSON report containing discovered files, associated-file counts,
+   source directories, statuses, and details.
+4. Classify jobs as `ready`, `incomplete`, `duplicate OMS number`,
+   `duplicate marker`, or `duplicate input`.
+5. Mark ready jobs as `staging conflict` when the same OMS number is already
+   queued in the configured staging directory.
+6. Skip processed OMS numbers and do not overwrite different destination
+   files.
+7. Copy the first ready job's recognized files into the configured staging
+   directory, preserving metadata and refusing conflicting destinations.
+8. Leave the marker with the other staged inputs; the normal OMS queue then
+   validates, imports, and archives the job.
 
-Publishing the marker last is important: the marker is the queue entry, so
-the queue must not see a job until all of its inputs are staged.
+The stager copies the complete selected job as one operation from the
+backfile source into the staging directory. The normal orchestration queue
+uses the marker as its entry point only after the copy has completed.
 
-After a successful import, the existing OMS postprocessor moves the staged
-inputs and marker into:
+The stager supports a scan-only mode through the Paperboy `Stage Data` screen.
+The screen runs the scan and presents the report without staging. The normal
+staging action writes the same report to:
 
 ```text
-$P2M_DATARUNNER_ROOT/02_Processed/<OMS number>/
+$P2M_DATARUNNER_ROOT/p2m_oms_backfill_report.json
 ```
 
-That directory should be treated as the durable idempotency record. A later
-backfile run will see it and skip the OMS number, preventing a second import.
+After a successful import, the OMS postprocessor moves the staged inputs and
+marker into:
+
+```text
+<configured processed path>/<OMS number>/
+```
+
+That directory and the OMS upload ledger are both used as idempotency and
+state records. A later backfile run sees processed directories and reports a
+duplicate OMS number. Normal UI staging also consults the ledger and rejects
+an OMS whose import has already begun. This prevents a second import through
+the normal staging path.
 The historical source files can remain in place for audit and recovery.
 
-The staging command should also stop rather than overwrite files when a
-different or partially staged job is already present in the DataRunner root
-or queue. This makes interruption and restart behavior visible and avoids
-mixing jobs.
+The stager refuses to overwrite files with different size or modification
+metadata. It marks a same-number queue conflict in the report and stages no
+new job while the staging area already contains an OMS marker. This makes
+interruption and restart behavior visible and avoids mixing jobs.
+
+The report can be regenerated without staging with the Rails-backed service:
+
+```ruby
+P2m::PrintAndInsertingDone.scan(start_date:, end_date:)
+```
+
+The staging operation is invoked with `P2m::PrintAndInsertingDone.call` and
+is run in `P2m::StageDataJob` for the UI workflow.
 
 ## Recommendation for incomplete jobs
 
 Recover the missing source files for the five incomplete jobs before
-processing them. Making orchestration children optional is not recommended
-as part of the backfile because it would also allow incomplete future jobs
-to pass without an error.
+processing them. The backfile stager reports incomplete jobs and does not copy
+them. The OMS ledger and orchestration still require all three input datasets;
+making orchestration children optional is not recommended because it would
+also allow incomplete future jobs to pass without an error.
 
 If partial historical imports are required, implement that as an explicit
 backfile-only policy with a reviewed allowlist of OMS numbers. Do not weaken
-the default OMS orchestration validation globally.
+the default OMS orchestration or ledger validation globally.
+
+## Current implementation references
+
+- `script/ruby/p2m/print_and_inserting_done.rb`
+- `app/services/p2m/print_and_inserting_done.rb`
+- `app/services/p2m/oms_upload_ledger.rb`
+- `app/services/p2m/paths.rb`
+- `app/controllers/p2m/stage_data_controller.rb`
+- `app/jobs/p2m/stage_data_job.rb`
+- `test/scripts/p2m_print_and_inserting_done_scan_test.rb`
+- `test/scripts/p2m_print_and_inserting_done_test.rb`
 
 ## Proposed commit message
 
 ```text
-Document OMS historical backfile recommendations
+Document OMS historical backfile staging
 
 Record eligible OMS jobs and incomplete source sets.
-Describe idempotent staging and duplicate-processing safeguards.
+Describe implemented staging, reporting, and duplicate safeguards.
 ```

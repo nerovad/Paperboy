@@ -1,17 +1,16 @@
 # frozen_string_literal: true
 
-require 'fileutils'
 require 'pathname'
 require_relative 'paths'
 
 module P2m
   class PrinterQueue
-    DESTINATION = Paths::PRINTERS_PATH
     SAFE_COMPONENT = %r{\A[^./\\][^/\\]*\z}
 
-    def initialize(root: OmsAssociatedFiles::ROOT, destination: DESTINATION)
+    def initialize(root: OmsAssociatedFiles::ROOT, destination: nil)
       @root = Pathname.new(root).expand_path
-      @destination = Pathname.new(destination).expand_path
+      @destination = destination || Paths.printers_store
+      @destination = Paperboy::FileStore.for(@destination) unless @destination.respond_to?(:copy)
       @associated_files = OmsAssociatedFiles.new(root: @root)
     end
 
@@ -26,15 +25,13 @@ module P2m
       raise ArgumentError, "associated file not found: #{invalid.first}" if invalid.any?
       raise ArgumentError, 'select at least one file' if selected.empty?
 
-      target_directory = destination.join(printer, queue)
-      target_directory.mkpath
       selected.each do |name|
         source = root.join(directory, name)
-        target = target_directory.join(name)
-        next if matching_file?(source, target)
-        raise "printer queue file already exists with different contents: #{name}" if target.exist?
+        target = File.join(printer, queue, name)
+        next if destination.exist?(target)
 
-        FileUtils.cp(source, target, preserve: true)
+        destination.mkdir(File.join(printer, queue))
+        destination.copy(source, target)
       end
       selected.length
     end
@@ -50,13 +47,8 @@ module P2m
       raise ArgumentError, "associated file not found: #{invalid.first}" if invalid.any?
       raise ArgumentError, 'select at least one file' if selected.empty?
 
-      target_directory = destination.join(printer, queue)
       selected.count do |name|
-        target = target_directory.join(name)
-        next false unless target.file?
-
-        FileUtils.rm_f(target)
-        true
+        destination.remove(File.join(printer, queue, name))
       end
     end
 
@@ -66,10 +58,6 @@ module P2m
 
     def validate_component!(value, label)
       raise ArgumentError, "invalid #{label}" unless value.to_s.match?(SAFE_COMPONENT)
-    end
-
-    def matching_file?(source, target)
-      target.file? && source.size == target.size && source.mtime == target.mtime
     end
 
     def validate_pdf_filenames!(filenames)

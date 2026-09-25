@@ -3,6 +3,7 @@
 # Stage-by-stage orchestration support for control-only DataRunner DSL entries.
 require 'date'
 require 'pathname'
+require_relative '../../../../lib/paperboy/file_store'
 
 # rubocop:disable-next Metrics/ModuleLength
 module DataRunnerTaskHelpers
@@ -121,12 +122,12 @@ module DataRunnerTaskHelpers
     target_oms = ENV.fetch('DATARUNNER_QUEUE_OMS', nil)
     while (entry = next_queue_entry(orchestration.fetch(:queue)))
       ensure_queue_entry_not_processed!(orchestration, entry)
-      puts "[QUEUE] Processing #{entry}"
+      puts "[QUEUE] Processing #{queue_entry_name(entry)}"
       run_orchestration_stages(selector, %i[download to_csv use_dsl inject])
       processed += 1
       next unless next_queue_entry(orchestration.fetch(:queue)) == entry
 
-      raise "orchestration queue item was not removed: #{entry}"
+      raise "orchestration queue item was not removed: #{queue_entry_name(entry)}"
     end
     raise "OMS #{target_oms} is not present in the orchestration queue" if target_oms && processed.zero?
 
@@ -135,24 +136,30 @@ module DataRunnerTaskHelpers
   private_class_method :drain_orchestration_queue
 
   def ensure_queue_entry_not_processed!(orchestration, entry)
-    match = entry.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
+    match = queue_entry_name(entry).match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
     return unless match
 
-    processed = File.absolute_path(orchestration.fetch(:processed_path).to_s,
-                                   orchestration.fetch(:root_path))
-    archive = File.join(processed, match[1])
-    raise "duplicate OMS number: archive already exists: #{archive}" if Dir.exist?(archive)
+    processed = orchestration_store(orchestration, :processed_path)
+    archive = processed.path.join(match[1])
+    raise "duplicate OMS number: archive already exists: #{archive}" if processed.directory?(match[1])
   end
   private_class_method :ensure_queue_entry_not_processed!
 
+  def queue_entry_name(entry)
+    entry.is_a?(Hash) ? entry.fetch(:name) : entry.to_s
+  end
+  private_class_method :queue_entry_name
+
   def next_queue_entry(queue)
     path = queue.fetch(:path)
-    raise "orchestration queue directory not found: #{path}" unless Dir.exist?(path)
+    store = Paperboy::FileStore.for(path)
+    raise "orchestration queue directory not found: #{path}" unless store.directory?
 
     target_oms = ENV.fetch('DATARUNNER_QUEUE_OMS', nil)
-    Dir.children(path).sort.find do |entry|
+    store.entries.sort_by { |file| file.fetch(:name) }.find do |file|
+      entry = file.fetch(:name)
       matches_target = target_oms.nil? || entry.match?(/\AMail\.dat_#{Regexp.escape(target_oms)}\.zip\z/i)
-      File.file?(File.join(path, entry)) && queue.fetch(:pattern).match?(entry) && matches_target
+      !file.fetch(:directory) && queue.fetch(:pattern).match?(entry) && matches_target
     end
   end
   private_class_method :next_queue_entry
@@ -265,10 +272,10 @@ module DataRunnerTaskHelpers
   private_class_method :child_local!
 
   def verify_orchestration_outputs!(orchestration)
+    output_store = Paperboy::FileStore.for(orchestration.fetch(:output_dir))
     missing = orchestration_children(orchestration).filter_map do |child_name, child_cfg|
       local = child_local!(child_name, child_cfg)
-      path = File.join(orchestration.fetch(:output_dir), local)
-      "#{child_name}: #{path}" unless File.file?(path)
+      "#{child_name}: #{output_store.path.join(local)}" unless output_store.exist?(local)
     end
     return if missing.empty?
 
@@ -277,24 +284,26 @@ module DataRunnerTaskHelpers
   private_class_method :verify_orchestration_outputs!
 
   def stage_orchestration_inputs(orchestration)
+    output_store = Paperboy::FileStore.for(orchestration.fetch(:output_dir))
+    download_store, relative_prefix = workflow_stage_store(WorkflowPaths::DOWNLOAD_DIR)
+    download_store.mkdir(relative_prefix)
     orchestration_children(orchestration).each do |child_name, child_cfg|
       local = child_local!(child_name, child_cfg)
-      source = File.join(orchestration.fetch(:output_dir), local)
-      target = File.join(WorkflowPaths::DOWNLOAD_DIR, local)
-      FileUtils.mkdir_p(File.dirname(target))
-      FileUtils.cp(source, target)
-      puts "[STAGE] #{child_name}: #{source} -> #{target}"
+      target = [relative_prefix, local].compact.join('/')
+      output_store.with_download(local) { |source| download_store.copy(source, target) }
+      puts "[STAGE] #{child_name}: #{output_store.path.join(local)} -> #{download_store.path.join(target)}"
     end
   end
   private_class_method :stage_orchestration_inputs
 
   def verify_child_stage_files!(orchestration, stage_dir, extension: nil, skip_replication: false)
+    store, relative_prefix = workflow_stage_store(stage_dir)
     missing = orchestration_children(orchestration).filter_map do |child_name, child_cfg|
       next if skip_replication && EtlHelpers.source_strategy(child_cfg) == :replicate
 
       filename = extension ? "#{EtlHelpers.base_for(child_cfg)}#{extension}" : EtlHelpers.output_for(child_cfg)
-      path = File.join(stage_dir, filename)
-      "#{child_name}: #{path}" unless File.file?(path)
+      target = [relative_prefix, filename].compact.join('/')
+      "#{child_name}: #{stage_dir}/#{filename}" unless store.exist?(target)
     end
     return if missing.empty?
 
@@ -374,11 +383,12 @@ module DataRunnerTaskHelpers
   def orchestration_upload(orchestration)
     queue = orchestration[:queue]
     entry = queue && next_queue_entry(queue)
-    match = entry&.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
+    name = entry && queue_entry_name(entry)
+    match = name&.match(/\AMail\.dat_(\d{8,9})\.zip\z/i)
     return unless match
 
-    marker = Pathname.new(queue.fetch(:path)).join(entry)
-    P2m::OmsUpload.find_by(oms_number: match[1], mailer_date: marker.mtime.to_date)
+    marker_store = Paperboy::FileStore.for(queue.fetch(:path))
+    P2m::OmsUpload.find_by(oms_number: match[1], mailer_date: marker_store.mtime(name)&.to_date)
   end
   private_class_method :orchestration_upload
 
@@ -393,6 +403,14 @@ module DataRunnerTaskHelpers
     end
   end
   private_class_method :mark_files_archived
+
+  def orchestration_store(orchestration, key)
+    location = File.absolute_path(
+      orchestration.fetch(key).to_s, orchestration.fetch(:root_path)
+    )
+    Paperboy::FileStore.for(location)
+  end
+  private_class_method :orchestration_store
 
   def run_atomic_inject(orchestration)
     children = orchestration_children(orchestration).map(&:first)

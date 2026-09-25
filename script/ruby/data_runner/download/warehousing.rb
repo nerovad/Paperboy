@@ -3,11 +3,12 @@
 
 require 'csv'
 require 'date'
-require 'fileutils'
 require 'nokogiri'
+require 'tempfile'
 require 'stringio'
 require 'zip'
 
+require_relative '../helpers/download_store'
 require_relative '../constants/workflow_paths'
 
 # Technical overview
@@ -46,7 +47,10 @@ require_relative '../constants/workflow_paths'
 ROOT = Pathname.pwd.expand_path
 SEARCH_ROOT = Pathname.new(ENV.fetch('GSABSS_ROOT')).join('BUSINESS_SUPPORT/Billing').expand_path
 SEARCH_DIRS = %w[FY26-27 FY25-26].map { |year| SEARCH_ROOT.join(year) }.freeze
-OUTPUT_DIR = ROOT.join(WorkflowPaths::DOWNLOAD_DIR)
+OUTPUT_NAME = 'warehousing.csv'
+DOWNLOAD_STORE = DataRunnerDownloadStore.new
+DOWNLOAD_STORE.prepare!
+OUTPUT_PATH = DOWNLOAD_STORE.display_path(OUTPUT_NAME)
 
 AP_DIRS = {
   'AP01' => 'AP01-Jul',
@@ -482,11 +486,12 @@ def build_warehousing_rows(chosen)
 end
 
 def write_warehousing_csv(warehousing_rows)
-  FileUtils.mkdir_p(OUTPUT_DIR)
-
-  CSV.open(OUTPUT_DIR.join('warehousing.csv'), 'w', encoding: 'UTF-8') do |csv|
-    csv << OUTPUT_HEADER
-    warehousing_rows.each { |row| csv << row }
+  Tempfile.create(['paperboy-warehousing', '.csv']) do |file|
+    CSV.open(file.path, 'w', encoding: 'UTF-8') do |csv|
+      csv << OUTPUT_HEADER
+      warehousing_rows.each { |row| csv << row }
+    end
+    DOWNLOAD_STORE.write(OUTPUT_NAME, File.binread(file.path))
   end
 end
 

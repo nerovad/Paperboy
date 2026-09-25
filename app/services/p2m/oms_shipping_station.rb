@@ -1,37 +1,28 @@
 # frozen_string_literal: true
 
-require 'fileutils'
 require 'pathname'
 require_relative 'paths'
 
 module P2m
   class OmsShippingStation
-    DESTINATION = Paths::SHIPPING_STATION_PATH
-
-    def initialize(root: OmsAssociatedFiles::ROOT, destination: DESTINATION)
+    def initialize(root: OmsAssociatedFiles::ROOT, destination: nil)
       @root = Pathname.new(root).expand_path
-      @destination = Pathname.new(destination).expand_path
+      @destination = destination || Paths.shipping_station_store
+      @destination = Paperboy::FileStore.for(@destination) unless @destination.respond_to?(:copy)
       @associated_files = OmsAssociatedFiles.new(root: @root)
     end
 
     def copy(directory:, oms_number:)
       name = maildat_name(directory, oms_number)
-      destination.mkpath
       source = root.join(directory, name)
-      target = destination.join(name)
-      return 1 if matching_file?(source, target)
-      raise "shipping station file already exists with different contents: #{name}" if target.exist?
+      return 1 if destination.exist?(name)
 
-      FileUtils.cp(source, target, preserve: true)
+      destination.copy(source, name)
       1
     end
 
     def remove(directory:, oms_number:)
-      path = destination.join(maildat_name(directory, oms_number))
-      return 0 unless path.file?
-
-      FileUtils.rm_f(path)
-      1
+      destination.remove(maildat_name(directory, oms_number)) ? 1 : 0
     end
 
     private
@@ -45,10 +36,6 @@ module P2m
       raise ArgumentError, "Mail.dat file not found for OMS #{oms_number}" unless name
 
       name
-    end
-
-    def matching_file?(source, target)
-      target.file? && source.size == target.size && source.mtime == target.mtime
     end
   end
 end

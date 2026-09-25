@@ -2,9 +2,11 @@
 
 ## Purpose
 
-`OMS Status` is a Print 2 Mail sidebar link to the OMS upload status
-screen. It is a read-only status view. The link does not start a Data Runner
-refresh, upload files, or change an OMS record directly.
+`OMS Status` is a Print 2 Mail sidebar link to the OMS upload status screen.
+It is a read-only status view: it does not start a Data Runner refresh, upload
+files, or change an OMS record directly. On read, it may reconcile status
+fields in the OMS upload ledger when the imported datasets or processed archive
+are already present.
 
 The user-facing name is `OMS Status`, while the implementation retains the
 older `uploads` names for the controller, model, view directory, database
@@ -95,8 +97,8 @@ updates these states directly; this check repairs interrupted or stale runs.
 If all three datasets exist, it sets `import_status` to `imported` and clears
 any prior failure message.
 
-If `02_Processed/<OMS number>` exists below the configured Data Runner
-processed path, reconciliation also sets:
+If `<configured processed path>/<OMS number>` exists below the configured Data
+Runner processed path, reconciliation also sets:
 
 ```text
 status         = completed
@@ -104,9 +106,10 @@ archive_status = archived
 archived_at    = archive directory modification time
 ```
 
-Otherwise the record is marked `status = archiving`. Existing
-`imported_at` and `archived_at` values are preserved. If the three destination
-tables are unavailable, reconciliation makes no import-status determination.
+Otherwise the record is marked `status = archiving`. Existing `imported_at`
+and `archived_at` values are preserved. If the three destination tables are
+unavailable, reconciliation makes no import-status determination. Records
+with `status` `removed` or `completed` are excluded from reconciliation.
 
 ## Displayed information
 
@@ -160,6 +163,13 @@ Only the route helper, URL, ACL feature key, and visible label need the
 - `app/controllers/p2m/oms_uploads_controller.rb`
 - `app/controllers/concerns/p2m/date_range.rb`
 - `app/services/p2m/oms_upload_ledger.rb`
+- `app/services/p2m/data_refresh.rb`
+- `app/services/p2m/paths.rb`
+- `app/models/p2m/oms_upload.rb`
+- `app/models/p2m/oms_upload_file.rb`
+- `app/models/p2m/oms_upload_finding.rb`
+- `db/migrate/20260824000001_create_p2m_oms_uploads.rb`
+- `db/migrate/20260824000002_move_p2m_oms_uploads_to_gsabss.rb`
 - `app/views/p2m/oms_uploads/index.html.erb`
 - `app/models/app_feature.rb`
 - `db/acl.yml`
