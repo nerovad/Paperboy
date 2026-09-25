@@ -273,8 +273,8 @@ module Paperboy
 
       def remote_prefix
         target = shortcut&.target.to_s
-        prefix = target[UNC_TARGET, 3]
-        return prefix.to_s.tr('/', '\\') if prefix
+        match = UNC_TARGET.match(target)
+        return match[3].to_s.tr('/', '\\') if match
 
         raise Error, "Shortcut does not contain a usable UNC target: #{shortcut_path}"
       end

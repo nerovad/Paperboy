@@ -13,7 +13,7 @@ gem 'rails', '~> 8.1.3'
 # removed that calling convention and breaks every cookie-backed session.
 gem 'json', '< 3.0'
 source 'http://gsa-gitea:3000/api/packages/BSS/rubygems' do
-  gem 'smb_shortcut', '1.1.1'
+  gem 'smb_shortcut', '1.1.2'
 end
 
 # Asset pipeline: Sprockets serves and digests; dartsass-rails compiles SCSS
