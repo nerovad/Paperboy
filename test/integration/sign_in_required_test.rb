@@ -25,6 +25,32 @@ class SignInRequiredTest < ActionDispatch::IntegrationTest
     assert_redirected_to critical_information_reporting_path(42)
   end
 
+  # History behind that page is the login page, so Back must not step into it.
+  test 'Back on the page reached by signing in goes to Submissions, not history' do
+    contractor = create_contractor
+    record = probation_transfer_requests(:one)
+
+    get probation_transfer_request_path(record)
+    post contractor_login_path, params: { email: contractor.email, password: PASSWORD }
+    Forms::SubmissionAccess.stub(:viewable?, true) { follow_redirect! }
+
+    assert_response :success
+    assert_select 'a.form-header__back[href=?]', submissions_path
+    assert_select 'a.form-header__back[data-controller]', count: 0
+  end
+
+  test 'Back on a page reached normally steps back through history' do
+    contractor = create_contractor
+    post contractor_login_path, params: { email: contractor.email, password: PASSWORD }
+
+    Forms::SubmissionAccess.stub(:viewable?, true) do
+      get probation_transfer_request_path(probation_transfer_requests(:one))
+    end
+
+    assert_response :success
+    assert_select 'a.form-header__back[data-controller=?]', 'back-link'
+  end
+
   test 'with nothing remembered, signing in goes home' do
     contractor = create_contractor
 
