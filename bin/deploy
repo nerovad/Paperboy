@@ -51,10 +51,14 @@ git checkout -q -- db/schema.rb
 git checkout --detach "refs/tags/$TAG"
 
 echo "==> Installing gems..."
-# An environment variable, not --without: that flag is saved to .bundle/config,
-# and this checkout is also the development tree, where the saved exclusion
-# hides the debug gem and every plain bin/rails command fails to boot.
-export BUNDLE_WITHOUT=development:test
+# The full bundle, development and test groups included. config/application.rb
+# runs Bundler.require(*Rails.groups), so production loads neither group
+# whether or not it is installed; excluding them saved disk and nothing else.
+# What it cost was a boot: the exclusion lived only in this script, while the
+# systemd units run bundle exec with none, so Bundler resolved the whole
+# lockfile and refused to start the moment a lint gem version drifted from what
+# was installed here. That was the stage 502 on 2026-09-27. bin/deploy-dev has
+# always installed the lot.
 bundle install
 
 echo "==> Preparing application and Solid adapter databases..."
