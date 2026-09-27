@@ -327,8 +327,14 @@ class ApplicationController < ActionController::Base
 
   # Where to go once signed in: the page require_sign_in remembered, if it is
   # a path on this site, else home. Read once, then forgotten.
+  #
+  # The browser history behind a remembered page is the sign-in round trip, so
+  # the flag tells shared/_back_button not to step back into it.
   def after_sign_in_path(return_to = session.delete(:return_to))
     path = return_to.to_s
-    path.start_with?('/') && !path.start_with?('//') ? path : root_path
+    return root_path unless path.start_with?('/') && !path.start_with?('//')
+
+    flash[:arrived_from_sign_in] = true
+    path
   end
 end
