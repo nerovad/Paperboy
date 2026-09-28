@@ -63,6 +63,24 @@ module Aim
       assert_match(/99999.*not in the COA/, r.warnings)
     end
 
+    test 'the rules download in the template layout with their ids, and a changed re-upload edits them' do
+      r = rule
+      get :index, params: { agency: 'GSA' }, format: :csv
+      assert_equal 'text/csv', response.media_type
+      rows = CSV.parse(response.body)
+      assert_equal Aim::LookupFile::EXPORT, rows.first
+      assert_equal ['ACME', '4641', 'BDO_46402024072600000001_1', r.id.to_s], rows.last.values_at(0, 2, 3, 16)
+
+      path = File.join(Dir.mktmpdir, 'edited.csv')
+      File.write(path, response.body.sub('ACME', 'ACME Inc').sub('2162', '2199'))
+      import = Aim::LookupImport.new(path, agency: 'GSA', effective: 'today').apply!(by: 'fiscal@example.com')
+
+      assert_equal [1, 1], [import.loaded_count, import.retired_count]
+      assert_not r.reload.in_effect?
+      level, rules = Aim::CodingLookup.candidates(Aim::Invoice.new(agency: 'GSA', budget_unit: '4641', vendor_name: 'ACME Inc'))
+      assert_equal [:unit, ['2199']], [level, rules.map(&:object_code)]
+    end
+
     test 'retire ends the rule yesterday' do
       r = rule
       patch :retire, params: { id: r.id }

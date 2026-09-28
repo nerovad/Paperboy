@@ -2980,6 +2980,15 @@ with **Load anyway** ticks for the acceptable ones, rows put right while
 reading) -> **Apply** -> **Undo**. The file is kept on the import row between
 preview and apply (`20260928180000`: status, file_content, default_unit).
 Routes inside the namespace. Data Runner staging (b.4) not started.
+**Template and bulk edit (Joshua, 2026-09-28):** Load a Lookup File offers
+a CSV template (the reader's own headings, one example row); Coding Rules
+offers **Download these rules** (the filtered set, template layout plus a
+Rule ID column). Edited in Excel and loaded again, an unchanged row is
+skipped and a changed one replaces the rule it names by id -- a renamed
+vendor included -- so a re-upload is the bulk edit. Two bugs found by the
+tests: an unsaved rule had no `vendor_key` (identical rows looked
+different), and `where.not(import_id:)` skipped hand-made rules (NULL), so
+an upload could never replace them.
 
 *Still to do in b:* b.4 Data Runner; the stamp's dual key and the coding
 gate at approval (below); the worker's OCR text for the hint.
@@ -4209,3 +4218,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | b.2 | (this commit) | Coding lines on the invoice, filled from the rules when Ready for Approval (`Aim::CodingLookup`, `Aim::CodeReadyJob` + `recurring.yml` block, standing exception), several matches offered with a hint from the PDF text, Use this coding (`code` route); Fiscal edits the line; the report reads it; fiscal_records' coding columns moved (`20260928170000`). 1337 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
 | 2026-09-28 | b.2 | (this commit) | A coding rule from another BU is offered, never applied on its own; the choices show the BU. Dev re-coded. 1338 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | b.3 | (this commit) | Lookups screens: Coding Rules (list, one rule with COA checking, Save anyway, Retire, history) and Imports (upload, report with Load anyway, Apply, Undo; file kept on the import row, `20260928180000`). Routes in the namespace. 1346 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
+| 2026-09-28 | b.3 | (this commit) | CSV template download; Download these rules (filtered, with Rule ID) and edit by re-upload. Fixed: identical re-upload rows loaded again (no vendor_key before save); hand-made rules never replaced (NULL import_id). 1348 runs, 0 failures, 0 errors; scoped rubocop clean |

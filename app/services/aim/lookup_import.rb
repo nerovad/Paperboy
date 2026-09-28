@@ -64,7 +64,8 @@ module Aim
         loadable.each do |outcome|
           rule = outcome.rule
           rule.assign_attributes(import_id: import.id, source_row: outcome.row.number, created_by: by)
-          same, different = standing_rules(rule, import).partition { |standing| standing.same_as?(rule) }
+          same, different = standing_rules(rule, import, outcome.row.fields['rule_id'].presence&.to_i)
+                            .partition { |standing| standing.same_as?(rule) && standing.vendor_key == rule.vendor_key }
           next if same.any?
 
           different.each { |standing| standing.retire!(on: rule.effective_from - 1, by: by, import_id: import.id) }
@@ -94,9 +95,9 @@ module Aim
       row.notes << "department #{values['department'].inspect} is not in the COA" if bad.delete('department')
       objections += bad.map { |field| "#{field.humanize.downcase} #{values[field].inspect} is not in the COA for #{agency}" }
       accepted = reasons.empty? && objections.any? && accepted?(row.number)
-      attributes = values.slice(*Aim::CodingRule::FIELDS)
-      rule = Aim::CodingRule.new(attributes.merge(agency: agency, effective_from: effective_from_for(values, row.notes),
-                                                  warnings: (objections.join('; ') if accepted)))
+      attributes = values.slice(*Aim::CodingRule::FIELDS).merge(agency: agency, warnings: (objections.join('; ') if accepted))
+      rule = Aim::CodingRule.new(attributes.merge(effective_from: effective_from_for(values, row.notes)))
+      rule.vendor_key = Aim::CodingRule.key_for(rule.vendor_name)
       Outcome.new(row: row, rule: rule, reasons: reasons, objections: objections, notes: row.notes, accepted: accepted)
     end
 
@@ -111,29 +112,22 @@ module Aim
       when 'date' then effective_date || Date.current
       when 'today' then Date.current
       else
-        date = date_in(values['encumbrance_number'])
+        date = Aim::LookupFile.date_in(values['encumbrance_number'])
         notes << 'no date in the encumbrance number; effective today' if date.nil?
         date || Date.current
       end
     end
 
-    def date_in(number)
-      digits = number.to_s.sub(/\A\d{4}/, '')
-      if (m = digits.match(/\A(20\d{2})(\d{2})(\d{2})/))
-        Date.new(m[1].to_i, m[2].to_i, m[3].to_i)
-      elsif (m = digits.match(/\AFY(\d{2})/i))
-        Date.new(2000 + m[1].to_i - 1, 7, 1)
-      end
-    rescue Date::Error
-      nil
-    end
-
-    # The rules this one replaces: never one from the same file, since a
-    # vendor listed several times there (4703's BDO lines) is several choices.
-    def standing_rules(rule, import)
-      Aim::CodingRule.in_effect(rule.effective_from).for_agency(agency)
-                     .where(budget_unit: rule.budget_unit, vendor_key: Aim::CodingRule.key_for(rule.vendor_name))
-                     .where(customer_number: rule.customer_number.presence).where.not(import_id: import.id).to_a
+    # The rules this one replaces: the same vendor and customer in the BU, and
+    # the rule a downloaded row names by id (so a re-upload edits it, a renamed
+    # vendor included). Never one from the same file: a vendor listed several
+    # times there (4703's BDO lines) is several choices. Rules made by hand
+    # have no import, and count.
+    def standing_rules(rule, import, rule_id = nil)
+      scope = Aim::CodingRule.in_effect(rule.effective_from).for_agency(agency)
+                             .where('import_id IS NULL OR import_id <> ?', import.id)
+      same_key = scope.where(budget_unit: rule.budget_unit, vendor_key: rule.vendor_key, customer_number: rule.customer_number.presence)
+      rule_id ? (same_key.to_a | scope.where(id: rule_id).to_a) : same_key.to_a
     end
   end
 end

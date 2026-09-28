@@ -16,8 +16,11 @@ module Aim
                 'Department', 'Object', 'Activity', 'Function', 'Major Program', 'Program', 'Phase', 'Task', 'Notes'].freeze
     EXAMPLE = ['ACME Supply Co', '', '4641', 'BDO_46402026072600000012_1', 'ACMESUPPLYFY27MA01', 'VC00012345', 'G001',
                '', '2162', 'GATV', 'GFUN', '', 'INDIRECT', '', '', 'Any note for Fiscal'].freeze
+    # A download of existing rules carries their ids, so a re-upload edits
+    # those rules rather than adding beside them.
+    EXPORT = (TEMPLATE + ['Rule ID']).freeze
     COLUMNS = {
-      'vendor name' => 'vendor_name', 'vendor name lookup' => 'vendor_alt', 'customers' => 'customer_number',
+      'rule id' => 'rule_id', 'vendor name' => 'vendor_name', 'vendor name lookup' => 'vendor_alt', 'customers' => 'customer_number',
       'customer number' => 'customer_number', 'ma number' => 'ma_number', 'bdo / do' => 'encumbrance',
       'account number' => 'customer_number', 'fiscal unique identifier' => 'vendor_code',
       'vendor code' => 'vendor_code', 'remit to' => 'vendor_code', 'fund' => 'fund', 'department' => 'department',
@@ -33,6 +36,19 @@ module Aim
     MA_NUMBER = /FY\d{2}MA\d+\z/i
 
     Row = Struct.new(:number, :fields, :notes, keyword_init: true)
+
+    # The date in an encumbrance number: BDO_4700 20240729 ... is that day;
+    # CT_4620 FY23 ... is that fiscal year's first day. Nil when neither.
+    def self.date_in(number)
+      digits = number.to_s.sub(/\A\d{4}/, '')
+      if (m = digits.match(/\A(20\d{2})(\d{2})(\d{2})/))
+        Date.new(m[1].to_i, m[2].to_i, m[3].to_i)
+      elsif (m = digits.match(/\AFY(\d{2})/i))
+        Date.new(2000 + m[1].to_i - 1, 7, 1)
+      end
+    rescue Date::Error
+      nil
+    end
 
     attr_reader :rows, :unknown_columns
 

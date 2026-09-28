@@ -12,6 +12,8 @@
         </span>
       <% end %>
       <span class="aim-count-pill"><%= pluralize(@rules.size, 'rule') %></span>
+      <%= link_to 'Download these rules', aim_coding_rules_path(agency: @agency, unit: @unit, show: @show, format: :csv),
+                  class: 'btn secondary compact', title: 'Edit them in bulk, then Load a file to apply the changes' %>
       <%= link_to 'Load a file', new_aim_coding_import_path, class: 'btn approve compact' %>
       <%= link_to 'Imports', aim_coding_imports_path, class: 'btn compact' %>
     </div>
