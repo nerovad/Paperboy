@@ -2969,7 +2969,37 @@ invoices coded by the job. **A rule from another BU only offers, never
 applies** (found on dev: Grainger in 4641 took Parks' BDO; a BDO is that
 BU's), and the choices then show the BU.
 
-*Next:* b.3 the Lookups
+*b.3 built (2026-09-28):* a **Lookups** sidebar group (Fiscal and AIM
+Admins): **Coding Rules** (`/aim/lookups`; by agency, BU, in effect or all,
+search; a chip for AIM's BUs with no rule) and one rule's page (every field,
+the COA checking each code on Save, **Save anyway** keeping the objection as
+a warning, **Retire** = in effect through yesterday, the rule's history);
+**Imports** (`/aim/lookups/imports`): upload a CSV with the agency, when the
+rules take effect and a BU for rows naming none -> the report (refused rows
+with **Load anyway** ticks for the acceptable ones, rows put right while
+reading) -> **Apply** -> **Undo**. The file is kept on the import row between
+preview and apply (`20260928180000`: status, file_content, default_unit).
+Routes inside the namespace. Data Runner staging (b.4) not started.
+
+*Still to do in b:* b.4 Data Runner; the stamp's dual key and the coding
+gate at approval (below); the worker's OCR text for the hint.
+
+*The stamp is a template, filled by hand (Joshua, 2026-09-28, samples
+from Sheriff/Detention Services):* "Budget Unit # 2551", "Account # 2051"
+(the **Account is the Object code**), "Authorized by: Invoice Date", Initial,
+Date Processed. So the stamp carries a **second key**: vendor + BU + object
+picks among a vendor's rules. Plan: the worker's extraction reads
+`stamped_budget_unit` and `stamped_object` (a worker prompt change and
+deploy; b.5); the lookup then filters a vendor's rules by them and codes
+when exactly one fits. **When the lookup fails** (Joshua: "if vendor exists
+but no lookup results, then fail"): a vendor with *no* rules at all is not a
+failure -- there will be many -- the invoice goes on uncoded and Fiscal
+codes it; a vendor *with* rules where none or several fit stays with the
+approver as the pick on the review page, and **Approve is refused until the
+coding is picked**. To confirm with Joshua: the pick staying with the
+approver (who knows the invoice) rather than going to Action Needed.
+
+*Next:* b.4 the Lookups
 screens (Fiscal and AIM Admins): rules by agency and BU, search, edit with
 COA validation, history, import with the report, undo, BUs with no rules.
 b.4 the yearly file through Data Runner (Traap).
@@ -3386,6 +3416,19 @@ at intake (the decision already made: assignment is source-agnostic, so a
 coversheet sets it without redesign). The history records the channel and
 the sender.
 
+
+**Coversheets, detailed 2026-09-28.** Fusion's scan coversheet (sample: two
+Data Matrix bands top and bottom, the name, employee id and Fusion queue id,
+and a QR code) is what routes a scan to a queue today, and some people want
+to keep that workflow. Plan: (1) **generate** one in Paperboy -- from My Queue
+for yourself, from a profile for someone else -- a PDF whose QR (and text)
+carries the employee id; (2) the worker **reads the QR on the first page** of
+a drop, sets the owner by employee id (`assignment_source = 'coversheet'`,
+assignment is already source-agnostic), and drops the coversheet page from
+the stored PDF; no QR, no change. An explicit coversheet beats the folder.
+Generation is small (a PDF library is already here); reading needs a
+barcode decoder in the worker (`zxing-cpp` has Windows wheels) and a
+deploy.
 ### j. Demo mode (asked by Joshua 2026-09-25)
 
 **Goal.** Show and try AIM -- upload, review, approve -- without anything
@@ -4165,3 +4208,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | b.1 | (this commit) | A file never retires its own rows (a vendor listed several times is several choices). GSA and Sheriff lookups loaded into `Paperboy_Dev` as imports 14-23: 864 rules in effect. 1331 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | b.2 | (this commit) | Coding lines on the invoice, filled from the rules when Ready for Approval (`Aim::CodingLookup`, `Aim::CodeReadyJob` + `recurring.yml` block, standing exception), several matches offered with a hint from the PDF text, Use this coding (`code` route); Fiscal edits the line; the report reads it; fiscal_records' coding columns moved (`20260928170000`). 1337 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
 | 2026-09-28 | b.2 | (this commit) | A coding rule from another BU is offered, never applied on its own; the choices show the BU. Dev re-coded. 1338 runs, 0 failures, 0 errors; scoped rubocop clean |
+| 2026-09-28 | b.3 | (this commit) | Lookups screens: Coding Rules (list, one rule with COA checking, Save anyway, Retire, history) and Imports (upload, report with Load anyway, Apply, Undo; file kept on the import row, `20260928180000`). Routes in the namespace. 1346 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |

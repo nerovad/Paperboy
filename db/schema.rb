@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_180000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -61,8 +61,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_170000) do
   create_table "aim.coding_imports", force: :cascade do |t|
     t.string "agency", limit: 3, null: false
     t.datetime "created_at", null: false
+    t.string "default_unit", limit: 10
     t.date "effective_from"
     t.string "effective_option", limit: 20, null: false
+    t.text "file_content"
     t.string "file_name", limit: 260, null: false
     t.string "imported_by", limit: 255, null: false
     t.integer "loaded_count", default: 0, null: false
@@ -70,6 +72,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_170000) do
     t.text "report"
     t.integer "retired_count", default: 0, null: false
     t.integer "row_count", default: 0, null: false
+    t.string "status", limit: 20, default: "applied", null: false
     t.datetime "undone_at"
     t.string "undone_by", limit: 255
     t.datetime "updated_at", null: false

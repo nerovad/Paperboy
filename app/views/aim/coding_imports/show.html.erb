@@ -1,0 +1,69 @@
+<%# One import (item b.3): the report; Apply with any accepted rows while
+    previewed; Undo once applied. %>
+<% r = @report.with_indifferent_access %>
+<div class="aim-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title"><%= @import.file_name %></h1>
+      <p class="aim-page-subtitle">
+        <%= @import.agency %> · <%= @import.imported_by %> · <%= @import.created_at.in_time_zone.strftime('%m/%d/%y %H:%M') %> ·
+        <span class="badge <%= { 'applied' => 'is-approved', 'previewed' => 'is-pending', 'undone' => 'is-cancelled' }[@import.status] %>"><%= @import.status %></span>
+        <% if @import.applied? %>· <%= @import.loaded_count %> loaded, <%= @import.refused_count %> refused, <%= @import.retired_count %> earlier rules replaced<% end %>
+      </p>
+    </div>
+    <%= link_to 'Back to Imports', aim_coding_imports_path, class: 'btn compact' %>
+  </header>
+
+  <%= form_with url: apply_aim_coding_import_path(@import), method: :post, local: true do %>
+    <section class="aim-panel">
+      <p><strong><%= r[:rows] %></strong> rows: <strong><%= r[:loadable] %></strong> would load, <strong><%= r[:refused] %></strong> refused.
+        <% if r[:unknown_columns].present? %>Columns not understood: <%= r[:unknown_columns].join(', ') %>.<% end %></p>
+
+      <% if r[:refused_rows].present? %>
+        <h3 class="aim-fiscal-heading">Refused rows</h3>
+        <table class="submission-table aim-queue-table">
+          <thead><tr><th>Row</th><th>Vendor</th><th>Why</th><th><%= 'Load anyway' if @import.previewed? %></th></tr></thead>
+          <tbody>
+            <% r[:refused_rows].each do |row| %>
+              <tr>
+                <td><%= row[:row] %></td>
+                <td class="is-strong"><%= row[:vendor].presence || '—' %></td>
+                <td><%= row[:reasons].join('; ') %></td>
+                <td>
+                  <% if row[:acceptable] && @import.previewed? %>
+                    <%= check_box_tag 'accept_rows[]', row[:row], false, id: "accept-#{row[:row]}", aria: { label: "Load row #{row[:row]} anyway" } %>
+                  <% elsif !row[:acceptable] %><span class="aim-coding__help">cannot be a rule</span><% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+
+      <% if r[:accepted_rows].present? %>
+        <h3 class="aim-fiscal-heading">Loaded with a warning</h3>
+        <ul><% r[:accepted_rows].each do |row| %><li>Row <%= row[:row] %>: <%= row[:warnings].join('; ') %></li><% end %></ul>
+      <% end %>
+
+      <% if r[:noted_rows].present? %>
+        <details class="aim-history-fold">
+          <summary>Rows put right while reading (<%= r[:noted_rows].size %>)</summary>
+          <ul><% r[:noted_rows].each do |row| %><li>Row <%= row[:row] %>: <%= row[:notes].join('; ') %></li><% end %></ul>
+        </details>
+      <% end %>
+    </section>
+
+    <div class="aim-form-actions">
+      <div class="aim-action-group">
+        <% if @import.previewed? %>
+          <%= submit_tag 'Apply', class: 'btn approve',
+                                  data: { turbo_confirm: "Load #{r[:loadable]} rules (plus any ticked) for #{@import.agency}?", confirm_label: 'Load' } %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+  <% if @import.applied? %>
+    <%= button_to 'Undo this import', undo_aim_coding_import_path(@import), method: :post, class: 'btn deny',
+                  data: { turbo_confirm: 'Undo? Its rules are retired and the ones it replaced come back.', confirm_label: 'Undo' } %>
+  <% end %>
+</div>

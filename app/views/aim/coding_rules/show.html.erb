@@ -1,0 +1,76 @@
+<%# One coding rule (item b.3): edit with the COA checking each code, Save
+    anyway when Fiscal knows better, Retire, and every change so far. %>
+<div class="aim-page aim-profile-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title"><%= @rule.vendor_name %> · <%= @rule.budget_unit %></h1>
+      <p class="aim-page-subtitle">
+        <%= @rule.agency %> ·
+        <%= @rule.in_effect? ? "In effect since #{l(@rule.effective_from, format: :long)}" : 'Not in effect' %><%= ", until #{l(@rule.effective_until, format: :long)}" if @rule.effective_until %>
+        <% if @rule.import %>· loaded from <%= @rule.import.file_name %> (row <%= @rule.source_row %>)<% end %>
+      </p>
+    </div>
+    <%= link_to 'Back to Coding Rules', aim_coding_rules_path(agency: @rule.agency, unit: @rule.budget_unit), class: 'btn compact' %>
+  </header>
+
+  <% if @objections.any? %>
+    <div class="aim-readonly-banner" role="alert">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
+      <div>
+        <strong>The COA does not know these codes</strong>
+        <ul><% @objections.each do |o| %><li><%= o %></li><% end %></ul>
+        <p>Correct them, or Save anyway to keep them with a warning.</p>
+      </div>
+    </div>
+  <% elsif @rule.warnings.present? %>
+    <p class="aim-coding__help"><span class="badge is-denied">unvalidated</span> <%= @rule.warnings %></p>
+  <% end %>
+
+  <section class="aim-panel">
+    <%= form_with url: aim_coding_rule_path(@rule), method: :patch, local: true do %>
+      <div class="aim-fields aim-fiscal-grid">
+        <% fields = %w[budget_unit vendor_name customer_number encumbrance ma_number vendor_code] + Aim::CodingRule::CODING_FIELDS + %w[effective_from effective_until] %>
+        <% fields.each do |field| %>
+          <div class="aim-field<%= ' aim-fiscal-grid__wide' if field == 'vendor_name' %>">
+            <%= label_tag "coding_rule_#{field}", aim_coding_field_label(field) %>
+            <% if field.start_with?('effective') %>
+              <%= date_field_tag "coding_rule[#{field}]", @rule.public_send(field), id: "coding_rule_#{field}" %>
+            <% else %>
+              <%= text_field_tag "coding_rule[#{field}]", @rule.public_send(field), id: "coding_rule_#{field}" %>
+            <% end %>
+          </div>
+        <% end %>
+        <div class="aim-field aim-fiscal-grid__wide">
+          <%= label_tag 'coding_rule_notes', 'Notes' %>
+          <%= text_area_tag 'coding_rule[notes]', @rule.notes, id: 'coding_rule_notes', rows: 2 %>
+        </div>
+      </div>
+      <div class="aim-form-actions">
+        <div class="aim-action-group">
+          <%= submit_tag 'Save', class: 'btn approve' %>
+          <% if @objections.any? %>
+            <%= submit_tag 'Save anyway', name: 'save_anyway', class: 'btn warning' %>
+          <% end %>
+          <% if @rule.in_effect? %>
+            <%= button_to 'Retire', retire_aim_coding_rule_path(@rule), method: :patch, form: { style: 'display:inline' },
+                          data: { turbo_confirm: "Retire this rule for #{@rule.vendor_name}? Invoices already coded keep it.", confirm_label: 'Retire' },
+                          class: 'btn deny' %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </section>
+
+  <% if @changes.any? %>
+    <details class="aim-history-fold" open>
+      <summary>History (<%= @changes.size %>)</summary>
+      <ul>
+        <% @changes.each do |change| %>
+          <li><%= change.created_at.in_time_zone.strftime('%m/%d/%y %H:%M') %> <%= change.kind %>
+            <% if change.field %><%= aim_coding_field_label(change.field) %>: <%= change.before.presence || '—' %> → <%= change.after.presence || '—' %><% elsif change.after %><%= change.after %><% end %>
+            by <%= change.changed_by %></li>
+        <% end %>
+      </ul>
+    </details>
+  <% end %>
+</div>

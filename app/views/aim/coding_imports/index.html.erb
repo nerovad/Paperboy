@@ -1,0 +1,38 @@
+<%# Every lookup file loaded (item b.3), newest first. %>
+<div class="aim-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Lookup Imports</h1>
+      <p class="aim-page-subtitle">Each file loaded, what it did, and Undo.</p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= link_to 'Load a file', new_aim_coding_import_path, class: 'btn approve compact' %>
+      <%= link_to 'Coding Rules', aim_coding_rules_path, class: 'btn compact' %>
+    </div>
+  </header>
+  <% if @imports.empty? %>
+    <section class="aim-panel aim-empty-state"><p>Nothing loaded yet.</p></section>
+  <% else %>
+    <section class="aim-panel aim-queue-panel">
+      <table class="submission-table aim-queue-table">
+        <thead><tr><th>When</th><th>File</th><th>Agency</th><th>By</th><th>Rows</th><th>Loaded</th><th>Refused</th><th>Replaced</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <% @imports.each do |import| %>
+            <tr>
+              <td><%= import.created_at.in_time_zone.strftime('%m/%d/%y %H:%M') %></td>
+              <td class="is-strong"><%= link_to import.file_name, aim_coding_import_path(import) %></td>
+              <td><%= import.agency %></td>
+              <td><%= import.imported_by %></td>
+              <td><%= import.row_count %></td>
+              <td><%= import.loaded_count %></td>
+              <td><%= import.refused_count %></td>
+              <td><%= import.retired_count %></td>
+              <td><span class="badge <%= { 'applied' => 'is-approved', 'previewed' => 'is-pending', 'undone' => 'is-cancelled' }[import.status] %>"><%= import.status %></span></td>
+              <td class="action-buttons"><%= link_to 'Open', aim_coding_import_path(import), class: 'btn secondary compact' %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  <% end %>
+</div>

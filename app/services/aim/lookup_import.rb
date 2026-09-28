@@ -51,13 +51,14 @@ module Aim
         noted_rows: loadable.select { |o| o.notes.any? }.map { |o| { row: o.row.number, notes: o.notes } } }
     end
 
-    def apply!(by:)
+    # import: a previewed Aim::CodingImport to apply into; else a new row.
+    def apply!(by:, import: nil)
       raise ArgumentError, "#{agency} is not an agency in the chart of accounts" unless @coa.agency?
 
       Aim::CodingRule.transaction do
-        import = Aim::CodingImport.create!(agency: agency, file_name: file_name, imported_by: by,
-                                           effective_option: effective_option, effective_from: effective_date,
-                                           row_count: outcomes.size, refused_count: refused.size)
+        import ||= Aim::CodingImport.new(agency: agency, file_name: file_name, effective_option: effective_option,
+                                         effective_from: effective_date)
+        import.update!(imported_by: by, row_count: outcomes.size, refused_count: refused.size, status: 'applied')
         loaded = 0
         retired = 0
         loadable.each do |outcome|

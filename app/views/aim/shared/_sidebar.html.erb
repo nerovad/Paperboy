@@ -9,6 +9,7 @@
               elsif %w[vendor_aliases vendor_rules].include?(controller_name) then "vendors"
               elsif %w[admin members enabled_units].include?(controller_name) then "admin"
               elsif controller_name == "fiscal" then "fiscal"
+              elsif %w[coding_rules coding_imports].include?(controller_name) then "lookups"
               else "aim"
               end %>
 <% in_queues = current == "queues" %>
@@ -86,6 +87,15 @@
             <span class="sidebar-count <%= status == 'on_hold' ? 'danger' : 'neutral' %>" data-aim-count="fiscal_<%= status %>">…</span>
           <% end %>
         <% end %>
+      </details>
+    <% end %>
+
+    <% if aim_fiscal? %>
+      <details class="nav-group" <%= "open" if current == "lookups" %> data-aim-sidebar-target="group" data-key="lookups"
+               data-default-open="false" data-current="<%= current == "lookups" %>">
+        <summary><span class="nav-group-label">Lookups</span></summary>
+        <%= link_to "Coding Rules", aim_coding_rules_path, class: "nav-link#{' active' if controller_name == 'coding_rules'}" %>
+        <%= link_to "Imports", aim_coding_imports_path, class: "nav-link#{' active' if controller_name == 'coding_imports'}" %>
       </details>
     <% end %>
 

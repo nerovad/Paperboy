@@ -1,0 +1,35 @@
+<%# Load a lookup file (item b.3): it is read and reported first; nothing
+    is loaded until Apply on the next page. %>
+<div class="aim-page aim-upload-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Load a Lookup File</h1>
+      <p class="aim-page-subtitle">Fiscal's CSV. You see what would load before anything is loaded.</p>
+    </div>
+  </header>
+  <section class="aim-panel aim-upload-panel">
+    <%= form_with url: aim_coding_imports_path, method: :post, multipart: true, local: true do %>
+      <div class="aim-fields">
+        <div class="aim-field">
+          <%= label_tag :file, 'CSV file' %>
+          <%= file_field_tag :file, accept: '.csv,text/csv', required: true %>
+        </div>
+        <div class="aim-field">
+          <%= label_tag :agency, 'Agency' %>
+          <%= select_tag :agency, options_for_select(@agencies.map { |a| [@units.agency_label(a), a] }, 'GSA'), required: true %>
+        </div>
+        <fieldset class="aim-field aim-owner-choice">
+          <legend>Rules take effect</legend>
+          <label><%= radio_button_tag :effective, 'bdo', true %> From the date in each BDO number (today when there is none)</label>
+          <label><%= radio_button_tag :effective, 'today', false %> Today</label>
+          <label><%= radio_button_tag :effective, 'date', false %> On a date: <%= date_field_tag :effective_date, nil %></label>
+        </fieldset>
+        <div class="aim-field">
+          <%= label_tag :default_unit, 'Budget unit for rows that name none (optional)' %>
+          <%= text_field_tag :default_unit, nil, pattern: '\d{4}', placeholder: '4641' %>
+        </div>
+      </div>
+      <div class="aim-form-actions"><div class="aim-action-group"><%= submit_tag 'Read the file', class: 'btn approve' %></div></div>
+    <% end %>
+  </section>
+</div>
