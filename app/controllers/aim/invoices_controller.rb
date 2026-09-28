@@ -60,7 +60,9 @@ module Aim
       path = stored_pdf_path
       return head :not_found if path.nil?
 
-      send_file path, type: 'application/pdf', disposition: 'inline'
+      # Once approved, an invoice goes by Fiscal's name for it (item f).
+      name = Aim::FiscalRecord::APPROVED_STATES.include?(@invoice.state) ? Aim::FiscalRecord.file_name_for(@invoice) : "#{@invoice.batch_id}.pdf"
+      send_file path, type: 'application/pdf', disposition: 'inline', filename: name
     end
 
     private

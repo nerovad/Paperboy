@@ -5,14 +5,17 @@ module Aim
   # 2026-09-28). Kept beside the invoice, so the worker's states are untouched.
   #
   # review  -> Fiscal is filling it in (check number, pay doc, coding)
-  # on_hold -> waiting on something, with a reason and a tag
-  # ready   -> complete, waiting for the export
-  # exported, then archived: the data has gone to the payment software.
+  # on_hold -> waiting on something, with a reason
+  # ready   -> in the Report Queue, waiting for the report
+  # exported, then archived: the report has gone to the payment software.
+  #
+  # Tags are Fiscal's own free text (Joshua, 2026-09-28), with DocuShare's
+  # common ones offered as suggestions; they go in the report's Keywords.
   #
   # Every move is a line in the invoice's history (action 'fiscal').
   class FiscalRecord < Record
     STATUSES = %w[review on_hold ready exported archived].freeze
-    STATUS_LABELS = { 'review' => 'Fiscal Queue', 'on_hold' => 'On Hold', 'ready' => 'Ready to Export',
+    STATUS_LABELS = { 'review' => 'Fiscal Queue', 'on_hold' => 'On Hold', 'ready' => 'Report Queue',
                       'exported' => 'Exported', 'archived' => 'Archived' }.freeze
     TRANSITIONS = {
       'review' => %w[on_hold ready],
@@ -21,14 +24,17 @@ module Aim
       'exported' => %w[archived],
       'archived' => []
     }.freeze
-    # DocuShare's title and keyword tags: what holds an invoice, or marks it.
-    TAGS = ['#INV', '#BDO$', '#CT$', '#INV_TAX CREDIT_DO NOT PAY', '#INV_TAX ERROR', '#RQS', 'DISCOUNT',
-            'HOLD PMT', 'Cross-FY Invoice'].freeze
-    DEFAULT_TAG = '#INV'
+    # Offered as you type a tag; anything else may be typed too. The marks
+    # Fiscal put on DocuShare titles.
+    TAG_SUGGESTIONS = ['#INV', '#BDO$', '#CT$', '#RQS', 'CT-PEND', 'HOLD PMT', 'DISCOUNT', 'Cross-FY Invoice',
+                       '#INV_TAX CREDIT_DO NOT PAY', '#INV_TAX ERROR'].freeze
     # The states in which an invoice has been approved and belongs to Fiscal.
     APPROVED_STATES = %w[approved exporting exported].freeze
-    FIELDS = %w[tag hold_reason bdo_do pay_doc_number check_number check_date credit_amount split_amount
-                object_code dept_object activity function_code program phase task description].freeze
+    FIELDS = %w[tags hold_reason bdo_do pay_doc_number check_number check_date credit_amount split_amount
+                org_number object_code dept_object activity function_code program phase task description].freeze
+    # The invoice's own fields Fiscal may correct on the Fiscal page.
+    INVOICE_FIELDS = %w[vendor_name invoice_number invoice_date invoice_total subtotal sales_tax order_number
+                        customer_number budget_unit document_type].freeze
     # What the Fiscal page lets Fiscal type; the hold reason is set by Hold.
     EDITABLE_FIELDS = (FIELDS - %w[hold_reason]).freeze
 
@@ -36,7 +42,6 @@ module Aim
 
     validates :status, inclusion: { in: STATUSES }
     validates :invoice_id, uniqueness: true
-    validates :tag, inclusion: { in: TAGS }, allow_blank: true
 
     scope :in_status, ->(status) { includes(:invoice).where(status: status) }
 
@@ -72,11 +77,20 @@ module Aim
 
     def status_label = STATUS_LABELS.fetch(status, status.to_s.humanize)
 
-    # DocuShare's title: <tag>_<BU>_<vendor>_<invoice no>_<yyyymmdd>.
-    def title
-      [tag.presence || DEFAULT_TAG, invoice.budget_unit, invoice.vendor_name, invoice.invoice_number,
-       invoice.invoice_date&.strftime('%Y%m%d')].join('_')
+    # The name an approved invoice goes by, as Fiscal has always named them:
+    # <BU>_<vendor>_<invoice no>_<yyyymmdd>. The report's Title, and the PDF's
+    # file name once approved.
+    def title = self.class.title_for(invoice)
+
+    def self.title_for(invoice)
+      [invoice.budget_unit, invoice.vendor_name, invoice.invoice_number, invoice.invoice_date&.strftime('%Y%m%d')]
+        .map { |part| part.to_s.squish }.join('_')
     end
+
+    # The title as a file name: characters Windows refuses become spaces.
+    def self.file_name_for(invoice) = "#{title_for(invoice).tr('\\/:*?"<>|', ' ').squish}.pdf"
+
+    def tag_list = tags.to_s.split(',').map(&:strip).compact_blank
 
     private
 

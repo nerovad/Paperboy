@@ -1,6 +1,5 @@
-<%# The Fiscal stage (item f): one list per status. The Fiscal Queue is
-    grouped by budget unit; Ready to Export and Exported tick invoices for
-    the export. %>
+<%# The Fiscal stage (item f): one list per status, as one list or grouped by
+    budget unit. The Report Queue and Exported tick invoices for the report. %>
 <% selectable = aim_fiscal_exportable?(@status) %>
 <div class="aim-page" data-controller="aim-queue-filter">
   <header class="aim-page-header">
@@ -14,48 +13,29 @@
   <% if @records.empty? %>
     <section class="aim-panel aim-empty-state"><p>Nothing here.</p></section>
   <% else %>
-    <%= render 'aim/invoices/search_box', placeholder: 'Search vendor, invoice #, BU, check #, pay doc, approver…' %>
+    <div class="aim-people-toolbar">
+      <nav class="aim-people-toolbar__views" aria-label="View">
+        <%= link_to 'All', aim_fiscal_path(status: @status, view: 'all'), class: "btn compact #{@view == 'all' ? 'active' : 'ghost'}" %>
+        <%= link_to 'By BU', aim_fiscal_path(status: @status, view: 'bu'), class: "btn compact #{@view == 'bu' ? 'active' : 'ghost'}" %>
+      </nav>
+      <%= render 'aim/invoices/search_box', placeholder: 'Search vendor, invoice #, BU, check #, pay doc, approver…' %>
+    </div>
 
-    <% if @status == 'review' %>
-      <% @groups.each_with_index do |(unit, label, records), index| %>
-        <section class="billing-audit-group aim-owner-group aim-bu-group" data-controller="billing-audit-sections"
-                 data-aim-queue-filter-target="group" data-search="<%= label %>">
-          <h2>
-            <button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle"
-                    data-action="billing-audit-sections#toggle" aria-expanded="true" aria-controls="aim-fiscal-bu-<%= index %>">
-              <span aria-hidden="true">▾</span>
-              <strong class="aim-owner-group__name"><%= label.presence || unit.presence || 'No budget unit' %></strong>
-              <strong class="aim-count-pill"><%= pluralize(records.size, 'invoice') %></strong>
-            </button>
-          </h2>
-          <div id="aim-fiscal-bu-<%= index %>" data-billing-audit-sections-target="content">
-            <div class="billing-type-audit-table-wrapper">
-              <%= render 'rows', records: records, status: @status, selectable: false, stamps: @stamps %>
-            </div>
-          </div>
-        </section>
-      <% end %>
-    <% elsif selectable %>
+    <% if selectable %>
       <%= form_with url: aim_fiscal_export_path, method: :post, local: true, class: 'aim-fiscal-export',
                     data: { turbo: false } do %>
         <div class="aim-fiscal-export__bar">
-          <%= label_tag :export_format, 'Format' %>
-          <%= select_tag :export_format, options_for_select(Aim::FiscalExport::FORMATS.invert) %>
           <button type="submit" class="btn approve compact">
-            <%= @status == 'ready' ? 'Export selected' : 'Download selected again' %>
+            <%= @status == 'ready' ? 'Download report (CSV)' : 'Download again (CSV)' %>
           </button>
           <span class="aim-fiscal-export__hint">
-            <%= @status == 'ready' ? 'They move to Exported; refresh after the download.' : 'They stay as they are.' %>
+            <%= @status == 'ready' ? 'Reported invoices move to Exported. Refresh after the download.' : 'They stay in Exported.' %>
           </span>
         </div>
-        <section class="aim-panel aim-queue-panel">
-          <%= render 'rows', records: @records, status: @status, selectable: true, stamps: @stamps %>
-        </section>
+        <%= render 'list', selectable: selectable %>
       <% end %>
     <% else %>
-      <section class="aim-panel aim-queue-panel">
-        <%= render 'rows', records: @records, status: @status, selectable: false, stamps: @stamps %>
-      </section>
+      <%= render 'list', selectable: selectable %>
     <% end %>
   <% end %>
 </div>

@@ -1,21 +1,15 @@
-<%# The Fiscal page for one approved invoice (item f): the PDF, what AIM
-    already knows, and what Fiscal records beside it. Archived is read only. %>
+<%# The Fiscal page for one approved invoice (item f): the PDF, the invoice's
+    fields and Fiscal's, all editable until archived. History opens on request. %>
 <% status = @record.status %>
 <% read_only = status == 'archived' %>
-<% facts = [['Vendor Name', @invoice.vendor_name], ['Invoice Number', @invoice.invoice_number],
-            ['Invoice Date', aim_invoice_date(@invoice.invoice_date)], ['Invoice Total', aim_currency(@invoice.invoice_total)],
-            ['Subtotal', aim_currency(@invoice.subtotal)], ['Sales Tax', aim_currency(@invoice.sales_tax)],
-            ['Order Number', @invoice.order_number], ['Customer Number', @invoice.customer_number],
-            ['Budget Unit', @invoice.budget_unit], ['Owner', @invoice.assigned_to.presence || 'Shared'],
-            ['Approved', @stamp], ['Document Type', @invoice.document_type], ['Handle', @invoice.batch_id],
-            ['DocuShare Title', @record.title]] %>
+<% missing = [('check number' if @record.check_number.blank?), ('pay doc number' if @record.pay_doc_number.blank?)].compact %>
 <div class="aim-page aim-review-page">
   <header class="aim-page-header">
     <div class="aim-review-heading">
       <%= link_to 'Back to Fiscal', fiscal_return_path, class: 'aim-kicker' %>
       <h1 class="aim-page-title"><%= @invoice.vendor_name.presence || @invoice.batch_id %> · <%= @invoice.invoice_number %></h1>
       <%= aim_fiscal_badge(@record) %>
-      <% if @record.tag.present? %><span class="badge is-scheduled"><%= @record.tag %></span><% end %>
+      <% @record.tag_list.each do |tag| %><span class="badge is-scheduled"><%= tag %></span><% end %>
     </div>
   </header>
 
@@ -41,47 +35,65 @@
       <% end %>
     </section>
 
-    <%= form_with model: @record, scope: :fiscal_record, url: aim_fiscal_invoice_path(@invoice.batch_id),
-                  method: :patch, local: true, class: 'aim-panel aim-metadata-form', data: { controller: 'aim-reason' } do |form| %>
+    <%= form_with url: aim_fiscal_invoice_path(@invoice.batch_id), method: :patch, local: true,
+                  class: 'aim-panel aim-metadata-form', data: { controller: 'aim-reason' } do %>
       <div class="aim-panel-header">
         <h2 class="aim-panel-title">Fiscal</h2>
       </div>
 
       <div class="aim-form-scroll">
-        <section class="aim-ticket aim-fiscal-facts">
-          <h3>Invoice</h3>
-          <dl>
-            <% facts.each do |label, value| %>
-              <dt><%= label %></dt><dd><%= value.presence || '—' %></dd>
-            <% end %>
-          </dl>
-        </section>
+        <dl class="aim-fiscal-facts">
+          <dt>File name</dt><dd><%= @record.title %></dd>
+          <dt>Approved</dt><dd><%= @stamp || '—' %></dd>
+          <dt>Owner</dt><dd><%= @invoice.assigned_to.presence || 'Shared' %></dd>
+        </dl>
 
-        <div class="aim-fields">
+        <h3 class="aim-fiscal-heading">Invoice</h3>
+        <div class="aim-fields aim-fiscal-grid">
+          <% Aim::FiscalRecord::INVOICE_FIELDS.each do |field| %>
+            <div class="aim-field">
+              <%= label_tag "invoice_#{field}", aim_field_label(field) %>
+              <% if field == 'document_type' %>
+                <%= select_tag "invoice[#{field}]", options_for_select(Aim::Invoice::DOCUMENT_TYPES, @invoice.document_type),
+                               id: "invoice_#{field}", disabled: read_only %>
+              <% elsif field == 'invoice_date' %>
+                <%= date_field_tag "invoice[#{field}]", @invoice.invoice_date, id: "invoice_#{field}", disabled: read_only %>
+              <% else %>
+                <%= text_field_tag "invoice[#{field}]", @invoice.public_send(field), id: "invoice_#{field}", disabled: read_only %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+
+        <h3 class="aim-fiscal-heading">Payment and coding</h3>
+        <div class="aim-fields aim-fiscal-grid">
           <% Aim::FiscalRecord::EDITABLE_FIELDS.each do |field| %>
-            <div class="aim-field-row">
-              <div class="aim-field">
-                <%= form.label field, aim_fiscal_field_label(field) %>
-                <% case field %>
-                <% when 'tag' %>
-                  <%= form.select field, Aim::FiscalRecord::TAGS, { include_blank: "None (#{Aim::FiscalRecord::DEFAULT_TAG})" },
-                                  disabled: read_only %>
-                <% when 'check_date' %>
-                  <%= form.date_field field, disabled: read_only %>
-                <% when 'description' %>
-                  <%= form.text_area field, rows: 2, disabled: read_only,
-                                            placeholder: @stamp ? "If empty, the export uses #{@stamp}" : nil %>
-                <% else %>
-                  <%= form.text_field field, disabled: read_only %>
-                <% end %>
-              </div>
+            <div class="aim-field<%= ' aim-fiscal-grid__wide' if %w[tags description].include?(field) %>">
+              <%= label_tag "fiscal_record_#{field}", aim_fiscal_field_label(field) %>
+              <% case field %>
+              <% when 'tags' %>
+                <%= text_field_tag 'fiscal_record[tags]', @record.tags, id: 'fiscal_record_tags', disabled: read_only,
+                                   list: 'aim-fiscal-tag-suggestions', autocomplete: 'off',
+                                   placeholder: 'Anything you like, separated by commas' %>
+                <datalist id="aim-fiscal-tag-suggestions">
+                  <% Aim::FiscalRecord::TAG_SUGGESTIONS.each do |tag| %><option value="<%= tag %>"></option><% end %>
+                </datalist>
+              <% when 'check_date' %>
+                <%= date_field_tag 'fiscal_record[check_date]', @record.check_date, id: 'fiscal_record_check_date', disabled: read_only %>
+              <% when 'description' %>
+                <%= text_area_tag 'fiscal_record[description]', @record.description, id: 'fiscal_record_description', rows: 2,
+                                  disabled: read_only, placeholder: 'Added after the approval stamp in the report' %>
+              <% else %>
+                <%= text_field_tag "fiscal_record[#{field}]", @record.public_send(field), id: "fiscal_record_#{field}",
+                                   disabled: read_only %>
+              <% end %>
             </div>
           <% end %>
         </div>
 
         <% if @events.present? %>
-          <section class="aim-ticket aim-history">
-            <h3>History</h3>
+          <details class="aim-fiscal-history">
+            <summary>History (<%= @events.size %>)</summary>
             <ul>
               <% @events.each do |event| %>
                 <li>
@@ -93,7 +105,7 @@
                 </li>
               <% end %>
             </ul>
-          </section>
+          </details>
         <% end %>
       </div>
 
@@ -102,25 +114,27 @@
           <% if read_only %>
             <%= link_to 'Back to Fiscal', fiscal_return_path, class: 'btn' %>
           <% else %>
-            <%= form.submit 'Save', class: 'btn secondary' %>
+            <%= submit_tag 'Save', class: 'btn secondary' %>
             <% if @record.can_move_to?('ready') %>
-              <%= form.submit 'Ready', class: 'btn approve',
-                                       data: { turbo_confirm: 'Mark this invoice ready for the export?', confirm_label: 'Ready' } %>
+              <%= submit_tag 'Add to Report Queue', class: 'btn approve',
+                                                    data: { turbo_confirm: 'Add this invoice to the Report Queue?',
+                                                            confirm_label: 'Add' } %>
             <% end %>
             <% if status == 'on_hold' %>
-              <%= form.submit 'Release', class: 'btn take-back' %>
+              <%= submit_tag 'Release', class: 'btn take-back' %>
             <% end %>
             <% if status == 'ready' %>
-              <%= form.submit 'Back to Fiscal Queue', class: 'btn warning' %>
+              <%= submit_tag 'Back to Fiscal Queue', class: 'btn warning' %>
             <% end %>
             <% if @record.can_move_to?('on_hold') %>
               <button type="button" class="btn warning" data-action="aim-reason#open"
                       data-commit="Hold" data-title="Put on hold">Hold</button>
             <% end %>
             <% if status == 'exported' %>
-              <%= form.submit 'Archive', class: 'btn approve',
-                                         data: { turbo_confirm: 'Archive this invoice? It is finished after this.',
-                                                 confirm_label: 'Archive' } %>
+              <%# Check and pay doc numbers come back after payment, so Archive is where a gap matters. %>
+              <%= submit_tag 'Archive', class: 'btn approve',
+                                        data: { turbo_confirm: missing.any? ? "There is no #{missing.join(' or ')} yet. Archive it anyway?" : 'Archive this invoice? It is finished after this.',
+                                                confirm_label: 'Archive' } %>
             <% end %>
           <% end %>
         </div>

@@ -33,15 +33,18 @@ module Aim
       assert_select 'a[href=?]', aim_fiscal_invoice_path(@invoice.batch_id)
     end
 
-    test 'Ready to Export ticks invoices for the export' do
+    test 'the Report Queue ticks invoices for the report, all at once or by BU' do
       record = Aim::FiscalRecord.create!(invoice: @invoice, status: 'ready')
       get :index, params: { status: 'ready' }
 
       assert_response :success
       assert_select 'form[action=?]', aim_fiscal_export_path do
         assert_select 'input[type=checkbox][name=?][value=?]', 'record_ids[]', record.id.to_s
-        assert_select 'select[name=export_format]'
+        assert_select 'input[data-select-all-target=selectAll]'
       end
+
+      get :index, params: { status: 'ready', view: 'bu' }
+      assert_select 'section.aim-bu-group input[name=?]', 'record_ids[]'
     end
 
     test 'someone who is neither Fiscal nor an AIM admin is turned away' do
@@ -59,27 +62,39 @@ module Aim
       assert_response :success
     end
 
-    test 'the Fiscal page shows the invoice and saves what Fiscal types' do
+    test 'the Fiscal page saves what Fiscal types, the invoice\'s fields too, with a history line' do
       get :show, params: { id: @invoice.batch_id }
       assert_response :success
 
       patch :update, params: { id: @invoice.batch_id, commit: 'Save',
-                               fiscal_record: { check_number: ' 1001 ', pay_doc_number: 'PD 1' } }
+                               fiscal_record: { check_number: ' 1001 ', pay_doc_number: 'PD 1', org_number: '12' },
+                               invoice: { vendor_name: 'ACME Inc', invoice_number: 'A-1' } }
 
       record = Aim::FiscalRecord.find_by(invoice_id: @invoice.id)
-      assert_equal '1001', record.check_number
-      assert_equal 'review', record.status
+      assert_equal %w[1001 12 review], [record.check_number, record.org_number, record.status]
       assert_equal 'fiscal@example.com', record.updated_by
+      assert_equal 'ACME Inc', @invoice.reload.vendor_name
+      assert_equal 'Fiscal changed Vendor Name', @invoice.events.last.note
     end
 
-    test 'Hold needs a reason, and takes the tag' do
+    test 'the PDF goes by Fiscal\'s name' do
+      dir = Dir.mktmpdir
+      FileUtils.mkdir_p(File.join(dir, @invoice.batch_id))
+      File.write(File.join(dir, @invoice.batch_id, "#{@invoice.batch_id}.pdf"), '%PDF-1.4')
+      Aim::InvoiceDirectoryService.instance.stub(:store_dir, dir) { get :pdf, params: { id: @invoice.batch_id } }
+
+      assert_response :success
+      assert_match(/filename="4641_ACME_A-1_\.pdf"/, response.headers['Content-Disposition'])
+    end
+
+    test 'Hold needs a reason' do
       patch :update, params: { id: @invoice.batch_id, commit: 'Hold' }
       assert_match(/Say why/, flash[:alert])
 
-      patch :update, params: { id: @invoice.batch_id, commit: 'Hold', reason: 'Missing MA', hold_tag: 'HOLD PMT' }
+      patch :update, params: { id: @invoice.batch_id, commit: 'Hold', reason: 'Missing MA' }
 
       record = Aim::FiscalRecord.find_by(invoice_id: @invoice.id)
-      assert_equal ['on_hold', 'Missing MA', 'HOLD PMT'], [record.status, record.hold_reason, record.tag]
+      assert_equal ['on_hold', 'Missing MA'], [record.status, record.hold_reason]
     end
 
     test 'Release, Ready and Archive move it on; a move it cannot make is refused' do
@@ -88,7 +103,7 @@ module Aim
       patch :update, params: { id: @invoice.batch_id, commit: 'Release' }
       assert_equal ['review', nil], [record.reload.status, record.hold_reason]
 
-      patch :update, params: { id: @invoice.batch_id, commit: 'Ready' }
+      patch :update, params: { id: @invoice.batch_id, commit: 'Add to Report Queue' }
       assert_equal 'ready', record.reload.status
 
       patch :update, params: { id: @invoice.batch_id, commit: 'Archive' }
@@ -126,18 +141,18 @@ module Aim
     end
 
     test 'exporting downloads the file and marks the ready ones exported' do
-      post :create, params: { record_ids: [@record.id], export_format: 'csv' }
+      post :create, params: { record_ids: [@record.id] }
 
       assert_response :success
       assert_equal 'text/csv', response.media_type
-      assert_match(/attachment; filename="aim_fiscal_export_\d+_\d+\.csv"/, response.headers['Content-Disposition'])
+      assert_match(/attachment; filename="AIM_Fiscal_Report_\d+_\d+\.csv"/, response.headers['Content-Disposition'])
       assert_equal 2, CSV.parse(response.body).size
       assert_equal 'exported', @record.reload.status
       assert_not_nil @record.exported_at
     end
 
     test 'nothing ticked is refused' do
-      post :create, params: { export_format: 'docushare' }
+      post :create
 
       assert_match(/Tick at least one/, flash[:alert])
       assert_equal 'ready', @record.reload.status

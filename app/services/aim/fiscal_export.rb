@@ -3,21 +3,19 @@
 require 'csv'
 
 module Aim
-  # Fiscal's bulk export (item f demo): the header row and one row per invoice,
-  # in DocuShare's column order. Two formats until Fiscal says which their
-  # macro takes: DocuShare's own (tab-separated, UTF-16 with a byte order mark,
-  # every value quoted) and plain CSV. DocuShare's "Class Name", Collection and
-  # SavedQuery blocks are its own, not data, and are left out (Joshua).
+  # Fiscal's report (item f): one CSV, the header row and one row per invoice,
+  # for the macro that feeds the payment software. The header is exactly the
+  # one Fiscal's macro was built on -- 31 columns, Org_Number after Unit, and
+  # "Handle " with its trailing space (Joshua, 2026-09-28). Nothing of
+  # DocuShare's own blocks, and no DocuShare format: AIM replaces it.
   class FiscalExport
     COLUMNS = [
       'Title', 'Invoice Number', 'Vendor Name', 'Customer Number', 'Order Number', 'Invoice Date AP',
       'Create Date', 'Modified Date', 'Expiration Date', 'Past Due', 'Sales Tax', 'SubTotal', 'Credit Amount',
-      'Total', 'Keywords', 'BDO / DO', 'Pay Doc Number', 'Description', 'Unit', 'Object', 'Dept Object',
-      'Activity', 'Function', 'Program', 'Phase', 'Task', 'Split Invoice Amount', 'Handle', 'Archive Date',
-      'Check Number'
+      'Total', 'Keywords', 'BDO / DO', 'Pay Doc Number', 'Description', 'Unit', 'Org_Number', 'Object',
+      'Dept Object', 'Activity', 'Function', 'Program', 'Phase', 'Task', 'Split Invoice Amount', 'Handle ',
+      'Archive Date', 'Check Number'
     ].freeze
-    BOM = "\uFEFF"
-    FORMATS = { 'docushare' => 'DocuShare (tab-separated, UTF-16)', 'csv' => 'CSV' }.freeze
 
     attr_reader :records
 
@@ -27,7 +25,7 @@ module Aim
     end
 
     # "Last, First_mm/dd/yyyy_hh:mm:ss" per invoice id: who approved it and
-    # when, as the approval stamp and DocuShare's Description carry it. The
+    # when, as the approval stamp and the report's Description carry it. The
     # history names the approver by email; GSABSS turns that into a name.
     def self.approval_stamps(invoice_ids)
       approvals = Aim::InvoiceEvent.where(invoice_id: invoice_ids, to_state: 'approved').order(:created_at, :id)
@@ -45,26 +43,12 @@ module Aim
       {}
     end
 
-    def filename(format)
-      "aim_fiscal_export_#{Time.current.strftime('%Y%m%d_%H%M%S')}.#{format == 'csv' ? 'csv' : 'txt'}"
-    end
-
-    def content_type(format) = format == 'csv' ? 'text/csv' : 'text/tab-separated-values; charset=utf-16le'
-
-    def render(format) = format == 'csv' ? to_csv : to_docushare
+    def filename = "AIM_Fiscal_Report_#{Time.current.strftime('%Y%m%d_%H%M%S')}.csv"
 
     def rows = records.map { |record| row(record) }
 
     def to_csv
       CSV.generate { |csv| ([COLUMNS] + rows).each { |line| csv << line } }
-    end
-
-    # UTF-16LE with its byte order mark, tabs between values, every value in
-    # double quotes (a quote inside one doubled), CRLF line ends: DocuShare's.
-    def to_docushare
-      text = ([COLUMNS] + rows).map { |line| line.map { |value| %("#{value.to_s.gsub('"', '""')}") }.join("\t") }
-                               .join("\r\n")
-      "#{BOM}#{text}\r\n".encode('UTF-16LE')
     end
 
     private
@@ -75,20 +59,17 @@ module Aim
         record.title, invoice.invoice_number, invoice.vendor_name, invoice.customer_number, invoice.order_number,
         invoice.invoice_date&.strftime('%Y%m%d'), day(invoice.created_at), day(record.updated_at), nil, nil,
         money(invoice.sales_tax), money(invoice.subtotal), money(record.credit_amount), money(invoice.invoice_total),
-        record.tag.presence || FiscalRecord::DEFAULT_TAG, record.bdo_do, record.pay_doc_number, description(record),
-        invoice.budget_unit, record.object_code, record.dept_object, record.activity, record.function_code,
+        record.tag_list.join(', '), record.bdo_do, record.pay_doc_number, description(record), invoice.budget_unit,
+        record.org_number, record.object_code, record.dept_object, record.activity, record.function_code,
         record.program, record.phase, record.task, record.split_amount, invoice.batch_id, day(record.archived_at),
         record.check_number
       ]
     end
 
-    # What Fiscal typed, else the hold reason while held, else the approval
-    # stamp's text.
+    # As Fiscal's own reports have it: the approval stamp's text, then " _ "
+    # and whatever Fiscal wrote.
     def description(record)
-      return record.description if record.description.present?
-      return record.hold_reason if record.status == 'on_hold' && record.hold_reason.present?
-
-      @stamps[record.invoice_id]
+      [@stamps[record.invoice_id], record.description.presence].compact.join(' _ ')
     end
 
     def day(value) = value&.in_time_zone&.strftime('%m/%d/%Y')

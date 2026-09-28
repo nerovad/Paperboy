@@ -34,14 +34,19 @@ module Aim
       assert_equal 'on_hold', record.reload.status
     end
 
-    test 'the title is DocuShare\'s, #INV unless tagged' do
-      acme = invoice('F-5', 'approved', budget_unit: '4641', vendor_name: 'ACME', invoice_number: 'A-9',
+    test 'the name is Fiscal\'s: BU, vendor, invoice number and date, safe as a file name' do
+      acme = invoice('F-5', 'approved', budget_unit: '4641', vendor_name: 'A/B Supply', invoice_number: 'A-9',
                                         invoice_date: Date.new(2026, 9, 3))
       record = Aim::FiscalRecord.create!(invoice: acme)
 
-      assert_equal '#INV_4641_ACME_A-9_20260903', record.title
-      record.update!(tag: 'HOLD PMT')
-      assert_equal 'HOLD PMT_4641_ACME_A-9_20260903', record.title
+      assert_equal '4641_A/B Supply_A-9_20260903', record.title
+      assert_equal '4641_A B Supply_A-9_20260903.pdf', Aim::FiscalRecord.file_name_for(acme)
+    end
+
+    test 'tags are free text, split on commas' do
+      record = Aim::FiscalRecord.create!(invoice: invoice('F-8', 'approved'), tags: 'emailed Karen 09.22, #BDO$ ,')
+
+      assert_equal ['emailed Karen 09.22', '#BDO$'], record.tag_list
     end
 
     test 'the counts are keyed as the sidebar keys them' do
@@ -56,12 +61,6 @@ module Aim
       Aim::Member.create!(employee_id: 91, fiscal: true)
 
       assert_equal %w[User Fiscal], Aim::Users.roles_of(91)
-    end
-
-    test 'a tag must be one of DocuShare\'s' do
-      record = Aim::FiscalRecord.new(invoice: invoice('F-7', 'approved'), tag: 'made up')
-
-      assert_not record.valid?
     end
   end
 end

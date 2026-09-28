@@ -1,0 +1,25 @@
+<%# A Fiscal list: one table, or one per budget unit. %>
+<% if @view == 'bu' %>
+  <% @groups.each_with_index do |(unit, label, records), index| %>
+    <section class="billing-audit-group aim-owner-group aim-bu-group" data-controller="billing-audit-sections"
+             data-aim-queue-filter-target="group" data-search="<%= label %>">
+      <h2>
+        <button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle"
+                data-action="billing-audit-sections#toggle" aria-expanded="true" aria-controls="aim-fiscal-bu-<%= index %>">
+          <span aria-hidden="true">▾</span>
+          <strong class="aim-owner-group__name"><%= label.presence || unit.presence || 'No budget unit' %></strong>
+          <strong class="aim-count-pill"><%= pluralize(records.size, 'invoice') %></strong>
+        </button>
+      </h2>
+      <div id="aim-fiscal-bu-<%= index %>" data-billing-audit-sections-target="content">
+        <div class="billing-type-audit-table-wrapper">
+          <%= render 'rows', records: records, status: @status, selectable: selectable, stamps: @stamps %>
+        </div>
+      </div>
+    </section>
+  <% end %>
+<% else %>
+  <section class="aim-panel aim-queue-panel">
+    <%= render 'rows', records: @records, status: @status, selectable: selectable, stamps: @stamps %>
+  </section>
+<% end %>

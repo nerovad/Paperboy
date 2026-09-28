@@ -13,46 +13,29 @@ module Aim
       @record = Aim::FiscalRecord.create!(invoice: @invoice, check_number: '1001', pay_doc_number: 'PD 1')
     end
 
-    test 'the CSV has DocuShare\'s columns in order and one row per invoice' do
+    test 'the report has Fiscal\'s header exactly, and one row per invoice' do
       rows = CSV.parse(Aim::FiscalExport.new([@record]).to_csv)
 
-      assert_equal Aim::FiscalExport::COLUMNS, rows.first
+      assert_equal 31, rows.first.size
+      assert_equal %w[Unit Org_Number Object], rows.first[18, 3]
+      assert_equal 'Handle ', rows.first[28]
       assert_equal 2, rows.size
       row = Aim::FiscalExport::COLUMNS.zip(rows.last).to_h
-      assert_equal '#INV_4641_ACME "West"_A-9_20260903', row['Title']
+      assert_equal '4641_ACME "West"_A-9_20260903', row['Title']
       assert_equal '20260903', row['Invoice Date AP']
       assert_equal '12.50', row['Total']
       assert_equal '1.00', row['Sales Tax']
-      assert_equal '4641.X-1', row['Handle']
+      assert_equal '4641.X-1', row['Handle ']
       assert_equal '1001', row['Check Number']
       assert_match(%r{\Anobody@example.com_\d{2}/\d{2}/\d{4}_\d{2}:\d{2}:\d{2}\z}, row['Description'])
     end
 
-    test 'DocuShare\'s format is UTF-16 with a BOM, tab-separated, every value quoted' do
-      text = Aim::FiscalExport.new([@record]).to_docushare
+    test 'Fiscal\'s description follows the approval stamp, and tags are the keywords' do
+      @record.update!(description: 'PRUDENTIALOVFY25MA01', tags: 'HOLD PMT, emailed Karen')
+      row = Aim::FiscalExport::COLUMNS.zip(Aim::FiscalExport.new([@record.reload]).rows.first).to_h
 
-      assert_equal Encoding::UTF_16LE, text.encoding
-      assert_equal Aim::FiscalExport::BOM.encode('UTF-16LE'), text[0]
-      lines = text.encode('UTF-8').delete_prefix(Aim::FiscalExport::BOM).split("\r\n")
-      assert_equal 2, lines.size
-      assert lines.first.start_with?(%("Title"\t"Invoice Number"\t))
-      assert_includes lines.last, %("ACME ""West""")
-      assert_includes lines.last, %(\t""\t)
-    end
-
-    test 'the description is what Fiscal typed, else the hold reason while held' do
-      @record.update!(status: 'on_hold', hold_reason: 'Missing MA')
-      assert_equal 'Missing MA', description
-
-      @record.update!(description: 'Paid by P-card')
-      assert_equal 'Paid by P-card', description
-    end
-
-    private
-
-    def description
-      row = Aim::FiscalExport.new([@record.reload]).rows.first
-      row[Aim::FiscalExport::COLUMNS.index('Description')]
+      assert_match(/_\d{2}:\d{2}:\d{2} _ PRUDENTIALOVFY25MA01\z/, row['Description'])
+      assert_equal 'HOLD PMT, emailed Karen', row['Keywords']
     end
   end
 end

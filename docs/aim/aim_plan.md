@@ -3042,6 +3042,40 @@ through their Excel macro into the payment software); then they archive it.
   `admin/users/:id/fiscal`. No JavaScript was added; the lists reuse
   `aim-queue-filter`, `billing-audit-sections` and `aim-reason`.
 
+*Changed after Joshua's first run-through (2026-09-28):*
+- **Tags are free text**, comma-separated, with the marks Fiscal used on
+  DocuShare titles offered as suggestions (`#BDO$`, `CT-PEND`, `HOLD PMT`...).
+  They fill the report's Keywords. The DocuShare samples show Fiscal's
+  title prefixes were free text too ("emailed Karen 09.22.2025", `E-HOLD`).
+  **Open: a clean status-like list** alongside the tags (Joshua), to be
+  settled from his DocuShare screenshots.
+- **Naming:** `<BU>_<vendor>_<invoice no>_<yyyymmdd>`, no prefix, as
+  DocuShare's plain titles. It is the report's Title and the PDF's file name
+  once approved (Fiscal page, and the review page's PDF from `approved` on).
+  The worker's `_AI_Processed` and archive copies are still `<batch id>.pdf`.
+- **Fiscal page:** the invoice's own fields are editable (a history line
+  names what changed; billing is not updated once exported); Org Number
+  added; History is a closed "History (n)" link; no DocuShare wording.
+- **Report Queue** replaces Ready to Export; "Add to Report Queue" asks
+  "Add this invoice to the Report Queue?". No check/pay doc warning there:
+  the samples leave both empty at report time, so they come back after
+  payment. **Archive** warns when either is still empty.
+- **Lists:** All / By BU on every Fiscal list; a tick-all box per table (in
+  All, the whole list; in By BU, that BU).
+- **Report:** one CSV, UTF-8, no DocuShare format. Header exactly the
+  macro's: 31 columns, `Org_Number` after `Unit`, `Handle ` with its trailing
+  space. Description is the stamp text, then ` _ ` and Fiscal's text, as in
+  the samples. Of the 29 samples in Downloads, 22 have no Org_Number, 4 have
+  it, 3 have `Unit` twice; Joshua picked Org_Number. **Ask Fiscal:** whether
+  the macro reads a UTF-8 comma CSV, or DocuShare's UTF-16 tab file saved as
+  `.csv` (the samples are the latter).
+- **Approval stamp (item e) is wanted in this phase.** Rails stamping with
+  `prawn-templates` was tried on 40 store PDFs: 4 failed, and each took
+  2.5-6 s, so not on the fly. Proposed: the worker stamps with PyMuPDF at
+  approval into a derived `<batch id>.stamped.pdf` (the store copy stays as
+  received), Rails serves the stamped copy when it exists, and a one-off pass
+  stamps those already approved. Needs a worker deploy. Waiting on Joshua.
+
 *Questions for Fiscal (2026-09-29):* which export format and exact columns
 the macro takes; which fields they fill and which the lookup should; the
 check number and pay doc: from where, and when; what "archive" must do; do
@@ -3951,3 +3985,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | a | (this merge) | **Item a merged to Paperboy master**, Joshua's decision. Gate: the full suite on the master merge `2dc9141b` (1297 runs, 0 failures, 0 errors) was against today's master, which had not moved; the one commit after is the grouped picker's script. Fiscal demo (item f) written up as the next phase; its start is in `git stash` |
 | 2026-09-28 | f | (this commit) | Fiscal stage demo on `aim/f-fiscal-demo`: `aim.fiscal_records` and `aim.members.fiscal` (stash popped and migrated on `Paperboy_Dev`); Fiscal sidebar (Fiscal Queue by BU, On Hold, Ready to Export, Exported, Archived); Fiscal page with Save, Hold, Ready, Release, Archive; Fiscal switch on profiles; export in DocuShare and CSV formats. Store PDF lookup moved into `Aim::StoredPdf`. New routes in the `aim` namespace only. 1319 runs, 0 failures, 0 errors before the last test was added; the Fiscal, profile and review tests re-run after (75 runs, 0 failures); brakeman's same four, none AIM (two P2M, two Data Runner); bundle-audit clean; scoped rubocop clean |
 | 2026-09-28 | — | (this commit) | On-screen text made short and plain, at Joshua's request: no Laserfiche anywhere a user sees it (approval now reads "billing and Fiscal"); page subtitles, queue descriptions, confirms and notices rewritten for users, not developers (no "worker", "extraction", "aim_admin group"; outdated lines such as "coming next" and "Paperboy inbox" fixed; "AIM staff" is AIM Admins). Keep new text in that style. 1320 runs, 0 failures, 0 errors; scoped rubocop clean |
+| 2026-09-28 | f | (this commit) | From Joshua's run-through: free-text tags, Org Number, editable invoice fields, History behind a link, Report Queue, All / By BU with tick-all, one CSV with the macro's exact header, Fiscal's file name for approved PDFs. Migration `20260928120000` (tags, org_number; tag dropped). Approval stamp proposed for the worker, not built. 1320 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |

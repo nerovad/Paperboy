@@ -1,5 +1,6 @@
-<%# One Fiscal list. With `selectable`, the last column ticks invoices for the export. %>
-<table class="submission-table aim-queue-table aim-fiscal-table">
+<%# One Fiscal list. With `selectable`, the last column ticks invoices for the
+    report, and its heading ticks every one in this table (select-all). %>
+<table class="submission-table aim-queue-table aim-fiscal-table"<%= ' data-controller="select-all"'.html_safe if selectable %>>
   <thead>
     <tr>
       <th>Action</th>
@@ -9,20 +10,27 @@
       <th>Date</th>
       <th>Total</th>
       <th>Approved</th>
-      <th>Tag</th>
+      <th>Tags</th>
       <th>Check #</th>
       <th>Pay Doc #</th>
       <% if status == 'on_hold' %><th>Hold Reason</th><% end %>
       <% if %w[exported archived].include?(status) %><th>Exported</th><% end %>
       <th>Status</th>
-      <% if selectable %><th class="aim-select-cell">Export</th><% end %>
+      <% if selectable %>
+        <th class="aim-select-cell">
+          <label class="aim-select-all">
+            <input type="checkbox" aria-label="Select all in this list" data-select-all-target="selectAll"
+                   data-action="select-all#toggle"> All
+          </label>
+        </th>
+      <% end %>
     </tr>
   </thead>
   <tbody>
     <% records.each do |record| %>
       <% invoice = record.invoice %>
       <% search = [invoice.vendor_name, invoice.invoice_number, invoice.budget_unit, invoice.invoice_total,
-                   aim_invoice_date(invoice.invoice_date), record.tag, record.check_number, record.pay_doc_number,
+                   aim_invoice_date(invoice.invoice_date), record.tags, record.check_number, record.pay_doc_number,
                    record.bdo_do, record.hold_reason, stamps[invoice.id], invoice.batch_id].compact.join(' ') %>
       <tr title="<%= record.title %>" data-aim-queue-filter-target="row" data-search="<%= search %>">
         <td class="action-buttons">
@@ -35,7 +43,7 @@
         <td><%= aim_invoice_date(invoice.invoice_date) || 'N/A' %></td>
         <td class="aim-total"><%= aim_currency(invoice.invoice_total) || 'N/A' %></td>
         <td><%= stamps[invoice.id] || '—' %></td>
-        <td><%= record.tag.presence || '—' %></td>
+        <td><%= record.tag_list.join(', ').presence || '—' %></td>
         <td><%= record.check_number.presence || '—' %></td>
         <td><%= record.pay_doc_number.presence || '—' %></td>
         <% if status == 'on_hold' %><td><%= record.hold_reason %></td><% end %>
@@ -46,7 +54,8 @@
         <% if selectable %>
           <td class="aim-select-cell">
             <input type="checkbox" name="record_ids[]" value="<%= record.id %>"
-                   aria-label="Export <%= invoice.invoice_number.presence || invoice.batch_id %>">
+                   data-select-all-target="checkbox" data-action="select-all#update"
+                   aria-label="Select <%= invoice.invoice_number.presence || invoice.batch_id %>">
           </td>
         <% end %>
       </tr>

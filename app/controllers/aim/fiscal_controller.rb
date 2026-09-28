@@ -8,11 +8,12 @@ module Aim
   # has approved belongs here.
   class FiscalController < BaseController
     include Aim::StoredPdf
+    include Aim::FiscalEdits
 
     ACTIONS = {
       'Save' => :save_only,
       'Hold' => :hold,
-      'Ready' => :make_ready,
+      'Add to Report Queue' => :make_ready,
       'Release' => :release,
       'Back to Fiscal Queue' => :back_to_review,
       'Archive' => :archive
@@ -22,13 +23,17 @@ module Aim
     before_action :set_status, only: :index
     before_action :set_record, only: %i[show update pdf]
 
-    # One status at a time. The Fiscal Queue is grouped by budget unit.
+    VIEWS = %w[all bu].freeze
+
+    # One status at a time, as one list or grouped by budget unit. The Fiscal
+    # Queue starts grouped, the rest as one list.
     def index
       session[:aim_fiscal_page] = request.fullpath
+      @view = VIEWS.include?(params[:view]) ? params[:view] : default_view
       Aim::FiscalRecord.take_in_approved!
       @records = Aim::FiscalRecord.in_status(@status).to_a.sort_by { |record| [-record.invoice.created_at.to_f, -record.id] }
       @stamps = Aim::FiscalExport.approval_stamps(@records.map(&:invoice_id))
-      return unless @status == 'review'
+      return unless @view == 'bu'
 
       coa = Aim::Units.new
       @groups = @records.group_by { |record| record.invoice.budget_unit }.sort_by { |unit, _| unit.to_s }
@@ -63,10 +68,12 @@ module Aim
       path = stored_pdf_path
       return head :not_found if path.nil?
 
-      send_file path, type: 'application/pdf', disposition: 'inline'
+      send_file path, type: 'application/pdf', disposition: 'inline', filename: Aim::FiscalRecord.file_name_for(@invoice)
     end
 
     private
+
+    def default_view = @status == 'review' ? 'bu' : 'all'
 
     def set_status
       @status = params[:status].presence || 'review'
@@ -91,16 +98,6 @@ module Aim
     end
     helper_method :fiscal_return_path
 
-    # An archived invoice is finished; nothing on it changes.
-    def save_fields
-      return if @record.status == 'archived'
-
-      permitted = params.fetch(:fiscal_record, {}).permit(*Aim::FiscalRecord::EDITABLE_FIELDS).to_h
-      return if permitted.empty?
-
-      @record.update!(permitted.transform_values { |value| value.to_s.strip.presence }.merge(updated_by: current_user_email))
-    end
-
     def reason = params[:reason].to_s.squish.presence
 
     def save_only = back('Saved.')
@@ -108,15 +105,13 @@ module Aim
     def hold
       raise ArgumentError, 'Say why the invoice is on hold.' if reason.blank?
 
-      changes = { hold_reason: reason }
-      changes[:tag] = params[:hold_tag] if params[:hold_tag].present?
-      @record.move_to!('on_hold', actor: current_user_email, note: "reason: #{reason}", **changes)
+      @record.move_to!('on_hold', actor: current_user_email, note: "reason: #{reason}", hold_reason: reason)
       back('On hold.')
     end
 
     def make_ready
       @record.move_to!('ready', actor: current_user_email, hold_reason: nil)
-      finish('Ready to export.')
+      finish('Added to the Report Queue.')
     end
 
     def release

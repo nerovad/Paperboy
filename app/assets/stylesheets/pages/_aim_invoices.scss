@@ -1483,7 +1483,7 @@
   font-size: 0.85rem;
 }
 
-.aim-fiscal-facts dl {
+.aim-fiscal-facts {
   display: grid;
   gap: 4px 12px;
   grid-template-columns: max-content 1fr;
@@ -1497,4 +1497,35 @@
 .aim-fiscal-facts dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+
+.aim-fiscal-heading {
+  font-size: 0.95rem;
+  margin: 16px 0 8px;
+}
+
+.aim-fiscal-grid {
+  display: grid;
+  gap: 8px 12px;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}
+
+.aim-fiscal-grid__wide {
+  grid-column: 1 / -1;
+}
+
+.aim-fiscal-history {
+  margin-top: 16px;
+
+  summary {
+    color: $text-muted;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+
+  ul {
+    font-size: 0.85rem;
+    margin: 8px 0 0;
+    padding-left: 18px;
+  }
 }

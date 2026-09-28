@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -82,12 +82,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
     t.string "hold_reason", limit: 500
     t.bigint "invoice_id", null: false
     t.string "object_code", limit: 20
+    t.string "org_number", limit: 20
     t.string "pay_doc_number", limit: 100
     t.string "phase", limit: 20
     t.string "program", limit: 20
     t.string "split_amount", limit: 100
     t.string "status", limit: 20, default: "review", null: false
-    t.string "tag", limit: 40
+    t.string "tags", limit: 500
     t.string "task", limit: 20
     t.datetime "updated_at", null: false
     t.string "updated_by", limit: 255
