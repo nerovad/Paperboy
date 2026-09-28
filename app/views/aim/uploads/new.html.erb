@@ -31,7 +31,9 @@
             <%# Every agency's active units from the COA: no typos, no invented BUs. %>
             <%= form.select :budget_unit, grouped_options_for_select(@units.grouped_options, @budget_unit),
                             { include_blank: 'Pick a budget unit…' },
-                            { required: true, class: 'form-control', data: { controller: 'searchable-select' } } %>
+                            { required: true, class: 'form-control', aria: { label: 'Budget unit' },
+                              data: { controller: 'aim-grouped-search',
+                                      aim_grouped_search_placeholder_value: 'Search unit number or name…' } } %>
           </div>
         </div>
 
@@ -43,7 +45,7 @@
           <label><%= radio_button_tag :owner, 'shared', false, data: { action: 'aim-owner-choice#update' } %> The budget unit's shared queue</label>
           <label><%= radio_button_tag :owner, 'person', !@has_queue, data: { action: 'aim-owner-choice#update' } %> Someone else</label>
           <div class="aim-owner-choice__picker" data-aim-owner-choice-target="picker">
-            <%= render 'aim/shared/person_picker', name: :owner_employee_id, label: 'Whose queue' %>
+            <%= render 'aim/shared/grouped_person_select', name: :owner_employee_id, label: 'Whose queue' %>
           </div>
         </fieldset>
       </div>

@@ -110,7 +110,7 @@ module Aim
     test 'someone else is found with the employee search' do
       get :new
 
-      assert_select '[data-controller=aim-person-search] input[type=hidden][name=owner_employee_id]'
+      assert_select 'select[name=owner_employee_id][data-controller=aim-grouped-search]'
       assert_select '[data-controller=aim-dropzone] input[type=file][multiple]'
     end
 

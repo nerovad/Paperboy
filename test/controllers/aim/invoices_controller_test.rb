@@ -419,7 +419,8 @@ module Aim
       assert_select '.aim-bu-person__shared', 0, 'no people tools in the Pipeline'
       assert_select 'input[type=checkbox][data-aim-move-modal-target=check]', 3
       assert_select 'button.aim-move-button', 0, 'one way to move: tick, then Move selected'
-      assert_select '[data-controller=aim-person-search] input[type=hidden][name=owner]'
+      assert_select 'select[name=owner][data-controller=aim-grouped-search]'
+      assert_select 'input[type=checkbox][data-budget-unit=?]', '4601', minimum: 1
     end
 
     test 'moving an invoice to a person records it and returns to the queue' do

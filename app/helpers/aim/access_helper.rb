@@ -89,6 +89,28 @@ module Aim
       Aim::Users.budget_units_of(aim_session_employee_id)
     end
 
+    # The people an invoice can go to, grouped by the BUs they work in:
+    # [[unit, "4641 · Document Management", [["Gannon, Joshua (126566)", 126566], ...]], ...]
+    # in BU order, anyone with no BU last. Someone in several BUs is under each.
+    # For the grouped person picker (aim_grouped_search_controller).
+    def aim_person_groups
+      people = Aim::Users.all.pluck(:id, :first_name, :last_name, :unit)
+      names = people.to_h { |id, first, last, _| [id, "#{last}, #{first} (#{id})"] }
+      rows = Aim::UserBudgetUnit.where(employee_id: names.keys).pluck(:employee_id, :budget_unit, :hidden)
+      hidden = rows.select(&:last).to_set { |row| row.first(2) }
+      by_unit = Hash.new { |hash, unit| hash[unit] = [] }
+      people.each { |id, _, _, unit| by_unit[unit] << id if unit.present? && !hidden.include?([id, unit]) }
+      rows.reject(&:last).each { |id, unit, _| by_unit[unit] << id }
+      coa = Aim::Units.new
+      groups = by_unit.keys.sort.map { |unit| [unit, coa.label(unit), aim_named(by_unit[unit], names)] }
+      loose = names.keys - by_unit.values.flatten
+      loose.any? ? groups + [[nil, 'No budget unit', aim_named(loose, names)]] : groups
+    rescue ActiveRecord::ActiveRecordError
+      []
+    end
+
+    def aim_named(ids, names) = ids.uniq.sort_by { |id| names[id].downcase }.map { |id| [names[id], id] }
+
     # The Move dialog's "another budget unit" choices, grouped by agency, from
     # the Chart of Accounts.
     def aim_move_unit_options

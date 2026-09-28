@@ -12,7 +12,7 @@ export default class extends Controller {
 
   update() {
     const chosen = this.element.querySelector("input[type=radio]:checked")?.value
-    this.toggle(this.pickerTarget, chosen === "person", "input[type=search]")
+    this.toggle(this.pickerTarget, chosen === "person", "select, input[type=search]")
     if (this.hasUnitTarget) this.toggle(this.unitTarget, chosen === "other_unit", "select")
   }
 

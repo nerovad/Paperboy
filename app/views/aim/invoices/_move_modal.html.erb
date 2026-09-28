@@ -22,7 +22,8 @@
             <label><%= radio_button_tag :destination, 'other_unit', false, data: { action: 'aim-owner-choice#update' } %> Another budget unit's shared queue</label>
           <% end %>
           <div class="aim-owner-choice__picker" data-aim-owner-choice-target="picker">
-            <%= render 'aim/shared/person_picker', name: :owner, label: 'Move to' %>
+            <%= render 'aim/shared/grouped_person_select', name: :owner, label: 'Move to',
+                                                            target: 'aim-move-modal-target=person' %>
           </div>
           <% if unit_options.any? %>
             <div class="aim-owner-choice__picker" data-aim-owner-choice-target="unit" hidden>

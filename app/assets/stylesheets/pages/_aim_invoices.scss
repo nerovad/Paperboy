@@ -1371,12 +1371,91 @@
   grid-column: 1 / -1;
 }
 
+// Save floats at the bottom right, just the button: no bar across the list.
 .aim-enabled-units__save {
-  background: $surface-base;
-  border-top: 1px solid $neutral-border-subtle;
-  bottom: 0;
+  bottom: 16px;
   display: flex;
   justify-content: flex-end;
-  padding: 10px 0;
+  pointer-events: none;
   position: sticky;
+
+  .btn {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    pointer-events: auto;
+  }
+}
+
+// The grouped pick-list (aim_grouped_search_controller): a search box over a
+// list with a heading per group. The real <select> is hidden but not
+// display:none, so a validation bubble still has somewhere to point.
+.aim-grouped-search__native {
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 1px;
+}
+
+.aim-grouped-search {
+  position: relative;
+  width: 100%;
+}
+
+.aim-grouped-search__input {
+  width: 100%;
+}
+
+.aim-grouped-search__list {
+  background: $surface-base;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  left: 0;
+  list-style: none;
+  margin: 4px 0 0;
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 4px 0;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 20;
+}
+
+.aim-grouped-search__heading {
+  background: $surface-subtle;
+  color: $text-strong;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 12px 4px;
+  position: sticky;
+  top: 0;
+}
+
+.aim-grouped-search__option {
+  cursor: pointer;
+  padding: 6px 12px 6px 20px;
+
+  &.is-active,
+  &:hover {
+    background: $surface-hover;
+  }
+}
+
+.aim-grouped-search__empty {
+  color: $text-muted;
+  padding: 8px 12px;
+}
+
+.aim-count-pill--nowrap {
+  white-space: nowrap;
+}
+
+.aim-enabled-units .aim-queue-search {
+  margin-bottom: 12px;
+}
+
+// A unit the search leaves out: the grid's display: flex would otherwise win.
+.aim-agency-units__grid label[hidden] {
+  display: none;
 }

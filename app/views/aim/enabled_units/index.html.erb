@@ -4,7 +4,7 @@
     saving unchanged keeps it. %>
 <% fresh = !@current.configured? %>
 <% whole = fresh ? @current.agencies.to_set : @whole %>
-<div class="aim-page aim-enabled-units">
+<div class="aim-page aim-enabled-units" data-controller="aim-queue-filter">
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">AIM's Budget Units</h1>
@@ -13,17 +13,23 @@
         Tick <strong>Entire agency</strong> to include every unit, and any the COA adds later.
       </p>
     </div>
-    <span class="aim-count-pill"><%= pluralize(@current.all.size, 'unit') %> in use</span>
+    <div class="aim-page-header__pills">
+      <span class="aim-count-pill aim-count-pill--nowrap"><%= pluralize(@current.all.size, 'unit') %> in use</span>
+      <button type="submit" form="aim-enabled-units-form" class="btn approve compact">Save</button>
+    </div>
   </header>
+
+  <%= render 'aim/invoices/search_box', placeholder: 'Search agency, unit number or name…', empty: 'Nothing matches.' %>
 
   <% if fresh %>
     <p class="aim-profile-switch__note">Not set yet: AIM offers <%= @current.agencies.to_sentence %>, the agencies of the people in AIM. Saving makes it a setting.</p>
   <% end %>
 
-  <%= form_with url: aim_enabled_units_path, method: :patch, local: true do %>
+  <%= form_with url: aim_enabled_units_path, method: :patch, local: true, id: 'aim-enabled-units-form' do %>
     <% @coa.all.group_by(&:agency).each do |agency, units| %>
       <% picked = units.count { |u| whole.include?(agency) || @single.include?([agency, u.unit]) } %>
-      <details class="aim-panel aim-agency-units" <%= 'open' if picked.positive? %>>
+      <details class="aim-panel aim-agency-units" <%= 'open' if picked.positive? %>
+               data-aim-queue-filter-target="group" data-search="<%= @coa.agency_label(agency) %>">
         <summary>
           <strong><%= @coa.agency_label(agency) %></strong>
           <span class="aim-count-pill"><%= picked %> of <%= pluralize(units.size, 'unit') %></span>
@@ -35,7 +41,7 @@
             <strong>Entire agency</strong>
           </label>
           <% units.each do |unit| %>
-            <label>
+            <label data-aim-queue-filter-target="row" data-search="<%= unit.label %>">
               <%= check_box_tag 'units[]', unit.unit, whole.include?(agency) || @single.include?([agency, unit.unit]),
                                 id: "unit-#{agency}-#{unit.unit}",
                                 data: { select_all_target: 'checkbox', action: 'change->select-all#update' } %>

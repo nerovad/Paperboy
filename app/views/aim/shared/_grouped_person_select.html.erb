@@ -1,0 +1,17 @@
+<%# Pick an AIM user from a list grouped by budget unit (aim_person_groups),
+    searchable by name, employee id or BU (aim_grouped_search_controller). The
+    <select> is what submits. A group whose data-unit matches the select's
+    data-priority-unit is listed first: the Move dialog sets it to the
+    invoice's BU. Locals: name, label. %>
+<select name="<%= name %>" class="form-control" aria-label="<%= label %>"
+        data-controller="aim-grouped-search" data-aim-grouped-search-placeholder-value="Search name, employee ID or BU…"
+        <%= local_assigns[:target] ? "data-#{local_assigns[:target]}" : '' %>>
+  <option value="">Pick a person…</option>
+  <% aim_person_groups.each do |unit, heading, people| %>
+    <optgroup label="<%= heading %>" data-unit="<%= unit %>">
+      <% people.each do |text, id| %>
+        <option value="<%= id %>"><%= text %></option>
+      <% end %>
+    </optgroup>
+  <% end %>
+</select>
