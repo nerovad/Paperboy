@@ -24,6 +24,11 @@ production: &production
     queue: default
     schedule: every hour
     description: Processes reportable OSHA deadlines
+  aim_stamp_approved:
+    class: Aim::StampApprovedJob
+    queue: default
+    schedule: every 10 minutes
+    description: Stamps approved AIM invoices that have no approval stamp yet
   dam_watch_folders:
     class: Dam::WatchFolderIngestJob
     queue: default

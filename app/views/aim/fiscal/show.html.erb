@@ -45,6 +45,10 @@
         <dl class="aim-fiscal-facts">
           <dt>File name</dt><dd><%= @record.title %></dd>
           <dt>Approved</dt><dd><%= @stamp || '—' %></dd>
+          <dt>Stamp</dt>
+          <dd><%= if @record.stamped_at then 'On the PDF'
+                  elsif @record.stamp_error then "Could not be added: #{@record.stamp_error}"
+                  else 'Being added; refresh in a minute' end %></dd>
           <dt>Owner</dt><dd><%= @invoice.assigned_to.presence || 'Shared' %></dd>
         </dl>
 

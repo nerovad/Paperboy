@@ -87,6 +87,16 @@ module Aim
       assert_match(/filename="4641_ACME_A-1_\.pdf"/, response.headers['Content-Disposition'])
     end
 
+    test 'the stamped copy is shown once it is there' do
+      dir = Dir.mktmpdir
+      FileUtils.mkdir_p(File.join(dir, @invoice.batch_id))
+      File.write(File.join(dir, @invoice.batch_id, "#{@invoice.batch_id}.pdf"), '%PDF-1.4 received')
+      File.write(File.join(dir, @invoice.batch_id, "#{@invoice.batch_id}.stamped.pdf"), '%PDF-1.4 stamped')
+      Aim::InvoiceDirectoryService.instance.stub(:store_dir, dir) { get :pdf, params: { id: @invoice.batch_id } }
+
+      assert_equal '%PDF-1.4 stamped', response.body
+    end
+
     test 'Hold needs a reason' do
       patch :update, params: { id: @invoice.batch_id, commit: 'Hold' }
       assert_match(/Say why/, flash[:alert])

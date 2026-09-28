@@ -10,6 +10,8 @@ module Aim
   # the PDF is read from the store and never moved. AIM v2.
   # rubocop:disable-next Metrics/ClassLength
   class InvoicesControllerTest < ActionController::TestCase
+    include ActiveJob::TestHelper
+
     tests Aim::InvoicesController
 
     FOLDERS = {
@@ -242,10 +244,10 @@ module Aim
       assert_match(/still needs a vendor name/, flash[:alert])
     end
 
-    test 'approve asks the worker to export' do
+    test 'approve asks the worker to export, and queues the approval stamp' do
       row = invoice('4601.N', state: 'ready_for_approval', pdf: false)
 
-      act(row, 'Approve')
+      assert_enqueued_with(job: Aim::StampApprovedJob, args: [row.id]) { act(row, 'Approve') }
 
       assert_equal %w[approved export], [row.state, row.command]
     end

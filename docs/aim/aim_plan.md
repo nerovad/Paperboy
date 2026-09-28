@@ -3069,12 +3069,21 @@ through their Excel macro into the payment software); then they archive it.
   it, 3 have `Unit` twice; Joshua picked Org_Number. **Ask Fiscal:** whether
   the macro reads a UTF-8 comma CSV, or DocuShare's UTF-16 tab file saved as
   `.csv` (the samples are the latter).
-- **Approval stamp (item e) is wanted in this phase.** Rails stamping with
-  `prawn-templates` was tried on 40 store PDFs: 4 failed, and each took
-  2.5-6 s, so not on the fly. Proposed: the worker stamps with PyMuPDF at
-  approval into a derived `<batch id>.stamped.pdf` (the store copy stays as
-  received), Rails serves the stamped copy when it exists, and a one-off pass
-  stamps those already approved. Needs a worker deploy. Waiting on Joshua.
+- **Approval stamp (item e), built here in Ruby** (Joshua: a delay after
+  approval is fine). `prawn-templates` failed on 4 of 40 store PDFs, so
+  `Aim::PdfStamp` reads every object with pdf-reader and writes a plain PDF
+  (`Aim::PdfWriter`), each page's content wrapped in q/Q and the stamp added
+  over a white box, bottom right as the page is seen (rotation honoured).
+  All 46 store PDFs stamped and passed Ghostscript. The copy is
+  `<batch id>.stamped.pdf` beside the received PDF, which is untouched; the
+  review page and Fiscal show it from approval on. `Aim::StampApprovedJob`
+  runs on Approve, when Fiscal edits the invoice, and every 10 minutes
+  (`config/recurring.yml`, `aim_stamp_approved`) over anything approved and
+  unstamped. `aim.fiscal_records.stamped_at` / `stamp_error`; a PDF that
+  cannot be stamped is noted on the Fiscal page and not retried. No worker
+  change, so nothing to deploy to GSA-SCAN02. Dev's two approved invoices
+  are stamped. The worker's `_AI_Processed` and archive copies are still the
+  unstamped `<batch id>.pdf`: settled with storage (Laserfiche or DAM).
 
 *Questions for Fiscal (2026-09-29):* which export format and exact columns
 the macro takes; which fields they fill and which the lookup should; the
@@ -3986,3 +3995,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | f | (this commit) | Fiscal stage demo on `aim/f-fiscal-demo`: `aim.fiscal_records` and `aim.members.fiscal` (stash popped and migrated on `Paperboy_Dev`); Fiscal sidebar (Fiscal Queue by BU, On Hold, Ready to Export, Exported, Archived); Fiscal page with Save, Hold, Ready, Release, Archive; Fiscal switch on profiles; export in DocuShare and CSV formats. Store PDF lookup moved into `Aim::StoredPdf`. New routes in the `aim` namespace only. 1319 runs, 0 failures, 0 errors before the last test was added; the Fiscal, profile and review tests re-run after (75 runs, 0 failures); brakeman's same four, none AIM (two P2M, two Data Runner); bundle-audit clean; scoped rubocop clean |
 | 2026-09-28 | — | (this commit) | On-screen text made short and plain, at Joshua's request: no Laserfiche anywhere a user sees it (approval now reads "billing and Fiscal"); page subtitles, queue descriptions, confirms and notices rewritten for users, not developers (no "worker", "extraction", "aim_admin group"; outdated lines such as "coming next" and "Paperboy inbox" fixed; "AIM staff" is AIM Admins). Keep new text in that style. 1320 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | f | (this commit) | From Joshua's run-through: free-text tags, Org Number, editable invoice fields, History behind a link, Report Queue, All / By BU with tick-all, one CSV with the macro's exact header, Fiscal's file name for approved PDFs. Migration `20260928120000` (tags, org_number; tag dropped). Approval stamp proposed for the worker, not built. 1320 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
+| 2026-09-28 | f / e | (this commit) | Approval stamp in Ruby: `Aim::PdfStamp` + `Aim::PdfWriter`, `Aim::ApprovalStamp`, `Aim::StampApprovedJob` (on Approve, on Fiscal's invoice edits, and every 10 minutes -- new `aim_stamp_approved` block in `config/recurring.yml`, standing exception), migration `20260928130000`. Stamped copies served from approval on. Backfilled dev's two approved invoices. 1324 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |

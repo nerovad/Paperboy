@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_130000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -87,6 +87,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
     t.string "phase", limit: 20
     t.string "program", limit: 20
     t.string "split_amount", limit: 100
+    t.string "stamp_error", limit: 500
+    t.datetime "stamped_at"
     t.string "status", limit: 20, default: "review", null: false
     t.string "tags", limit: 500
     t.string "task", limit: 20
