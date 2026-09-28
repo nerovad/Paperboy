@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_160000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -116,6 +116,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_150000) do
     t.string "vendor_code", limit: 50
     t.string "vendor_key", limit: 255, null: false
     t.string "vendor_name", limit: 255, null: false
+    t.text "warnings"
     t.index ["agency", "budget_unit", "vendor_key"], name: "index_aim_coding_rules_on_agency_unit_vendor"
     t.index ["import_id"], name: "index_aim_coding_rules_on_import_id"
     t.index ["retired_by_import_id"], name: "index_aim_coding_rules_on_retired_by_import_id"

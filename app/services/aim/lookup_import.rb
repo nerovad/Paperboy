@@ -8,23 +8,31 @@ module Aim
   # effect with the same coding is skipped; one with different coding is
   # retired the day before the new rule starts, so the file replaces what it
   # covers and leaves the rest.
+  #
+  # Two kinds of refusal. A row with no vendor or no budget unit cannot be a
+  # rule and stays refused. A row the COA objects to may be accepted anyway
+  # (`accept: :all`, or the row numbers) -- there are always exceptions
+  # (Joshua, 2026-09-28) -- and the rule then carries the objection as its
+  # warnings, in sight on the screen.
   class LookupImport
     REQUIRED = %w[vendor_name budget_unit].freeze
-    Outcome = Struct.new(:row, :rule, :reasons, :notes, keyword_init: true) do
-      def refused? = reasons.any?
+    Outcome = Struct.new(:row, :rule, :reasons, :objections, :notes, :accepted, keyword_init: true) do
+      def refused? = reasons.any? || (objections.any? && !accepted)
+      def acceptable? = reasons.empty? && objections.any?
     end
 
     attr_reader :agency, :file_name, :outcomes, :effective_option, :effective_date
 
     # budget_unit: the BU for rows that name none (Facilities' file has no
     # column for it).
-    def initialize(path, agency:, effective: 'bdo', effective_date: nil, budget_unit: nil)
+    def initialize(path, agency:, effective: 'bdo', effective_date: nil, budget_unit: nil, accept: :none)
       @path = path
       @file_name = File.basename(path)
       @agency = agency.to_s.upcase
       @effective_option = effective
       @effective_date = effective_date
       @default_unit = budget_unit.presence
+      @accept = accept
       @coa = Aim::CoaCodes.new(@agency)
       @file = Aim::LookupFile.new(path)
       @outcomes = @file.rows.map { |row| judge(row) }
@@ -36,7 +44,10 @@ module Aim
     def report
       { file: file_name, agency: agency, rows: outcomes.size, loadable: loadable.size, refused: refused.size,
         unknown_columns: @file.unknown_columns,
-        refused_rows: refused.map { |o| { row: o.row.number, vendor: o.row.fields['vendor_name'], reasons: o.reasons } },
+        refused_rows: refused.map do |o|
+          { row: o.row.number, vendor: o.row.fields['vendor_name'], reasons: o.reasons + o.objections, acceptable: o.acceptable? }
+        end,
+        accepted_rows: loadable.select(&:accepted).map { |o| { row: o.row.number, warnings: o.objections } },
         noted_rows: loadable.select { |o| o.notes.any? }.map { |o| { row: o.row.number, notes: o.notes } } }
     end
 
@@ -75,14 +86,21 @@ module Aim
         row.notes << "budget unit #{@default_unit} given at import"
       end
       reasons = REQUIRED.reject { |field| values[field].present? }.map { |field| "no #{field.humanize.downcase}" }
-      reasons << 'no coding and no encumbrance' if (Aim::CodingRule::CODING_FIELDS + %w[encumbrance_type]).none? { |f| values[f].present? }
+      objections = []
+      objections << 'no coding and no encumbrance' if (Aim::CodingRule::CODING_FIELDS + %w[encumbrance_type]).none? { |f| values[f].present? }
       bad = @coa.invalid_fields(values.slice(*Aim::CoaCodes::LISTS.keys))
       # Sheriff writes its department as the agency code (SHF); noted, not refused.
       row.notes << "department #{values['department'].inspect} is not in the COA" if bad.delete('department')
-      reasons += bad.map { |field| "#{field.humanize.downcase} #{values[field].inspect} is not in the COA for #{agency}" }
+      objections += bad.map { |field| "#{field.humanize.downcase} #{values[field].inspect} is not in the COA for #{agency}" }
+      accepted = reasons.empty? && objections.any? && accepted?(row.number)
       attributes = values.slice(*Aim::CodingRule::FIELDS)
-      rule = Aim::CodingRule.new(attributes.merge(agency: agency, effective_from: effective_from_for(values, row.notes)))
-      Outcome.new(row: row, rule: rule, reasons: reasons, notes: row.notes)
+      rule = Aim::CodingRule.new(attributes.merge(agency: agency, effective_from: effective_from_for(values, row.notes),
+                                                  warnings: (objections.join('; ') if accepted)))
+      Outcome.new(row: row, rule: rule, reasons: reasons, objections: objections, notes: row.notes, accepted: accepted)
+    end
+
+    def accepted?(row_number)
+      @accept == :all || (@accept.respond_to?(:include?) && @accept.include?(row_number))
     end
 
     # bdo: the date in the encumbrance number (BDO_4700 2024 07 29 ...; CT_4620

@@ -2915,7 +2915,12 @@ Business Support's objects `20304`/`22304`/`21914` and Housekeeping's `20313`
 `CHECK W/ FISCAL` as a program; Facilities' 6 rows name no BU
 (`AIM_LOOKUP_UNIT=nnnn` supplies one); Sheriff's `S040` in the Object
 column. Each is reported by row for Fiscal to fix in the file or on the
-screen. Not loaded into any database yet.
+screen. Not loaded into any database yet. **Exceptions (Joshua, 2026-09-28:
+"there are always exceptions"):** a row with no vendor or no BU cannot be a
+rule and stays refused; a row the COA objects to may be **accepted anyway**
+(`AIM_LOOKUP_ACCEPT=all` or row numbers; on the screen, Load anyway / Save
+anyway) and the rule keeps the objection in `warnings`, shown wherever the
+rule is.
 
 *Next:* b.2 coding lines on the invoice (`aim.coding_lines`, one normally,
 more for a split), applied in Rails when an invoice becomes Ready for
@@ -4111,3 +4116,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | f / e | (this commit) | Approval stamp in Ruby: `Aim::PdfStamp` + `Aim::PdfWriter`, `Aim::ApprovalStamp`, `Aim::StampApprovedJob` (on Approve, on Fiscal's invoice edits, and every 10 minutes -- new `aim_stamp_approved` block in `config/recurring.yml`, standing exception), migration `20260928130000`. Stamped copies served from approval on. Backfilled dev's two approved invoices. 1324 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
 | 2026-09-28 | f | (this commit) | From DocuShare's folders and an archived invoice's properties: Remit To, Fund, Department and Major Program added to `aim.fiscal_records` (`20260928140000`); Archive warns on a missing pay doc number only (check numbers are never filled there). Findings, the upload-batch and naming proposals, and new Fiscal questions recorded under item f. 1324 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | b.1 | (this commit) | Branch `aim/b-lookups` from the Fiscal branch (master unchanged). Coding rules, imports and changes tables; `Aim::CodingRule.match`; `Aim::CoaCodes`; `Aim::LookupFile`; `Aim::LookupImport` with report, apply and undo; `aim:lookups:*` rake tasks (standing exception). Preview of the eleven real files: 879 of 972 rows load, the rest reported by row. Bug found in test: assigning `import:` on an unsaved rule made the import's save load rows meant to be skipped; ids are assigned instead. 1327 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
+| 2026-09-28 | b.1 | (this commit) | Accept-anyway for rows the COA objects to (`accept:`, `AIM_LOOKUP_ACCEPT`), the objection kept as the rule's `warnings` (`20260928160000`); rows with no vendor or BU stay refused. 1328 runs, 0 failures, 0 errors; scoped rubocop clean |

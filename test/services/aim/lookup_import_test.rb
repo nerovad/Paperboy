@@ -42,6 +42,20 @@ module Aim
       assert_includes report[:noted_rows].last[:notes], 'object read from "2192 TEMP HELP"'
     end
 
+    test 'a row the COA objects to can be accepted, and carries the objection; a row with no vendor cannot' do
+      path = file('c.csv',
+                  'Bad Object,,,,,BDO_46402023072600000006_1,4641,22304,GATV,GFUN,INDIRECT,,,,,',
+                  ',,,,,BDO_46402023072600000007_1,4641,2162,,,,,,,,')
+      report = Aim::LookupImport.new(path, agency: 'GSA').report
+      assert_equal([true, false], report[:refused_rows].map { |r| r[:acceptable] })
+
+      import = Aim::LookupImport.new(path, agency: 'GSA', accept: [2]).apply!(by: 'fiscal@example.com')
+
+      assert_equal [1, 1], [import.loaded_count, import.refused_count]
+      assert_equal 'object code "22304" is not in the COA for GSA', import.rules.first.warnings
+      assert_equal 1, Aim::LookupImport.new(path, agency: 'GSA', accept: :all).loadable.size
+    end
+
     test 'applying loads the rules once, replaces changed ones, and undo puts it all back' do
       path = file('a.csv', 'FAST SIGNS,,,,,BDO_46402023072600000005_1,4641,2162,GATV,GFUN,INDIRECT,,,,,')
       first = Aim::LookupImport.new(path, agency: 'GSA').apply!(by: 'fiscal@example.com')
