@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -65,6 +65,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_100000) do
     t.string "unit_id", limit: 10
     t.datetime "updated_at", null: false
     t.index ["agency_id", "unit_id"], name: "index_aim_enabled_units_on_agency_and_unit", unique: true
+  end
+
+  create_table "aim.fiscal_records", force: :cascade do |t|
+    t.string "activity", limit: 20
+    t.datetime "archived_at"
+    t.string "bdo_do", limit: 100
+    t.date "check_date"
+    t.string "check_number", limit: 50
+    t.datetime "created_at", null: false
+    t.decimal "credit_amount", precision: 15, scale: 2
+    t.string "dept_object", limit: 20
+    t.text "description"
+    t.datetime "exported_at"
+    t.string "function_code", limit: 20
+    t.string "hold_reason", limit: 500
+    t.bigint "invoice_id", null: false
+    t.string "object_code", limit: 20
+    t.string "pay_doc_number", limit: 100
+    t.string "phase", limit: 20
+    t.string "program", limit: 20
+    t.string "split_amount", limit: 100
+    t.string "status", limit: 20, default: "review", null: false
+    t.string "tag", limit: 40
+    t.string "task", limit: 20
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.index ["invoice_id"], name: "index_aim_fiscal_records_on_invoice_id", unique: true
+    t.index ["status"], name: "index_aim_fiscal_records_on_status"
   end
 
   create_table "aim.invoice_events", force: :cascade do |t|
@@ -135,6 +163,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_100000) do
     t.string "deactivated_by", limit: 255
     t.string "deactivation_reason", limit: 500
     t.integer "employee_id", null: false
+    t.boolean "fiscal", default: false, null: false
     t.string "fusion_roles", limit: 255
     t.string "fusion_team", limit: 100
     t.datetime "updated_at", null: false

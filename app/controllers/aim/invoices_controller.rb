@@ -10,6 +10,7 @@ module Aim
     include Aim::InvoiceLocking
     include Aim::InvoiceBulkMoves
     include Aim::InvoiceRestore
+    include Aim::StoredPdf
 
     before_action :require_aim_admin, :remember_queue_page, only: :index
     before_action :set_queue
@@ -95,22 +96,6 @@ module Aim
     end
 
     def pdf_present? = stored_pdf_path.present?
-
-    # Ready for Approval is people's queues: one group per owner, the shared
-    # queue last, each with the queues an invoice of that BU can move to.
-    # The store, then the invoice's folder, then its PDF, and nothing from the
-    # row may name a file outside the store: the batch id has to be one path
-    # component, and the resolved path has to stay under the store.
-    def stored_pdf_path
-      store = File.expand_path(Aim::InvoiceDirectoryService.instance.store_dir)
-      name = @invoice.batch_id.to_s
-      return if name.blank? || name.match?(%r{[/\\]}) || name.start_with?('.')
-
-      path = File.expand_path(File.join(store, name, "#{name}.pdf"))
-      path if path.start_with?("#{store}/") && File.file?(path)
-    rescue Aim::MissingConfiguration
-      nil
-    end
 
     def save_fields
       permitted = params.fetch(:invoice, {}).permit(*Aim::Invoice::EDITABLE_FIELDS).to_h

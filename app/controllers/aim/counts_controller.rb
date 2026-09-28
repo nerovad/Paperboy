@@ -12,6 +12,7 @@ module Aim
       units = Aim::Users.shared_budget_units(current_user_employee_id, staff: false)
       counts = { my_queue: my_queue_count, shared_queues: Aim::Invoice.shared_for(units).count }
       counts[:queues] = Aim::Invoice.queue_counts if helpers.aim_queue_access?
+      counts[:queues] = (counts[:queues] || {}).merge(Aim::FiscalRecord.status_counts) if helpers.aim_fiscal?
       render json: counts
     rescue StandardError => e
       Rails.logger.error "AIM could not count its queues: #{e.message}"

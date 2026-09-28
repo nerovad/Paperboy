@@ -1,0 +1,55 @@
+<%# One Fiscal list. With `selectable`, the last column ticks invoices for the export. %>
+<table class="submission-table aim-queue-table aim-fiscal-table">
+  <thead>
+    <tr>
+      <th>Action</th>
+      <th>Vendor</th>
+      <th>Invoice #</th>
+      <th>Budget Unit</th>
+      <th>Date</th>
+      <th>Total</th>
+      <th>Approved</th>
+      <th>Tag</th>
+      <th>Check #</th>
+      <th>Pay Doc #</th>
+      <% if status == 'on_hold' %><th>Hold Reason</th><% end %>
+      <% if %w[exported archived].include?(status) %><th>Exported</th><% end %>
+      <th>Status</th>
+      <% if selectable %><th class="aim-select-cell">Export</th><% end %>
+    </tr>
+  </thead>
+  <tbody>
+    <% records.each do |record| %>
+      <% invoice = record.invoice %>
+      <% search = [invoice.vendor_name, invoice.invoice_number, invoice.budget_unit, invoice.invoice_total,
+                   aim_invoice_date(invoice.invoice_date), record.tag, record.check_number, record.pay_doc_number,
+                   record.bdo_do, record.hold_reason, stamps[invoice.id], invoice.batch_id].compact.join(' ') %>
+      <tr title="<%= record.title %>" data-aim-queue-filter-target="row" data-search="<%= search %>">
+        <td class="action-buttons">
+          <%= link_to record.status == 'archived' ? 'View' : 'Open', aim_fiscal_invoice_path(invoice.batch_id),
+                      data: { turbo: false }, class: "btn #{record.status == 'archived' ? 'secondary' : 'approve'} compact" %>
+        </td>
+        <td class="is-strong"><%= invoice.vendor_name.presence || 'N/A' %></td>
+        <td><%= invoice.invoice_number.presence || 'N/A' %></td>
+        <td><%= invoice.budget_unit.presence || 'N/A' %></td>
+        <td><%= aim_invoice_date(invoice.invoice_date) || 'N/A' %></td>
+        <td class="aim-total"><%= aim_currency(invoice.invoice_total) || 'N/A' %></td>
+        <td><%= stamps[invoice.id] || '—' %></td>
+        <td><%= record.tag.presence || '—' %></td>
+        <td><%= record.check_number.presence || '—' %></td>
+        <td><%= record.pay_doc_number.presence || '—' %></td>
+        <% if status == 'on_hold' %><td><%= record.hold_reason %></td><% end %>
+        <% if %w[exported archived].include?(status) %>
+          <td><%= record.exported_at&.in_time_zone&.strftime('%m/%d/%y %H:%M') || '—' %></td>
+        <% end %>
+        <td><%= aim_fiscal_badge(record) %></td>
+        <% if selectable %>
+          <td class="aim-select-cell">
+            <input type="checkbox" name="record_ids[]" value="<%= record.id %>"
+                   aria-label="Export <%= invoice.invoice_number.presence || invoice.batch_id %>">
+          </td>
+        <% end %>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

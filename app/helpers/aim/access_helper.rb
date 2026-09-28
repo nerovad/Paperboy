@@ -27,6 +27,18 @@ module Aim
       Aim::Users.member?(aim_session_employee_id)
     end
 
+    # Who works the Fiscal stage (item f): the people an AIM Admin has marked
+    # Fiscal on their profile, and the AIM Admins themselves.
+    def aim_fiscal?
+      return true if aim_queue_access?
+      return @aim_fiscal unless @aim_fiscal.nil?
+
+      id = aim_session_employee_id
+      @aim_fiscal = id.present? && Aim::Member.active.exists?(employee_id: id, fiscal: true)
+    rescue ActiveRecord::ActiveRecordError
+      false
+    end
+
     # Who manages AIM's people. One role since 2026-09-25: the AIM Admins,
     # who also process invoices, so this is aim_queue_access? by another name.
     def aim_user_admin? = aim_queue_access?

@@ -406,6 +406,11 @@ Left in a, for later: BU labels and default owners (a.3), sharing and Out of
 office (a.4), person folders by employee id (a.5). **Next phase: the Fiscal
 stage, item f, as a demo first** -- see `### f.` below.
 
+**Update 2026-09-28, later: the Fiscal demo is built** on `aim/f-fiscal-demo`
+(not merged): a Fiscal sidebar group, the Fiscal switch on profiles, a
+Fiscal page per approved invoice, and the export in both formats. What was
+built and decided is under `### f.` -> *Built*.
+
 **What is missing** is mostly two things: managing who works AIM and which
 BUs they cover, and the lookups that code and route an invoice before it
 reaches a person. See `## Next — After v2`.
@@ -3003,6 +3008,40 @@ through their Excel macro into the payment software); then they archive it.
 - **Demo data:** the invoices already approved on `Paperboy_Dev` appear in
   the Fiscal Queue on their own.
 
+*Built (demo, 2026-09-28, `aim/f-fiscal-demo`):*
+- `Aim::FiscalRecord` moves review -> on_hold / ready, on_hold -> review /
+  ready, ready -> review / on_hold / exported, exported -> archived. Every
+  move is an `aim.invoice_events` row with action `fiscal` and a note, so it
+  shows in the invoice's history. Approved invoices are taken in each time a
+  Fiscal list opens (`take_in_approved!`).
+- Sidebar **Fiscal**: Fiscal Queue (grouped by BU), On Hold, Ready to
+  Export, **Exported**, Archived, with counts. Exported was added to the four
+  planned, because archiving happens after the export and needs a list.
+- **Fiscal page** (`/aim/fiscal/<batch id>`): the PDF, the invoice's facts,
+  the DocuShare title and the approval stamp text, Fiscal's fields, and the
+  history. Save, Hold (asks for a reason and a tag, `HOLD PMT` by default),
+  Ready, Release, Back to Fiscal Queue, Archive. Archived is read only.
+  Nothing is required before Ready until Fiscal says what is.
+- **The PDF shown is the store's, unstamped**: the approval stamp is item e
+  and not built. The stamp *text* (`Last, First_mm/dd/yyyy_hh:mm:ss`) comes
+  from the history's move to approved, and the name comes from the
+  approver's email in GSABSS (the email itself if no match).
+- **Fiscal role:** `aim.members.fiscal`, set with Make Fiscal / Take away
+  Fiscal on the profile by AIM Admins. The person has to be on the AIM list
+  first. It shows as a Fiscal badge among their roles. AIM Admins reach
+  Fiscal without it (`aim_fiscal?`); in Approver mode they need it.
+- **Export** (`Aim::FiscalExport`): tick on Ready to Export, pick DocuShare
+  (`.txt`, UTF-16LE with a BOM, tabs, every value quoted, CRLF) or CSV. Ready
+  ones become exported. Exported ones can be downloaded again and stay as
+  they are. Expiration Date and Past Due are empty. Description is Fiscal's
+  text, else the hold reason while held, else the approval stamp text.
+- On `Paperboy_Dev` only one invoice is approved (BU 4641, exported), so the
+  demo shows one row unless more are approved first.
+- Shared files: new routes inside the `aim` namespace only (standing
+  exception): `fiscal`, `fiscal/export`, `fiscal/:id` (+ `/pdf`), and
+  `admin/users/:id/fiscal`. No JavaScript was added; the lists reuse
+  `aim-queue-filter`, `billing-audit-sections` and `aim-reason`.
+
 *Questions for Fiscal (2026-09-29):* which export format and exact columns
 the macro takes; which fields they fill and which the lookup should; the
 check number and pay doc: from where, and when; what "archive" must do; do
@@ -3910,3 +3949,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | — | (this merge) | Merged `origin/master` (96 commits, `ffa0867b`) into `aim/a-user-admin`. Master's `20260925100000_create_form_template_emails` shared a version with `create_aim_members`, so AIM's six Sep-25 migrations were renumbered to `20260926100000`-`100005` first (third collision; always check `db/migrate` on master before merging), and `Paperboy_Dev`'s `schema_migrations` rows moved to match. `schema.rb` is master's plus AIM's four tables (`enabled_units`, `members`, `user_budget_units`, `user_preferences`); master had already dropped them once as unmerged (`86c98d9d`). Gate on the merge: 1297 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's four, none AIM (one moved from P2M to Data Runner with master); bundle-audit and zeitwerk clean |
 | 2026-09-28 | a | (this commit) | Grouped picker: clicking in shows the whole list with the current choice highlighted; only typing filters (it had filtered by the chosen text, so Upload's BU list showed one unit -- found by Joshua). Script only; syntax-checked, not covered by the Rails suite |
 | 2026-09-28 | a | (this merge) | **Item a merged to Paperboy master**, Joshua's decision. Gate: the full suite on the master merge `2dc9141b` (1297 runs, 0 failures, 0 errors) was against today's master, which had not moved; the one commit after is the grouped picker's script. Fiscal demo (item f) written up as the next phase; its start is in `git stash` |
+| 2026-09-28 | f | (this commit) | Fiscal stage demo on `aim/f-fiscal-demo`: `aim.fiscal_records` and `aim.members.fiscal` (stash popped and migrated on `Paperboy_Dev`); Fiscal sidebar (Fiscal Queue by BU, On Hold, Ready to Export, Exported, Archived); Fiscal page with Save, Hold, Ready, Release, Archive; Fiscal switch on profiles; export in DocuShare and CSV formats. Store PDF lookup moved into `Aim::StoredPdf`. New routes in the `aim` namespace only. 1319 runs, 0 failures, 0 errors before the last test was added; the Fiscal, profile and review tests re-run after (75 runs, 0 failures); brakeman's same four, none AIM (two P2M, two Data Runner); bundle-audit clean; scoped rubocop clean |

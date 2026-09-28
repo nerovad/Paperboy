@@ -1,0 +1,131 @@
+<%# The Fiscal page for one approved invoice (item f): the PDF, what AIM
+    already knows, and what Fiscal records beside it. Archived is read only. %>
+<% status = @record.status %>
+<% read_only = status == 'archived' %>
+<% facts = [['Vendor Name', @invoice.vendor_name], ['Invoice Number', @invoice.invoice_number],
+            ['Invoice Date', aim_invoice_date(@invoice.invoice_date)], ['Invoice Total', aim_currency(@invoice.invoice_total)],
+            ['Subtotal', aim_currency(@invoice.subtotal)], ['Sales Tax', aim_currency(@invoice.sales_tax)],
+            ['Order Number', @invoice.order_number], ['Customer Number', @invoice.customer_number],
+            ['Budget Unit', @invoice.budget_unit], ['Owner', @invoice.assigned_to.presence || 'Shared'],
+            ['Approved', @stamp], ['Document Type', @invoice.document_type], ['Handle', @invoice.batch_id],
+            ['DocuShare Title', @record.title]] %>
+<div class="aim-page aim-review-page">
+  <header class="aim-page-header">
+    <div class="aim-review-heading">
+      <%= link_to 'Back to Fiscal', fiscal_return_path, class: 'aim-kicker' %>
+      <h1 class="aim-page-title"><%= @invoice.vendor_name.presence || @invoice.batch_id %> · <%= @invoice.invoice_number %></h1>
+      <%= aim_fiscal_badge(@record) %>
+      <% if @record.tag.present? %><span class="badge is-scheduled"><%= @record.tag %></span><% end %>
+    </div>
+  </header>
+
+  <% if status == 'on_hold' && @record.hold_reason.present? %>
+    <div class="aim-readonly-banner" role="alert">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
+      <div><strong>On hold</strong><p><%= @record.hold_reason %></p></div>
+    </div>
+  <% end %>
+
+  <div class="aim-document-layout">
+    <section class="aim-panel aim-document-panel">
+      <div class="aim-panel-header">
+        <h2 class="aim-panel-title">Document</h2>
+      </div>
+      <% if @pdf_present %>
+        <div class="aim-pdf-shell">
+          <iframe class="aim-pdf-frame" src="<%= "#{pdf_aim_fiscal_invoice_path(@invoice.batch_id)}#zoom=page-fit" %>"
+                  title="Invoice PDF"></iframe>
+        </div>
+      <% else %>
+        <div class="aim-empty-state"><p>The PDF is not in the store.</p></div>
+      <% end %>
+    </section>
+
+    <%= form_with model: @record, scope: :fiscal_record, url: aim_fiscal_invoice_path(@invoice.batch_id),
+                  method: :patch, local: true, class: 'aim-panel aim-metadata-form', data: { controller: 'aim-reason' } do |form| %>
+      <div class="aim-panel-header">
+        <h2 class="aim-panel-title">Fiscal</h2>
+      </div>
+
+      <div class="aim-form-scroll">
+        <section class="aim-ticket aim-fiscal-facts">
+          <h3>Invoice</h3>
+          <dl>
+            <% facts.each do |label, value| %>
+              <dt><%= label %></dt><dd><%= value.presence || '—' %></dd>
+            <% end %>
+          </dl>
+        </section>
+
+        <div class="aim-fields">
+          <% Aim::FiscalRecord::EDITABLE_FIELDS.each do |field| %>
+            <div class="aim-field-row">
+              <div class="aim-field">
+                <%= form.label field, aim_fiscal_field_label(field) %>
+                <% case field %>
+                <% when 'tag' %>
+                  <%= form.select field, Aim::FiscalRecord::TAGS, { include_blank: "None (#{Aim::FiscalRecord::DEFAULT_TAG})" },
+                                  disabled: read_only %>
+                <% when 'check_date' %>
+                  <%= form.date_field field, disabled: read_only %>
+                <% when 'description' %>
+                  <%= form.text_area field, rows: 2, disabled: read_only,
+                                            placeholder: @stamp ? "Left empty, the export uses #{@stamp}" : nil %>
+                <% else %>
+                  <%= form.text_field field, disabled: read_only %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <% if @events.present? %>
+          <section class="aim-ticket aim-history">
+            <h3>History</h3>
+            <ul>
+              <% @events.each do |event| %>
+                <li>
+                  <%= event.created_at.in_time_zone.strftime('%m/%d/%y %H:%M') %>
+                  <% if event.to_state.present? %>
+                    <%= event.from_state.present? ? "#{aim_state_label(event.from_state)} → " : '' %><%= aim_state_label(event.to_state) %>
+                  <% end %>
+                  by <%= event.actor %><%= " — #{event.note}" if event.note.present? %>
+                </li>
+              <% end %>
+            </ul>
+          </section>
+        <% end %>
+      </div>
+
+      <div class="aim-form-actions">
+        <div class="aim-action-group aim-review-action-strip">
+          <% if read_only %>
+            <%= link_to 'Back to Fiscal', fiscal_return_path, class: 'btn' %>
+          <% else %>
+            <%= form.submit 'Save', class: 'btn secondary' %>
+            <% if @record.can_move_to?('ready') %>
+              <%= form.submit 'Ready', class: 'btn approve',
+                                       data: { turbo_confirm: 'Mark this invoice ready for the export?', confirm_label: 'Ready' } %>
+            <% end %>
+            <% if status == 'on_hold' %>
+              <%= form.submit 'Release', class: 'btn take-back' %>
+            <% end %>
+            <% if status == 'ready' %>
+              <%= form.submit 'Back to Fiscal Queue', class: 'btn warning' %>
+            <% end %>
+            <% if @record.can_move_to?('on_hold') %>
+              <button type="button" class="btn warning" data-action="aim-reason#open"
+                      data-commit="Hold" data-title="Put on hold">Hold</button>
+            <% end %>
+            <% if status == 'exported' %>
+              <%= form.submit 'Archive', class: 'btn approve',
+                                         data: { turbo_confirm: 'Archive this invoice? It is finished after this.',
+                                                 confirm_label: 'Archive' } %>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+      <%= render 'hold_modal' unless read_only %>
+    <% end %>
+  </div>
+</div>

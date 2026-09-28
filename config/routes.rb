@@ -158,10 +158,17 @@ Rails.application.routes.draw do
       member do
         patch :deactivate, to: 'member_statuses#deactivate'
         patch :reactivate, to: 'member_statuses#reactivate'
+        patch :fiscal, to: 'member_fiscal#update'
       end
       resources :budget_units, only: %i[create update destroy], controller: 'member_budget_units'
     end
     resources :uploads, only: %i[new create]
+    get 'fiscal', to: 'fiscal#index', as: :fiscal
+    post 'fiscal/export', to: 'fiscal_exports#create', as: :fiscal_export
+    resources :fiscal_invoices, path: 'fiscal', controller: 'fiscal', only: %i[show update],
+                                constraints: { id: %r{[^/]+} } do
+      get :pdf, on: :member
+    end
     resources :vendor_aliases, only: %i[index create update destroy]
     resources :vendor_rules, only: %i[index create update destroy]
   end

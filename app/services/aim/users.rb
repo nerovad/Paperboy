@@ -63,6 +63,7 @@ module Aim
     # What a person is in AIM, for their profile and the Users & Queues list
     # (roles decided 2026-09-25): AIM Admin comes from ACL (aim_admin, or
     # system_admins), BU Admin from their BUs, and everyone else is a User.
+    # Fiscal (item f) is a switch on their profile, alongside the others.
     def roles_of(employee_id) = roles_by_person([employee_id]).fetch(employee_id.to_i)
 
     # The same for many people at once: { employee_id => [roles] }.
@@ -72,7 +73,8 @@ module Aim
       groups = EmployeeGroup.where(EmployeeID: ids).pluck(:EmployeeID, :GroupID)
                             .group_by(&:first).transform_values { |pairs| pairs.map { |_, id| names[id] } }
       admins = Aim::UserBudgetUnit.where(employee_id: ids).administered.distinct.pluck(:employee_id).to_set
-      ids.index_with { |id| role_names(groups.fetch(id, []), admins.include?(id)) }
+      fiscal = Aim::Member.active.where(employee_id: ids, fiscal: true).pluck(:employee_id).to_set
+      ids.index_with { |id| role_names(groups.fetch(id, []), admins.include?(id)) + (fiscal.include?(id) ? ['Fiscal'] : []) }
     rescue ActiveRecord::ActiveRecordError
       ids.index_with { ['User'] }
     end

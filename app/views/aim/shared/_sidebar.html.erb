@@ -1,6 +1,6 @@
 <%# app/views/aim/shared/_sidebar.html.erb
     Sidebar for Automated Invoice Management, grouped the way Production's is:
-    AIM, Pipeline, Vendors, Admin. AIM is open by default and the rest closed;
+    AIM, Pipeline, Vendors, Fiscal, Admin. AIM is open by default and the rest closed;
     the group holding the current page is always open. A group you open or
     close yourself stays that way from page to page until you come back to
     the AIM main page (aim_sidebar_controller). The counts are filled in after the
@@ -8,6 +8,7 @@
 <% current = if controller_name == "invoices" || (controller_name == "budget_units" && aim_queue_access?) then "queues"
               elsif %w[vendor_aliases vendor_rules].include?(controller_name) then "vendors"
               elsif %w[admin members enabled_units].include?(controller_name) then "admin"
+              elsif controller_name == "fiscal" then "fiscal"
               else "aim"
               end %>
 <% in_queues = current == "queues" %>
@@ -70,6 +71,25 @@
                     class: "nav-link#{' active' if current_page?(aim_vendor_rules_path)}" %>
       </details>
 
+    <% end %>
+
+    <% if aim_fiscal? %>
+      <%# The Fiscal stage (item f): what happens after approval. The Fiscal
+          Queue is the invoices Fiscal is still filling in, by budget unit. %>
+      <details class="nav-group" <%= "open" if current == "fiscal" %> data-aim-sidebar-target="group" data-key="fiscal"
+               data-default-open="false" data-current="<%= current == "fiscal" %>">
+        <summary><span class="nav-group-label">Fiscal</span></summary>
+        <% Aim::FiscalRecord::STATUS_LABELS.each do |status, label| %>
+          <%= link_to aim_fiscal_path(status: status),
+                      class: "nav-link#{' active' if current == 'fiscal' && (@status || @record&.status) == status}" do %>
+            <span><%= label %></span>
+            <span class="sidebar-count <%= status == 'on_hold' ? 'danger' : 'neutral' %>" data-aim-count="fiscal_<%= status %>">…</span>
+          <% end %>
+        <% end %>
+      </details>
+    <% end %>
+
+    <% if aim_queue_access? %>
       <% if aim_user_admin? %>
         <details class="nav-group" <%= "open" if current == "admin" %> data-aim-sidebar-target="group" data-key="admin"
                  data-default-open="false" data-current="<%= current == "admin" %>">

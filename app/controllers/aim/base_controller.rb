@@ -36,6 +36,13 @@ module Aim
       redirect_to aim_root_path, alert: 'Only AIM admins manage AIM users.'
     end
 
+    # The Fiscal stage: Fiscal staff and AIM admins.
+    def require_fiscal
+      return if helpers.aim_fiscal?
+
+      redirect_to aim_root_path, alert: 'Only Fiscal staff and AIM admins work the Fiscal queue.'
+    end
+
     # Managing people: AIM admins everywhere, BU Admins in their own BUs.
     def require_people_manager
       return if helpers.aim_manages_people?

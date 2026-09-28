@@ -30,6 +30,19 @@
 
   <%= render 'roles', name: name %>
 
+  <%# The Fiscal switch (item f): who works the Fiscal queue. AIM Admins set it. %>
+  <% if @member && aim_user_admin? %>
+    <section class="aim-panel aim-profile-fiscal">
+      <div>
+        <strong>Fiscal</strong>
+        <%= @member.fiscal ? "#{name} works the Fiscal queue." : "#{name} does not work the Fiscal queue." %>
+      </div>
+      <%= button_to @member.fiscal ? 'Take away Fiscal' : 'Make Fiscal', fiscal_aim_member_path(@employee_id),
+                    method: :patch, params: { fiscal: @member.fiscal ? '0' : '1' },
+                    class: "btn #{@member.fiscal ? 'deny' : 'approve'} compact" %>
+    </section>
+  <% end %>
+
   <h2 class="aim-profile-heading" id="queue">Invoices</h2>
   <div data-controller="aim-queue-filter">
     <%= render 'aim/shared/stage_tabs', path: ->(**opts) { aim_member_path(@employee_id, anchor: 'queue', **opts) } %>

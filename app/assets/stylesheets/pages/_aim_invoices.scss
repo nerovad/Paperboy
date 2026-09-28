@@ -1459,3 +1459,42 @@
 .aim-agency-units__grid label[hidden] {
   display: none;
 }
+
+// The Fiscal stage (item f).
+.aim-profile-fiscal {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+}
+
+.aim-fiscal-export__bar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.aim-fiscal-export__hint {
+  color: $text-muted;
+  font-size: 0.85rem;
+}
+
+.aim-fiscal-facts dl {
+  display: grid;
+  gap: 4px 12px;
+  grid-template-columns: max-content 1fr;
+  margin: 0;
+}
+
+.aim-fiscal-facts dt {
+  color: $text-muted;
+}
+
+.aim-fiscal-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
