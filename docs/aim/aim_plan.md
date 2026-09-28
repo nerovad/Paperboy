@@ -396,15 +396,15 @@ the share, stopped, to be retired (see `## Next` item h). **LockBox**:
 variables, `AIM_SHARED_FOLDER_NAME`, `AIM_STORE_DIR` and
 `AIM_V2_PROGRAM_DIR`.
 
-**Update 2026-09-25 (branch `aim/a-user-admin`, pushed, not merged).** Item a
-is mostly built: the AIM list and Users & Queues; profiles with BUs, BU
-Admin, the shared queue switch, Deactivate; one admin role, the `aim_admin`
-group in ACL; BU Admins managing their BUs from My BUs; Admin / Approver
-mode; BUs and agencies from the COA; AIM open to anyone signed in (the
-account decides the rest; AIM granted globally in ACL on dev). Left in a:
-BU labels and default owners (a.3), sharing and Out of office (a.4), person
-folders by employee id (a.5). Open question for a.3: does a BU's default
-owner receive its unassigned drops, or only back up routing (item b)?
+**Update 2026-09-28: item a merged to master** (`aim/a-user-admin`). Built:
+the AIM list and Users & Queues; profiles with BUs, BU Admin, the shared
+queue switch, Deactivate; one admin role, the `aim_admin` group in ACL; BU
+Admins managing their BUs from My BUs; Admin / Approver mode; BUs and
+agencies from the COA, and AIM's Budget Units choosing which; the grouped
+person picker; AIM open to anyone signed in (the account decides the rest).
+Left in a, for later: BU labels and default owners (a.3), sharing and Out of
+office (a.4), person folders by employee id (a.5). **Next phase: the Fiscal
+stage, item f, as a demo first** -- see `### f.` below.
 
 **What is missing** is mostly two things: managing who works AIM and which
 BUs they cover, and the lookups that code and route an invoice before it
@@ -2953,6 +2953,75 @@ touched it, and how many).
 
 ### f. The Fiscal stage (was 11) -- partly waiting on Fiscal
 
+**Next phase (Joshua, 2026-09-28): a working demo of this stage, then the
+lookups (item b) feeding it.** Joshua meets Fiscal on 2026-09-29; the demo
+shows what Paperboy can take over from DocuShare. Branch
+`aim/f-fiscal-demo`, cut from master once `aim/a-user-admin` is merged.
+**A start is in `git stash` on this machine** ("fiscal demo start"): the
+migration `20260928110000_create_aim_fiscal_records` (table below plus
+`aim.members.fiscal`) and `Aim::FiscalRecord`. It was rolled back on
+`Paperboy_Dev`; `git stash pop` on the new branch, then `db:migrate`.
+
+What Fiscal does today, as Joshua understands it: an approved invoice reaches
+the BU's Fiscal queue; Fiscal opens it, applies the check number, pay doc and
+the rest; it waits for the data export; they run the report (a CSV put
+through their Excel macro into the payment software); then they archive it.
+
+*The demo:*
+- **Fiscal records the invoice beside it** (`aim.fiscal_records`, one per
+  approved invoice: status, tag, hold reason, BDO/DO, pay doc number, check
+  number and date, credit amount, split amount, object, dept object,
+  activity, function, program, phase, task, description, exported_at,
+  archived_at, updated_by). The worker's states are untouched: every invoice
+  in `approved`, `exporting` or `exported` belongs to Fiscal.
+- **Statuses:** review -> on_hold (with a reason and a tag) -> ready ->
+  exported -> archived. DocuShare's folders map to these ("BDO's On Hold
+  Missing MA's/Approvals", "Credit/On Hold Invoices", "Invoices To Accrue",
+  "Accrue Pending"); its title/keyword tags (`#INV`, `#BDO$`, `#CT$`,
+  `#INV_TAX CREDIT_DO NOT PAY`, `#INV_TAX ERROR`, `#RQS`, `DISCOUNT`,
+  `HOLD PMT`, `Cross-FY Invoice`) become a tag on the record.
+- **A Fiscal sidebar group:** Fiscal Queue (by BU, the By BU sections), On
+  Hold, Ready to Export, Archived. A Fiscal page per invoice: the stamped PDF
+  and the fields, with Save, Hold (reason), Ready, Release.
+- **A Fiscal role:** `aim.members.fiscal`, switched on the profile by AIM
+  Admins (roles other than AIM Admin live in AIM's settings). AIM Admins see
+  Fiscal too. Fiscal also gets to edit the lookups (item b).
+- **Export:** tick Ready invoices, export, and they become exported; archive
+  after. Two formats until Fiscal says which their macro wants: DocuShare's
+  (tab-separated, UTF-16 with BOM, every value quoted) and plain CSV. **Only
+  the header row and one row per invoice** -- the sample's "Class Name",
+  Collection and SavedQuery blocks are DocuShare's own, not data (Joshua).
+  Columns, in DocuShare's order: Title, Invoice Number, Vendor Name,
+  Customer Number, Order Number, Invoice Date AP (yyyymmdd), Create Date,
+  Modified Date (mm/dd/yyyy), Expiration Date, Past Due, Sales Tax,
+  SubTotal, Credit Amount, Total, Keywords, BDO / DO, Pay Doc Number,
+  Description, Unit, Object, Dept Object, Activity, Function, Program,
+  Phase, Task, Split Invoice Amount, Handle, Archive Date, Check Number.
+  Title is `<tag>_<BU>_<vendor>_<invoice no>_<yyyymmdd>`; Handle is AIM's
+  batch id; Description carries the approval stamp text
+  (`Last, First_mm/dd/yyyy_hh:mm:ss`) or the hold reason.
+- **Demo data:** the invoices already approved on `Paperboy_Dev` appear in
+  the Fiscal Queue on their own.
+
+*Questions for Fiscal (2026-09-29):* which export format and exact columns
+the macro takes; which fields they fill and which the lookup should; the
+check number and pay doc: from where, and when; what "archive" must do; do
+they send an invoice back to the approver; which folders/statuses they
+really use; per-BU queues or one queue; the fiscal stamp (check number, date
+processed, who?); invoice date or processing date for choosing a year's
+lookup row.
+
+*Then item b feeds it:* the lookup fills BDO/DO and the coding (PO numbers
+are in Fiscal's lookup CSVs, the "Encumbrance Doc"/"BDO/PO #" column --
+never loaded to SQL so far). The lookups are managed in Paperboy: AIM
+tables, screens with COA validation and row history, Fiscal editing,
+effective-from/until dates so next year's rows can be loaded ahead of 7/1,
+and the yearly file staged through Data Runner (its inbox, load and run log;
+a DSL there needs Traap's approval) with AIM's preview-then-apply. No person
+routing in the lookups: an invoice nobody names goes to the BU's shared
+queue (Joshua, 2026-09-28); suggestions from approval history may come
+later.
+
 **Goal.** Approved invoices go to Fiscal inside AIM, where Fiscal records
 payment and exports in bulk. Only when Fiscal archives an invoice does it
 leave for long-term storage. Laserfiche, or whatever replaces it, is the
@@ -3840,3 +3909,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | a | (this commit) | Grouped person picker (`aim_grouped_search_controller`, registered in `app/javascript/controllers/index.js` with Joshua's approval): AIM users under each BU they work in, COA labels, the invoice's BU first, loose word search; used by Move and Upload's Someone else, and for Upload's BU list (agency headings kept). AIM's Budget Units: Save at the top too, floating Save without a bar, loose search opening matching agencies (`aim_queue_filter` now opens <details> groups). 1212 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-28 | — | (this merge) | Merged `origin/master` (96 commits, `ffa0867b`) into `aim/a-user-admin`. Master's `20260925100000_create_form_template_emails` shared a version with `create_aim_members`, so AIM's six Sep-25 migrations were renumbered to `20260926100000`-`100005` first (third collision; always check `db/migrate` on master before merging), and `Paperboy_Dev`'s `schema_migrations` rows moved to match. `schema.rb` is master's plus AIM's four tables (`enabled_units`, `members`, `user_budget_units`, `user_preferences`); master had already dropped them once as unmerged (`86c98d9d`). Gate on the merge: 1297 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's four, none AIM (one moved from P2M to Data Runner with master); bundle-audit and zeitwerk clean |
 | 2026-09-28 | a | (this commit) | Grouped picker: clicking in shows the whole list with the current choice highlighted; only typing filters (it had filtered by the chosen text, so Upload's BU list showed one unit -- found by Joshua). Script only; syntax-checked, not covered by the Rails suite |
+| 2026-09-28 | a | (this merge) | **Item a merged to Paperboy master**, Joshua's decision. Gate: the full suite on the master merge `2dc9141b` (1297 runs, 0 failures, 0 errors) was against today's master, which had not moved; the one commit after is the grouped picker's script. Fiscal demo (item f) written up as the next phase; its start is in `git stash` |
