@@ -39,6 +39,26 @@ namespace :aim do
       puts "closed #{closed} rows created before #{before}"
     end
 
+    desc 'Add everyone who works AIM through a group to the Admin screen list (item a.1)'
+    task seed_members: :environment do
+      added = Aim::Member.seed_from_groups!(added_by: 'aim:v2:seed_members')
+      puts "aim.members: #{added} added from the AIM groups"
+    end
+
+    desc 'Add the people in a CSV of employee ids to the AIM users list (item a.1c)'
+    task import_members: :environment do
+      path = ENV['AIM_SEED_FILE'].presence || Rails.root.join('docs/aim/fusion_gsa_users.csv').to_s
+      added, kept, unknown = Aim::Member.import_csv!(path, added_by: 'aim:v2:import_members')
+      puts "aim.members: #{added} added, #{kept} already present, from #{path}"
+      puts "  not in GSABSS, skipped: #{unknown.join(', ')}" if unknown.any?
+
+      made, app_admins = Aim::Member.apply_fusion_roles!(granted_by: 'aim:v2:import_members')
+      puts "BU Admin from Fusion supervisors: #{made.size} set"
+      made.each { |id, unit| puts "  #{id} is BU Admin of #{unit}" }
+      admins_elsewhere = app_admins - Aim::Users.group_employee_ids
+      puts "Fusion app admins not in aim_admin (add in ACL if they should be AIM Admins): #{admins_elsewhere.join(', ')}" if admins_elsewhere.any?
+    end
+
     desc 'Link open invoices owned by a name to the employee of that name'
     task link_owners: :environment do
       linked, unmatched = Aim::V2Seeds.link_owners

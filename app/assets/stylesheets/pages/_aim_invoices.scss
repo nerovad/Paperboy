@@ -923,3 +923,539 @@
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
+
+// Users & Queues: the Add a person picker's dropdown floats over the list
+// below it, so its panel neither clips it nor paints under the next panel.
+.aim-admin-add-panel {
+  overflow: visible;
+  position: relative;
+  z-index: 2;
+}
+
+// Users & Queues: one line per person, headings pinned while the list
+// scrolls, and everything done to a person in one Actions menu.
+.aim-admin-add-panel__label {
+  color: $text-strong;
+  white-space: nowrap;
+}
+
+.aim-people-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0 12px;
+}
+
+.aim-people-toolbar .aim-queue-search {
+  flex: 1 1 260px;
+  margin: 0;
+}
+
+.aim-people-toolbar__views {
+  display: flex;
+  gap: 4px;
+}
+
+.aim-people-toolbar__filters {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  label {
+    align-items: center;
+    display: inline-flex;
+    gap: 4px;
+    white-space: nowrap;
+  }
+}
+
+// The list scrolls with the page, not in a box of its own, so a laptop
+// screen shows as many rows as it can; the headings stay pinned.
+.aim-people-panel {
+  overflow: visible;
+}
+
+.aim-people-table {
+  overflow: visible;
+
+  th,
+  td {
+    padding: 8px 14px;
+  }
+
+  thead th {
+    background: $surface-panel;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  tr.is-missing td {
+    background: $surface-subtle;
+  }
+}
+
+.aim-people-table__name,
+.aim-sort-link {
+  color: $brand-navy;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    color: $brand-navy-hover;
+    text-decoration: underline;
+  }
+}
+
+.aim-people-table__id {
+  color: $text-muted;
+  font-size: 0.85em;
+  margin-left: 6px;
+}
+
+.aim-people-table__open {
+  text-align: center;
+}
+
+.aim-people-table__zero {
+  color: $text-muted;
+}
+
+.aim-people-table__actions {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+}
+
+// A native <details> dropdown: no script, and it opens over the rows below.
+.aim-actions-menu {
+  display: inline-block;
+  position: relative;
+
+  > summary {
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+}
+
+.aim-actions-menu__list {
+  background: $surface-base;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  min-width: 13rem;
+  padding: 4px 0;
+  position: absolute;
+  right: 0;
+  text-align: left;
+  top: calc(100% + 4px);
+  z-index: 5;
+
+  > a,
+  form button {
+    background: none;
+    border: 0;
+    color: $text-color;
+    cursor: pointer;
+    display: block;
+    font: inherit;
+    padding: 8px 14px;
+    text-align: left;
+    text-decoration: none;
+    width: 100%;
+
+    &:hover {
+      background: $surface-hover;
+    }
+  }
+
+  .aim-actions-menu__danger {
+    color: $danger-dark;
+  }
+}
+
+.aim-actions-menu__note {
+  color: $text-muted;
+  display: block;
+  font-size: 0.85em;
+  padding: 8px 14px;
+  white-space: normal;
+}
+
+// A person's profile: Roles & budget units, Queue, Delete.
+.aim-profile-heading {
+  align-items: center;
+  display: flex;
+  font-size: 1.05rem;
+  gap: 8px;
+  margin: 20px 0 8px;
+}
+
+.aim-profile-page .aim-page-subtitle .badge {
+  margin-left: 6px;
+}
+
+.aim-profile-note {
+  color: $text-muted;
+  font-size: 0.85em;
+  margin: 0;
+  padding: 0 14px 12px;
+}
+
+// The roles panel keeps its shape: no scroll box, no collapsing.
+.aim-profile-roles {
+  overflow: visible;
+
+  .aim-people-table {
+    box-shadow: none;
+  }
+}
+
+.aim-profile-roles__buttons {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.aim-stage-filters {
+  margin: 0 0 12px;
+}
+
+// Delete sits small at the bottom right; its pop-up does the explaining.
+.aim-profile-delete {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+
+  .pb-modal input[type="text"] {
+    width: 100%;
+  }
+}
+
+.aim-profile-roles tr.is-hidden-unit td {
+  color: $text-muted;
+}
+
+// Admin / Approver mode switch at the top of the AIM sidebar: a two-way
+// segmented control on the sidebar's green.
+.aim-mode-switch {
+  margin: 8px 12px 12px;
+}
+
+.aim-mode-switch__buttons {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+  display: flex;
+  padding: 3px;
+
+  form {
+    flex: 1;
+  }
+}
+
+.aim-mode-switch__button {
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 5px 0;
+  width: 100%;
+
+  &.is-active {
+    background: $surface-base;
+    color: $brand-navy;
+  }
+}
+
+.aim-mode-switch__note,
+.aim-mode-switch__link {
+  color: rgba(255, 255, 255, 0.75);
+  display: block;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.aim-mode-switch__link {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  width: 100%;
+}
+
+.aim-owner-choice__note {
+  color: $text-muted;
+  font-size: 0.85em;
+  margin: 6px 0 0;
+}
+
+// The BU page: a BU's shared queue and people nest inside it, one step
+// lighter than the BU header.
+.aim-bu-group > div > .aim-bu-person {
+  margin: 0 0 8px 16px;
+}
+
+.aim-bu-person h3 {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  margin: 0;
+}
+
+.aim-bu-person__toggle {
+  align-items: center;
+  background: $surface-panel;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  color: $text-strong;
+  cursor: pointer;
+  display: flex;
+  flex: 1;
+  font: inherit;
+  font-size: 0.95rem;
+  gap: 10px;
+  padding: 8px 14px;
+  text-align: left;
+
+  .aim-count-pill {
+    margin-left: auto;
+  }
+
+  &[aria-expanded="false"] > span[aria-hidden] {
+    display: inline-block;
+    transform: rotate(-90deg);
+  }
+}
+
+.aim-bu-person__profile {
+  color: $brand-navy;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.aim-bu-person__empty {
+  color: $text-muted;
+  margin: 6px 14px;
+}
+
+.aim-bu-add {
+  margin: 0 0 8px 16px;
+  overflow: visible;
+  position: relative;
+  z-index: 2;
+}
+
+.aim-bu-group,
+.aim-bu-group > div {
+  overflow: visible;
+}
+
+// A profile's bottom row: Deactivate and Delete, small, to the right.
+.aim-profile-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+
+  .aim-profile-delete {
+    margin-top: 0;
+  }
+
+  .pb-modal textarea {
+    width: 100%;
+  }
+}
+
+.aim-profile-inactive {
+  align-items: center;
+  background: $surface-subtle;
+  border-color: $warning-border;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+}
+
+
+.aim-agency-filter {
+  margin: 0 0 8px;
+}
+
+.aim-agency-note {
+  color: $text-muted;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.aim-profile-switch__note {
+  color: $text-muted;
+  font-size: 0.85em;
+}
+
+.aim-bu-person__shared {
+  align-items: center;
+  color: $text-muted;
+  display: inline-flex;
+  font-size: 0.85rem;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.aim-count-pill--warn {
+  background: $warning-border-soft;
+  color: $warning-text;
+}
+
+// Pills at the right of a page header: the no-BU-Admin chip, then the count.
+.aim-page-header__pills {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+// Active BUs with no BU Admin: a chip that opens its list over the page.
+.aim-alert-chip {
+  > summary {
+    cursor: pointer;
+  }
+
+  .aim-alert-chip__list {
+    max-height: 60vh;
+    min-width: 20rem;
+    overflow-y: auto;
+  }
+}
+
+// AIM's budget units: an agency per section, its units in a grid of boxes.
+.aim-agency-units {
+  margin-bottom: 8px;
+  overflow: visible;
+
+  > summary {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+}
+
+.aim-agency-units__grid {
+  display: grid;
+  gap: 6px 16px;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  padding: 4px 14px 14px;
+
+  label {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+  }
+}
+
+.aim-agency-units__all {
+  grid-column: 1 / -1;
+}
+
+// Save floats at the bottom right, just the button: no bar across the list.
+.aim-enabled-units__save {
+  bottom: 16px;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+  position: sticky;
+
+  .btn {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    pointer-events: auto;
+  }
+}
+
+// The grouped pick-list (aim_grouped_search_controller): a search box over a
+// list with a heading per group. The real <select> is hidden but not
+// display:none, so a validation bubble still has somewhere to point.
+.aim-grouped-search__native {
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 1px;
+}
+
+.aim-grouped-search {
+  position: relative;
+  width: 100%;
+}
+
+.aim-grouped-search__input {
+  width: 100%;
+}
+
+.aim-grouped-search__list {
+  background: $surface-base;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  left: 0;
+  list-style: none;
+  margin: 4px 0 0;
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 4px 0;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 20;
+}
+
+.aim-grouped-search__heading {
+  background: $surface-subtle;
+  color: $text-strong;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 12px 4px;
+  position: sticky;
+  top: 0;
+}
+
+.aim-grouped-search__option {
+  cursor: pointer;
+  padding: 6px 12px 6px 20px;
+
+  &.is-active,
+  &:hover {
+    background: $surface-hover;
+  }
+}
+
+.aim-grouped-search__empty {
+  color: $text-muted;
+  padding: 8px 12px;
+}
+
+.aim-count-pill--nowrap {
+  white-space: nowrap;
+}
+
+.aim-enabled-units .aim-queue-search {
+  margin-bottom: 12px;
+}
+
+// A unit the search leaves out: the grid's display: flex would otherwise win.
+.aim-agency-units__grid label[hidden] {
+  display: none;
+}

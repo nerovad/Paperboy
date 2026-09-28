@@ -1,0 +1,21 @@
+<%# Active BUs with no BU Admin (Aim::Users.units_without_admin), for AIM
+    Admins: every BU with people in it should have one. Not enforced. A small
+    chip in the page header; the list opens over the page when clicked, and
+    closes like the Actions menus (aim-actions-menu on the page). %>
+<% if aim_user_admin? %>
+  <% gaps = Aim::Users.units_without_admin %>
+  <% if gaps.any? %>
+    <% coa = Aim::Units.new %>
+    <details class="aim-actions-menu aim-alert-chip" name="aim-people-actions">
+      <summary class="aim-count-pill aim-count-pill--warn" title="Every BU with people should have a BU Admin">
+        ⚠ <%= pluralize(gaps.size, 'BU') %> <%= gaps.size == 1 ? 'has' : 'have' %> no BU Admin
+      </summary>
+      <div class="aim-actions-menu__list aim-alert-chip__list">
+        <p class="aim-actions-menu__note">These have people but no BU Admin. Make someone BU Admin on their profile.</p>
+        <% gaps.each do |unit| %>
+          <%= link_to coa.label(unit), aim_budget_units_path(agency: coa.agency_of(unit), anchor: "bu-#{unit}") %>
+        <% end %>
+      </div>
+    </details>
+  <% end %>
+<% end %>

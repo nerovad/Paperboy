@@ -1,0 +1,53 @@
+<%# One table of AIM users, shared by the list and the By BU groups. One line
+    per person; everything else they can be done to sits in the Actions menu. %>
+<table class="submission-table aim-queue-table aim-people-table">
+  <thead>
+    <tr>
+      <th><%= aim_admin_sort_link 'Name', 'name' %></th>
+      <th><%= aim_admin_sort_link 'Unit', 'unit' %></th>
+      <th><%= aim_admin_sort_link 'Role', 'role' %></th>
+      <th class="aim-people-table__open"><%= aim_admin_sort_link 'Open invoices', 'open' %></th>
+      <th class="aim-people-table__actions" aria-label="Actions"></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% people.each do |person| %>
+      <tr data-aim-queue-filter-target="row" data-search="<%= person.search_text %>"
+          class="<%= 'is-missing' if person.missing || person.inactive %>">
+        <td>
+          <%= link_to person.name, aim_member_path(person.employee_id), class: 'aim-people-table__name' %>
+          <span class="aim-people-table__id"><%= person.employee_id %></span>
+          <% if person.via_group %><span class="badge is-pending" title="AIM Admin through the aim_admin group, set in ACL">ACL</span><% end %>
+          <% if person.missing %><span class="badge is-denied">Not in GSABSS</span><% end %>
+          <% if person.inactive %><span class="badge is-cancelled">Inactive</span><% end %>
+        </td>
+        <td><%= person.unit_label %></td>
+        <td><%= person.roles.join(', ') %></td>
+        <td class="aim-people-table__open">
+          <% if person.open.positive? %>
+            <%= link_to person.open, aim_member_path(person.employee_id), class: 'aim-count-pill' %>
+          <% else %>
+            <span class="aim-people-table__zero">0</span>
+          <% end %>
+        </td>
+        <td class="aim-people-table__actions">
+          <%# name= makes the menus one group: opening one closes the others. %>
+          <details class="aim-actions-menu" name="aim-people-actions">
+            <summary class="btn compact">Actions ▾</summary>
+            <div class="aim-actions-menu__list">
+              <%= link_to 'Edit profile', aim_member_path(person.employee_id, anchor: 'roles') %>
+              <%= link_to 'View queue', aim_member_path(person.employee_id, anchor: 'queue') %>
+              <% if person.member %>
+                <%= link_to person.open.zero? ? 'Delete from AIM…' : 'Move invoices to delete',
+                            aim_member_path(person.employee_id, anchor: 'delete'),
+                            class: ('aim-actions-menu__danger' if person.open.zero?) %>
+              <% else %>
+                <span class="aim-actions-menu__note">AIM Admin through the aim_admin group; change it in ACL</span>
+              <% end %>
+            </div>
+          </details>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

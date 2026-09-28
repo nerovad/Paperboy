@@ -12,7 +12,8 @@ export default class extends Controller {
   connect() {
     this.groupTargets.forEach((group) => {
       const toggle = group.querySelector("[aria-expanded]")
-      group.dataset.startedOpen = toggle?.getAttribute("aria-expanded") ?? "true"
+      const open = group.tagName === "DETAILS" ? String(group.open) : toggle?.getAttribute("aria-expanded")
+      group.dataset.startedOpen = open ?? "true"
     })
   }
 
@@ -43,7 +44,12 @@ export default class extends Controller {
     this.filter()
   }
 
+  // A group is a collapsible section with a toggle, or a native <details>.
   setOpen(group, open) {
+    if (group.tagName === "DETAILS") {
+      group.open = open
+      return
+    }
     const toggle = group.querySelector("[aria-expanded]")
     const content = group.querySelector("[data-billing-audit-sections-target=content]")
     if (!toggle || !content) return

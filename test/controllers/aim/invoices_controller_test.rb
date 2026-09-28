@@ -102,6 +102,15 @@ module Aim
       assert_select 'button[data-action=?][data-commit=?]', 'aim-reason#open', 'Delete'
     end
 
+    test 'Return to Queue goes back to the queue page the invoice was opened from' do
+      row = invoice('4601.R')
+      session[:aim_queue_page] = '/aim/admin/users/300'
+
+      get :show, params: { id: row.batch_id }
+
+      assert_select 'a[href=?]', '/aim/admin/users/300', text: 'Back to Queue'
+    end
+
     test 'an invoice someone else holds is read only' do
       row = invoice('4601.G', claimed_by: 'other@example.com', claimed_at: Time.current, claimed_by_name: 'Dana Reyes')
 
@@ -388,7 +397,7 @@ module Aim
     # People's queues
     # ---------------------------------------------------------------
 
-    test 'ready for approval is grouped by person, one shared queue per BU last, collapsed' do
+    test 'ready for approval is grouped by BU, then its shared queue and each person, collapsed' do
       invoice('4601.O1', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
                          assignment_source: 'folder')
       invoice('4601.O2', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
@@ -398,13 +407,20 @@ module Aim
       get :index, params: { queue: 'ready_for_approval' }
 
       assert_response :success
-      assert_equal(['Jane Doe', '4601 shared queue'], @controller.instance_variable_get(:@groups).map { |key, _| key.last })
-      assert_select 'section.aim-owner-group', 2
-      assert_select 'section.aim-owner-group button[aria-expanded=false]', 2, 'the groups start collapsed'
-      assert_select 'section.aim-owner-group .aim-count-pill', text: '2 invoices'
+      sections = @controller.instance_variable_get(:@sections)
+      assert_equal ['4601'], sections.map(&:unit)
+      assert_equal ['Jane Doe'], sections.first.people.map(&:name)
+      assert_equal 1, sections.first.shared.size
+      assert_select 'section.aim-bu-group', 1
+      assert_select 'section.aim-bu-group .aim-count-pill', text: '3 invoices'
+      assert_select 'section.aim-bu-person', 2, 'the shared queue, then Jane Doe'
+      assert_select 'section.aim-bu-person .aim-count-pill', text: '2 invoices'
+      assert_select 'section.aim-bu-group > h2 button[aria-expanded=false]', 1, 'the groups start collapsed'
+      assert_select '.aim-bu-person__shared', 0, 'no people tools in the Pipeline'
       assert_select 'input[type=checkbox][data-aim-move-modal-target=check]', 3
       assert_select 'button.aim-move-button', 0, 'one way to move: tick, then Move selected'
-      assert_select '[data-controller=aim-person-search] input[type=hidden][name=owner]'
+      assert_select 'select[name=owner][data-controller=aim-grouped-search]'
+      assert_select 'input[type=checkbox][data-budget-unit=?]', '4601', minimum: 1
     end
 
     test 'moving an invoice to a person records it and returns to the queue' do
@@ -509,12 +525,17 @@ module Aim
     # Shared queues
     # ---------------------------------------------------------------
 
-    test "a shared-queue invoice in someone's own BU is theirs to work and claim, not staff only" do
+    test 'a shared-queue invoice in a BU whose shared queue someone has switched on is theirs to work and claim' do
       employee = Employee.where.not(unit: [nil, '']).order(:id).first || skip('no employee with a unit to test with')
       row = invoice('4601.SQ1', state: 'ready_for_approval', budget_unit: employee.unit)
       other = invoice('4601.SQ2', state: 'ready_for_approval', budget_unit: employee.unit == '9999' ? '9998' : '9999')
       as_owner_not_staff
       session[:user] = session[:user].merge('employee_id' => employee.id)
+
+      get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
+      assert_redirected_to aim_my_queue_path, 'the home unit alone does not open its shared queue'
+
+      Aim::UserBudgetUnit.create!(employee_id: employee.id, budget_unit: employee.unit, shared_queue: true)
 
       get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
       assert_response :success

@@ -9,7 +9,7 @@ module Aim
     before_action :require_signed_in
 
     def show
-      units = Aim::Users.shared_budget_units(current_user_employee_id, staff: helpers.aim_queue_access?)
+      units = Aim::Users.shared_budget_units(current_user_employee_id, staff: false)
       counts = { my_queue: my_queue_count, shared_queues: Aim::Invoice.shared_for(units).count }
       counts[:queues] = Aim::Invoice.queue_counts if helpers.aim_queue_access?
       render json: counts

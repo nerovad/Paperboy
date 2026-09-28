@@ -3,8 +3,12 @@
     <div>
       <h1 class="aim-page-title">Shared Queues</h1>
       <p class="aim-page-subtitle">
-        Ready invoices nobody owns yet, for
-        <%= @budget_units.nil? ? 'every budget unit' : "budget unit#{'s' if @budget_units.size > 1} #{@budget_units.to_sentence}" %>.
+        <% if @budget_units.empty? %>
+          You have no budget units yet; an AIM Admin or BU Admin adds them on your profile.
+        <% else %>
+          Ready invoices nobody owns yet, for
+          <%= "budget unit#{'s' if @budget_units.size > 1} #{@budget_units.to_sentence}" %>.
+        <% end %>
         Open one to work it, or Claim it to move it into your queue.
       </p>
     </div>

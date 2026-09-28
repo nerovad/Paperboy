@@ -1,0 +1,51 @@
+# frozen_string_literal: true
+
+module Aim
+  # The BU page (item a.2): budget unit -> its shared queue and each person ->
+  # their invoices, collapsible, in the Ready for Approval style. "My BUs" for a
+  # BU Admin, their BUs only; "By BU" for AIM Admins, every GSA BU.
+  # In queue by default, with the pipeline a tab away.
+  class BudgetUnitsController < BaseController
+    include Aim::StageTabs
+
+    before_action :remember_queue_page, only: :index
+
+    def index
+      mine = helpers.aim_bu_admin_units
+      return redirect_to(aim_root_path, alert: 'You are not a BU Admin.') if mine == []
+
+      @coa = Aim::Units.new
+      choose_agency(mine)
+      invoices = invoices_for_tab(Aim::Invoice.where(budget_unit: @units))
+      @sections = Aim::BuSections.build(invoices, coa: @coa, units: @units, people: people_by_unit, rows: @rows)
+    end
+
+    private
+
+    # One agency at a time, from the COA. AIM Admins start on their own agency;
+    # a BU Admin sees their BUs, by agency only when those span more than one.
+    def choose_agency(mine)
+      in_scope = mine || @coa.all.map(&:unit)
+      @agencies = in_scope.map { |unit| @coa.agency_of(unit) }.compact.uniq.sort
+      own = Coa::Agency.normalize_id(Employee.where(id: current_user_employee_id).pick(:agency))
+      @agency = [params[:agency], own, @agencies.first].find { |agency| @agencies.include?(agency) }
+      @units = in_scope.select { |unit| @agency.nil? || @coa.agency_of(unit) == @agency || @coa.agency_of(unit).nil? }.sort
+    end
+
+    # { unit => { employee_id => "Last, First" } } for the people who work AIM:
+    # their home unit unless hidden, and every BU granted on their profile.
+    def people_by_unit
+      employees = Aim::Users.all.to_a
+      names = employees.to_h { |e| [e.id, "#{e.last_name}, #{e.first_name}"] }
+      rows = Aim::UserBudgetUnit.where(employee_id: names.keys, budget_unit: @units).to_a
+      @rows = rows.index_by { |row| [row.employee_id, row.budget_unit] }
+      hidden = rows.select(&:hidden).to_set { |row| [row.employee_id, row.budget_unit] }
+      result = Hash.new { |hash, unit| hash[unit] = {} }
+      employees.each do |e|
+        result[e.unit][e.id] = names[e.id] if e.unit.present? && !hidden.include?([e.id, e.unit])
+      end
+      rows.reject(&:hidden).each { |row| result[row.budget_unit][row.employee_id] = names[row.employee_id] }
+      result
+    end
+  end
+end

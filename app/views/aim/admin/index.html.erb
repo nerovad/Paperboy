@@ -1,11 +1,79 @@
-<div class="aim-page">
+<div class="aim-page aim-people-page" data-controller="aim-queue-filter aim-actions-menu">
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">Users &amp; Queues</h1>
-      <p class="aim-page-subtitle">Who works AIM, the budget units they cover, and each BU's shared queue.</p>
+      <p class="aim-page-subtitle">Who works AIM. Budget units, roles and each BU's shared queue are coming next.</p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= render 'aim/shared/units_without_admin' %>
+      <span class="aim-count-pill"><%= pluralize(@people.length, 'person') %></span>
     </div>
   </header>
-  <section class="aim-panel aim-empty-state">
-    <p>Coming soon. Until then, a queue's owner is picked from the same list Emulate uses.</p>
+
+  <section class="aim-panel aim-admin-add-panel">
+    <%= form_with url: aim_members_path, method: :post, local: true, class: 'aim-inline-form' do |form| %>
+      <strong class="aim-admin-add-panel__label">Add a person</strong>
+      <%= render 'aim/shared/person_picker', name: :employee_id, label: 'Add a person', url: aim_admin_employees_path %>
+      <%= form.submit 'Add to AIM', class: 'btn approve compact' %>
+    <% end %>
   </section>
+
+  <div class="aim-people-toolbar">
+    <nav class="aim-people-toolbar__views" aria-label="View">
+      <%= link_to 'List', aim_admin_path(@filters.merge(view: 'list', sort: @sort)),
+                  class: "btn compact #{@view == 'list' ? 'active' : 'ghost'}" %>
+      <%= link_to 'By BU', aim_admin_path(@filters.merge(view: 'bu', sort: @sort)),
+                  class: "btn compact #{@view == 'bu' ? 'active' : 'ghost'}" %>
+    </nav>
+
+    <%= render 'aim/invoices/search_box', placeholder: 'Search name, employee ID or unit…', empty: 'Nobody here matches.' %>
+
+    <%= form_with url: aim_admin_path, method: :get, local: true, class: 'aim-people-toolbar__filters' do %>
+      <%= hidden_field_tag :sort, @sort %>
+      <%= select_tag :agency, options_for_select(@agencies, @filters['agency']),
+                     include_blank: 'All agencies', aria: { label: 'Agency' } %>
+      <%= select_tag :unit, options_for_select(@units, @filters['unit']),
+                     include_blank: 'All units', aria: { label: 'Unit' } %>
+      <%= select_tag :role, options_for_select(Aim::AdminController::ROLES, @filters['role']),
+                     include_blank: 'All roles', aria: { label: 'Role' } %>
+      <label><%= check_box_tag :has_open, '1', @filters['has_open'] == '1' %> Has invoices</label>
+      <label><%= check_box_tag :via_group, '1', @filters['via_group'] == '1' %> Admin through ACL</label>
+      <label><%= check_box_tag :missing, '1', @filters['missing'] == '1' %> Not in GSABSS</label>
+      <label><%= check_box_tag :inactive, '1', @filters['inactive'] == '1' %> Show inactive</label>
+      <button type="submit" class="btn compact">Apply</button>
+      <% if @filters.any? %>
+        <%= link_to 'Clear', aim_admin_path(sort: @sort), class: 'btn compact clear-filters' %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if @people.empty? %>
+    <section class="aim-panel aim-empty-state"><p>Nobody matches.</p></section>
+  <% elsif @view == 'bu' %>
+    <% @groups.each_with_index do |(label, people), index| %>
+      <% content_id = "aim-people-group-#{index}" %>
+      <% open = people.sum(&:open) %>
+      <section class="billing-audit-group aim-owner-group" data-controller="billing-audit-sections"
+               data-aim-queue-filter-target="group" data-search="<%= label %>">
+        <h2>
+          <button type="button" class="billing-audit-group-toggle" data-billing-audit-sections-target="toggle"
+                  data-action="billing-audit-sections#toggle" aria-expanded="false" aria-controls="<%= content_id %>">
+            <span aria-hidden="true">▾</span>
+            <strong class="aim-owner-group__name"><%= label %></strong>
+            <strong class="aim-count-pill"><%= pluralize(people.size, 'person') %></strong>
+            <% if open.positive? %><strong class="aim-count-pill"><%= pluralize(open, 'open invoice') %></strong><% end %>
+          </button>
+        </h2>
+        <div id="<%= content_id %>" data-billing-audit-sections-target="content" hidden>
+          <div class="billing-type-audit-table-wrapper">
+            <%= render 'people_table', people: people %>
+          </div>
+        </div>
+      </section>
+    <% end %>
+  <% else %>
+    <section class="aim-panel aim-queue-panel aim-people-panel">
+      <%= render 'people_table', people: @people %>
+    </section>
+  <% end %>
 </div>

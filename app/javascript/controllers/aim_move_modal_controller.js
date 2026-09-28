@@ -6,7 +6,7 @@ import { Controller } from "@hotwired/stimulus"
 //   <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="/aim/invoices/reassign_many">
 //     ... rows with data-aim-move-modal-target="check" boxes, the bulk bar, the modal ...
 export default class extends Controller {
-  static targets = ["backdrop", "form", "title", "owner", "check", "bulkButton", "bulkCount", "ids"]
+  static targets = ["backdrop", "form", "title", "owner", "person", "check", "bulkButton", "bulkCount", "ids"]
   static values = { bulkUrl: String }
 
   connect() {
@@ -34,9 +34,19 @@ export default class extends Controller {
       return input
     }))
     this.titleTarget.textContent = `Move ${ids.length} invoice${ids.length === 1 ? "" : "s"}`
+    this.preparePeople()
     this.backdropTarget.hidden = false
-    const search = this.element.querySelector("[data-aim-person-search-target=input]")
+    const search = this.element.querySelector(".aim-grouped-search__input")
     setTimeout(() => search?.focus(), 0)
+  }
+
+  // The person list puts the invoices' BU first when they share one, and
+  // starts with nobody chosen.
+  preparePeople() {
+    if (!this.hasPersonTarget) return
+    const units = [...new Set(this.checked().map((box) => box.dataset.budgetUnit || ""))]
+    this.personTarget.dataset.priorityUnit = units.length === 1 ? units[0] : ""
+    this.personTarget.dispatchEvent(new Event("aim-grouped-search:reset"))
   }
 
   // A header box ticks or clears the rows in its table that the search shows.

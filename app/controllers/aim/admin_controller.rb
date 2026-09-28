@@ -1,11 +1,104 @@
 # frozen_string_literal: true
 
 module Aim
-  # AIM administration: who works AIM, which budget units they cover, and
-  # the shared queue of each BU. Placeholder until it is built.
+  # AIM administration: who works AIM (item a.1). Budget unit coverage and
+  # each BU's shared queue follow in a.2 and a.3. Only AIM admins reach it.
+  #
+  # Two views of the same people: a list, sortable and filterable, and one
+  # collapsible group per budget unit. The choice is kept in the session.
   class AdminController < BaseController
-    before_action :require_aim_admin
+    before_action :require_aim_user_admin
 
-    def index; end
+    VIEWS = %w[list bu].freeze
+    SORTS = %w[name unit role open].freeze
+    ROLES = ['AIM Admin', 'BU Admin', 'User'].freeze
+
+    # Each filter on the page, as a test of one person against its value.
+    FILTERS = {
+      'agency' => ->(person, value) { person.agency == value },
+      'unit' => ->(person, value) { person.unit == value },
+      'role' => ->(person, value) { person.roles.include?(value) },
+      'has_open' => ->(person, _) { person.open.positive? },
+      'via_group' => ->(person, _) { person.via_group },
+      'missing' => ->(person, _) { person.missing }
+    }.freeze
+
+    # unit_label and agency come from the Chart of Accounts (Aim::Units).
+    Person = Struct.new(:employee_id, :first_name, :last_name, :unit, :unit_label, :agency, :member, :via_group,
+                        :open, :missing, :roles, :inactive, keyword_init: true) do
+      def name = missing ? "Employee #{employee_id}" : "#{last_name}, #{first_name}"
+      def search_text = [name, first_name, employee_id, unit_label, agency, *roles].compact.join(' ')
+    end
+
+    def index
+      @view = choose_view
+      @sort = SORTS.include?(params[:sort]) ? params[:sort] : 'name'
+      @filters = params.permit(:agency, :unit, :role, :has_open, :via_group, :missing, :inactive).to_h.compact_blank
+      @people = filtered(sorted(all_people))
+      @agencies = all_people.filter_map(&:agency).uniq.sort.map { |agency| [coa.agency_label(agency), agency] }
+      in_agency = all_people.select { |person| person.unit && (@filters['agency'].nil? || person.agency == @filters['agency']) }
+      @units = in_agency.map { |person| [person.unit_label, person.unit] }.uniq.sort_by(&:last)
+      @groups = @people.group_by(&:unit_label).sort_by { |label, _| label } if @view == 'bu'
+    rescue ActiveRecord::ActiveRecordError => e
+      Rails.logger.error "AIM could not list its users: #{e.message}"
+      @people = []
+      @units = []
+      @agencies = []
+      @groups = []
+      flash.now[:alert] = 'The AIM users could not be read.'
+    end
+
+    private
+
+    def choose_view
+      session[:aim_admin_view] = params[:view] if VIEWS.include?(params[:view])
+      VIEWS.include?(session[:aim_admin_view]) ? session[:aim_admin_view] : 'list'
+    end
+
+    # Everyone on the Admin list or in an AIM group, including list entries
+    # GSABSS no longer knows -- a leaver shows up flagged instead of vanishing.
+    def all_people
+      @all_people ||= begin
+        members = Aim::Member.all.index_by(&:employee_id)
+        via_groups = Aim::Users.group_employee_ids.to_set
+        ids = (members.keys + via_groups.to_a).uniq
+        employees = Employee.where(id: ids).index_by(&:id)
+        open = open_counts(ids)
+        roles = Aim::Users.roles_by_person(ids)
+        ids.map { |id| person(id, employees[id], members[id], via_groups.include?(id), open, roles[id]) }
+      end
+    end
+
+    def coa = (@coa ||= Aim::Units.new)
+
+    def person(id, employee, member, via_group, open, roles)
+      unit = employee&.unit.presence
+      Person.new(employee_id: id, first_name: employee&.first_name, last_name: employee&.last_name,
+                 unit: unit, unit_label: unit ? coa.label(unit) : 'No unit',
+                 agency: Coa::Agency.normalize_id(employee&.agency), member: member,
+                 via_group: via_group, open: open.fetch(id, 0), missing: employee.nil?, roles: roles,
+                 inactive: member.present? && !member.active? && !via_group)
+    end
+
+    def open_counts(ids)
+      Aim::Invoice.where(assigned_employee_id: ids)
+                  .where.not(state: Aim::Invoice::TERMINAL_STATES + Aim::Member::HANDS_OFF_STATES)
+                  .group(:assigned_employee_id).count
+    end
+
+    def sorted(list)
+      case @sort
+      when 'unit' then list.sort_by { |p| [p.unit.to_s, p.name.downcase] }
+      when 'role' then list.sort_by { |p| [ROLES.index(p.roles.first).to_i, p.name.downcase] }
+      when 'open' then list.sort_by { |p| [-p.open, p.name.downcase] }
+      else list.sort_by { |p| p.name.downcase }
+      end
+    end
+
+    # Inactive people are left out unless asked for.
+    def filtered(list)
+      list = list.select { |person| @filters.all? { |key, value| FILTERS.fetch(key, ->(*) { true }).call(person, value) } }
+      @filters['inactive'] == '1' ? list : list.reject(&:inactive)
+    end
   end
 end

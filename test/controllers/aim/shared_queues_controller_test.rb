@@ -27,7 +27,9 @@ module Aim
       Aim::Users.stub(:shared_budget_units, %w[4601 4641]) { get :index }
 
       assert_response :success
-      assert_equal(['4601 shared queue', '4641 shared queue'], @controller.instance_variable_get(:@groups).map(&:first))
+      coa = Aim::Units.new
+      assert_equal(["#{coa.label('4601')} shared queue", "#{coa.label('4641')} shared queue"],
+                   @controller.instance_variable_get(:@groups).map(&:first))
       assert_equal(%w[4641.SQ2], @controller.instance_variable_get(:@groups).last.last.map(&:batch_id))
     end
 
@@ -37,6 +39,20 @@ module Aim
       Aim::Users.stub(:shared_budget_units, %w[4641]) { get :index }
 
       assert_empty @controller.instance_variable_get(:@groups)
+    end
+
+    test "an AIM Admin's Shared Queues are their own BUs, not every BU" do
+      session[:user] = (session[:user] || {}).merge('employee_id' => 7)
+      @controller.define_singleton_method(:current_user_group_names) { Set['aim_admin'] }
+      Aim::UserBudgetUnit.create!(employee_id: 7, budget_unit: '4641', shared_queue: true)
+      row('4641.SQ7', '4641')
+      row('4621.SQ8', '4621')
+
+      get :index
+
+      batches = @controller.instance_variable_get(:@groups).flat_map(&:last).map(&:batch_id)
+      assert_includes batches, '4641.SQ7'
+      assert_not_includes batches, '4621.SQ8'
     end
   end
 end

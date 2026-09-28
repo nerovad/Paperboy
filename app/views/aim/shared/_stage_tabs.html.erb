@@ -1,0 +1,30 @@
+<%# In queue / In pipeline tabs, the search box, and (in the pipeline) a tick
+    box per stage. `path` builds this page's URL from extra params; `keep` is
+    params the stage form must carry, since a GET form drops its URL's. Pairs with
+    Aim::StageTabs, which sets @tab, @stages and @stage_counts. %>
+<div class="aim-people-toolbar">
+  <nav class="aim-people-toolbar__views" aria-label="Invoices">
+    <%= link_to "In queue (#{@stage_counts['ready_for_approval']})", path.call,
+                class: "btn compact #{@tab == 'queue' ? 'active' : 'ghost'}" %>
+    <%= link_to "In pipeline (#{@stage_counts.except('ready_for_approval').values.sum})", path.call(tab: 'pipeline'),
+                class: "btn compact #{@tab == 'pipeline' ? 'active' : 'ghost'}" %>
+  </nav>
+  <%= render 'aim/invoices/search_box', placeholder: local_assigns.fetch(:placeholder, 'Search vendor, invoice #, BU, total…'),
+                                        empty: 'Nothing here matches.' %>
+</div>
+
+<% if @tab == 'pipeline' %>
+  <%= form_with url: path.call, method: :get, local: true, class: 'aim-people-toolbar__filters aim-stage-filters' do %>
+    <%= hidden_field_tag :tab, 'pipeline' %>
+    <% local_assigns.fetch(:keep, {}).compact.each do |key, value| %>
+      <%= hidden_field_tag key, value, id: nil %>
+    <% end %>
+    <% pipeline_stages.each do |stage| %>
+      <label>
+        <%= check_box_tag 'stages[]', stage, @stages.include?(stage), id: "stage-#{stage}" %>
+        <%= aim_queue_label(stage) %> (<%= @stage_counts[stage] %>)
+      </label>
+    <% end %>
+    <button type="submit" class="btn compact">Apply</button>
+  <% end %>
+<% end %>

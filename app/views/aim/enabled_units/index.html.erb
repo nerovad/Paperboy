@@ -1,0 +1,59 @@
+<%# AIM's budget units (2026-09-28): every COA agency with active units, a
+    section each; "Entire agency" takes the agency itself (select-all ticks its
+    units too). Before the first save, what AIM offers today is ticked, so
+    saving unchanged keeps it. %>
+<% fresh = !@current.configured? %>
+<% whole = fresh ? @current.agencies.to_set : @whole %>
+<div class="aim-page aim-enabled-units" data-controller="aim-queue-filter">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">AIM's Budget Units</h1>
+      <p class="aim-page-subtitle">
+        The budget units AIM works with, from the Chart of Accounts: what Upload, Move, profiles and By BU offer.
+        Tick <strong>Entire agency</strong> to include every unit, and any the COA adds later.
+      </p>
+    </div>
+    <div class="aim-page-header__pills">
+      <span class="aim-count-pill aim-count-pill--nowrap"><%= pluralize(@current.all.size, 'unit') %> in use</span>
+      <button type="submit" form="aim-enabled-units-form" class="btn approve compact">Save</button>
+    </div>
+  </header>
+
+  <%= render 'aim/invoices/search_box', placeholder: 'Search agency, unit number or name…', empty: 'Nothing matches.' %>
+
+  <% if fresh %>
+    <p class="aim-profile-switch__note">Not set yet: AIM offers <%= @current.agencies.to_sentence %>, the agencies of the people in AIM. Saving makes it a setting.</p>
+  <% end %>
+
+  <%= form_with url: aim_enabled_units_path, method: :patch, local: true, id: 'aim-enabled-units-form' do %>
+    <% @coa.all.group_by(&:agency).each do |agency, units| %>
+      <% picked = units.count { |u| whole.include?(agency) || @single.include?([agency, u.unit]) } %>
+      <details class="aim-panel aim-agency-units" <%= 'open' if picked.positive? %>
+               data-aim-queue-filter-target="group" data-search="<%= @coa.agency_label(agency) %>">
+        <summary>
+          <strong><%= @coa.agency_label(agency) %></strong>
+          <span class="aim-count-pill"><%= picked %> of <%= pluralize(units.size, 'unit') %></span>
+        </summary>
+        <div class="aim-agency-units__grid" data-controller="select-all">
+          <label class="aim-agency-units__all">
+            <%= check_box_tag 'agencies[]', agency, whole.include?(agency), id: "agency-#{agency}",
+                              data: { select_all_target: 'selectAll', action: 'change->select-all#toggle' } %>
+            <strong>Entire agency</strong>
+          </label>
+          <% units.each do |unit| %>
+            <label data-aim-queue-filter-target="row" data-search="<%= unit.label %>">
+              <%= check_box_tag 'units[]', unit.unit, whole.include?(agency) || @single.include?([agency, unit.unit]),
+                                id: "unit-#{agency}-#{unit.unit}",
+                                data: { select_all_target: 'checkbox', action: 'change->select-all#update' } %>
+              <%= unit.label %>
+            </label>
+          <% end %>
+        </div>
+      </details>
+    <% end %>
+
+    <div class="aim-enabled-units__save">
+      <button type="submit" class="btn approve">Save AIM's budget units</button>
+    </div>
+  <% end %>
+</div>

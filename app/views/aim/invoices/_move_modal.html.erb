@@ -13,11 +13,25 @@
       <%= form_with url: '#', method: :patch, authenticity_token: form_authenticity_token,
                     data: { aim_move_modal_target: 'form', turbo: false } do |form| %>
         <div data-aim-move-modal-target="ids"></div>
-        <fieldset class="form-group aim-owner-choice">
+        <fieldset class="form-group aim-owner-choice" data-controller="aim-owner-choice">
           <legend>Move to</legend>
-          <label><%= radio_button_tag :destination, 'person', true %> A person</label>
-          <label><%= radio_button_tag :destination, 'shared' %> The invoice's budget unit shared queue</label>
-          <%= render 'aim/shared/person_picker', name: :owner, label: 'Move to' %>
+          <label><%= radio_button_tag :destination, 'person', true, data: { action: 'aim-owner-choice#update' } %> A person</label>
+          <label><%= radio_button_tag :destination, 'shared', false, data: { action: 'aim-owner-choice#update' } %> The invoice's budget unit shared queue</label>
+          <% unit_options = aim_move_unit_options %>
+          <% if unit_options.any? %>
+            <label><%= radio_button_tag :destination, 'other_unit', false, data: { action: 'aim-owner-choice#update' } %> Another budget unit's shared queue</label>
+          <% end %>
+          <div class="aim-owner-choice__picker" data-aim-owner-choice-target="picker">
+            <%= render 'aim/shared/grouped_person_select', name: :owner, label: 'Move to',
+                                                            target: 'aim-move-modal-target=person' %>
+          </div>
+          <% if unit_options.any? %>
+            <div class="aim-owner-choice__picker" data-aim-owner-choice-target="unit" hidden>
+              <%= select_tag :budget_unit, grouped_options_for_select(unit_options), include_blank: 'Pick a budget unit…',
+                             aria: { label: 'Budget unit' } %>
+              <p class="aim-owner-choice__note">This changes the invoice's budget unit, and so the BU that billing charges.</p>
+            </div>
+          <% end %>
         </fieldset>
         <div class="pb-modal__actions">
           <button type="button" class="btn" data-action="aim-move-modal#close">Cancel</button>

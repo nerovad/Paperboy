@@ -1,0 +1,103 @@
+<% name = @employee ? "#{@employee.first_name} #{@employee.last_name}".squish : "Employee #{@employee_id}" %>
+<div class="aim-page aim-profile-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title"><%= name %></h1>
+      <p class="aim-page-subtitle">
+        Employee <%= @employee_id %><%= ' · No longer in GSABSS.' unless @employee %>
+        <% @roles.each do |role| %><span class="badge is-scheduled"><%= role %></span><% end %>
+      </p>
+    </div>
+    <% if aim_user_admin? %>
+      <%= link_to 'Back to Users & Queues', aim_admin_path, class: 'btn compact' %>
+    <% else %>
+      <%= link_to 'Back to My BUs', aim_budget_units_path, class: 'btn compact' %>
+    <% end %>
+  </header>
+
+  <% if @member && !@member.active? %>
+    <section class="aim-panel aim-profile-inactive">
+      <div>
+        <strong>Inactive</strong> since <%= l(@member.deactivated_at.to_date, format: :long) %>
+        <%= "by #{@member.deactivated_by}" if @member.deactivated_by.present? %>.
+        <%= @member.deactivation_reason %>
+      </div>
+      <% if aim_manages_all_units_of?(@employee_id) %>
+        <%= button_to 'Reactivate', reactivate_aim_member_path(@employee_id), method: :patch, class: 'btn approve compact' %>
+      <% end %>
+    </section>
+  <% end %>
+
+  <%= render 'roles', name: name %>
+
+  <h2 class="aim-profile-heading" id="queue">Invoices</h2>
+  <div data-controller="aim-queue-filter">
+    <%= render 'aim/shared/stage_tabs', path: ->(**opts) { aim_member_path(@employee_id, anchor: 'queue', **opts) } %>
+
+    <% if @invoices.empty? %>
+      <section class="aim-panel aim-empty-state">
+        <p><%= @tab == 'queue' ? "Nothing is waiting in #{name}'s queue." : 'Nothing in the stages shown.' %></p>
+      </section>
+    <% else %>
+      <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path %>">
+        <%= render 'aim/invoices/bulk_bar' %>
+        <section class="aim-panel aim-queue-panel">
+          <%= render 'aim/invoices/rows', invoices: @invoices, movable: true %>
+        </section>
+        <%= render 'aim/invoices/move_modal' %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="aim-profile-actions">
+  <% if @member&.active? && aim_manages_all_units_of?(@employee_id) %>
+    <%= render 'status', name: name %>
+  <% end %>
+  <% if @member && aim_user_admin? %>
+    <%# Delete: a small button, a pop-up that either explains what is in the way
+        or asks for the employee ID, then a last "cannot be undone" check. %>
+    <div class="aim-profile-delete" data-controller="aim-reason">
+      <button type="button" class="btn deny compact" data-action="aim-reason#open"
+              data-title="Delete <%= name %> from AIM" data-commit="Delete from AIM">Delete from AIM</button>
+
+      <div class="pb-modal-backdrop" data-aim-reason-target="backdrop" hidden>
+        <div class="pb-modal" role="dialog" aria-modal="true" aria-labelledby="aim-delete-title">
+          <div class="pb-modal__header">
+            <h3 id="aim-delete-title" data-aim-reason-target="title">Delete from AIM</h3>
+            <button type="button" class="pb-modal__close" data-action="aim-reason#close" aria-label="Close">✕</button>
+          </div>
+          <% if @open_count.positive? %>
+            <div class="pb-modal__body">
+              <p class="pb-modal__message">
+                <%= name %> still owns <%= pluralize(@open_count, 'open invoice') %>. Move them to another person or a
+                shared queue first, then delete.
+              </p>
+              <input type="hidden" data-aim-reason-target="reason" disabled>
+              <div class="pb-modal__actions">
+                <button type="button" class="btn" data-action="aim-reason#close">Close</button>
+                <button type="button" class="btn deny" data-aim-reason-target="submit" hidden>Delete from AIM</button>
+              </div>
+            </div>
+          <% else %>
+            <%= form_with url: aim_member_path(@employee_id), method: :delete, local: true, class: 'pb-modal__body',
+                          data: { turbo_confirm: "Delete #{name} from AIM? This cannot be undone.",
+                                  confirm_title: 'Are you sure?', confirm_label: 'Yes, delete' } do %>
+              <p class="pb-modal__message">
+                This takes <%= name %> off the AIM list for good; their history stays. To confirm, type their employee
+                ID, <strong><%= @employee_id %></strong>.
+              </p>
+              <%= text_field_tag :confirm_employee_id, nil, autocomplete: 'off', disabled: true,
+                                 pattern: Regexp.escape(@employee_id.to_s), aria: { label: "Type #{@employee_id} to confirm" },
+                                 data: { aim_reason_target: 'reason' } %>
+              <div class="pb-modal__actions">
+                <button type="button" class="btn" data-action="aim-reason#close">Cancel</button>
+                <button type="submit" class="btn deny" data-aim-reason-target="submit">Delete from AIM</button>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+  </div>
+</div>

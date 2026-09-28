@@ -1,0 +1,18 @@
+<%# One BU's shared queue switch for this person: always on for a BU Admin of
+    it, nothing while hidden, otherwise On/Off for whoever manages the BU.
+    Locals: employee_id, unit, row (may be nil for a home unit with no flags),
+    can_change. %>
+<% if row&.hidden %>
+  <span class="aim-profile-switch__note">—</span>
+<% elsif row&.bu_admin %>
+  <button type="button" class="btn compact aim-shared-switch" disabled title="Always on for a BU Admin of this BU">On</button>
+<% elsif can_change %>
+  <% on = row&.shared_queue %>
+  <%= button_to on ? 'On' : 'Off',
+                row ? aim_member_budget_unit_path(employee_id, row) : aim_member_budget_units_path(employee_id),
+                method: row ? :patch : :post, params: { budget_unit: unit, shared_queue: on ? '0' : '1' },
+                class: "btn compact aim-shared-switch #{on ? 'active' : 'ghost'}",
+                title: on ? "Stop #{unit}'s shared queue for this person" : "Let this person pick up #{unit}'s shared queue" %>
+<% else %>
+  <button type="button" class="btn compact aim-shared-switch" disabled><%= row&.shared_queue ? 'On' : 'Off' %></button>
+<% end %>

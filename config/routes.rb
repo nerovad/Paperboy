@@ -146,9 +146,21 @@ Rails.application.routes.draw do
     end
     get 'my_queue', to: 'my_queue#index', as: :my_queue
     get 'shared_queues', to: 'shared_queues#index', as: :shared_queues
+    get 'budget_units', to: 'budget_units#index', as: :budget_units
     get 'people', to: 'people#index', as: :people
     get 'counts', to: 'counts#show', as: :counts
+    patch 'mode', to: 'modes#update', as: :mode
     get 'admin', to: 'admin#index', as: :admin
+    get 'admin/employees', to: 'members#employees', as: :admin_employees
+    get 'admin/budget_units', to: 'enabled_units#index', as: :enabled_units
+    patch 'admin/budget_units', to: 'enabled_units#update'
+    resources :members, only: %i[create show destroy], path: 'admin/users' do
+      member do
+        patch :deactivate, to: 'member_statuses#deactivate'
+        patch :reactivate, to: 'member_statuses#reactivate'
+      end
+      resources :budget_units, only: %i[create update destroy], controller: 'member_budget_units'
+    end
     resources :uploads, only: %i[new create]
     resources :vendor_aliases, only: %i[index create update destroy]
     resources :vendor_rules, only: %i[index create update destroy]

@@ -149,7 +149,7 @@ module Aim
     # The invoice has left this person's hands.
     def finish(notice)
       @invoice.release_claim!
-      redirect_to helpers.aim_queue_access? ? aim_invoices_path(queue: @queue) : aim_my_queue_path, notice: notice
+      redirect_to queue_return_path, notice: notice
     end
 
     # A copy of the PDF for the people who look in that folder today, or nil

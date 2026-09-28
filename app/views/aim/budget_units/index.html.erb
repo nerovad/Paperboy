@@ -1,0 +1,36 @@
+<% title = aim_queue_access? ? 'By BU' : 'My BUs' %>
+<div class="aim-page aim-bu-page" data-controller="aim-queue-filter aim-actions-menu">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title"><%= title %></h1>
+      <p class="aim-page-subtitle">
+        Each budget unit's shared queue and people, and their invoices. Open a BU, then a person; tick invoices to move them.
+      </p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= render 'aim/shared/units_without_admin' %>
+      <span class="aim-count-pill"><%= pluralize(@units.size, 'budget unit') %></span>
+    </div>
+  </header>
+
+  <% if @agencies.size > 1 %>
+    <%= form_with url: aim_budget_units_path, method: :get, local: true, class: 'aim-people-toolbar__filters aim-agency-filter' do %>
+      <%= hidden_field_tag :tab, @tab %>
+      <%= select_tag :agency, options_for_select(@agencies.map { |a| [@coa.agency_label(a), a] }, @agency), aria: { label: 'Agency' } %>
+      <button type="submit" class="btn compact">Show</button>
+    <% end %>
+  <% elsif @agency %>
+    <p class="aim-agency-note"><%= @coa.agency_label(@agency) %></p>
+  <% end %>
+
+  <%= render 'aim/shared/stage_tabs', path: ->(**opts) { aim_budget_units_path(agency: @agency, **opts) }, keep: { agency: @agency },
+                                      placeholder: 'Search person, vendor, invoice #, BU, total…' %>
+
+  <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path %>">
+    <%= render 'aim/invoices/bulk_bar' %>
+
+    <%= render 'aim/shared/bu_sections', sections: @sections, people_tools: true %>
+
+    <%= render 'aim/invoices/move_modal' %>
+  </div>
+</div>

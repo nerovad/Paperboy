@@ -13,7 +13,7 @@
      <% end %>>
   <header class="aim-page-header">
     <div class="aim-review-heading">
-      <%= link_to 'Back to Queue', (aim_queue_access? ? aim_invoices_path(queue: @queue) : aim_my_queue_path), class: 'aim-kicker' %>
+      <%= link_to 'Back to Queue', queue_return_path, class: 'aim-kicker' %>
       <h1 class="aim-page-title"><%= @invoice.batch_id %></h1>
       <span class="aim-page-subtitle"><%= aim_state_label(state) %></span>
       <% if @invoice.review_reason.present? %>
@@ -184,7 +184,7 @@
       <div class="aim-form-actions">
         <% if @read_only %>
           <div class="aim-action-group">
-            <%= link_to 'Return to Queue', (aim_queue_access? ? aim_invoices_path(queue: @queue) : aim_my_queue_path), class: 'btn' %>
+            <%= link_to 'Return to Queue', queue_return_path, class: 'btn' %>
           </div>
         <% else %>
           <div class="aim-action-group aim-review-action-strip">

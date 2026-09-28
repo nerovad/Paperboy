@@ -55,7 +55,7 @@
         <td><span class="badge <%= badge_class %>"><%= badge_text %></span></td>
         <% if movable %>
           <td class="aim-select-cell">
-            <input type="checkbox" value="<%= invoice.batch_id %>" aria-label="Select <%= invoice.invoice_number.presence || invoice.batch_id %>"
+            <input type="checkbox" value="<%= invoice.batch_id %>" data-budget-unit="<%= invoice.budget_unit %>" aria-label="Select <%= invoice.invoice_number.presence || invoice.batch_id %>"
                    data-aim-move-modal-target="check" data-action="aim-move-modal#count">
           </td>
         <% end %>

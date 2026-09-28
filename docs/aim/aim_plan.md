@@ -396,6 +396,16 @@ the share, stopped, to be retired (see `## Next` item h). **LockBox**:
 variables, `AIM_SHARED_FOLDER_NAME`, `AIM_STORE_DIR` and
 `AIM_V2_PROGRAM_DIR`.
 
+**Update 2026-09-28: item a merged to master** (`aim/a-user-admin`). Built:
+the AIM list and Users & Queues; profiles with BUs, BU Admin, the shared
+queue switch, Deactivate; one admin role, the `aim_admin` group in ACL; BU
+Admins managing their BUs from My BUs; Admin / Approver mode; BUs and
+agencies from the COA, and AIM's Budget Units choosing which; the grouped
+person picker; AIM open to anyone signed in (the account decides the rest).
+Left in a, for later: BU labels and default owners (a.3), sharing and Out of
+office (a.4), person folders by employee id (a.5). **Next phase: the Fiscal
+stage, item f, as a demo first** -- see `### f.` below.
+
 **What is missing** is mostly two things: managing who works AIM and which
 BUs they cover, and the lookups that code and route an invoice before it
 reaches a person. See `## Next — After v2`.
@@ -776,6 +786,8 @@ Recorded so they are not relitigated.
 - **Vendor CSV import.** A rake task plus a small AIM admin upload page. Not
   Data Runner — the files arrive once a year.
 - **Laserfiche** is the target repository. Docushare is being retired.
+  **Reopened 2026-09-25:** Paperboy's DAM may do instead; see `## Next`
+  item f and Open Questions.
 - **Metadata is embedded in the PDF, not shipped beside it as XML.** Decided by
   Joshua 2026-09-08, from a working Laserfiche setup on another project. Fields
   are written as **custom keys in the PDF Info dictionary** -- not XMP, no
@@ -842,6 +854,73 @@ Recorded so they are not relitigated.
   concerned. When the migration happens it must be a LockBox variable
   change and nothing else — see `## Guardrails → No hardcoded paths`.
   Driving Paperboy's migration is not AIM's job; being ready for it is.
+- **After v2: people, queues, stamps and Fiscal -- decided by Joshua
+  2026-09-25.** Detail in `## Next` items a, e and f.
+  - **AIM staff see every BU** without being given coverage. Everyone else
+    sees the BUs the Admin screen gives them.
+  - **Only AIM admins** (`aim_admin`, and System Admins) add people to AIM
+    and grant BU coverage.
+  - **Removing someone with invoices is refused** until their invoices are
+    moved, using the same Move choices as the queue (another person, or the
+    BU's shared queue).
+  - **Switchover:** until Joshua says to drop them, the three groups and the
+    Processing Queues grant still count as AIM users alongside the Admin
+    list.
+  - **Queue access, not redirection.** A person grants others access to
+    their queue at one of three levels: **View** (read only), **Pull** (view
+    and Claim into their own queue) and **Cover** (work and approve in place,
+    without claiming, while the owner is out of office). Invoices stay in the
+    owner's queue; nothing is redirected, so nothing has to be returned. A
+    covered approval is in the coverer's name -- billing's `[Approved By]`,
+    the history ("covering for ...") and the stamp -- and is marked as
+    covered on screen. Out of office is set by the person or an AIM admin,
+    and needs at least one Cover grant. This replaces the backup/redirect
+    idea raised the same day.
+  - **Named folders link by employee ID, hard switch.** A person folder is
+    `<employee id> <any name>`; the leading number is the link. A folder
+    with no ID, or an ID that is not an AIM user, goes to the BU's shared
+    queue, flagged. Name-only folders stop linking at once, so the share's
+    person folders must be renamed before the worker change is deployed.
+  - **Approval stamp.** At approval, every page, bottom right, as v1 AIM
+    did: `<received date>- Invoice Date:<yyyymmdd>` over
+    `<Last, First>_<mm/dd/yyyy>_<hh:mm:ss>`. The received date is when AIM
+    took the invoice in. The stamped copy is derived; the store's PDF stays
+    as received.
+  - **Fiscal stamp.** When Fiscal archives, every page, bottom left: the
+    check number and the date processed.
+  - **One admin role, from ACL** (Joshua, 2026-09-25, later the same day,
+    replacing the four roles below). AIM Staff and AIM Admin are merged: AIM
+    processing staff also manage people in Fusion today, so nothing separated
+    them. **AIM Admin** is the `aim_admin` group in ACL (plus system admins,
+    who reach all of Paperboy) and does everything: processing, people, BUs,
+    settings. Everything else comes from AIM's own settings: who works AIM
+    (the AIM list), BU Admin and BUs (profiles), later Out of office. The
+    `aim_staff` group and the old Processing Queues grants count for nothing.
+    AIM users are the AIM list plus the `aim_admin` group; system admins have
+    no queue unless listed. Where the list below says Staff, read AIM Admin.
+  - **Roles** (Joshua, 2026-09-25). Four, plus Fiscal; no Superuser, which
+    "BU Admin over many BUs" or Staff already covers.
+    - **User** (approver): their own queue and their BUs' shared queues;
+      open, edit, approve, send back; claim from a shared queue; move within
+      their BUs; share their own queue; set their own Out of office.
+    - **BU Admin** (Fusion's supervisor), only in the BUs they administer:
+      all a User does, plus see every queue in those BUs and move invoices
+      between people there; add people to AIM with those BUs only; set the
+      BU's label and default owner; set Out of office for their people. A BU
+      Admin removes only their own BUs from someone who also has others, and
+      removes the person only when no other BU remains. BU Admins do not
+      **approve** others' invoices -- they move or claim them; standing in
+      is Cover, so the history shows whose invoice it was. They do not
+      appoint BU Admins.
+    - **AIM Staff** (the processing team): every BU, before approval --
+      Action Needed, splits, review, Retry, Restore, vendor aliases and
+      rules. Not people management. One person may be Staff and BU Admin.
+    - **AIM Admin**: everything, including appointing Staff and BU Admins
+      and managing BUs.
+    - **Fiscal** (item f): the Fiscal queue, after approval.
+  - **A Fiscal stage sits between approval and the archive.** Laserfiche,
+    or whatever replaces it, is the last step, after Fiscal, not the step
+    after approval.
 
 ---
 
@@ -2639,26 +2718,138 @@ queue, managed on one screen instead of by group membership and guesses.
 `Aim::Users.shared_budget_units` (staff: all; others: their GSABSS unit).
 Both are one-method stand-ins meant to be replaced here.
 
-**Build.**
-- AIM users: add and remove people (by employee, the same search as the
-  picker), replacing the group-based list.
-- BU coverage per person: home unit from GSABSS plus granted BUs (9.1: read
-  GSABSS, never copy it). Replaces `shared_budget_units`.
-- Per-BU shared queue: who covers it, and its default owner or router.
-- Folder-to-person links: map each watch-tree folder name to an employee, so
-  a new drop gets `assigned_employee_id` at intake. Names that match nobody
-  are flagged and land in the BU's shared queue.
-- Capabilities (9.1a): AIM app features under ACL -- `approve`, `upload`,
-  `route_within_bu`, `route_within_agency`, `route_anywhere`,
-  `manage_rules` -- bundled into ordinary Paperboy groups as roles. Scope
-  (the BUs) gives a capability its reach.
+**Decided 2026-09-25** (see `## Decisions Already Made`): staff see every
+BU; only AIM admins grant; removal refused while the person has invoices;
+groups and the Admin list both count during the switchover; queue access
+is View / Pull / Cover; person folders link by employee ID.
 
-**Decide.** Whether AIM staff remain "see every BU" or get explicit
-coverage too. Who may grant coverage. What happens to invoices of a person
-removed from AIM (their queue goes to the BU shared queue?). The COA calls
-the agency `GSA` while `Employees.agency` says `GSAV`; scope must map them.
-Stafford (335) and Salgado (334) are not in GSABSS `Employees`, so they
-cannot sign in today.
+Branch `aim/a-user-admin`, cut from master `3b4a2eb5`. One step, one commit.
+
+- [x] **a.1 AIM users.** Table `aim.members` (employee id, added by, when).
+  Admin screen at `/aim/admin`: add by the picker's employee search, remove.
+  Seeded once from today's `Aim::Users.all`. `Aim::Users.all` becomes the
+  table **or** the groups (switchover). Removing someone who owns invoices in
+  any open state is refused, and the screen offers the queue's Move choices
+  for them. Only AIM admins reach it.
+  As built: table `aim.members` (model `Aim::Member`, beside the `Aim::Users`
+  module), seeded by `bin/rails aim:v2:seed_members`. Every name on the list
+  opens that person's queue for the admin (`/aim/admin/users/<employee id>`),
+  with Move, and Remove once it is empty -- also for people who are AIM users
+  only through a group.
+- [ ] **a.1b Profile page** (asked by Joshua 2026-09-25). One page per
+  person, reached from the list: edit profile and view queue. Sections
+  arrive with their steps: BUs (a.2), sharing and Out of office (a.4), the
+  queue and Remove (a.1). Each person reaches their own sharing and Out of
+  office from My Queue.
+- [x] **a.1c Import from Fusion.** `docs/aim/fusion_gsa_users.csv`: Fusion's
+  40 enabled GSA users (GSA teams, F&M Admin, and System Team members whose
+  GSABSS agency is `GSAV`), matched by employee number (`UserName` = GSABSS
+  id), with their Fusion team and Fusion roles. `bin/rails
+  aim:v2:import_members` adds them (again at go-live, on Prod); ids with no
+  GSABSS employee are skipped and listed. Imported to `Paperboy_Dev`
+  2026-09-25: 40 added. Left out: Stafford (139155) and Salgado (121550),
+  not in GSABSS; Delgado (Sheriff), Gaynor (not in GSABSS), the built-in
+  accounts, and 66 disabled accounts, none of them current GSA staff.
+  Fusion's `UserGroups` are empty and no directory groups are mapped, so
+  `Users` is the whole list. Fusion's roles are **suggestions** for a.2, never
+  granted by the import: app admins (Gannon, Howard, Nelles, Huebner, Smith)
+  for Staff or Admin; supervisors (Gagnon -> Maintenance, Bonilla -> Fleet,
+  Nelles -> Business Support, Arellano, Johnson, Kunsemiller, Huebner,
+  Howard) for BU Admin of their team's BUs.
+- [x] **a.2 Roles and BU scope** (replaces "BU coverage" and absorbs a.6;
+  roles decided 2026-09-25, see `## Decisions Already Made`). Table
+  `aim.user_budget_units`: each person's BUs, and whether they are BU Admin
+  of each. The home unit is read from GSABSS, never copied (9.1). Staff and
+  Admin as roles; `shared_budget_units` and every access check read these.
+  The profile page (a.1b) arrives here with its Roles and BUs section, and
+  the Fusion suggestions above are offered there for one-click confirmation.
+  **Built so far (a.2 part 1):** `aim.user_budget_units` and
+  `Aim::UserBudgetUnit`; the profile page (`/aim/admin/users/<id>`) with
+  Roles & budget units -- home unit from GSABSS with Make BU Admin, added
+  BUs from GSA's active COA units with a BU Admin toggle and Take away --
+  then Queue and Delete. `shared_budget_units` reads the added BUs;
+  `administered_budget_units` and `roles_of` added. AIM admins only.
+  **a.2 complete, 2026-09-25.** Built beyond part 1: BU Admins working their
+  BUs (the BU page, moves, adding people, their BUs on profiles), the Role
+  column, hiding a home unit, Admin / Approver mode, moves to another BU's
+  shared queue, one admin role from ACL, Deactivate, and Fusion's roles
+  applied by the import (supervisors become BU Admin of their team's BU; app
+  admins are listed for ACL). Fusion's plain supervisor flag, with no team
+  named, sets nothing: Arellano, Johnson, Kunsemiller, Huebner and Howard
+  are for Joshua to set by hand or to map to their home units.
+  **Also decided 2026-09-25, from Joshua's testing:**
+  - **A home unit can be hidden** (`hidden` on its row): the person sees
+    nothing in it until it is shown again; it is never taken away. Hiding
+    clears BU Admin. Built.
+  - **Admin / Approver mode.** AIM Admins and Staff switch, from the top of
+    the sidebar, to Approver mode, in which AIM treats them as a User: My
+    Queue, Shared Queues and Upload only, with the checks as well as the menus
+    following. Each picks their starting mode on their profile (an AIM
+    table). To build.
+  - **Move to another BU's shared queue** changes the invoice's budget unit,
+    and so what billing charges: a third Move choice with a BU list, the
+    history saying the BU changed, billing following. A User moves to BUs
+    they cover, a BU Admin between theirs, Staff and Admins anywhere. To
+    build.
+  **Inactive, not deleted** (Joshua, 2026-09-25): someone who leaves is
+  marked inactive (`aim.members` gains `deactivated_at`, `deactivated_by`,
+  and a reason). An inactive person is out of the picker and the queues, but
+  their record, BUs and history stay, and one click brings them back. Their
+  invoices are moved first, as for removal. A BU Admin deactivates someone
+  whose BUs are all theirs; otherwise they take away only their own BUs. AIM
+  Admins deactivate anyone. Users & Queues flags anyone GSABSS no longer
+  lists as an active employee, so leavers surface on their own. **Delete**
+  stays for AIM Admins only, for mistakes: today's Remove becomes it.
+- **Shared queue switch (the first half of a.3, 2026-09-25).** A person picks
+  up a BU's shared queue -- its unowned ready invoices, which they may open
+  and approve -- only once it is switched on for them (`shared_queue` on
+  `aim.user_budget_units`), home unit included; a BU Admin of the BU always
+  has it. AIM Admins switch it for anyone, BU Admins for their own BUs, on the
+  profile or the BU page; the BU page flags a BU nobody covers.
+  `Aim::Users.budget_units_of` (the BUs someone works in: moves, profiles,
+  BU Admin rules) is now apart from `shared_budget_units` (the queues they
+  pick up from).
+- **AIM's budget units (2026-09-28, on trial -- roll back to `c3801c3e` if
+  unwanted).** Admin -> AIM's Budget Units: every COA agency with active
+  units, "Entire agency" (the agency itself, later COA units included) or
+  single units, in `aim.enabled_units`. One setting for Upload, Move,
+  profiles and By BU (`Aim::Units`); until first saved, the agencies of the
+  people in AIM. The server refuses units outside it.
+- [ ] **a.3 Budget units.** Table `aim.budget_units`, one row per BU AIM
+  handles: a **label** -- the name GSA calls the BU (Joshua, 2026-09-25: GSA
+  worked by group names, as Fusion's teams and DocuShare's folder titles
+  show) -- who covers its shared queue, and its default owner. With no label,
+  the COA's name is shown (`Coa::Unit.long_name`, e.g. 4641 `DOCUMENT
+  MANAGEMENT`), read from GSABSS, never copied. Everywhere a BU appears it
+  reads `4641 · Document Management`. Default owner read by routing in item
+  b.
+- [ ] **a.4 Queue access and Out of office.** Table `aim.queue_grants`
+  (owner, grantee, level: view / pull / cover). My Queue gets a Sharing panel
+  and an Out of office switch; the grantee's My Queue shows each queue they
+  can see, and "Covering: <name>" while it is live. Cover acts in place:
+  approval, billing and the stamp in the coverer's name, the event naming
+  whom they covered. Admins set either for anyone. Removing a user drops
+  their grants both ways. **To confirm at this step:** read Paperboy's own
+  `AwayPeriod` (dated, with a delegate, used by forms) as the Out of office
+  switch, with its delegate treated as Cover, instead of an AIM-only toggle.
+  Reading it changes nothing of theirs.
+- [ ] **a.5 ID-linked folders (Python).** `intake.route_for` takes the leading
+  employee id of a person folder as `assigned_employee_id`; no id, or not an
+  AIM user, goes to the BU's shared queue with a review reason. BU README
+  updated. **Deploy note:** rename the share's person folders to
+  `<id> <name>` first; name-only folders stop linking at once.
+- [ ] **a.6 Capabilities** (9.1a), now the mechanism under a.2's roles:
+  AIM app features under ACL -- `approve`, `upload`, `route_within_bu`,
+  `manage_users`, `manage_rules`, `process` (Staff's pre-approval work) and
+  `fiscal` (item f) -- that each role bundles. Scope (the BUs) gives a
+  capability its reach. Built with a.2 where a.2 needs it; the rest here.
+
+**Order from here:** a.2 (roles, BU scope, profile page), a.3 (budget units
+and labels), a.4 (sharing and Out of office), a.5 (ID folders), a.6.
+
+**Still to decide.** The COA calls the agency `GSA` while `Employees.agency`
+says `GSAV`; scope must map them. Stafford (335) and Salgado (334) are not in
+GSABSS `Employees`, so they cannot sign in today.
 
 ### b. Lookups and routing before the queue (was 8b)
 
@@ -2742,25 +2933,170 @@ the working lock, Claim, reasons, Restore.
 - Paperboy's inbox / My Work: `Aim::WorkProvider` already reads rows; make
   its exposure match the screens' access rules.
 - The document type on the face of the queue, filterable (9.2).
+- **Approval stamp** (decided 2026-09-25). When an invoice is approved, the
+  worker writes on every page, bottom right, over a thin white box so it
+  stays legible over content, as v1 AIM did:
+
+  ```text
+  06/24/2025- Invoice Date:20250616
+  Martinez, Mark_06/27/2025_12:27:03
+  ```
+
+  Line one: the date AIM received the invoice, then the confirmed invoice
+  date. Line two: the approver (the coverer under Cover), last name first,
+  and the approval time. `pymupdf` is already a dependency. The store keeps
+  the PDF as received; the stamped copy is what Fiscal sees and what is
+  archived.
 
 **Decide.** What counts as stale (days since arrival or since anyone
 touched it, and how many).
 
-### f. Fiscal handoff (was 11) -- blocked on Fiscal
+### f. The Fiscal stage (was 11) -- partly waiting on Fiscal
 
-**Goal.** Approved invoices reach Fiscal the way Fiscal needs them.
+**Next phase (Joshua, 2026-09-28): a working demo of this stage, then the
+lookups (item b) feeding it.** Joshua meets Fiscal on 2026-09-29; the demo
+shows what Paperboy can take over from DocuShare. Branch
+`aim/f-fiscal-demo`, cut from master once `aim/a-user-admin` is merged.
+**A start is in `git stash` on this machine** ("fiscal demo start"): the
+migration `20260928110000_create_aim_fiscal_records` (table below plus
+`aim.members.fiscal`) and `Aim::FiscalRecord`. It was rolled back on
+`Paperboy_Dev`; `git stash pop` on the new branch, then `db:migrate`.
+
+What Fiscal does today, as Joshua understands it: an approved invoice reaches
+the BU's Fiscal queue; Fiscal opens it, applies the check number, pay doc and
+the rest; it waits for the data export; they run the report (a CSV put
+through their Excel macro into the payment software); then they archive it.
+
+*The demo:*
+- **Fiscal records the invoice beside it** (`aim.fiscal_records`, one per
+  approved invoice: status, tag, hold reason, BDO/DO, pay doc number, check
+  number and date, credit amount, split amount, object, dept object,
+  activity, function, program, phase, task, description, exported_at,
+  archived_at, updated_by). The worker's states are untouched: every invoice
+  in `approved`, `exporting` or `exported` belongs to Fiscal.
+- **Statuses:** review -> on_hold (with a reason and a tag) -> ready ->
+  exported -> archived. DocuShare's folders map to these ("BDO's On Hold
+  Missing MA's/Approvals", "Credit/On Hold Invoices", "Invoices To Accrue",
+  "Accrue Pending"); its title/keyword tags (`#INV`, `#BDO$`, `#CT$`,
+  `#INV_TAX CREDIT_DO NOT PAY`, `#INV_TAX ERROR`, `#RQS`, `DISCOUNT`,
+  `HOLD PMT`, `Cross-FY Invoice`) become a tag on the record.
+- **A Fiscal sidebar group:** Fiscal Queue (by BU, the By BU sections), On
+  Hold, Ready to Export, Archived. A Fiscal page per invoice: the stamped PDF
+  and the fields, with Save, Hold (reason), Ready, Release.
+- **A Fiscal role:** `aim.members.fiscal`, switched on the profile by AIM
+  Admins (roles other than AIM Admin live in AIM's settings). AIM Admins see
+  Fiscal too. Fiscal also gets to edit the lookups (item b).
+- **Export:** tick Ready invoices, export, and they become exported; archive
+  after. Two formats until Fiscal says which their macro wants: DocuShare's
+  (tab-separated, UTF-16 with BOM, every value quoted) and plain CSV. **Only
+  the header row and one row per invoice** -- the sample's "Class Name",
+  Collection and SavedQuery blocks are DocuShare's own, not data (Joshua).
+  Columns, in DocuShare's order: Title, Invoice Number, Vendor Name,
+  Customer Number, Order Number, Invoice Date AP (yyyymmdd), Create Date,
+  Modified Date (mm/dd/yyyy), Expiration Date, Past Due, Sales Tax,
+  SubTotal, Credit Amount, Total, Keywords, BDO / DO, Pay Doc Number,
+  Description, Unit, Object, Dept Object, Activity, Function, Program,
+  Phase, Task, Split Invoice Amount, Handle, Archive Date, Check Number.
+  Title is `<tag>_<BU>_<vendor>_<invoice no>_<yyyymmdd>`; Handle is AIM's
+  batch id; Description carries the approval stamp text
+  (`Last, First_mm/dd/yyyy_hh:mm:ss`) or the hold reason.
+- **Demo data:** the invoices already approved on `Paperboy_Dev` appear in
+  the Fiscal Queue on their own.
+
+*Questions for Fiscal (2026-09-29):* which export format and exact columns
+the macro takes; which fields they fill and which the lookup should; the
+check number and pay doc: from where, and when; what "archive" must do; do
+they send an invoice back to the approver; which folders/statuses they
+really use; per-BU queues or one queue; the fiscal stamp (check number, date
+processed, who?); invoice date or processing date for choosing a year's
+lookup row.
+
+*Then item b feeds it:* the lookup fills BDO/DO and the coding (PO numbers
+are in Fiscal's lookup CSVs, the "Encumbrance Doc"/"BDO/PO #" column --
+never loaded to SQL so far). The lookups are managed in Paperboy: AIM
+tables, screens with COA validation and row history, Fiscal editing,
+effective-from/until dates so next year's rows can be loaded ahead of 7/1,
+and the yearly file staged through Data Runner (its inbox, load and run log;
+a DSL there needs Traap's approval) with AIM's preview-then-apply. No person
+routing in the lookups: an invoice nobody names goes to the BU's shared
+queue (Joshua, 2026-09-28); suggestions from approval history may come
+later.
+
+**Goal.** Approved invoices go to Fiscal inside AIM, where Fiscal records
+payment and exports in bulk. Only when Fiscal archives an invoice does it
+leave for long-term storage. Laserfiche, or whatever replaces it, is the
+**last** step (decided 2026-09-25).
+
+```text
+approve (stamp) -> Fiscal queue -> check number etc. -> bulk export
+                -> Fiscal archives (fiscal stamp) -> storage -> finished
+```
 
 **Exists.** Export writes the billing row, the Laserfiche XML and the PDF to
-`_AI_Processed`, and archives a copy.
+`_AI_Processed` straight after approval, and archives a copy. That hop moves
+to the end of the chain.
 
-**Build, once Fiscal answers.** The fiscal export in their layout; stamping
-the metadata into the PDF Info dictionary and retiring the XML (11.3, 11.4);
-split coding lines if Fiscal needs them. The Laserfiche import mechanism is
-still blocked on IT.
+**Build.**
+- New states between approval and export for Fiscal's work, in both state
+  machines (Ruby and Python), with events as ever.
+- **Fiscal queue**: approved invoices, open to the `fiscal` capability
+  (a.6). Shows the stamped PDF, the facts and the history, and takes the
+  fields Fiscal records -- check number, check date, and the rest once
+  Fiscal names them -- as new `aim.invoices` columns.
+- **Bulk export**: tick invoices, download Excel or CSV. `caxlsx` and `csv`
+  are already in the Gemfile, so this is an AIM controller action, not a Data
+  Runner port.
+- **Archive**: Fiscal's final action. Writes the **fiscal stamp** (every
+  page, bottom left: check number and date processed), then hands the
+  invoice to storage. The storage step is one adapter, so Laserfiche or DAM
+  is a configuration choice, not a rewrite.
+- Once storage is chosen: the PDF Info dictionary metadata (11.3, 11.4) and
+  retiring the XML if it is Laserfiche; split coding lines if Fiscal needs
+  them.
+
+**What Fiscal does today, in DocuShare** (from Joshua's screenshots,
+2026-09-25; the skeleton to replace, not yet the spec). Fiscal staff work in
+`GSA AP` on `gsadoc02`: `01 Invoices` ("In-Bin - Pending VCFMS Upload") has
+one folder per BU (4501, 4551, 4571, ...), and a later stage folder
+(`03 VCFMS ...`) takes them on. Each PDF is titled
+`<tag>_<BU>_<vendor>_<invoice no>_<yyyymmdd>` and carries properties:
+
+- Already AIM's: Invoice Number, Vendor Name, Invoice Date AP, Total,
+  Remit To.
+- Coding (item b): Fund, Department, Object, Dept Object, Activity,
+  Function, Major Program, ...
+- **Fiscal's own:** BDO / DO (`BDO_<BU><yyyymmdd>...`), **Pay Doc Number**
+  (`4570202609240000878 IN`), **Check Number**, **Archive Date**, Credit
+  Amount.
+- **Keywords as workflow flags:** `#BDO$`, `#INV_TAX CREDIT_DO NOT PAY`,
+  `#INV_TAX ERROR`, `#RQS_CT-L3_SETUP`, `HOLD PMT`, `Cross-FY Invoice` --
+  hold, do-not-pay, tax problem, setup needed, cross fiscal year. In AIM
+  these become flags on the row that the Fiscal queue filters by, not text
+  in a title.
+- Description: today holds the approval stamp's text
+  (`Howard, Gary_09/23/2026_10:37:00`), which AIM gets from the history.
+
+A **Fiscal staff role** (an ordinary Paperboy group holding the `fiscal`
+capability, a.6) reaches the Fiscal queue. Goal: DocuShare's AP collection
+retires once this runs.
+
+**Decide, with Fiscal.** The fields they record (above is the starting
+list); the export's columns and
+order; whether Fiscal can send an invoice back to the approver; whether the
+fiscal stamp names who processed it. **Storage:** Laserfiche (possibly the
+county's records system, so retention may require it; its import is still
+blocked on IT) or Paperboy's DAM (already here, with access rules that could
+limit invoices to Fiscal, but another team's, so it needs their agreement).
 
 ### g. Observability (was 10)
 
 **Goal.** Knowing the worker is healthy without watching its window.
+
+**Activity view** (asked by Joshua 2026-09-25): what was done, by whom,
+when -- across all invoices, filterable by person, action, BU and date, and
+as an Activity tab on each person's profile. `aim.invoice_events` already
+holds every move with its actor; admin changes (people added or deleted, BUs
+and BU Admin granted) need recording too, in the same shape.
 
 **Build.** Worker logging to timestamped files under `AIM_LOG_DIR` (read but
 unused today); a heartbeat row or file the dashboard shows (last cycle, last
@@ -2790,6 +3126,39 @@ billing writes surfaced rather than only printed.
 - **Drag and drop**: robustness across browsers.
 
 ---
+
+### i. More ways in: email and coversheet (asked by Joshua 2026-09-25)
+
+**Goal.** Invoices reach the right queue however they are sent. Most are sent
+by someone other than the approver.
+
+**Exists.** Upload in Paperboy (anyone signed in; the BU from the COA, every
+agency; the person picked), and the hot folder (`<BU>\<person folder>`, the
+person by employee id after a.5).
+
+**Build.** An AIM mailbox the worker reads, the recipient from the subject or
+a code; a printable coversheet whose barcode names the person and BU, read
+at intake (the decision already made: assignment is source-agnostic, so a
+coversheet sets it without redesign). The history records the channel and
+the sender.
+
+### j. Demo mode (asked by Joshua 2026-09-25)
+
+**Goal.** Show and try AIM -- upload, review, approve -- without anything
+real happening: for training, for testing, and for demos to other agencies.
+
+**To think through.**
+- *Isolation.* Demo invoices flagged as such (a column on `aim.invoices`, or
+  a demo BU), never mixed into real queues, counts or By BU.
+- *No side effects.* No billing rows in `Aim_Invoices` (no charges), no
+  export to `_AI_Processed` or Laserfiche, no emails; the approval stamp is
+  drawn but marked DEMO.
+- *No AI cost.* Canned extractions for a set of sample PDFs, so the worker's
+  AI is not called.
+- *Who sees it.* A Demo switch like Admin / Approver mode, or demo users;
+  a banner on every page while it is on.
+- *Reset.* One button clears the demo invoices and reloads the samples.
+- *For sales.* Sample vendors and BUs that name no real county data.
 
 ## Earlier Roadmap (pre-v2), kept for reference
 
@@ -3369,6 +3738,30 @@ end so the reasoning stays findable.
   `SalesTax` and `Credit Amount` matter (v2 stores subtotal and sales tax as
   money columns and sends them to billing); whether `Aim_Invoices`' approval
   columns stay authoritative.
+- **[f] Fiscal's fields and export.** What Fiscal records per invoice
+  (check number, check date, payment date, voucher, ...), the export's
+  columns and order, whether they can send an invoice back, and whether the
+  fiscal stamp carries the processor's name.
+- **[f] Storage: Laserfiche or DAM.** Records retention may decide it. DAM
+  is another team's; using it needs their agreement.
+- **[a] Out of office through `AwayPeriod`.** Proposed 2026-09-25: read
+  Paperboy's existing away periods rather than add an AIM switch. Confirm
+  with Joshua at step a.4.
+- **[a] Old org-level AIM grants in ACL.** `aim:processing_queues` and
+  `aim:dashboard` are granted to all of departments 4601 and 4643 (org
+  permissions 1453, 1454, 1544, 1545). They made every User there staff until
+  2026-09-25, when AIM stopped reading them. Harmless now; Joshua to remove
+  them on the ACL screen. Steve Nelles had the Pipeline only through
+  `Super_User`'s grant: add him to `aim_staff` if he should keep it.
+- **[a] ACL's AIM application grant now only shows AIM in the app switcher.**
+  AIM's front door asks only for a Paperboy sign-in (2026-09-25); the AIM
+  account decides the rest. Joshua to grant the AIM application once at the
+  top of ACL, so everyone sees it, and remove the old grants to departments
+  4601, 4643, 4645 and unit 4641.
+- **[b] A unit's agency on the invoice.** AIM's BU lists and labels come from
+  the COA (`Aim::Units`, 2026-09-25), but an invoice stores only its unit
+  number, and three unit numbers belong to more than one agency in the COA.
+  Store the agency on the invoice when routing (item b) sets the coding.
 - **[f] Laserfiche import mechanism.** Blocked on IT. The likely shape is a
   monitored folder on GSA-SCAN02; `AIM_LASERFICHE_INBOX_PATH` keeps it a
   LockBox value, so do not design around today's literal.
@@ -3388,6 +3781,13 @@ end so the reasoning stays findable.
   `C:\Windows`. `_prepare_aim_environment.bat` uses `pushd`, and the
   launchers call python with `"%~dp0<script>.py"`. v2's launcher does the
   same. **Never add a relative path or a bare `cd` to a `.bat` here.**
+- **AIM's own test database, `Paperboy_Test_AIM`** (created 2026-09-25). Two
+  full runs on the shared `Paperboy_Test` collapsed into hundreds of pool
+  timeouts and "Database 'Paperboy_Test' is in transition": another run on
+  the same database, or the relay restarted mid-run. Run the gate with
+  `PAPERBOY_TEST_DATABASE=Paperboy_Test_AIM` and do not restart the relay or
+  run other tests while it runs. Through the WSL relay the suite takes about
+  7 minutes.
 - **Pull LockBox before assuming a missing variable is a bug.** A variable
   fetched at module load aborts the whole suite when absent
   (`P2M_PRINTERS`, 2026-09-08).
@@ -3485,3 +3885,28 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-24 | v2 | (this commit) | **AIM v2 built in one pass** on `aim/v2-row-first`, from the contract above, by two builders working in parallel. Python: `script/python/aim/v2` (one worker: intake, extract, split, export; atomic row claim with a lease; events in the same transaction), 50 tests; `bin/deploy-aim-workers --v2` targets `_PROGRAM2`. Rails: migrations `20260924100000`–`100002` (v2 columns with the v1→v2 state mapping, `aim.vendor_aliases`, `aim.vendor_rules`), `Aim::Invoice` v2 state machine, queues as row queries, review actions via `transition_to!`, upload, alias and rule screens, `aim:v2:seed_aliases`/`seed_rules`; `QueueSync`, the folder concerns and `.claim.json` removed. Decisions beyond the contract: `split_error` reason; the Needs Review queue keeps the label *Action Needed* (the shared navigation catalog asserts it); Finished holds `exported` and `split`; Send to Approval and Approve need a set type, vendor and invoice number; the store keeps its PDF on reject and delete, copies go to the old folders; upload is gated by AIM access with BU from the user's unit. Gate on the combined tree: 1098 runs, 0 fail, 0 error, 297 pytest, scoped rubocop clean, brakeman 4 (none AIM), zeitwerk clean, `--v2` dry run 17 files. Not yet run on the server |
 | 2026-09-24 | — | (this merge) | **AIM v2 merged to Paperboy master**, Joshua's decision after testing it live. Since the one-pass build: billing written at intake and kept current by `BatchID`; owners are employees (`assigned_employee_id`) found with a COA-style search limited to AIM users; My Queue (ready only) and Shared Queues (by BU; interim rule: staff all BUs, others their own unit); owners work their own ready invoices; a working lock that lapses 90 s after the page stops checking in, and Claim moves an invoice to your queue; a reason for Reject, Delete and Send Back, and staff Restore from Rejected/Deleted, kept in Notes and history; multi-move by checkbox; queue search; lazy counts; grouped sidebar; upload open to anyone signed in, drag-and-drop. Master merged in first (only the Phase 5 merge commit). Gate: 1138 runs, 1 failure (P2M `OmsUploadLedgerTest`, fails on clean master too), 304 pytest, AIM rubocop clean, brakeman's same 4, bundle-audit and zeitwerk clean. v1 still on the share until cut over |
 | 2026-09-24 | — | (this edit) | Plan brought up to date with v2 on master: `## Where AIM Stands`, the contract marked as built, `## Next — After v2` (items a–h: user admin, lookups and routing, vendors, duplicates, approval polish, fiscal, observability, cutover), Open Questions tagged by item, the pre-v2 phases kept under `## Earlier Roadmap` |
+| 2026-09-25 | a | (this commit) | Decisions for item a recorded with Joshua: staff see every BU, admins grant, removal refused while a person has invoices, groups and the Admin list both count for now, queue access View / Pull / Cover with Out of office, person folders linked by employee ID (hard switch). Item a split into steps a.1-a.6 on branch `aim/a-user-admin`. Approval stamp added to item e; item f rewritten as the Fiscal stage (queue, check numbers, bulk export, archive with a fiscal stamp, storage last: Laserfiche or DAM) |
+| 2026-09-25 | a.1 | (this commit) | `aim.members` and `Aim::Member`; Users & Queues lists everyone who works AIM (Admin list, AIM group, or both) with open-invoice counts; add by an all-employee search; each name opens that person's queue with Move, and Remove once it is empty; removal refused while they own open invoices; AIM staff kept out (`aim_user_admin?`). `aim:v2:seed_members`. Return to Queue now goes back to the page the invoice was opened from. Suite run through the WSL relay: 1153 runs, 1 failure (the known P2M `OmsUploadLedgerTest`), 0 errors; scoped rubocop clean, brakeman's same four non-AIM warnings, bundle-audit clean |
+| 2026-09-25 | a.1c | (this commit) | 40 Fusion GSA users in `docs/aim/fusion_gsa_users.csv` and `aim:v2:import_members`; imported to `Paperboy_Dev` (40 added). Roles settled: User, BU Admin, AIM Staff, AIM Admin, Fiscal; item a reordered so a.2 is roles and BU scope with the profile page |
+| 2026-09-25 | a.1 | (this commit) | Users & Queues redesigned from Joshua's testing: List and By BU views (remembered), one line per person, an Actions menu per row (one open at a time, closed by a click elsewhere or Escape: `aim_actions_menu_controller`, registered in `app/javascript/controllers/index.js` with Joshua's approval), search, unit and flag filters, sortable columns, pinned headings. People GSABSS no longer lists are shown and flagged, and their queue still opens. Delete needs the employee ID typed and a confirmation, checked by the server. 1159 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four non-AIM warnings; scoped rubocop clean |
+| 2026-09-25 | a.2 (1) | (this commit) | `aim.user_budget_units`; a person's profile sets their BUs and BU Admin flags; shared queues follow the added BUs; roles named on the profile; Edit profile in the Actions menu. `schema.rb` again carried another team's uncommitted `textbook_and_tuition_reimbursement_forms` from the shared dev database; removed from the commit, as Joshua approved. 1164 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (2) | (this commit) | From Joshua's testing: a person's invoices split into In queue (Ready for Approval) and In pipeline (the other stages, per-stage filters, finished ones only on request, searchable); the Roles panel keeps its shape and shows each BU's role instead of how it was added; Delete is a small button whose pop-up explains what blocks it or asks for the employee ID, then a last confirmation; sidebar group Queues renamed Pipeline; activity view added to item g. 1165 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (3) | (this commit) | Role column (sortable, filterable) replaces Added through on Users & Queues; a home unit can be hidden and shown (`hidden` on `aim.user_budget_units`); the Move dialog shows the person search only when moving to a person. `schema.rb` cleared of the other team's table again. 1167 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (4) | (this commit) | Admin / Approver mode: a switch at the top of the sidebar for AIM Admins and Staff; Approver mode answers every access check as for a User; the start mode is saved in `aim.user_preferences`. Move to another BU's shared queue: changes the invoice's budget unit, recorded in the history, limited to BUs the mover covers (Staff and Admins any). `schema.rb` cleared of the other team's table again. 1176 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (5) | (this commit) | AIM Staff and Admin are the `aim_admin`, `aim_staff` and `system_admins` groups only. The Processing Queues and Dashboard features no longer grant staff access: org-level grants to 4601 and 4643 had made every User there staff (found emulating Tina Arellano: Pipeline, Vendors, Dashboard, the mode switch and every BU's shared queue). The Dashboard follows the same rule. 1177 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (6) | (this commit) | The BU page: My BUs for a BU Admin, By BU for Staff and Admins -- each BU's shared queue and people, collapsible, with the queue/pipeline tabs (now a shared concern and partial) and Move. BU Admins open, claim and move invoices in their BUs, moving to a person only if that person covers the BU; they still cannot approve others' invoices. Hidden in Approver mode. 1182 runs, 1 failure (the known P2M test), 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (7) | (this commit) | BU Admins manage people in their BUs: add someone with one of their BUs from My BUs, open the profiles of people in those BUs, add or take away those BUs only. Appointing BU Admins, hiding units, taking a BU from another BU Admin of it and deleting stay with AIM admins (`aim_managed_units`). 1187 runs, 0 failures, 0 errors (the P2M test passed this run, so it is intermittent); brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (8) | (this commit) | One admin role: AIM Admin is the `aim_admin` group in ACL (plus system admins); AIM Staff is folded into it, and the Staff switch built earlier the same day was withdrawn before commit. AIM users are the AIM list plus `aim_admin`; `system_admins`, `aim_staff` and the Processing Queues grant groups no longer add anyone. The list's group tag reads ACL. Gary Howard and Matthew Davoren added to `aim_admin` in ACL by Joshua. 1187 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.2 (9) | (this commit) | Deactivate (reason, who, when; out of the picker and queues; Reactivate; BU Admins only for people whose BUs are all theirs; Users & Queues hides inactive unless asked). Fusion's team and roles kept on `aim.members`; the import makes each Fusion supervisor BU Admin of their team's BU (the BU most of the team's people are in) and lists app admins for ACL -- applied rather than suggested, Joshua's call. Run on `Paperboy_Dev`: Nelles 4641, Gagnon 4703, Bonilla 4551 and 4571. **a.2 complete.** 1193 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a | (this commit) | Agencies and BUs from the Chart of Accounts (`Aim::Units`): every BU list and label reads the COA, grouped by agency, with names tidied (`4601 · GSA Administration`); the agencies offered are those of the people on the AIM list (GSABSS `GSAV` is COA `GSA`). Agency filter on Users & Queues and the BU page (starting on your own agency); Shared Queues headings use the COA names. 1198 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a | (this commit) | AIM's front door needs only a Paperboy sign-in; the AIM account decides the rest (found emulating Tonya Gagnon, 4703, whose department held no ACL grant). Everything under AIM in the sidebar is personal: Shared Queues and its count show your own BUs, AIM Admins included; an admin's By BU moved into Pipeline. 1202 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.3 (1) | (this commit) | Shared queue switch per person per BU, off by default, always on for that BU's BU Admins; set by AIM Admins anywhere and BU Admins in their BUs, from profiles and the BU page, which flags BUs nobody covers. Works-in and shared-queue BUs separated. 1203 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a.3 (2) | (this commit) | Every BU with people should have a BU Admin (Joshua): not enforced, but Users & Queues and By BU warn AIM Admins of each active BU with none (`Aim::Users.units_without_admin`), and By BU tags it. BU Admins always have their BUs' shared queues. On `Paperboy_Dev` ten BUs lack one. 1206 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a | (this commit) | Ready for Approval grouped BU -> shared queue and each person -> invoices, the same sections as By BU (`Aim::BuSections`, `aim/shared/_bu_sections`). Upload's budget unit is a searchable list of every agency's active COA units, and the server refuses anything else. The AIM application granted globally in ACL on dev by Joshua (10 global grants: AIM plus the 9 before). New to-do items i (email and coversheet intake) and j (demo mode). 1206 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-25 | a | (this commit) | End of day: BU warnings placed before the counts; a BU Admin's shared queue shows a greyed On. `Where AIM Stands` updated. 1206 runs, 0 failures, 0 errors; brakeman's same four. Branch `aim/a-user-admin` pushed for Joshua; not merged. Worked through a WSL-to-Windows relay (`~/vpn-workaround`) while the VPN blocks WSL; the suite ran on `PAPERBOY_TEST_DATABASE=Paperboy_Test_AIM`. |
+| 2026-09-28 | a | (this commit) | The no-BU-Admin banner becomes a small chip in the page header whose list opens over the page (Users & Queues, By BU), and the Users & Queues list scrolls with the page instead of a short box of its own -- from Joshua on a laptop screen. First run off the VPN: the suite ran straight to GSASQL16 in about 7 minutes. 1206 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-28 | a.3 | (this commit) | AIM's budget units: an AIM Admin chooses, per COA agency, the whole agency or single units, and every BU list follows (Upload, Move, profiles, By BU). `schema.rb` rebuilt from the last commit plus `aim.enabled_units`: the shared dev database now also carries other teams' uncommitted form tables and columns. Joshua's call: try it, roll back to `c3801c3e` if not liked. 1210 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-28 | a | (this commit) | Grouped person picker (`aim_grouped_search_controller`, registered in `app/javascript/controllers/index.js` with Joshua's approval): AIM users under each BU they work in, COA labels, the invoice's BU first, loose word search; used by Move and Upload's Someone else, and for Upload's BU list (agency headings kept). AIM's Budget Units: Save at the top too, floating Save without a bar, loose search opening matching agencies (`aim_queue_filter` now opens <details> groups). 1212 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-28 | — | (this merge) | Merged `origin/master` (96 commits, `ffa0867b`) into `aim/a-user-admin`. Master's `20260925100000_create_form_template_emails` shared a version with `create_aim_members`, so AIM's six Sep-25 migrations were renumbered to `20260926100000`-`100005` first (third collision; always check `db/migrate` on master before merging), and `Paperboy_Dev`'s `schema_migrations` rows moved to match. `schema.rb` is master's plus AIM's four tables (`enabled_units`, `members`, `user_budget_units`, `user_preferences`); master had already dropped them once as unmerged (`86c98d9d`). Gate on the merge: 1297 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's four, none AIM (one moved from P2M to Data Runner with master); bundle-audit and zeitwerk clean |
+| 2026-09-28 | a | (this commit) | Grouped picker: clicking in shows the whole list with the current choice highlighted; only typing filters (it had filtered by the chosen text, so Upload's BU list showed one unit -- found by Joshua). Script only; syntax-checked, not covered by the Rails suite |
+| 2026-09-28 | a | (this merge) | **Item a merged to Paperboy master**, Joshua's decision. Gate: the full suite on the master merge `2dc9141b` (1297 runs, 0 failures, 0 errors) was against today's master, which had not moved; the one commit after is the grouped picker's script. Fiscal demo (item f) written up as the next phase; its start is in `git stash` |
