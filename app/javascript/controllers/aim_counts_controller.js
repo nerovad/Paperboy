@@ -7,17 +7,30 @@ export default class extends Controller {
   static values = { url: String }
 
   // The last counts seen are shown at once, then refreshed in place, so
-  // moving between pages does not blink the badges.
+  // moving between pages does not blink the badges. A fetch that fails is
+  // tried once more a few seconds later: a page opened while the server is
+  // reloading, or the database blinks, should not leave the badges blank.
   async connect() {
     this.show(this.remembered())
+    if (await this.load()) return
+    this.retry = setTimeout(() => this.load(), 3000)
+  }
+
+  disconnect() {
+    clearTimeout(this.retry)
+  }
+
+  async load() {
     try {
       const response = await fetch(this.urlValue, { headers: { Accept: "application/json" } })
-      if (!response.ok) return
+      if (!response.ok) return false
       const counts = await response.json()
       this.show(counts)
       this.remember(counts)
+      return true
     } catch (error) {
       console.warn("AIM counts could not be loaded", error)
+      return false
     }
   }
 
