@@ -39,8 +39,10 @@ export default class extends Controller {
     this.box.append(this.input, this.list)
     this.select.before(this.box)
 
-    this.input.addEventListener("input", () => this.render())
-    this.input.addEventListener("focus", () => { this.input.select(); this.render() })
+    // Clicking in shows the whole list, the current choice highlighted; only
+    // typing filters. (Filtering by the chosen text left just that one.)
+    this.input.addEventListener("input", () => { this.showAll = false; this.render() })
+    this.input.addEventListener("focus", () => { this.input.select(); this.showAll = true; this.render() })
     this.input.addEventListener("keydown", (event) => this.keydown(event))
     this.input.addEventListener("blur", () => setTimeout(() => this.settle(), 150))
     this.list.addEventListener("mousedown", (event) => event.preventDefault())
@@ -79,7 +81,7 @@ export default class extends Controller {
   }
 
   render() {
-    const words = this.normalize(this.input.value).split(" ").filter(Boolean)
+    const words = this.showAll ? [] : this.normalize(this.input.value).split(" ").filter(Boolean)
     this.list.replaceChildren()
     this.items = []
     this.groups().forEach((group) => {
@@ -109,13 +111,14 @@ export default class extends Controller {
       this.list.append(empty)
     }
     this.list.hidden = false
-    this.highlight(0)
+    const chosen = this.items.findIndex((item) => item.dataset.value === this.select.value)
+    this.highlight(this.showAll && chosen >= 0 ? chosen : 0)
   }
 
   keydown(event) {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault()
-      if (this.list.hidden) return this.render()
+      if (this.list.hidden) { this.showAll = true; return this.render() }
       this.highlight(this.active + (event.key === "ArrowDown" ? 1 : -1))
     } else if (event.key === "Enter") {
       if (this.list.hidden || !this.items?.length) return
