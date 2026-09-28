@@ -2965,7 +2965,9 @@ the worker's OCR text is a later step), and Use this coding
 Coding section edits the line (BDO/DO typed as one, `encumbrance=` splits
 it); Payment section holds Fiscal's own fields. The report reads the line;
 Split Invoice Amount only when there is more than one. Dev's waiting
-invoices coded by the job.
+invoices coded by the job. **A rule from another BU only offers, never
+applies** (found on dev: Grainger in 4641 took Parks' BDO; a BDO is that
+BU's), and the choices then show the BU.
 
 *Next:* b.3 the Lookups
 screens (Fiscal and AIM Admins): rules by agency and BU, search, edit with
@@ -4162,3 +4164,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | — | (this commit) | Approve refused outside Ready for Approval (button gone from Action Needed, `needs_review -> approved` removed); Delete refused server-side to non-admins; History folded on the review page. 1330 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | b.1 | (this commit) | A file never retires its own rows (a vendor listed several times is several choices). GSA and Sheriff lookups loaded into `Paperboy_Dev` as imports 14-23: 864 rules in effect. 1331 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | b.2 | (this commit) | Coding lines on the invoice, filled from the rules when Ready for Approval (`Aim::CodingLookup`, `Aim::CodeReadyJob` + `recurring.yml` block, standing exception), several matches offered with a hint from the PDF text, Use this coding (`code` route); Fiscal edits the line; the report reads it; fiscal_records' coding columns moved (`20260928170000`). 1337 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
+| 2026-09-28 | b.2 | (this commit) | A coding rule from another BU is offered, never applied on its own; the choices show the BU. Dev re-coded. 1338 runs, 0 failures, 0 errors; scoped rubocop clean |

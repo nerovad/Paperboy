@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 module Aim
-  # Codes an invoice from the coding rules (item b.2). One matching rule
-  # becomes the invoice's coding line; several are choices for a person, with
-  # a hint when one of them is named on the invoice; none is said so. Runs
+  # Codes an invoice from the coding rules (item b.2). One matching rule in
+  # the invoice's BU becomes its coding line; several are choices for a
+  # person, with a hint when one of them is named on the invoice; a rule from
+  # another BU only ever offers (its BDO is that BU's); none is said so. Runs
   # when an invoice reaches Ready for Approval and is looked at, and on a
   # schedule for the rest (Aim::CodeReadyJob).
   module CodingLookup
@@ -20,14 +21,15 @@ module Aim
     def run!(invoice)
       level, rules = candidates(invoice)
       invoice.transaction do
-        if rules&.one?
+        if rules&.one? && level != :agency
           line = Aim::CodingLine.from_rule(rules.first, source: 'rule', set_by: ACTOR)
           line.amount = invoice.invoice_total
           invoice.coding_lines.destroy_all
           invoice.coding_lines << line
           note = "coded from the #{level} rule for #{rules.first.vendor_name}#{" (#{rules.first.encumbrance})" if rules.first.encumbrance}"
         elsif rules
-          note = "#{rules.size} coding rules match; one has to be picked"
+          where = level == :agency ? ' from other BUs' : ''
+          note = "#{pluralize_rules(rules.size)}#{where} match; one has to be picked"
         else
           note = "no coding rule for #{invoice.vendor_name.presence || 'this vendor'} in #{invoice.budget_unit.presence || 'its BU'}"
         end
@@ -36,6 +38,8 @@ module Aim
       end
       rules
     end
+
+    def pluralize_rules(count) = count == 1 ? '1 coding rule' : "#{count} coding rules"
 
     # [level, rules] from the rules, or nil.
     def candidates(invoice)
@@ -63,7 +67,7 @@ module Aim
     # The fields that differ between candidate rules: what a person looks at
     # to choose, and what the hint looks for on the invoice.
     def differing_fields(rules)
-      (Aim::CodingLine::RULE_FIELDS + %w[customer_number]).select { |f| rules.map { |r| r.public_send(f).to_s }.uniq.size > 1 }
+      (%w[budget_unit customer_number] + Aim::CodingLine::RULE_FIELDS).select { |f| rules.map { |r| r.public_send(f).to_s }.uniq.size > 1 }
     end
 
     # The candidates named on the invoice itself -- a stamp with the BDO line,

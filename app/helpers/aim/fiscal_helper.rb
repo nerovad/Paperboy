@@ -14,7 +14,7 @@ module Aim
       'ma_number' => 'MA Number', 'vendor_code' => 'Vendor Code', 'fund' => 'Fund', 'department' => 'Department',
       'org_number' => 'Org Number', 'object_code' => 'Object', 'dept_object' => 'Dept Object', 'activity' => 'Activity',
       'function_code' => 'Function', 'major_program' => 'Major Program', 'program' => 'Program', 'phase' => 'Phase',
-      'task' => 'Task', 'amount' => 'Amount', 'customer_number' => 'Customer Number'
+      'task' => 'Task', 'amount' => 'Amount', 'customer_number' => 'Customer Number', 'budget_unit' => 'Budget Unit'
     }.freeze
 
     def aim_coding_field_label(field) = CODING_FIELD_LABELS.fetch(field.to_s, field.to_s.humanize)

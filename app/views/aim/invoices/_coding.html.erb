@@ -20,7 +20,7 @@
     <% end %>
   <% elsif @coding_candidates.present? %>
     <p class="aim-coding__help">
-      <%= @coding_candidates.size %> coding rules match this vendor<%= ' in this BU' if @coding_level != :agency %>.
+      <%= pluralize(@coding_candidates.size, 'coding rule') %> for this vendor<%= @coding_level == :agency ? ' in other BUs. None is for this BU, so check the BDO' : ' in this BU' %>.
       <%= 'One is named on the invoice and is ticked.' if @coding_hinted.one? %>
       Pick the right one.
     </p>

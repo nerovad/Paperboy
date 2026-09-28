@@ -32,6 +32,16 @@ module Aim
       assert_match(/coded from the unit rule for ACME/, row.events.last.note)
     end
 
+    test 'a rule from another BU is offered, never applied on its own' do
+      other = rule('BDO_47002024072900000051_1', budget_unit: '4703')
+      row = invoice
+
+      assert_equal [other], Aim::CodingLookup.run!(row)
+      assert_empty row.coding_lines
+      assert_match(/1 coding rule from other BUs match/, row.events.last.note)
+      assert_equal %w[budget_unit], Aim::CodingLookup.differing_fields([other, rule('BDO_47002024072900000051_1', budget_unit: '4705')])
+    end
+
     test 'several matches leave the choice to a person, who picks one' do
       first = rule('BDO_46402024072600000001_1')
       rule('BDO_46402024072600000001_2')
