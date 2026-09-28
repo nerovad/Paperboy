@@ -205,14 +205,14 @@
                               data: { turbo_confirm: 'Send this invoice to its owner for approval?' },
                               class: 'btn approve' %>
               <%= form.submit 'Approve',
-                              data: { turbo_confirm: 'Approve this invoice now and send it to billing and Laserfiche?' },
+                              data: { turbo_confirm: 'Approve this invoice now and send it to billing and Fiscal?' },
                               class: 'btn approve' %>
               <%= form.submit 'Retry AI',
                               data: { turbo_confirm: 'Send this document back through AI extraction?' },
                               class: 'btn warning' %>
             <% elsif state == 'ready_for_approval' %>
               <%= form.submit 'Approve',
-                              data: { turbo_confirm: 'Approve this invoice and send it to billing and Laserfiche?' },
+                              data: { turbo_confirm: 'Approve this invoice and send it to billing and Fiscal?' },
                               class: 'btn approve' %>
               <button type="button" class="btn warning" data-action="aim-reason#open"
                       data-commit="Send Back" data-title="Send back to AIM review">Send Back</button>
@@ -236,7 +236,7 @@
                               data: { turbo_confirm: 'Send this document back through AI extraction?' },
                               class: 'btn warning' %>
               <%= form.submit 'Retry Export',
-                              data: { turbo_confirm: 'Try the export to billing and Laserfiche again?' },
+                              data: { turbo_confirm: 'Try the export to billing again?' },
                               class: 'btn approve' %>
             <% end %>
 

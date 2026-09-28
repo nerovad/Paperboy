@@ -55,7 +55,7 @@ module Aim
       return refuse_unready unless @invoice.ready_for_a_user?
 
       @invoice.request_export!(actor: current_user_email)
-      finish('Invoice approved. It is on its way to billing and Laserfiche.')
+      finish('Invoice approved. It is on its way to billing and Fiscal.')
     end
 
     def send_back
