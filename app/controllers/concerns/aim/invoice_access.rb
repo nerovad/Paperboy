@@ -80,7 +80,7 @@ module Aim
     end
 
     def refuse_outsider
-      redirect_back_or_to home_queue_path, alert: 'That person does not work AIM, so they have no queue.'
+      redirect_back_or_to home_queue_path, alert: 'That person is not in AIM, so they have no queue.'
     end
 
     def home_queue_path = queue_return_path

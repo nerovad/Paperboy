@@ -70,7 +70,7 @@
                   <%= form.date_field field, disabled: read_only %>
                 <% when 'description' %>
                   <%= form.text_area field, rows: 2, disabled: read_only,
-                                            placeholder: @stamp ? "Left empty, the export uses #{@stamp}" : nil %>
+                                            placeholder: @stamp ? "If empty, the export uses #{@stamp}" : nil %>
                 <% else %>
                   <%= form.text_field field, disabled: read_only %>
                 <% end %>

@@ -26,7 +26,7 @@ module Aim
     def require_aim_admin
       return if helpers.aim_queue_access?
 
-      redirect_to aim_root_path, alert: 'You do not have access to AIM processing queues.'
+      redirect_to aim_root_path, alert: 'Only AIM Admins can open that page.'
     end
 
     # Managing who works AIM: aim_admin and system admins only.

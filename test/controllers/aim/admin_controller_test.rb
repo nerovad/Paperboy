@@ -24,7 +24,7 @@ module Aim
       assert_response :success
       assert_includes response.body, added.last_name
       assert_includes response.body, grouped.last_name
-      assert_includes response.body, 'AIM Admin through the aim_admin group'
+      assert_includes response.body, 'AIM Admin, set in ACL'
       assert_select 'th', text: /Role/
       assert_includes response.body, 'AIM Admin'
     end

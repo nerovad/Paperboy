@@ -12,7 +12,7 @@ module Aim
 
     def restore
       target = RESTORE_TO[params[:commit].to_s]
-      return restore_refused('Only AIM staff restore invoices.') unless staff? && @invoice.restorable?
+      return restore_refused('Only AIM Admins can restore invoices.') unless staff? && @invoice.restorable?
       return restore_refused('Choose where to restore it.') if target.nil?
       return restore_refused('Restoring needs a reason.') if reason.blank?
 

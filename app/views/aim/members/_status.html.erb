@@ -25,8 +25,7 @@
       <% else %>
         <%= form_with url: deactivate_aim_member_path(@employee_id), method: :patch, local: true, class: 'pb-modal__body' do %>
           <p class="pb-modal__message">
-            <%= name %> drops out of the picker and the queues. Their record, budget units and history stay, and they
-            can be reactivated. Why?
+            <%= name %> is taken out of AIM for now. Their history is kept, and you can reactivate them later. Why?
           </p>
           <%= text_area_tag :reason, nil, rows: 3, disabled: true, placeholder: 'For example: left the county, moved to another agency',
                             aria: { label: 'Reason' }, data: { aim_reason_target: 'reason' } %>

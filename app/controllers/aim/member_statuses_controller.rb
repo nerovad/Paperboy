@@ -32,7 +32,7 @@ module Aim
       @employee_id = @member.employee_id
       return if helpers.aim_manages_all_units_of?(@employee_id)
 
-      redirect_to aim_member_path(@employee_id), alert: 'They also work BUs you do not administer; an AIM Admin can do this.'
+      redirect_to aim_member_path(@employee_id), alert: 'They also work in BUs you do not manage. Ask an AIM Admin.'
     end
   end
 end

@@ -12,21 +12,21 @@ module Aim
       'received' => { label: 'Waiting for AI', states: %w[received extracting], css_class: 'aim-card-neutral',
                       description: 'Invoices the AI has not finished reading.' },
       'needs_review' => { label: 'Action Needed', states: %w[needs_review], css_class: 'aim-card-danger',
-                          description: 'The AI needs a person: an unknown vendor, a missing field, handwriting.' },
+                          description: 'Needs a person to check: an unknown vendor, a missing field or handwriting.' },
       'needs_split' => { label: 'Needs Split', states: %w[needs_split], css_class: 'aim-card-info',
                          description: 'PDFs the AI thinks hold more than one invoice.' },
       'ready_for_approval' => { label: 'Ready for Approval', states: %w[ready_for_approval], css_class: 'aim-card-warning',
-                                description: 'Extracted and waiting for the owner to approve.' },
+                                description: 'Read by the AI and waiting for approval.' },
       'in_flight' => { label: 'Exporting', states: %w[approved exporting], css_class: 'aim-card-neutral',
                        description: 'Approved and on the way to billing and Fiscal.' },
       'failed' => { label: 'Failed', states: %w[failed], css_class: 'aim-card-danger',
-                    description: 'The worker could not finish. See the note on each.' },
+                    description: 'Something went wrong. Open one to see why.' },
       'exported' => { label: 'Finished', states: %w[exported split], css_class: 'aim-card-neutral',
-                      description: 'In billing and with Fiscal, or split into the invoices it held.' },
+                      description: 'Done: sent to billing and Fiscal, or split into separate invoices.' },
       'rejected' => { label: 'Rejected', states: %w[rejected], css_class: 'aim-card-neutral',
-                      description: 'Sent back to the submitter.' },
+                      description: 'Turned down, with the reason why.' },
       'deleted' => { label: 'Deleted', states: %w[deleted], css_class: 'aim-card-neutral',
-                     description: 'Removed by a reviewer; a copy is kept.' }
+                     description: 'Removed. A copy is kept.' }
     }.freeze
 
     # The queues a person works.

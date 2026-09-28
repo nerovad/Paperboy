@@ -47,7 +47,7 @@ module Aim
       get :index
 
       assert_response :redirect
-      assert_match(/do not have access/, flash[:alert])
+      assert_match(/Only AIM Admins/, flash[:alert])
     end
   end
 end

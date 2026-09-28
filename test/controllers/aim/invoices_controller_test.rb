@@ -117,7 +117,7 @@ module Aim
       get :show, params: { id: row.batch_id, queue: 'needs_review' }
 
       assert_response :success
-      assert_includes response.body, 'Dana Reyes is working on this invoice right now'
+      assert_includes response.body, 'Dana Reyes is working on this invoice. You can view it'
       assert_select 'input[type=submit][value=?]', 'Send to Approval', count: 0
       assert_select '[data-controller~=aim-presence]', 0, 'a reader keeps no lock'
 

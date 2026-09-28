@@ -9,8 +9,8 @@
     <div>
       <h1 class="aim-page-title">AIM's Budget Units</h1>
       <p class="aim-page-subtitle">
-        The budget units AIM works with, from the Chart of Accounts: what Upload, Move, profiles and By BU offer.
-        Tick <strong>Entire agency</strong> to include every unit, and any the COA adds later.
+        Choose the budget units AIM uses. Only these appear across AIM.
+        Tick <strong>Entire agency</strong> to include all its units, including new ones.
       </p>
     </div>
     <div class="aim-page-header__pills">
@@ -22,7 +22,7 @@
   <%= render 'aim/invoices/search_box', placeholder: 'Search agency, unit number or name…', empty: 'Nothing matches.' %>
 
   <% if fresh %>
-    <p class="aim-profile-switch__note">Not set yet: AIM offers <%= @current.agencies.to_sentence %>, the agencies of the people in AIM. Saving makes it a setting.</p>
+    <p class="aim-profile-switch__note">Not set yet. AIM currently offers <%= @current.agencies.to_sentence %>. Save to keep this.</p>
   <% end %>
 
   <%= form_with url: aim_enabled_units_path, method: :patch, local: true, id: 'aim-enabled-units-form' do %>

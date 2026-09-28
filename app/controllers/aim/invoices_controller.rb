@@ -53,7 +53,7 @@ module Aim
     rescue Aim::MissingConfiguration, SystemCallError => e
       Rails.logger.error "AIM file write failed for #{@invoice.batch_id.inspect}: #{e.class}: #{e.message}"
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue),
-                  alert: 'The AIM share could not be written to, so that action did not complete. Check the share and try again.'
+                  alert: 'That did not go through: the AIM file share could not be reached. Try again.'
     end
 
     def pdf

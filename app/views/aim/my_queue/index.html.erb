@@ -2,7 +2,7 @@
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">My Queue</h1>
-      <p class="aim-page-subtitle">Invoices ready for you. Review and approve them, send one back, or move it to someone else.</p>
+      <p class="aim-page-subtitle">Invoices waiting for your approval. Approve them, send one back, or move it to someone else.</p>
     </div>
     <div class="aim-page-actions">
       <%= link_to 'Upload Invoices', new_aim_upload_path, class: 'btn approve' %>
@@ -11,7 +11,7 @@
   </header>
 
   <% if @employee_id.nil? %>
-    <section class="aim-panel aim-empty-state"><p>Your account has no employee id, so no queue can be yours.</p></section>
+    <section class="aim-panel aim-empty-state"><p>Your account has no employee ID, so you have no queue. Ask an AIM Admin.</p></section>
   <% elsif @invoices.empty? %>
     <section class="aim-panel aim-empty-state"><p>Nothing is waiting for you.</p></section>
   <% else %>

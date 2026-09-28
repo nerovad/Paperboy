@@ -131,7 +131,7 @@ module Aim
 
     def refuse_unready
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue),
-                  alert: "This invoice still needs #{@invoice.missing_for_a_user.to_sentence}. Fill that in first. Nothing has moved."
+                  alert: "This invoice still needs #{@invoice.missing_for_a_user.to_sentence}. Fill that in first."
     end
 
     def reason = params[:reason].to_s.squish

@@ -45,7 +45,7 @@ module Aim
       Aim::UserBudgetUnit.create!(employee_id: @employee.id, budget_unit: '4703')
 
       patch :deactivate, params: { id: @employee.id }
-      assert_match(/also work BUs you do not administer/, flash[:alert])
+      assert_match(/also work in BUs you do not manage/, flash[:alert])
       assert @member.reload.active?
 
       Aim::UserBudgetUnit.create!(employee_id: @employee.id, budget_unit: @employee.unit, hidden: true)

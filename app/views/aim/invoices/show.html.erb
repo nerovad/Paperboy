@@ -34,7 +34,7 @@
       <div>
         <strong>Read only</strong>
         <% if @claimed_by_other %>
-          <p><%= @claim_holder %> is working on this invoice right now. You can read it; the actions come back when they leave it.</p>
+          <p><%= @claim_holder %> is working on this invoice. You can view it, but not change it until they are done.</p>
         <% elsif @invoice.terminal? %>
           <p>This invoice is finished (<%= aim_state_label(state).downcase %>) and cannot be changed.</p>
         <% else %>
@@ -195,10 +195,10 @@
             <% if state == 'needs_review' %>
               <% if @invoice.review_reason == 'unknown_vendor' %>
                 <%= form.submit 'Learn & Retry AI',
-                                data: { turbo_confirm: 'Save this alias and send the document back through AI extraction?' },
+                                data: { turbo_confirm: 'Save this vendor match and have the AI read the invoice again?' },
                                 class: 'btn warning' %>
                 <%= form.submit 'Learn & Send to Approval',
-                                data: { turbo_confirm: 'Save this alias and send the invoice for approval?' },
+                                data: { turbo_confirm: 'Save this vendor match and send the invoice for approval?' },
                                 class: 'btn approve' %>
               <% end %>
               <%= form.submit 'Send to Approval',
@@ -208,7 +208,7 @@
                               data: { turbo_confirm: 'Approve this invoice now and send it to billing and Fiscal?' },
                               class: 'btn approve' %>
               <%= form.submit 'Retry AI',
-                              data: { turbo_confirm: 'Send this document back through AI extraction?' },
+                              data: { turbo_confirm: 'Have the AI read this invoice again?' },
                               class: 'btn warning' %>
             <% elsif state == 'ready_for_approval' %>
               <%= form.submit 'Approve',
@@ -219,24 +219,24 @@
             <% elsif state == 'needs_split' %>
               <%= form.submit 'Approve Split',
                               data: {
-                                turbo_confirm: 'Split this PDF into the invoices above? Each goes through extraction on its own.',
+                                turbo_confirm: 'Split this PDF into the invoices above? The AI reads each one.',
                                 confirm_title: 'Approve split',
                                 confirm_label: 'Approve Split'
                               },
                               class: 'btn approve' %>
               <%= form.submit 'Process as One Invoice',
                               data: {
-                                turbo_confirm: 'Treat this PDF as a single invoice and send it through extraction without splitting?',
+                                turbo_confirm: 'Keep this PDF as one invoice and have the AI read it?',
                                 confirm_title: 'Process as one invoice',
                                 confirm_label: 'Process as One'
                               },
                               class: 'btn warning' %>
             <% elsif state == 'failed' %>
               <%= form.submit 'Retry AI',
-                              data: { turbo_confirm: 'Send this document back through AI extraction?' },
+                              data: { turbo_confirm: 'Have the AI read this invoice again?' },
                               class: 'btn warning' %>
               <%= form.submit 'Retry Export',
-                              data: { turbo_confirm: 'Try the export to billing again?' },
+                              data: { turbo_confirm: 'Try sending it to billing again?' },
                               class: 'btn approve' %>
             <% end %>
 

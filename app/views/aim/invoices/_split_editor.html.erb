@@ -3,10 +3,9 @@
 <section class="aim-split-editor" aria-labelledby="aim-split-heading">
   <h3 id="aim-split-heading">Which pages are which invoice?</h3>
   <p class="aim-split-help">
-    The AI thinks this PDF holds more than one invoice<%= " across its #{pluralize(@split_page_count, 'page')}" if @split_page_count %>.
-    Check each invoice's pages against the preview and correct them, then approve.
-    Write pages like <code>1-3, 5</code>. Clear an invoice's pages to remove it, and use a blank row to add one.
-    Every page must belong to exactly one invoice.
+    The AI thinks this PDF<%= " (#{pluralize(@split_page_count, 'page')})" if @split_page_count %> holds more than one invoice.
+    Check which pages belong to each, then approve. Write pages like <code>1-3, 5</code>.
+    Clear a row to remove it; use a blank row to add one. Every page must belong to one invoice.
   </p>
 
   <% if @split_plan&.errors.present? %>

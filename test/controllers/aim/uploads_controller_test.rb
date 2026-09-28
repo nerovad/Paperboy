@@ -103,7 +103,7 @@ module Aim
       post :create, params: { budget_unit: '4601', files: [pdf('a.pdf')] }
 
       assert_redirected_to new_aim_upload_path
-      assert_match(/could not be stored/, flash[:alert])
+      assert_match(/could not be saved/, flash[:alert])
       assert_equal 0, Aim::Invoice.count
     end
 
@@ -134,7 +134,7 @@ module Aim
         post :create, params: { budget_unit: '4601', owner: 'person', owner_employee_id: '12345', files: [pdf('a.pdf')] }
       end
 
-      assert_match(/does not work AIM/, flash[:alert])
+      assert_match(/is not in AIM/, flash[:alert])
       assert_equal 0, Aim::Invoice.count
     end
   end

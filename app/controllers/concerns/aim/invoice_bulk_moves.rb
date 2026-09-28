@@ -30,9 +30,7 @@ module Aim
       return move_many_to_other_unit if params[:destination] == 'other_unit'
 
       owner = params[:destination] == 'shared' ? Aim::Invoice::SHARED_QUEUE : params[:owner]
-      if owner != Aim::Invoice::SHARED_QUEUE && !Aim::Users.member?(owner)
-        return redirect_back_or_to(aim_my_queue_path, alert: 'That person does not work AIM, so they have no queue.')
-      end
+      return redirect_back_or_to(aim_my_queue_path, alert: 'That person is not in AIM, so they have no queue.') if owner != Aim::Invoice::SHARED_QUEUE && !Aim::Users.member?(owner)
 
       moved, skipped = move_each(Array(params[:ids]).map(&:to_s).uniq) do |invoice|
         raise Aim::Invoice::IllegalTransition, 'outside the BU' unless target_in_unit?(owner)
