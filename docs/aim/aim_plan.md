@@ -404,7 +404,7 @@ agencies from the COA, and AIM's Budget Units choosing which; the grouped
 person picker; AIM open to anyone signed in (the account decides the rest).
 Left in a, for later: BU labels and default owners (a.3), sharing and Out of
 office (a.4), person folders by employee id (a.5). **Next phase: the Fiscal
-stage, item f, as a demo first** -- see `### f.` below.
+stage, item f, as a demo first** -- see `### f.` below. **Then item k** (Fiscal rules per agency: agency on the invoice, Fiscal access per agency, a seeded profile) before item b.
 
 **Update 2026-09-28, later: the Fiscal demo is built** on `aim/f-fiscal-demo`
 (not merged): a Fiscal sidebar group, the Fiscal switch on profiles, a
@@ -3208,6 +3208,36 @@ fiscal stamp names who processed it. **Storage:** Laserfiche (possibly the
 county's records system, so retention may require it; its import is still
 blocked on IT) or Paperboy's DAM (already here, with access rules that could
 limit invoices to Fiscal, but another team's, so it needs their agreement).
+
+### k. Fiscal profiles: rules per agency (asked by Joshua 2026-09-28)
+
+Sheriff already uses AIM and does some of Fiscal's work differently (they
+may record check numbers; GSA does not). Assume every agency may differ in
+how Fiscal works, and build for it before the second agency arrives.
+
+**Rules follow the invoice's agency, not the person.** Groups decide who may
+work Fiscal; a *profile* decides how Fiscal works for an agency. (Joshua
+first suggested profiles on groups; keyed to agencies instead so one person
+covering two agencies, or two groups covering one, still works.)
+
+- `aim.fiscal_profiles`, a named set of rules, and each agency assigned
+  exactly one (a profile may serve several). **Admin › Fiscal Profiles.**
+  A `GSA` profile is seeded from what is hard-coded today.
+- A profile holds: the **report layout** (columns and order from a catalogue
+  of AIM's fields, header names, comma/UTF-8 or tab/UTF-16, date format,
+  the Title pattern); the **hold reasons** list; **which Fiscal fields
+  show** and **which are required before archive**; later the stamp
+  wording, Laserfiche field names and the archive destination.
+- `Aim::FiscalExport` renders from the profile; `Aim::FiscalRecord` asks it
+  for rules; the Fiscal Queue groups by agency, then BU, for someone
+  covering several.
+- **Do first, right after the Fiscal meeting, before item b** (hard to
+  retrofit): store the **agency on the invoice** (today derived from the
+  unit, and three unit numbers belong to more than one agency -- item b
+  planned this); make **Fiscal access per agency** on the profile, like BU
+  coverage, so Sheriff's Fiscal staff never see GSA's queue. Then the seeded
+  profile with the code reading from it. The admin screen once Sheriff is
+  at the table, so it is built against a real second case.
 
 ### g. Observability (was 10)
 
