@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_150000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -56,6 +56,70 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_table "active_storage_variant_records", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
+  end
+
+  create_table "aim.coding_imports", force: :cascade do |t|
+    t.string "agency", limit: 3, null: false
+    t.datetime "created_at", null: false
+    t.date "effective_from"
+    t.string "effective_option", limit: 20, null: false
+    t.string "file_name", limit: 260, null: false
+    t.string "imported_by", limit: 255, null: false
+    t.integer "loaded_count", default: 0, null: false
+    t.integer "refused_count", default: 0, null: false
+    t.text "report"
+    t.integer "retired_count", default: 0, null: false
+    t.integer "row_count", default: 0, null: false
+    t.datetime "undone_at"
+    t.string "undone_by", limit: 255
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "aim.coding_rule_changes", force: :cascade do |t|
+    t.text "after"
+    t.text "before"
+    t.string "changed_by", limit: 255, null: false
+    t.bigint "coding_rule_id", null: false
+    t.datetime "created_at", null: false
+    t.string "field", limit: 40
+    t.string "kind", limit: 20, null: false
+    t.index ["coding_rule_id", "created_at"], name: "index_aim_coding_rule_changes_on_rule_and_time"
+  end
+
+  create_table "aim.coding_rules", force: :cascade do |t|
+    t.string "activity", limit: 20
+    t.string "agency", limit: 3, null: false
+    t.string "budget_unit", limit: 10, null: false
+    t.datetime "created_at", null: false
+    t.string "created_by", limit: 255
+    t.string "customer_number", limit: 100
+    t.string "department", limit: 20
+    t.string "dept_object", limit: 20
+    t.date "effective_from", null: false
+    t.date "effective_until"
+    t.string "encumbrance_number", limit: 100
+    t.string "encumbrance_type", limit: 10
+    t.string "function_code", limit: 20
+    t.string "fund", limit: 20
+    t.bigint "import_id"
+    t.string "ma_number", limit: 100
+    t.string "major_program", limit: 20
+    t.text "notes"
+    t.string "object_code", limit: 20
+    t.string "phase", limit: 20
+    t.string "program", limit: 20
+    t.bigint "retired_by_import_id"
+    t.integer "source_row"
+    t.string "task", limit: 20
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.string "vendor_code", limit: 50
+    t.string "vendor_key", limit: 255, null: false
+    t.string "vendor_name", limit: 255, null: false
+    t.index ["agency", "budget_unit", "vendor_key"], name: "index_aim_coding_rules_on_agency_unit_vendor"
+    t.index ["import_id"], name: "index_aim_coding_rules_on_import_id"
+    t.index ["retired_by_import_id"], name: "index_aim_coding_rules_on_retired_by_import_id"
+    t.index ["vendor_key"], name: "index_aim_coding_rules_on_vendor_key"
   end
 
   create_table "aim.enabled_units", force: :cascade do |t|

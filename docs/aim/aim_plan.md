@@ -2887,6 +2887,44 @@ in `### Phase 8b` below.
 - The PO lookup: bring what is still needed from `bs_purchase_orders` into
   AIM's own tables.
 
+**Scope as of 2026-09-28.** Person routing is out of the lookups (an invoice
+nobody names goes to the BU's shared queue); item b is **coding**: the
+encumbrance (BDO/DO/CT...), the MA number, vendor code and the COA coding,
+filled from Fiscal's files, validated against the COA, with effective dates
+and history, edited by Fiscal. Branch `aim/b-lookups`, cut from
+`aim/f-fiscal-demo` (Fiscal stays unmerged; master had not moved).
+
+*b.1 built (2026-09-28):* tables `aim.coding_imports`, `aim.coding_rules`,
+`aim.coding_rule_changes` (`20260928150000`); `Aim::CodingRule.match`
+(vendor + customer number within the BU, then vendor within the BU, then
+vendor within the agency; several at one level are choices); `Aim::CoaCodes`
+(COA validation per agency); `Aim::LookupFile` (eleven files, three layouts,
+one column set; puts right: object with its description appended, vendor
+code in Fund, `_S040`, a keyword that is an MA number); `Aim::LookupImport`
+(report first, then `apply!` as one import: an unchanged row is skipped, a
+changed one retires the standing rule the day before; `undo!` puts it all
+back); `lib/tasks/aim_lookups.rake` preview / apply / undo. Effective date:
+from the BDO number (`BDO_4700 20240729...`, `CT_4620 FY23...`) by default,
+or today, or a date given (Joshua: old BDOs are still in use, so the date
+only says when a rule starts; `effective_until` is never inferred).
+Department is noted, not refused (Sheriff writes `SHF`). Preview of the real
+files: 879 of 972 rows load. Refused: 4703's BUs 4704/4706 (not in the COA);
+Business Support's objects `20304`/`22304`/`21914` and Housekeeping's `20313`
+(five digits, in no COA list, mostly AT&T/Sprint rows that also carry Task
+`1`), `Single Flag` as a fund, shifted rows; Parks' 11 blank vendors and
+`CHECK W/ FISCAL` as a program; Facilities' 6 rows name no BU
+(`AIM_LOOKUP_UNIT=nnnn` supplies one); Sheriff's `S040` in the Object
+column. Each is reported by row for Fiscal to fix in the file or on the
+screen. Not loaded into any database yet.
+
+*Next:* b.2 coding lines on the invoice (`aim.coding_lines`, one normally,
+more for a split), applied in Rails when an invoice becomes Ready for
+Approval, shown on the review page, edited on the Fiscal page, read by the
+report; the coding fields on `fiscal_records` move there. b.3 the Lookups
+screens (Fiscal and AIM Admins): rules by agency and BU, search, edit with
+COA validation, history, import with the report, undo, BUs with no rules.
+b.4 the yearly file through Data Runner (Traap).
+
 **Decide.** Who maintains the rules (Joshua, AIM staff, Fiscal). Whether a
 user may change the coding at approval. 119 and 123 (no Fusion user) and
 198 (Dixon, now another agency). Sheriff lookups (Joshua to explain first).
@@ -4072,3 +4110,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | f | (this commit) | From Joshua's run-through: free-text tags, Org Number, editable invoice fields, History behind a link, Report Queue, All / By BU with tick-all, one CSV with the macro's exact header, Fiscal's file name for approved PDFs. Migration `20260928120000` (tags, org_number; tag dropped). Approval stamp proposed for the worker, not built. 1320 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
 | 2026-09-28 | f / e | (this commit) | Approval stamp in Ruby: `Aim::PdfStamp` + `Aim::PdfWriter`, `Aim::ApprovalStamp`, `Aim::StampApprovedJob` (on Approve, on Fiscal's invoice edits, and every 10 minutes -- new `aim_stamp_approved` block in `config/recurring.yml`, standing exception), migration `20260928130000`. Stamped copies served from approval on. Backfilled dev's two approved invoices. 1324 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
 | 2026-09-28 | f | (this commit) | From DocuShare's folders and an archived invoice's properties: Remit To, Fund, Department and Major Program added to `aim.fiscal_records` (`20260928140000`); Archive warns on a missing pay doc number only (check numbers are never filled there). Findings, the upload-batch and naming proposals, and new Fiscal questions recorded under item f. 1324 runs, 0 failures, 0 errors; scoped rubocop clean |
+| 2026-09-28 | b.1 | (this commit) | Branch `aim/b-lookups` from the Fiscal branch (master unchanged). Coding rules, imports and changes tables; `Aim::CodingRule.match`; `Aim::CoaCodes`; `Aim::LookupFile`; `Aim::LookupImport` with report, apply and undo; `aim:lookups:*` rake tasks (standing exception). Preview of the eleven real files: 879 of 972 rows load, the rest reported by row. Bug found in test: assigning `import:` on an unsaved rule made the import's save load rows meant to be skipped; ids are assigned instead. 1327 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
