@@ -17,6 +17,7 @@ module Aim
     include Aim::InvoiceQueues
     include Aim::InvoiceCommands
     include Aim::InvoiceAssignment
+    include Aim::InvoiceNaming
 
     # Raised by #transition_to! when the move is not one the pipeline makes.
     class IllegalTransition < StandardError; end
@@ -93,10 +94,6 @@ module Aim
 
     def terminal? = TERMINAL_STATES.include?(state)
 
-    # "AIM-1234": the short public number people and the Fiscal report use
-    # (Joshua, 2026-09-28); the batch id stays the store's and billing's key.
-    def handle = id && "AIM-#{id}"
-
     def next_states = TRANSITIONS.fetch(state, [])
 
     def can_move_to?(new_state) = next_states.include?(new_state.to_s)
@@ -117,10 +114,6 @@ module Aim
       @transition_note = note
       save!
     end
-
-    # The invoice's folder in the store, as this server sees it, and its PDF.
-    def store_dir = File.join(Aim::InvoiceDirectoryService.instance.store_dir, batch_id)
-    def pdf_path = File.join(store_dir, "#{batch_id}.pdf")
 
     # What a user's approval, and billing, cannot do without.
     def ready_for_a_user?
