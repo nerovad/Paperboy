@@ -50,6 +50,7 @@ module Aim
       @stamp = Aim::FiscalExport.approval_stamps([@invoice.id])[@invoice.id]
       @pdf_present = stored_pdf_path.present?
       @events = @invoice.events.to_a
+      @line = @invoice.coding || @invoice.coding_lines.build(source: 'fiscal')
     end
 
     def update

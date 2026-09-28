@@ -32,7 +32,7 @@
       <% invoice = record.invoice %>
       <% search = [invoice.vendor_name, invoice.invoice_number, invoice.budget_unit, invoice.invoice_total,
                    aim_invoice_date(invoice.invoice_date), record.tags, record.check_number, record.pay_doc_number,
-                   record.bdo_do, record.hold_reason, stamps[invoice.id], invoice.handle, invoice.batch_id].compact.join(' ') %>
+                   invoice.coding&.encumbrance, record.hold_reason, stamps[invoice.id], invoice.handle, invoice.batch_id].compact.join(' ') %>
       <tr title="<%= record.title %>" data-aim-queue-filter-target="row" data-search="<%= search %>">
         <td class="action-buttons">
           <%= link_to record.status == 'archived' ? 'View' : 'Open', aim_fiscal_invoice_path(invoice.batch_id),

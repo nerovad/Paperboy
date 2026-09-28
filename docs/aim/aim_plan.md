@@ -2947,10 +2947,27 @@ invoice". Vision AI is a later layer only if text matching proves too weak.
 Per-agency lines are already separate: rules carry the agency, and the
 invoice's agency chooses.
 
-*Next:* b.2 coding lines on the invoice (`aim.coding_lines`, one normally,
-more for a split), applied in Rails when an invoice becomes Ready for
-Approval, shown on the review page, edited on the Fiscal page, read by the
-report; the coding fields on `fiscal_records` move there. b.3 the Lookups
+*b.2 built (2026-09-28):* `aim.coding_lines` (`20260928170000`; one line
+normally, more for a split; `source` rule / person / fiscal) and
+`aim.invoices.agency` + `coded_at` (item k's agency on the row, filled from
+the COA when first needed). The coding fields on `fiscal_records` moved to
+the line. `Aim::CodingLookup`: one matching rule becomes the line; several
+are choices; none is said so -- each a `coding` history line. Runs when a
+Ready for Approval invoice is opened, on Send to Approval, and every 10
+minutes (`Aim::CodeReadyJob`, `aim_code_ready` in `recurring.yml`). Changing
+the vendor, BU or customer number on the review page forgets a rule-made
+line and asks again. **Review page, Coding section:** the line (with an
+"unvalidated" badge when its rule was accepted over the COA), or the
+candidates side by side showing only the fields that differ, one pre-ticked
+when its value is in the PDF's text layer (`hinted`; scans have none, so
+the worker's OCR text is a later step), and Use this coding
+(`POST /aim/invoices/:id/code`, new route in the namespace). **Fiscal page:**
+Coding section edits the line (BDO/DO typed as one, `encumbrance=` splits
+it); Payment section holds Fiscal's own fields. The report reads the line;
+Split Invoice Amount only when there is more than one. Dev's waiting
+invoices coded by the job.
+
+*Next:* b.3 the Lookups
 screens (Fiscal and AIM Admins): rules by agency and BU, search, edit with
 COA validation, history, import with the report, undo, BUs with no rules.
 b.4 the yearly file through Data Runner (Traap).
@@ -4144,3 +4161,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | b.1 | (this commit) | Accept-anyway for rows the COA objects to (`accept:`, `AIM_LOOKUP_ACCEPT`), the objection kept as the rule's `warnings` (`20260928160000`); rows with no vendor or BU stay refused. 1328 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | — | (this commit) | Approve refused outside Ready for Approval (button gone from Action Needed, `needs_review -> approved` removed); Delete refused server-side to non-admins; History folded on the review page. 1330 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | b.1 | (this commit) | A file never retires its own rows (a vendor listed several times is several choices). GSA and Sheriff lookups loaded into `Paperboy_Dev` as imports 14-23: 864 rules in effect. 1331 runs, 0 failures, 0 errors; scoped rubocop clean |
+| 2026-09-28 | b.2 | (this commit) | Coding lines on the invoice, filled from the rules when Ready for Approval (`Aim::CodingLookup`, `Aim::CodeReadyJob` + `recurring.yml` block, standing exception), several matches offered with a hint from the PDF text, Use this coding (`code` route); Fiscal edits the line; the report reads it; fiscal_records' coding columns moved (`20260928170000`). 1337 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |

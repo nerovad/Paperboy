@@ -18,6 +18,7 @@ module Aim
     include Aim::InvoiceCommands
     include Aim::InvoiceAssignment
     include Aim::InvoiceNaming
+    include Aim::InvoiceCoding
 
     # Raised by #transition_to! when the move is not one the pipeline makes.
     class IllegalTransition < StandardError; end

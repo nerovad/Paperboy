@@ -1,0 +1,55 @@
+<%# The invoice's coding (item b.2): its line from the rules, or the rules to
+    choose from, or the fact that none matches. Choosing posts on its own,
+    outside the review form. %>
+<section class="aim-ticket aim-coding">
+  <h3>Coding</h3>
+  <% if @coding_lines.any? %>
+    <% @coding_lines.each do |line| %>
+      <dl class="aim-coding__line">
+        <% (%w[encumbrance] + Aim::CodingLine::FIELDS.drop(2)).each do |field| %>
+          <% value = line.public_send(field) %>
+          <% next if value.blank? %>
+          <dt><%= aim_coding_field_label(field) %></dt><dd><%= value %></dd>
+        <% end %>
+        <% if @coding_lines.size > 1 %><dt>Amount</dt><dd><%= aim_currency(line.amount) %></dd><% end %>
+      </dl>
+      <p class="aim-coding__source">
+        <%= { 'rule' => 'From the coding rules', 'person' => "Picked by #{line.set_by}", 'fiscal' => "Set by Fiscal (#{line.set_by})" }[line.source] %>
+        <% if line.warnings.present? %><span class="badge is-denied" title="<%= line.warnings %>">unvalidated</span><% end %>
+      </p>
+    <% end %>
+  <% elsif @coding_candidates.present? %>
+    <p class="aim-coding__help">
+      <%= @coding_candidates.size %> coding rules match this vendor<%= ' in this BU' if @coding_level != :agency %>.
+      <%= 'One is named on the invoice and is ticked.' if @coding_hinted.one? %>
+      Pick the right one.
+    </p>
+    <%= form_with url: code_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post, local: true,
+                  class: 'aim-coding__choices', data: { turbo: false } do %>
+      <table class="submission-table aim-queue-table aim-coding__table">
+        <thead>
+          <tr>
+            <th></th>
+            <% @coding_differing.each do |field| %><th><%= aim_coding_field_label(field) %></th><% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% @coding_candidates.each do |rule| %>
+            <tr class="<%= 'is-hinted' if @coding_hinted.include?(rule) %>">
+              <td><%= radio_button_tag :coding_rule_id, rule.id, @coding_hinted.one? && @coding_hinted.include?(rule), disabled: @read_only,
+                                       aria: { label: "Rule #{rule.id}" } %></td>
+              <% @coding_differing.each do |field| %>
+                <td><%= rule.public_send(field).presence || '—' %><%= ' ✓' if @coding_hinted.include?(rule) && field == @coding_differing.first %></td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <button type="submit" class="btn approve compact" <%= 'disabled' if @read_only %>>Use this coding</button>
+    <% end %>
+  <% elsif @invoice.coded? %>
+    <p class="aim-coding__help">No coding rule matches <%= @invoice.vendor_name.presence || 'this vendor' %> in <%= @invoice.budget_unit.presence || 'its BU' %>. Fiscal codes it.</p>
+  <% else %>
+    <p class="aim-coding__help">Coded when the invoice reaches Ready for Approval.</p>
+  <% end %>
+</section>

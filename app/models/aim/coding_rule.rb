@@ -54,6 +54,12 @@ module Aim
 
     def encumbrance = [encumbrance_type, encumbrance_number].compact_blank.join('_').presence
 
+    def encumbrance=(value)
+      type, number = value.to_s.strip.match(/\A([A-Za-z]{2,4})_?(.*)\z/)&.captures
+      self.encumbrance_type = type&.upcase
+      self.encumbrance_number = number.presence
+    end
+
     # The same coding and encumbrance as another rule: a second import of an
     # unchanged row.
     def same_as?(other)

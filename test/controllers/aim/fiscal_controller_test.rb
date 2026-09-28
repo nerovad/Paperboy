@@ -67,14 +67,20 @@ module Aim
       assert_response :success
 
       patch :update, params: { id: @invoice.batch_id, commit: 'Save',
-                               fiscal_record: { check_number: ' 1001 ', pay_doc_number: 'PD 1', org_number: '12' },
+                               fiscal_record: { check_number: ' 1001 ', pay_doc_number: 'PD 1' },
+                               coding_line: { encumbrance: 'bdo_46402024072600000009_1', object_code: '2162', fund: 'G001' },
                                invoice: { vendor_name: 'ACME Inc', invoice_number: 'A-1' } }
 
       record = Aim::FiscalRecord.find_by(invoice_id: @invoice.id)
-      assert_equal %w[1001 12 review], [record.check_number, record.org_number, record.status]
+      assert_equal %w[1001 review], [record.check_number, record.status]
       assert_equal 'fiscal@example.com', record.updated_by
       assert_equal 'ACME Inc', @invoice.reload.vendor_name
-      assert_equal 'Fiscal changed Vendor Name', @invoice.events.last.note
+      line = @invoice.coding
+      assert_equal ['BDO_46402024072600000009_1', '2162', 'fiscal', 'fiscal@example.com'],
+                   [line.encumbrance, line.object_code, line.source, line.set_by]
+      notes = @invoice.events.map(&:note)
+      assert_includes notes, 'Fiscal changed Vendor Name'
+      assert_includes notes, 'Fiscal set Encumbrance Number, Encumbrance Type, Fund, and Object'
     end
 
     test 'the PDF goes by Fiscal\'s name' do

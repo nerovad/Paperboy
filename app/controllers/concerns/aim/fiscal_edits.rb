@@ -15,6 +15,25 @@ module Aim
       permitted = params.fetch(:fiscal_record, {}).permit(*Aim::FiscalRecord::EDITABLE_FIELDS).to_h
       @record.update!(tidy(permitted).merge(updated_by: current_user_email)) if permitted.any?
       save_invoice_fields
+      save_coding_line
+    end
+
+    # The invoice's coding line, typed or corrected by Fiscal (item b.2).
+    def save_coding_line
+      permitted = params.fetch(:coding_line, {}).permit(*Aim::CodingLine::EDITABLE_FIELDS, :encumbrance).to_h
+      return if permitted.empty?
+
+      line = @invoice.coding || @invoice.coding_lines.build(line_no: 1)
+      line.assign_attributes(tidy(permitted))
+      return unless line.new_record? || line.changed?
+      return if line.new_record? && line.blank_coding? && line.amount.blank?
+
+      changed = line.changes.keys & Aim::CodingLine::EDITABLE_FIELDS
+      line.assign_attributes(source: 'fiscal', set_by: current_user_email)
+      line.save!
+      @invoice.update_column(:coded_at, Time.current) unless @invoice.coded?
+      @invoice.events.create!(action: 'coding', actor: current_user_email,
+                              note: "Fiscal set #{changed.map { |f| helpers.aim_coding_field_label(f) }.to_sentence}")
     end
 
     # Fiscal corrects the invoice's own fields too. What changed goes in the

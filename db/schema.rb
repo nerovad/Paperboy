@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_170000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -75,6 +75,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_160000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "aim.coding_lines", force: :cascade do |t|
+    t.string "activity", limit: 20
+    t.decimal "amount", precision: 15, scale: 2
+    t.bigint "coding_rule_id"
+    t.datetime "created_at", null: false
+    t.string "department", limit: 20
+    t.string "dept_object", limit: 20
+    t.string "encumbrance_number", limit: 100
+    t.string "encumbrance_type", limit: 10
+    t.string "function_code", limit: 20
+    t.string "fund", limit: 20
+    t.bigint "invoice_id", null: false
+    t.integer "line_no", default: 1, null: false
+    t.string "ma_number", limit: 100
+    t.string "major_program", limit: 20
+    t.string "object_code", limit: 20
+    t.string "org_number", limit: 20
+    t.string "phase", limit: 20
+    t.string "program", limit: 20
+    t.string "set_by", limit: 255
+    t.string "source", limit: 20, default: "person", null: false
+    t.string "task", limit: 20
+    t.datetime "updated_at", null: false
+    t.string "vendor_code", limit: 50
+    t.text "warnings"
+    t.index ["invoice_id", "line_no"], name: "index_aim_coding_lines_on_invoice_and_line", unique: true
+  end
+
   create_table "aim.coding_rule_changes", force: :cascade do |t|
     t.text "after"
     t.text "before"
@@ -133,34 +161,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_160000) do
   end
 
   create_table "aim.fiscal_records", force: :cascade do |t|
-    t.string "activity", limit: 20
     t.datetime "archived_at"
-    t.string "bdo_do", limit: 100
     t.date "check_date"
     t.string "check_number", limit: 50
     t.datetime "created_at", null: false
     t.decimal "credit_amount", precision: 15, scale: 2
-    t.string "department", limit: 20
-    t.string "dept_object", limit: 20
     t.text "description"
     t.datetime "exported_at"
-    t.string "function_code", limit: 20
-    t.string "fund", limit: 20
     t.string "hold_reason", limit: 500
     t.bigint "invoice_id", null: false
-    t.string "major_program", limit: 20
-    t.string "object_code", limit: 20
-    t.string "org_number", limit: 20
     t.string "pay_doc_number", limit: 100
-    t.string "phase", limit: 20
-    t.string "program", limit: 20
-    t.string "remit_to", limit: 255
-    t.string "split_amount", limit: 100
     t.string "stamp_error", limit: 500
     t.datetime "stamped_at"
     t.string "status", limit: 20, default: "review", null: false
     t.string "tags", limit: 500
-    t.string "task", limit: 20
     t.datetime "updated_at", null: false
     t.string "updated_by", limit: 255
     t.index ["invoice_id"], name: "index_aim_fiscal_records_on_invoice_id", unique: true
@@ -179,6 +193,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_160000) do
   end
 
   create_table "aim.invoices", force: :cascade do |t|
+    t.string "agency", limit: 3
     t.integer "assigned_employee_id"
     t.string "assigned_to"
     t.string "assignment_source", limit: 50
@@ -190,6 +205,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_160000) do
     t.datetime "claimed_at"
     t.string "claimed_by"
     t.string "claimed_by_name"
+    t.datetime "coded_at"
     t.string "command", limit: 20
     t.string "content_hash", limit: 64
     t.datetime "created_at", null: false
@@ -222,6 +238,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_160000) do
     t.string "vendor_name"
     t.index ["assigned_employee_id"], name: "index_aim_invoices_on_assigned_employee_id"
     t.index ["batch_id"], name: "index_aim_invoices_on_batch_id", unique: true
+    t.index ["coded_at"], name: "index_aim_invoices_on_coded_at"
     t.index ["command", "lease_until"], name: "index_aim_invoices_on_command_and_lease_until"
     t.index ["content_hash"], name: "index_aim_invoices_on_content_hash"
     t.index ["parent_id"], name: "index_aim_invoices_on_parent_id"

@@ -54,15 +54,19 @@ module Aim
 
     private
 
+    # The coding comes from the invoice's coding line (item b.2). Split
+    # Invoice Amount is filled only when there is more than one line.
     def row(record)
       invoice = record.invoice
+      line = invoice.coding || Aim::CodingLine.new
+      split = invoice.coding_lines.size > 1 ? money(line.amount) : nil
       [
         record.title, invoice.invoice_number, invoice.vendor_name, invoice.customer_number, invoice.order_number,
         invoice.invoice_date&.strftime('%Y%m%d'), day(invoice.created_at), day(record.updated_at), nil, nil,
         money(invoice.sales_tax), money(invoice.subtotal), money(record.credit_amount), money(invoice.invoice_total),
-        record.tag_list.join(', '), record.bdo_do, record.pay_doc_number, description(record), invoice.budget_unit,
-        record.object_code, record.dept_object, record.activity, record.function_code, record.program,
-        record.phase, record.task, record.split_amount, invoice.handle, day(record.archived_at), record.check_number
+        record.tag_list.join(', '), line.encumbrance, record.pay_doc_number, description(record), invoice.budget_unit,
+        line.object_code, line.dept_object, line.activity, line.function_code, line.program, line.phase, line.task,
+        split, invoice.handle, day(record.archived_at), record.check_number
       ]
     end
 

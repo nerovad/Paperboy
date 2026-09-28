@@ -1521,3 +1521,27 @@
     padding-left: 18px;
   }
 }
+
+// Coding (item b.2): the line, or the rules to choose from.
+.aim-coding__line {
+  display: grid;
+  gap: 2px 12px;
+  grid-template-columns: max-content 1fr;
+  margin: 0 0 6px;
+
+  dt { color: $text-muted; }
+  dd { margin: 0; }
+}
+
+.aim-coding__source,
+.aim-coding__help {
+  color: $text-muted;
+  font-size: 0.85rem;
+  margin: 4px 0 0;
+}
+
+.aim-coding__table {
+  margin: 8px 0;
+
+  tr.is-hinted td { font-weight: 600; }
+}

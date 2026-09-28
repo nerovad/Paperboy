@@ -48,6 +48,7 @@ module Aim
       return refuse_unready unless @invoice.ready_for_a_user?
 
       @invoice.transition_to!('ready_for_approval', actor: current_user_email, review_reason: nil)
+      Aim::CodingLookup.run!(@invoice) unless @invoice.coded?
       finish('Invoice sent for approval.')
     end
 

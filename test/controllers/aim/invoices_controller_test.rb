@@ -232,7 +232,28 @@ module Aim
       assert_equal 'ready_for_approval', row.state
       assert_nil row.review_reason
       assert_nil row.claimed_by
-      assert_equal REVIEWER, row.events.last.actor
+      assert_equal REVIEWER, row.events.where(action: 'transition').last.actor
+      assert row.coded?, 'sending to approval codes the invoice'
+    end
+
+    test 'several matching coding rules are offered on the review page, and one can be picked' do
+      %w[BDO_46002024072600000001_1 BDO_46002024072600000001_2].each do |enc|
+        Aim::CodingRule.create!(agency: 'GSA', budget_unit: '4601', vendor_name: 'ACME', encumbrance: enc,
+                                object_code: '2162', effective_from: Date.new(2024, 7, 1))
+      end
+      row = invoice('4601.C1', state: 'ready_for_approval', pdf: false)
+
+      get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
+      assert_response :success
+      assert_select 'input[type=radio][name=coding_rule_id]', 2
+      assert row.reload.coded?
+      assert_empty row.coding_lines
+
+      post :code, params: { id: row.batch_id, queue: 'ready_for_approval', coding_rule_id: Aim::CodingRule.last.id }
+
+      line = row.coding_lines.first
+      assert_equal ['BDO_46002024072600000001_2', 'person', REVIEWER], [line.encumbrance, line.source, line.set_by]
+      assert_match(/coding picked/, row.events.last.note)
     end
 
     test 'an invoice missing its vendor is not sent for approval, and nothing moves' do

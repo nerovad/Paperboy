@@ -165,6 +165,8 @@
           <% end %>
         </div>
 
+        <%= render 'coding' unless state == 'needs_split' %>
+
         <% if @events.present? %>
           <details class="aim-history-fold">
             <summary>History (<%= @events.size %>)</summary>

@@ -29,6 +29,11 @@ production: &production
     queue: default
     schedule: every 10 minutes
     description: Stamps approved AIM invoices that have no approval stamp yet
+  aim_code_ready:
+    class: Aim::CodeReadyJob
+    queue: default
+    schedule: every 10 minutes
+    description: Codes AIM invoices waiting for approval from the coding rules
   dam_watch_folders:
     class: Dam::WatchFolderIngestJob
     queue: default

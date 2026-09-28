@@ -14,8 +14,8 @@ module Aim
 
     before_action :require_aim_admin, :remember_queue_page, only: :index
     before_action :set_queue
-    before_action :set_invoice, only: %i[show update pdf reassign lock unlock claim restore]
-    before_action :require_staff_or_owner, only: %i[show update pdf reassign lock unlock claim restore]
+    before_action :set_invoice, only: %i[show update pdf reassign lock unlock claim restore code]
+    before_action :require_staff_or_owner, only: %i[show update pdf reassign lock unlock claim restore code]
     # Everything #update does changes the invoice, so it needs the claim. The
     # queue list already offers a second reviewer nothing but View Only; this
     # is what makes that true of a posted form as well.
@@ -54,6 +54,16 @@ module Aim
       Rails.logger.error "AIM file write failed for #{@invoice.batch_id.inspect}: #{e.class}: #{e.message}"
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue),
                   alert: 'That did not go through: the AIM file share could not be reached. Try again.'
+    end
+
+    # A person picks one of several matching coding rules (item b.2).
+    def code
+      rule = Aim::CodingRule.find_by(id: params[:coding_rule_id])
+      candidates = Aim::CodingLookup.candidates(@invoice)&.last || []
+      return redirect_to(aim_invoice_path(@invoice.batch_id, queue: @queue), alert: 'Pick one of the coding rules shown.') unless rule && candidates.include?(rule)
+
+      Aim::CodingLookup.choose!(@invoice, rule, by: current_user_email)
+      redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), notice: 'Coding set.'
     end
 
     def pdf
@@ -95,6 +105,20 @@ module Aim
       @events = @invoice.events.to_a
       @official_vendor_names = Aim::VendorAlias.official_names
       load_split_context if @invoice.state == 'needs_split'
+      prepare_coding
+    end
+
+    # The invoice's coding, or the rules to choose from (item b.2).
+    def prepare_coding
+      Aim::CodingLookup.ensure!(@invoice)
+      @coding_lines = @invoice.coding_lines.to_a
+      return if @coding_lines.any? || !@invoice.coded?
+
+      @coding_level, @coding_candidates = Aim::CodingLookup.candidates(@invoice)
+      return if @coding_candidates.blank?
+
+      @coding_differing = Aim::CodingLookup.differing_fields(@coding_candidates)
+      @coding_hinted = Aim::CodingLookup.hinted(@coding_candidates, stored_pdf_path)
     end
 
     def pdf_present? = stored_pdf_path.present?
@@ -104,6 +128,16 @@ module Aim
       return if permitted.empty?
 
       @invoice.update!(permitted.transform_values { |value| value.is_a?(String) ? value.strip.presence : value })
+      forget_coding_if_rematch_needed
+    end
+
+    # A new vendor, BU or customer number may match other rules.
+    def forget_coding_if_rematch_needed
+      changed = @invoice.previous_changes.keys & %w[vendor_name budget_unit customer_number]
+      return if changed.empty?
+
+      @invoice.update_column(:agency, nil) if changed.include?('budget_unit')
+      @invoice.forget_rule_coding!
     end
   end
 end
