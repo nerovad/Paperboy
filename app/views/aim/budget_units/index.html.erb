@@ -1,5 +1,5 @@
 <% title = aim_queue_access? ? 'By BU' : 'My BUs' %>
-<div class="aim-page aim-bu-page" data-controller="aim-queue-filter">
+<div class="aim-page aim-bu-page" data-controller="aim-queue-filter aim-actions-menu">
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title"><%= title %></h1>
@@ -7,10 +7,11 @@
         Each budget unit's shared queue and people, and their invoices. Open a BU, then a person; tick invoices to move them.
       </p>
     </div>
-    <span class="aim-count-pill"><%= pluralize(@units.size, 'budget unit') %></span>
+    <div class="aim-page-header__pills">
+      <%= render 'aim/shared/units_without_admin' %>
+      <span class="aim-count-pill"><%= pluralize(@units.size, 'budget unit') %></span>
+    </div>
   </header>
-
-  <%= render 'aim/shared/units_without_admin' %>
 
   <% if @agencies.size > 1 %>
     <%= form_with url: aim_budget_units_path, method: :get, local: true, class: 'aim-people-toolbar__filters aim-agency-filter' do %>

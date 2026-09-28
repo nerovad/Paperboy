@@ -971,9 +971,10 @@
   }
 }
 
+// The list scrolls with the page, not in a box of its own, so a laptop
+// screen shows as many rows as it can; the headings stay pinned.
 .aim-people-panel {
-  max-height: calc(100vh - 20rem);
-  overflow: auto;
+  overflow: visible;
 }
 
 .aim-people-table {
@@ -1318,33 +1319,22 @@
   color: $warning-text;
 }
 
-// A standing warning at the top of an admin page: active BUs with no BU Admin.
-.aim-alert {
-  border: 1px solid $neutral-border-subtle;
-  border-radius: 8px;
-  line-height: 1.5;
-  margin: 0 0 12px;
-  padding: 10px 14px;
+// Pills at the right of a page header: the no-BU-Admin chip, then the count.
+.aim-page-header__pills {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
 
-  a {
-    color: $brand-navy;
-    font-weight: 600;
+// Active BUs with no BU Admin: a chip that opens its list over the page.
+.aim-alert-chip {
+  > summary {
+    cursor: pointer;
   }
-}
 
-.aim-alert--warn {
-  background: $warning-border-soft;
-  border-color: $warning-border;
-  color: $warning-text;
-}
-
-// Shared queue On/Off: one width, so the column lines up; a BU Admin's is a
-// greyed-out On that cannot be pressed.
-.aim-shared-switch {
-  min-width: 3.25rem;
-
-  &:disabled {
-    cursor: default;
-    opacity: 0.55;
+  .aim-alert-chip__list {
+    max-height: 60vh;
+    min-width: 20rem;
+    overflow-y: auto;
   }
 }

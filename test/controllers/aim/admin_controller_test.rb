@@ -72,7 +72,8 @@ module Aim
 
       get :index
 
-      assert_select '.aim-alert--warn', text: /no BU Admin/
+      assert_select '.aim-alert-chip summary', text: /no BU Admin/
+      assert_select '.aim-alert-chip__list a', minimum: 1
     end
 
     test 'filters by agency, read from the COA' do
