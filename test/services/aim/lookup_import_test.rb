@@ -75,6 +75,16 @@ module Aim
       assert_equal %w[created retired restored], old.changes_made.map(&:kind)
     end
 
+    test 'a vendor listed twice in one file loads as two choices, neither retiring the other' do
+      path = file('d.csv',
+                  'AAA Propane,,,,,BDO_47002024072900000003_1,4703,2104,GATV,GFUN,MNTFIRE,,,,,',
+                  'AAA Propane,,,,,BDO_47002024072900000003_2,4703,2104,GATV,GFUN,MNTFIRE,,,,,')
+      import = Aim::LookupImport.new(path, agency: 'GSA').apply!(by: 'fiscal@example.com')
+
+      assert_equal [2, 0], [import.loaded_count, import.retired_count]
+      assert_equal 2, Aim::CodingRule.match(agency: 'GSA', budget_unit: '4703', vendor_name: 'AAA Propane').last.size
+    end
+
     test 'the most specific rule wins: customer within the BU, then the BU, then the agency' do
       rows = [%w[Vestis 4721 6063764 BDO_1], %w[Vestis 4721 6063751 BDO_2], ['Vestis', '4723', nil, 'BDO_3']]
       rows.each do |vendor, unit, customer, enc|

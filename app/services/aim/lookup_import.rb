@@ -63,7 +63,7 @@ module Aim
         loadable.each do |outcome|
           rule = outcome.rule
           rule.assign_attributes(import_id: import.id, source_row: outcome.row.number, created_by: by)
-          same, different = standing_rules(rule).partition { |standing| standing.same_as?(rule) }
+          same, different = standing_rules(rule, import).partition { |standing| standing.same_as?(rule) }
           next if same.any?
 
           different.each { |standing| standing.retire!(on: rule.effective_from - 1, by: by, import_id: import.id) }
@@ -127,10 +127,12 @@ module Aim
       nil
     end
 
-    def standing_rules(rule)
+    # The rules this one replaces: never one from the same file, since a
+    # vendor listed several times there (4703's BDO lines) is several choices.
+    def standing_rules(rule, import)
       Aim::CodingRule.in_effect(rule.effective_from).for_agency(agency)
                      .where(budget_unit: rule.budget_unit, vendor_key: Aim::CodingRule.key_for(rule.vendor_name))
-                     .where(customer_number: rule.customer_number.presence).to_a
+                     .where(customer_number: rule.customer_number.presence).where.not(import_id: import.id).to_a
     end
   end
 end

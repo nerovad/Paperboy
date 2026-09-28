@@ -2926,7 +2926,14 @@ screen. Not loaded into any database yet. **Exceptions (Joshua, 2026-09-28:
 rule and stays refused; a row the COA objects to may be **accepted anyway**
 (`AIM_LOOKUP_ACCEPT=all` or row numbers; on the screen, Load anyway / Save
 anyway) and the rule keeps the objection in `warnings`, shown wherever the
-rule is.
+rule is. **Loaded into `Paperboy_Dev` 2026-09-28** (Joshua: so long as it is
+undoable and touches nothing else -- it writes only `aim.coding_*`): imports
+14-23, one per file, Facilities skipped, nothing accepted over an objection;
+864 rules in effect (GSA 680, Sheriff 184). A file never retires its own rows
+(4703's repeated vendors are choices); a bug in the first load did, fixed.
+**Security's file retired 8 of Business Support's 4661 rows** -- both files
+cover 4661 with different coding for the same vendors, and the later file
+won. Ask Fiscal which is right.
 
 *Next:* b.2 coding lines on the invoice (`aim.coding_lines`, one normally,
 more for a split), applied in Rails when an invoice becomes Ready for
@@ -4124,3 +4131,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | b.1 | (this commit) | Branch `aim/b-lookups` from the Fiscal branch (master unchanged). Coding rules, imports and changes tables; `Aim::CodingRule.match`; `Aim::CoaCodes`; `Aim::LookupFile`; `Aim::LookupImport` with report, apply and undo; `aim:lookups:*` rake tasks (standing exception). Preview of the eleven real files: 879 of 972 rows load, the rest reported by row. Bug found in test: assigning `import:` on an unsaved rule made the import's save load rows meant to be skipped; ids are assigned instead. 1327 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
 | 2026-09-28 | b.1 | (this commit) | Accept-anyway for rows the COA objects to (`accept:`, `AIM_LOOKUP_ACCEPT`), the objection kept as the rule's `warnings` (`20260928160000`); rows with no vendor or BU stay refused. 1328 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | — | (this commit) | Approve refused outside Ready for Approval (button gone from Action Needed, `needs_review -> approved` removed); Delete refused server-side to non-admins; History folded on the review page. 1330 runs, 0 failures, 0 errors; scoped rubocop clean |
+| 2026-09-28 | b.1 | (this commit) | A file never retires its own rows (a vendor listed several times is several choices). GSA and Sheriff lookups loaded into `Paperboy_Dev` as imports 14-23: 864 rules in effect. 1331 runs, 0 failures, 0 errors; scoped rubocop clean |
