@@ -166,8 +166,8 @@
         </div>
 
         <% if @events.present? %>
-          <section class="aim-ticket aim-history">
-            <h3>History</h3>
+          <details class="aim-history-fold">
+            <summary>History (<%= @events.size %>)</summary>
             <ul>
               <% @events.each do |event| %>
                 <li>
@@ -177,7 +177,7 @@
                 </li>
               <% end %>
             </ul>
-          </section>
+          </details>
         <% end %>
       </div>
 
