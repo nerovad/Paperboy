@@ -2809,6 +2809,12 @@ Branch `aim/a-user-admin`, cut from master `3b4a2eb5`. One step, one commit.
   `Aim::Users.budget_units_of` (the BUs someone works in: moves, profiles,
   BU Admin rules) is now apart from `shared_budget_units` (the queues they
   pick up from).
+- **AIM's budget units (2026-09-28, on trial -- roll back to `c3801c3e` if
+  unwanted).** Admin -> AIM's Budget Units: every COA agency with active
+  units, "Entire agency" (the agency itself, later COA units included) or
+  single units, in `aim.enabled_units`. One setting for Upload, Move,
+  profiles and By BU (`Aim::Units`); until first saved, the agencies of the
+  people in AIM. The server refuses units outside it.
 - [ ] **a.3 Budget units.** Table `aim.budget_units`, one row per BU AIM
   handles: a **label** -- the name GSA calls the BU (Joshua, 2026-09-25: GSA
   worked by group names, as Fusion's teams and DocuShare's folder titles
@@ -3830,3 +3836,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-25 | a | (this commit) | Ready for Approval grouped BU -> shared queue and each person -> invoices, the same sections as By BU (`Aim::BuSections`, `aim/shared/_bu_sections`). Upload's budget unit is a searchable list of every agency's active COA units, and the server refuses anything else. The AIM application granted globally in ACL on dev by Joshua (10 global grants: AIM plus the 9 before). New to-do items i (email and coversheet intake) and j (demo mode). 1206 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
 | 2026-09-25 | a | (this commit) | End of day: BU warnings placed before the counts; a BU Admin's shared queue shows a greyed On. `Where AIM Stands` updated. 1206 runs, 0 failures, 0 errors; brakeman's same four. Branch `aim/a-user-admin` pushed for Joshua; not merged. Worked through a WSL-to-Windows relay (`~/vpn-workaround`) while the VPN blocks WSL; the suite ran on `PAPERBOY_TEST_DATABASE=Paperboy_Test_AIM`. |
 | 2026-09-28 | a | (this commit) | The no-BU-Admin banner becomes a small chip in the page header whose list opens over the page (Users & Queues, By BU), and the Users & Queues list scrolls with the page instead of a short box of its own -- from Joshua on a laptop screen. First run off the VPN: the suite ran straight to GSASQL16 in about 7 minutes. 1206 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |
+| 2026-09-28 | a.3 | (this commit) | AIM's budget units: an AIM Admin chooses, per COA agency, the whole agency or single units, and every BU list follows (Upload, Move, profiles, By BU). `schema.rb` rebuilt from the last commit plus `aim.enabled_units`: the shared dev database now also carries other teams' uncommitted form tables and columns. Joshua's call: try it, roll back to `c3801c3e` if not liked. 1210 runs, 0 failures, 0 errors; brakeman's same four; scoped rubocop clean |

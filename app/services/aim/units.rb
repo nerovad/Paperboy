@@ -2,9 +2,10 @@
 
 module Aim
   # Agencies and budget units, read from the Chart of Accounts so AIM's lists
-  # and labels are always the COA's (Joshua, 2026-09-25). Which agencies AIM
-  # offers is not a setting: it is the agencies of the people who work AIM, read
-  # from GSABSS, so adding Sheriff's AP people brings Sheriff's units with them.
+  # and labels are always the COA's (Joshua, 2026-09-25). Which ones AIM offers
+  # is AIM's budget units (Aim::EnabledUnit, set on the Admin screen,
+  # 2026-09-28): whole agencies and single units. Until that is first saved,
+  # it is the agencies of the people who work AIM, read from GSABSS.
   # GSABSS spells an agency with a trailing V (GSAV) where the COA does not
   # (GSA); Coa::Agency.normalize_id translates.
   #
@@ -39,17 +40,22 @@ module Aim
 
     FALLBACK_AGENCIES = %w[GSA].freeze
 
-    # every_agency: true offers the whole COA -- Upload, where GSA sometimes
-    # processes another agency's invoices (Joshua, 2026-09-25).
+    # every_agency: true offers the whole COA, for choosing AIM's budget units.
     def initialize(every_agency: false)
       @every_agency = every_agency
     end
 
-    # The agencies AIM serves: those of the people who work AIM, or every
-    # agency with an active unit.
+    # The agencies offered: every agency with an active unit, those AIM's
+    # budget units name, or -- not yet set -- those of the people in AIM.
     def agencies
-      @agencies ||= @every_agency ? Coa::Unit.where(active: true).distinct.order(:agency_id).pluck(:agency_id) : served_agencies
+      @agencies ||= if @every_agency then Coa::Unit.where(active: true).distinct.order(:agency_id).pluck(:agency_id)
+                    elsif configured? then enabled.map(&:first).uniq.sort
+                    else served_agencies
+                    end
     end
+
+    # Whether AIM's budget units have been chosen yet.
+    def configured? = !@every_agency && enabled.any?
 
     def served_agencies
       codes = Employee.where(id: Aim::Users.all.select(:id)).distinct.pluck(:agency)
@@ -70,11 +76,13 @@ module Aim
     # Whether a unit is an active unit of an agency offered here.
     def valid?(unit) = by_unit.key?(unit.to_s)
 
-    # Active COA units of the agencies AIM serves, in agency then unit order.
+    # Active COA units offered, in agency then unit order: of the agencies
+    # above, limited to AIM's budget units once they are chosen.
     def all
       @all ||= Coa::Unit.where(agency_id: agencies, active: true).order(:agency_id, :unit_id)
                         .pluck(:agency_id, :unit_id, :long_name)
                         .map { |agency, unit, name| Unit.new(agency: agency, unit: unit, name: name) }
+                        .select { |u| !configured? || enabled_unit?(u) }
                         .uniq(&:unit)
     end
 
@@ -98,6 +106,15 @@ module Aim
     end
 
     private
+
+    # [[agency, unit or nil], ...] from Aim::EnabledUnit.
+    def enabled
+      @enabled ||= Aim::EnabledUnit.pluck(:agency_id, :unit_id)
+    rescue ActiveRecord::ActiveRecordError
+      []
+    end
+
+    def enabled_unit?(unit) = enabled.include?([unit.agency, nil]) || enabled.include?([unit.agency, unit.unit])
 
     def by_unit = (@by_unit ||= all.index_by(&:unit))
 

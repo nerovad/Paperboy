@@ -1338,3 +1338,45 @@
     overflow-y: auto;
   }
 }
+
+// AIM's budget units: an agency per section, its units in a grid of boxes.
+.aim-agency-units {
+  margin-bottom: 8px;
+  overflow: visible;
+
+  > summary {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+}
+
+.aim-agency-units__grid {
+  display: grid;
+  gap: 6px 16px;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  padding: 4px 14px 14px;
+
+  label {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+  }
+}
+
+.aim-agency-units__all {
+  grid-column: 1 / -1;
+}
+
+.aim-enabled-units__save {
+  background: $surface-base;
+  border-top: 1px solid $neutral-border-subtle;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 0;
+  position: sticky;
+}

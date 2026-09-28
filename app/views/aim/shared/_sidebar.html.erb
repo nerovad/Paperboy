@@ -7,7 +7,7 @@
     page draws (aim_counts_controller). %>
 <% current = if controller_name == "invoices" || (controller_name == "budget_units" && aim_queue_access?) then "queues"
               elsif %w[vendor_aliases vendor_rules].include?(controller_name) then "vendors"
-              elsif %w[admin members].include?(controller_name) then "admin"
+              elsif %w[admin members enabled_units].include?(controller_name) then "admin"
               else "aim"
               end %>
 <% in_queues = current == "queues" %>
@@ -75,7 +75,9 @@
                  data-default-open="false" data-current="<%= current == "admin" %>">
           <summary><span class="nav-group-label">Admin</span></summary>
           <%= link_to "Users & Queues", aim_admin_path,
-                      class: "nav-link#{' active' if current == 'admin'}" %>
+                      class: "nav-link#{' active' if current == 'admin' && controller_name != 'enabled_units'}" %>
+          <%= link_to "AIM's Budget Units", aim_enabled_units_path,
+                      class: "nav-link#{' active' if controller_name == 'enabled_units'}" %>
         </details>
       <% end %>
     <% end %>

@@ -144,6 +144,8 @@ Rails.application.routes.draw do
     patch 'mode', to: 'modes#update', as: :mode
     get 'admin', to: 'admin#index', as: :admin
     get 'admin/employees', to: 'members#employees', as: :admin_employees
+    get 'admin/budget_units', to: 'enabled_units#index', as: :enabled_units
+    patch 'admin/budget_units', to: 'enabled_units#update'
     resources :members, only: %i[create show destroy], path: 'admin/users' do
       member do
         patch :deactivate, to: 'member_statuses#deactivate'
