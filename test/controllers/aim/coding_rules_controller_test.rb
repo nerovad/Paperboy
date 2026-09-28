@@ -133,6 +133,19 @@ module Aim
       assert_equal 0, Aim::CodingRule.in_effect.count
     end
 
+    test 'the template downloads, and the reader understands every column of it' do
+      get :template, format: :csv
+
+      assert_equal 'text/csv', response.media_type
+      path = File.join(Dir.mktmpdir, 't.csv')
+      File.write(path, response.body)
+      file = Aim::LookupFile.new(path)
+      assert_empty file.unknown_columns
+      row = file.rows.first.fields
+      assert_equal ['ACME Supply Co', '4641', 'BDO', 'ACMESUPPLYFY27MA01', '2162'],
+                   row.values_at('vendor_name', 'budget_unit', 'encumbrance_type', 'ma_number', 'object_code')
+    end
+
     test 'no file is refused' do
       post :create, params: { agency: 'GSA' }
       assert_redirected_to new_aim_coding_import_path

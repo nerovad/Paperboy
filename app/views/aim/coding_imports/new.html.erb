@@ -6,6 +6,7 @@
       <h1 class="aim-page-title">Load a Lookup File</h1>
       <p class="aim-page-subtitle">Fiscal's CSV. You see what would load before anything is loaded.</p>
     </div>
+    <%= link_to 'Download the template', template_aim_coding_imports_path(format: :csv), class: 'btn secondary compact' %>
   </header>
   <section class="aim-panel aim-upload-panel">
     <%= form_with url: aim_coding_imports_path, method: :post, multipart: true, local: true do %>

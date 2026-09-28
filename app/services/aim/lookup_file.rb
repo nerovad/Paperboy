@@ -10,8 +10,15 @@ module Aim
   # vendor code in the Fund column (Fleet, Parks), an underscore before a
   # fund ("_S040"), a keyword that is an MA number.
   class LookupFile
+    # The template's own headings come first; the rest are what Fiscal's
+    # files have called the same things.
+    TEMPLATE = ['Vendor Name', 'Customer Number', 'Budget Unit', 'BDO / DO', 'MA Number', 'Vendor Code', 'Fund',
+                'Department', 'Object', 'Activity', 'Function', 'Major Program', 'Program', 'Phase', 'Task', 'Notes'].freeze
+    EXAMPLE = ['ACME Supply Co', '', '4641', 'BDO_46402026072600000012_1', 'ACMESUPPLYFY27MA01', 'VC00012345', 'G001',
+               '', '2162', 'GATV', 'GFUN', '', 'INDIRECT', '', '', 'Any note for Fiscal'].freeze
     COLUMNS = {
       'vendor name' => 'vendor_name', 'vendor name lookup' => 'vendor_alt', 'customers' => 'customer_number',
+      'customer number' => 'customer_number', 'ma number' => 'ma_number', 'bdo / do' => 'encumbrance',
       'account number' => 'customer_number', 'fiscal unique identifier' => 'vendor_code',
       'vendor code' => 'vendor_code', 'remit to' => 'vendor_code', 'fund' => 'fund', 'department' => 'department',
       'encumbrance doc (bdo, do, etc)' => 'encumbrance', 'bdo/po #' => 'encumbrance', 'bdo/do' => 'encumbrance',
@@ -71,7 +78,9 @@ module Aim
         values['encumbrance_number'] = match[2].presence
       end
       keyword = values.delete('keyword')
-      if keyword&.match?(MA_NUMBER)
+      if values['ma_number'].present?
+        values['notes'] = [values['notes'], "keyword: #{keyword}"].compact.join('; ') if keyword
+      elsif keyword&.match?(MA_NUMBER)
         values['ma_number'] = keyword
       elsif keyword
         values['notes'] = [values['notes'], "keyword: #{keyword}"].compact.join('; ')

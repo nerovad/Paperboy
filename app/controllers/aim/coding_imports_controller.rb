@@ -12,6 +12,15 @@ module Aim
       @imports = Aim::CodingImport.newest_first.to_a
     end
 
+    # A CSV to fill in: the headings the reader expects, and one example row.
+    def template
+      csv = CSV.generate do |out|
+        out << Aim::LookupFile::TEMPLATE
+        out << Aim::LookupFile::EXAMPLE
+      end
+      send_data csv, filename: 'AIM_Lookup_Template.csv', type: 'text/csv', disposition: 'attachment'
+    end
+
     def new
       @units = Aim::Units.new(every_agency: true)
       @agencies = @units.agencies

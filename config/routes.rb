@@ -174,6 +174,7 @@ Rails.application.routes.draw do
       patch :retire, on: :member
     end
     resources :coding_imports, only: %i[index new create show], path: 'lookups/imports' do
+      get :template, on: :collection
       member do
         post :apply
         post :undo
