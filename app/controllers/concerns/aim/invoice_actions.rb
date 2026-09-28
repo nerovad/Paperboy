@@ -22,7 +22,8 @@ module Aim
       'Delete' => :delete_invoice,
       'Learn & Retry AI' => :learn_and_retry,
       'Learn & Send to Approval' => :learn_and_send,
-      'Retry Export' => :retry_export
+      'Retry Export' => :retry_export,
+      'Use this coding' => :use_coding
     }.freeze
 
     # These ask why, and the reason is kept: in Notes, and on the history.
@@ -58,10 +59,26 @@ module Aim
     def approve
       return refuse('Approve it from its queue: send it to approval first.') unless @invoice.state == 'ready_for_approval'
       return refuse_unready unless @invoice.ready_for_a_user?
+      return refuse('Pick or enter the coding first.') if coding_unpicked?
 
       @invoice.request_export!(actor: current_user_email)
       Aim::StampApprovedJob.perform_later(@invoice.id)
       finish('Invoice approved. It is on its way to billing and Fiscal.')
+    end
+
+    # A person picks one of several matching coding rules (item b.2).
+    def use_coding
+      rule = Aim::CodingRule.find_by(id: params[:coding_rule_id])
+      candidates = Aim::CodingLookup.candidates(@invoice)&.last || []
+      return refuse('Pick one of the coding rules shown.') unless rule && candidates.include?(rule)
+
+      Aim::CodingLookup.choose!(@invoice, rule, by: current_user_email)
+      redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), notice: 'Coding set.'
+    end
+
+    # Rules match but nobody has chosen, and nothing was typed.
+    def coding_unpicked?
+      @invoice.coding.nil? && Aim::CodingLookup.candidates(@invoice).present?
     end
 
     def send_back

@@ -84,7 +84,7 @@ module Aim
     test 'the job codes what is waiting' do
       rule('BDO_46402024072600000001_1')
       row = invoice
-      invoice(state: 'needs_review', document_type: 'Invoice')
+      invoice(state: 'received', document_type: 'Invoice')
 
       Aim::CodeReadyJob.perform_now
 

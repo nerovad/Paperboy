@@ -246,14 +246,30 @@ module Aim
       get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
       assert_response :success
       assert_select 'input[type=radio][name=coding_rule_id]', 2
+      assert_select 'select[name=?]', 'coding_line[object_code]'
       assert row.reload.coded?
       assert_empty row.coding_lines
 
-      post :code, params: { id: row.batch_id, queue: 'ready_for_approval', coding_rule_id: Aim::CodingRule.last.id }
+      act(row, 'Approve', queue: 'ready_for_approval')
+      assert_equal 'ready_for_approval', row.state
+      assert_match(/Pick or enter the coding/, flash[:alert])
+
+      act(row, 'Use this coding', queue: 'ready_for_approval', coding_rule_id: Aim::CodingRule.last.id)
 
       line = row.coding_lines.first
       assert_equal ['BDO_46002024072600000001_2', 'person', REVIEWER], [line.encumbrance, line.source, line.set_by]
       assert_match(/coding picked/, row.events.last.note)
+    end
+
+    test 'a reviewer enters the coding by hand when no rule fits' do
+      row = invoice('4601.C2', state: 'ready_for_approval', pdf: false)
+
+      act(row, 'Save Changes', queue: 'ready_for_approval',
+                               coding_line: { encumbrance: 'DO_46012026', object_code: '2162', activity: 'GATV' })
+
+      line = row.coding_lines.first
+      assert_equal %w[DO_46012026 2162 GATV person], [line.encumbrance, line.object_code, line.activity, line.source]
+      assert_match(/set .*Object/, row.events.last.note)
     end
 
     test 'an invoice missing its vendor is not sent for approval, and nothing moves' do

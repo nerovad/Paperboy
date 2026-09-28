@@ -51,6 +51,7 @@ module Aim
       @pdf_present = stored_pdf_path.present?
       @events = @invoice.events.to_a
       @line = @invoice.coding || @invoice.coding_lines.build(source: 'fiscal')
+      @coa = Aim::CoaCodes.new(@invoice.agency!.to_s)
     end
 
     def update

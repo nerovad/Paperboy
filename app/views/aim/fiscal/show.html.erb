@@ -75,19 +75,7 @@
         <% if @line.warnings.present? %>
           <p class="aim-coding__help"><span class="badge is-denied">unvalidated</span> <%= @line.warnings %></p>
         <% end %>
-        <div class="aim-fields aim-fiscal-grid">
-          <div class="aim-field">
-            <%= label_tag 'coding_line_encumbrance', aim_coding_field_label('encumbrance') %>
-            <%= text_field_tag 'coding_line[encumbrance]', @line.encumbrance, id: 'coding_line_encumbrance', disabled: read_only,
-                               placeholder: 'BDO_4640…' %>
-          </div>
-          <% (Aim::CodingLine::FIELDS - %w[encumbrance_type encumbrance_number]).each do |field| %>
-            <div class="aim-field">
-              <%= label_tag "coding_line_#{field}", aim_coding_field_label(field) %>
-              <%= text_field_tag "coding_line[#{field}]", @line.public_send(field), id: "coding_line_#{field}", disabled: read_only %>
-            </div>
-          <% end %>
-        </div>
+        <%= render 'aim/shared/coding_fields', line: @line, coa: @coa, read_only: read_only %>
         <p class="aim-coding__source">
           <%= { 'rule' => 'From the coding rules.', 'person' => "Picked by #{@line.set_by}.", 'fiscal' => "Set by Fiscal (#{@line.set_by})." }[@line.source] if @line.persisted? %>
           <%= 'No coding rule matched; type it here.' if !@line.persisted? && @invoice.coded? %>

@@ -11,9 +11,11 @@ module Aim
     module_function
 
     ACTOR = 'aim'
+    # Once the AI has read it, an invoice is coded wherever a person sees it.
+    STATES = %w[needs_review ready_for_approval failed].freeze
 
     def ensure!(invoice)
-      return if invoice.coded? || invoice.state != 'ready_for_approval'
+      return if invoice.coded? || STATES.exclude?(invoice.state)
 
       run!(invoice)
     end

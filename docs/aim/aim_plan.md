@@ -2990,6 +2990,17 @@ tests: an unsaved rule had no `vendor_key` (identical rows looked
 different), and `where.not(import_id:)` skipped hand-made rules (NULL), so
 an upload could never replace them.
 
+*Review page coding (Joshua, 2026-09-28, from the demo):* the coding
+fields are on the review page in every state, not Fiscal's alone, with the
+COA's lists as dropdowns as Fusion had them (`Aim::CoaCodes#options`;
+object, fund, activity and program searchable; `aim/shared/_coding_fields`,
+shared with the Fiscal page). A reviewer types the coding when no rule fits.
+The pick is rows inside the review form (the earlier table was a nested
+form and overflowed the panel), "Use this coding" is a review action, and
+the `code` route is gone. **Approve is refused while rules match and none is
+picked or typed.** The lookup now runs from Action Needed on
+(`Aim::CodingLookup::STATES`), so staff see candidates early.
+
 *Still to do in b:* b.4 Data Runner; the stamp's dual key and the coding
 gate at approval (below); the worker's OCR text for the hint.
 
@@ -3034,6 +3045,17 @@ to a name, collapse the known duplicate groups, fuzzy match suggestions on
 the review page, a merge/rename/delete screen, and an audit of alias changes.
 Decide whether AI auto-learning stays on.
 
+
+**Lookups and aliases (Joshua, 2026-09-28).** A coding rule matches an
+invoice by the invoice's `vendor_name`, which is the alias list's *official*
+name, so the two lists must agree. To build, as the next step after b:
+(1) an import keys each row's vendor through the aliases -- a lookup's
+"AAA PROPANE SERVICE INC" that is an alias of "AAA Propane" becomes a rule
+for "AAA Propane"; (2) a lookup vendor with no alias at all is added as an
+official name (`name -> name`), so the AI learns it; (3) renaming a vendor
+on a rule or in the aliases renames the official name everywhere -- the
+aliases, the other rules, and open invoices -- as one recorded change. That
+is the vendor master this item always wanted, with the lookups as its seed.
 ### d. Duplicate prevention (was 7)
 
 **Goal.** The same invoice is not paid twice.
@@ -4219,3 +4241,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | b.2 | (this commit) | A coding rule from another BU is offered, never applied on its own; the choices show the BU. Dev re-coded. 1338 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | b.3 | (this commit) | Lookups screens: Coding Rules (list, one rule with COA checking, Save anyway, Retire, history) and Imports (upload, report with Load anyway, Apply, Undo; file kept on the import row, `20260928180000`). Routes in the namespace. 1346 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
 | 2026-09-28 | b.3 | (this commit) | CSV template download; Download these rules (filtered, with Rule ID) and edit by re-upload. Fixed: identical re-upload rows loaded again (no vendor_key before save); hand-made rules never replaced (NULL import_id). 1348 runs, 0 failures, 0 errors; scoped rubocop clean |
+| 2026-09-28 | b.2/b.3 | (this commit) | Coding fields with COA dropdowns on the review page in every state and on the Fiscal page (one partial); the pick inside the review form; Approve refused until picked or typed; lookup from Action Needed on. 1349 runs, 0 failures, 0 errors; scoped rubocop clean |

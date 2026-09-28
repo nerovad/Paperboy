@@ -25,7 +25,27 @@ module Aim
       @lists = {}
     end
 
+    # field on a line => [model, id column, name column, scoped by agency?]:
+    # the lists people choose from, as Fusion offered them.
+    OPTION_LISTS = LISTS.merge(
+      'dept_object' => [Coa::ObjectInference, :agency_object_code, true]
+    ).except('budget_unit').freeze
+    NAMES = { Coa::ObjectInference => :agency_object_name }.freeze
+
     def agency? = Coa::Agency.exists?(agency_id: @agency)
+
+    # [["2162 · OFFICE SUPPLIES", "2162"], ...] for a select, active codes
+    # only, in code order.
+    def options(field)
+      @options ||= {}
+      @options[field] ||= begin
+        model, column, scoped = OPTION_LISTS.fetch(field)
+        scope = scoped ? model.where(agency_id: @agency) : model.all
+        scope = scope.where(active: true) if model.column_names.include?('active')
+        name = NAMES.fetch(model, :short_name)
+        scope.order(column).pluck(column, name).map { |code, label| ["#{code} · #{label.to_s.strip}".strip, code.to_s] }
+      end
+    end
 
     def valid?(field, value)
       return true if value.blank?

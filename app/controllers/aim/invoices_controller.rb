@@ -11,11 +11,12 @@ module Aim
     include Aim::InvoiceBulkMoves
     include Aim::InvoiceRestore
     include Aim::StoredPdf
+    include Aim::CodingLineEdits
 
     before_action :require_aim_admin, :remember_queue_page, only: :index
     before_action :set_queue
-    before_action :set_invoice, only: %i[show update pdf reassign lock unlock claim restore code]
-    before_action :require_staff_or_owner, only: %i[show update pdf reassign lock unlock claim restore code]
+    before_action :set_invoice, only: %i[show update pdf reassign lock unlock claim restore]
+    before_action :require_staff_or_owner, only: %i[show update pdf reassign lock unlock claim restore]
     # Everything #update does changes the invoice, so it needs the claim. The
     # queue list already offers a second reviewer nothing but View Only; this
     # is what makes that true of a posted form as well.
@@ -54,16 +55,6 @@ module Aim
       Rails.logger.error "AIM file write failed for #{@invoice.batch_id.inspect}: #{e.class}: #{e.message}"
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue),
                   alert: 'That did not go through: the AIM file share could not be reached. Try again.'
-    end
-
-    # A person picks one of several matching coding rules (item b.2).
-    def code
-      rule = Aim::CodingRule.find_by(id: params[:coding_rule_id])
-      candidates = Aim::CodingLookup.candidates(@invoice)&.last || []
-      return redirect_to(aim_invoice_path(@invoice.batch_id, queue: @queue), alert: 'Pick one of the coding rules shown.') unless rule && candidates.include?(rule)
-
-      Aim::CodingLookup.choose!(@invoice, rule, by: current_user_email)
-      redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), notice: 'Coding set.'
     end
 
     def pdf
@@ -108,10 +99,13 @@ module Aim
       prepare_coding
     end
 
-    # The invoice's coding, or the rules to choose from (item b.2).
+    # The invoice's coding, or the rules to choose from (item b.2). The
+    # fields are always there, with the COA's lists, for a person to type.
     def prepare_coding
       Aim::CodingLookup.ensure!(@invoice)
       @coding_lines = @invoice.coding_lines.to_a
+      @coding_line = @invoice.coding || @invoice.coding_lines.build(line_no: 1)
+      @coa = Aim::CoaCodes.new(@invoice.agency!.to_s)
       return if @coding_lines.any? || !@invoice.coded?
 
       @coding_level, @coding_candidates = Aim::CodingLookup.candidates(@invoice)
@@ -125,10 +119,11 @@ module Aim
 
     def save_fields
       permitted = params.fetch(:invoice, {}).permit(*Aim::Invoice::EDITABLE_FIELDS).to_h
-      return if permitted.empty?
+      return save_coding_line(source: 'person') if permitted.empty?
 
       @invoice.update!(permitted.transform_values { |value| value.is_a?(String) ? value.strip.presence : value })
       forget_coding_if_rematch_needed
+      save_coding_line(source: 'person')
     end
 
     # A new vendor, BU or customer number may match other rules.
