@@ -2935,6 +2935,18 @@ undoable and touches nothing else -- it writes only `aim.coding_*`): imports
 cover 4661 with different coding for the same vendors, and the later file
 won. Ask Fiscal which is right.
 
+*Several rules for one vendor (Joshua, 2026-09-28).* Capture kept rows
+for the same vendor differing in one field so staff could pick, and some
+invoices carry a stamp naming that field. So in b.2: when more than one rule
+matches, the review page shows them side by side with only the differing
+fields highlighted, and the person picks (the pick is in the history). **Stamp
+hint, no vision model:** the worker already OCRs the pages, so if one
+candidate's distinguishing value (BDO/DO number, program, object) appears in
+the invoice's text, that row is pre-selected and marked "found on the
+invoice". Vision AI is a later layer only if text matching proves too weak.
+Per-agency lines are already separate: rules carry the agency, and the
+invoice's agency chooses.
+
 *Next:* b.2 coding lines on the invoice (`aim.coding_lines`, one normally,
 more for a split), applied in Rails when an invoice becomes Ready for
 Approval, shown on the review page, edited on the Fiscal page, read by the
