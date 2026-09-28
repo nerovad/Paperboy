@@ -3063,10 +3063,10 @@ through their Excel macro into the payment software); then they archive it.
 - **Lists:** All / By BU on every Fiscal list; a tick-all box per table (in
   All, the whole list; in By BU, that BU).
 - **Report:** one CSV, UTF-8, no DocuShare format. Header exactly the
-  macro's: 31 columns, `Org_Number` after `Unit`, `Handle ` with its trailing
-  space. Description is the stamp text, then ` _ ` and Fiscal's text, as in
-  the samples. Of the 29 samples in Downloads, 22 have no Org_Number, 4 have
-  it, 3 have `Unit` twice; Joshua picked Org_Number. **Ask Fiscal:** whether
+  macro's: **30 columns, no `Org_Number`, `Handle` with no trailing space**
+  (Joshua corrected this the same day; the first cut had read his screenshot
+  wrong). Description is the stamp text, then ` _ ` and Fiscal's text, as in
+  the samples. Org Number stays a field on the Fiscal page for now. **Ask Fiscal:** whether
   the macro reads a UTF-8 comma CSV, or DocuShare's UTF-16 tab file saved as
   `.csv` (the samples are the latter).
 - **Approval stamp (item e), built here in Ruby** (Joshua: a delay after

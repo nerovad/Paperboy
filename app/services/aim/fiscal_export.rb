@@ -5,16 +5,17 @@ require 'csv'
 module Aim
   # Fiscal's report (item f): one CSV, the header row and one row per invoice,
   # for the macro that feeds the payment software. The header is exactly the
-  # one Fiscal's macro was built on -- 31 columns, Org_Number after Unit, and
-  # "Handle " with its trailing space (Joshua, 2026-09-28). Nothing of
-  # DocuShare's own blocks, and no DocuShare format: AIM replaces it.
+  # one Fiscal's macro was built on: these 30 columns, in this order (Joshua,
+  # 2026-09-28, corrected the same day: no Org_Number, no trailing space on
+  # Handle). Nothing of DocuShare's own blocks, and no DocuShare format: AIM
+  # replaces it.
   class FiscalExport
     COLUMNS = [
       'Title', 'Invoice Number', 'Vendor Name', 'Customer Number', 'Order Number', 'Invoice Date AP',
       'Create Date', 'Modified Date', 'Expiration Date', 'Past Due', 'Sales Tax', 'SubTotal', 'Credit Amount',
-      'Total', 'Keywords', 'BDO / DO', 'Pay Doc Number', 'Description', 'Unit', 'Org_Number', 'Object',
-      'Dept Object', 'Activity', 'Function', 'Program', 'Phase', 'Task', 'Split Invoice Amount', 'Handle ',
-      'Archive Date', 'Check Number'
+      'Total', 'Keywords', 'BDO / DO', 'Pay Doc Number', 'Description', 'Unit', 'Object', 'Dept Object',
+      'Activity', 'Function', 'Program', 'Phase', 'Task', 'Split Invoice Amount', 'Handle', 'Archive Date',
+      'Check Number'
     ].freeze
 
     attr_reader :records
@@ -60,9 +61,8 @@ module Aim
         invoice.invoice_date&.strftime('%Y%m%d'), day(invoice.created_at), day(record.updated_at), nil, nil,
         money(invoice.sales_tax), money(invoice.subtotal), money(record.credit_amount), money(invoice.invoice_total),
         record.tag_list.join(', '), record.bdo_do, record.pay_doc_number, description(record), invoice.budget_unit,
-        record.org_number, record.object_code, record.dept_object, record.activity, record.function_code,
-        record.program, record.phase, record.task, record.split_amount, invoice.batch_id, day(record.archived_at),
-        record.check_number
+        record.object_code, record.dept_object, record.activity, record.function_code, record.program,
+        record.phase, record.task, record.split_amount, invoice.batch_id, day(record.archived_at), record.check_number
       ]
     end
 

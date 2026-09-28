@@ -16,16 +16,16 @@ module Aim
     test 'the report has Fiscal\'s header exactly, and one row per invoice' do
       rows = CSV.parse(Aim::FiscalExport.new([@record]).to_csv)
 
-      assert_equal 31, rows.first.size
-      assert_equal %w[Unit Org_Number Object], rows.first[18, 3]
-      assert_equal 'Handle ', rows.first[28]
+      assert_equal 30, rows.first.size
+      assert_equal %w[Unit Object], rows.first[18, 2]
+      assert_equal 'Handle', rows.first[27]
       assert_equal 2, rows.size
       row = Aim::FiscalExport::COLUMNS.zip(rows.last).to_h
       assert_equal '4641_ACME "West"_A-9_20260903', row['Title']
       assert_equal '20260903', row['Invoice Date AP']
       assert_equal '12.50', row['Total']
       assert_equal '1.00', row['Sales Tax']
-      assert_equal '4641.X-1', row['Handle ']
+      assert_equal '4641.X-1', row['Handle']
       assert_equal '1001', row['Check Number']
       assert_match(%r{\Anobody@example.com_\d{2}/\d{2}/\d{4}_\d{2}:\d{2}:\d{2}\z}, row['Description'])
     end
