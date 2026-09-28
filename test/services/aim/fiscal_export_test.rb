@@ -25,7 +25,7 @@ module Aim
       assert_equal '20260903', row['Invoice Date AP']
       assert_equal '12.50', row['Total']
       assert_equal '1.00', row['Sales Tax']
-      assert_equal '4641.X-1', row['Handle']
+      assert_equal "AIM-#{@invoice.id}", row['Handle']
       assert_equal '1001', row['Check Number']
       assert_match(%r{\Anobody@example.com_\d{2}/\d{2}/\d{4}_\d{2}:\d{2}:\d{2}\z}, row['Description'])
     end

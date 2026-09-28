@@ -93,6 +93,10 @@ module Aim
 
     def terminal? = TERMINAL_STATES.include?(state)
 
+    # "AIM-1234": the short public number people and the Fiscal report use
+    # (Joshua, 2026-09-28); the batch id stays the store's and billing's key.
+    def handle = id && "AIM-#{id}"
+
     def next_states = TRANSITIONS.fetch(state, [])
 
     def can_move_to?(new_state) = next_states.include?(new_state.to_s)

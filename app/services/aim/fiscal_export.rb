@@ -62,7 +62,7 @@ module Aim
         money(invoice.sales_tax), money(invoice.subtotal), money(record.credit_amount), money(invoice.invoice_total),
         record.tag_list.join(', '), record.bdo_do, record.pay_doc_number, description(record), invoice.budget_unit,
         record.object_code, record.dept_object, record.activity, record.function_code, record.program,
-        record.phase, record.task, record.split_amount, invoice.batch_id, day(record.archived_at), record.check_number
+        record.phase, record.task, record.split_amount, invoice.handle, day(record.archived_at), record.check_number
       ]
     end
 

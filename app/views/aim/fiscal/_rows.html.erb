@@ -4,6 +4,7 @@
   <thead>
     <tr>
       <th>Action</th>
+      <th>AIM #</th>
       <th>Vendor</th>
       <th>Invoice #</th>
       <th>Budget Unit</th>
@@ -31,12 +32,13 @@
       <% invoice = record.invoice %>
       <% search = [invoice.vendor_name, invoice.invoice_number, invoice.budget_unit, invoice.invoice_total,
                    aim_invoice_date(invoice.invoice_date), record.tags, record.check_number, record.pay_doc_number,
-                   record.bdo_do, record.hold_reason, stamps[invoice.id], invoice.batch_id].compact.join(' ') %>
+                   record.bdo_do, record.hold_reason, stamps[invoice.id], invoice.handle, invoice.batch_id].compact.join(' ') %>
       <tr title="<%= record.title %>" data-aim-queue-filter-target="row" data-search="<%= search %>">
         <td class="action-buttons">
           <%= link_to record.status == 'archived' ? 'View' : 'Open', aim_fiscal_invoice_path(invoice.batch_id),
                       data: { turbo: false }, class: "btn #{record.status == 'archived' ? 'secondary' : 'approve'} compact" %>
         </td>
+        <td><%= invoice.handle %></td>
         <td class="is-strong"><%= invoice.vendor_name.presence || 'N/A' %></td>
         <td><%= invoice.invoice_number.presence || 'N/A' %></td>
         <td><%= invoice.budget_unit.presence || 'N/A' %></td>

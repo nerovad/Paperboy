@@ -3066,7 +3066,11 @@ through their Excel macro into the payment software); then they archive it.
   macro's: **30 columns, no `Org_Number`, `Handle` with no trailing space**
   (Joshua corrected this the same day; the first cut had read his screenshot
   wrong). Description is the stamp text, then ` _ ` and Fiscal's text, as in
-  the samples. Org Number stays a field on the Fiscal page for now. **Ask Fiscal:** whether
+  the samples. Org Number stays a field on the Fiscal page for now.
+  **Handle is `AIM-<id>`** (the row's id; Joshua 2026-09-28, in place of the
+  batch id, which stays the store's and billing's key and drops to a
+  tooltip): `Aim::Invoice#handle`, shown as "AIM #" on Fiscal's lists and
+  page, searchable. **Ask Fiscal:** whether
   the macro reads a UTF-8 comma CSV, or DocuShare's UTF-16 tab file saved as
   `.csv` (the samples are the latter).
 - **Approval stamp (item e), built here in Ruby** (Joshua: a delay after
