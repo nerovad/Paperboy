@@ -3085,13 +3085,52 @@ through their Excel macro into the payment software); then they archive it.
   are stamped. The worker's `_AI_Processed` and archive copies are still the
   unstamped `<batch id>.pdf`: settled with storage (Laserfiche or DAM).
 
+*What DocuShare shows (Joshua, 2026-09-28, from the exports' folder names
+and the properties of an invoice in `VCFMS Upload Complete`):*
+- **Flow:** BU folder -> hold sub-folders -> CSV -> `IN ADS Upload` (with a
+  `FAILS` sub-folder, moved by hand when the other system rejects one) ->
+  `VCFMS Upload Complete` (the archive, unsorted; where Laserfiche would take
+  over). Also `Reviewed/Ready for ADS upload`, `Next ADS Upload`, `Ready for
+  PRC2 Upload`, `Rejected Invoices`, `Problem`, `INCORRECT RATES`.
+- **The hold folders are reasons, not statuses:** `BDO's On Hold Missing
+  MA's/Approvals`, `Credit/On Hold Invoices`, `Invoices To Accrue`, `Accrue
+  Pending`, `HOLD FY26`, `#BDO$_<BU>`, `House/Sinclair Invoices for DO`. So:
+  On Hold stays one status with a **hold reason from a short list** plus
+  free text. Tags stay free. *(Proposed, not built.)*
+- **Check Number is empty on an archived invoice; Pay Doc Number is filled**
+  (`4570202609220000780 IN`, dated between invoice and archive): VCFMS assigns
+  it at upload and Fiscal types it back. Archive now warns on a missing pay
+  doc number only. Description is overwritten with "Uploaded to VCFMS": a
+  status note, which AIM's status covers.
+- **Properties AIM lacked:** Remit To, Fund (`VC00017117`), Department,
+  Major Program -- added to `aim.fiscal_records` (`20260928140000`) so Fiscal
+  can type them until item b's lookups fill them. `BDO / DO` reads
+  `BDO_<agency><yyyymmdd><seq>_<line>`.
+- **Proposed instead of moving files after the CSV:** an *upload batch*.
+  Tick invoices, create the batch (shown on screen first, nothing changed),
+  download its CSV as often as wanted, then **Uploaded** for the batch or
+  **Failed** on a row, which returns that invoice to the Fiscal Queue with
+  the reason. The batch is the audit trail. No report builder: the macro
+  wants one exact layout. *(Waiting on Joshua.)*
+- **Proposed names**, in Fiscal's words: Fiscal Queue; On Hold; Ready for
+  ADS Upload (was Report Queue); Uploaded to VCFMS (was Exported); Upload
+  Complete / Archive. *(Waiting on Joshua.)*
+- **Laserfiche metadata** at Archive: Info-dictionary keys, letters, digits
+  and underscores only (`Invoice_Number`, `Pay_Doc_Number`...). The stamp's
+  PDF writer can write them; needs Laserfiche's field list from IT.
+- The macro is Fiscal's alone: AIM only has to match the headers and their
+  positions; formatting details later.
+
 *Questions for Fiscal (2026-09-29):* which export format and exact columns
 the macro takes; which fields they fill and which the lookup should; the
 check number and pay doc: from where, and when; what "archive" must do; do
 they send an invoice back to the approver; which folders/statuses they
 really use; per-BU queues or one queue; the fiscal stamp (check number, date
 processed, who?); invoice date or processing date for choosing a year's
-lookup row.
+lookup row. **Added 2026-09-28:** what Accrue / Accrue Pending means for
+the process; whether the pay doc number is typed back after upload or could
+be imported; whether check numbers are ever recorded; the upload-batch idea
+and the names above.
 
 *Then item b feeds it:* the lookup fills BDO/DO and the coding (PO numbers
 are in Fiscal's lookup CSVs, the "Encumbrance Doc"/"BDO/PO #" column --
@@ -3996,3 +4035,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | — | (this commit) | On-screen text made short and plain, at Joshua's request: no Laserfiche anywhere a user sees it (approval now reads "billing and Fiscal"); page subtitles, queue descriptions, confirms and notices rewritten for users, not developers (no "worker", "extraction", "aim_admin group"; outdated lines such as "coming next" and "Paperboy inbox" fixed; "AIM staff" is AIM Admins). Keep new text in that style. 1320 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | f | (this commit) | From Joshua's run-through: free-text tags, Org Number, editable invoice fields, History behind a link, Report Queue, All / By BU with tick-all, one CSV with the macro's exact header, Fiscal's file name for approved PDFs. Migration `20260928120000` (tags, org_number; tag dropped). Approval stamp proposed for the worker, not built. 1320 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
 | 2026-09-28 | f / e | (this commit) | Approval stamp in Ruby: `Aim::PdfStamp` + `Aim::PdfWriter`, `Aim::ApprovalStamp`, `Aim::StampApprovedJob` (on Approve, on Fiscal's invoice edits, and every 10 minutes -- new `aim_stamp_approved` block in `config/recurring.yml`, standing exception), migration `20260928130000`. Stamped copies served from approval on. Backfilled dev's two approved invoices. 1324 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
+| 2026-09-28 | f | (this commit) | From DocuShare's folders and an archived invoice's properties: Remit To, Fund, Department and Major Program added to `aim.fiscal_records` (`20260928140000`); Archive warns on a missing pay doc number only (check numbers are never filled there). Findings, the upload-batch and naming proposals, and new Fiscal questions recorded under item f. 1324 runs, 0 failures, 0 errors; scoped rubocop clean |

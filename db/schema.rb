@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -75,17 +75,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_130000) do
     t.string "check_number", limit: 50
     t.datetime "created_at", null: false
     t.decimal "credit_amount", precision: 15, scale: 2
+    t.string "department", limit: 20
     t.string "dept_object", limit: 20
     t.text "description"
     t.datetime "exported_at"
     t.string "function_code", limit: 20
+    t.string "fund", limit: 20
     t.string "hold_reason", limit: 500
     t.bigint "invoice_id", null: false
+    t.string "major_program", limit: 20
     t.string "object_code", limit: 20
     t.string "org_number", limit: 20
     t.string "pay_doc_number", limit: 100
     t.string "phase", limit: 20
     t.string "program", limit: 20
+    t.string "remit_to", limit: 255
     t.string "split_amount", limit: 100
     t.string "stamp_error", limit: 500
     t.datetime "stamped_at"

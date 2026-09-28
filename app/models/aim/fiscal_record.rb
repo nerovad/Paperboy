@@ -30,8 +30,9 @@ module Aim
                        '#INV_TAX CREDIT_DO NOT PAY', '#INV_TAX ERROR'].freeze
     # The states in which an invoice has been approved and belongs to Fiscal.
     APPROVED_STATES = %w[approved exporting exported].freeze
-    FIELDS = %w[tags hold_reason bdo_do pay_doc_number check_number check_date credit_amount split_amount
-                org_number object_code dept_object activity function_code program phase task description].freeze
+    FIELDS = %w[tags hold_reason bdo_do pay_doc_number check_number check_date credit_amount split_amount remit_to
+                fund department org_number object_code dept_object activity function_code major_program program
+                phase task description].freeze
     # The invoice's own fields Fiscal may correct on the Fiscal page.
     INVOICE_FIELDS = %w[vendor_name invoice_number invoice_date invoice_total subtotal sales_tax order_number
                         customer_number budget_unit document_type].freeze

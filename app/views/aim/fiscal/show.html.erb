@@ -2,7 +2,8 @@
     fields and Fiscal's, all editable until archived. History opens on request. %>
 <% status = @record.status %>
 <% read_only = status == 'archived' %>
-<% missing = [('check number' if @record.check_number.blank?), ('pay doc number' if @record.pay_doc_number.blank?)].compact %>
+<%# The pay doc number comes back from VCFMS after the upload; a check number does not (DocuShare's own records, 2026-09-28). %>
+<% missing = [('pay doc number' if @record.pay_doc_number.blank?)].compact %>
 <div class="aim-page aim-review-page">
   <header class="aim-page-header">
     <div class="aim-review-heading">
