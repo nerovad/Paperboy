@@ -54,6 +54,9 @@ module Aim
 
     def encumbrance = [encumbrance_type, encumbrance_number].compact_blank.join('_').presence
 
+    # Rules carry no org number; the shared coding fields ask for one.
+    def org_number = nil
+
     def encumbrance=(value)
       type, number = value.to_s.strip.match(/\A([A-Za-z]{2,4})_?(.*)\z/)&.captures
       self.encumbrance_type = type&.upcase

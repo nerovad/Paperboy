@@ -12,8 +12,10 @@ module Aim
       permitted = params.fetch(:coding_line, {}).permit(*Aim::CodingLine::EDITABLE_FIELDS, :encumbrance).to_h
       return if permitted.empty?
 
+      values = permitted.transform_values { |value| value.to_s.strip.presence }
+      fills, objections = Aim::CoaCodes.new(@invoice.agency!.to_s).linkage(values)
       line = @invoice.coding || @invoice.coding_lines.build(line_no: 1)
-      line.assign_attributes(permitted.transform_values { |value| value.to_s.strip.presence })
+      line.assign_attributes(values.merge(fills).merge(warnings: objections.join('; ').presence))
       return unless line.new_record? || line.changed?
       return if line.new_record? && line.blank_coding? && line.amount.blank?
 

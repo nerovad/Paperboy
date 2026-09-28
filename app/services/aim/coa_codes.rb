@@ -27,12 +27,34 @@ module Aim
 
     # field on a line => [model, id column, name column, scoped by agency?]:
     # the lists people choose from, as Fusion offered them.
-    OPTION_LISTS = LISTS.merge(
-      'dept_object' => [Coa::ObjectInference, :agency_object_code, true]
-    ).except('budget_unit').freeze
+    OPTION_LISTS = LISTS.merge('dept_object' => [Coa::ObjectInference, :agency_object_code, true]).freeze
     NAMES = { Coa::ObjectInference => :agency_object_name }.freeze
 
     def agency? = Coa::Agency.exists?(agency_id: @agency)
+
+    # What the COA links: a program belongs to a major program, a dept object
+    # to an object. Blanks are filled from the chosen code; a code that
+    # contradicts the link is an objection. Returns [fills, objections].
+    def linkage(values)
+      fills = {}
+      objections = []
+      if (program = values['program'].presence)
+        major = Coa::Program.where(agency_id: @agency, program_id: program).pick(:major_program_id).to_s.strip
+        if major.present?
+          given = values['major_program'].to_s.strip
+          fills['major_program'] = major if given.blank?
+          objections << "program #{program} belongs to major program #{major}, not #{given}" if given.present? && !given.casecmp?(major)
+        end
+      end
+      if (dept_object = values['dept_object'].presence)
+        object = Coa::ObjectInference.where(agency_id: @agency, agency_object_code: dept_object).pick(:object_id).to_s.strip
+        if object.present?
+          fills['object_code'] = object if values['object_code'].blank?
+          objections << "dept object #{dept_object} is object #{object}, not #{values['object_code']}" if values['object_code'].present? && values['object_code'].strip != object
+        end
+      end
+      [fills, objections]
+    end
 
     # [["2162 · OFFICE SUPPLIES", "2162"], ...] for a select, active codes
     # only, in code order.

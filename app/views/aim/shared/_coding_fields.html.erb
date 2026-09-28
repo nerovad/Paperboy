@@ -1,30 +1,31 @@
 <%# An invoice's coding line as fields (item b.2), the chart-of-accounts
-    lists as dropdowns; used by the review page and the Fiscal page inside
-    their forms. Locals: line, coa (Aim::CoaCodes), read_only. %>
-<% searchable = %w[object_code activity program fund] %>
+    lists as plain dropdowns (the search widget cramps in this grid; typing
+    a code in a select jumps to it); used by the review page and the Fiscal page inside
+    their forms, and the coding rule page. Locals: line, coa (Aim::CoaCodes),
+    read_only; prefix (the form scope, default coding_line). %>
+<% prefix = local_assigns.fetch(:prefix, 'coding_line') %>
 <div class="aim-fields aim-fiscal-grid">
   <div class="aim-field">
-    <%= label_tag 'coding_line_encumbrance', aim_coding_field_label('encumbrance') %>
-    <%= text_field_tag 'coding_line[encumbrance]', line.encumbrance, id: 'coding_line_encumbrance', disabled: read_only,
+    <%= label_tag "#{prefix}_encumbrance", aim_coding_field_label('encumbrance') %>
+    <%= text_field_tag "#{prefix}[encumbrance]", line.encumbrance, id: "#{prefix}_encumbrance", disabled: read_only,
                        placeholder: 'BDO_4640…', autocomplete: 'off' %>
   </div>
   <% %w[ma_number vendor_code org_number].each do |field| %>
     <div class="aim-field">
-      <%= label_tag "coding_line_#{field}", aim_coding_field_label(field) %>
-      <%= text_field_tag "coding_line[#{field}]", line.public_send(field), id: "coding_line_#{field}", disabled: read_only, autocomplete: 'off' %>
+      <%= label_tag "#{prefix}_#{field}", aim_coding_field_label(field) %>
+      <%= text_field_tag "#{prefix}[#{field}]", line.public_send(field), id: "#{prefix}_#{field}", disabled: read_only, autocomplete: 'off' %>
     </div>
   <% end %>
-  <% Aim::CoaCodes::OPTION_LISTS.keys.each do |field| %>
+  <% (Aim::CodingLine::CODING_FIELDS & Aim::CoaCodes::OPTION_LISTS.keys).each do |field| %>
     <% options = coa.options(field) %>
     <div class="aim-field">
-      <%= label_tag "coding_line_#{field}", aim_coding_field_label(field) %>
+      <%= label_tag "#{prefix}_#{field}", aim_coding_field_label(field) %>
       <% if options.empty? %>
-        <%= text_field_tag "coding_line[#{field}]", line.public_send(field), id: "coding_line_#{field}", disabled: read_only, autocomplete: 'off' %>
+        <%= text_field_tag "#{prefix}[#{field}]", line.public_send(field), id: "#{prefix}_#{field}", disabled: read_only, autocomplete: 'off' %>
       <% else %>
-        <%= select_tag "coding_line[#{field}]",
+        <%= select_tag "#{prefix}[#{field}]",
                        options_for_select(options + ([[line.public_send(field), line.public_send(field)]] if line.public_send(field).present? && options.none? { |_, v| v == line.public_send(field) }).to_a, line.public_send(field)),
-                       include_blank: '—', id: "coding_line_#{field}", disabled: read_only,
-                       data: (searchable.include?(field) ? { controller: 'aim-grouped-search', aim_grouped_search_placeholder_value: 'Search code or name…' } : {}) %>
+                       include_blank: '—', id: "#{prefix}_#{field}", disabled: read_only %>
       <% end %>
     </div>
   <% end %>

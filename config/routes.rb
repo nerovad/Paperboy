@@ -169,15 +169,15 @@ Rails.application.routes.draw do
                                 constraints: { id: %r{[^/]+} } do
       get :pdf, on: :member
     end
-    resources :coding_rules, only: %i[index show update], path: 'lookups' do
-      patch :retire, on: :member
-    end
     resources :coding_imports, only: %i[index new create show], path: 'lookups/imports' do
       get :template, on: :collection
       member do
         post :apply
         post :undo
       end
+    end
+    resources :coding_rules, only: %i[index show update], path: 'lookups', constraints: { id: /\d+/ } do
+      patch :retire, on: :member
     end
     resources :vendor_aliases, only: %i[index create update destroy]
     resources :vendor_rules, only: %i[index create update destroy]

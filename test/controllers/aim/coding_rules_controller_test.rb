@@ -81,6 +81,19 @@ module Aim
       assert_equal [:unit, ['2199']], [level, rules.map(&:object_code)]
     end
 
+    test 'the COA\'s links fill and check: a program brings its major program, a dept object its object' do
+      r = rule
+      program = Coa::Program.where(agency_id: 'GSA').where.not(major_program_id: [nil, '']).first
+      skip 'no linked program in the COA' unless program
+
+      patch :update, params: { id: r.id, coding_rule: { program: program.program_id, major_program: '' } }
+      assert_equal program.major_program_id.strip, r.reload.major_program
+
+      patch :update, params: { id: r.id, coding_rule: { program: program.program_id, major_program: 'WRONG' } }
+      assert_response :unprocessable_content
+      assert_select '.aim-readonly-banner li', text: /belongs to major program/
+    end
+
     test 'retire ends the rule yesterday' do
       r = rule
       patch :retire, params: { id: r.id }
@@ -162,6 +175,12 @@ module Aim
       row = file.rows.first.fields
       assert_equal ['ACME Supply Co', '4641', 'BDO', 'ACMESUPPLYFY27MA01', '2162'],
                    row.values_at('vendor_name', 'budget_unit', 'encumbrance_type', 'ma_number', 'object_code')
+    end
+
+    test 'the imports pages route ahead of a rule by id' do
+      assert_routing '/aim/lookups/imports', controller: 'aim/coding_imports', action: 'index'
+      assert_routing '/aim/lookups/imports/new', controller: 'aim/coding_imports', action: 'new'
+      assert_routing '/aim/lookups/12', controller: 'aim/coding_rules', action: 'show', id: '12'
     end
 
     test 'no file is refused' do

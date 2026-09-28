@@ -3001,6 +3001,15 @@ the `code` route is gone. **Approve is refused while rules match and none is
 picked or typed.** The lookup now runs from Action Needed on
 (`Aim::CodingLookup::STATES`), so staff see candidates early.
 
+*Rules and the COA (Joshua, 2026-09-28):* the rule page uses the same
+COA dropdowns as the review page (`aim/shared/_coding_fields`, plain
+selects: the search widget cramped in the grid), and the COA's **links are
+applied**: a program brings its major program, a dept object its object
+(`Aim::CoaCodes#linkage`); blanks are filled, a contradiction is an
+objection (Save anyway keeps it as a warning) -- on rules and on coding
+lines. Route order fixed: `/aim/lookups/imports` had been read as rule
+"imports" (rule ids are now numeric, imports declared first, routing test).
+
 *Still to do in b:* b.4 Data Runner; the stamp's dual key and the coding
 gate at approval (below); the worker's OCR text for the hint.
 
@@ -4242,3 +4251,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | b.3 | (this commit) | Lookups screens: Coding Rules (list, one rule with COA checking, Save anyway, Retire, history) and Imports (upload, report with Load anyway, Apply, Undo; file kept on the import row, `20260928180000`). Routes in the namespace. 1346 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
 | 2026-09-28 | b.3 | (this commit) | CSV template download; Download these rules (filtered, with Rule ID) and edit by re-upload. Fixed: identical re-upload rows loaded again (no vendor_key before save); hand-made rules never replaced (NULL import_id). 1348 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | b.2/b.3 | (this commit) | Coding fields with COA dropdowns on the review page in every state and on the Fiscal page (one partial); the pick inside the review form; Approve refused until picked or typed; lookup from Action Needed on. 1349 runs, 0 failures, 0 errors; scoped rubocop clean |
+| 2026-09-28 | b.3 | (this commit) | Rule page with the COA dropdowns; COA links (program -> major program, dept object -> object) filled and checked on rules and lines; route order fixed for /aim/lookups/imports; plain selects for coding fields. 1351 runs, 0 failures, 0 errors; scoped rubocop clean |

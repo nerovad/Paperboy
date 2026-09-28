@@ -29,22 +29,27 @@ module Aim
     end
 
     def show
+      @coa = Aim::CoaCodes.new(@rule.agency)
       @changes = @rule.changes_made.to_a
       @objections = []
     end
 
     def update
+      @coa = Aim::CoaCodes.new(@rule.agency)
       attributes = params.require(:coding_rule).permit(*Aim::CodingRule::FIELDS, :encumbrance).to_h
-      attributes = attributes.transform_values { |v| v.to_s.strip.presence }
-      objections = Aim::CoaCodes.new(@rule.agency).invalid_fields(attributes.slice(*Aim::CoaCodes::LISTS.keys))
+      attributes = attributes.except('org_number').transform_values { |v| v.to_s.strip.presence }
+      fills, linked = @coa.linkage(attributes)
+      attributes.merge!(fills)
+      unknown = @coa.invalid_fields(attributes.slice(*Aim::CoaCodes::LISTS.keys))
+      objections = unknown.map { |f| "#{helpers.aim_coding_field_label(f)} #{attributes[f].inspect} is not in the COA for #{@rule.agency}" } + linked
       if objections.any? && params[:save_anyway].blank?
         @rule.assign_attributes(attributes)
         @changes = @rule.changes_made.to_a
-        @objections = objections.map { |f| "#{helpers.aim_coding_field_label(f)} #{attributes[f].inspect} is not in the COA for #{@rule.agency}" }
+        @objections = objections
         return render :show, status: :unprocessable_content
       end
 
-      @rule.apply_edits!(attributes.merge(warnings: objections.any? ? objection_text(objections, attributes) : nil), by: current_user_email)
+      @rule.apply_edits!(attributes.merge(warnings: objections.join('; ').presence), by: current_user_email)
       redirect_to aim_coding_rule_path(@rule), notice: objections.any? ? 'Saved, with the COA\'s objection kept as a warning.' : 'Saved.'
     rescue ActiveRecord::RecordInvalid => e
       redirect_to aim_coding_rule_path(@rule), alert: e.message
@@ -89,10 +94,6 @@ module Aim
                   r.notes, r.id]
         end
       end
-    end
-
-    def objection_text(fields, attributes)
-      fields.map { |f| "#{f.humanize.downcase} #{attributes[f].inspect} is not in the COA for #{@rule.agency}" }.join('; ')
     end
   end
 end

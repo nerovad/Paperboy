@@ -29,15 +29,26 @@
   <section class="aim-panel">
     <%= form_with url: aim_coding_rule_path(@rule), method: :patch, local: true do %>
       <div class="aim-fields aim-fiscal-grid">
-        <% fields = %w[budget_unit vendor_name customer_number encumbrance ma_number vendor_code] + Aim::CodingRule::CODING_FIELDS + %w[effective_from effective_until] %>
-        <% fields.each do |field| %>
-          <div class="aim-field<%= ' aim-fiscal-grid__wide' if field == 'vendor_name' %>">
-            <%= label_tag "coding_rule_#{field}", aim_coding_field_label(field) %>
-            <% if field.start_with?('effective') %>
-              <%= date_field_tag "coding_rule[#{field}]", @rule.public_send(field), id: "coding_rule_#{field}" %>
-            <% else %>
-              <%= text_field_tag "coding_rule[#{field}]", @rule.public_send(field), id: "coding_rule_#{field}" %>
-            <% end %>
+        <div class="aim-field aim-fiscal-grid__wide">
+          <%= label_tag 'coding_rule_vendor_name', 'Vendor Name' %>
+          <%= text_field_tag 'coding_rule[vendor_name]', @rule.vendor_name, id: 'coding_rule_vendor_name', required: true %>
+        </div>
+        <div class="aim-field">
+          <%= label_tag 'coding_rule_budget_unit', 'Budget Unit' %>
+          <%= select_tag 'coding_rule[budget_unit]', options_for_select(@coa.options('budget_unit'), @rule.budget_unit),
+                         id: 'coding_rule_budget_unit' %>
+        </div>
+        <div class="aim-field">
+          <%= label_tag 'coding_rule_customer_number', 'Customer Number' %>
+          <%= text_field_tag 'coding_rule[customer_number]', @rule.customer_number, id: 'coding_rule_customer_number', autocomplete: 'off' %>
+        </div>
+      </div>
+      <%= render 'aim/shared/coding_fields', line: @rule, coa: @coa, read_only: false, prefix: 'coding_rule' %>
+      <div class="aim-fields aim-fiscal-grid">
+        <% %w[effective_from effective_until].each do |field| %>
+          <div class="aim-field">
+            <%= label_tag "coding_rule_#{field}", field.humanize %>
+            <%= date_field_tag "coding_rule[#{field}]", @rule.public_send(field), id: "coding_rule_#{field}" %>
           </div>
         <% end %>
         <div class="aim-field aim-fiscal-grid__wide">
