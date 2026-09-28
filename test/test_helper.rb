@@ -3,6 +3,9 @@
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 require 'rails/test_help'
+
+Rails.application.routes.default_url_options[:host] = 'www.example.com'
+
 require 'minitest/mock'
 require_relative 'support/isolated_dsl_catalog'
 require_relative 'support/dam/fake_catalog'
@@ -78,9 +81,14 @@ end
 
 ActionController::TestCase.prepend(DataRunnerControllerTestAccess)
 
-Minitest.after_run do
+test_process_pid = Process.pid
+databases_cleaned = false
+cleanup_parallel_databases = lambda do
+  next if Process.pid != test_process_pid
   next unless ActiveSupport::TestCase.parallel_database_run_started
+  next if databases_cleaned
 
+  databases_cleaned = true
   ActiveRecord::Base.connection_handler.clear_all_connections!
   Minitest.parallel_executor.size.times do |worker|
     database = "#{ActiveSupport::TestCase::PARALLEL_TEST_DATABASE}_#{worker}"
@@ -88,3 +96,8 @@ Minitest.after_run do
     ActiveRecord::Tasks::DatabaseTasks.drop(configuration)
   end
 end
+
+Signal.trap('INT') { exit 130 }
+Signal.trap('TERM') { exit 143 }
+Minitest.after_run { cleanup_parallel_databases.call }
+at_exit { cleanup_parallel_databases.call }

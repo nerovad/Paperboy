@@ -48,6 +48,16 @@ bin/tag-master-commit
 
 Set `PAPERBOY_ENV_FILE` to update a different environment file.
 
+To create the same tag manually after updating `VERSION`, check out the commit
+that should be released and run:
+
+```bash
+bin/tag-master-commit
+```
+
+The script uses `GITHUB_SHA` when CI provides it, otherwise it tags `HEAD`.
+Pass a commit explicitly when needed: `bin/tag-master-commit COMMIT`. It is
+safe to rerun when the tag already exists on the remote.
 ---
 
 ## Local development
@@ -98,6 +108,13 @@ GSABSS_HOST=  GSABSS_PORT=  GSABSS_USERNAME=  GSABSS_PASSWORD=
 GSABSS_DATABASE=GSABSS
 GSABSS_ROOT=/mnt/i
 P2M_DATARUNNER_ROOT=/mnt/o/Outputs/DataRunner
+P2M_SHIPPING_STATION=00_ShippingStation
+P2M_STAGING=01_Staging
+P2M_TEMPORARY_OUTPUT=02_TemporaryOutput
+P2M_PROCESSED=03_Processed
+P2M_DESTROYED=04_Destroyed
+P2M_PRINTERS=99_Printers
+SMB_USERNAME=  SMB_PASSWORD=  SMB_IP=
 AIM_ROOT=/mnt/a
 PAPERBOY_DATABASE=Paperboy_Dev
 ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=

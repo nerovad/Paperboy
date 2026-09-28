@@ -7,6 +7,9 @@ module DataRunner
     # DslsController so the gate sits beside the app's other one.
     GROUP_ACTIONS = %i[new_group create_group update_group rename_group destroy_group].freeze
 
+    # The DSL index is Data Runner's sign-in panel, and where signed-out
+    # visitors are sent (#signed_out_landing_path), so it stays open.
+    skip_before_action :require_sign_in, if: -> { controller_name == 'dsls' && action_name == 'index' }
     before_action :require_app_access
     before_action :require_dsl_access
     before_action :require_group_management
@@ -22,6 +25,10 @@ module DataRunner
     end
 
     private
+
+    # Data Runner's index is its own sign-in panel, so signed-out visitors
+    # land there rather than on Paperboy's home page.
+    def signed_out_landing_path = data_runner_root_path
 
     # The sidebar app switcher only *hides* apps the user cannot reach, so this
     # is the real gate: without it Data Runner stays reachable by typing the

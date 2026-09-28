@@ -4299,7 +4299,7 @@ forms:
     position: 1
     required: true
     options:
-      rows: 2
+      rows: 1
       repeatable: true
       repeat_min: 1
       repeat_max: 0
@@ -4325,6 +4325,209 @@ forms:
     page_number: 3
     position: 3
     required: true
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+- class_name: TextbookAndTuitionReimbursementForm
+  name: Textbook and Tuition Reimbursement
+  page_count: 4
+  page_headers:
+  - Employee Billing
+  - Course
+  submission_type: approval
+  description: A form for applying to get reimbursed for your college tuition and
+    textbooks
+  form_number: HR-102
+  form_type: Application
+  agency_id: GSA
+  division_id: '4600'
+  department_id: '4601'
+  unit_id: '4601'
+  fields:
+  - field_name: fund
+    field_type: text
+    label: FUND
+    page_number: 3
+    position: 0
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: dept
+    field_type: text
+    label: DEPT
+    page_number: 3
+    position: 1
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: unit
+    field_type: text
+    label: UNIT
+    page_number: 3
+    position: 2
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: object
+    field_type: text
+    label: OBJECT
+    page_number: 3
+    position: 3
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: dept_obj
+    field_type: text
+    label: DEPT OBJ
+    page_number: 3
+    position: 4
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: b_s_acct
+    field_type: text
+    label: B S ACCT
+    page_number: 3
+    position: 5
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: activity
+    field_type: text
+    label: ACTIVITY
+    page_number: 3
+    position: 6
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: function
+    field_type: text
+    label: FUNCTION
+    page_number: 3
+    position: 7
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: task
+    field_type: text
+    label: TASK
+    page_number: 3
+    position: 8
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: major_program
+    field_type: text
+    label: MAJOR PROGRAM
+    page_number: 3
+    position: 9
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: program
+    field_type: text
+    label: PROGRAM
+    page_number: 3
+    position: 10
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: phase
+    field_type: text
+    label: PHASE
+    page_number: 3
+    position: 11
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: school
+    field_type: text
+    label: School
+    page_number: 4
+    position: 12
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: course_number_and_title
+    field_type: text
+    label: Course Number and Title
+    page_number: 4
+    position: 13
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: course_units
+    field_type: number
+    label: Course Units
+    page_number: 4
+    position: 14
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_course_begin
+    field_type: date
+    label: Date Course Begin
+    page_number: 4
+    position: 15
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  - field_name: date_course_ends
+    field_type: date
+    label: Date Course Ends
+    page_number: 4
+    position: 16
+    required: false
     options: {}
     read_only: none
     has_custom_view: false

@@ -2,6 +2,8 @@
 
 module P2m
   class OmsUploadsController < ApplicationController
+    MAX_DEADLOCK_RETRIES = 2
+
     include Pagy::Method
     include DateRange
 
@@ -9,12 +11,21 @@ module P2m
     before_action :set_dates
 
     def index
-      validate_date_range!
-      scope = OmsUpload.where.not(status: 'removed')
-                       .where(mailer_date: @start_date..@end_date)
-      OmsUploadLedger.new.reconcile_imported!(scope: scope)
-      scope = scope.includes(:files, :findings).newest_first
-      @pagy, @uploads = pagy(:offset, scope)
+      attempts = 0
+      begin
+        validate_date_range!
+        scope = OmsUpload.where.not(status: 'removed')
+                         .where(mailer_date: @start_date..@end_date)
+        OmsUploadLedger.new.reconcile_imported!(scope: scope)
+        scope = scope.includes(:files, :findings).newest_first
+        @pagy, @uploads = pagy(:offset, scope)
+      rescue ActiveRecord::DeadlockVictim, ActiveRecord::Deadlocked
+        attempts += 1
+        raise if attempts > MAX_DEADLOCK_RETRIES
+
+        sleep(0.05 * attempts)
+        retry
+      end
     rescue ArgumentError
       @uploads = OmsUpload.none
       render_invalid_date_range(:index)

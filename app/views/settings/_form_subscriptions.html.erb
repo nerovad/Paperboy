@@ -1,14 +1,17 @@
 <%# Personal form subscriptions — the same table the ACL page manages for
     groups, from the other end. Rendered outside the settings form: a
-    subscription is its own row, and HTML has no nested forms.
+    subscription is its own row, and HTML has no nested forms. Sits inside
+    the Email Notifications section as its Form Activity sub-section.
 
     Locals:
-      subscriptions  this user's own Forms::Subscription rows
+      subscriptions        this user's own Forms::Subscription rows
+      group_subscriptions  group rows reaching this user, read-only here
+      opted_out_ids        ids of the group rows this user opted out of
       form_types     [{ class_name:, label: }] catalog
       form_labels    class_name => label
 -%>
-<section class="settings-section">
-  <h2>Form Activity Notifications</h2>
+<div class="settings-subsection">
+  <h3>Form Activity</h3>
   <p class="settings-description">
     Follow a form and get emailed when something happens to it — a new
     submission, an edit to any field, or a status change. Edit notifications
@@ -84,4 +87,53 @@
   <% else %>
     <p class="settings-description">You are not following any forms yet.</p>
   <% end %>
-</section>
+
+  <% if group_subscriptions.any? %>
+    <h4>From your groups</h4>
+    <p class="settings-description">
+      An administrator subscribed a group you belong to. You can opt out of
+      any of these without leaving the group; your access is unaffected.
+      Required ones cannot be opted out of.
+    </p>
+
+    <table class="visibility-grants-table">
+      <thead>
+        <tr>
+          <th scope="col">Form</th>
+          <th scope="col">Notify about</th>
+          <th scope="col">Delivery</th>
+          <th scope="col">Via</th>
+          <th scope="col" class="actions-column">Email me</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% group_subscriptions.each do |subscription| %>
+          <% opted_out = subscription.opt_out_allowed? && opted_out_ids.include?(subscription.id) %>
+          <tr>
+            <td><strong><%= subscription.form_label(form_labels) %></strong></td>
+            <td>
+              <% subscription.event_labels.each do |label| %>
+                <span class="pb-search-chip"><%= label %></span>
+              <% end %>
+            </td>
+            <td><span class="grant-badge"><%= subscription.delivery_mode_label %></span></td>
+            <td><%= subscription.group&.group_name || "Group ##{subscription.group_id}" %></td>
+            <td class="actions-column">
+              <% if subscription.required? %>
+                <span class="grant-badge">Required</span>
+              <% elsif opted_out %>
+                <%= button_to "Opt back in", form_subscription_opt_out_path(subscription), method: :delete,
+                      class: "btn approve compact" %>
+              <% else %>
+                <%= button_to "Opt out", form_subscription_opt_out_path(subscription), method: :post,
+                      class: "btn deny compact",
+                      form: { data: { turbo_confirm: "Stop being emailed about this? You stay in the group.",
+                                      confirm_title: "Opt out", confirm_label: "Opt out" } } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>

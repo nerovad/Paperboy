@@ -5,6 +5,9 @@
 # stateless token (Contractor#generates_token_for) — no token is stored in the
 # DB, and each invalidates once the password changes.
 class ContractorPasswordsController < ApplicationController
+  # Reached from an emailed link by someone who can't sign in yet.
+  skip_before_action :require_sign_in
+
   MIN_PASSWORD_LENGTH = 10
 
   # GET — form to request a reset link by email.

@@ -8,7 +8,7 @@ module Dam
   # already on the share, and building one when there is nothing to adopt.
   class DerivativeBuilderTest < ActiveSupport::TestCase
     setup do
-      skip 'ImageMagick is not installed' unless system('which convert > /dev/null 2>&1')
+      skip 'ImageMagick is not installed' unless system('which magick > /dev/null 2>&1')
 
       ActiveStorage::Attachment.delete_all
       ActiveStorage::Blob.delete_all
@@ -81,7 +81,7 @@ module Dam
 
       assert_equal 'failed', Dam::DerivativeBuilder.new(asset).call
       assert_equal 'failed', asset.reload.derivative_state
-      assert_match(/convert/, asset.derivative_error)
+      assert_match(/magick/, asset.derivative_error)
     end
 
     test 'a format nothing can draw is left alone rather than failed' do
@@ -97,7 +97,7 @@ module Dam
 
     def image(name, size)
       path = @share.join(name)
-      system('convert', '-size', size, 'xc:red', path.to_s, exception: true)
+      system('magick', '-size', size, 'xc:red', path.to_s, exception: true)
       path
     end
 

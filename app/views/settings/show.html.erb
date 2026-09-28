@@ -7,11 +7,14 @@
     <div class="settings-notice"><%= notice %></div>
   <% end %>
 
-  <%= form_with model: @settings, url: settings_path, method: :patch do |f| %>
-    <section class="settings-section">
-      <h2>Email Notifications</h2>
-      <p class="settings-description">Configure when Paperboy sends you email notifications.</p>
+  <%# One section for every email Paperboy sends you. The inbox toggle and the
+      form subscriptions each post to their own endpoint, and HTML has no
+      nested forms, so the section wraps two forms rather than one. -%>
+  <section class="settings-section">
+    <h2>Email Notifications</h2>
+    <p class="settings-description">Configure when Paperboy sends you email notifications.</p>
 
+    <%= form_with model: @settings, url: settings_path, method: :patch do |f| %>
       <div class="settings-option">
         <label class="settings-toggle">
           <%= f.check_box :inbox_email_notifications, class: "settings-checkbox" %>
@@ -21,17 +24,19 @@
           </span>
         </label>
       </div>
-    </section>
 
-    <div class="form-actions">
-      <%= f.submit "Save Settings", class: "btn approve" %>
-    </div>
-  <% end %>
+      <div class="form-actions">
+        <%= f.submit "Save Settings", class: "btn approve" %>
+      </div>
+    <% end %>
+
+    <%= render "settings/form_subscriptions",
+               subscriptions: @form_subscriptions,
+               group_subscriptions: @group_subscriptions,
+               opted_out_ids: @opted_out_subscription_ids,
+               form_types: @subscription_form_types,
+               form_labels: @subscription_form_labels %>
+  </section>
 
   <%= render "settings/away", periods: @away_periods, employees: @delegate_options %>
-
-  <%= render "settings/form_subscriptions",
-             subscriptions: @form_subscriptions,
-             form_types: @subscription_form_types,
-             form_labels: @subscription_form_labels %>
 </div>

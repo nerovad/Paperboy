@@ -644,6 +644,10 @@ groups:
     class: SheriffSafetyReportingForm
     label: Sheriff Safety Reporting
   - type: form
+    key: '99'
+    class: TextbookAndTuitionReimbursementForm
+    label: Textbook and Tuition Reimbursement
+  - type: form
     key: creative_job_request
   - type: record_view
     key: fleet
@@ -775,6 +779,10 @@ groups:
     class: SheriffSafetyReportingForm
     label: Sheriff Safety Reporting
   - type: form
+    key: '99'
+    class: TextbookAndTuitionReimbursementForm
+    label: Textbook and Tuition Reimbursement
+  - type: form
     key: creative_job_request
 - name: Ticket_Admin
   description: Admins of the help/ticketing system
@@ -820,6 +828,12 @@ groups:
   - type: feature
     key: hsa_adoption_cards:search
 org_permissions:
+- agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  type: application
+  key: aim
 - agency_id:
   division_id:
   department_id:
@@ -9910,7 +9924,17 @@ org_permissions:
   label: ID Badge Request
 memberships:
 - group: aim_admin
+  employee_id: 109800
+- group: aim_admin
+  employee_id: 122715
+- group: aim_admin
   employee_id: 126566
+- group: aim_admin
+  employee_id: 130803
+- group: aim_admin
+  employee_id: 135272
+- group: aim_admin
+  employee_id: 136626
 - group: Auth_Console_Admin
   employee_id: 104236
 - group: Auth_Console_Admin

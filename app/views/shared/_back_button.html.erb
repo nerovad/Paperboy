@@ -8,8 +8,12 @@
     pasted in — the href carries them to Submissions, where every submission
     lives regardless of its status.
 
+    Right after signing in, the history behind the page is the login page and
+    the identity provider (a Teams "View in Paperboy" link opened signed out),
+    so the button skips history and goes straight to Submissions.
+
     Render it with: render "shared/back_button"
 -%>
 <%= link_to "← Back", submissions_path,
       class: "btn ghost compact form-header__back",
-      data: { controller: "back-link", action: "back-link#navigate" } %>
+      data: (flash[:arrived_from_sign_in] ? {} : { controller: "back-link", action: "back-link#navigate" }) %>

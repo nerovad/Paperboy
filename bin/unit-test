@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+
+test_target="${1:-test}"
+
+bundle exec rails test "$test_target" > error.log 2>&1
+rg -N '\(Finished|runs|assertions|failures|errors\)' error.log

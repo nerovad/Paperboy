@@ -14,15 +14,18 @@ class ParkingLotSubmissionsControllerTest < ActionController::TestCase
   # stay a cheap guard against the callback chain breaking again.
 
   test 'index redirects to the inbox queue' do
+    session[:user] = { 'employee_id' => 1, 'email' => 'employee@example.com' }
+
     get :index
 
     assert_redirected_to inbox_queue_path
   end
 
-  test 'new redirects to login when nobody is signed in' do
+  test 'new sends a signed-out visitor to sign in and back' do
     get :new
 
-    assert_redirected_to login_path
-    assert_equal 'Please sign in to start a submission.', flash[:alert]
+    assert_redirected_to root_path
+    assert_equal 'Please sign in to continue.', flash[:alert]
+    assert_equal new_parking_lot_submission_path, session[:return_to]
   end
 end

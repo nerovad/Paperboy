@@ -1,6 +1,14 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  resources :textbook_and_tuition_reimbursement_forms, controller: 'forms/textbook_and_tuition_reimbursement_forms' do
+    member do
+      get :pdf
+      patch :approve
+      patch :deny
+      patch :update_status
+    end
+  end
   resources :telework_log_forms, controller: 'forms/telework_log_forms' do
     member do
       get :pdf
@@ -227,6 +235,7 @@ Rails.application.routes.draw do
       post :move_to_shipping_station
       delete :remove_from_shipping_station
     end
+    post 'search/cancel', to: 'searches#cancel', as: :search_cancel
     get 'oms_status', to: 'oms_uploads#index', as: :oms_status
     resource :data_refresh, only: %i[show update] do
       post :restart
@@ -580,7 +589,10 @@ Rails.application.routes.draw do
 
   # Rows behind the ACL group page's Submission Visibility section.
   resources :form_visibility_grants, only: %i[create destroy]
-  resources :form_subscriptions, only: %i[create destroy]
+  resources :form_subscriptions, only: %i[create destroy] do
+    # A member stepping out of (and back into) one group subscription's mail.
+    resource :opt_out, only: %i[create destroy], controller: 'form_subscription_opt_outs'
+  end
   resources :away_periods, only: %i[create destroy]
 
   # ============================================================================

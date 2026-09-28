@@ -12,6 +12,10 @@ module DigitalAssetManagement
   # Anything wrong — no session, a token for someone else, a forged or
   # expired one, a copy that does not exist — is a plain 404.
   class FilesController < ApplicationController
+    # Loaded by <img> tags, so a signed-out request gets the 404 #show
+    # answers itself rather than a redirect to a page.
+    skip_before_action :require_sign_in
+
     include ActiveStorage::SetCurrent
 
     # Long enough to start a video; Range requests for the rest of it go

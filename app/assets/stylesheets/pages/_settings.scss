@@ -27,6 +27,27 @@
   }
 }
 
+// A group of related settings inside a section, e.g. Form Activity under
+// Email Notifications. Divided from what precedes it and headed one step
+// down from the section's h2.
+.settings-subsection {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid $border-color;
+
+  h3 {
+    font-size: 15px;
+    color: $brand-navy;
+    margin-bottom: 4px;
+  }
+
+  h4 {
+    font-size: 14px;
+    color: $text-color;
+    margin: 20px 0 4px;
+  }
+}
+
 .settings-option {
   padding: 14px 16px;
   background: $surface-panel;

@@ -61,6 +61,19 @@ module SubmissionsHelper
     submission_action_permitted?(record, 'edit', routing_step: routing_step)
   end
 
+  # True when the viewer may open this submission at all — see
+  # Forms::SubmissionAccess. Enforced for real by Forms::BaseController on
+  # every action that loads one submission.
+  def can_view_submission?(record)
+    Forms::SubmissionAccess.viewable?(
+      record,
+      employee_id: session.dig(:user, 'employee_id'),
+      group_names: current_user_group_names,
+      group_ids: current_user_group_ids,
+      permission_keys: current_user_submission_action_permission_keys
+    )
+  end
+
   # Both buttons above ask Forms::SubmissionPolicy the same question the
   # endpoints ask, so a button a viewer can see is one they can use, and one
   # they can't see is refused if the URL is typed by hand.

@@ -1338,3 +1338,51 @@
   font-size: 0.8em;
   color: $muted;
 }
+
+// Email Content: the wording of a form's four notification emails, one
+// collapsible panel each (form_templates/_notification_emails).
+.notification-emails {
+  .notification-emails__help {
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .notification-emails__item {
+    background: $surface-panel;
+    border: 1px solid $border-color;
+    border-left: 3px solid $brand-navy;
+    border-radius: $radius-6;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+
+    summary {
+      cursor: pointer;
+    }
+
+    textarea {
+      font-family: $font-sans;
+    }
+  }
+
+  .notification-emails__badge {
+    margin-left: 8px;
+    padding: 1px 8px;
+    border-radius: $radius-12;
+    background: $info-bg;
+    color: $info-text;
+    font-size: 12px;
+  }
+
+  .notification-emails__description {
+    color: $muted;
+    font-size: 13px;
+    margin: 8px 0;
+  }
+
+  .notification-emails__field-label {
+    display: block;
+    margin: 8px 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+}

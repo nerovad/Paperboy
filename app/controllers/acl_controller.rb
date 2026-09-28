@@ -233,6 +233,7 @@ class AclController < ApplicationController
     @groups = Group.order(:group_name)
     @visibility_grants = group_visibility_grants
     @form_subscriptions = group_form_subscriptions
+    @opt_out_names = subscription_opt_out_names(@form_subscriptions)
 
     # If no permissions exist yet for this group, pre-check default public items
     return unless @current_permissions.empty?
@@ -458,8 +459,22 @@ class AclController < ApplicationController
   # to their owner and are managed from that person's Settings page.
   def group_form_subscriptions
     Forms::Subscription.for_group(@group.GroupID)
-                       .includes(:group)
+                       .includes(:group, :opt_outs)
                        .sort_by { |subscription| subscription.form_label(@submission_form_labels).to_s.downcase }
+  end
+
+  # employee id => "First Last" for everyone who opted out of one of these
+  # subscriptions. Names come from GSABSS, so a failed lookup falls back to the
+  # bare id rather than breaking the page.
+  def subscription_opt_out_names(subscriptions)
+    ids = subscriptions.flat_map { |subscription| subscription.opt_outs.map(&:employee_id) }.uniq
+    return {} if ids.empty?
+
+    Employee.where(id: ids).pluck(:id, :first_name, :last_name)
+            .to_h { |id, first, last| [id.to_s, "#{first} #{last}".strip] }
+  rescue StandardError => e
+    Rails.logger.warn("ACL opt-out name lookup failed: #{e.message}")
+    {}
   end
 
   # Only keys this screen actually offers, so a hand-posted form can't invent a

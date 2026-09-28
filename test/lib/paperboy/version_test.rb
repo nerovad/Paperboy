@@ -4,9 +4,13 @@ require 'test_helper'
 
 class PaperboyVersionTest < ActiveSupport::TestCase
   test 'uses the base version and commit identifier' do
+    packaged_version = ENV.delete('PAPERBOY_VERSION')
+
     Paperboy::Version.stub(:commit, '21df93052') do
       assert_equal "#{Paperboy::Version::BASE}-21df93052", Paperboy::Version.to_s
     end
+  ensure
+    ENV['PAPERBOY_VERSION'] = packaged_version if packaged_version
   end
 
   test 'an environment version can identify a packaged build' do

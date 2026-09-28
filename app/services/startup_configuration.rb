@@ -1,19 +1,25 @@
 # frozen_string_literal: true
 
 require 'socket'
+require 'pathname'
+require 'smb_shortcut'
 
 # Checks the configuration Paperboy needs before its integrations can work.
 # The result is memoized because this check runs while rendering the layout;
 # it is a startup diagnostic, not a health check on every request.
 class StartupConfiguration
-  PATHS = %w[AIM_ROOT BILLING_ARCHIVE_ROOT DATARUNNER_INBOX GSABSS_ROOT P2M_ROOT P2M_DATARUNNER_ROOT].freeze
+  PATHS = %w[AIM_ROOT BILLING_ARCHIVE_ROOT DATARUNNER_INBOX GSABSS_ROOT P2M_ROOT P2M_DATARUNNER_ROOT
+             P2M_SHIPPING_STATION P2M_STAGING P2M_TEMPORARY_OUTPUT P2M_PROCESSED P2M_DESTROYED
+             P2M_PRINTERS].freeze
+  P2M_PATHS = PATHS.last(6).freeze
 
   class << self
     def warnings(env: ENV, directory_checker: method(:directory_reachable?),
-                 host_checker: method(:host_reachable?), database_checker: method(:database_reachable?))
+                 shortcut_checker: method(:shortcut_reachable?), host_checker: method(:host_reachable?),
+                 database_checker: method(:database_reachable?))
       return @warnings if defined?(@warnings)
 
-      @warnings = build_warnings(env, directory_checker, host_checker, database_checker).freeze
+      @warnings = build_warnings(env, directory_checker, shortcut_checker, host_checker, database_checker).freeze
     end
 
     # Useful for tests and for a process that deliberately reloads its .env.
@@ -23,15 +29,19 @@ class StartupConfiguration
 
     private
 
-    def build_warnings(env, directory_checker, host_checker, database_checker)
+    def build_warnings(env, directory_checker, shortcut_checker, host_checker, database_checker)
       warnings = []
 
       PATHS.each do |key|
         value = configured_value(env, key)
         warnings << warning(key, value, 'is not defined.') unless value
-        warnings << warning(key, value, 'is not reachable.') if
-          value && !safe_check { directory_checker.call(value) }
+        warnings << warning(key, value, 'is not reachable.') if value && !safe_check do
+          checker = shortcut_path?(value) ? shortcut_checker : directory_checker
+          checker.call(resolve_path(env, key, value))
+        end
       end
+
+      warnings.concat(smb_credential_warnings(env)) if shortcut_paths?(env)
 
       host = configured_value(env, 'GSABSS_HOST')
       database = configured_value(env, 'GSABSS_DATABASE')
@@ -68,6 +78,36 @@ class StartupConfiguration
 
     def directory_reachable?(path)
       File.directory?(path) && File.readable?(path)
+    end
+
+    def shortcut_reachable?(path)
+      return false unless File.file?(path) && File.readable?(path)
+
+      SmbShortcut::WindowsShortcut.new(path.to_s).target
+      true
+    end
+
+    def shortcut_paths?(env)
+      PATHS.any? { |key| (value = configured_value(env, key)) && shortcut_path?(value) }
+    end
+
+    def shortcut_path?(value)
+      Pathname.new(value).extname.casecmp?('.lnk')
+    end
+
+    def resolve_path(env, key, value)
+      return value unless P2M_PATHS.include?(key)
+
+      path = Pathname.new(value)
+      return path.to_s if path.absolute?
+
+      Pathname.new(env.fetch('P2M_DATARUNNER_ROOT', '')).join(path).to_s
+    end
+
+    def smb_credential_warnings(env)
+      %w[SMB_USERNAME SMB_PASSWORD].filter_map do |key|
+        warning(key, '(undefined)', 'is not defined.') unless configured_value(env, key)
+      end
     end
 
     def host_reachable?(host, port)

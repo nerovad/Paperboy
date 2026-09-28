@@ -2,7 +2,10 @@
 
 require 'csv'
 require 'digest'
+require 'fileutils'
 require 'pathname'
+require 'tmpdir'
+require_relative '../../../lib/paperboy/file_store'
 require_relative 'paths'
 
 module P2m
@@ -28,26 +31,27 @@ module P2m
     PROCESSED_PATH = Paths::PROCESSED_PATH
 
     def initialize(staging_path: OmsStaging::DESTINATION, processed_path: PROCESSED_PATH)
-      @staging_path = Pathname.new(staging_path)
-      @processed_path = Pathname.new(processed_path)
+      @staging_store = file_store(staging_path)
+      @processed_store = file_store(processed_path)
     end
 
     def ensure_stageable!(oms_number:)
-      archive = processed_path.join(oms_number.to_s)
-      raise ChangedFiles, "OMS #{oms_number} is already archived in #{Paths::PROCESSED}" if archive.directory?
+      raise ChangedFiles, "OMS #{oms_number} is already archived in #{Paths::PROCESSED}" if directory_exists?(processed_store, oms_number)
 
       imported = OmsUpload.where(oms_number: oms_number).where.not(import_status: 'not_started').exists?
       raise ChangedFiles, "OMS #{oms_number} has already begun import" if imported
     end
 
     def validate!(oms_number:)
-      analysis = analyze(staged_paths(oms_number))
-      return analysis if analysis.fetch(:valid)
+      with_materialized_files do
+        analysis = analyze(staged_paths(oms_number))
+        return analysis if analysis.fetch(:valid)
 
-      messages = analysis.fetch(:findings).filter_map do |finding|
-        finding.fetch(:message) if finding.fetch(:severity) == 'error' && finding.fetch(:status) == 'failed'
+        messages = analysis.fetch(:findings).filter_map do |finding|
+          finding.fetch(:message) if finding.fetch(:severity) == 'error' && finding.fetch(:status) == 'failed'
+        end
+        raise InvalidDataset, "OMS #{oms_number} cannot be staged: #{messages.join(' ')}"
       end
-      raise InvalidDataset, "OMS #{oms_number} cannot be staged: #{messages.join(' ')}"
     end
 
     def reconcile_imported!(scope: OmsUpload.all)
@@ -55,12 +59,12 @@ module P2m
         imported_at = imported_dataset_at(upload.oms_number)
         next false unless imported_at
 
-        archive = processed_path.join(upload.oms_number)
+        archive_exists = directory_exists?(processed_store, upload.oms_number)
         attributes = { import_status: 'imported', imported_at: upload.imported_at || imported_at,
                        failure_message: nil }
-        if archive.directory?
+        if archive_exists
           attributes.merge!(status: 'completed', archive_status: 'archived',
-                            archived_at: upload.archived_at || archive.mtime)
+                            archived_at: upload.archived_at || processed_store.mtime(upload.oms_number.to_s))
         else
           attributes.merge!(status: 'archiving')
         end
@@ -72,36 +76,40 @@ module P2m
     end
 
     def staged!(oms_number:, actor:, analysis: nil, checksums: {})
-      paths = staged_paths(oms_number)
-      marker = marker_for(paths, oms_number)
-      analysis ||= analyze(paths)
+      with_materialized_files do
+        paths = staged_paths(oms_number)
+        marker = marker_for(paths, oms_number)
+        analysis ||= analyze(paths)
 
-      OmsUpload.transaction do
-        upload = OmsUpload.find_or_initialize_by(oms_number: oms_number, mailer_date: marker.mtime.to_date)
-        verify_existing_files!(upload, paths)
-        upload.assign_attributes(analysis.fetch(:attributes).merge(staging_attributes(actor, analysis)))
-        upload.save!
-        replace_files(upload, paths, checksums)
-        replace_findings(upload, analysis.fetch(:findings))
-        upload
+        OmsUpload.transaction do
+          upload = OmsUpload.find_or_initialize_by(oms_number: oms_number, mailer_date: marker.mtime.to_date)
+          verify_existing_files!(upload, paths)
+          upload.assign_attributes(analysis.fetch(:attributes).merge(staging_attributes(actor, analysis)))
+          upload.save!
+          replace_files(upload, paths, checksums)
+          replace_findings(upload, analysis.fetch(:findings))
+          upload
+        end
       end
     end
 
     def remove!(oms_number:, actor:, reason: nil)
-      upload = upload_for_staged_job(oms_number)
-      upload.with_lock do
-        raise ImportStarted, "OMS #{oms_number} cannot be removed after import begins" unless upload.removable?
+      with_materialized_files do
+        upload = upload_for_staged_job(oms_number)
+        upload.with_lock do
+          raise ImportStarted, "OMS #{oms_number} cannot be removed after import begins" unless upload.removable?
 
-        yield
-        upload.update!(status: 'removed', removed_at: Time.current, removed_by: actor,
-                       removal_reason: reason, last_seen_at: Time.current)
+          yield
+          upload.update!(status: 'removed', removed_at: Time.current, removed_by: actor,
+                         removal_reason: reason, last_seen_at: Time.current)
+        end
+        upload
       end
-      upload
     end
 
     private
 
-    attr_reader :processed_path, :staging_path
+    attr_reader :processed_store, :staging_store
 
     def imported_dataset_at(oms_number)
       connection = OmsUpload.connection
@@ -123,8 +131,11 @@ module P2m
     end
 
     def staged_paths(oms_number)
-      paths = staging_path.children.select do |path|
-        path.file? && file_oms_number(path) == oms_number.to_s
+      paths = staging_store.entries.filter_map do |entry|
+        name = entry.fetch(:name)
+        next if entry.fetch(:directory) || file_oms_number(name) != oms_number.to_s
+
+        materialize(name)
       end
       raise ArgumentError, "no staged files found for OMS #{oms_number}" if paths.empty?
 
@@ -142,8 +153,9 @@ module P2m
     end
 
     def file_oms_number(path)
+      basename = Pathname.new(path.to_s).basename.to_s
       OMS_FILE_PATTERNS.each do |pattern|
-        match = path.basename.to_s.match(pattern)
+        match = basename.match(pattern)
         return match[1] if match
       end
       nil
@@ -152,6 +164,37 @@ module P2m
     def upload_for_staged_job(oms_number)
       marker = marker_for(staged_paths(oms_number), oms_number)
       OmsUpload.find_by!(oms_number: oms_number, mailer_date: marker.mtime.to_date)
+    end
+
+    def file_store(value)
+      return value if value.respond_to?(:download) && value.respond_to?(:entries)
+
+      Paperboy::FileStore.for(value)
+    end
+
+    def directory_exists?(store, name)
+      store.entries(name).any? || store.entries.any? { |entry| entry.fetch(:name) == name.to_s && entry.fetch(:directory) }
+    rescue Errno::ENOENT, SmbShortcut::CommandError
+      false
+    end
+
+    def with_materialized_files
+      @materialized_directory = Pathname.new(Dir.mktmpdir('paperboy-oms-upload-'))
+      yield
+    ensure
+      FileUtils.remove_entry(@materialized_directory.to_s) if @materialized_directory&.directory?
+      @materialized_directory = nil
+    end
+
+    def materialize(name)
+      target = @materialized_directory.join(name)
+      target.dirname.mkpath
+      staging_store.with_download(name) do |source|
+        FileUtils.cp(source, target, preserve: true)
+      end
+      modified_at = staging_store.mtime(name)
+      FileUtils.touch(target, mtime: modified_at) if modified_at
+      target
     end
 
     def analyze(paths)

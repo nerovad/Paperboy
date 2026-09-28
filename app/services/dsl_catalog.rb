@@ -45,7 +45,10 @@ class DslCatalog
       orchestration = config.fetch(:orchestration)
       queue_path = orchestration.dig(:queue, :path)
       queue_path = orchestration.fetch(queue_path) if queue_path.is_a?(Symbol)
-      Pathname.new(orchestration.fetch(:root_path)).join(queue_path)
+      path = Pathname.new(queue_path.to_s)
+      return path if path.absolute?
+
+      Pathname.new(orchestration.fetch(:root_path)).join(path)
     end
     private :downloaded_reference_path
 

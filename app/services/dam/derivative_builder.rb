@@ -114,7 +114,7 @@ module Dam
     # multi-page TIFF or an animated GIF.
     def convert(path, pixels, name)
       output = in_tmp(name)
-      run('convert', "#{path}[0]", '-auto-orient', '-resize', "#{pixels}x#{pixels}>",
+      run('magick', "#{path}[0]", '-auto-orient', '-resize', "#{pixels}x#{pixels}>",
           '-quality', '82', '-strip', output.to_s)
       output
     end

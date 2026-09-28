@@ -2,6 +2,7 @@
 
 require 'json'
 require 'open3'
+require_relative '../../../lib/paperboy/search_cancellation'
 
 module P2m
   class PrintAndInsertingDone
@@ -13,11 +14,12 @@ module P2m
       run(start_date: start_date, end_date: end_date)
     end
 
-    def self.scan(start_date:, end_date:)
-      run(start_date: start_date, end_date: end_date, scan_only: true)
+    def self.scan(start_date:, end_date:, cancellation_token: nil)
+      run(start_date: start_date, end_date: end_date, scan_only: true,
+          cancellation_token: cancellation_token)
     end
 
-    def self.run(start_date:, end_date:, scan_only: false)
+    def self.run(start_date:, end_date:, scan_only: false, cancellation_token: nil)
       command = [
         RbConfig.ruby, SCRIPT_PATH.to_s,
         '--start-date', start_date.iso8601,
@@ -25,10 +27,15 @@ module P2m
         '--report', REPORT_PATH.to_s
       ]
       command << '--scan-only' if scan_only
+      command += ['--cancel-token', cancellation_token] if cancellation_token
       output, status = Open3.capture2e(*command, chdir: Rails.root.to_s)
+      cancelled = cancellation_token && Paperboy::SearchCancellation.cancelled?(cancellation_token)
+      raise Paperboy::SearchCancellation::Cancelled if cancelled
       raise output.strip unless status.success?
 
       report
+    ensure
+      Paperboy::SearchCancellation.cleanup!(cancellation_token) if cancellation_token
     end
 
     def self.report

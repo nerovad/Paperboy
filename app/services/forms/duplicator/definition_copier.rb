@@ -90,14 +90,15 @@ module Forms
           attrs['form_template_status_id'] = status_ids[step.form_template_status_id]
           template.routing_steps.create!(attrs)
         end
-        @source.email_steps.each { |step| template.email_steps.create!(renamed_email(step)) }
+        @source.email_steps.each { |step| template.email_steps.create!(step.attributes.except(*ROW_SKIP)) }
+        @source.emails.each { |email| template.emails.create!(renamed_email(email)) }
         @source.copy_recipients.each { |row| template.copy_recipients.create!(row.attributes.except(*ROW_SKIP)) }
       end
 
       # An email that names the form ("Your Safety Reporting was approved")
       # names the copy instead.
-      def renamed_email(step)
-        attrs = step.attributes.except(*ROW_SKIP)
+      def renamed_email(email)
+        attrs = email.attributes.except(*ROW_SKIP)
         %w[subject body].each { |column| attrs[column] = @renamer.text(attrs[column]) if attrs[column].present? }
         attrs
       end

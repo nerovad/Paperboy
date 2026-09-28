@@ -40,13 +40,14 @@ class SubmissionsController < ApplicationController
 
     # Determine which employee IDs to load submissions for based on filter.
     # nil means "no employee_id restriction" (system admin viewing All).
-    # Advanced Search sends `all` so a search spans everything the viewer may
-    # see rather than only their own submissions — see the panel's comment.
-    @scoped_employee_ids = if @show_employee_filter && params[:filter_employee].present?
-                             if params[:filter_employee] == 'all'
-                               @is_system_admin ? nil : [employee_id] + @subordinate_ids
-                             else
-                               [params[:filter_employee]]
+    # Anyone who gets the Employee filter starts on All — everything they may
+    # see — and picks `me` to narrow to their own. `all` is still accepted
+    # because Advanced Search, bookmarks and saved searches send it.
+    @scoped_employee_ids = if @show_employee_filter
+                             case params[:filter_employee].presence
+                             when nil, 'all' then @is_system_admin ? nil : [employee_id] + @subordinate_ids
+                             when 'me' then [employee_id]
+                             else [params[:filter_employee]]
                              end
                            else
                              [employee_id]

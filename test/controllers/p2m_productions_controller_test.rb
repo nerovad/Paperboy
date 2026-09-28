@@ -48,6 +48,7 @@ class P2mProductionsControllerTest < ActionController::TestCase
     assert_response :success
     assert_equal 'application/pdf', response.media_type
     assert_match 'inline', response.headers.fetch('Content-Disposition')
+    assert_equal '%PDF fixture', response.body
   ensure
     file&.delete if file&.exist?
   end

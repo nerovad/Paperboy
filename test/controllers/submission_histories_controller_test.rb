@@ -77,9 +77,24 @@ class SubmissionHistoriesControllerTest < ActionController::TestCase
     assert_response :not_found
   end
 
+  # Seeing the timeline needs sight of the submission (an ACL visibility grant
+  # here), not the right to edit it.
   test 'status history is readable without the edit right' do
+    @controller.define_singleton_method(:current_user_group_ids) { [] }
+    Forms::VisibilityGrant.create!(form_type: @record.class.name, grantee_type: 'employee', employee_id: '9999')
+
     get :status, params: { type: @record.class.name, id: @record.id }
 
     assert_response :success
+  end
+
+  test 'status history is refused to someone who may not open the submission' do
+    @controller.define_singleton_method(:current_user_group_ids) { [] }
+
+    Forms::SubmissionAccess.stub(:supervisor_chain, ->(*) { [] }) do
+      get :status, params: { type: @record.class.name, id: @record.id }
+    end
+
+    assert_response :forbidden
   end
 end

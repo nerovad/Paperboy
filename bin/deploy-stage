@@ -2,7 +2,18 @@
 set -e
 
 APP_DIR="/home/matthew/gitea/Paperboy"
-BRANCH="${1:-master}"
+# Stage and prod deploy a release tag, never a branch tip: dev tags the commit
+# it has checked with bin/tag-master-commit, and the same tag then goes to
+# stage and on to prod, so prod only ever runs code that was on dev and stage.
+# The leading "v" is optional: 2.1.0-a1a91a09e and v2.1.0-a1a91a09e both work.
+if [ -z "$1" ]; then
+  echo "Usage: bin/deploy-stage <tag>   e.g. bin/deploy-stage v2.1.0-a1a91a09e" >&2
+  echo "Recent tags:" >&2
+  git -C "$APP_DIR" fetch -q origin --tags
+  git -C "$APP_DIR" tag --list 'v*' --sort=-creatordate | head -5 | sed 's/^/  /' >&2
+  exit 2
+fi
+TAG="v${1#v}"
 cd "$APP_DIR"
 
 # Installs a unit file unless /etc/systemd/system already symlinks straight at
@@ -19,16 +30,34 @@ sync_unit() {
   fi
 }
 
-echo "==> Fetching and checking out branch: $BRANCH ..."
-git fetch origin
-git checkout "$BRANCH"
-git pull origin "$BRANCH"
+echo "==> Fetching and checking out tag: $TAG ..."
+git fetch origin --tags
+
+if ! git rev-parse -q --verify "refs/tags/$TAG^{commit}" >/dev/null; then
+  echo "!!! No tag $TAG on origin. Tag it on dev with bin/tag-master-commit." >&2
+  exit 1
+fi
+
+# A detached checkout leaves the box on exactly the tagged commit. Local edits
+# would either block it or ride along into the deploy, so refuse them.
+# db/schema.rb is exempt: db:prepare below rewrites it on every deploy.
+if ! git diff --quiet HEAD -- . ':!db/schema.rb'; then
+  echo "!!! Uncommitted changes in $APP_DIR -- stash or discard them first:" >&2
+  git status --short -- . ':!db/schema.rb' >&2
+  exit 1
+fi
+
+git checkout -q -- db/schema.rb
+git checkout --detach "refs/tags/$TAG"
 
 echo "==> Installing gems..."
-# An environment variable, not --without: that flag is saved to .bundle/config,
-# and this checkout is also the development tree, where the saved exclusion
-# hides the debug gem and every plain bin/rails command fails to boot.
-export BUNDLE_WITHOUT=development:test
+# The full bundle, development and test groups included. config/application.rb
+# runs Bundler.require(*Rails.groups), so staging loads neither group whether or
+# not it is installed; excluding them saved disk and nothing else. What it cost
+# was a boot: the exclusion lived only in this script, while the systemd units
+# run bundle exec with none, so Bundler resolved the whole lockfile and refused
+# to start the moment a lint gem version drifted from what was installed here.
+# That was the 502 on 2026-09-27. bin/deploy-dev has always installed the lot.
 bundle install
 
 echo "==> Preparing application and Solid adapter databases..."

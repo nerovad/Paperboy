@@ -36,11 +36,12 @@ module P2m
     end
 
     def self.queued_oms_entries(entry, queue_path)
-      Pathname.new(queue_path).children.filter_map do |path|
-        match = path.file? && path.basename.to_s.match(OMS_MARKER)
+      Paperboy::FileStore.for(queue_path).entries.filter_map do |file|
+        name = file.fetch(:name)
+        match = !file.fetch(:directory) && name.match(OMS_MARKER)
         QueueEntry.new(key: "OMS #{match[1]}", slug: entry.slug) if match
       end.sort_by(&:key)
-    rescue SystemCallError
+    rescue Paperboy::FileStore::Error, SystemCallError
       []
     end
     private_class_method :queued_oms_entries

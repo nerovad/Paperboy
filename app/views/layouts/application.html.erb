@@ -3,6 +3,9 @@
   <head>
     <title>📰 Paperboy - Ventura</title>
     <%= csrf_meta_tags %>
+    <%# Signed-in pages stay out of Turbo's snapshot cache, so Back after
+        signing out asks the server again rather than redrawing them. %>
+    <% if current_user %><meta name="turbo-cache-control" content="no-cache"><% end %>
     <%= csp_meta_tag %>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#b71c1c">
@@ -18,10 +21,14 @@
   </head>
   <body class="page-<%= "#{controller_name}-#{action_name}" %> controller-<%= controller_name %> controller-path-<%= controller_path.tr("/", "-") %><%= " has-hero-image" if content_for?(:image) %>">
 
-    <%= tag.div nil, data: {
-      controller: "startup-warning",
-      startup_warnings: StartupConfiguration.warnings.to_json
-    } %>
+    <%# Configuration warnings name hosts and keys, and only an admin can act on
+        them, so nobody else is shown the dialog or sent the payload. %>
+    <% if system_admin? %>
+      <%= tag.div nil, data: {
+        controller: "startup-warning",
+        startup_warnings: StartupConfiguration.warnings.to_json
+      } %>
+    <% end %>
 
     <% if (badge = environment_badge) %>
       <div class="env-badge <%= badge[:css_class] %>"><%= badge[:label] %></div>

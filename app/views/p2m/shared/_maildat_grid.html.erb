@@ -54,7 +54,14 @@
           <tr id="<%= detail_id %>" class="p2m-maildat-detail"
               data-details-url="<%= details_path.call(file) %>" hidden>
             <td colspan="3">
-              <div data-lazy-details>Loading associated files…</div>
+              <div data-lazy-details>
+                <div class="p2m-inline-progress" data-details-progress>
+                  <progress max="1" value="0" aria-label="Loading associated files"></progress>
+                  <span data-details-progress-label aria-live="polite">
+                    Loading associated files… 0.0 seconds elapsed
+                  </span>
+                </div>
+              </div>
             </td>
           </tr>
         <% end %>
@@ -84,7 +91,7 @@
       <button type="button" class="btn reassign" data-batch-move
               data-action="data-refresh-groups#batchMove" data-batch-destination="shipping"
               data-batch-url="<%= move_to_shipping_station_p2m_stage_data_path %>">
-        Move All to Shipping Station
+        Send All to Shipping Station
       </button>
       <button type="button" class="btn approve" data-batch-move
               data-action="data-refresh-groups#batchMove" data-batch-destination="staging"

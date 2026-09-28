@@ -21,6 +21,9 @@ export default class extends Controller {
 
   async loadDetails(detailRow) {
     const container = detailRow.querySelector("[data-lazy-details]")
+    const progress = container.querySelector("[data-details-progress]")
+    const startedAt = performance.now()
+    const timer = this.startDetailsProgress(progress, startedAt)
     try {
       const response = await fetch(detailRow.dataset.detailsUrl, { headers: { Accept: "text/html" } })
       if (!response.ok) throw new Error(`Details request failed: ${response.status}`)
@@ -29,7 +32,26 @@ export default class extends Controller {
       detailRow.dataset.loaded = "true"
     } catch (_error) {
       container.textContent = "Associated files could not be loaded."
+    } finally {
+      this.stopDetailsProgress(timer)
     }
+  }
+
+  startDetailsProgress(progress, startedAt) {
+    if (!progress) return null
+
+    progress.hidden = false
+    const update = () => {
+      const elapsed = this.elapsedSeconds(startedAt)
+      progress.querySelector("[data-details-progress-label]").textContent =
+        `Loading associated files… ${elapsed} seconds elapsed`
+    }
+    update()
+    return window.setInterval(update, 100)
+  }
+
+  stopDetailsProgress(timer) {
+    if (timer) window.clearInterval(timer)
   }
 
   async feedback(event) {
@@ -90,7 +112,8 @@ export default class extends Controller {
         : response.ok ? button.dataset.stagingAction : `${button.dataset.stagingAction} failed`
       await pbAlert({
         title,
-        message: `${result.message || `The staging request failed (${response.status}).`} ` +
+        message: `${result.message || `OMS ${button.dataset.omsNumber}: ` +
+          `The staging request failed (${response.status}).`} ` +
           `Elapsed time: ${duration} seconds.`
       })
     } catch (_error) {
@@ -98,7 +121,8 @@ export default class extends Controller {
       this.stopStagingProgress(progress, timer)
       await pbAlert({
         title: `${button.dataset.stagingAction} failed`,
-        message: `The staging request could not be completed. Elapsed time: ${duration} seconds.`
+        message: `OMS ${button.dataset.omsNumber}: The staging request could not be ` +
+          `completed. Elapsed time: ${duration} seconds.`
       })
     } finally {
       button.disabled = false

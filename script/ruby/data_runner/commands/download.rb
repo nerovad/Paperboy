@@ -6,9 +6,9 @@
 require 'net/http'
 require 'rbconfig'
 require 'uri'
-require 'fileutils'
 require_relative 'dsl_map'
 require_relative '../helpers/etl_helpers'
+require_relative '../helpers/download_store'
 require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
 
@@ -20,7 +20,8 @@ VCFMS_URL  = "#{ACWEB_ROOT}/index.php/vcfms".freeze
 
 DOWNLOAD_DIR = WorkflowPaths::DOWNLOAD_DIR
 DOWNLOAD_BACKUP_DIR = WorkflowPaths::DOWNLOAD_BACKUP_DIR
-FileUtils.mkdir_p(DOWNLOAD_DIR)
+DOWNLOAD_STORE = DataRunnerDownloadStore.new
+DOWNLOAD_STORE.prepare!
 
 # -------------------------------------------------------------------------- }}}
 # {{{ Get external file using http.
@@ -48,25 +49,11 @@ end
 # -------------------------------------------------------------------------- }}}
 # {{{ Backup existing downloaded files.
 
-def next_backup_path(target)
-  FileUtils.mkdir_p(DOWNLOAD_BACKUP_DIR)
-
-  date = Time.now.strftime('%Y-%m-%d')
-  basename = File.basename(target)
-  pattern = /\A#{Regexp.escape(date)}-(\d{3})-#{Regexp.escape(basename)}\z/
-  next_number = Dir.children(DOWNLOAD_BACKUP_DIR).filter_map do |entry|
-    match = entry.match(pattern)
-    match && match[1].to_i
-  end.max.to_i + 1
-
-  File.join(DOWNLOAD_BACKUP_DIR, format('%s-%03d-%s', date, next_number, basename))
-end
-
 def backup_existing_download(name, target)
-  return unless File.exist?(target)
+  return unless DOWNLOAD_STORE.target_exists?(File.basename(target))
 
-  backup = next_backup_path(target)
-  FileUtils.cp(target, backup)
+  backup = DOWNLOAD_STORE.backup_existing(File.basename(target))
+  backup = DOWNLOAD_STORE.display_path(backup)
   puts "[BACKUP] #{name}: #{target} -> #{backup}"
 end
 
@@ -74,7 +61,7 @@ end
 # {{{ Validate locally staged file strategies.
 
 def validate_local_source?(name, target, location, local, label)
-  if File.exist?(target)
+  if DOWNLOAD_STORE.target_exists?(local)
     backup_existing_download(name, target)
     puts "[#{label}] #{name}: #{target}"
     return true
@@ -82,9 +69,9 @@ def validate_local_source?(name, target, location, local, label)
 
   if location && location.to_s != local.to_s
     source_path = File.expand_path(location.to_s, DOWNLOAD_DIR)
-    if File.exist?(source_path)
+    if DOWNLOAD_STORE.target_exists?(File.basename(source_path))
       backup_existing_download(name, target)
-      FileUtils.cp(source_path, target)
+      DOWNLOAD_STORE.copy_source(source_path, local)
       puts "[#{label}] #{name}: #{source_path} -> #{target}"
       return true
     end
@@ -123,6 +110,7 @@ end
 # -------------------------------------------------------------------------- }}}
 # {{{ Run a configured Ruby source script.
 
+# rubocop:disable-next Metrics/PerceivedComplexity
 def run_source_script?(name, target, src)
   script_path, args = script_config(src)
 
@@ -146,13 +134,18 @@ def run_source_script?(name, target, src)
   puts "[SCRIPT] #{name}: ruby #{script_path} #{args.join(' ')}"
   verify_target = script_verifies_target?(src)
   backup_existing_download(name, target) if verify_target
-  success = system(RbConfig.ruby, full_path, *args)
+  success = false
+  DOWNLOAD_STORE.with_workspace do |workspace|
+    environment = workspace ? { 'DATARUNNER_OUTPUT_ROOT' => workspace.to_s } : {}
+    success = system(environment, RbConfig.ruby, full_path, *args)
+    success &&= DOWNLOAD_STORE.publish_workspace_file(workspace, File.basename(target)) if workspace && verify_target
+  end
   unless success
     puts "[FAIL] #{name}: script failed #{script_path}"
     return false
   end
 
-  if verify_target && !File.exist?(target)
+  if verify_target && !DOWNLOAD_STORE.target_exists?(File.basename(target))
     puts "[FAIL] #{name}: script completed but did not create #{target}"
     return false
   end
@@ -163,6 +156,18 @@ def run_source_script?(name, target, src)
     puts "[OK] #{name}: #{script_path}"
   end
   true
+end
+
+def run_replicate?(name, target)
+  command = File.join(__dir__, 'from_sql.rb')
+  backup_existing_download(name, target)
+  success = false
+  DOWNLOAD_STORE.with_workspace do |workspace|
+    environment = workspace ? { 'DATARUNNER_OUTPUT_ROOT' => workspace.to_s } : {}
+    success = system(environment, RbConfig.ruby, command, name)
+    success &&= DOWNLOAD_STORE.publish_workspace_file(workspace, File.basename(target)) if workspace
+  end
+  success
 end
 
 # -------------------------------------------------------------------------- }}}
@@ -227,7 +232,7 @@ selected_entries.each do |name, cfg|
     end
 
     source_path = File.expand_path(location_s, DOWNLOAD_DIR)
-    unless File.exist?(source_path)
+    unless DOWNLOAD_STORE.target_exists?(File.basename(source_path))
       puts "[FAIL] #{name}: copy source missing #{source_path}"
       stats.fail!
       next
@@ -235,7 +240,7 @@ selected_entries.each do |name, cfg|
 
     begin
       backup_existing_download(name, target)
-      FileUtils.cp(source_path, target)
+      DOWNLOAD_STORE.copy_source(source_path, local)
       puts "[OK] #{name}: #{source_path} -> #{target}"
       stats.ok!
     rescue StandardError => e
@@ -247,9 +252,7 @@ selected_entries.each do |name, cfg|
     run_source_script?(name, target, src) ? stats.ok! : stats.fail!
 
   when :replicate
-    command = File.join(__dir__, 'from_sql.rb')
-    backup_existing_download(name, target)
-    system(RbConfig.ruby, command, name) ? stats.ok! : stats.fail!
+    run_replicate?(name, target) ? stats.ok! : stats.fail!
 
   when :http
     url_s = (url || '').to_s.strip
@@ -270,7 +273,7 @@ selected_entries.each do |name, cfg|
       end
 
       backup_existing_download(name, target)
-      File.binwrite(target, res.body)
+      DOWNLOAD_STORE.write(local, res.body)
       puts "[OK] #{name}: #{url_s} -> #{target}\n"
       stats.ok!
     rescue StandardError => e

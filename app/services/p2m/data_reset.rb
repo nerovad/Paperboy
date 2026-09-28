@@ -57,12 +57,12 @@ module P2m
 
     def configured_paths
       {
-        'P2M_SHIPPING_STATION' => Paths::SHIPPING_STATION_PATH,
-        'P2M_STAGING' => Paths::STAGING_PATH,
-        'P2M_TEMPORARY_OUTPUT' => Paths::DATA_RUNNER_ROOT.join(Paths::TEMPORARY_OUTPUT),
-        'P2M_PROCESSED' => Paths::PROCESSED_PATH,
-        'P2M_DESTROYED' => Paths::DESTROYED_PATH,
-        'P2M_PRINTERS' => Paths::PRINTERS_PATH
+        'P2M_SHIPPING_STATION' => Paths.shipping_station_store,
+        'P2M_STAGING' => Paths.staging_store,
+        'P2M_TEMPORARY_OUTPUT' => Paths.temporary_output_store,
+        'P2M_PROCESSED' => Paths.processed_store,
+        'P2M_DESTROYED' => Paths.destroyed_store,
+        'P2M_PRINTERS' => Paths.printers_store
       }
     end
 
@@ -71,19 +71,19 @@ module P2m
     end
 
     def reset_directory(label, configured_path)
-      path = Pathname.new(configured_path).expand_path
-      validate_reset_path!(path)
-      items = removable_files(path)
-      path.children.each { |child| FileUtils.rm_rf(child) } if path.directory?
+      store = file_store(configured_path)
+      validate_reset_path!(store.path)
+      items = removable_files(store)
+      store.clear
       result(label, 'Files removed', items)
-    rescue SystemCallError, ArgumentError => e
+    rescue SystemCallError, ArgumentError, SmbShortcut::CommandError => e
       result(label, 'Error', [e.message], error: true)
     end
 
     def inspect_directory(label, configured_path)
-      path = Pathname.new(configured_path).expand_path
-      validate_reset_path!(path)
-      result(label, 'Files found', removable_files(path))
+      store = file_store(configured_path)
+      validate_reset_path!(store.path)
+      result(label, 'Files found', removable_files(store))
     rescue SystemCallError, ArgumentError => e
       result(label, 'Error', [e.message], error: true)
     end
@@ -103,14 +103,18 @@ module P2m
       result('p2m_oms_backfill_report.json', 'Error', [e.message], error: true)
     end
 
-    def removable_files(path)
-      return [] unless path.directory?
+    def file_store(configured_path)
+      return configured_path if configured_path.respond_to?(:copy)
 
-      Dir.glob(path.join('**/*'), File::FNM_DOTMATCH).filter_map do |name|
-        candidate = Pathname.new(name)
-        next if %w[. ..].include?(candidate.basename.to_s) || candidate.directory?
+      Paperboy::FileStore.for(configured_path)
+    end
 
-        candidate.relative_path_from(path).to_s
+    def removable_files(store, prefix = nil)
+      return [] unless store.directory?
+
+      store.entries(prefix).flat_map do |entry|
+        name = [prefix, entry.fetch(:name)].compact.join('/')
+        entry.fetch(:directory) ? removable_files(store, name) : [name]
       end.sort
     end
 

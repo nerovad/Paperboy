@@ -103,6 +103,7 @@ import DateRangeController from "controllers/date_range_controller"
 import PdfPreviewController from "controllers/pdf_preview_controller"
 import PrinterSelectionController from "controllers/printer_selection_controller"
 import P2mDataResetController from "controllers/p2m_data_reset_controller"
+import NavigationProgressController from "controllers/navigation_progress_controller"
 import P2mQualityControlController from "controllers/p2m_quality_control_controller"
 import StartupWarningController from "controllers/startup_warning_controller"
 
@@ -125,6 +126,7 @@ application.register("billing-report-preview", BillingReportPreviewController)
 application.register("data-refresh-groups", DataRefreshGroupsController)
 application.register("printer-selection", PrinterSelectionController)
 application.register("p2m-data-reset", P2mDataResetController)
+application.register("navigation-progress", NavigationProgressController)
 application.register("p2m-quality-control", P2mQualityControlController)
 application.register("startup-warning", StartupWarningController)
 application.register("coa-account-fields", CoaAccountFieldsController)
