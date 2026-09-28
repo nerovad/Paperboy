@@ -923,6 +923,12 @@ Recorded so they are not relitigated.
     - **AIM Admin**: everything, including appointing Staff and BU Admins
       and managing BUs.
     - **Fiscal** (item f): the Fiscal queue, after approval.
+  - **Approval only from a user's queue** (Joshua, 2026-09-28): no Approve
+    button in Action Needed, Waiting for AI or anywhere before Ready for
+    Approval, and the server refuses it; Send to Approval skips straight to
+    the queue. `needs_review -> approved` is out of the state machine.
+  - **Only AIM Admins delete**, on the server as well as the button.
+  - **History folds closed** on every review page, opened on request.
   - **A Fiscal stage sits between approval and the archive.** Laserfiche,
     or whatever replaces it, is the last step, after Fiscal, not the step
     after approval.
@@ -4117,3 +4123,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-28 | f | (this commit) | From DocuShare's folders and an archived invoice's properties: Remit To, Fund, Department and Major Program added to `aim.fiscal_records` (`20260928140000`); Archive warns on a missing pay doc number only (check numbers are never filled there). Findings, the upload-batch and naming proposals, and new Fiscal questions recorded under item f. 1324 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-28 | b.1 | (this commit) | Branch `aim/b-lookups` from the Fiscal branch (master unchanged). Coding rules, imports and changes tables; `Aim::CodingRule.match`; `Aim::CoaCodes`; `Aim::LookupFile`; `Aim::LookupImport` with report, apply and undo; `aim:lookups:*` rake tasks (standing exception). Preview of the eleven real files: 879 of 972 rows load, the rest reported by row. Bug found in test: assigning `import:` on an unsaved rule made the import's save load rows meant to be skipped; ids are assigned instead. 1327 runs, 0 failures, 0 errors; scoped rubocop clean; brakeman's same four |
 | 2026-09-28 | b.1 | (this commit) | Accept-anyway for rows the COA objects to (`accept:`, `AIM_LOOKUP_ACCEPT`), the objection kept as the rule's `warnings` (`20260928160000`); rows with no vendor or BU stay refused. 1328 runs, 0 failures, 0 errors; scoped rubocop clean |
+| 2026-09-28 | — | (this commit) | Approve refused outside Ready for Approval (button gone from Action Needed, `needs_review -> approved` removed); Delete refused server-side to non-admins; History folded on the review page. 1330 runs, 0 failures, 0 errors; scoped rubocop clean |

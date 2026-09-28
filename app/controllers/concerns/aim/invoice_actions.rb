@@ -51,7 +51,11 @@ module Aim
       finish('Invoice sent for approval.')
     end
 
+    # Approval happens in a user's queue and nowhere else (Joshua, 2026-09-28):
+    # from Action Needed the move is Send to Approval, which skips straight
+    # to the queue.
     def approve
+      return refuse('Approve it from its queue: send it to approval first.') unless @invoice.state == 'ready_for_approval'
       return refuse_unready unless @invoice.ready_for_a_user?
 
       @invoice.request_export!(actor: current_user_email)
@@ -105,7 +109,10 @@ module Aim
       finish('Invoice rejected. A copy is in the rejected folder for the submitter.')
     end
 
+    # Deleting is AIM Admins' alone; the button is theirs, and so is the action.
     def delete_invoice
+      return refuse('Only AIM Admins delete invoices.') unless staff?
+
       copied = keep_copy(File.join(Aim::InvoiceDirectoryService.instance.deleted_dir, @invoice.batch_id))
       @invoice.transition_to!('deleted', actor: current_user_email, notes: notes_with('Deleted'),
                                          note: "reason: #{reason}; #{copied ? 'copy kept in the deleted folder' : 'no PDF to copy'}")
@@ -136,6 +143,8 @@ module Aim
     end
 
     def reason = params[:reason].to_s.squish
+
+    def refuse(message) = redirect_to(aim_invoice_path(@invoice.batch_id, queue: @queue), alert: message)
 
     def refuse_without_reason(commit)
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), alert: "#{commit} needs a reason."

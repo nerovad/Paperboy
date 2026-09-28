@@ -252,6 +252,28 @@ module Aim
       assert_equal %w[approved export], [row.state, row.command]
     end
 
+    test 'approve is refused outside a user queue; send to approval is the way there' do
+      row = invoice('4601.N2', state: 'needs_review', pdf: false)
+
+      get :show, params: { id: row.batch_id, queue: 'needs_review' }
+      assert_select 'input[type=submit][value=Approve]', 0
+
+      act(row, 'Approve')
+      assert_equal 'needs_review', row.state
+      assert_match(/from its queue/, flash[:alert])
+    end
+
+    test 'delete is refused to anyone but an AIM admin, on the server too' do
+      row = invoice('4601.N3', state: 'ready_for_approval', assigned_to: 'Jane Doe', assigned_employee_id: 7,
+                               assignment_source: 'folder')
+      as_owner_not_staff
+      get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
+
+      act(row, 'Delete', reason: 'no', queue: 'ready_for_approval')
+      assert_equal 'ready_for_approval', row.state
+      assert_match(/Only AIM Admins|not in your queue/, flash[:alert])
+    end
+
     test 'send back returns an invoice to AIM review' do
       row = invoice('4601.O', state: 'ready_for_approval', pdf: false)
 

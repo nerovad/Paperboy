@@ -204,9 +204,6 @@
               <%= form.submit 'Send to Approval',
                               data: { turbo_confirm: 'Send this invoice to its owner for approval?' },
                               class: 'btn approve' %>
-              <%= form.submit 'Approve',
-                              data: { turbo_confirm: 'Approve this invoice now and send it to billing and Fiscal?' },
-                              class: 'btn approve' %>
               <%= form.submit 'Retry AI',
                               data: { turbo_confirm: 'Have the AI read this invoice again?' },
                               class: 'btn warning' %>

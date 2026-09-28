@@ -50,7 +50,7 @@ module Aim
     TRANSITIONS = {
       'received' => %w[extracting rejected deleted],
       'extracting' => %w[needs_review needs_split ready_for_approval failed received],
-      'needs_review' => %w[ready_for_approval approved received needs_split rejected deleted],
+      'needs_review' => %w[ready_for_approval received needs_split rejected deleted],
       'needs_split' => %w[split received rejected deleted],
       'ready_for_approval' => %w[approved needs_review rejected deleted],
       'approved' => %w[exporting needs_review],
