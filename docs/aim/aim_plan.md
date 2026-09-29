@@ -3019,6 +3019,11 @@ objection (Save anyway keeps it as a warning) -- on rules and on coding
 lines. Route order fixed: `/aim/lookups/imports` had been read as rule
 "imports" (rule ids are now numeric, imports declared first, routing test).
 
+*To do (Joshua, 2026-09-29):* Coding Rules' agency filter needs an **All**
+choice, and the BU list must follow the agency chosen -- with GSA picked it
+still lists SHF's units (2551...), because the BU select holds every
+agency's units. Filter the BU options by agency on the page.
+
 *Still to do in b:* b.4 Data Runner; the stamp's dual key and the coding
 gate at approval (below); the worker's OCR text for the hint.
 
