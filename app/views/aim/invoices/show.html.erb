@@ -147,7 +147,8 @@
                     <%= label_tag 'normalized_vendor', 'Match to Official Vendor Name' %>
                     <%= select_tag 'normalized_vendor',
                                    options_for_select([['Select official vendor', '']] + @official_vendor_names.map { |name| [name, name] }, @invoice.vendor_name),
-                                   id: 'aim-official-vendor-select', class: 'aim-vendor-select' %>
+                                   id: 'aim-official-vendor-select', class: 'aim-vendor-select',
+                                   data: { controller: 'aim-grouped-search', aim_grouped_search_placeholder_value: 'Type part of the vendor name…' } %>
                   </div>
                   <div class="aim-field-row">
                     <div class="aim-field">

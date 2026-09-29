@@ -16,18 +16,16 @@ module Aim
 
     before_action :require_aim_admin, :remember_queue_page, only: :index
     before_action :set_queue
-    before_action :set_invoice, only: %i[show update pdf reassign lock unlock claim restore]
-    before_action :require_staff_or_owner, only: %i[show update pdf reassign lock unlock claim restore]
+    before_action :set_invoice, only: %i[show update pdf reassign lock unlock claim restore relookup]
+    before_action :require_staff_or_owner, only: %i[show update pdf reassign lock unlock claim restore relookup]
     # Everything #update does changes the invoice, so it needs the claim. The
     # queue list already offers a second reviewer nothing but View Only; this
     # is what makes that true of a posted form as well.
-    before_action :require_editor, only: :update
+    before_action :require_editor, only: %i[update relookup]
 
     def index
-      @review_reason = params[:review_reason].presence if @queue == 'needs_review'
-      scope = Aim::Invoice.in_queue(@queue).newest_first
-      scope = scope.where(review_reason: @review_reason) if @review_reason
-      @invoices = scope.to_a
+      # The reason filter is on the page itself; every Action Needed row is sent.
+      @invoices = Aim::Invoice.in_queue(@queue).newest_first.to_a
       @reason_counts = @queue == 'needs_review' ? Aim::Invoice.in_queue(@queue).group(:review_reason).count : {}
       # Budget unit -> shared queue and each person -> invoices, as on By BU.
       @sections = Aim::BuSections.build(@invoices, coa: Aim::Units.new) if @queue == 'ready_for_approval'
@@ -56,6 +54,21 @@ module Aim
       Rails.logger.error "AIM file write failed for #{@invoice.batch_id.inspect}: #{e.class}: #{e.message}"
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue),
                   alert: 'That did not go through: the AIM file share could not be reached. Try again.'
+    end
+
+    # The coding rules once more, from scratch, and the Coding box drawn
+    # again for the page to swap in (aim_coding_choice_controller#relookup).
+    def relookup
+      @invoice.coding_lines.destroy_all
+      @invoice.update_column(:coded_at, nil)
+      rules = Aim::CodingLookup.run!(@invoice)
+      @coding_notice = if rules.nil? then 'Looked up again: no coding rule matches now.'
+                       elsif rules.one? && @invoice.coding then 'Looked up again and coded from the matching rule.'
+                       else "Looked up again: #{rules.size} rules match; tick one."
+                       end
+      @read_only = false
+      prepare_coding
+      render partial: 'aim/invoices/coding', layout: false
     end
 
     def pdf

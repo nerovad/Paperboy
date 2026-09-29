@@ -142,6 +142,7 @@ Rails.application.routes.draw do
         post :unlock
         post :claim
         post :restore
+        post :relookup
       end
     end
     get 'my_queue', to: 'my_queue#index', as: :my_queue

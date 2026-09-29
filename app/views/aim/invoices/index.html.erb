@@ -11,12 +11,13 @@
   <%= render 'aim/invoices/search_box' %>
 
   <% if @queue == 'needs_review' && @reason_counts.present? %>
+    <%# The reasons narrow the list in place (aim_queue_filter_controller#pickReason). %>
     <nav class="aim-reason-filters" aria-label="Filter by reason">
-      <%= link_to "All (#{@reason_counts.values.sum})", aim_invoices_path(queue: @queue),
-                  class: "btn compact#{@review_reason.blank? ? ' active' : ' ghost'}" %>
+      <button type="button" class="btn compact active" data-reason="" data-aim-queue-filter-target="reason"
+              data-action="aim-queue-filter#pickReason">All (<%= @reason_counts.values.sum %>)</button>
       <% @reason_counts.sort_by { |reason, _| reason.to_s }.each do |reason, count| %>
-        <%= link_to "#{aim_review_reason_label(reason)} (#{count})", aim_invoices_path(queue: @queue, review_reason: reason),
-                    class: "btn compact#{@review_reason == reason ? ' active' : ' ghost'}" %>
+        <button type="button" class="btn compact ghost" data-reason="<%= reason %>" data-aim-queue-filter-target="reason"
+                data-action="aim-queue-filter#pickReason"><%= aim_review_reason_label(reason) %> (<%= count %>)</button>
       <% end %>
     </nav>
   <% end %>

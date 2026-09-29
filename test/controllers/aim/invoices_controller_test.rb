@@ -73,14 +73,16 @@ module Aim
       assert_equal [newer.batch_id, older.batch_id], @controller.instance_variable_get(:@invoices).map(&:batch_id)
     end
 
-    test 'needs review can be filtered by reason' do
+    test 'needs review carries every row with its reason, and the reason buttons filter on the page' do
       invoice('4601.D', review_reason: 'unknown_vendor', pdf: false)
       invoice('4601.E', review_reason: 'handwritten', pdf: false)
 
-      get :index, params: { queue: 'needs_review', review_reason: 'handwritten' }
+      get :index, params: { queue: 'needs_review' }
 
-      assert_equal ['4601.E'], @controller.instance_variable_get(:@invoices).map(&:batch_id)
+      assert_equal %w[4601.E 4601.D], @controller.instance_variable_get(:@invoices).map(&:batch_id)
       assert_equal({ 'unknown_vendor' => 1, 'handwritten' => 1 }, @controller.instance_variable_get(:@reason_counts))
+      assert_select 'button[data-reason=handwritten][data-action*=pickReason]'
+      assert_select 'tr[data-reason=handwritten]', 1
     end
 
     test 'an unknown queue goes home' do
@@ -270,8 +272,12 @@ module Aim
       row = invoice('4601.C3', state: 'ready_for_approval', pdf: false)
       row.coding_lines.create!(object_code: '9999', source: 'person', set_by: 'someone')
 
-      act(row, 'Look up coding again', queue: 'ready_for_approval')
-      assert_equal %w[2162 rule], [row.coding.object_code, row.coding.source]
+      get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
+      post :relookup, params: { id: row.batch_id, queue: 'ready_for_approval' }
+      assert_response :success
+      assert_select 'section.aim-coding'
+      assert_match(/coded from the matching rule/, response.body)
+      assert_equal %w[2162 rule], [row.reload.coding.object_code, row.coding.source]
 
       bare = invoice('4601.C4', invoice_date: nil, invoice_total: nil)
       act(bare, 'Send to Approval')

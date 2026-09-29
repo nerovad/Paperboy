@@ -22,8 +22,7 @@ module Aim
       'Delete' => :delete_invoice,
       'Learn & Retry AI' => :learn_and_retry,
       'Learn & Send to Approval' => :learn_and_send,
-      'Retry Export' => :retry_export,
-      'Look up coding again' => :relookup
+      'Retry Export' => :retry_export
     }.freeze
 
     # These ask why, and the reason is kept: in Notes, and on the history.

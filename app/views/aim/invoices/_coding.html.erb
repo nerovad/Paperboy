@@ -2,16 +2,19 @@
     choose from when several match, and the fields themselves, from the COA's
     lists, for a person to correct or type when no rule fits. %>
 <% shown = %w[budget_unit encumbrance object_code program fund activity function_code] %>
-<section class="aim-coding" data-controller="aim-coding-choice">
+<section class="aim-coding" data-controller="aim-coding-choice"
+         data-aim-coding-choice-url-value="<%= relookup_aim_invoice_path(@invoice.batch_id, queue: @queue) %>">
   <div class="aim-coding__head">
     <h3>Coding</h3>
     <% unless @read_only %>
-      <%= submit_tag 'Look up coding again', name: 'commit', class: 'btn compact', form: nil,
-                                             title: 'Runs the coding rules again for this vendor and BU, replacing what is here',
-                                             data: { turbo_confirm: 'Run the coding rules again? The coding below is replaced by what they find.',
-                                                     confirm_label: 'Look up again' } %>
+      <span class="aim-coding__buttons">
+        <button type="button" class="btn compact" data-action="aim-coding-choice#undo" data-aim-coding-choice-target="undo" hidden>Undo fill</button>
+        <button type="button" class="btn compact" data-action="aim-coding-choice#relookup"
+                title="Runs the coding rules again for this vendor and BU, replacing what is here">Look up coding again</button>
+      </span>
     <% end %>
   </div>
+  <% if @coding_notice %><p class="aim-coding__help"><strong><%= @coding_notice %></strong></p><% end %>
   <% if @coding_candidates.present? %>
     <p class="aim-coding__help">
       <%= pluralize(@coding_candidates.size, 'coding rule') %> for this vendor<%= @coding_level == :agency ? ' in other BUs; none is for this BU, so check the BDO' : ' in this BU' %>.
