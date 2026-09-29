@@ -16,12 +16,26 @@
 
   <%= form_with url: apply_aim_coding_import_path(@import), method: :post, local: true do %>
     <section class="aim-panel">
-      <p>
-        <strong><%= r[:rows] %></strong> rows:
-        <strong><%= r[:adds] %></strong> new, <strong><%= r[:edits] %></strong> changing a rule,
-        <strong><%= r[:unchanged] %></strong> already loaded, <strong><%= r[:refused] %></strong> refused.
-        <% if r[:unknown_columns].present? %>Columns not understood: <%= r[:unknown_columns].join(', ') %>.<% end %>
-      </p>
+      <% if r[:all_rows] %>
+        <p>
+          <strong><%= r[:rows] %></strong> rows:
+          <strong><%= r[:adds] %></strong> new, <strong><%= r[:edits] %></strong> changing a rule,
+          <strong><%= r[:unchanged] %></strong> already loaded, <strong><%= r[:refused] %></strong> refused.
+          <% if r[:unknown_columns].present? %>Columns not understood: <%= r[:unknown_columns].join(', ') %>.<% end %>
+        </p>
+        <nav class="aim-people-toolbar__views" aria-label="Show rows">
+          <% { nil => ['All', r[:rows]], 'add' => ['New', r[:adds]], 'edit' => ['Edit', r[:edits]],
+               'unchanged' => ['Same', r[:unchanged]], 'refused' => ['Refused', r[:refused]] }.each do |kind, (label, count)| %>
+            <%= link_to "#{label} (#{count})", aim_coding_import_path(@import, only: kind),
+                        class: "btn compact #{@only == kind ? 'active' : 'ghost'}" %>
+          <% end %>
+        </nav>
+      <% else %>
+        <p>
+          <strong><%= r[:rows] %></strong> rows: <strong><%= r[:loadable] %></strong> loaded, <strong><%= r[:refused] %></strong> refused.
+          <span class="aim-coding__help">Row detail is not kept for an import made from the command line.</span>
+        </p>
+      <% end %>
 
       <% if r[:all_rows].present? %>
         <div class="billing-type-audit-table-wrapper">
@@ -35,6 +49,7 @@
             </thead>
             <tbody>
               <% r[:all_rows].each do |row| %>
+                <% next if @only && row[:kind] != @only %>
                 <% v = row[:values] %>
                 <tr class="is-<%= row[:kind] %>">
                   <td><%= row[:row] %></td>
@@ -97,8 +112,27 @@
       </div>
     </div>
   <% end %>
-  <% if @import.applied? %>
-    <%= button_to 'Undo this import', undo_aim_coding_import_path(@import), method: :post, class: 'btn deny',
-                  data: { turbo_confirm: 'Undo? Its rules are retired and the ones it replaced come back.', confirm_label: 'Undo' } %>
+  <% if @import.previewed? %>
+    <section class="aim-panel aim-import-retry">
+      <%= form_with url: aim_coding_imports_path, method: :post, multipart: true, local: true, class: 'aim-inline-form' do %>
+        <strong>Fixed the file?</strong>
+        <%= hidden_field_tag :agency, @import.agency, id: nil %>
+        <%= hidden_field_tag :effective, @import.effective_option, id: nil %>
+        <%= hidden_field_tag :effective_date, @import.effective_from, id: nil %>
+        <%= hidden_field_tag :default_unit, @import.default_unit, id: nil %>
+        <%= hidden_field_tag :replaces, @import.id, id: nil %>
+        <%= file_field_tag :file, accept: '.csv,text/csv', required: true, aria: { label: 'Corrected CSV file' } %>
+        <%= submit_tag 'Read it again', class: 'btn secondary compact' %>
+      <% end %>
+    </section>
   <% end %>
+  <div class="aim-action-group">
+    <% if @import.applied? %>
+      <%= button_to 'Undo this import', undo_aim_coding_import_path(@import), method: :post, class: 'btn deny',
+                    data: { turbo_confirm: 'Undo? Its rules are retired and the ones it replaced come back.', confirm_label: 'Undo' } %>
+    <% else %>
+      <%= button_to 'Delete this import', aim_coding_import_path(@import), method: :delete, class: 'btn deny',
+                    data: { turbo_confirm: 'Delete this import? It loaded nothing that is still in effect.', confirm_label: 'Delete' } %>
+    <% end %>
+  </div>
 </div>

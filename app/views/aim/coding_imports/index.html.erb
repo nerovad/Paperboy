@@ -28,7 +28,14 @@
               <td><%= import.refused_count %></td>
               <td><%= import.retired_count %></td>
               <td><span class="badge <%= { 'applied' => 'is-approved', 'previewed' => 'is-pending', 'undone' => 'is-cancelled' }[import.status] %>"><%= import.status %></span></td>
-              <td class="action-buttons"><%= link_to 'Open', aim_coding_import_path(import), class: 'btn secondary compact' %></td>
+              <td class="action-buttons">
+                <%= link_to 'Open', aim_coding_import_path(import), class: 'btn secondary compact' %>
+                <% unless import.applied? %>
+                  <%= button_to 'Delete', aim_coding_import_path(import), method: :delete, form_class: 'aim-inline-form',
+                                data: { turbo_confirm: "Delete the import of #{import.file_name}?", confirm_label: 'Delete' },
+                                class: 'btn deny compact' %>
+                <% end %>
+              </td>
             </tr>
           <% end %>
         </tbody>

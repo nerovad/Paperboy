@@ -169,7 +169,7 @@ Rails.application.routes.draw do
                                 constraints: { id: %r{[^/]+} } do
       get :pdf, on: :member
     end
-    resources :coding_imports, only: %i[index new create show], path: 'lookups/imports' do
+    resources :coding_imports, only: %i[index new create show destroy], path: 'lookups/imports' do
       get :template, on: :collection
       member do
         post :apply

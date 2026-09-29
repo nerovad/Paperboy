@@ -1589,3 +1589,8 @@
 .aim-import-preview tr.is-refused td { background: $red-denied-bg; color: $danger-dark; }
 .aim-import-preview tr.is-edit td { background: $surface-subtle; }
 .aim-import-preview tr.is-unchanged td { color: $text-muted; }
+
+.aim-import-retry {
+  margin: 12px 0;
+  padding: 12px 14px;
+}

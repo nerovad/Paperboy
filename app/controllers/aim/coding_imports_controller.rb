@@ -6,7 +6,8 @@ module Aim
   # Admins. The file is kept on the import row between preview and apply.
   class CodingImportsController < BaseController
     before_action :require_fiscal
-    before_action :set_import, only: %i[show apply undo]
+    before_action :set_import, only: %i[show apply undo destroy]
+    KINDS = %w[add edit unchanged refused].freeze
 
     def index
       @imports = Aim::CodingImport.newest_first.to_a
@@ -38,13 +39,35 @@ module Aim
                                      file_content: file.read, status: 'previewed')
       import.with_file { |path| import.report = lookup(import, path).report }
       import.save!
+      replaced = Aim::CodingImport.find_by(id: params[:replaces], status: 'previewed')
+      replaced&.destroy
       redirect_to aim_coding_import_path(import)
     rescue CSV::MalformedCSVError, ArgumentError => e
       redirect_to new_aim_coding_import_path, alert: "That file could not be read: #{e.message}"
     end
 
+    # An import made before previews kept row detail is re-read from its file
+    # when there is one; a command-line import has none to re-read.
     def show
       @report = @import.report || {}
+      if !@report.key?('all_rows') && @import.file_content.present?
+        @import.with_file { |path| @import.update!(report: lookup(@import, path).report) }
+        @report = @import.report
+      end
+      @only = KINDS.include?(params[:only]) ? params[:only] : nil
+    end
+
+    # An import that loaded nothing (previewed, or undone) can go; an applied
+    # one is undone first, so its rules always have their history.
+    def destroy
+      return redirect_to(aim_coding_import_path(@import), alert: 'Undo this import first; then it can be deleted.') if @import.applied?
+
+      Aim::CodingImport.transaction do
+        Aim::CodingRule.where(import_id: @import.id).update_all(import_id: nil)
+        Aim::CodingRule.where(retired_by_import_id: @import.id).update_all(retired_by_import_id: nil)
+        @import.destroy!
+      end
+      redirect_to aim_coding_imports_path, notice: 'Import deleted.'
     end
 
     def apply

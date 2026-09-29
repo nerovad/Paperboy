@@ -183,6 +183,30 @@ module Aim
       assert_routing '/aim/lookups/12', controller: 'aim/coding_rules', action: 'show', id: '12'
     end
 
+    test 'the preview filters by outcome, a corrected file replaces it, and a preview or undone import can be deleted' do
+      import = previewed_import
+      get :show, params: { id: import.id, only: 'refused' }
+      assert_response :success
+      assert_select 'tr.is-refused', 1
+      assert_select 'tr.is-add', 0
+
+      post :create, params: { file: upload(*ROWS), agency: 'GSA', effective: 'today', replaces: import.id }
+      assert_nil Aim::CodingImport.find_by(id: import.id)
+      assert Aim::CodingImport.last.previewed?
+
+      delete :destroy, params: { id: Aim::CodingImport.last.id }
+      assert_equal 0, Aim::CodingImport.count
+    end
+
+    test 'an applied import cannot be deleted' do
+      import = previewed_import
+      post :apply, params: { id: import.id }
+      delete :destroy, params: { id: import.id }
+
+      assert_match(/Undo this import first/, flash[:alert])
+      assert Aim::CodingImport.exists?(import.id)
+    end
+
     test 'no file is refused' do
       post :create, params: { agency: 'GSA' }
       assert_redirected_to new_aim_coding_import_path
