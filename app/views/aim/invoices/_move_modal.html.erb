@@ -24,6 +24,22 @@
           <div class="aim-owner-choice__picker" data-aim-owner-choice-target="picker">
             <%= render 'aim/shared/grouped_person_select', name: :owner, label: 'Move to',
                                                             target: 'aim-move-modal-target=person' %>
+            <%# Shown when the person does not work in the invoice's BU: the BU
+                follows the person (aim_move_modal_controller#personChanged). %>
+            <div class="aim-move-unit" data-aim-move-modal-target="unitChoice" hidden>
+              <p class="aim-owner-choice__note" data-aim-move-modal-target="unitMessage"></p>
+              <%= select_tag :new_budget_unit, '', aria: { label: 'Their budget unit for it' },
+                             data: { aim_move_modal_target: 'unitSelect' } %>
+              <p class="aim-owner-choice__note">This changes the invoice's budget unit, and so the BU that billing charges. Its coding is looked up again.</p>
+              <p class="aim-owner-choice__note" data-aim-move-modal-target="unitHelp"></p>
+              <% if aim_queue_access? || aim_bu_admin_units.present? %>
+                <label class="aim-move-unit__keep">
+                  <input type="checkbox" name="keep_unit" value="1" data-aim-move-modal-target="keepUnit"
+                         data-action="aim-move-modal#keepChanged">
+                  Keep it in its budget unit anyway (this invoice only)
+                </label>
+              <% end %>
+            </div>
           </div>
           <% if unit_options.any? %>
             <div class="aim-owner-choice__picker" data-aim-owner-choice-target="unit" hidden>

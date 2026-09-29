@@ -59,21 +59,37 @@ module Aim
       assert_equal '4641', row.reload.budget_unit
     end
 
-    test 'a BU Admin moves an invoice in their BU only to someone who covers it' do
-      as_user
-      Aim::UserBudgetUnit.create!(employee_id: 7, budget_unit: '4641', bu_admin: true)
-      insider, outsider = Employee.order(:id).limit(2).to_a
-      skip 'need two employees' if outsider.nil?
-      [insider, outsider].each { |e| Aim::Member.create!(employee_id: e.id) }
-      Aim::UserBudgetUnit.create!(employee_id: insider.id, budget_unit: '4641')
-      row = invoice('U-6', budget_unit: '4641', assigned_employee_id: 99, assigned_to: 'Someone Else',
-                           assignment_source: 'folder')
+    test 'the BU follows the person: someone outside it takes it into one of theirs, or it is kept by exception' do
+      outsider = Employee.where.not(unit: [nil, '', '4641']).order(:id).first
+      skip 'need an employee outside 4641' if outsider.nil?
+      Aim::Member.create!(employee_id: outsider.id)
+      theirs = Aim::Users.budget_units_of(outsider.id).first
+      row = invoice('U-6', budget_unit: '4641', assigned_employee_id: 99, assigned_to: 'Someone Else', assignment_source: 'folder')
 
       patch :reassign, params: { id: row.batch_id, destination: 'person', owner: outsider.id }
-      assert_match(/does not cover 4641/, flash[:alert]) unless Aim::Users.shared_budget_units(outsider.id, staff: false).include?('4641')
+      assert_match(/does not work in 4641.*add them to 4641/, flash[:alert])
+      assert_equal 99, row.reload.assigned_employee_id
 
-      patch :reassign, params: { id: row.batch_id, destination: 'person', owner: insider.id }
-      assert_equal insider.id, row.reload.assigned_employee_id
+      patch :reassign, params: { id: row.batch_id, destination: 'person', owner: outsider.id, keep_unit: '1' }
+      assert_equal [outsider.id, '4641'], [row.reload.assigned_employee_id, row.budget_unit]
+      assert_match(/kept in 4641 by exception/, row.events.last.note)
+
+      other = invoice('U-6b', budget_unit: '4641', assigned_employee_id: 99, assigned_to: 'Someone Else', assignment_source: 'folder')
+      patch :reassign, params: { id: other.batch_id, destination: 'person', owner: outsider.id, new_budget_unit: theirs }
+      assert_equal [outsider.id, theirs], [other.reload.assigned_employee_id, other.budget_unit]
+      assert_match(/its budget unit from 4641 to #{theirs}/, other.events.last.note)
+    end
+
+    test 'only an AIM Admin or the BU Admin keeps an invoice in its BU by exception' do
+      as_user
+      outsider = Employee.where.not(unit: [nil, '', '4641']).order(:id).first
+      skip 'need an employee outside 4641' if outsider.nil?
+      Aim::Member.create!(employee_id: outsider.id)
+      Aim::UserBudgetUnit.create!(employee_id: 7, budget_unit: '4641', bu_admin: true)
+      row = invoice('U-8', budget_unit: '4641', assigned_employee_id: 99, assigned_to: 'Someone Else', assignment_source: 'folder')
+
+      patch :reassign, params: { id: row.batch_id, destination: 'person', owner: outsider.id, keep_unit: '1' }
+      assert_equal [outsider.id, '4641'], [row.reload.assigned_employee_id, row.budget_unit]
     end
 
     test "a BU Admin may claim but not approve someone else's invoice" do

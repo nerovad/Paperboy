@@ -928,6 +928,15 @@ Recorded so they are not relitigated.
     Approval, and the server refuses it; Send to Approval skips straight to
     the queue. `needs_review -> approved` is out of the state machine.
   - **Only AIM Admins delete**, on the server as well as the button.
+  - **The BU follows the person** (Joshua, 2026-09-29). An invoice goes to
+    someone who works in its budget unit. Moving it to someone who does not
+    asks which of *their* BUs it becomes (chosen for you when they have one),
+    with "this changes the BU that billing charges"; its coding is looked up
+    again. **By exception, this invoice only,** an AIM Admin or the invoice
+    BU's BU Admin may keep it in its BU ("kept in 4641 by exception" in the
+    history). Everyone else is told to ask an AIM Admin or that BU's Admin
+    to add the person to the BU. Upload narrows the BU list to the person's
+    BUs and refuses one that is not theirs. Applies to AIM Admins too.
   - **History folds closed** on every review page, opened on request.
   - **A Fiscal stage sits between approval and the archive.** Laserfiche,
     or whatever replaces it, is the last step, after Fiscal, not the step
@@ -4259,3 +4268,4 @@ Append one line per pushed step: date, step number, commit, result.
 | 2026-09-29 | — | (this commit) | Joshua: Needs Split is an Action Needed reason, not a queue (`needs_review` queue holds both states; the filter shows "Needs split"); the Users & Queues Actions menu keeps only Delete from AIM (name = profile, open count = queue); the shared queue switch is a Turbo Frame, so a toggle replaces its cell, not the page. 1354 runs, 0 failures, 0 errors; scoped rubocop clean |
 | 2026-09-29 | — | (this commit) | Seamless pass (Joshua): Turbo Frames so only the part that changed redraws -- profile Roles & BUs and the Fiscal switch, Vendor Aliases and Vendor Rules (add, save, remove, filter), Lookup Imports list, a coding rule's page, and **Save / Save Changes on the Fiscal and review pages** (the form panel only, so the PDF keeps its place; every other button still goes to the whole page). `aim/shared/_frame_flash` shows the notice inside a frame. Page filters and moves stay whole-page. 1355 runs; scoped rubocop clean |
 | 2026-09-29 | b.3 | (this commit) | Coding Rules shows every field (the table scrolls inside its panel), agency / BU / in-effect filter as you choose them (facets in `aim_queue_filter_controller`; every rule is sent), Download sends the same choices, and "BUs with no rules" opens a list like the no-BU-Admin chip. Full suite green; scoped rubocop clean |
+| 2026-09-29 | — | (this commit) | The BU follows the person: moves (one or many) to someone outside the invoice's BU take one of their BUs, or are kept by exception by an AIM Admin / the BU's Admin; the Move dialog asks, the history says; Upload narrows the BU list to the person's and refuses others. `reassign!(unit:, exception:)`. 1357 runs, 0 failures, 0 errors; scoped rubocop clean |

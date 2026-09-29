@@ -17,9 +17,11 @@ module Aim
 
       owner = params[:destination] == 'shared' ? Aim::Invoice::SHARED_QUEUE : params[:owner]
       return refuse_outsider if outsider?(owner)
-      return refuse_out_of_unit unless target_in_unit?(owner)
 
-      moved = @invoice.reassign!(owner, actor: current_user_email)
+      unit, refusal = unit_for(owner)
+      return redirect_back_or_to(home_queue_path, alert: refusal) if refusal
+
+      moved = @invoice.reassign!(owner, actor: current_user_email, unit: unit, exception: keeping_unit?(owner))
       notice = moved ? "Moved to #{helpers.aim_owner_label(@invoice.queue_owner)}." : 'The invoice was already there.'
       redirect_back_or_to home_queue_path, notice: notice
     rescue Aim::Invoice::IllegalTransition, ActiveRecord::RecordInvalid => e
@@ -33,9 +35,10 @@ module Aim
       return redirect_back_or_to(aim_my_queue_path, alert: 'That person is not in AIM, so they have no queue.') if owner != Aim::Invoice::SHARED_QUEUE && !Aim::Users.member?(owner)
 
       moved, skipped = move_each(Array(params[:ids]).map(&:to_s).uniq) do |invoice|
-        raise Aim::Invoice::IllegalTransition, 'outside the BU' unless target_in_unit?(owner)
+        unit, refusal = unit_for(owner)
+        raise Aim::Invoice::IllegalTransition, refusal if refusal
 
-        invoice.reassign!(owner, actor: current_user_email)
+        invoice.reassign!(owner, actor: current_user_email, unit: unit, exception: keeping_unit?(owner))
       end
       report_moves(moved, skipped)
     end
@@ -61,16 +64,31 @@ module Aim
       report_moves(moved, skipped)
     end
 
-    # A BU Admin moving someone else's invoice keeps it inside the BU: the
-    # person it goes to must cover the invoice's budget unit.
-    def target_in_unit?(owner)
-      return true if staff? || owner == Aim::Invoice::SHARED_QUEUE || mine? || shared_to_me?
+    # The BU follows the person (Joshua, 2026-09-29): an invoice goes to
+    # someone who works in its budget unit; otherwise it takes one of theirs
+    # (new_budget_unit), or -- this invoice only -- an AIM Admin or its BU
+    # Admin keeps it in its own (keep_unit). Returns [new unit or nil, refusal
+    # or nil].
+    def unit_for(owner)
+      return [nil, nil] if owner == Aim::Invoice::SHARED_QUEUE || @invoice.terminal?
 
-      Aim::Users.budget_units_of(owner).include?(@invoice.budget_unit)
+      bu = @invoice.budget_unit
+      theirs = Aim::Users.budget_units_of(owner)
+      return [nil, nil] if bu.blank? || theirs.include?(bu)
+      return [nil, nil] if keeping_unit?(owner)
+      return [nil, "Only an AIM Admin or #{bu}'s BU Admin can keep it in #{bu} for someone outside it."] if params[:keep_unit] == '1'
+
+      unit = params[:new_budget_unit].to_s.strip
+      return [unit, nil] if theirs.include?(unit) && unit_allowed?(unit)
+
+      name = Aim::Invoice.employee_name(owner) || 'That person'
+      [nil, "#{name} does not work in #{bu}. Pick one of their budget units for it, or ask an AIM Admin or #{bu}'s BU Admin " \
+            "to add them to #{bu}."]
     end
 
-    def refuse_out_of_unit
-      redirect_back_or_to home_queue_path, alert: "That person does not cover #{@invoice.budget_unit}, so it cannot go to them."
+    def keeping_unit?(owner)
+      params[:keep_unit] == '1' && owner != Aim::Invoice::SHARED_QUEUE && (staff? || bu_admin_here?) &&
+        !Aim::Users.budget_units_of(owner).include?(@invoice.budget_unit)
     end
 
     def unit_allowed?(unit)

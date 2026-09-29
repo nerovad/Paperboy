@@ -523,7 +523,9 @@ module Aim
       row = invoice('4601.O5', state: 'ready_for_approval', pdf: false)
 
       Aim::Users.stub(:member?, true) do
-        patch :reassign, params: { id: row.batch_id, queue: 'ready_for_approval', destination: 'person', owner: employee.id }
+        Aim::Users.stub(:budget_units_of, ['4601']) do
+          patch :reassign, params: { id: row.batch_id, queue: 'ready_for_approval', destination: 'person', owner: employee.id }
+        end
       end
 
       assert_redirected_to aim_invoices_path(queue: 'ready_for_approval')

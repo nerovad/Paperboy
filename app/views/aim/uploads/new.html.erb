@@ -8,7 +8,7 @@
 
   <section class="aim-panel aim-upload-panel">
     <%= form_with url: aim_uploads_path, method: :post, multipart: true, local: true, class: 'aim-upload-form',
-                  data: { controller: 'aim-dropzone' } do |form| %>
+                  data: { controller: 'aim-dropzone aim-owner-choice' } do |form| %>
       <div class="aim-fields">
         <div class="aim-field-row">
           <div class="aim-field">
@@ -32,12 +32,12 @@
             <%= form.select :budget_unit, grouped_options_for_select(@units.grouped_options, @budget_unit),
                             { include_blank: 'Pick a budget unit…' },
                             { required: true, class: 'form-control', aria: { label: 'Budget unit' },
-                              data: { controller: 'aim-grouped-search',
+                              data: { controller: 'aim-grouped-search', aim_owner_choice_target: 'budgetUnit',
                                       aim_grouped_search_placeholder_value: 'Search unit number or name…' } } %>
           </div>
         </div>
 
-        <fieldset class="aim-field aim-owner-choice" data-controller="aim-owner-choice">
+        <fieldset class="aim-field aim-owner-choice">
           <legend>Whose queue</legend>
           <% if @has_queue %>
             <label><%= radio_button_tag :owner, 'self', true, data: { action: 'aim-owner-choice#update' } %> Mine</label>
@@ -45,7 +45,8 @@
           <label><%= radio_button_tag :owner, 'shared', false, data: { action: 'aim-owner-choice#update' } %> The budget unit's shared queue</label>
           <label><%= radio_button_tag :owner, 'person', !@has_queue, data: { action: 'aim-owner-choice#update' } %> Someone else</label>
           <div class="aim-owner-choice__picker" data-aim-owner-choice-target="picker">
-            <%= render 'aim/shared/grouped_person_select', name: :owner_employee_id, label: 'Whose queue' %>
+            <%= render 'aim/shared/grouped_person_select', name: :owner_employee_id, label: 'Whose queue',
+                                                            target: 'aim-owner-choice-target=person' %>
           </div>
         </fieldset>
       </div>

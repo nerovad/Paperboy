@@ -35,19 +35,29 @@ module Aim
     # Move the invoice to a person's queue (an employee id) or to the BU's
     # shared queue (SHARED or blank). Returns the invoice when it moved, nil
     # when it was already there.
-    def reassign!(owner, actor:)
+    # unit: the budget unit the invoice takes with its new owner, when they do
+    # not work in its own (the BU follows the person, 2026-09-29); exception:
+    # kept in its own BU anyway, by an AIM Admin or its BU Admin, for this
+    # invoice only. Either is named in the history.
+    def reassign!(owner, actor:, unit: nil, exception: false)
       raise Aim::Invoice::IllegalTransition, "#{batch_id} is finished and cannot be moved to another queue." if terminal?
 
       was = queue_owner
+      was_unit = budget_unit
       target_id, target_name = resolve_owner(owner)
-      return if target_id == assigned_employee_id && (target_id || shared_queue?)
+      unit = unit.presence && unit.to_s != was_unit.to_s ? unit.to_s : nil
+      return if target_id == assigned_employee_id && (target_id || shared_queue?) && unit.nil?
 
+      changes = { assigned_employee_id: target_id, assigned_to: target_name, assignment_source: target_id ? 'reassigned' : nil }
+      changes.merge!(budget_unit: unit, agency: nil) if unit
+      note = "moved from #{was} to #{target_name || "the #{budget_unit} shared queue"}"
+      note += ", and its budget unit from #{was_unit} to #{unit}" if unit
+      note += ", kept in #{was_unit} by exception" if exception
       transaction do
-        update!(assigned_employee_id: target_id, assigned_to: target_name,
-                assignment_source: target_id ? 'reassigned' : nil)
-        events.create!(action: 'assignment', from_state: state, to_state: state, actor: actor,
-                       note: "moved from #{was} to #{target_name || "the #{budget_unit} shared queue"}")
+        update!(changes)
+        events.create!(action: 'assignment', from_state: state, to_state: state, actor: actor, note: note)
       end
+      forget_rule_coding! if unit
       self
     end
 

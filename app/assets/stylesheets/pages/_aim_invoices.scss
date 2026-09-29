@@ -1656,3 +1656,15 @@
   display: block;
   padding: 4px 0;
 }
+
+.aim-move-unit {
+  margin-top: 10px;
+
+  select { width: 100%; }
+}
+
+.aim-move-unit__keep {
+  display: block;
+  font-size: 0.85rem;
+  margin-top: 6px;
+}

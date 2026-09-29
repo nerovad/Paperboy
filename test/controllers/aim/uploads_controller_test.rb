@@ -65,9 +65,8 @@ module Aim
     test 'a person picked by employee id owns it' do
       employee = Employee.order(:id).first || skip('no employee to test with')
 
-      Aim::Users.stub(:member?, true) do
-        post :create, params: { budget_unit: '4601', owner: 'person', owner_employee_id: employee.id, files: [pdf('a.pdf')] }
-      end
+      params = { budget_unit: '4601', owner: 'person', owner_employee_id: employee.id, files: [pdf('a.pdf')] }
+      Aim::Users.stub(:member?, true) { Aim::Users.stub(:budget_units_of, ['4601']) { post :create, params: params } }
 
       row = Aim::Invoice.sole
       assert_equal [employee.id, "#{employee.first_name} #{employee.last_name}".squish],
@@ -111,7 +110,7 @@ module Aim
       get :new
 
       assert_select 'select[name=owner_employee_id][data-controller=aim-grouped-search]'
-      assert_select '[data-controller=aim-dropzone] input[type=file][multiple]'
+      assert_select '[data-controller~=aim-dropzone] input[type=file][multiple]'
     end
 
     test 'someone else with nobody picked is refused, not sent to the shared queue' do

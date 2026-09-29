@@ -52,11 +52,14 @@ export default class extends Controller {
     })
     this.onReset = () => { this.select.value = ""; this.input.value = "" }
     this.select.addEventListener("aim-grouped-search:reset", this.onReset)
+    this.onRefresh = () => this.showChosen()
+    this.select.addEventListener("aim-grouped-search:refresh", this.onRefresh)
     this.showChosen()
   }
 
   disconnect() {
     this.select?.removeEventListener("aim-grouped-search:reset", this.onReset)
+    this.select?.removeEventListener("aim-grouped-search:refresh", this.onRefresh)
     this.box?.remove()
     this.select?.classList.remove("aim-grouped-search__native")
   }

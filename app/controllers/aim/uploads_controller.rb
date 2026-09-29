@@ -28,6 +28,7 @@ module Aim
       return refuse('Only PDF files can be uploaded.') unless files.all? { |file| pdf?(file) }
       return refuse('Choose the person whose queue it goes to.') if params[:owner] == 'person' && owner_employee_id.nil?
       return refuse('That person is not in AIM, so they have no queue.') if outsider_chosen?
+      return refuse("They do not work in #{budget_unit}. Pick one of their budget units.") if outside_their_units?(budget_unit)
 
       stored = files.map { |file| store(file, budget_unit) }
       redirect_to new_aim_upload_path,
@@ -67,6 +68,15 @@ module Aim
     end
 
     def outsider_chosen? = params[:owner] == 'person' && !Aim::Users.member?(owner_employee_id)
+
+    # The BU follows the person (2026-09-29): an invoice for someone goes in
+    # one of their budget units. Someone with none recorded is not held to it.
+    def outside_their_units?(budget_unit)
+      return false unless params[:owner] == 'person' && owner_employee_id
+
+      theirs = Aim::Users.budget_units_of(owner_employee_id)
+      theirs.any? && theirs.exclude?(budget_unit)
+    end
 
     def pdf?(file)
       PDF_TYPES.include?(file.content_type.to_s.downcase) || File.extname(file.original_filename.to_s).casecmp?('.pdf')
