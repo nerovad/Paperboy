@@ -62,10 +62,16 @@ module Aim
       assert_equal 1, first.loaded_count
       assert_equal 0, Aim::LookupImport.new(path, agency: 'GSA').apply!(by: 'fiscal@example.com').loaded_count
 
+      noted = file('n.csv', 'FAST SIGNS,,,,,BDO_46402023072600000005_1,4641,2162,GATV,GFUN,INDIRECT,,,,,call first')
+      assert_equal(%w[edit], Aim::LookupImport.new(noted, agency: 'GSA').report[:all_rows].map { |r| r[:kind] })
+      assert_equal 1, Aim::LookupImport.new(noted, agency: 'GSA').apply!(by: 'fiscal@example.com').loaded_count
+
       changed = file('b.csv', 'Fast Signs,,,,,BDO_46402024072600000009_1,4641,2199,GATV,GFUN,INDIRECT,,,,,')
+      report = Aim::LookupImport.new(changed, agency: 'GSA').report
+      assert_equal [0, 1, 0], report.values_at(:adds, :edits, :unchanged)
       second = Aim::LookupImport.new(changed, agency: 'GSA').apply!(by: 'fiscal@example.com')
       assert_equal [1, 1], [second.loaded_count, second.retired_count]
-      old, new = Aim::CodingRule.order(:id).to_a
+      old, new = Aim::CodingRule.order(:id).to_a.values_at(1, 2)
       assert_equal Date.new(2024, 7, 25), old.effective_until
       assert_equal [:unit, [new]], Aim::CodingRule.match(agency: 'GSA', budget_unit: '4641', vendor_name: 'fast signs ')
 
@@ -73,6 +79,7 @@ module Aim
       assert_nil old.reload.effective_until
       assert_not new.reload.in_effect?
       assert_equal %w[created retired restored], old.changes_made.map(&:kind)
+      assert_equal %w[created retired], Aim::CodingRule.order(:id).first.changes_made.map(&:kind)
     end
 
     test 'a vendor listed twice in one file loads as two choices, neither retiring the other' do

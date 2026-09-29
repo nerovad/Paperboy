@@ -1576,3 +1576,16 @@
   margin: 4px 0 0;
 }
 
+
+// Coding Rules: the headings stay put while the list scrolls.
+.aim-rules-table thead th {
+  background: $surface-base;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+// A lookup file's preview: one row per line of the file, refusals in red.
+.aim-import-preview tr.is-refused td { background: $red-denied-bg; color: $danger-dark; }
+.aim-import-preview tr.is-edit td { background: $surface-subtle; }
+.aim-import-preview tr.is-unchanged td { color: $text-muted; }

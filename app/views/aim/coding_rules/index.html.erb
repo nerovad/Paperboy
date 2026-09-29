@@ -24,6 +24,7 @@
       <%= select_tag :agency, options_for_select(@agencies, @agency), aria: { label: 'Agency' } %>
       <%= select_tag :unit, options_for_select(@units, @unit), include_blank: 'All budget units', aria: { label: 'Budget unit' } %>
       <%= select_tag :show, options_for_select([['In effect', 'in_effect'], ['All, retired too', 'all']], @show), aria: { label: 'Show' } %>
+      <%= hidden_field_tag :sort, @sort %>
       <button type="submit" class="btn compact">Apply</button>
     <% end %>
     <%= render 'aim/invoices/search_box', placeholder: 'Search vendor, BDO, object, program…', empty: 'No rule matches.' %>
@@ -36,8 +37,11 @@
       <table class="submission-table aim-queue-table aim-rules-table">
         <thead>
           <tr>
-            <th>BU</th><th>Vendor</th><th>Customer #</th><th>BDO / DO</th><th>Object</th><th>Program</th>
-            <th>Activity</th><th>Function</th><th>Fund</th><th>In effect</th><th></th>
+            <th><%= aim_rules_sort_link 'BU', 'budget_unit' %></th><th><%= aim_rules_sort_link 'Vendor', 'vendor' %></th>
+            <th>Customer #</th><th><%= aim_rules_sort_link 'BDO / DO', 'encumbrance' %></th>
+            <th><%= aim_rules_sort_link 'Object', 'object' %></th><th><%= aim_rules_sort_link 'Program', 'program' %></th>
+            <th>Activity</th><th>Function</th><th><%= aim_rules_sort_link 'Fund', 'fund' %></th>
+            <th><%= aim_rules_sort_link 'In effect', 'effective' %></th><th></th>
           </tr>
         </thead>
         <tbody>

@@ -21,8 +21,9 @@ module Aim
       send_data csv, filename: 'AIM_Lookup_Template.csv', type: 'text/csv', disposition: 'attachment'
     end
 
+    # The agencies AIM works (AIM's Budget Units), not the whole COA.
     def new
-      @units = Aim::Units.new(every_agency: true)
+      @units = Aim::Units.new
       @agencies = @units.agencies
     end
 

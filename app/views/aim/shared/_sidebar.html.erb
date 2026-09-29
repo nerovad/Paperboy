@@ -1,6 +1,6 @@
 <%# app/views/aim/shared/_sidebar.html.erb
     Sidebar for Automated Invoice Management, grouped the way Production's is:
-    AIM, Pipeline, Vendors, Fiscal, Admin. AIM is open by default and the rest closed;
+    AIM, Pipeline, Fiscal, Vendors, Lookups, Admin. AIM is open by default and the rest closed;
     the group holding the current page is always open. A group you open or
     close yourself stays that way from page to page until you come back to
     the AIM main page (aim_sidebar_controller). The counts are filled in after the
@@ -63,14 +63,6 @@
                     class: "nav-link#{' active' if current_page?(aim_budget_units_path)}" %>
       </details>
 
-      <details class="nav-group" <%= "open" if current == "vendors" %> data-aim-sidebar-target="group" data-key="vendors"
-             data-default-open="false" data-current="<%= current == "vendors" %>">
-        <summary><span class="nav-group-label">Vendors</span></summary>
-        <%= link_to "Vendor Aliases", aim_vendor_aliases_path,
-                    class: "nav-link#{' active' if current_page?(aim_vendor_aliases_path)}" %>
-        <%= link_to "Vendor Rules", aim_vendor_rules_path,
-                    class: "nav-link#{' active' if current_page?(aim_vendor_rules_path)}" %>
-      </details>
 
     <% end %>
 
@@ -87,6 +79,17 @@
             <span class="sidebar-count <%= status == 'on_hold' ? 'danger' : 'neutral' %>" data-aim-count="fiscal_<%= status %>">…</span>
           <% end %>
         <% end %>
+      </details>
+    <% end %>
+
+    <% if aim_queue_access? %>
+      <details class="nav-group" <%= "open" if current == "vendors" %> data-aim-sidebar-target="group" data-key="vendors"
+             data-default-open="false" data-current="<%= current == "vendors" %>">
+        <summary><span class="nav-group-label">Vendors</span></summary>
+        <%= link_to "Vendor Aliases", aim_vendor_aliases_path,
+                    class: "nav-link#{' active' if current_page?(aim_vendor_aliases_path)}" %>
+        <%= link_to "Vendor Rules", aim_vendor_rules_path,
+                    class: "nav-link#{' active' if current_page?(aim_vendor_rules_path)}" %>
       </details>
     <% end %>
 

@@ -8,13 +8,19 @@ module Aim
     before_action :require_fiscal
     before_action :set_rule, only: %i[show update retire]
 
+    SORTS = { 'budget_unit' => %i[budget_unit vendor_key], 'vendor' => %i[vendor_key budget_unit],
+              'encumbrance' => %i[encumbrance_number vendor_key], 'object' => %i[object_code vendor_key],
+              'program' => %i[program vendor_key], 'fund' => %i[fund vendor_key],
+              'effective' => %i[effective_from vendor_key] }.freeze
+
     def index
       @agencies = Aim::CodingRule.distinct.order(:agency).pluck(:agency)
       @agency = @agencies.include?(params[:agency]) ? params[:agency] : @agencies.first
       @units = Aim::CodingRule.for_agency(@agency).distinct.order(:budget_unit).pluck(:budget_unit)
       @unit = params[:unit].presence
       @show = params[:show] == 'all' ? 'all' : 'in_effect'
-      @rules = filtered_rules.order(:budget_unit, :vendor_key, :id).to_a
+      @sort = SORTS.key?(params[:sort]) ? params[:sort] : 'budget_unit'
+      @rules = filtered_rules.order(*SORTS[@sort], :id).to_a
       return send_data(export_csv, filename: "AIM_Coding_Rules_#{@agency}.csv", type: 'text/csv') if request.format.csv?
 
       @coa = Aim::Units.new

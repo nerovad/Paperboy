@@ -63,12 +63,12 @@ module Aim
       self.encumbrance_number = number.presence
     end
 
-    # The same coding and encumbrance as another rule: a second import of an
-    # unchanged row.
+    # The same as another rule in everything a file carries (dates aside): a
+    # second import of an unchanged row.
+    COMPARED_FIELDS = (FIELDS - %w[budget_unit vendor_name effective_from effective_until]).freeze
+
     def same_as?(other)
-      (CODING_FIELDS + %w[encumbrance_type encumbrance_number ma_number customer_number]).all? do |field|
-        public_send(field).to_s == other.public_send(field).to_s
-      end
+      COMPARED_FIELDS.all? { |field| public_send(field).to_s.strip == other.public_send(field).to_s.strip }
     end
 
     def retire!(on:, by:, kind: 'retired', import_id: nil)

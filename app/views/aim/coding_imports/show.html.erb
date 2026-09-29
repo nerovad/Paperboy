@@ -16,10 +16,45 @@
 
   <%= form_with url: apply_aim_coding_import_path(@import), method: :post, local: true do %>
     <section class="aim-panel">
-      <p><strong><%= r[:rows] %></strong> rows: <strong><%= r[:loadable] %></strong> would load, <strong><%= r[:refused] %></strong> refused.
-        <% if r[:unknown_columns].present? %>Columns not understood: <%= r[:unknown_columns].join(', ') %>.<% end %></p>
+      <p>
+        <strong><%= r[:rows] %></strong> rows:
+        <strong><%= r[:adds] %></strong> new, <strong><%= r[:edits] %></strong> changing a rule,
+        <strong><%= r[:unchanged] %></strong> already loaded, <strong><%= r[:refused] %></strong> refused.
+        <% if r[:unknown_columns].present? %>Columns not understood: <%= r[:unknown_columns].join(', ') %>.<% end %>
+      </p>
 
-      <% if r[:refused_rows].present? %>
+      <% if r[:all_rows].present? %>
+        <div class="billing-type-audit-table-wrapper">
+          <table class="submission-table aim-queue-table aim-import-preview">
+            <thead>
+              <tr>
+                <th>Row</th><th>Outcome</th><th>Vendor</th><th>Cust #</th><th>BU</th><th>BDO / DO</th><th>MA #</th>
+                <th>Vendor code</th><th>Fund</th><th>Object</th><th>Activity</th><th>Function</th><th>Program</th><th>Notes</th>
+                <th><%= 'Load anyway' if @import.previewed? %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% r[:all_rows].each do |row| %>
+                <% v = row[:values] %>
+                <tr class="is-<%= row[:kind] %>">
+                  <td><%= row[:row] %></td>
+                  <td>
+                    <strong><%= { 'add' => 'New', 'edit' => 'Edit', 'unchanged' => 'Same', 'refused' => 'Refused' }[row[:kind]] %></strong>
+                    <% if row[:reasons].present? %><br><small><%= row[:reasons].join('; ') %></small><% end %>
+                    <% if row[:notes].present? %><br><small><%= row[:notes].join('; ') %></small><% end %>
+                  </td>
+                  <% Aim::LookupReport::SHOWN.each do |f| %><td><%= v[f].presence || '—' %></td><% end %>
+                  <td>
+                    <% if row[:kind] == 'refused' && row[:acceptable] && @import.previewed? %>
+                      <%= check_box_tag 'accept_rows[]', row[:row], false, id: "accept-#{row[:row]}", aria: { label: "Load row #{row[:row]} anyway" } %>
+                    <% elsif row[:kind] == 'refused' && !row[:acceptable] %><small>cannot be a rule</small><% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% elsif r[:refused_rows].present? %>
         <h3 class="aim-fiscal-heading">Refused rows</h3>
         <table class="submission-table aim-queue-table">
           <thead><tr><th>Row</th><th>Vendor</th><th>Why</th><th><%= 'Load anyway' if @import.previewed? %></th></tr></thead>
@@ -45,19 +80,19 @@
         <ul><% r[:accepted_rows].each do |row| %><li>Row <%= row[:row] %>: <%= row[:warnings].join('; ') %></li><% end %></ul>
       <% end %>
 
-      <% if r[:noted_rows].present? %>
-        <details class="aim-history-fold">
-          <summary>Rows put right while reading (<%= r[:noted_rows].size %>)</summary>
-          <ul><% r[:noted_rows].each do |row| %><li>Row <%= row[:row] %>: <%= row[:notes].join('; ') %></li><% end %></ul>
-        </details>
-      <% end %>
     </section>
 
     <div class="aim-form-actions">
       <div class="aim-action-group">
         <% if @import.previewed? %>
+          <% question = if r[:refused].to_i.positive?
+                          "#{pluralize(r[:refused], 'row')} will be refused (unless ticked). Load the other #{r[:loadable]} for #{@import.agency} anyway?"
+                        else
+                          "Load #{r[:loadable]} rules for #{@import.agency}?"
+                        end %>
           <%= submit_tag 'Apply', class: 'btn approve',
-                                  data: { turbo_confirm: "Load #{r[:loadable]} rules (plus any ticked) for #{@import.agency}?", confirm_label: 'Load' } %>
+                                  data: { turbo_confirm: question, confirm_title: r[:refused].to_i.positive? ? 'Some rows are refused' : 'Load the file',
+                                          confirm_label: 'Load' } %>
         <% end %>
       </div>
     </div>

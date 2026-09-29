@@ -41,17 +41,20 @@ module Aim
     def loadable = outcomes.reject(&:refused?)
     def refused = outcomes.select(&:refused?)
 
-    def report
-      { file: file_name, agency: agency, rows: outcomes.size, loadable: loadable.size, refused: refused.size,
-        unknown_columns: @file.unknown_columns,
-        refused_rows: refused.map do |o|
-          { row: o.row.number, vendor: o.row.fields['vendor_name'], reasons: o.reasons + o.objections, acceptable: o.acceptable? }
-        end,
-        accepted_rows: loadable.select(&:accepted).map { |o| { row: o.row.number, warnings: o.objections } },
-        noted_rows: loadable.select { |o| o.notes.any? }.map { |o| { row: o.row.number, notes: o.notes } } }
+    # add / edit / unchanged / refused, against the rules standing now.
+    def outcome_kind(outcome)
+      return 'refused' if outcome.refused?
+
+      standing = standing_rules(outcome.rule, nil, outcome.row.fields['rule_id'].presence&.to_i)
+      return 'add' if standing.empty?
+
+      standing.any? { |s| s.same_as?(outcome.rule) && s.vendor_key == outcome.rule.vendor_key } ? 'unchanged' : 'edit'
     end
 
-    # import: a previewed Aim::CodingImport to apply into; else a new row.
+    def report = Aim::LookupReport.build(self)
+
+    def unknown_columns = @file.unknown_columns
+
     def apply!(by:, import: nil)
       raise ArgumentError, "#{agency} is not an agency in the chart of accounts" unless @coa.agency?
 
@@ -125,7 +128,7 @@ module Aim
     # have no import, and count.
     def standing_rules(rule, import, rule_id = nil)
       scope = Aim::CodingRule.in_effect(rule.effective_from).for_agency(agency)
-                             .where('import_id IS NULL OR import_id <> ?', import.id)
+      scope = scope.where('import_id IS NULL OR import_id <> ?', import.id) if import
       same_key = scope.where(budget_unit: rule.budget_unit, vendor_key: rule.vendor_key, customer_number: rule.customer_number.presence)
       rule_id ? (same_key.to_a | scope.where(id: rule_id).to_a) : same_key.to_a
     end
