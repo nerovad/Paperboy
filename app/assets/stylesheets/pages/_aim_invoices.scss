@@ -1668,3 +1668,9 @@
   font-size: 0.85rem;
   margin-top: 6px;
 }
+
+// Upload: room below the form so the person list and the Upload button
+// scroll clear of the Paperboy mascot in the corner.
+.aim-upload-page {
+  padding-bottom: 22rem;
+}
