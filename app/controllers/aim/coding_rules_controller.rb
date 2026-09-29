@@ -16,12 +16,18 @@ module Aim
     def index
       @agencies = Aim::CodingRule.distinct.order(:agency).pluck(:agency)
       @agency = @agencies.include?(params[:agency]) ? params[:agency] : @agencies.first
-      @units = Aim::CodingRule.for_agency(@agency).distinct.order(:budget_unit).pluck(:budget_unit)
       @unit = params[:unit].presence
       @show = params[:show] == 'all' ? 'all' : 'in_effect'
       @sort = SORTS.key?(params[:sort]) ? params[:sort] : 'budget_unit'
-      @rules = filtered_rules.order(*SORTS[@sort], :id).to_a
-      return send_data(export_csv, filename: "AIM_Coding_Rules_#{@agency}.csv", type: 'text/csv') if request.format.csv?
+      if request.format.csv?
+        @rules = filtered_rules.order(*SORTS[@sort], :id).to_a
+        return send_data(export_csv, filename: "AIM_Coding_Rules_#{@agency}.csv", type: 'text/csv')
+      end
+
+      # Every rule goes to the page; agency, BU and in-effect filter there,
+      # as you choose them (aim_queue_filter_controller facets).
+      @units = Aim::CodingRule.distinct.order(:budget_unit).pluck(:agency, :budget_unit)
+      @rules = Aim::CodingRule.order(*SORTS[@sort], :id).to_a
 
       @coa = Aim::Units.new
       @units_without_rules = units_without_rules

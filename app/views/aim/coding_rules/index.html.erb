@@ -1,5 +1,8 @@
 <%# The coding lookups (item b.3): Fiscal's rules by agency and budget unit. %>
-<div class="aim-page" data-controller="aim-queue-filter">
+<% columns = %w[customer_number encumbrance ma_number vendor_code fund department object_code dept_object activity
+                 function_code major_program program phase task] %>
+<% sortable = { 'encumbrance' => 'encumbrance', 'object_code' => 'object', 'program' => 'program', 'fund' => 'fund' } %>
+<div class="aim-page" data-controller="aim-queue-filter aim-actions-menu">
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">Coding Rules</h1>
@@ -7,60 +10,67 @@
     </div>
     <div class="aim-page-header__pills">
       <% if @units_without_rules.any? %>
-        <span class="aim-count-pill aim-count-pill--warn" title="<%= @units_without_rules.join(', ') %>">
-          ⚠ <%= pluralize(@units_without_rules.size, 'BU') %> with no rules
-        </span>
+        <details class="aim-actions-menu aim-alert-chip" name="aim-rules-alerts">
+          <summary class="aim-count-pill aim-count-pill--warn">⚠ <%= pluralize(@units_without_rules.size, 'BU') %> with no rules</summary>
+          <div class="aim-actions-menu__list aim-alert-chip__list">
+            <p class="aim-actions-menu__note">AIM's budget units in <%= @agency %> with no coding rule in effect. Their invoices are coded by hand until a file loads some.</p>
+            <% @units_without_rules.each do |unit| %><span class="aim-alert-chip__item"><%= @coa.label(unit) %></span><% end %>
+            <%= link_to 'Load a file', new_aim_coding_import_path %>
+          </div>
+        </details>
       <% end %>
-      <span class="aim-count-pill"><%= pluralize(@rules.size, 'rule') %></span>
-      <%= link_to 'Download these rules', aim_coding_rules_path(agency: @agency, unit: @unit, show: @show, format: :csv),
-                  class: 'btn secondary compact', title: 'Edit them in bulk, then Load a file to apply the changes' %>
+      <span class="aim-count-pill" data-aim-queue-filter-target="count" data-one="rule" data-many="rules"><%= pluralize(@rules.size, 'rule') %></span>
       <%= link_to 'Load a file', new_aim_coding_import_path, class: 'btn approve compact' %>
       <%= link_to 'Imports', aim_coding_imports_path, class: 'btn compact' %>
     </div>
   </header>
 
-  <div class="aim-people-toolbar">
-    <%= form_with url: aim_coding_rules_path, method: :get, local: true, class: 'aim-people-toolbar__filters' do %>
-      <%= select_tag :agency, options_for_select(@agencies, @agency), aria: { label: 'Agency' } %>
-      <%= select_tag :unit, options_for_select(@units, @unit), include_blank: 'All budget units', aria: { label: 'Budget unit' } %>
-      <%= select_tag :show, options_for_select([['In effect', 'in_effect'], ['All, retired too', 'all']], @show), aria: { label: 'Show' } %>
+  <%# The filters apply as you choose (aim_queue_filter_controller); the same
+      choices are what Download sends, so it downloads what you see. %>
+  <%= form_with url: aim_coding_rules_path(format: :csv), method: :get, local: true, class: 'aim-people-toolbar',
+                data: { turbo: false } do %>
+    <div class="aim-people-toolbar__filters">
+      <%= select_tag :agency, options_for_select(@agencies, @agency), aria: { label: 'Agency' },
+                     data: { aim_queue_filter_target: 'facet', key: 'agency', action: 'aim-queue-filter#filter' } %>
+      <%= select_tag :unit, options_for_select(@units.map { |agency, unit| ["#{unit} (#{agency})", unit] }, @unit),
+                     include_blank: 'All budget units', aria: { label: 'Budget unit' },
+                     data: { aim_queue_filter_target: 'facet', key: 'unit', action: 'aim-queue-filter#filter' } %>
+      <%= select_tag :show, options_for_select([['In effect', 'in_effect'], ['All, retired too', '']], @show == 'all' ? '' : 'in_effect'),
+                     aria: { label: 'Show' }, data: { aim_queue_filter_target: 'facet', key: 'state', action: 'aim-queue-filter#filter' } %>
       <%= hidden_field_tag :sort, @sort %>
-      <button type="submit" class="btn compact">Apply</button>
-    <% end %>
+      <button type="submit" class="btn secondary compact" title="Download the rules shown, to edit in bulk and load again">Download these rules</button>
+    </div>
     <%= render 'aim/invoices/search_box', placeholder: 'Search vendor, BDO, object, program…', empty: 'No rule matches.' %>
-  </div>
+  <% end %>
 
   <% if @rules.empty? %>
     <section class="aim-panel aim-empty-state"><p>No rules yet. Load a file to start.</p></section>
   <% else %>
-    <section class="aim-panel aim-queue-panel">
+    <section class="aim-panel aim-queue-panel aim-rules-panel">
       <table class="submission-table aim-queue-table aim-rules-table">
         <thead>
           <tr>
-            <th><%= aim_rules_sort_link 'BU', 'budget_unit' %></th><th><%= aim_rules_sort_link 'Vendor', 'vendor' %></th>
-            <th>Customer #</th><th><%= aim_rules_sort_link 'BDO / DO', 'encumbrance' %></th>
-            <th><%= aim_rules_sort_link 'Object', 'object' %></th><th><%= aim_rules_sort_link 'Program', 'program' %></th>
-            <th>Activity</th><th>Function</th><th><%= aim_rules_sort_link 'Fund', 'fund' %></th>
-            <th><%= aim_rules_sort_link 'In effect', 'effective' %></th><th></th>
+            <th><%= aim_rules_sort_link 'BU', 'budget_unit' %></th>
+            <th><%= aim_rules_sort_link 'Vendor', 'vendor' %></th>
+            <% columns.each do |field| %>
+              <th><%= sortable[field] ? aim_rules_sort_link(aim_coding_field_label(field), sortable[field]) : aim_coding_field_label(field) %></th>
+            <% end %>
+            <th>Notes</th>
+            <th><%= aim_rules_sort_link 'In effect', 'effective' %></th>
           </tr>
         </thead>
         <tbody>
           <% @rules.each do |rule| %>
-            <% search = [rule.budget_unit, rule.vendor_name, rule.customer_number, rule.encumbrance, rule.object_code, rule.program,
-                         rule.activity, rule.function_code, rule.fund, rule.ma_number, rule.vendor_code].compact.join(' ') %>
-            <tr data-aim-queue-filter-target="row" data-search="<%= search %>" class="<%= 'is-missing' unless rule.in_effect? %>">
+            <% search = ([rule.budget_unit, rule.vendor_name, rule.notes] + columns.map { |f| rule.public_send(f) }).compact.join(' ') %>
+            <tr data-aim-queue-filter-target="row" data-search="<%= search %>" data-agency="<%= rule.agency %>"
+                data-unit="<%= rule.budget_unit %>" data-state="<%= 'in_effect' if rule.in_effect? %>"
+                class="<%= 'is-missing' unless rule.in_effect? %>">
               <td><%= rule.budget_unit %></td>
-              <td class="is-strong"><%= link_to rule.vendor_name, aim_coding_rule_path(rule) %>
+              <td class="is-strong"><%= link_to rule.vendor_name, aim_coding_rule_path(rule), data: { turbo_frame: '_top' } %>
                 <% if rule.warnings.present? %><span class="badge is-denied" title="<%= rule.warnings %>">unvalidated</span><% end %></td>
-              <td><%= rule.customer_number || '—' %></td>
-              <td><%= rule.encumbrance || '—' %></td>
-              <td><%= rule.object_code || '—' %></td>
-              <td><%= rule.program || '—' %></td>
-              <td><%= rule.activity || '—' %></td>
-              <td><%= rule.function_code || '—' %></td>
-              <td><%= rule.fund || '—' %></td>
+              <% columns.each do |field| %><td><%= rule.public_send(field).presence || '—' %></td><% end %>
+              <td class="aim-rules-table__notes"><%= rule.notes %></td>
               <td><%= l(rule.effective_from, format: :short) %><%= " – #{l(rule.effective_until, format: :short)}" if rule.effective_until %></td>
-              <td class="action-buttons"><%= link_to 'Open', aim_coding_rule_path(rule), class: 'btn secondary compact' %></td>
             </tr>
           <% end %>
         </tbody>

@@ -21,7 +21,7 @@ module Aim
     # A column heading on Coding Rules that sorts the list.
     def aim_rules_sort_link(label, sort)
       text = @sort == sort ? "#{label} ▾" : label
-      link_to text, aim_coding_rules_path(agency: @agency, unit: @unit, show: @show, sort: sort), class: 'aim-sort-link'
+      link_to text, aim_coding_rules_path(sort: sort), class: 'aim-sort-link'
     end
 
     def aim_coding_field_label(field) = CODING_FIELD_LABELS.fetch(field.to_s, field.to_s.humanize)

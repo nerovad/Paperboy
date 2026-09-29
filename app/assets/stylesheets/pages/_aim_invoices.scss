@@ -1634,3 +1634,25 @@
 .aim-review-frame {
   display: contents;
 }
+
+// Coding Rules shows every field: the table scrolls sideways inside its
+// panel, the page does not.
+.aim-rules-panel {
+  max-height: calc(100% - 4rem);
+  overflow: auto;
+}
+
+.aim-rules-table {
+  white-space: nowrap;
+}
+
+.aim-rules-table__notes {
+  max-width: 24rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aim-alert-chip__item {
+  display: block;
+  padding: 4px 0;
+}

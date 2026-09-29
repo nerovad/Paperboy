@@ -7,7 +7,7 @@ import { Controller } from "@hotwired/stimulus"
 // A group whose heading matches (a person's name) shows all its rows. Groups
 // with a match open; clearing the box puts them back as they were.
 export default class extends Controller {
-  static targets = ["input", "row", "group", "empty", "reason"]
+  static targets = ["input", "row", "group", "empty", "reason", "facet", "count"]
   static values = { reason: String }
 
   connect() {
@@ -38,19 +38,21 @@ export default class extends Controller {
       const group = row.closest("[data-aim-queue-filter-target~=group]")
       const heading = group ? this.normalize(group.dataset.search || "") : ""
       const text = `${this.normalize(row.dataset.search || "")} ${heading}`
-      const match = words.every((word) => this.contains(text, word)) && (!reason || (row.dataset.reason || "") === reason)
+      const match = words.every((word) => this.contains(text, word)) && (!reason || (row.dataset.reason || "") === reason) &&
+                    this.facetTargets.every((facet) => !facet.value || (row.dataset[facet.dataset.key] || "") === facet.value)
       row.hidden = !match
       if (match) shown += 1
     })
 
     this.groupTargets.forEach((group) => {
       const visible = group.querySelectorAll("[data-aim-queue-filter-target~=row]:not([hidden])").length
-      const filtering = words.length > 0 || reason !== ""
+      const filtering = words.length > 0 || reason !== "" || this.facetTargets.some((facet) => facet.value)
       group.hidden = filtering && visible === 0
       this.setOpen(group, filtering ? visible > 0 : group.dataset.startedOpen === "true")
     })
 
-    if (this.hasEmptyTarget) this.emptyTarget.hidden = shown > 0 || (words.length === 0 && reason === "")
+    if (this.hasEmptyTarget) this.emptyTarget.hidden = shown > 0 || (words.length === 0 && reason === "" && !this.facetTargets.some((f) => f.value))
+    if (this.hasCountTarget) this.countTarget.textContent = `${shown} ${shown === 1 ? this.countTarget.dataset.one : this.countTarget.dataset.many}`
   }
 
   clear() {
