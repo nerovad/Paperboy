@@ -26,8 +26,13 @@ module Aim
       'handwritten' => 'Handwritten amounts',
       'extraction_error' => 'Extraction error',
       'split_error' => 'Split error',
-      'export_error' => 'Export error'
+      'export_error' => 'Export error',
+      'needs_split' => 'Needs split'
     }.freeze
+
+    # An Action Needed row's reason for the filter: its review reason, or
+    # Needs split for a PDF holding several invoices.
+    def aim_filter_reason(invoice) = invoice.state == 'needs_split' ? 'needs_split' : invoice.review_reason
 
     STATE_LABELS = {
       'received' => 'Waiting for AI',

@@ -26,7 +26,7 @@ module Aim
     def index
       # The reason filter is on the page itself; every Action Needed row is sent.
       @invoices = Aim::Invoice.in_queue(@queue).newest_first.to_a
-      @reason_counts = @queue == 'needs_review' ? Aim::Invoice.in_queue(@queue).group(:review_reason).count : {}
+      @reason_counts = @queue == 'needs_review' ? @invoices.map { |i| helpers.aim_filter_reason(i) }.compact.tally : {}
       # Budget unit -> shared queue and each person -> invoices, as on By BU.
       @sections = Aim::BuSections.build(@invoices, coa: Aim::Units.new) if @queue == 'ready_for_approval'
     rescue ActiveRecord::ActiveRecordError => e

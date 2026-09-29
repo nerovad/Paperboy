@@ -33,7 +33,7 @@
                    aim_invoice_date(invoice.invoice_date), invoice.order_number, invoice.customer_number,
                    invoice.batch_id].compact.join(' ') %>
       <tr class="<%= 'is-locked' if locked %>" title="<%= invoice.batch_id %>"
-          data-aim-queue-filter-target="row" data-search="<%= search %>" data-reason="<%= invoice.review_reason %>">
+          data-aim-queue-filter-target="row" data-search="<%= search %>" data-reason="<%= aim_filter_reason(invoice) %>">
         <td class="action-buttons">
           <% if locked || invoice.terminal? %>
             <%= link_to 'View', aim_invoice_path(invoice.batch_id, queue: @queue),

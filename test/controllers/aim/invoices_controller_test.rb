@@ -442,7 +442,7 @@ module Aim
                               manifest: { 'invoices' => [{ 'vendor_name' => 'ACME', 'invoice_number' => 'INV-1', 'pages' => [1, 2] },
                                                          { 'vendor_name' => 'ACME', 'invoice_number' => 'INV-2', 'pages' => [3] }] }.to_json)
 
-      get :show, params: { id: row.batch_id, queue: 'needs_split' }
+      get :show, params: { id: row.batch_id, queue: 'needs_review' }
 
       assert_response :success
       assert_select 'input[name=?][value=?]', 'split[0][pages_text]', '1-2'

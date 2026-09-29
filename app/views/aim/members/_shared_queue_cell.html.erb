@@ -2,6 +2,10 @@
     it, nothing while hidden, otherwise On/Off for whoever manages the BU.
     Locals: employee_id, unit, row (may be nil for a home unit with no flags),
     can_change. %>
+<%# A Turbo Frame, so switching replaces this cell alone (the page does not
+    reload): the switch's redirect lands on this page again and Turbo takes
+    the same frame from it. %>
+<%= turbo_frame_tag "aim-shared-#{employee_id}-#{unit}" do %>
 <% if row&.hidden %>
   <span class="aim-profile-switch__note">—</span>
 <% elsif row&.bu_admin %>
@@ -15,4 +19,5 @@
                 title: on ? "Stop #{unit}'s shared queue for this person" : "Let this person pick up #{unit}'s shared queue" %>
 <% else %>
   <button type="button" class="btn compact aim-shared-switch" disabled><%= row&.shared_queue ? 'On' : 'Off' %></button>
+<% end %>
 <% end %>

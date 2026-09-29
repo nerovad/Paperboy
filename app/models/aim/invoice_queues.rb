@@ -11,10 +11,10 @@ module Aim
     QUEUES = {
       'received' => { label: 'Waiting for AI', states: %w[received extracting], css_class: 'aim-card-neutral',
                       description: 'Invoices the AI has not finished reading.' },
-      'needs_review' => { label: 'Action Needed', states: %w[needs_review], css_class: 'aim-card-danger',
-                          description: 'Needs a person to check: an unknown vendor, a missing field or handwriting.' },
-      'needs_split' => { label: 'Needs Split', states: %w[needs_split], css_class: 'aim-card-info',
-                         description: 'PDFs the AI thinks hold more than one invoice.' },
+      # Needs Split is one of Action Needed's reasons, not a queue of its own
+      # (Joshua, 2026-09-29).
+      'needs_review' => { label: 'Action Needed', states: %w[needs_review needs_split], css_class: 'aim-card-danger',
+                          description: 'Needs a person to check: an unknown vendor, a missing field, handwriting, or a PDF holding several invoices.' },
       'ready_for_approval' => { label: 'Ready for Approval', states: %w[ready_for_approval], css_class: 'aim-card-warning',
                                 description: 'Read by the AI and waiting for approval.' },
       'in_flight' => { label: 'Exporting', states: %w[approved exporting], css_class: 'aim-card-neutral',
@@ -30,7 +30,7 @@ module Aim
     }.freeze
 
     # The queues a person works.
-    WORK_QUEUES = %w[needs_review needs_split ready_for_approval failed].freeze
+    WORK_QUEUES = %w[needs_review ready_for_approval failed].freeze
 
     included do
       scope :in_queue, ->(queue) { where(state: QUEUES.fetch(queue.to_s).fetch(:states)) }
