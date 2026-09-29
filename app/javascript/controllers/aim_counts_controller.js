@@ -43,7 +43,7 @@ export default class extends Controller {
 
   remembered() {
     try {
-      return JSON.parse(sessionStorage.getItem("aim-counts") || "null")
+      return JSON.parse(sessionStorage.getItem(this.storageKey) || "null")
     } catch {
       return null
     }
@@ -51,16 +51,30 @@ export default class extends Controller {
 
   remember(counts) {
     try {
-      sessionStorage.setItem("aim-counts", JSON.stringify(counts))
+      sessionStorage.setItem(this.storageKey, JSON.stringify(counts))
     } catch {
       // Storage refused: the counts still load, just without the head start.
     }
   }
 
+  // The name badge and the Invoices tab ask for only My Queue's count, so
+  // they keep their own copy rather than overwrite the sidebar's.
+  get storageKey() {
+    return `aim-counts:${this.urlValue}`
+  }
+
+  // A data-aim-count-base is added to the count: the name badge already holds
+  // the Inbox count and shows the two together. The controller's own element
+  // may carry data-aim-count as well as its children.
   fill(key, count) {
-    this.element.querySelectorAll(`[data-aim-count="${key}"]`).forEach((element) => {
-      element.textContent = count ?? "–"
-      element.hidden = element.dataset.hideZero !== undefined && !count
+    const selector = `[data-aim-count="${key}"]`
+    const elements = [...this.element.querySelectorAll(selector)]
+    if (this.element.matches(selector)) elements.push(this.element)
+    elements.forEach((element) => {
+      const base = Number(element.dataset.aimCountBase || 0)
+      const total = count == null ? (base || null) : base + count
+      element.textContent = total ?? "–"
+      element.hidden = element.dataset.hideZero !== undefined && !total
     })
   }
 }

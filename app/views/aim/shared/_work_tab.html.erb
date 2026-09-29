@@ -1,0 +1,9 @@
+<%# The Invoices tab on My Work (shared/_work_tabs): the signed-in person's
+    AIM invoices waiting for their approval. The count is filled in after the
+    page draws (aim_counts_controller), so no My Work page waits on AIM. %>
+<%= link_to aim_my_queue_path,
+    class: "work-tab work-tab--invoices",
+    data: { controller: "aim-counts", aim_counts_url_value: aim_counts_path(scope: "mine") } do %>
+  Invoices
+  <span class="work-tab-badge" data-aim-count="my_queue" data-hide-zero hidden></span>
+<% end %>

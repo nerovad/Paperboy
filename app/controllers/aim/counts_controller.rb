@@ -4,11 +4,15 @@ module Aim
   # The sidebar, dashboard and My Queue counts, fetched after the page has
   # drawn (aim_counts_controller.js) so no screen waits on them. A database
   # that cannot be reached leaves the counts blank rather than failing.
+  # scope=mine asks for My Queue's count alone: the Invoices tab on My Work
+  # and the name badge ask on every page, and need nothing more.
   class CountsController < BaseController
     skip_before_action :require_app_access
     before_action :require_signed_in
 
     def show
+      return render json: { my_queue: my_queue_count } if params[:scope] == 'mine'
+
       units = Aim::Users.shared_budget_units(current_user_employee_id, staff: false)
       counts = { my_queue: my_queue_count, shared_queues: Aim::Invoice.shared_for(units).count }
       counts[:queues] = Aim::Invoice.queue_counts if helpers.aim_queue_access?

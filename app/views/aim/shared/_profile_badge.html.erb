@@ -1,0 +1,11 @@
+<%# The name badge in the header for someone with an AIM queue: their Inbox
+    count plus the AIM invoices waiting for their approval. The Inbox part is
+    drawn now; the invoices are added after the page draws
+    (aim_counts_controller), so no page waits on AIM. %>
+<span class="inbox-badge"
+      data-controller="aim-counts"
+      data-aim-counts-url-value="<%= aim_counts_path(scope: 'mine') %>"
+      data-aim-count="my_queue"
+      data-aim-count-base="<%= base %>"
+      data-hide-zero
+      <%= 'hidden' if base.zero? %>><%= base %></span>

@@ -24,5 +24,14 @@ module Aim
       assert_equal 1, body.dig('queues', 'ready_for_approval')
       assert_equal 1, body.dig('queues', 'needs_review')
     end
+
+    test 'scope=mine counts only my queue, for the Invoices tab and the name badge' do
+      Aim::Invoice.create!(batch_id: '4601.C3', state: 'ready_for_approval', actor: 'test', assigned_to: 'Jane',
+                           assigned_employee_id: 7, assignment_source: 'folder')
+
+      get :show, params: { scope: 'mine' }, format: :json
+
+      assert_equal({ 'my_queue' => 1 }, response.parsed_body)
+    end
   end
 end

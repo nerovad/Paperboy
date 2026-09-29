@@ -128,8 +128,10 @@
                 <!-- Name (hidden on mobile) -->
                 <span class="profile-name"><%= session[:user]["first_name"] %></span>
                 
-                <!-- Inbox badge -->
-                <% if inbox_count > 0 %>
+                <!-- Inbox badge, plus AIM invoices for anyone with an AIM queue -->
+                <% if aim_invoices_tab? %>
+                  <%= render "aim/shared/profile_badge", base: inbox_count %>
+                <% elsif inbox_count > 0 %>
                   <span class="inbox-badge"><%= inbox_count %></span>
                 <% end %>
               </button>

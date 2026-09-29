@@ -1674,3 +1674,10 @@
 .aim-upload-page {
   padding-bottom: 22rem;
 }
+
+/* AIM counts on shared chrome -- the Invoices tab on My Work and the name
+   badge in the header. Both badges set a display of their own, which beats
+   the hidden attribute, so a zero count needs saying twice. */
+[data-aim-count][hidden] {
+  display: none;
+}
