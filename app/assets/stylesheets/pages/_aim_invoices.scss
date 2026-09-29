@@ -1612,3 +1612,25 @@
 }
 
 .aim-coding__buttons { display: flex; gap: 6px; }
+
+// A part of a page redrawn on its own (a Turbo Frame) shows its own notice.
+.aim-frame-flash {
+  background: $surface-subtle;
+  border-left: 4px solid $border-muted;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+}
+
+.aim-frame-flash--alert {
+  background: $red-denied-bg;
+  border-left-color: $danger;
+  color: $danger-dark;
+}
+
+// The review and Fiscal panels are frames: they keep the panel's place in
+// the two-column layout.
+.aim-review-frame {
+  display: contents;
+}

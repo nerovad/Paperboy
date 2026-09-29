@@ -1,0 +1,7 @@
+<%# The notice or alert for a part of a page redrawn on its own (a Turbo
+    Frame): the page's own toast is not redrawn, so the frame shows it. On a
+    whole page load the toast already does. %>
+<% if turbo_frame_request? %>
+  <% if flash[:notice] %><p class="aim-frame-flash"><%= flash[:notice] %></p><% end %>
+  <% if flash[:alert] %><p class="aim-frame-flash aim-frame-flash--alert" role="alert"><%= flash[:alert] %></p><% end %>
+<% end %>

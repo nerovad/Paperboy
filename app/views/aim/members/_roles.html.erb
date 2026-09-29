@@ -6,6 +6,8 @@
 <% mine = ->(unit) { full || aim_managed_units.include?(unit) } %>
 <% rows = @budget_units.index_by(&:budget_unit) %>
 <% extra = @budget_units.reject { |row| row.budget_unit == @home_unit } %>
+<%= turbo_frame_tag 'aim-roles' do %>
+<%= render 'aim/shared/frame_flash' %>
 <h2 class="aim-profile-heading" id="roles">Roles &amp; budget units</h2>
 <section class="aim-panel aim-profile-roles">
   <table class="submission-table aim-queue-table aim-people-table">
@@ -86,3 +88,4 @@
     <button type="submit" class="btn approve compact">Add</button>
   <% end %>
 </section>
+<% end %>

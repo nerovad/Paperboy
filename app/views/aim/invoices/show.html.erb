@@ -83,6 +83,9 @@
       <% end %>
     </section>
 
+    <%# Save Changes redraws this panel alone, so the PDF keeps its place;
+        every other button leaves the frame for the whole page. %>
+    <%= turbo_frame_tag 'aim-review-panel', target: '_top', class: 'aim-review-frame' do %>
     <%= form_with url: aim_invoice_path(@invoice.batch_id, queue: @queue),
                   method: :patch,
                   local: true,
@@ -92,6 +95,7 @@
       </div>
 
       <div class="aim-form-scroll">
+        <%= render 'aim/shared/frame_flash' %>
         <% if @invoice.review_note.present? %>
           <section class="aim-ticket">
             <h3><%= aim_review_reason_label(@invoice.review_reason.presence || 'note') %></h3>
@@ -195,7 +199,7 @@
         <% else %>
           <div class="aim-action-group aim-review-action-strip">
             <% unless state == 'needs_split' %>
-              <%= form.submit 'Save Changes', class: 'btn secondary' %>
+              <%= form.submit 'Save Changes', class: 'btn secondary', data: { turbo_frame: 'aim-review-panel' } %>
             <% end %>
 
             <% if state == 'needs_review' %>
@@ -255,6 +259,7 @@
         <% end %>
       </div>
       <%= render 'reason_modal' unless @read_only %>
+    <% end %>
     <% end %>
   </div>
 </div>

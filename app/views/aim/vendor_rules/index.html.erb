@@ -6,6 +6,8 @@
     </div>
     <span class="aim-count-pill"><%= pluralize(@rules.length, 'vendor') %></span>
   </header>
+  <%= turbo_frame_tag 'aim-vendor-rules' do %>
+    <%= render 'aim/shared/frame_flash' %>
 
   <section class="aim-panel aim-vendor-panel">
     <%= form_with url: aim_vendor_rules_path, method: :post, local: true, class: 'aim-inline-form aim-rules-form' do |form| %>
@@ -49,5 +51,6 @@
         </tbody>
       </table>
     </section>
+  <% end %>
   <% end %>
 </div>

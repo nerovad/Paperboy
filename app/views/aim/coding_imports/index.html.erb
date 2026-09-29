@@ -10,6 +10,8 @@
       <%= link_to 'Coding Rules', aim_coding_rules_path, class: 'btn compact' %>
     </div>
   </header>
+  <%= turbo_frame_tag 'aim-coding-imports' do %>
+    <%= render 'aim/shared/frame_flash' %>
   <% if @imports.empty? %>
     <section class="aim-panel aim-empty-state"><p>Nothing loaded yet.</p></section>
   <% else %>
@@ -41,5 +43,6 @@
         </tbody>
       </table>
     </section>
+  <% end %>
   <% end %>
 </div>

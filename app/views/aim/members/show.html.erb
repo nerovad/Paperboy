@@ -32,6 +32,8 @@
 
   <%# The Fiscal switch (item f): who works the Fiscal queue. AIM Admins set it. %>
   <% if @member && aim_user_admin? %>
+    <%= turbo_frame_tag 'aim-fiscal-switch' do %>
+    <%= render 'aim/shared/frame_flash' %>
     <section class="aim-panel aim-profile-fiscal">
       <div>
         <strong>Fiscal</strong>
@@ -41,6 +43,7 @@
                     method: :patch, params: { fiscal: @member.fiscal ? '0' : '1' },
                     class: "btn #{@member.fiscal ? 'deny' : 'approve'} compact" %>
     </section>
+    <% end %>
   <% end %>
 
   <h2 class="aim-profile-heading" id="queue">Invoices</h2>

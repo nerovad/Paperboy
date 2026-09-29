@@ -36,6 +36,7 @@
       <% end %>
     </section>
 
+    <%= turbo_frame_tag 'aim-fiscal-panel', target: '_top', class: 'aim-review-frame' do %>
     <%= form_with url: aim_fiscal_invoice_path(@invoice.batch_id), method: :patch, local: true,
                   class: 'aim-panel aim-metadata-form', data: { controller: 'aim-reason' } do %>
       <div class="aim-panel-header">
@@ -43,6 +44,7 @@
       </div>
 
       <div class="aim-form-scroll">
+        <%= render 'aim/shared/frame_flash' %>
         <dl class="aim-fiscal-facts">
           <dt>AIM #</dt><dd title="<%= @invoice.batch_id %>"><%= @invoice.handle %></dd>
           <dt>File name</dt><dd><%= @record.title %></dd>
@@ -130,7 +132,7 @@
           <% if read_only %>
             <%= link_to 'Back to Fiscal', fiscal_return_path, class: 'btn' %>
           <% else %>
-            <%= submit_tag 'Save', class: 'btn secondary' %>
+            <%= submit_tag 'Save', class: 'btn secondary', data: { turbo_frame: 'aim-fiscal-panel' } %>
             <% if @record.can_move_to?('ready') %>
               <%= submit_tag 'Add to Report Queue', class: 'btn approve',
                                                     data: { turbo_confirm: 'Add this invoice to the Report Queue?',
@@ -156,6 +158,7 @@
         </div>
       </div>
       <%= render 'hold_modal' unless read_only %>
+    <% end %>
     <% end %>
   </div>
 </div>

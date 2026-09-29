@@ -285,6 +285,16 @@ module Aim
       assert_match(/still needs an invoice date and an invoice total/, flash[:alert])
     end
 
+    test 'save changes redraws only the form panel; the other buttons leave it' do
+      row = invoice('4601.F1', state: 'ready_for_approval', pdf: false)
+      get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
+
+      assert_select 'turbo-frame#aim-review-panel[target=_top]' do
+        assert_select 'input[type=submit][value=?][data-turbo-frame=?]', 'Save Changes', 'aim-review-panel'
+        assert_select 'input[type=submit][value=Approve]:not([data-turbo-frame])'
+      end
+    end
+
     test 'a reviewer enters the coding by hand when no rule fits' do
       row = invoice('4601.C2', state: 'ready_for_approval', pdf: false)
 

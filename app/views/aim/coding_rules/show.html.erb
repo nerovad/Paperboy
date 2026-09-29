@@ -12,6 +12,8 @@
     </div>
     <%= link_to 'Back to Coding Rules', aim_coding_rules_path(agency: @rule.agency, unit: @rule.budget_unit), class: 'btn compact' %>
   </header>
+  <%= turbo_frame_tag 'aim-coding-rule' do %>
+    <%= render 'aim/shared/frame_flash' %>
 
   <% if @objections.any? %>
     <div class="aim-readonly-banner" role="alert">
@@ -83,5 +85,6 @@
         <% end %>
       </ul>
     </details>
+  <% end %>
   <% end %>
 </div>
