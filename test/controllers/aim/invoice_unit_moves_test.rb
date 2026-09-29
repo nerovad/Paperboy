@@ -90,7 +90,8 @@ module Aim
 
     def invoice(batch_id, **attributes)
       Aim::Invoice.create!(batch_id: batch_id, state: 'ready_for_approval', actor: 'test', document_type: 'Invoice',
-                           vendor_name: 'ACME', invoice_number: batch_id, **attributes)
+                           vendor_name: 'ACME', invoice_number: batch_id, invoice_date: Date.new(2026, 9, 1),
+                           invoice_total: 10, **attributes)
     end
 
     def as_user

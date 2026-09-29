@@ -1,29 +1,42 @@
 <%# The invoice's coding (item b.2), inside the review form: the rules to
     choose from when several match, and the fields themselves, from the COA's
     lists, for a person to correct or type when no rule fits. %>
-<section class="aim-coding">
-  <h3>Coding</h3>
+<% shown = %w[budget_unit encumbrance object_code program fund activity function_code] %>
+<section class="aim-coding" data-controller="aim-coding-choice">
+  <div class="aim-coding__head">
+    <h3>Coding</h3>
+    <% unless @read_only %>
+      <%= submit_tag 'Look up coding again', name: 'commit', class: 'btn compact', form: nil,
+                                             title: 'Runs the coding rules again for this vendor and BU, replacing what is here',
+                                             data: { turbo_confirm: 'Run the coding rules again? The coding below is replaced by what they find.',
+                                                     confirm_label: 'Look up again' } %>
+    <% end %>
+  </div>
   <% if @coding_candidates.present? %>
     <p class="aim-coding__help">
       <%= pluralize(@coding_candidates.size, 'coding rule') %> for this vendor<%= @coding_level == :agency ? ' in other BUs; none is for this BU, so check the BDO' : ' in this BU' %>.
-      <%= 'One is named on the invoice and is ticked.' if @coding_hinted.one? %> Pick one, or enter the coding below.
+      <%= 'One is named on the invoice and is ticked.' if @coding_hinted.one? %>
+      Tick one and the coding below fills in from it; what it changes is highlighted. Save Changes keeps it, or enter the coding yourself.
     </p>
     <ul class="aim-coding__choices">
       <% @coding_candidates.each do |rule| %>
         <li class="<%= 'is-hinted' if @coding_hinted.include?(rule) %>">
           <label>
-            <%= radio_button_tag :coding_rule_id, rule.id, @coding_hinted.one? && @coding_hinted.include?(rule), disabled: @read_only %>
-            <% @coding_differing.each do |field| %>
-              <span class="aim-coding__choice-field"><small><%= aim_coding_field_label(field) %></small> <%= rule.public_send(field).presence || '—' %></span>
+            <%= radio_button_tag :coding_rule_id, rule.id, @coding_hinted.one? && @coding_hinted.include?(rule), disabled: @read_only,
+                                 data: { aim_coding_choice_target: 'choice', action: 'change->aim-coding-choice#choose',
+                                         rule: (%w[encumbrance] + Aim::CodingLine::RULE_FIELDS.drop(2)).index_with { |f| rule.public_send(f) }.to_json } %>
+            <% (shown | @coding_differing).each do |field| %>
+              <% value = rule.public_send(field) %>
+              <% next if value.blank? && !@coding_differing.include?(field) %>
+              <span class="aim-coding__choice-field<%= ' is-differing' if @coding_differing.include?(field) %>"><small><%= aim_coding_field_label(field) %></small> <%= value.presence || '—' %></span>
             <% end %>
             <% if @coding_hinted.include?(rule) %><span class="badge is-approved">on the invoice</span><% end %>
           </label>
         </li>
       <% end %>
     </ul>
-    <% unless @read_only %>
-      <%= submit_tag 'Use this coding', name: 'commit', class: 'btn approve compact', data: { turbo: false } %>
-    <% end %>
+    <p class="aim-coding__help aim-coding__preview-note" data-aim-coding-choice-target="note" hidden></p>
+    <%= hidden_field_tag 'coding_line[coding_rule_id]', nil, id: 'coding_line_coding_rule_id', data: { aim_coding_choice_target: 'ruleId' } %>
   <% elsif @coding_lines.any? %>
     <% line = @coding_lines.first %>
     <p class="aim-coding__help">

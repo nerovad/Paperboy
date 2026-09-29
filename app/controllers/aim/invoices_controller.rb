@@ -6,6 +6,7 @@ module Aim
   # it; the PDF is read from the store and never moved.
   class InvoicesController < BaseController
     include Aim::InvoiceActions
+    include Aim::InvoiceCodingActions
     include Aim::InvoiceAccess
     include Aim::InvoiceLocking
     include Aim::InvoiceBulkMoves

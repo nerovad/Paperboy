@@ -63,10 +63,11 @@ module Aim
       'split' => []
     }.freeze
 
-    # The columns a reviewer may change on the review page.
+    # The columns a reviewer may change on the review page. The submitter is
+    # who sent it in, and stays as recorded.
     EDITABLE_FIELDS = %w[
       document_type vendor_name invoice_number invoice_date invoice_total subtotal sales_tax
-      order_number customer_number budget_unit submitter notes
+      order_number customer_number budget_unit notes
     ].freeze
 
     has_many :events, -> { order(:created_at, :id) },
@@ -116,17 +117,18 @@ module Aim
       save!
     end
 
-    # What a user's approval, and billing, cannot do without.
-    def ready_for_a_user?
-      document_type.present? && document_type != UNSETTLED_DOCUMENT_TYPE &&
-        vendor_name.present? && invoice_number.present?
-    end
+    # What a user's approval, Fiscal and billing cannot do without (the
+    # required fields, Joshua 2026-09-29).
+    REQUIRED_FOR_A_USER = { 'vendor_name' => 'a vendor name', 'invoice_number' => 'an invoice number',
+                            'invoice_date' => 'an invoice date', 'invoice_total' => 'an invoice total',
+                            'budget_unit' => 'a budget unit' }.freeze
+
+    def ready_for_a_user? = missing_for_a_user.empty?
 
     def missing_for_a_user
       missing = []
       missing << 'a document type' if document_type.blank? || document_type == UNSETTLED_DOCUMENT_TYPE
-      missing << 'a vendor name' if vendor_name.blank?
-      missing << 'an invoice number' if invoice_number.blank?
+      REQUIRED_FOR_A_USER.each { |field, name| missing << name if public_send(field).blank? }
       missing
     end
 

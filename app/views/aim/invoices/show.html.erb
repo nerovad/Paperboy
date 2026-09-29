@@ -113,23 +113,26 @@
               </div>
             <% end %>
 
-            <% Aim::Invoice::EDITABLE_FIELDS.each do |field| %>
+            <% (Aim::Invoice::EDITABLE_FIELDS + %w[submitter]).each do |field| %>
               <div class="aim-field-row">
                 <div class="aim-field">
-                  <%= form.label "invoice[#{field}]", aim_field_label(field) %>
+                  <%= form.label "invoice[#{field}]", aim_field_label(field) + (Aim::Invoice::REQUIRED_FOR_A_USER.key?(field) || field == 'document_type' ? ' *' : '') %>
                   <% if field == 'document_type' %>
                     <%= form.select "invoice[#{field}]",
                                     options_for_select(Aim::Invoice::DOCUMENT_TYPES, @invoice.document_type),
                                     { include_blank: 'Not set' }, disabled: @read_only %>
                   <% elsif field == 'notes' %>
                     <%= form.text_area "invoice[#{field}]", value: @invoice.notes, rows: 3, disabled: @read_only %>
+                  <% elsif field == 'submitter' %>
+                    <%= text_field_tag 'aim_submitter', @invoice.submitter, readonly: true, class: 'aim-readonly-field',
+                                       title: 'Who sent the invoice in; it stays as recorded' %>
                   <% else %>
                     <%= form.text_field "invoice[#{field}]",
                                         value: @invoice.public_send(field),
                                         disabled: @read_only %>
                   <% end %>
                 </div>
-                <% unless @read_only || %w[document_type notes].include?(field) %>
+                <% unless @read_only || %w[document_type notes submitter].include?(field) %>
                   <button type="button"
                           class="btn secondary compact btn-ocr"
                           data-ocr-target-name="invoice[<%= field %>]">OCR</button>

@@ -9,17 +9,19 @@ module Aim
     private
 
     def save_coding_line(source:)
-      permitted = params.fetch(:coding_line, {}).permit(*Aim::CodingLine::EDITABLE_FIELDS, :encumbrance).to_h
+      permitted = params.fetch(:coding_line, {}).permit(*Aim::CodingLine::EDITABLE_FIELDS, :encumbrance, :coding_rule_id).to_h
+      rule_id = permitted.delete('coding_rule_id').presence
       return if permitted.empty?
 
       values = permitted.transform_values { |value| value.to_s.strip.presence }
+      values['coding_rule_id'] = rule_id if rule_id && Aim::CodingRule.exists?(rule_id)
       fills, objections = Aim::CoaCodes.new(@invoice.agency!.to_s).linkage(values)
       line = @invoice.coding || @invoice.coding_lines.build(line_no: 1)
       line.assign_attributes(values.merge(fills).merge(warnings: objections.join('; ').presence))
       return unless line.new_record? || line.changed?
       return if line.new_record? && line.blank_coding? && line.amount.blank?
 
-      changed = line.changes.keys & Aim::CodingLine::EDITABLE_FIELDS
+      changed = line.changes.keys & (Aim::CodingLine::EDITABLE_FIELDS + %w[coding_rule_id])
       line.assign_attributes(source: source, set_by: current_user_email)
       line.save!
       @invoice.update_column(:coded_at, Time.current) unless @invoice.coded?

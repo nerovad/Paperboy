@@ -49,7 +49,7 @@ module Aim
         end
       end
       defaults = { document_type: 'Invoice', vendor_name: 'ACME', invoice_number: 'INV-1', budget_unit: '4601',
-                   submitter: 'Jane Doe', page_count: pages }
+                   invoice_date: Date.new(2026, 9, 1), invoice_total: 10, submitter: 'Jane Doe', page_count: pages }
       Aim::Invoice.create!(batch_id: batch_id, state: state, actor: 'aim_worker', **defaults.merge(attributes))
     end
 
@@ -247,6 +247,7 @@ module Aim
       assert_response :success
       assert_select 'input[type=radio][name=coding_rule_id]', 2
       assert_select 'select[name=?]', 'coding_line[object_code]'
+      assert_select 'input[type=radio][data-rule]', 2
       assert row.reload.coded?
       assert_empty row.coding_lines
 
@@ -254,11 +255,28 @@ module Aim
       assert_equal 'ready_for_approval', row.state
       assert_match(/Pick or enter the coding/, flash[:alert])
 
-      act(row, 'Use this coding', queue: 'ready_for_approval', coding_rule_id: Aim::CodingRule.last.id)
+      picked = Aim::CodingRule.last
+      act(row, 'Save Changes', queue: 'ready_for_approval',
+                               coding_line: { encumbrance: picked.encumbrance, object_code: '2162', coding_rule_id: picked.id })
 
       line = row.coding_lines.first
-      assert_equal ['BDO_46002024072600000001_2', 'person', REVIEWER], [line.encumbrance, line.source, line.set_by]
-      assert_match(/coding picked/, row.events.last.note)
+      assert_equal ['BDO_46002024072600000001_2', 'person', REVIEWER, picked.id], [line.encumbrance, line.source, line.set_by, line.coding_rule_id]
+      assert_match(/set .*rule picked/, row.events.last.note)
+    end
+
+    test 'look up coding again replaces the coding from the rules, and an invoice missing its date or total is not sent on' do
+      Aim::CodingRule.create!(agency: 'GSA', budget_unit: '4601', vendor_name: 'ACME', encumbrance: 'BDO_46002024072600000001_1',
+                              object_code: '2162', effective_from: Date.new(2024, 7, 1))
+      row = invoice('4601.C3', state: 'ready_for_approval', pdf: false)
+      row.coding_lines.create!(object_code: '9999', source: 'person', set_by: 'someone')
+
+      act(row, 'Look up coding again', queue: 'ready_for_approval')
+      assert_equal %w[2162 rule], [row.coding.object_code, row.coding.source]
+
+      bare = invoice('4601.C4', invoice_date: nil, invoice_total: nil)
+      act(bare, 'Send to Approval')
+      assert_equal 'needs_review', bare.state
+      assert_match(/still needs an invoice date and an invoice total/, flash[:alert])
     end
 
     test 'a reviewer enters the coding by hand when no rule fits' do

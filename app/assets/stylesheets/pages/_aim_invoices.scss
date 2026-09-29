@@ -1594,3 +1594,19 @@
   margin: 12px 0;
   padding: 12px 14px;
 }
+
+.aim-coding__head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+
+  h3 { margin: 0; }
+}
+
+.aim-coding__choice-field.is-differing { font-weight: 600; }
+
+.aim-field.is-changed input,
+.aim-field.is-changed select {
+  border-color: $warning-border;
+  box-shadow: 0 0 0 2px $warning-border;
+}

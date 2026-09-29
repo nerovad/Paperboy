@@ -246,9 +246,11 @@ module Aim
       invoice = create_invoice(state: 'needs_review', document_type: 'Unknown')
 
       assert_not invoice.ready_for_a_user?
-      assert_equal ['a document type', 'a vendor name', 'an invoice number'], invoice.missing_for_a_user
+      assert_equal ['a document type', 'a vendor name', 'an invoice number', 'an invoice date', 'an invoice total',
+                    'a budget unit'], invoice.missing_for_a_user
 
-      invoice.update!(document_type: 'Invoice', vendor_name: 'ACME', invoice_number: 'INV-1')
+      invoice.update!(document_type: 'Invoice', vendor_name: 'ACME', invoice_number: 'INV-1',
+                      invoice_date: Date.new(2026, 9, 1), invoice_total: 10, budget_unit: '4601')
       assert_predicate invoice, :ready_for_a_user?
     end
 
