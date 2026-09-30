@@ -7,13 +7,13 @@ require 'test_helper'
 class FleetVehicleGaragingFormTest < ActiveSupport::TestCase
   setup do
     @vehicle = FleetVehicle.create!(vehicle_number: '4763', make: 'CHEV', model: 'VAN', year: 2014,
-                                    take_home: 'No', contact_name: 'Irma Hernandez',
+                                    take_home: 'No',
                                     garaging_location: '800 S. Victoria Ave',
                                     secondary_garaging_location: '646 County Square Dr')
   end
 
   def garaging_form(**attrs)
-    FleetVehicleGaragingForm.create!({ name: 'Jane Smith', email: 'jane.smith@example.com',
+    FleetVehicleGaragingForm.create!({ name: 'Jane Smith', email: 'jane.smith@example.com', employee_id: '127260',
                                        vehicle_number: '4763' }.merge(attrs))
   end
 
@@ -28,11 +28,10 @@ class FleetVehicleGaragingFormTest < ActiveSupport::TestCase
   end
 
   test 'submitting copies the answers onto the vehicle' do
-    form = garaging_form(contact_name: 'Chris Driver', is_this_a_take_home_vehicle: 'Yes', location: 'Other',
+    form = garaging_form(is_this_a_take_home_vehicle: 'Yes', location: 'Other',
                          other_location: '1 Main St', do_you_have_a_secondary_location: 'No')
     @vehicle.reload
 
-    assert_equal 'Chris Driver', @vehicle.contact_name
     assert_equal 'Yes', @vehicle.take_home
     assert_equal '1 Main St', @vehicle.garaging_location
     assert_nil @vehicle.secondary_garaging_location
@@ -40,10 +39,11 @@ class FleetVehicleGaragingFormTest < ActiveSupport::TestCase
     assert_equal 1, FleetVehicle.where(vehicle_number: '4763').count
   end
 
-  test 'Other makes the typed name the contact' do
-    garaging_form(contact_name: 'Other', other_contact: 'Pat Contractor')
+  test 'links the form to its vehicle by id' do
+    form = garaging_form
 
-    assert_equal 'Pat Contractor', @vehicle.reload.contact_name
+    assert_equal @vehicle, form.fleet_vehicle
+    assert_equal [form], @vehicle.garaging_forms.to_a
   end
 
   test 'the submitter becomes the vehicle\'s Last Updated By' do
@@ -52,15 +52,19 @@ class FleetVehicleGaragingFormTest < ActiveSupport::TestCase
     assert_equal 'Irma Hernandez', form.last_updated_by
 
     garaging_form(name: 'Jane Smith')
+    @vehicle.reload
 
-    assert_equal 'Jane Smith', @vehicle.reload.last_updated_by
+    assert_equal 'Jane Smith', @vehicle.last_updated_by
+    assert_equal 127_260, @vehicle.last_updated_by_employee_id
   end
 
   test 'a Records grid edit names the signed-in user as Last Updated By' do
-    Current.user = { 'employee_id' => '1', 'first_name' => 'Raj', 'last_name' => 'Patel' }
+    Current.user = { 'employee_id' => '4242', 'first_name' => 'Raj', 'last_name' => 'Patel' }
     @vehicle.update!(color: 'WHITE')
+    @vehicle.reload
 
-    assert_equal 'Raj Patel', @vehicle.reload.last_updated_by
+    assert_equal 'Raj Patel', @vehicle.last_updated_by
+    assert_equal 4242, @vehicle.last_updated_by_employee_id
   ensure
     Current.reset
   end
@@ -84,20 +88,19 @@ class FleetVehicleGaragingFormTest < ActiveSupport::TestCase
     garaging_form
     @vehicle.reload
 
-    assert_equal 'Irma Hernandez', @vehicle.contact_name
     assert_equal 'No', @vehicle.take_home
     assert_equal '800 S. Victoria Ave', @vehicle.garaging_location
     assert_equal '646 County Square Dr', @vehicle.secondary_garaging_location
   end
 
   test 'editing the latest submission updates the vehicle, an older one does not' do
-    older = garaging_form(contact_name: 'Jane Smith')
-    latest = garaging_form(contact_name: 'Pat Contractor')
+    older = garaging_form(location: 'Other', other_location: '1 Main St')
+    latest = garaging_form(location: 'Other', other_location: '2 Oak Ave')
 
-    older.update!(contact_name: 'Someone Else')
-    assert_equal 'Pat Contractor', @vehicle.reload.contact_name
+    older.update!(other_location: '3 Elm St')
+    assert_equal '2 Oak Ave', @vehicle.reload.garaging_location
 
-    latest.update!(contact_name: 'Chris Driver')
-    assert_equal 'Chris Driver', @vehicle.reload.contact_name
+    latest.update!(other_location: '4 Pine Rd')
+    assert_equal '4 Pine Rd', @vehicle.reload.garaging_location
   end
 end

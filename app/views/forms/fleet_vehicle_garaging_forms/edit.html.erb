@@ -20,7 +20,6 @@
         <% _page_1_visible = true %>
         <% _page_2_visible = true %>
         <% _page_3_visible = true %>
-        <% _page_4_visible = true %>
 
 <!-- Page 1: Employee Info -->
 <div class="form-page">
@@ -170,36 +169,6 @@
             <%= form.text_field :last_updated_by, class: "form-control field-readonly", readonly: true %>
           </div>
 <!-- FIELD:last_updated_by END -->
-<!-- FIELD:contact_name START --><div class="form-group flex-fill<%= '' %>">
-  <%= form.label :contact_name, "Contact Name" %>
-            <%= form.select :contact_name,
-                  options_for_select(FormLookup.options_for("FleetVehicleGaragingForm", "contact_name"), @fleet_vehicle_garaging_form.contact_name),
-                  { include_blank: "Select..." },
-                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'contact_name' } } %>
-          </div>
-<!-- FIELD:contact_name END -->
-<!-- FIELD:other_contact START -->          <div class="conditional-field" data-depends-on="contact_name" data-show-values="[&quot;Other&quot;]" style="<%= ["Other"].include?(@fleet_vehicle_garaging_form.contact_name) ? '' : 'display: none;' %>">
-<div class="form-group flex-fill<%= '' %>">
-  <%= form.label :other_contact, "Other Contact" %>
-            <%= form.text_field :other_contact, class: "form-control" %>
-          </div>
-          </div>
-<!-- FIELD:other_contact END -->
-<!-- FIELD:is_this_a_take_home_vehicle START --><div class="form-group flex-fill<%= '' %>">
-  <%= form.label :is_this_a_take_home_vehicle, "Is this a take home vehicle?" %>
-            <%= form.select :is_this_a_take_home_vehicle,
-                  options_for_select(["Yes", "No"], @fleet_vehicle_garaging_form.is_this_a_take_home_vehicle),
-                  { include_blank: "Select..." },
-                  { class: "form-control", required: true, data: { controller: "searchable-select" } } %>
-          </div>
-<!-- FIELD:is_this_a_take_home_vehicle END -->
-        </div>
-      </div>
-
-<!-- Page 4: Garaging Location -->
-<div class="form-page" style="display:none;">
-  <h2>Garaging Location</h2>
-        <div class="form-row d-flex flex-wrap">
 <!-- FIELD:last_known_location START --><div class="form-group flex-fill<%= '' %>" data-answer-depends-on="vehicle_number" data-answer-lookup-form="FleetVehicleGaragingForm" data-answer-lookup-field="last_known_location">
   <%= form.label :last_known_location, "Last Known Location" %>
             <%= form.text_field :last_known_location, class: "form-control field-readonly", readonly: true %>
@@ -245,6 +214,14 @@
           </div>
           </div>
 <!-- FIELD:other_secondary_location END -->
+<!-- FIELD:is_this_a_take_home_vehicle START --><div class="form-group flex-fill<%= '' %>">
+  <%= form.label :is_this_a_take_home_vehicle, "Is this a take home vehicle?" %>
+            <%= form.select :is_this_a_take_home_vehicle,
+                  options_for_select(["Yes", "No"], @fleet_vehicle_garaging_form.is_this_a_take_home_vehicle),
+                  { include_blank: "Select..." },
+                  { class: "form-control", required: true, data: { controller: "searchable-select" } } %>
+          </div>
+<!-- FIELD:is_this_a_take_home_vehicle END -->
         </div>
       </div>
 

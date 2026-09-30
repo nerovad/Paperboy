@@ -11,12 +11,16 @@ class FleetVehicleGaragingForm < ApplicationRecord
 
   include Reassignable
 
+  # The vehicle this form is about, set from vehicle_number when the form is
+  # saved. Forms from before the fleet list existed have none.
+  belongs_to :fleet_vehicle, optional: true
+
   has_many :fleet_vehicle_garaging_form_locations, dependent: :destroy
   accepts_nested_attributes_for :fleet_vehicle_garaging_form_locations, allow_destroy: true, reject_if: :all_blank
 
   # Answers a submission copies onto its vehicle (see FleetVehicle#apply_garaging_form!).
   APPLIED_COLUMNS = %w[
-    contact_name other_contact is_this_a_take_home_vehicle location other_location
+    is_this_a_take_home_vehicle location other_location
     do_you_have_a_secondary_location secondary_location other_secondary_location
   ].freeze
 
@@ -46,11 +50,6 @@ class FleetVehicleGaragingForm < ApplicationRecord
     self.class.column_names.each do |col|
       errors.add(:base, "Column '#{col}' is invalid: names must start with a letter or underscore, not a number.") unless col.match?(/\A[a-zA-Z_]/)
     end
-  end
-
-  # The vehicle's contact: the typed name when "Other" was picked.
-  def contact
-    contact_name == 'Other' ? other_contact : contact_name
   end
 
   # Primary garaging address: the typed one when "Other" was picked.
@@ -89,12 +88,9 @@ class FleetVehicleGaragingForm < ApplicationRecord
 
   private
 
-  def fleet_vehicle
-    FleetVehicle.find_by(vehicle_number: vehicle_number) if vehicle_number.present?
-  end
-
   def copy_vehicle_details
-    vehicle = fleet_vehicle
+    vehicle = FleetVehicle.find_by(vehicle_number: vehicle_number) if vehicle_number.present?
+    self.fleet_vehicle = vehicle
     return unless vehicle
 
     self.year = vehicle.year
@@ -107,11 +103,10 @@ class FleetVehicleGaragingForm < ApplicationRecord
   # is still the vehicle's latest form, so correcting an old submission never
   # overwrites what a newer one set.
   def applies_to_fleet_vehicle?
-    return false if vehicle_number.blank?
+    return false unless fleet_vehicle
     return true if saved_change_to_id?
 
-    saved_changes.keys.intersect?(APPLIED_COLUMNS) &&
-      FleetVehicle.exists?(vehicle_number: vehicle_number, fleet_vehicle_garaging_form_id: id)
+    saved_changes.keys.intersect?(APPLIED_COLUMNS) && fleet_vehicle.fleet_vehicle_garaging_form_id == id
   end
 
   def vehicle_must_be_on_the_fleet_list
@@ -125,6 +120,6 @@ class FleetVehicleGaragingForm < ApplicationRecord
   # Raises on failure so the submission rolls back with it rather than
   # leaving a saved form whose vehicle never changed.
   def apply_to_fleet_vehicle
-    FleetVehicle.find_by!(vehicle_number: vehicle_number).apply_garaging_form!(self)
+    fleet_vehicle.apply_garaging_form!(self)
   end
 end
