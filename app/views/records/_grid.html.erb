@@ -8,12 +8,19 @@
             button share one row above the grid — rendered here so the Edit
             button stays inside the records-edit controller),
             exportable (optional; shows an Export button that opens the
-            records-export modal, which the caller renders around the grid).
+            records-export modal, which the caller renders around the grid),
+            highlights (optional RecordsHighlights; built from the table when
+            not given, so every grid colours its rows),
+            highlight_counts + view_params (optional; given, a legend above the
+            grid counts each rule's rows and filters to them, and editors get a
+            Highlights button for the records-highlights dialog).
             Viewers with the edit grant also get the table's change log and a
             History button per row (see RecordsHistoriesController). %>
 <% edit_path = local_assigns.fetch(:edit_path, nil) %>
 <% editable = local_assigns.fetch(:editable) { can_edit_record_table?(table) } %>
 <% title = local_assigns.fetch(:title, nil) %>
+<% highlights = local_assigns.fetch(:highlights) { RecordsHighlights.new(table) } %>
+<% highlight_counts = local_assigns.fetch(:highlight_counts, nil) %>
 <div class="records-page"
      data-controller="column-customizer records-edit history-modal"
      data-column-customizer-page-value="<%= page %>"
@@ -29,6 +36,9 @@
       <div class="records-bar__actions">
         <% if editable %>
           <%= link_to 'Changes', records_table_changes_path(table.slug), class: 'btn status-history' %>
+        <% end %>
+        <% if editable && highlight_counts %>
+          <button type="button" class="btn" data-action="records-highlights#open">Highlights</button>
         <% end %>
         <% if local_assigns[:exportable] %>
           <button type="button" class="btn secondary"
@@ -49,6 +59,11 @@
     </div>
   <% end %>
 
+  <% if highlight_counts && highlights.any? %>
+    <%= render 'records/highlight_legend', table: table, counts: highlight_counts,
+               view_params: local_assigns.fetch(:view_params, {}) %>
+  <% end %>
+
   <% if rows.any? %>
     <div class="records-table-wrapper" data-column-customizer-target="tableContainer">
       <table class="records-table">
@@ -64,7 +79,10 @@
         </thead>
         <tbody>
           <% rows.each do |row| %>
-            <tr class="<%= 'is-inactive' if row.respond_to?(:canceled_date) && row.canceled_date.present? %>">
+            <% highlight = highlights.rule_for(row) %>
+            <tr <%= tag.attributes(class: class_names('is-inactive': row.respond_to?(:canceled_date) && row.canceled_date.present?,
+                                                      "is-highlight-#{highlight&.color}": highlight).presence,
+                                   title: highlight&.display_label) %>>
               <% columns.each do |column| %>
                 <% if editable && records_cell_editable?(table, column) %>
                   <td class="records-cell is-editable"

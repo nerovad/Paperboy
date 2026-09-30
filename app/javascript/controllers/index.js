@@ -47,6 +47,7 @@ import NhtsaVehicleController from "controllers/nhtsa_vehicle_controller"
 import VehicleListController from "controllers/vehicle_list_controller"
 import RepeatableSectionController from "controllers/repeatable_section_controller"
 import SearchableSelectController from "controllers/searchable_select_controller"
+import RecordsHighlightsController from "controllers/records_highlights_controller"
 import LookupFilterController from "controllers/lookup_filter_controller"
 import SecondaryLocationController from "controllers/secondary_location_controller"
 import GroupSelectController from "controllers/group_select_controller"
@@ -166,6 +167,7 @@ application.register("nhtsa-vehicle", NhtsaVehicleController)
 application.register("vehicle-list", VehicleListController)
 application.register("repeatable-section", RepeatableSectionController)
 application.register("searchable-select", SearchableSelectController)
+application.register("records-highlights", RecordsHighlightsController)
 application.register("lookup-filter", LookupFilterController)
 application.register("secondary-location", SecondaryLocationController)
 application.register("group-select", GroupSelectController)

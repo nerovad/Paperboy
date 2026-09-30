@@ -1,0 +1,104 @@
+<%# Highlights dialog for a Records grid (records-highlights controller): the
+    table's colouring rules in the order they are checked, and a form to add
+    one. Rules are shared by everyone who opens the table; only its editors see
+    this dialog. See RecordsHighlightRule.
+    locals: table, rules, view_params %>
+<% view_fields = capture do %>
+  <% view_params.each do |key, value| %>
+    <% Array(value).each do |item| %>
+      <%= hidden_field_tag(value.is_a?(Array) ? "view[#{key}][]" : "view[#{key}]", item, id: nil) %>
+    <% end %>
+  <% end %>
+<% end %>
+<div class="pb-modal-backdrop" hidden
+     data-records-highlights-target="backdrop"
+     data-action="click->records-highlights#backdropClick">
+  <div class="pb-modal pb-modal--lg" role="dialog" aria-modal="true" aria-labelledby="records-highlights-title">
+    <div class="pb-modal__header">
+      <h3 id="records-highlights-title">Highlights for <%= table.label %></h3>
+      <button type="button" class="pb-modal__close" data-action="records-highlights#close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="pb-modal__body">
+      <p class="records-highlights__hint">
+        Rows that meet a rule are shaded for everyone who opens this table. Rules are checked top to
+        bottom and the first match wins.
+      </p>
+
+      <% if rules.any? %>
+        <ol class="records-highlights__list">
+          <% rules.each_with_index do |rule, index| %>
+            <li class="records-highlights__rule">
+              <span class="records-highlight-chip__swatch is-<%= rule.color %>" aria-hidden="true"></span>
+              <span class="records-highlights__text">
+                <strong><%= rule.display_label %></strong>
+                <% if rule.label.present? %><small><%= rule.description %></small><% end %>
+              </span>
+              <% if index.positive? %>
+                <%= button_to '↑', move_records_table_highlight_rule_path(table.slug, rule), method: :patch,
+                              class: 'btn compact', title: 'Check this rule earlier', form: { class: 'records-highlights__inline' },
+                              params: { view: view_params } %>
+              <% end %>
+              <%= button_to 'Remove', records_table_highlight_rule_path(table.slug, rule), method: :delete,
+                            class: 'btn deny compact', form: { class: 'records-highlights__inline' },
+                            params: { view: view_params },
+                            data: { turbo_confirm: "Remove the highlight \"#{rule.display_label}\"?",
+                                    confirm_title: 'Remove highlight', confirm_label: 'Remove' } %>
+            </li>
+          <% end %>
+        </ol>
+      <% end %>
+
+      <%= form_with url: records_table_highlight_rules_path(table.slug), method: :post, local: true,
+                    class: 'records-highlights__form' do |f| %>
+        <%= view_fields %>
+        <h4 class="records-highlights__heading">Add a rule</h4>
+        <div class="records-highlights__fields">
+          <div class="form-group">
+            <%= label_tag 'rule_column_name', 'Column', class: 'form-label' %>
+            <select name="rule[column_name]" id="rule_column_name" class="form-control" required
+                    data-records-highlights-target="column" data-action="change->records-highlights#columnChanged">
+              <% table.columns.each do |column| %>
+                <option value="<%= column.name %>" data-kind="<%= column.kind %>"><%= column.label %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <%= label_tag 'rule_operator', 'Condition', class: 'form-label' %>
+            <select name="rule[operator]" id="rule_operator" class="form-control" required
+                    data-records-highlights-target="operator" data-action="change->records-highlights#operatorChanged">
+              <% RecordsHighlightRule::OPERATORS.each do |key, label| %>
+                <option value="<%= key %>"
+                        data-applies="<%= RecordsHighlightRule::DATE_OPERATORS.key?(key) ? 'date' : (key == 'blank' ? 'any' : 'text') %>"><%= label %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="form-group" data-records-highlights-target="valueField">
+            <%= label_tag 'rule_value', 'Value', class: 'form-label', data: { records_highlights_target: 'valueLabel' } %>
+            <%= text_field_tag 'rule[value]', nil, id: 'rule_value', class: 'form-control',
+                               data: { records_highlights_target: 'value' } %>
+          </div>
+
+          <div class="form-group">
+            <%= label_tag 'rule_color', 'Colour', class: 'form-label' %>
+            <%= select_tag 'rule[color]', options_for_select(RecordsHighlightRule::COLORS.invert, 'red'),
+                           id: 'rule_color', class: 'form-control', required: true %>
+          </div>
+
+          <div class="form-group records-highlights__label-field">
+            <%= label_tag 'rule_label', 'Label (optional)', class: 'form-label' %>
+            <%= text_field_tag 'rule[label]', nil, id: 'rule_label', class: 'form-control', maxlength: 60,
+                               placeholder: 'e.g. Out of compliance' %>
+          </div>
+        </div>
+
+        <div class="pb-modal__actions">
+          <button type="button" class="btn" data-action="records-highlights#close">Close</button>
+          <%= f.submit 'Add highlight', class: 'btn approve' %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

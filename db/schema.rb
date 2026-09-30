@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_30_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_30_170000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -1425,6 +1425,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_150000) do
     t.index ["created_at"], name: "index_record_edits_on_created_at"
     t.index ["record_type", "created_at"], name: "index_record_edits_on_record_type_and_created_at"
     t.index ["record_type", "record_id"], name: "index_record_edits_on_record_type_and_record_id"
+  end
+
+  create_table "records_highlight_rules", force: :cascade do |t|
+    t.string "color", null: false
+    t.string "column_name", null: false
+    t.datetime "created_at", null: false
+    t.integer "created_by_employee_id"
+    t.string "label"
+    t.string "operator", null: false
+    t.integer "position", default: 0, null: false
+    t.string "table_slug", null: false
+    t.datetime "updated_at", null: false
+    t.string "value"
+    t.index ["table_slug", "position"], name: "index_records_highlight_rules_on_table_slug_and_position"
   end
 
   create_table "safety_report_authorizations", force: :cascade do |t|

@@ -481,6 +481,10 @@ Rails.application.routes.draw do
     resources :export_schedules, only: %i[create destroy], controller: 'record_export_schedules' do
       patch :toggle, on: :member
     end
+    # Conditional row colouring, managed from the grid's Highlights dialog.
+    resources :highlight_rules, only: %i[create destroy], controller: 'records_highlight_rules' do
+      patch :move, on: :member
+    end
   end
 
   resources :pcard_inventory, only: %i[index new create edit update] do
