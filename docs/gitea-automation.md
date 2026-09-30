@@ -223,22 +223,22 @@ Questions for the CI planning effort include:
 
 ### Phase 1 — establish the workflow
 
-- [ ] Confirm access to the Paperboy Gitea repository and its Projects feature.
+- [x] Confirm access to the Paperboy Gitea repository and its Projects feature.
 - [ ] Confirm who may administer repository labels, milestones, Projects, and
       webhooks.
 - [ ] Create the initial Project with the agreed workflow columns.
-- [ ] Create the initial issue labels and descriptions.
-- [ ] Agree on milestone naming and target-date conventions.
+- [x] Create the initial issue labels and descriptions.
+- [x] Agree on milestone naming and target-date conventions.
 - [x] Add issue templates for bug, feature, chore, and infrastructure work.
 - [x] Add a pull request template.
 - [x] Document the conventions in the repository README or contributor guide
       if broader visibility is needed.
 
-The repository-side templates and README link are complete. Repository access,
-server-side labels, Projects, and milestone configuration still require access
-to an authenticated Gitea account with repository administration permissions.
-The repository is reachable at `10.135.204.125:3000`; read-only API access is
-working, but no API credential is currently available to this workspace.
+The repository-side templates and README link are complete. The initial labels
+and `Gitea Workflow Phase 1` milestone have also been created. The repository
+is reachable at `10.135.204.125:3000`. Projects are enabled, but this Gitea
+instance does not expose Project management through its API, so creating the
+initial Project board remains a web UI or administrator task.
 
 ### Phase 2 — connect development work
 
